@@ -24,5 +24,9 @@
     "@nomicfoundation/hardhat-foundry": "^1.0.3",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "hardhat": "^2.17.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.3",
+    "@openzeppelin/contracts-upgradeable": "^4.9.3"
   }
 }

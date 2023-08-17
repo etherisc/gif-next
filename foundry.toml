@@ -7,4 +7,6 @@ cache_path  = 'cache_forge'
 
 remappings = [
     "@forgestd/=lib/forge-std/src/",
+    "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+    "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
 ]
