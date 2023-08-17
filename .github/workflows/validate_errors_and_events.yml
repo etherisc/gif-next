@@ -1,0 +1,31 @@
+name: Error codes and events
+
+on: 
+  workflow_dispatch:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Validate error codes
+        run: .github/workflows/scripts/validate_errorcodes.sh
+      
+      - run: mkdir tmp
+
+      - name: Find all error codes
+        run: .github/workflows/scripts/list_all_errorcodes.sh > tmp/errorcodes.md
+      
+      - name: Archive error codes
+        uses: actions/upload-artifact@v3
+        with:
+          name: error-codes
+          path: tmp/errorcodes.md
+
+      - name: Validate events
+        run: .github/workflows/scripts/validate_events.sh
