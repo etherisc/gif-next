@@ -1,0 +1,17 @@
+FROM node:lts-bookworm
+
+EXPOSE 7545
+
+# install foundry
+RUN curl -L https://foundry.paradigm.xyz | bash
+# RUN echo 'export PATH="$PATH:/root/.foundry/bin"' >> ~/.zshrc
+RUN /root/.foundry/bin/foundryup
+
+CMD /root/.foundry/bin/anvil \
+    --mnemonic "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat" \
+    --chain-id 1337 \
+    --port 7545 \
+    --accounts 20 \
+    --state /anvil \
+    --host "0.0.0.0"
+
