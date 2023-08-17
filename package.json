@@ -1,0 +1,27 @@
+{
+  "name": "@etherisc/gif-next",
+  "version": "0.0.1",
+  "description": "This is the repository for the next version of the Generic Insurance Framework (GIF) smart contracts. ",
+  "main": "index.js",
+  "scripts": {
+    "build": "hardhat compile",
+    "test": "hardhat test",
+    "ptest": "hardhat test --parallel",
+    "test-with-gas": "REPORT_GAS=true hardhat test",
+    "coverage": "hardhat coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/etherisc/gif-next.git"
+  },
+  "author": "Etherisc Gmbh",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/etherisc/gif-next/issues"
+  },
+  "homepage": "https://github.com/etherisc/gif-next#readme",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "hardhat": "^2.17.1"
+  }
+}

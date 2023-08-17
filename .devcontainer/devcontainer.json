@@ -1,0 +1,45 @@
+// For format details, see https://aka.ms/devcontainer.json. For config options, see the README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.245.2/containers/typescript-node
+{
+	"name": "gif-next",
+	"dockerComposeFile": "docker-compose.yaml",
+    "service": "contracts",
+    "workspaceFolder": "/workspaces/gif-next",
+
+	// Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"dbaeumer.vscode-eslint",
+				"github.vscode-pull-request-github",
+				"github.copilot",
+				"github.copilot-chat",
+				"mhutchie.git-graph",
+				"eamodio.gitlens",
+				"gruntfuggly.todo-tree",
+				"aaron-bond.better-comments",
+				"oderwat.indent-rainbow",
+				"johnpapa.vscode-peacock",
+				"vikas.code-navigation",
+				"vscode-icons-team.vscode-icons",
+				"NomicFoundation.hardhat-solidity",
+				]
+		}
+	},
+
+	// Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [],
+
+	// Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "sudo chown node node_modules",
+
+	// Comment out to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "node",
+	
+	// "features": {
+	// 	"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+	// },
+
+}
