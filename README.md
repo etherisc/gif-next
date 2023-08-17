@@ -1,4 +1,4 @@
-# Sample Hardhat Project
+# gif-next (Generic Insurance Framework next version)
 
 ## Hardhat 
 
