@@ -1,0 +1,8 @@
+{
+    "vsicons.associations.folders": [
+        { "icon": "test", "extensions": ["test_forge"], "format": "svg" }
+    ],
+    "vsicons.associations.files": [
+        { "icon": "test", "extensions": [".t.sol"], "format": "svg" }
+    ]
+}

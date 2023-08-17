@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/etherisc/gif-next#readme",
   "devDependencies": {
+    "@nomicfoundation/hardhat-foundry": "^1.0.3",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "hardhat": "^2.17.1"
   }

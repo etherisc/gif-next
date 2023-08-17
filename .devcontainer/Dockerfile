@@ -25,3 +25,9 @@ RUN echo 'eval "$(mcfly init zsh)"' >> ~/.zshrc \
 
 # [Optional] Uncomment if you want to install more global node packages
 # RUN su node -c "npm install -g <your-package-list -here>"
+
+# Install foundry
+RUN curl -L https://foundry.paradigm.xyz | bash
+RUN echo 'export PATH="$PATH:/home/node/.foundry/bin"' >> ~/.zshrc
+RUN echo 'export PATH="$PATH:/home/node/.foundry/bin"' >> ~/.bashrc
+RUN /home/node/.foundry/bin/foundryup

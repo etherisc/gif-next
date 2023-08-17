@@ -9,3 +9,7 @@ typechain-types
 cache
 artifacts
 
+# forge files
+cache_forge
+artifacts_forge
+

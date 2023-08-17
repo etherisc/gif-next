@@ -1,8 +1,8 @@
 # Sample Hardhat Project
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+## Hardhat 
 
-Try running some of the following tasks:
+### Commands
 
 ```shell
 npm run build
@@ -12,4 +12,22 @@ npm run ptest
 npm run test-with-gas
 npm run coverage
 ```
+
+### Documentation
+
+https://hardhat.org/hardhat-runner/docs/guides/compile-contracts
+
+## Forge 
+
+### Commands
+
+```shell
+forge build
+
+forge test
+```
+
+### Documentation
+
+https://book.getfoundry.sh/reference/
 
