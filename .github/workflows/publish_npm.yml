@@ -2,11 +2,8 @@ name: Publish package to npmjs
 
 on:
   workflow_run:
-    workflows: 
-      - build_hardhat.yml
-      - build_foundry.yml
-    types: 
-      - completed
+    workflows: ["Build and test (Hardhat)", "Build and test (Foundry)"]
+    types: [completed]
 
 jobs:
   publish:
@@ -22,3 +19,30 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
+
+      - name: Setup node environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+
+      # latest npm required for provenance
+      - run: npm install -g npm
+      - run: npm ci
+
+      - name: Download artifact
+        id: download-artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          github_token: ${{secrets.GITHUB_TOKEN}}
+          workflow: "Build and test (Hardhat)"
+          name: artifacts
+          path: |
+            artifacts
+
+      - name: Set build version identifier
+        run: npm version "`npm version patch --no-git-tag-version`-`git rev-parse --short HEAD`" --no-git-tag-version
+
+      - run: npm publish --tag next --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_ACCESS_TOKEN }}
