@@ -1,0 +1,97 @@
+name: Build and test (Hardhat)
+
+on:
+  push:
+    branches: [main, develop]
+    tags: '*'
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build_hardhat:
+    name: Build and test (Hardhat)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+    
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: NPM install
+        run: npm install
+
+      - name: Compile contracts
+        run: npm run build
+
+      - name: Run all tests
+        run: npm run test
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: |
+            artifacts
+
+  build_foundry:
+    name: Build and test (Foundry)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+    
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Compile contracts
+        run: forge build
+
+      - name: Run all tests
+        run: forge test -vvvv
+
+
+  publish:
+    name: Publish npm package to npmjs
+    runs-on: ubuntu-latest
+    permissions:
+        contents: read
+        id-token: write
+    needs: [build_hardhat, build_foundry]
+    # only run if not on main and hardhat **and** founddry are successful
+    if: ${{ github.ref != 'refs/heads/main' && contains(join(needs.*.result, ','), 'success') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Setup node environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
+      
+      # latest npm required for provenance
+      - run: npm install -g npm
+      - run: npm ci
+
+      - name: Set build version identifier
+        run: npm version "`npm version patch --no-git-tag-version`-`git rev-parse --short HEAD`" --no-git-tag-version
+
+      - run: npm publish --tag ci --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPMJS_ACCESS_TOKEN }}
