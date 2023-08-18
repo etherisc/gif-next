@@ -5,6 +5,7 @@
     "vsicons.associations.files": [
         { "icon": "test", "extensions": [".t.sol"], "format": "svg" }
     ],
+    "peacock.remoteColor": "#be6900",
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#f18500",
         "activityBar.background": "#f18500",
@@ -23,6 +24,5 @@
         "titleBar.activeForeground": "#e7e7e7",
         "titleBar.inactiveBackground": "#be690099",
         "titleBar.inactiveForeground": "#e7e7e799"
-    },
-    "peacock.remoteColor": "#be6900"
+    }
 }
