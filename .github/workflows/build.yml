@@ -92,6 +92,6 @@ jobs:
       - name: Set build version identifier
         run: npm version "`npm version patch --no-git-tag-version`-`git rev-parse --short HEAD`" --no-git-tag-version
 
-      - run: npm publish --tag ci --provenance
+      - run: npm publish --tag next --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_ACCESS_TOKEN }}
