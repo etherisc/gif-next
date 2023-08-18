@@ -19,6 +19,10 @@
   "bugs": {
     "url": "https://github.com/etherisc/gif-next/issues"
   },
+  "files": [
+    "contracts/**/*sol",
+    "artifacts/contracts/**/*.json"
+  ],
   "homepage": "https://github.com/etherisc/gif-next#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-foundry": "^1.0.3",
