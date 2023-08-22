@@ -49,6 +49,18 @@ https://hardhat.org/hardhat-runner/docs/guides/compile-contracts
 forge build
 
 forge test
+
+# run single test case
+forge test --mt test_decimals
+
+# run single test case with substantial logginglogging
+# to include logs as well use -vvvvv
+forge test -vvvv --mt test_decimals
+
+# provide gas report for a single test
+forge test --mt test_decimals --gas-report
+
+forge coverage
 ```
 
 ### Documentation
