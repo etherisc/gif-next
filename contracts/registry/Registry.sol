@@ -117,7 +117,38 @@ contract Registry is IRegistry {
         _info[nftId] = info;
         _idByAddress[objectAddress] = nftId;
 
-        // TODO logging
+        // add logging
+    }
+
+
+    function registerObjectForInstance(
+        uint256 parentNftId,
+        uint256 objectType,
+        address initialOwner
+    )
+        external 
+        override
+        // TODO add onlyRegisteredInstance
+        returns(uint256 nftId)
+    {
+        // TODO add more validation
+        require(
+            objectType == POLICY() || objectType == BUNDLE(),
+            "ERROR:REG-005:TYPE_INVALID");
+
+        nftId = _mint(initialOwner);
+
+        RegistryInfo memory info = RegistryInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            address(0),
+            initialOwner
+        );
+
+        _info[nftId] = info;
+
+        // add logging
     }
 
 

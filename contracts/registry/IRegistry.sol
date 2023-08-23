@@ -6,7 +6,9 @@ interface IOwnable {
 }
 
 interface IRegistryLinked {
-    // function setRegistry(address registry) external;
+
+    event LogDebug(uint256 idx, address module, string comment);
+
     function getRegistry() external view returns(IRegistry registry);
 }
 
@@ -47,6 +49,13 @@ interface IRegistry {
     function BUNDLE() external pure returns(uint256);
 
     function register(address objectAddress) external returns(uint256 nftId);
+    function registerObjectForInstance(
+        uint256 parentNftid,
+        uint256 objectType,
+        address initialOwner
+    )
+        external returns(uint256 nftId);
+
     function transfer(uint256 nftId, address newOwner) external;
 
     function getNftId(address objectAddress) external view returns(uint256 nftId);

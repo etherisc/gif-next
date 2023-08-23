@@ -8,11 +8,12 @@ import {IInstance} from "../IInstance.sol";
 // TODO or name this IProtectionService to have Product be something more generic (loan, savings account, ...)
 interface IProductService is IRegistryLinked {
 
-    function createApplicationForBundle(
-        uint256 bundleNftId,
+    function createApplication(
+        address applicationOwner,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
-        uint256 lifetime
+        uint256 lifetime,
+        uint256 bundleNftId
     )
         external 
         returns(uint256 nftId);
@@ -32,3 +33,7 @@ interface IProductService is IRegistryLinked {
     // function closeClaim(uint256 nftId, uint256 claimId) external;
 }
 
+
+interface IProductModule {
+    function getProductService() external view returns(IProductService);
+}

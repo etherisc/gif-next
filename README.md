@@ -63,6 +63,64 @@ forge test --mt test_decimals --gas-report
 forge coverage
 ```
 
+Chisel session
+```typescript
+import "./contracts/components/Component.sol";
+import "./contracts/components/IPool.sol";
+import "./contracts/components/IProduct.sol";
+import "./contracts/components/Pool.sol";
+import "./contracts/components/Product.sol";
+import "./contracts/instance/access/Access.sol";
+import "./contracts/instance/access/IAccess.sol";
+import "./contracts/instance/component/ComponentModule.sol";
+import "./contracts/instance/component/IComponent.sol";
+import "./contracts/instance/IInstance.sol";
+import "./contracts/instance/policy/IPolicy.sol";
+import "./contracts/instance/policy/PolicyModule.sol";
+import "./contracts/instance/product/IProductService.sol";
+import "./contracts/instance/product/ProductService.sol";
+import "./contracts/registry/IRegistry.sol";
+
+import {Instance} from "./contracts/instance/Instance.sol";
+import {Registry} from "./contracts/registry/Registry.sol";
+import {DeployAll} from "./scripts/DeployAll.s.sol";
+import {TestPool} from "./test_forge/mock/TestPool.sol";
+import {TestProduct} from "./test_forge/mock/TestProduct.sol";
+
+string memory instanceOwnerName = "instanceOwner";
+address instanceOwner = vm.addr(uint256(keccak256(abi.encodePacked(instanceOwnerName))));
+
+string memory productOwnerName = "productOwner";
+address productOwner = vm.addr(uint256(keccak256(abi.encodePacked(productOwnerName))));
+
+string memory poolOwnerName = "poolOwner";
+address poolOwner = vm.addr(uint256(keccak256(abi.encodePacked(poolOwnerName))));
+
+string memory customerName = "customer";
+address customer = vm.addr(uint256(keccak256(abi.encodePacked(customerName))));
+
+DeployAll deployer = new DeployAll();
+(
+    Registry registry, 
+    Instance instance, 
+    TestProduct product,
+    TestPool pool
+) = deployer.run(
+    instanceOwner,
+    productOwner,
+    poolOwner);
+
+ProductService ps = ProductService(address(registry));
+
+uint256 bundleNftId = 99;
+uint256 sumInsuredAmount = 1000*10**6;
+uint256 premiumAmount = 110*10**6;
+uint256 lifetime =365*24*3600;
+uint256 policyNftId = ps.createApplicationForBundle(customer, bundleNftId, sumInsuredAmount, premiumAmount, lifetime);
+
+```
+
+
 ### Documentation
 
 https://book.getfoundry.sh/reference/

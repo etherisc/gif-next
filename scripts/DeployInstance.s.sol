@@ -7,6 +7,7 @@ import {HelperConfig} from "./HelperConfig.s.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 import {ComponentOwnerService} from "../contracts/instance/component/ComponentModule.sol";
+import {ProductService} from "../contracts/instance/product/ProductService.sol";
 
 contract DeployInstance is Script {
 
@@ -21,7 +22,12 @@ contract DeployInstance is Script {
 
         vm.startBroadcast();
         ComponentOwnerService cos = new ComponentOwnerService(address(registry));
-        Instance instance = new Instance(address(registry), address(cos));
+        ProductService ps = new ProductService(address(registry));
+
+        Instance instance = new Instance(
+            address(registry), 
+            address(cos),
+            address(ps));
 
         uint256 nftId = instance.register();
         registry.transfer(nftId, instanceOwner);

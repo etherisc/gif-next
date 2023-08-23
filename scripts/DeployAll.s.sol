@@ -8,6 +8,7 @@ import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 import {IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
 import {ComponentOwnerService} from "../contracts/instance/component/ComponentModule.sol";
+import {ProductService} from "../contracts/instance/product/ProductService.sol";
 import {TestProduct} from "../test_forge/mock/TestProduct.sol";
 import {TestPool} from "../test_forge/mock/TestPool.sol";
 
@@ -58,9 +59,13 @@ contract DeployAll is Script {
         ComponentOwnerService componentOwnerService = new ComponentOwnerService(
             address(registry));
 
+        ProductService productService = new ProductService(
+            address(registry));
+
         instance = new Instance(
             address(registry), 
-            address(componentOwnerService));
+            address(componentOwnerService),
+            address(productService));
 
         console.log("instance deployed at", address(instance));
     }

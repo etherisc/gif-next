@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 
-import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
+import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
 
 import {IProductService} from "../product/IProductService.sol";
@@ -10,10 +10,17 @@ import {IProductService} from "../product/IProductService.sol";
 // TODO check if there is value to introuce IContract and let IPolicy derive from IContract
 interface IPolicy {
 
-    struct Policy {
+    enum PolicyState {
+        Undefined,
+        Applied,
+        Rejected,
+        Active,
+        Closed
+    }
+
+    struct PolicyInfo {
         uint256 nftId;
-        uint256 productNftId; // TODO decide if this info is to be kept in the registry and not here
-        uint256 state; // applied, withdrawn, rejected, active, closed
+        PolicyState state; // applied, withdrawn, rejected, active, closed
 
         uint256 sumInsuredAmount;
         uint256 premiumAmount;
@@ -23,7 +30,6 @@ interface IPolicy {
         uint256 activatedAt; // time of underwriting
         uint256 expiredAt; // no new claims
         uint256 closedAt; // no locked capital
-        uint256 updatedIn; // block id
     }
 }
 
@@ -33,9 +39,25 @@ interface IPolicyModule is
     IPolicy
 {
 
-    function getProductService()
+    function createApplication(
+        IRegistry.RegistryInfo memory productInfo,
+        address applicationOwner,
+        uint256 sumInsuredAmount,
+        uint256 premiumAmount,
+        uint256 lifetime,
+        uint256 bundleNftId
+    )
+        external
+        returns(uint256 nftId);
+
+    function getBundleNftForPolicy(uint256 nftId)
         external
         view
-        returns(IProductService);
+        returns(uint256 bundleNft);
+
+    function getPolicyInfo(uint256 nftId)
+        external
+        view
+        returns(PolicyInfo memory info);
 
 }

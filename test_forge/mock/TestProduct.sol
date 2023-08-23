@@ -10,4 +10,22 @@ contract TestProduct is Product {
         Product(registry, instance, pool)
     {}
 
+    function applyForPolicy(
+        uint256 sumInsuredAmount,
+        uint256 premiumAmount,
+        uint256 lifetime
+    )
+        external
+        returns(uint256 nftId)
+    {
+        nftId = _createApplication(
+            msg.sender, // policy holder
+            sumInsuredAmount,
+            premiumAmount,
+            lifetime,
+            0 // requested bundle nft id
+        );
+    }
+
+
 }

@@ -6,6 +6,8 @@ import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IAccessModule, AccessModule} from "./access/Access.sol";
 import {ComponentModule} from "./component/ComponentModule.sol";
+import {ProductModule} from "./product/ProductService.sol";
+import {PolicyModule} from "./policy/PolicyModule.sol";
 
 import {IInstance} from "./IInstance.sol";
 
@@ -13,16 +15,21 @@ contract Instance is
     Registerable,
     AccessModule,
     ComponentModule, 
+    PolicyModule, 
+    ProductModule, 
     IInstance
 {
 
     constructor(
         address registry,
-        address componentOwnerService
+        address componentOwnerService,
+        address productService
     )
         Registerable(registry)
         AccessModule()
         ComponentModule(componentOwnerService)
+        PolicyModule(productService)
+        ProductModule(productService)
     { }
 
     // from registerable
