@@ -6,6 +6,8 @@ import {Product} from "../../contracts/components/Product.sol";
 
 contract TestProduct is Product {
 
-    constructor(address instance) Product(instance) {}
+    constructor(address registry, address instance, address pool)
+        Product(registry, instance, pool)
+    {}
 
 }

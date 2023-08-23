@@ -22,9 +22,9 @@ abstract contract AccessModule is
     mapping(bytes32 role => RoleInfo info) private _info;
     bytes32 [] private _roles;
 
-    bytes32 _productOwnerRole;
-    bytes32 _oracleOwnerRole;
-    bytes32 _poolOwnerRole;
+    bytes32 private immutable _productOwnerRole;
+    bytes32 private immutable _oracleOwnerRole;
+    bytes32 private immutable _poolOwnerRole;
 
     mapping(bytes32 role => mapping(address member => bool isMember)) private _isRoleMember;
     mapping(bytes32 role => EnumerableSet.AddressSet) private _roleMembers;
@@ -40,23 +40,9 @@ abstract contract AccessModule is
         _poolOwnerRole = _createRole(POOL_OWNER);
     }
 
-
-    function getComponentTypeRole(uint256 cType)
-        external
-        view
-        override
-        returns(bytes32 role)
-    {
-        if(cType == this.getRegistry().PRODUCT()) {
-            return _productOwnerRole;
-        }
-        if(cType == this.getRegistry().POOL()) {
-            return _poolOwnerRole;
-        }
-        if(cType == this.getRegistry().ORACLE()) {
-            return _oracleOwnerRole;
-        }
-    }
+    function PRODUCT_OWNER_ROLE() public view override returns(bytes32 role) { return _productOwnerRole; }
+    function ORACLE_OWNER_ROLE() public view override returns(bytes32 role) { return _oracleOwnerRole; }
+    function POOL_OWNER_ROLE() public view override returns(bytes32 role) { return _poolOwnerRole; }
 
 
     function createRole(string memory roleName) 

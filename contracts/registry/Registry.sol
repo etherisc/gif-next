@@ -7,14 +7,14 @@ contract RegistryLinked is IRegistryLinked {
 
     IRegistry internal _registry;
     
-    constructor() {
-        _registry = IRegistry(address(0));
-    }
-
-    function setRegistry(address registry) public override {
-        require(address(_registry) == address(0), "ERROR:RGL-001:REGISTRY_ALREADY_SET");
+    constructor(address registry) {
         _registry = IRegistry(registry);
     }
+
+    // function setRegistry(address registry) public override {
+    //     require(address(_registry) == address(0), "ERROR:RGL-001:REGISTRY_ALREADY_SET");
+    //     _registry = IRegistry(registry);
+    // }
 
     function getRegistry() external view override returns(IRegistry registry) {
         return _registry;
@@ -30,8 +30,8 @@ abstract contract Registerable is
 
     address private _initialOwner;
     
-    constructor()
-        RegistryLinked()
+    constructor(address registry)
+        RegistryLinked(registry)
     {
         _initialOwner = msg.sender;
     }
@@ -56,7 +56,7 @@ abstract contract Registerable is
 
     function getOwner() public view override returns(address owner) {
         uint256 id = _registry.getNftId(address(this));
-        address owner = _registry.getOwner(id);
+        owner = _registry.getOwner(id);
         return owner != address(0) ? owner : _initialOwner;
     }
 
@@ -82,29 +82,40 @@ contract Registry is IRegistry {
         _idNext = 0;
     }
 
-    function TOKEN() external pure override returns(uint256) { return 30; }
-    function INSTANCE() external pure override returns(uint256) { return 40; }
-    function PRODUCT() external pure override returns(uint256) { return 50; }
-    function ORACLE() external pure override returns(uint256) { return 60; }
-    function POOL() external pure override returns(uint256) { return 70; }
+    function TOKEN() public pure override returns(uint256) { return 30; }
+    function INSTANCE() public pure override returns(uint256) { return 40; }
+    function PRODUCT() public pure override returns(uint256) { return 50; }
+    function ORACLE() public pure override returns(uint256) { return 60; }
+    function POOL() public pure override returns(uint256) { return 70; }
+    function POLICY() public pure override returns(uint256) { return 80; }
+    function BUNDLE() public pure override returns(uint256) { return 90; }
 
-    function register(address object) external override returns(uint256 id) {
-        require(_idByAddress[object] == 0, "ERROR:REG-001:ALREADY_REGISTERED");
+    function register(address objectAddress) external override returns(uint256 nftId) {
+        require(_idByAddress[objectAddress] == 0, "ERROR:REG-001:ALREADY_REGISTERED");
 
-        IRegisterable registerable = IRegisterable(object);
+        IRegisterable registerable = IRegisterable(objectAddress);
         require(registerable.isRegisterable(), "ERROR:REG-002:NOT_REGISTERABLE");
 
-        id = _mint(registerable.getInitialOwner());
+        // check parent exists (for objects not instances)
+        if(registerable.getType() != INSTANCE()) {
+            RegistryInfo memory parentInfo = _info[registerable.getParentNftId()];
+            require(parentInfo.nftId > 0, "ERROR:REG-003:PARENT_NOT_FOUND");
+            // check validity of parent relation, valid relations are
+            // policy -> product, bundle -> pool, product -> instance, pool -> instance
+        }
+
+        nftId = _mint(registerable.getInitialOwner());
     
         RegistryInfo memory info = RegistryInfo(
-            id,
+            nftId,
+            registerable.getParentNftId(),
             registerable.getType(),
-            object,
+            objectAddress,
             registerable.getInitialOwner()
         );
 
-        _info[id] = info;
-        _idByAddress[object] = id;
+        _info[nftId] = info;
+        _idByAddress[objectAddress] = nftId;
 
         // TODO logging
     }

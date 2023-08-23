@@ -13,14 +13,14 @@ contract InstanceLinked is
 {
     IInstance internal _instance;
 
-    constructor() {
-        _instance = IInstance(address(0));
-    }
-
-    function setInstance(address instance) public override {
-        require(address(_instance) == address(0), "ERROR:RGL-001:INSTANCE_ALREADY_SET");
+    constructor(address instance) {
         _instance = IInstance(instance);
     }
+
+    // function setInstance(address instance) public override {
+    //     require(address(_instance) == address(0), "ERROR:RGL-001:INSTANCE_ALREADY_SET");
+    //     _instance = IInstance(instance);
+    // }
 
     function getInstance() public view override returns(IInstance instance) {
         return _instance;
@@ -36,12 +36,10 @@ abstract contract Component is
 
     address private _deployer;
 
-    constructor(address instance)
-        InstanceLinked()
-    {
-        setInstance(instance);
-        setRegistry(address(_instance.getRegistry()));
-    }
+    constructor(address registry, address instance)
+        Registerable(registry)
+        InstanceLinked(instance)
+    { }
 
     // from registerable
     function register()
@@ -55,5 +53,10 @@ abstract contract Component is
 
         IComponentOwnerService cos = _instance.getComponentOwnerService();
         componentId = cos.register(this);
+    }
+
+    // from registerable
+    function getParentNftId() public view override returns(uint256) {
+        return getInstance().getNftId();
     }
 }

@@ -10,15 +10,18 @@ import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 import {IComponent, IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
 import {TestProduct} from "./mock/TestProduct.sol";
+import {TestPool} from "./mock/TestPool.sol";
 
 contract TestComponentLockUnlock is Test {
 
     Registry registry;
     Instance instance;
     TestProduct product;
+    TestPool pool;
 
     address instanceOwner = makeAddr("instanceOwner");
     address productOwner = makeAddr("productOwner");
+    address poolOwner = makeAddr("poolOwner");
     address outsider = makeAddr("outsider");
     
     IComponentOwnerService componentOwnerService;
@@ -28,17 +31,19 @@ contract TestComponentLockUnlock is Test {
         (
             registry, 
             instance, 
-            product
+            product,
+            pool
         ) = deployer.run(
             instanceOwner,
-            productOwner);
+            productOwner,
+            poolOwner);
 
         componentOwnerService = instance.getComponentOwnerService();
     }
 
     function testComponentLockNotOwner() public {
         vm.prank(outsider);
-        vm.expectRevert("ERROR:AOS-001:NOT_COMPONENT_OWNER");
+        vm.expectRevert("ERROR:COS-002:NOT_OWNER");
         componentOwnerService.lock(product);
     }
 
@@ -49,17 +54,13 @@ contract TestComponentLockUnlock is Test {
         componentOwnerService.lock(product);
 
         IComponent.ComponentInfo memory info_after = instance.getComponentInfo(product.getNftId());
-
-        assertEq(info_before.id, info_before.id, "product id not same");
-        assertEq(info_before.cAddress, info_before.cAddress, "product address not same");
-        assertEq(info_before.cType, info_before.cType, "component type not same");
-
+        assertEq(info_before.nftId, info_after.nftId, "product id not same");
         assertEq(uint256(uint256(info_after.state)), uint256(IComponent.CState.Locked), "component state not locked");
     }
 
     function testComponentUnlockNotOwner() public {
         vm.prank(outsider);
-        vm.expectRevert("ERROR:AOS-001:NOT_COMPONENT_OWNER");
+        vm.expectRevert("ERROR:COS-002:NOT_OWNER");
         componentOwnerService.unlock(product);
     }
 
@@ -73,10 +74,7 @@ contract TestComponentLockUnlock is Test {
         IComponent.ComponentInfo memory info_after = instance.getComponentInfo(product.getNftId());
         vm.stopPrank();
 
-        assertEq(info_before.id, info_before.id, "product id not same");
-        assertEq(info_before.cAddress, info_before.cAddress, "product address not same");
-        assertEq(info_before.cType, info_before.cType, "component type not same");
-
+        assertEq(info_before.nftId, info_after.nftId, "product id not same");
         assertEq(uint256(uint256(info_before.state)), uint256(IComponent.CState.Locked), "component state not locked");
         assertEq(uint256(uint256(info_after.state)), uint256(IComponent.CState.Active), "component state not active");
     }

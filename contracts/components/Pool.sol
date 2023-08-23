@@ -1,33 +1,25 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IPool} from "./IPool.sol";
 import {Component} from "./Component.sol";
-import {IProduct} from "./IProduct.sol";
 
 
-contract Product is
+contract Pool is
     Component,
-    IProduct
+    IPool
 {
-    address private _pool;
 
     constructor(
         address registry, 
-        address instance, 
-        address pool
+        address instance
     )
         Component(registry, instance)
-    { 
-        _pool = pool;
-    }
-
-    function getPoolNftId() external view override returns(uint256 poolNftId) {
-        return _registry.getNftId(_pool);
-    }
+    { }
 
     // from registerable
     function getType() public view override returns(uint256) {
-        return _registry.PRODUCT();
+        return _registry.POOL();
     }
 
     // from registerable

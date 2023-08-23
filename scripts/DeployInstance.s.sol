@@ -20,7 +20,7 @@ contract DeployInstance is Script {
         address dipAddress = config.dipAddress;
 
         vm.startBroadcast();
-        ComponentOwnerService cos = new ComponentOwnerService();
+        ComponentOwnerService cos = new ComponentOwnerService(address(registry));
         Instance instance = new Instance(address(registry), address(cos));
 
         uint256 nftId = instance.register();

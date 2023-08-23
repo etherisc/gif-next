@@ -12,12 +12,29 @@ interface IAccess {
     }
 }
 
+interface IAccessCheckRole {
+
+    function hasRole(bytes32 role, address member)
+        external
+        view
+        returns(bool);
+}
+
+interface IAccessComponentTypeRoles {
+    function PRODUCT_OWNER_ROLE() external view returns(bytes32 role);
+    function ORACLE_OWNER_ROLE() external view returns(bytes32 role);
+    function POOL_OWNER_ROLE() external view returns(bytes32 role);
+}
+
 
 interface IAccessModule is 
     IOwnable,
+    IRegistryLinked,
     IAccess,
-    IRegistryLinked
+    IAccessComponentTypeRoles,
+    IAccessCheckRole
 {
+
     function createRole(string memory roleName)
         external
         returns(bytes32 role);
@@ -34,29 +51,19 @@ interface IAccessModule is
     function revokeRole(bytes32 role, address member)
         external;       
 
-    function hasRole(bytes32 role, address member)
+    function getRole(uint256 idx)
         external
         view
-        returns(bool);
+        returns(bytes32 role);
 
     function getRoleInfo(bytes32 role)
         external
         view
         returns(RoleInfo memory info);
 
-    function getRole(uint256 idx)
-        external
-        view
-        returns(bytes32 role);
-
     function getRoleForName(string memory roleName)
         external
         pure
-        returns(bytes32 role);
-
-    function getComponentTypeRole(uint256 cType)
-        external
-        view
         returns(bytes32 role);
 
     function getRoleCount()

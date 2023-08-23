@@ -14,17 +14,16 @@ interface IComponent {
         Locked
     }
 
+    // component dynamic info (static info kept in registry)
     struct ComponentInfo {
-        uint256 id;
-        address cAddress;
-        uint256 cType;
+        uint256 nftId;
         CState state;
     }
 }
 
 
 interface IInstanceLinked {
-    function setInstance(address instance) external;
+    // function setInstance(address instance) external;
     function getInstance() external view returns(IInstance instance);
 }
 
@@ -36,7 +35,7 @@ interface IComponentContract is
 { }
 
 
-interface IComponentOwnerService {
+interface IComponentOwnerService is IRegistryLinked{
 
     function register(IComponentContract component) external returns(uint256 id);
     function lock(IComponentContract component) external;
@@ -49,6 +48,10 @@ interface IComponentModule is
     IRegistryLinked,
     IComponent
 {
+
+    function registerComponent(IComponentContract component)
+        external
+        returns(uint256 nftInfo);
 
     function setComponentInfo(ComponentInfo memory info)
         external

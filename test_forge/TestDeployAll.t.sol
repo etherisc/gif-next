@@ -9,29 +9,34 @@ import {DeployAll} from "../scripts/DeployAll.s.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 import {TestProduct} from "./mock/TestProduct.sol";
+import {TestPool} from "./mock/TestPool.sol";
 
 contract TestDeployAll is Test {
 
     Registry registry;
     Instance instance;
     TestProduct product;
+    TestPool pool;
 
     address instanceOwner = makeAddr("instanceOwner");
     address productOwner = makeAddr("productOwner");
+    address poolOwner = makeAddr("poolOwner");
     
     function setUp() external {
         DeployAll deployer = new DeployAll();
         (
             registry, 
             instance, 
-            product
+            product,
+            pool
         ) = deployer.run(
             instanceOwner,
-            productOwner);
+            productOwner,
+            poolOwner);
     }
 
     function testDeployAllRegistryCountWithProduct() public {
-        assertEq(registry.getObjectCount(), 2, "getObjectCount not 2");
+        assertEq(registry.getObjectCount(), 3, "getObjectCount not 3");
     }
 
     function testDeployAllInstanceOwner() public {
@@ -60,5 +65,16 @@ contract TestDeployAll is Test {
         uint256 nftId = registry.getNftId(address(product));
         assertEq(nftId, 2, "getNftId not 2");
         assertEq(nftId, product.getNftId(), "registry and product nft id differ");
+    }
+
+    function testDeployAllProductPoolLink() public {
+        uint256 poolNftId = product.getPoolNftId();
+        assertEq(pool.getNftId(), poolNftId, "pool nft id does not match with linked product");
+    }
+
+    function testDeployAllPoolNftId() public {
+        uint256 nftId = registry.getNftId(address(pool));
+        assertEq(nftId, 3, "getNftId not 3");
+        assertEq(nftId, pool.getNftId(), "registry and pool nft id differ");
     }
 }

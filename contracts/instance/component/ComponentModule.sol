@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {RegistryLinked} from "../../registry/Registry.sol";
 import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
+import {IAccessComponentTypeRoles, IAccessCheckRole} from "../access/IAccess.sol";
 import {IInstance} from "../IInstance.sol";
 
-import {IAccessModule} from "../access/IAccess.sol";
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
 
 
 abstract contract ComponentModule is 
     IRegistryLinked,
+    IAccessComponentTypeRoles,
+    IAccessCheckRole,
     IComponentModule
 {
 
@@ -19,16 +22,40 @@ abstract contract ComponentModule is
 
     mapping(uint256 cType => bytes32 role) private _componentOwnerRole;
 
-    IComponentOwnerService private _ownerService;
+    IComponentOwnerService private _componentOwnerService;
 
     modifier onlyComponentOwnerService() {
-        require(address(_ownerService) == msg.sender, "ERROR:CMP-001:NOT_OWNER_SERVICE");
+        require(address(_componentOwnerService) == msg.sender, "ERROR:CMP-001:NOT_OWNER_SERVICE");
         _;
     }
 
     constructor(address componentOwnerService) {
-        _ownerService = ComponentOwnerService(componentOwnerService);
+        _componentOwnerService = ComponentOwnerService(componentOwnerService);
     }
+
+    function registerComponent(IComponentContract component)
+        external
+        override
+        onlyComponentOwnerService
+        returns(uint256 nftId)
+    {
+        bytes32 typeRole = getRoleForType(component.getType());
+        require(
+            this.hasRole(typeRole, component.getInitialOwner()),
+            "ERROR:CMP-004:TYPE_ROLE_MISSING");
+        
+        nftId = this.getRegistry().register(address(component));
+
+        _info[nftId] = ComponentInfo(
+            nftId,
+            CState.Active);
+
+        _idByAddress[address(component)] = nftId;
+        _ids.push(nftId);
+
+        // add logging
+    }
+
 
     function getComponentOwnerService()
         external
@@ -36,28 +63,22 @@ abstract contract ComponentModule is
         view
         returns(IComponentOwnerService)
     {
-        return _ownerService;
+        return _componentOwnerService;
     }
 
     function setComponentInfo(ComponentInfo memory info)
         external
         onlyComponentOwnerService
-        returns(uint256 id)
+        returns(uint256 nftId)
     {
-        // check if new component
-        id = _idByAddress[info.cAddress];
-
-        if(id == 0) {
-            id = this.getRegistry().register(info.cAddress);
-
-            _idByAddress[info.cAddress] = id;
-            _ids.push(id);
-
-            info.id = id;
-        }
+        uint256 id = info.nftId;
+        require(
+            id > 0 && _info[id].nftId == id,
+            "ERROR:CMP-005:COMPONENT_UNKNOWN");
 
         _info[id] = info;
 
+        // add logging
     }
 
     function getComponentInfo(uint256 id)
@@ -104,54 +125,73 @@ abstract contract ComponentModule is
     {
         return _ids.length;
     }
+
+    function getRoleForType(uint256 cType)
+        public
+        view
+        returns(bytes32 role)
+    {
+        if(cType == this.getRegistry().PRODUCT()) {
+            return this.PRODUCT_OWNER_ROLE();
+        }
+        if(cType == this.getRegistry().POOL()) {
+            return this.POOL_OWNER_ROLE();
+        }
+        if(cType == this.getRegistry().ORACLE()) {
+            return this.ORACLE_OWNER_ROLE();
+        }
+
+    }
 }
 
 
 // this is actually the component owner service
 contract ComponentOwnerService is
+    RegistryLinked,
     IComponent,
     IComponentOwnerService
 {
 
     modifier onlyComponentOwner(IComponentContract component) {
-        IRegistry registry = component.getRegistry();
+        uint256 nftId = _registry.getNftId(address(component));
         require(
-            msg.sender == registry.getOwner(component.getNftId()),
-            "ERROR:AOS-001:NOT_COMPONENT_OWNER"
+            nftId > 0, 
+            "ERROR:COS-001:COMPONENT_UNKNOWN");
+        require(
+            msg.sender == _registry.getOwner(nftId),
+            "ERROR:COS-002:NOT_OWNER"
         );
         _;
     }
 
+    constructor(address registry)
+        RegistryLinked(registry)
+    { }
 
-    modifier onlyComponentOwnerRole(IComponentContract component) {
-        IInstance instance = component.getInstance();
-        // TODO add set/getComponentOwnerRole to IComonentModule
-        bytes32 typeRole = instance.getComponentTypeRole(component.getType());
-        require(
-            instance.hasRole(typeRole, msg.sender),
-            "ERROR:AOS-002:COMPONENT_ROLE_MISSING"
-        );
-        _;
-    }
+
+    // modifier onlyComponentOwnerRole(IComponentContract component) {
+    //     IInstance instance = component.getInstance();
+    //     // TODO add set/getComponentOwnerRole to IComonentModule
+    //     bytes32 typeRole = instance.getComponentTypeRole(component.getType());
+    //     require(
+    //         instance.hasRole(typeRole, msg.sender),
+    //         "ERROR:COS-003:COMPONENT_ROLE_MISSING"
+    //     );
+    //     _;
+    // }
 
 
     function register(IComponentContract component)
         external
         override
-        onlyComponentOwnerRole(component)
-        returns(uint256 id)
+        returns(uint256 nftId)
     {
+        require(
+            msg.sender == component.getInitialOwner(), 
+            "ERROR:COS-003:NOT_OWNER");
+
         IInstance instance = component.getInstance();
-        require(instance.getComponentId(address(component)) == 0, "ERROR_COMPONENT_ALREADY_REGISTERED");
-
-        ComponentInfo memory info = ComponentInfo(
-            0, // 0 for not registered component
-            address(component),
-            component.getType(),
-            CState.Active
-        );
-
-        id = instance.setComponentInfo(info);
+        nftId = instance.registerComponent(component);
     }
 
 
@@ -162,7 +202,7 @@ contract ComponentOwnerService is
     {
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(component.getNftId());
-        require(info.id > 0, "ERROR_COMPONENT_UNKNOWN");
+        require(info.nftId > 0, "ERROR_COMPONENT_UNKNOWN");
         // TODO add state change validation
 
         info.state = CState.Locked;
@@ -177,7 +217,7 @@ contract ComponentOwnerService is
     {
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(component.getNftId());
-        require(info.id > 0, "ERROR_COMPONENT_UNKNOWN");
+        require(info.nftId > 0, "ERROR_COMPONENT_UNKNOWN");
         // TODO state change validation
 
         info.state = CState.Active;

@@ -10,26 +10,33 @@ import {ComponentModule} from "./component/ComponentModule.sol";
 import {IInstance} from "./IInstance.sol";
 
 contract Instance is
-    IInstance,
     Registerable,
     AccessModule,
-    ComponentModule 
+    ComponentModule, 
+    IInstance
 {
 
     constructor(
         address registry,
         address componentOwnerService
     )
+        Registerable(registry)
         AccessModule()
         ComponentModule(componentOwnerService)
-    { 
-        setRegistry(registry);
-    }
+    { }
 
     // from registerable
     function register() external override returns(uint256 id) {
         require(address(_registry) != address(0), "ERROR:PRD-001:REGISTRY_ZERO");
         return _registry.register(address(this));
+    }
+
+    // from registerable
+    function getParentNftId() public view override returns(uint256) {
+        // TODO  add self registry and exchange 0 for_registry.getNftId();
+        // define parent tree for all registerables
+        // eg 0 <- chain(mainnet) <- global registry <- chain registry <- instance <- component <- policy/bundle 
+        return 0;
     }
 
     // from registerable
