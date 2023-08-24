@@ -25,9 +25,12 @@ jobs:
         with:
           node-version: '18'
 
+      - name: NPM install globals
+        run:  npm install -g hardhat-shorthand
+      
       - name: NPM install
         run: npm install
-
+      
       - name: Compile contracts
         run: npm run build
 
