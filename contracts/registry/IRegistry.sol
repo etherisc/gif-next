@@ -56,11 +56,13 @@ interface IRegistry {
     )
         external returns(uint256 nftId);
 
-    function transfer(uint256 nftId, address newOwner) external;
+    function getObjectCount() external view returns(uint256);
 
     function getNftId(address objectAddress) external view returns(uint256 nftId);
     function getInfo(uint256 nftId) external view returns(RegistryInfo memory info);
     function getOwner(uint256 nftId) external view returns(address ownerAddress);
 
     function isRegistered(address objectAddress) external view returns(bool);
+
+    function getNftAddress() external view returns(address nft);
 }

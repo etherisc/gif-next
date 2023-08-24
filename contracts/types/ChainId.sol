@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-// bytes5 allows for chain ids up to 13 digits
+// bytes5 (uint40) allows for chain ids up to 13 digits
 type ChainId is bytes5;
 
 // type bindings

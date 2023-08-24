@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {Script, console} from "forge-std/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 
+import {ChainNft} from "../contracts/registry/ChainNft.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 import {IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
@@ -27,7 +28,6 @@ contract DeployAll is Script {
             TestPool
         )
     {
-
         // HelperConfig helperConfig = new HelperConfig();
         // HelperConfig.NetworkConfig memory config = HelperConfig.NetworkConfig(helperConfig.activeNetworkConfig());
         // address dipAddress = config.dipAddress;
@@ -35,7 +35,7 @@ contract DeployAll is Script {
         console.log("tx origin", tx.origin);
 
         vm.startBroadcast();
-        Registry registry = _deployRegistry();
+        (, Registry registry) = _deployRegistry();
         Instance instance = _deployInstance(registry);
         TestPool pool = _deployPool(registry, instance);
         TestProduct product = _deployProduct(registry, instance, pool);
@@ -50,8 +50,18 @@ contract DeployAll is Script {
         );
     }
 
-    function _deployRegistry() internal returns(Registry registry) {
+    function _deployRegistry()
+        internal 
+        returns(
+            ChainNft nft,
+            Registry registry
+        )
+    {
         registry = new Registry();
+        nft = new ChainNft(address(registry));
+        registry.initialize(address(nft));
+
+        console.log("nft deployed at", address(nft));
         console.log("registry deployed at", address(registry));
     }
 
@@ -109,9 +119,10 @@ contract DeployAll is Script {
         uint256 productNftId = componentOwnerService.register(product);
 
         // transfer ownerships
-        registry.transfer(instanceNftId, instanceOwner);
-        registry.transfer(productNftId, productOwner);
-        registry.transfer(poolNftId, poolOwner);
+        ChainNft nft = ChainNft(registry.getNftAddress());
+        nft.safeTransferFrom(tx.origin, instanceOwner, instanceNftId);
+        nft.safeTransferFrom(tx.origin, productOwner, productNftId);
+        nft.safeTransferFrom(tx.origin, poolOwner, poolNftId);
     }
 
 }

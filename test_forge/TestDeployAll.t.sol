@@ -1,39 +1,10 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import "../lib/forge-std/src/Test.sol";
 import {console} from "../lib/forge-std/src/Script.sol";
+import {TestGifBase} from "./TestGifBase.sol";
 
-import {DeployAll} from "../scripts/DeployAll.s.sol";
-
-import {Registry} from "../contracts/registry/Registry.sol";
-import {Instance} from "../contracts/instance/Instance.sol";
-import {TestProduct} from "./mock/TestProduct.sol";
-import {TestPool} from "./mock/TestPool.sol";
-
-contract TestDeployAll is Test {
-
-    Registry registry;
-    Instance instance;
-    TestProduct product;
-    TestPool pool;
-
-    address instanceOwner = makeAddr("instanceOwner");
-    address productOwner = makeAddr("productOwner");
-    address poolOwner = makeAddr("poolOwner");
-    
-    function setUp() external {
-        DeployAll deployer = new DeployAll();
-        (
-            registry, 
-            instance, 
-            product,
-            pool
-        ) = deployer.run(
-            instanceOwner,
-            productOwner,
-            poolOwner);
-    }
+contract TestDeployAll is TestGifBase {
 
     function testDeployAllRegistryCountWithProduct() public {
         assertEq(registry.getObjectCount(), 3, "getObjectCount not 3");
@@ -46,8 +17,8 @@ contract TestDeployAll is Test {
 
     function testDeployAllInstanceNftId() public {
         uint256 nftId = registry.getNftId(address(instance));
-        assertEq(nftId, 1, "getNftId not 1");
         assertEq(nftId, instance.getNftId(), "registry and instance nft id differ");
+        assertNftId(nftId, 23133705, "instance getNftId not 23133705");
     }
 
     function testDeployAllProductOwner() public {
@@ -63,8 +34,8 @@ contract TestDeployAll is Test {
 
     function testDeployAllProductNftId() public {
         uint256 nftId = registry.getNftId(address(product));
-        assertEq(nftId, 3, "product getNftId not 3");
         assertEq(nftId, product.getNftId(), "registry and product nft id differ");
+        assertNftId(nftId, 43133705, "product getNftId not 43133705");
     }
 
     function testDeployAllProductPoolLink() public {
@@ -74,7 +45,7 @@ contract TestDeployAll is Test {
 
     function testDeployAllPoolNftId() public {
         uint256 nftId = registry.getNftId(address(pool));
-        assertEq(nftId, 2, "pool getNftId not 2");
         assertEq(nftId, pool.getNftId(), "registry and pool nft id differ");
+        assertNftId(nftId, 33133705, "pool getNftId not 33133705");
     }
 }

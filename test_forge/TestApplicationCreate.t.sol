@@ -1,57 +1,27 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import "../lib/forge-std/src/Test.sol";
-import {console} from "../lib/forge-std/src/Script.sol";
-
-import {DeployAll} from "../scripts/DeployAll.s.sol";
-
-import {Registry} from "../contracts/registry/Registry.sol";
-import {Instance} from "../contracts/instance/Instance.sol";
-import {TestProduct} from "./mock/TestProduct.sol";
-import {TestPool} from "./mock/TestPool.sol";
-
+import {TestGifBase} from "./TestGifBase.sol";
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
 
-contract TestApplicationCreate is Test {
-
-    Registry registry;
-    Instance instance;
-    TestProduct product;
-    TestPool pool;
-
-    address instanceOwner = makeAddr("instanceOwner");
-    address productOwner = makeAddr("productOwner");
-    address poolOwner = makeAddr("poolOwner");
-    address customer = makeAddr("customer");
+contract TestApplicationCreate is TestGifBase {
 
     uint256 sumInsuredAmount = 1000*10**6;
     uint256 premiumAmount = 110*10**6;
     uint256 lifetime =365*24*3600;
 
-    function setUp() external {
-        DeployAll deployer = new DeployAll();
-        (
-            registry, 
-            instance, 
-            product,
-            pool
-        ) = deployer.run(
-            instanceOwner,
-            productOwner,
-            poolOwner);
-    }
-
 
     function testApplicationCreateSimple() public {
 
+        vm.prank(customer);
         uint256 policyNftId = product.applyForPolicy(
             sumInsuredAmount, 
             premiumAmount, 
             lifetime);
 
-        assertEq(policyNftId, 4, "policy id not 4");
+        assertNftId(policyNftId, 53133705, "policy id not 53133705");
+        assertEq(registry.getOwner(policyNftId), customer, "customer not policy owner");
         assertEq(instance.getBundleNftForPolicy(policyNftId), 0, "bundle id not 0");
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
@@ -71,6 +41,7 @@ contract TestApplicationCreate is Test {
 
     function testApplicationCreateAndUnderwrite() public {
 
+        vm.prank(customer);
         uint256 policyNftId = product.applyForPolicy(
             sumInsuredAmount, 
             premiumAmount, 
@@ -89,9 +60,8 @@ contract TestApplicationCreate is Test {
         assertEq(info.closedAt, 0, "wrong closed at");
 
         IPool.PoolInfo memory poolInfoAfter = instance.getPoolInfo(pool.getNftId());
-        assertEq(poolInfoAfter.nftId, 2, "wrong pool id");
+        assertNftId(poolInfoAfter.nftId, 33133705, "pool id not 33133705");
         assertEq(poolInfoBefore.lockedCapital, 0, "capital locked not 0");
         assertEq(poolInfoAfter.lockedCapital, sumInsuredAmount, "capital locked not sum insured");
-
     }
 }

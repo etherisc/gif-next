@@ -4,24 +4,22 @@ pragma solidity 0.8.20;
 import "../lib/forge-std/src/Test.sol";
 import {console} from "../lib/forge-std/src/Script.sol";
 
-import {DeployRegistry} from "../scripts/DeployRegistry.s.sol";
 import {DeployInstance} from "../scripts/DeployInstance.s.sol";
 
+import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 
 contract TestInstanceEmpty is Test {
 
-    Registry registry;
+    IRegistry registry;
     Instance instance;
     address instanceOwner = makeAddr("instanceOwner");
     
     function setUp() external {
-        DeployRegistry dr = new DeployRegistry();
-        registry = dr.run();
-
         DeployInstance di = new DeployInstance();
-        instance = di.run(registry, instanceOwner);
+        instance = di.run(instanceOwner);
+        registry = IRegistry(instance.getRegistry());
     }
 
     function testRegistryCount() public {
@@ -30,12 +28,20 @@ contract TestInstanceEmpty is Test {
 
     function testRegistryNftId() public {
         uint256 nftId = registry.getNftId(address(instance));
-        assertEq(nftId, 1, "getNftId not 1");
+        assertNftId(nftId, 23133705, "instance getNftId not 23133705");
         assertEq(nftId, instance.getNftId(), "registry and instance nft id differ");
     }
 
     function testInstanceOwner() public {
         uint256 instanceId = registry.getNftId(address(instance));
         assertEq(registry.getOwner(instanceId), instanceOwner, "unexpected instance owner");
+    }
+
+    function assertNftId(uint256 actualNftId, uint256 expectedNftId, string memory message) public {
+        if(block.chainid == 31337) {
+            assertEq(actualNftId, expectedNftId, message);
+        } else {
+            console.log("chain not anvil, skipping assertNftId");
+        }
     }
 }

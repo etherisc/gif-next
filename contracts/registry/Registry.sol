@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IChainNft} from "./IChainNft.sol";
 import {IRegistry, IRegistryLinked, IRegisterable} from "./IRegistry.sol";
 
 contract RegistryLinked is IRegistryLinked {
@@ -10,11 +11,6 @@ contract RegistryLinked is IRegistryLinked {
     constructor(address registry) {
         _registry = IRegistry(registry);
     }
-
-    // function setRegistry(address registry) public override {
-    //     require(address(_registry) == address(0), "ERROR:RGL-001:REGISTRY_ALREADY_SET");
-    //     _registry = IRegistry(registry);
-    // }
 
     function getRegistry() external view override returns(IRegistry registry) {
         return _registry;
@@ -62,24 +58,19 @@ abstract contract Registerable is
 
 }
 
-    // struct RegistryInfo {
-    //     bytes32 id;
-    //     uint256 objectType;
-    //     address objectAddress;
-    //     address initialOwner;
-    // }
-
 contract Registry is IRegistry {
+
+    string public constant EMPTY_URI = "";
 
     mapping(uint256 id => RegistryInfo info) private _info;
     mapping(uint256 id => address owner) private _owner;
     mapping(address object => uint256 id) private _idByAddress;
-    uint256 [] private _ids;
-    uint256 private _idNext;
 
+    IChainNft private _chainNft;
 
-    constructor() {
-        _idNext = 0;
+    function initialize(address chainNft) external {
+        require(address(_chainNft) == address(0), "ERROR:REG-001:ALREADY_INITIALIZED");
+        _chainNft = IChainNft(chainNft);
     }
 
     function TOKEN() public pure override returns(uint256) { return 30; }
@@ -104,7 +95,9 @@ contract Registry is IRegistry {
             // policy -> product, bundle -> pool, product -> instance, pool -> instance
         }
 
-        nftId = _mint(registerable.getInitialOwner());
+        nftId = _chainNft.mint(
+            registerable.getInitialOwner(), 
+            EMPTY_URI);
     
         RegistryInfo memory info = RegistryInfo(
             nftId,
@@ -136,7 +129,9 @@ contract Registry is IRegistry {
             objectType == POLICY() || objectType == BUNDLE(),
             "ERROR:REG-005:TYPE_INVALID");
 
-        nftId = _mint(initialOwner);
+        nftId = _chainNft.mint(
+            initialOwner,
+            EMPTY_URI);
 
         RegistryInfo memory info = RegistryInfo(
             nftId,
@@ -152,16 +147,8 @@ contract Registry is IRegistry {
     }
 
 
-    function transfer(uint256 id, address newOwner) external {
-        require(msg.sender == _owner[id], "ERROR:REG-010:NOT_OWNER");
-        _owner[id] = newOwner;
-
-        // TODO logging
-    }
-
-
-    function getObjectCount() external view returns(uint256) {
-        return _ids.length;
+    function getObjectCount() external view override returns(uint256) {
+        return _chainNft.totalSupply();
     }
 
 
@@ -175,23 +162,15 @@ contract Registry is IRegistry {
     }
 
 
-    function getInfo(uint256 id) external view override returns(RegistryInfo memory info) {
-        return _info[id];
+    function getInfo(uint256 nftId) external view override returns(RegistryInfo memory info) {
+        return _info[nftId];
     }
 
-    function getOwner(uint256 id) external view override returns(address) {
-        return _owner[id];
+    function getOwner(uint256 nftId) external view override returns(address) {
+        return _chainNft.ownerOf(nftId);
     }
 
-
-    function _mint(address initialOwner)
-        internal
-        returns(uint256 id)
-    {
-        _idNext++;
-
-        id = _idNext;
-        _owner[id] = initialOwner;
-        _ids.push(id);
+    function getNftAddress() external view override returns(address nft) {
+        return address(_chainNft);
     }
 }

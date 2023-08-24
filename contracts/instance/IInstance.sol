@@ -12,9 +12,9 @@ import {IPoolModule} from "./pool/IPoolModule.sol";
 interface IInstance is
     IRegisterable,
     IAccessModule,
-    IComponentModule,
-    IProductModule,
     IPolicyModule,
-    IPoolModule
+    IPoolModule,
+    IComponentModule,
+    IProductModule
 { }
 

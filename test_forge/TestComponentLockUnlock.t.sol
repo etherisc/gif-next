@@ -1,43 +1,16 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import "../lib/forge-std/src/Test.sol";
-import {console} from "../lib/forge-std/src/Script.sol";
 
-import {DeployAll} from "../scripts/DeployAll.s.sol";
-
-import {Registry} from "../contracts/registry/Registry.sol";
-import {Instance} from "../contracts/instance/Instance.sol";
+import {TestGifBase} from "./TestGifBase.sol";
 import {IComponent, IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
-import {TestProduct} from "./mock/TestProduct.sol";
-import {TestPool} from "./mock/TestPool.sol";
 
-contract TestComponentLockUnlock is Test {
-
-    Registry registry;
-    Instance instance;
-    TestProduct product;
-    TestPool pool;
-
-    address instanceOwner = makeAddr("instanceOwner");
-    address productOwner = makeAddr("productOwner");
-    address poolOwner = makeAddr("poolOwner");
-    address outsider = makeAddr("outsider");
+contract TestComponentLockUnlock is TestGifBase {
     
     IComponentOwnerService componentOwnerService;
 
-    function setUp() external {
-        DeployAll deployer = new DeployAll();
-        (
-            registry, 
-            instance, 
-            product,
-            pool
-        ) = deployer.run(
-            instanceOwner,
-            productOwner,
-            poolOwner);
-
+    function setUp() public override {
+        super.setUp();
         componentOwnerService = instance.getComponentOwnerService();
     }
 
