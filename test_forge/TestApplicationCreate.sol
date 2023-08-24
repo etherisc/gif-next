@@ -12,6 +12,7 @@ import {TestProduct} from "./mock/TestProduct.sol";
 import {TestPool} from "./mock/TestPool.sol";
 
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
+import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
 // import {IProductService} from "../contracts/instance/product/IProductService.sol";
 
 contract TestApplicationCreate is Test {
@@ -79,6 +80,8 @@ contract TestApplicationCreate is Test {
             premiumAmount, 
             lifetime);
 
+        IPool.PoolInfo memory poolInfoBefore = instance.getPoolInfo(pool.getNftId());
+
         product.underwrite(policyNftId);
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
@@ -88,5 +91,11 @@ contract TestApplicationCreate is Test {
         assertEq(info.activatedAt, block.timestamp, "wrong activated at");
         assertEq(info.expiredAt, block.timestamp + info.lifetime, "wrong expired at");
         assertEq(info.closedAt, 0, "wrong closed at");
+
+        IPool.PoolInfo memory poolInfoAfter = instance.getPoolInfo(pool.getNftId());
+        assertEq(poolInfoAfter.nftId, 2, "wrong pool id");
+        assertEq(poolInfoBefore.lockedCapital, 0, "capital locked not 0");
+        assertEq(poolInfoAfter.lockedCapital, sumInsuredAmount, "capital locked not sum insured");
+
     }
 }
