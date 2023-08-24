@@ -4,11 +4,11 @@
   "description": "This is the repository for the next version of the Generic Insurance Framework (GIF) smart contracts. ",
   "main": "index.js",
   "scripts": {
-    "build": "hardhat compile",
-    "test": "hardhat test",
-    "ptest": "hardhat test --parallel",
-    "test-with-gas": "REPORT_GAS=true hardhat test",
-    "coverage": "hardhat coverage"
+    "build": "hh compile",
+    "test": "hh test",
+    "ptest": "hh test --parallel",
+    "test-with-gas": "REPORT_GAS=true hh test",
+    "coverage": "hh coverage"
   },
   "repository": {
     "type": "git",
