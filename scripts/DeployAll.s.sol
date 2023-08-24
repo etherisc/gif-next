@@ -63,7 +63,7 @@ contract DeployAll is Script {
             address(registry));
 
         instance = new Instance(
-            address(registry), 
+            address(registry),
             address(componentOwnerService),
             address(productService));
 

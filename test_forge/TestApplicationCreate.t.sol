@@ -13,7 +13,6 @@ import {TestPool} from "./mock/TestPool.sol";
 
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
-// import {IProductService} from "../contracts/instance/product/IProductService.sol";
 
 contract TestApplicationCreate is Test {
 
@@ -21,8 +20,6 @@ contract TestApplicationCreate is Test {
     Instance instance;
     TestProduct product;
     TestPool pool;
-
-    // IProductService productService;
 
     address instanceOwner = makeAddr("instanceOwner");
     address productOwner = makeAddr("productOwner");
@@ -44,8 +41,6 @@ contract TestApplicationCreate is Test {
             instanceOwner,
             productOwner,
             poolOwner);
-
-        // productService = instance.getProductService();
     }
 
 
@@ -72,6 +67,7 @@ contract TestApplicationCreate is Test {
         assertEq(info.expiredAt, 0, "wrong expired at");
         assertEq(info.closedAt, 0, "wrong closed at");
     }
+
 
     function testApplicationCreateAndUnderwrite() public {
 
