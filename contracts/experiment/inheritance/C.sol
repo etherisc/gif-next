@@ -15,7 +15,7 @@ abstract contract C is ISharedA, IC {
 
     // access own state
     function getC() external view override returns(uint256) { return _x; }
-    function setC(uint256 newA) external override { _x = newA; }
+    function setC(uint256 newC) external override { _x = newC; }
 
     // access state from parent contract A
     function getAfromC() external view override returns(uint256) { return this.getA(); }
