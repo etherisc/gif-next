@@ -8,6 +8,7 @@ import {IAccessModule, AccessModule} from "./access/Access.sol";
 import {ComponentModule} from "./component/ComponentModule.sol";
 import {ProductModule} from "./product/ProductService.sol";
 import {PolicyModule} from "./policy/PolicyModule.sol";
+import {PoolModule} from "./pool/PoolModule.sol";
 
 import {IInstance} from "./IInstance.sol";
 
@@ -16,6 +17,7 @@ contract Instance is
     AccessModule,
     ComponentModule, 
     PolicyModule, 
+    PoolModule,
     ProductModule, 
     IInstance
 {
@@ -30,6 +32,7 @@ contract Instance is
         ComponentModule(componentOwnerService)
         PolicyModule(productService)
         ProductModule(productService)
+        PoolModule(productService)
     { }
 
     // from registerable

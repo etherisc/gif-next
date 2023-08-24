@@ -41,7 +41,7 @@ contract TestComponentInfo is Test {
         console.log("product (nftId, state)");
         console.log(info.nftId, uint(info.state));
 
-        assertEq(info.nftId, 2, "product id not 2");
+        assertEq(info.nftId, 3, "product id not 3");
         assertEq(uint256(info.state), uint256(IComponent.CState.Active), "component state not active");
     }
 
@@ -50,7 +50,7 @@ contract TestComponentInfo is Test {
         console.log("pool (nftId, state)");
         console.log(info.nftId, uint(info.state));
 
-        assertEq(info.nftId, 3, "pool id not 3");
+        assertEq(info.nftId, 2, "pool id not 2");
         assertEq(uint256(info.state), uint256(IComponent.CState.Active), "component state not active");
     }
 }

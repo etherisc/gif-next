@@ -19,7 +19,8 @@ abstract contract PolicyModule is
 
     IProductService private _productService;
 
-    modifier onlyProductService() {
+    // TODO find a better place to avoid dupliation
+    modifier onlyProductService2() {
         require(address(_productService) == msg.sender, "ERROR:POL-001:NOT_PRODUCT_SERVICE");
         _;
     }
@@ -39,7 +40,7 @@ abstract contract PolicyModule is
     )
         external
         override
-        onlyProductService
+        onlyProductService2
         returns(uint256 nftId)
     {
         // TODO add parameter validation
@@ -74,7 +75,7 @@ abstract contract PolicyModule is
     function activate(uint256 nftId)
         external
         override
-        onlyProductService
+        onlyProductService2
     {
         PolicyInfo storage info = _policyInfo[nftId];
         info.activatedAt = block.timestamp;

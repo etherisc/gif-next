@@ -6,19 +6,6 @@ import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry
 import {IInstance} from "../IInstance.sol";
 
 
-interface IProduct {
-
-    struct PoolInfo {
-        uint256 nftId;
-        address wallet;
-        address token;
-        uint256 capital;
-        uint256 lockedCapital;
-    }
-
-}
-
-
 // TODO or name this IProtectionService to have Product be something more generic (loan, savings account, ...)
 interface IProductService is
     IRegistryLinked
@@ -52,8 +39,7 @@ interface IProductService is
 
 interface IProductModule is
     IOwnable,
-    IRegistryLinked,
-    IProduct
+    IRegistryLinked
 {
     function getProductService() external view returns(IProductService);
 }

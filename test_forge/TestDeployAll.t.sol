@@ -63,7 +63,7 @@ contract TestDeployAll is Test {
 
     function testDeployAllProductNftId() public {
         uint256 nftId = registry.getNftId(address(product));
-        assertEq(nftId, 2, "getNftId not 2");
+        assertEq(nftId, 3, "product getNftId not 3");
         assertEq(nftId, product.getNftId(), "registry and product nft id differ");
     }
 
@@ -74,7 +74,7 @@ contract TestDeployAll is Test {
 
     function testDeployAllPoolNftId() public {
         uint256 nftId = registry.getNftId(address(pool));
-        assertEq(nftId, 3, "getNftId not 3");
+        assertEq(nftId, 2, "pool getNftId not 2");
         assertEq(nftId, pool.getNftId(), "registry and pool nft id differ");
     }
 }

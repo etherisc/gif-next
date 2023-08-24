@@ -8,14 +8,13 @@ import {IInstance} from "../IInstance.sol";
 
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
-import {IPoolCreateInfo} from "../pool/IPoolModule.sol";
+import {IPoolModule} from "../pool/IPoolModule.sol";
 
 
 abstract contract ComponentModule is 
     IRegistryLinked,
     IAccessComponentTypeRoles,
     IAccessCheckRole,
-    IPoolCreateInfo,
     IComponentModule
 {
 
@@ -66,7 +65,8 @@ abstract contract ComponentModule is
             // add creation of productInfo
         }
         else if(component.getType() == this.getRegistry().POOL()) {
-            this.createPoolInfo(
+            IPoolModule poolModule = IPoolModule(address(this));
+            poolModule.createPoolInfo(
                 nftId,
                 address(component), // set pool as its wallet
                 address(0) // don't deal with token yet

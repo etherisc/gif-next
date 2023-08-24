@@ -6,6 +6,7 @@ import {IAccessModule} from "./access/IAccess.sol";
 import {IComponentModule} from "./component/IComponent.sol";
 import {IProductModule} from "./product/IProductService.sol";
 import {IPolicyModule} from "./policy/IPolicy.sol";
+import {IPoolModule} from "./pool/IPoolModule.sol";
 
 
 interface IInstance is
@@ -13,6 +14,7 @@ interface IInstance is
     IAccessModule,
     IComponentModule,
     IProductModule,
-    IPolicyModule
+    IPolicyModule,
+    IPoolModule
 { }
 

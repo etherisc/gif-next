@@ -14,27 +14,22 @@ interface IPool {
     }
 }
 
-interface IPoolCreateInfo is {
-
-    function createPoolInfo(
-        uint256 nftId,
-        address wallet,
-        address token
-    )
-        external;
-
-}
-
 interface IPoolModule is
     IOwnable,
     IRegistryLinked,
-    IPoolCreateInfo,
     IPool
 {
     
     function underwrite(
         uint256 poolNftId,
         uint256 policyNftId
+    )
+        external;
+
+    function createPoolInfo(
+        uint256 nftId,
+        address wallet,
+        address token
     )
         external;
 
