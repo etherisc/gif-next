@@ -50,6 +50,9 @@ interface IPolicyModule is
         external
         returns(uint256 nftId);
 
+    function activate(uint256 nftId)
+        external;
+
     function getBundleNftForPolicy(uint256 nftId)
         external
         view

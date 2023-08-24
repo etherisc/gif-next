@@ -27,5 +27,7 @@ contract TestProduct is Product {
         );
     }
 
-
+    function underwrite(uint256 nftId) external {
+        _underwrite(nftId);
+    }
 }

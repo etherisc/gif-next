@@ -5,8 +5,24 @@ pragma solidity ^0.8.19;
 import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
 
+
+interface IProduct {
+
+    struct PoolInfo {
+        uint256 nftId;
+        address wallet;
+        address token;
+        uint256 capital;
+        uint256 lockedCapital;
+    }
+
+}
+
+
 // TODO or name this IProtectionService to have Product be something more generic (loan, savings account, ...)
-interface IProductService is IRegistryLinked {
+interface IProductService is
+    IRegistryLinked
+{
 
     function createApplication(
         address applicationOwner,
@@ -34,6 +50,10 @@ interface IProductService is IRegistryLinked {
 }
 
 
-interface IProductModule {
+interface IProductModule is
+    IOwnable,
+    IRegistryLinked,
+    IProduct
+{
     function getProductService() external view returns(IProductService);
 }

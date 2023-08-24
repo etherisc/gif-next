@@ -91,20 +91,24 @@ contract DeployAll is Script {
     )
         internal
     {
-        bytes32 productOwnerRole = instance.getRoleForName("ProductOwner");
-        instance.grantRole(productOwnerRole, address(tx.origin));
-        instance.grantRole(productOwnerRole, productOwner);
+        uint256 instanceNftId = instance.register();
+        IComponentOwnerService componentOwnerService = instance.getComponentOwnerService();
 
+        // register pool
         bytes32 poolOwnerRole = instance.getRoleForName("PoolOwner");
         instance.grantRole(poolOwnerRole, address(tx.origin));
         instance.grantRole(poolOwnerRole, poolOwner);
 
-        uint256 instanceNftId = instance.register();
-
-        IComponentOwnerService componentOwnerService = instance.getComponentOwnerService();
-        uint256 productNftId = componentOwnerService.register(product);
         uint256 poolNftId = componentOwnerService.register(pool);
 
+        // register product
+        bytes32 productOwnerRole = instance.getRoleForName("ProductOwner");
+        instance.grantRole(productOwnerRole, address(tx.origin));
+        instance.grantRole(productOwnerRole, productOwner);
+
+        uint256 productNftId = componentOwnerService.register(product);
+
+        // transfer ownerships
         registry.transfer(instanceNftId, instanceOwner);
         registry.transfer(productNftId, productOwner);
         registry.transfer(poolNftId, poolOwner);

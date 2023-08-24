@@ -71,6 +71,21 @@ abstract contract PolicyModule is
     }
 
 
+    function activate(uint256 nftId)
+        external
+        override
+        onlyProductService
+    {
+        PolicyInfo storage info = _policyInfo[nftId];
+        info.activatedAt = block.timestamp;
+        info.expiredAt = block.timestamp + info.lifetime;
+        info.state = PolicyState.Active;
+
+        // add logging
+    }
+
+
+
     function getBundleNftForPolicy(uint256 nftId)
         external
         view

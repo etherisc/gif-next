@@ -7,16 +7,20 @@ import {IAccessComponentTypeRoles, IAccessCheckRole} from "../access/IAccess.sol
 import {IInstance} from "../IInstance.sol";
 
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
+import {IProductComponent} from "../../components/IProduct.sol";
+import {IPoolCreateInfo} from "../pool/IPoolModule.sol";
 
 
 abstract contract ComponentModule is 
     IRegistryLinked,
     IAccessComponentTypeRoles,
     IAccessCheckRole,
+    IPoolCreateInfo,
     IComponentModule
 {
 
-    mapping(uint256 id => ComponentInfo info) private _info;
+    mapping(uint256 nftId => ComponentInfo info) private _componentInfo;
+    mapping(uint256 nftId => uint256 poolNftId) private _poolNftIdForProduct;
     mapping(address cAddress => uint256 id) private _idByAddress;
     uint256 [] private _ids;
 
@@ -46,14 +50,42 @@ abstract contract ComponentModule is
         
         nftId = this.getRegistry().register(address(component));
 
-        _info[nftId] = ComponentInfo(
+        _componentInfo[nftId] = ComponentInfo(
             nftId,
             CState.Active);
+
+        // special case product -> persist product - pool assignment
+        if(component.getType() == this.getRegistry().PRODUCT()) {
+            IProductComponent product = IProductComponent(address(component));
+            uint256 poolNftId = product.getPoolNftId();
+            require(poolNftId > 0, "ERROR:CMP-005:POOL_UNKNOWN");
+            // add more validation (type, token, ...)
+
+            _poolNftIdForProduct[nftId] = poolNftId;
+
+            // add creation of productInfo
+        }
+        else if(component.getType() == this.getRegistry().POOL()) {
+            this.createPoolInfo(
+                nftId,
+                address(component), // set pool as its wallet
+                address(0) // don't deal with token yet
+            );
+        }
 
         _idByAddress[address(component)] = nftId;
         _ids.push(nftId);
 
         // add logging
+    }
+
+    function getPoolNftId(uint256 productNftId)
+        external
+        view
+        override
+        returns(uint256 poolNftId)
+    {
+        poolNftId = _poolNftIdForProduct[productNftId];
     }
 
 
@@ -73,10 +105,10 @@ abstract contract ComponentModule is
     {
         uint256 id = info.nftId;
         require(
-            id > 0 && _info[id].nftId == id,
+            id > 0 && _componentInfo[id].nftId == id,
             "ERROR:CMP-005:COMPONENT_UNKNOWN");
 
-        _info[id] = info;
+        _componentInfo[id] = info;
 
         // add logging
     }
@@ -87,7 +119,7 @@ abstract contract ComponentModule is
         view
         returns(ComponentInfo memory)
     {
-        return _info[id];
+        return _componentInfo[id];
     }
 
     function getComponentOwner(uint256 id)

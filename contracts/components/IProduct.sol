@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IComponentContract} from "../instance/component/IComponent.sol";
 
-interface IProduct is
+interface IProductComponent is
     IComponentContract
 {
 

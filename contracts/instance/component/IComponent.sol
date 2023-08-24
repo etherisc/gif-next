@@ -77,6 +77,11 @@ interface IComponentModule is
         view
         returns(uint256 id);
 
+    function getPoolNftId(uint256 productNftId)
+        external
+        view
+        returns(uint256 poolNftId);
+
     function components()
         external
         view

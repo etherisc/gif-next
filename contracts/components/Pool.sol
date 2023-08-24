@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IPool} from "./IPool.sol";
+import {IPoolComponent} from "./IPool.sol";
 import {Component} from "./Component.sol";
 
 
 contract Pool is
     Component,
-    IPool
+    IPoolComponent
 {
 
     constructor(

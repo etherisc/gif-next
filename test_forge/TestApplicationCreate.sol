@@ -12,7 +12,7 @@ import {TestProduct} from "./mock/TestProduct.sol";
 import {TestPool} from "./mock/TestPool.sol";
 
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
-import {IProductService} from "../contracts/instance/product/IProductService.sol";
+// import {IProductService} from "../contracts/instance/product/IProductService.sol";
 
 contract TestApplicationCreate is Test {
 
@@ -21,13 +21,17 @@ contract TestApplicationCreate is Test {
     TestProduct product;
     TestPool pool;
 
-    IProductService productService;
+    // IProductService productService;
 
     address instanceOwner = makeAddr("instanceOwner");
     address productOwner = makeAddr("productOwner");
     address poolOwner = makeAddr("poolOwner");
     address customer = makeAddr("customer");
-    
+
+    uint256 sumInsuredAmount = 1000*10**6;
+    uint256 premiumAmount = 110*10**6;
+    uint256 lifetime =365*24*3600;
+
     function setUp() external {
         DeployAll deployer = new DeployAll();
         (
@@ -40,14 +44,11 @@ contract TestApplicationCreate is Test {
             productOwner,
             poolOwner);
 
-        productService = instance.getProductService();
+        // productService = instance.getProductService();
     }
 
 
     function testApplicationCreateSimple() public {
-        uint256 sumInsuredAmount = 1000*10**6;
-        uint256 premiumAmount = 110*10**6;
-        uint256 lifetime =365*24*3600;
 
         uint256 policyNftId = product.applyForPolicy(
             sumInsuredAmount, 
@@ -69,6 +70,23 @@ contract TestApplicationCreate is Test {
         assertEq(info.activatedAt, 0, "wrong activated at");
         assertEq(info.expiredAt, 0, "wrong expired at");
         assertEq(info.closedAt, 0, "wrong closed at");
+    }
 
+    function testApplicationCreateAndUnderwrite() public {
+
+        uint256 policyNftId = product.applyForPolicy(
+            sumInsuredAmount, 
+            premiumAmount, 
+            lifetime);
+
+        product.underwrite(policyNftId);
+
+        IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
+        assertEq(info.nftId, policyNftId, "policy id differs");
+        assertEq(uint(info.state), uint(IPolicy.PolicyState.Active), "policy state not active/underwritten");
+
+        assertEq(info.activatedAt, block.timestamp, "wrong activated at");
+        assertEq(info.expiredAt, block.timestamp + info.lifetime, "wrong expired at");
+        assertEq(info.closedAt, 0, "wrong closed at");
     }
 }

@@ -3,12 +3,12 @@ pragma solidity ^0.8.19;
 
 import {IProductService} from "../instance/product/IProductService.sol";
 import {Component} from "./Component.sol";
-import {IProduct} from "./IProduct.sol";
+import {IProductComponent} from "./IProduct.sol";
 
 
 contract Product is
     Component,
-    IProduct
+    IProductComponent
 {
     IProductService private _productService;
     address private _pool;
@@ -41,6 +41,12 @@ contract Product is
             lifetime,
             bundleNftId
         );
+    }
+
+    function _underwrite(uint256 nftId)
+        internal
+    {
+        _productService.underwrite(nftId);
     }
 
     function getPoolNftId() external view override returns(uint256 poolNftId) {
