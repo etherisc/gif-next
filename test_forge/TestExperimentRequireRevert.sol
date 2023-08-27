@@ -58,7 +58,10 @@ contract TestExperimentRequireRevert is Test {
     }
 
     function testExperiment_RR_RevertNOK_M() public {
-        vm.expectRevert(Revert.AsmallerThanB_M.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Revert.AsmallerThanB_M.selector,
+                10));
         rv.isAlargerThanBRevert_M(10);
     }
 
@@ -67,7 +70,11 @@ contract TestExperimentRequireRevert is Test {
     }
 
     function testExperiment_RR_RevertNOK_L() public {
-        vm.expectRevert(Revert.AsmallerThanB_L.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Revert.AsmallerThanB_L.selector,
+                10, 
+                42));
         rv.isAlargerThanBRevert_L(10);
     }
 }
