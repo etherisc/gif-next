@@ -14,6 +14,7 @@ using {
 // general pure free functions
 function toNftId(uint256 id) pure returns(NftId) { return NftId.wrap(uint96(id)); }
 function gtz(NftId a) pure returns(bool) { return NftId.unwrap(a) > 0; }
+function eqz(NftId a) pure returns(bool) { return NftId.unwrap(a) == 0; }
 
 // pure free functions for operators
 function eqNftId(NftId a, NftId b) pure returns(bool isSame) { return NftId.unwrap(a) == NftId.unwrap(b); }

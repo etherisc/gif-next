@@ -7,15 +7,15 @@ import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
 
 import {IProductService} from "../product/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
-
+import {NftId, gtz} from "../../types/NftId.sol";
 
 abstract contract PolicyModule is
     IRegistryLinked,
     IPolicyModule
 {
 
-    mapping(uint256 nftId => PolicyInfo info) private _policyInfo;
-    mapping(uint256 nftId => uint256 bundleNftId) private _bundleForPolicy;
+    mapping(NftId nftId => PolicyInfo info) private _policyInfo;
+    mapping(NftId nftId => NftId bundleNftId) private _bundleForPolicy;
 
     IProductService private _productService;
 
@@ -36,15 +36,15 @@ abstract contract PolicyModule is
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
-        uint256 bundleNftId
+        NftId bundleNftId
     )
         external
         override
         onlyProductService2
-        returns(uint256 nftId)
+        returns(NftId nftId)
     {
         // TODO add parameter validation
-        if(bundleNftId > 0) {
+        if(gtz(bundleNftId)) {
             IRegistry.RegistryInfo memory bundleInfo = this.getRegistry().getInfo(bundleNftId);
             IRegistry.RegistryInfo memory poolInfo = this.getRegistry().getInfo(bundleInfo.parentNftId);
         }
@@ -72,7 +72,7 @@ abstract contract PolicyModule is
     }
 
 
-    function activate(uint256 nftId)
+    function activate(NftId nftId)
         external
         override
         onlyProductService2
@@ -87,16 +87,16 @@ abstract contract PolicyModule is
 
 
 
-    function getBundleNftForPolicy(uint256 nftId)
+    function getBundleNftForPolicy(NftId nftId)
         external
         view
-        returns(uint256 bundleNft)
+        returns(NftId bundleNft)
     {
         return _bundleForPolicy[nftId];
     }
 
 
-    function getPolicyInfo(uint256 nftId)
+    function getPolicyInfo(NftId nftId)
         external
         view
         returns(PolicyInfo memory info)

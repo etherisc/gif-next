@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 
 import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
-
 import {IProductService} from "../product/IProductService.sol";
+import {NftId} from "../../types/NftId.sol";
 
 // TODO check if there is value to introuce IContract and let IPolicy derive from IContract
 interface IPolicy {
@@ -19,7 +19,7 @@ interface IPolicy {
     }
 
     struct PolicyInfo {
-        uint256 nftId;
+        NftId nftId;
         PolicyState state; // applied, withdrawn, rejected, active, closed
 
         uint256 sumInsuredAmount;
@@ -45,20 +45,20 @@ interface IPolicyModule is
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
-        uint256 bundleNftId
+        NftId bundleNftId
     )
         external
-        returns(uint256 nftId);
+        returns(NftId nftId);
 
-    function activate(uint256 nftId)
+    function activate(NftId nftId)
         external;
 
-    function getBundleNftForPolicy(uint256 nftId)
+    function getBundleNftForPolicy(NftId nftId)
         external
         view
-        returns(uint256 bundleNft);
+        returns(NftId bundleNft);
 
-    function getPolicyInfo(uint256 nftId)
+    function getPolicyInfo(NftId nftId)
         external
         view
         returns(PolicyInfo memory info);

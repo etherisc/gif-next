@@ -5,13 +5,14 @@ import {IOwnable, IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol
 import {IProductService} from "../product/IProductService.sol";
 import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 import {IPoolModule} from "./IPoolModule.sol";
+import {NftId, eqz} from "../../types/NftId.sol";
 
 abstract contract PoolModule is
     IPoolModule
 {
     uint256 public constant INITIAL_CAPITAL = 10000*10**6;
 
-    mapping(uint256 nftId => PoolInfo info) private _poolInfo;
+    mapping(NftId nftId => PoolInfo info) private _poolInfo;
 
     IProductService private _productService;
 
@@ -25,7 +26,7 @@ abstract contract PoolModule is
     }
 
     function createPoolInfo(
-        uint256 nftId,
+        NftId nftId,
         address wallet,
         address token
     )
@@ -33,7 +34,7 @@ abstract contract PoolModule is
         override
     {
         require(
-            _poolInfo[nftId].nftId == 0,
+            eqz(_poolInfo[nftId].nftId),
             "ERROR:PL-001:ALREADY_CREATED");
 
         _poolInfo[nftId] = PoolInfo(
@@ -48,8 +49,8 @@ abstract contract PoolModule is
 
 
     function underwrite(
-        uint256 poolNftId,
-        uint256 policyNftId
+        NftId poolNftId,
+        NftId policyNftId
     )
         external
         override
@@ -71,7 +72,7 @@ abstract contract PoolModule is
     }
 
 
-    function getPoolInfo(uint256 nftId)
+    function getPoolInfo(NftId nftId)
         external
         view
         override

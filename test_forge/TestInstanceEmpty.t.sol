@@ -10,6 +10,8 @@ import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 
+import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
+
 contract TestInstanceEmpty is Test {
 
     IRegistry registry;
@@ -27,19 +29,19 @@ contract TestInstanceEmpty is Test {
     }
 
     function testRegistryNftId() public {
-        uint256 nftId = registry.getNftId(address(instance));
-        assertNftId(nftId, 23133705, "instance getNftId not 23133705");
-        assertEq(nftId, instance.getNftId(), "registry and instance nft id differ");
+        NftId nftId = registry.getNftId(address(instance));
+        assertNftId(nftId, toNftId(23133705), "instance getNftId not 23133705");
+        assertNftId(nftId, instance.getNftId(), "registry and instance nft id differ");
     }
 
     function testInstanceOwner() public {
-        uint256 instanceId = registry.getNftId(address(instance));
+        NftId instanceId = registry.getNftId(address(instance));
         assertEq(registry.getOwner(instanceId), instanceOwner, "unexpected instance owner");
     }
 
-    function assertNftId(uint256 actualNftId, uint256 expectedNftId, string memory message) public {
+    function assertNftId(NftId actualNftId, NftId expectedNftId, string memory message) public {
         if(block.chainid == 31337) {
-            assertEq(actualNftId, expectedNftId, message);
+            assertEq(NftIdLib.toInt(actualNftId), NftIdLib.toInt(expectedNftId), message);
         } else {
             console.log("chain not anvil, skipping assertNftId");
         }

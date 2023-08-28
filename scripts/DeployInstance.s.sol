@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Script, console} from "forge-std/Script.sol";
+import {Script, console} from "../lib/forge-std/src/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
@@ -10,6 +10,7 @@ import {Instance} from "../contracts/instance/Instance.sol";
 import {IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
 import {ComponentOwnerService} from "../contracts/instance/component/ComponentModule.sol";
 import {ProductService} from "../contracts/instance/product/ProductService.sol";
+import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 
 contract DeployInstance is Script {
 
@@ -67,10 +68,10 @@ contract DeployInstance is Script {
     )
         internal
     {
-        uint256 instanceNftId = instance.register();
+        NftId instanceNftId = instance.register();
 
         // transfer ownerships
-        nft.safeTransferFrom(tx.origin, instanceOwner, instanceNftId);
+        nft.safeTransferFrom(tx.origin, instanceOwner, NftIdLib.toInt(instanceNftId));
     }
 
 }

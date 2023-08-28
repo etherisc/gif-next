@@ -11,6 +11,7 @@ import {RegistryLinked} from "../../registry/Registry.sol";
 import {IProductService, IProductModule} from "./IProductService.sol";
 import {IComponentModule} from "../../instance/component/IComponent.sol";
 import {IPoolModule} from "../../instance/pool/IPoolModule.sol";
+import {NftId, gtz} from "../../types/NftId.sol";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
 contract ProductService is
@@ -27,20 +28,20 @@ contract ProductService is
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
-        uint256 bundleNftId
+        NftId bundleNftId
     )
         external 
         override
-        returns(uint256 nftId)
+        returns(NftId nftId)
     {
         // same as only registered product
-        uint256 productNftId = _registry.getNftId(msg.sender);
-        require(productNftId > 0, "ERROR_PRODUCT_UNKNOWN");
+        NftId productNftId = _registry.getNftId(msg.sender);
+        require(gtz(productNftId), "ERROR_PRODUCT_UNKNOWN");
         IRegistry.RegistryInfo memory productInfo = _registry.getInfo(productNftId);
         require(productInfo.objectType == _registry.PRODUCT(), "ERROR_NOT_PRODUCT");
 
         IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
-        require(instanceInfo.nftId > 0, "ERROR_INSTANCE_UNKNOWN");
+        require(gtz(instanceInfo.nftId), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == _registry.INSTANCE(), "ERROR_NOT_INSTANCE");
 
         IPolicyModule policyModule = IPolicyModule(instanceInfo.objectAddress);
@@ -55,23 +56,23 @@ contract ProductService is
         // add logging
     }
 
-    function underwrite(uint256 nftId)
+    function underwrite(NftId nftId)
         external
         override
     {
         // same as only registered product
-        uint256 productNftId = _registry.getNftId(msg.sender);
-        require(productNftId > 0, "ERROR_PRODUCT_UNKNOWN");
+        NftId productNftId = _registry.getNftId(msg.sender);
+        require(gtz(productNftId), "ERROR_PRODUCT_UNKNOWN");
         IRegistry.RegistryInfo memory productInfo = _registry.getInfo(productNftId);
         require(productInfo.objectType == _registry.PRODUCT(), "ERROR_NOT_PRODUCT");
 
         IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
-        require(instanceInfo.nftId > 0, "ERROR_INSTANCE_UNKNOWN");
+        require(gtz(instanceInfo.nftId), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == _registry.INSTANCE(), "ERROR_NOT_INSTANCE");
 
         // get responsible pool
         IComponentModule componentModule = IComponentModule(instanceInfo.objectAddress);
-        uint256 poolNftId = componentModule.getPoolNftId(productNftId);
+        NftId poolNftId = componentModule.getPoolNftId(productNftId);
 
         // lock capital (and update pool accounting)
         IPoolModule poolModule = IPoolModule(instanceInfo.objectAddress);
@@ -86,7 +87,7 @@ contract ProductService is
         // add logging
     }
 
-    function close(uint256 nftId) external override {}
+    function close(NftId nftId) external override {}
 }
 
 abstract contract ProductModule is

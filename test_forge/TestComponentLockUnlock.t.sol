@@ -27,7 +27,7 @@ contract TestComponentLockUnlock is TestGifBase {
         componentOwnerService.lock(product);
 
         IComponent.ComponentInfo memory info_after = instance.getComponentInfo(product.getNftId());
-        assertEq(info_before.nftId, info_after.nftId, "product id not same");
+        assertNftId(info_before.nftId, info_after.nftId, "product id not same");
         assertEq(uint256(uint256(info_after.state)), uint256(IComponent.CState.Locked), "component state not locked");
     }
 
@@ -47,7 +47,7 @@ contract TestComponentLockUnlock is TestGifBase {
         IComponent.ComponentInfo memory info_after = instance.getComponentInfo(product.getNftId());
         vm.stopPrank();
 
-        assertEq(info_before.nftId, info_after.nftId, "product id not same");
+        assertNftId(info_before.nftId, info_after.nftId, "product id not same");
         assertEq(uint256(uint256(info_before.state)), uint256(IComponent.CState.Locked), "component state not locked");
         assertEq(uint256(uint256(info_after.state)), uint256(IComponent.CState.Active), "component state not active");
     }

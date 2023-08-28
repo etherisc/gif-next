@@ -6,7 +6,7 @@ import {Registerable} from "../registry/Registry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
 import {IInstanceLinked, IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "../instance/component/IComponent.sol";
-
+import {NftId} from "../types/NftId.sol";
 
 contract InstanceLinked is 
     IInstanceLinked
@@ -45,7 +45,7 @@ abstract contract Component is
     function register()
         public
         override
-        returns(uint256 componentId)
+        returns(NftId componentId)
     {
         require(msg.sender == getInitialOwner(), "");
         require(address(_registry) != address(0), "ERROR:PRD-001:REGISTRY_ZERO");
@@ -56,7 +56,7 @@ abstract contract Component is
     }
 
     // from registerable
-    function getParentNftId() public view override returns(uint256) {
+    function getParentNftId() public view override returns(NftId) {
         return getInstance().getNftId();
     }
 }

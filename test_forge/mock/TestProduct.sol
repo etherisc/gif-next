@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Product} from "../../contracts/components/Product.sol";
-
+import {NftId, toNftId} from "../../contracts/types/NftId.sol";
 
 contract TestProduct is Product {
 
@@ -16,18 +16,18 @@ contract TestProduct is Product {
         uint256 lifetime
     )
         external
-        returns(uint256 nftId)
+        returns(NftId nftId)
     {
         nftId = _createApplication(
             msg.sender, // policy holder
             sumInsuredAmount,
             premiumAmount,
             lifetime,
-            0 // requested bundle nft id
+            toNftId(0) // requested bundle nft id
         );
     }
 
-    function underwrite(uint256 nftId) external {
+    function underwrite(NftId nftId) external {
         _underwrite(nftId);
     }
 }

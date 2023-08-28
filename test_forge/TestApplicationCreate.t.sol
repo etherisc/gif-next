@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import {TestGifBase} from "./TestGifBase.sol";
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
+import {NftId, toNftId} from "../contracts/types/NftId.sol";
 
 contract TestApplicationCreate is TestGifBase {
 
@@ -15,17 +16,17 @@ contract TestApplicationCreate is TestGifBase {
     function testApplicationCreateSimple() public {
 
         vm.prank(customer);
-        uint256 policyNftId = product.applyForPolicy(
+        NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount, 
             premiumAmount, 
             lifetime);
 
-        assertNftId(policyNftId, 53133705, "policy id not 53133705");
+        assertNftId(policyNftId, toNftId(53133705), "policy id not 53133705");
         assertEq(registry.getOwner(policyNftId), customer, "customer not policy owner");
-        assertEq(instance.getBundleNftForPolicy(policyNftId), 0, "bundle id not 0");
+        assertNftIdZero(instance.getBundleNftForPolicy(policyNftId), "bundle id not 0");
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
-        assertEq(info.nftId, policyNftId, "policy id differs");
+        assertNftId(info.nftId, policyNftId, "policy id differs");
         assertEq(uint(info.state), uint(IPolicy.PolicyState.Applied), "policy state not applied");
 
         assertEq(info.sumInsuredAmount, sumInsuredAmount, "wrong sum insured amount");
@@ -42,7 +43,7 @@ contract TestApplicationCreate is TestGifBase {
     function testApplicationCreateAndUnderwrite() public {
 
         vm.prank(customer);
-        uint256 policyNftId = product.applyForPolicy(
+        NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount, 
             premiumAmount, 
             lifetime);
@@ -52,7 +53,7 @@ contract TestApplicationCreate is TestGifBase {
         product.underwrite(policyNftId);
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
-        assertEq(info.nftId, policyNftId, "policy id differs");
+        assertNftId(info.nftId, policyNftId, "policy id differs");
         assertEq(uint(info.state), uint(IPolicy.PolicyState.Active), "policy state not active/underwritten");
 
         assertEq(info.activatedAt, block.timestamp, "wrong activated at");
@@ -60,7 +61,7 @@ contract TestApplicationCreate is TestGifBase {
         assertEq(info.closedAt, 0, "wrong closed at");
 
         IPool.PoolInfo memory poolInfoAfter = instance.getPoolInfo(pool.getNftId());
-        assertNftId(poolInfoAfter.nftId, 33133705, "pool id not 33133705");
+        assertNftId(poolInfoAfter.nftId, toNftId(33133705), "pool id not 33133705");
         assertEq(poolInfoBefore.lockedCapital, 0, "capital locked not 0");
         assertEq(poolInfoAfter.lockedCapital, sumInsuredAmount, "capital locked not sum insured");
     }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 
 import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
+import {NftId} from "../../types/NftId.sol";
 
 interface IComponent {
 
@@ -16,7 +17,7 @@ interface IComponent {
 
     // component dynamic info (static info kept in registry)
     struct ComponentInfo {
-        uint256 nftId;
+        NftId nftId;
         CState state;
     }
 }
@@ -37,7 +38,7 @@ interface IComponentContract is
 
 interface IComponentOwnerService is IRegistryLinked{
 
-    function register(IComponentContract component) external returns(uint256 id);
+    function register(IComponentContract component) external returns(NftId nftId);
     function lock(IComponentContract component) external;
     function unlock(IComponentContract component) external;
 }
@@ -51,18 +52,18 @@ interface IComponentModule is
 
     function registerComponent(IComponentContract component)
         external
-        returns(uint256 nftInfo);
+        returns(NftId nftId);
 
     function setComponentInfo(ComponentInfo memory info)
         external
-        returns(uint256 componentId);
+        returns(NftId componentNftId);
 
-    function getComponentInfo(uint256 id)
+    function getComponentInfo(NftId nftId)
         external
         view
         returns(ComponentInfo memory info);
 
-    function getComponentOwner(uint256 id)
+    function getComponentOwner(NftId nftId)
         external
         view
         returns(address owner);
@@ -70,17 +71,17 @@ interface IComponentModule is
     function getComponentId(address componentAddress)
         external
         view
-        returns(uint256 id);
+        returns(NftId nftId);
 
     function getComponentId(uint256 idx)
         external
         view
-        returns(uint256 id);
+        returns(NftId nftId);
 
-    function getPoolNftId(uint256 productNftId)
+    function getPoolNftId(NftId productNftId)
         external
         view
-        returns(uint256 poolNftId);
+        returns(NftId poolNftId);
 
     function components()
         external

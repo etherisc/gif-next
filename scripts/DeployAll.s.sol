@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Script, console} from "forge-std/Script.sol";
+import {Script, console} from "../lib/forge-std/src/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
@@ -12,6 +12,8 @@ import {ComponentOwnerService} from "../contracts/instance/component/ComponentMo
 import {ProductService} from "../contracts/instance/product/ProductService.sol";
 import {TestProduct} from "../test_forge/mock/TestProduct.sol";
 import {TestPool} from "../test_forge/mock/TestPool.sol";
+
+import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 
 contract DeployAll is Script {
 
@@ -101,7 +103,7 @@ contract DeployAll is Script {
     )
         internal
     {
-        uint256 instanceNftId = instance.register();
+        NftId instanceNftId = instance.register();
         IComponentOwnerService componentOwnerService = instance.getComponentOwnerService();
 
         // register pool
@@ -109,20 +111,20 @@ contract DeployAll is Script {
         instance.grantRole(poolOwnerRole, address(tx.origin));
         instance.grantRole(poolOwnerRole, poolOwner);
 
-        uint256 poolNftId = componentOwnerService.register(pool);
+        NftId poolNftId = componentOwnerService.register(pool);
 
         // register product
         bytes32 productOwnerRole = instance.getRoleForName("ProductOwner");
         instance.grantRole(productOwnerRole, address(tx.origin));
         instance.grantRole(productOwnerRole, productOwner);
 
-        uint256 productNftId = componentOwnerService.register(product);
+        NftId productNftId = componentOwnerService.register(product);
 
         // transfer ownerships
         ChainNft nft = ChainNft(registry.getNftAddress());
-        nft.safeTransferFrom(tx.origin, instanceOwner, instanceNftId);
-        nft.safeTransferFrom(tx.origin, productOwner, productNftId);
-        nft.safeTransferFrom(tx.origin, poolOwner, poolNftId);
+        nft.safeTransferFrom(tx.origin, instanceOwner, NftIdLib.toInt(instanceNftId));
+        nft.safeTransferFrom(tx.origin, productOwner, NftIdLib.toInt(productNftId));
+        nft.safeTransferFrom(tx.origin, poolOwner, NftIdLib.toInt(poolNftId));
     }
 
 }
