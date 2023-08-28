@@ -106,7 +106,7 @@ abstract contract ComponentModule is
         uint256 id = info.nftId;
         require(
             id > 0 && _componentInfo[id].nftId == id,
-            "ERROR:CMP-005:COMPONENT_UNKNOWN");
+            "ERROR:CMP-006:COMPONENT_UNKNOWN");
 
         _componentInfo[id] = info;
 
@@ -199,19 +199,6 @@ contract ComponentOwnerService is
     constructor(address registry)
         RegistryLinked(registry)
     { }
-
-
-    // modifier onlyComponentOwnerRole(IComponentContract component) {
-    //     IInstance instance = component.getInstance();
-    //     // TODO add set/getComponentOwnerRole to IComonentModule
-    //     bytes32 typeRole = instance.getComponentTypeRole(component.getType());
-    //     require(
-    //         instance.hasRole(typeRole, msg.sender),
-    //         "ERROR:COS-003:COMPONENT_ROLE_MISSING"
-    //     );
-    //     _;
-    // }
-
 
     function register(IComponentContract component)
         external

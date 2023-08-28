@@ -31,7 +31,7 @@ contract TestExperimentRequireRevert is Test {
     }
 
     function testExperiment_RR_RequireNOK_M() public {
-        vm.expectRevert("ERROR:ABC-001:A_IS_SMALLER");
+        vm.expectRevert("ERROR:ABC-002:A_IS_SMALLER");
         rq.isAlargerThanBRequire_M(10);
     }
 
@@ -40,7 +40,7 @@ contract TestExperimentRequireRevert is Test {
     }
 
     function testExperiment_RR_RequireNOK_L() public {
-        vm.expectRevert("ERROR:ABC-001:A_IS_SMALLER_THAN_B");
+        vm.expectRevert("ERROR:ABC-003:A_IS_SMALLER_THAN_B");
         rq.isAlargerThanBRequire_L(10);
     }
 

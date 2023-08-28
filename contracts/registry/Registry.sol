@@ -82,15 +82,15 @@ contract Registry is IRegistry {
     function BUNDLE() public pure override returns(uint256) { return 90; }
 
     function register(address objectAddress) external override returns(uint256 nftId) {
-        require(_idByAddress[objectAddress] == 0, "ERROR:REG-001:ALREADY_REGISTERED");
+        require(_idByAddress[objectAddress] == 0, "ERROR:REG-002:ALREADY_REGISTERED");
 
         IRegisterable registerable = IRegisterable(objectAddress);
-        require(registerable.isRegisterable(), "ERROR:REG-002:NOT_REGISTERABLE");
+        require(registerable.isRegisterable(), "ERROR:REG-003:NOT_REGISTERABLE");
 
         // check parent exists (for objects not instances)
         if(registerable.getType() != INSTANCE()) {
             RegistryInfo memory parentInfo = _info[registerable.getParentNftId()];
-            require(parentInfo.nftId > 0, "ERROR:REG-003:PARENT_NOT_FOUND");
+            require(parentInfo.nftId > 0, "ERROR:REG-004:PARENT_NOT_FOUND");
             // check validity of parent relation, valid relations are
             // policy -> product, bundle -> pool, product -> instance, pool -> instance
         }

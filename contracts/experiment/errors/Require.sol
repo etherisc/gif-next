@@ -20,13 +20,13 @@ contract Require {
     }
 
     function isAlargerThanBRequire_M(uint a) external view returns(bool isLarger) {
-        require(a > _b, "ERROR:ABC-001:A_IS_SMALLER");
+        require(a > _b, "ERROR:ABC-002:A_IS_SMALLER");
 
         return true;
     }
 
     function isAlargerThanBRequire_L(uint a) external view returns(bool isLarger) {
-        require(a > _b, "ERROR:ABC-001:A_IS_SMALLER_THAN_B");
+        require(a > _b, "ERROR:ABC-003:A_IS_SMALLER_THAN_B");
 
         return true;
     }
