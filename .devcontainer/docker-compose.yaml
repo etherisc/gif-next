@@ -16,7 +16,7 @@ services:
       context: ..
       dockerfile: .devcontainer/Dockerfile
       args:
-        VARIANT: 18-bookworm
+        VARIANT: 18-bullseye
     volumes:
       - ..:/workspaces/gif-next:cached
       - gif-next-node_modules:/workspaces/gif-next/node_modules
