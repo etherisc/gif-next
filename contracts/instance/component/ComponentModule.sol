@@ -9,7 +9,7 @@ import {IInstance} from "../IInstance.sol";
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
 import {IPoolModule} from "../pool/IPoolModule.sol";
-import {NftId, NftIdLib, eqNftId} from "../../types/NftId.sol";
+import {NftId, NftIdLib} from "../../types/NftId.sol";
 
 abstract contract ComponentModule is 
     IRegistryLinked,
@@ -106,7 +106,7 @@ abstract contract ComponentModule is
     {
         nftId = info.nftId;
         require(
-            nftId.gtz() && eqNftId(_componentInfo[nftId].nftId, nftId),
+            nftId.gtz() && _componentInfo[nftId].nftId.eq(nftId),
             "ERROR:CMP-006:COMPONENT_UNKNOWN");
 
         _componentInfo[nftId] = info;

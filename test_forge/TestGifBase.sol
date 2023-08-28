@@ -45,6 +45,7 @@ contract TestGifBase is Test {
         chainNft = ChainNft(registry.getNftAddress());
     }
 
+    /// @dev Helper function to assert that a given NftId is equal to the expected NftId.
     function assertNftId(NftId actualNftId, NftId expectedNftId, string memory message) public {
         if(block.chainid == 31337) {
             assertEq(actualNftId.toInt(), expectedNftId.toInt(), message);
@@ -53,6 +54,7 @@ contract TestGifBase is Test {
         }
     }
 
+    /// @dev Helper function to assert that a given NftId is equal to zero.
     function assertNftIdZero(NftId nftId, string memory message) public {
         if(block.chainid == 31337) {
             assertTrue(nftId.eqz(), message);
