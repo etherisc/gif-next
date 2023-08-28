@@ -25,7 +25,8 @@
 				"vikas.code-navigation",
 				"github.vscode-github-actions",
 				"vscode-icons-team.vscode-icons",
-				"NomicFoundation.hardhat-solidity",
+				//"NomicFoundation.hardhat-solidity", - currently got issues with foundry remappings
+				"JuanBlanco.solidity",
 				]
 		}
 	},
