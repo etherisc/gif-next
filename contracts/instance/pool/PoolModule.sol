@@ -5,11 +5,13 @@ import {IOwnable, IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol
 import {IProductService} from "../product/IProductService.sol";
 import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 import {IPoolModule} from "./IPoolModule.sol";
-import {NftId, eqz} from "../../types/NftId.sol";
+import {NftId, NftIdLib} from "../../types/NftId.sol";
 
 abstract contract PoolModule is
     IPoolModule
 {
+    using NftIdLib for NftId;
+    
     uint256 public constant INITIAL_CAPITAL = 10000*10**6;
 
     mapping(NftId nftId => PoolInfo info) private _poolInfo;
@@ -34,7 +36,7 @@ abstract contract PoolModule is
         override
     {
         require(
-            eqz(_poolInfo[nftId].nftId),
+            _poolInfo[nftId].nftId.eqz(),
             "ERROR:PL-001:ALREADY_CREATED");
 
         _poolInfo[nftId] = PoolInfo(

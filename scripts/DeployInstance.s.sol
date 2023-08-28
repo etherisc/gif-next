@@ -13,6 +13,7 @@ import {ProductService} from "../contracts/instance/product/ProductService.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 
 contract DeployInstance is Script {
+    using NftIdLib for NftId;
 
     function run(address instanceOwner) external returns (Instance instance) {
 
@@ -71,7 +72,7 @@ contract DeployInstance is Script {
         NftId instanceNftId = instance.register();
 
         // transfer ownerships
-        nft.safeTransferFrom(tx.origin, instanceOwner, NftIdLib.toInt(instanceNftId));
+        nft.safeTransferFrom(tx.origin, instanceOwner, instanceNftId.toInt());
     }
 
 }

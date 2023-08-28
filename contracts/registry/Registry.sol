@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IChainNft} from "./IChainNft.sol";
 import {IRegistry, IRegistryLinked, IRegisterable} from "./IRegistry.sol";
-import {NftId, gtz, eqz, toNftId} from "../types/NftId.sol";
+import {NftId, toNftId} from "../types/NftId.sol";
 import {NftIdLib} from "../types/NftId.sol";
 
 contract RegistryLinked is IRegistryLinked {
@@ -25,6 +25,7 @@ abstract contract Registerable is
     RegistryLinked,
     IRegisterable
 {
+    using NftIdLib for NftId;
 
     address private _initialOwner;
     
@@ -46,7 +47,7 @@ abstract contract Registerable is
 
     function isRegistered() public view override returns(bool) {
         NftId nftId = _registry.getNftId(address(this));
-        return gtz(nftId);
+        return nftId.gtz();
     }
 
     function getNftId() public view override returns(NftId nftId) {
@@ -62,7 +63,7 @@ abstract contract Registerable is
 }
 
 contract Registry is IRegistry {
-
+    using NftIdLib for NftId;
     string public constant EMPTY_URI = "";
 
     mapping(NftId nftId => RegistryInfo info) private _info;
@@ -85,7 +86,7 @@ contract Registry is IRegistry {
     function BUNDLE() public pure override returns(uint256) { return 90; }
 
     function register(address objectAddress) external override returns(NftId nftId) {
-        require(eqz(_nftIdByAddress[objectAddress]), "ERROR:REG-002:ALREADY_REGISTERED");
+        require(_nftIdByAddress[objectAddress].eqz(), "ERROR:REG-002:ALREADY_REGISTERED");
 
         IRegisterable registerable = IRegisterable(objectAddress);
         require(registerable.isRegisterable(), "ERROR:REG-003:NOT_REGISTERABLE");
@@ -93,7 +94,7 @@ contract Registry is IRegistry {
         // check parent exists (for objects not instances)
         if(registerable.getType() != INSTANCE()) {
             RegistryInfo memory parentInfo = _info[registerable.getParentNftId()];
-            require(gtz(parentInfo.nftId), "ERROR:REG-004:PARENT_NOT_FOUND");
+            require(parentInfo.nftId.gtz(), "ERROR:REG-004:PARENT_NOT_FOUND");
             // check validity of parent relation, valid relations are
             // policy -> product, bundle -> pool, product -> instance, pool -> instance
         }
@@ -163,7 +164,7 @@ contract Registry is IRegistry {
 
 
     function isRegistered(address object) external view override returns(bool) {
-        return gtz(_nftIdByAddress[object]);
+        return _nftIdByAddress[object].gtz();
     }
 
 
@@ -172,7 +173,7 @@ contract Registry is IRegistry {
     }
 
     function getOwner(NftId nftId) external view override returns(address) {
-        return _chainNft.ownerOf(NftIdLib.toInt(nftId));
+        return _chainNft.ownerOf(nftId.toInt());
     }
 
     function getNftAddress() external view override returns(address nft) {

@@ -11,13 +11,15 @@ import {RegistryLinked} from "../../registry/Registry.sol";
 import {IProductService, IProductModule} from "./IProductService.sol";
 import {IComponentModule} from "../../instance/component/IComponent.sol";
 import {IPoolModule} from "../../instance/pool/IPoolModule.sol";
-import {NftId, gtz} from "../../types/NftId.sol";
+import {NftId, NftIdLib} from "../../types/NftId.sol";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
 contract ProductService is
     RegistryLinked,
     IProductService
 {
+    using NftIdLib for NftId;
+    
     constructor(address registry) 
         RegistryLinked(registry)
     { }
@@ -36,12 +38,12 @@ contract ProductService is
     {
         // same as only registered product
         NftId productNftId = _registry.getNftId(msg.sender);
-        require(gtz(productNftId), "ERROR_PRODUCT_UNKNOWN");
+        require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
         IRegistry.RegistryInfo memory productInfo = _registry.getInfo(productNftId);
         require(productInfo.objectType == _registry.PRODUCT(), "ERROR_NOT_PRODUCT");
 
         IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
-        require(gtz(instanceInfo.nftId), "ERROR_INSTANCE_UNKNOWN");
+        require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == _registry.INSTANCE(), "ERROR_NOT_INSTANCE");
 
         IPolicyModule policyModule = IPolicyModule(instanceInfo.objectAddress);
@@ -62,12 +64,12 @@ contract ProductService is
     {
         // same as only registered product
         NftId productNftId = _registry.getNftId(msg.sender);
-        require(gtz(productNftId), "ERROR_PRODUCT_UNKNOWN");
+        require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
         IRegistry.RegistryInfo memory productInfo = _registry.getInfo(productNftId);
         require(productInfo.objectType == _registry.PRODUCT(), "ERROR_NOT_PRODUCT");
 
         IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
-        require(gtz(instanceInfo.nftId), "ERROR_INSTANCE_UNKNOWN");
+        require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == _registry.INSTANCE(), "ERROR_NOT_INSTANCE");
 
         // get responsible pool

@@ -13,9 +13,10 @@ import {TestPool} from "./mock/TestPool.sol";
 
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
-import {NftId, NftIdLib, eqz} from "../contracts/types/NftId.sol";
+import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 
 contract TestGifBase is Test {
+    using NftIdLib for NftId;
 
     ChainNft chainNft;
     Registry registry;
@@ -46,7 +47,7 @@ contract TestGifBase is Test {
 
     function assertNftId(NftId actualNftId, NftId expectedNftId, string memory message) public {
         if(block.chainid == 31337) {
-            assertEq(NftIdLib.toInt(actualNftId), NftIdLib.toInt(expectedNftId), message);
+            assertEq(actualNftId.toInt(), expectedNftId.toInt(), message);
         } else {
             console.log("chain not anvil, skipping assertNftId");
         }
@@ -54,7 +55,7 @@ contract TestGifBase is Test {
 
     function assertNftIdZero(NftId nftId, string memory message) public {
         if(block.chainid == 31337) {
-            assertTrue(eqz(nftId), message);
+            assertTrue(nftId.eqz(), message);
         } else {
             console.log("chain not anvil, skipping assertNftId");
         }

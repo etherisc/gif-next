@@ -12,7 +12,7 @@ contract TestComponentInfo is TestGifBase {
     function testProductInfo() public {
         IComponent.ComponentInfo memory info = instance.getComponentInfo(product.getNftId());
         console.log("product (nftId, state)");
-        console.log(NftIdLib.toInt(info.nftId), uint(info.state));
+        console.log(info.nftId.toInt(), uint(info.state));
 
         assertNftId(info.nftId, product.getNftId(), "product nft mismatch");
         assertEq(uint256(info.state), uint256(IComponent.CState.Active), "component state not active");
@@ -21,7 +21,7 @@ contract TestComponentInfo is TestGifBase {
     function testPoolInfo() public {
         IComponent.ComponentInfo memory info = instance.getComponentInfo(pool.getNftId());
         console.log("pool (nftId, state)");
-        console.log(NftIdLib.toInt(info.nftId), uint(info.state));
+        console.log(info.nftId.toInt(), uint(info.state));
 
         assertNftId(info.nftId, pool.getNftId(), "pool nft mismatch");
         assertEq(uint256(info.state), uint256(IComponent.CState.Active), "component state not active");

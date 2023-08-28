@@ -7,12 +7,13 @@ import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
 
 import {IProductService} from "../product/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
-import {NftId, gtz} from "../../types/NftId.sol";
+import {NftId, NftIdLib} from "../../types/NftId.sol";
 
 abstract contract PolicyModule is
     IRegistryLinked,
     IPolicyModule
 {
+    using NftIdLib for NftId;
 
     mapping(NftId nftId => PolicyInfo info) private _policyInfo;
     mapping(NftId nftId => NftId bundleNftId) private _bundleForPolicy;
@@ -44,9 +45,9 @@ abstract contract PolicyModule is
         returns(NftId nftId)
     {
         // TODO add parameter validation
-        if(gtz(bundleNftId)) {
+        if(bundleNftId.gtz()) {
             IRegistry.RegistryInfo memory bundleInfo = this.getRegistry().getInfo(bundleNftId);
-            IRegistry.RegistryInfo memory poolInfo = this.getRegistry().getInfo(bundleInfo.parentNftId);
+            // IRegistry.RegistryInfo memory poolInfo = this.getRegistry().getInfo(bundleInfo.parentNftId);
         }
 
         nftId = this.getRegistry().registerObjectForInstance(

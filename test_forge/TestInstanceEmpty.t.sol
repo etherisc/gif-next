@@ -13,7 +13,8 @@ import {Instance} from "../contracts/instance/Instance.sol";
 import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
 
 contract TestInstanceEmpty is Test {
-
+    using NftIdLib for NftId;
+    
     IRegistry registry;
     Instance instance;
     address instanceOwner = makeAddr("instanceOwner");
@@ -41,7 +42,7 @@ contract TestInstanceEmpty is Test {
 
     function assertNftId(NftId actualNftId, NftId expectedNftId, string memory message) public {
         if(block.chainid == 31337) {
-            assertEq(NftIdLib.toInt(actualNftId), NftIdLib.toInt(expectedNftId), message);
+            assertEq(actualNftId.toInt(), expectedNftId.toInt(), message);
         } else {
             console.log("chain not anvil, skipping assertNftId");
         }

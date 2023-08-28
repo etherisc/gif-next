@@ -9,7 +9,7 @@ import {IInstance} from "../IInstance.sol";
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
 import {IPoolModule} from "../pool/IPoolModule.sol";
-import {NftId, gtz, eqNftId} from "../../types/NftId.sol";
+import {NftId, NftIdLib, eqNftId} from "../../types/NftId.sol";
 
 abstract contract ComponentModule is 
     IRegistryLinked,
@@ -17,6 +17,7 @@ abstract contract ComponentModule is
     IAccessCheckRole,
     IComponentModule
 {
+    using NftIdLib for NftId;
 
     mapping(NftId nftId => ComponentInfo info) private _componentInfo;
     mapping(NftId nftId => NftId poolNftId) private _poolNftIdForProduct;
@@ -57,7 +58,7 @@ abstract contract ComponentModule is
         if(component.getType() == this.getRegistry().PRODUCT()) {
             IProductComponent product = IProductComponent(address(component));
             NftId poolNftId = product.getPoolNftId();
-            require(gtz(poolNftId), "ERROR:CMP-005:POOL_UNKNOWN");
+            require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
             // add more validation (type, token, ...)
 
             _poolNftIdForProduct[nftId] = poolNftId;
@@ -105,7 +106,7 @@ abstract contract ComponentModule is
     {
         nftId = info.nftId;
         require(
-            gtz(nftId) && eqNftId(_componentInfo[nftId].nftId, nftId),
+            nftId.gtz() && eqNftId(_componentInfo[nftId].nftId, nftId),
             "ERROR:CMP-006:COMPONENT_UNKNOWN");
 
         _componentInfo[nftId] = info;
@@ -183,11 +184,12 @@ contract ComponentOwnerService is
     IComponent,
     IComponentOwnerService
 {
+    using NftIdLib for NftId;
 
     modifier onlyComponentOwner(IComponentContract component) {
         NftId nftId = _registry.getNftId(address(component));
         require(
-            gtz(nftId), 
+            nftId.gtz(), 
             "ERROR:COS-001:COMPONENT_UNKNOWN");
         require(
             msg.sender == _registry.getOwner(nftId),
@@ -221,7 +223,7 @@ contract ComponentOwnerService is
     {
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(component.getNftId());
-        require(gtz(info.nftId), "ERROR_COMPONENT_UNKNOWN");
+        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
         // TODO add state change validation
 
         info.state = CState.Locked;
@@ -236,7 +238,7 @@ contract ComponentOwnerService is
     {
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(component.getNftId());
-        require(gtz(info.nftId), "ERROR_COMPONENT_UNKNOWN");
+        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
         // TODO state change validation
 
         info.state = CState.Active;
