@@ -3,6 +3,8 @@ pragma solidity ^0.8.19;
 
 import {IChainNft} from "./IChainNft.sol";
 import {IRegistry, IRegistryLinked, IRegisterable} from "./IRegistry.sol";
+import {NftId, toNftId} from "../types/NftId.sol";
+import {NftIdLib} from "../types/NftId.sol";
 
 contract RegistryLinked is IRegistryLinked {
 
@@ -23,6 +25,7 @@ abstract contract Registerable is
     RegistryLinked,
     IRegisterable
 {
+    using NftIdLib for NftId;
 
     address private _initialOwner;
     
@@ -43,15 +46,16 @@ abstract contract Registerable is
     }
 
     function isRegistered() public view override returns(bool) {
-        return _registry.getNftId(address(this)) > 0;
+        NftId nftId = _registry.getNftId(address(this));
+        return nftId.gtz();
     }
 
-    function getNftId() public view override returns(uint256 id) {
+    function getNftId() public view override returns(NftId nftId) {
         return _registry.getNftId(address(this));
     }
 
     function getOwner() public view override returns(address owner) {
-        uint256 id = _registry.getNftId(address(this));
+        NftId id = _registry.getNftId(address(this));
         owner = _registry.getOwner(id);
         return owner != address(0) ? owner : _initialOwner;
     }
@@ -59,12 +63,12 @@ abstract contract Registerable is
 }
 
 contract Registry is IRegistry {
-
+    using NftIdLib for NftId;
     string public constant EMPTY_URI = "";
 
-    mapping(uint256 id => RegistryInfo info) private _info;
-    mapping(uint256 id => address owner) private _owner;
-    mapping(address object => uint256 id) private _idByAddress;
+    mapping(NftId nftId => RegistryInfo info) private _info;
+    mapping(NftId nftId => address owner) private _owner;
+    mapping(address object => NftId nftId) private _nftIdByAddress;
 
     IChainNft private _chainNft;
 
@@ -81,8 +85,8 @@ contract Registry is IRegistry {
     function POLICY() public pure override returns(uint256) { return 80; }
     function BUNDLE() public pure override returns(uint256) { return 90; }
 
-    function register(address objectAddress) external override returns(uint256 nftId) {
-        require(_idByAddress[objectAddress] == 0, "ERROR:REG-002:ALREADY_REGISTERED");
+    function register(address objectAddress) external override returns(NftId nftId) {
+        require(_nftIdByAddress[objectAddress].eqz(), "ERROR:REG-002:ALREADY_REGISTERED");
 
         IRegisterable registerable = IRegisterable(objectAddress);
         require(registerable.isRegisterable(), "ERROR:REG-003:NOT_REGISTERABLE");
@@ -90,14 +94,15 @@ contract Registry is IRegistry {
         // check parent exists (for objects not instances)
         if(registerable.getType() != INSTANCE()) {
             RegistryInfo memory parentInfo = _info[registerable.getParentNftId()];
-            require(parentInfo.nftId > 0, "ERROR:REG-004:PARENT_NOT_FOUND");
+            require(parentInfo.nftId.gtz(), "ERROR:REG-004:PARENT_NOT_FOUND");
             // check validity of parent relation, valid relations are
             // policy -> product, bundle -> pool, product -> instance, pool -> instance
         }
 
-        nftId = _chainNft.mint(
+        uint256 mintedTokenId = _chainNft.mint(
             registerable.getInitialOwner(), 
             EMPTY_URI);
+        nftId = toNftId(mintedTokenId);
     
         RegistryInfo memory info = RegistryInfo(
             nftId,
@@ -108,30 +113,31 @@ contract Registry is IRegistry {
         );
 
         _info[nftId] = info;
-        _idByAddress[objectAddress] = nftId;
+        _nftIdByAddress[objectAddress] = nftId;
 
         // add logging
     }
 
 
     function registerObjectForInstance(
-        uint256 parentNftId,
+        NftId parentNftId,
         uint256 objectType,
         address initialOwner
     )
         external 
         override
         // TODO add onlyRegisteredInstance
-        returns(uint256 nftId)
+        returns(NftId nftId)
     {
         // TODO add more validation
         require(
             objectType == POLICY() || objectType == BUNDLE(),
             "ERROR:REG-005:TYPE_INVALID");
 
-        nftId = _chainNft.mint(
+        uint256 mintedTokenId = _chainNft.mint(
             initialOwner,
             EMPTY_URI);
+        nftId = toNftId(mintedTokenId);
 
         RegistryInfo memory info = RegistryInfo(
             nftId,
@@ -152,22 +158,22 @@ contract Registry is IRegistry {
     }
 
 
-    function getNftId(address object) external view override returns(uint256 id) {
-        return _idByAddress[object];
+    function getNftId(address object) external view override returns(NftId id) {
+        return _nftIdByAddress[object];
     }
 
 
     function isRegistered(address object) external view override returns(bool) {
-        return _idByAddress[object] > 0;
+        return _nftIdByAddress[object].gtz();
     }
 
 
-    function getInfo(uint256 nftId) external view override returns(RegistryInfo memory info) {
+    function getInfo(NftId nftId) external view override returns(RegistryInfo memory info) {
         return _info[nftId];
     }
 
-    function getOwner(uint256 nftId) external view override returns(address) {
-        return _chainNft.ownerOf(nftId);
+    function getOwner(NftId nftId) external view override returns(address) {
+        return _chainNft.ownerOf(nftId.toInt());
     }
 
     function getNftAddress() external view override returns(address nft) {

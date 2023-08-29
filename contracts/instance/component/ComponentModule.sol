@@ -9,7 +9,7 @@ import {IInstance} from "../IInstance.sol";
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
 import {IPoolModule} from "../pool/IPoolModule.sol";
-
+import {NftId, NftIdLib} from "../../types/NftId.sol";
 
 abstract contract ComponentModule is 
     IRegistryLinked,
@@ -17,11 +17,12 @@ abstract contract ComponentModule is
     IAccessCheckRole,
     IComponentModule
 {
+    using NftIdLib for NftId;
 
-    mapping(uint256 nftId => ComponentInfo info) private _componentInfo;
-    mapping(uint256 nftId => uint256 poolNftId) private _poolNftIdForProduct;
-    mapping(address cAddress => uint256 id) private _idByAddress;
-    uint256 [] private _ids;
+    mapping(NftId nftId => ComponentInfo info) private _componentInfo;
+    mapping(NftId nftId => NftId poolNftId) private _poolNftIdForProduct;
+    mapping(address cAddress => NftId nftId) private _nftIdByAddress;
+    NftId[] private _nftIds;
 
     mapping(uint256 cType => bytes32 role) private _componentOwnerRole;
 
@@ -40,7 +41,7 @@ abstract contract ComponentModule is
         external
         override
         onlyComponentOwnerService
-        returns(uint256 nftId)
+        returns(NftId nftId)
     {
         bytes32 typeRole = getRoleForType(component.getType());
         require(
@@ -56,8 +57,8 @@ abstract contract ComponentModule is
         // special case product -> persist product - pool assignment
         if(component.getType() == this.getRegistry().PRODUCT()) {
             IProductComponent product = IProductComponent(address(component));
-            uint256 poolNftId = product.getPoolNftId();
-            require(poolNftId > 0, "ERROR:CMP-005:POOL_UNKNOWN");
+            NftId poolNftId = product.getPoolNftId();
+            require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
             // add more validation (type, token, ...)
 
             _poolNftIdForProduct[nftId] = poolNftId;
@@ -73,17 +74,17 @@ abstract contract ComponentModule is
             );
         }
 
-        _idByAddress[address(component)] = nftId;
-        _ids.push(nftId);
+        _nftIdByAddress[address(component)] = nftId;
+        _nftIds.push(nftId);
 
         // add logging
     }
 
-    function getPoolNftId(uint256 productNftId)
+    function getPoolNftId(NftId productNftId)
         external
         view
         override
-        returns(uint256 poolNftId)
+        returns(NftId poolNftId)
     {
         poolNftId = _poolNftIdForProduct[productNftId];
     }
@@ -101,28 +102,28 @@ abstract contract ComponentModule is
     function setComponentInfo(ComponentInfo memory info)
         external
         onlyComponentOwnerService
-        returns(uint256 nftId)
+        returns(NftId nftId)
     {
-        uint256 id = info.nftId;
+        nftId = info.nftId;
         require(
-            id > 0 && _componentInfo[id].nftId == id,
+            nftId.gtz() && _componentInfo[nftId].nftId.eq(nftId),
             "ERROR:CMP-006:COMPONENT_UNKNOWN");
 
-        _componentInfo[id] = info;
+        _componentInfo[nftId] = info;
 
         // add logging
     }
 
-    function getComponentInfo(uint256 id)
+    function getComponentInfo(NftId nftId)
         external
         override
         view
         returns(ComponentInfo memory)
     {
-        return _componentInfo[id];
+        return _componentInfo[nftId];
     }
 
-    function getComponentOwner(uint256 id)
+    function getComponentOwner(NftId nftId)
         external
         view
         returns(address owner)
@@ -133,9 +134,9 @@ abstract contract ComponentModule is
     function getComponentId(address componentAddress)
         external
         view
-        returns(uint256 id)
+        returns(NftId componentNftId)
     {
-        return _idByAddress[componentAddress];
+        return _nftIdByAddress[componentAddress];
     }
 
 
@@ -143,9 +144,9 @@ abstract contract ComponentModule is
         external
         override
         view
-        returns(uint256 id)
+        returns(NftId componentNftId)
     {
-        return _ids[idx];
+        return _nftIds[idx];
     }
 
 
@@ -155,7 +156,7 @@ abstract contract ComponentModule is
         view
         returns(uint256 numberOfCompnents)
     {
-        return _ids.length;
+        return _nftIds.length;
     }
 
     function getRoleForType(uint256 cType)
@@ -183,11 +184,12 @@ contract ComponentOwnerService is
     IComponent,
     IComponentOwnerService
 {
+    using NftIdLib for NftId;
 
     modifier onlyComponentOwner(IComponentContract component) {
-        uint256 nftId = _registry.getNftId(address(component));
+        NftId nftId = _registry.getNftId(address(component));
         require(
-            nftId > 0, 
+            nftId.gtz(), 
             "ERROR:COS-001:COMPONENT_UNKNOWN");
         require(
             msg.sender == _registry.getOwner(nftId),
@@ -203,7 +205,7 @@ contract ComponentOwnerService is
     function register(IComponentContract component)
         external
         override
-        returns(uint256 nftId)
+        returns(NftId nftId)
     {
         require(
             msg.sender == component.getInitialOwner(), 
@@ -221,7 +223,7 @@ contract ComponentOwnerService is
     {
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(component.getNftId());
-        require(info.nftId > 0, "ERROR_COMPONENT_UNKNOWN");
+        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
         // TODO add state change validation
 
         info.state = CState.Locked;
@@ -236,7 +238,7 @@ contract ComponentOwnerService is
     {
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(component.getNftId());
-        require(info.nftId > 0, "ERROR_COMPONENT_UNKNOWN");
+        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
         // TODO state change validation
 
         info.state = CState.Active;

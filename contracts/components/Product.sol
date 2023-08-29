@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {IProductService} from "../instance/product/IProductService.sol";
 import {Component} from "./Component.sol";
 import {IProductComponent} from "./IProduct.sol";
+import {NftId} from "../types/NftId.sol";
 
 
 contract Product is
@@ -29,10 +30,10 @@ contract Product is
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
-        uint256 bundleNftId
+        NftId bundleNftId
     )
         internal
-        returns(uint256 nftId)
+        returns(NftId nftId)
     {
         nftId = _productService.createApplication(
             applicationOwner,
@@ -43,13 +44,13 @@ contract Product is
         );
     }
 
-    function _underwrite(uint256 nftId)
+    function _underwrite(NftId nftId)
         internal
     {
         _productService.underwrite(nftId);
     }
 
-    function getPoolNftId() external view override returns(uint256 poolNftId) {
+    function getPoolNftId() external view override returns(NftId poolNftId) {
         return _registry.getNftId(_pool);
     }
 
