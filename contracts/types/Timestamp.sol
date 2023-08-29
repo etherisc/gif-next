@@ -9,7 +9,7 @@ using {
     ltTimestamp as <,
     lteTimestamp as <=,
     eqTimestamp as ==,
-    neqTimestamp as !=
+    neTimestamp as !=
 } for Timestamp global;
 
 /// @dev return true if Timestamp a is after Timestamp b
@@ -25,7 +25,7 @@ function lteTimestamp(Timestamp a, Timestamp b) pure returns(bool) { return Time
 /// @dev return true if Timestamp a is equal to Timestamp b
 function eqTimestamp(Timestamp a, Timestamp b) pure returns(bool) { return Timestamp.unwrap(a) == Timestamp.unwrap(b); }
 /// @dev return true if Timestamp a is not equal to Timestamp b
-function neqTimestamp(Timestamp a, Timestamp b) pure returns(bool) { return Timestamp.unwrap(a) != Timestamp.unwrap(b); }
+function neTimestamp(Timestamp a, Timestamp b) pure returns(bool) { return Timestamp.unwrap(a) != Timestamp.unwrap(b); }
 
 /// @dev Converts the uint256 to a Timestamp.
 function toTimestamp(uint256 timestamp) pure returns(Timestamp) { return Timestamp.wrap(uint40(timestamp));}
@@ -49,7 +49,7 @@ library TimestampLib {
     /// @dev return true if Timestamp a is equal to Timestamp b
     function eq(Timestamp a, Timestamp b) internal pure returns(bool isSame) { return eqTimestamp(a, b); }
     /// @dev return true if Timestamp a is not equal to Timestamp b
-    function ne(Timestamp a, Timestamp b) internal pure returns(bool isDifferent) { return neqTimestamp(a, b); }
+    function ne(Timestamp a, Timestamp b) internal pure returns(bool isDifferent) { return neTimestamp(a, b); }
 
     function toInt(Timestamp timestamp) internal pure returns(uint256) { return uint256(uint40(Timestamp.unwrap(timestamp))); }
 }
