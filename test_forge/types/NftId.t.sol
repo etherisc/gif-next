@@ -26,6 +26,38 @@ contract NftIdTest is TestGifBase {
         assertNftIdZero(NftIdZero, "nft id not zero");
     }
 
+    function test_op_equal() public {
+        assertTrue(nftId1 == nftId1, "nft id not equal to itself");
+        assertTrue(nftId2 == nftId2, "nft id not equal to itself");
+
+        assertTrue(NftIdZero == NftIdZero, "nft id zero not equal to itself");
+
+        assertFalse(nftId1 == nftId2, "nft id 1 equal to nft id 2");
+        assertFalse(nftId2 == nftId1, "nft id 2 equal to nft id 1");
+
+        assertFalse(nftId1 == NftIdZero, "nft id 1 equal to nft id zero");
+        assertFalse(nftId2 == NftIdZero, "nft id 2 equal to nft id zero");
+
+        assertFalse(NftIdZero == nftId1, "nft id zero equal to nft id 1");
+        assertFalse(NftIdZero == nftId2, "nft id zero equal to nft id 2");
+    }
+
+    function test_op_not_equal() public {
+        assertTrue(nftId1 != nftId2, "nft id 1 equal to nft id 2");
+        assertTrue(nftId2 != nftId1, "nft id 2 equal to nft id 1");
+
+        assertTrue(nftId1 != NftIdZero, "nft id 1 equal to nft id zero");
+        assertTrue(nftId2 != NftIdZero, "nft id 2 equal to nft id zero");
+
+        assertTrue(NftIdZero != nftId1, "nft id zero equal to nft id 1");
+        assertTrue(NftIdZero != nftId2, "nft id zero equal to nft id 2");
+
+        assertFalse(nftId1 != nftId1, "nft id not equal to itself");
+        assertFalse(nftId2 != nftId2, "nft id not equal to itself");
+
+        assertFalse(NftIdZero != NftIdZero, "nft id zero not equal to itself");
+    }
+
     function test_eqNftId() public {
         assertTrue(eqNftId(nftId1, nftId1), "nft id not equal to itself");
         assertTrue(eqNftId(nftId2, nftId2), "nft id not equal to itself");

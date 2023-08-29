@@ -26,6 +26,35 @@ contract ChainIdTest is Test {
         assertEq(thisChainId().toInt(), block.chainid);
     }
 
+    function test_op_equal() public {
+        assertTrue(chainId1 == chainId1);
+        assertTrue(chainId2 == chainId2);
+
+        assertTrue(ChainIdZero == ChainIdZero);
+
+        assertFalse(chainId1 == chainId2);
+        assertFalse(chainId2 == chainId1);
+
+        assertFalse(chainId1 == ChainIdZero);
+        assertFalse(chainId2 == ChainIdZero);
+    }
+
+    function test_op_not_equal() public {
+        assertTrue(chainId1 != chainId2);
+        assertTrue(chainId2 != chainId1);
+
+        assertTrue(chainId1 != ChainIdZero);
+        assertTrue(chainId2 != ChainIdZero);
+
+        assertTrue(ChainIdZero != chainId1);
+        assertTrue(ChainIdZero != chainId2);
+
+        assertFalse(chainId1 != chainId1);
+        assertFalse(chainId2 != chainId2);
+
+        assertFalse(ChainIdZero != ChainIdZero);
+    }
+
     function test_eqChainId() public {
         assertTrue(eqChainId(chainId1, chainId1));
         assertTrue(eqChainId(chainId2, chainId2));
