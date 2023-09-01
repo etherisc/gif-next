@@ -47,6 +47,7 @@ contract UFixedTest is Test {
         UFixed c = UFixed.wrap(2 * 10 ** 18);
         UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue((a + b) == c);
+        assertFalse((a + b) == d);
 
         assertTrue((a + c) == d);
 
@@ -61,6 +62,7 @@ contract UFixedTest is Test {
         UFixed c = UFixed.wrap(2 * 10 ** 18);
         UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue(a.add(b) == c);
+        assertFalse(a.add(b) == d);
 
         assertTrue(a.add(c) == d);
 
@@ -75,8 +77,9 @@ contract UFixedTest is Test {
         UFixed c = UFixed.wrap(2 * 10 ** 18);
         UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue((c - b) == a);
-
+        
         assertTrue((d - c) == a);
+        assertFalse((d - b) == b);
 
         UFixed e = UFixed.wrap(0 * 10 ** 18);
         assertTrue((a - a) == e);
@@ -95,6 +98,7 @@ contract UFixedTest is Test {
         assertTrue(c.sub(b) == a);
 
         assertTrue(d.sub(c) == a);
+        assertFalse(d.sub(b) == b);
 
         UFixed e = UFixed.wrap(0 * 10 ** 18);
         assertTrue(a.sub(a) == e);
@@ -119,6 +123,7 @@ contract UFixedTest is Test {
         // 2 * 2 = 4
         UFixed e = UFixed.wrap(4 * 10 ** 18);
         assertTrue((d * d) == e);
+        assertFalse((a * d) == e);
 
         // 2 * 21 = 42
         UFixed f = UFixed.wrap(21 * 10 ** 18);
@@ -156,6 +161,7 @@ contract UFixedTest is Test {
         // 2 * 2 = 4
         UFixed e = UFixed.wrap(4 * 10 ** 18);
         assertTrue(d.mul(d) == e);
+        assertFalse(a.mul(d) == e);
 
         // 2 * 21 = 42
         UFixed f = UFixed.wrap(21 * 10 ** 18);
@@ -178,4 +184,51 @@ contract UFixedTest is Test {
         // 0 * 1 = 0
         assertTrue(z.mul(a) == z);
     }
+
+    // TODO: fix
+    // function test_op_div() public {
+    //     // 1 / 1 = 1
+    //     UFixed a = UFixed.wrap(1 * 10 ** 18);
+    //     UFixed b = UFixed.wrap(1 * 10 ** 18);
+    //     UFixed c = UFixed.wrap(1 * 10 ** 18);
+    //     assertTrue((a / b) == c);
+
+    //     // 2 / 1 = 2
+    //     UFixed d = UFixed.wrap(2 * 10 ** 18);
+    //     assertTrue((d / a) == d);
+
+    //     // 4 / 2 = 2
+    //     UFixed e = UFixed.wrap(4 * 10 ** 18);
+    //     assertTrue((e / d) == d);
+
+    //     // 5 / 2 = 2.5
+    //     UFixed f1 = UFixed.wrap(5 * 10 ** 18);
+    //     UFixed ex1 = UFixed.wrap(5 * 10 ** 18);
+    //     assertTrue((f1 / d) == ex1);
+
+
+    //     // 42 / 2 = 21
+    //     UFixed f = UFixed.wrap(21 * 10 ** 18);
+    //     UFixed g = UFixed.wrap(42 * 10 ** 18);
+    //     assertTrue((g / d) == f);
+
+    //     // BIG / 1 = BIG
+    //     // BIG = 1 * 10 ** 31
+    //     UFixed BIG = UFixed.wrap(1 * 10 ** 32 - 1);
+    //     assertTrue((BIG / a) == BIG);
+    //     // (2 * BIG) / 2 = BIG
+    //     assertTrue(((d * BIG) / d) == (BIG));
+
+    //     // 0 / 1 = 0
+    //     UFixed z = UFixed.wrap(0 * 10 ** 18);
+    //     assertTrue((z / a) == z);
+
+    //     // 0 / 0 = 0
+    //     vm.expectRevert("ERROR:UFM-020:DIVISOR_ZERO");
+    //     assertTrue((z / z) == z);
+
+    //     // 1 / 0 = 0
+    //     vm.expectRevert("ERROR:UFM-020:DIVISOR_ZERO");
+    //     assertTrue((a / z) == z);
+    // }
 }
