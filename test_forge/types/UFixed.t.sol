@@ -48,11 +48,11 @@ contract UFixedTest is Test {
         vm.expectRevert("ERROR:FM-010:EXPONENT_TOO_SMALL");
         UFixedMathLib.itof(1, -19);
 
-        // largest possible value
-        assertTrue(UFixedMathLib.itof(1, 18) == UFixedMathLib.itof(1 * 10 ** 18));
+        // largest possible value -- 10 ** 46 (64 - EXP(18))
+        assertTrue(UFixedMathLib.itof(1, 46) == UFixedMathLib.itof(1 * 10 ** 46));
         // one order of magnitude larger reverts
         vm.expectRevert("ERROR:FM-011:EXPONENT_TOO_LARGE");
-        UFixedMathLib.itof(1, 19);
+        UFixedMathLib.itof(1, 64 - 18 + 1);
     }
 
     function test_ftoi() public {

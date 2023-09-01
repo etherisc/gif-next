@@ -116,7 +116,7 @@ library UFixedMathLib {
         returns(UFixed)
     {
         require(EXP + exp >= 0, "ERROR:FM-010:EXPONENT_TOO_SMALL");
-        require(EXP + exp <= 2 * EXP, "ERROR:FM-011:EXPONENT_TOO_LARGE");
+        require(EXP + exp <= 64, "ERROR:FM-011:EXPONENT_TOO_LARGE");
 
         return UFixed.wrap(a * 10 ** uint8(EXP + exp));
     }
