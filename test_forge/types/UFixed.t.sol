@@ -42,12 +42,15 @@ contract UFixedTest is Test {
         UFixed b = UFixedMathLib.itof(1, -2).mul(UFixedMathLib.itof(1, 2));
         assertTrue(b.ftoi() == 1);
 
-        // emit log_uint(UFixedMathLib.itof(1, -18).ftoi());
-        // assertTrue(UFixedMathLib.itof(1, -18).eqz());
+        // smalltest possible value
+        UFixedMathLib.itof(1, -18);
+        // one order of magnitude smaller reverts
         vm.expectRevert("ERROR:FM-010:EXPONENT_TOO_SMALL");
         UFixedMathLib.itof(1, -19);
 
+        // largest possible value
         assertTrue(UFixedMathLib.itof(1, 18) == UFixedMathLib.itof(1 * 10 ** 18));
+        // one order of magnitude larger reverts
         vm.expectRevert("ERROR:FM-011:EXPONENT_TOO_LARGE");
         UFixedMathLib.itof(1, 19);
     }
