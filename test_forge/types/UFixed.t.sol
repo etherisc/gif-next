@@ -47,6 +47,23 @@ contract UFixedTest is Test {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
         assertTrue(a.ftoi() == 1);
     }
+
+    function test_ftoi_rounding() public {
+        UFixed a = UFixed.wrap(4 * 10 ** 17);
+        assertTrue(a.ftoi(UFixedMathLib.Rounding.Up) == 1);
+        assertTrue(a.ftoi(UFixedMathLib.Rounding.Down) == 0);
+        assertTrue(a.ftoi(UFixedMathLib.Rounding.HalfUp) == 0);
+
+        UFixed b = UFixed.wrap(5 * 10 ** 17);
+        assertTrue(b.ftoi(UFixedMathLib.Rounding.Up) == 1);
+        assertTrue(b.ftoi(UFixedMathLib.Rounding.Down) == 0);
+        assertTrue(b.ftoi(UFixedMathLib.Rounding.HalfUp) == 1);
+
+        UFixed c = UFixed.wrap(6 * 10 ** 17);
+        assertTrue(c.ftoi(UFixedMathLib.Rounding.Up) == 1);
+        assertTrue(c.ftoi(UFixedMathLib.Rounding.Down) == 0);
+        assertTrue(c.ftoi(UFixedMathLib.Rounding.HalfUp) == 1);
+    }
     
 
     function test_op_add() public {
