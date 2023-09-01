@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import { Test } from  "../../lib/forge-std/src/Test.sol";
+import "forge-std/Test.sol";
 import "../../contracts/types/UFixed.sol";
 
 contract UFixedTest is Test {
@@ -12,61 +12,73 @@ contract UFixedTest is Test {
     }
     
     function test_op_equal() public {
-        UFixed a = UFixed.wrap(1);
-        UFixed b = UFixed.wrap(1);
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
         assertTrue(a == b);
 
-        UFixed c = UFixed.wrap(2);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
         assertFalse(a == c);
     }
 
     function test_UFixedMathLib() public {
-        UFixed a = UFixed.wrap(1);
-        UFixed b = UFixed.wrap(1);
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
         assertTrue(a.eq(b));
 
-        UFixed c = UFixed.wrap(2);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
         assertFalse(a.eq(c));
     }
 
+    function test_itof() public {
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        assertTrue(a == UFixedMathLib.itof(1));
+    }
+
+    function test_ftoi() public {
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        assertTrue(a.ftoi() == 1);
+    }
+    
+
+    // TODO: use proper UFixed
     function test_op_add() public {
-        UFixed a = UFixed.wrap(1);
-        UFixed b = UFixed.wrap(1);
-        UFixed c = UFixed.wrap(2);
-        UFixed d = UFixed.wrap(3);
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue((a + b) == c);
 
         assertTrue((a + c) == d);
 
-        UFixed e = UFixed.wrap(0);
+        UFixed e = UFixed.wrap(0 * 10 ** 18);
         assertTrue((a + e) == a);
         assertTrue((e + e) == e);
     }
 
     function test_UFixedMathLib_add() public {
-        UFixed a = UFixed.wrap(1);
-        UFixed b = UFixed.wrap(1);
-        UFixed c = UFixed.wrap(2);
-        UFixed d = UFixed.wrap(3);
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue(a.add(b) == c);
 
         assertTrue(a.add(c) == d);
 
-        UFixed e = UFixed.wrap(0);
+        UFixed e = UFixed.wrap(0 * 10 ** 18);
         assertTrue(a.add(e) == a);
         assertTrue(e.add(e) == e);
     }
 
     function test_op_sub() public {
-        UFixed a = UFixed.wrap(1);
-        UFixed b = UFixed.wrap(1);
-        UFixed c = UFixed.wrap(2);
-        UFixed d = UFixed.wrap(3);
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue((c - b) == a);
 
         assertTrue((d - c) == a);
 
-        UFixed e = UFixed.wrap(0);
+        UFixed e = UFixed.wrap(0 * 10 ** 18);
         assertTrue((a - a) == e);
         assertTrue((a - e) == a);
         assertTrue((e - e) == e);
@@ -76,20 +88,57 @@ contract UFixedTest is Test {
     }
 
     function test_UFixedMathLib_sub() public {
-        UFixed a = UFixed.wrap(1);
-        UFixed b = UFixed.wrap(1);
-        UFixed c = UFixed.wrap(2);
-        UFixed d = UFixed.wrap(3);
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue(c.sub(b) == a);
 
         assertTrue(d.sub(c) == a);
 
-        UFixed e = UFixed.wrap(0);
+        UFixed e = UFixed.wrap(0 * 10 ** 18);
         assertTrue(a.sub(a) == e);
         assertTrue(a.sub(e) == a);
         assertTrue(e.sub(e) == e);
 
         vm.expectRevert("ERROR:UFM-010:NEGATIVE_RESULT");
         a.sub(c);
+    }
+
+    function test_op_mul() public {
+        // 1 * 1 = 1
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(1 * 10 ** 18);
+        assertTrue((a * b) == c);
+
+        // 1 * 2 = 2
+        UFixed d = UFixed.wrap(2 * 10 ** 18);
+        assertTrue((a * d) == d);
+
+        // 2 * 2 = 4
+        UFixed e = UFixed.wrap(4 * 10 ** 18);
+        assertTrue((d * d) == e);
+
+        // 2 * 21 = 42
+        UFixed f = UFixed.wrap(21 * 10 ** 18);
+        UFixed g = UFixed.wrap(42 * 10 ** 18);
+        assertTrue((d * f) == g);
+
+        // BIG * 1 = BIG
+        // BIG = 1 * 10 ** 31
+        UFixed BIG = UFixed.wrap(1 * 10 ** 32 - 1);
+        assertTrue((BIG * a) == BIG);
+        assertTrue((BIG * d) == (BIG + BIG));
+
+        // 1 * 0 = 0
+        UFixed z = UFixed.wrap(0 * 10 ** 18);
+        assertTrue((a * z) == z);
+
+        // 0 * 0 = 0
+        assertTrue((z * z) == z);
+
+        // 0 * 1 = 0
+        assertTrue((z * a) == z);
     }
 }
