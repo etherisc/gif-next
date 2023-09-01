@@ -141,4 +141,41 @@ contract UFixedTest is Test {
         // 0 * 1 = 0
         assertTrue((z * a) == z);
     }
+
+    function test_UFixedMathLib_mul() public {
+        // 1 * 1 = 1
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(1 * 10 ** 18);
+        assertTrue(a.mul(b) == c);
+
+        // 1 * 2 = 2
+        UFixed d = UFixed.wrap(2 * 10 ** 18);
+        assertTrue(a.mul(d) == d);
+
+        // 2 * 2 = 4
+        UFixed e = UFixed.wrap(4 * 10 ** 18);
+        assertTrue(d.mul(d) == e);
+
+        // 2 * 21 = 42
+        UFixed f = UFixed.wrap(21 * 10 ** 18);
+        UFixed g = UFixed.wrap(42 * 10 ** 18);
+        assertTrue(d.mul(f) == g);
+
+        // BIG * 1 = BIG
+        // BIG = 1 * 10 ** 31
+        UFixed BIG = UFixed.wrap(1 * 10 ** 32 - 1);
+        assertTrue(BIG.mul(a) == BIG);
+        assertTrue(BIG.mul(d) == (BIG.add(BIG)));
+
+        // 1 * 0 = 0
+        UFixed z = UFixed.wrap(0 * 10 ** 18);
+        assertTrue(a.mul(z) == z);
+
+        // 0 * 0 = 0
+        assertTrue(z.mul(z) == z);
+
+        // 0 * 1 = 0
+        assertTrue(z.mul(a) == z);
+    }
 }
