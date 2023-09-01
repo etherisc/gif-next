@@ -6,6 +6,10 @@
         { "icon": "test", "extensions": [".t.sol"], "format": "svg" }
     ],
     "peacock.remoteColor": "#be6900",
+    "solidity.packageDefaultDependenciesContractsDirectory": "contracts",
+    "solidity.packageDefaultDependenciesDirectory": "lib",
+    "solidity.defaultCompiler": "remote",
+    "solidity.compileUsingRemoteVersion": "v0.8.20+commit.a1b79de6",
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#f18500",
         "activityBar.background": "#f18500",
@@ -25,8 +29,4 @@
         "titleBar.inactiveBackground": "#be690099",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
-    "solidity.packageDefaultDependenciesContractsDirectory": "contracts",
-    "solidity.packageDefaultDependenciesDirectory": "lib",
-    "solidity.defaultCompiler": "remote",
-    "solidity.compileUsingRemoteVersion": "v0.8.20+commit.a1b79de6",
 }

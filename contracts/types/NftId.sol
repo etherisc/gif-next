@@ -15,6 +15,9 @@ using {
 /// @dev Converts the uint256 to a NftId.
 function toNftId(uint256 id) pure returns(NftId) { return NftId.wrap(uint96(id)); }
 
+/// @dev Return the NftId zero (0)
+function zeroNftId() pure returns(NftId) { return NftId.wrap(0); }
+
 // pure free functions for operators
 function eqNftId(NftId a, NftId b) pure returns(bool isSame) { return NftId.unwrap(a) == NftId.unwrap(b); }
 function neNftId(NftId a, NftId b) pure returns(bool isDifferent) { return NftId.unwrap(a) != NftId.unwrap(b); }
