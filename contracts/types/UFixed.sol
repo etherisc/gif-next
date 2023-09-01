@@ -200,6 +200,10 @@ library UFixedMathLib {
         return eqzUFixed(a);
     }
 
+    function zero() public pure returns(UFixed) {
+        return UFixed.wrap(0);
+    }
+
     /// @dev return the absolute delta between two UFixed numbers
     function delta(UFixed a, UFixed b) public pure returns(UFixed) {
         return deltaUFixed(a, b);

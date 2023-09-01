@@ -41,6 +41,15 @@ contract UFixedTest is Test {
         // 0.01 * 100
         UFixed b = UFixedMathLib.itof(1, -2).mul(UFixedMathLib.itof(1, 2));
         assertTrue(b.ftoi() == 1);
+
+        // emit log_uint(UFixedMathLib.itof(1, -18).ftoi());
+        // assertTrue(UFixedMathLib.itof(1, -18).eqz());
+        vm.expectRevert("ERROR:FM-010:EXPONENT_TOO_SMALL");
+        UFixedMathLib.itof(1, -19);
+
+        assertTrue(UFixedMathLib.itof(1, 18) == UFixedMathLib.itof(1 * 10 ** 18));
+        vm.expectRevert("ERROR:FM-011:EXPONENT_TOO_LARGE");
+        UFixedMathLib.itof(1, 19);
     }
 
     function test_ftoi() public {
