@@ -34,6 +34,15 @@ contract UFixedTest is Test {
         assertTrue(a == UFixedMathLib.itof(1));
     }
 
+    function test_itof_exp() public {
+        UFixed a = UFixedMathLib.itof(1, 2);
+        assertTrue(a.ftoi() == 100);
+
+        // 0.01 * 100
+        UFixed b = UFixedMathLib.itof(1, -2).mul(UFixedMathLib.itof(1, 2));
+        assertTrue(b.ftoi() == 1);
+    }
+
     function test_ftoi() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
         assertTrue(a.ftoi() == 1);
