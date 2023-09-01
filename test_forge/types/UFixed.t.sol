@@ -257,4 +257,78 @@ contract UFixedTest is Test {
         vm.expectRevert("ERROR:UFM-020:DIVISOR_ZERO");
         assertTrue(a.div(z).eq(z));
     }
+
+    function test_op_gt() public {
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        assertTrue(c > b);
+        assertTrue(c.gt(b));
+        assertFalse(a > b);
+        assertFalse(a.gt(b));
+    }
+
+    function test_op_gte() public {
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        assertTrue(c >= b);
+        assertTrue(c.gte(b));
+        assertFalse(a >= c);
+        assertFalse(a.gte(c));
+        assertTrue(b >= a);
+        assertTrue(b.gte(a));
+        assertTrue(a >= b);
+        assertTrue(a.gte(b));
+    }
+
+    function test_op_lt() public {
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        assertTrue(a < c);
+        assertTrue(a.lt(c));
+        assertFalse(b < a);
+        assertFalse(b.lt(a));
+    }
+
+    function test_op_lte() public {
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(1 * 10 ** 18);
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        assertTrue(a <= c);
+        assertTrue(a.lte(c));
+        assertTrue(b <= a);
+        assertTrue(b.lte(a));
+        assertFalse(c <= b);
+        assertFalse(c.lte(b));
+    }
+
+    function test_gtz() public {
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(0 * 10 ** 18);
+        assertTrue(a.gtz());
+        assertFalse(b.gtz());
+    }
+
+    function test_eqz() public {
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(0 * 10 ** 18);
+        assertFalse(a.eqz());
+        assertTrue(b.eqz());
+    }
+
+    function test_delta() public {
+        UFixed a = UFixed.wrap(1 * 10 ** 18);
+        UFixed b = UFixed.wrap(0 * 10 ** 18);
+        assertTrue(a.delta(b).eq(UFixedMathLib.itof(1)));
+        assertTrue(b.delta(a).eq(UFixedMathLib.itof(1)));
+
+        UFixed c = UFixed.wrap(2 * 10 ** 18);
+        assertTrue(c.delta(a).eq(UFixedMathLib.itof(1)));
+        assertTrue(a.delta(c).eq(UFixedMathLib.itof(1)));
+
+        assertTrue(c.delta(b).eq(UFixedMathLib.itof(2)));
+        assertTrue(b.delta(c).eq(UFixedMathLib.itof(2)));
+    }
 }
