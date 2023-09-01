@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import { Test } from  "../../lib/forge-std/src/Test.sol";
-import { ChainId, ChainIdLib, toChainId, thisChainId, eqChainId, neChainId } from "../../contracts/types/ChainId.sol";
+import "../../contracts/types/ChainId.sol";
 
 contract ChainIdTest is Test {
     using ChainIdLib for ChainId;

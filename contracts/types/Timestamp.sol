@@ -37,19 +37,19 @@ function zeroTimestamp() pure returns(Timestamp) { return toTimestamp(0); }
 
 library TimestampLib {
     /// @dev return true if Timestamp a is after Timestamp b
-    function gt(Timestamp a, Timestamp b) internal pure returns(bool isAfter) { return gtTimestamp(a, b); }
+    function gt(Timestamp a, Timestamp b) public pure returns(bool isAfter) { return gtTimestamp(a, b); }
     /// @dev return true if Timestamp a is after or the same than Timestamp b
-    function gte(Timestamp a, Timestamp b) internal pure returns(bool isAfterOrSame) { return gteTimestamp(a, b); }
+    function gte(Timestamp a, Timestamp b) public pure returns(bool isAfterOrSame) { return gteTimestamp(a, b); }
 
     /// @dev return true if Timestamp a is before Timestamp b
-    function lt(Timestamp a, Timestamp b) internal pure returns(bool isBefore) { return ltTimestamp(a, b); }
+    function lt(Timestamp a, Timestamp b) public pure returns(bool isBefore) { return ltTimestamp(a, b); }
     /// @dev return true if Timestamp a is before or the same than Timestamp b
-    function lte(Timestamp a, Timestamp b) internal pure returns(bool isBeforeOrSame) { return lteTimestamp(a, b); }
+    function lte(Timestamp a, Timestamp b) public pure returns(bool isBeforeOrSame) { return lteTimestamp(a, b); }
 
     /// @dev return true if Timestamp a is equal to Timestamp b
-    function eq(Timestamp a, Timestamp b) internal pure returns(bool isSame) { return eqTimestamp(a, b); }
+    function eq(Timestamp a, Timestamp b) public pure returns(bool isSame) { return eqTimestamp(a, b); }
     /// @dev return true if Timestamp a is not equal to Timestamp b
-    function ne(Timestamp a, Timestamp b) internal pure returns(bool isDifferent) { return neTimestamp(a, b); }
+    function ne(Timestamp a, Timestamp b) public pure returns(bool isDifferent) { return neTimestamp(a, b); }
 
-    function toInt(Timestamp timestamp) internal pure returns(uint256) { return uint256(uint40(Timestamp.unwrap(timestamp))); }
+    function toInt(Timestamp timestamp) public pure returns(uint256) { return uint256(uint40(Timestamp.unwrap(timestamp))); }
 }
