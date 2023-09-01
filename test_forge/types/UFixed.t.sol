@@ -40,7 +40,6 @@ contract UFixedTest is Test {
     }
     
 
-    // TODO: use proper UFixed
     function test_op_add() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
         UFixed b = UFixed.wrap(1 * 10 ** 18);
