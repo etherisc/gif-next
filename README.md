@@ -131,3 +131,10 @@ Solidity code is to be written according to the [Solidity Style Guide](https://d
 
 Documentation of the code should be written inline using [NatSpec](https://docs.soliditylang.org/en/latest/natspec-format.html).
 
+
+### Automatic code formatting
+
+We use prettier and the solidity plugin to format the code automatically. 
+The plugin is configured to use the style guide mentioned above.
+To execute formatting run `npm run prettier`.
+
