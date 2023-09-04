@@ -125,3 +125,9 @@ uint256 policyNftId = ps.createApplicationForBundle(customer, bundleNftId, sumIn
 
 https://book.getfoundry.sh/reference/
 
+## Style Guide
+
+Solidity code is to be written according to the [Solidity Style Guide](https://docs.soliditylang.org/en/latest/style-guide.html).
+
+Documentation of the code should be written inline using [NatSpec](https://docs.soliditylang.org/en/latest/natspec-format.html).
+
