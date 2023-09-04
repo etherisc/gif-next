@@ -138,3 +138,8 @@ We use prettier and the solidity plugin to format the code automatically.
 The plugin is configured to use the style guide mentioned above.
 To execute formatting run `npm run prettier`.
 
+### Linting 
+
+We use solhint to lint the code.
+To execute linting run `npm run lint`.
+
