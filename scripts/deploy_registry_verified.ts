@@ -1,5 +1,6 @@
 import { ethers } from "hardhat";
-import hre from "hardhat";
+import { verifyContract } from "./deploy_helper";
+
 
 async function main() {
   const signer = process.env.WALLET_MNEMONIC ? ethers.Wallet.fromPhrase(process.env.WALLET_MNEMONIC as string).connect(ethers.provider) : undefined;
@@ -17,21 +18,7 @@ async function main() {
   console.log("waiting for 5 confirmations");
   await nftIdLibDeployed.deploymentTransaction()?.wait(5);
   
-  // verify
-  try {
-    await hre.run("verify:verify", {
-      address: nftIdLibAdr,
-      constructorArguments: [
-      ],
-    });
-    console.log("NftIdLib verified\n\n");
-  } catch (err: any) {
-    if (err.message.toLowerCase().includes("already verified")) {
-      console.log("Contract is already verified!");
-    } else {
-      throw err;
-    }
-  }
+  await verifyContract(nftIdLibAdr, []);
   
 
   // deploy registry
@@ -51,21 +38,7 @@ async function main() {
   console.log("waiting for 5 confirmations");
   await registry.deploymentTransaction()?.wait(5);
 
-  // verify 
-  try {
-    await hre.run("verify:verify", {
-      address: registryAdr,
-      constructorArguments: [
-      ],
-    });
-    console.log("Registry verified\n\n");
-  } catch (err: any) {
-    if (err.message.toLowerCase().includes("already verified")) {
-      console.log("Contract is already verified!");
-    } else {
-      throw err;
-    }
-  }
+  await verifyContract(registryAdr, []);
 
   // deploy ChainNft
   const chainNftFactory = await ethers.getContractFactory("ChainNft", signer);
@@ -79,22 +52,7 @@ async function main() {
   console.log("waiting for 5 confirmations");
   await chainNftDeployed.deploymentTransaction()?.wait(5);
 
-  // verify
-  try {
-    await hre.run("verify:verify", {
-      address: chainNftAdr,
-      constructorArguments: [
-        registryAdr
-      ],
-    });
-    console.log("ChainNft verified\n\n");
-  } catch (err: any) {
-    if (err.message.toLowerCase().includes("already verified")) {
-      console.log("Contract is already verified!");
-    } else {
-      throw err;
-    }
-  }
+  await verifyContract(chainNftAdr, [registryAdr]);
 
   const registryContract = await ethers.getContractAt("Registry", registryAdr, signer);
   await registryContract.initialize(chainNftAdr);
