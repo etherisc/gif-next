@@ -149,4 +149,3 @@ To execute formatting run `npm run prettier`.
 
 We use solhint to lint the code.
 To execute linting run `npm run lint`.
-
