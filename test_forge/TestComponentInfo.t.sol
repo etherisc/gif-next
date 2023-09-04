@@ -11,7 +11,9 @@ contract TestComponentInfo is TestGifBase {
         IComponent.ComponentInfo memory info = instance.getComponentInfo(
             product.getNftId()
         );
+        // solhint-disable-next-line
         console.log("product (nftId, state)");
+        // solhint-disable-next-line
         console.log(info.nftId.toInt(), uint(info.state));
 
         assertNftId(info.nftId, product.getNftId(), "product nft mismatch");
@@ -26,7 +28,9 @@ contract TestComponentInfo is TestGifBase {
         IComponent.ComponentInfo memory info = instance.getComponentInfo(
             pool.getNftId()
         );
+        // solhint-disable-next-line
         console.log("pool (nftId, state)");
+        // solhint-disable-next-line
         console.log(info.nftId.toInt(), uint(info.state));
 
         assertNftId(info.nftId, pool.getNftId(), "pool nft mismatch");
