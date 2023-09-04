@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import { TestGifBase } from  "../TestGifBase.sol";
-import { NftId, toNftId, zeroNftId, eqNftId, neNftId, NftIdLib } from "../../contracts/types/NftId.sol";
+import {TestGifBase} from "../TestGifBase.sol";
+import {NftId, toNftId, zeroNftId, eqNftId, neNftId, NftIdLib} from "../../contracts/types/NftId.sol";
 
 contract NftIdTest is TestGifBase {
     using NftIdLib for NftId;
@@ -10,8 +10,8 @@ contract NftIdTest is TestGifBase {
     NftId nftId1;
     NftId nftId2;
     NftId NftIdZero;
-    
-    function setUp() override public {
+
+    function setUp() public override {
         nftId1 = toNftId(23133705);
         nftId2 = toNftId(43133705);
         NftIdZero = toNftId(0);
@@ -62,20 +62,32 @@ contract NftIdTest is TestGifBase {
         assertTrue(eqNftId(nftId1, nftId1), "nft id not equal to itself");
         assertTrue(eqNftId(nftId2, nftId2), "nft id not equal to itself");
 
-        assertTrue(eqNftId(NftIdZero, NftIdZero), "nft id zero not equal to itself");
+        assertTrue(
+            eqNftId(NftIdZero, NftIdZero),
+            "nft id zero not equal to itself"
+        );
 
         assertFalse(eqNftId(nftId1, nftId2), "nft id 1 equal to nft id 2");
         assertFalse(eqNftId(nftId2, nftId1), "nft id 2 equal to nft id 1");
 
-        assertFalse(eqNftId(nftId1, NftIdZero), "nft id 1 equal to nft id zero");
-        assertFalse(eqNftId(nftId2, NftIdZero), "nft id 2 equal to nft id zero");
+        assertFalse(
+            eqNftId(nftId1, NftIdZero),
+            "nft id 1 equal to nft id zero"
+        );
+        assertFalse(
+            eqNftId(nftId2, NftIdZero),
+            "nft id 2 equal to nft id zero"
+        );
     }
 
     function test_neNftId() public {
         assertFalse(neNftId(nftId1, nftId1), "nft id not equal to itself");
         assertFalse(neNftId(nftId2, nftId2), "nft id not equal to itself");
 
-        assertFalse(neNftId(NftIdZero, NftIdZero), "nft id zero not equal to itself");
+        assertFalse(
+            neNftId(NftIdZero, NftIdZero),
+            "nft id zero not equal to itself"
+        );
 
         assertTrue(neNftId(nftId1, nftId2), "nft id 1 equal to nft id 2");
         assertTrue(neNftId(nftId2, nftId1), "nft id 2 equal to nft id 1");
@@ -115,5 +127,4 @@ contract NftIdTest is TestGifBase {
         assertFalse(nftId1.eq(NftIdZero), "nft id 1 equal to nft id zero");
         assertFalse(nftId2.eq(NftIdZero), "nft id 2 equal to nft id zero");
     }
-
 }

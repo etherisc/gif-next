@@ -8,9 +8,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceLinked, IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "../instance/component/IComponent.sol";
 import {NftId} from "../types/NftId.sol";
 
-contract InstanceLinked is 
-    IInstanceLinked
-{
+contract InstanceLinked is IInstanceLinked {
     IInstance internal _instance;
 
     constructor(address instance) {
@@ -22,41 +20,41 @@ contract InstanceLinked is
     //     _instance = IInstance(instance);
     // }
 
-    function getInstance() public view override returns(IInstance instance) {
+    function getInstance() public view override returns (IInstance instance) {
         return _instance;
     }
 }
-
 
 abstract contract Component is
     Registerable,
     InstanceLinked,
     IComponentContract
 {
-
     address private _deployer;
 
-    constructor(address registry, address instance)
-        Registerable(registry)
-        InstanceLinked(instance)
-    { }
+    constructor(
+        address registry,
+        address instance
+    ) Registerable(registry) InstanceLinked(instance) {}
 
     // from registerable
-    function register()
-        public
-        override
-        returns(NftId componentId)
-    {
+    function register() public override returns (NftId componentId) {
         require(msg.sender == getInitialOwner(), "");
-        require(address(_registry) != address(0), "ERROR:PRD-001:REGISTRY_ZERO");
-        require(_registry.isRegistered(address(_instance)), "ERROR:PRD-002:INSTANCE_NOT_REGISTERED");
+        require(
+            address(_registry) != address(0),
+            "ERROR:PRD-001:REGISTRY_ZERO"
+        );
+        require(
+            _registry.isRegistered(address(_instance)),
+            "ERROR:PRD-002:INSTANCE_NOT_REGISTERED"
+        );
 
         IComponentOwnerService cos = _instance.getComponentOwnerService();
         componentId = cos.register(this);
     }
 
     // from registerable
-    function getParentNftId() public view override returns(NftId) {
+    function getParentNftId() public view override returns (NftId) {
         return getInstance().getNftId();
     }
 }

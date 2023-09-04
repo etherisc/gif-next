@@ -8,7 +8,6 @@ import {IProductModule} from "./product/IProductService.sol";
 import {IPolicyModule} from "./policy/IPolicy.sol";
 import {IPoolModule} from "./pool/IPoolModule.sol";
 
-
 interface IInstance is
     IRegisterable,
     IAccessModule,
@@ -16,5 +15,4 @@ interface IInstance is
     IPoolModule,
     IComponentModule,
     IProductModule
-{ }
-
+{}

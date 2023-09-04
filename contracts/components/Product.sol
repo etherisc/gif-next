@@ -6,21 +6,15 @@ import {Component} from "./Component.sol";
 import {IProductComponent} from "./IProduct.sol";
 import {NftId} from "../types/NftId.sol";
 
-
-contract Product is
-    Component,
-    IProductComponent
-{
+contract Product is Component, IProductComponent {
     IProductService private _productService;
     address private _pool;
 
     constructor(
-        address registry, 
-        address instance, 
+        address registry,
+        address instance,
         address pool
-    )
-        Component(registry, instance)
-    { 
+    ) Component(registry, instance) {
         _productService = _instance.getProductService();
         _pool = pool;
     }
@@ -31,10 +25,7 @@ contract Product is
         uint256 premiumAmount,
         uint256 lifetime,
         NftId bundleNftId
-    )
-        internal
-        returns(NftId nftId)
-    {
+    ) internal returns (NftId nftId) {
         nftId = _productService.createApplication(
             applicationOwner,
             sumInsuredAmount,
@@ -44,23 +35,21 @@ contract Product is
         );
     }
 
-    function _underwrite(NftId nftId)
-        internal
-    {
+    function _underwrite(NftId nftId) internal {
         _productService.underwrite(nftId);
     }
 
-    function getPoolNftId() external view override returns(NftId poolNftId) {
+    function getPoolNftId() external view override returns (NftId poolNftId) {
         return _registry.getNftId(_pool);
     }
 
     // from registerable
-    function getType() public view override returns(uint256) {
+    function getType() public view override returns (uint256) {
         return _registry.PRODUCT();
     }
 
     // from registerable
-    function getData() external view override returns(bytes memory data) {
+    function getData() external view override returns (bytes memory data) {
         return bytes(abi.encode(getInstance().getNftId()));
     }
 }
