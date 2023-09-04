@@ -7,19 +7,20 @@ import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 import {IPoolModule} from "./IPoolModule.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 
-abstract contract PoolModule is
-    IPoolModule
-{
+abstract contract PoolModule is IPoolModule {
     using NftIdLib for NftId;
-    
-    uint256 public constant INITIAL_CAPITAL = 10000*10**6;
+
+    uint256 public constant INITIAL_CAPITAL = 10000 * 10 ** 6;
 
     mapping(NftId nftId => PoolInfo info) private _poolInfo;
 
     IProductService private _productService;
 
     modifier onlyProductService() {
-        require(address(_productService) == msg.sender, "ERROR:POL-001:NOT_PRODUCT_SERVICE");
+        require(
+            address(_productService) == msg.sender,
+            "ERROR:POL-001:NOT_PRODUCT_SERVICE"
+        );
         _;
     }
 
@@ -31,13 +32,8 @@ abstract contract PoolModule is
         NftId nftId,
         address wallet,
         address token
-    )
-        public
-        override
-    {
-        require(
-            _poolInfo[nftId].nftId.eqz(),
-            "ERROR:PL-001:ALREADY_CREATED");
+    ) public override {
+        require(_poolInfo[nftId].nftId.eqz(), "ERROR:PL-001:ALREADY_CREATED");
 
         _poolInfo[nftId] = PoolInfo(
             nftId,
@@ -46,41 +42,32 @@ abstract contract PoolModule is
             INITIAL_CAPITAL,
             0 // locked capital
         );
-
     }
-
 
     function underwrite(
         NftId poolNftId,
         NftId policyNftId
-    )
-        external
-        override
-        onlyProductService
-    {
+    ) external override onlyProductService {
         PoolInfo storage poolInfo = _poolInfo[poolNftId];
-        require(
-            poolInfo.nftId == poolNftId,
-            "ERROR:PL-002:POOL_UNKNOWN");
+        require(poolInfo.nftId == poolNftId, "ERROR:PL-002:POOL_UNKNOWN");
 
         IPolicyModule policyModule = IPolicyModule(address(this));
-        IPolicy.PolicyInfo memory policyInfo = policyModule.getPolicyInfo(policyNftId);
+        IPolicy.PolicyInfo memory policyInfo = policyModule.getPolicyInfo(
+            policyNftId
+        );
 
         require(
-            poolInfo.capital - poolInfo.lockedCapital >= policyInfo.sumInsuredAmount,
-            "ERROR:PL-003:CAPACITY_TOO_LOW");
+            poolInfo.capital - poolInfo.lockedCapital >=
+                policyInfo.sumInsuredAmount,
+            "ERROR:PL-003:CAPACITY_TOO_LOW"
+        );
 
         poolInfo.lockedCapital += policyInfo.sumInsuredAmount;
     }
 
-
-    function getPoolInfo(NftId nftId)
-        external
-        view
-        override
-        returns(PoolInfo memory info)
-    {
+    function getPoolInfo(
+        NftId nftId
+    ) external view override returns (PoolInfo memory info) {
         info = _poolInfo[nftId];
     }
-
 }

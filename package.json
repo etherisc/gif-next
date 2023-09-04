@@ -8,7 +8,9 @@
     "test": "hh test",
     "ptest": "hh test --parallel",
     "test-with-gas": "REPORT_GAS=true hh test",
-    "coverage": "hh coverage"
+    "coverage": "hh coverage",
+    "prettier": "prettier --write --plugin=prettier-plugin-solidity 'contracts/**/*.sol' 'test_forge/**/*.t.sol'",
+    "lint": "prettier --list-different --plugin=prettier-plugin-solidity 'contracts/**/*.sol' 'test_forge/**/*.t.sol' && solhint 'contracts/**/*.sol' 'test_forge/**/*.t.sol'"
   },
   "repository": {
     "type": "git",
@@ -25,10 +27,12 @@
   ],
   "homepage": "https://github.com/etherisc/gif-next#readme",
   "devDependencies": {
-    "@nomicfoundation/hardhat-foundry": "^1.0.3",
+    "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "dotenv": "^16.3.1",
-    "hardhat": "^2.17.1"
+    "hardhat": "^2.17.2",
+    "prettier": "^3.0.3",
+    "prettier-plugin-solidity": "^1.1.3"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.3",

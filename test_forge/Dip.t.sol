@@ -6,7 +6,7 @@ import "./mock/Dip.sol";
 
 contract DipTest is Test {
     DIP dip;
-    
+
     function setUp() public {
         dip = new DIP();
     }

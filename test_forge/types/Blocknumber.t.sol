@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import { Test } from  "../../lib/forge-std/src/Test.sol";
+import {Test} from "../../lib/forge-std/src/Test.sol";
 import "../../contracts/types/Blocknumber.sol";
 
 contract BlocknumberTest is Test {
@@ -212,5 +212,4 @@ contract BlocknumberTest is Test {
         assertEq(bn1.toInt(), 42);
         assertEq(bn2.toInt(), 742);
     }
-
 }
