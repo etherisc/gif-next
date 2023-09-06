@@ -1,11 +1,17 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-
+import {ILifecycle} from "../contracts/instance/lifecycle/ILifecycle.sol";
+import {NftId} from "../contracts/types/NftId.sol";
+import {PRODUCT} from "../contracts/types/ObjectType.sol";
+import {ACTIVE, PAUSED} from "../contracts/types/StateId.sol";
 import {TestGifBase} from "./TestGifBase.sol";
 import {IComponent, IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
 
-contract TestComponentLockUnlock is TestGifBase {
+contract TestComponentLockUnlock is
+    ILifecycle,
+    TestGifBase
+{
     
     IComponentOwnerService componentOwnerService;
 
@@ -21,14 +27,18 @@ contract TestComponentLockUnlock is TestGifBase {
     }
 
     function testComponentLockOwner() public {
-        IComponent.ComponentInfo memory info_before = instance.getComponentInfo(product.getNftId());
+        NftId nftId = product.getNftId();
+        IComponent.ComponentInfo memory info_before = instance.getComponentInfo(nftId);
+
+        vm.expectEmit();
+        emit LogComponentStateChanged(nftId, PRODUCT(), ACTIVE(), PAUSED());
 
         vm.prank(productOwner);
         componentOwnerService.lock(product);
 
         IComponent.ComponentInfo memory info_after = instance.getComponentInfo(product.getNftId());
         assertNftId(info_before.nftId, info_after.nftId, "product id not same");
-        assertEq(uint256(uint256(info_after.state)), uint256(IComponent.CState.Locked), "component state not locked");
+        assertEq(info_after.state.toInt(), PAUSED().toInt(), "component state not paused");
     }
 
     function testComponentUnlockNotOwner() public {
@@ -48,7 +58,7 @@ contract TestComponentLockUnlock is TestGifBase {
         vm.stopPrank();
 
         assertNftId(info_before.nftId, info_after.nftId, "product id not same");
-        assertEq(uint256(uint256(info_before.state)), uint256(IComponent.CState.Locked), "component state not locked");
-        assertEq(uint256(uint256(info_after.state)), uint256(IComponent.CState.Active), "component state not active");
+        assertEq(info_before.state.toInt(), PAUSED().toInt(), "component state not paused");
+        assertEq(info_after.state.toInt(), ACTIVE().toInt(), "component state not active");
     }
 }

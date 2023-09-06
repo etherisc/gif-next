@@ -12,6 +12,17 @@ using {
 } for StateId global;
 
 // general pure free functions
+function APPLIED() pure returns(StateId) { return toStateId(10); }
+function REVOKED() pure returns(StateId) { return toStateId(20); }
+function DECLINED() pure returns(StateId) { return toStateId(30); }
+function CONFIRMED() pure returns(StateId) { return toStateId(40); }
+function EXPECTED() pure returns(StateId) { return toStateId(50); }
+function ACTIVE() pure returns(StateId) { return toStateId(100); }
+function PAUSED() pure returns(StateId) { return toStateId(110); }
+function CLOSED() pure returns(StateId) { return toStateId(200); }
+function ARCHIVED() pure returns(StateId) { return toStateId(210); }
+function PAID() pure returns(StateId) { return toStateId(220); }
+
 /// @dev Converts the uint8 to a StateId.
 function toStateId(uint256 id) pure returns(StateId) { return StateId.wrap(uint8(id)); }
 

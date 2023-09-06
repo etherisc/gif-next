@@ -12,7 +12,22 @@ using {
 } for ObjectType global;
 
 // general pure free functions
-/// @dev Converts the uint8 to a ObjectTypeId.
+
+
+function PROTOCOL() pure returns(ObjectType) { return toObjectType(10); }
+function CHAIN() pure returns(ObjectType) { return toObjectType(20); }
+function REGISTRY() pure returns(ObjectType) { return toObjectType(30); }
+function TOKEN() pure returns(ObjectType) { return toObjectType(40); }
+function INSTANCE() pure returns(ObjectType) { return toObjectType(50); }
+function PRODUCT() pure returns(ObjectType) { return toObjectType(60); }
+function ORACLE() pure returns(ObjectType) { return toObjectType(70); }
+function POOL() pure returns(ObjectType) { return toObjectType(80); }
+function BUNDLE() pure returns(ObjectType) { return toObjectType(81); }
+function POLICY() pure returns(ObjectType) { return toObjectType(90); }
+function CLAIM() pure returns(ObjectType) { return toObjectType(91); }
+function PAYOUT() pure returns(ObjectType) { return toObjectType(92); }
+
+/// @dev Converts the uint8 to a ObjectType.
 function toObjectType(uint256 objectType) pure returns(ObjectType) { return ObjectType.wrap(uint8(objectType)); }
 
 /// @dev Return the ObjectType zero (0)

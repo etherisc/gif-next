@@ -24,7 +24,7 @@ interface IRegisterable is
     
     function getNftId() external view returns(NftId nftId);
     function getParentNftId() external view returns(NftId parentNftId);
-    function getType() external view returns(ObjectType objectType);
+    function getType() external pure returns(ObjectType objectType);
     function getData() external view returns(bytes memory data);
     function isRegisterable() external pure returns(bool);
     function getInitialOwner() external view returns(address initialOwner);
@@ -43,13 +43,13 @@ interface IRegistry {
         address initialOwner;
     }
 
-    function TOKEN() external pure returns(ObjectType);
-    function INSTANCE() external pure returns(ObjectType);
-    function PRODUCT() external pure returns(ObjectType);
-    function ORACLE() external pure returns(ObjectType);
-    function POOL() external pure returns(ObjectType);
-    function POLICY() external pure returns(ObjectType);
-    function BUNDLE() external pure returns(ObjectType);
+    // function TOKEN() external pure returns(ObjectType);
+    // function INSTANCE() external pure returns(ObjectType);
+    // function PRODUCT() external pure returns(ObjectType);
+    // function ORACLE() external pure returns(ObjectType);
+    // function POOL() external pure returns(ObjectType);
+    // function POLICY() external pure returns(ObjectType);
+    // function BUNDLE() external pure returns(ObjectType);
 
     function register(address objectAddress) external returns(NftId nftId);
     function registerObjectForInstance(

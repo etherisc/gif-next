@@ -4,21 +4,15 @@ pragma solidity ^0.8.19;
 
 import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
+import {StateId} from "../../types/StateId.sol";
 import {NftId} from "../../types/NftId.sol";
 
 interface IComponent {
 
-    // TODO decide if enum or uints with constants (as in IRegistry.PRODUCT())
-    enum CState {
-        Undefined,
-        Active,
-        Locked
-    }
-
     // component dynamic info (static info kept in registry)
     struct ComponentInfo {
         NftId nftId;
-        CState state;
+        StateId state;
     }
 }
 

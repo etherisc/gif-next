@@ -6,10 +6,12 @@ import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
 import {IAccessComponentTypeRoles, IAccessCheckRole} from "../access/IAccess.sol";
 import {IInstance} from "../IInstance.sol";
 
+import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
 import {IPoolModule} from "../pool/IPoolModule.sol";
-import {ObjectType} from "../../types/ObjectType.sol";
+import {ObjectType, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
+import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 
 abstract contract ComponentModule is 
@@ -27,6 +29,8 @@ abstract contract ComponentModule is
 
     mapping(ObjectType cType => bytes32 role) private _componentOwnerRole;
 
+    // TODO maybe move this to Instance contract as internal variable?
+    LifecycleModule private _lifecycleModule;
     IComponentOwnerService private _componentOwnerService;
 
     modifier onlyComponentOwnerService() {
@@ -35,6 +39,7 @@ abstract contract ComponentModule is
     }
 
     constructor(address componentOwnerService) {
+        _lifecycleModule = LifecycleModule(address(this));
         _componentOwnerService = ComponentOwnerService(componentOwnerService);
     }
 
@@ -44,7 +49,8 @@ abstract contract ComponentModule is
         onlyComponentOwnerService
         returns(NftId nftId)
     {
-        bytes32 typeRole = getRoleForType(component.getType());
+        ObjectType objectType = component.getType();
+        bytes32 typeRole = getRoleForType(objectType);
         require(
             this.hasRole(typeRole, component.getInitialOwner()),
             "ERROR:CMP-004:TYPE_ROLE_MISSING");
@@ -53,10 +59,10 @@ abstract contract ComponentModule is
 
         _componentInfo[nftId] = ComponentInfo(
             nftId,
-            CState.Active);
+            _lifecycleModule.getInitialState(objectType));
 
         // special case product -> persist product - pool assignment
-        if(component.getType() == this.getRegistry().PRODUCT()) {
+        if(component.getType() == PRODUCT()) {
             IProductComponent product = IProductComponent(address(component));
             NftId poolNftId = product.getPoolNftId();
             require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
@@ -66,7 +72,7 @@ abstract contract ComponentModule is
 
             // add creation of productInfo
         }
-        else if(component.getType() == this.getRegistry().POOL()) {
+        else if(component.getType() == POOL()) {
             IPoolModule poolModule = IPoolModule(address(this));
             poolModule.createPoolInfo(
                 nftId,
@@ -110,9 +116,11 @@ abstract contract ComponentModule is
             nftId.gtz() && _componentInfo[nftId].nftId.eq(nftId),
             "ERROR:CMP-006:COMPONENT_UNKNOWN");
 
+        // TODO decide if state changes should have explicit functions and not
+        // just a generic setXYZInfo and implicit state transitions
+        ObjectType objectType = this.getRegistry().getInfo(nftId).objectType;
+        _lifecycleModule.checkAndLogTransition(nftId, objectType, _componentInfo[nftId].state, info.state);
         _componentInfo[nftId] = info;
-
-        // add logging
     }
 
     function getComponentInfo(NftId nftId)
@@ -165,13 +173,13 @@ abstract contract ComponentModule is
         view
         returns(bytes32 role)
     {
-        if(cType == this.getRegistry().PRODUCT()) {
+        if(cType == PRODUCT()) {
             return this.PRODUCT_OWNER_ROLE();
         }
-        if(cType == this.getRegistry().POOL()) {
+        if(cType == POOL()) {
             return this.POOL_OWNER_ROLE();
         }
-        if(cType == this.getRegistry().ORACLE()) {
+        if(cType == ORACLE()) {
             return this.ORACLE_OWNER_ROLE();
         }
 
@@ -225,9 +233,9 @@ contract ComponentOwnerService is
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(component.getNftId());
         require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
-        // TODO add state change validation
 
-        info.state = CState.Locked;
+        info.state = PAUSED();
+        // setComponentInfo checks for valid state changes
         instance.setComponentInfo(info);
     }
 
@@ -240,9 +248,9 @@ contract ComponentOwnerService is
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(component.getNftId());
         require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
-        // TODO state change validation
 
-        info.state = CState.Active;
+        info.state = ACTIVE();
+        // setComponentInfo checks for valid state changes
         instance.setComponentInfo(info);
     }
 

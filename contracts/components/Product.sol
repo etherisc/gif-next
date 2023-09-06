@@ -5,7 +5,7 @@ import {IProductService} from "../instance/product/IProductService.sol";
 import {Component} from "./Component.sol";
 import {IProductComponent} from "./IProduct.sol";
 import {NftId} from "../types/NftId.sol";
-import {ObjectType} from "../types/ObjectType.sol";
+import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
 import {Component} from "./Component.sol";
 
 
@@ -57,8 +57,8 @@ contract Product is
     }
 
     // from registerable
-    function getType() public view override returns(ObjectType) {
-        return _registry.PRODUCT();
+    function getType() public pure override returns(ObjectType) {
+        return PRODUCT();
     }
 
     // from registerable

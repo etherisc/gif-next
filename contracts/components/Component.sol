@@ -17,11 +17,6 @@ contract InstanceLinked is
         _instance = IInstance(instance);
     }
 
-    // function setInstance(address instance) public override {
-    //     require(address(_instance) == address(0), "ERROR:RGL-001:INSTANCE_ALREADY_SET");
-    //     _instance = IInstance(instance);
-    // }
-
     function getInstance() public view override returns(IInstance instance) {
         return _instance;
     }

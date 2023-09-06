@@ -6,21 +6,14 @@ import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../registr
 import {IInstance} from "../IInstance.sol";
 import {IProductService} from "../product/IProductService.sol";
 import {NftId} from "../../types/NftId.sol";
+import {StateId} from "../../types/StateId.sol";
 
 // TODO check if there is value to introuce IContract and let IPolicy derive from IContract
 interface IPolicy {
 
-    enum PolicyState {
-        Undefined,
-        Applied,
-        Rejected,
-        Active,
-        Closed
-    }
-
     struct PolicyInfo {
         NftId nftId;
-        PolicyState state; // applied, withdrawn, rejected, active, closed
+        StateId state; // applied, withdrawn, rejected, active, closed
 
         uint256 sumInsuredAmount;
         uint256 premiumAmount;

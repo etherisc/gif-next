@@ -5,18 +5,20 @@ import {Registerable} from "../registry/Registry.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IAccessModule, AccessModule} from "./access/Access.sol";
+import {LifecycleModule} from "./lifecycle/LifecycleModule.sol";
 import {ComponentModule} from "./component/ComponentModule.sol";
 import {ProductModule} from "./product/ProductService.sol";
 import {PolicyModule} from "./policy/PolicyModule.sol";
 import {PoolModule} from "./pool/PoolModule.sol";
 
 import {IInstance} from "./IInstance.sol";
-import {ObjectType} from "../types/ObjectType.sol";
+import {ObjectType, INSTANCE} from "../types/ObjectType.sol";
 import {NftId, toNftId} from "../types/NftId.sol";
 
 contract Instance is
     Registerable,
     AccessModule,
+    LifecycleModule, 
     ComponentModule, 
     PolicyModule, 
     PoolModule,
@@ -52,8 +54,8 @@ contract Instance is
     }
 
     // from registerable
-    function getType() external view override returns(ObjectType objectType) {
-        return _registry.INSTANCE();
+    function getType() external pure override returns(ObjectType objectType) {
+        return INSTANCE();
     }
 
     // from registerable

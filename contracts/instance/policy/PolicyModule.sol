@@ -5,9 +5,14 @@ pragma solidity ^0.8.19;
 // import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
 import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
 
+import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 import {IProductService} from "../product/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
+import {ObjectType, POLICY} from "../../types/ObjectType.sol";
+import {ACTIVE} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
+
+import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 
 abstract contract PolicyModule is
     IRegistryLinked,
@@ -19,6 +24,7 @@ abstract contract PolicyModule is
     mapping(NftId nftId => NftId bundleNftId) private _bundleForPolicy;
 
     IProductService private _productService;
+    LifecycleModule private _lifecycleModule;
 
     // TODO find a better place to avoid dupliation
     modifier onlyProductService2() {
@@ -27,6 +33,7 @@ abstract contract PolicyModule is
     }
 
     constructor(address productService) {
+        _lifecycleModule = LifecycleModule(address(this));
         _productService = IProductService(productService);
     }
 
@@ -52,12 +59,12 @@ abstract contract PolicyModule is
 
         nftId = this.getRegistry().registerObjectForInstance(
             productInfo.nftId,
-            this.getRegistry().POLICY(),
+            POLICY(),
             applicationOwner);
 
         _policyInfo[nftId] = PolicyInfo(
             nftId,
-            PolicyState.Applied,
+            _lifecycleModule.getInitialState(POLICY()),
             sumInsuredAmount,
             premiumAmount,
             lifetime,
@@ -81,9 +88,7 @@ abstract contract PolicyModule is
         PolicyInfo storage info = _policyInfo[nftId];
         info.activatedAt = block.timestamp;
         info.expiredAt = block.timestamp + info.lifetime;
-        info.state = PolicyState.Active;
-
-        // add logging
+        info.state = _lifecycleModule.checkAndLogTransition(nftId, POLICY(), info.state, ACTIVE());
     }
 
 
