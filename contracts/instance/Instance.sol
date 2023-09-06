@@ -11,6 +11,7 @@ import {PolicyModule} from "./policy/PolicyModule.sol";
 import {PoolModule} from "./pool/PoolModule.sol";
 
 import {IInstance} from "./IInstance.sol";
+import {ObjectType} from "../types/ObjectType.sol";
 import {NftId, toNftId} from "../types/NftId.sol";
 
 contract Instance is
@@ -51,7 +52,7 @@ contract Instance is
     }
 
     // from registerable
-    function getType() external view override returns(uint256 objectType) {
+    function getType() external view override returns(ObjectType objectType) {
         return _registry.INSTANCE();
     }
 

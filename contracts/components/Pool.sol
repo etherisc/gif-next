@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {ObjectType} from "../types/ObjectType.sol";
 import {IPoolComponent} from "./IPool.sol";
 import {Component} from "./Component.sol";
 
@@ -18,7 +19,7 @@ contract Pool is
     { }
 
     // from registerable
-    function getType() public view override returns(uint256) {
+    function getType() public view override returns(ObjectType) {
         return _registry.POOL();
     }
 

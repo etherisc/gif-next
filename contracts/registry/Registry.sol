@@ -3,8 +3,8 @@ pragma solidity ^0.8.19;
 
 import {IChainNft} from "./IChainNft.sol";
 import {IRegistry, IRegistryLinked, IRegisterable} from "./IRegistry.sol";
-import {NftId, toNftId} from "../types/NftId.sol";
-import {NftIdLib} from "../types/NftId.sol";
+import {NftId, toNftId, NftIdLib} from "../types/NftId.sol";
+import {ObjectType, toObjectType} from "../types/ObjectType.sol";
 
 contract RegistryLinked is IRegistryLinked {
 
@@ -64,6 +64,7 @@ abstract contract Registerable is
 
 contract Registry is IRegistry {
     using NftIdLib for NftId;
+
     string public constant EMPTY_URI = "";
 
     mapping(NftId nftId => RegistryInfo info) private _info;
@@ -77,13 +78,13 @@ contract Registry is IRegistry {
         _chainNft = IChainNft(chainNft);
     }
 
-    function TOKEN() public pure override returns(uint256) { return 30; }
-    function INSTANCE() public pure override returns(uint256) { return 40; }
-    function PRODUCT() public pure override returns(uint256) { return 50; }
-    function ORACLE() public pure override returns(uint256) { return 60; }
-    function POOL() public pure override returns(uint256) { return 70; }
-    function POLICY() public pure override returns(uint256) { return 80; }
-    function BUNDLE() public pure override returns(uint256) { return 90; }
+    function TOKEN() public pure override returns(ObjectType) { return toObjectType(30); }
+    function INSTANCE() public pure override returns(ObjectType) { return toObjectType(40); }
+    function PRODUCT() public pure override returns(ObjectType) { return toObjectType(50); }
+    function ORACLE() public pure override returns(ObjectType) { return toObjectType(60); }
+    function POOL() public pure override returns(ObjectType) { return toObjectType(70); }
+    function POLICY() public pure override returns(ObjectType) { return toObjectType(80); }
+    function BUNDLE() public pure override returns(ObjectType) { return toObjectType(90); }
 
     function register(address objectAddress) external override returns(NftId nftId) {
         require(_nftIdByAddress[objectAddress].eqz(), "ERROR:REG-002:ALREADY_REGISTERED");
@@ -121,7 +122,7 @@ contract Registry is IRegistry {
 
     function registerObjectForInstance(
         NftId parentNftId,
-        uint256 objectType,
+        ObjectType objectType,
         address initialOwner
     )
         external 

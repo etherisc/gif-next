@@ -9,6 +9,7 @@ import {IInstance} from "../IInstance.sol";
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
 import {IPoolModule} from "../pool/IPoolModule.sol";
+import {ObjectType} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 
 abstract contract ComponentModule is 
@@ -24,7 +25,7 @@ abstract contract ComponentModule is
     mapping(address cAddress => NftId nftId) private _nftIdByAddress;
     NftId[] private _nftIds;
 
-    mapping(uint256 cType => bytes32 role) private _componentOwnerRole;
+    mapping(ObjectType cType => bytes32 role) private _componentOwnerRole;
 
     IComponentOwnerService private _componentOwnerService;
 
@@ -159,7 +160,7 @@ abstract contract ComponentModule is
         return _nftIds.length;
     }
 
-    function getRoleForType(uint256 cType)
+    function getRoleForType(ObjectType cType)
         public
         view
         returns(bytes32 role)
