@@ -79,20 +79,34 @@ A policy is expired for block.timestamp >= expiredAt
 
 To discuss: 
 
-* Should 'Closed' be less explicit using a closedAt state variable?
+* Should 'Closed' be less explicit using a closedAt state variable? 
+* Or even more lighweight? ie. block.timestamp >= expiredAt and no open claims
 
 Valid state transitions:
 
-* Applied -> Active
+* Applied -> Revoked
 * Applied -> Declined
-* Active -> Closed
+* Applied -> Active
+* Active -> Closed (needs to be expired)
 
 ### Claim State Machine
 
-GIF V2: enum ClaimState {Applied, Confirmed, Declined, Closed}
-TODO
+Valid states
+* Applied (initial state)
+* Confirmed
+* Declined (final state)
+* Closed (final state)
+
+Valid state transitions:
+* Applied -> Confirmed
+* Applied -> Declined
+* Confirmed -> Closed
 
 ### Payout State Machine
 
-GIF V2: enum PayoutState {Expected, PaidOut}
-TODO
+Valid states
+* Expected
+* PaidOut
+
+Valid state transitions:
+* Expected -> PaidOut
