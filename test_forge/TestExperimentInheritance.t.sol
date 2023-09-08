@@ -7,9 +7,8 @@ import {console} from "../lib/forge-std/src/Script.sol";
 import {A} from "../contracts/experiment/inheritance/A.sol";
 
 contract TestExperimentInheritance is Test {
-
     A a;
-    
+
     function setUp() external {
         a = new A();
     }

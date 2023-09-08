@@ -122,9 +122,9 @@ contract DeployAll is Script {
 
         // transfer ownerships
         ChainNft nft = ChainNft(registry.getNftAddress());
-        nft.safeTransferFrom(tx.origin, instanceOwner, NftIdLib.toInt(instanceNftId));
-        nft.safeTransferFrom(tx.origin, productOwner, NftIdLib.toInt(productNftId));
-        nft.safeTransferFrom(tx.origin, poolOwner, NftIdLib.toInt(poolNftId));
+        nft.safeTransferFrom(tx.origin, instanceOwner, instanceNftId.toInt());
+        nft.safeTransferFrom(tx.origin, productOwner, productNftId.toInt());
+        nft.safeTransferFrom(tx.origin, poolOwner, poolNftId.toInt());
     }
 
 }

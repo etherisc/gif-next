@@ -36,7 +36,9 @@ contract TestComponentLockUnlock is
         vm.prank(productOwner);
         componentOwnerService.lock(product);
 
-        IComponent.ComponentInfo memory info_after = instance.getComponentInfo(product.getNftId());
+        IComponent.ComponentInfo memory info_after = instance.getComponentInfo(
+            product.getNftId()
+        );
         assertNftId(info_before.nftId, info_after.nftId, "product id not same");
         assertEq(info_after.state.toInt(), PAUSED().toInt(), "component state not paused");
     }
@@ -48,13 +50,16 @@ contract TestComponentLockUnlock is
     }
 
     function testComponentUnlockOwner() public {
-
         vm.startPrank(productOwner);
         componentOwnerService.lock(product);
-        IComponent.ComponentInfo memory info_before = instance.getComponentInfo(product.getNftId());
+        IComponent.ComponentInfo memory info_before = instance.getComponentInfo(
+            product.getNftId()
+        );
 
         componentOwnerService.unlock(product);
-        IComponent.ComponentInfo memory info_after = instance.getComponentInfo(product.getNftId());
+        IComponent.ComponentInfo memory info_after = instance.getComponentInfo(
+            product.getNftId()
+        );
         vm.stopPrank();
 
         assertNftId(info_before.nftId, info_after.nftId, "product id not same");

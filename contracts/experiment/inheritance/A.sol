@@ -35,22 +35,19 @@ a.setC(20);
  */
 
 contract AShared is ISharedA {
-
     uint256 private _x;
 
     constructor() {
         _x = 42;
     }
 
-    function getA() external view override returns(uint256) { return _x; }
-    function setA(uint256 newA) external override { _x = newA; }
+    function getA() external view override returns (uint256) {
+        return _x;
+    }
+
+    function setA(uint256 newA) external override {
+        _x = newA;
+    }
 }
 
-contract A is
-    AShared,
-    B,
-    C,
-    IA
-{
-
-}
+contract A is AShared, B, C, IA {}

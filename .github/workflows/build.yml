@@ -6,6 +6,8 @@ on:
     tags: '*'
   pull_request:
     branches: [main, develop]
+  schedule:
+    - cron: "33 3 * * 1"
 
 jobs:
   build_hardhat:
@@ -26,7 +28,7 @@ jobs:
           node-version: '18'
 
       - name: NPM install globals
-        run:  npm install -g hardhat-shorthand
+        run:  npm install -g hardhat-shorthand solhint
       
       - name: NPM install
         run: npm install
@@ -43,6 +45,9 @@ jobs:
           name: artifacts
           path: |
             artifacts
+
+      - name: Run linter (prettier check and solhint)
+        run: npm run lint
 
   build_foundry:
     name: Build and test (Foundry)

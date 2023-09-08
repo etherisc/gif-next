@@ -8,10 +8,11 @@ import {ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 
 contract TestComponentInfo is TestGifBase {
-
-
     function testProductInfo() public {
-        IComponent.ComponentInfo memory info = instance.getComponentInfo(product.getNftId());
+        IComponent.ComponentInfo memory info = instance.getComponentInfo(
+            product.getNftId()
+        );
+        // solhint-disable-next-line
         console.log("product (nftId, state)");
         console.log(info.nftId.toInt(), info.state.toInt());
 
@@ -20,7 +21,10 @@ contract TestComponentInfo is TestGifBase {
     }
 
     function testPoolInfo() public {
-        IComponent.ComponentInfo memory info = instance.getComponentInfo(pool.getNftId());
+        IComponent.ComponentInfo memory info = instance.getComponentInfo(
+            pool.getNftId()
+        );
+        // solhint-disable-next-line
         console.log("pool (nftId, state)");
         console.log(info.nftId.toInt(), info.state.toInt());
 

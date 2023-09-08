@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-
 import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
 import {StateId} from "../../types/StateId.sol";
@@ -16,74 +15,54 @@ interface IComponent {
     }
 }
 
-
 interface IInstanceLinked {
     // function setInstance(address instance) external;
-    function getInstance() external view returns(IInstance instance);
+    function getInstance() external view returns (IInstance instance);
 }
 
+interface IComponentContract is IRegisterable, IInstanceLinked, IComponent {}
 
-interface IComponentContract is
-    IRegisterable,
-    IInstanceLinked,
-    IComponent
-{ }
+interface IComponentOwnerService is IRegistryLinked {
+    function register(
+        IComponentContract component
+    ) external returns (NftId nftId);
 
-
-interface IComponentOwnerService is IRegistryLinked{
-
-    function register(IComponentContract component) external returns(NftId nftId);
     function lock(IComponentContract component) external;
+
     function unlock(IComponentContract component) external;
 }
 
+interface IComponentModule is IOwnable, IRegistryLinked, IComponent {
+    function registerComponent(
+        IComponentContract component
+    ) external returns (NftId nftId);
 
-interface IComponentModule is
-    IOwnable,
-    IRegistryLinked,
-    IComponent
-{
+    function setComponentInfo(
+        ComponentInfo memory info
+    ) external returns (NftId componentNftId);
 
-    function registerComponent(IComponentContract component)
-        external
-        returns(NftId nftId);
+    function getComponentInfo(
+        NftId nftId
+    ) external view returns (ComponentInfo memory info);
 
-    function setComponentInfo(ComponentInfo memory info)
-        external
-        returns(NftId componentNftId);
+    function getComponentOwner(
+        NftId nftId
+    ) external view returns (address owner);
 
-    function getComponentInfo(NftId nftId)
-        external
-        view
-        returns(ComponentInfo memory info);
+    function getComponentId(
+        address componentAddress
+    ) external view returns (NftId nftId);
 
-    function getComponentOwner(NftId nftId)
-        external
-        view
-        returns(address owner);
+    function getComponentId(uint256 idx) external view returns (NftId nftId);
 
-    function getComponentId(address componentAddress)
-        external
-        view
-        returns(NftId nftId);
+    function getPoolNftId(
+        NftId productNftId
+    ) external view returns (NftId poolNftId);
 
-    function getComponentId(uint256 idx)
-        external
-        view
-        returns(NftId nftId);
-
-    function getPoolNftId(NftId productNftId)
-        external
-        view
-        returns(NftId poolNftId);
-
-    function components()
-        external
-        view
-        returns(uint256 numberOfCompnents);
+    function components() external view returns (uint256 numberOfCompnents);
 
     function getComponentOwnerService()
         external
         view
-        returns(IComponentOwnerService);
+        returns (IComponentOwnerService);
 }

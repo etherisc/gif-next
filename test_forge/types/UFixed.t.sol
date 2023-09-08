@@ -10,7 +10,7 @@ contract UFixedTest is Test {
     function test_testDecimals() public {
         assertEq(UFixedMathLib.decimals(), 18);
     }
-    
+
     function test_op_equal() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
         UFixed b = UFixed.wrap(1 * 10 ** 18);
@@ -49,7 +49,9 @@ contract UFixedTest is Test {
         UFixedMathLib.itof(1, -19);
 
         // largest possible value -- 10 ** 46 (64 - EXP(18))
-        assertTrue(UFixedMathLib.itof(1, 46) == UFixedMathLib.itof(1 * 10 ** 46));
+        assertTrue(
+            UFixedMathLib.itof(1, 46) == UFixedMathLib.itof(1 * 10 ** 46)
+        );
         // one order of magnitude larger reverts
         vm.expectRevert("ERROR:FM-011:EXPONENT_TOO_LARGE");
         UFixedMathLib.itof(1, 64 - 18 + 1);
@@ -76,7 +78,6 @@ contract UFixedTest is Test {
         assertTrue(c.ftoi(UFixedMathLib.Rounding.Down) == 0);
         assertTrue(c.ftoi(UFixedMathLib.Rounding.HalfUp) == 1);
     }
-    
 
     function test_op_add() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
@@ -105,7 +106,7 @@ contract UFixedTest is Test {
         UFixed d = UFixed.wrap(3 * 10 ** 18);
         assertTrue((c - b) == a);
         assertTrue(c.sub(b) == a);
-        
+
         assertTrue((d - c) == a);
         assertTrue(d.sub(c) == a);
         assertFalse((d - b) == b);
@@ -185,7 +186,7 @@ contract UFixedTest is Test {
     function test_op_mul_zero() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
         UFixed b = UFixed.wrap(1 * 10 ** 18);
-    
+
         // 1 * 0 = 0
         UFixed z = UFixed.wrap(0 * 10 ** 18);
         assertTrue((a * z) == z);

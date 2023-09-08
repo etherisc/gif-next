@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import { Test } from  "../../lib/forge-std/src/Test.sol";
+import {Test} from "../../lib/forge-std/src/Test.sol";
 import "../../contracts/types/Timestamp.sol";
 
 contract TimestampTest is Test {
@@ -195,5 +195,4 @@ contract TimestampTest is Test {
         assertFalse(ts2.ne(ts2));
         assertFalse(ts3.ne(ts3));
     }
-
 }

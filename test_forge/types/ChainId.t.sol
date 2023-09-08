@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import { Test } from  "../../lib/forge-std/src/Test.sol";
+import {Test} from "../../lib/forge-std/src/Test.sol";
 import "../../contracts/types/ChainId.sol";
 
 contract ChainIdTest is Test {
@@ -10,7 +10,7 @@ contract ChainIdTest is Test {
     ChainId chainId1;
     ChainId chainId2;
     ChainId ChainIdZero;
-    
+
     function setUp() public {
         chainId1 = toChainId(1);
         chainId2 = toChainId(2);
@@ -80,5 +80,4 @@ contract ChainIdTest is Test {
         assertTrue(neChainId(chainId1, ChainIdZero));
         assertTrue(neChainId(chainId2, ChainIdZero));
     }
-    
 }

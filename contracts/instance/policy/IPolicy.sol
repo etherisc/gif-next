@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-
 import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
 import {IProductService} from "../product/IProductService.sol";
@@ -14,11 +13,9 @@ interface IPolicy {
     struct PolicyInfo {
         NftId nftId;
         StateId state; // applied, withdrawn, rejected, active, closed
-
         uint256 sumInsuredAmount;
         uint256 premiumAmount;
         uint256 lifetime; // activatedAt + lifetime >= expiredAt
-
         uint256 createdAt;
         uint256 activatedAt; // time of underwriting
         uint256 expiredAt; // no new claims
@@ -26,12 +23,7 @@ interface IPolicy {
     }
 }
 
-interface IPolicyModule is
-    IOwnable,
-    IRegistryLinked,
-    IPolicy
-{
-
+interface IPolicyModule is IOwnable, IRegistryLinked, IPolicy {
     function createApplication(
         IRegistry.RegistryInfo memory productInfo,
         address applicationOwner,
@@ -39,21 +31,15 @@ interface IPolicyModule is
         uint256 premiumAmount,
         uint256 lifetime,
         NftId bundleNftId
-    )
-        external
-        returns(NftId nftId);
+    ) external returns (NftId nftId);
 
-    function activate(NftId nftId)
-        external;
+    function activate(NftId nftId) external;
 
-    function getBundleNftForPolicy(NftId nftId)
-        external
-        view
-        returns(NftId bundleNft);
+    function getBundleNftForPolicy(
+        NftId nftId
+    ) external view returns (NftId bundleNft);
 
-    function getPolicyInfo(NftId nftId)
-        external
-        view
-        returns(PolicyInfo memory info);
-
+    function getPolicyInfo(
+        NftId nftId
+    ) external view returns (PolicyInfo memory info);
 }

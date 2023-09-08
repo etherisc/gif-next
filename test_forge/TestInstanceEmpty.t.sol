@@ -14,11 +14,11 @@ import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
 
 contract TestInstanceEmpty is Test {
     using NftIdLib for NftId;
-    
+
     IRegistry registry;
     Instance instance;
     address instanceOwner = makeAddr("instanceOwner");
-    
+
     function setUp() external {
         DeployInstance di = new DeployInstance();
         instance = di.run(instanceOwner);
@@ -32,18 +32,31 @@ contract TestInstanceEmpty is Test {
     function testRegistryNftId() public {
         NftId nftId = registry.getNftId(address(instance));
         assertNftId(nftId, toNftId(23133705), "instance getNftId not 23133705");
-        assertNftId(nftId, instance.getNftId(), "registry and instance nft id differ");
+        assertNftId(
+            nftId,
+            instance.getNftId(),
+            "registry and instance nft id differ"
+        );
     }
 
     function testInstanceOwner() public {
         NftId instanceId = registry.getNftId(address(instance));
-        assertEq(registry.getOwner(instanceId), instanceOwner, "unexpected instance owner");
+        assertEq(
+            registry.getOwner(instanceId),
+            instanceOwner,
+            "unexpected instance owner"
+        );
     }
 
-    function assertNftId(NftId actualNftId, NftId expectedNftId, string memory message) public {
-        if(block.chainid == 31337) {
+    function assertNftId(
+        NftId actualNftId,
+        NftId expectedNftId,
+        string memory message
+    ) public {
+        if (block.chainid == 31337) {
             assertEq(actualNftId.toInt(), expectedNftId.toInt(), message);
         } else {
+            // solhint-disable-next-line
             console.log("chain not anvil, skipping assertNftId");
         }
     }

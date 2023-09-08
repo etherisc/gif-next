@@ -50,6 +50,8 @@ contract TestGifBase is Test {
         if(block.chainid == 31337) {
             assertEq(actualNftId.toInt(), expectedNftId.toInt(), message);
         } else {
+            // solhint ignore
+            // solhint-disable-next-line
             console.log("chain not anvil, skipping assertNftId");
         }
     }
@@ -59,6 +61,7 @@ contract TestGifBase is Test {
         if(block.chainid == 31337) {
             assertTrue(nftId.eqz(), message);
         } else {
+            // solhint-disable-next-line
             console.log("chain not anvil, skipping assertNftId");
         }
     }

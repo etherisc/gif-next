@@ -5,18 +5,11 @@ import {ObjectType, POOL} from "../types/ObjectType.sol";
 import {IPoolComponent} from "./IPool.sol";
 import {Component} from "./Component.sol";
 
-
-contract Pool is
-    Component,
-    IPoolComponent
-{
-
+contract Pool is Component, IPoolComponent {
     constructor(
-        address registry, 
+        address registry,
         address instance
-    )
-        Component(registry, instance)
-    { }
+    ) Component(registry, instance) {}
 
     // from registerable
     function getType() public pure override returns(ObjectType) {
@@ -24,7 +17,7 @@ contract Pool is
     }
 
     // from registerable
-    function getData() external view override returns(bytes memory data) {
+    function getData() external view override returns (bytes memory data) {
         return bytes(abi.encode(getInstance().getNftId()));
     }
 }

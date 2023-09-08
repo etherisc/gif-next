@@ -23,20 +23,25 @@ a.toInt() == x.toInt() // -> no error
 type TypeA is uint248;
 
 // type bindings
-using {
-    eqTypeA as ==,
-    neTypeA as !=,
-    TypeALib.toInt
-} for TypeA global;
+using {eqTypeA as ==, neTypeA as !=, TypeALib.toInt} for TypeA global;
 
 // general pure free functions
-function toTypeA(uint256 typeA) pure returns(TypeA) { return TypeA.wrap(uint248(typeA)); }
+function toTypeA(uint256 typeA) pure returns (TypeA) {
+    return TypeA.wrap(uint248(typeA));
+}
 
 // pure free functions for operators
-function eqTypeA(TypeA a, TypeA b) pure returns(bool isSame) { return TypeA.unwrap(a) == TypeA.unwrap(b); }
-function neTypeA(TypeA a, TypeA b) pure returns(bool isDifferent) { return TypeA.unwrap(a) != TypeA.unwrap(b); }
+function eqTypeA(TypeA a, TypeA b) pure returns (bool isSame) {
+    return TypeA.unwrap(a) == TypeA.unwrap(b);
+}
+
+function neTypeA(TypeA a, TypeA b) pure returns (bool isDifferent) {
+    return TypeA.unwrap(a) != TypeA.unwrap(b);
+}
 
 // library functions that operate on user defined type
 library TypeALib {
-    function toInt(TypeA typeA) internal pure returns(uint256) { return uint256(TypeA.unwrap(typeA)); }
+    function toInt(TypeA typeA) internal pure returns (uint256) {
+        return uint256(TypeA.unwrap(typeA));
+    }
 }
