@@ -43,6 +43,7 @@ interface IRegistry {
         address initialOwner;
     }
 
+    // TODO cleanup
     // function TOKEN() external pure returns(ObjectType);
     // function INSTANCE() external pure returns(ObjectType);
     // function PRODUCT() external pure returns(ObjectType);

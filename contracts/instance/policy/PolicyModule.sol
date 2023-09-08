@@ -23,8 +23,8 @@ abstract contract PolicyModule is
     mapping(NftId nftId => PolicyInfo info) private _policyInfo;
     mapping(NftId nftId => NftId bundleNftId) private _bundleForPolicy;
 
-    IProductService private _productService;
     LifecycleModule private _lifecycleModule;
+    IProductService private _productService;
 
     // TODO find a better place to avoid dupliation
     modifier onlyProductService2() {
