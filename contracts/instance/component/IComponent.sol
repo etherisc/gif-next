@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
 import {StateId} from "../../types/StateId.sol";
@@ -20,7 +22,14 @@ interface IInstanceLinked {
     function getInstance() external view returns (IInstance instance);
 }
 
-interface IComponentContract is IRegisterable, IInstanceLinked, IComponent {}
+interface IComponentContract is
+    IRegisterable,
+    IInstanceLinked,
+    IComponent
+{
+    function getWalletAddress() external view returns(address walletAddress);
+    function getToken() external view returns(IERC20 token);
+}
 
 interface IComponentOwnerService is IRegistryLinked {
     function register(

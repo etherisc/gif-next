@@ -15,8 +15,9 @@ contract Product is Component, IProductComponent {
     constructor(
         address registry,
         address instance,
+        address token,
         address pool
-    ) Component(registry, instance) {
+    ) Component(registry, instance, token) {
         _productService = _instance.getProductService();
         _pool = pool;
     }

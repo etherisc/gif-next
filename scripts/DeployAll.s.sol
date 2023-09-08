@@ -12,6 +12,7 @@ import {ComponentOwnerService} from "../contracts/instance/component/ComponentMo
 import {ProductService} from "../contracts/instance/product/ProductService.sol";
 import {TestProduct} from "../test_forge/mock/TestProduct.sol";
 import {TestPool} from "../test_forge/mock/TestPool.sol";
+import {USDC} from "../test_forge/mock/Usdc.sol";
 
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 
@@ -38,9 +39,11 @@ contract DeployAll is Script {
 
         vm.startBroadcast();
         (, Registry registry) = _deployRegistry();
-        Instance instance = _deployInstance(registry);
-        TestPool pool = _deployPool(registry, instance);
-        TestProduct product = _deployProduct(registry, instance, pool);
+        (
+            Instance instance,
+            TestPool pool,
+            TestProduct product
+        ) = _deployInstancePoolAndProduct(registry);
         _registerAndTransfer(registry, instance, product, pool, instanceOwner, productOwner, poolOwner);
         vm.stopBroadcast();
 
@@ -50,6 +53,25 @@ contract DeployAll is Script {
             product,
             pool
         );
+    }
+
+    function _deployInstancePoolAndProduct(Registry registry)
+        internal
+        returns(
+            Instance instance,
+            TestPool pool,
+            TestProduct product
+        )
+    {
+        instance = _deployInstance(registry);
+        USDC token = _deployToken();
+        pool = _deployPool(registry, instance, token);
+        product = _deployProduct(registry, instance, token, pool);
+    }
+
+    function _deployToken() internal returns(USDC token) {
+        token = new USDC();
+        console.log("usdc token deployed at", address(token));
     }
 
     function _deployRegistry()
@@ -82,13 +104,13 @@ contract DeployAll is Script {
         console.log("instance deployed at", address(instance));
     }
 
-    function _deployPool(Registry registry, Instance instance) internal returns(TestPool pool) {
-        pool = new TestPool(address(registry), address(instance));
+    function _deployPool(Registry registry, Instance instance, USDC token) internal returns(TestPool pool) {
+        pool = new TestPool(address(registry), address(instance), address(token));
         console.log("pool deployed at", address(pool));
     }
 
-    function _deployProduct(Registry registry, Instance instance, TestPool pool) internal returns(TestProduct product) {
-        product = new TestProduct(address(registry), address(instance), address(pool));
+    function _deployProduct(Registry registry, Instance instance, USDC token, TestPool pool) internal returns(TestProduct product) {
+        product = new TestProduct(address(registry), address(instance), address(token), address(pool));
         console.log("product deployed at", address(product));
     }
 

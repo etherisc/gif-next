@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import {IRegistry, IRegisterable, IRegistryLinked} from "../registry/IRegistry.sol";
 import {Registerable} from "../registry/Registry.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -26,11 +28,21 @@ abstract contract Component is
     IComponentContract
 {
     address private _deployer;
+    address private _wallet;
+    IERC20 private _token;
 
     constructor(
         address registry,
-        address instance
-    ) Registerable(registry) InstanceLinked(instance) {}
+        address instance,
+        address token
+
+    )
+        Registerable(registry)
+        InstanceLinked(instance)
+    {
+        _wallet = address(this);
+        _token = IERC20(token);
+    }
 
     // from registerable
     function register() public override returns (NftId componentId) {
@@ -52,4 +64,13 @@ abstract contract Component is
     function getParentNftId() public view override returns (NftId) {
         return getInstance().getNftId();
     }
+
+    function getWalletAddress() external view returns(address walletAddress) {
+        return _wallet;
+    }
+
+    function getToken() external view returns(IERC20 token) {
+        return _token;
+    }
+
 }

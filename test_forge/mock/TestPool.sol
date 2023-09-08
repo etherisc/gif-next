@@ -6,8 +6,8 @@ import {Pool} from "../../contracts/components/Pool.sol";
 
 contract TestPool is Pool {
 
-    constructor(address registry, address instance)
-        Pool(registry, instance)
+    constructor(address registry, address instance, address token)
+        Pool(registry, instance, token)
     {}
 
 }

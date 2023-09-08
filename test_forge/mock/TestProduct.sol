@@ -6,8 +6,8 @@ import {NftId, toNftId} from "../../contracts/types/NftId.sol";
 
 contract TestProduct is Product {
 
-    constructor(address registry, address instance, address pool)
-        Product(registry, instance, pool)
+    constructor(address registry, address instance, address token, address pool)
+        Product(registry, instance, token, pool)
     {}
 
     function applyForPolicy(
