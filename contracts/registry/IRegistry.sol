@@ -22,7 +22,7 @@ interface IRegisterable is IOwnable, IRegistryLinked {
 
     function getParentNftId() external view returns (NftId parentNftId);
 
-    function getType() external view returns (uint256 objectType);
+    function getType() external view returns (ObjectType objectType);
 
     function getData() external view returns (bytes memory data);
 

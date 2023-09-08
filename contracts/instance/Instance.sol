@@ -48,7 +48,7 @@ contract Instance is
     }
 
     // from registerable
-    function getParentNftId() public view override returns (NftId) {
+    function getParentNftId() public pure override returns (NftId) {
         // TODO  add self registry and exchange 0 for_registry.getNftId();
         // define parent tree for all registerables
         // eg 0 <- chain(mainnet) <- global registry <- chain registry <- instance <- component <- policy/bundle
@@ -61,7 +61,7 @@ contract Instance is
     }
 
     // from registerable
-    function getData() external view override returns (bytes memory data) {
+    function getData() external pure override returns (bytes memory data) {
         return bytes(abi.encode(0));
     }
 }

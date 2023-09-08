@@ -49,9 +49,9 @@ abstract contract PolicyModule is
     ) external override onlyProductService2 returns (NftId nftId) {
         // TODO add parameter validation
         if (bundleNftId.gtz()) {
-            IRegistry.RegistryInfo memory bundleInfo = this
-                .getRegistry()
-                .getInfo(bundleNftId);
+            // IRegistry.RegistryInfo memory bundleInfo = this
+            //     .getRegistry()
+            //     .getInfo(bundleNftId);
             // IRegistry.RegistryInfo memory poolInfo = this.getRegistry().getInfo(bundleInfo.parentNftId);
         }
 
