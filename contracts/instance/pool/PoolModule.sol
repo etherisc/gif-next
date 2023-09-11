@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {IOwnable, IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
 import {IProductService} from "../product/IProductService.sol";
 import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
+import {ITreasuryModule} from "../treasury/ITreasury.sol";
 import {IPoolModule} from "./IPoolModule.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 
@@ -11,9 +12,12 @@ abstract contract PoolModule is IPoolModule {
     using NftIdLib for NftId;
 
     uint256 public constant INITIAL_CAPITAL = 10000 * 10 ** 6;
+    uint256 public constant INITIAL_LOCKED_CAPITAL = 0;
 
     mapping(NftId nftId => PoolInfo info) private _poolInfo;
 
+    IPolicyModule private _policyModule;
+    ITreasuryModule private _treasuryModule;
     IProductService private _productService;
 
     modifier onlyProductService() {
@@ -25,41 +29,46 @@ abstract contract PoolModule is IPoolModule {
     }
 
     constructor(address productService) {
+        _policyModule = IPolicyModule(address(this));
+        _treasuryModule = ITreasuryModule(address(this));
         _productService = IProductService(productService);
     }
 
-    function createPoolInfo(
-        NftId nftId,
-        address wallet,
-        address token
-    ) public override {
+    function registerPool(NftId nftId)
+        public
+        override
+    {
         require(_poolInfo[nftId].nftId.eqz(), "ERROR:PL-001:ALREADY_CREATED");
 
         _poolInfo[nftId] = PoolInfo(
             nftId,
-            wallet,
-            token,
             INITIAL_CAPITAL,
-            0 // locked capital
+            INITIAL_LOCKED_CAPITAL
         );
     }
 
     function underwrite(
-        NftId poolNftId,
-        NftId policyNftId
-    ) external override onlyProductService {
-        PoolInfo storage poolInfo = _poolInfo[poolNftId];
-        require(poolInfo.nftId == poolNftId, "ERROR:PL-002:POOL_UNKNOWN");
+        NftId policyNftId,
+        NftId productNftId
+    )
+        external
+        override
+        onlyProductService
+    {
+        IPolicy.PolicyInfo memory policyInfo = _policyModule.getPolicyInfo(policyNftId);
+        require(policyInfo.nftId == policyNftId, "ERROR:PL-002:POLICY_UNKNOWN");
 
-        IPolicyModule policyModule = IPolicyModule(address(this));
-        IPolicy.PolicyInfo memory policyInfo = policyModule.getPolicyInfo(
-            policyNftId
-        );
+        ITreasuryModule.ProductSetup memory product = _treasuryModule.getProductSetup(productNftId);
+        require(product.productNftId == productNftId, "ERROR:PL-003:PRODUCT_SETUP_MISSING");
+
+        NftId poolNftId = product.poolNftId;
+        PoolInfo storage poolInfo = _poolInfo[poolNftId];
+        require(poolInfo.nftId == poolNftId, "ERROR:PL-004:POOL_UNKNOWN");
 
         require(
             poolInfo.capital - poolInfo.lockedCapital >=
                 policyInfo.sumInsuredAmount,
-            "ERROR:PL-003:CAPACITY_TOO_LOW"
+            "ERROR:PL-005:CAPACITY_TOO_LOW"
         );
 
         poolInfo.lockedCapital += policyInfo.sumInsuredAmount;

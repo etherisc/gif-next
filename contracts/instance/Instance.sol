@@ -10,6 +10,7 @@ import {ComponentModule} from "./component/ComponentModule.sol";
 import {ProductModule} from "./product/ProductService.sol";
 import {PolicyModule} from "./policy/PolicyModule.sol";
 import {PoolModule} from "./pool/PoolModule.sol";
+import {TreasuryModule} from "./treasury/TreasuryModule.sol";
 
 import {IInstance} from "./IInstance.sol";
 import {ObjectType, INSTANCE} from "../types/ObjectType.sol";
@@ -23,6 +24,7 @@ contract Instance is
     PolicyModule, 
     PoolModule,
     ProductModule,
+    TreasuryModule,
     IInstance
 {
     constructor(

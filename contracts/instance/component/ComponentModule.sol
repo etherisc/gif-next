@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import {RegistryLinked} from "../../registry/Registry.sol";
 import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
 import {IAccessComponentTypeRoles, IAccessCheckRole} from "../access/IAccess.sol";
 import {IInstance} from "../IInstance.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
+import {TreasuryModule} from "../treasury/TreasuryModule.sol";
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
+import {IPoolComponent} from "../../components/IPool.sol";
 import {IPoolModule} from "../pool/IPoolModule.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
-import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
+import {Fee, zeroFee} from "../../types/Fee.sol";
 
 abstract contract ComponentModule is
     IRegistryLinked,
@@ -23,7 +28,6 @@ abstract contract ComponentModule is
     using NftIdLib for NftId;
 
     mapping(NftId nftId => ComponentInfo info) private _componentInfo;
-    mapping(NftId nftId => NftId poolNftId) private _poolNftIdForProduct;
     mapping(address cAddress => NftId nftId) private _nftIdByAddress;
     NftId[] private _nftIds;
 
@@ -31,6 +35,8 @@ abstract contract ComponentModule is
 
     // TODO maybe move this to Instance contract as internal variable?
     LifecycleModule private _lifecycleModule;
+    TreasuryModule private _treasuryModule;
+    IPoolModule private _poolModule;
     IComponentOwnerService private _componentOwnerService;
 
     modifier onlyComponentOwnerService() {
@@ -42,7 +48,10 @@ abstract contract ComponentModule is
     }
 
     constructor(address componentOwnerService) {
-        _lifecycleModule = LifecycleModule(address(this));
+        address componentAddress = address(this);
+        _lifecycleModule = LifecycleModule(componentAddress);
+        _treasuryModule = TreasuryModule(componentAddress);
+        _poolModule = IPoolModule(componentAddress);
         _componentOwnerService = ComponentOwnerService(componentOwnerService);
     }
 
@@ -60,41 +69,53 @@ abstract contract ComponentModule is
         );
 
         nftId = this.getRegistry().register(address(component));
+        IERC20 token = component.getToken();
+        address wallet = component.getWallet();
 
+        // create component info
         _componentInfo[nftId] = ComponentInfo(
             nftId,
-            _lifecycleModule.getInitialState(objectType));
+            _lifecycleModule.getInitialState(objectType),
+            token);
 
-        // special case product -> persist product - pool assignment
+        // component type specific registration actions
         if(component.getType() == PRODUCT()) {
             IProductComponent product = IProductComponent(address(component));
             NftId poolNftId = product.getPoolNftId();
             require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
-            // add more validation (type, token, ...)
+            // validate pool token and product token are same
 
-            _poolNftIdForProduct[nftId] = poolNftId;
-
-            // add creation of productInfo
+            // register with tresury
+            // implement and add validation
+            NftId distributorNftId = zeroNftId();
+            _treasuryModule.registerProduct(
+                nftId, 
+                distributorNftId, 
+                poolNftId, 
+                token, 
+                wallet, 
+                product.getPolicyFee(),
+                product.getProcessingFee()); 
         }
         else if(component.getType() == POOL()) {
-            IPoolModule poolModule = IPoolModule(address(this));
-            poolModule.createPoolInfo(
-                nftId,
-                address(component), // set pool as its wallet
-                address(0) // don't deal with token yet
-            );
+            IPoolComponent pool = IPoolComponent(address(component));
+
+            // register with pool
+            _poolModule.registerPool(nftId);
+
+            // register with tresury
+            _treasuryModule.registerPool(
+                nftId, 
+                wallet, 
+                pool.getStakingFee(),
+                pool.getPerformanceFee()); 
         }
+        // TODO add distribution
 
         _nftIdByAddress[address(component)] = nftId;
         _nftIds.push(nftId);
 
-        // add logging
-    }
-
-    function getPoolNftId(
-        NftId productNftId
-    ) external view override returns (NftId poolNftId) {
-        poolNftId = _poolNftIdForProduct[productNftId];
+        // TODO add loggingx
     }
 
     function getComponentOwnerService()
@@ -117,6 +138,7 @@ abstract contract ComponentModule is
 
         // TODO decide if state changes should have explicit functions and not
         // just a generic setXYZInfo and implicit state transitions
+        // when in doubt go for the explicit approach ...
         ObjectType objectType = this.getRegistry().getInfo(nftId).objectType;
         _lifecycleModule.checkAndLogTransition(nftId, objectType, _componentInfo[nftId].state, info.state);
         _componentInfo[nftId] = info;

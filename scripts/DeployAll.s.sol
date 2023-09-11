@@ -15,6 +15,8 @@ import {TestPool} from "../test_forge/mock/TestPool.sol";
 import {USDC} from "../test_forge/mock/Usdc.sol";
 
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
+import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";
+import {Fee, toFee} from "../contracts/types/Fee.sol";
 
 contract DeployAll is Script {
 
@@ -110,7 +112,8 @@ contract DeployAll is Script {
     }
 
     function _deployProduct(Registry registry, Instance instance, USDC token, TestPool pool) internal returns(TestProduct product) {
-        product = new TestProduct(address(registry), address(instance), address(token), address(pool));
+        Fee memory policyFee = toFee(UFixedMathLib.itof(1, -1), 0);
+        product = new TestProduct(address(registry), address(instance), address(token), address(pool), policyFee);
         console.log("product deployed at", address(product));
     }
 

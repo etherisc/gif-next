@@ -13,7 +13,9 @@ interface IPolicy {
     struct PolicyInfo {
         NftId nftId;
         StateId state; // applied, withdrawn, rejected, active, closed
+        // TODO add beneficiary address
         uint256 sumInsuredAmount;
+        // TODO add premiumExpectedAmount
         uint256 premiumAmount;
         uint256 lifetime; // activatedAt + lifetime >= expiredAt
         uint256 createdAt;

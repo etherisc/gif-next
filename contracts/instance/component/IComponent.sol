@@ -7,6 +7,8 @@ import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry
 import {IInstance} from "../IInstance.sol";
 import {StateId} from "../../types/StateId.sol";
 import {NftId} from "../../types/NftId.sol";
+import {Fee} from "../../types/Fee.sol";
+import {UFixed} from "../../types/UFixed.sol";
 
 interface IComponent {
 
@@ -14,6 +16,7 @@ interface IComponent {
     struct ComponentInfo {
         NftId nftId;
         StateId state;
+        IERC20 token;
     }
 }
 
@@ -27,8 +30,8 @@ interface IComponentContract is
     IInstanceLinked,
     IComponent
 {
-    function getWalletAddress() external view returns(address walletAddress);
     function getToken() external view returns(IERC20 token);
+    function getWallet() external view returns(address walletAddress);
 }
 
 interface IComponentOwnerService is IRegistryLinked {
@@ -63,10 +66,6 @@ interface IComponentModule is IOwnable, IRegistryLinked, IComponent {
     ) external view returns (NftId nftId);
 
     function getComponentId(uint256 idx) external view returns (NftId nftId);
-
-    function getPoolNftId(
-        NftId productNftId
-    ) external view returns (NftId poolNftId);
 
     function components() external view returns (uint256 numberOfCompnents);
 

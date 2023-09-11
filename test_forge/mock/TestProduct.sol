@@ -3,11 +3,12 @@ pragma solidity ^0.8.19;
 
 import {Product} from "../../contracts/components/Product.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
+import {Fee, zeroFee} from "../../contracts/types/Fee.sol";
 
 contract TestProduct is Product {
 
-    constructor(address registry, address instance, address token, address pool)
-        Product(registry, instance, token, pool)
+    constructor(address registry, address instance, address token, address pool, Fee memory policyFee)
+        Product(registry, instance, token, pool, policyFee, zeroFee())
     {}
 
     function applyForPolicy(

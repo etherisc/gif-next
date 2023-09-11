@@ -8,7 +8,7 @@ import {IRegistry} from "../../registry/IRegistry.sol";
 import {IPolicyModule} from "../policy/IPolicy.sol";
 import {RegistryLinked} from "../../registry/Registry.sol";
 import {IProductService, IProductModule} from "./IProductService.sol";
-import {IComponentModule} from "../../instance/component/IComponent.sol";
+import {ITreasuryModule} from "../../instance/treasury/ITreasury.sol";
 import {IPoolModule} from "../../instance/pool/IPoolModule.sol";
 import {ObjectType, INSTANCE, PRODUCT} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
@@ -49,7 +49,8 @@ contract ProductService is RegistryLinked, IProductService {
         // add logging
     }
 
-    function underwrite(NftId nftId) external override {
+    function underwrite(NftId policyNftId) external override {
+        // validation
         // same as only registered product
         NftId productNftId = _registry.getNftId(msg.sender);
         require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
@@ -60,24 +61,19 @@ contract ProductService is RegistryLinked, IProductService {
         require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
 
-        // get responsible pool
-        IComponentModule componentModule = IComponentModule(
-            instanceInfo.objectAddress
-        );
-        NftId poolNftId = componentModule.getPoolNftId(productNftId);
-
-        // lock capital (and update pool accounting)
-        IPoolModule poolModule = IPoolModule(instanceInfo.objectAddress);
-        poolModule.underwrite(poolNftId, nftId);
+        // underwrite policy
+        address instanceAddress = instanceInfo.objectAddress;
+        IPoolModule poolModule = IPoolModule(instanceAddress);
+        poolModule.underwrite(policyNftId, productNftId);
 
         // activate policy
-        IPolicyModule policyModule = IPolicyModule(instanceInfo.objectAddress);
-        policyModule.activate(nftId);
+        IPolicyModule policyModule = IPolicyModule(instanceAddress);
+        policyModule.activate(policyNftId);
 
         // add logging
     }
 
-    function close(NftId nftId) external override {}
+    function close(NftId policyNftId) external override {}
 }
 
 abstract contract ProductModule is IProductModule {

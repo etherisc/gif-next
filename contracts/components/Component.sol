@@ -65,11 +65,12 @@ abstract contract Component is
         return getInstance().getNftId();
     }
 
-    function getWalletAddress() external view returns(address walletAddress) {
+    // from component contract
+    function getWallet() external view override returns(address walletAddress) {
         return _wallet;
     }
 
-    function getToken() external view returns(IERC20 token) {
+    function getToken() external view override returns(IERC20 token) {
         return _token;
     }
 
