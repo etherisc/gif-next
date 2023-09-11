@@ -41,7 +41,8 @@ jobs:
             artifacts
 
       - name: Set build version identifier
-        run: npm version "`npm version patch --no-git-tag-version`-`git rev-parse --short HEAD`" --no-git-tag-version
+        # version is set to current patch + 1 and a build identifier (revision plus seconds to avoid duplicates) is added
+        run: npm version "`npm version patch --no-git-tag-version`-`git rev-parse --short HEAD`-`date +%s | tail -c4`" --no-git-tag-version
 
       - run: npm publish --tag next --provenance
         env:
