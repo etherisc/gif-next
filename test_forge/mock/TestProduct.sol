@@ -31,4 +31,8 @@ contract TestProduct is Product {
     function underwrite(NftId nftId) external {
         _underwrite(nftId);
     }
+
+    function collectPremium(NftId nftId) external {
+        _collectPremium(nftId);
+    }
 }

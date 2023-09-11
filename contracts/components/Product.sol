@@ -52,6 +52,10 @@ contract Product is Component, IProductComponent {
         _productService.underwrite(nftId);
     }
 
+    function _collectPremium(NftId nftId) internal {
+        _productService.collectPremium(nftId);
+    }
+
     function getPoolNftId() external view override returns (NftId poolNftId) {
         return _registry.getNftId(_pool);
     }

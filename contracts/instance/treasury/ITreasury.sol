@@ -3,9 +3,13 @@ pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+import {IRegistryLinked} from "../../registry/IRegistry.sol";
+
 import {NftId} from "../../types/NftId.sol";
 import {UFixed} from "../../types/UFixed.sol";
 import {Fee} from "../../types/Fee.sol";
+
+import {TokenHandler} from "./TokenHandler.sol";
 
 interface ITreasury {
 
@@ -13,13 +17,17 @@ interface ITreasury {
     // TODO add errors
 }
 
-interface ITreasuryModule is ITreasury {
+interface ITreasuryModule is
+    IRegistryLinked,
+    ITreasury
+{
 
     struct ProductSetup {
         NftId productNftId;
         NftId distributorNftId;
         NftId poolNftId;
         IERC20 token;
+        TokenHandler tokenHandler;
         address wallet;
         Fee policyFee;
         Fee processingFee;
@@ -57,8 +65,9 @@ interface ITreasuryModule is ITreasury {
         )
             external;
 
+    function getTokenHandler(NftId productNftId) external view returns(TokenHandler tokenHandler);
     function getProductSetup(NftId productNftId) external view returns(ProductSetup memory setup);
     function getPoolSetup(NftId poolNftId) external view returns(PoolSetup memory setup);
 
-    function processPremium(NftId policyNftId) external;
+    function processPremium(NftId policyNftId, NftId productNftId) external;
 }

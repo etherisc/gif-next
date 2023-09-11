@@ -15,10 +15,11 @@ interface IPolicy {
         StateId state; // applied, withdrawn, rejected, active, closed
         // TODO add beneficiary address
         uint256 sumInsuredAmount;
-        // TODO add premiumExpectedAmount
         uint256 premiumAmount;
+        uint256 premiumPaidAmount;
         uint256 lifetime; // activatedAt + lifetime >= expiredAt
         uint256 createdAt;
+        uint256 updatedAt;
         uint256 activatedAt; // time of underwriting
         uint256 expiredAt; // no new claims
         uint256 closedAt; // no locked capital
@@ -26,6 +27,7 @@ interface IPolicy {
 }
 
 interface IPolicyModule is IOwnable, IRegistryLinked, IPolicy {
+
     function createApplication(
         IRegistry.RegistryInfo memory productInfo,
         address applicationOwner,
@@ -34,6 +36,9 @@ interface IPolicyModule is IOwnable, IRegistryLinked, IPolicy {
         uint256 lifetime,
         NftId bundleNftId
     ) external returns (NftId nftId);
+
+    // process full premium
+    function processPremium(NftId nftId) external;
 
     function activate(NftId nftId) external;
 

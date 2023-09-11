@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import {TestGifBase} from "./TestGifBase.sol";
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
+import {TokenHandler} from "../contracts/instance/treasury/TokenHandler.sol";
 import {APPLIED, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
 
@@ -79,5 +80,42 @@ contract TestApplicationCreate is TestGifBase {
             sumInsuredAmount,
             "capital locked not sum insured"
         );
+    }
+
+    function testCreatePolicyAndCollectPremium() public {
+
+        vm.prank(customer);
+        NftId policyNftId = product.applyForPolicy(
+            sumInsuredAmount,
+            premiumAmount,
+            lifetime
+        );
+
+        product.underwrite(policyNftId);
+
+        // check bookkeeping before collecting premium
+        IPolicy.PolicyInfo memory infoBefore = instance.getPolicyInfo(policyNftId);
+        assertEq(infoBefore.premiumAmount, premiumAmount, "unexpected policy premium amount");
+        assertEq(infoBefore.premiumPaidAmount, 0, "unexpected policy premium paid amount");
+        assertEq(token.balanceOf(pool.getWallet()), 0, "unexpected pool balance");
+
+        vm.prank(instanceOwner);
+        fundAccount(customer, premiumAmount);
+
+        TokenHandler tokenHandler = instance.getTokenHandler(product.getNftId());
+        address tokenHandlerAddress = address(tokenHandler);
+
+        vm.prank(customer);
+        token.approve(tokenHandlerAddress, premiumAmount);
+
+        assertEq(token.balanceOf(customer), premiumAmount, "customer balance not premium");
+        assertEq(token.allowance(customer, tokenHandlerAddress), premiumAmount, "customer token approval not premium");
+
+        product.collectPremium(policyNftId);
+
+        IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
+        assertEq(info.premiumAmount, premiumAmount, "unexpected policy premium amount (after)");
+        assertEq(info.premiumPaidAmount, premiumAmount, "unexpected policy premium paid amount (after)");
+        assertEq(token.balanceOf(pool.getWallet()), premiumAmount, "unexpected pool balance (after)");
     }
 }

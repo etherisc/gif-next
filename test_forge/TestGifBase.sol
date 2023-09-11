@@ -3,6 +3,8 @@ pragma solidity 0.8.20;
 
 import "../lib/forge-std/src/Test.sol";
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import {DeployAll} from "../scripts/DeployAll.s.sol";
 
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
@@ -10,6 +12,7 @@ import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 import {TestProduct} from "./mock/TestProduct.sol";
 import {TestPool} from "./mock/TestPool.sol";
+import {USDC} from "./mock/Usdc.sol";
 
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
@@ -20,6 +23,7 @@ contract TestGifBase is Test {
 
     ChainNft chainNft;
     Registry registry;
+    IERC20 token;
     Instance instance;
     TestProduct product;
     TestPool pool;
@@ -42,7 +46,13 @@ contract TestGifBase is Test {
             productOwner,
             poolOwner);
 
+        token = product.getToken();
+
         chainNft = ChainNft(registry.getNftAddress());
+    }
+
+    function fundAccount(address account, uint256 amount) public {
+        token.transfer(account, amount);
     }
 
     /// @dev Helper function to assert that a given NftId is equal to the expected NftId.

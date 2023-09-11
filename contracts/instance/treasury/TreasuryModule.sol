@@ -4,16 +4,25 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {NftId} from "../../types/NftId.sol";
-import {Fee} from "../../types/Fee.sol";
+import {Fee, feeIsZero} from "../../types/Fee.sol";
 import {UFixed} from "../../types/UFixed.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
+import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
+import {TokenHandler} from "./TokenHandler.sol";
 import {ITreasuryModule} from "./ITreasury.sol";
+import {TokenHandler} from "./TokenHandler.sol";
 
-contract TreasuryModule is ITreasuryModule {
+abstract contract TreasuryModule is ITreasuryModule {
 
     mapping(NftId productNftId => ProductSetup setup) private _productSetup;
     mapping(NftId distributorNftId => DistributorSetup setup) private _distributorSetup;
     mapping(NftId poolNftId => PoolSetup setup) private _poolSetup;
+
+    IPolicyModule private _policyModule;
+
+    constructor() {
+        _policyModule = IPolicyModule(address(this));
+    }
 
     function registerProduct(
         NftId productNftId,
@@ -30,11 +39,15 @@ contract TreasuryModule is ITreasuryModule {
     {
         // TODO add validation
 
+        // deploy product specific handler contract
+        TokenHandler tokenHandler = new TokenHandler(address(token));
+
         _productSetup[productNftId] = ProductSetup(
             productNftId,
             distributorNftId,
             poolNftId,
             token,
+            tokenHandler,
             wallet,
             policyFee,
             processingFee
@@ -65,6 +78,15 @@ contract TreasuryModule is ITreasuryModule {
         // TODO add logging
     }
 
+    function getTokenHandler(NftId productNftId)
+        external
+        view
+        override
+        returns(TokenHandler tokenHandler)
+    {
+        return _productSetup[productNftId].tokenHandler;
+    }
+
     function getProductSetup(NftId productNftId)
         external
         view
@@ -83,10 +105,27 @@ contract TreasuryModule is ITreasuryModule {
         return _poolSetup[poolNftId];
     }
 
-    function processPremium(NftId policyNftId)
+
+    function processPremium(NftId policyNftId, NftId productNftId)
         external
+        override
         // TODO add authz (only product service)
     {
+        IPolicy.PolicyInfo memory policyInfo = _policyModule.getPolicyInfo(policyNftId);
+        require(policyInfo.nftId == policyNftId, "ERROR:TRS-020:POLICY_UNKNOWN");
 
+        ProductSetup memory product = _productSetup[productNftId];
+
+        TokenHandler tokenHandler = product.tokenHandler;
+        address policyOwner = this.getRegistry().getOwner(policyNftId);
+        address poolWallet = _poolSetup[product.poolNftId].wallet;
+        // TODO add validation
+
+        if(feeIsZero(product.policyFee)) {
+            tokenHandler.transfer(policyOwner, poolWallet, policyInfo.premiumAmount);
+        } else {
+            // TODO add fee handling
+            tokenHandler.transfer(policyOwner, poolWallet, policyInfo.premiumAmount);
+        }
     }
 }

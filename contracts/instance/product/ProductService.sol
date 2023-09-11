@@ -73,7 +73,36 @@ contract ProductService is RegistryLinked, IProductService {
         // add logging
     }
 
+    function collectPremium(NftId policyNftId)
+        external
+        override
+    {
+        // validation same as other functions, eg underwrite
+        // TODO unify validation into modifier and/or other suitable approaches
+        // same as only registered product
+        NftId productNftId = _registry.getNftId(msg.sender);
+        require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
+        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(productNftId);
+        require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
+
+        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
+        require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
+        require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
+
+        // process/collect premium: book keeping for policy
+        address instanceAddress = instanceInfo.objectAddress;
+        IPolicyModule policyModule = IPolicyModule(instanceAddress);
+        policyModule.processPremium(policyNftId);
+
+        // process/collect premium: actual token transfer
+        ITreasuryModule treasuryModule = ITreasuryModule(instanceAddress);
+        treasuryModule.processPremium(policyNftId, productNftId);
+
+        // TODO add logging
+    }
+
     function close(NftId policyNftId) external override {}
+
 }
 
 abstract contract ProductModule is IProductModule {

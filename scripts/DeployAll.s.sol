@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+
 import {Script, console} from "../lib/forge-std/src/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 
@@ -66,14 +68,8 @@ contract DeployAll is Script {
         )
     {
         instance = _deployInstance(registry);
-        USDC token = _deployToken();
-        pool = _deployPool(registry, instance, token);
-        product = _deployProduct(registry, instance, token, pool);
-    }
-
-    function _deployToken() internal returns(USDC token) {
-        token = new USDC();
-        console.log("usdc token deployed at", address(token));
+        pool = _deployPool(registry, instance);
+        product = _deployProduct(registry, instance, pool);
     }
 
     function _deployRegistry()
@@ -89,6 +85,8 @@ contract DeployAll is Script {
 
         console.log("nft deployed at", address(nft));
         console.log("registry deployed at", address(registry));
+
+        // TODO add usdc token registration
     }
 
     function _deployInstance(Registry registry) internal returns(Instance instance) {
@@ -106,14 +104,17 @@ contract DeployAll is Script {
         console.log("instance deployed at", address(instance));
     }
 
-    function _deployPool(Registry registry, Instance instance, USDC token) internal returns(TestPool pool) {
+    function _deployPool(Registry registry, Instance instance) internal returns(TestPool pool) {
+        USDC token  = new USDC();
+        console.log("usdc token deployed at", address(token));
+
         pool = new TestPool(address(registry), address(instance), address(token));
         console.log("pool deployed at", address(pool));
     }
 
-    function _deployProduct(Registry registry, Instance instance, USDC token, TestPool pool) internal returns(TestProduct product) {
+    function _deployProduct(Registry registry, Instance instance, TestPool pool) internal returns(TestProduct product) {
         Fee memory policyFee = toFee(UFixedMathLib.itof(1, -1), 0);
-        product = new TestProduct(address(registry), address(instance), address(token), address(pool), policyFee);
+        product = new TestProduct(address(registry), address(instance), address(pool.getToken()), address(pool), policyFee);
         console.log("product deployed at", address(product));
     }
 
@@ -144,6 +145,10 @@ contract DeployAll is Script {
         instance.grantRole(productOwnerRole, productOwner);
 
         NftId productNftId = componentOwnerService.register(product);
+
+        // transfer token
+        IERC20 token = product.getToken();
+        token.transfer(instanceOwner, token.totalSupply());
 
         // transfer ownerships
         ChainNft nft = ChainNft(registry.getNftAddress());

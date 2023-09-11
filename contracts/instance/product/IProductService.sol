@@ -23,7 +23,7 @@ interface IProductService is IRegistryLinked {
     // function expire(uint256 nftId) external;
     function close(NftId nftId) external;
 
-    // function collectPremium(uint256 nftId, uint256 premiumAmount) external;
+    function collectPremium(NftId nftId) external;
 
     // function createClaim(uint256 nftId, uint256 claimAmount) external;
     // function confirmClaim(uint256 nftId, uint256 claimId, uint256 claimAmount) external;

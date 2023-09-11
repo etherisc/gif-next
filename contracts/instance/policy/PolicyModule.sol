@@ -65,8 +65,10 @@ abstract contract PolicyModule is
             _lifecycleModule.getInitialState(POLICY()),
             sumInsuredAmount,
             premiumAmount,
+            0, // premium paid amount
             lifetime,
-            block.timestamp,
+            block.timestamp, // createdAt
+            block.timestamp, // updatedAt
             0, // activatedAt
             0, // expiredAt
             0 // closedAt
@@ -76,6 +78,13 @@ abstract contract PolicyModule is
 
         // add logging
     }
+
+    function processPremium(NftId nftId) external override onlyProductService2 {
+        PolicyInfo storage info = _policyInfo[nftId];
+        info.premiumPaidAmount = info.premiumAmount;
+        info.updatedAt = block.timestamp;
+    }
+
 
     function activate(NftId nftId) external override onlyProductService2 {
         PolicyInfo storage info = _policyInfo[nftId];
