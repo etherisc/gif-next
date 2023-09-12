@@ -9,6 +9,7 @@ contract TestProduct is Product {
 
     constructor(address registry, address instance, address token, address pool, Fee memory policyFee)
         Product(registry, instance, token, pool, policyFee, zeroFee())
+    // solhint-disable-next-line no-empty-blocks
     {}
 
     function applyForPolicy(

@@ -9,9 +9,9 @@ import {APPLIED, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
 
 contract TestApplicationCreate is TestGifBase {
-    uint256 sumInsuredAmount = 1000 * 10 ** 6;
-    uint256 premiumAmount = 110 * 10 ** 6;
-    uint256 lifetime = 365 * 24 * 3600;
+    uint256 public sumInsuredAmount = 1000 * 10 ** 6;
+    uint256 public premiumAmount = 110 * 10 ** 6;
+    uint256 public lifetime = 365 * 24 * 3600;
 
     function testApplicationCreateSimple() public {
         vm.prank(customer);
@@ -40,6 +40,7 @@ contract TestApplicationCreate is TestGifBase {
         assertEq(info.premiumAmount, premiumAmount, "wrong premium amount");
         assertEq(info.lifetime, lifetime, "wrong lifetime");
 
+        // solhint-disable-next-line not-rely-on-time
         assertEq(info.createdAt, block.timestamp, "wrong created at");
         assertEq(info.activatedAt, 0, "wrong activated at");
         assertEq(info.expiredAt, 0, "wrong expired at");
@@ -64,9 +65,11 @@ contract TestApplicationCreate is TestGifBase {
         assertNftId(info.nftId, policyNftId, "policy id differs");
         assertEq(info.state.toInt(), ACTIVE().toInt(), "policy state not active/underwritten");
 
+        // solhint-disable-next-line not-rely-on-time
         assertEq(info.activatedAt, block.timestamp, "wrong activated at");
         assertEq(
             info.expiredAt,
+            // solhint-disable-next-line not-rely-on-time
             block.timestamp + info.lifetime,
             "wrong expired at"
         );

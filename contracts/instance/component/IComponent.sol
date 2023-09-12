@@ -57,10 +57,6 @@ interface IComponentModule is IOwnable, IRegistryLinked, IComponent {
         NftId nftId
     ) external view returns (ComponentInfo memory info);
 
-    function getComponentOwner(
-        NftId nftId
-    ) external view returns (address owner);
-
     function getComponentId(
         address componentAddress
     ) external view returns (NftId nftId);

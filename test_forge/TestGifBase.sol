@@ -21,18 +21,18 @@ import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 contract TestGifBase is Test {
     using NftIdLib for NftId;
 
-    ChainNft chainNft;
-    Registry registry;
-    IERC20 token;
-    Instance instance;
-    TestProduct product;
-    TestPool pool;
+    ChainNft public chainNft;
+    Registry public registry;
+    IERC20 public token;
+    Instance public instance;
+    TestProduct public product;
+    TestPool public pool;
 
-    address instanceOwner = makeAddr("instanceOwner");
-    address productOwner = makeAddr("productOwner");
-    address poolOwner = makeAddr("poolOwner");
-    address customer = makeAddr("customer");
-    address outsider = makeAddr("outsider");
+    address public instanceOwner = makeAddr("instanceOwner");
+    address public productOwner = makeAddr("productOwner");
+    address public poolOwner = makeAddr("poolOwner");
+    address public customer = makeAddr("customer");
+    address public outsider = makeAddr("outsider");
 
     function setUp() public virtual {
         DeployAll deployer = new DeployAll();

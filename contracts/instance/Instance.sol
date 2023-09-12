@@ -38,6 +38,7 @@ contract Instance is
         PolicyModule(productService)
         ProductModule(productService)
         PoolModule(productService)
+    // solhint-disable-next-line no-empty-blocks
     {}
 
     // from registerable

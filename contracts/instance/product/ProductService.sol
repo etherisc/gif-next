@@ -17,7 +17,9 @@ import {NftId, NftIdLib} from "../../types/NftId.sol";
 contract ProductService is RegistryLinked, IProductService {
     using NftIdLib for NftId;
 
-    constructor(address registry) RegistryLinked(registry) {}
+    constructor(address registry) RegistryLinked(registry) 
+    // solhint-disable-next-line no-empty-blocks
+    {}
 
     function createApplication(
         address applicationOwner,
@@ -101,7 +103,9 @@ contract ProductService is RegistryLinked, IProductService {
         // TODO add logging
     }
 
-    function close(NftId policyNftId) external override {}
+    function close(NftId policyNftId) external override
+    // solhint-disable-next-line no-empty-blocks
+    {}
 
 }
 

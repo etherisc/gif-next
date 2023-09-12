@@ -150,10 +150,6 @@ abstract contract ComponentModule is
         return _componentInfo[nftId];
     }
 
-    function getComponentOwner(
-        NftId nftId
-    ) external view returns (address owner) {}
-
     function getComponentId(
         address componentAddress
     ) external view returns (NftId componentNftId) {
@@ -210,7 +206,9 @@ contract ComponentOwnerService is
         _;
     }
 
-    constructor(address registry) RegistryLinked(registry) {}
+    constructor(address registry) RegistryLinked(registry)
+    // solhint-disable-next-line no-empty-blocks
+    {}
 
     function register(
         IComponentContract component

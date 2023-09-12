@@ -10,6 +10,7 @@ import {IPolicyModule} from "./policy/IPolicy.sol";
 import {IPoolModule} from "./pool/IPoolModule.sol";
 import {ITreasuryModule} from "./treasury/ITreasury.sol";
 
+// solhint-disable-next-line no-empty-blocks
 interface IInstance is
     IRegisterable,
     IAccessModule,

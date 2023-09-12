@@ -10,6 +10,7 @@ contract TestPool is Pool {
     constructor(address registry, address instance, address token)
         // feeless pool (no staking fee, no performance fee)
         Pool(registry, instance, token, zeroFee(), zeroFee())
+    // solhint-disable-next-line no-empty-blocks
     {}
 
 }

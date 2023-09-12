@@ -67,7 +67,9 @@ abstract contract PolicyModule is
             premiumAmount,
             0, // premium paid amount
             lifetime,
+            // solhint-disable-next-line not-rely-on-time
             block.timestamp, // createdAt
+            // solhint-disable-next-line not-rely-on-time
             block.timestamp, // updatedAt
             0, // activatedAt
             0, // expiredAt
@@ -82,13 +84,16 @@ abstract contract PolicyModule is
     function processPremium(NftId nftId) external override onlyProductService2 {
         PolicyInfo storage info = _policyInfo[nftId];
         info.premiumPaidAmount = info.premiumAmount;
+        // solhint-disable-next-line not-rely-on-time
         info.updatedAt = block.timestamp;
     }
 
 
     function activate(NftId nftId) external override onlyProductService2 {
         PolicyInfo storage info = _policyInfo[nftId];
+        // solhint-disable-next-line not-rely-on-time
         info.activatedAt = block.timestamp;
+        // solhint-disable-next-line not-rely-on-time
         info.expiredAt = block.timestamp + info.lifetime;
         info.state = _lifecycleModule.checkAndLogTransition(nftId, POLICY(), info.state, ACTIVE());
     }
