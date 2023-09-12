@@ -19,9 +19,9 @@ import {NftId, toNftId} from "../types/NftId.sol";
 contract Instance is
     Registerable,
     AccessModule,
-    LifecycleModule, 
-    ComponentModule, 
-    PolicyModule, 
+    LifecycleModule,
+    ComponentModule,
+    PolicyModule,
     PoolModule,
     ProductModule,
     TreasuryModule,
@@ -39,7 +39,9 @@ contract Instance is
         ProductModule(productService)
         PoolModule(productService)
     // solhint-disable-next-line no-empty-blocks
-    {}
+    {
+
+    }
 
     // from registerable
     function register() external override returns (NftId nftId) {
@@ -59,7 +61,7 @@ contract Instance is
     }
 
     // from registerable
-    function getType() external pure override returns(ObjectType objectType) {
+    function getType() external pure override returns (ObjectType objectType) {
         return INSTANCE();
     }
 

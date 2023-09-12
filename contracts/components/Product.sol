@@ -22,9 +22,7 @@ contract Product is Component, IProductComponent {
         address pool,
         Fee memory policyFee,
         Fee memory processingFee
-    )
-        Component(registry, instance, token)
-    {
+    ) Component(registry, instance, token) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = pool;
@@ -61,16 +59,26 @@ contract Product is Component, IProductComponent {
     }
 
     // from product component
-    function getPolicyFee() external view override returns(Fee memory policyFee) {
+    function getPolicyFee()
+        external
+        view
+        override
+        returns (Fee memory policyFee)
+    {
         return _policyFee;
     }
 
-    function getProcessingFee() external view override returns(Fee memory processingFee) {
+    function getProcessingFee()
+        external
+        view
+        override
+        returns (Fee memory processingFee)
+    {
         return _processingFee;
     }
 
     // from registerable
-    function getType() public pure override returns(ObjectType) {
+    function getType() public pure override returns (ObjectType) {
         return PRODUCT();
     }
 

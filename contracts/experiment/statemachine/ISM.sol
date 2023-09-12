@@ -15,6 +15,11 @@ interface ISMEE {
 
 interface ISM is ISMEE {
     function changeToState(StateId newStateId) external;
-    function isValidTransition(StateId currentStateId, StateId newStateId) external view returns(bool isValid);
-    function getState() external view returns(StateId currentStateId);
+
+    function isValidTransition(
+        StateId currentStateId,
+        StateId newStateId
+    ) external view returns (bool isValid);
+
+    function getState() external view returns (StateId currentStateId);
 }

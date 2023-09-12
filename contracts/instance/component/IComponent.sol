@@ -11,7 +11,6 @@ import {Fee} from "../../types/Fee.sol";
 import {UFixed} from "../../types/UFixed.sol";
 
 interface IComponent {
-
     // component dynamic info (static info kept in registry)
     struct ComponentInfo {
         NftId nftId;
@@ -25,13 +24,10 @@ interface IInstanceLinked {
     function getInstance() external view returns (IInstance instance);
 }
 
-interface IComponentContract is
-    IRegisterable,
-    IInstanceLinked,
-    IComponent
-{
-    function getToken() external view returns(IERC20Metadata token);
-    function getWallet() external view returns(address walletAddress);
+interface IComponentContract is IRegisterable, IInstanceLinked, IComponent {
+    function getToken() external view returns (IERC20Metadata token);
+
+    function getWallet() external view returns (address walletAddress);
 }
 
 interface IComponentOwnerService is IRegistryLinked {
@@ -40,12 +36,14 @@ interface IComponentOwnerService is IRegistryLinked {
     ) external returns (NftId nftId);
 
     function lock(IComponentContract component) external;
+
     function unlock(IComponentContract component) external;
 
     function setProductFees(
         IComponentContract product,
         Fee memory policyFee,
-        Fee memory processingFee) external;
+        Fee memory processingFee
+    ) external;
 }
 
 interface IComponentModule is IOwnable, IRegistryLinked, IComponent {

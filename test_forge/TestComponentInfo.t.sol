@@ -18,7 +18,11 @@ contract TestComponentInfo is TestGifBase {
         console.log(info.nftId.toInt(), info.state.toInt());
 
         assertNftId(info.nftId, product.getNftId(), "product nft mismatch");
-        assertEq(info.state.toInt(), ACTIVE().toInt(), "component state not active");
+        assertEq(
+            info.state.toInt(),
+            ACTIVE().toInt(),
+            "component state not active"
+        );
     }
 
     function testPoolInfo() public {
@@ -31,6 +35,10 @@ contract TestComponentInfo is TestGifBase {
         console.log(info.nftId.toInt(), info.state.toInt());
 
         assertNftId(info.nftId, pool.getNftId(), "pool nft mismatch");
-        assertEq(info.state.toInt(), ACTIVE().toInt(), "component state not active");
+        assertEq(
+            info.state.toInt(),
+            ACTIVE().toInt(),
+            "component state not active"
+        );
     }
 }

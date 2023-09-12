@@ -6,6 +6,10 @@ import {IComponentContract} from "../instance/component/IComponent.sol";
 
 // just marker interface for now
 interface IPoolComponent is IComponentContract {
-    function getStakingFee() external view returns(Fee memory stakingFee);
-    function getPerformanceFee() external view returns(Fee memory performanceFee);
+    function getStakingFee() external view returns (Fee memory stakingFee);
+
+    function getPerformanceFee()
+        external
+        view
+        returns (Fee memory performanceFee);
 }

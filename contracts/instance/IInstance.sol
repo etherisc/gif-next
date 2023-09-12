@@ -20,4 +20,6 @@ interface IInstance is
     IComponentModule,
     IProductModule,
     ITreasuryModule
-{}
+{
+
+}

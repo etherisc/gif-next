@@ -34,10 +34,7 @@ abstract contract PoolModule is IPoolModule {
         _productService = IProductService(productService);
     }
 
-    function registerPool(NftId nftId)
-        public
-        override
-    {
+    function registerPool(NftId nftId) public override {
         require(_poolInfo[nftId].nftId.eqz(), "ERROR:PL-001:ALREADY_CREATED");
 
         _poolInfo[nftId] = PoolInfo(
@@ -50,16 +47,18 @@ abstract contract PoolModule is IPoolModule {
     function underwrite(
         NftId policyNftId,
         NftId productNftId
-    )
-        external
-        override
-        onlyProductService
-    {
-        IPolicy.PolicyInfo memory policyInfo = _policyModule.getPolicyInfo(policyNftId);
+    ) external override onlyProductService {
+        IPolicy.PolicyInfo memory policyInfo = _policyModule.getPolicyInfo(
+            policyNftId
+        );
         require(policyInfo.nftId == policyNftId, "ERROR:PL-002:POLICY_UNKNOWN");
 
-        ITreasuryModule.ProductSetup memory product = _treasuryModule.getProductSetup(productNftId);
-        require(product.productNftId == productNftId, "ERROR:PL-003:PRODUCT_SETUP_MISSING");
+        ITreasuryModule.ProductSetup memory product = _treasuryModule
+            .getProductSetup(productNftId);
+        require(
+            product.productNftId == productNftId,
+            "ERROR:PL-003:PRODUCT_SETUP_MISSING"
+        );
 
         NftId poolNftId = product.poolNftId;
         PoolInfo storage poolInfo = _poolInfo[poolNftId];

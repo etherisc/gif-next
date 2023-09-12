@@ -8,11 +8,7 @@ import {ACTIVE, PAUSED} from "../contracts/types/StateId.sol";
 import {TestGifBase} from "./TestGifBase.sol";
 import {IComponent, IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
 
-contract TestComponentLockUnlock is
-    ILifecycle,
-    TestGifBase
-{
-    
+contract TestComponentLockUnlock is ILifecycle, TestGifBase {
     IComponentOwnerService public componentOwnerService;
 
     function setUp() public override {
@@ -28,7 +24,9 @@ contract TestComponentLockUnlock is
 
     function testComponentLockOwner() public {
         NftId nftId = product.getNftId();
-        IComponent.ComponentInfo memory info_before = instance.getComponentInfo(nftId);
+        IComponent.ComponentInfo memory info_before = instance.getComponentInfo(
+            nftId
+        );
 
         vm.expectEmit();
         emit LogComponentStateChanged(nftId, PRODUCT(), ACTIVE(), PAUSED());
@@ -40,7 +38,11 @@ contract TestComponentLockUnlock is
             product.getNftId()
         );
         assertNftId(info_before.nftId, info_after.nftId, "product id not same");
-        assertEq(info_after.state.toInt(), PAUSED().toInt(), "component state not paused");
+        assertEq(
+            info_after.state.toInt(),
+            PAUSED().toInt(),
+            "component state not paused"
+        );
     }
 
     function testComponentUnlockNotOwner() public {
@@ -63,7 +65,15 @@ contract TestComponentLockUnlock is
         vm.stopPrank();
 
         assertNftId(info_before.nftId, info_after.nftId, "product id not same");
-        assertEq(info_before.state.toInt(), PAUSED().toInt(), "component state not paused");
-        assertEq(info_after.state.toInt(), ACTIVE().toInt(), "component state not active");
+        assertEq(
+            info_before.state.toInt(),
+            PAUSED().toInt(),
+            "component state not paused"
+        );
+        assertEq(
+            info_after.state.toInt(),
+            ACTIVE().toInt(),
+            "component state not active"
+        );
     }
 }

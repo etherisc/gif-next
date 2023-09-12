@@ -17,9 +17,12 @@ import {NftId, NftIdLib} from "../../types/NftId.sol";
 contract ProductService is RegistryLinked, IProductService {
     using NftIdLib for NftId;
 
-    constructor(address registry) RegistryLinked(registry) 
-    // solhint-disable-next-line no-empty-blocks
-    {}
+    constructor(
+        address registry
+    ) RegistryLinked(registry) // solhint-disable-next-line no-empty-blocks
+    {
+
+    }
 
     function createApplication(
         address applicationOwner,
@@ -31,10 +34,14 @@ contract ProductService is RegistryLinked, IProductService {
         // same as only registered product
         NftId productNftId = _registry.getNftId(msg.sender);
         require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
-        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(productNftId);
+        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(
+            productNftId
+        );
         require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
 
-        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
+        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(
+            productInfo.parentNftId
+        );
         require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
 
@@ -56,10 +63,14 @@ contract ProductService is RegistryLinked, IProductService {
         // same as only registered product
         NftId productNftId = _registry.getNftId(msg.sender);
         require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
-        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(productNftId);
+        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(
+            productNftId
+        );
         require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
 
-        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
+        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(
+            productInfo.parentNftId
+        );
         require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
 
@@ -75,19 +86,20 @@ contract ProductService is RegistryLinked, IProductService {
         // add logging
     }
 
-    function collectPremium(NftId policyNftId)
-        external
-        override
-    {
+    function collectPremium(NftId policyNftId) external override {
         // validation same as other functions, eg underwrite
         // TODO unify validation into modifier and/or other suitable approaches
         // same as only registered product
         NftId productNftId = _registry.getNftId(msg.sender);
         require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
-        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(productNftId);
+        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(
+            productNftId
+        );
         require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
 
-        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
+        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(
+            productInfo.parentNftId
+        );
         require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
 
@@ -103,10 +115,12 @@ contract ProductService is RegistryLinked, IProductService {
         // TODO add logging
     }
 
-    function close(NftId policyNftId) external override
-    // solhint-disable-next-line no-empty-blocks
-    {}
+    function close(
+        NftId policyNftId
+    ) external override // solhint-disable-next-line no-empty-blocks
+    {
 
+    }
 }
 
 abstract contract ProductModule is IProductModule {

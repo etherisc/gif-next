@@ -56,12 +56,9 @@ abstract contract ComponentModule is
         _componentOwnerService = ComponentOwnerService(componentOwnerService);
     }
 
-    function registerComponent(IComponentContract component)
-        external
-        override
-        onlyComponentOwnerService
-        returns(NftId nftId)
-    {
+    function registerComponent(
+        IComponentContract component
+    ) external override onlyComponentOwnerService returns (NftId nftId) {
         ObjectType objectType = component.getType();
         bytes32 typeRole = getRoleForType(objectType);
         require(
@@ -77,10 +74,11 @@ abstract contract ComponentModule is
         _componentInfo[nftId] = ComponentInfo(
             nftId,
             _lifecycleModule.getInitialState(objectType),
-            token);
+            token
+        );
 
         // component type specific registration actions
-        if(component.getType() == PRODUCT()) {
+        if (component.getType() == PRODUCT()) {
             IProductComponent product = IProductComponent(address(component));
             NftId poolNftId = product.getPoolNftId();
             require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
@@ -90,15 +88,15 @@ abstract contract ComponentModule is
             // implement and add validation
             NftId distributorNftId = zeroNftId();
             _treasuryModule.registerProduct(
-                nftId, 
-                distributorNftId, 
-                poolNftId, 
-                token, 
-                wallet, 
+                nftId,
+                distributorNftId,
+                poolNftId,
+                token,
+                wallet,
                 product.getPolicyFee(),
-                product.getProcessingFee()); 
-        }
-        else if(component.getType() == POOL()) {
+                product.getProcessingFee()
+            );
+        } else if (component.getType() == POOL()) {
             IPoolComponent pool = IPoolComponent(address(component));
 
             // register with pool
@@ -106,10 +104,11 @@ abstract contract ComponentModule is
 
             // register with tresury
             _treasuryModule.registerPool(
-                nftId, 
-                wallet, 
+                nftId,
+                wallet,
                 pool.getStakingFee(),
-                pool.getPerformanceFee()); 
+                pool.getPerformanceFee()
+            );
         }
         // TODO add distribution
 
@@ -141,7 +140,12 @@ abstract contract ComponentModule is
         // just a generic setXYZInfo and implicit state transitions
         // when in doubt go for the explicit approach ...
         ObjectType objectType = this.getRegistry().getInfo(nftId).objectType;
-        _lifecycleModule.checkAndLogTransition(nftId, objectType, _componentInfo[nftId].state, info.state);
+        _lifecycleModule.checkAndLogTransition(
+            nftId,
+            objectType,
+            _componentInfo[nftId].state,
+            info.state
+        );
         _componentInfo[nftId] = info;
     }
 
@@ -172,18 +176,16 @@ abstract contract ComponentModule is
         return _nftIds.length;
     }
 
-    function getRoleForType(ObjectType cType)
-        public
-        view
-        returns(bytes32 role)
-    {
-        if(cType == PRODUCT()) {
+    function getRoleForType(
+        ObjectType cType
+    ) public view returns (bytes32 role) {
+        if (cType == PRODUCT()) {
             return this.PRODUCT_OWNER_ROLE();
         }
-        if(cType == POOL()) {
+        if (cType == POOL()) {
             return this.POOL_OWNER_ROLE();
         }
-        if(cType == ORACLE()) {
+        if (cType == ORACLE()) {
             return this.ORACLE_OWNER_ROLE();
         }
     }
@@ -207,9 +209,12 @@ contract ComponentOwnerService is
         _;
     }
 
-    constructor(address registry) RegistryLinked(registry)
-    // solhint-disable-next-line no-empty-blocks
-    {}
+    constructor(
+        address registry
+    ) RegistryLinked(registry) // solhint-disable-next-line no-empty-blocks
+    {
+
+    }
 
     function register(
         IComponentContract component
@@ -255,11 +260,7 @@ contract ComponentOwnerService is
         IComponentContract product,
         Fee memory policyFee,
         Fee memory processingFee
-    )
-        external
-        override
-        onlyComponentOwner(product)
-    {
+    ) external override onlyComponentOwner(product) {
         require(product.getType() == PRODUCT(), "ERROR_NOT_PRODUCT");
 
         address instanceAddress = address(product.getInstance());
@@ -267,6 +268,7 @@ contract ComponentOwnerService is
         treasuryModule.setProductFees(
             product.getNftId(),
             policyFee,
-            processingFee);
+            processingFee
+        );
     }
 }

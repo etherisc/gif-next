@@ -17,7 +17,7 @@ contract InstanceLinked is IInstanceLinked {
         _instance = IInstance(instance);
     }
 
-    function getInstance() public view override returns(IInstance instance) {
+    function getInstance() public view override returns (IInstance instance) {
         return _instance;
     }
 }
@@ -35,11 +35,7 @@ abstract contract Component is
         address registry,
         address instance,
         address token
-
-    )
-        Registerable(registry)
-        InstanceLinked(instance)
-    {
+    ) Registerable(registry) InstanceLinked(instance) {
         _wallet = address(this);
         _token = IERC20Metadata(token);
     }
@@ -66,12 +62,16 @@ abstract contract Component is
     }
 
     // from component contract
-    function getWallet() external view override returns(address walletAddress) {
+    function getWallet()
+        external
+        view
+        override
+        returns (address walletAddress)
+    {
         return _wallet;
     }
 
-    function getToken() external view override returns(IERC20Metadata token) {
+    function getToken() external view override returns (IERC20Metadata token) {
         return _token;
     }
-
 }

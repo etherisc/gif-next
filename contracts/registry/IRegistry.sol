@@ -15,7 +15,6 @@ interface IRegistryLinked {
 }
 
 interface IRegisterable is IOwnable, IRegistryLinked {
-
     function register() external returns (NftId nftId);
 
     function getNftId() external view returns (NftId nftId);
@@ -34,7 +33,6 @@ interface IRegisterable is IOwnable, IRegistryLinked {
 }
 
 interface IRegistry {
-
     struct RegistryInfo {
         NftId nftId;
         NftId parentNftId;

@@ -13,11 +13,10 @@ import {IComponent, IComponentOwnerService} from "../contracts/instance/componen
 import {ITreasuryModule} from "../contracts/instance/treasury/ITreasury.sol";
 
 contract TestApplicationCreate is TestGifBase {
-
     uint256 public sumInsuredAmount = 1000 * 10 ** 6;
     uint256 public premiumAmount = 110 * 10 ** 6;
     uint256 public lifetime = 365 * 24 * 3600;
-    
+
     IComponentOwnerService public componentOwnerService;
 
     function setUp() public override {
@@ -46,9 +45,17 @@ contract TestApplicationCreate is TestGifBase {
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
         assertNftId(info.nftId, policyNftId, "policy id differs");
-        assertEq(info.state.toInt(), APPLIED().toInt(), "policy state not applied");
+        assertEq(
+            info.state.toInt(),
+            APPLIED().toInt(),
+            "policy state not applied"
+        );
 
-        assertEq(info.sumInsuredAmount, sumInsuredAmount, "wrong sum insured amount");
+        assertEq(
+            info.sumInsuredAmount,
+            sumInsuredAmount,
+            "wrong sum insured amount"
+        );
         assertEq(info.premiumAmount, premiumAmount, "wrong premium amount");
         assertEq(info.lifetime, lifetime, "wrong lifetime");
 
@@ -75,7 +82,11 @@ contract TestApplicationCreate is TestGifBase {
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
         assertNftId(info.nftId, policyNftId, "policy id differs");
-        assertEq(info.state.toInt(), ACTIVE().toInt(), "policy state not active/underwritten");
+        assertEq(
+            info.state.toInt(),
+            ACTIVE().toInt(),
+            "policy state not active/underwritten"
+        );
 
         // solhint-disable-next-line not-rely-on-time
         assertEq(info.activatedAt, block.timestamp, "wrong activated at");
@@ -87,7 +98,9 @@ contract TestApplicationCreate is TestGifBase {
         );
         assertEq(info.closedAt, 0, "wrong closed at");
 
-        IPool.PoolInfo memory poolInfoAfter = instance.getPoolInfo(pool.getNftId());
+        IPool.PoolInfo memory poolInfoAfter = instance.getPoolInfo(
+            pool.getNftId()
+        );
         assertEq(poolInfoAfter.nftId.toInt(), 33133705, "pool id not 33133705");
         assertEq(poolInfoBefore.lockedCapital, 0, "capital locked not 0");
         assertEq(
@@ -98,19 +111,22 @@ contract TestApplicationCreate is TestGifBase {
     }
 
     function testCreatePolicyAndCollectPremiumNoFee() public {
-
         // set fees to zeroFee
         vm.prank(productOwner);
-        componentOwnerService.setProductFees(
-            product,
-            zeroFee(),
-            zeroFee());
+        componentOwnerService.setProductFees(product, zeroFee(), zeroFee());
 
         // check updated policy fee
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
-        ITreasuryModule.ProductSetup memory setup = treasuryModule.getProductSetup(product.getNftId());
-        assertTrue(feeIsSame(setup.policyFee, zeroFee()), "updated policyFee not zeroFee");
-        assertTrue(feeIsSame(setup.processingFee, zeroFee()), "updated processingFee not zeroFee");
+        ITreasuryModule.ProductSetup memory setup = treasuryModule
+            .getProductSetup(product.getNftId());
+        assertTrue(
+            feeIsSame(setup.policyFee, zeroFee()),
+            "updated policyFee not zeroFee"
+        );
+        assertTrue(
+            feeIsSame(setup.processingFee, zeroFee()),
+            "updated processingFee not zeroFee"
+        );
 
         vm.prank(customer);
         NftId policyNftId = product.applyForPolicy(
@@ -122,56 +138,104 @@ contract TestApplicationCreate is TestGifBase {
         product.underwrite(policyNftId);
 
         // check bookkeeping before collecting premium
-        IPolicy.PolicyInfo memory infoBefore = instance.getPolicyInfo(policyNftId);
-        assertEq(infoBefore.premiumAmount, premiumAmount, "unexpected policy premium amount");
-        assertEq(infoBefore.premiumPaidAmount, 0, "unexpected policy premium paid amount");
-        assertEq(token.balanceOf(pool.getWallet()), 0, "unexpected pool balance");
+        IPolicy.PolicyInfo memory infoBefore = instance.getPolicyInfo(
+            policyNftId
+        );
+        assertEq(
+            infoBefore.premiumAmount,
+            premiumAmount,
+            "unexpected policy premium amount"
+        );
+        assertEq(
+            infoBefore.premiumPaidAmount,
+            0,
+            "unexpected policy premium paid amount"
+        );
+        assertEq(
+            token.balanceOf(pool.getWallet()),
+            0,
+            "unexpected pool balance"
+        );
 
         vm.prank(instanceOwner);
         fundAccount(customer, premiumAmount);
 
-        TokenHandler tokenHandler = instance.getTokenHandler(product.getNftId());
+        TokenHandler tokenHandler = instance.getTokenHandler(
+            product.getNftId()
+        );
         address tokenHandlerAddress = address(tokenHandler);
 
         vm.prank(customer);
         token.approve(tokenHandlerAddress, premiumAmount);
 
-        assertEq(token.balanceOf(customer), premiumAmount, "customer balance not premium");
-        assertEq(token.allowance(customer, tokenHandlerAddress), premiumAmount, "customer token approval not premium");
+        assertEq(
+            token.balanceOf(customer),
+            premiumAmount,
+            "customer balance not premium"
+        );
+        assertEq(
+            token.allowance(customer, tokenHandlerAddress),
+            premiumAmount,
+            "customer token approval not premium"
+        );
 
         product.collectPremium(policyNftId);
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
-        assertEq(info.premiumAmount, premiumAmount, "unexpected policy premium amount (after)");
-        assertEq(info.premiumPaidAmount, premiumAmount, "unexpected policy premium paid amount (after)");
-        assertEq(token.balanceOf(pool.getWallet()), premiumAmount, "unexpected pool balance (after)");
+        assertEq(
+            info.premiumAmount,
+            premiumAmount,
+            "unexpected policy premium amount (after)"
+        );
+        assertEq(
+            info.premiumPaidAmount,
+            premiumAmount,
+            "unexpected policy premium paid amount (after)"
+        );
+        assertEq(
+            token.balanceOf(pool.getWallet()),
+            premiumAmount,
+            "unexpected pool balance (after)"
+        );
     }
 
     function testCreatePolicyAndCollectPremiumPolicyFee() public {
-
         // check initial policy fee
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
-        ITreasuryModule.ProductSetup memory setup = treasuryModule.getProductSetup(product.getNftId());
-        Fee memory expectedInitialPolicyFee = toFee(UFixedMathLib.itof(1, -1), 0);
+        ITreasuryModule.ProductSetup memory setup = treasuryModule
+            .getProductSetup(product.getNftId());
+        Fee memory expectedInitialPolicyFee = toFee(
+            UFixedMathLib.itof(1, -1),
+            0
+        );
 
-        assertTrue(feeIsSame(setup.policyFee, expectedInitialPolicyFee), "initial policyFee not 10%");
-        assertTrue(feeIsZero(setup.processingFee), "initial processingFee not zeroFee");
+        assertTrue(
+            feeIsSame(setup.policyFee, expectedInitialPolicyFee),
+            "initial policyFee not 10%"
+        );
+        assertTrue(
+            feeIsZero(setup.processingFee),
+            "initial processingFee not zeroFee"
+        );
 
         // updated policy fee (15% + 20 cents)
         UFixed fractionalFee = UFixedMathLib.itof(15, -2);
-        uint256 fixedFee = 2 * 10**(token.decimals() - 1);
+        uint256 fixedFee = 2 * 10 ** (token.decimals() - 1);
         Fee memory policyFee = toFee(fractionalFee, fixedFee);
 
         vm.prank(productOwner);
-        componentOwnerService.setProductFees(
-            product,
-            policyFee,
-            zeroFee());
+        componentOwnerService.setProductFees(product, policyFee, zeroFee());
 
         // check updated policy fee
         setup = treasuryModule.getProductSetup(product.getNftId());
-        assertTrue(feeIsSame(setup.policyFee, policyFee), "updated policyFee not 15% + 20 cents");
-        assertTrue(feeIsSame(setup.processingFee, zeroFee()), "updated processingFee not zeroFee");
+        assertTrue(
+            feeIsSame(setup.policyFee, policyFee),
+            "updated policyFee not 15% + 20 cents"
+        );
+        assertTrue(
+            feeIsSame(setup.processingFee, zeroFee()),
+            "updated processingFee not zeroFee"
+        );
 
         vm.prank(customer);
         NftId policyNftId = product.applyForPolicy(
@@ -183,35 +247,78 @@ contract TestApplicationCreate is TestGifBase {
         product.underwrite(policyNftId);
 
         // check bookkeeping before collecting premium
-        IPolicy.PolicyInfo memory infoBefore = instance.getPolicyInfo(policyNftId);
-        assertEq(infoBefore.premiumAmount, premiumAmount, "unexpected policy premium amount");
-        assertEq(infoBefore.premiumPaidAmount, 0, "unexpected policy premium paid amount");
-        assertEq(token.balanceOf(pool.getWallet()), 0, "unexpected pool balance");
+        IPolicy.PolicyInfo memory infoBefore = instance.getPolicyInfo(
+            policyNftId
+        );
+        assertEq(
+            infoBefore.premiumAmount,
+            premiumAmount,
+            "unexpected policy premium amount"
+        );
+        assertEq(
+            infoBefore.premiumPaidAmount,
+            0,
+            "unexpected policy premium paid amount"
+        );
+        assertEq(
+            token.balanceOf(pool.getWallet()),
+            0,
+            "unexpected pool balance"
+        );
 
         vm.prank(instanceOwner);
         fundAccount(customer, premiumAmount);
 
-        TokenHandler tokenHandler = instance.getTokenHandler(product.getNftId());
+        TokenHandler tokenHandler = instance.getTokenHandler(
+            product.getNftId()
+        );
         address tokenHandlerAddress = address(tokenHandler);
 
         vm.prank(customer);
         token.approve(tokenHandlerAddress, premiumAmount);
 
-        assertEq(token.balanceOf(customer), premiumAmount, "customer balance not premium");
-        assertEq(token.allowance(customer, tokenHandlerAddress), premiumAmount, "customer token approval not premium");
+        assertEq(
+            token.balanceOf(customer),
+            premiumAmount,
+            "customer balance not premium"
+        );
+        assertEq(
+            token.allowance(customer, tokenHandlerAddress),
+            premiumAmount,
+            "customer token approval not premium"
+        );
 
         product.collectPremium(policyNftId);
 
         UFixed premiumUFixed = UFixedMathLib.itof(premiumAmount);
-        UFixed fractionalFeeAmountUFixed = premiumUFixed * policyFee.fractionalFee;
-        uint fractionalFeeAmount = UFixedMathLib.ftoi(fractionalFeeAmountUFixed);
+        UFixed fractionalFeeAmountUFixed = premiumUFixed *
+            policyFee.fractionalFee;
+        uint fractionalFeeAmount = UFixedMathLib.ftoi(
+            fractionalFeeAmountUFixed
+        );
         uint policyFeeAmount = fractionalFeeAmount + policyFee.fixedFee;
         uint netPremiumAmount = premiumAmount - policyFeeAmount;
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
-        assertEq(info.premiumAmount, premiumAmount, "unexpected policy premium amount (after)");
-        assertEq(info.premiumPaidAmount, premiumAmount, "unexpected policy premium paid amount (after)");
-        assertEq(token.balanceOf(product.getWallet()), policyFeeAmount, "unexpected product balance (after)");
-        assertEq(token.balanceOf(pool.getWallet()), netPremiumAmount, "unexpected pool balance (after)");
+        assertEq(
+            info.premiumAmount,
+            premiumAmount,
+            "unexpected policy premium amount (after)"
+        );
+        assertEq(
+            info.premiumPaidAmount,
+            premiumAmount,
+            "unexpected policy premium paid amount (after)"
+        );
+        assertEq(
+            token.balanceOf(product.getWallet()),
+            policyFeeAmount,
+            "unexpected product balance (after)"
+        );
+        assertEq(
+            token.balanceOf(pool.getWallet()),
+            netPremiumAmount,
+            "unexpected pool balance (after)"
+        );
     }
 }

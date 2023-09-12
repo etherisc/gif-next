@@ -5,7 +5,6 @@ import {StateId, toStateId} from "../../types/StateId.sol";
 import {SM} from "./SM.sol";
 
 contract SimpleStateMachine is SM {
-
     uint8 public constant STATE_ACTIVE = 10;
     uint8 public constant STATE_PAUSED = 20;
     uint8 public constant STATE_ARCHIVED = 30;
@@ -18,7 +17,15 @@ contract SimpleStateMachine is SM {
         setInitialState(ACTIVE());
     }
 
-    function ACTIVE() public pure returns(StateId stateId) { return toStateId(STATE_ACTIVE); }
-    function PAUSED() public pure returns(StateId stateId) { return toStateId(STATE_PAUSED); }
-    function ARCHIVED() public pure returns(StateId stateId) { return toStateId(STATE_ARCHIVED); }
+    function ACTIVE() public pure returns (StateId stateId) {
+        return toStateId(STATE_ACTIVE);
+    }
+
+    function PAUSED() public pure returns (StateId stateId) {
+        return toStateId(STATE_PAUSED);
+    }
+
+    function ARCHIVED() public pure returns (StateId stateId) {
+        return toStateId(STATE_ARCHIVED);
+    }
 }

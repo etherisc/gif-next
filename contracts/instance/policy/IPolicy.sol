@@ -9,7 +9,6 @@ import {StateId} from "../../types/StateId.sol";
 
 // TODO check if there is value to introuce IContract and let IPolicy derive from IContract
 interface IPolicy {
-
     struct PolicyInfo {
         NftId nftId;
         StateId state; // applied, withdrawn, rejected, active, closed
@@ -27,7 +26,6 @@ interface IPolicy {
 }
 
 interface IPolicyModule is IOwnable, IRegistryLinked, IPolicy {
-
     function createApplication(
         IRegistry.RegistryInfo memory productInfo,
         address applicationOwner,

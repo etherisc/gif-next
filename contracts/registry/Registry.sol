@@ -72,8 +72,13 @@ contract Registry is IRegistry {
         _chainNft = IChainNft(chainNft);
     }
 
-    function register(address objectAddress) external override returns(NftId nftId) {
-        require(_nftIdByAddress[objectAddress].eqz(), "ERROR:REG-002:ALREADY_REGISTERED");
+    function register(
+        address objectAddress
+    ) external override returns (NftId nftId) {
+        require(
+            _nftIdByAddress[objectAddress].eqz(),
+            "ERROR:REG-002:ALREADY_REGISTERED"
+        );
 
         IRegisterable registerable = IRegisterable(objectAddress);
         require(

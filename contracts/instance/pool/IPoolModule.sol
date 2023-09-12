@@ -13,10 +13,11 @@ interface IPool {
 }
 
 interface IPoolModule is IOwnable, IRegistryLinked, IPool {
-
     function underwrite(NftId policyNftId, NftId productNftId) external;
 
     function registerPool(NftId nftId) external;
 
-    function getPoolInfo(NftId nftId) external view returns (PoolInfo memory info);
+    function getPoolInfo(
+        NftId nftId
+    ) external view returns (PoolInfo memory info);
 }

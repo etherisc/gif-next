@@ -6,6 +6,11 @@ import {Fee} from "../types/Fee.sol";
 
 interface IProductComponent {
     function getPoolNftId() external view returns (NftId poolNftId);
-    function getPolicyFee() external view returns(Fee memory policyFee);
-    function getProcessingFee() external view returns(Fee memory processingFee);
+
+    function getPolicyFee() external view returns (Fee memory policyFee);
+
+    function getProcessingFee()
+        external
+        view
+        returns (Fee memory processingFee);
 }

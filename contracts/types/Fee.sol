@@ -10,7 +10,10 @@ struct Fee {
 
 // general pure free functions
 /// @dev Converts the uint256 to a NftId.
-function toFee(UFixed fractionalFee, uint256 fixedFee) pure returns (Fee memory fee) {
+function toFee(
+    UFixed fractionalFee,
+    uint256 fixedFee
+) pure returns (Fee memory fee) {
     return Fee(fractionalFee, fixedFee);
 }
 
@@ -24,7 +27,6 @@ function feeIsSame(Fee memory a, Fee memory b) pure returns (bool isSame) {
     return a.fixedFee == b.fixedFee && a.fractionalFee == b.fractionalFee;
 }
 
-
-function feeIsZero(Fee memory fee) pure returns(bool) {
+function feeIsZero(Fee memory fee) pure returns (bool) {
     return fee.fixedFee == 0 && UFixed.unwrap(fee.fractionalFee) == 0;
 }

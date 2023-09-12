@@ -13,10 +13,7 @@ import {NftId, NftIdLib} from "../../types/NftId.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 
-abstract contract PolicyModule is
-    IRegistryLinked,
-    IPolicyModule
-{
+abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
     using NftIdLib for NftId;
 
     mapping(NftId nftId => PolicyInfo info) private _policyInfo;
@@ -58,7 +55,8 @@ abstract contract PolicyModule is
         nftId = this.getRegistry().registerObjectForInstance(
             productInfo.nftId,
             POLICY(),
-            applicationOwner);
+            applicationOwner
+        );
 
         _policyInfo[nftId] = PolicyInfo(
             nftId,
@@ -88,14 +86,18 @@ abstract contract PolicyModule is
         info.updatedAt = block.timestamp;
     }
 
-
     function activate(NftId nftId) external override onlyProductService2 {
         PolicyInfo storage info = _policyInfo[nftId];
         // solhint-disable-next-line not-rely-on-time
         info.activatedAt = block.timestamp;
         // solhint-disable-next-line not-rely-on-time
         info.expiredAt = block.timestamp + info.lifetime;
-        info.state = _lifecycleModule.checkAndLogTransition(nftId, POLICY(), info.state, ACTIVE());
+        info.state = _lifecycleModule.checkAndLogTransition(
+            nftId,
+            POLICY(),
+            info.state,
+            ACTIVE()
+        );
     }
 
     function getBundleNftForPolicy(

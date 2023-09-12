@@ -13,9 +13,9 @@ import {ITreasuryModule} from "./ITreasury.sol";
 import {TokenHandler} from "./TokenHandler.sol";
 
 abstract contract TreasuryModule is ITreasuryModule {
-
     mapping(NftId productNftId => ProductSetup setup) private _productSetup;
-    mapping(NftId distributorNftId => DistributorSetup setup) private _distributorSetup;
+    mapping(NftId distributorNftId => DistributorSetup setup)
+        private _distributorSetup;
     mapping(NftId poolNftId => PoolSetup setup) private _poolSetup;
 
     IPolicyModule private _policyModule;
@@ -32,10 +32,7 @@ abstract contract TreasuryModule is ITreasuryModule {
         address wallet,
         Fee memory policyFee,
         Fee memory processingFee
-    )
-        external
-        override
-        // TODO add authz (only component module)
+    ) external override // TODO add authz (only component module)
     {
         // TODO add validation
 
@@ -56,15 +53,11 @@ abstract contract TreasuryModule is ITreasuryModule {
         // TODO add logging
     }
 
-
     function setProductFees(
-        NftId productNftId, 
+        NftId productNftId,
         Fee memory policyFee,
         Fee memory processingFee
-    )
-        external
-        override
-        // TODO add authz (only component owner service)
+    ) external override // TODO add authz (only component owner service)
     {
         // TODO add validation
 
@@ -76,14 +69,11 @@ abstract contract TreasuryModule is ITreasuryModule {
     }
 
     function registerPool(
-            NftId poolNftId,
-            address wallet,
-            Fee memory stakingFee,
-            Fee memory performanceFee
-    )
-        external
-        override
-        // TODO add authz (only component module)
+        NftId poolNftId,
+        address wallet,
+        Fee memory stakingFee,
+        Fee memory performanceFee
+    ) external override // TODO add authz (only component module)
     {
         // TODO add validation
 
@@ -98,13 +88,10 @@ abstract contract TreasuryModule is ITreasuryModule {
     }
 
     function setPoolFees(
-        NftId poolNftId, 
+        NftId poolNftId,
         Fee memory stakingFee,
         Fee memory performanceFee
-    )
-        external
-        override
-        // TODO add authz (only component owner service)
+    ) external override // TODO add authz (only component owner service)
     {
         // TODO add validation
 
@@ -115,41 +102,36 @@ abstract contract TreasuryModule is ITreasuryModule {
         // TODO add logging
     }
 
-    function getTokenHandler(NftId productNftId)
-        external
-        view
-        override
-        returns(TokenHandler tokenHandler)
-    {
+    function getTokenHandler(
+        NftId productNftId
+    ) external view override returns (TokenHandler tokenHandler) {
         return _productSetup[productNftId].tokenHandler;
     }
 
-    function getProductSetup(NftId productNftId)
-        external
-        view
-        override
-        returns(ProductSetup memory setup)
-    {
+    function getProductSetup(
+        NftId productNftId
+    ) external view override returns (ProductSetup memory setup) {
         return _productSetup[productNftId];
     }
 
-    function getPoolSetup(NftId poolNftId) 
-        external
-        view
-        override
-        returns(PoolSetup memory setup)
-    {
+    function getPoolSetup(
+        NftId poolNftId
+    ) external view override returns (PoolSetup memory setup) {
         return _poolSetup[poolNftId];
     }
 
-
-    function processPremium(NftId policyNftId, NftId productNftId)
-        external
-        override
-        // TODO add authz (only product service)
+    function processPremium(
+        NftId policyNftId,
+        NftId productNftId
+    ) external override // TODO add authz (only product service)
     {
-        IPolicy.PolicyInfo memory policyInfo = _policyModule.getPolicyInfo(policyNftId);
-        require(policyInfo.nftId == policyNftId, "ERROR:TRS-020:POLICY_UNKNOWN");
+        IPolicy.PolicyInfo memory policyInfo = _policyModule.getPolicyInfo(
+            policyNftId
+        );
+        require(
+            policyInfo.nftId == policyNftId,
+            "ERROR:TRS-020:POLICY_UNKNOWN"
+        );
 
         ProductSetup memory product = _productSetup[productNftId];
         TokenHandler tokenHandler = product.tokenHandler;
@@ -157,29 +139,29 @@ abstract contract TreasuryModule is ITreasuryModule {
         address poolWallet = _poolSetup[product.poolNftId].wallet;
         // TODO add validation
 
-        if(feeIsZero(product.policyFee)) {
-            tokenHandler.transfer(policyOwner, poolWallet, policyInfo.premiumAmount);
+        if (feeIsZero(product.policyFee)) {
+            tokenHandler.transfer(
+                policyOwner,
+                poolWallet,
+                policyInfo.premiumAmount
+            );
         } else {
-            (
-                uint256 feeAmount,
-                uint256 netAmount
-             ) = calculateFeeAmount(policyInfo.premiumAmount, product.policyFee);
+            (uint256 feeAmount, uint256 netAmount) = calculateFeeAmount(
+                policyInfo.premiumAmount,
+                product.policyFee
+            );
 
             tokenHandler.transfer(policyOwner, product.wallet, feeAmount);
             tokenHandler.transfer(policyOwner, poolWallet, netAmount);
         }
     }
 
-    function calculateFeeAmount(uint256 amount, Fee memory fee)
-        public
-        pure
-        override
-        returns(
-            uint256 feeAmount,
-            uint256 netAmount
-        )
-    {
-        UFixed fractionalAmount = UFixedMathLib.itof(amount) * fee.fractionalFee;
+    function calculateFeeAmount(
+        uint256 amount,
+        Fee memory fee
+    ) public pure override returns (uint256 feeAmount, uint256 netAmount) {
+        UFixed fractionalAmount = UFixedMathLib.itof(amount) *
+            fee.fractionalFee;
         feeAmount = UFixedMathLib.ftoi(fractionalAmount) + fee.fixedFee;
         netAmount = amount - feeAmount;
     }
