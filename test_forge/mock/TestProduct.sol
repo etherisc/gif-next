@@ -3,11 +3,13 @@ pragma solidity ^0.8.19;
 
 import {Product} from "../../contracts/components/Product.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
+import {Fee, zeroFee} from "../../contracts/types/Fee.sol";
 
 contract TestProduct is Product {
 
-    constructor(address registry, address instance, address pool)
-        Product(registry, instance, pool)
+    constructor(address registry, address instance, address token, address pool, Fee memory policyFee)
+        Product(registry, instance, token, pool, policyFee, zeroFee())
+    // solhint-disable-next-line no-empty-blocks
     {}
 
     function applyForPolicy(
@@ -29,5 +31,9 @@ contract TestProduct is Product {
 
     function underwrite(NftId nftId) external {
         _underwrite(nftId);
+    }
+
+    function collectPremium(NftId nftId) external {
+        _collectPremium(nftId);
     }
 }

@@ -102,6 +102,7 @@ library UFixedMathLib {
         return UFixed.wrap(a * MULTIPLIER);
     }
 
+    // TODO rename to toUFixed
     /// @dev Converts the uint256 to a UFixed with given exponent.
     function itof(uint256 a, int8 exp) public pure returns (UFixed) {
         require(EXP + exp >= 0, "ERROR:FM-010:EXPONENT_TOO_SMALL");

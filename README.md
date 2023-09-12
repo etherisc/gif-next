@@ -143,7 +143,8 @@ Additionally, we use the following naming conventions:
 
 We use prettier and the solidity plugin to format the code automatically. 
 The plugin is configured to use the style guide mentioned above.
-To execute formatting run `npm run prettier`.
+To execute format checks run `npm run styleCheck`.
+To execute formatting run `npm run styleFix`.
 
 ### Linting 
 

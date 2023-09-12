@@ -1,22 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
+import {StateId} from "../../types/StateId.sol";
 import {NftId} from "../../types/NftId.sol";
+import {Fee} from "../../types/Fee.sol";
+import {UFixed} from "../../types/UFixed.sol";
 
 interface IComponent {
-    // TODO decide if enum or uints with constants (as in IRegistry.PRODUCT())
-    enum CState {
-        Undefined,
-        Active,
-        Locked
-    }
-
     // component dynamic info (static info kept in registry)
     struct ComponentInfo {
         NftId nftId;
-        CState state;
+        StateId state;
+        IERC20Metadata token;
     }
 }
 
@@ -25,7 +24,11 @@ interface IInstanceLinked {
     function getInstance() external view returns (IInstance instance);
 }
 
-interface IComponentContract is IRegisterable, IInstanceLinked, IComponent {}
+interface IComponentContract is IRegisterable, IInstanceLinked, IComponent {
+    function getToken() external view returns (IERC20Metadata token);
+
+    function getWallet() external view returns (address walletAddress);
+}
 
 interface IComponentOwnerService is IRegistryLinked {
     function register(
@@ -35,6 +38,12 @@ interface IComponentOwnerService is IRegistryLinked {
     function lock(IComponentContract component) external;
 
     function unlock(IComponentContract component) external;
+
+    function setProductFees(
+        IComponentContract product,
+        Fee memory policyFee,
+        Fee memory processingFee
+    ) external;
 }
 
 interface IComponentModule is IOwnable, IRegistryLinked, IComponent {
@@ -50,19 +59,11 @@ interface IComponentModule is IOwnable, IRegistryLinked, IComponent {
         NftId nftId
     ) external view returns (ComponentInfo memory info);
 
-    function getComponentOwner(
-        NftId nftId
-    ) external view returns (address owner);
-
     function getComponentId(
         address componentAddress
     ) external view returns (NftId nftId);
 
     function getComponentId(uint256 idx) external view returns (NftId nftId);
-
-    function getPoolNftId(
-        NftId productNftId
-    ) external view returns (NftId poolNftId);
 
     function components() external view returns (uint256 numberOfCompnents);
 

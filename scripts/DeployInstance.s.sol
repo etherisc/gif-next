@@ -17,9 +17,9 @@ contract DeployInstance is Script {
 
     function run(address instanceOwner) external returns (Instance instance) {
 
-        HelperConfig helperConfig = new HelperConfig();
-        HelperConfig.NetworkConfig memory config = HelperConfig.NetworkConfig(helperConfig.activeNetworkConfig());
-        address dipAddress = config.dipAddress;
+        // HelperConfig helperConfig = new HelperConfig();
+        // HelperConfig.NetworkConfig memory config = HelperConfig.NetworkConfig(helperConfig.activeNetworkConfig());
+        // address dipAddress = config.dipAddress;
 
         console.log("tx origin", tx.origin);
 

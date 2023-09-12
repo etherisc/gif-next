@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {Script, console} from "../lib/forge-std/src/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 
@@ -12,8 +14,11 @@ import {ComponentOwnerService} from "../contracts/instance/component/ComponentMo
 import {ProductService} from "../contracts/instance/product/ProductService.sol";
 import {TestProduct} from "../test_forge/mock/TestProduct.sol";
 import {TestPool} from "../test_forge/mock/TestPool.sol";
+import {USDC} from "../test_forge/mock/Usdc.sol";
 
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
+import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";
+import {Fee, toFee} from "../contracts/types/Fee.sol";
 
 contract DeployAll is Script {
 
@@ -38,9 +43,11 @@ contract DeployAll is Script {
 
         vm.startBroadcast();
         (, Registry registry) = _deployRegistry();
-        Instance instance = _deployInstance(registry);
-        TestPool pool = _deployPool(registry, instance);
-        TestProduct product = _deployProduct(registry, instance, pool);
+        (
+            Instance instance,
+            TestPool pool,
+            TestProduct product
+        ) = _deployInstancePoolAndProduct(registry);
         _registerAndTransfer(registry, instance, product, pool, instanceOwner, productOwner, poolOwner);
         vm.stopBroadcast();
 
@@ -50,6 +57,19 @@ contract DeployAll is Script {
             product,
             pool
         );
+    }
+
+    function _deployInstancePoolAndProduct(Registry registry)
+        internal
+        returns(
+            Instance instance,
+            TestPool pool,
+            TestProduct product
+        )
+    {
+        instance = _deployInstance(registry);
+        pool = _deployPool(registry, instance);
+        product = _deployProduct(registry, instance, pool);
     }
 
     function _deployRegistry()
@@ -65,6 +85,8 @@ contract DeployAll is Script {
 
         console.log("nft deployed at", address(nft));
         console.log("registry deployed at", address(registry));
+
+        // TODO add usdc token registration
     }
 
     function _deployInstance(Registry registry) internal returns(Instance instance) {
@@ -83,12 +105,16 @@ contract DeployAll is Script {
     }
 
     function _deployPool(Registry registry, Instance instance) internal returns(TestPool pool) {
-        pool = new TestPool(address(registry), address(instance));
+        USDC token  = new USDC();
+        console.log("usdc token deployed at", address(token));
+
+        pool = new TestPool(address(registry), address(instance), address(token));
         console.log("pool deployed at", address(pool));
     }
 
     function _deployProduct(Registry registry, Instance instance, TestPool pool) internal returns(TestProduct product) {
-        product = new TestProduct(address(registry), address(instance), address(pool));
+        Fee memory policyFee = toFee(UFixedMathLib.itof(1, -1), 0);
+        product = new TestProduct(address(registry), address(instance), address(pool.getToken()), address(pool), policyFee);
         console.log("product deployed at", address(product));
     }
 
@@ -119,6 +145,10 @@ contract DeployAll is Script {
         instance.grantRole(productOwnerRole, productOwner);
 
         NftId productNftId = componentOwnerService.register(product);
+
+        // transfer token
+        IERC20Metadata token = product.getToken();
+        token.transfer(instanceOwner, token.totalSupply());
 
         // transfer ownerships
         ChainNft nft = ChainNft(registry.getNftAddress());

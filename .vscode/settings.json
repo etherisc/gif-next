@@ -14,6 +14,7 @@
     "[solidity]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
     },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#f18500",
         "activityBar.background": "#f18500",

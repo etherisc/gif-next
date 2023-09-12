@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {NftId} from "../types/NftId.sol";
+import {ObjectType} from "../types/ObjectType.sol";
 
 interface IOwnable {
     function getOwner() external view returns (address owner);
@@ -20,7 +21,7 @@ interface IRegisterable is IOwnable, IRegistryLinked {
 
     function getParentNftId() external view returns (NftId parentNftId);
 
-    function getType() external view returns (uint256 objectType);
+    function getType() external view returns (ObjectType objectType);
 
     function getData() external view returns (bytes memory data);
 
@@ -35,30 +36,16 @@ interface IRegistry {
     struct RegistryInfo {
         NftId nftId;
         NftId parentNftId;
-        uint256 objectType;
+        ObjectType objectType;
         address objectAddress;
         address initialOwner;
     }
-
-    function TOKEN() external pure returns (uint256);
-
-    function INSTANCE() external pure returns (uint256);
-
-    function PRODUCT() external pure returns (uint256);
-
-    function ORACLE() external pure returns (uint256);
-
-    function POOL() external pure returns (uint256);
-
-    function POLICY() external pure returns (uint256);
-
-    function BUNDLE() external pure returns (uint256);
 
     function register(address objectAddress) external returns (NftId nftId);
 
     function registerObjectForInstance(
         NftId parentNftid,
-        uint256 objectType,
+        ObjectType objectType,
         address initialOwner
     ) external returns (NftId nftId);
 

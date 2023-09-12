@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {IRegistry, IRegisterable, IRegistryLinked} from "../registry/IRegistry.sol";
 import {Registerable} from "../registry/Registry.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -15,11 +17,6 @@ contract InstanceLinked is IInstanceLinked {
         _instance = IInstance(instance);
     }
 
-    // function setInstance(address instance) public override {
-    //     require(address(_instance) == address(0), "ERROR:RGL-001:INSTANCE_ALREADY_SET");
-    //     _instance = IInstance(instance);
-    // }
-
     function getInstance() public view override returns (IInstance instance) {
         return _instance;
     }
@@ -31,11 +28,17 @@ abstract contract Component is
     IComponentContract
 {
     address private _deployer;
+    address private _wallet;
+    IERC20Metadata private _token;
 
     constructor(
         address registry,
-        address instance
-    ) Registerable(registry) InstanceLinked(instance) {}
+        address instance,
+        address token
+    ) Registerable(registry) InstanceLinked(instance) {
+        _wallet = address(this);
+        _token = IERC20Metadata(token);
+    }
 
     // from registerable
     function register() public override returns (NftId componentId) {
@@ -56,5 +59,19 @@ abstract contract Component is
     // from registerable
     function getParentNftId() public view override returns (NftId) {
         return getInstance().getNftId();
+    }
+
+    // from component contract
+    function getWallet()
+        external
+        view
+        override
+        returns (address walletAddress)
+    {
+        return _wallet;
+    }
+
+    function getToken() external view override returns (IERC20Metadata token) {
+        return _token;
     }
 }
