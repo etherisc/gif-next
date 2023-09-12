@@ -1,5 +1,13 @@
 # gif-next (Generic Insurance Framework next version)
 
+## Submodules checkout
+
+This repository uses submodules. To checkout or update to the latest submodules, run the following command after updating to any revision (or checking out the repository)
+
+```shell
+git submodule update --recursive
+```
+
 ## Hardhat 
 
 ### NPM Commands
