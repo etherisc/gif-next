@@ -13,7 +13,7 @@ contract TestComponentLockUnlock is
     TestGifBase
 {
     
-    IComponentOwnerService componentOwnerService;
+    IComponentOwnerService public componentOwnerService;
 
     function setUp() public override {
         super.setUp();

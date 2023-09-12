@@ -53,21 +53,35 @@ interface ITreasuryModule is
             IERC20 token,
             address wallet,
             Fee memory policyFee,
-            Fee memory processingFee
-        )
-            external;
+            Fee memory processingFee) external;
+
+    function setProductFees(
+        NftId productNftId, 
+        Fee memory policyFee,
+        Fee memory processingFee) external;
 
     function registerPool(
             NftId poolNftId,
             address wallet,
             Fee memory stakingFee,
-            Fee memory performanceFee
-        )
-            external;
+            Fee memory performanceFee) external;
+
+    function setPoolFees(
+        NftId poolNftId, 
+        Fee memory stakingFee,
+        Fee memory performanceFee) external;
+
+    function processPremium(NftId policyNftId, NftId productNftId) external;
 
     function getTokenHandler(NftId productNftId) external view returns(TokenHandler tokenHandler);
     function getProductSetup(NftId productNftId) external view returns(ProductSetup memory setup);
     function getPoolSetup(NftId poolNftId) external view returns(PoolSetup memory setup);
 
-    function processPremium(NftId policyNftId, NftId productNftId) external;
+    function calculateFeeAmount(uint256 amount, Fee memory fee)
+        external
+        pure
+        returns(
+            uint256 feeAmount,
+            uint256 netAmount
+        );
 }

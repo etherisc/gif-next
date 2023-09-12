@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {RegistryLinked} from "../../registry/Registry.sol";
 import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
@@ -9,6 +9,7 @@ import {IAccessComponentTypeRoles, IAccessCheckRole} from "../access/IAccess.sol
 import {IInstance} from "../IInstance.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
+import {ITreasuryModule} from "../treasury/ITreasury.sol";
 import {TreasuryModule} from "../treasury/TreasuryModule.sol";
 import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
@@ -69,7 +70,7 @@ abstract contract ComponentModule is
         );
 
         nftId = this.getRegistry().register(address(component));
-        IERC20 token = component.getToken();
+        IERC20Metadata token = component.getToken();
         address wallet = component.getWallet();
 
         // create component info
@@ -248,5 +249,24 @@ contract ComponentOwnerService is
         info.state = ACTIVE();
         // setComponentInfo checks for valid state changes
         instance.setComponentInfo(info);
+    }
+
+    function setProductFees(
+        IComponentContract product,
+        Fee memory policyFee,
+        Fee memory processingFee
+    )
+        external
+        override
+        onlyComponentOwner(product)
+    {
+        require(product.getType() == PRODUCT(), "ERROR_NOT_PRODUCT");
+
+        address instanceAddress = address(product.getInstance());
+        ITreasuryModule treasuryModule = ITreasuryModule(instanceAddress);
+        treasuryModule.setProductFees(
+            product.getNftId(),
+            policyFee,
+            processingFee);
     }
 }

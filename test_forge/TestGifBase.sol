@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import "../lib/forge-std/src/Test.sol";
 
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {DeployAll} from "../scripts/DeployAll.s.sol";
 
@@ -23,7 +23,7 @@ contract TestGifBase is Test {
 
     ChainNft public chainNft;
     Registry public registry;
-    IERC20 public token;
+    IERC20Metadata public token;
     Instance public instance;
     TestProduct public product;
     TestPool public pool;

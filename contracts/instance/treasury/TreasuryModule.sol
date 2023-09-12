@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 import {NftId} from "../../types/NftId.sol";
 import {Fee, feeIsZero} from "../../types/Fee.sol";
-import {UFixed} from "../../types/UFixed.sol";
+import {UFixed, UFixedMathLib} from "../../types/UFixed.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
 import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 import {TokenHandler} from "./TokenHandler.sol";
@@ -56,6 +56,25 @@ abstract contract TreasuryModule is ITreasuryModule {
         // TODO add logging
     }
 
+
+    function setProductFees(
+        NftId productNftId, 
+        Fee memory policyFee,
+        Fee memory processingFee
+    )
+        external
+        override
+        // TODO add authz (only component owner service)
+    {
+        // TODO add validation
+
+        ProductSetup storage setup = _productSetup[productNftId];
+        setup.policyFee = policyFee;
+        setup.processingFee = processingFee;
+
+        // TODO add logging
+    }
+
     function registerPool(
             NftId poolNftId,
             address wallet,
@@ -74,6 +93,24 @@ abstract contract TreasuryModule is ITreasuryModule {
             stakingFee,
             performanceFee
         );
+
+        // TODO add logging
+    }
+
+    function setPoolFees(
+        NftId poolNftId, 
+        Fee memory stakingFee,
+        Fee memory performanceFee
+    )
+        external
+        override
+        // TODO add authz (only component owner service)
+    {
+        // TODO add validation
+
+        PoolSetup storage setup = _poolSetup[poolNftId];
+        setup.stakingFee = stakingFee;
+        setup.performanceFee = performanceFee;
 
         // TODO add logging
     }
@@ -115,7 +152,6 @@ abstract contract TreasuryModule is ITreasuryModule {
         require(policyInfo.nftId == policyNftId, "ERROR:TRS-020:POLICY_UNKNOWN");
 
         ProductSetup memory product = _productSetup[productNftId];
-
         TokenHandler tokenHandler = product.tokenHandler;
         address policyOwner = this.getRegistry().getOwner(policyNftId);
         address poolWallet = _poolSetup[product.poolNftId].wallet;
@@ -124,8 +160,27 @@ abstract contract TreasuryModule is ITreasuryModule {
         if(feeIsZero(product.policyFee)) {
             tokenHandler.transfer(policyOwner, poolWallet, policyInfo.premiumAmount);
         } else {
-            // TODO add fee handling
-            tokenHandler.transfer(policyOwner, poolWallet, policyInfo.premiumAmount);
+            (
+                uint256 feeAmount,
+                uint256 netAmount
+             ) = calculateFeeAmount(policyInfo.premiumAmount, product.policyFee);
+
+            tokenHandler.transfer(policyOwner, product.wallet, feeAmount);
+            tokenHandler.transfer(policyOwner, poolWallet, netAmount);
         }
+    }
+
+    function calculateFeeAmount(uint256 amount, Fee memory fee)
+        public
+        pure
+        override
+        returns(
+            uint256 feeAmount,
+            uint256 netAmount
+        )
+    {
+        UFixed fractionalAmount = UFixedMathLib.itof(amount) * fee.fractionalFee;
+        feeAmount = UFixedMathLib.ftoi(fractionalAmount) + fee.fixedFee;
+        netAmount = amount - feeAmount;
     }
 }
