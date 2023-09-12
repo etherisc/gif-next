@@ -14,6 +14,7 @@ contract TestComponentInfo is TestGifBase {
         );
         // solhint-disable-next-line
         console.log("product (nftId, state)");
+        // solhint-disable-next-line
         console.log(info.nftId.toInt(), info.state.toInt());
 
         assertNftId(info.nftId, product.getNftId(), "product nft mismatch");
@@ -26,6 +27,7 @@ contract TestComponentInfo is TestGifBase {
         );
         // solhint-disable-next-line
         console.log("pool (nftId, state)");
+        // solhint-disable-next-line
         console.log(info.nftId.toInt(), info.state.toInt());
 
         assertNftId(info.nftId, pool.getNftId(), "pool nft mismatch");

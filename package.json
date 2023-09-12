@@ -9,8 +9,9 @@
     "ptest": "hh test --parallel",
     "test-with-gas": "REPORT_GAS=true hh test",
     "coverage": "hh coverage",
-    "prettier": "prettier --write --plugin=prettier-plugin-solidity 'contracts/**/*.sol' 'test_forge/**/*.t.sol'",
-    "lint": "prettier --list-different --plugin=prettier-plugin-solidity 'contracts/**/*.sol' 'test_forge/**/*.t.sol' && solhint 'contracts/**/*.sol' 'test_forge/**/*.t.sol'"
+    "styleFix": "prettier --write --plugin=prettier-plugin-solidity 'contracts/**/*.sol' 'test_forge/**/*.t.sol'",
+    "styleCheck": "prettier --check --plugin=prettier-plugin-solidity 'contracts/**/*.sol' 'test_forge/**/*.t.sol'",
+    "lint": "solhint 'contracts/**/*.sol' 'test_forge/**/*.t.sol'"
   },
   "repository": {
     "type": "git",
