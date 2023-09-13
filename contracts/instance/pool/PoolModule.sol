@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IOwnable, IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
-import {IProductService} from "../product/IProductService.sol";
+import {IProductService} from "../services/IProductService.sol";
 import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 import {ITreasuryModule} from "../treasury/ITreasury.sol";
 import {IPoolModule} from "./IPoolModule.sol";

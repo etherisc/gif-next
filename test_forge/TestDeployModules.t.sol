@@ -9,7 +9,7 @@ import {ChainNft} from "../contracts/registry/ChainNft.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 
 import {ComponentOwnerService} from "../contracts/instance/component/ComponentModule.sol";
-import {ProductService} from "../contracts/instance/product/ProductService.sol";
+import {ProductService} from "../contracts/instance/services/ProductService.sol";
 
 import {TestInstanceBase} from "./modules/TestInstanceBase.sol";
 import {TestInstanceModuleBundle, TestInstanceModuleComponent, TestInstanceModulePolicy, TestInstanceModuleProduct, TestInstanceModulePool, TestInstanceModuleTreasury} from "./modules/TestInstanceModules.sol";

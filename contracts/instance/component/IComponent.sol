@@ -41,12 +41,6 @@ interface IComponentOwnerService is IRegistryLinked {
     function lock(IComponentContract component) external;
 
     function unlock(IComponentContract component) external;
-
-    function setProductFees(
-        IComponentContract product,
-        Fee memory policyFee,
-        Fee memory processingFee
-    ) external;
 }
 
 interface IComponentModule is IOwnable, IRegistryLinked, IComponent {

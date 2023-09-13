@@ -4,11 +4,11 @@ pragma solidity ^0.8.19;
 import {TestInstanceBase} from "./TestInstanceBase.sol";
 
 import {LifecycleModule} from "../../contracts/instance/lifecycle/LifecycleModule.sol";
-import {ComponentModule} from "../../contracts/instance//component/ComponentModule.sol";
-import {ProductModule} from "../../contracts/instance//product/ProductService.sol";
-import {PoolModule} from "../../contracts/instance//pool/PoolModule.sol";
-import {PolicyModule} from "../../contracts/instance//policy/PolicyModule.sol";
-import {BundleModule} from "../../contracts/instance//bundle/BundleModule.sol";
+import {ComponentModule} from "../../contracts/instance/component/ComponentModule.sol";
+import {ProductModule} from "../../contracts/instance/product/ProductModule.sol";
+import {PoolModule} from "../../contracts/instance/pool/PoolModule.sol";
+import {PolicyModule} from "../../contracts/instance/policy/PolicyModule.sol";
+import {BundleModule} from "../../contracts/instance/bundle/BundleModule.sol";
 import {TreasuryModule} from "../../contracts/instance//treasury/TreasuryModule.sol";
 
 contract TestInstanceModuleBundle  is

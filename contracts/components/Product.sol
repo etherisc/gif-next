@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IProductService} from "../instance/product/IProductService.sol";
+import {IProductService} from "../instance/services/IProductService.sol";
 import {Component} from "./Component.sol";
 import {IProductComponent} from "./IProduct.sol";
 import {NftId} from "../types/NftId.sol";

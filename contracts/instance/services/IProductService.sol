@@ -6,7 +6,6 @@ import {IInstance} from "../IInstance.sol";
 import {NftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 
-// TODO or name this IProtectionService to have Product be something more generic (loan, savings account, ...)
 interface IProductService is IRegistryLinked {
     function setFees(
         Fee memory policyFee,
@@ -35,8 +34,4 @@ interface IProductService is IRegistryLinked {
     // function confirmClaim(uint256 nftId, uint256 claimId, uint256 claimAmount) external;
     // function declineClaim(uint256 nftId, uint256 claimId) external;
     // function closeClaim(uint256 nftId, uint256 claimId) external;
-}
-
-interface IProductModule is IOwnable, IRegistryLinked {
-    function getProductService() external view returns (IProductService);
 }

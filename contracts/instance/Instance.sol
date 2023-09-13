@@ -7,7 +7,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IAccessModule, AccessModule} from "./access/Access.sol";
 import {LifecycleModule} from "./lifecycle/LifecycleModule.sol";
 import {ComponentModule} from "./component/ComponentModule.sol";
-import {ProductModule} from "./product/ProductService.sol";
+import {ProductModule} from "./product/ProductModule.sol";
 import {PolicyModule} from "./policy/PolicyModule.sol";
 import {PoolModule} from "./pool/PoolModule.sol";
 import {BundleModule} from "./bundle/BundleModule.sol";

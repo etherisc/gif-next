@@ -11,7 +11,7 @@ import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 import {IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
 import {ComponentOwnerService} from "../contracts/instance/component/ComponentModule.sol";
-import {ProductService} from "../contracts/instance/product/ProductService.sol";
+import {ProductService} from "../contracts/instance/services/ProductService.sol";
 import {TestProduct} from "../contracts/test/TestProduct.sol";
 import {TestPool} from "../contracts/test/TestPool.sol";
 import {USDC} from "../test_forge/mock/Usdc.sol";

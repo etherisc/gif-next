@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
 import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
-import {IProductService} from "../product/IProductService.sol";
+import {IProductService} from "../services/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../types/ObjectType.sol";
 import {ACTIVE} from "../../types/StateId.sol";

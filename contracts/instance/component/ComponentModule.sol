@@ -261,20 +261,4 @@ contract ComponentOwnerService is
         // setComponentInfo checks for valid state changes
         instance.setComponentInfo(info);
     }
-
-    function setProductFees(
-        IComponentContract product,
-        Fee memory policyFee,
-        Fee memory processingFee
-    ) external override onlyRegisteredComponent(product) {
-        require(product.getType() == PRODUCT(), "ERROR_NOT_PRODUCT");
-
-        address instanceAddress = address(product.getInstance());
-        ITreasuryModule treasuryModule = ITreasuryModule(instanceAddress);
-        treasuryModule.setProductFees(
-            product.getNftId(),
-            policyFee,
-            processingFee
-        );
-    }
 }

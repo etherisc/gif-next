@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
-import {IProductService} from "../product/IProductService.sol";
+import {IProductService} from "../services/IProductService.sol";
 import {NftId} from "../../types/NftId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {Timestamp} from "../../types/Timestamp.sol";
