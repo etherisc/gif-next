@@ -57,18 +57,11 @@ abstract contract ComponentModule is
     }
 
     function registerComponent(
-        IComponentContract component
-    ) external override onlyComponentOwnerService returns (NftId nftId) {
-        ObjectType objectType = component.getType();
-        bytes32 typeRole = getRoleForType(objectType);
-        require(
-            this.hasRole(typeRole, component.getInitialOwner()),
-            "ERROR:CMP-004:TYPE_ROLE_MISSING"
-        );
-
-        nftId = this.getRegistry().register(address(component));
-        IERC20Metadata token = component.getToken();
-        address wallet = component.getWallet();
+        IComponentContract component,
+        NftId nftId,
+        ObjectType objectType,
+        IERC20Metadata token
+    ) external override onlyComponentOwnerService {
 
         // create component info
         _componentInfo[nftId] = ComponentInfo(
@@ -77,45 +70,10 @@ abstract contract ComponentModule is
             token
         );
 
-        // component type specific registration actions
-        if (component.getType() == PRODUCT()) {
-            IProductComponent product = IProductComponent(address(component));
-            NftId poolNftId = product.getPoolNftId();
-            require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
-            // validate pool token and product token are same
-
-            // register with tresury
-            // implement and add validation
-            NftId distributorNftId = zeroNftId();
-            _treasuryModule.registerProduct(
-                nftId,
-                distributorNftId,
-                poolNftId,
-                token,
-                wallet,
-                product.getPolicyFee(),
-                product.getProcessingFee()
-            );
-        } else if (component.getType() == POOL()) {
-            IPoolComponent pool = IPoolComponent(address(component));
-
-            // register with pool
-            _poolModule.registerPool(nftId);
-
-            // register with tresury
-            _treasuryModule.registerPool(
-                nftId,
-                wallet,
-                pool.getStakingFee(),
-                pool.getPerformanceFee()
-            );
-        }
-        // TODO add distribution
-
         _nftIdByAddress[address(component)] = nftId;
         _nftIds.push(nftId);
 
-        // TODO add loggingx
+        // TODO add logging
     }
 
     function getComponentOwnerService()
@@ -178,7 +136,7 @@ abstract contract ComponentModule is
 
     function getRoleForType(
         ObjectType cType
-    ) public view returns (bytes32 role) {
+    ) public view override returns (bytes32 role) {
         if (cType == PRODUCT()) {
             return this.PRODUCT_OWNER_ROLE();
         }
@@ -219,13 +177,65 @@ contract ComponentOwnerService is
     function register(
         IComponentContract component
     ) external override returns (NftId nftId) {
+        address initialOwner = component.getInitialOwner();
         require(
-            msg.sender == component.getInitialOwner(),
+            msg.sender == initialOwner,
             "ERROR:COS-003:NOT_OWNER"
         );
 
         IInstance instance = component.getInstance();
-        nftId = instance.registerComponent(component);
+        ObjectType objectType = component.getType();
+        bytes32 typeRole = instance.getRoleForType(objectType);
+        require(
+            instance.hasRole(typeRole, initialOwner),
+            "ERROR:CMP-004:TYPE_ROLE_MISSING"
+        );
+
+        nftId = _registry.register(address(component));
+        IERC20Metadata token = component.getToken();
+
+        instance.registerComponent(
+            component,
+            nftId,
+            objectType,
+            token);
+
+        address wallet = component.getWallet();
+
+        // component type specific registration actions
+        if (component.getType() == PRODUCT()) {
+            IProductComponent product = IProductComponent(address(component));
+            NftId poolNftId = product.getPoolNftId();
+            require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
+            // validate pool token and product token are same
+
+            // register with tresury
+            // implement and add validation
+            NftId distributorNftId = zeroNftId();
+            instance.registerProduct(
+                nftId,
+                distributorNftId,
+                poolNftId,
+                token,
+                wallet,
+                product.getPolicyFee(),
+                product.getProcessingFee()
+            );
+        } else if (component.getType() == POOL()) {
+            IPoolComponent pool = IPoolComponent(address(component));
+
+            // register with pool
+            instance.registerPool(nftId);
+
+            // register with tresury
+            instance.registerPool(
+                nftId,
+                wallet,
+                pool.getStakingFee(),
+                pool.getPerformanceFee()
+            );
+        }
+        // TODO add distribution
     }
 
     function lock(

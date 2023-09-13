@@ -7,6 +7,7 @@ import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry
 import {IInstance} from "../IInstance.sol";
 import {StateId} from "../../types/StateId.sol";
 import {NftId} from "../../types/NftId.sol";
+import {ObjectType} from "../../types/ObjectType.sol";
 import {Fee} from "../../types/Fee.sol";
 import {UFixed} from "../../types/UFixed.sol";
 
@@ -31,9 +32,7 @@ interface IComponentContract is IRegisterable, IInstanceLinked, IComponent {
 }
 
 interface IComponentOwnerService is IRegistryLinked {
-    function register(
-        IComponentContract component
-    ) external returns (NftId nftId);
+    function register(IComponentContract component) external returns(NftId componentNftId);
 
     function lock(IComponentContract component) external;
 
@@ -48,8 +47,11 @@ interface IComponentOwnerService is IRegistryLinked {
 
 interface IComponentModule is IOwnable, IRegistryLinked, IComponent {
     function registerComponent(
-        IComponentContract component
-    ) external returns (NftId nftId);
+        IComponentContract component,
+        NftId nftId,
+        ObjectType objectType,
+        IERC20Metadata token
+    ) external;
 
     function setComponentInfo(
         ComponentInfo memory info
@@ -71,4 +73,6 @@ interface IComponentModule is IOwnable, IRegistryLinked, IComponent {
         external
         view
         returns (IComponentOwnerService);
+
+    function getRoleForType(ObjectType cType) external view returns (bytes32 role);
 }
