@@ -8,6 +8,7 @@ import {IComponentModule} from "./component/IComponent.sol";
 import {IProductModule} from "./product/IProductService.sol";
 import {IPolicyModule} from "./policy/IPolicy.sol";
 import {IPoolModule} from "./pool/IPoolModule.sol";
+import {IBundleModule} from "./bundle/IBundle.sol";
 import {ITreasuryModule} from "./treasury/ITreasury.sol";
 
 // solhint-disable-next-line no-empty-blocks
@@ -17,6 +18,7 @@ interface IInstance is
     ILifecycleModule,
     IPolicyModule,
     IPoolModule,
+    IBundleModule,
     IComponentModule,
     IProductModule,
     ITreasuryModule
