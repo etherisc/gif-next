@@ -12,8 +12,8 @@ import {Instance} from "../contracts/instance/Instance.sol";
 import {IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
 import {ComponentOwnerService} from "../contracts/instance/component/ComponentModule.sol";
 import {ProductService} from "../contracts/instance/product/ProductService.sol";
-import {TestProduct} from "../test_forge/mock/TestProduct.sol";
-import {TestPool} from "../test_forge/mock/TestPool.sol";
+import {TestProduct} from "../contracts/test/TestProduct.sol";
+import {TestPool} from "../contracts/test/TestPool.sol";
 import {USDC} from "../test_forge/mock/Usdc.sol";
 
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";

@@ -150,3 +150,66 @@ To execute formatting run `npm run styleFix`.
 
 We use solhint to lint the code.
 To execute linting run `npm run lint`.
+
+
+### Adding Brownie (Legacy)
+
+python3 is already installed
+
+```bash
+npm install -g ganache
+sudo apt update
+sudo apt install python3-pip
+pip install eth-brownie
+brownie pm install OpenZeppelin/openzeppelin-contracts@4.9.3
+```
+
+```bash
+brownie compile --all
+brownie console
+```
+
+```python
+registry_owner = accounts[0]
+instance_owner = accounts[1]
+product_owner = accounts[2]
+
+# deploy libs and helper contracts
+nft_id_lib = NftIdLib.deploy({'from': registry_owner})
+ufixed_math_lib = UFixedMathLib.deploy({'from': registry_owner})
+test_fee = TestFee.deploy({'from': registry_owner})
+
+# deploy registry and a token
+registry = Registry.deploy({'from': registry_owner})
+nft = ChainNft.deploy(registry, {'from': registry_owner})
+registry.initialize(nft,  {'from': registry_owner})
+token = TestUsdc.deploy({'from': registry_owner})
+
+# deploy services
+component_owner_service = ComponentOwnerService.deploy(registry, {'from': registry_owner})
+product_service = ProductService.deploy(registry, {'from': registry_owner})
+
+# deploy an instance
+instance = Instance.deploy(registry, component_owner_service, product_service, {'from': instance_owner})
+
+# deploy product
+pool = TestPool.deploy(registry, instance, token, {'from': product_owner})
+policy_fee = test_fee.createFee(1, -1, 0)
+product = TestProduct.deploy(registry, instance, token, pool, policy_fee, {'from': product_owner})
+
+# grant roles
+pool_owner_role = instance.getRoleForName("PoolOwner")
+product_owner_role = instance.getRoleForName("ProductOwner")
+instance.grantRole(pool_owner_role, product_owner, {'from': instance_owner})
+instance.grantRole(product_owner_role, product_owner, {'from': instance_owner})
+
+# register objects
+instance.register()
+component_owner_service.register(pool, {'from': product_owner})
+component_owner_service.register(product, {'from': product_owner})
+
+instance_id = instance.getNftId()
+pool_id = pool.getNftId()
+product_id = product.getNftId()
+```
+

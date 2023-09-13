@@ -13,3 +13,5 @@ artifacts
 cache_forge
 artifacts_forge
 
+# brownie
+build/
