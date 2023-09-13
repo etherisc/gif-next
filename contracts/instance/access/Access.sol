@@ -64,7 +64,6 @@ abstract contract AccessModule is IAccessModule {
         role = _setRoleInfo(info);
     }
 
-    // TODO move to module
     function disableRole(bytes32 role) external override onlyOwner {
         RoleInfo memory info = _info[role];
         require(info.id == role, "ERROR:AOS-001:ROLE_DOES_NOT_EXIST");
@@ -73,7 +72,6 @@ abstract contract AccessModule is IAccessModule {
         _setRoleInfo(info);
     }
 
-    // TODO move to module
     function enableRole(bytes32 role) external override onlyOwner {
         RoleInfo memory info = _info[role];
         require(info.id == role, "ERROR:AOS-002:ROLE_DOES_NOT_EXIST");
