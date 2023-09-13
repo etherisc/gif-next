@@ -7,6 +7,7 @@ import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
 import {TokenHandler} from "../contracts/instance/treasury/TokenHandler.sol";
 import {APPLIED, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
+import {blockTimestamp, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {Fee, toFee, zeroFee, feeIsZero, feeIsSame} from "../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";
 import {IComponent, IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
@@ -59,11 +60,10 @@ contract TestApplicationCreate is TestGifBase {
         assertEq(info.premiumAmount, premiumAmount, "wrong premium amount");
         assertEq(info.lifetime, lifetime, "wrong lifetime");
 
-        // solhint-disable-next-line not-rely-on-time
-        assertEq(info.createdAt, block.timestamp, "wrong created at");
-        assertEq(info.activatedAt, 0, "wrong activated at");
-        assertEq(info.expiredAt, 0, "wrong expired at");
-        assertEq(info.closedAt, 0, "wrong closed at");
+        assertTrue(info.createdAt == blockTimestamp(), "wrong created at");
+        assertTrue(info.activatedAt == zeroTimestamp(), "wrong activated at");
+        assertTrue(info.expiredAt == zeroTimestamp(), "wrong expired at");
+        assertTrue(info.closedAt == zeroTimestamp(), "wrong closed at");
     }
 
     function testApplicationCreateAndUnderwrite() public {
@@ -89,14 +89,13 @@ contract TestApplicationCreate is TestGifBase {
         );
 
         // solhint-disable-next-line not-rely-on-time
-        assertEq(info.activatedAt, block.timestamp, "wrong activated at");
-        assertEq(
-            info.expiredAt,
-            // solhint-disable-next-line not-rely-on-time
-            block.timestamp + info.lifetime,
+        assertTrue(info.activatedAt == blockTimestamp(), "wrong activated at");
+        assertTrue(
+            info.expiredAt ==
+            blockTimestamp().addSeconds(info.lifetime),
             "wrong expired at"
         );
-        assertEq(info.closedAt, 0, "wrong closed at");
+        assertTrue(info.closedAt == zeroTimestamp(), "wrong closed at");
 
         IPool.PoolInfo memory poolInfoAfter = instance.getPoolInfo(
             pool.getNftId()

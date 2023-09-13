@@ -120,42 +120,6 @@ abstract contract TreasuryModule is ITreasuryModule {
         return _poolSetup[poolNftId];
     }
 
-    function processPremium(
-        NftId policyNftId,
-        NftId productNftId
-    ) external override // TODO add authz (only product service)
-    {
-        IPolicy.PolicyInfo memory policyInfo = _policyModule.getPolicyInfo(
-            policyNftId
-        );
-        require(
-            policyInfo.nftId == policyNftId,
-            "ERROR:TRS-020:POLICY_UNKNOWN"
-        );
-
-        ProductSetup memory product = _productSetup[productNftId];
-        TokenHandler tokenHandler = product.tokenHandler;
-        address policyOwner = this.getRegistry().getOwner(policyNftId);
-        address poolWallet = _poolSetup[product.poolNftId].wallet;
-        // TODO add validation
-
-        if (feeIsZero(product.policyFee)) {
-            tokenHandler.transfer(
-                policyOwner,
-                poolWallet,
-                policyInfo.premiumAmount
-            );
-        } else {
-            (uint256 feeAmount, uint256 netAmount) = calculateFeeAmount(
-                policyInfo.premiumAmount,
-                product.policyFee
-            );
-
-            tokenHandler.transfer(policyOwner, product.wallet, feeAmount);
-            tokenHandler.transfer(policyOwner, poolWallet, netAmount);
-        }
-    }
-
     function calculateFeeAmount(
         uint256 amount,
         Fee memory fee

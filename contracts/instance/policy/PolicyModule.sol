@@ -10,6 +10,7 @@ import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../types/ObjectType.sol";
 import {ACTIVE} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {Timestamp, blockTimestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 
@@ -65,13 +66,11 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
             premiumAmount,
             0, // premium paid amount
             lifetime,
-            // solhint-disable-next-line not-rely-on-time
-            block.timestamp, // createdAt
-            // solhint-disable-next-line not-rely-on-time
-            block.timestamp, // updatedAt
-            0, // activatedAt
-            0, // expiredAt
-            0 // closedAt
+            blockTimestamp(), // createdAt
+            blockTimestamp(), // updatedAt
+            zeroTimestamp(), // activatedAt
+            zeroTimestamp(), // expiredAt
+            zeroTimestamp() // closedAt
         );
 
         _bundleForPolicy[nftId] = bundleNftId;
@@ -79,19 +78,21 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
         // add logging
     }
 
-    function processPremium(NftId nftId) external override onlyProductService2 {
+    function processPremium(NftId nftId, uint256 premiumAmount) external override onlyProductService2 {
         PolicyInfo storage info = _policyInfo[nftId];
-        info.premiumPaidAmount = info.premiumAmount;
-        // solhint-disable-next-line not-rely-on-time
-        info.updatedAt = block.timestamp;
+        require(
+            info.premiumPaidAmount + premiumAmount <= info.premiumAmount,
+            "ERROR:POL-010:PREMIUM_AMOUNT_TOO_LARGE"
+        );
+
+        info.premiumPaidAmount += premiumAmount;
+        info.updatedAt = blockTimestamp();
     }
 
     function activate(NftId nftId) external override onlyProductService2 {
         PolicyInfo storage info = _policyInfo[nftId];
-        // solhint-disable-next-line not-rely-on-time
-        info.activatedAt = block.timestamp;
-        // solhint-disable-next-line not-rely-on-time
-        info.expiredAt = block.timestamp + info.lifetime;
+        info.activatedAt = blockTimestamp();
+        info.expiredAt = blockTimestamp().addSeconds(info.lifetime);
         info.state = _lifecycleModule.checkAndLogTransition(
             nftId,
             POLICY(),
@@ -111,4 +112,9 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
     ) external view returns (PolicyInfo memory info) {
         return _policyInfo[nftId];
     }
+
+    function getPremiumAmount(NftId nftId) external view override returns(uint256 premiumAmount) {
+        return _policyInfo[nftId].premiumAmount;
+    }
+
 }

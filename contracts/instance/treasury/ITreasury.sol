@@ -14,9 +14,7 @@ import {TokenHandler} from "./TokenHandler.sol";
 interface ITreasury {
     // TODO add events
     // TODO add errors
-}
 
-interface ITreasuryModule is IRegistryLinked, ITreasury {
     struct ProductSetup {
         NftId productNftId;
         NftId distributorNftId;
@@ -40,6 +38,9 @@ interface ITreasuryModule is IRegistryLinked, ITreasury {
         Fee stakingFee;
         Fee performanceFee;
     }
+}
+
+interface ITreasuryModule is IRegistryLinked, ITreasury {
 
     function registerProduct(
         NftId productNftId,
@@ -69,8 +70,6 @@ interface ITreasuryModule is IRegistryLinked, ITreasury {
         Fee memory stakingFee,
         Fee memory performanceFee
     ) external;
-
-    function processPremium(NftId policyNftId, NftId productNftId) external;
 
     function getTokenHandler(
         NftId productNftId

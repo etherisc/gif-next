@@ -5,13 +5,14 @@ pragma solidity ^0.8.19;
 // import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../registry/IRegistry.sol";
 // import {IInstance} from "../IInstance.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
-import {IPolicyModule} from "../policy/IPolicy.sol";
+import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 import {RegistryLinked} from "../../registry/Registry.sol";
 import {IProductService, IProductModule} from "./IProductService.sol";
-import {ITreasuryModule} from "../../instance/treasury/ITreasury.sol";
+import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/treasury/ITreasury.sol";
 import {IPoolModule} from "../../instance/pool/IPoolModule.sol";
 import {ObjectType, INSTANCE, PRODUCT} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {feeIsZero} from "../../types/Fee.sol";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
 contract ProductService is RegistryLinked, IProductService {
@@ -83,7 +84,7 @@ contract ProductService is RegistryLinked, IProductService {
         IPolicyModule policyModule = IPolicyModule(instanceAddress);
         policyModule.activate(policyNftId);
 
-        // add logging
+        // TODO add logging
     }
 
     function collectPremium(NftId policyNftId) external override {
@@ -103,14 +104,16 @@ contract ProductService is RegistryLinked, IProductService {
         require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
 
-        // process/collect premium: book keeping for policy
+        // get involved modules
         address instanceAddress = instanceInfo.objectAddress;
         IPolicyModule policyModule = IPolicyModule(instanceAddress);
-        policyModule.processPremium(policyNftId);
+        uint256 premiumAmount = policyModule.getPremiumAmount(policyNftId);
 
-        // process/collect premium: actual token transfer
+        policyModule.processPremium(policyNftId, premiumAmount);
+
+        // perform actual token transfers
         ITreasuryModule treasuryModule = ITreasuryModule(instanceAddress);
-        treasuryModule.processPremium(policyNftId, productNftId);
+        _processPremiumByTreasury(treasuryModule, productNftId, policyNftId, premiumAmount);
 
         // TODO add logging
     }
@@ -121,7 +124,38 @@ contract ProductService is RegistryLinked, IProductService {
     {
 
     }
+
+    function _processPremiumByTreasury(
+        ITreasuryModule treasuryModule,
+        NftId productNftId,
+        NftId policyNftId,
+        uint256 premiumAmount
+    )
+        internal
+    {
+        ITreasury.ProductSetup memory product = treasuryModule.getProductSetup(productNftId);
+        TokenHandler tokenHandler = product.tokenHandler;
+        address policyOwner = _registry.getOwner(policyNftId);
+        address poolWallet = treasuryModule.getPoolSetup(product.poolNftId).wallet;
+
+        if (feeIsZero(product.policyFee)) {
+            tokenHandler.transfer(
+                policyOwner,
+                poolWallet,
+                premiumAmount
+            );
+        } else {
+            (uint256 feeAmount, uint256 netAmount) = treasuryModule.calculateFeeAmount(
+                premiumAmount,
+                product.policyFee
+            );
+
+            tokenHandler.transfer(policyOwner, product.wallet, feeAmount);
+            tokenHandler.transfer(policyOwner, poolWallet, netAmount);
+        }
+    }
 }
+
 
 abstract contract ProductModule is IProductModule {
     IProductService private _productService;

@@ -6,6 +6,7 @@ import {IInstance} from "../IInstance.sol";
 import {IProductService} from "../product/IProductService.sol";
 import {NftId} from "../../types/NftId.sol";
 import {StateId} from "../../types/StateId.sol";
+import {Timestamp} from "../../types/Timestamp.sol";
 
 // TODO check if there is value to introuce IContract and let IPolicy derive from IContract
 interface IPolicy {
@@ -17,11 +18,11 @@ interface IPolicy {
         uint256 premiumAmount;
         uint256 premiumPaidAmount;
         uint256 lifetime; // activatedAt + lifetime >= expiredAt
-        uint256 createdAt;
-        uint256 updatedAt;
-        uint256 activatedAt; // time of underwriting
-        uint256 expiredAt; // no new claims
-        uint256 closedAt; // no locked capital
+        Timestamp createdAt;
+        Timestamp updatedAt;
+        Timestamp activatedAt; // time of underwriting
+        Timestamp expiredAt; // no new claims
+        Timestamp closedAt; // no locked capital
     }
 }
 
@@ -36,7 +37,7 @@ interface IPolicyModule is IOwnable, IRegistryLinked, IPolicy {
     ) external returns (NftId nftId);
 
     // process full premium
-    function processPremium(NftId nftId) external;
+    function processPremium(NftId nftId, uint256 amount) external;
 
     function activate(NftId nftId) external;
 
@@ -47,4 +48,6 @@ interface IPolicyModule is IOwnable, IRegistryLinked, IPolicy {
     function getPolicyInfo(
         NftId nftId
     ) external view returns (PolicyInfo memory info);
+
+    function getPremiumAmount(NftId nftId) external view returns(uint256 premiumAmount);
 }
