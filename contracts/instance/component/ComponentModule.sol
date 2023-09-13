@@ -157,13 +157,9 @@ contract ComponentOwnerService is
 {
     using NftIdLib for NftId;
 
-    modifier onlyComponentOwner(IComponentContract component) {
+    modifier onlyRegisteredComponent(IComponentContract component) {
         NftId nftId = _registry.getNftId(address(component));
         require(nftId.gtz(), "ERROR:COS-001:COMPONENT_UNKNOWN");
-        require(
-            msg.sender == _registry.getOwner(nftId),
-            "ERROR:COS-002:NOT_OWNER"
-        );
         _;
     }
 
@@ -240,7 +236,7 @@ contract ComponentOwnerService is
 
     function lock(
         IComponentContract component
-    ) external override onlyComponentOwner(component) {
+    ) external override onlyRegisteredComponent(component) {
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(
             component.getNftId()
@@ -254,7 +250,7 @@ contract ComponentOwnerService is
 
     function unlock(
         IComponentContract component
-    ) external override onlyComponentOwner(component) {
+    ) external override onlyRegisteredComponent(component) {
         IInstance instance = component.getInstance();
         ComponentInfo memory info = instance.getComponentInfo(
             component.getNftId()
@@ -270,7 +266,7 @@ contract ComponentOwnerService is
         IComponentContract product,
         Fee memory policyFee,
         Fee memory processingFee
-    ) external override onlyComponentOwner(product) {
+    ) external override onlyRegisteredComponent(product) {
         require(product.getType() == PRODUCT(), "ERROR_NOT_PRODUCT");
 
         address instanceAddress = address(product.getInstance());

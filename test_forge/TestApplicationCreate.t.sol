@@ -112,7 +112,7 @@ contract TestApplicationCreate is TestGifBase {
     function testCreatePolicyAndCollectPremiumNoFee() public {
         // set fees to zeroFee
         vm.prank(productOwner);
-        componentOwnerService.setProductFees(product, zeroFee(), zeroFee());
+        product.setFees(zeroFee(), zeroFee());
 
         // check updated policy fee
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
@@ -203,14 +203,11 @@ contract TestApplicationCreate is TestGifBase {
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
         ITreasuryModule.ProductSetup memory setup = treasuryModule
             .getProductSetup(product.getNftId());
-        Fee memory expectedInitialPolicyFee = toFee(
-            UFixedMathLib.itof(1, -1),
-            0
-        );
+        Fee memory expectedInitialPolicyFee = zeroFee();
 
         assertTrue(
             feeIsSame(setup.policyFee, expectedInitialPolicyFee),
-            "initial policyFee not 10%"
+            "initial policyFee not zeroFee"
         );
         assertTrue(
             feeIsZero(setup.processingFee),
@@ -223,7 +220,7 @@ contract TestApplicationCreate is TestGifBase {
         Fee memory policyFee = toFee(fractionalFee, fixedFee);
 
         vm.prank(productOwner);
-        componentOwnerService.setProductFees(product, policyFee, zeroFee());
+        product.setFees(policyFee, zeroFee());
 
         // check updated policy fee
         setup = treasuryModule.getProductSetup(product.getNftId());

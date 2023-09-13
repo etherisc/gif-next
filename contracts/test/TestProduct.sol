@@ -7,8 +7,8 @@ import {Fee, zeroFee} from "../../contracts/types/Fee.sol";
 
 contract TestProduct is Product {
 
-    constructor(address registry, address instance, address token, address pool, Fee memory policyFee)
-        Product(registry, instance, token, pool, policyFee, zeroFee())
+    constructor(address registry, address instance, address token, address pool)
+        Product(registry, instance, token, pool)
     // solhint-disable-next-line no-empty-blocks
     {}
 

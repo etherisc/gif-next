@@ -5,6 +5,7 @@ pragma solidity ^0.8.19;
 // import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../registry/IRegistry.sol";
 // import {IInstance} from "../IInstance.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
+import {IInstance} from "../../instance/IInstance.sol";
 import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 import {RegistryLinked} from "../../registry/Registry.sol";
 import {IProductService, IProductModule} from "./IProductService.sol";
@@ -12,7 +13,7 @@ import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/treasury/
 import {IPoolModule} from "../../instance/pool/IPoolModule.sol";
 import {ObjectType, INSTANCE, PRODUCT} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
-import {feeIsZero} from "../../types/Fee.sol";
+import {Fee, feeIsZero} from "../../types/Fee.sol";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
 contract ProductService is RegistryLinked, IProductService {
@@ -25,6 +26,17 @@ contract ProductService is RegistryLinked, IProductService {
 
     }
 
+    function setFees(
+        Fee memory policyFee,
+        Fee memory processingFee
+    )
+        external
+        override
+    {
+        (IRegistry.RegistryInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
+        instance.setProductFees(productInfo.nftId, policyFee, processingFee);
+    }
+
     function createApplication(
         address applicationOwner,
         uint256 sumInsuredAmount,
@@ -32,22 +44,9 @@ contract ProductService is RegistryLinked, IProductService {
         uint256 lifetime,
         NftId bundleNftId
     ) external override returns (NftId nftId) {
-        // same as only registered product
-        NftId productNftId = _registry.getNftId(msg.sender);
-        require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
-        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(
-            productNftId
-        );
-        require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
+        (IRegistry.RegistryInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
 
-        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(
-            productInfo.parentNftId
-        );
-        require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
-        require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
-
-        IPolicyModule policyModule = IPolicyModule(instanceInfo.objectAddress);
-        nftId = policyModule.createApplication(
+        nftId = instance.createApplication(
             productInfo,
             applicationOwner,
             sumInsuredAmount,
@@ -60,60 +59,42 @@ contract ProductService is RegistryLinked, IProductService {
     }
 
     function underwrite(NftId policyNftId) external override {
-        // validation
-        // same as only registered product
-        NftId productNftId = _registry.getNftId(msg.sender);
-        require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
-        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(
-            productNftId
-        );
-        require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
+        (IRegistry.RegistryInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
 
-        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(
-            productInfo.parentNftId
-        );
-        require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
-        require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
-
-        // underwrite policy
-        address instanceAddress = instanceInfo.objectAddress;
-        IPoolModule poolModule = IPoolModule(instanceAddress);
-        poolModule.underwrite(policyNftId, productNftId);
-
-        // activate policy
-        IPolicyModule policyModule = IPolicyModule(instanceAddress);
-        policyModule.activate(policyNftId);
+        instance.underwrite(policyNftId, productInfo.nftId);
+        instance.activate(policyNftId);
 
         // TODO add logging
     }
 
     function collectPremium(NftId policyNftId) external override {
-        // validation same as other functions, eg underwrite
-        // TODO unify validation into modifier and/or other suitable approaches
-        // same as only registered product
-        NftId productNftId = _registry.getNftId(msg.sender);
-        require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
-        IRegistry.RegistryInfo memory productInfo = _registry.getInfo(
-            productNftId
-        );
-        require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
+        (IRegistry.RegistryInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
 
-        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(
-            productInfo.parentNftId
-        );
-        require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
-        require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
+        // // TODO unify validation into modifier and/or other suitable approaches
+        // // same as only registered product
+        // NftId productNftId = _registry.getNftId(msg.sender);
+        // require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
+        // IRegistry.RegistryInfo memory productInfo = _registry.getInfo(
+        //     productNftId
+        // );
+        // require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
+
+        // IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(
+        //     productInfo.parentNftId
+        // );
+        // require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
+        // require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
 
         // get involved modules
-        address instanceAddress = instanceInfo.objectAddress;
-        IPolicyModule policyModule = IPolicyModule(instanceAddress);
-        uint256 premiumAmount = policyModule.getPremiumAmount(policyNftId);
+        // address instanceAddress = instanceInfo.objectAddress;
+        // IPolicyModule policyModule = IPolicyModule(instanceAddress);
+        uint256 premiumAmount = instance.getPremiumAmount(policyNftId);
 
-        policyModule.processPremium(policyNftId, premiumAmount);
+        instance.processPremium(policyNftId, premiumAmount);
 
         // perform actual token transfers
-        ITreasuryModule treasuryModule = ITreasuryModule(instanceAddress);
-        _processPremiumByTreasury(treasuryModule, productNftId, policyNftId, premiumAmount);
+        // ITreasuryModule treasuryModule = ITreasuryModule(instanceAddress);
+        _processPremiumByTreasury(instance, productInfo.nftId, policyNftId, premiumAmount);
 
         // TODO add logging
     }
@@ -125,18 +106,40 @@ contract ProductService is RegistryLinked, IProductService {
 
     }
 
+    function _verifyAndGetProductAndInstance()
+        internal
+        view
+        returns(
+            IRegistry.RegistryInfo memory productInfo, 
+            IInstance instance
+        )
+    {
+        NftId productNftId = _registry.getNftId(msg.sender);
+        require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
+
+        productInfo = _registry.getInfo(productNftId);
+        require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
+
+        // TODO check if this is really needed or if registry may be considered reliable
+        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
+        require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
+        require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
+
+        instance = IInstance(instanceInfo.objectAddress);
+    }
+
     function _processPremiumByTreasury(
-        ITreasuryModule treasuryModule,
+        IInstance instance,
         NftId productNftId,
         NftId policyNftId,
         uint256 premiumAmount
     )
         internal
     {
-        ITreasury.ProductSetup memory product = treasuryModule.getProductSetup(productNftId);
+        ITreasury.ProductSetup memory product = instance.getProductSetup(productNftId);
         TokenHandler tokenHandler = product.tokenHandler;
         address policyOwner = _registry.getOwner(policyNftId);
-        address poolWallet = treasuryModule.getPoolSetup(product.poolNftId).wallet;
+        address poolWallet = instance.getPoolSetup(product.poolNftId).wallet;
 
         if (feeIsZero(product.policyFee)) {
             tokenHandler.transfer(
@@ -145,7 +148,7 @@ contract ProductService is RegistryLinked, IProductService {
                 premiumAmount
             );
         } else {
-            (uint256 feeAmount, uint256 netAmount) = treasuryModule.calculateFeeAmount(
+            (uint256 feeAmount, uint256 netAmount) = instance.calculateFeeAmount(
                 premiumAmount,
                 product.policyFee
             );

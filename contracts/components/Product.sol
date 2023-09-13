@@ -12,22 +12,16 @@ import {Component} from "./Component.sol";
 contract Product is Component, IProductComponent {
     IProductService private _productService;
     address private _pool;
-    Fee private _policyFee;
-    Fee private _processingFee;
 
     constructor(
         address registry,
         address instance,
         address token,
-        address pool,
-        Fee memory policyFee,
-        Fee memory processingFee
+        address pool
     ) Component(registry, instance, token) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = pool;
-        _policyFee = policyFee;
-        _processingFee = processingFee;
     }
 
     function _createApplication(
@@ -59,13 +53,25 @@ contract Product is Component, IProductComponent {
     }
 
     // from product component
+    function setFees(
+        Fee memory policyFee,
+        Fee memory processingFee
+    )
+        external
+        onlyOwner
+        override
+    {
+        _productService.setFees(policyFee, processingFee);
+    }
+
+
     function getPolicyFee()
         external
         view
         override
         returns (Fee memory policyFee)
     {
-        return _policyFee;
+        return _instance.getProductSetup(getNftId()).policyFee;
     }
 
     function getProcessingFee()
@@ -74,7 +80,7 @@ contract Product is Component, IProductComponent {
         override
         returns (Fee memory processingFee)
     {
-        return _processingFee;
+        return _instance.getProductSetup(getNftId()).processingFee;
     }
 
     // from registerable

@@ -27,15 +27,24 @@ abstract contract Component is
     InstanceLinked,
     IComponentContract
 {
-    address private _deployer;
-    address private _wallet;
-    IERC20Metadata private _token;
+    IComponentOwnerService internal _componentOwnerService;
+
+    address internal _deployer;
+    address internal _wallet;
+    IERC20Metadata internal _token;
+
+    modifier onlyOwner() {
+        NftId nftId = _registry.getNftId(address(this));
+        require(_registry.getOwner(nftId) == msg.sender, "ERROR:CMP-001:NOT_OWNER");
+        _;
+    }
 
     constructor(
         address registry,
         address instance,
         address token
     ) Registerable(registry) InstanceLinked(instance) {
+        _componentOwnerService = _instance.getComponentOwnerService();
         _wallet = address(this);
         _token = IERC20Metadata(token);
     }
@@ -52,8 +61,7 @@ abstract contract Component is
             "ERROR:PRD-002:INSTANCE_NOT_REGISTERED"
         );
 
-        IComponentOwnerService cos = _instance.getComponentOwnerService();
-        componentId = cos.register(this);
+        componentId = _componentOwnerService.register(this);
     }
 
     // from registerable
@@ -62,6 +70,14 @@ abstract contract Component is
     }
 
     // from component contract
+    function lock() external onlyOwner override {
+        _componentOwnerService.lock(this);
+    }
+
+    function unlock() external onlyOwner override {
+        _componentOwnerService.unlock(this);
+    }
+
     function getWallet()
         external
         view

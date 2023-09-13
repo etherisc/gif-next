@@ -4,9 +4,15 @@ pragma solidity ^0.8.19;
 import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
 import {NftId} from "../../types/NftId.sol";
+import {Fee} from "../../types/Fee.sol";
 
 // TODO or name this IProtectionService to have Product be something more generic (loan, savings account, ...)
 interface IProductService is IRegistryLinked {
+    function setFees(
+        Fee memory policyFee,
+        Fee memory processingFee
+    ) external;
+
     function createApplication(
         address applicationOwner,
         uint256 sumInsuredAmount,

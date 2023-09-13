@@ -113,8 +113,7 @@ contract DeployAll is Script {
     }
 
     function _deployProduct(Registry registry, Instance instance, TestPool pool) internal returns(TestProduct product) {
-        Fee memory policyFee = toFee(UFixedMathLib.itof(1, -1), 0);
-        product = new TestProduct(address(registry), address(instance), address(pool.getToken()), address(pool), policyFee);
+        product = new TestProduct(address(registry), address(instance), address(pool.getToken()), address(pool));
         console.log("product deployed at", address(product));
     }
 
