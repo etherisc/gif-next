@@ -1,5 +1,5 @@
 import hre, { ethers } from "hardhat";
-import { AddressLike, Signer, ContractTransactionResponse } from "ethers";
+import { AddressLike, Signer, ContractTransactionResponse, BaseContract } from "ethers";
 import { logger } from "./logger";
 
 export async function verifyContract(address: AddressLike, constructorArgs: any[]) {
@@ -19,13 +19,20 @@ export async function verifyContract(address: AddressLike, constructorArgs: any[
     }
 };
 
-export async function deployContract(contractName: string, signer: Signer, factoryOptions?: any): Promise<{
+export async function deployContract(contractName: string, owner: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any): Promise<{
     address: AddressLike; 
     deploymentTransaction: ContractTransactionResponse | null;
+    contract: BaseContract;
 }> {
-    const factoryArgs = factoryOptions ? { ...factoryOptions, signer } : { signer };
+    const factoryArgs = factoryOptions ? { ...factoryOptions, owner } : { owner };
     const contractFactory = await ethers.getContractFactory(contractName, factoryArgs);
-    const deployTxResponse = await contractFactory.deploy();
+
+    // TODO: make this two-stepped so that we can wait for the deployment transaction to be mined 
+    // and have access to tx already in between
+    const deployTxResponse = constructorArgs !== undefined
+        ? await contractFactory.deploy(...constructorArgs) 
+        : await contractFactory.deploy();
+    
     const deployedContractAddress = deployTxResponse.target;
     logger.info(`${contractName} deployed to ${deployedContractAddress}`);
 
@@ -36,5 +43,9 @@ export async function deployContract(contractName: string, signer: Signer, facto
         logger.debug("Skipping verification");
     }
 
-    return { address: deployedContractAddress, deploymentTransaction: deployTxResponse.deploymentTransaction() };
+    return { 
+        address: deployedContractAddress, 
+        deploymentTransaction: deployTxResponse.deploymentTransaction(), 
+        contract: deployTxResponse 
+    };
 }

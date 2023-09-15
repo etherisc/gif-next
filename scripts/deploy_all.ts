@@ -2,6 +2,7 @@ import { ethers } from "hardhat";
 import { Signer } from "ethers";
 import { deployContract, verifyContract } from "./deploy_helper";
 import { logger } from "./logger";
+import { Registry } from "../typechain-types";
 
 
 async function main() {
@@ -9,40 +10,33 @@ async function main() {
 //   console.log("signer: " + signer?.address);
 
     const { instanceOwner, productOwner, poolOwner } = await getNamedAccounts();
-    
+    const registry = await deployRegistry(instanceOwner);
+}
+
+async function deployRegistry(owner: Signer): Promise<Registry> {
+
     const { address: nfIdLibAddress } = await deployContract(
-        "NftIdLib", 
-        instanceOwner);
-    const { address: registryAddress } = await deployContract(
-        "Registry", 
-        instanceOwner, 
-        { 
+        "NftIdLib",
+        owner);
+    const { address: registryAddress, contract: registryBaseContract } = await deployContract(
+        "Registry",
+        owner,
+        undefined,
+        {
             libraries: {
                 NftIdLib: nfIdLibAddress,
             }
         });
+    const { address: chainNftAddress } = await deployContract(
+        "ChainNft",
+        owner,
+        [registryAddress]);
 
+    const registry = registryBaseContract as Registry;
+    await registry.initialize(chainNftAddress);
+    logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}`);
 
-
-
-
-//   // deploy ChainNft
-//   const chainNftFactory = await ethers.getContractFactory("ChainNft", signer);
-//   const chainNftDeployed = await chainNftFactory.deploy(registryAdr);
-//   const chainNftAdr = chainNftDeployed.target;
-//   console.log(
-//     `ChainNft deployed to ${chainNftAdr}`
-//   );
-
-//   // wait for 5 confirmations
-//   console.log("waiting for 5 confirmations");
-//   await chainNftDeployed.deploymentTransaction()?.wait(5);
-
-//   await verifyContract(chainNftAdr, [registryAdr]);
-
-//   const registryContract = await ethers.getContractAt("Registry", registryAdr, signer);
-//   await registryContract.initialize(chainNftAdr);
-//   console.log(`Registry initialized with ChainNft @ ${chainNftAdr}`);
+    return registry;
 }
 
 async function getNamedAccounts(): Promise<{ instanceOwner: Signer; productOwner: Signer; poolOwner: Signer; }> {
