@@ -2,11 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {IOwnable, IRegistryLinked} from "../../registry/IRegistry.sol";
-import {IProductService} from "../services/IProductService.sol";
+import {IProductService} from "../service/IProductService.sol";
 
 interface IProductModule is
     IOwnable, 
     IRegistryLinked
 {
-    function getProductService() external view returns (IProductService);
 }

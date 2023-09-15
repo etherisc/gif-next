@@ -1,14 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IOwnable, IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
-import {IProductService} from "../services/IProductService.sol";
-import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
-import {ITreasuryModule} from "../treasury/ITreasury.sol";
-import {IPoolModule} from "./IPoolModule.sol";
-import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {IOwnable, IRegistry, IRegistryLinked} from "../../../registry/IRegistry.sol";
+import {IProductService} from "../../service/IProductService.sol";
+import {IPoolService} from "../../service/IPoolService.sol";
+import {IPolicy, IPolicyModule} from "../../policy/IPolicy.sol";
+import {ITreasuryModule} from "../../treasury/ITreasury.sol";
+import {NftId, NftIdLib} from "../../../types/NftId.sol";
 
-abstract contract PoolModule is IPoolModule {
+import {IPoolModule} from "./IPoolModule.sol";
+
+abstract contract PoolModule is
+    IPoolModule
+{
     using NftIdLib for NftId;
 
     uint256 public constant INITIAL_CAPITAL = 10000 * 10 ** 6;
@@ -18,24 +22,22 @@ abstract contract PoolModule is IPoolModule {
 
     IPolicyModule private _policyModule;
     ITreasuryModule private _treasuryModule;
-    IProductService private _productService;
 
-    modifier onlyProductService() {
+    modifier onlyPoolProductService() {
         require(
-            address(_productService) == msg.sender,
-            "ERROR:POL-001:NOT_PRODUCT_SERVICE"
+            this.senderIsProductService(),
+            "ERROR:PL-001:NOT_PRODUCT_SERVICE"
         );
         _;
     }
 
-    constructor(address productService) {
+    constructor() {
         _policyModule = IPolicyModule(address(this));
         _treasuryModule = ITreasuryModule(address(this));
-        _productService = IProductService(productService);
     }
 
     function registerPool(NftId nftId) public override {
-        require(_poolInfo[nftId].nftId.eqz(), "ERROR:PL-001:ALREADY_CREATED");
+        require(_poolInfo[nftId].nftId.eqz(), "ERROR:PL-010:ALREADY_CREATED");
 
         _poolInfo[nftId] = PoolInfo(
             nftId,
@@ -47,7 +49,7 @@ abstract contract PoolModule is IPoolModule {
     function underwrite(
         NftId policyNftId,
         NftId productNftId
-    ) external override onlyProductService {
+    ) external override onlyPoolProductService {
         IPolicy.PolicyInfo memory policyInfo = _policyModule.getPolicyInfo(
             policyNftId
         );

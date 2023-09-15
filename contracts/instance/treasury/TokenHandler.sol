@@ -17,7 +17,7 @@ contract TokenHandler {
         address from,
         address to,
         uint256 amount
-    ) external // TODO add authz (only treasury)
+    ) external // TODO add authz (only treasury/instance/product/pool/ service)
     {
         _token.transferFrom(from, to, amount);
     }

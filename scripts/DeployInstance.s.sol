@@ -8,8 +8,9 @@ import {ChainNft} from "../contracts/registry/ChainNft.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
 import {IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
-import {ComponentOwnerService} from "../contracts/instance/component/ComponentModule.sol";
-import {ProductService} from "../contracts/instance/services/ProductService.sol";
+import {ComponentOwnerService} from "../contracts/instance/service/ComponentOwnerService.sol";
+import {ProductService} from "../contracts/instance/service/ProductService.sol";
+import {PoolService} from "../contracts/instance/service/PoolService.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 
 contract DeployInstance is Script {
@@ -54,10 +55,14 @@ contract DeployInstance is Script {
         ProductService productService = new ProductService(
             address(registry));
 
+        PoolService poolService = new PoolService(
+            address(registry));
+
         instance = new Instance(
             address(registry),
             address(componentOwnerService),
-            address(productService));
+            address(productService),
+            address(poolService));
 
         console.log("instance deployed at", address(instance));
     }

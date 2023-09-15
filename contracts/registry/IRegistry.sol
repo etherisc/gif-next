@@ -33,6 +33,7 @@ interface IRegisterable is IOwnable, IRegistryLinked {
 }
 
 interface IRegistry {
+    // TODO rename to ObjectInfo
     struct RegistryInfo {
         NftId nftId;
         NftId parentNftId;

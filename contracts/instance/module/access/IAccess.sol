@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IOwnable, IRegistryLinked} from "../../registry/IRegistry.sol";
+import {IOwnable, IRegistryLinked} from "../../../registry/IRegistry.sol";
 
 interface IAccess {
     struct RoleInfo {

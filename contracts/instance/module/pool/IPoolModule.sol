@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IOwnable, IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
-import {NftId} from "../../types/NftId.sol";
+import {IOwnable, IRegistry, IRegistryLinked} from "../../../registry/IRegistry.sol";
+import {NftId} from "../../../types/NftId.sol";
+import {IPoolService} from "../../service/IPoolService.sol";
+
+import {IServiceLinked} from "../../IServiceLinked.sol";
 
 interface IPool {
     struct PoolInfo {
@@ -12,7 +15,7 @@ interface IPool {
     }
 }
 
-interface IPoolModule is IOwnable, IRegistryLinked, IPool {
+interface IPoolModule is IOwnable, IRegistryLinked, IServiceLinked, IPool {
     function underwrite(NftId policyNftId, NftId productNftId) external;
 
     function registerPool(NftId nftId) external;

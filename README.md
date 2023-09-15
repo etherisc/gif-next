@@ -119,7 +119,17 @@ uint256 lifetime =365*24*3600;
 uint256 policyNftId = ps.createApplicationForBundle(customer, bundleNftId, sumInsuredAmount, premiumAmount, lifetime);
 
 ```
+### Library Linking
 
+https://ethereum.stackexchange.com/questions/153411/does-foundry-support-dynamical-library-linking-in-solidity
+
+```toml
+# foundry.toml
+
+[profile.default]
+  # expected format(example below): libraries = ["<path>:<lib name>:<address>"]
+  libraries = ["src/libraries/MyLibrary.sol:MyLibrary:0x..."]
+```
 
 ### Documentation
 

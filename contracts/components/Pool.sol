@@ -2,23 +2,39 @@
 pragma solidity ^0.8.19;
 
 import {ObjectType, POOL} from "../types/ObjectType.sol";
+import {IPoolService} from "../instance/service/IPoolService.sol";
+import {NftId} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
 import {IPoolComponent} from "./IPool.sol";
 import {Component} from "./Component.sol";
 
 contract Pool is Component, IPoolComponent {
-    Fee private _stakingFee;
-    Fee private _performanceFee;
+    IPoolService private _poolService;
 
     constructor(
         address registry,
         address instance,
-        address token,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) Component(registry, instance, token) {
-        _stakingFee = stakingFee;
-        _performanceFee = performanceFee;
+        address token
+    ) Component(registry, instance, token)
+    {
+        _poolService = _instance.getPoolService();
+    }
+
+    function _createBundle(
+        address bundleOwner,
+        uint256 amount,
+        uint256 lifetime, 
+        bytes calldata filter
+    )
+        internal
+        returns(NftId bundleNftId)
+    {
+        bundleNftId = _poolService.createBundle(
+            bundleOwner,
+            amount,
+            lifetime,
+            filter
+        );
     }
 
     // from pool component
@@ -28,7 +44,7 @@ contract Pool is Component, IPoolComponent {
         override
         returns (Fee memory stakingFee)
     {
-        return _stakingFee;
+        return _instance.getPoolSetup(getNftId()).stakingFee;
     }
 
     function getPerformanceFee()
@@ -37,7 +53,7 @@ contract Pool is Component, IPoolComponent {
         override
         returns (Fee memory performanceFee)
     {
-        return _performanceFee;
+        return _instance.getPoolSetup(getNftId()).performanceFee;
     }
 
     // from registerable

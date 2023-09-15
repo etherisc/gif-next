@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import {TestGifBase} from "./TestGifBase.sol";
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
-import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
+import {IPool} from "../contracts/instance/module/pool/IPoolModule.sol";
 import {TokenHandler} from "../contracts/instance/treasury/TokenHandler.sol";
 import {APPLIED, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";

@@ -5,12 +5,13 @@ pragma solidity ^0.8.19;
 import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
-import {IProductService} from "../services/IProductService.sol";
+import {IProductService} from "../service/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../types/ObjectType.sol";
 import {ACTIVE} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../types/Timestamp.sol";
+import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 
@@ -39,7 +40,7 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
 
     function createApplication(
         IRegistry.RegistryInfo memory productInfo,
-        address applicationOwner,
+        address initialOwner,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
@@ -56,7 +57,7 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
         nftId = this.getRegistry().registerObjectForInstance(
             productInfo.nftId,
             POLICY(),
-            applicationOwner
+            initialOwner
         );
 
         _policyInfo[nftId] = PolicyInfo(
@@ -65,17 +66,17 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
             sumInsuredAmount,
             premiumAmount,
             0, // premium paid amount
-            lifetime,
+            lifetime, 
             blockTimestamp(), // createdAt
-            blockTimestamp(), // updatedAt
             zeroTimestamp(), // activatedAt
             zeroTimestamp(), // expiredAt
-            zeroTimestamp() // closedAt
+            zeroTimestamp(), // closedAt
+            blockNumber() // updatedIn
         );
 
         _bundleForPolicy[nftId] = bundleNftId;
 
-        // add logging
+        // TODO add logging
     }
 
     function processPremium(NftId nftId, uint256 premiumAmount) external override onlyProductService2 {
@@ -86,7 +87,8 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
         );
 
         info.premiumPaidAmount += premiumAmount;
-        info.updatedAt = blockTimestamp();
+
+        info.updatedIn = blockNumber();
     }
 
     function activate(NftId nftId) external override onlyProductService2 {
@@ -99,6 +101,8 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
             info.state,
             ACTIVE()
         );
+
+        info.updatedIn = blockNumber();
     }
 
     function getBundleNftForPolicy(

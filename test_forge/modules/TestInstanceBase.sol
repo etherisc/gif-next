@@ -2,20 +2,32 @@
 pragma solidity ^0.8.19;
 
 import {Registerable} from "../../contracts/registry/Registry.sol";
-import {AccessModule} from "../../contracts/instance/access/Access.sol";
+import {AccessModule} from "../../contracts/instance/module/access/Access.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, INSTANCE} from "../../contracts/types/ObjectType.sol";
 
+import {ServiceLinked} from "../../contracts/instance/ServiceLinked.sol";
+
+import {IComponentOwnerService} from "../../contracts/instance/service/IComponentOwnerService.sol";
+import {IProductService} from "../../contracts/instance/service/IProductService.sol";
+import {IPoolService} from "../../contracts/instance/service/IPoolService.sol";
+
 contract TestInstanceBase  is
     Registerable,
+    ServiceLinked,
     AccessModule
 {
-    constructor(address registry)
-        Registerable(registry)
-        AccessModule()
-    // solhint-disable-next-line no-empty-blocks
-    {
 
+    constructor(
+        address registry,
+        address componentOwnerService,
+        address productService,
+        address poolService
+    )
+        Registerable(registry)
+        ServiceLinked(componentOwnerService, productService, poolService)
+        AccessModule()
+    {
     }
 
     // from registerable

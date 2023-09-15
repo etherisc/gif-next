@@ -15,7 +15,7 @@ import {TestPool} from "../contracts/test/TestPool.sol";
 import {USDC} from "./mock/Usdc.sol";
 
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
-import {IPool} from "../contracts/instance/pool/IPoolModule.sol";
+import {IPool} from "../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 
 contract TestGifBase is Test {
