@@ -10,29 +10,21 @@ async function main() {
 
     const { instanceOwner, productOwner, poolOwner } = await getNamedAccounts();
     
-    const { address: nfIdLibAddress } = await deployContract("NftIdLib", instanceOwner);
+    const { address: nfIdLibAddress } = await deployContract(
+        "NftIdLib", 
+        instanceOwner);
+    const { address: registryAddress } = await deployContract(
+        "Registry", 
+        instanceOwner, 
+        { 
+            libraries: {
+                NftIdLib: nfIdLibAddress,
+            }
+        });
 
 
 
 
-//   // deploy registry
-//   const registry = await ethers.deployContract("Registry", [], {
-//     signer,
-//     libraries: {
-//       NftIdLib: nftIdLibAdr,
-//     },
-//   });
-//   await registry.waitForDeployment();
-//   const registryAdr = registry.target;
-//   console.log(
-//     `Registry deployed to ${registryAdr}`
-//   );
-
-//   // wait for 5 confirmations
-//   console.log("waiting for 5 confirmations");
-//   await registry.deploymentTransaction()?.wait(5);
-
-//   await verifyContract(registryAdr, []);
 
 //   // deploy ChainNft
 //   const chainNftFactory = await ethers.getContractFactory("ChainNft", signer);
@@ -66,7 +58,7 @@ async function getNamedAccounts(): Promise<{ instanceOwner: Signer; productOwner
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main().catch((error) => {
-    logger.error(error);
+    logger.error(error.message);
     process.exitCode = 1;
 });
 

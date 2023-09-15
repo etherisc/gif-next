@@ -19,23 +19,18 @@ export async function verifyContract(address: AddressLike, constructorArgs: any[
     }
 };
 
-export async function deployContract(contractName: string, instanceOwner: Signer): Promise<{
+export async function deployContract(contractName: string, signer: Signer, factoryOptions?: any): Promise<{
     address: AddressLike; 
     deploymentTransaction: ContractTransactionResponse | null;
 }> {
-    const contractFactory = await ethers.getContractFactory(contractName, instanceOwner);
+    const factoryArgs = factoryOptions ? { ...factoryOptions, signer } : { signer };
+    const contractFactory = await ethers.getContractFactory(contractName, factoryArgs);
     const deployTxResponse = await contractFactory.deploy();
     const deployedContractAddress = deployTxResponse.target;
-    logger.info(
-        `${contractName} deployed to ${deployedContractAddress}`
-    );
+    logger.info(`${contractName} deployed to ${deployedContractAddress}`);
 
     if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
-        // wait for 5 confirmations
-        logger.debug("waiting for 5 confirmations");
-        // TODO: make this configurable
         await deployTxResponse.deploymentTransaction()?.wait(5);
-        
         await verifyContract(deployedContractAddress, []);
     } else {
         logger.debug("Skipping verification");
