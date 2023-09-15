@@ -2,18 +2,18 @@
 pragma solidity ^0.8.19;
 
 // import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
-import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
+import {IRegistry, IRegistryLinked} from "../../../registry/IRegistry.sol";
 
-import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
-import {IProductService} from "../service/IProductService.sol";
+import {LifecycleModule} from "../../module/lifecycle/LifecycleModule.sol";
+import {IProductService} from "../../service/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
-import {ObjectType, POLICY} from "../../types/ObjectType.sol";
-import {ACTIVE} from "../../types/StateId.sol";
-import {NftId, NftIdLib} from "../../types/NftId.sol";
-import {Timestamp, blockTimestamp, zeroTimestamp} from "../../types/Timestamp.sol";
-import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
+import {ObjectType, POLICY} from "../../../types/ObjectType.sol";
+import {ACTIVE} from "../../../types/StateId.sol";
+import {NftId, NftIdLib} from "../../../types/NftId.sol";
+import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
+import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
 
-import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
+import {LifecycleModule} from "../../module/lifecycle/LifecycleModule.sol";
 
 abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
     using NftIdLib for NftId;

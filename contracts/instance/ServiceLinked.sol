@@ -23,7 +23,7 @@ contract ServiceLinked is IServiceLinked {
         _poolService = IPoolService(poolService);
     }
 
-    function getCompnentOwnerService() external view override returns(IComponentOwnerService service) { return _componentOwnerService; }
+    function getComponentOwnerService() external view override returns(IComponentOwnerService service) { return _componentOwnerService; }
     function getProductService() external view override returns(IProductService service) { return _productService; }
     function getPoolService() external view override returns(IPoolService service) { return _poolService; }
 

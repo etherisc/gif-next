@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {ObjectType} from "../../types/ObjectType.sol";
-import {StateId, toStateId, zeroStateId} from "../../types/StateId.sol";
-import {NftId} from "../../types/NftId.sol";
+import {ObjectType} from "../../../types/ObjectType.sol";
+import {StateId, toStateId, zeroStateId} from "../../../types/StateId.sol";
+import {NftId} from "../../../types/NftId.sol";
 
 interface ILifecycle {
     event LogComponentStateChanged(

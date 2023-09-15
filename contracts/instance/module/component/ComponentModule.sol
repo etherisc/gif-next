@@ -3,22 +3,23 @@ pragma solidity ^0.8.19;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {RegistryLinked} from "../../registry/Registry.sol";
-import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
-import {IAccessComponentTypeRoles, IAccessCheckRole} from "../module/access/IAccess.sol";
-import {IInstance} from "../IInstance.sol";
+import {RegistryLinked} from "../../../registry/Registry.sol";
+import {IRegistry, IRegistryLinked} from "../../../registry/IRegistry.sol";
+import {IAccessComponentTypeRoles, IAccessCheckRole} from "../access/IAccess.sol";
+import {IInstance} from "../../IInstance.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 import {ITreasuryModule} from "../treasury/ITreasury.sol";
 import {TreasuryModule} from "../treasury/TreasuryModule.sol";
-import {IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "./IComponent.sol";
-import {IProductComponent} from "../../components/IProduct.sol";
-import {IPoolComponent} from "../../components/IPool.sol";
-import {IPoolModule} from "../module/pool/IPoolModule.sol";
-import {ObjectType, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {Fee, zeroFee} from "../../types/Fee.sol";
+import {IComponent, IComponentContract, IComponentModule} from "./IComponent.sol";
+import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
+import {IProductComponent} from "../../../components/IProduct.sol";
+import {IPoolComponent} from "../../../components/IPool.sol";
+import {IPoolModule} from "../pool/IPoolModule.sol";
+import {ObjectType, PRODUCT, ORACLE, POOL} from "../../../types/ObjectType.sol";
+import {StateId, ACTIVE, PAUSED} from "../../../types/StateId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../../types/NftId.sol";
+import {Fee, zeroFee} from "../../../types/Fee.sol";
 
 abstract contract ComponentModule is
     IRegistryLinked,
@@ -74,15 +75,6 @@ abstract contract ComponentModule is
         _nftIds.push(nftId);
 
         // TODO add logging
-    }
-
-    function getComponentOwnerService()
-        external
-        view
-        override
-        returns (IComponentOwnerService)
-    {
-        return _componentOwnerService;
     }
 
     function setComponentInfo(

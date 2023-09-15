@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IRegistryLinked} from "../../registry/IRegistry.sol";
-import {IComponent, IComponentContract} from "../component/IComponent.sol";
+import {IComponent, IComponentContract} from "../module/component/IComponent.sol";
 import {NftId} from "../../types/NftId.sol";
 
 interface IComponentOwnerService is IRegistryLinked, IComponent {

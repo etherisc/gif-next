@@ -6,7 +6,7 @@ import {IProductService} from "./service/IProductService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 
 interface IServiceLinked {
-    function getCompnentOwnerService() external view returns(IComponentOwnerService service);
+    function getComponentOwnerService() external view returns(IComponentOwnerService service);
     function getProductService() external view returns(IProductService service);
     function getPoolService() external view returns(IPoolService service);
 

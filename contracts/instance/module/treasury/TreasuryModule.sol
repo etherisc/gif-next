@@ -3,10 +3,10 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-import {NftId} from "../../types/NftId.sol";
-import {Fee, feeIsZero} from "../../types/Fee.sol";
-import {UFixed, UFixedMathLib} from "../../types/UFixed.sol";
-import {IProductComponent} from "../../components/IProduct.sol";
+import {NftId} from "../../../types/NftId.sol";
+import {Fee, feeIsZero} from "../../../types/Fee.sol";
+import {UFixed, UFixedMathLib} from "../../../types/UFixed.sol";
+import {IProductComponent} from "../../../components/IProduct.sol";
 import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 import {TokenHandler} from "./TokenHandler.sol";
 import {ITreasuryModule} from "./ITreasury.sol";

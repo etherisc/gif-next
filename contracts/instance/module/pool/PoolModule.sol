@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 import {IOwnable, IRegistry, IRegistryLinked} from "../../../registry/IRegistry.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
-import {IPolicy, IPolicyModule} from "../../policy/IPolicy.sol";
-import {ITreasuryModule} from "../../treasury/ITreasury.sol";
+import {IPolicy, IPolicyModule} from "../../module/policy/IPolicy.sol";
+import {ITreasuryModule} from "../../module/treasury/ITreasury.sol";
 import {NftId, NftIdLib} from "../../../types/NftId.sol";
 
 import {IPoolModule} from "./IPoolModule.sol";

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {ILifecycle} from "../contracts/instance/lifecycle/ILifecycle.sol";
+import {ILifecycle} from "../contracts/instance/module/lifecycle/ILifecycle.sol";
 import {NftId} from "../contracts/types/NftId.sol";
 import {PRODUCT} from "../contracts/types/ObjectType.sol";
 import {ACTIVE, PAUSED} from "../contracts/types/StateId.sol";
 import {TestGifBase} from "./TestGifBase.sol";
-import {IComponent, IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
+import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
+import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
 
 contract TestComponentLockUnlock is ILifecycle, TestGifBase {
     IComponentOwnerService public componentOwnerService;

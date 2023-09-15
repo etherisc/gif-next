@@ -9,7 +9,7 @@ import {IInstance} from "../../instance/IInstance.sol";
 // import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 // import {RegistryLinked} from "../../registry/Registry.sol";
 // import {IProductService} from "./IProductService.sol";
-import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/treasury/ITreasury.sol";
+import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
 // import {IPoolModule} from "../../instance/pool/IPoolModule.sol";
 // import {ObjectType, INSTANCE, PRODUCT} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";

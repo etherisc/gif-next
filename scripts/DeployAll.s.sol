@@ -9,7 +9,7 @@ import {HelperConfig} from "./HelperConfig.s.sol";
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
-import {IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
+import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
 import {ComponentOwnerService} from "../contracts/instance/service/ComponentOwnerService.sol";
 import {ProductService} from "../contracts/instance/service/ProductService.sol";
 import {PoolService} from "../contracts/instance/service/PoolService.sol";

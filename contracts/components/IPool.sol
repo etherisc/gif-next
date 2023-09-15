@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Fee} from "../types/Fee.sol";
-import {IComponentContract} from "../instance/component/IComponent.sol";
+import {IComponentContract} from "../instance/module/component/IComponent.sol";
 
 // just marker interface for now
 interface IPoolComponent is IComponentContract {

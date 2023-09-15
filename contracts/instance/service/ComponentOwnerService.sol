@@ -8,10 +8,10 @@ import {IRegistry, IRegistryLinked} from "../../registry/IRegistry.sol";
 import {IAccessComponentTypeRoles, IAccessCheckRole} from "../module/access/IAccess.sol";
 import {IInstance} from "../IInstance.sol";
 
-import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
-import {ITreasuryModule} from "../treasury/ITreasury.sol";
-import {TreasuryModule} from "../treasury/TreasuryModule.sol";
-import {IComponent, IComponentContract, IComponentModule} from "../component/IComponent.sol";
+import {LifecycleModule} from "../module/lifecycle/LifecycleModule.sol";
+import {ITreasuryModule} from "../module/treasury/ITreasury.sol";
+import {TreasuryModule} from "../module/treasury/TreasuryModule.sol";
+import {IComponent, IComponentContract, IComponentModule} from "../module/component/IComponent.sol";
 import {IProductComponent} from "../../components/IProduct.sol";
 import {IPoolComponent} from "../../components/IPool.sol";
 import {IPoolModule} from "../module/pool/IPoolModule.sol";

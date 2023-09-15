@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IRegistry, IRegistryLinked} from "../../../registry/IRegistry.sol";
 
-import {LifecycleModule} from "../../lifecycle/LifecycleModule.sol";
+import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
@@ -14,7 +14,7 @@ import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, REVOKED, DECLINED} f
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
 
-import {ILifecycleModule} from "../../lifecycle/ILifecycle.sol";
+import {ILifecycleModule} from "../lifecycle/ILifecycle.sol";
 import {IBundleModule} from "./IBundle.sol";
 
 abstract contract BundleModule is

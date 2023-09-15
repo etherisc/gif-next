@@ -2,16 +2,17 @@
 pragma solidity 0.8.20;
 
 import {TestGifBase} from "./TestGifBase.sol";
-import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
+import {IPolicy} from "../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/module/pool/IPoolModule.sol";
-import {TokenHandler} from "../contracts/instance/treasury/TokenHandler.sol";
+import {TokenHandler} from "../contracts/instance/module/treasury/TokenHandler.sol";
 import {APPLIED, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
 import {blockTimestamp, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {Fee, toFee, zeroFee, feeIsZero, feeIsSame} from "../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";
-import {IComponent, IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
-import {ITreasuryModule} from "../contracts/instance/treasury/ITreasury.sol";
+import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
+import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
+import {ITreasuryModule} from "../contracts/instance/module/treasury/ITreasury.sol";
 
 contract TestApplicationCreate is TestGifBase {
     uint256 public sumInsuredAmount = 1000 * 10 ** 6;

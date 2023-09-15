@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import {console} from "../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "./TestGifBase.sol";
-import {IComponent} from "../contracts/instance/component/IComponent.sol";
+import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
 import {ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 

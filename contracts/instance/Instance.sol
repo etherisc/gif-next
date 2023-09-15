@@ -5,13 +5,13 @@ import {Registerable} from "../registry/Registry.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IAccessModule, AccessModule} from "./module/access/Access.sol";
-import {LifecycleModule} from "./lifecycle/LifecycleModule.sol";
-import {ComponentModule} from "./component/ComponentModule.sol";
-import {ProductModule} from "./product/ProductModule.sol";
-import {PolicyModule} from "./policy/PolicyModule.sol";
+import {LifecycleModule} from "./module/lifecycle/LifecycleModule.sol";
+import {ComponentModule} from "./module/component/ComponentModule.sol";
+import {ProductModule} from "./module/product/ProductModule.sol";
+import {PolicyModule} from "./module/policy/PolicyModule.sol";
 import {PoolModule} from "./module/pool/PoolModule.sol";
 import {BundleModule} from "./module/bundle/BundleModule.sol";
-import {TreasuryModule} from "./treasury/TreasuryModule.sol";
+import {TreasuryModule} from "./module/treasury/TreasuryModule.sol";
 
 import {IInstance} from "./IInstance.sol";
 import {ObjectType, INSTANCE} from "../types/ObjectType.sol";

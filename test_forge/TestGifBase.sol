@@ -14,7 +14,7 @@ import {TestProduct} from "../contracts/test/TestProduct.sol";
 import {TestPool} from "../contracts/test/TestPool.sol";
 import {USDC} from "./mock/Usdc.sol";
 
-import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
+import {IPolicy} from "../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 

@@ -6,8 +6,10 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IRegistry, IRegisterable, IRegistryLinked} from "../registry/IRegistry.sol";
 import {Registerable} from "../registry/Registry.sol";
 import {IInstance} from "../instance/IInstance.sol";
+import {IServiceLinked} from "../instance/IServiceLinked.sol";
 
-import {IInstanceLinked, IComponent, IComponentContract, IComponentModule, IComponentOwnerService} from "../instance/component/IComponent.sol";
+import {IInstanceLinked, IComponent, IComponentContract, IComponentModule} from "../instance/module/component/IComponent.sol";
+import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
 import {NftId} from "../types/NftId.sol";
 
 contract InstanceLinked is IInstanceLinked {

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../registry/IRegistry.sol";
-import {IInstance} from "../IInstance.sol";
-import {IProductService} from "../service/IProductService.sol";
-import {NftId} from "../../types/NftId.sol";
-import {StateId} from "../../types/StateId.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
-import {Blocknumber} from "../../types/Blocknumber.sol";
+import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../../registry/IRegistry.sol";
+import {IInstance} from "../../IInstance.sol";
+import {IProductService} from "../../service/IProductService.sol";
+import {NftId} from "../../../types/NftId.sol";
+import {StateId} from "../../../types/StateId.sol";
+import {Timestamp} from "../../../types/Timestamp.sol";
+import {Blocknumber} from "../../../types/Blocknumber.sol";
 
 // TODO check if there is value to introuce IContract and let IPolicy derive from IContract
 interface IPolicy {
