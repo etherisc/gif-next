@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { Signer, formatEther } from "ethers";
+import { AddressLike, Signer, formatEther } from "ethers";
 import { deployContract, verifyContract } from "./lib/deployment";
 import { logger } from "./logger";
 import { Registry } from "../typechain-types";
@@ -8,14 +8,53 @@ import { getNamedAccounts, printBalance } from "./lib/accounts";
 
 async function main() {
     const { instanceOwner, productOwner, poolOwner } = await getNamedAccounts();
-    const registry = await deployRegistry(instanceOwner);
+    const { registryAddress, nfIdLibAddress, chainNftAddress } = await deployRegistry(instanceOwner);
+    const instance = await deployInstance(instanceOwner, registryAddress, nfIdLibAddress);
     printBalance(
         ["instanceOwner", instanceOwner] , 
         ["productOwner", productOwner], 
         ["poolOwner", poolOwner]);
-    }
+}
 
-async function deployRegistry(owner: Signer): Promise<Registry> {
+async function deployInstance(owner: Signer, registryAddress: AddressLike, nfIdLibAddress: AddressLike): Promise<{
+    instanceAddress: AddressLike,
+    componentOwnerServiceAddress: AddressLike,
+    productServiceAddress: AddressLike,
+    uFixedMathLibAddress: AddressLike,
+}> {
+    const { address: componentOwnerServiceAddress } = await deployContract(
+        "ComponentOwnerService",
+        owner,
+        [registryAddress],
+        { libraries: { NftIdLib: nfIdLibAddress }});
+    const { address: productServiceAddress } = await deployContract(
+        "ProductService",
+        owner,
+        [registryAddress],
+        { libraries: { NftIdLib: nfIdLibAddress }});
+
+    const { address: uFixedMathLibAddress } = await deployContract(
+        "UFixedMathLib",
+        owner);
+
+    const { address: instanceAddress } = await deployContract(
+        "Instance",
+        owner,
+        [registryAddress, componentOwnerServiceAddress, productServiceAddress],
+        { libraries: { NftIdLib: nfIdLibAddress, UFixedMathLib: uFixedMathLibAddress }});
+    return {
+        instanceAddress,
+        componentOwnerServiceAddress,
+        productServiceAddress,
+        uFixedMathLibAddress
+    };
+}
+
+async function deployRegistry(owner: Signer): Promise<{
+    registryAddress: AddressLike,
+    chainNftAddress: AddressLike,
+    nfIdLibAddress: AddressLike,
+}> {
     const { address: nfIdLibAddress } = await deployContract(
         "NftIdLib",
         owner);
@@ -37,7 +76,11 @@ async function deployRegistry(owner: Signer): Promise<Registry> {
     await registry.initialize(chainNftAddress);
     logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}`);
 
-    return registry;
+    return {
+        registryAddress,
+        chainNftAddress,
+        nfIdLibAddress,
+    };
 }
 
 

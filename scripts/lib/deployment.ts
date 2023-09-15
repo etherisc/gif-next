@@ -24,6 +24,7 @@ export async function deployContract(contractName: string, owner: Signer, constr
     deploymentTransaction: ContractTransactionResponse | null;
     contract: BaseContract;
 }> {
+    logger.info(`Deploying ${contractName}...`);
     const factoryArgs = factoryOptions ? { ...factoryOptions, owner } : { owner };
     const contractFactory = await ethers.getContractFactory(contractName, factoryArgs);
 
