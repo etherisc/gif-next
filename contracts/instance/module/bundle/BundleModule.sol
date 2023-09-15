@@ -8,7 +8,7 @@ import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
 import {NftId} from "../../../types/NftId.sol";
-import {LibNftIdSet} from "../../../helper/NftIdSet.sol";
+import {LibNftIdSet} from "../../../types/NftIdSet.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL, BUNDLE, POLICY} from "../../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, REVOKED, DECLINED} from "../../../types/StateId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
