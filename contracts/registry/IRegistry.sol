@@ -33,13 +33,13 @@ interface IRegisterable is IOwnable, IRegistryLinked {
 }
 
 interface IRegistry {
-    // TODO rename to ObjectInfo
-    struct RegistryInfo {
+    struct ObjectInfo {
         NftId nftId;
         NftId parentNftId;
         ObjectType objectType;
         address objectAddress;
         address initialOwner;
+        bytes data;
     }
 
     function register(address objectAddress) external returns (NftId nftId);
@@ -47,7 +47,8 @@ interface IRegistry {
     function registerObjectForInstance(
         NftId parentNftid,
         ObjectType objectType,
-        address initialOwner
+        address initialOwner,
+        bytes memory data
     ) external returns (NftId nftId);
 
     function getObjectCount() external view returns (uint256);
@@ -56,9 +57,9 @@ interface IRegistry {
         address objectAddress
     ) external view returns (NftId nftId);
 
-    function getInfo(
+    function getObjectInfo(
         NftId nftId
-    ) external view returns (RegistryInfo memory info);
+    ) external view returns (ObjectInfo memory info);
 
     function getOwner(NftId nftId) external view returns (address ownerAddress);
 

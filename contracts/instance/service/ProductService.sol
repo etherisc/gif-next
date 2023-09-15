@@ -33,7 +33,7 @@ contract ProductService is RegistryLinked, IProductService {
         external
         override
     {
-        (IRegistry.RegistryInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
+        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
         instance.setProductFees(productInfo.nftId, policyFee, processingFee);
     }
 
@@ -44,7 +44,7 @@ contract ProductService is RegistryLinked, IProductService {
         uint256 lifetime,
         NftId bundleNftId
     ) external override returns (NftId nftId) {
-        (IRegistry.RegistryInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
+        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
 
         nftId = instance.createApplication(
             productInfo,
@@ -59,7 +59,7 @@ contract ProductService is RegistryLinked, IProductService {
     }
 
     function underwrite(NftId policyNftId) external override {
-        (IRegistry.RegistryInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
+        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
 
         instance.underwrite(policyNftId, productInfo.nftId);
         instance.activate(policyNftId);
@@ -68,18 +68,18 @@ contract ProductService is RegistryLinked, IProductService {
     }
 
     function collectPremium(NftId policyNftId) external override {
-        (IRegistry.RegistryInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
+        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
 
         // // TODO unify validation into modifier and/or other suitable approaches
         // // same as only registered product
         // NftId productNftId = _registry.getNftId(msg.sender);
         // require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
-        // IRegistry.RegistryInfo memory productInfo = _registry.getInfo(
+        // IRegistry.ObjectInfo memory productInfo = _registry.getInfo(
         //     productNftId
         // );
         // require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
 
-        // IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(
+        // IRegistry.ObjectInfo memory instanceInfo = _registry.getInfo(
         //     productInfo.parentNftId
         // );
         // require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
@@ -110,18 +110,18 @@ contract ProductService is RegistryLinked, IProductService {
         internal
         view
         returns(
-            IRegistry.RegistryInfo memory productInfo, 
+            IRegistry.ObjectInfo memory productInfo, 
             IInstance instance
         )
     {
         NftId productNftId = _registry.getNftId(msg.sender);
         require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
 
-        productInfo = _registry.getInfo(productNftId);
+        productInfo = _registry.getObjectInfo(productNftId);
         require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
 
         // TODO check if this is really needed or if registry may be considered reliable
-        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(productInfo.parentNftId);
+        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(productInfo.parentNftId);
         require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
 

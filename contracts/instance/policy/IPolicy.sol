@@ -29,7 +29,7 @@ interface IPolicy {
 
 interface IPolicyModule is IOwnable, IRegistryLinked, IPolicy {
     function createApplication(
-        IRegistry.RegistryInfo memory productInfo,
+        IRegistry.ObjectInfo memory productInfo,
         address initialOwner,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,

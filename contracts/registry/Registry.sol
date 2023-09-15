@@ -58,7 +58,7 @@ contract Registry is IRegistry {
 
     string public constant EMPTY_URI = "";
 
-    mapping(NftId nftId => RegistryInfo info) private _info;
+    mapping(NftId nftId => ObjectInfo info) private _info;
     mapping(NftId nftId => address owner) private _owner;
     mapping(address object => NftId nftId) private _nftIdByAddress;
 
@@ -88,7 +88,7 @@ contract Registry is IRegistry {
 
         // check parent exists (for objects not instances)
         if (registerable.getType() != INSTANCE()) {
-            RegistryInfo memory parentInfo = _info[
+            ObjectInfo memory parentInfo = _info[
                 registerable.getParentNftId()
             ];
             require(parentInfo.nftId.gtz(), "ERROR:REG-004:PARENT_NOT_FOUND");
@@ -102,12 +102,13 @@ contract Registry is IRegistry {
         );
         nftId = toNftId(mintedTokenId);
 
-        RegistryInfo memory info = RegistryInfo(
+        ObjectInfo memory info = ObjectInfo(
             nftId,
             registerable.getParentNftId(),
             registerable.getType(),
             objectAddress,
-            registerable.getInitialOwner()
+            registerable.getInitialOwner(),
+            registerable.getData()
         );
 
         _info[nftId] = info;
@@ -119,7 +120,8 @@ contract Registry is IRegistry {
     function registerObjectForInstance(
         NftId parentNftId,
         ObjectType objectType,
-        address initialOwner
+        address initialOwner,
+        bytes memory data
     )
         external
         override
@@ -137,12 +139,13 @@ contract Registry is IRegistry {
         uint256 mintedTokenId = _chainNft.mint(initialOwner, EMPTY_URI);
         nftId = toNftId(mintedTokenId);
 
-        RegistryInfo memory info = RegistryInfo(
+        ObjectInfo memory info = ObjectInfo(
             nftId,
             parentNftId,
             objectType,
             address(0),
-            initialOwner
+            initialOwner,
+            data
         );
 
         _info[nftId] = info;
@@ -166,9 +169,9 @@ contract Registry is IRegistry {
         return _nftIdByAddress[object].gtz();
     }
 
-    function getInfo(
+    function getObjectInfo(
         NftId nftId
-    ) external view override returns (RegistryInfo memory info) {
+    ) external view override returns (ObjectInfo memory info) {
         return _info[nftId];
     }
 

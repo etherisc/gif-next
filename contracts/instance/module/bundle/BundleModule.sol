@@ -50,7 +50,7 @@ abstract contract BundleModule is
     }
 
     function createBundle(
-        IRegistry.RegistryInfo memory poolInfo,
+        IRegistry.ObjectInfo memory poolInfo,
         address initialOwner,
         uint256 amount, 
         uint256 lifetime, 
@@ -65,7 +65,8 @@ abstract contract BundleModule is
         nftId = this.getRegistry().registerObjectForInstance(
             poolInfo.nftId,
             BUNDLE(),
-            initialOwner
+            initialOwner,
+            ""
         );
 
         _bundleInfo[nftId] = BundleInfo(

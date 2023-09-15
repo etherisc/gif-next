@@ -28,7 +28,7 @@ contract ComponentService is RegistryLinked {
         internal
         view
         returns(
-            IRegistry.RegistryInfo memory productInfo, 
+            IRegistry.ObjectInfo memory productInfo, 
             IInstance instance
         )
     {
@@ -40,7 +40,7 @@ contract ComponentService is RegistryLinked {
         internal
         view
         returns(
-            IRegistry.RegistryInfo memory poolInfo, 
+            IRegistry.ObjectInfo memory poolInfo, 
             IInstance instance
         )
     {
@@ -53,17 +53,17 @@ contract ComponentService is RegistryLinked {
         internal
         view
         returns(
-            IRegistry.RegistryInfo memory info, 
+            IRegistry.ObjectInfo memory info, 
             IInstance instance
         )
     {
         NftId componentNftId = _registry.getNftId(msg.sender);
         require(componentNftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
 
-        info = _registry.getInfo(componentNftId);
+        info = _registry.getObjectInfo(componentNftId);
 
         // TODO check if this is really needed or if registry may be considered reliable
-        IRegistry.RegistryInfo memory instanceInfo = _registry.getInfo(info.parentNftId);
+        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(info.parentNftId);
         require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
         require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
 

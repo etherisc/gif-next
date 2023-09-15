@@ -39,7 +39,7 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
     }
 
     function createApplication(
-        IRegistry.RegistryInfo memory productInfo,
+        IRegistry.ObjectInfo memory productInfo,
         address initialOwner,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
@@ -48,16 +48,17 @@ abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
     ) external override onlyProductService2 returns (NftId nftId) {
         // TODO add parameter validation
         if (bundleNftId.gtz()) {
-            // IRegistry.RegistryInfo memory bundleInfo = this
+            // IRegistry.ObjectInfo memory bundleInfo = this
             //     .getRegistry()
             //     .getInfo(bundleNftId);
-            // IRegistry.RegistryInfo memory poolInfo = this.getRegistry().getInfo(bundleInfo.parentNftId);
+            // IRegistry.ObjectInfo memory poolInfo = this.getRegistry().getInfo(bundleInfo.parentNftId);
         }
 
         nftId = this.getRegistry().registerObjectForInstance(
             productInfo.nftId,
             POLICY(),
-            initialOwner
+            initialOwner,
+            ""
         );
 
         _policyInfo[nftId] = PolicyInfo(

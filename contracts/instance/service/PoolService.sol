@@ -36,7 +36,7 @@ contract PoolService is ComponentService, IPoolService {
         external
         override
     {
-        (IRegistry.RegistryInfo memory info, IInstance instance) = _verifyAndGetPoolAndInstance();
+        (IRegistry.ObjectInfo memory info, IInstance instance) = _verifyAndGetPoolAndInstance();
         instance.setPoolFees(info.nftId, stakingFee, performanceFee);
     }
 
@@ -50,7 +50,7 @@ contract PoolService is ComponentService, IPoolService {
         override
         returns(NftId nftId)
     {
-        (IRegistry.RegistryInfo memory poolInfo, IInstance instance) = _verifyAndGetPoolAndInstance();
+        (IRegistry.ObjectInfo memory poolInfo, IInstance instance) = _verifyAndGetPoolAndInstance();
 
         nftId = instance.createBundle(
             poolInfo,

@@ -97,7 +97,7 @@ abstract contract ComponentModule is
         // TODO decide if state changes should have explicit functions and not
         // just a generic setXYZInfo and implicit state transitions
         // when in doubt go for the explicit approach ...
-        ObjectType objectType = this.getRegistry().getInfo(nftId).objectType;
+        ObjectType objectType = this.getRegistry().getObjectInfo(nftId).objectType;
         _lifecycleModule.checkAndLogTransition(
             nftId,
             objectType,

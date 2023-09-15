@@ -31,7 +31,7 @@ interface IBundle {
 interface IBundleModule is IRegistryLinked, IServiceLinked, IBundle {
 
     function createBundle(
-        IRegistry.RegistryInfo memory poolInfo,
+        IRegistry.ObjectInfo memory poolInfo,
         address owner, 
         uint256 amount, 
         uint256 lifetime, 
