@@ -1,6 +1,6 @@
 import hre, { ethers } from "hardhat";
 import { AddressLike, Signer, ContractTransactionResponse, BaseContract } from "ethers";
-import { logger } from "./logger";
+import { logger } from "../logger";
 
 export async function verifyContract(address: AddressLike, constructorArgs: any[]) {
     logger.debug("verifying contract @ address: " + address);
@@ -9,10 +9,10 @@ export async function verifyContract(address: AddressLike, constructorArgs: any[
             address: address,
             constructorArguments: constructorArgs,
         });
-        logger.info("Contract verified\n\n");
+        logger.info("Contract verified");
     } catch (err: any) {
         if (err.message.toLowerCase().includes("already verified")) {
-            logger.info("Contract is already verified! \n\n");
+            logger.info("Contract is already verified!");
         } else {
             throw err;
         }
@@ -37,8 +37,11 @@ export async function deployContract(contractName: string, owner: Signer, constr
     logger.info(`${contractName} deployed to ${deployedContractAddress}`);
 
     if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
+        logger.debug("Waiting for 5 confirmations");
         await deployTxResponse.deploymentTransaction()?.wait(5);
-        await verifyContract(deployedContractAddress, []);
+        constructorArgs !== undefined
+            ? await verifyContract(deployedContractAddress, constructorArgs)
+            : await verifyContract(deployedContractAddress, []);
     } else {
         logger.debug("Skipping verification");
     }

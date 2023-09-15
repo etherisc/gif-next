@@ -1,5 +1,5 @@
 import { ethers } from "hardhat";
-import { verifyContract } from "./deploy_helper";
+import { verifyContract } from "./lib/deployment";
 
 
 async function main() {

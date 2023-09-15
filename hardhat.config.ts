@@ -27,6 +27,10 @@ const config: HardhatUserConfig = {
     mumbai: {
       chainId: 80001,
       url: process.env.NETWORK_URL || 'https://polygon-mumbai.infura.io/v3/' + process.env.WEB3_INFURA_PROJECT_ID,
+      accounts: {
+        mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
+        count: 20,
+      },
     },
     mainnet: {
       chainId: 1,
