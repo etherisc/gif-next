@@ -28,11 +28,11 @@ export async function deployContract(contractName: string, owner: Signer, constr
     const factoryArgs = factoryOptions ? { ...factoryOptions, owner } : { owner };
     const contractFactory = await ethers.getContractFactory(contractName, factoryArgs);
 
-    // TODO: make this two-stepped so that we can wait for the deployment transaction to be mined 
-    // and have access to tx already in between
     const deployTxResponse = constructorArgs !== undefined
         ? await contractFactory.deploy(...constructorArgs) 
         : await contractFactory.deploy();
+    logger.debug("Waiting for deployment transaction to be mined...");
+    await deployTxResponse.waitForDeployment();
     
     const deployedContractAddress = deployTxResponse.target;
     logger.info(`${contractName} deployed to ${deployedContractAddress}`);
