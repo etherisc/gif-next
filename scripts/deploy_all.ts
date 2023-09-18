@@ -7,17 +7,27 @@ import { getNamedAccounts, printBalance } from "./lib/accounts";
 
 
 async function main() {
-    const { instanceOwner, productOwner, poolOwner } = await getNamedAccounts();
-    const { registryAddress, nfIdLibAddress, chainNftAddress } = await deployRegistry(instanceOwner);
-    const instance = await deployInstance(instanceOwner, registryAddress, nfIdLibAddress);
+    const { protocolOwner, instanceOwner, productOwner, poolOwner } = await getNamedAccounts();
+
+    // deploy protocol contracts
+    const { registryAddress, nfIdLibAddress, chainNftAddress } = await deployRegistry(protocolOwner);
+    const { componentOwnerServiceAddress, productServiceAddress, uFixedMathLibAddress } = await deployServices(protocolOwner, registryAddress, nfIdLibAddress);
+
+    // deploy instance contracts
+    const instance = await deployInstance(
+        instanceOwner, 
+        nfIdLibAddress, uFixedMathLibAddress, 
+        registryAddress, componentOwnerServiceAddress, productServiceAddress);
+
+    // print final balance
     printBalance(
+        ["protocolOwner", protocolOwner] ,
         ["instanceOwner", instanceOwner] , 
         ["productOwner", productOwner], 
         ["poolOwner", poolOwner]);
 }
 
-async function deployInstance(owner: Signer, registryAddress: AddressLike, nfIdLibAddress: AddressLike): Promise<{
-    instanceAddress: AddressLike,
+async function deployServices(owner: Signer, registryAddress: AddressLike, nfIdLibAddress: AddressLike): Promise<{
     componentOwnerServiceAddress: AddressLike,
     productServiceAddress: AddressLike,
     uFixedMathLibAddress: AddressLike,
@@ -37,6 +47,23 @@ async function deployInstance(owner: Signer, registryAddress: AddressLike, nfIdL
         "UFixedMathLib",
         owner);
 
+    return {
+        componentOwnerServiceAddress,
+        productServiceAddress,
+        uFixedMathLibAddress
+    };
+}
+
+async function deployInstance(
+    owner: Signer, 
+    nfIdLibAddress: AddressLike,
+    uFixedMathLibAddress: AddressLike,
+    registryAddress: AddressLike,
+    componentOwnerServiceAddress: AddressLike,
+    productServiceAddress: AddressLike,
+): Promise<{
+    instanceAddress: AddressLike,
+}> {
     const { address: instanceAddress } = await deployContract(
         "Instance",
         owner,
@@ -44,9 +71,6 @@ async function deployInstance(owner: Signer, registryAddress: AddressLike, nfIdL
         { libraries: { NftIdLib: nfIdLibAddress, UFixedMathLib: uFixedMathLibAddress }});
     return {
         instanceAddress,
-        componentOwnerServiceAddress,
-        productServiceAddress,
-        uFixedMathLibAddress
     };
 }
 

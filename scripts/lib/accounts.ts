@@ -3,16 +3,23 @@ import { logger } from "../logger";
 import { Signer, formatEther } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 
-export async function getNamedAccounts(): Promise<{ instanceOwner: HardhatEthersSigner; productOwner: HardhatEthersSigner; poolOwner: HardhatEthersSigner; }> {
+export async function getNamedAccounts(): Promise<{ 
+    protocolOwner: HardhatEthersSigner;
+    instanceOwner: HardhatEthersSigner; 
+    productOwner: HardhatEthersSigner; 
+    poolOwner: HardhatEthersSigner; 
+}> {
     const signers = await ethers.getSigners();
-    const instanceOwner = signers[0];
-    const productOwner = signers[1];
-    const poolOwner = signers[2];
+    const protocolOwner = signers[0];
+    const instanceOwner = signers[1];
+    const productOwner = signers[2];
+    const poolOwner = signers[3];
     printBalance(
+        ["protocolOwner", protocolOwner] ,
         ["instanceOwner", instanceOwner] , 
         ["productOwner", productOwner], 
         ["poolOwner", poolOwner]);
-    return { instanceOwner, productOwner, poolOwner }; 
+    return { protocolOwner, instanceOwner, productOwner, poolOwner }; 
 }
 
 export async function printBalance(...signers: [string,HardhatEthersSigner][]) {
