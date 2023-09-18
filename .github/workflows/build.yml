@@ -75,8 +75,8 @@ jobs:
         contents: read
         id-token: write
     needs: [build_hardhat, build_foundry]
-    # only run if not on main and hardhat **and** founddry are successful
-    if: ${{ github.ref != 'refs/heads/main' && contains(join(needs.*.result, ','), 'success') }}
+    # only run if not on main and hardhat **and** founddry are successful and not dependabot
+    if: ${{ github.ref != 'refs/heads/main' && contains(join(needs.*.result, ','), 'success') && github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
