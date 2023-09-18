@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {Script} from "../lib/forge-std/src/Script.sol";
 
 // import mocks
-import {DIP} from "../test_forge/mock/Dip.sol";
+import {DIP} from "../contracts/mock/Dip.sol";
 
 contract HelperConfig is Script {
 

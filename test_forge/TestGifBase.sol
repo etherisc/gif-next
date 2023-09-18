@@ -10,9 +10,9 @@ import {DeployAll} from "../scripts/DeployAll.s.sol";
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
-import {TestProduct} from "./mock/TestProduct.sol";
-import {TestPool} from "./mock/TestPool.sol";
-import {USDC} from "./mock/Usdc.sol";
+import {TestProduct} from "../contracts/mock/TestProduct.sol";
+import {TestPool} from "../contracts/mock/TestPool.sol";
+import {USDC} from "../contracts/mock/Usdc.sol";
 
 import {IPolicy} from "../contracts/instance/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/pool/IPoolModule.sol";

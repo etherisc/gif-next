@@ -12,9 +12,9 @@ import {Instance} from "../contracts/instance/Instance.sol";
 import {IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
 import {ComponentOwnerService} from "../contracts/instance/component/ComponentModule.sol";
 import {ProductService} from "../contracts/instance/product/ProductService.sol";
-import {TestProduct} from "../test_forge/mock/TestProduct.sol";
-import {TestPool} from "../test_forge/mock/TestPool.sol";
-import {USDC} from "../test_forge/mock/Usdc.sol";
+import {TestProduct} from "../contracts/mock/TestProduct.sol";
+import {TestPool} from "../contracts/mock/TestPool.sol";
+import {USDC} from "../contracts/mock/Usdc.sol";
 
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";

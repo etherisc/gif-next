@@ -14,10 +14,13 @@ async function main() {
     const { componentOwnerServiceAddress, productServiceAddress, uFixedMathLibAddress } = await deployServices(protocolOwner, registryAddress, nfIdLibAddress);
 
     // deploy instance contracts
-    const instance = await deployInstance(
+    const { instanceAddress } = await deployInstance(
         instanceOwner, 
         nfIdLibAddress, uFixedMathLibAddress, 
         registryAddress, componentOwnerServiceAddress, productServiceAddress);
+
+    // deploy pool & product contracts
+    const { poolAddress } = await deployPool(poolOwner, nfIdLibAddress, registryAddress, instanceAddress);
 
     // print final balance
     printBalance(
@@ -25,6 +28,29 @@ async function main() {
         ["instanceOwner", instanceOwner] , 
         ["productOwner", productOwner], 
         ["poolOwner", poolOwner]);
+}
+
+async function deployPool(owner: Signer, nftIdLibAddress: AddressLike, registryAddress: AddressLike, instanceAddress: AddressLike): Promise<{
+    poolTokenAddress: AddressLike,
+    poolAddress: AddressLike,
+}> {
+    const { address: tokenAddress } = await deployContract(
+        "USDC",
+        owner);
+    const { address: poolAddress } = await deployContract(
+        "TestPool",
+        owner,
+        [
+            registryAddress,
+            instanceAddress,
+            tokenAddress,
+        ],
+        { libraries: { NftIdLib: nftIdLibAddress }}
+        );
+    return {
+        poolTokenAddress: tokenAddress,
+        poolAddress,
+    };
 }
 
 async function deployServices(owner: Signer, registryAddress: AddressLike, nfIdLibAddress: AddressLike): Promise<{
