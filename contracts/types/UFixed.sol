@@ -76,21 +76,25 @@ function deltaUFixed(UFixed a, UFixed b) pure returns (UFixed) {
 }
 
 library UFixedMathLib {
-    enum Rounding {
-        /// @dev Round down - floor(value)
-        Down,
-        /// @dev Round up - ceil(value)
-        Up,
-        /// @dev Round half up - round(value)
-        HalfUp
-    }
 
     int8 public constant EXP = 18;
     uint256 public constant MULTIPLIER = 10 ** uint256(int256(EXP));
     uint256 public constant MULTIPLIER_HALF = MULTIPLIER / 2;
 
-    /// @dev Default rounding mode used by ftoi is HalfUp
-    Rounding public constant ROUNDING_DEFAULT = Rounding.HalfUp;
+    /// @dev returns the rounding mode DOWN - 0.4 becomes 0, 0.5 becomes 0, 0.6 becomes 0
+    function ROUNDING_DOWN() public pure returns (uint8) {
+        return uint8(0);
+    }
+
+    /// @dev returns the rounding mode UP - 0.4 becomes 1, 0.5 becomes 1, 0.6 becomes 1
+    function ROUNDING_UP() public pure returns (uint8) {
+        return uint8(1);
+    }
+
+    /// @dev returns the rounding mode HALF_UP - 0.4 becomes 0, 0.5 becomes 1, 0.6 becomes 1
+    function ROUNDING_HALF_UP() public pure returns (uint8) {
+        return uint8(2);
+    }
 
     /// @dev returns the decimals precision of the UFixed type
     function decimals() public pure returns (uint256) {
@@ -113,12 +117,12 @@ library UFixedMathLib {
 
     /// @dev Converts a UFixed to a uint256.
     function ftoi(UFixed a) public pure returns (uint256) {
-        return ftoi(a, ROUNDING_DEFAULT);
+        return ftoi(a, ROUNDING_HALF_UP());
     }
 
     /// @dev Converts a UFixed to a uint256 with given rounding mode.
-    function ftoi(UFixed a, Rounding rounding) public pure returns (uint256) {
-        if (rounding == Rounding.HalfUp) {
+    function ftoi(UFixed a, uint8 rounding) public pure returns (uint256) {
+        if (rounding == ROUNDING_HALF_UP()) {
             return
                 Math.mulDiv(
                     UFixed.unwrap(a) + MULTIPLIER_HALF,
@@ -126,7 +130,7 @@ library UFixedMathLib {
                     MULTIPLIER,
                     Math.Rounding.Down
                 );
-        } else if (rounding == Rounding.Down) {
+        } else if (rounding == ROUNDING_DOWN()) {
             return
                 Math.mulDiv(
                     UFixed.unwrap(a),

@@ -64,19 +64,19 @@ contract UFixedTest is Test {
 
     function testFtoiRounding() public {
         UFixed a = UFixed.wrap(4 * 10 ** 17);
-        assertTrue(a.ftoi(UFixedMathLib.Rounding.Up) == 1);
-        assertTrue(a.ftoi(UFixedMathLib.Rounding.Down) == 0);
-        assertTrue(a.ftoi(UFixedMathLib.Rounding.HalfUp) == 0);
+        assertTrue(a.ftoi(UFixedMathLib.ROUNDING_UP()) == 1);
+        assertTrue(a.ftoi(UFixedMathLib.ROUNDING_DOWN()) == 0);
+        assertTrue(a.ftoi(UFixedMathLib.ROUNDING_HALF_UP()) == 0);
 
         UFixed b = UFixed.wrap(5 * 10 ** 17);
-        assertTrue(b.ftoi(UFixedMathLib.Rounding.Up) == 1);
-        assertTrue(b.ftoi(UFixedMathLib.Rounding.Down) == 0);
-        assertTrue(b.ftoi(UFixedMathLib.Rounding.HalfUp) == 1);
+        assertTrue(b.ftoi(UFixedMathLib.ROUNDING_UP()) == 1);
+        assertTrue(b.ftoi(UFixedMathLib.ROUNDING_DOWN()) == 0);
+        assertTrue(b.ftoi(UFixedMathLib.ROUNDING_HALF_UP()) == 1);
 
         UFixed c = UFixed.wrap(6 * 10 ** 17);
-        assertTrue(c.ftoi(UFixedMathLib.Rounding.Up) == 1);
-        assertTrue(c.ftoi(UFixedMathLib.Rounding.Down) == 0);
-        assertTrue(c.ftoi(UFixedMathLib.Rounding.HalfUp) == 1);
+        assertTrue(c.ftoi(UFixedMathLib.ROUNDING_UP()) == 1);
+        assertTrue(c.ftoi(UFixedMathLib.ROUNDING_DOWN()) == 0);
+        assertTrue(c.ftoi(UFixedMathLib.ROUNDING_HALF_UP()) == 1);
     }
 
     function testOpAdd() public {
