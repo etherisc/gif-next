@@ -1,8 +1,8 @@
 import { ethers } from "hardhat";
-import { AddressLike, Signer, formatEther } from "ethers";
+import { AddressLike, FeeData, Signer, formatEther } from "ethers";
 import { deployContract, verifyContract } from "./lib/deployment";
 import { logger } from "./logger";
-import { Registry } from "../typechain-types";
+import { Registry, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance } from "./lib/accounts";
 
 
@@ -20,7 +20,8 @@ async function main() {
         registryAddress, componentOwnerServiceAddress, productServiceAddress);
 
     // deploy pool & product contracts
-    const { poolAddress } = await deployPool(poolOwner, nfIdLibAddress, registryAddress, instanceAddress);
+    const { poolAddress, tokenAddress } = await deployPool(poolOwner, nfIdLibAddress, registryAddress, instanceAddress);
+    const { productAddress } = await deployProduct(productOwner, uFixedMathLibAddress, nfIdLibAddress, registryAddress, instanceAddress, poolAddress, tokenAddress);
 
     // print final balance
     printBalance(
@@ -30,8 +31,36 @@ async function main() {
         ["poolOwner", poolOwner]);
 }
 
+async function deployProduct(
+    owner: Signer, uFixedMathLibAddress: AddressLike, nftIdLibAddress: AddressLike, 
+    registryAddress: AddressLike, instanceAddress: AddressLike, poolAddress: AddressLike, tokenAddress: AddressLike
+): Promise<{
+    productAddress: AddressLike,
+}> {
+    const uFixedMathLib = UFixedMathLib__factory.connect(uFixedMathLibAddress.toString(), owner);
+    const fractionalFee = await uFixedMathLib["itof(uint256,int8)"](1, -1);
+    const { address: productAddress } = await deployContract(
+        "TestProduct",
+        owner,
+        [
+            registryAddress,
+            instanceAddress,
+            tokenAddress,
+            poolAddress,
+            {
+                fractionalFee,
+                fixedFee: 0
+            }
+        ],
+        { libraries: { NftIdLib: nftIdLibAddress }});
+    return {
+        productAddress,
+    };
+}
+
+
 async function deployPool(owner: Signer, nftIdLibAddress: AddressLike, registryAddress: AddressLike, instanceAddress: AddressLike): Promise<{
-    poolTokenAddress: AddressLike,
+    tokenAddress: AddressLike,
     poolAddress: AddressLike,
 }> {
     const { address: tokenAddress } = await deployContract(
@@ -48,7 +77,7 @@ async function deployPool(owner: Signer, nftIdLibAddress: AddressLike, registryA
         { libraries: { NftIdLib: nftIdLibAddress }}
         );
     return {
-        poolTokenAddress: tokenAddress,
+        tokenAddress,
         poolAddress,
     };
 }
