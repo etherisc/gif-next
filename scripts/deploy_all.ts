@@ -1,9 +1,14 @@
 import { ethers } from "hardhat";
-import { AddressLike, FeeData, Signer, formatEther } from "ethers";
+import { AddressLike, FeeData, Interface, Signer, decodeBytes32String, formatEther } from "ethers";
 import { deployContract, verifyContract } from "./lib/deployment";
 import { logger } from "./logger";
-import { Registry, UFixedMathLib__factory } from "../typechain-types";
+import { ComponentOwnerService__factory, IERC721Enumerable, IERC721Enumerable__factory, Instance__factory, Registry, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance } from "./lib/accounts";
+import * as iERC721Abi  from "../artifacts/@openzeppelin/contracts/token/ERC721/IERC721.sol/IERC721.json";
+import { Coder } from "abi-coder";
+import { getFieldFromLogs } from "./lib/transaction";
+import { Role, grantRole, registerInstance } from "./lib/instance";
+import { registerComponent } from "./lib/componentownerservice";
 
 
 async function main() {
@@ -23,12 +28,40 @@ async function main() {
     const { poolAddress, tokenAddress } = await deployPool(poolOwner, nfIdLibAddress, registryAddress, instanceAddress);
     const { productAddress } = await deployProduct(productOwner, uFixedMathLibAddress, nfIdLibAddress, registryAddress, instanceAddress, poolAddress, tokenAddress);
 
+    const { instanceNftId, poolNftId, productNftId } = await registerInstanceAndComponents(
+        instanceOwner, productOwner, poolOwner,
+        componentOwnerServiceAddress,
+        instanceAddress, productAddress, poolAddress);
+
     // print final balance
-    printBalance(
+    await printBalance(
         ["protocolOwner", protocolOwner] ,
         ["instanceOwner", instanceOwner] , 
         ["productOwner", productOwner], 
         ["poolOwner", poolOwner]);
+}
+
+async function registerInstanceAndComponents(
+    instanceOwner: Signer, productOwner: Signer, poolOwner: Signer,
+    componentOwnerServiceAddress: AddressLike,
+    instanceAddress: AddressLike, productAddress: AddressLike, poolAddress: AddressLike
+): Promise<{
+    instanceNftId: string,
+    poolNftId: string,
+    productNftId: string,
+}> {
+    // register instance
+    const instanceNftId = await registerInstance(instanceOwner, instanceAddress);
+    
+    // grant pool role and register pool
+    await grantRole(instanceOwner, instanceAddress, Role.POOL_OWNER_ROLE, poolOwner);
+    const poolNftId = await registerComponent(componentOwnerServiceAddress, poolOwner, poolAddress);
+    
+    // grant product role and register product
+    await grantRole(instanceOwner, instanceAddress, Role.PRODUCT_OWNER_ROLE, productOwner);
+    const productNftId = await registerComponent(componentOwnerServiceAddress, productOwner, productAddress);
+
+    return { instanceNftId, poolNftId, productNftId };
 }
 
 async function deployProduct(
@@ -167,7 +200,5 @@ main().catch((error) => {
     logger.error(error.message);
     process.exitCode = 1;
 });
-
-
 
 

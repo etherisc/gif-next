@@ -14,7 +14,7 @@ export async function getNamedAccounts(): Promise<{
     const instanceOwner = signers[1];
     const productOwner = signers[2];
     const poolOwner = signers[3];
-    printBalance(
+    await printBalance(
         ["protocolOwner", protocolOwner] ,
         ["instanceOwner", instanceOwner] , 
         ["productOwner", productOwner], 

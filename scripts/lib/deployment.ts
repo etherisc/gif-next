@@ -19,13 +19,21 @@ export async function verifyContract(address: AddressLike, constructorArgs: any[
     }
 };
 
-export async function deployContract(contractName: string, owner: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any): Promise<{
+/**
+ * Deploy a smart contract to the block chain.
+ * 
+ * @param contractName the name of the smart contract to deploy
+ * @param signer the signer to use for the deployment
+ * @param constructorArgs a list of constructor arguments to pass to the contract constructor
+ * @param factoryOptions options to pass to the contract factory (libraries, ...)
+ */
+export async function deployContract(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any): Promise<{
     address: AddressLike; 
     deploymentTransaction: ContractTransactionResponse | null;
     contract: BaseContract;
 }> {
     logger.info(`Deploying ${contractName}...`);
-    const factoryArgs = factoryOptions ? { ...factoryOptions, owner } : { owner };
+    const factoryArgs = factoryOptions ? { ...factoryOptions, signer } : { signer };
     const contractFactory = await ethers.getContractFactory(contractName, factoryArgs);
 
     const deployTxResponse = constructorArgs !== undefined
