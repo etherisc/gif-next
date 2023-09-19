@@ -1,8 +1,8 @@
-import { AddressLike, Signer, ethers, getAddress, resolveAddress } from "ethers";
-import * as iERC721Abi  from "../../artifacts/@openzeppelin/contracts/token/ERC721/IERC721.sol/IERC721.json";
+import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
+import * as iERC721Abi from "../../artifacts/@openzeppelin/contracts/token/ERC721/IERC721.sol/IERC721.json";
 import { Instance__factory } from "../../typechain-types";
-import { getFieldFromLogs } from "./transaction";
 import { logger } from "../logger";
+import { getFieldFromLogs } from "./transaction";
 
 const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
 

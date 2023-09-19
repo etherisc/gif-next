@@ -1,14 +1,11 @@
+import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
-import { AddressLike, BaseContract, FeeData, Interface, Signer, decodeBytes32String, formatEther, resolveAddress } from "ethers";
-import { deployContract, verifyContract } from "./lib/deployment";
-import { logger } from "./logger";
-import { ComponentOwnerService__factory, IChainNft__factory, IERC721Enumerable, IERC721Enumerable__factory, IOwnable__factory, IRegistry__factory, Instance__factory, Registry, UFixedMathLib__factory } from "../typechain-types";
+import { IChainNft__factory, IRegistry__factory, Registry, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
-import * as iERC721Abi  from "../artifacts/@openzeppelin/contracts/token/ERC721/IERC721.sol/IERC721.json";
-import { Coder } from "abi-coder";
-import { getFieldFromLogs } from "./lib/transaction";
-import { Role, grantRole, registerInstance } from "./lib/instance";
 import { registerComponent } from "./lib/componentownerservice";
+import { deployContract } from "./lib/deployment";
+import { Role, grantRole, registerInstance } from "./lib/instance";
+import { logger } from "./logger";
 
 
 async function main() {

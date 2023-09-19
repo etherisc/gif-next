@@ -1,8 +1,8 @@
-import { ethers } from "hardhat";
-import { logger } from "../logger";
-import { AddressLike, Signer, formatEther, getAddress, resolveAddress } from "ethers";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { AddressLike, formatEther, resolveAddress } from "ethers";
+import { ethers } from "hardhat";
 import { IOwnable__factory } from "../../typechain-types";
+import { logger } from "../logger";
 
 export async function getNamedAccounts(): Promise<{ 
     protocolOwner: HardhatEthersSigner;

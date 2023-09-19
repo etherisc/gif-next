@@ -1,5 +1,4 @@
-import { ContractTransactionReceipt, Interface, ethers } from "ethers";
-import { logger } from "../logger";
+import { ContractTransactionReceipt, Interface } from "ethers";
 
 /**
  * 

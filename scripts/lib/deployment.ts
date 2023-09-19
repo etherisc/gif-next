@@ -1,5 +1,5 @@
+import { AddressLike, BaseContract, ContractTransactionResponse, Signer } from "ethers";
 import hre, { ethers } from "hardhat";
-import { AddressLike, Signer, ContractTransactionResponse, BaseContract } from "ethers";
 import { logger } from "../logger";
 
 export async function verifyContract(address: AddressLike, constructorArgs: any[]) {
