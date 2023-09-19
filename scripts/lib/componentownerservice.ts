@@ -2,7 +2,7 @@ import { AddressLike, Signer, ethers } from "ethers";
 import * as iERC721Abi from "../../artifacts/@openzeppelin/contracts/token/ERC721/IERC721.sol/IERC721.json";
 import { ComponentOwnerService__factory } from "../../typechain-types";
 import { logger } from "../logger";
-import { getFieldFromLogs } from "./transaction";
+import { executeTx, getFieldFromLogs } from "./transaction";
 
 const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
 
@@ -11,17 +11,7 @@ export async function registerComponent(componentOwnerServiceAddress: AddressLik
 
     // register component
     const componentOwnerService = ComponentOwnerService__factory.connect(componentOwnerServiceAddress.toString(), signer);
-    const componentRegistrationTxResponse = await componentOwnerService.register(componentAddress);
-    const tx = await componentRegistrationTxResponse.wait();
-    
-    if (tx === null) {
-        throw new Error("component registration tx is null");
-
-    }
-    if (tx.status !== 1) {
-        throw new Error("instance registration tx failed");
-    }
-
+    const tx = await executeTx(async () => await componentOwnerService.register(componentAddress));
     const componentNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
     logger.info(`Component registered with NFT ID: ${componentNftId}`);
     return componentNftId;

@@ -1,4 +1,4 @@
-import { ContractTransactionReceipt, Interface } from "ethers";
+import { ContractTransactionReceipt, Interface, ethers } from "ethers";
 
 /**
  * 
@@ -21,3 +21,25 @@ export function getFieldFromLogs(tx: ContractTransactionReceipt, abiInterface: I
 
     return value;
 }
+
+export async function executeTx(txFunc: () => Promise<ethers.ContractTransactionResponse>): Promise<ethers.ContractTransactionReceipt> {
+    const txResp = await txFunc();
+    const tx = await txResp.wait();
+    if (tx === null) {
+        throw new TransactionFailedException(null);
+    }
+    if (tx?.status !== 1) {
+        throw new TransactionFailedException(tx);
+    }
+    return tx;
+}
+
+export class TransactionFailedException extends Error {
+    transaction: ethers.ContractTransactionReceipt | null;
+
+    constructor(tx: ethers.ContractTransactionReceipt| null) {
+        super(`Transaction failed: ${tx?.hash}`);
+        this.transaction = tx;
+    }
+}
+
