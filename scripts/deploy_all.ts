@@ -1,9 +1,9 @@
 import { ethers } from "hardhat";
-import { AddressLike, FeeData, Interface, Signer, decodeBytes32String, formatEther } from "ethers";
+import { AddressLike, BaseContract, FeeData, Interface, Signer, decodeBytes32String, formatEther, resolveAddress } from "ethers";
 import { deployContract, verifyContract } from "./lib/deployment";
 import { logger } from "./logger";
-import { ComponentOwnerService__factory, IERC721Enumerable, IERC721Enumerable__factory, Instance__factory, Registry, UFixedMathLib__factory } from "../typechain-types";
-import { getNamedAccounts, printBalance } from "./lib/accounts";
+import { ComponentOwnerService__factory, IChainNft__factory, IERC721Enumerable, IERC721Enumerable__factory, IOwnable__factory, IRegistry__factory, Instance__factory, Registry, UFixedMathLib__factory } from "../typechain-types";
+import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
 import * as iERC721Abi  from "../artifacts/@openzeppelin/contracts/token/ERC721/IERC721.sol/IERC721.json";
 import { Coder } from "abi-coder";
 import { getFieldFromLogs } from "./lib/transaction";
@@ -39,12 +39,58 @@ async function main() {
         instanceAddress,
         tokenAddress, poolAddress, productAddress);
 
+    await verifyOwnership(
+        instanceOwner, productOwner, poolOwner,
+        registryAddress,
+        instanceAddress, 
+        instanceNftId, poolNftId, productNftId,
+        chainNftAddress);
+
     // print final balance
     await printBalance(
         ["protocolOwner", protocolOwner] ,
         ["instanceOwner", instanceOwner] , 
         ["productOwner", productOwner], 
         ["poolOwner", poolOwner]);
+}
+
+/**
+ * Verifies the smart contract deployment has correct ownerships. 
+ * Check that NFT and registry are linked correctly.
+ * Check that the instance, instance NFT, pool NFT and product NFTs are owned by their respective owners.
+ */
+async function verifyOwnership(
+    instanceOwner: AddressLike, productOwner: AddressLike, poolOwner: AddressLike,
+    registryAddress: AddressLike, 
+    instanceAddress: AddressLike, 
+    instanceNftId: string, poolNftId: string, productNftId: string,
+    chainNftAddress: AddressLike
+) {
+    const chainNft = IChainNft__factory.connect(chainNftAddress.toString(), ethers.provider);
+    if (await chainNft.getRegistryAddress() !== registryAddress) {
+        throw new Error("chainNft registry address mismatch");
+    }
+    const registry = IRegistry__factory.connect(registryAddress.toString(), ethers.provider);
+    if (await registry.getNftAddress() !== chainNftAddress) {
+        throw new Error("registry chainNft address mismatch");
+    }
+
+    await validateOwnership(instanceOwner, instanceAddress);
+
+    const instanceNftOwner = await chainNft.ownerOf(instanceNftId);
+    if (instanceNftOwner !== await resolveAddress(instanceOwner)) {
+        throw new Error("instance nft owner mismatch");
+    }
+
+    const poolNftOwner = await chainNft.ownerOf(poolNftId);
+    if (poolNftOwner !== await resolveAddress(poolOwner)) {
+        throw new Error("pool nft owner mismatch");
+    }
+
+    const productNftOwner = await chainNft.ownerOf(productNftId);
+    if (productNftOwner !== await resolveAddress(productOwner)) {
+        throw new Error("product nft owner mismatch");
+    }
 }
 
 function printAddresses(
@@ -117,7 +163,6 @@ async function deployProduct(
         productAddress,
     };
 }
-
 
 async function deployPool(owner: Signer, nftIdLibAddress: AddressLike, registryAddress: AddressLike, instanceAddress: AddressLike): Promise<{
     tokenAddress: AddressLike,
@@ -224,7 +269,7 @@ async function deployRegistry(owner: Signer): Promise<{
 
 
 main().catch((error) => {
-    logger.error(error.message);
+    logger.error(error.stack);
     process.exitCode = 1;
 });
 
