@@ -30,6 +30,9 @@ export async function printBalance(...signers: [string,HardhatEthersSigner][]) {
     }
 }
 
+/**
+ * Validate that the contract at the given address is owned by the given owner. This required the contract to implement the IOwnable interface.
+ */
 export async function validateOwnership(owner: AddressLike, address: AddressLike): Promise<void> {
     const contract = IOwnable__factory.connect(address.toString(), ethers.provider);
     const contractOwner = await contract.getOwner();

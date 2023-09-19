@@ -8,7 +8,6 @@ const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
 
 export async function registerComponent(componentOwnerServiceAddress: AddressLike, signer: Signer, componentAddress: AddressLike): Promise<any> {
     logger.debug(`registering component ${componentAddress}`);
-
     // register component
     const componentOwnerService = ComponentOwnerService__factory.connect(componentOwnerServiceAddress.toString(), signer);
     const tx = await executeTx(async () => await componentOwnerService.register(componentAddress));

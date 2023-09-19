@@ -2,6 +2,9 @@ import { AddressLike, BaseContract, ContractTransactionResponse, Signer } from "
 import hre, { ethers } from "hardhat";
 import { logger } from "../logger";
 
+/**
+ * Verify a smart contract on Etherscan using hardhat-etherscan task "verify". 
+ */
 export async function verifyContract(address: AddressLike, constructorArgs: any[]) {
     logger.debug("verifying contract @ address: " + address);
     try {

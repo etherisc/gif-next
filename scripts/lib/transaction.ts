@@ -1,8 +1,7 @@
 import { ContractTransactionReceipt, Interface, ethers } from "ethers";
 
 /**
- * 
- * @param tx 
+ * Extract a field from the logs of a transaction. 
  */
 export function getFieldFromLogs(tx: ContractTransactionReceipt, abiInterface: Interface, eventName: string, fieldName: string): any | null {
     const logs = tx?.logs;
@@ -22,6 +21,10 @@ export function getFieldFromLogs(tx: ContractTransactionReceipt, abiInterface: I
     return value;
 }
 
+/**
+ * Execute a transaction and wait for it to be mined. Then check if the transaction was successful. 
+ * @throws TransactionFailedException if the transaction failed
+ */ 
 export async function executeTx(txFunc: () => Promise<ethers.ContractTransactionResponse>): Promise<ethers.ContractTransactionReceipt> {
     const txResp = await txFunc();
     const tx = await txResp.wait();
@@ -34,6 +37,9 @@ export async function executeTx(txFunc: () => Promise<ethers.ContractTransaction
     return tx;
 }
 
+/**
+ * Exception thrown when a transaction fails. Contains the transaction receipt in field `transaction`.
+ */
 export class TransactionFailedException extends Error {
     transaction: ethers.ContractTransactionReceipt | null;
 

@@ -6,6 +6,9 @@ import { executeTx, getFieldFromLogs } from "./transaction";
 
 const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
 
+/**
+ * Register an instance, extract NFT-Id from the transaction logs and return it.
+ */
 export async function registerInstance(instanceOwner: Signer, instanceAddress: AddressLike): Promise<any> {    
     logger.debug(`registering instance ${instanceAddress}`);
     // register instance
@@ -18,7 +21,7 @@ export async function registerInstance(instanceOwner: Signer, instanceAddress: A
 
 export enum Role { POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE }
 
-export async function grantRole(instanceOwner: Signer, instanceAddress: AddressLike, role: Role, beneficiary: AddressLike): Promise<any> {
+export async function grantRole(instanceOwner: Signer, instanceAddress: AddressLike, role: Role, beneficiary: AddressLike): Promise<void> {
     const beneficiaryAddress = await resolveAddress(beneficiary);
     logger.debug(`granting role ${Role[role]} to ${beneficiaryAddress}`);
     const instanceAsInstanceOwner = Instance__factory.connect(instanceAddress.toString(), instanceOwner);
