@@ -33,12 +33,39 @@ async function main() {
         componentOwnerServiceAddress,
         instanceAddress, productAddress, poolAddress);
 
+    printAddresses(
+        registryAddress, chainNftAddress,
+        componentOwnerServiceAddress, productServiceAddress, 
+        instanceAddress,
+        tokenAddress, poolAddress, productAddress);
+
     // print final balance
     await printBalance(
         ["protocolOwner", protocolOwner] ,
         ["instanceOwner", instanceOwner] , 
         ["productOwner", productOwner], 
         ["poolOwner", poolOwner]);
+}
+
+function printAddresses(
+    registryAddress: AddressLike, chainNftAddress: AddressLike,
+    componentOwnerServiceAddress: AddressLike, productServiceAddress: AddressLike,
+    instanceAddress: AddressLike,
+    tokenAddress: AddressLike, poolAddress: AddressLike, productAddress: AddressLike
+) {
+    let addresses = "\nAddresses of deployed smart contracts:\n==========\n";
+    addresses += `registryAddress: ${registryAddress}\n`;
+    addresses += `chainNftAddress: ${chainNftAddress}\n`;
+    addresses += `--------\n`;
+    addresses += `componentOwnerServiceAddress: ${componentOwnerServiceAddress}\n`;
+    addresses += `productServiceAddress: ${productServiceAddress}\n`;
+    addresses += `--------\n`;
+    addresses += `instanceAddress: ${instanceAddress}\n`;
+    addresses += `--------\n`;
+    addresses += `tokenAddress: ${tokenAddress}\n`;
+    addresses += `poolAddress: ${poolAddress}\n`;
+    addresses += `productAddress: ${productAddress}\n`;
+    logger.info(addresses);
 }
 
 async function registerInstanceAndComponents(
