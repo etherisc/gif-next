@@ -5,8 +5,6 @@ import {IRegistry} from "../../../registry/IRegistry.sol";
 import {NftId} from "../../../types/NftId.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
-import {IModuleBase} from "../IModuleBase.sol";
-
 interface IPool {
     struct PoolInfo {
         NftId nftId;
@@ -15,7 +13,7 @@ interface IPool {
     }
 }
 
-interface IPoolModule is IModuleBase, IPool {
+interface IPoolModule is IPool {
     function underwrite(NftId policyNftId, NftId productNftId) external;
 
     function registerPool(NftId nftId) external;

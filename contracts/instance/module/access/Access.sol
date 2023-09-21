@@ -106,7 +106,7 @@ abstract contract AccessModule is IAccessModule {
     function hasRole(
         bytes32 role,
         address member
-    ) external view virtual override returns (bool) {
+    ) public view virtual override returns (bool) {
         return _isRoleMember[role][member];
     }
 

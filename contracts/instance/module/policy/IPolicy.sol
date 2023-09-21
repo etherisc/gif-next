@@ -9,8 +9,6 @@ import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber} from "../../../types/Blocknumber.sol";
 
-import {IModuleBase} from "../IModuleBase.sol";
-
 // TODO check if there is value to introuce IContract and let IPolicy derive from IContract
 interface IPolicy {
     struct PolicyInfo {
@@ -29,7 +27,7 @@ interface IPolicy {
     }
 }
 
-interface IPolicyModule is IModuleBase, IPolicy {
+interface IPolicyModule is IPolicy {
     function createApplication(
         IRegistry.ObjectInfo memory productInfo,
         address initialOwner,
@@ -53,6 +51,9 @@ interface IPolicyModule is IModuleBase, IPolicy {
 
     function getPremiumAmount(NftId nftId) external view returns(uint256 premiumAmount);
 
-    // repeat service linked signaturea to avoid linearization issues
+    // repeat registry linked signature
+    function getRegistry() external view returns (IRegistry registry);
+
+    // repeat service linked signature to avoid linearization issues
     function senderIsProductService() external  returns(bool isService);
 }

@@ -3,9 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IRegistryLinked} from "../../shared/IRegisterable.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
-
 import {IInstance} from "../IInstance.sol";
 
 import {LifecycleModule} from "../module/lifecycle/LifecycleModule.sol";

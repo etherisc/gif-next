@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IPolicy, IPolicyModule} from "../module/policy/IPolicy.sol";
-import {IRegistryLinked} from "../../shared/IRegisterable.sol";
 import {IProductService} from "./IProductService.sol";
 import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
 // import {IPoolModule} from "../../instance/pool/IPoolModule.sol";

@@ -102,7 +102,6 @@ contract DeployAll is Script {
 
     function _deployServices()
         internal 
-        returns(Instance instance)
     {
         ComponentOwnerService componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId);
         componentOwnerService.register();

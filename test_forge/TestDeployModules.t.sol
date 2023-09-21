@@ -20,8 +20,8 @@ contract TestDeployModules is Test {
 
     ChainNft public chainNft;
     Registry public registry;
-    address registryAddress;
-    NftId registryNftId;
+    address public registryAddress;
+    NftId public registryNftId;
 
     ComponentOwnerService public componentOwnerService;
     ProductService public productService;
@@ -46,10 +46,7 @@ contract TestDeployModules is Test {
         vm.prank(instanceOwner);
         TestInstanceBase instance = new TestInstanceBase(
             registryAddress, 
-            registryNftId, 
-            address(componentOwnerService), 
-            address(productService), 
-            address(poolService));
+            registryNftId);
         instance.register();
     }
 
@@ -57,40 +54,37 @@ contract TestDeployModules is Test {
         vm.prank(instanceOwner);
         TestInstanceModuleAccess instance = new TestInstanceModuleAccess(
             registryAddress, 
-            registryNftId, 
-            address(componentOwnerService), 
-            address(productService), 
-            address(poolService));
+            registryNftId);
         instance.register();
     }
 
     function testInstanceModuleBundle() public {
         vm.prank(instanceOwner);
-        TestInstanceModuleBundle instance = new TestInstanceModuleBundle(registryAddress, registryNftId, address(componentOwnerService), address(productService), address(poolService));
+        TestInstanceModuleBundle instance = new TestInstanceModuleBundle(registryAddress, registryNftId);
         instance.register();
     }
 
     function testInstanceModuleComponent() public {
         vm.prank(instanceOwner);
-        TestInstanceModuleComponent instance = new TestInstanceModuleComponent(registryAddress, registryNftId, address(componentOwnerService), address(productService), address(poolService));
+        TestInstanceModuleComponent instance = new TestInstanceModuleComponent(registryAddress, registryNftId);
         instance.register();
     }
 
     function testInstanceModulePolicy() public {
         vm.prank(instanceOwner);
-        TestInstanceModulePolicy instance = new TestInstanceModulePolicy(registryAddress, registryNftId, address(componentOwnerService), address(productService), address(poolService));
+        TestInstanceModulePolicy instance = new TestInstanceModulePolicy(registryAddress, registryNftId);
         instance.register();
     }
 
     function testInstanceModulePool() public {
         vm.prank(instanceOwner);
-        TestInstanceModulePool instance = new TestInstanceModulePool(registryAddress, registryNftId, address(componentOwnerService), address(productService), address(poolService));
+        TestInstanceModulePool instance = new TestInstanceModulePool(registryAddress, registryNftId);
         instance.register();
     }
 
     function testInstanceModuleTreasury() public {
         vm.prank(instanceOwner);
-        TestInstanceModuleTreasury instance = new TestInstanceModuleTreasury(registryAddress, registryNftId, address(componentOwnerService), address(productService), address(poolService));
+        TestInstanceModuleTreasury instance = new TestInstanceModuleTreasury(registryAddress, registryNftId);
         instance.register();
     }
 }

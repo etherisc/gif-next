@@ -15,7 +15,7 @@ contract TestInstanceBase  is
     {
     }
 
-    function senderIsComponentOwnerService() external override returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external override returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external override returns(bool isService) { return msg.sender == address(_poolService); }
+    function senderIsComponentOwnerService() external view override returns(bool isService) { return msg.sender == address(_componentOwnerService); }
+    function senderIsProductService() external view override returns(bool isService) { return msg.sender == address(_productService); }
+    function senderIsPoolService() external view override returns(bool isService) { return msg.sender == address(_poolService); }
 }

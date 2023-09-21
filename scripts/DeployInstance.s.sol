@@ -16,10 +16,17 @@ import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 contract DeployInstance is Script {
     using NftIdLib for NftId;
 
+    ChainNft public nft;
+    Registry public registry;
     address public registryAddress;
     NftId public registryNftId;
+    Instance public instance;
 
-    function run(address instanceOwner) external returns (Instance instance) {
+    ComponentOwnerService public componentOwnerService;
+    ProductService public productService;
+    PoolService public poolService;
+
+    function run(address instanceOwner) external returns (Instance) {
 
         // HelperConfig helperConfig = new HelperConfig();
         // HelperConfig.NetworkConfig memory config = HelperConfig.NetworkConfig(helperConfig.activeNetworkConfig());
@@ -28,10 +35,9 @@ contract DeployInstance is Script {
         console.log("tx origin", tx.origin);
 
         vm.startBroadcast();
-        (ChainNft nft, Registry registry) = _deployRegistry();
-
-        instance = _deployInstance();
-        _registerAndTransfer(nft, instance, instanceOwner);
+        _deployRegistry();
+        _deployInstance();
+        _registerAndTransfer(instanceOwner);
         vm.stopBroadcast();
 
         return instance;
@@ -39,10 +45,6 @@ contract DeployInstance is Script {
 
     function _deployRegistry()
         internal 
-        returns(
-            ChainNft nft,
-            Registry registry
-        )
     {
         registry = new Registry();
         nft = new ChainNft(address(registry));
@@ -54,29 +56,29 @@ contract DeployInstance is Script {
         console.log("registry deployed at", address(registry));
     }
 
-    function _deployInstance() internal returns(Instance instance) {
-        ComponentOwnerService componentOwnerService = new ComponentOwnerService(
+    function _deployInstance() internal returns(Instance) {
+        componentOwnerService = new ComponentOwnerService(
             registryAddress, registryNftId);
+        componentOwnerService.register();
 
-        ProductService productService = new ProductService(
+        productService = new ProductService(
             registryAddress, registryNftId);
+        productService.register();
 
-        PoolService poolService = new PoolService(
+        poolService = new PoolService(
             registryAddress, registryNftId);
+        poolService.register();
 
         instance = new Instance(
             registryAddress, 
-            registryNftId,
-            address(componentOwnerService),
-            address(productService),
-            address(poolService));
+            registryNftId);
 
         console.log("instance deployed at", address(instance));
+
+        return instance;
     }
 
     function _registerAndTransfer(
-        ChainNft nft,
-        Instance instance, 
         address instanceOwner
     )
         internal

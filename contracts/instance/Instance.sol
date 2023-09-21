@@ -45,7 +45,7 @@ contract Instance is
     {
     }
 
-    function getRegistry() public view override (Registerable, IComponentModule) returns (IRegistry registry) { return super.getRegistry(); }
+    function getRegistry() public view override (Registerable, IBundleModule, IComponentModule, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
 
     function PRODUCT_OWNER_ROLE() public view override (AccessModule, IComponentModule) returns (bytes32 role) { return super.PRODUCT_OWNER_ROLE(); }
     function ORACLE_OWNER_ROLE() public view override (AccessModule, IComponentModule) returns (bytes32 role) {return super.ORACLE_OWNER_ROLE(); }
@@ -53,9 +53,9 @@ contract Instance is
 
     function hasRole(bytes32 role, address member) public view override (AccessModule, IComponentModule) returns (bool) { return super.hasRole(role, member); }
 
-    function senderIsComponentOwnerService() external override (IComponentModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external override (IBundleModule, IPoolModule, IPolicyModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external override (IBundleModule, IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function senderIsComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
+    function senderIsProductService() external view override (IBundleModule, IPoolModule, IPolicyModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
+    function senderIsPoolService() external view override (IBundleModule, IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
 
     function requireSenderIsOwner() public view override (IAccessModule, Registerable) returns (bool senderIsOwner) { return super.requireSenderIsOwner(); }
 }

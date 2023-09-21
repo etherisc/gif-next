@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IModuleBase} from "../IModuleBase.sol";
-
 interface IAccess {
     struct RoleInfo {
         bytes32 id;
@@ -12,7 +10,6 @@ interface IAccess {
 }
 
 interface IAccessModule is
-    IModuleBase,
     IAccess
 {
     function PRODUCT_OWNER_ROLE() external view returns (bytes32 role);

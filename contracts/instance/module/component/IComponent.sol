@@ -13,7 +13,6 @@ import {Fee} from "../../../types/Fee.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 
 import {IComponentBase} from "../../../components/IComponentBase.sol";
-import {IModuleBase} from "../IModuleBase.sol";
 
 interface IComponent {
     // component dynamic info (static info kept in registry)
@@ -24,12 +23,7 @@ interface IComponent {
     }
 }
 
-// TODO cleanup
-// interface IInstanceLinked {
-//     function getInstance() external view returns (IInstance instance);
-// }
-
-interface IComponentModule is IModuleBase, IComponent {
+interface IComponentModule is IComponent {
     function getRegistry() external view returns (IRegistry registry);
 
     function registerComponent(

@@ -106,7 +106,7 @@ contract Registry is
 
             string memory serviceName = service.getName();
             VersionPart majorVersion = service.getMajorVersion();
-            bytes32 serviceNameHash = keccak256(serviceName);
+            bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
 
             // service specific state
             _string[nftId] = serviceName;
@@ -202,7 +202,7 @@ contract Registry is
     }
 
     // special case to retrive a gif service
-    function getServiceAddress(string memory serviceName, VersionPart majorVersion) external override returns (address serviceAddress) {
+    function getServiceAddress(string memory serviceName, VersionPart majorVersion) external view override returns (address serviceAddress) {
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
         return _service[serviceNameHash][majorVersion];
     }
@@ -323,7 +323,7 @@ contract Registry is
         }
 
         _chainNftInternal.mint(_initialOwner, registryId);
-        _registerObjectInfo(this, registryId);
+        _registerObjectInfo(this, registryNftId);
     }
 
 

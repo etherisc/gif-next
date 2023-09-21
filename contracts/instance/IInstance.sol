@@ -32,7 +32,7 @@ interface IInstance is
     ITreasuryModule,
     IServiceLinked
 {
-    function getRegistry() external view override (IRegistryLinked, IComponentModule) returns (IRegistry registry);
+    function getRegistry() external view override (IBundleModule, IComponentModule, IPolicyModule, IRegisterable) returns (IRegistry registry);
 
     function PRODUCT_OWNER_ROLE() external view override (IAccessModule, IComponentModule) returns (bytes32 role);    
     function ORACLE_OWNER_ROLE() external view override (IAccessModule, IComponentModule) returns (bytes32 role);    

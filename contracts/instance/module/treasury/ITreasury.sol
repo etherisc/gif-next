@@ -6,7 +6,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {NftId} from "../../../types/NftId.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 import {Fee} from "../../../types/Fee.sol";
-import {IModuleBase} from "../IModuleBase.sol";
 
 import {TokenHandler} from "./TokenHandler.sol";
 
@@ -39,7 +38,7 @@ interface ITreasury {
     }
 }
 
-interface ITreasuryModule is IModuleBase, ITreasury {
+interface ITreasuryModule is ITreasury {
 
     function registerProduct(
         NftId productNftId,

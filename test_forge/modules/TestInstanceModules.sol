@@ -27,9 +27,9 @@ contract TestInstanceModuleAccess  is
     InstanceBase,
     AccessModule
 {
-    constructor(address registry, NftId registryNftId, address componentOwnerService, address productService, address poolService)
+    constructor(address registry, NftId registryNftId)
         InstanceBase(registry, registryNftId)
-        ComponentModule()
+        AccessModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
@@ -43,9 +43,9 @@ contract TestInstanceModuleAccess  is
 
     function hasRole(bytes32 role, address member) public view override (AccessModule) returns (bool) { return super.hasRole(role, member); }
 
-    function senderIsComponentOwnerService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
+    function senderIsProductService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
+    function senderIsPoolService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
 
     function requireSenderIsOwner() public view override (IAccessModule, Registerable) returns (bool senderIsOwner) { return super.requireSenderIsOwner(); }
 }
@@ -54,24 +54,25 @@ contract TestInstanceModuleBundle  is
     InstanceBase,
     BundleModule
 {
-    constructor(address registry, NftId registryNftId, address componentOwnerService, address productService, address poolService)
+    constructor(address registry, NftId registryNftId)
         InstanceBase(registry, registryNftId)
         BundleModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
     }
+    function getRegistry() public view override (Registerable, IBundleModule) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function senderIsComponentOwnerService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external override (IBundleModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external override (IBundleModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
+    function senderIsProductService() external view override (IBundleModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
+    function senderIsPoolService() external view override (IBundleModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
 }
 
 contract TestInstanceModuleComponent  is
     InstanceBase,
     ComponentModule
 {
-    constructor(address registry, NftId registryNftId, address componentOwnerService, address productService, address poolService)
+    constructor(address registry, NftId registryNftId)
         InstanceBase(registry, registryNftId)
         ComponentModule()
     // solhint-disable-next-line no-empty-blocks
@@ -81,39 +82,41 @@ contract TestInstanceModuleComponent  is
 
     function getRegistry() public view override (Registerable, IComponentModule) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function PRODUCT_OWNER_ROLE() public view override returns (bytes32 role) { return bytes32(1); }
-    function ORACLE_OWNER_ROLE() public view override returns (bytes32 role) {return bytes32(2); }
-    function POOL_OWNER_ROLE() public view override returns (bytes32 role) { return bytes32(3);  }
+    function PRODUCT_OWNER_ROLE() public pure override returns (bytes32 role) { return bytes32(uint256(1)); }
+    function ORACLE_OWNER_ROLE() public pure override returns (bytes32 role) {return bytes32(uint256(2)); }
+    function POOL_OWNER_ROLE() public pure override returns (bytes32 role) { return bytes32(uint256(3));  }
 
-    function hasRole(bytes32 role, address member) public view override returns (bool) { return true; }
+    function hasRole(bytes32, address) public pure override returns (bool) { return true; }
 
-    function senderIsComponentOwnerService() external override (IComponentModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function senderIsComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
+    function senderIsProductService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
+    function senderIsPoolService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
 }
 
 contract TestInstanceModulePolicy  is
     InstanceBase,
     PolicyModule
 {
-    constructor(address registry, NftId registryNftId, address componentOwnerService, address productService, address poolService)
+    constructor(address registry, NftId registryNftId)
         InstanceBase(registry, registryNftId)
-        PolicyModule(productService)
+        PolicyModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
     }
 
-    function senderIsComponentOwnerService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external override (IPolicyModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
+
+    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
+    function senderIsProductService() external view override (IPolicyModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
+    function senderIsPoolService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
 }
 
 contract TestInstanceModulePool  is
     InstanceBase,
     PoolModule
 {
-    constructor(address registry, NftId registryNftId, address componentOwnerService, address productService, address poolService)
+    constructor(address registry, NftId registryNftId)
         InstanceBase(registry, registryNftId)
         PoolModule()
     // solhint-disable-next-line no-empty-blocks
@@ -121,16 +124,16 @@ contract TestInstanceModulePool  is
 
     }
 
-    function senderIsComponentOwnerService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external override (IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external override (IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
+    function senderIsProductService() external view override (IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
+    function senderIsPoolService() external view override (IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
 }
 
 contract TestInstanceModuleTreasury  is
     InstanceBase,
     TreasuryModule
 {
-    constructor(address registry, NftId registryNftId, address componentOwnerService, address productService, address poolService)
+    constructor(address registry, NftId registryNftId)
         InstanceBase(registry, registryNftId)
         TreasuryModule()
     // solhint-disable-next-line no-empty-blocks
@@ -138,7 +141,7 @@ contract TestInstanceModuleTreasury  is
 
     }
 
-    function senderIsComponentOwnerService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
+    function senderIsProductService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
+    function senderIsPoolService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
 }

@@ -27,7 +27,7 @@ interface IRegistry is IERC165 {
         bytes memory data
     ) external returns (NftId nftId);
 
-    function getServiceAddress(string memory serviceName, VersionPart majorVersion) external returns (address serviceAddress);
+    function getServiceAddress(string memory serviceName, VersionPart majorVersion) external view returns (address serviceAddress);
 
     function getObjectCount() external view returns (uint256);
 

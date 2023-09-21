@@ -8,8 +8,6 @@ import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber} from "../../../types/Blocknumber.sol";
 
-import {IModuleBase} from "../IModuleBase.sol";
-
 interface IBundle {
 
     struct BundleInfo {
@@ -28,7 +26,7 @@ interface IBundle {
     }
 }
 
-interface IBundleModule is IModuleBase, IBundle {
+interface IBundleModule is IBundle {
 
     function createBundle(
         IRegistry.ObjectInfo memory poolInfo,
@@ -50,6 +48,9 @@ interface IBundleModule is IModuleBase, IBundle {
     function processPremium(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
     function processPayout(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
     function releasePolicy(NftId bundleNftId, NftId policyNftId) external returns(uint256 collateralAmount);
+
+    // repeat registry linked signature
+    function getRegistry() external view returns (IRegistry registry);
 
     // repeat service linked signatures to avoid linearization issues
     function senderIsProductService() external  returns(bool isService);

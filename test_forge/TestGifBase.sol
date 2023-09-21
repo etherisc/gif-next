@@ -46,9 +46,6 @@ contract TestGifBase is Test {
         DeployAll deployer = new DeployAll();
         (
             registry,
-            componentOwnerService,
-            productService,
-            poolService,
             instance, 
             product,
             pool
