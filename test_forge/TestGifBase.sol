@@ -7,8 +7,13 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {DeployAll} from "../scripts/DeployAll.s.sol";
 
-import {ChainNft} from "../contracts/registry/ChainNft.sol";
+import {IChainNft} from "../contracts/registry/ChainNft.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
+
+import {ComponentOwnerService} from "../contracts/instance/service/ComponentOwnerService.sol";
+import {ProductService} from "../contracts/instance/service/ProductService.sol";
+import {PoolService} from "../contracts/instance/service/PoolService.sol";
+
 import {Instance} from "../contracts/instance/Instance.sol";
 import {TestProduct} from "../contracts/test/TestProduct.sol";
 import {TestPool} from "../contracts/test/TestPool.sol";
@@ -21,9 +26,12 @@ import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 contract TestGifBase is Test {
     using NftIdLib for NftId;
 
-    ChainNft public chainNft;
+    IChainNft public chainNft;
     Registry public registry;
     IERC20Metadata public token;
+    ComponentOwnerService public componentOwnerService;
+    ProductService public productService;
+    PoolService public poolService;
     Instance public instance;
     TestProduct public product;
     TestPool public pool;
@@ -37,7 +45,10 @@ contract TestGifBase is Test {
     function setUp() public virtual {
         DeployAll deployer = new DeployAll();
         (
-            registry, 
+            registry,
+            componentOwnerService,
+            productService,
+            poolService,
             instance, 
             product,
             pool
@@ -47,8 +58,7 @@ contract TestGifBase is Test {
             poolOwner);
 
         token = product.getToken();
-
-        chainNft = ChainNft(registry.getNftAddress());
+        chainNft = registry.getChainNft();
     }
 
     function fundAccount(address account, uint256 amount) public {

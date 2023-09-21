@@ -2,23 +2,22 @@
 pragma solidity ^0.8.19;
 
 import {IProductService} from "../instance/service/IProductService.sol";
-import {Component} from "./Component.sol";
-import {IProductComponent} from "./IProduct.sol";
+import {IProductBase} from "./IProductBase.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
 import {Fee} from "../types/Fee.sol";
-import {Component} from "./Component.sol";
+import {ComponentBase} from "./ComponentBase.sol";
 
-contract Product is Component, IProductComponent {
+contract Product is ComponentBase, IProductBase {
     IProductService private _productService;
     address private _pool;
 
     constructor(
         address registry,
-        address instance,
+        NftId instanceNftid,
         address token,
         address pool
-    ) Component(registry, instance, token) {
+    ) ComponentBase(registry, instanceNftid, token) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = pool;
@@ -86,10 +85,5 @@ contract Product is Component, IProductComponent {
     // from registerable
     function getType() public pure override returns (ObjectType) {
         return PRODUCT();
-    }
-
-    // from registerable
-    function getData() external view override returns (bytes memory data) {
-        return bytes(abi.encode(getInstance().getNftId()));
     }
 }

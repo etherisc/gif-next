@@ -27,8 +27,8 @@ abstract contract AccessModule is IAccessModule {
         private _isRoleMember;
     mapping(bytes32 role => EnumerableSet.AddressSet) private _roleMembers;
 
-    modifier onlyOwner() {
-        require(msg.sender == this.getOwner(), "ERROR:ACM-001:NOT_OWNER");
+    modifier onlyAccessOwner() {        
+        this.requireSenderIsOwner();
         _;
     }
 
@@ -38,21 +38,21 @@ abstract contract AccessModule is IAccessModule {
         _poolOwnerRole = _createRole(POOL_OWNER);
     }
 
-    function PRODUCT_OWNER_ROLE() public view override returns (bytes32 role) {
+    function PRODUCT_OWNER_ROLE() public view virtual override returns (bytes32 role) {
         return _productOwnerRole;
     }
 
-    function ORACLE_OWNER_ROLE() public view override returns (bytes32 role) {
+    function ORACLE_OWNER_ROLE() public view virtual override returns (bytes32 role) {
         return _oracleOwnerRole;
     }
 
-    function POOL_OWNER_ROLE() public view override returns (bytes32 role) {
+    function POOL_OWNER_ROLE() public view virtual override returns (bytes32 role) {
         return _poolOwnerRole;
     }
 
     function createRole(
         string memory roleName
-    ) external override onlyOwner returns (bytes32 role) {
+    ) external override onlyAccessOwner returns (bytes32 role) {
         return _createRole(roleName);
     }
 
@@ -64,7 +64,7 @@ abstract contract AccessModule is IAccessModule {
         role = _setRoleInfo(info);
     }
 
-    function disableRole(bytes32 role) external override onlyOwner {
+    function disableRole(bytes32 role) external override onlyAccessOwner {
         RoleInfo memory info = _info[role];
         require(info.id == role, "ERROR:AOS-001:ROLE_DOES_NOT_EXIST");
 
@@ -72,7 +72,7 @@ abstract contract AccessModule is IAccessModule {
         _setRoleInfo(info);
     }
 
-    function enableRole(bytes32 role) external override onlyOwner {
+    function enableRole(bytes32 role) external override onlyAccessOwner {
         RoleInfo memory info = _info[role];
         require(info.id == role, "ERROR:AOS-002:ROLE_DOES_NOT_EXIST");
 
@@ -83,7 +83,7 @@ abstract contract AccessModule is IAccessModule {
     function grantRole(
         bytes32 role,
         address member
-    ) external override onlyOwner {
+    ) external override onlyAccessOwner {
         require(_info[role].id == role, "ERROR:ACM-010:ROLE_NOT_EXISTING");
         require(_info[role].isActive, "ERROR:ACM-011:ROLE_NOT_ACTIVE");
 
@@ -96,7 +96,7 @@ abstract contract AccessModule is IAccessModule {
     function revokeRole(
         bytes32 role,
         address member
-    ) external override onlyOwner {
+    ) external override onlyAccessOwner {
         require(_info[role].id == role, "ERROR:ACM-020:ROLE_NOT_EXISTING");
 
         _isRoleMember[role][member] = false;
@@ -106,7 +106,7 @@ abstract contract AccessModule is IAccessModule {
     function hasRole(
         bytes32 role,
         address member
-    ) external view override returns (bool) {
+    ) external view virtual override returns (bool) {
         return _isRoleMember[role][member];
     }
 

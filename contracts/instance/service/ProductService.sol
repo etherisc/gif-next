@@ -1,29 +1,51 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-// import {IProduct} from "../../components/IProduct.sol";
-// import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../registry/IRegistry.sol";
-// import {IInstance} from "../IInstance.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IPolicy, IPolicyModule} from "../module/policy/IPolicy.sol";
-import {RegistryLinked} from "../../registry/Registry.sol";
+import {IRegistryLinked} from "../../shared/IRegisterable.sol";
 import {IProductService} from "./IProductService.sol";
 import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
 // import {IPoolModule} from "../../instance/pool/IPoolModule.sol";
 import {ObjectType, INSTANCE, PRODUCT} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee, feeIsZero} from "../../types/Fee.sol";
+import {Version, toVersion, toVersionPart} from "../../types/Version.sol";
+
+import {ComponentServiceBase} from "./ComponentServiceBase.sol";
+import {IProductService} from "./IProductService.sol";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
-contract ProductService is RegistryLinked, IProductService {
+contract ProductService is ComponentServiceBase, IProductService {
     using NftIdLib for NftId;
 
-    constructor(
-        address registry
-    ) RegistryLinked(registry) // solhint-disable-next-line no-empty-blocks
-    {
+    string public constant NAME = "ProductService";
 
+    event LogProductServiceSender(address sender);
+
+    constructor(
+        address registry,
+        NftId registryNftId
+    ) ComponentServiceBase(registry, registryNftId) // solhint-disable-next-line no-empty-blocks
+    {
+        _registerInterface(type(IProductService).interfaceId);
+    }
+
+    function getVersion()
+        public 
+        pure 
+        virtual override
+        returns(Version)
+    {
+        return toVersion(
+            toVersionPart(3),
+            toVersionPart(0),
+            toVersionPart(0));
+    }
+
+    function getName() external pure override returns(string memory name) {
+        return NAME;
     }
 
     function setFees(
@@ -59,6 +81,8 @@ contract ProductService is RegistryLinked, IProductService {
     }
 
     function underwrite(NftId policyNftId) external override {
+        emit LogProductServiceSender(msg.sender);
+
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
 
         instance.underwrite(policyNftId, productInfo.nftId);
@@ -106,27 +130,27 @@ contract ProductService is RegistryLinked, IProductService {
 
     }
 
-    function _verifyAndGetProductAndInstance()
-        internal
-        view
-        returns(
-            IRegistry.ObjectInfo memory productInfo, 
-            IInstance instance
-        )
-    {
-        NftId productNftId = _registry.getNftId(msg.sender);
-        require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
+    // function _verifyAndGetProductAndInstance()
+    //     internal
+    //     view
+    //     returns(
+    //         IRegistry.ObjectInfo memory productInfo, 
+    //         IInstance instance
+    //     )
+    // {
+    //     NftId productNftId = _registry.getNftId(msg.sender);
+    //     require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
 
-        productInfo = _registry.getObjectInfo(productNftId);
-        require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
+    //     productInfo = _registry.getObjectInfo(productNftId);
+    //     require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
 
-        // TODO check if this is really needed or if registry may be considered reliable
-        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(productInfo.parentNftId);
-        require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
-        require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
+    //     // TODO check if this is really needed or if registry may be considered reliable
+    //     IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(productInfo.parentNftId);
+    //     require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
+    //     require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
 
-        instance = IInstance(instanceInfo.objectAddress);
-    }
+    //     instance = IInstance(instanceInfo.objectAddress);
+    // }
 
     function _processPremiumByTreasury(
         IInstance instance,

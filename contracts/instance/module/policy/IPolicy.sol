@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../../registry/IRegistry.sol";
+import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {NftId} from "../../../types/NftId.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber} from "../../../types/Blocknumber.sol";
+
+import {IModuleBase} from "../IModuleBase.sol";
 
 // TODO check if there is value to introuce IContract and let IPolicy derive from IContract
 interface IPolicy {
@@ -27,7 +29,7 @@ interface IPolicy {
     }
 }
 
-interface IPolicyModule is IOwnable, IRegistryLinked, IPolicy {
+interface IPolicyModule is IModuleBase, IPolicy {
     function createApplication(
         IRegistry.ObjectInfo memory productInfo,
         address initialOwner,
@@ -50,4 +52,7 @@ interface IPolicyModule is IOwnable, IRegistryLinked, IPolicy {
     ) external view returns (PolicyInfo memory info);
 
     function getPremiumAmount(NftId nftId) external view returns(uint256 premiumAmount);
+
+    // repeat service linked signaturea to avoid linearization issues
+    function senderIsProductService() external  returns(bool isService);
 }

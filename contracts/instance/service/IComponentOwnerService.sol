@@ -1,14 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IRegistryLinked} from "../../registry/IRegistry.sol";
-import {IComponent, IComponentContract} from "../module/component/IComponent.sol";
 import {NftId} from "../../types/NftId.sol";
+import {IComponentBase} from "../../components/IComponentBase.sol";
+import {IService} from "./IService.sol";
 
-interface IComponentOwnerService is IRegistryLinked, IComponent {
-    function register(IComponentContract component) external returns(NftId componentNftId);
+// TODO likely merge this into IComponentBase interface
+// which would make a separate component owner service obsolete
+interface IComponentOwnerService is IService {
+    function register(IComponentBase component) external returns(NftId componentNftId);
 
-    function lock(IComponentContract component) external;
+    function lock(IComponentBase component) external;
 
-    function unlock(IComponentContract component) external;
+    function unlock(IComponentBase component) external;
 }

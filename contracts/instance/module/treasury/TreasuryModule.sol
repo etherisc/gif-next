@@ -1,16 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {NftId} from "../../../types/NftId.sol";
 import {Fee, feeIsZero} from "../../../types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../../types/UFixed.sol";
-import {IProductComponent} from "../../../components/IProduct.sol";
-import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
 import {TokenHandler} from "./TokenHandler.sol";
 import {ITreasuryModule} from "./ITreasury.sol";
-import {TokenHandler} from "./TokenHandler.sol";
 
 abstract contract TreasuryModule is ITreasuryModule {
     mapping(NftId productNftId => ProductSetup setup) private _productSetup;
@@ -18,17 +15,11 @@ abstract contract TreasuryModule is ITreasuryModule {
         private _distributorSetup;
     mapping(NftId poolNftId => PoolSetup setup) private _poolSetup;
 
-    IPolicyModule private _policyModule;
-
-    constructor() {
-        _policyModule = IPolicyModule(address(this));
-    }
-
     function registerProduct(
         NftId productNftId,
         NftId distributorNftId,
         NftId poolNftId,
-        IERC20 token,
+        IERC20Metadata token,
         address wallet,
         Fee memory policyFee,
         Fee memory processingFee
@@ -37,7 +28,7 @@ abstract contract TreasuryModule is ITreasuryModule {
         // TODO add validation
 
         // deploy product specific handler contract
-        TokenHandler tokenHandler = new TokenHandler(address(token));
+        TokenHandler tokenHandler = new TokenHandler(productNftId, address(token));
 
         _productSetup[productNftId] = ProductSetup(
             productNftId,

@@ -3,8 +3,9 @@ pragma solidity ^0.8.19;
 
 import {NftId} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
+import {IComponentBase} from "./IComponentBase.sol";
 
-interface IProductComponent {
+interface IProductBase is IComponentBase {
     function setFees(
         Fee memory policyFee,
         Fee memory processingFee

@@ -7,8 +7,10 @@ import {Fee, zeroFee} from "../../contracts/types/Fee.sol";
 
 contract TestProduct is Product {
 
-    constructor(address registry, address instance, address token, address pool)
-        Product(registry, instance, token, pool)
+    event LogTestProductSender(address sender);
+
+    constructor(address registry, NftId instanceNftid, address token, address pool)
+        Product(registry, instanceNftid, token, pool)
     // solhint-disable-next-line no-empty-blocks
     {}
 
@@ -30,6 +32,7 @@ contract TestProduct is Product {
     }
 
     function underwrite(NftId nftId) external {
+        emit LogTestProductSender(msg.sender);
         _underwrite(nftId);
     }
 

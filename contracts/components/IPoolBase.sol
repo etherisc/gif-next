@@ -2,10 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {Fee} from "../types/Fee.sol";
-import {IComponentContract} from "../instance/module/component/IComponent.sol";
+import {IComponentBase} from "./IComponentBase.sol";
 
-// just marker interface for now
-interface IPoolComponent is IComponentContract {
+interface IPoolBase is IComponentBase {
     function getStakingFee() external view returns (Fee memory stakingFee);
 
     function getPerformanceFee()

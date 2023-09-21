@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
-import {IInstance} from "../IInstance.sol";
 import {NftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
+import {IService} from "./IService.sol";
 
-interface IPoolService is IRegistryLinked {
+interface IPoolService is IService {
     function setFees(
         Fee memory stakingFee,
         Fee memory performanceFee

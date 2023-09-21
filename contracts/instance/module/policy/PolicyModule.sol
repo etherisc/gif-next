@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-// import {IOwnable, IRegistryLinked, IRegisterable} from "../../registry/IRegistry.sol";
-import {IRegistry, IRegistryLinked} from "../../../registry/IRegistry.sol";
+import {IRegistry} from "../../../registry/IRegistry.sol";
 
 import {LifecycleModule} from "../../module/lifecycle/LifecycleModule.sol";
 import {IProductService} from "../../service/IProductService.sol";
@@ -15,27 +14,25 @@ import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
 
 import {LifecycleModule} from "../../module/lifecycle/LifecycleModule.sol";
 
-abstract contract PolicyModule is IRegistryLinked, IPolicyModule {
+abstract contract PolicyModule is IPolicyModule {
     using NftIdLib for NftId;
 
     mapping(NftId nftId => PolicyInfo info) private _policyInfo;
     mapping(NftId nftId => NftId bundleNftId) private _bundleForPolicy;
 
     LifecycleModule private _lifecycleModule;
-    IProductService private _productService;
 
     // TODO find a better place to avoid dupliation
     modifier onlyProductService2() {
         require(
-            address(_productService) == msg.sender,
+            this.senderIsProductService(),
             "ERROR:POL-001:NOT_PRODUCT_SERVICE"
         );
         _;
     }
 
-    constructor(address productService) {
+    constructor() {
         _lifecycleModule = LifecycleModule(address(this));
-        _productService = IProductService(productService);
     }
 
     function createApplication(

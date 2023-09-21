@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IOwnable, IRegistryLinked, IRegisterable, IRegistry} from "../../../registry/IRegistry.sol";
+import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
 import {NftId} from "../../../types/NftId.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber} from "../../../types/Blocknumber.sol";
 
-import {IServiceLinked} from "../../IServiceLinked.sol";
+import {IModuleBase} from "../IModuleBase.sol";
 
 interface IBundle {
 
@@ -28,7 +28,7 @@ interface IBundle {
     }
 }
 
-interface IBundleModule is IRegistryLinked, IServiceLinked, IBundle {
+interface IBundleModule is IModuleBase, IBundle {
 
     function createBundle(
         IRegistry.ObjectInfo memory poolInfo,
@@ -50,4 +50,8 @@ interface IBundleModule is IRegistryLinked, IServiceLinked, IBundle {
     function processPremium(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
     function processPayout(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
     function releasePolicy(NftId bundleNftId, NftId policyNftId) external returns(uint256 collateralAmount);
+
+    // repeat service linked signatures to avoid linearization issues
+    function senderIsProductService() external  returns(bool isService);
+    function senderIsPoolService() external  returns(bool isService);
 }

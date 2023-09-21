@@ -5,17 +5,18 @@ import {ObjectType, POOL} from "../types/ObjectType.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
 import {NftId} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
-import {IPoolComponent} from "./IPool.sol";
-import {Component} from "./Component.sol";
+import {IPoolBase} from "./IPoolBase.sol";
+import {ComponentBase} from "./ComponentBase.sol";
 
-contract Pool is Component, IPoolComponent {
+contract Pool is ComponentBase, IPoolBase {
     IPoolService private _poolService;
 
     constructor(
         address registry,
-        address instance,
+        NftId instanceNftid,
+        // TODO refactor into tokenNftId
         address token
-    ) Component(registry, instance, token)
+    ) ComponentBase(registry, instanceNftid, token)
     {
         _poolService = _instance.getPoolService();
     }
@@ -59,10 +60,5 @@ contract Pool is Component, IPoolComponent {
     // from registerable
     function getType() public pure override returns (ObjectType) {
         return POOL();
-    }
-
-    // from registerable
-    function getData() external view override returns (bytes memory data) {
-        return bytes(abi.encode(getInstance().getNftId()));
     }
 }

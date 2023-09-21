@@ -7,21 +7,23 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 // import {IPolicy, IPolicyModule} from "../policy/IPolicy.sol";
-import {RegistryLinked} from "../../registry/Registry.sol";
+import {IRegistryLinked} from "../../shared/IRegisterable.sol";
 // import {IProductService} from "./IProductService.sol";
 // import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/treasury/ITreasury.sol";
 // import {IPoolModule} from "../../instance/pool/IPoolModule.sol";
 import {ObjectType, INSTANCE, PRODUCT, POOL} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 
-contract ComponentService is RegistryLinked {
-    using NftIdLib for NftId;
+import {ServiceBase} from "./ServiceBase.sol";
+
+abstract contract ComponentServiceBase is ServiceBase {
 
     constructor(
-        address registry
-    ) RegistryLinked(registry) // solhint-disable-next-line no-empty-blocks
+        address registry,
+        NftId registryNftId
+    )
+        ServiceBase(registry, registryNftId)
     {
-
     }
 
     function _verifyAndGetProductAndInstance()

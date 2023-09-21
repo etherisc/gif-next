@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IOwnable, IRegistry, IRegistryLinked} from "../../../registry/IRegistry.sol";
+import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 import {IPolicy, IPolicyModule} from "../../module/policy/IPolicy.sol";

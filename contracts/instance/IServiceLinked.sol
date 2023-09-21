@@ -10,6 +10,7 @@ interface IServiceLinked {
     function getProductService() external view returns(IProductService service);
     function getPoolService() external view returns(IPoolService service);
 
-    function senderIsProductService() external view returns(bool isService);
-    function senderIsPoolService() external view returns(bool isService);
+    function senderIsComponentOwnerService() external returns(bool isService);
+    function senderIsProductService() external returns(bool isService);
+    function senderIsPoolService() external returns(bool isService);
 }

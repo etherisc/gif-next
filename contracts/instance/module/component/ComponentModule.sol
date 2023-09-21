@@ -3,28 +3,22 @@ pragma solidity ^0.8.19;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {RegistryLinked} from "../../../registry/Registry.sol";
-import {IRegistry, IRegistryLinked} from "../../../registry/IRegistry.sol";
-import {IAccessComponentTypeRoles, IAccessCheckRole} from "../access/IAccess.sol";
+import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 import {ITreasuryModule} from "../treasury/ITreasury.sol";
 import {TreasuryModule} from "../treasury/TreasuryModule.sol";
-import {IComponent, IComponentContract, IComponentModule} from "./IComponent.sol";
+import {IComponent, IComponentModule} from "./IComponent.sol";
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
-import {IProductComponent} from "../../../components/IProduct.sol";
-import {IPoolComponent} from "../../../components/IPool.sol";
 import {IPoolModule} from "../pool/IPoolModule.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../../types/NftId.sol";
 import {Fee, zeroFee} from "../../../types/Fee.sol";
+import {IComponentBase} from "../../../components/IComponentBase.sol";
 
 abstract contract ComponentModule is
-    IRegistryLinked,
-    IAccessComponentTypeRoles,
-    IAccessCheckRole,
     IComponentModule
 {
     using NftIdLib for NftId;
@@ -39,26 +33,24 @@ abstract contract ComponentModule is
     LifecycleModule private _lifecycleModule;
     TreasuryModule private _treasuryModule;
     IPoolModule private _poolModule;
-    IComponentOwnerService private _componentOwnerService;
 
     modifier onlyComponentOwnerService() {
         require(
-            address(_componentOwnerService) == msg.sender,
+            this.senderIsComponentOwnerService(),
             "ERROR:CMP-001:NOT_OWNER_SERVICE"
         );
         _;
     }
 
-    constructor(address componentOwnerService) {
+    constructor() {
         address componentAddress = address(this);
         _lifecycleModule = LifecycleModule(componentAddress);
         _treasuryModule = TreasuryModule(componentAddress);
         _poolModule = IPoolModule(componentAddress);
-        _componentOwnerService = IComponentOwnerService(componentOwnerService);
     }
 
     function registerComponent(
-        IComponentContract component,
+        IComponentBase component,
         NftId nftId,
         ObjectType objectType,
         IERC20Metadata token

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IOwnable, IRegistryLinked} from "../../../registry/IRegistry.sol";
+import {IModuleBase} from "../IModuleBase.sol";
 
 interface IAccess {
     struct RoleInfo {
@@ -11,25 +11,16 @@ interface IAccess {
     }
 }
 
-interface IAccessCheckRole {
-    function hasRole(bytes32 role, address member) external view returns (bool);
-}
-
-interface IAccessComponentTypeRoles {
+interface IAccessModule is
+    IModuleBase,
+    IAccess
+{
     function PRODUCT_OWNER_ROLE() external view returns (bytes32 role);
 
     function ORACLE_OWNER_ROLE() external view returns (bytes32 role);
 
     function POOL_OWNER_ROLE() external view returns (bytes32 role);
-}
 
-interface IAccessModule is
-    IOwnable,
-    IRegistryLinked,
-    IAccess,
-    IAccessComponentTypeRoles,
-    IAccessCheckRole
-{
     function createRole(string memory roleName) external returns (bytes32 role);
 
     function enableRole(bytes32 role) external;
@@ -39,6 +30,8 @@ interface IAccessModule is
     function grantRole(bytes32 role, address member) external;
 
     function revokeRole(bytes32 role, address member) external;
+
+    function hasRole(bytes32 role, address member) external view returns (bool);
 
     function getRole(uint256 idx) external view returns (bytes32 role);
 
@@ -60,4 +53,6 @@ interface IAccessModule is
         bytes32 role,
         uint256 idx
     ) external view returns (address roleMembers);
+
+    function requireSenderIsOwner() external view returns (bool senderIsOwner);
 }

@@ -16,6 +16,9 @@ import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 contract DeployInstance is Script {
     using NftIdLib for NftId;
 
+    address public registryAddress;
+    NftId public registryNftId;
+
     function run(address instanceOwner) external returns (Instance instance) {
 
         // HelperConfig helperConfig = new HelperConfig();
@@ -26,7 +29,8 @@ contract DeployInstance is Script {
 
         vm.startBroadcast();
         (ChainNft nft, Registry registry) = _deployRegistry();
-        instance = _deployInstance(registry);
+
+        instance = _deployInstance();
         _registerAndTransfer(nft, instance, instanceOwner);
         vm.stopBroadcast();
 
@@ -43,23 +47,26 @@ contract DeployInstance is Script {
         registry = new Registry();
         nft = new ChainNft(address(registry));
         registry.initialize(address(nft));
+        registryAddress = address(registry);
+        registryNftId = registry.getNftId();
 
         console.log("nft deployed at", address(nft));
         console.log("registry deployed at", address(registry));
     }
 
-    function _deployInstance(Registry registry) internal returns(Instance instance) {
+    function _deployInstance() internal returns(Instance instance) {
         ComponentOwnerService componentOwnerService = new ComponentOwnerService(
-            address(registry));
+            registryAddress, registryNftId);
 
         ProductService productService = new ProductService(
-            address(registry));
+            registryAddress, registryNftId);
 
         PoolService poolService = new PoolService(
-            address(registry));
+            registryAddress, registryNftId);
 
         instance = new Instance(
-            address(registry),
+            registryAddress, 
+            registryNftId,
             address(componentOwnerService),
             address(productService),
             address(poolService));

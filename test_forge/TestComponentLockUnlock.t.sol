@@ -10,12 +10,6 @@ import {IComponent} from "../contracts/instance/module/component/IComponent.sol"
 import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
 
 contract TestComponentLockUnlock is ILifecycle, TestGifBase {
-    IComponentOwnerService public componentOwnerService;
-
-    function setUp() public override {
-        super.setUp();
-        componentOwnerService = instance.getComponentOwnerService();
-    }
 
     function testComponentLockNotOwner() public {
         vm.prank(outsider);

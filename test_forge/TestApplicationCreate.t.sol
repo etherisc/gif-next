@@ -19,13 +19,6 @@ contract TestApplicationCreate is TestGifBase {
     uint256 public premiumAmount = 110 * 10 ** 6;
     uint256 public lifetime = 365 * 24 * 3600;
 
-    IComponentOwnerService public componentOwnerService;
-
-    function setUp() public override {
-        super.setUp();
-        componentOwnerService = instance.getComponentOwnerService();
-    }
-
     function testApplicationCreateSimple() public {
         vm.prank(customer);
         NftId policyNftId = product.applyForPolicy(

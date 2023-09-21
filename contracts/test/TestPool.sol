@@ -8,8 +8,8 @@ import {Pool} from "../../contracts/components/Pool.sol";
 
 contract TestPool is Pool {
 
-    constructor(address registry, address instance, address token)
-        Pool(registry, instance, token)
+    constructor(address registry, NftId instanceNftid, address token)
+        Pool(registry, instanceNftid, token)
     // solhint-disable-next-line no-empty-blocks
     {}
 

@@ -1,84 +1,61 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Registerable} from "../registry/Registry.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
+import {NftId} from "../types/NftId.sol";
 
-import {IAccessModule, AccessModule} from "./module/access/Access.sol";
+import {InstanceBase} from "./InstanceBase.sol";
+import {AccessModule} from "./module/access/Access.sol";
 import {LifecycleModule} from "./module/lifecycle/LifecycleModule.sol";
 import {ComponentModule} from "./module/component/ComponentModule.sol";
-import {ProductModule} from "./module/product/ProductModule.sol";
 import {PolicyModule} from "./module/policy/PolicyModule.sol";
 import {PoolModule} from "./module/pool/PoolModule.sol";
 import {BundleModule} from "./module/bundle/BundleModule.sol";
 import {TreasuryModule} from "./module/treasury/TreasuryModule.sol";
 
-import {IInstance} from "./IInstance.sol";
-import {ObjectType, INSTANCE} from "../types/ObjectType.sol";
-import {NftId, toNftId} from "../types/NftId.sol";
-
-import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
-import {IProductService} from "./service/IProductService.sol";
-import {IPoolService} from "./service/IPoolService.sol";
-
-import {ServiceLinked} from "./ServiceLinked.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {Registerable} from "../shared/Registerable.sol";
+import {IAccessModule} from "./module/access/IAccess.sol";
+import {IBundleModule} from "./module/bundle/IBundle.sol";
+import {IComponentModule} from "./module/component/IComponent.sol";
+import {IPoolModule} from "./module/pool/IPoolModule.sol";
+import {IPolicyModule} from "./module/policy/IPolicy.sol";
+import {IServiceLinked} from "./IServiceLinked.sol";
 
 contract Instance is
-    Registerable,
-    ServiceLinked,
+    InstanceBase,
     AccessModule,
-    LifecycleModule,
+    BundleModule,
     ComponentModule,
+    LifecycleModule,
     PolicyModule,
     PoolModule,
-    ProductModule,
-    BundleModule,
-    TreasuryModule,
-    IInstance
+    TreasuryModule
 {
-
     constructor(
         address registry,
-        address componentOwnerService,
-        address productService,
-        address poolService
+        NftId registryNftId
     )
-        Registerable(registry)
-        ServiceLinked(componentOwnerService, productService, poolService)
+        InstanceBase(registry, registryNftId)
         AccessModule()
-        ComponentModule(componentOwnerService)
-        PolicyModule(productService)
-        ProductModule()
-        PoolModule()
         BundleModule()
-    // solhint-disable-next-line no-empty-blocks
+        ComponentModule()
+        PolicyModule()
+        PoolModule()
+        TreasuryModule()
     {
     }
 
-    // from registerable
-    function register() external override returns (NftId nftId) {
-        require(
-            address(_registry) != address(0),
-            "ERROR:PRD-001:REGISTRY_ZERO"
-        );
-        return _registry.register(address(this));
-    }
+    function getRegistry() public view override (Registerable, IComponentModule) returns (IRegistry registry) { return super.getRegistry(); }
 
-    // from registerable
-    function getParentNftId() public pure override returns (NftId) {
-        // TODO  add self registry and exchange 0 for_registry.getNftId();
-        // define parent tree for all registerables
-        // eg 0 <- chain(mainnet) <- global registry <- chain registry <- instance <- component <- policy/bundle
-        return toNftId(0);
-    }
+    function PRODUCT_OWNER_ROLE() public view override (AccessModule, IComponentModule) returns (bytes32 role) { return super.PRODUCT_OWNER_ROLE(); }
+    function ORACLE_OWNER_ROLE() public view override (AccessModule, IComponentModule) returns (bytes32 role) {return super.ORACLE_OWNER_ROLE(); }
+    function POOL_OWNER_ROLE() public view override (AccessModule, IComponentModule) returns (bytes32 role) { return super.POOL_OWNER_ROLE(); }
 
-    // from registerable
-    function getType() external pure override returns (ObjectType objectType) {
-        return INSTANCE();
-    }
+    function hasRole(bytes32 role, address member) public view override (AccessModule, IComponentModule) returns (bool) { return super.hasRole(role, member); }
 
-    // from registerable
-    function getData() external pure override returns (bytes memory data) {
-        return bytes(abi.encode(0));
-    }
+    function senderIsComponentOwnerService() external override (IComponentModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
+    function senderIsProductService() external override (IBundleModule, IPoolModule, IPolicyModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
+    function senderIsPoolService() external override (IBundleModule, IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+
+    function requireSenderIsOwner() public view override (IAccessModule, Registerable) returns (bool senderIsOwner) { return super.requireSenderIsOwner(); }
 }
