@@ -6,7 +6,10 @@ import {IInstance} from "../../instance/IInstance.sol";
 import {IPolicy, IPolicyModule} from "../module/policy/IPolicy.sol";
 import {IProductService} from "./IProductService.sol";
 import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
-// import {IPoolModule} from "../../instance/pool/IPoolModule.sol";
+
+import {IVersionable} from "../../shared/IVersionable.sol";
+import {Versionable} from "../../shared/Versionable.sol";
+
 import {ObjectType, INSTANCE, PRODUCT} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee, feeIsZero} from "../../types/Fee.sol";
@@ -34,7 +37,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     function getVersion()
         public 
         pure 
-        virtual override
+        virtual override (IVersionable, Versionable)
         returns(Version)
     {
         return toVersion(

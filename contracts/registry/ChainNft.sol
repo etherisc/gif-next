@@ -38,13 +38,6 @@ contract ChainNft is ERC721Enumerable, IChainNft {
         _chainIdDigits = _countDigits(_chainIdInt);
         _chainIdMultiplier = 10 ** _chainIdDigits;
         _idNext = 3;
-
-        // on mainnet/goerli start /1 (reserved for protocol nft) on other chains with 2
-        if (block.chainid == 1 || block.chainid == 5) {
-            _idNext = 1;
-        } else {
-            _idNext = 2;
-        }
     }
 
     /**
@@ -55,13 +48,13 @@ contract ChainNft is ERC721Enumerable, IChainNft {
         string memory uri
     ) external override onlyRegistry returns (uint256 tokenId) {
         tokenId = _getNextTokenId();
-        _totalMinted++;
-
-        _safeMint(to, tokenId);
 
         if (bytes(uri).length > 0) {
             _uri[tokenId] = uri;
         }
+
+        _safeMint(to, tokenId);
+        _totalMinted++;
     }
 
     /**

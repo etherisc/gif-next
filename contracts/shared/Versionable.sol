@@ -9,13 +9,14 @@ import {IVersionable} from "./IVersionable.sol";
 
 abstract contract Versionable is IVersionable {
 
+
     mapping(Version version => VersionInfo info) private _versionHistory;
     Version [] private _versions;
 
 
     // controlled activation for controller contract
     constructor() {
-        _activate(address(this), msg.sender);
+        _activate(address(0), msg.sender);
     }
 
     // IMPORTANT this function needs to be implemented by each new version
@@ -36,8 +37,7 @@ abstract contract Versionable is IVersionable {
     )
         internal
     {
-        Version thisVersion = this.getVersion();
-
+        Version thisVersion = getVersion();
         require(
             !isActivated(thisVersion),
             "ERROR:VRN-001:VERSION_ALREADY_ACTIVATED"
@@ -69,6 +69,10 @@ abstract contract Versionable is IVersionable {
     function isActivated(Version _version) public override view returns(bool) {
         return _versionHistory[_version].activatedIn.toInt() > 0;
     }
+
+
+    function getVersion() public pure virtual returns(Version);
+
 
     function getVersionCount() external view override returns(uint256) {
         return _versions.length;

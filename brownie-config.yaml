@@ -1,6 +1,10 @@
 # secrets management via .env (excluded via .gitignore)
 dotenv: .env
 
+project_structure:
+    scripts: test_brownie
+    tests: test_brownie
+
 networks:
     default: development
     mainnet-fork:

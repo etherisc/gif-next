@@ -57,7 +57,10 @@ contract Registry is
 
     function register(
         address objectAddress
-    ) external override returns (NftId nftId) {
+    )
+    // TODO add authz (only services may register components etc)
+    // we have to check how we do authz for registring services (just restrict to protocol owner/registry owner)
+    external override returns (NftId nftId) {
         require(
             _nftIdByAddress[objectAddress].eqz(),
             "ERROR:REG-002:ALREADY_REGISTERED"
@@ -85,6 +88,8 @@ contract Registry is
             _isValidParentType[objectType][_info[parentNftId].objectType],
             "ERROR:REG-006:PARENT_TYPE_INVALID"
         );
+
+        // also check that nftId and parentNFtId are on the same chain if applicable
 
         // nft minting
         uint256 mintedTokenId = _chainNft.mint(
@@ -206,7 +211,7 @@ contract Registry is
     }
 
     // from IERC165
-    function supportsInterface(bytes4 interfaceId) external override view returns (bool) {
+    function supportsInterface(bytes4 interfaceId) external pure override returns (bool) {
         return interfaceId == type(IRegistry).interfaceId;
     }
 

@@ -13,6 +13,10 @@ import {IComponent, IComponentModule} from "../module/component/IComponent.sol";
 import {IProductBase} from "../../components/IProductBase.sol";
 import {IPoolBase} from "../../components/IPoolBase.sol";
 import {IPoolModule} from "../module/pool/IPoolModule.sol";
+
+import {IVersionable} from "../../shared/IVersionable.sol";
+import {Versionable} from "../../shared/Versionable.sol";
+
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
@@ -50,7 +54,7 @@ contract ComponentOwnerService is
     function getVersion()
         public 
         pure 
-        virtual override
+        virtual override (IVersionable, Versionable)
         returns(Version)
     {
         return toVersion(

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {NftId} from "../types/NftId.sol";
+import {NftId, zeroNftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -65,9 +65,12 @@ abstract contract Registerable is
     }
 
     function getOwner() public view override returns (address owner) {
-        NftId id = getNftId();
-        owner = _registry.getOwner(id);
-        return owner != address(0) ? owner : _initialOwner;
+        NftId nftId = getNftId();
+        if(_registry.getNftId(address(this)) == zeroNftId()) {
+            return _initialOwner;
+        }
+
+        return _registry.getOwner(nftId);
     }
 
     function getNftId() public view override returns (NftId nftId) {

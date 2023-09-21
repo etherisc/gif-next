@@ -4,6 +4,10 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
+
+import {IVersionable} from "../../shared/IVersionable.sol";
+import {Versionable} from "../../shared/Versionable.sol";
+
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee, feeIsZero} from "../../types/Fee.sol";
 import {Version, toVersion, toVersionPart} from "../../types/Version.sol";
@@ -28,7 +32,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
     function getVersion()
         public 
         pure 
-        virtual override
+        virtual override (IVersionable, Versionable)
         returns(Version)
     {
         return toVersion(
