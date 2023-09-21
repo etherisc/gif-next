@@ -2,6 +2,7 @@ import { AddressLike, BaseContract, Signer, TransactionResponse, resolveAddress 
 import hre, { ethers } from "hardhat";
 import { logger } from "../logger";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
+import { NUMBER_OF_CONFIRMATIONS } from "./constants";
 
 type DeploymentResult = {
     address: AddressLike; 
@@ -103,8 +104,8 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
 
 async function verifyDeployedContract(contractName: string, address: AddressLike, tx: TransactionResponse, constructorArgs?: any[] | undefined) {
     if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
-        logger.debug("Waiting for 5 confirmations");
-        await tx.wait(5); // TODO: make this configurable
+        logger.debug(`Waiting for ${NUMBER_OF_CONFIRMATIONS} confirmations`);
+        await tx.wait(NUMBER_OF_CONFIRMATIONS); 
         constructorArgs !== undefined
             ? await verifyContract(address, constructorArgs)
             : await verifyContract(address, []);
