@@ -22,6 +22,7 @@ export async function registerInstance(instanceOwner: Signer, instanceAddress: A
 export enum Role { POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE }
 
 export async function grantRole(instanceOwner: Signer, instanceAddress: AddressLike, role: Role, beneficiary: AddressLike): Promise<void> {
+    // TODO: check if role already assigned
     const beneficiaryAddress = await resolveAddress(beneficiary);
     logger.debug(`granting role ${Role[role]} to ${beneficiaryAddress}`);
     const instanceAsInstanceOwner = Instance__factory.connect(instanceAddress.toString(), instanceOwner);
