@@ -239,6 +239,7 @@ async function deployRegistry(owner: Signer): Promise<{
     const { address: nfIdLibAddress } = await deployContract(
         "NftIdLib",
         owner);
+
     const { address: registryAddress, contract: registryBaseContract } = await deployContract(
         "Registry",
         owner,

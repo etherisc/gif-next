@@ -115,8 +115,8 @@ async function verifyDeployedContract(contractName: string, address: AddressLike
 }
 
 async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, constructorArgs?: any[] | undefined): Promise<DeploymentResult> {
-    logger.info(`Waiting for deployment transaction ${deploymentState.getDeploymentTransaction(contractName)} to be mined...`);
     const deploymentTx = deploymentState.getDeploymentTransaction(contractName)!
+    logger.info(`Deployment transaction ${deploymentTx} exists, waiting for it to be mined...`);
     const deploymentTransaction = await ethers.provider.getTransaction(deploymentTx);
     if (deploymentTransaction === null) {
         throw new Error(`Deployment transaction ${deploymentState.getDeploymentTransaction(contractName)} not found`);
@@ -124,6 +124,7 @@ async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, 
     if (! deploymentTransaction.isMined()) {
         await deploymentTransaction.wait();
     }
+    logger.info("...mined");
 
     const receipt = await ethers.provider.getTransactionReceipt(deploymentTx);
     if (receipt === null) {
