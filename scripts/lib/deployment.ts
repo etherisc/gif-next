@@ -39,8 +39,11 @@ export async function verifyContract(address: AddressLike, constructorArgs: any[
  */
 export async function deployContract(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any): Promise<DeploymentResult> {
     if (! isResumeableDeployment ) {
+        logger.info("Starting new deployment");
         return executeAllDeploymentSteps(contractName, signer, constructorArgs, factoryOptions);
     }
+
+    logger.info(`Trying to resume deployment of ${contractName}`);
 
     if (deploymentState.getContractAddress(contractName) === undefined) {
         if (deploymentState.getDeploymentTransaction(contractName) === undefined) {
@@ -54,10 +57,11 @@ export async function deployContract(contractName: string, signer: Signer, const
         const address = deploymentState.getContractAddress(contractName)!;
         const deploymentTransaction = await ethers.provider.getTransaction(deploymentState.getDeploymentTransaction(contractName)!)!;
         const contract = await ethers.getContractAt(contractName, address, signer);
-
+        
         if (deploymentState.isDeployedAndVerified(contractName)) {
             logger.info(`Contract ${contractName} is already deployed at ${address} and verified`);
         } else {
+            logger.info(`Contract ${contractName} is already deployed at ${address}`);
             if (deploymentTransaction !== null) {
                 await verifyDeployedContract(contractName, address, deploymentTransaction, constructorArgs);
             }
@@ -79,9 +83,10 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
         const deployTxResponse = constructorArgs !== undefined
             ? await contractFactory.deploy(...constructorArgs) 
             : await contractFactory.deploy();
-        logger.debug("Waiting for deployment transaction to be mined...");
         deploymentState.setDeploymentTransaction(contractName, deployTxResponse.deploymentTransaction()?.hash!);
-        await deployTxResponse.waitForDeployment();
+        logger.info(`Waiting for deployment transaction ${deployTxResponse.deploymentTransaction()?.hash} to be mined...`);
+        await deployTxResponse.deploymentTransaction()?.wait();
+        logger.debug("... mined");
         
         const deployedContractAddress = deployTxResponse.target;
         deploymentState.setContractAddress(contractName, await resolveAddress(deployedContractAddress));
@@ -110,6 +115,7 @@ async function verifyDeployedContract(contractName: string, address: AddressLike
 }
 
 async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, constructorArgs?: any[] | undefined): Promise<DeploymentResult> {
+    logger.info(`Waiting for deployment transaction ${deploymentState.getDeploymentTransaction(contractName)} to be mined...`);
     const deploymentTx = deploymentState.getDeploymentTransaction(contractName)!
     const deploymentTransaction = await ethers.provider.getTransaction(deploymentTx);
     if (deploymentTransaction === null) {
@@ -126,6 +132,8 @@ async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, 
 
     const address = receipt.contractAddress!;
     const contract = await ethers.getContractAt(contractName, address, signer);
+
+    deploymentState.setContractAddress(contractName, await resolveAddress(address));
     
     await verifyDeployedContract(contractName, address, deploymentTransaction, constructorArgs);
 

@@ -2,6 +2,8 @@
 import * as fs from 'fs';
 import { logger } from '../logger';
 
+const DEPLOYMENT_STATE_FILENAME = "deployment_state.json";
+
 type State = {
     contracts: ContractState[];
 }
@@ -17,10 +19,8 @@ export class DeploymentState {
 
     private state: State;
 
-    constructor() {
-        this.state = {
-            contracts: []
-        };
+    constructor(preloadedState: State | null) {
+        this.state = preloadedState ?? { contracts: [] };
     }
 
     public isDeployedAndVerified(contractName: string): boolean {
@@ -93,12 +93,11 @@ export class DeploymentState {
 
     private persistState() {
         const json = JSON.stringify(this.state);
-        fs.writeFileSync("deployment_state.json", json);
+        fs.writeFileSync(DEPLOYMENT_STATE_FILENAME, json);
     }
 }
 
-// TODO: initialize deployment state
-
-export const deploymentState = new DeploymentState();
+const deploymentStateFromFile = fs.existsSync(DEPLOYMENT_STATE_FILENAME) ? JSON.parse(fs.readFileSync(DEPLOYMENT_STATE_FILENAME).toString()) : null;
+export const deploymentState = new DeploymentState(deploymentStateFromFile);
 
 export const isResumeableDeployment = process.env.RESUMEABLE_DEPLOYMENT === "true";
