@@ -1,7 +1,13 @@
 import { AddressLike, BaseContract, Signer, TransactionResponse, resolveAddress } from "ethers";
 import hre, { ethers } from "hardhat";
 import { logger } from "../logger";
-import { deploymentState, isTrackDeploymentStateEnabled } from "./deployment_state";
+import { deploymentState, isResumeableDeployment } from "./deployment_state";
+
+type DeploymentResult = {
+    address: AddressLike; 
+    deploymentTransaction: TransactionResponse | null;
+    contract: BaseContract | null;
+}
 
 /**
  * Verify a smart contract on Etherscan using hardhat-etherscan task "verify". 
@@ -31,25 +37,42 @@ export async function verifyContract(address: AddressLike, constructorArgs: any[
  * @param constructorArgs a list of constructor arguments to pass to the contract constructor
  * @param factoryOptions options to pass to the contract factory (libraries, ...)
  */
-export async function deployContract(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any): Promise<{
-    address: AddressLike; 
-    deploymentTransaction: TransactionResponse | null;
-    contract: BaseContract;
-}> {
-    // check if contract is already deployed 
-    if (isTrackDeploymentStateEnabled && deploymentState.isDeployedAndVerified(contractName)) {    
-        const addr = deploymentState.getContractAddress(contractName)!;
-        return {
-            address: addr,
-            deploymentTransaction: await ethers.provider.getTransaction(deploymentState.getDeploymentTransaction(contractName)!)!,
-            contract: await ethers.getContractAt(contractName, addr, signer),
-        }
+export async function deployContract(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any): Promise<DeploymentResult> {
+    if (! isResumeableDeployment ) {
+        return executeAllDeploymentSteps(contractName, signer, constructorArgs, factoryOptions);
     }
 
-    // TODO: should work when only contract name and address are given (not deployment tx)
+    if (deploymentState.getContractAddress(contractName) === undefined) {
+        if (deploymentState.getDeploymentTransaction(contractName) === undefined) {
+            // TODO: check if contract exists in registry and continue from there
+            return executeAllDeploymentSteps(contractName, signer, constructorArgs, factoryOptions);
+        } else {
+            return awaitDeploymentTxAndVerify(contractName, signer, constructorArgs);
+        }
+    } else {
+        // fetch persisted data
+        const address = deploymentState.getContractAddress(contractName)!;
+        const deploymentTransaction = await ethers.provider.getTransaction(deploymentState.getDeploymentTransaction(contractName)!)!;
+        const contract = await ethers.getContractAt(contractName, address, signer);
 
-    if (! isTrackDeploymentStateEnabled || deploymentState.getDeploymentTransaction(contractName) === undefined) {
-        logger.info(`Deploying ${contractName}...`);
+        if (deploymentState.isDeployedAndVerified(contractName)) {
+            logger.info(`Contract ${contractName} is already deployed at ${address} and verified`);
+        } else {
+            if (deploymentTransaction !== null) {
+                await verifyDeployedContract(contractName, address, deploymentTransaction, constructorArgs);
+            }
+        }
+
+        return { address, deploymentTransaction, contract };
+    }
+}
+
+export function delay(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function executeAllDeploymentSteps(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any): Promise<DeploymentResult> {
+    logger.info(`Deploying ${contractName}...`);
         const factoryArgs = factoryOptions ? { ...factoryOptions, signer } : { signer };
         const contractFactory = await ethers.getContractFactory(contractName, factoryArgs);
 
@@ -64,74 +87,47 @@ export async function deployContract(contractName: string, signer: Signer, const
         deploymentState.setContractAddress(contractName, await resolveAddress(deployedContractAddress));
         logger.info(`${contractName} deployed to ${deployedContractAddress}`);
         
-        if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
-            logger.debug("Waiting for 5 confirmations");
-            await deployTxResponse!.deploymentTransaction()?.wait(5);
-            constructorArgs !== undefined
-                ? await verifyContract(deployedContractAddress, constructorArgs)
-                : await verifyContract(deployedContractAddress, []);
-            deploymentState.setVerified(contractName, true);
-        } else {
-            logger.debug("Skipping verification");
-        }
+        await verifyDeployedContract(contractName, deployedContractAddress, deployTxResponse.deploymentTransaction()!, constructorArgs);
 
         return { 
             address: deployedContractAddress, 
             deploymentTransaction: deployTxResponse.deploymentTransaction(), 
             contract: deployTxResponse 
         };
-    } else if (deploymentState.getDeploymentTransaction(contractName) !== undefined && deploymentState.getContractAddress(contractName) === undefined) {
-        logger.info(`Waiting for ${contractName} to be deployed...`);
-        const receipt = await ethers.provider.getTransactionReceipt(deploymentState.getDeploymentTransaction(contractName)!);
-        if (receipt === null || receipt.contractAddress === null) {
-            throw new Error("Deployment transaction receipt not found");
-        }
-        const deployedContractAddress = receipt.contractAddress;
-        deploymentState.setContractAddress(contractName, deployedContractAddress!);
-        logger.info(`${contractName} deployed to ${deployedContractAddress}`);
+}
 
-        
-        if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
-            // TODO: make this configurable
-            // wait until tx has 5 confirmations 
-            logger.debug("wait until tx has 5 confirmations");
-            while (await receipt.confirmations() < 5) {
-                delay(1000);
-            }
-            constructorArgs !== undefined
-                ? await verifyContract(deployedContractAddress!, constructorArgs)
-                : await verifyContract(deployedContractAddress!, []);
-            deploymentState.setVerified(contractName, true);
-        } else {
-            logger.debug("Skipping verification");
-        }
-
-        return { 
-            address: deployedContractAddress!, 
-            deploymentTransaction: await receipt.getTransaction(), 
-            contract: await ethers.getContractAt(contractName, deployedContractAddress!, signer)
-        };
+async function verifyDeployedContract(contractName: string, address: AddressLike, tx: TransactionResponse, constructorArgs?: any[] | undefined) {
+    if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
+        logger.debug("Waiting for 5 confirmations");
+        await tx.wait(5); // TODO: make this configurable
+        constructorArgs !== undefined
+            ? await verifyContract(address, constructorArgs)
+            : await verifyContract(address, []);
+        deploymentState.setVerified(contractName, true);
     } else {
-        // TODO: check getCode = 0x
-        logger.info(`Waiting for ${contractName} to be verified...`);
-        const deployedContractAddress = deploymentState.getContractAddress(contractName);
-        if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
-            constructorArgs !== undefined
-                ? await verifyContract(deployedContractAddress!, constructorArgs)
-                : await verifyContract(deployedContractAddress!, []);
-            deploymentState.setVerified(contractName, true);
-        } else {
-            logger.debug("Skipping verification");
-        }
-
-        return { 
-            address: deployedContractAddress!, 
-            deploymentTransaction: await ethers.provider.getTransaction(deploymentState.getDeploymentTransaction(contractName)!), 
-            contract: await ethers.getContractAt(contractName, deployedContractAddress!, signer)
-        };
+        logger.debug("Skipping verification");
     }
 }
 
-export function delay(ms: number): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, constructorArgs?: any[] | undefined): Promise<DeploymentResult> {
+    const deploymentTx = deploymentState.getDeploymentTransaction(contractName)!
+    const deploymentTransaction = await ethers.provider.getTransaction(deploymentTx);
+    if (deploymentTransaction === null) {
+        throw new Error(`Deployment transaction ${deploymentState.getDeploymentTransaction(contractName)} not found`);
+    }
+    if (! deploymentTransaction.isMined()) {
+        await deploymentTransaction.wait();
+    }
+
+    const receipt = await ethers.provider.getTransactionReceipt(deploymentTx);
+    if (receipt === null) {
+        throw new Error(`Deployment transaction receipt ${deploymentState.getDeploymentTransaction(contractName)} not found`);
+    }
+
+    const address = receipt.contractAddress!;
+    const contract = await ethers.getContractAt(contractName, address, signer);
+    
+    await verifyDeployedContract(contractName, address, deploymentTransaction, constructorArgs);
+
+    return { address, deploymentTransaction, contract };
 }

@@ -68,7 +68,7 @@ export class DeploymentState {
         } else {
             contractState.deploymentTransaction = deploymentTransaction;
         }
-        this.saveState();
+        this.persistState();
     }
 
     public setContractAddress(contractName: string, contractAddress: string): void {
@@ -78,7 +78,7 @@ export class DeploymentState {
         } else {
             contractState.address = contractAddress;
         }
-        this.saveState();
+        this.persistState();
     }
 
     public setVerified(contractName: string, verified: boolean): void {
@@ -88,16 +88,11 @@ export class DeploymentState {
         } else {
             contractState.verified = verified;
         }
-        this.saveState();
+        this.persistState();
     }
 
-    private saveState() {
-        // TODO save state as json to file
-        // serialize state to json
-        logger.info(this.state.contracts.length);
+    private persistState() {
         const json = JSON.stringify(this.state);
-        logger.debug(json);
-        // write json to file
         fs.writeFileSync("deployment_state.json", json);
     }
 }
@@ -106,4 +101,4 @@ export class DeploymentState {
 
 export const deploymentState = new DeploymentState();
 
-export const isTrackDeploymentStateEnabled = process.env.TRACK_DEPLOYMENT_STATE === "true";
+export const isResumeableDeployment = process.env.RESUMEABLE_DEPLOYMENT === "true";
