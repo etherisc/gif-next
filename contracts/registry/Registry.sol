@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {ERC165} from "../shared/ERC165.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IService} from "../instance/service/IService.sol";
 
@@ -14,7 +13,6 @@ import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT
 
 // TODO make registry upgradable
 contract Registry is
-    ERC165,
     IRegisterable,
     IRegistry
 {
@@ -205,6 +203,11 @@ contract Registry is
     function getServiceAddress(string memory serviceName, VersionPart majorVersion) external view override returns (address serviceAddress) {
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
         return _service[serviceNameHash][majorVersion];
+    }
+
+    // from IERC165
+    function supportsInterface(bytes4 interfaceId) external override view returns (bool) {
+        return interfaceId == type(IRegistry).interfaceId;
     }
 
     // from IRegistryLinked
