@@ -22,7 +22,6 @@ export async function registerInstance(instanceOwner: Signer, instanceAddress: A
 export enum Role { POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE }
 
 export async function grantRole(instanceOwner: Signer, instanceAddress: AddressLike, role: Role, beneficiary: AddressLike): Promise<void> {
-    // TODO: check if role already assigned
     const beneficiaryAddress = await resolveAddress(beneficiary);
     logger.debug(`granting role ${Role[role]} to ${beneficiaryAddress}`);
     const instanceAsInstanceOwner = Instance__factory.connect(instanceAddress.toString(), instanceOwner);
@@ -34,6 +33,13 @@ export async function grantRole(instanceOwner: Signer, instanceAddress: AddressL
         roleValue = await instanceAsInstanceOwner.PRODUCT_OWNER_ROLE();
     } else {
         throw new Error("unknown role");
+    }
+
+    const hasRole = await instanceAsInstanceOwner.hasRole(await instanceAsInstanceOwner.POOL_OWNER_ROLE(), beneficiaryAddress);
+    
+    if (hasRole) {
+        logger.debug(`Role ${roleValue} already granted to ${beneficiaryAddress}`);
+        return;
     }
 
     await executeTx(async () => await instanceAsInstanceOwner.grantRole(roleValue, beneficiaryAddress));
