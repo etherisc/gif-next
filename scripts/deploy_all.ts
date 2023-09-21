@@ -1,4 +1,4 @@
-import { AddressLike, Signer, resolveAddress } from "ethers";
+import { AddressLike, Signer, ZeroAddress, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
 import { IChainNft__factory, IRegistry__factory, Registry, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
@@ -255,8 +255,13 @@ async function deployRegistry(owner: Signer): Promise<{
         [registryAddress]);
 
     const registry = registryBaseContract as Registry;
-    await registry.initialize(chainNftAddress);
-    logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}`);
+
+    const isRegistered = await registry.getNftAddress() !== ZeroAddress;
+
+    if (!isRegistered) {
+        await registry.initialize(chainNftAddress);
+        logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}`);
+    }
 
     return {
         registryAddress,
