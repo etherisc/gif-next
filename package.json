@@ -11,7 +11,8 @@
     "coverage": "hh coverage",
     "styleFix": "prettier --write --plugin=prettier-plugin-solidity 'contracts/**/*.sol' 'test_forge/**/*.t.sol'",
     "styleCheck": "prettier --check --plugin=prettier-plugin-solidity 'contracts/**/*.sol' 'test_forge/**/*.t.sol'",
-    "lint": "solhint 'contracts/**/*.sol' 'test_forge/**/*.t.sol'"
+    "lint": "solhint 'contracts/**/*.sol' 'test_forge/**/*.t.sol'",
+    "eslint": "eslint ."
   },
   "repository": {
     "type": "git",
@@ -31,10 +32,14 @@
     "@nomicfoundation/hardhat-foundry": "^1.1.1",
     "@nomicfoundation/hardhat-toolbox": "^3.0.0",
     "@nomicfoundation/hardhat-verify": "^1.1.1",
+    "@typescript-eslint/eslint-plugin": "^6.7.2",
+    "@typescript-eslint/parser": "^6.7.2",
     "dotenv": "^16.3.1",
+    "eslint": "^8.50.0",
     "hardhat": "^2.17.2",
     "prettier": "^3.0.3",
-    "prettier-plugin-solidity": "^1.1.3"
+    "prettier-plugin-solidity": "^1.1.3",
+    "typescript": "^5"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.3",
