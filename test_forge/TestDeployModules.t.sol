@@ -21,13 +21,22 @@ import {TestInstanceModuleAccess, TestInstanceModuleBundle, TestInstanceModuleCo
 contract TestDeployModules is TestGifBase {
 
     function testInstanceBase() public {
-        vm.prank(instanceOwner);
-        TestInstanceBase instance = new TestInstanceBase(
-            registryAddress, 
-            registryNftId);
 
-        vm.prank(instanceOwner);
-        instance.register();
+        address regAddr = address(registry);
+        NftId regNftId = registry.getNftId();
+
+        vm.startPrank(instanceOwner);
+        _startMeasureGas("InstanceBase");
+        TestInstanceBase instanceBase = new TestInstanceBase(
+            regAddr, regNftId);
+        _stopMeasureGas();
+
+        instanceBase.register();
+        vm.stopPrank();
+
+        NftId baseNftId = instanceBase.getNftId();
+        assertTrue(baseNftId.toInt() > 0);
+        assertNftId(registry.getNftId(address(instanceBase)), baseNftId, "unexpected instance base nft id");
     }
 
     function testInstanceAccess() public {

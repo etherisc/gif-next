@@ -48,6 +48,9 @@ https://hardhat.org/hardhat-runner/docs/guides/compile-contracts
 ```shell
 forge build
 
+# contract sizes
+forge build --sizes | grep Instance
+
 forge test
 
 # run single test case

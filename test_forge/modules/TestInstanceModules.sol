@@ -13,7 +13,6 @@ import {PolicyModule} from "../../contracts/instance/module/policy/PolicyModule.
 import {PoolModule} from "../../contracts/instance/module/pool/PoolModule.sol";
 import {TreasuryModule} from "../../contracts/instance/module/treasury/TreasuryModule.sol";
 
-import {TestInstanceBase} from "./TestInstanceBase.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 import {IAccessModule} from "../../contracts/instance/module/access/IAccess.sol";
 import {IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";

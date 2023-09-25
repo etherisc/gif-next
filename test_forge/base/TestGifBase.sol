@@ -44,6 +44,9 @@ contract TestGifBase is Test {
     address public customer = makeAddr("customer");
     address public outsider = makeAddr("outsider");
 
+    string private _checkpointLabel;
+    uint256 private _checkpointGasLeft = 1; // Start the slot warm.
+
     function setUp() public virtual {
 
         console.log("tx origin", tx.origin);
@@ -95,6 +98,18 @@ contract TestGifBase is Test {
         }
     }
 
+    function _startMeasureGas(string memory label) internal virtual {
+        _checkpointLabel = label;
+        _checkpointGasLeft = gasleft();
+    }
+
+
+    function _stopMeasureGas() internal virtual {
+        // Subtract 100 to account for the warm SLOAD in startMeasuringGas.
+        uint256 gasDelta = _checkpointGasLeft - gasleft() - 100;
+        string memory message = string(abi.encodePacked(_checkpointLabel, " gas"));
+        console.log(message, gasDelta);
+    }
 
     function _deployRegistry(address registryNftOwner) internal {
         registry = new Registry();
