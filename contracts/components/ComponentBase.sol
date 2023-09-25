@@ -51,11 +51,11 @@ abstract contract ComponentBase is
         require(msg.sender == getInitialOwner(), "");
         require(
             address(_registry) != address(0),
-            "ERROR:PRD-001:REGISTRY_ZERO"
+            "ERROR:COB-001:REGISTRY_ZERO"
         );
         require(
             _registry.isRegistered(address(_instance)),
-            "ERROR:PRD-002:INSTANCE_NOT_REGISTERED"
+            "ERROR:COB:INSTANCE_NOT_REGISTERED"
         );
 
         componentId = _componentOwnerService.register(this);

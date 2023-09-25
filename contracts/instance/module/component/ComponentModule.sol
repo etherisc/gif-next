@@ -36,7 +36,7 @@ abstract contract ComponentModule is
 
     modifier onlyComponentOwnerService() {
         require(
-            this.senderIsComponentOwnerService(),
+            msg.sender == address(this.getComponentOwnerService()),
             "ERROR:CMP-001:NOT_OWNER_SERVICE"
         );
         _;

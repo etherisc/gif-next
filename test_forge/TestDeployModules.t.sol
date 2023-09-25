@@ -5,8 +5,12 @@ import {Test} from "../lib/forge-std/src/Test.sol";
 import {console} from "../lib/forge-std/src/Script.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
 
+import {DeployInstance} from "../scripts/DeployInstance.s.sol";
+
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
+import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
+import {Instance} from "../contracts/instance/Instance.sol";
 
 import {ComponentOwnerService} from "../contracts/instance/service/ComponentOwnerService.sol";
 import {ProductService} from "../contracts/instance/service/ProductService.sol";
@@ -17,29 +21,20 @@ import {TestInstanceModuleAccess, TestInstanceModuleBundle, TestInstanceModuleCo
 
 
 contract TestDeployModules is Test {
-
-    ChainNft public chainNft;
-    Registry public registry;
+    IRegistry public registry;
     address public registryAddress;
     NftId public registryNftId;
 
-    ComponentOwnerService public componentOwnerService;
-    ProductService public productService;
-    PoolService public poolService;
-
+    address public registryOwner = makeAddr("registryOwner");
     address public instanceOwner = makeAddr("instanceOwner");
 
-    function setUp() public virtual {
-        registry = new Registry();
+    function setUp() external {
+        DeployInstance di = new DeployInstance();
+        Instance instanceFull = di.run(registryOwner, instanceOwner);
+        registry = instanceFull.getRegistry();
+
         registryAddress = address(registry);
         registryNftId = registry.getNftId();
-
-        chainNft = new ChainNft(registryAddress);
-        registry.initialize(address(chainNft));
-
-        componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId);
-        productService = new ProductService(registryAddress, registryNftId);
-        poolService = new PoolService(registryAddress, registryNftId);
     }
 
     function testInstanceBase() public {
@@ -47,6 +42,8 @@ contract TestDeployModules is Test {
         TestInstanceBase instance = new TestInstanceBase(
             registryAddress, 
             registryNftId);
+
+        vm.prank(instanceOwner);
         instance.register();
     }
 
@@ -55,36 +52,48 @@ contract TestDeployModules is Test {
         TestInstanceModuleAccess instance = new TestInstanceModuleAccess(
             registryAddress, 
             registryNftId);
+
+        vm.prank(instanceOwner);
         instance.register();
     }
 
     function testInstanceModuleBundle() public {
         vm.prank(instanceOwner);
         TestInstanceModuleBundle instance = new TestInstanceModuleBundle(registryAddress, registryNftId);
+
+        vm.prank(instanceOwner);
         instance.register();
     }
 
     function testInstanceModuleComponent() public {
         vm.prank(instanceOwner);
         TestInstanceModuleComponent instance = new TestInstanceModuleComponent(registryAddress, registryNftId);
+
+        vm.prank(instanceOwner);
         instance.register();
     }
 
     function testInstanceModulePolicy() public {
         vm.prank(instanceOwner);
         TestInstanceModulePolicy instance = new TestInstanceModulePolicy(registryAddress, registryNftId);
+
+        vm.prank(instanceOwner);
         instance.register();
     }
 
     function testInstanceModulePool() public {
         vm.prank(instanceOwner);
         TestInstanceModulePool instance = new TestInstanceModulePool(registryAddress, registryNftId);
+
+        vm.prank(instanceOwner);
         instance.register();
     }
 
     function testInstanceModuleTreasury() public {
         vm.prank(instanceOwner);
         TestInstanceModuleTreasury instance = new TestInstanceModuleTreasury(registryAddress, registryNftId);
+
+        vm.prank(instanceOwner);
         instance.register();
     }
 }

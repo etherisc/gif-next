@@ -51,5 +51,5 @@ interface IAccessModule is
         uint256 idx
     ) external view returns (address roleMembers);
 
-    function requireSenderIsOwner() external view returns (bool senderIsOwner);
+    function getOwner() external view returns (address owner);
 }

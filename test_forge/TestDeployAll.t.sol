@@ -2,12 +2,12 @@
 pragma solidity 0.8.20;
 
 import {console} from "../lib/forge-std/src/Script.sol";
-import {TestGifBase} from "./TestGifBase.sol";
+import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
 
 contract TestDeployAll is TestGifBase {
     function testDeployAllRegistryCountWithProduct() public {
-        assertEq(registry.getObjectCount(), 3, "getObjectCount not 3");
+        assertEq(registry.getObjectCount(), 9, "getObjectCount not 9");
     }
 
     function testDeployAllInstanceOwner() public {
@@ -26,7 +26,7 @@ contract TestDeployAll is TestGifBase {
             instance.getNftId(),
             "registry and instance nft id differ"
         );
-        assertNftId(nftId, toNftId(23133705), "instance getNftId not 23133705");
+        assertNftId(nftId, toNftId(63133705), "instance getNftId not 63133705");
     }
 
     function testDeployAllProductOwner() public {
@@ -57,7 +57,7 @@ contract TestDeployAll is TestGifBase {
             product.getNftId(),
             "registry and product nft id differ"
         );
-        assertNftId(nftId, toNftId(43133705), "product getNftId not 43133705");
+        assertNftId(nftId, toNftId(83133705), "product getNftId not 83133705");
     }
 
     function testDeployAllProductPoolLink() public {
@@ -72,6 +72,6 @@ contract TestDeployAll is TestGifBase {
     function testDeployAllPoolNftId() public {
         NftId nftId = registry.getNftId(address(pool));
         assertNftId(nftId, pool.getNftId(), "registry and pool nft id differ");
-        assertNftId(nftId, toNftId(33133705), "pool getNftId not 33133705");
+        assertNftId(nftId, toNftId(73133705), "pool getNftId not 73133705");
     }
 }

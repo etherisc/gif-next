@@ -25,7 +25,7 @@ abstract contract PolicyModule is IPolicyModule {
     // TODO find a better place to avoid dupliation
     modifier onlyProductService2() {
         require(
-            this.senderIsProductService(),
+            msg.sender == address(this.getProductService()),
             "ERROR:POL-001:NOT_PRODUCT_SERVICE"
         );
         _;

@@ -5,7 +5,7 @@ import {ILifecycle} from "../contracts/instance/module/lifecycle/ILifecycle.sol"
 import {NftId} from "../contracts/types/NftId.sol";
 import {PRODUCT} from "../contracts/types/ObjectType.sol";
 import {ACTIVE, PAUSED} from "../contracts/types/StateId.sol";
-import {TestGifBase} from "./TestGifBase.sol";
+import {TestGifBase} from "./base/TestGifBase.sol";
 import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
 import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
 
@@ -13,7 +13,7 @@ contract TestComponentLockUnlock is ILifecycle, TestGifBase {
 
     function testComponentLockNotOwner() public {
         vm.prank(outsider);
-        vm.expectRevert("ERROR:CMP-001:NOT_OWNER");
+        vm.expectRevert("ERROR:RGB-001:NOT_OWNER");
         product.lock();
     }
 
@@ -42,7 +42,7 @@ contract TestComponentLockUnlock is ILifecycle, TestGifBase {
 
     function testComponentUnlockNotOwner() public {
         vm.prank(outsider);
-        vm.expectRevert("ERROR:CMP-001:NOT_OWNER");
+        vm.expectRevert("ERROR:RGB-001:NOT_OWNER");
         product.unlock();
     }
 

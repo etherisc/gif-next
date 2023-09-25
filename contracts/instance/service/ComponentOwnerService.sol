@@ -72,8 +72,8 @@ contract ComponentOwnerService is
     ) external override returns (NftId nftId) {
         address initialOwner = component.getInitialOwner();
         require(
-            msg.sender == initialOwner,
-            "ERROR:COS-003:NOT_OWNER"
+            msg.sender == address(component),
+            "ERROR:COS-003:NOT_COMPONENT"
         );
 
         IInstance instance = component.getInstance();

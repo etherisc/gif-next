@@ -31,7 +31,7 @@ abstract contract BundleModule is
 
     modifier onlyBundleProductService() {
         require(
-            this.senderIsProductService(),
+            msg.sender == address(this.getProductService()),
             "ERROR:BDL-001:NOT_PRODUCT_SERVICE"
         );
         _;
@@ -39,7 +39,7 @@ abstract contract BundleModule is
 
     modifier onlyBundlePoolService() {
         require(
-            this.senderIsPoolService(),
+            msg.sender == address(this.getPoolService()),
             "ERROR:BDL-002:NOT_POOL_SERVICE"
         );
         _;

@@ -18,6 +18,11 @@ import {ITreasuryModule} from "./module/treasury/ITreasury.sol";
 import {IRegistry, IRegistryLinked} from "../registry/IRegistryLinked.sol";
 import {IServiceLinked} from "./IServiceLinked.sol";
 
+import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
+import {IProductService} from "./service/IProductService.sol";
+import {IPoolService} from "./service/IPoolService.sol";
+
+
 // solhint-disable-next-line no-empty-blocks
 interface IInstance is
     IERC165,
@@ -40,9 +45,9 @@ interface IInstance is
 
     function hasRole(bytes32 role, address member) external view override (IAccessModule, IComponentModule) returns (bool hasRole);    
 
-    function senderIsComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(bool isService);
-    function senderIsProductService() external view override (IBundleModule, IPoolModule, IPolicyModule, IServiceLinked) returns(bool isService);
-    function senderIsPoolService() external view override (IBundleModule, IPoolModule, IServiceLinked) returns(bool isService);
+    function getComponentOwnerService() external view override (IServiceLinked, IComponentModule) returns(IComponentOwnerService);
+    function getProductService() external view override (IServiceLinked, IBundleModule, IPolicyModule, IPoolModule) returns(IProductService);
+    function getPoolService() external view override (IServiceLinked, IBundleModule, IPoolModule) returns(IPoolService);
 
-    function requireSenderIsOwner() external view override (IOwnable, IAccessModule) returns(bool isService);
+    function getOwner() external view override (IOwnable, IAccessModule) returns(address owner);
 }

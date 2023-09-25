@@ -34,14 +34,27 @@ contract Registry is
     ChainNft private _chainNftInternal;
     address private _initialOwner;
 
+    // @dev will own protocol nft and registry nft(s) minted during initialize
+    address private _protocolOwner;
+
     // TODO refactor once registry becomes upgradable
-    function initialize(address chainNft) public {
+    // @Dev the protocol owner will get ownership of the
+    // protocol nft and the global registry nft minted in this 
+    // initializer function 
+    function initialize(
+        address chainNft, 
+        address protocolOwner
+    )
+        public 
+    {
         require(
             address(_chainNft) == address(0),
             "ERROR:REG-001:ALREADY_INITIALIZED"
         );
 
         _initialOwner = msg.sender;
+        _protocolOwner = protocolOwner;
+
         _chainNft = IChainNft(chainNft);
         _chainNftInternal = ChainNft(chainNft);
 
@@ -239,7 +252,7 @@ contract Registry is
         return owner != address(0) ? owner : _initialOwner;
     }
 
-    function getNftId() external view override returns (NftId nftId) {
+    function getNftId() external view override (IRegisterable, IRegistry) returns (NftId nftId) {
         return _nftId;
     }
 
@@ -257,13 +270,9 @@ contract Registry is
         return "";
     }
 
-    function requireSenderIsOwner() external view override returns (bool senderIsOwner) {
-        require(
-            msg.sender == getOwner(),
-            "ERROR:REG-020:NOT_OWNER"
-        );
-
-        return true;
+    // registry specific functions
+    function getProtocolOwner() external view override returns (address) {
+        return _protocolOwner;
     }
 
     /// @dev defines which types are allowed to register
@@ -304,7 +313,7 @@ contract Registry is
     /// @dev protocol registration used to anchor the dip ecosystem relations
     function _registerProtocol() virtual internal {
         uint256 protocolId = _chainNftInternal.PROTOCOL_NFT_ID();
-        _chainNftInternal.mint(_initialOwner, protocolId);
+        _chainNftInternal.mint(_protocolOwner, protocolId);
 
         NftId protocolNftid = toNftId(protocolId);
         ObjectInfo memory protocolInfo = ObjectInfo(
@@ -312,7 +321,7 @@ contract Registry is
             zeroNftId(), // parent nft id
             PROTOCOL(),
             address(0), // contract address
-            _initialOwner,
+            _protocolOwner,
             "" // data
         );
 
@@ -330,7 +339,7 @@ contract Registry is
             _registerGlobalRegistry();
         }
 
-        _chainNftInternal.mint(_initialOwner, registryId);
+        _chainNftInternal.mint(_protocolOwner, registryId);
         _registerObjectInfo(this, registryNftId);
     }
 
@@ -338,7 +347,7 @@ contract Registry is
     /// @dev global registry registration for non mainnet registries
     function _registerGlobalRegistry() virtual internal {
         uint256 globalRegistryId = _chainNftInternal.GLOBAL_REGISTRY_ID();
-        _chainNftInternal.mint(_initialOwner, globalRegistryId);
+        _chainNftInternal.mint(_protocolOwner, globalRegistryId);
 
         NftId globalRegistryNftId = toNftId(globalRegistryId);
         ObjectInfo memory globalRegistryInfo = ObjectInfo(
@@ -346,7 +355,7 @@ contract Registry is
             toNftId(_chainNftInternal.PROTOCOL_NFT_ID()),
             REGISTRY(),
             address(0), // contract address
-            _initialOwner,
+            _protocolOwner,
             "" // data
         );
 

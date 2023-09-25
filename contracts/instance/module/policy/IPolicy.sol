@@ -55,5 +55,5 @@ interface IPolicyModule is IPolicy {
     function getRegistry() external view returns (IRegistry registry);
 
     // repeat service linked signature to avoid linearization issues
-    function senderIsProductService() external  returns(bool isService);
+    function getProductService() external  returns(IProductService);
 }

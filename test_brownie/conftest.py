@@ -14,12 +14,14 @@ from brownie import (
     TestPool,
     TestUsdc,
     TestFee,
-    ObjectTypeLib,
     NftIdLib,
+    ObjectTypeLib,
     StateIdLib,
+    TimestampLib,
     UFixedMathLib,
     VersionLib,
-    VersionPartLib    
+    VersionPartLib,
+    TestVersion
 )
 
 from brownie.network import accounts
@@ -29,7 +31,8 @@ from test_brownie.gif import (
     deploy_libs,
     deploy_token,
     deploy_registry,
-    deploy_service,
+    deploy_services,
+    deploy_instance,
 ) 
 
 from test_brownie.const import (
@@ -62,11 +65,6 @@ def run_around_tests():
         accounts[8].transfer(accounts[9], 1)
         # dummy_account = get_account(ACCOUNTS_MNEMONIC, 999)
         # execute_simple_incrementer_trx(dummy_account)
-
-def deploy_service(service_class, registry, owner):
-    service = service_class.deploy(registry, registry.getNftId(), {'from': owner})
-    service.register()
-    return service
 
 #=== actor account fixtures  =================================================#
 
@@ -108,19 +106,18 @@ def usdc(registry_owner) -> TestUsdc:
 #=== access to gif library contracts =========================================#
 
 @pytest.fixture(scope="module")
-def nft_id_lib(registry_owner) -> NftIdLib:
-    return NftIdLib.deploy({'from': registry_owner})
-
-@pytest.fixture(scope="module")
-def object_type_lib(registry_owner) -> ObjectTypeLib:
-    return ObjectTypeLib.deploy({'from': registry_owner})
-
-
-@pytest.fixture(scope="module")
 def all_libs(registry_owner) -> ObjectTypeLib:
     return deploy_libs(registry_owner, force_deploy = True)
 
-#=== access to gif contract classes ==========================================#
+@pytest.fixture(scope="module")
+def version_lib(all_libs, registry_owner) -> TestVersion:
+    return TestVersion.deploy({'from': registry_owner})
+
+@pytest.fixture(scope="module")
+def all_services(registry, registry_owner) -> ObjectTypeLib:
+    return deploy_services(registry, registry_owner)
+
+#=== access to deployed gif contract classes ==========================================#
 
 @pytest.fixture(scope="module")
 def chain_nft_standalon(all_libs, registry_owner) -> ChainNft:
@@ -136,13 +133,18 @@ def chain_nft(registry) -> ChainNft:
     return contract_from_address(ChainNft, registry.getChainNft())
 
 @pytest.fixture(scope="module")
-def component_owner_service(registry, registry_owner) -> ComponentOwnerService:
-    return deploy_service(ComponentOwnerService, registry, registry_owner)
+def component_owner_service(all_services) -> ComponentOwnerService:
+    return all_services['ComponentOwnerService']
 
 @pytest.fixture(scope="module")
-def product_service(registry, registry_owner) -> ProductService:
-    return deploy_service(ComponentOwnerService, registry, registry_owner)
+def product_service(all_services) -> ProductService:
+    return all_services['ProductService']
 
 @pytest.fixture(scope="module")
-def pool_service(registry, registry_owner) -> PoolService:
-    return deploy_service(ComponentOwnerService, registry, registry_owner)
+def pool_service(all_services) -> PoolService:
+    return all_services['PoolService']
+
+@pytest.fixture(scope="module")
+def instance(all_services, registry, instance_owner) -> Instance:
+    return deploy_instance(registry, instance_owner)
+

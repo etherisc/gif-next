@@ -21,6 +21,10 @@ import {IPoolModule} from "./module/pool/IPoolModule.sol";
 import {IPolicyModule} from "./module/policy/IPolicy.sol";
 import {IServiceLinked} from "./IServiceLinked.sol";
 
+import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
+import {IProductService} from "./service/IProductService.sol";
+import {IPoolService} from "./service/IPoolService.sol";
+
 contract Instance is
     InstanceBase,
     AccessModule,
@@ -53,9 +57,9 @@ contract Instance is
 
     function hasRole(bytes32 role, address member) public view override (AccessModule, IComponentModule) returns (bool) { return super.hasRole(role, member); }
 
-    function senderIsComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external view override (IBundleModule, IPoolModule, IPolicyModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external view override (IBundleModule, IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function getComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(IComponentOwnerService service) { return _componentOwnerService; }
+    function getProductService() external view override (IBundleModule, IPolicyModule, IPoolModule, IServiceLinked) returns(IProductService service) { return _productService; }
+    function getPoolService() external view override (IBundleModule, IPoolModule, IServiceLinked) returns(IPoolService service) { return _poolService; }
 
-    function requireSenderIsOwner() public view override (IAccessModule, Registerable) returns (bool senderIsOwner) { return super.requireSenderIsOwner(); }
+    function getOwner() public view override (IAccessModule, Registerable) returns(address owner) { return super.getOwner(); }
 }

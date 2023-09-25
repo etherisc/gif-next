@@ -14,6 +14,7 @@ abstract contract AccessModule is IAccessModule {
 
     using EnumerableSet for EnumerableSet.AddressSet;
 
+    event LogAccessSenderOwner(uint index, address sender, address owner);
     event LogAccessRoleGranted(bytes32 role, address member, bool isMember);
 
     mapping(bytes32 role => RoleInfo info) private _info;
@@ -27,8 +28,12 @@ abstract contract AccessModule is IAccessModule {
         private _isRoleMember;
     mapping(bytes32 role => EnumerableSet.AddressSet) private _roleMembers;
 
-    modifier onlyAccessOwner() {        
-        this.requireSenderIsOwner();
+    modifier onlyAccessOwner() {
+        emit LogAccessSenderOwner(1, msg.sender, this.getOwner());    
+        require(
+            msg.sender == this.getOwner(),
+            "ERROR:ACS-001:NOT_OWNER");
+        emit LogAccessSenderOwner(2, msg.sender, this.getOwner());    
         _;
     }
 

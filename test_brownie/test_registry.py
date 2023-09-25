@@ -15,6 +15,7 @@ from test_brownie.const import (
     ZERO_ADDRESS,
     ADDRESS,
     NFT_ID,
+    REGISTRY,
 )
 
 from test_brownie.util import contract_from_address
@@ -68,16 +69,15 @@ def test_registry_initial_setup(
 
     registry_nft_id = registry.getNftId(registry)
     assert registry.isRegistered[NFT_ID](registry_nft_id)
+    assert registry_nft_id[0] == '2'
 
     info = registry.getObjectInfo(registry_nft_id).dict()
     assert info['initialOwner'] == registry_owner
     assert info['nftId'] == registry_nft_id
     assert info['objectAddress'] == registry
-    assert info['objectType'] == 20 #REGISTRY(
+    assert info['objectType'] == REGISTRY
 
     if web3.chain_id == 1:
         assert info['parentNftId'] == 1101 # the protocol nft
     else:
         assert info['parentNftId'] == 2101 # the global registry nft
-
-    assert False

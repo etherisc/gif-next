@@ -6,11 +6,12 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Script, console} from "../lib/forge-std/src/Script.sol";
 import {HelperConfig} from "./HelperConfig.s.sol";
 
+import {DeployInstance} from "./DeployInstance.s.sol";
+
 import {IChainNft} from "../contracts/registry/IChainNft.sol";
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {Instance} from "../contracts/instance/Instance.sol";
-import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
 import {ComponentOwnerService} from "../contracts/instance/service/ComponentOwnerService.sol";
 import {ProductService} from "../contracts/instance/service/ProductService.sol";
 import {PoolService} from "../contracts/instance/service/PoolService.sol";
@@ -20,17 +21,25 @@ import {USDC} from "../test_forge/mock/Usdc.sol";
 
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";
+import {Version} from "../contracts/types/Version.sol";
 import {Fee, toFee} from "../contracts/types/Fee.sol";
 
-contract DeployAll is Script {
+contract DeployAll is DeployInstance {
 
-    address public registryAddress;
-    NftId public registryNftId;
+    event LogTest(uint a, string b, address c);
+
+    address public productOwner;
+    address public poolOwner;
+
+    IERC20Metadata public token;
+    TestProduct public product;
+    TestPool public pool;
 
     function run(
-        address instanceOwner,
-        address productOwner,
-        address poolOwner
+        address registryOwner_,
+        address instanceOwner_,
+        address productOwner_,
+        address poolOwner_
     )
         external
         returns (
@@ -40,23 +49,21 @@ contract DeployAll is Script {
             TestPool
         )
     {
-        // HelperConfig helperConfig = new HelperConfig();
-        // HelperConfig.NetworkConfig memory config = HelperConfig.NetworkConfig(helperConfig.activeNetworkConfig());
-        // address dipAddress = config.dipAddress;
+        productOwner = productOwner_;
+        poolOwner = poolOwner_;
 
-        console.log("tx origin", tx.origin);
+        super.run(registryOwner_, instanceOwner_);
+
+        Version version = instance.getVersion();
+        address cosAddress = registry.getServiceAddress("ComponentOwnerService", version.toMajorPart());
+        componentOwnerService = ComponentOwnerService(cosAddress);
+
+        console.log("deploy pool and product");
 
         vm.startBroadcast();
-        (, Registry registry) = _deployRegistry();
-
-        _deployServices();
-
-        (
-            Instance instance,
-            TestPool pool,
-            TestProduct product
-        ) = _deployInstancePoolAndProduct(registry);
-        _registerAndTransfer(registry, instance, product, pool, instanceOwner, productOwner, poolOwner);
+        pool = _deployPool();
+        product = _deployProduct();
+        _registerAndTransferProductAndPool();
         vm.stopBroadcast();
 
         return (
@@ -67,93 +74,20 @@ contract DeployAll is Script {
         );
     }
 
-    function _deployInstancePoolAndProduct(Registry registry)
-        internal
-        returns(
-            Instance instance,
-            TestPool pool,
-            TestProduct product
-        )
-    {
-        instance = _deployInstance();
-        pool = _deployPool(registry, instance);
-        product = _deployProduct(registry, instance, pool);
+    function _deployPool() internal returns(TestPool pool_) {
+        USDC usdc  = new USDC();
+        console.log("usdc token deployed at", address(usdc));
+
+        pool_ = new TestPool(address(registry), instance.getNftId(), address(usdc));
+        console.log("pool deployed at", address(pool_));
     }
 
-    function _deployRegistry()
-        internal 
-        returns(
-            ChainNft nft,
-            Registry registry
-        )
-    {
-        registry = new Registry();
-        nft = new ChainNft(address(registry));
-        registry.initialize(address(nft));
-        registryAddress = address(registry);
-        registryNftId = registry.getNftId();
-
-        console.log("nft deployed at", address(nft));
-        console.log("registry deployed at", address(registry));
-
-        // TODO add usdc token registration
+    function _deployProduct() internal returns(TestProduct product_) {
+        product_ = new TestProduct(address(registry), instance.getNftId(), address(pool.getToken()), address(pool));
+        console.log("product deployed at", address(product_));
     }
 
-
-    function _deployServices()
-        internal 
-    {
-        ComponentOwnerService componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId);
-        componentOwnerService.register();
-
-        ProductService productService = new ProductService(registryAddress, registryNftId);
-        productService.register();
-
-        PoolService poolService = new PoolService(registryAddress, registryNftId);
-        poolService.register();
-
-        console.log("component owner service deployed at", address(componentOwnerService));
-        console.log("product service deployed at", address(productService));
-        console.log("pool service deployed at", address(poolService));
-    }
-
-
-    function _deployInstance()
-        internal 
-        returns(Instance instance)
-    {
-        instance = new Instance(registryAddress, registryNftId);
-        instance.register();
-
-        console.log("instance deployed at", address(instance));
-    }
-
-    function _deployPool(Registry registry, Instance instance) internal returns(TestPool pool) {
-        USDC token  = new USDC();
-        console.log("usdc token deployed at", address(token));
-
-        pool = new TestPool(address(registry), instance.getNftId(), address(token));
-        console.log("pool deployed at", address(pool));
-    }
-
-    function _deployProduct(Registry registry, Instance instance, TestPool pool) internal returns(TestProduct product) {
-        product = new TestProduct(address(registry), instance.getNftId(), address(pool.getToken()), address(pool));
-        console.log("product deployed at", address(product));
-    }
-
-    function _registerAndTransfer(
-        Registry registry,
-        Instance instance, 
-        TestProduct product, 
-        TestPool pool, 
-        address instanceOwner,
-        address productOwner,
-        address poolOwner
-    )
-        internal
-    {
-        NftId instanceNftId = instance.register();
-        IComponentOwnerService componentOwnerService = instance.getComponentOwnerService();
+    function _registerAndTransferProductAndPool() internal {
 
         // register pool
         bytes32 poolOwnerRole = instance.getRoleForName("PoolOwner");
@@ -170,12 +104,11 @@ contract DeployAll is Script {
         NftId productNftId = componentOwnerService.register(product);
 
         // transfer token
-        IERC20Metadata token = product.getToken();
+        token = product.getToken();
         token.transfer(instanceOwner, token.totalSupply());
 
         // transfer ownerships
         IChainNft nft = registry.getChainNft();
-        nft.safeTransferFrom(tx.origin, instanceOwner, instanceNftId.toInt());
         nft.safeTransferFrom(tx.origin, productOwner, productNftId.toInt());
         nft.safeTransferFrom(tx.origin, poolOwner, poolNftId.toInt());
     }

@@ -15,23 +15,31 @@ import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
 contract TestInstanceEmpty is Test {
     using NftIdLib for NftId;
 
-    IRegistry registry;
-    Instance instance;
-    address instanceOwner = makeAddr("instanceOwner");
+    IRegistry public registry;
+    Instance public instance;
+    address public registryOwner = makeAddr("registryOwner");
+    address public instanceOwner = makeAddr("instanceOwner");
 
     function setUp() external {
         DeployInstance di = new DeployInstance();
-        instance = di.run(instanceOwner);
-        registry = IRegistry(instance.getRegistry());
+        instance = di.run(registryOwner, instanceOwner);
+        registry = instance.getRegistry();
     }
 
     function testRegistryCount() public {
-        assertEq(registry.getObjectCount(), 1, "getObjectCount not 1");
+        // 1. protocol
+        // 2. global registry
+        // 3. 23133705 anvil registry
+        // 4. 33133705 component owner service
+        // 5. 43133705 product service
+        // 6. 53133705 pool service
+        // 7. 63133705 instance
+        assertEq(registry.getObjectCount(), 7, "getObjectCount not 1");
     }
 
     function testRegistryNftId() public {
         NftId nftId = registry.getNftId(address(instance));
-        assertNftId(nftId, toNftId(23133705), "instance getNftId not 23133705");
+        assertNftId(nftId, toNftId(63133705), "instance getNftId not 63133705");
         assertNftId(
             nftId,
             instance.getNftId(),

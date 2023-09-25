@@ -16,6 +16,9 @@ import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 contract DeployInstance is Script {
     using NftIdLib for NftId;
 
+    address public registryOwner;
+    address public instanceOwner;
+
     ChainNft public nft;
     Registry public registry;
     address public registryAddress;
@@ -26,18 +29,21 @@ contract DeployInstance is Script {
     ProductService public productService;
     PoolService public poolService;
 
-    function run(address instanceOwner) external returns (Instance) {
+    function run(address registryOwner_, address instanceOwner_) public virtual returns (Instance) {
 
         // HelperConfig helperConfig = new HelperConfig();
         // HelperConfig.NetworkConfig memory config = HelperConfig.NetworkConfig(helperConfig.activeNetworkConfig());
         // address dipAddress = config.dipAddress;
+
+        registryOwner = registryOwner_;
+        instanceOwner =  instanceOwner_;
 
         console.log("tx origin", tx.origin);
 
         vm.startBroadcast();
         _deployRegistry();
         _deployInstance();
-        _registerAndTransfer(instanceOwner);
+        _registerAndTransfer();
         vm.stopBroadcast();
 
         return instance;
@@ -48,7 +54,7 @@ contract DeployInstance is Script {
     {
         registry = new Registry();
         nft = new ChainNft(address(registry));
-        registry.initialize(address(nft));
+        registry.initialize(address(nft), registryOwner);
         registryAddress = address(registry);
         registryNftId = registry.getNftId();
 
@@ -60,14 +66,23 @@ contract DeployInstance is Script {
         componentOwnerService = new ComponentOwnerService(
             registryAddress, registryNftId);
         componentOwnerService.register();
+        console.log("service name", componentOwnerService.NAME());
+        console.log("service nft id", componentOwnerService.getNftId().toInt());
+        console.log("component owner service deployed at", address(componentOwnerService));
 
         productService = new ProductService(
             registryAddress, registryNftId);
         productService.register();
+        console.log("service name", productService.NAME());
+        console.log("service nft id", productService.getNftId().toInt());
+        console.log("product service deployed at", address(productService));
 
         poolService = new PoolService(
             registryAddress, registryNftId);
         poolService.register();
+        console.log("service name", poolService.NAME());
+        console.log("service nft id", poolService.getNftId().toInt());
+        console.log("pool service deployed at", address(poolService));
 
         instance = new Instance(
             registryAddress, 
@@ -78,15 +93,11 @@ contract DeployInstance is Script {
         return instance;
     }
 
-    function _registerAndTransfer(
-        address instanceOwner
-    )
-        internal
-    {
+    function _registerAndTransfer() internal {
         NftId instanceNftId = instance.register();
 
         // transfer ownerships
         nft.safeTransferFrom(tx.origin, instanceOwner, instanceNftId.toInt());
+        console.log("transferred instance nft", instanceNftId.toInt());
     }
-
 }

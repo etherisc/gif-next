@@ -8,6 +8,9 @@ import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber} from "../../../types/Blocknumber.sol";
 
+import {IProductService} from "../../service/IProductService.sol";
+import {IPoolService} from "../../service/IPoolService.sol";
+
 interface IBundle {
 
     struct BundleInfo {
@@ -53,6 +56,6 @@ interface IBundleModule is IBundle {
     function getRegistry() external view returns (IRegistry registry);
 
     // repeat service linked signatures to avoid linearization issues
-    function senderIsProductService() external  returns(bool isService);
-    function senderIsPoolService() external  returns(bool isService);
+    function getProductService() external returns(IProductService);
+    function getPoolService() external returns(IPoolService);
 }

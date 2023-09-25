@@ -22,6 +22,10 @@ import {IPolicyModule} from "../../contracts/instance/module/policy/IPolicy.sol"
 import {IBundleModule} from "../../contracts/instance/module/bundle/IBundle.sol";
 import {IServiceLinked} from "../../contracts/instance/IServiceLinked.sol";
 
+import {IComponentOwnerService} from "../../contracts/instance/service/IComponentOwnerService.sol";
+import {IProductService} from "../../contracts/instance/service/IProductService.sol";
+import {IPoolService} from "../../contracts/instance/service/IPoolService.sol";
+
 
 contract TestInstanceModuleAccess  is
     InstanceBase,
@@ -43,11 +47,11 @@ contract TestInstanceModuleAccess  is
 
     function hasRole(bytes32 role, address member) public view override (AccessModule) returns (bool) { return super.hasRole(role, member); }
 
-    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function getComponentOwnerService() external view override (IServiceLinked) returns(IComponentOwnerService service) { return _componentOwnerService; }
+    function getProductService() external view override (IServiceLinked) returns(IProductService service) { return _productService; }
+    function getPoolService() external view override (IServiceLinked) returns(IPoolService service) { return _poolService; }
 
-    function requireSenderIsOwner() public view override (IAccessModule, Registerable) returns (bool senderIsOwner) { return super.requireSenderIsOwner(); }
+    function getOwner() public view override (IAccessModule, Registerable) returns (address owner) { return super.getOwner(); }
 }
 
 contract TestInstanceModuleBundle  is
@@ -63,9 +67,9 @@ contract TestInstanceModuleBundle  is
     }
     function getRegistry() public view override (Registerable, IBundleModule) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external view override (IBundleModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external view override (IBundleModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function getComponentOwnerService() external view override (IServiceLinked) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getProductService() external view override (IBundleModule, IServiceLinked) returns(IProductService service) { return _productService; }
+    function getPoolService() external view override (IBundleModule, IServiceLinked) returns(IPoolService service) { return _poolService; }
 }
 
 contract TestInstanceModuleComponent  is
@@ -88,9 +92,9 @@ contract TestInstanceModuleComponent  is
 
     function hasRole(bytes32, address) public pure override returns (bool) { return true; }
 
-    function senderIsComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function getComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getProductService() external view override (IServiceLinked) returns(IProductService service) { return _productService; }
+    function getPoolService() external view override (IServiceLinked) returns(IPoolService service) { return _poolService; }
 }
 
 contract TestInstanceModulePolicy  is
@@ -107,9 +111,9 @@ contract TestInstanceModulePolicy  is
 
     function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external view override (IPolicyModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function getComponentOwnerService() external view override (IServiceLinked) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getProductService() external view override (IPolicyModule, IServiceLinked) returns(IProductService service) { return _productService; }
+    function getPoolService() external view override (IServiceLinked) returns(IPoolService service) { return _poolService; }
 }
 
 contract TestInstanceModulePool  is
@@ -124,9 +128,9 @@ contract TestInstanceModulePool  is
 
     }
 
-    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external view override (IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external view override (IPoolModule, IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function getComponentOwnerService() external view override (IServiceLinked) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getProductService() external view override (IPoolModule, IServiceLinked) returns(IProductService service) { return _productService; }
+    function getPoolService() external view override (IPoolModule, IServiceLinked) returns(IPoolService service) { return _poolService; }
 }
 
 contract TestInstanceModuleTreasury  is
@@ -141,7 +145,7 @@ contract TestInstanceModuleTreasury  is
 
     }
 
-    function senderIsComponentOwnerService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_componentOwnerService); }
-    function senderIsProductService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_productService); }
-    function senderIsPoolService() external view override (IServiceLinked) returns(bool isService) { return msg.sender == address(_poolService); }
+    function getComponentOwnerService() external view override (IServiceLinked) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getProductService() external view override (IServiceLinked) returns(IProductService service) { return _productService; }
+    function getPoolService() external view override (IServiceLinked) returns(IPoolService service) { return _poolService; }
 }

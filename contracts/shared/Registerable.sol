@@ -18,7 +18,10 @@ abstract contract Registerable is
     address internal immutable _initialOwner;
 
     modifier onlyOwner() virtual {
-        requireSenderIsOwner();
+        require(
+            msg.sender == getOwner(),
+            "ERROR:RGB-001:NOT_OWNER"
+        );
         _;
     }
 
@@ -64,9 +67,9 @@ abstract contract Registerable is
         return _initialOwner;
     }
 
-    function getOwner() public view override returns (address owner) {
-        NftId nftId = getNftId();
-        if(_registry.getNftId(address(this)) == zeroNftId()) {
+    function getOwner() public view virtual override returns (address owner) {
+        NftId nftId = _registry.getNftId(address(this));
+        if(nftId == zeroNftId()) {
             return _initialOwner;
         }
 
@@ -84,14 +87,4 @@ abstract contract Registerable is
     function getData() public view virtual override returns (bytes memory data) {
         return "";
     }
-
-    function requireSenderIsOwner() public view virtual override returns (bool senderIsOwner){
-        require(
-            msg.sender == getOwner(),
-            "ERROR:RGB-020:NOT_OWNER"
-        );
-
-        return true;
-    }
-
 }

@@ -31,6 +31,8 @@ interface IRegistry is IERC165 {
 
     function getObjectCount() external view returns (uint256);
 
+    function getNftId() external view returns (NftId nftId);
+
     function getNftId(
         address objectAddress
     ) external view returns (NftId nftId);
@@ -42,6 +44,8 @@ interface IRegistry is IERC165 {
     function getName(
         NftId nftId
     ) external view returns (string memory name);
+
+    function getProtocolOwner() external view returns (address);
 
     function getOwner(NftId nftId) external view returns (address ownerAddress);
 

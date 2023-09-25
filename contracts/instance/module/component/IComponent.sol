@@ -12,6 +12,7 @@ import {ObjectType} from "../../../types/ObjectType.sol";
 import {Fee} from "../../../types/Fee.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 
+import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
 import {IComponentBase} from "../../../components/IComponentBase.sol";
 
 interface IComponent {
@@ -50,7 +51,7 @@ interface IComponentModule is IComponent {
     function components() external view returns (uint256 numberOfCompnents);
 
     // repeat service linked signaturea to avoid linearization issues
-    function senderIsComponentOwnerService() external  returns(bool isService);
+    function getComponentOwnerService() external view returns(IComponentOwnerService);
 
     function PRODUCT_OWNER_ROLE() external view returns (bytes32 role);
 

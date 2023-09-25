@@ -25,7 +25,7 @@ abstract contract PoolModule is
 
     modifier onlyPoolProductService() {
         require(
-            this.senderIsProductService(),
+            msg.sender == address(this.getProductService()),
             "ERROR:PL-001:NOT_PRODUCT_SERVICE"
         );
         _;

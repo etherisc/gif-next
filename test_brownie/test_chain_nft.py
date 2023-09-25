@@ -77,6 +77,7 @@ def test_nft_mint(
     # check token id format
     token_id = str(evt['tokenId'])
 
+    # 1 is reserved for protocol, 2 reserved for chain/global registry
     assert token_id[:1] == '3'
     assert token_id[1:-2] == str(web3.chain_id)
     assert int(token_id[-2:]) == len(str(web3.chain_id))

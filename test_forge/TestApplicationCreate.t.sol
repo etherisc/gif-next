@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {TestGifBase} from "./TestGifBase.sol";
+import {TestGifBase} from "./base/TestGifBase.sol";
 import {IPolicy} from "../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/module/pool/IPoolModule.sol";
 import {TokenHandler} from "../contracts/instance/module/treasury/TokenHandler.sol";
@@ -27,7 +27,7 @@ contract TestApplicationCreate is TestGifBase {
             lifetime
         );
 
-        assertNftId(policyNftId, toNftId(53133705), "policy id not 53133705");
+        assertNftId(policyNftId, toNftId(93133705), "policy id not 93133705");
         assertEq(
             registry.getOwner(policyNftId),
             customer,
@@ -94,7 +94,7 @@ contract TestApplicationCreate is TestGifBase {
         IPool.PoolInfo memory poolInfoAfter = instance.getPoolInfo(
             pool.getNftId()
         );
-        assertEq(poolInfoAfter.nftId.toInt(), 33133705, "pool id not 33133705");
+        assertEq(poolInfoAfter.nftId.toInt(), 73133705, "pool id not 73133705");
         assertEq(poolInfoBefore.lockedCapital, 0, "capital locked not 0");
         assertEq(
             poolInfoAfter.lockedCapital,
