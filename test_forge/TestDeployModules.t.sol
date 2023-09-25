@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {Test} from "../lib/forge-std/src/Test.sol";
+import {TestGifBase} from "./base/TestGifBase.sol";
 import {console} from "../lib/forge-std/src/Script.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
-
-import {DeployInstance} from "../scripts/DeployInstance.s.sol";
 
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
@@ -20,22 +18,7 @@ import {TestInstanceBase} from "./modules/TestInstanceBase.sol";
 import {TestInstanceModuleAccess, TestInstanceModuleBundle, TestInstanceModuleComponent, TestInstanceModulePolicy, TestInstanceModulePool, TestInstanceModuleTreasury} from "./modules/TestInstanceModules.sol";
 
 
-contract TestDeployModules is Test {
-    IRegistry public registry;
-    address public registryAddress;
-    NftId public registryNftId;
-
-    address public registryOwner = makeAddr("registryOwner");
-    address public instanceOwner = makeAddr("instanceOwner");
-
-    function setUp() external {
-        DeployInstance di = new DeployInstance();
-        Instance instanceFull = di.run(registryOwner, instanceOwner);
-        registry = instanceFull.getRegistry();
-
-        registryAddress = address(registry);
-        registryNftId = registry.getNftId();
-    }
+contract TestDeployModules is TestGifBase {
 
     function testInstanceBase() public {
         vm.prank(instanceOwner);

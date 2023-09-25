@@ -21,8 +21,6 @@ import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
 
-import {DeployInstance} from "./DeployInstance.sol";
-
 contract TestGifBase is Test {
     using NftIdLib for NftId;
 
@@ -82,7 +80,6 @@ contract TestGifBase is Test {
         if(block.chainid == 31337) {
             assertEq(actualNftId.toInt(), expectedNftId.toInt(), message);
         } else {
-            // solhint ignore
             // solhint-disable-next-line
             console.log("chain not anvil, skipping assertNftId");
         }
