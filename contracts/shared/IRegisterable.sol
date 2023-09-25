@@ -10,10 +10,13 @@ import {ObjectType} from "../types/ObjectType.sol";
 import {IOwnable} from "./IOwnable.sol";
 
 interface IRegisterable is IERC165, IOwnable {
-    function getRegistry() external view returns (IRegistry registry);
 
     function register() external returns (NftId nftId);
 
+    function getInfo() external view returns (IRegistry.ObjectInfo memory info);
+
+    function getRegistry() external view returns (IRegistry registry);
+    
     function getType() external pure returns (ObjectType objectType);
 
     function getNftId() external view returns (NftId nftId);

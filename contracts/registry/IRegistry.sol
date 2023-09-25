@@ -18,14 +18,10 @@ interface IRegistry is IERC165 {
         bytes data;
     }
 
-    function register(address objectAddress) external returns (NftId nftId);
-
-    function registerObjectForInstance(
-        NftId parentNftid,
-        ObjectType objectType,
-        address initialOwner,
-        bytes memory data
-    ) external returns (NftId nftId);
+    function registerService(address serviceAddress) external returns (NftId nftId);
+    function registerToken(address token, ObjectInfo memory tokenInfo) external returns (NftId nftId);
+    function registerForService(address registrator, address registrable) external returns (NftId nftId);
+    function registerForInstance(ObjectInfo memory object) external returns (NftId nftId);
 
     function getServiceAddress(string memory serviceName, VersionPart majorVersion) external view returns (address serviceAddress);
 
@@ -37,6 +33,10 @@ interface IRegistry is IERC165 {
 
     function getObjectInfo(
         NftId nftId
+    ) external view returns (ObjectInfo memory info);
+
+    function getObjectInfo(
+        address object
     ) external view returns (ObjectInfo memory info);
 
     function getName(

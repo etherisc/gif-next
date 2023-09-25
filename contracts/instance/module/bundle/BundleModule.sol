@@ -7,7 +7,7 @@ import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
-import {NftId} from "../../../types/NftId.sol";
+import {NftId, zeroNftId} from "../../../types/NftId.sol";
 import {LibNftIdSet} from "../../../types/NftIdSet.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL, BUNDLE, POLICY} from "../../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, REVOKED, DECLINED} from "../../../types/StateId.sol";
@@ -62,11 +62,15 @@ abstract contract BundleModule is
         returns(NftId nftId)
     {
 
-        nftId = this.getRegistry().registerObjectForInstance(
-            poolInfo.nftId,
-            BUNDLE(),
-            initialOwner,
-            ""
+        nftId = this.getRegistry().registerForInstance(
+            IRegistry.ObjectInfo(
+                zeroNftId(),
+                poolInfo.nftId,
+                BUNDLE(),
+                address(0), 
+                initialOwner,
+                ""            
+            )
         );
 
         _bundleInfo[nftId] = BundleInfo(

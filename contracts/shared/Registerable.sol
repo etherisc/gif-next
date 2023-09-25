@@ -13,7 +13,7 @@ abstract contract Registerable is
     ERC165,
     IRegisterable
 {
-    IRegistry internal immutable _registry;
+    IRegistry internal immutable _registry;// TODO immutable for proxy?
     NftId internal immutable _parentNftId;
     address internal immutable _initialOwner;
 
@@ -52,8 +52,25 @@ abstract contract Registerable is
     }
 
     // from IRegistryLinked
+    // TODO refactor
     function register() public onlyOwner virtual override returns (NftId nftId) {
-        return _registry.register(address(this));
+        return _registry.registerForService(msg.sender, address(this));// wrong
+    }
+
+    function getInfo() external view returns (IRegistry.ObjectInfo memory info)
+    {
+        if(_registry.isRegistered(address(this))) {
+             return _registry.getObjectInfo(address(this));
+        }
+
+        return IRegistry.ObjectInfo(
+            zeroNftId(),
+            getParentNftId(),
+            this.getType(), // why only this is working? -> each child of IRegistrable implementats getType as public...
+            address(this),
+            getInitialOwner(),
+            getData()
+        );     
     }
 
     function getRegistry() public view virtual override returns (IRegistry registry) {

@@ -21,18 +21,28 @@ contract Registry is
     string public constant EMPTY_URI = "";
 
     mapping(NftId nftId => ObjectInfo info) private _info;
-    mapping(NftId nftId => address owner) private _owner;
+    mapping(NftId nftId => address owner) private _owner;// TODO: use _chainNft.ownerOf(nftId)...
     mapping(address object => NftId nftId) private _nftIdByAddress;
-    mapping(ObjectType objectType => bool) private _isValidType;
-    mapping(ObjectType objectType => mapping(ObjectType objectParentType => bool)) private _isValidParentType;
 
     mapping(NftId nftId => string stringValue) private _string;
     mapping(bytes32 serviceNameHash => mapping(VersionPart majorVersion => address service)) _service;
 
-    NftId private _nftId;
+    NftId private _nftId;// TODO move to register's info
     IChainNft private _chainNft;
     ChainNft private _chainNftInternal;
-    address private _initialOwner;
+    address private _initialOwner;// TODO move to register's info
+
+    mapping(ObjectType callerType => mapping(ObjectType parentType => mapping(ObjectType objectType => bool))) private _allowed;
+
+    modifier onlyService() {
+        NftId senderNftId = _nftIdByAddress[msg.sender]; 
+        require(_info[senderNftId].objectType == SERVICE(), "ERROR:REG-002:NOT_SERVICE");
+        _;
+    }
+    modifier onlyOwner() {
+        require(getOwner() == msg.sender, "ERROR:REG-003:NOT_OWNER");
+        _;
+    } 
 
     // TODO refactor once registry becomes upgradable
     function initialize(address chainNft) public {
@@ -50,63 +60,49 @@ contract Registry is
         _nftId = _registerRegistry();
 
         // setup rules for further registrations
-        _setupValidTypes();
-        _setupValidParentTypes();
+        _setRegistrables();
     }
 
+    // Registration
+    // what? -> who? -> how?
+    // SERVICE()/TOKEN()/INSTANCE()/COMPONENT() -> only owner -> directly
+    // INSTANCE() -> any address -> through SERVICE() (any not registered address)
+    // COMPONENT() -> any address -> through SERVICE() (any not regisetred address, with role from INSTANCE() )
+    // BUNDLE()/POLICY() -> only INSTANCE() -> directly  
+    // assumption: Service_X will never register Instance/Component for Service_Y -> need to check whole chain from object to service...
+    // assumption: Owner will behave well...
+    // question: If unknown contract registers other contract and then itself became registred?
+    // TODO: enforce "registration on the same hierarchy branch"
+    function registerForService(address registrator, address registrable)
+        external 
+        override 
+        onlyService() // only service capable of registring objects   register<-service
+        returns(NftId nftId)
+    {
+        IRegisterable registrableContract = IRegisterable(registrable);
+        ObjectInfo memory info = registrableContract.getInfo(); // TODO: provided by Service???
 
-    function register(
-        address objectAddress
-    )
-    // TODO add authz (only services may register components etc)
-    // we have to check how we do authz for registring services (just restrict to protocol owner/registry owner)
-    external override returns (NftId nftId) {
+        return _registerContract(SERVICE(), registrator, registrable, info);
+    }
+
+    function registerService(address serviceAddress)
+        external 
+        override 
+        //OnlyOwner()
+        returns(NftId nftId)
+    {
+        IService service = IService(serviceAddress);
         require(
-            _nftIdByAddress[objectAddress].eqz(),
-            "ERROR:REG-002:ALREADY_REGISTERED"
+            service.supportsInterface(type(IService).interfaceId),
+            "ERROR:REG-007:NOT_SERVICE"
         );
+        ObjectInfo memory info = service.getInfo();
 
-        IRegisterable registerable = IRegisterable(objectAddress);
-        require(
-            registerable.supportsInterface(type(IRegisterable).interfaceId),
-            "ERROR:REG-003:NOT_REGISTERABLE"
-        );
-
-        ObjectType objectType = registerable.getType();
-        require(
-            _isValidType[objectType],
-            "ERROR:REG-004:TYPE_INVALID"
-        );
-
-        NftId parentNftId = registerable.getParentNftId();
-        require(
-            isRegistered(parentNftId),
-            "ERROR:REG-005:PARENT_NOT_REGISTERED"
-        );
-
-        require(
-            _isValidParentType[objectType][_info[parentNftId].objectType],
-            "ERROR:REG-006:PARENT_TYPE_INVALID"
-        );
-
-        // also check that nftId and parentNFtId are on the same chain if applicable
-
-        // nft minting
-        uint256 mintedTokenId = _chainNft.mint(
-            registerable.getInitialOwner(),
-            EMPTY_URI
-        );
-
-        nftId = toNftId(mintedTokenId);
+        nftId = _registerContract(REGISTRY(), getOwner(), serviceAddress, info);
 
         // special case services
-        if(registerable.getType() == SERVICE()) {
-            IService service = IService(objectAddress);
-            require(
-                service.supportsInterface(type(IService).interfaceId),
-                "ERROR:REG-007:NOT_SERVICE"
-            );
-
+        // assumption: Service is trusted contract 
+        if(info.objectType == SERVICE()) { // afterServiceRegistration()
             string memory serviceName = service.getName();
             VersionPart majorVersion = service.getMajorVersion();
             bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
@@ -118,48 +114,75 @@ contract Registry is
                 _service[serviceNameHash][majorVersion] == address(0),
                 "ERROR:REG-008:ALREADY_REGISTERED"
             );
-            _service[serviceNameHash][majorVersion] = objectAddress;
+            _service[serviceNameHash][majorVersion] = serviceAddress;
         }
-
-        // create object info and link nft id with it
-        _registerObjectInfo(registerable, nftId);
     }
 
-
-    function registerObjectForInstance(
-        NftId parentNftId,
-        ObjectType objectType,
-        address initialOwner,
-        bytes memory data
-    )
+    function registerToken(address token, ObjectInfo memory tokenInfo) 
         external
-        override
-        returns (
-            // TODO add onlyRegisteredInstance
-            NftId nftId
-        )
+        override 
+        //OnlyOwner()
+        returns(NftId nftId)
     {
-        // TODO add more validation
-        require(
-            objectType == POLICY() || objectType == BUNDLE(),
-            "ERROR:REG-010:TYPE_INVALID"
-        );
+        return _registerContract(REGISTRY(), getOwner(), token, tokenInfo);
+    }
 
-        uint256 mintedTokenId = _chainNft.mint(initialOwner, EMPTY_URI);
+    function registerForInstance(ObjectInfo memory object)
+        external 
+        override 
+        returns(NftId nftId)
+        //OnlyInstance()
+    {
+        NftId instanceNftId = _nftIdByAddress[msg.sender];
+        require(_info[instanceNftId].objectType == INSTANCE(), "ERROR:REG-002:UNKNOWN_INSTANCE");
+
+        require(_info[object.parentNftId].parentNftId == instanceNftId, "ERROR:REG_002:WRONG_INSTANCE");// mismatch
+
+        return _registerObject(INSTANCE(), object);
+    }
+
+    // TODO is it possible to verify hash(contract.code + contract.storage)?
+    // callerType -> registerForService() or other function
+    // registrator -> who uses service to register something
+    // registrable, info -> is what registered
+    function _registerContract(ObjectType callerType, address registrator, address registrable, ObjectInfo memory info)
+        internal  
+        returns(NftId nftId)
+    {
+        require(_nftIdByAddress[registrable].eqz(), "ERROR:REG-002:ALREADY_REGISTERED");
+        require(_nftIdByAddress[registrator].eqz(), "ERROR:REG-003:ALREADY_REGISTERED");// registred contract can not register another contract
+
+        ObjectType parentType = _info[info.parentNftId].objectType;
+        require(_allowed[callerType][parentType][info.objectType] == true);// type is valid, parent type is valid, parent is registered
+        
+        uint256 mintedTokenId = _chainNft.mint(
+            info.initialOwner, // TODO any intrinsic for deployer address?
+            EMPTY_URI);
         nftId = toNftId(mintedTokenId);
 
-        ObjectInfo memory info = ObjectInfo(
-            nftId,
-            parentNftId,
-            objectType,
-            address(0),
-            initialOwner,
-            data
-        );
+        info.nftId = nftId;
+        info.objectAddress = registrable;
 
         _info[nftId] = info;
+        _nftIdByAddress[registrable] = nftId;
+    }
 
-        // add logging
+    function _registerObject(ObjectType callerType, ObjectInfo memory info)
+        internal 
+        returns(NftId nftId)
+    {
+        ObjectType parentType = _info[info.parentNftId].objectType;
+        require(_allowed[callerType][parentType][info.objectType] == true);// type is valid, parent type is valid, parent is registered
+
+        uint256 mintedTokenId = _chainNft.mint(
+            info.initialOwner,
+            EMPTY_URI);
+        nftId = toNftId(mintedTokenId);
+
+        info.nftId = nftId;
+        info.objectAddress = address(0);
+
+        _info[nftId] = info;
     }
 
     function getObjectCount() external view override returns (uint256) {
@@ -188,6 +211,12 @@ contract Registry is
         NftId nftId
     ) external view override returns (ObjectInfo memory info) {
         return _info[nftId];
+    }
+
+    function getObjectInfo(
+        address object
+    ) external view override returns (ObjectInfo memory info) {
+        return _info[_nftIdByAddress[object]];
     }
 
     function getName(
@@ -225,7 +254,23 @@ contract Registry is
         return zeroNftId();
     }
 
-    function getType() external pure override returns (ObjectType objectType) {
+    function getInfo() public view returns (IRegistry.ObjectInfo memory info) {
+        
+        if(this.isRegistered(address(this))) {// TODO always registered?
+            return this.getObjectInfo(address(this));
+        }
+
+        return IRegistry.ObjectInfo(
+            zeroNftId(),
+            getParentNftId(),
+            REGISTRY(),
+            address(this),
+            _initialOwner, 
+            getData()
+        );  
+    }
+
+    function getType() public pure override returns (ObjectType objectType) {
         return REGISTRY();
     }
 
@@ -243,7 +288,7 @@ contract Registry is
         return _nftId;
     }
 
-    function getParentNftId() external view returns (NftId nftId) {
+    function getParentNftId() public view returns (NftId nftId) {
         // we're the global registry
         if(block.chainid == 1) {
             return toNftId(_chainNftInternal.PROTOCOL_NFT_ID());
@@ -253,7 +298,7 @@ contract Registry is
         }
     }
 
-    function getData() external pure returns (bytes memory data) {
+    function getData() public pure returns (bytes memory data) {
         return "";
     }
 
@@ -266,45 +311,28 @@ contract Registry is
         return true;
     }
 
-    /// @dev defines which types are allowed to register
-    function _setupValidTypes() internal {
-        _isValidType[REGISTRY()] = true; // only for global registry 
-        _isValidType[TOKEN()] = true;
-        _isValidType[SERVICE()] = true;
-        _isValidType[INSTANCE()] = true;
-        _isValidType[STAKE()] = true;
-        _isValidType[PRODUCT()] = true;
-        _isValidType[ORACLE()] = true;
-        _isValidType[POOL()] = true;
-        _isValidType[POLICY()] = true;
-        _isValidType[BUNDLE()] = true;
-    }
+    function _setRegistrables() virtual internal 
+    {
+        // _allowed[function][object][parent]
+        // for instance
+        _allowed[SERVICE()][POLICY()][PRODUCT()] = true;
+        _allowed[SERVICE()][BUNDLE()][POOL()] = true;
 
-    /// @dev defines which types - parent type relations are allowed to register
-    function _setupValidParentTypes() internal {
-        // registry as parent
-        _isValidParentType[TOKEN()][REGISTRY()] = true;
-        _isValidParentType[SERVICE()][REGISTRY()] = true;
-        _isValidParentType[INSTANCE()][REGISTRY()] = true;
-
-        // instance as parent
-        _isValidParentType[PRODUCT()][INSTANCE()] = true;
-        _isValidParentType[DISTRIBUTOR()][INSTANCE()] = true;
-        _isValidParentType[ORACLE()][INSTANCE()] = true;
-        _isValidParentType[POOL()][INSTANCE()] = true;
-
-        // product as parent
-        _isValidParentType[POLICY()][PRODUCT()] = true;
-
-        // pool as parent
-        _isValidParentType[BUNDLE()][POOL()] = true;
-        _isValidParentType[STAKE()][POOL()] = true;
-    }
+        // for service -> indirect
+        _allowed[SERVICE()][PRODUCT()][INSTANCE()] = true;
+        _allowed[SERVICE()][POOL()][INSTANCE()] = true;
+        _allowed[SERVICE()][ORACLE()][INSTANCE()]= true;
+        _allowed[SERVICE()][INSTANCE()][REGISTRY()] = true;
+        
+        // for owner 
+        _allowed[REGISTRY()][SERVICE()][REGISTRY()] = true; 
+        _allowed[REGISTRY()][TOKEN()][REGISTRY()] = true; 
+    } 
 
     /// @dev protocol registration used to anchor the dip ecosystem relations
     function _registerProtocol() virtual internal {
         uint256 protocolId = _chainNftInternal.PROTOCOL_NFT_ID();
-        _chainNftInternal.mint(_initialOwner, protocolId);
+        _chainNftInternal.mint(_initialOwner, protocolId);// TODO protocol have 0 as owner?
 
         NftId protocolNftid = toNftId(protocolId);
         ObjectInfo memory protocolInfo = ObjectInfo(
@@ -318,7 +346,7 @@ contract Registry is
 
         _info[protocolNftid] = protocolInfo;
     }
-
+    // TODO refactor
     /// @dev registry registration
     /// might also register the global registry when not on mainnet
     function _registerRegistry() virtual internal returns (NftId registryNftId) {
@@ -327,11 +355,15 @@ contract Registry is
 
         // we're not the global registry
         if(registryId != _chainNftInternal.GLOBAL_REGISTRY_ID()) {
-            _registerGlobalRegistry();
+            _registerGlobalRegistry();// TODO return after call??
         }
 
+        IRegistry.ObjectInfo memory info = getInfo();
+        info.nftId = registryNftId;
+        
         _chainNftInternal.mint(_initialOwner, registryId);
-        _registerObjectInfo(this, registryNftId);
+
+        _registerContract(REGISTRY(), msg.sender, address(this), info);
     }
 
 
@@ -352,26 +384,4 @@ contract Registry is
 
         _info[globalRegistryNftId] = globalRegistryInfo;
     }
-
-
-    function _registerObjectInfo(
-        IRegisterable registerable,
-        NftId nftId
-    ) internal virtual {
-        address objectAddress = address(registerable);
-        ObjectInfo memory info = ObjectInfo(
-            nftId,
-            registerable.getParentNftId(),
-            registerable.getType(),
-            objectAddress,
-            registerable.getInitialOwner(),
-            registerable.getData()
-        );
-
-        _info[nftId] = info;
-        _nftIdByAddress[objectAddress] = nftId;
-
-        // add logging
-    }
-
 }

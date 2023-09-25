@@ -8,7 +8,7 @@ import {IProductService} from "../../service/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../../types/ObjectType.sol";
 import {ACTIVE} from "../../../types/StateId.sol";
-import {NftId, NftIdLib} from "../../../types/NftId.sol";
+import {NftId, zeroNftId, NftIdLib} from "../../../types/NftId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
 
@@ -51,11 +51,15 @@ abstract contract PolicyModule is IPolicyModule {
             // IRegistry.ObjectInfo memory poolInfo = this.getRegistry().getInfo(bundleInfo.parentNftId);
         }
 
-        nftId = this.getRegistry().registerObjectForInstance(
-            productInfo.nftId,
-            POLICY(),
-            initialOwner,
-            ""
+        nftId = this.getRegistry().registerForInstance(
+            IRegistry.ObjectInfo(
+                zeroNftId(),
+                productInfo.nftId,
+                POLICY(),
+                address(0), 
+                initialOwner,
+                ""            
+            )
         );
 
         _policyInfo[nftId] = PolicyInfo(
