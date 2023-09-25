@@ -16,6 +16,7 @@ contract TestInstanceBase  is
         NftId registryNftId
     )
         InstanceBase(registry, registryNftId)
+    // solhint-disable-next-line no-empty-blocks
     {
     }
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import "../../lib/forge-std/src/Test.sol";
+import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -23,6 +23,7 @@ import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
 import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 
+// solhint-disable-next-line max-states-count
 contract TestGifBase is Test {
 
     // in full token units, value will be multiplied by 10 ** token.decimals()
@@ -44,7 +45,7 @@ contract TestGifBase is Test {
     address public registryAddress;
     NftId public registryNftId;
     NftId public bundleNftId;
-    uint256 initialCapitalAmount;
+    uint256 public initialCapitalAmount;
 
     address public registryOwner = makeAddr("registryOwner");
     address public instanceOwner = makeAddr("instanceOwner");
@@ -77,6 +78,7 @@ contract TestGifBase is Test {
         internal
         virtual
     {
+        // solhint-disable-next-line
         console.log("tx origin", tx.origin);
 
         // deploy registry, nft, and services
@@ -143,6 +145,7 @@ contract TestGifBase is Test {
         // Subtract 100 to account for the warm SLOAD in startMeasuringGas.
         uint256 gasDelta = _checkpointGasLeft - gasleft() - 100;
         string memory message = string(abi.encodePacked(_checkpointLabel, " gas"));
+        // solhint-disable-next-line
         console.log(message, gasDelta);
     }
 
@@ -154,7 +157,9 @@ contract TestGifBase is Test {
         registryAddress = address(registry);
         registryNftId = registry.getNftId();
 
+        // solhint-disable-next-line
         console.log("nft deployed at", address(nft));
+        // solhint-disable-next-line
         console.log("registry deployed at", address(registry));
     }
 
@@ -164,24 +169,33 @@ contract TestGifBase is Test {
             registryAddress, registryNftId);
         componentOwnerService.register();
 
+        // solhint-disable-next-line
         console.log("service name", componentOwnerService.NAME());
+        // solhint-disable-next-line
         console.log("service nft id", componentOwnerService.getNftId().toInt());
+        // solhint-disable-next-line
         console.log("component owner service deployed at", address(componentOwnerService));
 
         productService = new ProductService(
             registryAddress, registryNftId);
         productService.register();
 
+        // solhint-disable-next-line
         console.log("service name", productService.NAME());
+        // solhint-disable-next-line
         console.log("service nft id", productService.getNftId().toInt());
+        // solhint-disable-next-line
         console.log("product service deployed at", address(productService));
 
         poolService = new PoolService(
             registryAddress, registryNftId);
         poolService.register();
 
+        // solhint-disable-next-line
         console.log("service name", poolService.NAME());
+        // solhint-disable-next-line
         console.log("service nft id", poolService.getNftId().toInt());
+        // solhint-disable-next-line
         console.log("pool service deployed at", address(poolService));
     }
 
@@ -190,13 +204,17 @@ contract TestGifBase is Test {
         instance = new Instance(
             address(registry), 
             registry.getNftId());
+
+        // solhint-disable-next-line
         console.log("instance deployed at", address(instance));
 
         NftId nftId = instance.register();
+        // solhint-disable-next-line
         console.log("instance nft id", nftId.toInt());
 
         instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        // solhint-disable-next-line
         console.log("product and pool roles granted");
     }
 
@@ -205,6 +223,7 @@ contract TestGifBase is Test {
         USDC usdc  = new USDC();
         address usdcAddress = address(usdc);
         token = IERC20Metadata(usdcAddress);
+        // solhint-disable-next-line
         console.log("token deployed at", usdcAddress);
     }
 
@@ -223,6 +242,7 @@ contract TestGifBase is Test {
             collateralizationLevel);
 
         pool.register();
+        // solhint-disable-next-line
         console.log("pool deployed at", address(pool));
     }
 
@@ -230,6 +250,7 @@ contract TestGifBase is Test {
     function _deployProduct() internal {
         product = new TestProduct(address(registry), instance.getNftId(), address(token), address(pool));
         product.register();
+        // solhint-disable-next-line
         console.log("product deployed at", address(product));
     }
 
@@ -245,7 +266,9 @@ contract TestGifBase is Test {
             lifetime,
             "");
 
+        // solhint-disable-next-line
         console.log("bundle fundet with", amount);
+        // solhint-disable-next-line
         console.log("bundle nft id", address(product));
     }
 

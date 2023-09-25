@@ -90,7 +90,6 @@ def deploy_instance(registry, instance_owner):
     instance.register({'from': instance_owner})
     return instance
 
-
 def deploy_pool(registry, instance, instance_owner, token, pool_is_verifying, pool_collateralization_level, pool_owner):
     pool_owner_role = instance.getRoleId(POOL_OWNER_ROLE)
     instance.grantRole(pool_owner_role, pool_owner, {'from': instance_owner})
