@@ -1,11 +1,12 @@
 import { AddressLike, Signer, ZeroAddress, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
-import { IChainNft__factory, IRegistry__factory, Registry, UFixedMathLib__factory } from "../typechain-types";
+import { IChainNft__factory, IRegistry__factory, Registry, Registry__factory, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
 import { registerComponent } from "./lib/componentownerservice";
 import { deployContract } from "./lib/deployment";
 import { Role, grantRole, registerInstance } from "./lib/instance";
 import { logger } from "./logger";
+import { registry } from "../typechain-types/contracts";
 
 
 async function main() {
@@ -28,7 +29,7 @@ async function main() {
     const { instanceNftId, poolNftId, productNftId } = await registerInstanceAndComponents(
         instanceOwner, productOwner, poolOwner,
         componentOwnerServiceAddress,
-        instanceAddress, productAddress, poolAddress);
+        registryAddress, instanceAddress, productAddress, poolAddress);
 
     printAddresses(
         registryAddress, chainNftAddress,
@@ -114,22 +115,22 @@ function printAddresses(
 async function registerInstanceAndComponents(
     instanceOwner: Signer, productOwner: Signer, poolOwner: Signer,
     componentOwnerServiceAddress: AddressLike,
-    instanceAddress: AddressLike, productAddress: AddressLike, poolAddress: AddressLike
+    registryAddress: AddressLike, instanceAddress: AddressLike, productAddress: AddressLike, poolAddress: AddressLike
 ): Promise<{
     instanceNftId: string,
     poolNftId: string,
     productNftId: string,
 }> {
     // register instance
-    const instanceNftId = await registerInstance(instanceOwner, instanceAddress);
+    const instanceNftId = await registerInstance(instanceOwner, instanceAddress, registryAddress);
     
     // grant pool role and register pool
     await grantRole(instanceOwner, instanceAddress, Role.POOL_OWNER_ROLE, poolOwner);
-    const poolNftId = await registerComponent(componentOwnerServiceAddress, poolOwner, poolAddress);
+    const poolNftId = await registerComponent(componentOwnerServiceAddress, poolOwner, poolAddress, registryAddress);
     
     // grant product role and register product
     await grantRole(instanceOwner, instanceAddress, Role.PRODUCT_OWNER_ROLE, productOwner);
-    const productNftId = await registerComponent(componentOwnerServiceAddress, productOwner, productAddress);
+    const productNftId = await registerComponent(componentOwnerServiceAddress, productOwner, productAddress, registryAddress);
 
     return { instanceNftId, poolNftId, productNftId };
 }
@@ -256,13 +257,16 @@ async function deployRegistry(owner: Signer): Promise<{
 
     const registry = registryBaseContract as Registry;
 
-    const isRegistered = await registry.getNftAddress() !== ZeroAddress;
-
-    if (!isRegistered) {
+    // TODO: check if NFT is already initialized before intializing
+    try {
         await registry.initialize(chainNftAddress);
         logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}`);
+    } catch (error: any) {
+        if (! error.message.includes("ERROR:REG-001:ALREADY_INITIALIZED")) {
+            throw error;
+        }
     }
-
+    
     return {
         registryAddress,
         chainNftAddress,
