@@ -50,8 +50,9 @@ abstract contract PolicyModule is IPolicyModule {
             //     .getInfo(bundleNftId);
             // IRegistry.ObjectInfo memory poolInfo = this.getRegistry().getInfo(bundleInfo.parentNftId);
         }
-
-        nftId = this.getRegistry().registerForInstance(
+        //TODO use register service???
+        nftId = this.getRegistry().registerFor(
+            address(this), 
             IRegistry.ObjectInfo(
                 zeroNftId(),
                 productInfo.nftId,

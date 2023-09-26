@@ -61,8 +61,9 @@ abstract contract BundleModule is
         onlyBundlePoolService
         returns(NftId nftId)
     {
-
-        nftId = this.getRegistry().registerForInstance(
+        //TODO use register service???
+        nftId = this.getRegistry().registerFor(
+            address(this),
             IRegistry.ObjectInfo(
                 zeroNftId(),
                 poolInfo.nftId,

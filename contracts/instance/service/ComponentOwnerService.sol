@@ -84,7 +84,7 @@ contract ComponentOwnerService is
             "ERROR:CMP-004:TYPE_ROLE_MISSING"
         );
 
-        nftId = _registry.registerForService(msg.sender, address(component));
+        nftId = _registry.registerFor(msg.sender, address(component));
         IERC20Metadata token = component.getToken();
 
         instance.registerComponent(

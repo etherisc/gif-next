@@ -34,12 +34,12 @@ contract Registry is
 
     mapping(ObjectType callerType => mapping(ObjectType parentType => mapping(ObjectType objectType => bool))) private _allowed;
 
-    modifier onlyService() {
+    modifier OnlyService() {
         NftId senderNftId = _nftIdByAddress[msg.sender]; 
         require(_info[senderNftId].objectType == SERVICE(), "ERROR:REG-002:NOT_SERVICE");
         _;
     }
-    modifier onlyOwner() {
+    modifier OnlyOwner() {
         require(getOwner() == msg.sender, "ERROR:REG-003:NOT_OWNER");
         _;
     } 
@@ -77,10 +77,10 @@ contract Registry is
     // ?->service.registry()->registry.registryFor(?)->creates in registry??? YES
     //                      ->instance->creates in instance??? YES
     // who is from? service is called by? -> instance???
-    function registerService(address service)
+    function registerService(address serviceAddress)
         external 
         override 
-        onlyOwner()
+        OnlyOwner()
         returns(NftId nftId)
     {
         IService service = IService(serviceAddress);
@@ -121,7 +121,7 @@ contract Registry is
     function registerFor(address from, address registrable)
         external 
         override 
-        onlyService()
+        OnlyService()
         returns(NftId nftId)
     {
         IRegisterable registrableContract = IRegisterable(registrable);
@@ -129,7 +129,7 @@ contract Registry is
 
         return _registerContract(SERVICE(), from, registrable, info);
     }
-    function registerFor(address from, ObjectInfo memory info) external returns (NftId nftId);
+    function registerFor(address from, ObjectInfo memory info)
         external 
         override
         OnlyService() 
@@ -172,7 +172,7 @@ contract Registry is
     {
         // only registered contract can register objects
         // owner either registers contracts or objects, never both
-        require(_inftIdByAddress[from].neqz(), "NOT_REGISTRED");
+        require(!_nftIdByAddress[from].eqz(), "NOT_REGISTRED");
     
         ObjectType parentType = _info[info.parentNftId].objectType;
         require(_allowed[registratorType][info.objectType][parentType] == true);// type is valid, parent type is valid, parent is registered
