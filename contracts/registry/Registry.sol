@@ -65,30 +65,22 @@ contract Registry is
 
     // Registration
     // what? -> who? -> how?
-    // SERVICE()/TOKEN()/INSTANCE()/COMPONENT() -> only owner -> directly
-    // INSTANCE() -> any address -> through SERVICE() (any not registered address)
-    // COMPONENT() -> any address -> through SERVICE() (any not regisetred address, with role from INSTANCE() )
+    // SERVICE()/TOKEN() -> only owner -> directly
+    // INSTANCE() -> any not registred address -> through SERVICE()
+    // COMPONENT() -> any not registred address -> through SERVICE() with role from INSTANCE()
     // BUNDLE()/POLICY() -> only INSTANCE() -> directly  
+    // if owner can register contracts -> owner is not registred contract -> thus owner can not registry objects
     // assumption: Service_X will never register Instance/Component for Service_Y -> need to check whole chain from object to service...
     // assumption: Owner will behave well...
     // question: If unknown contract registers other contract and then itself became registred?
-    // TODO: enforce "registration on the same hierarchy branch"
-    function registerForService(address registrator, address registrable)
+    // ?->service->instance->registry-> NO
+    // ?->service.registry()->registry.registryFor(?)->creates in registry??? YES
+    //                      ->instance->creates in instance??? YES
+    // who is from? service is called by? -> instance???
+    function registerService(address service)
         external 
         override 
-        onlyService() // only service capable of registring objects   register<-service
-        returns(NftId nftId)
-    {
-        IRegisterable registrableContract = IRegisterable(registrable);
-        ObjectInfo memory info = registrableContract.getInfo(); // TODO: provided by Service???
-
-        return _registerContract(SERVICE(), registrator, registrable, info);
-    }
-
-    function registerService(address serviceAddress)
-        external 
-        override 
-        //OnlyOwner()
+        onlyOwner()
         returns(NftId nftId)
     {
         IService service = IService(serviceAddress);
@@ -117,43 +109,50 @@ contract Registry is
             _service[serviceNameHash][majorVersion] = serviceAddress;
         }
     }
-
     function registerToken(address token, ObjectInfo memory tokenInfo) 
         external
         override 
-        //OnlyOwner()
+        OnlyOwner()
         returns(NftId nftId)
     {
+        // check for IERC20 support
         return _registerContract(REGISTRY(), getOwner(), token, tokenInfo);
     }
-
-    function registerForInstance(ObjectInfo memory object)
+    function registerFor(address from, address registrable)
         external 
         override 
+        onlyService()
         returns(NftId nftId)
-        //OnlyInstance()
     {
-        NftId instanceNftId = _nftIdByAddress[msg.sender];
-        require(_info[instanceNftId].objectType == INSTANCE(), "ERROR:REG-002:UNKNOWN_INSTANCE");
+        IRegisterable registrableContract = IRegisterable(registrable);
+        ObjectInfo memory info = registrableContract.getInfo(); // TODO: provided by Service???
 
-        require(_info[object.parentNftId].parentNftId == instanceNftId, "ERROR:REG_002:WRONG_INSTANCE");// mismatch
-
-        return _registerObject(INSTANCE(), object);
+        return _registerContract(SERVICE(), from, registrable, info);
     }
+    function registerFor(address from, ObjectInfo memory info) external returns (NftId nftId);
+        external 
+        override
+        OnlyService() 
+        returns(NftId nftId)
+    {
+        // enforce that service->...registrator->...->registrable.parentNftId->..-> registratorNftId ->
+        //require(_info[info.parentNftId].parentNftId == serviceNftId, "ERROR:REG_002:WRONG_SERVICE");// mismatch -> goes into service ???
 
-    // TODO is it possible to verify hash(contract.code + contract.storage)?
-    // callerType -> registerForService() or other function
-    // registrator -> who uses service to register something
-    // registrable, info -> is what registered
-    function _registerContract(ObjectType callerType, address registrator, address registrable, ObjectInfo memory info)
+        return _registerObject(SERVICE(), from, info);
+    }
+    // TODO registrator, source and registrable are on the same branch
+    function _registerContract(ObjectType registratorType, address from, address registrable, ObjectInfo memory info)
         internal  
         returns(NftId nftId)
     {
         require(_nftIdByAddress[registrable].eqz(), "ERROR:REG-002:ALREADY_REGISTERED");
-        require(_nftIdByAddress[registrator].eqz(), "ERROR:REG-003:ALREADY_REGISTERED");// registred contract can not register another contract
+        // registred contract can not register another contract
+        // service can register instance/component -> but service is never "from" 
+        // Service_X->Service_Y.register()->registry.registerFor() is not allowed
+        require(_nftIdByAddress[from].eqz(), "ERROR:REG-003:ALREADY_REGISTERED");
 
         ObjectType parentType = _info[info.parentNftId].objectType;
-        require(_allowed[callerType][parentType][info.objectType] == true);// type is valid, parent type is valid, parent is registered
+        require(_allowed[registratorType][info.objectType][parentType] == true);// type is valid, parent type is valid, parent is registered
         
         uint256 mintedTokenId = _chainNft.mint(
             info.initialOwner, // TODO any intrinsic for deployer address?
@@ -166,16 +165,20 @@ contract Registry is
         _info[nftId] = info;
         _nftIdByAddress[registrable] = nftId;
     }
-
-    function _registerObject(ObjectType callerType, ObjectInfo memory info)
+    // TODO registrator, from and info.parentNftId are on the same branch
+    function _registerObject(ObjectType registratorType, address from, ObjectInfo memory info)
         internal 
         returns(NftId nftId)
     {
+        // only registered contract can register objects
+        // owner either registers contracts or objects, never both
+        require(_inftIdByAddress[from].neqz(), "NOT_REGISTRED");
+    
         ObjectType parentType = _info[info.parentNftId].objectType;
-        require(_allowed[callerType][parentType][info.objectType] == true);// type is valid, parent type is valid, parent is registered
+        require(_allowed[registratorType][info.objectType][parentType] == true);// type is valid, parent type is valid, parent is registered
 
         uint256 mintedTokenId = _chainNft.mint(
-            info.initialOwner,
+            info.initialOwner,//always caller of "from"?
             EMPTY_URI);
         nftId = toNftId(mintedTokenId);
 
@@ -313,12 +316,12 @@ contract Registry is
 
     function _setRegistrables() virtual internal 
     {
-        // _allowed[function][object][parent]
-        // for instance
+        // _allowed[actor][object][parent]
+        // for service
+        //      used only by Instance !!!
         _allowed[SERVICE()][POLICY()][PRODUCT()] = true;
         _allowed[SERVICE()][BUNDLE()][POOL()] = true;
-
-        // for service -> indirect
+        //      used by ...
         _allowed[SERVICE()][PRODUCT()][INSTANCE()] = true;
         _allowed[SERVICE()][POOL()][INSTANCE()] = true;
         _allowed[SERVICE()][ORACLE()][INSTANCE()]= true;

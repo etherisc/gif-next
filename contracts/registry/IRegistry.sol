@@ -20,8 +20,8 @@ interface IRegistry is IERC165 {
 
     function registerService(address serviceAddress) external returns (NftId nftId);
     function registerToken(address token, ObjectInfo memory tokenInfo) external returns (NftId nftId);
-    function registerForService(address registrator, address registrable) external returns (NftId nftId);
-    function registerForInstance(ObjectInfo memory object) external returns (NftId nftId);
+    function registerFor(address from, address registrable) external returns (NftId nftId);
+    function registerFor(address from, ObjectInfo memory object) external returns (NftId nftId);
 
     function getServiceAddress(string memory serviceName, VersionPart majorVersion) external view returns (address serviceAddress);
 
