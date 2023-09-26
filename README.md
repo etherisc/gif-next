@@ -56,8 +56,21 @@ Environment variables:
 hh console --network <networkname>
 
 me = hre.ethers.Wallet.fromPhrase('...')
-provider = hre.ethers.provider
+provider = hre.ethers.providerc
 await provider.getBalance(me)
+
+me = (await hre.ethers.getSigners())[0]
+chainNftFact = await ethers.getContractFactory('ChainNft')
+chainNft = await chainNftFact.attach('0xE952F732123A96bDa07844DE5ca3e238D94a045E')
+mintTx = await chainNft.mint(me, 'https://ipfs.io/ipfs/QmWsUuNrvieMmojRHo7Vuwp5JDB2nQL9TYFfxbTZDN9Bks')
+receipt = await mintTx.wait()
+
+receipt.logs
+
+await chainNft.tokenURI('68000105') 
+
+https://testnets.opensea.io/assets/mumbai/0xe952f732123a96bda07844de5ca3e238d94a045e/68000105
+
 ```
 
 

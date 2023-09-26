@@ -1,0 +1,33 @@
+{
+    "description": "Owner token for Terraguard policy", 
+    "external_url": "https://etherisc.com", 
+    "image": "https://uploads-ssl.webflow.com/6243075ff83d08a79dc7b307/6269142f185faa55b7b57a76_Element%20172.png", 
+    "name": "Terraguard Policy 34522234",
+    "attributes": [ 
+        {
+            "trait_type": "Type",
+            "value": "Policy"
+        },
+        {
+            "display_type": "string", 
+            "trait_type": "Policy ID", 
+            "value": "34522234"
+        },
+        {
+            "display_type": "string", 
+            "trait_type": "Coverage amount", 
+            "value": "USDT 35000"
+        },
+        {
+            "display_type": "string", 
+            "trait_type": "Policy Type", 
+            "value": "Type One"
+        },
+
+        {
+            "display_type": "date", 
+            "trait_type": "Expiration date", 
+            "value": 1695718212
+        }
+    ]
+}

@@ -1,4 +1,4 @@
-import { AddressLike, Signer, resolveAddress } from "ethers";
+import { AddressLike, EtherscanProvider, Signer, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
 import { IChainNft__factory, IRegistry__factory, Registry, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
@@ -236,32 +236,34 @@ async function deployRegistry(owner: Signer): Promise<{
     chainNftAddress: AddressLike,
     nfIdLibAddress: AddressLike,
 }> {
-    const { address: nfIdLibAddress } = await deployContract(
-        "NftIdLib",
-        owner);
-    const { address: registryAddress, contract: registryBaseContract } = await deployContract(
-        "Registry",
-        owner,
-        undefined,
-        {
-            libraries: {
-                NftIdLib: nfIdLibAddress,
-            }
-        });
+    // const { address: nfIdLibAddress } = await deployContract(
+    //     "NftIdLib",
+    //     owner);
+    // const { address: registryAddress, contract: registryBaseContract } = await deployContract(
+    //     "Registry",
+    //     owner,
+    //     undefined,
+    //     {
+    //         libraries: {
+    //             NftIdLib: nfIdLibAddress,
+    //         }
+    //     });
     const { address: chainNftAddress } = await deployContract(
         "ChainNft",
         owner,
-        [registryAddress]);
+        [resolveAddress(owner.getAddress())]);
 
-    const registry = registryBaseContract as Registry;
-    await registry.initialize(chainNftAddress);
-    logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}`);
 
-    return {
-        registryAddress,
-        chainNftAddress,
-        nfIdLibAddress,
-    };
+    throw Error("ChainNft deployed at " + chainNftAddress)
+    // const registry = registryBaseContract as Registry;
+    // await registry.initialize(chainNftAddress);
+    // logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}`);
+
+    // return {
+    //     registryAddress,
+    //     chainNftAddress,
+    //     nfIdLibAddress,
+    // };
 }
 
 
