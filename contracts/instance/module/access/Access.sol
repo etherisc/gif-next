@@ -5,92 +5,67 @@ pragma solidity ^0.8.19;
 // import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import {RoleId, toRoleId} from "../../../types/RoleId.sol";
+import {DISTRIBUTOR_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../types/RoleId.sol";
+import {DISTRIBUTOR_OWNER_ROLE_NAME, ORACLE_OWNER_ROLE_NAME, POOL_OWNER_ROLE_NAME, PRODUCT_OWNER_ROLE_NAME} from "../../../types/RoleId.sol";
 import {IAccessModule} from "./IAccess.sol";
 
 abstract contract AccessModule is IAccessModule {
-    string public constant PRODUCT_OWNER = "ProductOwner";
-    string public constant ORACLE_OWNER = "OracleOwner";
-    string public constant POOL_OWNER = "PoolOwner";
 
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    event LogAccessSenderOwner(uint index, address sender, address owner);
-    event LogAccessRoleGranted(bytes32 role, address member, bool isMember);
+    mapping(RoleId role => RoleInfo info) private _info;
+    RoleId[] private _roles;
 
-    mapping(bytes32 role => RoleInfo info) private _info;
-    bytes32[] private _roles;
-
-    bytes32 private immutable _productOwnerRole;
-    bytes32 private immutable _oracleOwnerRole;
-    bytes32 private immutable _poolOwnerRole;
-
-    mapping(bytes32 role => mapping(address member => bool isMember))
+    mapping(RoleId role => mapping(address member => bool isMember))
         private _isRoleMember;
-    mapping(bytes32 role => EnumerableSet.AddressSet) private _roleMembers;
+    mapping(RoleId role => EnumerableSet.AddressSet members) private _roleMembers;
 
     modifier onlyAccessOwner() {
-        emit LogAccessSenderOwner(1, msg.sender, this.getOwner());    
         require(
             msg.sender == this.getOwner(),
             "ERROR:ACS-001:NOT_OWNER");
-        emit LogAccessSenderOwner(2, msg.sender, this.getOwner());    
+        _;
+    }
+
+    modifier onlyExistingRole(RoleId role) {
+        require(
+            _info[role].id == role,
+            "ERROR:ACS-002:ROLE_NOT_EXISTING");
         _;
     }
 
     constructor() {
-        _productOwnerRole = _createRole(PRODUCT_OWNER);
-        _oracleOwnerRole = _createRole(ORACLE_OWNER);
-        _poolOwnerRole = _createRole(POOL_OWNER);
-    }
-
-    function PRODUCT_OWNER_ROLE() public view virtual override returns (bytes32 role) {
-        return _productOwnerRole;
-    }
-
-    function ORACLE_OWNER_ROLE() public view virtual override returns (bytes32 role) {
-        return _oracleOwnerRole;
-    }
-
-    function POOL_OWNER_ROLE() public view virtual override returns (bytes32 role) {
-        return _poolOwnerRole;
+        _createRole(DISTRIBUTOR_OWNER_ROLE(), DISTRIBUTOR_OWNER_ROLE_NAME());
+        _createRole(ORACLE_OWNER_ROLE(), ORACLE_OWNER_ROLE_NAME());
+        _createRole(POOL_OWNER_ROLE(), POOL_OWNER_ROLE_NAME());
+        _createRole(PRODUCT_OWNER_ROLE(), PRODUCT_OWNER_ROLE_NAME());
     }
 
     function createRole(
         string memory roleName
-    ) external override onlyAccessOwner returns (bytes32 role) {
-        return _createRole(roleName);
+    ) public override onlyAccessOwner returns (RoleId role) {
+        role = toRoleId(roleName);
+        require(
+            !roleExists(role),
+            "ERROR:ACS-010:ROLE_ALREADY_EXISTS");
+        
+        _createRole(role, roleName);
     }
 
-    function _createRole(
-        string memory roleName
-    ) internal returns (bytes32 role) {
-        RoleInfo memory info = RoleInfo(0, roleName, true);
-
-        role = _setRoleInfo(info);
-    }
-
-    function disableRole(bytes32 role) external override onlyAccessOwner {
+    function setRoleState(RoleId role, bool active) external override onlyExistingRole(role) onlyAccessOwner {
         RoleInfo memory info = _info[role];
-        require(info.id == role, "ERROR:AOS-001:ROLE_DOES_NOT_EXIST");
-
-        info.isActive = false;
+        info.isActive = active;
         _setRoleInfo(info);
-    }
 
-    function enableRole(bytes32 role) external override onlyAccessOwner {
-        RoleInfo memory info = _info[role];
-        require(info.id == role, "ERROR:AOS-002:ROLE_DOES_NOT_EXIST");
-
-        info.isActive = true;
-        _setRoleInfo(info);
+        emit LogAccessRoleStateSet(role, active);
     }
 
     function grantRole(
-        bytes32 role,
+        RoleId role,
         address member
-    ) external override onlyAccessOwner {
-        require(_info[role].id == role, "ERROR:ACM-010:ROLE_NOT_EXISTING");
-        require(_info[role].isActive, "ERROR:ACM-011:ROLE_NOT_ACTIVE");
+    ) external override onlyExistingRole(role) onlyAccessOwner {
+        require(_info[role].isActive, "ERROR:ACS-040:ROLE_NOT_ACTIVE");
 
         _isRoleMember[role][member] = true;
         _roleMembers[role].add(member);
@@ -99,31 +74,35 @@ abstract contract AccessModule is IAccessModule {
     }
 
     function revokeRole(
-        bytes32 role,
+        RoleId role,
         address member
-    ) external override onlyAccessOwner {
-        require(_info[role].id == role, "ERROR:ACM-020:ROLE_NOT_EXISTING");
-
-        _isRoleMember[role][member] = false;
+    ) external override onlyExistingRole(role) onlyAccessOwner {
+        delete _isRoleMember[role][member];
         _roleMembers[role].remove(member);
+
+        emit LogAccessRoleGranted(role, member, false);
+    }
+
+    function roleExists(RoleId role) public view virtual override returns (bool) {
+        return _info[role].id == role;
     }
 
     function hasRole(
-        bytes32 role,
+        RoleId role,
         address member
     ) public view virtual override returns (bool) {
         return _isRoleMember[role][member];
     }
 
     function getRoleInfo(
-        bytes32 role
+        RoleId role
     ) external view override returns (RoleInfo memory info) {
         return _info[role];
     }
 
     function getRole(
         uint256 idx
-    ) external view override returns (bytes32 role) {
+    ) external view override returns (RoleId role) {
         return _roles[idx];
     }
 
@@ -132,37 +111,35 @@ abstract contract AccessModule is IAccessModule {
     }
 
     function getRoleMemberCount(
-        bytes32 role
+        RoleId role
     ) public view override returns (uint256 roleMembers) {
         return _roleMembers[role].length();
     }
 
     function getRoleMember(
-        bytes32 role,
+        RoleId role,
         uint256 idx
     ) public view override returns (address roleMembers) {
         return _roleMembers[role].at(idx);
     }
 
-    function getRoleForName(
+    function _createRole(
+        RoleId role,
         string memory roleName
-    ) public pure override returns (bytes32 role) {
-        return keccak256(abi.encode(roleName));
+    ) internal {
+        RoleInfo memory info = RoleInfo(role, roleName, true);
+        _setRoleInfo(info);
+
+        emit LogAccessRoleCreated(role, roleName);
     }
 
     function _setRoleInfo(
         RoleInfo memory info
-    ) internal returns (bytes32 role) {
-        role = info.id;
-
-        if (role == bytes32(0)) {
-            role = getRoleForName(info.name);
-            // TODO check that this is a new role id
-
-            info.id = role;
+    ) internal {
+        RoleId role = info.id;
+        _info[role] = info;
+        if(!roleExists(role)) {
             _roles.push(role);
         }
-
-        _info[role] = info;
     }
 }

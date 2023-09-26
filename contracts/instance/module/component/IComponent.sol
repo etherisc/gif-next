@@ -9,6 +9,7 @@ import {IInstance} from "../../IInstance.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {NftId} from "../../../types/NftId.sol";
 import {ObjectType} from "../../../types/ObjectType.sol";
+import {RoleId} from "../../../types/RoleId.sol";
 import {Fee} from "../../../types/Fee.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 
@@ -28,7 +29,6 @@ interface IComponentModule is IComponent {
     function getRegistry() external view returns (IRegistry registry);
 
     function registerComponent(
-        IComponentBase component,
         NftId nftId,
         ObjectType objectType,
         IERC20Metadata token
@@ -42,24 +42,12 @@ interface IComponentModule is IComponent {
         NftId nftId
     ) external view returns (ComponentInfo memory info);
 
-    function getComponentId(
-        address componentAddress
-    ) external view returns (NftId nftId);
+    function getComponentCount() external view returns (uint256 numberOfCompnents);
 
     function getComponentId(uint256 idx) external view returns (NftId nftId);
-
-    function components() external view returns (uint256 numberOfCompnents);
 
     // repeat service linked signaturea to avoid linearization issues
     function getComponentOwnerService() external view returns(IComponentOwnerService);
 
-    function PRODUCT_OWNER_ROLE() external view returns (bytes32 role);
-
-    function ORACLE_OWNER_ROLE() external view returns (bytes32 role);
-
-    function POOL_OWNER_ROLE() external view returns (bytes32 role);
-
-    function getRoleForType(ObjectType cType) external view returns (bytes32 role);
-
-    function hasRole(bytes32 role, address member) external view returns (bool);
+    function hasRole(RoleId role, address member) external view returns (bool);
 }

@@ -3,9 +3,11 @@ pragma solidity ^0.8.19;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
+
 import {IVersionable} from "../shared/IVersionable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IOwnable} from "../shared/IOwnable.sol";
+import {RoleId} from "../types/RoleId.sol";
 
 import {IAccessModule} from "./module/access/IAccess.sol";
 import {ILifecycleModule} from "./module/lifecycle/ILifecycle.sol";
@@ -38,12 +40,7 @@ interface IInstance is
     IServiceLinked
 {
     function getRegistry() external view override (IBundleModule, IComponentModule, IPolicyModule, IRegisterable) returns (IRegistry registry);
-
-    function PRODUCT_OWNER_ROLE() external view override (IAccessModule, IComponentModule) returns (bytes32 role);    
-    function ORACLE_OWNER_ROLE() external view override (IAccessModule, IComponentModule) returns (bytes32 role);    
-    function POOL_OWNER_ROLE() external view override (IAccessModule, IComponentModule) returns (bytes32 role);    
-
-    function hasRole(bytes32 role, address member) external view override (IAccessModule, IComponentModule) returns (bool hasRole);    
+    function hasRole(RoleId role, address member) external view override (IAccessModule, IComponentModule) returns (bool hasRole);    
 
     function getComponentOwnerService() external view override (IServiceLinked, IComponentModule) returns(IComponentOwnerService);
     function getProductService() external view override (IServiceLinked, IBundleModule, IPolicyModule, IPoolModule) returns(IProductService);

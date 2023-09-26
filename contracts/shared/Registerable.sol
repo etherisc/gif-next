@@ -63,10 +63,6 @@ abstract contract Registerable is
         return _registry;
     }
 
-    function getInitialOwner() public view override returns (address initialOwner) {
-        return _initialOwner;
-    }
-
     function getOwner() public view virtual override returns (address owner) {
         NftId nftId = _registry.getNftId(address(this));
         if(nftId == zeroNftId()) {

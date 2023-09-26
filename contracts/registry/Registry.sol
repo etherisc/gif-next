@@ -106,7 +106,7 @@ contract Registry is
 
         // nft minting
         uint256 mintedTokenId = _chainNft.mint(
-            registerable.getInitialOwner(),
+            registerable.getOwner(),
             EMPTY_URI
         );
 
@@ -242,14 +242,9 @@ contract Registry is
         return REGISTRY();
     }
 
-    function getInitialOwner() external view override returns (address) {
-        return _initialOwner;
-    }
-
 
     function getOwner() public view override returns (address owner) {
-        owner = this.getOwner(_nftId);
-        return owner != address(0) ? owner : _initialOwner;
+        return _nftId.gtz() ? this.getOwner(_nftId) : _initialOwner;
     }
 
     function getNftId() external view override (IRegisterable, IRegistry) returns (NftId nftId) {
@@ -373,7 +368,7 @@ contract Registry is
             registerable.getParentNftId(),
             registerable.getType(),
             objectAddress,
-            registerable.getInitialOwner(),
+            registerable.getOwner(),
             registerable.getData()
         );
 

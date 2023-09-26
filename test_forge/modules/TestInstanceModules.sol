@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {InstanceBase} from "../../contracts/instance/InstanceBase.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
+import {RoleId} from "../../contracts/types/RoleId.sol";
 
 import {AccessModule} from "../../contracts/instance/module/access/Access.sol";
 import {BundleModule} from "../../contracts/instance/module/bundle/BundleModule.sol";
@@ -40,11 +41,7 @@ contract TestInstanceModuleAccess  is
 
     function getRegistry() public view override (Registerable) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function PRODUCT_OWNER_ROLE() public view override (AccessModule) returns (bytes32 role) { return super.PRODUCT_OWNER_ROLE(); }
-    function ORACLE_OWNER_ROLE() public view override (AccessModule) returns (bytes32 role) {return super.ORACLE_OWNER_ROLE(); }
-    function POOL_OWNER_ROLE() public view override (AccessModule) returns (bytes32 role) { return super.POOL_OWNER_ROLE(); }
-
-    function hasRole(bytes32 role, address member) public view override (AccessModule) returns (bool) { return super.hasRole(role, member); }
+    function hasRole(RoleId role, address member) public view override (AccessModule) returns (bool) { return super.hasRole(role, member); }
 
     function getComponentOwnerService() external view override (IServiceLinked) returns(IComponentOwnerService service) { return _componentOwnerService; }
     function getProductService() external view override (IServiceLinked) returns(IProductService service) { return _productService; }
@@ -85,11 +82,7 @@ contract TestInstanceModuleComponent  is
 
     function getRegistry() public view override (Registerable, IComponentModule) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function PRODUCT_OWNER_ROLE() public pure override returns (bytes32 role) { return bytes32(uint256(1)); }
-    function ORACLE_OWNER_ROLE() public pure override returns (bytes32 role) {return bytes32(uint256(2)); }
-    function POOL_OWNER_ROLE() public pure override returns (bytes32 role) { return bytes32(uint256(3));  }
-
-    function hasRole(bytes32, address) public pure override returns (bool) { return true; }
+    function hasRole(RoleId, address) public pure override returns (bool) { return true; }
 
     function getComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getProductService() external view override (IServiceLinked) returns(IProductService service) { return _productService; }

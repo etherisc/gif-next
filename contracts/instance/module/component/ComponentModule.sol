@@ -7,11 +7,8 @@ import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
 
 import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
-import {ITreasuryModule} from "../treasury/ITreasury.sol";
-import {TreasuryModule} from "../treasury/TreasuryModule.sol";
 import {IComponent, IComponentModule} from "./IComponent.sol";
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
-import {IPoolModule} from "../pool/IPoolModule.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../../types/NftId.sol";
@@ -24,15 +21,12 @@ abstract contract ComponentModule is
     using NftIdLib for NftId;
 
     mapping(NftId nftId => ComponentInfo info) private _componentInfo;
-    mapping(address cAddress => NftId nftId) private _nftIdByAddress;
     NftId[] private _nftIds;
 
     mapping(ObjectType cType => bytes32 role) private _componentOwnerRole;
 
     // TODO maybe move this to Instance contract as internal variable?
     LifecycleModule private _lifecycleModule;
-    TreasuryModule private _treasuryModule;
-    IPoolModule private _poolModule;
 
     modifier onlyComponentOwnerService() {
         require(
@@ -45,12 +39,9 @@ abstract contract ComponentModule is
     constructor() {
         address componentAddress = address(this);
         _lifecycleModule = LifecycleModule(componentAddress);
-        _treasuryModule = TreasuryModule(componentAddress);
-        _poolModule = IPoolModule(componentAddress);
     }
 
     function registerComponent(
-        IComponentBase component,
         NftId nftId,
         ObjectType objectType,
         IERC20Metadata token
@@ -63,7 +54,6 @@ abstract contract ComponentModule is
             token
         );
 
-        _nftIdByAddress[address(component)] = nftId;
         _nftIds.push(nftId);
 
         // TODO add logging
@@ -91,25 +81,7 @@ abstract contract ComponentModule is
         _componentInfo[nftId] = info;
     }
 
-    function getComponentInfo(
-        NftId nftId
-    ) external view override returns (ComponentInfo memory) {
-        return _componentInfo[nftId];
-    }
-
-    function getComponentId(
-        address componentAddress
-    ) external view returns (NftId componentNftId) {
-        return _nftIdByAddress[componentAddress];
-    }
-
-    function getComponentId(
-        uint256 idx
-    ) external view override returns (NftId componentNftId) {
-        return _nftIds[idx];
-    }
-
-    function components()
+    function getComponentCount()
         external
         view
         override
@@ -118,17 +90,15 @@ abstract contract ComponentModule is
         return _nftIds.length;
     }
 
-    function getRoleForType(
-        ObjectType cType
-    ) public view override returns (bytes32 role) {
-        if (cType == PRODUCT()) {
-            return this.PRODUCT_OWNER_ROLE();
-        }
-        if (cType == POOL()) {
-            return this.POOL_OWNER_ROLE();
-        }
-        if (cType == ORACLE()) {
-            return this.ORACLE_OWNER_ROLE();
-        }
+    function getComponentId(
+        uint256 idx
+    ) external view override returns (NftId componentNftId) {
+        return _nftIds[idx];
+    }
+
+    function getComponentInfo(
+        NftId nftId
+    ) external view override returns (ComponentInfo memory) {
+        return _componentInfo[nftId];
     }
 }

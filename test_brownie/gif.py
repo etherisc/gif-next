@@ -66,7 +66,7 @@ def deploy_registry(owner):
 
     reg = Registry.deploy({'from': owner})
     nft = ChainNft.deploy(reg, {'from': owner})
-    reg.initialize(nft, {'from': owner})
+    reg.initialize(nft, owner, {'from': owner})
 
     return reg
 

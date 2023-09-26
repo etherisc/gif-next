@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {NftId} from "../types/NftId.sol";
+import {RoleId} from "../types/RoleId.sol";
 
 import {InstanceBase} from "./InstanceBase.sol";
 import {AccessModule} from "./module/access/Access.sol";
@@ -51,11 +52,7 @@ contract Instance is
 
     function getRegistry() public view override (Registerable, IBundleModule, IComponentModule, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function PRODUCT_OWNER_ROLE() public view override (AccessModule, IComponentModule) returns (bytes32 role) { return super.PRODUCT_OWNER_ROLE(); }
-    function ORACLE_OWNER_ROLE() public view override (AccessModule, IComponentModule) returns (bytes32 role) {return super.ORACLE_OWNER_ROLE(); }
-    function POOL_OWNER_ROLE() public view override (AccessModule, IComponentModule) returns (bytes32 role) { return super.POOL_OWNER_ROLE(); }
-
-    function hasRole(bytes32 role, address member) public view override (AccessModule, IComponentModule) returns (bool) { return super.hasRole(role, member); }
+    function hasRole(RoleId role, address member) public view override (AccessModule, IComponentModule) returns (bool) { return super.hasRole(role, member); }
 
     function getComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(IComponentOwnerService service) { return _componentOwnerService; }
     function getProductService() external view override (IBundleModule, IPolicyModule, IPoolModule, IServiceLinked) returns(IProductService service) { return _productService; }

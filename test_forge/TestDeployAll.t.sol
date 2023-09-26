@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import {console} from "../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
+import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol";
 
 contract TestDeployAll is TestGifBase {
     function testDeployAllRegistryCountWithProduct() public {
@@ -39,13 +40,12 @@ contract TestDeployAll is TestGifBase {
     }
 
     function testDeployAllHasProductOwnerRole() public {
-        bytes32 productOwnerRole = instance.getRoleForName("ProductOwner");
         assertTrue(
-            instance.hasRole(productOwnerRole, productOwner),
+            instance.hasRole(PRODUCT_OWNER_ROLE(), productOwner),
             "product owner not assigned to product owner"
         );
         assertFalse(
-            instance.hasRole(productOwnerRole, instanceOwner),
+            instance.hasRole(PRODUCT_OWNER_ROLE(), instanceOwner),
             "product owner is assigned to instance owner"
         );
     }

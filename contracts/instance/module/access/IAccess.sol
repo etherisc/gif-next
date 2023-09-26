@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {RoleId} from "../../../types/RoleId.sol";
+
 interface IAccess {
     struct RoleInfo {
-        bytes32 id;
+        RoleId id;
         string name;
         bool isActive;
     }
@@ -12,44 +14,38 @@ interface IAccess {
 interface IAccessModule is
     IAccess
 {
-    function PRODUCT_OWNER_ROLE() external view returns (bytes32 role);
+    event LogAccessRoleCreated(RoleId role, string roleName);
+    event LogAccessRoleStateSet(RoleId role, bool active);
+    event LogAccessRoleGranted(RoleId role, address member, bool isMember);
 
-    function ORACLE_OWNER_ROLE() external view returns (bytes32 role);
+    function createRole(string memory roleName) external returns (RoleId role);
 
-    function POOL_OWNER_ROLE() external view returns (bytes32 role);
+    function setRoleState(RoleId role, bool active) external;
 
-    function createRole(string memory roleName) external returns (bytes32 role);
+    function grantRole(RoleId role, address member) external;
 
-    function enableRole(bytes32 role) external;
+    function revokeRole(RoleId role, address member) external;
 
-    function disableRole(bytes32 role) external;
+    function roleExists(RoleId role) external view returns (bool);
 
-    function grantRole(bytes32 role, address member) external;
-
-    function revokeRole(bytes32 role, address member) external;
-
-    function hasRole(bytes32 role, address member) external view returns (bool);
-
-    function getRole(uint256 idx) external view returns (bytes32 role);
-
-    function getRoleInfo(
-        bytes32 role
-    ) external view returns (RoleInfo memory info);
-
-    function getRoleForName(
-        string memory roleName
-    ) external pure returns (bytes32 role);
+    function hasRole(RoleId role, address member) external view returns (bool);
 
     function getRoleCount() external view returns (uint256 roles);
 
+    function getRole(uint256 idx) external view returns (RoleId role);
+
+    function getRoleInfo(
+        RoleId role
+    ) external view returns (RoleInfo memory info);
+
     function getRoleMemberCount(
-        bytes32 role
+        RoleId role
     ) external view returns (uint256 roleMembers);
 
     function getRoleMember(
-        bytes32 role,
+        RoleId role,
         uint256 idx
-    ) external view returns (address roleMembers);
+    ) external view returns (address roleMember);
 
     function getOwner() external view returns (address owner);
 }

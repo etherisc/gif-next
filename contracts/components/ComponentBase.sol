@@ -48,7 +48,7 @@ abstract contract ComponentBase is
 
     // from registerable
     function register() public override(IRegisterable, Registerable) returns (NftId componentId) {
-        require(msg.sender == getInitialOwner(), "");
+        require(msg.sender == getOwner(), "");
         require(
             address(_registry) != address(0),
             "ERROR:COB-001:REGISTRY_ZERO"

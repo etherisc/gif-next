@@ -55,14 +55,10 @@ abstract contract InstanceBase is
         return INSTANCE();
     }
 
-    // // from service linked
-    // function getComponentOwnerService() external view virtual override returns(IComponentOwnerService service) { return _componentOwnerService; }
-    // function getProductService() external view virtual override returns(IProductService service) { return _productService; }
-    // function getPoolService() external view virtual override returns(IPoolService service) { return _poolService; }
 
     // internal / private functions
     function _linkToServicesInRegistry() internal {
-        (VersionPart majorVersion,,) = getVersion().toVersionParts();
+        VersionPart majorVersion = getVersion().toMajorPart();
         _componentOwnerService = IComponentOwnerService(_getAndCheck("ComponentOwnerService", majorVersion));
         _productService = IProductService(_getAndCheck("ProductService", majorVersion));
         _poolService = IPoolService(_getAndCheck("PoolService", majorVersion));

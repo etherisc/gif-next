@@ -20,6 +20,7 @@ import {USDC} from "../mock/Usdc.sol";
 import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
+import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 
 contract TestGifBase is Test {
     using NftIdLib for NftId;
@@ -155,15 +156,13 @@ contract TestGifBase is Test {
         instance = new Instance(
             address(registry), 
             registry.getNftId());
-        instance.register();
-
         console.log("instance deployed at", address(instance));
 
-        bytes32 productOwnerRole = instance.getRoleForName("ProductOwner");
-        bytes32 poolOwnerRole = instance.getRoleForName("PoolOwner");
+        NftId nftId = instance.register();
+        console.log("instance nft id", nftId.toInt());
 
-        instance.grantRole(productOwnerRole, productOwner);
-        instance.grantRole(poolOwnerRole, poolOwner);
+        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
         console.log("product and pool roles granted");
     }
 

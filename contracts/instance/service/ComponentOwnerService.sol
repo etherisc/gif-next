@@ -17,6 +17,7 @@ import {IPoolModule} from "../module/pool/IPoolModule.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
+import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../types/RoleId.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
@@ -67,10 +68,24 @@ contract ComponentOwnerService is
         return NAME;
     }
 
+    function getRoleForType(
+        ObjectType cType
+    ) public pure override returns (RoleId role) {
+        if (cType == PRODUCT()) {
+            return PRODUCT_OWNER_ROLE();
+        }
+        if (cType == POOL()) {
+            return POOL_OWNER_ROLE();
+        }
+        if (cType == ORACLE()) {
+            return ORACLE_OWNER_ROLE();
+        }
+    }
+
     function register(
         IComponentBase component
     ) external override returns (NftId nftId) {
-        address initialOwner = component.getInitialOwner();
+        address initialOwner = component.getOwner();
         require(
             msg.sender == address(component),
             "ERROR:COS-003:NOT_COMPONENT"
@@ -78,7 +93,7 @@ contract ComponentOwnerService is
 
         IInstance instance = component.getInstance();
         ObjectType objectType = component.getType();
-        bytes32 typeRole = instance.getRoleForType(objectType);
+        RoleId typeRole = getRoleForType(objectType);
         require(
             instance.hasRole(typeRole, initialOwner),
             "ERROR:CMP-004:TYPE_ROLE_MISSING"
@@ -88,7 +103,6 @@ contract ComponentOwnerService is
         IERC20Metadata token = component.getToken();
 
         instance.registerComponent(
-            component,
             nftId,
             objectType,
             token);
