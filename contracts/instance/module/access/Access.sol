@@ -94,6 +94,10 @@ abstract contract AccessModule is IAccessModule {
         return _isRoleMember[role][member];
     }
 
+    function getRoleId(string memory roleName) external pure override returns (RoleId role) {
+        return toRoleId(roleName);
+    }
+
     function getRoleInfo(
         RoleId role
     ) external view override returns (RoleInfo memory info) {

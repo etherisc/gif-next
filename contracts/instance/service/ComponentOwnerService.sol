@@ -10,9 +10,8 @@ import {LifecycleModule} from "../module/lifecycle/LifecycleModule.sol";
 import {ITreasuryModule} from "../module/treasury/ITreasury.sol";
 import {TreasuryModule} from "../module/treasury/TreasuryModule.sol";
 import {IComponent, IComponentModule} from "../module/component/IComponent.sol";
-import {IProductBase} from "../../components/IProductBase.sol";
-import {IPoolBase} from "../../components/IPoolBase.sol";
-import {IPoolModule} from "../module/pool/IPoolModule.sol";
+import {IBaseComponent} from "../../components/IBaseComponent.sol";
+import {IPoolComponent} from "../../components/IPoolComponent.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
@@ -24,9 +23,7 @@ import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, zeroFee} from "../../types/Fee.sol";
 import {Version, toVersion, toVersionPart} from "../../types/Version.sol";
 
-import {IComponentBase} from "../../components/IComponentBase.sol";
-import {IProductBase} from "../../components/IProductBase.sol";
-import {IPoolBase} from "../../components/IPoolBase.sol";
+import {IProductComponent} from "../../components/IProductComponent.sol";
 import {ServiceBase} from "./ServiceBase.sol";
 import {IComponentOwnerService} from "./IComponentOwnerService.sol";
 
@@ -38,7 +35,7 @@ contract ComponentOwnerService is
 
     string public constant NAME = "ComponentOwnerService";
 
-    modifier onlyRegisteredComponent(IComponentBase component) {
+    modifier onlyRegisteredComponent(IBaseComponent component) {
         NftId nftId = _registry.getNftId(address(component));
         require(nftId.gtz(), "ERROR:COS-001:COMPONENT_UNKNOWN");
         _;
@@ -83,7 +80,7 @@ contract ComponentOwnerService is
     }
 
     function register(
-        IComponentBase component
+        IBaseComponent component
     ) external override returns (NftId nftId) {
         address initialOwner = component.getOwner();
         require(
@@ -111,7 +108,7 @@ contract ComponentOwnerService is
 
         // component type specific registration actions
         if (component.getType() == PRODUCT()) {
-            IProductBase product = IProductBase(address(component));
+            IProductComponent product = IProductComponent(address(component));
             NftId poolNftId = product.getPoolNftId();
             require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
             // validate pool token and product token are same
@@ -129,24 +126,26 @@ contract ComponentOwnerService is
                 product.getProcessingFee()
             );
         } else if (component.getType() == POOL()) {
-            IPoolBase pool = IPoolBase(address(component));
+            IPoolComponent pool = IPoolComponent(address(component));
 
             // register with pool
-            instance.registerPool(nftId);
+            instance.registerPool(
+                nftId,
+                pool.isVerifying(),
+                pool.getCollateralizationLevel());
 
             // register with tresury
             instance.registerPool(
                 nftId,
                 wallet,
                 pool.getStakingFee(),
-                pool.getPerformanceFee()
-            );
+                pool.getPerformanceFee());
         }
         // TODO add distribution
     }
 
     function lock(
-        IComponentBase component
+        IBaseComponent component
     ) external override onlyRegisteredComponent(component) {
         IInstance instance = component.getInstance();
         IComponent.ComponentInfo memory info = instance.getComponentInfo(
@@ -160,7 +159,7 @@ contract ComponentOwnerService is
     }
 
     function unlock(
-        IComponentBase component
+        IBaseComponent component
     ) external override onlyRegisteredComponent(component) {
         IInstance instance = component.getInstance();
         IComponent.ComponentInfo memory info = instance.getComponentInfo(

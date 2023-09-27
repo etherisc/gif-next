@@ -6,7 +6,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IInstanceLinked} from "../instance/IInstanceLinked.sol";
 
-interface IComponentBase is IRegisterable, IInstanceLinked {
+interface IBaseComponent is IRegisterable, IInstanceLinked {
 
     function lock() external;
 

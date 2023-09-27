@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {NftId} from "../../../types/NftId.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL, BUNDLE, POLICY} from "../../../types/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, REVOKED, DECLINED} from "../../../types/StateId.sol";
+import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, UNDERWRITTEN, REVOKED, DECLINED} from "../../../types/StateId.sol";
 import {ILifecycleModule} from "./ILifecycle.sol";
 
 contract LifecycleModule is ILifecycleModule {
@@ -82,7 +82,8 @@ contract LifecycleModule is ILifecycleModule {
         _initialState[POLICY()] = APPLIED();
         _isValidTransition[POLICY()][APPLIED()][REVOKED()] = true;
         _isValidTransition[POLICY()][APPLIED()][DECLINED()] = true;
-        _isValidTransition[POLICY()][APPLIED()][ACTIVE()] = true;
+        _isValidTransition[POLICY()][APPLIED()][UNDERWRITTEN()] = true;
+        _isValidTransition[POLICY()][UNDERWRITTEN()][ACTIVE()] = true;
         _isValidTransition[POLICY()][ACTIVE()][CLOSED()] = true;
     }
 }

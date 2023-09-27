@@ -25,6 +25,10 @@ PRODUCT_SERVICE_NAME = 'ProductService'
 POOL_SERVICE_NAME = 'PoolService'
 ORACLE_SERVICE_NAME = 'OracleService'
 
+# GIF roles
+POOL_OWNER_ROLE = 'PoolOwnerRole'
+PRODUCT_OWNER_ROLE = 'ProductOwnerRole'
+
 # GIF ecosystem actors
 REGISTRY_OWNER = 'registryOwner'
 INSTANCE_OWNER = 'instanceOwner'

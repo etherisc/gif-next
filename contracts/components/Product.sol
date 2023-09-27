@@ -2,13 +2,14 @@
 pragma solidity ^0.8.19;
 
 import {IProductService} from "../instance/service/IProductService.sol";
-import {IProductBase} from "./IProductBase.sol";
+import {IProductComponent} from "./IProductComponent.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
+import {Timestamp} from "../types/Timestamp.sol";
 import {Fee} from "../types/Fee.sol";
-import {ComponentBase} from "./ComponentBase.sol";
+import {BaseComponent} from "./BaseComponent.sol";
 
-contract Product is ComponentBase, IProductBase {
+contract Product is BaseComponent, IProductComponent {
     IProductService private _productService;
     address private _pool;
 
@@ -17,7 +18,7 @@ contract Product is ComponentBase, IProductBase {
         NftId instanceNftid,
         address token,
         address pool
-    ) ComponentBase(registry, instanceNftid, token) {
+    ) BaseComponent(registry, instanceNftid, token) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = pool;
@@ -39,12 +40,39 @@ contract Product is ComponentBase, IProductBase {
         );
     }
 
-    function _underwrite(NftId nftId) internal {
-        _productService.underwrite(nftId);
+    function _underwrite(
+        NftId policyNftId,
+        bool requirePremiumPayment,
+        Timestamp activateAt
+    )
+        internal
+    {
+        _productService.underwrite(
+            policyNftId, 
+            requirePremiumPayment, 
+            activateAt);
     }
 
-    function _collectPremium(NftId nftId) internal {
-        _productService.collectPremium(nftId);
+    function _collectPremium(
+        NftId policyNftId,
+        Timestamp activateAt
+    )
+        internal
+    {
+        _productService.collectPremium(
+            policyNftId, 
+            activateAt);
+    }
+
+    function _activate(
+        NftId policyNftId,
+        Timestamp activateAt
+    )
+        internal
+    {
+        _productService.activate(
+            policyNftId, 
+            activateAt);
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {

@@ -4,10 +4,11 @@ pragma solidity 0.8.20;
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {IPolicy} from "../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/module/pool/IPoolModule.sol";
+import {IBundle} from "../contracts/instance/module/bundle/IBundle.sol";
 import {TokenHandler} from "../contracts/instance/module/treasury/TokenHandler.sol";
 import {APPLIED, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
-import {blockTimestamp, zeroTimestamp} from "../contracts/types/Timestamp.sol";
+import {Timestamp, blockTimestamp, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {Fee, toFee, zeroFee, feeIsZero, feeIsSame} from "../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";
 import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
@@ -24,7 +25,8 @@ contract TestApplicationCreate is TestGifBase {
         NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount,
             premiumAmount,
-            lifetime
+            lifetime,
+            bundleNftId
         );
 
         assertNftId(policyNftId, toNftId(93133705), "policy id not 93133705");
@@ -32,10 +34,6 @@ contract TestApplicationCreate is TestGifBase {
             registry.getOwner(policyNftId),
             customer,
             "customer not policy owner"
-        );
-        assertNftIdZero(
-            instance.getBundleNftForPolicy(policyNftId),
-            "bundle id not 0"
         );
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
@@ -65,14 +63,15 @@ contract TestApplicationCreate is TestGifBase {
         NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount,
             premiumAmount,
-            lifetime
+            lifetime,
+            bundleNftId
         );
 
-        IPool.PoolInfo memory poolInfoBefore = instance.getPoolInfo(
-            pool.getNftId()
-        );
+        IBundle.BundleInfo memory infoBefore = instance.getBundleInfo(bundleNftId);
 
-        product.underwrite(policyNftId);
+        bool requirePremiumPayment = true;
+        Timestamp activateAt = blockTimestamp();
+        product.underwrite(policyNftId, requirePremiumPayment, activateAt);
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
         assertNftId(info.nftId, policyNftId, "policy id differs");
@@ -91,13 +90,11 @@ contract TestApplicationCreate is TestGifBase {
         );
         assertTrue(info.closedAt == zeroTimestamp(), "wrong closed at");
 
-        IPool.PoolInfo memory poolInfoAfter = instance.getPoolInfo(
-            pool.getNftId()
-        );
-        assertEq(poolInfoAfter.nftId.toInt(), 73133705, "pool id not 73133705");
-        assertEq(poolInfoBefore.lockedCapital, 0, "capital locked not 0");
+        IBundle.BundleInfo memory infoAfter = instance.getBundleInfo(bundleNftId);
+        assertEq(infoAfter.nftId.toInt(), bundleNftId.toInt(), "bundle id unexpected");
+        assertEq(infoBefore.lockedAmount, 0, "capital locked not 0");
         assertEq(
-            poolInfoAfter.lockedCapital,
+            infoAfter.lockedAmount,
             sumInsuredAmount,
             "capital locked not sum insured"
         );
@@ -125,10 +122,16 @@ contract TestApplicationCreate is TestGifBase {
         NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount,
             premiumAmount,
-            lifetime
+            lifetime,
+            bundleNftId
         );
 
-        product.underwrite(policyNftId);
+        bool requirePremiumPayment = true;
+        Timestamp activateAt = zeroTimestamp();
+        product.underwrite(
+            policyNftId,
+            requirePremiumPayment,
+            activateAt);
 
         // check bookkeeping before collecting premium
         IPolicy.PolicyInfo memory infoBefore = instance.getPolicyInfo(
@@ -172,7 +175,10 @@ contract TestApplicationCreate is TestGifBase {
             "customer token approval not premium"
         );
 
-        product.collectPremium(policyNftId);
+        activateAt = blockTimestamp();
+        product.collectPremium(
+            policyNftId,
+            activateAt);
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
         assertEq(
@@ -209,7 +215,7 @@ contract TestApplicationCreate is TestGifBase {
         );
 
         // updated policy fee (15% + 20 cents)
-        UFixed fractionalFee = UFixedMathLib.itof(15, -2);
+        UFixed fractionalFee = UFixedMathLib.toUFixed(15, -2);
         uint256 fixedFee = 2 * 10 ** (token.decimals() - 1);
         Fee memory policyFee = toFee(fractionalFee, fixedFee);
 
@@ -231,10 +237,16 @@ contract TestApplicationCreate is TestGifBase {
         NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount,
             premiumAmount,
-            lifetime
+            lifetime,
+            bundleNftId
         );
 
-        product.underwrite(policyNftId);
+        bool requirePremiumPayment = true;
+        Timestamp activateAt = zeroTimestamp();
+        product.underwrite(
+            policyNftId,
+            requirePremiumPayment,
+            activateAt);
 
         // check bookkeeping before collecting premium
         IPolicy.PolicyInfo memory infoBefore = instance.getPolicyInfo(
@@ -278,14 +290,13 @@ contract TestApplicationCreate is TestGifBase {
             "customer token approval not premium"
         );
 
-        product.collectPremium(policyNftId);
+        activateAt = blockTimestamp();        
+        product.collectPremium(policyNftId, activateAt);
 
-        UFixed premiumUFixed = UFixedMathLib.itof(premiumAmount);
+        UFixed premiumUFixed = UFixedMathLib.toUFixed(premiumAmount);
         UFixed fractionalFeeAmountUFixed = premiumUFixed *
             policyFee.fractionalFee;
-        uint fractionalFeeAmount = UFixedMathLib.ftoi(
-            fractionalFeeAmountUFixed
-        );
+        uint fractionalFeeAmount = fractionalFeeAmountUFixed.toInt();
         uint policyFeeAmount = fractionalFeeAmount + policyFee.fixedFee;
         uint netPremiumAmount = premiumAmount - policyFeeAmount;
 

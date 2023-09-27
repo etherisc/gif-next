@@ -85,4 +85,20 @@ interface ITreasuryModule is ITreasury {
         uint256 amount,
         Fee memory fee
     ) external pure returns (uint256 feeAmount, uint256 netAmount);
+
+    function getFee(
+        UFixed fractionalFee, 
+        uint256 fixedFee
+    ) external pure returns (Fee memory fee);
+
+    function getZeroFee() external pure returns (Fee memory fee);
+
+    function getUFixed(
+        uint256 a
+    ) external pure returns (UFixed);
+
+    function getUFixed(
+        uint256 a, 
+        int8 exp
+    ) external pure returns (UFixed);
 }

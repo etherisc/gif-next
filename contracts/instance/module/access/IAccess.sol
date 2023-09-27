@@ -34,6 +34,8 @@ interface IAccessModule is
 
     function getRole(uint256 idx) external view returns (RoleId role);
 
+    function getRoleId(string memory roleName) external pure returns (RoleId role);
+
     function getRoleInfo(
         RoleId role
     ) external view returns (RoleInfo memory info);

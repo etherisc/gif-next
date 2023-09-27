@@ -13,12 +13,12 @@ import {IServiceLinked} from "../instance/IServiceLinked.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IComponent, IComponentModule} from "../instance/module/component/IComponent.sol";
 import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
-import {IComponentBase} from "./IComponentBase.sol";
+import {IBaseComponent} from "./IBaseComponent.sol";
 import {NftId} from "../types/NftId.sol";
 
-abstract contract ComponentBase is
+abstract contract BaseComponent is
     Registerable,
-    IComponentBase
+    IBaseComponent
 {
     IComponentOwnerService internal _componentOwnerService;
 

@@ -9,6 +9,7 @@ import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
 import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {Fee, feeIsZero} from "../../types/Fee.sol";
 import {Version, toVersion, toVersionPart} from "../../types/Version.sol";
 
@@ -52,7 +53,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
         external
         override
     {
-        (IRegistry.ObjectInfo memory info, IInstance instance) = _verifyAndGetPoolAndInstance();
+        (IRegistry.ObjectInfo memory info, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
         instance.setPoolFees(info.nftId, stakingFee, performanceFee);
     }
 
@@ -64,18 +65,34 @@ contract PoolService is ComponentServiceBase, IPoolService {
     )
         external
         override
-        returns(NftId nftId)
+        returns(NftId bundleNftId)
     {
-        (IRegistry.ObjectInfo memory poolInfo, IInstance instance) = _verifyAndGetPoolAndInstance();
+        (IRegistry.ObjectInfo memory info, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
 
-        nftId = instance.createBundle(
-            poolInfo,
+        // register bundle with registry
+        NftId poolNftId = info.nftId;
+        bundleNftId = _registry.registerObjectForInstance(
+            poolNftId, 
+            BUNDLE(), 
             owner,
+            "");
+
+        // create bundle info in instance
+        instance.createBundleInfo(
+            bundleNftId,
+            poolNftId,
             amount,
             lifetime,
-            filter
-        );
+            filter);
 
-        // add logging
+        // add bundle to pool in instance
+        instance.addBundleToPool(
+            bundleNftId,
+            poolNftId,
+            amount);
+
+        // TODO collect capital
+
+        // TODO add logging
     }
 }

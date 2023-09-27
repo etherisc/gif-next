@@ -43,7 +43,7 @@ interface IInstance is
     function hasRole(RoleId role, address member) external view override (IAccessModule, IComponentModule) returns (bool hasRole);    
 
     function getComponentOwnerService() external view override (IServiceLinked, IComponentModule) returns(IComponentOwnerService);
-    function getProductService() external view override (IServiceLinked, IBundleModule, IPolicyModule, IPoolModule) returns(IProductService);
+    function getProductService() external view override (IServiceLinked, IBundleModule, IPolicyModule) returns(IProductService);
     function getPoolService() external view override (IServiceLinked, IBundleModule, IPoolModule) returns(IPoolService);
 
     function getOwner() external view override (IOwnable, IAccessModule) returns(address owner);

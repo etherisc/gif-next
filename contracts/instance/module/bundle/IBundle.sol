@@ -15,13 +15,12 @@ interface IBundle {
 
     struct BundleInfo {
         NftId nftId;
+        NftId poolNftId;
         StateId state; // active, paused, closed (expriy only implicit)
         bytes filter; // required conditions for applications to be considered for collateralization by this bundle
         uint256 capitalAmount; // net investment capital amount (<= balance)
         uint256 lockedAmount; // capital amount linked to collateralizaion of non-closed policies (<= balance)
         uint256 balanceAmount; // total amount of funds: net investment capital + net premiums - payouts
-        // TODO decide; do we need lifetime or is expiredAt > 0 sufficient?
-        // uint256 lifetime; // createdAt + lifetime >= expiredAt
         Timestamp createdAt;
         Timestamp expiredAt; // no new policies
         Timestamp closedAt;
@@ -31,26 +30,19 @@ interface IBundle {
 
 interface IBundleModule is IBundle {
 
-    function createBundle(
-        IRegistry.ObjectInfo memory poolInfo,
-        address owner, 
+    function createBundleInfo(
+        NftId bundleNftId,
+        NftId poolNftId,
         uint256 amount, 
         uint256 lifetime, 
         bytes calldata filter
-    ) external returns(NftId nftId);
+    ) external;
 
-    function pauseBundle(NftId bundleNftId) external;
-    function activateBundle(NftId bundleNftId) external;
-    function extendBundle(NftId bundleNftId, uint256 lifetimeExtension) external;
-    function closeBundle(NftId bundleNftId) external;
-
-    function processStake(NftId bundleNftId, uint256 amount) external;
-    function processUnstake(NftId bundleNftId, uint256 amount) external;
-
-    function collateralizePolicy(NftId bundleNftId, NftId policyNftId, uint256 collateralAmount) external;
-    function processPremium(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
-    function processPayout(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
+    function setBundleInfo(BundleInfo memory bundleInfo) external;
+    function collateralizePolicy(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
     function releasePolicy(NftId bundleNftId, NftId policyNftId) external returns(uint256 collateralAmount);
+
+    function getBundleInfo(NftId bundleNftId) external view returns(BundleInfo memory bundleInfo);
 
     // repeat registry linked signature
     function getRegistry() external view returns (IRegistry registry);

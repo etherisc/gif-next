@@ -23,6 +23,11 @@ from brownie import (
     VersionPartLib 
 )
 
+from const import (
+    POOL_OWNER_ROLE,
+    PRODUCT_OWNER_ROLE,
+)
+
 libs = {}
 libs_are_deployed = False
 
@@ -83,7 +88,24 @@ def deploy_service(services, service_name, service_class, registry, owner):
     services[service_name] = service
     return services
 
-def deploy_instance(registry, owner):
-    instance = Instance.deploy(registry, registry.getNftId(), {'from': owner})
-    instance.register()
+def deploy_instance(registry, instance_owner):
+    instance = Instance.deploy(registry, registry.getNftId(), {'from': instance_owner})
+    instance.register({'from': instance_owner})
     return instance
+
+
+def deploy_pool(registry, instance, instance_owner, token, pool_is_verifying, pool_collateralization_level, pool_owner):
+    pool_owner_role = instance.getRoleId(POOL_OWNER_ROLE)
+    instance.grantRole(pool_owner_role, pool_owner, {'from': instance_owner})
+
+    pool = TestPool.deploy(
+        registry,
+        instance.getNftId(),
+        token,
+        pool_is_verifying, 
+        pool_collateralization_level,
+        {'from': pool_owner})
+    
+    pool.register({'from': pool_owner})
+    return pool
+

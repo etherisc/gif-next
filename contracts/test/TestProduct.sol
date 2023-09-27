@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {Product} from "../../contracts/components/Product.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
+import {Timestamp, blockTimestamp} from "../../contracts/types/Timestamp.sol";
 import {Fee, zeroFee} from "../../contracts/types/Fee.sol";
 
 contract TestProduct is Product {
@@ -17,7 +18,8 @@ contract TestProduct is Product {
     function applyForPolicy(
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
-        uint256 lifetime
+        uint256 lifetime,
+        NftId bundleNftId
     )
         external
         returns(NftId nftId)
@@ -27,16 +29,16 @@ contract TestProduct is Product {
             sumInsuredAmount,
             premiumAmount,
             lifetime,
-            toNftId(0) // requested bundle nft id
+            bundleNftId
         );
     }
 
-    function underwrite(NftId nftId) external {
+    function underwrite(NftId nftId, bool requirePremiumPayment, Timestamp activateAt) external {
         emit LogTestProductSender(msg.sender);
-        _underwrite(nftId);
+        _underwrite(nftId, requirePremiumPayment, activateAt);
     }
 
-    function collectPremium(NftId nftId) external {
-        _collectPremium(nftId);
+    function collectPremium(NftId nftId, Timestamp activateAt) external {
+        _collectPremium(nftId, activateAt);
     }
 }

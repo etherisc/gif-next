@@ -2,16 +2,23 @@
 pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
+import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IPolicy, IPolicyModule} from "../module/policy/IPolicy.sol";
+import {IPool} from "../module/pool/IPoolModule.sol";
+import {IBundle} from "../module/bundle/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
 import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
-import {ObjectType, INSTANCE, PRODUCT} from "../../types/ObjectType.sol";
+import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
+import {UFixed, UFixedMathLib} from "../../types/UFixed.sol";
+import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol";
+import {APPLIED, UNDERWRITTEN, ACTIVE} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {Fee, feeIsZero} from "../../types/Fee.sol";
 import {Version, toVersion, toVersionPart} from "../../types/Version.sol";
 
@@ -57,7 +64,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         external
         override
     {
-        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
+        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         instance.setProductFees(productInfo.nftId, policyFee, processingFee);
     }
 
@@ -67,60 +74,223 @@ contract ProductService is ComponentServiceBase, IProductService {
         uint256 premiumAmount,
         uint256 lifetime,
         NftId bundleNftId
-    ) external override returns (NftId nftId) {
-        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
+    ) external override returns (NftId policyNftId) {
+        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        NftId productNftId = productInfo.nftId;
+        // TODO add validations (see create bundle in pool service)
 
-        nftId = instance.createApplication(
-            productInfo,
+        policyNftId = this.getRegistry().registerObjectForInstance(
+            productNftId,
+            POLICY(),
             applicationOwner,
+            ""
+        );
+
+        instance.createApplication(
+            productNftId,
+            policyNftId,
             sumInsuredAmount,
             premiumAmount,
             lifetime,
             bundleNftId
         );
 
-        // add logging
+        // TODO add logging
     }
 
-    function underwrite(NftId policyNftId) external override {
-        emit LogProductServiceSender(msg.sender);
+    function _getAndVerifyUnderwritingSetup(
+        IInstance instance,
+        IPolicy.PolicyInfo memory policyInfo
+    )
+        internal
+        view
+        returns (
+            ITreasury.ProductSetup memory productSetup,
+            uint256 collateralAmount,
+            bool poolIsVerifying,
+            NftId bundleNftId,
+            bytes memory bundleFilter
+        )
+    {
+        // check match between policy and bundle (via pool)
+        bundleNftId = policyInfo.bundleNftId;
+        productSetup = instance.getProductSetup(policyInfo.productNftId);
+        IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
+        require(bundleInfo.poolNftId == productSetup.poolNftId, "POLICY_BUNDLE_MISMATCH");
 
-        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
+        // calculate required collateral
+        NftId poolNftId = productSetup.poolNftId;
+        IPool.PoolInfo memory poolInfo = instance.getPoolInfo(poolNftId);
 
-        instance.underwrite(policyNftId, productInfo.nftId);
-        instance.activate(policyNftId);
+        // obtain remaining return values
+        poolIsVerifying = poolInfo.isVerifying;
+        collateralAmount = calculateRequiredCollateral(poolInfo.collateralizationLevel, policyInfo.sumInsuredAmount);
+        bundleFilter = bundleInfo.filter;
+    }
+
+    function _lockCollateralInBundle(
+        IInstance instance,
+        NftId policyNftId, 
+        NftId bundleNftId,
+        uint256 collateralAmount
+    )
+        internal
+    {
+        IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
+        bundleInfo.lockedAmount += collateralAmount;
+        bundleInfo.updatedIn = blockNumber();
+
+        instance.setBundleInfo(bundleInfo);
+        instance.collateralizePolicy(bundleNftId, policyNftId, collateralAmount);
+    }
+
+    function _underwriteByPool(
+        ITreasury.ProductSetup memory productSetup,
+        IPolicy.PolicyInfo memory policyInfo,
+        bytes memory bundleFilter,
+        uint256 collateralAmount
+    )
+        internal
+    {
+        address poolAddress = _registry.getObjectInfo(productSetup.poolNftId).objectAddress;
+        IPoolComponent pool = IPoolComponent(poolAddress);
+        pool.underwrite(
+            policyInfo.nftId, 
+            policyInfo.data, 
+            bundleFilter,
+            collateralAmount);
+    }
+
+
+    function underwrite(
+        NftId policyNftId,
+        bool requirePremiumPayment,
+        Timestamp activateAt
+    )
+        external 
+        override
+    {
+        // check caller is registered product
+        (
+            IRegistry.ObjectInfo memory productInfo, 
+            IInstance instance
+        ) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+
+        // check match between policy and calling product
+        NftId productNftId = productInfo.nftId;
+        IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
+        require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
+        require(policyInfo.state == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
+
+        (
+            ITreasury.ProductSetup memory productSetup,
+            uint256 collateralAmount,
+            bool poolIsVerifying,
+            NftId bundleNftId,
+            bytes memory bundleFilter
+        ) = _getAndVerifyUnderwritingSetup(
+            instance,
+            policyInfo
+        );
+
+        // lock bundle collateral
+        _lockCollateralInBundle(
+            instance,
+            policyNftId, 
+            bundleNftId,
+            collateralAmount);
+
+        // collect premium
+        if(requirePremiumPayment) {
+            policyInfo.premiumPaidAmount += policyInfo.premiumAmount;
+            _processPremiumByTreasury(instance, productSetup, policyNftId, policyInfo.premiumAmount);
+        }
+
+        // set policy state to underwritten
+        // TODO add require for state change
+        policyInfo.state = UNDERWRITTEN();
+        policyInfo.updatedIn = blockNumber();
+
+        // optional activation of policy
+        if(activateAt > zeroTimestamp()) {
+            policyInfo.activatedAt = activateAt;
+            policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+
+            // TODO add require for state change
+            policyInfo.state = ACTIVE();
+        }
+
+        instance.setPolicyInfo(policyInfo);
+
+        // integrate pool component
+        if(poolIsVerifying) {
+            _underwriteByPool(
+                productSetup,
+                policyInfo,
+                bundleFilter,
+                collateralAmount
+            );
+        }
 
         // TODO add logging
     }
 
-    function collectPremium(NftId policyNftId) external override {
-        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _verifyAndGetProductAndInstance();
+    function calculateRequiredCollateral(UFixed collateralizationLevel, uint256 sumInsuredAmount) public pure override returns(uint256 collateralAmount) {
+        UFixed sumInsuredUFixed = UFixedMathLib.toUFixed(sumInsuredAmount);
+        UFixed collateralUFixed =  collateralizationLevel * sumInsuredUFixed;
+        return collateralUFixed.toInt();
+    } 
 
-        // // TODO unify validation into modifier and/or other suitable approaches
-        // // same as only registered product
-        // NftId productNftId = _registry.getNftId(msg.sender);
-        // require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
-        // IRegistry.ObjectInfo memory productInfo = _registry.getInfo(
-        //     productNftId
-        // );
-        // require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
-
-        // IRegistry.ObjectInfo memory instanceInfo = _registry.getInfo(
-        //     productInfo.parentNftId
-        // );
-        // require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
-        // require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
-
-        // get involved modules
-        // address instanceAddress = instanceInfo.objectAddress;
-        // IPolicyModule policyModule = IPolicyModule(instanceAddress);
-        uint256 premiumAmount = instance.getPremiumAmount(policyNftId);
-
-        instance.processPremium(policyNftId, premiumAmount);
+    function collectPremium(NftId policyNftId, Timestamp activateAt) external override {
+        // check caller is registered product
+        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
 
         // perform actual token transfers
-        // ITreasuryModule treasuryModule = ITreasuryModule(instanceAddress);
-        _processPremiumByTreasury(instance, productInfo.nftId, policyNftId, premiumAmount);
+        IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
+        ITreasury.ProductSetup memory product = instance.getProductSetup(productInfo.nftId);
+
+        uint256 premiumAmount = policyInfo.premiumAmount;
+        _processPremiumByTreasury(instance, product, policyNftId, premiumAmount);
+
+        // policy level book keeping for premium paid
+        policyInfo.premiumPaidAmount += premiumAmount;
+        policyInfo.updatedIn = blockNumber();
+
+        // optional activation of policy
+        if(activateAt > zeroTimestamp()) {
+            require(
+                policyInfo.activatedAt.eqz(),
+                "ERROR:PRS-020:ALREADY_ACTIVATED");
+
+            policyInfo.activatedAt = activateAt;
+            policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+
+            // TODO add require for state change
+            policyInfo.state = ACTIVE();
+        }
+
+        instance.setPolicyInfo(policyInfo);
+
+        // TODO add logging
+    }
+
+    function activate(NftId policyNftId, Timestamp activateAt) external override {
+        // check caller is registered product
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+
+        IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
+
+        require(
+            policyInfo.activatedAt.eqz(),
+            "ERROR:PRS-020:ALREADY_ACTIVATED");
+
+        policyInfo.activatedAt = activateAt;
+        policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+
+        // TODO add require for state change
+        policyInfo.state = ACTIVE();
+
+        instance.setPolicyInfo(policyInfo);
 
         // TODO add logging
     }
@@ -132,55 +302,49 @@ contract ProductService is ComponentServiceBase, IProductService {
 
     }
 
-    // function _verifyAndGetProductAndInstance()
-    //     internal
-    //     view
-    //     returns(
-    //         IRegistry.ObjectInfo memory productInfo, 
-    //         IInstance instance
-    //     )
-    // {
-    //     NftId productNftId = _registry.getNftId(msg.sender);
-    //     require(productNftId.gtz(), "ERROR_PRODUCT_UNKNOWN");
-
-    //     productInfo = _registry.getObjectInfo(productNftId);
-    //     require(productInfo.objectType == PRODUCT(), "ERROR_NOT_PRODUCT");
-
-    //     // TODO check if this is really needed or if registry may be considered reliable
-    //     IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(productInfo.parentNftId);
-    //     require(instanceInfo.nftId.gtz(), "ERROR_INSTANCE_UNKNOWN");
-    //     require(instanceInfo.objectType == INSTANCE(), "ERROR_NOT_INSTANCE");
-
-    //     instance = IInstance(instanceInfo.objectAddress);
-    // }
+    function _getPoolNftId(
+        IInstance instance,
+        NftId productNftId
+    )
+        internal
+        view
+        returns (NftId poolNftid)
+    {
+        return instance.getProductSetup(productNftId).poolNftId;
+    }
 
     function _processPremiumByTreasury(
         IInstance instance,
-        NftId productNftId,
+        ITreasury.ProductSetup memory product,
         NftId policyNftId,
         uint256 premiumAmount
     )
         internal
     {
-        ITreasury.ProductSetup memory product = instance.getProductSetup(productNftId);
-        TokenHandler tokenHandler = product.tokenHandler;
-        address policyOwner = _registry.getOwner(policyNftId);
-        address poolWallet = instance.getPoolSetup(product.poolNftId).wallet;
+        // process token transfer(s)
+        if(premiumAmount > 0) {
+            TokenHandler tokenHandler = product.tokenHandler;
+            address policyOwner = _registry.getOwner(policyNftId);
+            address poolWallet = instance.getPoolSetup(product.poolNftId).wallet;
+            Fee memory policyFee = product.policyFee;
 
-        if (feeIsZero(product.policyFee)) {
-            tokenHandler.transfer(
-                policyOwner,
-                poolWallet,
-                premiumAmount
-            );
-        } else {
-            (uint256 feeAmount, uint256 netAmount) = instance.calculateFeeAmount(
-                premiumAmount,
-                product.policyFee
-            );
+            if (feeIsZero(policyFee)) {
+                tokenHandler.transfer(
+                    policyOwner,
+                    poolWallet,
+                    premiumAmount
+                );
+            } else {
+                (uint256 feeAmount, uint256 netAmount) = instance.calculateFeeAmount(
+                    premiumAmount,
+                    policyFee
+                );
 
-            tokenHandler.transfer(policyOwner, product.wallet, feeAmount);
-            tokenHandler.transfer(policyOwner, poolWallet, netAmount);
+                tokenHandler.transfer(policyOwner, product.wallet, feeAmount);
+                tokenHandler.transfer(policyOwner, poolWallet, netAmount);
+            }
         }
+
+        // TODO add logging
     }
 }

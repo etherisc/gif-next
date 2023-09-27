@@ -9,7 +9,8 @@ using {
     eqNftId as ==, 
     neNftId as !=, 
     NftIdLib.toInt,
-    NftIdLib.gtz
+    NftIdLib.gtz,
+    NftIdLib.eqz
 } for NftId global;
 
 // general pure free functions

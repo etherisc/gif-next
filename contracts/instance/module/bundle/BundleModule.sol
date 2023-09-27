@@ -29,18 +29,27 @@ abstract contract BundleModule is
 
     LifecycleModule private _lifecycleModule;
 
-    modifier onlyBundleProductService() {
+    modifier onlyBundlePoolService() {
         require(
-            msg.sender == address(this.getProductService()),
-            "ERROR:BDL-001:NOT_PRODUCT_SERVICE"
+            msg.sender == address(this.getPoolService()),
+            "ERROR:BDL-001:NOT_POOL_SERVICE"
         );
         _;
     }
 
-    modifier onlyBundlePoolService() {
+    modifier onlyBundleProductService() {
         require(
-            msg.sender == address(this.getPoolService()),
-            "ERROR:BDL-002:NOT_POOL_SERVICE"
+            msg.sender == address(this.getProductService()),
+            "ERROR:BDL-002:NOT_PRODUCT_SERVICE"
+        );
+        _;
+    }
+
+    modifier onlyPoolOrProductService() {
+        require(
+            msg.sender == address(this.getPoolService())
+                || msg.sender == address(this.getProductService()),
+            "ERROR:BDL-003:NOT_POOL_OR_PRODUCT_SERVICE"
         );
         _;
     }
@@ -49,28 +58,21 @@ abstract contract BundleModule is
         _lifecycleModule = LifecycleModule(address(this));
     }
 
-    function createBundle(
-        IRegistry.ObjectInfo memory poolInfo,
-        address initialOwner,
+    function createBundleInfo(
+        NftId bundleNftId,
+        NftId poolNftId,
         uint256 amount, 
         uint256 lifetime, 
         bytes calldata filter
     )
         external
-        override
         onlyBundlePoolService
-        returns(NftId nftId)
+        override
     {
 
-        nftId = this.getRegistry().registerObjectForInstance(
-            poolInfo.nftId,
-            BUNDLE(),
-            initialOwner,
-            ""
-        );
-
-        _bundleInfo[nftId] = BundleInfo(
-            nftId,
+        _bundleInfo[bundleNftId] = BundleInfo(
+            bundleNftId,
+            poolNftId,
             _lifecycleModule.getInitialState(BUNDLE()),
             filter,
             amount, // capital
@@ -79,86 +81,89 @@ abstract contract BundleModule is
             blockTimestamp(), // createdAt
             blockTimestamp().addSeconds(lifetime), // expiredAt
             zeroTimestamp(), // closedAt
-            blockNumber() // updatedAt
+            blockNumber() // updatedIn
         );
 
         // TODO add logging
     }
 
-    function pauseBundle(NftId bundleNftId)
-        external    
-        onlyBundlePoolService
-        override
-    {
-
-    }
-
-    function activateBundle(NftId bundleNftId)
-        external    
-        onlyBundlePoolService
-        override
-    {
-
-    }
-
-    function extendBundle(
-        NftId bundleNftId,
-        uint256 lifetimeExtension
-    )
+    function setBundleInfo(BundleInfo memory bundleInfo)
         external
-        onlyBundlePoolService
         override
+        onlyPoolOrProductService
     {
-
+        _bundleInfo[bundleInfo.nftId] = bundleInfo;
     }
 
-    function closeBundle(NftId bundleNftId)
-        external    
-        onlyBundlePoolService
-        override
-    {
+    // function updateBundleState(
+    //     NftId bundleNftId,
+    //     StateId newState
+    // )
+    //     external    
+    //     // add authz (both product and pool service)
+    //     override
+    // {
+    //     BundleInfo storage info = _bundleInfo[bundleNftId];
+    //     info.state = newState;
+    //     info.updatedIn = blockNumber();
+    // }
 
-    }
+    // function extendBundle(
+    //     NftId bundleNftId,
+    //     uint256 lifetimeExtension
+    // )
+    //     external
+    //     onlyBundlePoolService
+    //     override
+    // {
+    //     BundleInfo storage info = _bundleInfo[bundleNftId];
+    //     info.expiredAt = info.expiredAt.addSeconds(lifetimeExtension);
+    //     info.updatedIn = blockNumber();
+    // }
 
-    function processStake(
-        NftId nftId,
-        uint256 amount
-    )
-        external
-        onlyBundlePoolService
-        override
-    {
-        // TODO add validation (bundle active or paused, not closed, not expired)
+    // function closeBundle(
+    //     NftId bundleNftId
+    // )
+    //     external
+    //     onlyBundlePoolService
+    //     override
+    // {
+    //     BundleInfo storage info = _bundleInfo[bundleNftId];
+    //     info.state = CLOSED();
+    //     info.closedAt = blockTimestamp();
+    //     info.updatedIn = blockNumber();
+    // }
 
-        BundleInfo storage info = _bundleInfo[nftId];
-        info.capitalAmount += amount;
-        info.balanceAmount += amount;
-        info.updatedIn = blockNumber();
+    // function processStake(
+    //     NftId nftId,
+    //     uint256 amount
+    // )
+    //     external
+    //     onlyBundlePoolService
+    //     override
+    // {
+    //     BundleInfo storage info = _bundleInfo[nftId];
+    //     info.capitalAmount += amount;
+    //     info.balanceAmount += amount;
+    //     info.updatedIn = blockNumber();
+    // }
 
-        // TODO add logging
-    }
-
-    function processUnstake(
-        NftId nftId,
-        uint256 amount
-    )
-        external
-        onlyBundlePoolService
-        override
-    {
-        BundleInfo storage info = _bundleInfo[nftId];
-        require(
-            info.balanceAmount - info.lockedAmount >= amount,
-            "ERROR:BDL-010:AMOUNT_TOO_LARGE");
-        
-        // TODO fix book keeping in a way that provides
-        // continuous infor regarding profitability
-        // this is needed to properly apply performance fees
-        info.balanceAmount += amount;
-        info.updatedIn = blockNumber();
-
-        // TODO add logging
-    }
+    // function processUnstake(
+    //     NftId nftId,
+    //     uint256 amount
+    // )
+    //     external
+    //     onlyBundlePoolService
+    //     override
+    // {
+    //     BundleInfo storage info = _bundleInfo[nftId];
+    //     // TODO fix book keeping in a way that provides
+    //     // continuous infor regarding profitability
+    //     // this is needed to properly apply performance fees
+    //     info.capitalAmount -= amount;
+    //     info.balanceAmount -= amount;
+    //     info.updatedIn = blockNumber();
+    // }
 
     function collateralizePolicy(
         NftId bundleNftId, 
@@ -169,32 +174,8 @@ abstract contract BundleModule is
         onlyBundleProductService
         override
     {
-        BundleInfo storage info = _bundleInfo[bundleNftId];
-        require(collateralAmount < info.balanceAmount - info.lockedAmount, "ERROR:BDL-020:CAPACITY_TOO_SMALL");
-        // TODO add more validation (bundle active (not paused or closed), not closed, not expired)
-
-        require(_collateralizationAmount[bundleNftId][policyNftId] == 0, "ERROR:BDL-021:ALREADY_COLLATERALIZED");
         _collateralizationAmount[bundleNftId][policyNftId] = collateralAmount;
         _collateralizedPolicies[bundleNftId].add(policyNftId);
-
-        info.lockedAmount += collateralAmount;
-        info.updatedIn = blockNumber();
-
-        // TODO add logging
-    }
-
-    function processPremium(NftId bundleNftId, NftId policyNftId, uint256 amount)
-        external
-        onlyBundleProductService
-        override
-    {
-    }
-
-    function processPayout(NftId bundleNftId, NftId policyNftId, uint256 amount)
-        external
-        onlyBundleProductService
-        override
-    {
     }
 
     function releasePolicy(
@@ -206,18 +187,42 @@ abstract contract BundleModule is
         override 
         returns(uint256 collateralAmount)
     {
-        require(_collateralizationAmount[bundleNftId][policyNftId] > 0, "ERROR:BDL-030:NOT_COLLATERALIZED");
+    //     BundleInfo storage info = _bundleInfo[bundleNftId];
+    //     info.lockedAmount -= collateralAmount;
+    //     info.updatedIn = blockNumber();
+
         collateralAmount = _collateralizationAmount[bundleNftId][policyNftId];
-
-        // TODO add more validation (policy is closed)
-
         delete _collateralizationAmount[bundleNftId][policyNftId];
         _collateralizedPolicies[bundleNftId].remove(policyNftId);
+    }
 
-        BundleInfo storage info = _bundleInfo[bundleNftId];
-        info.lockedAmount -= collateralAmount;
-        info.updatedIn = blockNumber();
+    // function addPremium(NftId bundleNftId, uint256 amount)
+    //     external
+    //     onlyBundleProductService
+    //     override
+    // {
+    //     BundleInfo storage info = _bundleInfo[bundleNftId];
+    //     info.capitalAmount += amount;
+    //     info.balanceAmount += amount;
+    //     info.updatedIn = blockNumber();
+    // }
 
-        // TODO add logging
+    // function subtractPayout(NftId bundleNftId, NftId policyNftId, uint256 amount)
+    //     external
+    //     onlyBundleProductService
+    //     override
+    // {
+    //     BundleInfo storage info = _bundleInfo[bundleNftId];
+    //     info.capitalAmount -= amount;
+    //     info.lockedAmount -= amount;
+    //     info.balanceAmount -= amount;
+    //     info.updatedIn = blockNumber();
+
+    //     // deduct amount from sum insured for this policy
+    //     _collateralizationAmount[bundleNftId][policyNftId] -= amount;
+    // }
+
+    function getBundleInfo(NftId bundleNftId) external view override returns(BundleInfo memory bundleInfo) {
+        return _bundleInfo[bundleNftId];
     }
 }

@@ -7,7 +7,7 @@ import {LifecycleModule} from "../../module/lifecycle/LifecycleModule.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../../types/ObjectType.sol";
-import {ACTIVE} from "../../../types/StateId.sol";
+import {APPLIED, ACTIVE, UNDERWRITTEN} from "../../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../../types/NftId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
@@ -18,7 +18,6 @@ abstract contract PolicyModule is IPolicyModule {
     using NftIdLib for NftId;
 
     mapping(NftId nftId => PolicyInfo info) private _policyInfo;
-    mapping(NftId nftId => NftId bundleNftId) private _bundleForPolicy;
 
     LifecycleModule private _lifecycleModule;
 
@@ -36,35 +35,28 @@ abstract contract PolicyModule is IPolicyModule {
     }
 
     function createApplication(
-        IRegistry.ObjectInfo memory productInfo,
-        address initialOwner,
+        NftId productNftId,
+        NftId policyNftId,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
         NftId bundleNftId
-    ) external override onlyProductService2 returns (NftId nftId) {
-        // TODO add parameter validation
-        if (bundleNftId.gtz()) {
-            // IRegistry.ObjectInfo memory bundleInfo = this
-            //     .getRegistry()
-            //     .getInfo(bundleNftId);
-            // IRegistry.ObjectInfo memory poolInfo = this.getRegistry().getInfo(bundleInfo.parentNftId);
-        }
-
-        nftId = this.getRegistry().registerObjectForInstance(
-            productInfo.nftId,
-            POLICY(),
-            initialOwner,
-            ""
-        );
-
-        _policyInfo[nftId] = PolicyInfo(
-            nftId,
+    )
+        external
+        onlyProductService2
+        override
+    {
+        _policyInfo[policyNftId] = PolicyInfo(
+            policyNftId,
+            productNftId,
+            bundleNftId,
+            address(0), // beneficiary = policy nft holder
             _lifecycleModule.getInitialState(POLICY()),
             sumInsuredAmount,
             premiumAmount,
             0, // premium paid amount
             lifetime, 
+            "", // data
             blockTimestamp(), // createdAt
             zeroTimestamp(), // activatedAt
             zeroTimestamp(), // expiredAt
@@ -72,51 +64,21 @@ abstract contract PolicyModule is IPolicyModule {
             blockNumber() // updatedIn
         );
 
-        _bundleForPolicy[nftId] = bundleNftId;
-
         // TODO add logging
     }
 
-    function processPremium(NftId nftId, uint256 premiumAmount) external override onlyProductService2 {
-        PolicyInfo storage info = _policyInfo[nftId];
-        require(
-            info.premiumPaidAmount + premiumAmount <= info.premiumAmount,
-            "ERROR:POL-010:PREMIUM_AMOUNT_TOO_LARGE"
-        );
-
-        info.premiumPaidAmount += premiumAmount;
-
-        info.updatedIn = blockNumber();
-    }
-
-    function activate(NftId nftId) external override onlyProductService2 {
-        PolicyInfo storage info = _policyInfo[nftId];
-        info.activatedAt = blockTimestamp();
-        info.expiredAt = blockTimestamp().addSeconds(info.lifetime);
-        info.state = _lifecycleModule.checkAndLogTransition(
-            nftId,
-            POLICY(),
-            info.state,
-            ACTIVE()
-        );
-
-        info.updatedIn = blockNumber();
-    }
-
-    function getBundleNftForPolicy(
-        NftId nftId
-    ) external view returns (NftId bundleNft) {
-        return _bundleForPolicy[nftId];
+    function setPolicyInfo(PolicyInfo memory policyInfo)
+        external
+        override
+        onlyProductService2
+    {
+        _policyInfo[policyInfo.nftId] = policyInfo;
     }
 
     function getPolicyInfo(
         NftId nftId
     ) external view returns (PolicyInfo memory info) {
         return _policyInfo[nftId];
-    }
-
-    function getPremiumAmount(NftId nftId) external view override returns(uint256 premiumAmount) {
-        return _policyInfo[nftId].premiumAmount;
     }
 
 }

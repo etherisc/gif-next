@@ -121,7 +121,7 @@ contract TestInstanceModulePool  is
     }
 
     function getComponentOwnerService() external view override (IServiceLinked) returns(IComponentOwnerService) { return _componentOwnerService; }
-    function getProductService() external view override (IPoolModule, IServiceLinked) returns(IProductService service) { return _productService; }
+    function getProductService() external view override (IServiceLinked) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IPoolModule, IServiceLinked) returns(IPoolService service) { return _poolService; }
 }
 

@@ -20,12 +20,16 @@ function DECLINED() pure returns (StateId) {
     return toStateId(30);
 }
 
-function CONFIRMED() pure returns (StateId) {
+function UNDERWRITTEN() pure returns (StateId) {
     return toStateId(40);
 }
 
-function EXPECTED() pure returns (StateId) {
+function CONFIRMED() pure returns (StateId) {
     return toStateId(50);
+}
+
+function EXPECTED() pure returns (StateId) {
+    return toStateId(60);
 }
 
 function ACTIVE() pure returns (StateId) {

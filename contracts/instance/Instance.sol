@@ -55,7 +55,7 @@ contract Instance is
     function hasRole(RoleId role, address member) public view override (AccessModule, IComponentModule) returns (bool) { return super.hasRole(role, member); }
 
     function getComponentOwnerService() external view override (IComponentModule, IServiceLinked) returns(IComponentOwnerService service) { return _componentOwnerService; }
-    function getProductService() external view override (IBundleModule, IPolicyModule, IPoolModule, IServiceLinked) returns(IProductService service) { return _productService; }
+    function getProductService() external view override (IBundleModule, IPolicyModule, IServiceLinked) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IBundleModule, IPoolModule, IServiceLinked) returns(IPoolService service) { return _poolService; }
 
     function getOwner() public view override (IAccessModule, Registerable) returns(address owner) { return super.getOwner(); }

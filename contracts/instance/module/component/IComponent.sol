@@ -14,7 +14,7 @@ import {Fee} from "../../../types/Fee.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
-import {IComponentBase} from "../../../components/IComponentBase.sol";
+// import {IComponentBase} from "../../../components/IComponentBase.sol";
 
 interface IComponent {
     // component dynamic info (static info kept in registry)

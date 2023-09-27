@@ -20,10 +20,16 @@ import {USDC} from "../mock/Usdc.sol";
 import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
+import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 
 contract TestGifBase is Test {
-    using NftIdLib for NftId;
+
+    // in full token units, value will be multiplied by 10 ** token.decimals()
+    uint256 constant public DEFAULT_BUNDLE_CAPITALIZATION = 10 ** 5;
+
+    // bundle lifetime is one year in seconds
+    uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
     ChainNft public chainNft;
     Registry public registry;
@@ -37,19 +43,39 @@ contract TestGifBase is Test {
 
     address public registryAddress;
     NftId public registryNftId;
+    NftId public bundleNftId;
 
     address public registryOwner = makeAddr("registryOwner");
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
     address public poolOwner = makeAddr("poolOwner");
     address public customer = makeAddr("customer");
+    address public investor = makeAddr("investor");
     address public outsider = makeAddr("outsider");
 
     string private _checkpointLabel;
     uint256 private _checkpointGasLeft = 1; // Start the slot warm.
 
     function setUp() public virtual {
+        bool poolIsVerifying = true;
+        UFixed poolCollateralizationLevelIs100 = UFixedMathLib.toUFixed(1);
 
+        _setUp(
+            poolIsVerifying,
+            poolCollateralizationLevelIs100,
+            DEFAULT_BUNDLE_CAPITALIZATION,
+            DEFAULT_BUNDLE_LIFETIME);
+    }
+
+    function _setUp(
+        bool poolIsVerifying,
+        UFixed poolCollateralizationLevel,
+        uint256 initialBundleCapitalization,
+        uint256 bundleLifetime
+    )
+        internal
+        virtual
+    {
         console.log("tx origin", tx.origin);
 
         // deploy registry, nft, and services
@@ -66,12 +92,19 @@ contract TestGifBase is Test {
 
         // deploy pool
         vm.startPrank(poolOwner);
-        _deployPool();
+        _deployPool(poolIsVerifying, poolCollateralizationLevel);
         vm.stopPrank();
 
         // deploy product
         vm.startPrank(productOwner);
         _deployProduct();
+        vm.stopPrank();
+
+        // deploy product
+        vm.startPrank(investor);
+        _createBundle(
+            initialBundleCapitalization,
+            bundleLifetime);
         vm.stopPrank();
     }
 
@@ -175,8 +208,19 @@ contract TestGifBase is Test {
     }
 
 
-    function _deployPool() internal {
-        pool = new TestPool(address(registry), instance.getNftId(), address(token));
+    function _deployPool(
+        bool isVerifying,
+        UFixed collateralizationLevel
+    )
+        internal
+    {
+        pool = new TestPool(
+            address(registry), 
+            instance.getNftId(), 
+            address(token),
+            isVerifying,
+            collateralizationLevel);
+
         pool.register();
         console.log("pool deployed at", address(pool));
     }
@@ -187,4 +231,21 @@ contract TestGifBase is Test {
         product.register();
         console.log("product deployed at", address(product));
     }
+
+    function _createBundle(
+        uint256 amount,
+        uint256 lifetime
+    ) 
+        internal
+    {
+        uint initialCapitalAmount = amount * 10 ** token.decimals();
+        bundleNftId = pool.createBundle(
+            initialCapitalAmount,
+            lifetime,
+            "");
+
+        console.log("bundle fundet with", amount);
+        console.log("bundle nft id", address(product));
+    }
+
 }

@@ -15,7 +15,7 @@ contract TestFee {
         pure 
         returns(Fee memory fee)
     {
-        return toFee(UFixedMathLib.itof(fractionalValue, exponent), fixedValue);
+        return toFee(UFixedMathLib.toUFixed(fractionalValue, exponent), fixedValue);
     }
 
     function getZeroFee() external pure returns(Fee memory fee) {

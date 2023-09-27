@@ -6,78 +6,82 @@ import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 import {IPolicy, IPolicyModule} from "../../module/policy/IPolicy.sol";
 import {ITreasuryModule} from "../../module/treasury/ITreasury.sol";
-import {NftId, NftIdLib} from "../../../types/NftId.sol";
+
+import {NftId} from "../../../types/NftId.sol";
+import {LibNftIdSet} from "../../../types/NftIdSet.sol";
+import {StateId, APPLIED} from "../../../types/StateId.sol";
+import {UFixed} from "../../../types/UFixed.sol";
 
 import {IPoolModule} from "./IPoolModule.sol";
 
 abstract contract PoolModule is
     IPoolModule
 {
-    using NftIdLib for NftId;
+    using LibNftIdSet for LibNftIdSet.Set;
 
-    uint256 public constant INITIAL_CAPITAL = 10000 * 10 ** 6;
-    uint256 public constant INITIAL_LOCKED_CAPITAL = 0;
+    mapping(NftId poolNftId => PoolInfo info) private _poolInfo;
+    mapping(NftId poolNftId => LibNftIdSet.Set bundles) private _bundlesForPool;
 
-    mapping(NftId nftId => PoolInfo info) private _poolInfo;
-
-    IPolicyModule private _policyModule;
-    ITreasuryModule private _treasuryModule;
-
-    modifier onlyPoolProductService() {
+    modifier poolServiceCallingPool() {
         require(
-            msg.sender == address(this.getProductService()),
-            "ERROR:PL-001:NOT_PRODUCT_SERVICE"
+            msg.sender == address(this.getPoolService()),
+            "ERROR:PL-001:NOT_POOL_SERVICE"
         );
         _;
     }
 
-    constructor() {
-        _policyModule = IPolicyModule(address(this));
-        _treasuryModule = ITreasuryModule(address(this));
-    }
-
-    function registerPool(NftId nftId) public override {
-        require(_poolInfo[nftId].nftId.eqz(), "ERROR:PL-010:ALREADY_CREATED");
+    function registerPool(
+        NftId nftId, 
+        bool isVerifying,
+        UFixed collateralizationRate
+    )
+        public
+        override
+    {
+        require(
+            _poolInfo[nftId].nftId.eqz(), 
+            "ERROR:PL-010:ALREADY_CREATED");
 
         _poolInfo[nftId] = PoolInfo(
             nftId,
-            INITIAL_CAPITAL,
-            INITIAL_LOCKED_CAPITAL
+            isVerifying,
+            collateralizationRate
         );
+
+        // TODO add logging
     }
 
-    function underwrite(
-        NftId policyNftId,
-        NftId productNftId
-    ) external override onlyPoolProductService {
-        IPolicy.PolicyInfo memory policyInfo = _policyModule.getPolicyInfo(
-            policyNftId
-        );
-        require(policyInfo.nftId == policyNftId, "ERROR:PL-002:POLICY_UNKNOWN");
-
-        ITreasuryModule.ProductSetup memory product = _treasuryModule
-            .getProductSetup(productNftId);
+    function addBundleToPool(
+        NftId bundleNftId,
+        NftId poolNftId,
+        uint256 // amount
+    )
+        external
+        override
+    {
+        LibNftIdSet.Set storage bundleSet = _bundlesForPool[poolNftId];
         require(
-            product.productNftId == productNftId,
-            "ERROR:PL-003:PRODUCT_SETUP_MISSING"
-        );
+            !bundleSet.contains(bundleNftId),
+            "ERROR:PL-020:BUNDLE_ALREADY_ADDED");
 
-        NftId poolNftId = product.poolNftId;
-        PoolInfo storage poolInfo = _poolInfo[poolNftId];
-        require(poolInfo.nftId == poolNftId, "ERROR:PL-004:POOL_UNKNOWN");
-
-        require(
-            poolInfo.capital - poolInfo.lockedCapital >=
-                policyInfo.sumInsuredAmount,
-            "ERROR:PL-005:CAPACITY_TOO_LOW"
-        );
-
-        poolInfo.lockedCapital += policyInfo.sumInsuredAmount;
+        bundleSet.add(bundleNftId);
     }
+
 
     function getPoolInfo(
         NftId nftId
     ) external view override returns (PoolInfo memory info) {
         info = _poolInfo[nftId];
     }
+
+
+    function getBundleCount(NftId poolNftId) external view override returns (uint256 bundleCount) {
+        return _bundlesForPool[poolNftId].getLength();
+    }
+
+
+    function getBundleNftId(NftId poolNftId, uint256 index) external view override returns (NftId bundleNftId) {
+        return _bundlesForPool[poolNftId].getElementAt(index);
+    }
+
 }
