@@ -39,6 +39,10 @@ contract Pool is ComponentBase, IPoolBase {
     }
 
     // from pool component
+    function getPoolInfo() external view returns(PoolInfo memory info)
+    {
+        require(true);
+    }
     function getStakingFee()
         external
         view

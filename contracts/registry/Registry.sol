@@ -34,9 +34,11 @@ contract Registry is
 
     mapping(ObjectType callerType => mapping(ObjectType parentType => mapping(ObjectType objectType => bool))) private _allowed;
 
+    // TODO check for exactlly RegisterService?
     modifier onlyRegistryService() {
         NftId senderNftId = _nftIdByAddress[msg.sender]; 
         require(_info[senderNftId].objectType == SERVICE(), "ERROR:REG-002:NOT_SERVICE");
+        // require(senderNftId == registryServiceNftdId);
         _;
     }
     modifier onlyOwner() {
@@ -45,6 +47,7 @@ contract Registry is
     } 
 
     // TODO refactor once registry becomes upgradable
+    // TODO binding to RegistryService
     function initialize(address chainNft) public {
         require(
             address(_chainNft) == address(0),
@@ -61,6 +64,8 @@ contract Registry is
 
         // setup rules for further registrations
         _setRegistrables();
+        
+        //this.register(registryService, registryService.getInfo());
     }
 
     // Registration
@@ -101,11 +106,11 @@ contract Registry is
         return _registerContract(SERVICE(), from, registrableAddress, info);
     }
     // "from" is msg.sender to registry service
-    // "from" is registred contract which keeps registrable's state
+    // "from" is registred contract which stores registrable
     function registerFor(address from, ObjectInfo memory registrable)
         external 
         override
-        onlyRegistryService() 
+        onlyRegistryService()
         returns(NftId nftId)
     {
         return _registerObject(SERVICE(), from, registrable);

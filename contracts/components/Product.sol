@@ -63,6 +63,10 @@ contract Product is ComponentBase, IProductBase {
         _productService.setFees(policyFee, processingFee);
     }
 
+    function getProductInfo() external view returns(ProductInfo memory info)
+    {
+        require(true);
+    }
 
     function getPolicyFee()
         external

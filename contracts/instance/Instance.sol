@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {NftId} from "../types/NftId.sol";
 
+import {IInstance} from "./IInstance.sol";
 import {InstanceBase} from "./InstanceBase.sol";
 import {AccessModule} from "./module/access/Access.sol";
 import {LifecycleModule} from "./module/lifecycle/LifecycleModule.sol";

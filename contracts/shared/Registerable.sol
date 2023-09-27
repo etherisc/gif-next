@@ -54,7 +54,8 @@ abstract contract Registerable is
     // from IRegistryLinked
     // TODO refactor
     function register() public onlyOwner virtual override returns (NftId nftId) {
-        return _registry.registerFor(msg.sender, address(this));// wrong
+        // call registry service....
+        //return _registry.registerFor(msg.sender, address(this));// wrong
     }
 
     function getInfo() external view returns (IRegistry.ObjectInfo memory info)
