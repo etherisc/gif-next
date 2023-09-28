@@ -142,7 +142,7 @@ contract TestApplicationCreate is TestGifBase {
         );
         assertEq(
             token.balanceOf(pool.getWallet()),
-            0,
+            initialCapitalAmount,
             "unexpected pool balance"
         );
 
@@ -205,7 +205,7 @@ contract TestApplicationCreate is TestGifBase {
         );
         assertEq(
             token.balanceOf(pool.getWallet()),
-            premiumAmount,
+            initialCapitalAmount + premiumAmount,
             "unexpected pool balance (after)"
         );
     }
@@ -298,7 +298,7 @@ contract TestApplicationCreate is TestGifBase {
         );
         assertEq(
             token.balanceOf(pool.getWallet()),
-            netPremiumAmount,
+            initialCapitalAmount + netPremiumAmount,
             "unexpected pool balance (after)"
         );
 

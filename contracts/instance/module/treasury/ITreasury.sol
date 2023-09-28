@@ -18,7 +18,6 @@ interface ITreasury {
         NftId distributorNftId;
         NftId poolNftId;
         IERC20Metadata token;
-        TokenHandler tokenHandler;
         address wallet;
         Fee policyFee;
         Fee processingFee;
@@ -27,7 +26,7 @@ interface ITreasury {
     struct DistributorSetup {
         NftId distributorNftId;
         address wallet;
-        Fee commissionFees;
+        Fee commissionFee;
     }
 
     struct PoolSetup {
@@ -70,7 +69,7 @@ interface ITreasuryModule is ITreasury {
     ) external;
 
     function getTokenHandler(
-        NftId productNftId
+        NftId componentNftId
     ) external view returns (TokenHandler tokenHandler);
 
     function getProductSetup(

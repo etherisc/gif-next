@@ -21,7 +21,7 @@ import {ObjectType, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, zeroFee} from "../../types/Fee.sol";
-import {Version, toVersion, toVersionPart} from "../../types/Version.sol";
+import {Version, VersionLib} from "../../types/Version.sol";
 
 import {IProductComponent} from "../../components/IProductComponent.sol";
 import {ServiceBase} from "./ServiceBase.sol";
@@ -55,10 +55,7 @@ contract ComponentOwnerService is
         virtual override (IVersionable, Versionable)
         returns(Version)
     {
-        return toVersion(
-            toVersionPart(3),
-            toVersionPart(0),
-            toVersionPart(0));
+        return VersionLib.toVersion(3,0,0);
     }
 
     function getName() external pure override returns(string memory name) {

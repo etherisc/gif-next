@@ -1,19 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Version, VersionPart, toVersion, toVersionPart, zeroVersion} from "../types/Version.sol";
+import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 
 contract TestVersion {
 
     function createVersion(uint major, uint minor, uint patch) external pure returns(Version) {
-        return toVersion(
-            toVersionPart(uint8(major)),
-            toVersionPart(uint8(minor)),
-            toVersionPart(uint8(patch)));
+        return VersionLib.toVersion(major, minor, patch);
     }
 
     function createVersionPart(uint versionPart) external pure returns(VersionPart) {
-        return toVersionPart(uint8(versionPart));
+        return VersionLib.toVersionPart(uint8(versionPart));
     }
 
     function getVersionParts(Version version)
@@ -33,7 +30,7 @@ contract TestVersion {
     }
 
     function getZeroVersion() external pure returns(Version) {
-        return zeroVersion();
+        return VersionLib.zeroVersion();
     }
 
     function isSameVersion(Version a, Version b) external pure returns(bool) {

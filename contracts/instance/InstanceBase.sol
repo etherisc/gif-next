@@ -8,7 +8,7 @@ import {Registerable} from "../shared/Registerable.sol";
 // import {IInstance} from "./IInstance.sol";
 import {ObjectType, INSTANCE} from "../types/ObjectType.sol";
 import {NftId} from "../types/NftId.sol";
-import {Version, VersionPart, toVersion, toVersionPart} from "../types/Version.sol";
+import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IProductService} from "./service/IProductService.sol";
@@ -44,10 +44,7 @@ abstract contract InstanceBase is
         virtual override
         returns(Version)
     {
-        return toVersion(
-            toVersionPart(3),
-            toVersionPart(0),
-            toVersionPart(0));
+        return VersionLib.toVersion(3,0,0);
     }
 
     // from registerable

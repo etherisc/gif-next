@@ -13,6 +13,7 @@ import {ProductService} from "../../contracts/instance/service/ProductService.so
 import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 
 import {Instance} from "../../contracts/instance/Instance.sol";
+import {TokenHandler} from "../../contracts/instance/module/treasury/TokenHandler.sol";
 import {TestProduct} from "../../contracts/test/TestProduct.sol";
 import {TestPool} from "../../contracts/test/TestPool.sol";
 import {USDC} from "../mock/Usdc.sol";
@@ -41,6 +42,7 @@ contract TestGifBase is Test {
     Instance public instance;
     TestProduct public product;
     TestPool public pool;
+    TokenHandler public tokenHandler;
 
     address public registryAddress;
     NftId public registryNftId;
@@ -103,16 +105,26 @@ contract TestGifBase is Test {
         _deployProduct();
         vm.stopPrank();
 
-        // deploy product
+        // fund investor
+        initialCapitalAmount = initialBundleCapitalization * 10 ** token.decimals();
+
+        vm.prank(instanceOwner);
+        token.transfer(investor, initialCapitalAmount);
+
+        // approve capital and create bundle
         vm.startPrank(investor);
+        token.approve(address(tokenHandler), initialCapitalAmount);
+
         _createBundle(
-            initialBundleCapitalization,
+            initialCapitalAmount,
             bundleLifetime);
         vm.stopPrank();
     }
 
     function fundAccount(address account, uint256 amount) public {
         token.transfer(account, amount);
+
+        token.approve(address(tokenHandler), amount);
     }
 
     /// @dev Helper function to assert that a given NftId is equal to the expected NftId.
@@ -250,8 +262,13 @@ contract TestGifBase is Test {
     function _deployProduct() internal {
         product = new TestProduct(address(registry), instance.getNftId(), address(token), address(pool));
         product.register();
+
+        tokenHandler = instance.getTokenHandler(product.getNftId());
+
         // solhint-disable-next-line
         console.log("product deployed at", address(product));
+        // solhint-disable-next-line
+        console.log("token handler deployed at", address(tokenHandler));
     }
 
     function _createBundle(
@@ -260,9 +277,8 @@ contract TestGifBase is Test {
     ) 
         internal
     {
-        initialCapitalAmount = amount * 10 ** token.decimals();
         bundleNftId = pool.createBundle(
-            initialCapitalAmount,
+            amount,
             lifetime,
             "");
 

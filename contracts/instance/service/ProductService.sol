@@ -20,7 +20,7 @@ import {APPLIED, UNDERWRITTEN, ACTIVE} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {Fee, feeIsZero} from "../../types/Fee.sol";
-import {Version, toVersion, toVersionPart} from "../../types/Version.sol";
+import {Version, VersionLib} from "../../types/Version.sol";
 
 import {ComponentServiceBase} from "./ComponentServiceBase.sol";
 import {IProductService} from "./IProductService.sol";
@@ -47,10 +47,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         virtual override (IVersionable, Versionable)
         returns(Version)
     {
-        return toVersion(
-            toVersionPart(3),
-            toVersionPart(0),
-            toVersionPart(0));
+        return VersionLib.toVersion(3,0,0);
     }
 
     function getName() external pure override returns(string memory name) {
@@ -329,7 +326,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
-            TokenHandler tokenHandler = product.tokenHandler;
+            TokenHandler tokenHandler = instance.getTokenHandler(product.productNftId);
             address policyOwner = _registry.getOwner(policyNftId);
             address poolWallet = instance.getPoolSetup(product.poolNftId).wallet;
             netPremiumAmount = premiumAmount;

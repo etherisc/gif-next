@@ -3,12 +3,11 @@ pragma solidity ^0.8.19;
 
 import {Blocknumber, blockNumber} from "../types/Blocknumber.sol";
 import {Timestamp, blockTimestamp} from "../types/Timestamp.sol";
-import {Version, VersionPart, zeroVersion} from "../types/Version.sol";
+import {Version, VersionPart} from "../types/Version.sol";
 
 import {IVersionable} from "./IVersionable.sol";
 
 abstract contract Versionable is IVersionable {
-
 
     mapping(Version version => VersionInfo info) private _versionHistory;
     Version [] private _versions;
@@ -58,8 +57,8 @@ abstract contract Versionable is IVersionable {
             thisVersion,
             implementation,
             activatedBy,
-            blockNumber(),
-            blockTimestamp()
+            blockTimestamp(),
+            blockNumber()
         );
 
         emit LogVersionableActivated(thisVersion, implementation, activatedBy);
@@ -80,13 +79,11 @@ abstract contract Versionable is IVersionable {
 
 
     function getVersion(uint256 idx) external view override returns(Version) {
-        require(idx < _versions.length, "ERROR:VRN-010:INDEX_TOO_LARGE");
         return _versions[idx];
     }
 
 
     function getVersionInfo(Version _version) external override view returns(VersionInfo memory) {
-        require(isActivated(_version), "ERROR:VRN-020:VERSION_UNKNOWN");
         return _versionHistory[_version];
     }
 }
