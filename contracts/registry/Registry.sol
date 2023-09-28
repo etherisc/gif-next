@@ -9,7 +9,7 @@ import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {NftId, toNftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {VersionPart} from "../types/Version.sol";
-import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
+import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, COMPENSATION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
 
 // TODO make registry upgradable
 contract Registry is
@@ -293,7 +293,7 @@ contract Registry is
 
         // instance as parent
         _isValidParentType[PRODUCT()][INSTANCE()] = true;
-        _isValidParentType[DISTRIBUTOR()][INSTANCE()] = true;
+        _isValidParentType[COMPENSATION()][INSTANCE()] = true;
         _isValidParentType[ORACLE()][INSTANCE()] = true;
         _isValidParentType[POOL()][INSTANCE()] = true;
 

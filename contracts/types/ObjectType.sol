@@ -41,7 +41,11 @@ function PRODUCT() pure returns (ObjectType) {
     return toObjectType(100);
 }
 
-function DISTRIBUTOR() pure returns (ObjectType) {
+function RISK() pure returns (ObjectType) {
+    return toObjectType(101);
+}
+
+function COMPENSATION() pure returns (ObjectType) {
     return toObjectType(110);
 }
 
