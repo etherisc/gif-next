@@ -1,0 +1,1 @@
+export const NUMBER_OF_CONFIRMATIONS = parseInt(process.env.NUMBER_OF_CONFIRMATIONS || "5");
