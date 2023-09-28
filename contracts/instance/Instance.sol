@@ -6,6 +6,7 @@ import {RoleId} from "../types/RoleId.sol";
 
 import {InstanceBase} from "./InstanceBase.sol";
 import {AccessModule} from "./module/access/Access.sol";
+import {CompensationModule} from "./module/compensation/CompensationModule.sol";
 import {LifecycleModule} from "./module/lifecycle/LifecycleModule.sol";
 import {ComponentModule} from "./module/component/ComponentModule.sol";
 import {PolicyModule} from "./module/policy/PolicyModule.sol";
@@ -31,6 +32,7 @@ contract Instance is
     AccessModule,
     BundleModule,
     ComponentModule,
+    CompensationModule,
     LifecycleModule,
     PolicyModule,
     PoolModule,

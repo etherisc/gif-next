@@ -10,6 +10,7 @@ import {IOwnable} from "../shared/IOwnable.sol";
 import {RoleId} from "../types/RoleId.sol";
 
 import {IAccessModule} from "./module/access/IAccess.sol";
+import {ICompensationModule} from "./module/compensation/ICompensation.sol";
 import {ILifecycleModule} from "./module/lifecycle/ILifecycle.sol";
 import {IComponentModule} from "./module/component/IComponent.sol";
 import {IPolicyModule} from "./module/policy/IPolicy.sol";
@@ -37,6 +38,7 @@ interface IInstance is
     IBundleModule,
     IComponentModule,
     ITreasuryModule,
+    ICompensationModule,
     IServiceLinked
 {
     function getRegistry() external view override (IBundleModule, IComponentModule, IPolicyModule, IRegisterable) returns (IRegistry registry);
