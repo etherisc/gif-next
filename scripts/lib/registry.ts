@@ -6,6 +6,12 @@ import { LibraryAddresses } from "./libraries";
 import { executeTx, getFieldFromLogs } from "./transaction";
 import { IERC721ABI } from "./erc721";
 
+export type RegistryAddresses = {
+    registryAddress: AddressLike;
+    registryNftId: string;
+    chainNftAddress: AddressLike;
+}
+
 export async function isRegistered(signer: Signer, registryAddress: AddressLike, objectAddress: AddressLike): Promise<string|null> {
     const registryAsInstanceOwner = Registry__factory.connect(registryAddress.toString(), signer);
     const isRegistered = await registryAsInstanceOwner.isRegistered(objectAddress);
@@ -19,11 +25,7 @@ export async function isRegistered(signer: Signer, registryAddress: AddressLike,
     return instanceNftId.toString();
 }
 
-export async function deployRegistry(owner: Signer, libraries: LibraryAddresses): Promise<{
-    registryAddress: AddressLike,
-    registryNftId: string,
-    chainNftAddress: AddressLike,
-}> {
+export async function deployRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
     const { address: registryAddress, contract: registryBaseContract } = await deployContract(
         "Registry",
         owner,

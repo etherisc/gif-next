@@ -15,7 +15,7 @@ async function main() {
 
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
-    const { registryAddress, registryNftId, chainNftAddress } = await deployRegistry(protocolOwner, libraries);
+    const registry = await deployRegistry(protocolOwner, libraries);
     throw Error("works up to here"); // TODO: implement the rest
     const { componentOwnerServiceAddress, productServiceAddress } = await deployServices(protocolOwner, registryAddress, libraries);
 
