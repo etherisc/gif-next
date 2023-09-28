@@ -4,7 +4,6 @@ FROM mcr.microsoft.com/devcontainers/typescript-node:${VARIANT}
 
 # install mcfly as root
 RUN curl -LSfs https://raw.githubusercontent.com/cantino/mcfly/master/ci/install.sh | sh -s -- --git cantino/mcfly 
-python -m pip install --upgrade pip
 USER node
 
 # Install and configure starship.rs prompt

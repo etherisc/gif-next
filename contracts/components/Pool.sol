@@ -125,7 +125,7 @@ contract Pool is BaseComponent, IPoolComponent {
     {
         require(
             policyMatchesBundle(policyData, bundleFilter),
-            "ERROR:POL-002:POLICY_BUNDLE_MISMATCH"
+            "ERROR:POL-020:POLICY_BUNDLE_MISMATCH"
         );
 
         emit LogUnderwrittenByPool(policyNftId, collateralizationAmount, address(this));

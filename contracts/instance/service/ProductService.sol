@@ -265,7 +265,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         if(activateAt > zeroTimestamp()) {
             require(
                 policyInfo.activatedAt.eqz(),
-                "ERROR:PRS-020:ALREADY_ACTIVATED");
+                "ERROR:PRS-030:ALREADY_ACTIVATED");
 
             policyInfo.activatedAt = activateAt;
             policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
