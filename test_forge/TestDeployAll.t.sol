@@ -8,7 +8,7 @@ import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol
 
 contract TestDeployAll is TestGifBase {
     function testDeployAllRegistryCountWithProduct() public {
-        assertEq(registry.getObjectCount(), 9, "getObjectCount not 9");
+        assertEq(registry.getObjectCount(), 10, "getObjectCount not 10");
     }
 
     function testDeployAllInstanceOwner() public {

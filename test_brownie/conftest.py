@@ -34,6 +34,7 @@ from test_brownie.gif import (
     deploy_services,
     deploy_instance,
     deploy_pool,
+    deploy_product,
 ) 
 
 from test_brownie.const import (
@@ -155,4 +156,8 @@ def pool(registry, instance, instance_owner, usdc, pool_owner) -> TestPool:
     pool_collateralization_level = instance.getUFixed(1)
 
     return deploy_pool(registry, instance, instance_owner, usdc, pool_is_verifying, pool_collateralization_level, pool_owner)
+
+@pytest.fixture(scope="module")
+def product(registry, instance, instance_owner, usdc, pool, product_owner) -> TestProduct:
+    return deploy_product(registry, instance, instance_owner, usdc, pool, product_owner)
 

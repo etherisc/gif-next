@@ -69,7 +69,7 @@ def test_registry_initial_setup(
 
     registry_nft_id = registry.getNftId(registry)
     assert registry.isRegistered[NFT_ID](registry_nft_id)
-    assert registry_nft_id[0] == '2'
+    assert str(registry_nft_id)[0] == '2'
 
     info = registry.getObjectInfo(registry_nft_id).dict()
     assert info['initialOwner'] == registry_owner

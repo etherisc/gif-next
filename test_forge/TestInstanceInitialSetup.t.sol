@@ -8,8 +8,8 @@ import {NftId, toNftId} from "../contracts/types/NftId.sol";
 contract TestInstanceInitialSetup is TestGifBase {
 
     function testRegistryCount() public {
-        // 1. protocol
-        // 2. global registry
+        // 1. 1101 protocol
+        // 2. 1201 global registry
         // 3. 23133705 anvil registry
         // 4. 33133705 component owner service
         // 5. 43133705 product service
@@ -17,7 +17,8 @@ contract TestInstanceInitialSetup is TestGifBase {
         // 7. 63133705 instance
         // 8. 73133705 pool
         // 9. 83133705 product
-        assertEq(registry.getObjectCount(), 9, "getObjectCount not 9");
+        // 10. 93133705 bundle
+        assertEq(registry.getObjectCount(), 10, "getObjectCount not 10");
     }
 
     function testRegistryNftId() public {

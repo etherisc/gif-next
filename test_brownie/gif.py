@@ -79,9 +79,6 @@ def deploy_lib(lib_class, owner):
     lib_class.deploy({'from': owner})
 
 def deploy_service(services, service_name, service_class, registry, owner):
-    if service_name in services:
-        return services
-
     service = service_class.deploy(registry, registry.getNftId(), {'from': owner})
     service.register()
 
@@ -109,3 +106,16 @@ def deploy_pool(registry, instance, instance_owner, token, pool_is_verifying, po
     pool.register({'from': pool_owner})
     return pool
 
+def deploy_product(registry, instance, instance_owner, token, pool, product_owner):
+    product_owner_role = instance.getRoleId(PRODUCT_OWNER_ROLE)
+    instance.grantRole(product_owner_role, product_owner, {'from': instance_owner})
+
+    product = TestProduct.deploy(
+        registry,
+        instance.getNftId(),
+        token,
+        pool,
+        {'from': product_owner})
+    
+    product.register({'from': product_owner})
+    return product

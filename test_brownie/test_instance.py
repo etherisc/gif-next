@@ -22,6 +22,7 @@ from test_brownie.const import (
     NFT_ID,
     REGISTRY,
     SERVICE,
+    INSTANCE,
     VERSION,
     COMPONENT_OWNER_SERVICE_NAME,
     PRODUCT_SERVICE_NAME,
@@ -43,5 +44,22 @@ def test_instance(
     version_lib: TestVersion
 ) -> None:
 
-    # todo
-    assert False
+    instance_nft_id = instance.getNftId()
+
+    # check instance registration
+    assert registry.isRegistered[NFT_ID](instance_nft_id)
+    assert registry.isRegistered[ADDRESS](instance)
+    assert registry.getNftId(instance) == instance_nft_id
+    
+    # check ownership
+    assert instance.getOwner() == instance_owner
+    assert registry.getOwner(instance_nft_id) == instance_owner
+
+    # check registry object info for instance
+    info = registry.getObjectInfo(instance_nft_id).dict()
+    assert info['nftId'] == instance_nft_id
+    assert info['parentNftId'] == registry.getNftId()
+    assert info['objectType'] == INSTANCE
+    assert info['objectAddress'] == instance
+    assert info['initialOwner'] == instance_owner
+    assert info['data'] == '0x'

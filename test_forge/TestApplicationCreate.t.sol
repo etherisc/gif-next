@@ -6,7 +6,7 @@ import {IPolicy} from "../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../contracts/instance/module/pool/IPoolModule.sol";
 import {IBundle} from "../contracts/instance/module/bundle/IBundle.sol";
 import {TokenHandler} from "../contracts/instance/module/treasury/TokenHandler.sol";
-import {APPLIED, ACTIVE} from "../contracts/types/StateId.sol";
+import {APPLIED, UNDERWRITTEN, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {Fee, toFee, zeroFee, feeIsZero, feeIsSame} from "../contracts/types/Fee.sol";
@@ -29,7 +29,7 @@ contract TestApplicationCreate is TestGifBase {
             bundleNftId
         );
 
-        assertNftId(policyNftId, toNftId(93133705), "policy id not 93133705");
+        assertNftId(policyNftId, toNftId(103133705), "policy id not 103133705");
         assertEq(
             registry.getOwner(policyNftId),
             customer,
@@ -67,30 +67,29 @@ contract TestApplicationCreate is TestGifBase {
             bundleNftId
         );
 
+        // get bundle details before underwriting (and token transfer)
         IBundle.BundleInfo memory infoBefore = instance.getBundleInfo(bundleNftId);
 
-        bool requirePremiumPayment = true;
-        Timestamp activateAt = blockTimestamp();
+        // underwrite and don't collect premium and don't activate
+        bool requirePremiumPayment = false;
+        Timestamp activateAt = zeroTimestamp();
         product.underwrite(policyNftId, requirePremiumPayment, activateAt);
 
-        IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
-        assertNftId(info.nftId, policyNftId, "policy id differs");
+        IBundle.BundleInfo memory infoAfter = instance.getBundleInfo(bundleNftId);
+        IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
+
+        assertNftId(policyInfo.nftId, policyNftId, "policy id differs");
         assertEq(
-            info.state.toInt(),
-            ACTIVE().toInt(),
-            "policy state not active/underwritten"
+            policyInfo.state.toInt(),
+            UNDERWRITTEN().toInt(),
+            "policy state not underwritten"
         );
 
         // solhint-disable-next-line not-rely-on-time
-        assertTrue(info.activatedAt == blockTimestamp(), "wrong activated at");
-        assertTrue(
-            info.expiredAt ==
-            blockTimestamp().addSeconds(info.lifetime),
-            "wrong expired at"
-        );
-        assertTrue(info.closedAt == zeroTimestamp(), "wrong closed at");
+        assertTrue(policyInfo.activatedAt == zeroTimestamp(), "wrong activated at");
+        assertTrue(policyInfo.expiredAt == zeroTimestamp(), "wrong expired at");
+        assertTrue(policyInfo.closedAt == zeroTimestamp(), "wrong closed at");
 
-        IBundle.BundleInfo memory infoAfter = instance.getBundleInfo(bundleNftId);
         assertEq(infoAfter.nftId.toInt(), bundleNftId.toInt(), "bundle id unexpected");
         assertEq(infoBefore.lockedAmount, 0, "capital locked not 0");
         assertEq(
@@ -100,7 +99,7 @@ contract TestApplicationCreate is TestGifBase {
         );
     }
 
-    function testCreatePolicyAndCollectPremiumNoFee() public {
+    function testUnderwriteAndActivatePolicyCollectPremiumNoFee() public {
         // set fees to zeroFee
         vm.prank(productOwner);
         product.setFees(zeroFee(), zeroFee());
@@ -126,17 +125,11 @@ contract TestApplicationCreate is TestGifBase {
             bundleNftId
         );
 
-        bool requirePremiumPayment = true;
-        Timestamp activateAt = zeroTimestamp();
-        product.underwrite(
-            policyNftId,
-            requirePremiumPayment,
-            activateAt);
-
         // check bookkeeping before collecting premium
         IPolicy.PolicyInfo memory infoBefore = instance.getPolicyInfo(
             policyNftId
         );
+
         assertEq(
             infoBefore.premiumAmount,
             premiumAmount,
@@ -153,6 +146,7 @@ contract TestApplicationCreate is TestGifBase {
             "unexpected pool balance"
         );
 
+        // prepare customer to pay premium amount
         vm.prank(instanceOwner);
         fundAccount(customer, premiumAmount);
 
@@ -175,12 +169,30 @@ contract TestApplicationCreate is TestGifBase {
             "customer token approval not premium"
         );
 
-        activateAt = blockTimestamp();
-        product.collectPremium(
+        // underwrite, collect premium and activate policy
+        bool requirePremiumPayment = true;
+        Timestamp activateAt = blockTimestamp();
+        product.underwrite(
             policyNftId,
+            requirePremiumPayment,
             activateAt);
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
+        assertNftId(info.nftId, policyNftId, "policy id differs");
+        assertEq(
+            info.state.toInt(),
+            ACTIVE().toInt(),
+            "policy state not active"
+        );
+
+        // solhint-disable-next-line not-rely-on-time
+        assertTrue(info.activatedAt == activateAt, "wrong activated at");
+        assertTrue(
+            info.expiredAt ==
+            activateAt.addSeconds(info.lifetime),
+            "wrong expired at"
+        );
+        assertTrue(info.closedAt == zeroTimestamp(), "wrong closed at");
         assertEq(
             info.premiumAmount,
             premiumAmount,
@@ -198,7 +210,7 @@ contract TestApplicationCreate is TestGifBase {
         );
     }
 
-    function testCreatePolicyAndCollectPremiumPolicyFee() public {
+    function testUnderwriteAndActivatePolicyCollectPremiumWithFee() public {
         // check initial policy fee
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
         ITreasuryModule.ProductSetup memory setup = treasuryModule
@@ -233,6 +245,7 @@ contract TestApplicationCreate is TestGifBase {
             "updated processingFee not zeroFee"
         );
 
+        // create appliation
         vm.prank(customer);
         NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount,
@@ -241,33 +254,7 @@ contract TestApplicationCreate is TestGifBase {
             bundleNftId
         );
 
-        bool requirePremiumPayment = true;
-        Timestamp activateAt = zeroTimestamp();
-        product.underwrite(
-            policyNftId,
-            requirePremiumPayment,
-            activateAt);
-
-        // check bookkeeping before collecting premium
-        IPolicy.PolicyInfo memory infoBefore = instance.getPolicyInfo(
-            policyNftId
-        );
-        assertEq(
-            infoBefore.premiumAmount,
-            premiumAmount,
-            "unexpected policy premium amount"
-        );
-        assertEq(
-            infoBefore.premiumPaidAmount,
-            0,
-            "unexpected policy premium paid amount"
-        );
-        assertEq(
-            token.balanceOf(pool.getWallet()),
-            0,
-            "unexpected pool balance"
-        );
-
+        // prepare customer to pay premium amount
         vm.prank(instanceOwner);
         fundAccount(customer, premiumAmount);
 
@@ -279,26 +266,13 @@ contract TestApplicationCreate is TestGifBase {
         vm.prank(customer);
         token.approve(tokenHandlerAddress, premiumAmount);
 
-        assertEq(
-            token.balanceOf(customer),
-            premiumAmount,
-            "customer balance not premium"
-        );
-        assertEq(
-            token.allowance(customer, tokenHandlerAddress),
-            premiumAmount,
-            "customer token approval not premium"
-        );
-
-        activateAt = blockTimestamp();        
-        product.collectPremium(policyNftId, activateAt);
-
-        UFixed premiumUFixed = UFixedMathLib.toUFixed(premiumAmount);
-        UFixed fractionalFeeAmountUFixed = premiumUFixed *
-            policyFee.fractionalFee;
-        uint fractionalFeeAmount = fractionalFeeAmountUFixed.toInt();
-        uint policyFeeAmount = fractionalFeeAmount + policyFee.fixedFee;
-        uint netPremiumAmount = premiumAmount - policyFeeAmount;
+        // underwrite, collect premium, and activate
+        bool requirePremiumPayment = true;
+        Timestamp activateAt = blockTimestamp();
+        product.underwrite(
+            policyNftId,
+            requirePremiumPayment,
+            activateAt);
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
         assertEq(
@@ -311,6 +285,12 @@ contract TestApplicationCreate is TestGifBase {
             premiumAmount,
             "unexpected policy premium paid amount (after)"
         );
+
+        (
+            uint256 policyFeeAmount,
+            uint256 netPremiumAmount
+        ) = instance.calculateFeeAmount(premiumAmount, policyFee);
+
         assertEq(
             token.balanceOf(product.getWallet()),
             policyFeeAmount,
@@ -320,6 +300,21 @@ contract TestApplicationCreate is TestGifBase {
             token.balanceOf(pool.getWallet()),
             netPremiumAmount,
             "unexpected pool balance (after)"
+        );
+
+        // check bundle book keeping after collecting premium
+        IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(
+            bundleNftId
+        );
+        assertEq(
+            bundleInfo.lockedAmount,
+            sumInsuredAmount,
+            "locked amount in bundle not sum insured"
+        );
+        assertEq(
+            bundleInfo.balanceAmount,
+            initialCapitalAmount + netPremiumAmount,
+            "bundle balance not initial capital + net premium"
         );
     }
 }

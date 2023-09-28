@@ -44,6 +44,7 @@ contract TestGifBase is Test {
     address public registryAddress;
     NftId public registryNftId;
     NftId public bundleNftId;
+    uint256 initialCapitalAmount;
 
     address public registryOwner = makeAddr("registryOwner");
     address public instanceOwner = makeAddr("instanceOwner");
@@ -238,7 +239,7 @@ contract TestGifBase is Test {
     ) 
         internal
     {
-        uint initialCapitalAmount = amount * 10 ** token.decimals();
+        initialCapitalAmount = amount * 10 ** token.decimals();
         bundleNftId = pool.createBundle(
             initialCapitalAmount,
             lifetime,

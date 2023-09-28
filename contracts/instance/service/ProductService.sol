@@ -106,16 +106,15 @@ contract ProductService is ComponentServiceBase, IProductService {
         view
         returns (
             ITreasury.ProductSetup memory productSetup,
+            IBundle.BundleInfo memory bundleInfo,
             uint256 collateralAmount,
             bool poolIsVerifying,
-            NftId bundleNftId,
             bytes memory bundleFilter
         )
     {
         // check match between policy and bundle (via pool)
-        bundleNftId = policyInfo.bundleNftId;
         productSetup = instance.getProductSetup(policyInfo.productNftId);
-        IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
+        bundleInfo = instance.getBundleInfo(policyInfo.bundleNftId);
         require(bundleInfo.poolNftId == productSetup.poolNftId, "POLICY_BUNDLE_MISMATCH");
 
         // calculate required collateral
@@ -130,18 +129,17 @@ contract ProductService is ComponentServiceBase, IProductService {
 
     function _lockCollateralInBundle(
         IInstance instance,
+        IBundle.BundleInfo memory bundleInfo,
         NftId policyNftId, 
-        NftId bundleNftId,
         uint256 collateralAmount
     )
         internal
+        returns (IBundle.BundleInfo memory)
     {
-        IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
         bundleInfo.lockedAmount += collateralAmount;
         bundleInfo.updatedIn = blockNumber();
-
-        instance.setBundleInfo(bundleInfo);
-        instance.collateralizePolicy(bundleNftId, policyNftId, collateralAmount);
+        instance.collateralizePolicy(bundleInfo.nftId, policyNftId, collateralAmount);
+        return bundleInfo;
     }
 
     function _underwriteByPool(
@@ -184,9 +182,9 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         (
             ITreasury.ProductSetup memory productSetup,
+            IBundle.BundleInfo memory bundleInfo,
             uint256 collateralAmount,
             bool poolIsVerifying,
-            NftId bundleNftId,
             bytes memory bundleFilter
         ) = _getAndVerifyUnderwritingSetup(
             instance,
@@ -194,16 +192,22 @@ contract ProductService is ComponentServiceBase, IProductService {
         );
 
         // lock bundle collateral
-        _lockCollateralInBundle(
+        bundleInfo = _lockCollateralInBundle(
             instance,
+            bundleInfo,
             policyNftId, 
-            bundleNftId,
             collateralAmount);
 
         // collect premium
         if(requirePremiumPayment) {
+            uint256 netPremiumAmount = _processPremiumByTreasury(
+                instance, 
+                productSetup, 
+                policyNftId, 
+                policyInfo.premiumAmount);
+
             policyInfo.premiumPaidAmount += policyInfo.premiumAmount;
-            _processPremiumByTreasury(instance, productSetup, policyNftId, policyInfo.premiumAmount);
+            bundleInfo.balanceAmount += netPremiumAmount;
         }
 
         // set policy state to underwritten
@@ -221,6 +225,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         }
 
         instance.setPolicyInfo(policyInfo);
+        instance.setBundleInfo(bundleInfo);
 
         // integrate pool component
         if(poolIsVerifying) {
@@ -320,12 +325,14 @@ contract ProductService is ComponentServiceBase, IProductService {
         uint256 premiumAmount
     )
         internal
+        returns (uint256 netPremiumAmount)
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
             TokenHandler tokenHandler = product.tokenHandler;
             address policyOwner = _registry.getOwner(policyNftId);
             address poolWallet = instance.getPoolSetup(product.poolNftId).wallet;
+            netPremiumAmount = premiumAmount;
             Fee memory policyFee = product.policyFee;
 
             if (feeIsZero(policyFee)) {
@@ -342,6 +349,7 @@ contract ProductService is ComponentServiceBase, IProductService {
 
                 tokenHandler.transfer(policyOwner, product.wallet, feeAmount);
                 tokenHandler.transfer(policyOwner, poolWallet, netAmount);
+                netPremiumAmount = netAmount;
             }
         }
 
