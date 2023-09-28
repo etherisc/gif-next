@@ -23,6 +23,7 @@ import {
     TestInstanceModuleCompensation,
     TestInstanceModulePolicy, 
     TestInstanceModulePool, 
+    TestInstanceModuleRisk, 
     TestInstanceModuleTreasury
 } from "./modules/TestInstanceModules.sol";
 
@@ -101,6 +102,14 @@ contract TestDeployModules is TestGifBase {
     function testInstanceModuleCompensation() public {
         vm.prank(instanceOwner);
         TestInstanceModuleCompensation instance = new TestInstanceModuleCompensation(registryAddress, registryNftId);
+
+        vm.prank(instanceOwner);
+        instance.register();
+    }
+
+    function testInstanceModuleRisk() public {
+        vm.prank(instanceOwner);
+        TestInstanceModuleRisk instance = new TestInstanceModuleRisk(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
         instance.register();

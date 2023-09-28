@@ -11,6 +11,7 @@ import {LifecycleModule} from "./module/lifecycle/LifecycleModule.sol";
 import {ComponentModule} from "./module/component/ComponentModule.sol";
 import {PolicyModule} from "./module/policy/PolicyModule.sol";
 import {PoolModule} from "./module/pool/PoolModule.sol";
+import {RiskModule} from "./module/risk/RiskModule.sol";
 import {BundleModule} from "./module/bundle/BundleModule.sol";
 import {TreasuryModule} from "./module/treasury/TreasuryModule.sol";
 
@@ -36,6 +37,7 @@ contract Instance is
     LifecycleModule,
     PolicyModule,
     PoolModule,
+    RiskModule,
     TreasuryModule
 {
     constructor(

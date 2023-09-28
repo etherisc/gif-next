@@ -10,12 +10,13 @@ import {IOwnable} from "../shared/IOwnable.sol";
 import {RoleId} from "../types/RoleId.sol";
 
 import {IAccessModule} from "./module/access/IAccess.sol";
+import {IBundleModule} from "./module/bundle/IBundle.sol";
 import {ICompensationModule} from "./module/compensation/ICompensation.sol";
 import {ILifecycleModule} from "./module/lifecycle/ILifecycle.sol";
 import {IComponentModule} from "./module/component/IComponent.sol";
 import {IPolicyModule} from "./module/policy/IPolicy.sol";
 import {IPoolModule} from "./module/pool/IPoolModule.sol";
-import {IBundleModule} from "./module/bundle/IBundle.sol";
+import {IRiskModule} from "./module/risk/IRisk.sol";
 import {ITreasuryModule} from "./module/treasury/ITreasury.sol";
 
 import {IRegistry, IRegistryLinked} from "../registry/IRegistryLinked.sol";
