@@ -1,20 +1,23 @@
-import { AddressLike, Signer, ZeroAddress, resolveAddress } from "ethers";
+import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
-import { IChainNft__factory, IRegistry__factory, Registry, Registry__factory, UFixedMathLib__factory } from "../typechain-types";
+import { IChainNft__factory, IRegistry__factory, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
 import { registerComponent } from "./lib/componentownerservice";
 import { deployContract } from "./lib/deployment";
 import { Role, grantRole, registerInstance } from "./lib/instance";
+import { LibraryAddresses, deployLibraries } from "./lib/libraries";
+import { deployRegistry } from "./lib/registry";
 import { logger } from "./logger";
-import { registry } from "../typechain-types/contracts";
 
 
 async function main() {
     const { protocolOwner, instanceOwner, productOwner, poolOwner } = await getNamedAccounts();
 
     // deploy protocol contracts
-    const { registryAddress, nfIdLibAddress, chainNftAddress } = await deployRegistry(protocolOwner);
-    const { componentOwnerServiceAddress, productServiceAddress, uFixedMathLibAddress } = await deployServices(protocolOwner, registryAddress, nfIdLibAddress);
+    const libraries = await deployLibraries(protocolOwner);
+    const { registryAddress, registryNftId, chainNftAddress } = await deployRegistry(protocolOwner, libraries);
+    throw Error("works up to here"); // TODO: implement the rest
+    const { componentOwnerServiceAddress, productServiceAddress } = await deployServices(protocolOwner, registryAddress, libraries);
 
     // deploy instance contracts
     const { instanceAddress } = await deployInstance(
@@ -185,10 +188,9 @@ async function deployPool(owner: Signer, nftIdLibAddress: AddressLike, registryA
     };
 }
 
-async function deployServices(owner: Signer, registryAddress: AddressLike, nfIdLibAddress: AddressLike): Promise<{
+async function deployServices(owner: Signer, registryAddress: AddressLike, libraries: LibraryAddresses): Promise<{
     componentOwnerServiceAddress: AddressLike,
     productServiceAddress: AddressLike,
-    uFixedMathLibAddress: AddressLike,
 }> {
     const { address: componentOwnerServiceAddress } = await deployContract(
         "ComponentOwnerService",
@@ -201,14 +203,9 @@ async function deployServices(owner: Signer, registryAddress: AddressLike, nfIdL
         [registryAddress],
         { libraries: { NftIdLib: nfIdLibAddress }});
 
-    const { address: uFixedMathLibAddress } = await deployContract(
-        "UFixedMathLib",
-        owner);
-
     return {
         componentOwnerServiceAddress,
         productServiceAddress,
-        uFixedMathLibAddress
     };
 }
 
@@ -232,47 +229,10 @@ async function deployInstance(
     };
 }
 
-async function deployRegistry(owner: Signer): Promise<{
-    registryAddress: AddressLike,
-    chainNftAddress: AddressLike,
-    nfIdLibAddress: AddressLike,
-}> {
-    const { address: nfIdLibAddress } = await deployContract(
-        "NftIdLib",
-        owner);
 
-    const { address: registryAddress, contract: registryBaseContract } = await deployContract(
-        "Registry",
-        owner,
-        undefined,
-        {
-            libraries: {
-                NftIdLib: nfIdLibAddress,
-            }
-        });
-    const { address: chainNftAddress } = await deployContract(
-        "ChainNft",
-        owner,
-        [registryAddress]);
 
-    const registry = registryBaseContract as Registry;
 
-    // TODO: check if NFT is already initialized before intializing
-    try {
-        await registry.initialize(chainNftAddress);
-        logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}`);
-    } catch (error: any) {
-        if (! error.message.includes("ERROR:REG-001:ALREADY_INITIALIZED")) {
-            throw error;
-        }
-    }
-    
-    return {
-        registryAddress,
-        chainNftAddress,
-        nfIdLibAddress,
-    };
-}
+
 
 
 main().catch((error) => {
