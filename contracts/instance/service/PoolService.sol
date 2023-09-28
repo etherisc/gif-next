@@ -10,7 +10,7 @@ import {Versionable} from "../../shared/Versionable.sol";
 
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {POOL, BUNDLE} from "../../types/ObjectType.sol";
-import {Fee, feeIsZero} from "../../types/Fee.sol";
+import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {ComponentServiceBase} from "./ComponentServiceBase.sol";

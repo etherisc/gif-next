@@ -19,7 +19,7 @@ import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol"
 import {APPLIED, UNDERWRITTEN, ACTIVE} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
-import {Fee, feeIsZero} from "../../types/Fee.sol";
+import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {ComponentServiceBase} from "./ComponentServiceBase.sol";
@@ -332,7 +332,7 @@ contract ProductService is ComponentServiceBase, IProductService {
             netPremiumAmount = premiumAmount;
             Fee memory policyFee = product.policyFee;
 
-            if (feeIsZero(policyFee)) {
+            if (FeeLib.feeIsZero(policyFee)) {
                 tokenHandler.transfer(
                     policyOwner,
                     poolWallet,

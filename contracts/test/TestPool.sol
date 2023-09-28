@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {NftId} from "../../contracts/types/NftId.sol";
 import {UFixed} from "../../contracts/types/UFixed.sol";
-import {Fee, zeroFee} from "../../contracts/types/Fee.sol";
+import {Fee} from "../../contracts/types/Fee.sol";
 import {Pool} from "../../contracts/components/Pool.sol";
 
 

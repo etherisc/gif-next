@@ -9,7 +9,7 @@ import {TokenHandler} from "../contracts/instance/module/treasury/TokenHandler.s
 import {APPLIED, UNDERWRITTEN, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../contracts/types/Timestamp.sol";
-import {Fee, toFee, zeroFee, feeIsZero, feeIsSame} from "../contracts/types/Fee.sol";
+import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";
 import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
 import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
@@ -101,19 +101,20 @@ contract TestApplicationCreate is TestGifBase {
 
     function testUnderwriteAndActivatePolicyCollectPremiumNoFee() public {
         // set fees to zeroFee
+        Fee memory zeroFee = FeeLib.zeroFee();
         vm.prank(productOwner);
-        product.setFees(zeroFee(), zeroFee());
+        product.setFees(zeroFee, zeroFee);
 
         // check updated policy fee
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
         ITreasuryModule.ProductSetup memory setup = treasuryModule
             .getProductSetup(product.getNftId());
         assertTrue(
-            feeIsSame(setup.policyFee, zeroFee()),
+            FeeLib.feeIsSame(setup.policyFee, FeeLib.zeroFee()),
             "updated policyFee not zeroFee"
         );
         assertTrue(
-            feeIsSame(setup.processingFee, zeroFee()),
+            FeeLib.feeIsSame(setup.processingFee, FeeLib.zeroFee()),
             "updated processingFee not zeroFee"
         );
 
@@ -215,33 +216,34 @@ contract TestApplicationCreate is TestGifBase {
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
         ITreasuryModule.ProductSetup memory setup = treasuryModule
             .getProductSetup(product.getNftId());
-        Fee memory expectedInitialPolicyFee = zeroFee();
+        Fee memory expectedInitialPolicyFee = FeeLib.zeroFee();
 
         assertTrue(
-            feeIsSame(setup.policyFee, expectedInitialPolicyFee),
+            FeeLib.feeIsSame(setup.policyFee, expectedInitialPolicyFee),
             "initial policyFee not zeroFee"
         );
         assertTrue(
-            feeIsZero(setup.processingFee),
+            FeeLib.feeIsZero(setup.processingFee),
             "initial processingFee not zeroFee"
         );
 
         // updated policy fee (15% + 20 cents)
         UFixed fractionalFee = UFixedMathLib.toUFixed(15, -2);
         uint256 fixedFee = 2 * 10 ** (token.decimals() - 1);
-        Fee memory policyFee = toFee(fractionalFee, fixedFee);
+        Fee memory policyFee = FeeLib.toFee(fractionalFee, fixedFee);
 
+        Fee memory zeroFee = FeeLib.zeroFee();
         vm.prank(productOwner);
-        product.setFees(policyFee, zeroFee());
+        product.setFees(policyFee, zeroFee);
 
         // check updated policy fee
         setup = treasuryModule.getProductSetup(product.getNftId());
         assertTrue(
-            feeIsSame(setup.policyFee, policyFee),
+            FeeLib.feeIsSame(setup.policyFee, policyFee),
             "updated policyFee not 15% + 20 cents"
         );
         assertTrue(
-            feeIsSame(setup.processingFee, zeroFee()),
+            FeeLib.feeIsSame(setup.processingFee, FeeLib.zeroFee()),
             "updated processingFee not zeroFee"
         );
 

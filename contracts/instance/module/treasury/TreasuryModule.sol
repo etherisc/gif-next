@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {NftId} from "../../../types/NftId.sol";
-import {Fee, feeIsZero, toFee, zeroFee} from "../../../types/Fee.sol";
+import {Fee, FeeLib} from "../../../types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../../types/UFixed.sol";
 import {TokenHandler} from "./TokenHandler.sol";
 import {ITreasuryModule} from "./ITreasury.sol";
@@ -122,21 +122,18 @@ abstract contract TreasuryModule is ITreasuryModule {
         uint256 amount,
         Fee memory fee
     ) public pure override returns (uint256 feeAmount, uint256 netAmount) {
-        UFixed fractionalAmount = UFixedMathLib.toUFixed(amount) *
-            fee.fractionalFee;
-        feeAmount = fractionalAmount.toInt() + fee.fixedFee;
-        netAmount = amount - feeAmount;
+        return FeeLib.calculateFee(amount, fee);
     }
 
     function getFee(
         UFixed fractionalFee, 
         uint256 fixedFee
     ) external pure override returns (Fee memory fee) {
-        return toFee(fractionalFee, fixedFee);
+        return FeeLib.toFee(fractionalFee, fixedFee);
     }
 
     function getZeroFee() external pure override returns (Fee memory fee) {
-        return zeroFee();
+        return FeeLib.zeroFee();
     }
 
     function getUFixed(

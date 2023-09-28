@@ -20,7 +20,7 @@ import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "..
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {Fee, zeroFee} from "../../types/Fee.sol";
+import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {IProductComponent} from "../../components/IProductComponent.sol";

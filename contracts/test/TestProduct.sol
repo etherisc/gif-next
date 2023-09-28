@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {Product} from "../../contracts/components/Product.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
 import {Timestamp, blockTimestamp} from "../../contracts/types/Timestamp.sol";
-import {Fee, zeroFee} from "../../contracts/types/Fee.sol";
+import {Fee} from "../../contracts/types/Fee.sol";
 
 contract TestProduct is Product {
 

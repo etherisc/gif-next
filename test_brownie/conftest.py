@@ -18,6 +18,7 @@ from brownie import (
     ObjectTypeLib,
     StateIdLib,
     TimestampLib,
+    FeeLib,
     UFixedMathLib,
     VersionLib,
     VersionPartLib,

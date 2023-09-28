@@ -12,8 +12,7 @@ import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../../types/NftId.sol";
-import {Fee, zeroFee} from "../../../types/Fee.sol";
-// import {IBaseComponent} from "../../../components/IBaseComponent.sol";
+import {Fee} from "../../../types/Fee.sol";
 
 abstract contract ComponentModule is
     IComponentModule

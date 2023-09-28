@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {UFixed, UFixedMathLib} from "../types/UFixed.sol";
-import {Fee, toFee, zeroFee} from "../types/Fee.sol";
+import {Fee, FeeLib} from "../types/Fee.sol";
 
 contract TestFee {
 
@@ -15,11 +15,11 @@ contract TestFee {
         pure 
         returns(Fee memory fee)
     {
-        return toFee(UFixedMathLib.toUFixed(fractionalValue, exponent), fixedValue);
+        return FeeLib.toFee(UFixedMathLib.toUFixed(fractionalValue, exponent), fixedValue);
     }
 
     function getZeroFee() external pure returns(Fee memory fee) {
-        return zeroFee();
+        return FeeLib.zeroFee();
     }
 
 }
