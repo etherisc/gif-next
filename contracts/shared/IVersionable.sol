@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {Blocknumber, blockNumber} from "../types/Blocknumber.sol";
 import {Timestamp, blockTimestamp} from "../types/Timestamp.sol";
-import {Version, VersionPart, zeroVersion} from "../types/Version.sol";
+import {Version, VersionPart} from "../types/Version.sol";
 
 interface IVersionable {
 
@@ -11,8 +11,8 @@ interface IVersionable {
         Version version;
         address implementation;
         address activatedBy;
-        Blocknumber activatedIn;
         Timestamp activatedAt;
+        Blocknumber activatedIn;
     }
 
     event LogVersionableActivated(Version version, address implementation, address activatedBy);

@@ -12,7 +12,6 @@ using {
 
 function versionPartGt(VersionPart a, VersionPart b) pure returns(bool isGreaterThan) { return VersionPart.unwrap(a) > VersionPart.unwrap(b); }
 function versionPartEq(VersionPart a, VersionPart b) pure returns(bool isSame) { return VersionPart.unwrap(a) == VersionPart.unwrap(b); }
-function toVersionPart(uint8 versionPart) pure returns(VersionPart) { return VersionPart.wrap(versionPart); }
 
 library VersionPartLib {
     function toInt(VersionPart x) external pure returns(uint) { return VersionPart.unwrap(x); }
@@ -31,27 +30,6 @@ using {
 
 function versionGt(Version a, Version b) pure returns(bool isGreaterThan) { return Version.unwrap(a) > Version.unwrap(b); }
 function versionEq(Version a, Version b) pure returns(bool isSame) { return Version.unwrap(a) == Version.unwrap(b); }
-
-function toVersion(
-    VersionPart major,
-    VersionPart minor,
-    VersionPart patch
-)
-    pure
-    returns(Version)
-{
-    uint majorInt = major.toInt();
-    uint minorInt = minor.toInt();
-    uint patchInt = patch.toInt();
-
-    return Version.wrap(
-        uint24(
-            (majorInt << 16) + (minorInt << 8) + patchInt));
-}
-
-function zeroVersion() pure returns(Version) {
-    return toVersion(toVersionPart(0), toVersionPart(0), toVersionPart(0));
-}
 
 library VersionLib {
     function toInt(Version version) external pure returns(uint) { return Version.unwrap(version); }
@@ -83,9 +61,35 @@ library VersionLib {
         uint8 patchInt = uint8(versionInt - (minorInt << 8));
 
         return (
-            toVersionPart(majorInt),
-            toVersionPart(minorInt),
-            toVersionPart(patchInt)
+            VersionPart.wrap(majorInt),
+            VersionPart.wrap(minorInt),
+            VersionPart.wrap(patchInt)
         );
+    }
+
+    function toVersionPart(uint256 versionPart) external pure returns(VersionPart) { 
+        return VersionPart.wrap(uint8(versionPart)); 
+    }
+
+    function toVersion(
+        uint256 major,
+        uint256 minor,
+        uint256 patch
+    )
+        external
+        pure
+        returns(Version)
+    {
+        require(
+            major < 256 && minor < 256 && patch < 256,
+            "ERROR:VRS-010:VERSION_PART_TOO_BIG");
+
+        return Version.wrap(
+            uint24(
+                (major << 16) + (minor << 8) + patch));
+    }
+
+    function zeroVersion() external pure returns(Version) {
+        return Version.wrap(0);
     }
 }

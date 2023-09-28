@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Version, toVersion, toVersionPart} from "../../contracts/types/Version.sol";
+import {Version, VersionLib} from "../../contracts/types/Version.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 
 contract TestVersionable is Versionable {
@@ -12,9 +12,6 @@ contract TestVersionable is Versionable {
         virtual override
         returns(Version)
     {
-        return toVersion(
-            toVersionPart(3),
-            toVersionPart(0),
-            toVersionPart(0));
+        return VersionLib.toVersion(3,0,0);
     }
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {NftId} from "../../../types/NftId.sol";
-import {Fee, feeIsZero, toFee, zeroFee} from "../../../types/Fee.sol";
+import {Fee, FeeLib} from "../../../types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../../types/UFixed.sol";
 import {TokenHandler} from "./TokenHandler.sol";
 import {ITreasuryModule} from "./ITreasury.sol";
@@ -14,6 +14,7 @@ abstract contract TreasuryModule is ITreasuryModule {
     mapping(NftId distributorNftId => DistributorSetup setup)
         private _distributorSetup;
     mapping(NftId poolNftId => PoolSetup setup) private _poolSetup;
+    mapping(NftId componentNftId => TokenHandler tokenHanlder) _tokenHandler;
 
     function registerProduct(
         NftId productNftId,
@@ -25,17 +26,23 @@ abstract contract TreasuryModule is ITreasuryModule {
         Fee memory processingFee
     ) external override // TODO add authz (only component module)
     {
-        // TODO add validation
+        require(address(_tokenHandler[productNftId]) == address(0), "ERROR:TRS-010:TOKEN_HANDLER_ALREADY_REGISTERED");
+        require(address(_tokenHandler[poolNftId]) == address(0), "ERROR:TRS-011:TOKEN_HANDLER_ALREADY_REGISTERED");
+        require(address(_tokenHandler[distributorNftId]) == address(0), "ERROR:TRS-012:TOKEN_HANDLER_ALREADY_REGISTERED");
+        // TODO add additional validations
 
         // deploy product specific handler contract
         TokenHandler tokenHandler = new TokenHandler(productNftId, address(token));
+        _tokenHandler[productNftId] = tokenHandler;
+        _tokenHandler[poolNftId] = tokenHandler;
+        _tokenHandler[distributorNftId] = tokenHandler;
 
+        // create product setup
         _productSetup[productNftId] = ProductSetup(
             productNftId,
             distributorNftId,
             poolNftId,
             token,
-            tokenHandler,
             wallet,
             policyFee,
             processingFee
@@ -94,9 +101,9 @@ abstract contract TreasuryModule is ITreasuryModule {
     }
 
     function getTokenHandler(
-        NftId productNftId
+        NftId componentNftId
     ) external view override returns (TokenHandler tokenHandler) {
-        return _productSetup[productNftId].tokenHandler;
+        return _tokenHandler[componentNftId];
     }
 
     function getProductSetup(
@@ -115,21 +122,18 @@ abstract contract TreasuryModule is ITreasuryModule {
         uint256 amount,
         Fee memory fee
     ) public pure override returns (uint256 feeAmount, uint256 netAmount) {
-        UFixed fractionalAmount = UFixedMathLib.toUFixed(amount) *
-            fee.fractionalFee;
-        feeAmount = fractionalAmount.toInt() + fee.fixedFee;
-        netAmount = amount - feeAmount;
+        return FeeLib.calculateFee(amount, fee);
     }
 
     function getFee(
         UFixed fractionalFee, 
         uint256 fixedFee
     ) external pure override returns (Fee memory fee) {
-        return toFee(fractionalFee, fixedFee);
+        return FeeLib.toFee(fractionalFee, fixedFee);
     }
 
     function getZeroFee() external pure override returns (Fee memory fee) {
-        return zeroFee();
+        return FeeLib.zeroFee();
     }
 
     function getUFixed(

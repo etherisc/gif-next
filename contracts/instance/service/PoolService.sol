@@ -10,8 +10,8 @@ import {Versionable} from "../../shared/Versionable.sol";
 
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {POOL, BUNDLE} from "../../types/ObjectType.sol";
-import {Fee, feeIsZero} from "../../types/Fee.sol";
-import {Version, toVersion, toVersionPart} from "../../types/Version.sol";
+import {Fee} from "../../types/Fee.sol";
+import {Version, VersionLib} from "../../types/Version.sol";
 
 import {ComponentServiceBase} from "./ComponentServiceBase.sol";
 import {IPoolService} from "./IPoolService.sol";
@@ -36,10 +36,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
         virtual override (IVersionable, Versionable)
         returns(Version)
     {
-        return toVersion(
-            toVersionPart(3),
-            toVersionPart(0),
-            toVersionPart(0));
+        return VersionLib.toVersion(3,0,0);
     }
 
     function getName() external pure override returns(string memory name) {
@@ -59,7 +56,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
     function createBundle(
         address owner, 
-        uint256 amount, 
+        uint256 stakingAmount, 
         uint256 lifetime, 
         bytes calldata filter
     )
@@ -81,7 +78,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
         instance.createBundleInfo(
             bundleNftId,
             poolNftId,
-            amount,
+            stakingAmount,
             lifetime,
             filter);
 
@@ -89,10 +86,38 @@ contract PoolService is ComponentServiceBase, IPoolService {
         instance.addBundleToPool(
             bundleNftId,
             poolNftId,
-            amount);
+            stakingAmount);
 
-        // TODO collect capital
+        // collect capital
+        _processStakingByTreasury(
+            instance,
+            poolNftId,
+            bundleNftId,
+            stakingAmount);
 
         // TODO add logging
+    }
+
+
+    function _processStakingByTreasury(
+        IInstance instance,
+        NftId poolNftId,
+        NftId bundleNftId,
+        uint256 stakingAmount
+    )
+        internal
+    {
+        // process token transfer(s)
+        if(stakingAmount > 0) {
+            TokenHandler tokenHandler = instance.getTokenHandler(poolNftId);
+            address bundleOwner = _registry.getOwner(bundleNftId);
+            address poolWallet = instance.getPoolSetup(poolNftId).wallet;
+
+            tokenHandler.transfer(
+                bundleOwner,
+                poolWallet,
+                stakingAmount
+            );
+        }
     }
 }

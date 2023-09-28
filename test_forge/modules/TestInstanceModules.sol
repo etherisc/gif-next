@@ -9,6 +9,8 @@ import {RoleId} from "../../contracts/types/RoleId.sol";
 import {AccessModule} from "../../contracts/instance/module/access/Access.sol";
 import {BundleModule} from "../../contracts/instance/module/bundle/BundleModule.sol";
 import {ComponentModule} from "../../contracts/instance/module/component/ComponentModule.sol";
+import {CompensationModule} from "../../contracts/instance/module/compensation/CompensationModule.sol";
+import {RiskModule} from "../../contracts/instance/module/risk/RiskModule.sol";
 import {LifecycleModule} from "../../contracts/instance/module/lifecycle/LifecycleModule.sol";
 import {PolicyModule} from "../../contracts/instance/module/policy/PolicyModule.sol";
 import {PoolModule} from "../../contracts/instance/module/pool/PoolModule.sol";
@@ -17,6 +19,8 @@ import {TreasuryModule} from "../../contracts/instance/module/treasury/TreasuryM
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 import {IAccessModule} from "../../contracts/instance/module/access/IAccess.sol";
 import {IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
+import {ICompensationModule} from "../../contracts/instance/module/compensation/ICompensation.sol";
+import {IRiskModule} from "../../contracts/instance/module/risk/IRisk.sol";
 import {IPoolModule} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IPolicyModule} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IBundleModule} from "../../contracts/instance/module/bundle/IBundle.sol";
@@ -132,6 +136,40 @@ contract TestInstanceModuleTreasury  is
     constructor(address registry, NftId registryNftId)
         InstanceBase(registry, registryNftId)
         TreasuryModule()
+    // solhint-disable-next-line no-empty-blocks
+    {
+
+    }
+
+    function getComponentOwnerService() external view override (IServiceLinked) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getProductService() external view override (IServiceLinked) returns(IProductService service) { return _productService; }
+    function getPoolService() external view override (IServiceLinked) returns(IPoolService service) { return _poolService; }
+}
+
+contract TestInstanceModuleCompensation is
+    InstanceBase,
+    CompensationModule
+{
+    constructor(address registry, NftId registryNftId)
+        InstanceBase(registry, registryNftId)
+        CompensationModule()
+    // solhint-disable-next-line no-empty-blocks
+    {
+
+    }
+
+    function getComponentOwnerService() external view override (IServiceLinked) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getProductService() external view override (IServiceLinked) returns(IProductService service) { return _productService; }
+    function getPoolService() external view override (IServiceLinked) returns(IPoolService service) { return _poolService; }
+}
+
+contract TestInstanceModuleRisk is
+    InstanceBase,
+    RiskModule
+{
+    constructor(address registry, NftId registryNftId)
+        InstanceBase(registry, registryNftId)
+        RiskModule()
     // solhint-disable-next-line no-empty-blocks
     {
 

@@ -15,7 +15,17 @@ import {ProductService} from "../contracts/instance/service/ProductService.sol";
 import {PoolService} from "../contracts/instance/service/PoolService.sol";
 
 import {TestInstanceBase} from "./modules/TestInstanceBase.sol";
-import {TestInstanceModuleAccess, TestInstanceModuleBundle, TestInstanceModuleComponent, TestInstanceModulePolicy, TestInstanceModulePool, TestInstanceModuleTreasury} from "./modules/TestInstanceModules.sol";
+
+import {
+    TestInstanceModuleAccess, 
+    TestInstanceModuleBundle, 
+    TestInstanceModuleComponent, 
+    TestInstanceModuleCompensation,
+    TestInstanceModulePolicy, 
+    TestInstanceModulePool, 
+    TestInstanceModuleRisk, 
+    TestInstanceModuleTreasury
+} from "./modules/TestInstanceModules.sol";
 
 
 contract TestDeployModules is TestGifBase {
@@ -84,6 +94,22 @@ contract TestDeployModules is TestGifBase {
     function testInstanceModuleTreasury() public {
         vm.prank(instanceOwner);
         TestInstanceModuleTreasury instance = new TestInstanceModuleTreasury(registryAddress, registryNftId);
+
+        vm.prank(instanceOwner);
+        instance.register();
+    }
+
+    function testInstanceModuleCompensation() public {
+        vm.prank(instanceOwner);
+        TestInstanceModuleCompensation instance = new TestInstanceModuleCompensation(registryAddress, registryNftId);
+
+        vm.prank(instanceOwner);
+        instance.register();
+    }
+
+    function testInstanceModuleRisk() public {
+        vm.prank(instanceOwner);
+        TestInstanceModuleRisk instance = new TestInstanceModuleRisk(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
         instance.register();
