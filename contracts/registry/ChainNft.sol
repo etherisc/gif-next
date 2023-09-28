@@ -8,6 +8,9 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     string public constant NAME = "Dezentralized Insurance Protocol Registry";
     string public constant SYMBOL = "DIPR";
 
+    uint256 public constant PROTOCOL_NFT_ID = 1101;
+    uint256 public constant GLOBAL_REGISTRY_ID = 2101;
+
     // remember token uri
     mapping(uint256 tokenId => string uri) private _uri;
 
@@ -34,27 +37,34 @@ contract ChainNft is ERC721Enumerable, IChainNft {
         _chainIdInt = block.chainid;
         _chainIdDigits = _countDigits(_chainIdInt);
         _chainIdMultiplier = 10 ** _chainIdDigits;
-
-        // on mainnet/goerli start /1 (reserved for protocol nft) on other chains with 2
-        if (block.chainid == 1 || block.chainid == 5) {
-            _idNext = 1;
-        } else {
-            _idNext = 2;
-        }
+        _idNext = 3;
     }
 
+    /**
+    * @dev mints the next token to register new objects
+    */
     function mint(
         address to,
         string memory uri
     ) external override onlyRegistry returns (uint256 tokenId) {
         tokenId = _getNextTokenId();
-        _totalMinted++;
-
-        _safeMint(to, tokenId);
 
         if (bytes(uri).length > 0) {
             _uri[tokenId] = uri;
         }
+
+        _safeMint(to, tokenId);
+        _totalMinted++;
+    }
+
+    /**
+    * @dev mints a token for a specified token id
+    * not part of the IRegistry interface only needed for
+    * initial registry setup (protocol and global registry objects)
+    */
+    function mint(address to, uint256 tokenId) external onlyRegistry {
+        _totalMinted++;
+        _safeMint(to, tokenId);
     }
 
     function burn(uint256 tokenId) external override onlyRegistry {
@@ -92,36 +102,50 @@ contract ChainNft is ERC721Enumerable, IChainNft {
         return _totalMinted;
     }
 
-    // requirement: each chain registry produces token ids that
-    // are guaranteed to not collide with any token id genereated
-    // on a different chain
-    //
-    // format concat(counter,chainid,2 digits for len-of-chain-id)
-    // restriction chainid up to 99 digits
-    // decode: from right to left:
-    // - 2 right most digits encode length of chainid
-    // - move number of digits to left as determined above (-> chainid)
-    // - the reminder to the left is the counter
-    // examples
-    // 1101
-    // ^^ ^
-    // || +- 1-digit chain id
-    // |+-- chain id = 1 (mainnet)
-    // +-- 1st token id on mainnet
-    // (1 * 10 ** 1 + 1) * 100 + 1
-    // 42987654321010
-    // ^ ^          ^
-    // | |          +- 10-digit chain id
-    // | +-- chain id = 9876543210 (hypothetical chainid)
-    // +-- 42nd token id on this chain
-    // (42 * 10 ** 10 + 9876543210) * 100 + 10
-    // (index * 10 ** digits + chainid) * 100 + digits (1 < digits < 100)
-
-    function _getNextTokenId() private returns (uint256 id) {
+    /**
+    * @dev token id calculation based on an index value that is supposed
+    * to increase with every minted token
+    *
+    * requirement: each chain registry produces token ids that
+    * are guaranteed to not collide with any token id genereated
+    * on a different chain
+    *
+    * format concat(counter,chainid,2 digits for len-of-chain-id)
+    * restriction chainid up to 99 digits
+    * decode: from right to left:
+    * - 2 right most digits encode length of chainid
+    * - move number of digits to left as determined above (-> chainid)
+    * - the reminder to the left is the counter
+    *
+    * special cases
+    * 1101 -> decentralized insurance protocol
+    * 2102 -> global registry
+    * 2xxxxx -> chain registry, where xxxxx = <chain-part> 
+    *
+    * examples
+    * 1101
+    * ^^ ^
+    * || +- 1-digit chain id
+    * |+-- chain id = 1 (mainnet)
+    * +-- 1st token id on mainnet
+    * (1 * 10 ** 1 + 1) * 100 + 1
+    * 42987654321010
+    * ^ ^          ^
+    * | |          +- 10-digit chain id
+    * | +-- chain id = 9876543210 (hypothetical chainid)
+    * +-- 42nd token id on this chain
+    * (42 * 10 ** 10 + 9876543210) * 100 + 10
+    * (index * 10 ** digits + chainid) * 100 + digits (1 < digits < 100)
+    */
+    function calculateTokenId(uint256 idIndex) public view returns (uint256 id) {
         id =
-            (_idNext * _chainIdMultiplier + _chainIdInt) *
+            (idIndex * _chainIdMultiplier + _chainIdInt) *
             100 +
             _chainIdDigits;
+    }
+
+    function _getNextTokenId() private returns (uint256 id) {
+        id = calculateTokenId(_idNext);
         _idNext++;
     }
 

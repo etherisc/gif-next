@@ -1,30 +1,25 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {ILifecycle} from "../contracts/instance/lifecycle/ILifecycle.sol";
+import {ILifecycle} from "../contracts/instance/module/lifecycle/ILifecycle.sol";
 import {NftId} from "../contracts/types/NftId.sol";
 import {PRODUCT} from "../contracts/types/ObjectType.sol";
 import {ACTIVE, PAUSED} from "../contracts/types/StateId.sol";
-import {TestGifBase} from "./TestGifBase.sol";
-import {IComponent, IComponentOwnerService} from "../contracts/instance/component/IComponent.sol";
+import {TestGifBase} from "./base/TestGifBase.sol";
+import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
+import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
 
 contract TestComponentLockUnlock is ILifecycle, TestGifBase {
-    IComponentOwnerService public componentOwnerService;
-
-    function setUp() public override {
-        super.setUp();
-        componentOwnerService = instance.getComponentOwnerService();
-    }
 
     function testComponentLockNotOwner() public {
         vm.prank(outsider);
-        vm.expectRevert("ERROR:COS-002:NOT_OWNER");
-        componentOwnerService.lock(product);
+        vm.expectRevert("ERROR:RGB-001:NOT_OWNER");
+        product.lock();
     }
 
     function testComponentLockOwner() public {
         NftId nftId = product.getNftId();
-        IComponent.ComponentInfo memory info_before = instance.getComponentInfo(
+        IComponent.ComponentInfo memory infoBefore = instance.getComponentInfo(
             nftId
         );
 
@@ -32,14 +27,14 @@ contract TestComponentLockUnlock is ILifecycle, TestGifBase {
         emit LogComponentStateChanged(nftId, PRODUCT(), ACTIVE(), PAUSED());
 
         vm.prank(productOwner);
-        componentOwnerService.lock(product);
+        product.lock();
 
-        IComponent.ComponentInfo memory info_after = instance.getComponentInfo(
+        IComponent.ComponentInfo memory infoAfter = instance.getComponentInfo(
             product.getNftId()
         );
-        assertNftId(info_before.nftId, info_after.nftId, "product id not same");
+        assertNftId(infoBefore.nftId, infoAfter.nftId, "product id not same");
         assertEq(
-            info_after.state.toInt(),
+            infoAfter.state.toInt(),
             PAUSED().toInt(),
             "component state not paused"
         );
@@ -47,31 +42,31 @@ contract TestComponentLockUnlock is ILifecycle, TestGifBase {
 
     function testComponentUnlockNotOwner() public {
         vm.prank(outsider);
-        vm.expectRevert("ERROR:COS-002:NOT_OWNER");
-        componentOwnerService.unlock(product);
+        vm.expectRevert("ERROR:RGB-001:NOT_OWNER");
+        product.unlock();
     }
 
     function testComponentUnlockOwner() public {
         vm.startPrank(productOwner);
-        componentOwnerService.lock(product);
-        IComponent.ComponentInfo memory info_before = instance.getComponentInfo(
+        product.lock();
+        IComponent.ComponentInfo memory infoBefore = instance.getComponentInfo(
             product.getNftId()
         );
 
-        componentOwnerService.unlock(product);
-        IComponent.ComponentInfo memory info_after = instance.getComponentInfo(
+        product.unlock();
+        IComponent.ComponentInfo memory infoAfter = instance.getComponentInfo(
             product.getNftId()
         );
         vm.stopPrank();
 
-        assertNftId(info_before.nftId, info_after.nftId, "product id not same");
+        assertNftId(infoBefore.nftId, infoAfter.nftId, "product id not same");
         assertEq(
-            info_before.state.toInt(),
+            infoBefore.state.toInt(),
             PAUSED().toInt(),
             "component state not paused"
         );
         assertEq(
-            info_after.state.toInt(),
+            infoAfter.state.toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );

@@ -5,7 +5,13 @@ pragma solidity ^0.8.19;
 type NftId is uint96;
 
 // type bindings
-using {eqNftId as ==, neNftId as !=, NftIdLib.toInt} for NftId global;
+using {
+    eqNftId as ==, 
+    neNftId as !=, 
+    NftIdLib.toInt,
+    NftIdLib.gtz,
+    NftIdLib.eqz
+} for NftId global;
 
 // general pure free functions
 /// @dev Converts the uint256 to a NftId.

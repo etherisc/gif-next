@@ -31,52 +31,52 @@ contract UFixedTest is Test {
 
     function testItof() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
-        assertTrue(a == UFixedMathLib.itof(1));
+        assertTrue(a == UFixedMathLib.toUFixed(1));
     }
 
     function testItofExp() public {
-        UFixed a = UFixedMathLib.itof(1, 2);
-        assertTrue(a.ftoi() == 100);
+        UFixed a = UFixedMathLib.toUFixed(1, 2);
+        assertTrue(a.toInt() == 100);
 
         // 0.01 * 100
-        UFixed b = UFixedMathLib.itof(1, -2).mul(UFixedMathLib.itof(1, 2));
-        assertTrue(b.ftoi() == 1);
+        UFixed b = UFixedMathLib.toUFixed(1, -2).mul(UFixedMathLib.toUFixed(1, 2));
+        assertTrue(b.toInt() == 1);
 
         // smalltest possible value
-        UFixedMathLib.itof(1, -18);
+        UFixedMathLib.toUFixed(1, -18);
         // one order of magnitude smaller reverts
         vm.expectRevert("ERROR:FM-010:EXPONENT_TOO_SMALL");
-        UFixedMathLib.itof(1, -19);
+        UFixedMathLib.toUFixed(1, -19);
 
         // largest possible value -- 10 ** 46 (64 - EXP(18))
         assertTrue(
-            UFixedMathLib.itof(1, 46) == UFixedMathLib.itof(1 * 10 ** 46)
+            UFixedMathLib.toUFixed(1, 46) == UFixedMathLib.toUFixed(1 * 10 ** 46)
         );
         // one order of magnitude larger reverts
         vm.expectRevert("ERROR:FM-011:EXPONENT_TOO_LARGE");
-        UFixedMathLib.itof(1, 64 - 18 + 1);
+        UFixedMathLib.toUFixed(1, 64 - 18 + 1);
     }
 
     function testFtoi() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
-        assertTrue(a.ftoi() == 1);
+        assertTrue(a.toInt() == 1);
     }
 
     function testFtoiRounding() public {
         UFixed a = UFixed.wrap(4 * 10 ** 17);
-        assertTrue(a.ftoi(UFixedMathLib.Rounding.Up) == 1);
-        assertTrue(a.ftoi(UFixedMathLib.Rounding.Down) == 0);
-        assertTrue(a.ftoi(UFixedMathLib.Rounding.HalfUp) == 0);
+        assertTrue(a.toIntWithRounding(UFixedMathLib.Rounding.Up) == 1);
+        assertTrue(a.toIntWithRounding(UFixedMathLib.Rounding.Down) == 0);
+        assertTrue(a.toIntWithRounding(UFixedMathLib.Rounding.HalfUp) == 0);
 
         UFixed b = UFixed.wrap(5 * 10 ** 17);
-        assertTrue(b.ftoi(UFixedMathLib.Rounding.Up) == 1);
-        assertTrue(b.ftoi(UFixedMathLib.Rounding.Down) == 0);
-        assertTrue(b.ftoi(UFixedMathLib.Rounding.HalfUp) == 1);
+        assertTrue(b.toIntWithRounding(UFixedMathLib.Rounding.Up) == 1);
+        assertTrue(b.toIntWithRounding(UFixedMathLib.Rounding.Down) == 0);
+        assertTrue(b.toIntWithRounding(UFixedMathLib.Rounding.HalfUp) == 1);
 
         UFixed c = UFixed.wrap(6 * 10 ** 17);
-        assertTrue(c.ftoi(UFixedMathLib.Rounding.Up) == 1);
-        assertTrue(c.ftoi(UFixedMathLib.Rounding.Down) == 0);
-        assertTrue(c.ftoi(UFixedMathLib.Rounding.HalfUp) == 1);
+        assertTrue(c.toIntWithRounding(UFixedMathLib.Rounding.Up) == 1);
+        assertTrue(c.toIntWithRounding(UFixedMathLib.Rounding.Down) == 0);
+        assertTrue(c.toIntWithRounding(UFixedMathLib.Rounding.HalfUp) == 1);
     }
 
     function testOpAdd() public {
@@ -359,14 +359,14 @@ contract UFixedTest is Test {
     function testDelta() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
         UFixed b = UFixed.wrap(0 * 10 ** 18);
-        assertTrue(a.delta(b).eq(UFixedMathLib.itof(1)));
-        assertTrue(b.delta(a).eq(UFixedMathLib.itof(1)));
+        assertTrue(a.delta(b).eq(UFixedMathLib.toUFixed(1)));
+        assertTrue(b.delta(a).eq(UFixedMathLib.toUFixed(1)));
 
         UFixed c = UFixed.wrap(2 * 10 ** 18);
-        assertTrue(c.delta(a).eq(UFixedMathLib.itof(1)));
-        assertTrue(a.delta(c).eq(UFixedMathLib.itof(1)));
+        assertTrue(c.delta(a).eq(UFixedMathLib.toUFixed(1)));
+        assertTrue(a.delta(c).eq(UFixedMathLib.toUFixed(1)));
 
-        assertTrue(c.delta(b).eq(UFixedMathLib.itof(2)));
-        assertTrue(b.delta(c).eq(UFixedMathLib.itof(2)));
+        assertTrue(c.delta(b).eq(UFixedMathLib.toUFixed(2)));
+        assertTrue(b.delta(c).eq(UFixedMathLib.toUFixed(2)));
     }
 }

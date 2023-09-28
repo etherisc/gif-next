@@ -1,33 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IProductService} from "../instance/product/IProductService.sol";
-import {Component} from "./Component.sol";
-import {IProductComponent} from "./IProduct.sol";
+import {IProductService} from "../instance/service/IProductService.sol";
+import {IProductComponent} from "./IProductComponent.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
+import {Timestamp} from "../types/Timestamp.sol";
 import {Fee} from "../types/Fee.sol";
-import {Component} from "./Component.sol";
+import {BaseComponent} from "./BaseComponent.sol";
 
-contract Product is Component, IProductComponent {
+contract Product is BaseComponent, IProductComponent {
     IProductService private _productService;
     address private _pool;
-    Fee private _policyFee;
-    Fee private _processingFee;
 
     constructor(
         address registry,
-        address instance,
+        NftId instanceNftid,
         address token,
-        address pool,
-        Fee memory policyFee,
-        Fee memory processingFee
-    ) Component(registry, instance, token) {
+        address pool
+    ) BaseComponent(registry, instanceNftid, token) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = pool;
-        _policyFee = policyFee;
-        _processingFee = processingFee;
     }
 
     function _createApplication(
@@ -46,12 +40,39 @@ contract Product is Component, IProductComponent {
         );
     }
 
-    function _underwrite(NftId nftId) internal {
-        _productService.underwrite(nftId);
+    function _underwrite(
+        NftId policyNftId,
+        bool requirePremiumPayment,
+        Timestamp activateAt
+    )
+        internal
+    {
+        _productService.underwrite(
+            policyNftId, 
+            requirePremiumPayment, 
+            activateAt);
     }
 
-    function _collectPremium(NftId nftId) internal {
-        _productService.collectPremium(nftId);
+    function _collectPremium(
+        NftId policyNftId,
+        Timestamp activateAt
+    )
+        internal
+    {
+        _productService.collectPremium(
+            policyNftId, 
+            activateAt);
+    }
+
+    function _activate(
+        NftId policyNftId,
+        Timestamp activateAt
+    )
+        internal
+    {
+        _productService.activate(
+            policyNftId, 
+            activateAt);
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {
@@ -59,13 +80,25 @@ contract Product is Component, IProductComponent {
     }
 
     // from product component
+    function setFees(
+        Fee memory policyFee,
+        Fee memory processingFee
+    )
+        external
+        onlyOwner
+        override
+    {
+        _productService.setFees(policyFee, processingFee);
+    }
+
+
     function getPolicyFee()
         external
         view
         override
         returns (Fee memory policyFee)
     {
-        return _policyFee;
+        return _instance.getProductSetup(getNftId()).policyFee;
     }
 
     function getProcessingFee()
@@ -74,16 +107,11 @@ contract Product is Component, IProductComponent {
         override
         returns (Fee memory processingFee)
     {
-        return _processingFee;
+        return _instance.getProductSetup(getNftId()).processingFee;
     }
 
     // from registerable
     function getType() public pure override returns (ObjectType) {
         return PRODUCT();
-    }
-
-    // from registerable
-    function getData() external view override returns (bytes memory data) {
-        return bytes(abi.encode(getInstance().getNftId()));
     }
 }

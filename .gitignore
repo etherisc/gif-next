@@ -13,4 +13,9 @@ artifacts
 cache_forge
 artifacts_forge
 
+# brownie
+build
+test_brownie/__pycache__
+
+# mac
 .DS_Store

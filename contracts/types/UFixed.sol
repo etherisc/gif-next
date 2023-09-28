@@ -15,7 +15,8 @@ using {
     gteUFixed as >=,
     ltUFixed as <,
     lteUFixed as <=,
-    eqUFixed as ==
+    eqUFixed as ==,
+    UFixedMathLib.toInt
 } for UFixed global;
 
 function addUFixed(UFixed a, UFixed b) pure returns (UFixed) {
@@ -89,6 +90,19 @@ library UFixedMathLib {
     uint256 public constant MULTIPLIER = 10 ** uint256(int256(EXP));
     uint256 public constant MULTIPLIER_HALF = MULTIPLIER / 2;
 
+    /// @dev Converts the uint256 to a UFixed.
+    function toUFixed(uint256 a) public pure returns (UFixed) {
+        return UFixed.wrap(a * MULTIPLIER);
+    }
+
+    /// @dev Converts the uint256 to a UFixed with given exponent.
+    function toUFixed(uint256 a, int8 exp) public pure returns (UFixed) {
+        require(EXP + exp >= 0, "ERROR:FM-010:EXPONENT_TOO_SMALL");
+        require(EXP + exp <= 64, "ERROR:FM-011:EXPONENT_TOO_LARGE");
+
+        return UFixed.wrap(a * 10 ** uint8(EXP + exp));
+    }
+
     /// @dev Default rounding mode used by ftoi is HalfUp
     Rounding public constant ROUNDING_DEFAULT = Rounding.HalfUp;
 
@@ -97,27 +111,13 @@ library UFixedMathLib {
         return uint8(EXP);
     }
 
-    /// @dev Converts the uint256 to a UFixed.
-    function itof(uint256 a) public pure returns (UFixed) {
-        return UFixed.wrap(a * MULTIPLIER);
-    }
-
-    // TODO rename to toUFixed
-    /// @dev Converts the uint256 to a UFixed with given exponent.
-    function itof(uint256 a, int8 exp) public pure returns (UFixed) {
-        require(EXP + exp >= 0, "ERROR:FM-010:EXPONENT_TOO_SMALL");
-        require(EXP + exp <= 64, "ERROR:FM-011:EXPONENT_TOO_LARGE");
-
-        return UFixed.wrap(a * 10 ** uint8(EXP + exp));
-    }
-
     /// @dev Converts a UFixed to a uint256.
-    function ftoi(UFixed a) public pure returns (uint256) {
-        return ftoi(a, ROUNDING_DEFAULT);
+    function toInt(UFixed a) public pure returns (uint256) {
+        return toIntWithRounding(a, ROUNDING_DEFAULT);
     }
 
     /// @dev Converts a UFixed to a uint256 with given rounding mode.
-    function ftoi(UFixed a, Rounding rounding) public pure returns (uint256) {
+    function toIntWithRounding(UFixed a, Rounding rounding) public pure returns (uint256) {
         if (rounding == Rounding.HalfUp) {
             return
                 Math.mulDiv(

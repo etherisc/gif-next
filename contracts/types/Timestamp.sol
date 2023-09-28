@@ -9,7 +9,10 @@ using {
     ltTimestamp as <,
     lteTimestamp as <=,
     eqTimestamp as ==,
-    neTimestamp as !=
+    neTimestamp as !=,
+    TimestampLib.gtz,
+    TimestampLib.eqz,
+    TimestampLib.addSeconds
 } for Timestamp global;
 
 /// @dev return true if Timestamp a is after Timestamp b
@@ -94,6 +97,24 @@ library TimestampLib {
         Timestamp b
     ) public pure returns (bool isDifferent) {
         return neTimestamp(a, b);
+    }
+
+    /// @dev return true if Timestamp is larger than 0
+    function gtz(Timestamp timestamp) public pure returns (bool) {
+        return Timestamp.unwrap(timestamp) > 0;
+    }
+
+    /// @dev return true if Timestamp equals 0
+    function eqz(Timestamp timestamp) public pure returns (bool) {
+        return Timestamp.unwrap(timestamp) == 0;
+    }
+
+    /// @dev return true if Timestamp a is not equal to Timestamp b
+    function addSeconds(
+        Timestamp timestamp,
+        uint256 timeDelta
+    ) public pure returns (Timestamp) {
+        return toTimestamp(Timestamp.unwrap(timestamp) + uint40(timeDelta));
     }
 
     function toInt(Timestamp timestamp) public pure returns (uint256) {
