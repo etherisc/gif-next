@@ -17,7 +17,7 @@ import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/instance/module/treasury/TokenHandler.sol";
 import {TestProduct} from "../../contracts/test/TestProduct.sol";
 import {TestPool} from "../../contracts/test/TestPool.sol";
-import {USDC} from "../mock/Usdc.sol";
+import {USDC} from "../../contracts/test/Usdc.sol";
 
 import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
