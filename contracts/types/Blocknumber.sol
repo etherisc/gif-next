@@ -10,6 +10,8 @@ using {
     lteBlocknumber as <=,
     eqBlocknumber as ==,
     neBlocknumber as !=,
+    BlocknumberLib.eqz,
+    BlocknumberLib.eqz,
     BlocknumberLib.toInt
 } for Blocknumber global;
 
@@ -79,6 +81,13 @@ library BlocknumberLib {
         return gteBlocknumber(a, b);
     }
 
+    /// @dev return true if Blocknumber a > zeroBlocknumber
+    function gtz(
+        Blocknumber a
+    ) public pure returns (bool) {
+        return Blocknumber.unwrap(a) > 0;
+    }
+
     /// @dev return true if Blocknumber a is less than Blocknumber b
     function lt(
         Blocknumber a,
@@ -101,6 +110,13 @@ library BlocknumberLib {
         Blocknumber b
     ) public pure returns (bool isSame) {
         return eqBlocknumber(a, b);
+    }
+
+    /// @dev return true if Blocknumber a is zeroBlocknumber
+    function eqz(
+        Blocknumber a
+    ) public pure returns (bool) {
+        return Blocknumber.unwrap(a) == 0;
     }
 
     /// @dev return true if Blocknumber a is not equal to Blocknumber b
