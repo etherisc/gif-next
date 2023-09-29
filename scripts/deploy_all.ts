@@ -1,14 +1,17 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
-import { IChainNft__factory, IRegistry__factory, UFixedMathLib__factory } from "../typechain-types";
+import { IChainNft__factory, IRegistry__factory, Registerable, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
 import { registerComponent } from "./lib/componentownerservice";
 import { deployContract } from "./lib/deployment";
-import { Role, deployAndRegisterInstance, grantRole } from "./lib/instance";
-import { deployLibraries } from "./lib/libraries";
-import { deployAndInitializeRegistry } from "./lib/registry";
+import { InstanceAddresses, Role, deployAndRegisterInstance, grantRole } from "./lib/instance";
+import { LibraryAddresses, deployLibraries } from "./lib/libraries";
+import { RegistryAddresses, deployAndInitializeRegistry } from "./lib/registry";
 import { deployAndRegisterServices } from "./lib/services";
 import { logger } from "./logger";
+import { POOL_COLLATERALIZATION_LEVEL, POOL_IS_VERIFYING } from "./lib/constants";
+import { executeTx, getFieldFromLogs } from "./lib/transaction";
+import { IERC721ABI } from "./lib/erc721";
 
 
 async function main() {
@@ -20,12 +23,18 @@ async function main() {
     const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
     
     // deploy instance contracts
-    const { instanceAddress } = await deployAndRegisterInstance(instanceOwner, libraries, registry, services);
-    throw Error("works up to here"); // TODO: implement the rest
+    const instance = await deployAndRegisterInstance(instanceOwner, libraries, registry, services);
+
+    // TODO: enable this 
+    // await grantRole(instanceOwner, instance.instanceAddress, Role.POOL_OWNER_ROLE, poolOwner);
+    // await grantRole(instanceOwner, instance.instanceAddress, Role.PRODUCT_OWNER_ROLE, productOwner);
+
     
     // deploy pool & product contracts
-    const { poolAddress, tokenAddress } = await deployPool(poolOwner, nfIdLibAddress, registryAddress, instanceAddress);
+    const { poolAddress, tokenAddress } = await deployPool(poolOwner, libraries, registry, instance);
+    throw Error("works up to here"); // TODO: implement the rest
     const { productAddress } = await deployProduct(productOwner, uFixedMathLibAddress, nfIdLibAddress, registryAddress, instanceAddress, poolAddress, tokenAddress);
+
 
     // TODO: probably not needed any more
     const { instanceNftId, poolNftId, productNftId } = await registerInstanceAndComponents(
@@ -127,11 +136,9 @@ async function registerInstanceAndComponents(
     const instanceNftId = await registerInstance(instanceOwner, instanceAddress, registryAddress);
     
     // grant pool role and register pool
-    await grantRole(instanceOwner, instanceAddress, Role.POOL_OWNER_ROLE, poolOwner);
     const poolNftId = await registerComponent(componentOwnerServiceAddress, poolOwner, poolAddress, registryAddress);
     
     // grant product role and register product
-    await grantRole(instanceOwner, instanceAddress, Role.PRODUCT_OWNER_ROLE, productOwner);
     const productNftId = await registerComponent(componentOwnerServiceAddress, productOwner, productAddress, registryAddress);
 
     return { instanceNftId, poolNftId, productNftId };
@@ -164,26 +171,41 @@ async function deployProduct(
     };
 }
 
-async function deployPool(owner: Signer, nftIdLibAddress: AddressLike, registryAddress: AddressLike, instanceAddress: AddressLike): Promise<{
+async function deployPool(owner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, instance: InstanceAddresses): Promise<{
     tokenAddress: AddressLike,
     poolAddress: AddressLike,
+    poolNftId: string,
 }> {
     const { address: tokenAddress } = await deployContract(
         "USDC",
         owner);
-    const { address: poolAddress } = await deployContract(
+
+    const uFixedMathLib = UFixedMathLib__factory.connect(libraries.uFixedMathLibAddress.toString(), owner);
+    const collateralizationLevel = await uFixedMathLib["toUFixed(uint256)"](POOL_COLLATERALIZATION_LEVEL);
+
+    const { address: poolAddress, contract: poolContractBase } = await deployContract(
         "TestPool",
         owner,
         [
-            registryAddress,
-            instanceAddress,
+            registry.registryAddress,
+            instance.instanceNftId,
             tokenAddress,
+            POOL_IS_VERIFYING,
+            collateralizationLevel,
         ],
-        { libraries: { NftIdLib: nftIdLibAddress }}
+        { libraries: {  }}
         );
+
+    // TODO: enable this when role is accessible
+    // const testPool = poolContractBase as Registerable;
+    // const tx = await executeTx(async () => await testPool.register());
+    // const poolNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    const poolNftId = "0";
+
     return {
         tokenAddress,
         poolAddress,
+        poolNftId,
     };
 }
 
