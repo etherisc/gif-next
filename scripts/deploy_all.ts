@@ -123,6 +123,7 @@ function printAddresses(
     logger.info(addresses);
 }
 
+// TODO: remove this function
 async function registerInstanceAndComponents(
     instanceOwner: Signer, productOwner: Signer, poolOwner: Signer,
     componentOwnerServiceAddress: AddressLike,

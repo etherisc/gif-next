@@ -7,6 +7,7 @@ import { isRegistered } from "./registry";
 
 const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
 
+// TODO: remove this function
 export async function registerComponent(componentOwnerServiceAddress: AddressLike, signer: Signer, componentAddress: AddressLike, registryAddress: AddressLike): Promise<any> {
     logger.debug(`registering component ${componentAddress}`);
 
