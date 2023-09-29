@@ -106,36 +106,35 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPMJS_ACCESS_TOKEN }}
 
 
-  # TODO: enable this
-  # deployment_test:
-  #   name: Execute test deployment on local chain
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #       contents: read
-  #       # id-token: write
-  #   needs: [build_hardhat, build_foundry]
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         submodules: recursive
+  deployment_test:
+    name: Execute test deployment on local chain
+    runs-on: ubuntu-latest
+    permissions:
+        contents: read
+        # id-token: write
+    needs: [build_hardhat, build_foundry]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-  #     - name: Install Foundry
-  #       uses: foundry-rs/foundry-toolchain@v1
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
 
-  #     - name: Setup node environment
-  #       uses: actions/setup-node@v3
-  #       with:
-  #         node-version: 18
-  #         registry-url: 'https://registry.npmjs.org'
+      - name: Setup node environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          registry-url: 'https://registry.npmjs.org'
 
-  #     - name: Install dependencies
-  #       run: |
-  #         npm install -g hardhat-shorthand
-  #         npm install
+      - name: Install dependencies
+        run: |
+          npm install -g hardhat-shorthand
+          npm install
       
-  #     - name: Run deployment script
-  #       env:
-  #         SKIP_VERIFICATION: true
-  #       run: hh run scripts/deploy_all.ts 
+      - name: Run deployment script
+        env:
+          SKIP_VERIFICATION: true
+        run: hh run scripts/deploy_all.ts 
         

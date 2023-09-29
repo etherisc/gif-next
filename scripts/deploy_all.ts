@@ -33,27 +33,28 @@ async function main() {
     // deploy pool & product contracts
     const { poolAddress, tokenAddress } = await deployPool(poolOwner, libraries, registry, instance);
     const { productAddress } = await deployProduct(productOwner, libraries, registry, instance, tokenAddress, poolAddress);
-    throw Error("works up to here"); // TODO: implement the rest
     
 
     // TODO: probably not needed any more
-    const { instanceNftId, poolNftId, productNftId } = await registerInstanceAndComponents(
-        instanceOwner, productOwner, poolOwner,
-        componentOwnerServiceAddress,
-        registryAddress, instanceAddress, productAddress, poolAddress);
+    // const { instanceNftId, poolNftId, productNftId } = await registerInstanceAndComponents(
+    //     instanceOwner, productOwner, poolOwner,
+    //     componentOwnerServiceAddress,
+    //     registryAddress, instanceAddress, productAddress, poolAddress);
 
-    printAddresses(
-        registryAddress, chainNftAddress,
-        componentOwnerServiceAddress, productServiceAddress, 
-        instanceAddress,
-        tokenAddress, poolAddress, productAddress);
+    // TODO: fix
+    // printAddresses(
+    //     registryAddress, chainNftAddress,
+    //     componentOwnerServiceAddress, productServiceAddress, 
+    //     instanceAddress,
+    //     tokenAddress, poolAddress, productAddress);
 
-    await verifyOwnership(
-        instanceOwner, productOwner, poolOwner,
-        registryAddress,
-        instanceAddress, 
-        instanceNftId, poolNftId, productNftId,
-        chainNftAddress);
+    // TODO: fix
+    // await verifyOwnership(
+    //     instanceOwner, productOwner, poolOwner,
+    //     registryAddress,
+    //     instanceAddress, 
+    //     instanceNftId, poolNftId, productNftId,
+    //     chainNftAddress);
 
     // print final balance
     await printBalance(
