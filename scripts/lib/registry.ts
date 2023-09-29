@@ -25,7 +25,7 @@ export async function isRegistered(signer: Signer, registryAddress: AddressLike,
     return instanceNftId.toString();
 }
 
-export async function deployRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
+export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
     const { address: registryAddress, contract: registryBaseContract } = await deployContract(
         "Registry",
         owner,

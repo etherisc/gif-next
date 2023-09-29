@@ -4,10 +4,10 @@ import { IChainNft__factory, IRegistry__factory, UFixedMathLib__factory } from "
 import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
 import { registerComponent } from "./lib/componentownerservice";
 import { deployContract } from "./lib/deployment";
-import { Role, grantRole, registerInstance } from "./lib/instance";
+import { Role, deployAndRegisterInstance, grantRole } from "./lib/instance";
 import { deployLibraries } from "./lib/libraries";
-import { deployRegistry } from "./lib/registry";
-import { deployServices } from "./lib/services";
+import { deployAndInitializeRegistry } from "./lib/registry";
+import { deployAndRegisterServices } from "./lib/services";
 import { logger } from "./logger";
 
 
@@ -16,20 +16,18 @@ async function main() {
 
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
-    const registry = await deployRegistry(protocolOwner, libraries);
-    const services = await deployServices(protocolOwner, registry, libraries);
-    throw Error("works up to here"); // TODO: implement the rest
+    const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
+    const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
     
     // deploy instance contracts
-    const { instanceAddress } = await deployInstance(
-        instanceOwner, 
-        nfIdLibAddress, uFixedMathLibAddress, 
-        registryAddress, componentOwnerServiceAddress, productServiceAddress);
-
+    const { instanceAddress } = await deployAndRegisterInstance(instanceOwner, libraries, registry, services);
+    throw Error("works up to here"); // TODO: implement the rest
+    
     // deploy pool & product contracts
     const { poolAddress, tokenAddress } = await deployPool(poolOwner, nfIdLibAddress, registryAddress, instanceAddress);
     const { productAddress } = await deployProduct(productOwner, uFixedMathLibAddress, nfIdLibAddress, registryAddress, instanceAddress, poolAddress, tokenAddress);
 
+    // TODO: probably not needed any more
     const { instanceNftId, poolNftId, productNftId } = await registerInstanceAndComponents(
         instanceOwner, productOwner, poolOwner,
         componentOwnerServiceAddress,
@@ -188,33 +186,6 @@ async function deployPool(owner: Signer, nftIdLibAddress: AddressLike, registryA
         poolAddress,
     };
 }
-
-
-
-async function deployInstance(
-    owner: Signer, 
-    nfIdLibAddress: AddressLike,
-    uFixedMathLibAddress: AddressLike,
-    registryAddress: AddressLike,
-    componentOwnerServiceAddress: AddressLike,
-    productServiceAddress: AddressLike,
-): Promise<{
-    instanceAddress: AddressLike,
-}> {
-    const { address: instanceAddress } = await deployContract(
-        "Instance",
-        owner,
-        [registryAddress, componentOwnerServiceAddress, productServiceAddress],
-        { libraries: { NftIdLib: nfIdLibAddress, UFixedMathLib: uFixedMathLibAddress }});
-    return {
-        instanceAddress,
-    };
-}
-
-
-
-
-
 
 
 main().catch((error) => {

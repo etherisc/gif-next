@@ -1,36 +1,49 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
 import * as iERC721Abi from "../../artifacts/@openzeppelin/contracts/token/ERC721/IERC721.sol/IERC721.json";
-import { Instance__factory, Registry__factory } from "../../typechain-types";
+import { Instance, Instance__factory, Registerable, Registry__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { executeTx, getFieldFromLogs } from "./transaction";
-import { isRegistered } from "./registry";
+import { RegistryAddresses, isRegistered } from "./registry";
+import { deployContract } from "./deployment";
+import { LibraryAddresses } from "./libraries";
+import { ServiceAddresses } from "./services";
 
 const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
 
-/**
- * Register an instance, extract NFT-Id from the transaction logs and return it.
- */
-export async function registerInstance(instanceOwner: Signer, instanceAddress: AddressLike, registryAddress: AddressLike): Promise<string> {    
-    logger.debug(`registering instance ${instanceAddress}`);
-
-    let instanceNftId = await isRegistered(instanceOwner, registryAddress, instanceAddress);
-
-    if (instanceNftId !== null) {
-        return instanceNftId;
-    }
-
-    // register instance
-    const instanceAsInstanceOwner = Instance__factory.connect(instanceAddress.toString(), instanceOwner);
-    const tx = await executeTx(async () => await instanceAsInstanceOwner.register());
-    instanceNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
-    logger.info(`Instance registered with NFT ID: ${instanceNftId}`);
-    
-    if (instanceNftId === null) {
-        throw new Error("NFT ID not found in transaction logs");
-    }
-
-    return instanceNftId;
+export type InstanceAddresses = {
+    instanceAddress: AddressLike,
+    instanceNftId: string,
 }
+
+export async function deployAndRegisterInstance(
+    owner: Signer, 
+    libraries: LibraryAddresses,
+    registry: RegistryAddresses,
+    services: ServiceAddresses,
+): Promise<InstanceAddresses> {
+    const { address: instanceAddress, contract: instanceBaseContract } = await deployContract(
+        "Instance",
+        owner,
+        [registry.registryAddress, registry.registryNftId],
+        { libraries: {
+            BlocknumberLib: libraries.blockNumberLibAddress,
+            NftIdLib: libraries.nfIdLibAddress,
+            LibNftIdSet: libraries.libNftIdSetAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            UFixedMathLib: libraries.uFixedMathLibAddress,
+            VersionLib: libraries.versionLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
+        }});
+
+    const instance = instanceBaseContract as Registerable;
+    const tx = await executeTx(async () => await instance.register());
+    const instanceNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    return {
+        instanceAddress,
+        instanceNftId,
+    };
+}
+
 
 export enum Role { POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE }
 
