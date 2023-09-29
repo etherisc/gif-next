@@ -32,9 +32,9 @@ async function main() {
     
     // deploy pool & product contracts
     const { poolAddress, tokenAddress } = await deployPool(poolOwner, libraries, registry, instance);
+    const { productAddress } = await deployProduct(productOwner, libraries, registry, instance, tokenAddress, poolAddress);
     throw Error("works up to here"); // TODO: implement the rest
-    const { productAddress } = await deployProduct(productOwner, uFixedMathLibAddress, nfIdLibAddress, registryAddress, instanceAddress, poolAddress, tokenAddress);
-
+    
 
     // TODO: probably not needed any more
     const { instanceNftId, poolNftId, productNftId } = await registerInstanceAndComponents(
@@ -145,29 +145,31 @@ async function registerInstanceAndComponents(
 }
 
 async function deployProduct(
-    owner: Signer, uFixedMathLibAddress: AddressLike, nftIdLibAddress: AddressLike, 
-    registryAddress: AddressLike, instanceAddress: AddressLike, poolAddress: AddressLike, tokenAddress: AddressLike
+    owner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, 
+    instance: InstanceAddresses, tokenAddress: AddressLike, poolAddress: AddressLike
 ): Promise<{
-    productAddress: AddressLike,
+    productAddress: AddressLike, productNftId: string,
 }> {
-    const uFixedMathLib = UFixedMathLib__factory.connect(uFixedMathLibAddress.toString(), owner);
-    const fractionalFee = await uFixedMathLib["itof(uint256,int8)"](1, -1);
     const { address: productAddress } = await deployContract(
         "TestProduct",
         owner,
         [
-            registryAddress,
-            instanceAddress,
+            registry.registryAddress,
+            instance.instanceNftId,
             tokenAddress,
             poolAddress,
-            {
-                fractionalFee,
-                fixedFee: 0
-            }
         ],
-        { libraries: { NftIdLib: nftIdLibAddress }});
+        { libraries: {  }});
+    
+    // TODO: enable this when role is accessible
+    // const testPool = poolContractBase as Registerable;
+    // const tx = await executeTx(async () => await testPool.register());
+    // const poolNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    const productNftId = "0";
+
     return {
         productAddress,
+        productNftId,
     };
 }
 
