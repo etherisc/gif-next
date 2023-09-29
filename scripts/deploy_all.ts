@@ -5,8 +5,9 @@ import { getNamedAccounts, printBalance, validateOwnership } from "./lib/account
 import { registerComponent } from "./lib/componentownerservice";
 import { deployContract } from "./lib/deployment";
 import { Role, grantRole, registerInstance } from "./lib/instance";
-import { LibraryAddresses, deployLibraries } from "./lib/libraries";
+import { deployLibraries } from "./lib/libraries";
 import { deployRegistry } from "./lib/registry";
+import { deployServices } from "./lib/services";
 import { logger } from "./logger";
 
 
@@ -16,9 +17,9 @@ async function main() {
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployRegistry(protocolOwner, libraries);
+    const services = await deployServices(protocolOwner, registry, libraries);
     throw Error("works up to here"); // TODO: implement the rest
-    const { componentOwnerServiceAddress, productServiceAddress } = await deployServices(protocolOwner, registryAddress, libraries);
-
+    
     // deploy instance contracts
     const { instanceAddress } = await deployInstance(
         instanceOwner, 
@@ -188,26 +189,7 @@ async function deployPool(owner: Signer, nftIdLibAddress: AddressLike, registryA
     };
 }
 
-async function deployServices(owner: Signer, registryAddress: AddressLike, libraries: LibraryAddresses): Promise<{
-    componentOwnerServiceAddress: AddressLike,
-    productServiceAddress: AddressLike,
-}> {
-    const { address: componentOwnerServiceAddress } = await deployContract(
-        "ComponentOwnerService",
-        owner,
-        [registryAddress],
-        { libraries: { NftIdLib: nfIdLibAddress }});
-    const { address: productServiceAddress } = await deployContract(
-        "ProductService",
-        owner,
-        [registryAddress],
-        { libraries: { NftIdLib: nfIdLibAddress }});
 
-    return {
-        componentOwnerServiceAddress,
-        productServiceAddress,
-    };
-}
 
 async function deployInstance(
     owner: Signer, 
