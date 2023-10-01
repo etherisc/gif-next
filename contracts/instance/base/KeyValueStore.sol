@@ -82,7 +82,7 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
     function updateData(Key32 key32, bytes memory data) public {
         Metadata storage metadata = _value[key32].metadata;
         StateId state = metadata.state;
-        require(state.gtz(), "ERROR:KVS-021:NOT_EXISTING");
+        require(state.gtz(), "ERROR:KVS-030:NOT_EXISTING");
 
         // update data
         _value[key32].data = data;
@@ -99,10 +99,10 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
     }
 
     function updateState(Key32 key32, StateId state) public {
-        require(state.gtz(), "ERROR:KVS-020:STATE_UNDEFINED");
+        require(state.gtz(), "ERROR:KVS-040:STATE_UNDEFINED");
         Metadata storage metadata = _value[key32].metadata;
         StateId stateOld = metadata.state;
-        require(stateOld.gtz(), "ERROR:KVS-021:NOT_EXISTING");
+        require(stateOld.gtz(), "ERROR:KVS-041:NOT_EXISTING");
 
         // update metadata (and state)
         address updatedBy = msg.sender;
