@@ -31,24 +31,24 @@ import {Timestamp, blockTimestamp, zeroTimestamp} from "../../types/Timestamp.so
 
 import {IBundle} from "./IBundle.sol";
 import {KeyId, KeyMapper} from "./KeyMapper.sol";
-import {KeyValueStore} from "./KeyValueStore.sol";
+import {KvStore2} from "./KvStore2.sol";
 
 contract BundleModuleStore is KeyMapper, IBundle {
 
-    KeyValueStore private _store;
+    KvStore2 private _store;
 
     constructor() {
-        _store = new KeyValueStore();
+        _store = new KvStore2();
     }
 
     function createBundleInfo(IBundle.BundleInfo memory info) public returns (bytes32 key) {
         key = toBundleKey32(info.nftId);
-        _store.create(key, BUNDLE(), abi.encode(info));
+        _store.create(key, BUNDLE(), ACTIVE(), abi.encode(info));
     }
 
     function updateBundleInfo(IBundle.BundleInfo memory info) public {
         bytes32 key = toBundleKey32(info.nftId);
-        _store.update(key, abi.encode(info));
+        _store.update(key, ACTIVE(), abi.encode(info));
     }
 
     function getBundleInfo(bytes32 key) public view returns (IBundle.BundleInfo memory) {
@@ -78,7 +78,6 @@ contract BundleModuleStore is KeyMapper, IBundle {
         return IBundle.BundleInfo(
             toNftId(bundleId),
             toNftId(123456),
-            ACTIVE(),
             filter,
             amount, // capital amount
             0, // locked amount
@@ -87,7 +86,7 @@ contract BundleModuleStore is KeyMapper, IBundle {
             zeroTimestamp()); // closedAt
     }
 
-    function getStore() public view returns (KeyValueStore) {
+    function getStore() public view returns (KvStore2) {
         return _store;
     }
 }

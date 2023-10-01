@@ -5,13 +5,13 @@ import {Test} from "../lib/forge-std/src/Test.sol";
 import {console} from "../lib/forge-std/src/Script.sol";
 
 import {IBundle} from "../contracts/experiment/kvstore/IBundle.sol";
-import {KeyValueStore} from "../contracts/experiment/kvstore/KeyValueStore.sol";
+import {KvStore2} from "../contracts/experiment/kvstore/KvStore2.sol";
 import {BundleModuleStore} from "../contracts/experiment/kvstore/BundleModuleStore.sol";
 
 contract TestExperimentRequireRevert is Test {
 
     BundleModuleStore public bm;
-    KeyValueStore public kv;
+    KvStore2 public kv;
 
     function setUp() external {
         bm = new BundleModuleStore();

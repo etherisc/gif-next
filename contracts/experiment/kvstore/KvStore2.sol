@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
 
 fa = {'from': accounts[0]}
 tl = TimestampLib.deploy(fa)
-kv = KeyValueStore.deploy(fa)
+kv = KvStore2.deploy(fa)
 
 pk = kv.s2k('policy key 1')
 pd = kv.s2b('policy info data 1.a')
@@ -43,19 +43,20 @@ ptxg = kv.update(pk, pd1f, True, True, True, False) # gas:
 
 */
 
-type KeyId is bytes32;
-
-import {ObjectType, RISK, POLICY} from "../../types/ObjectType.sol";
-import {Timestamp, blockTimestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 import {Blocknumber, blockBlocknumber, zeroBlocknumber} from "../../types/Blocknumber.sol";
+import {ObjectType, RISK, POLICY} from "../../types/ObjectType.sol";
+import {StateId} from "../../types/StateId.sol";
+import {Timestamp, blockTimestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 
-contract KeyValueStore {
+contract KvStore2 {
 
-    event LogInfoCreated(bytes32 key, ObjectType objectType, address createdBy);
-    event LogInfoUpdated(bytes32 key, ObjectType objectType, address updatedBy, Blocknumber lastUpdateIn);
+    event LogInfoCreated(bytes32 key, ObjectType objectType, StateId state, address createdBy);
+    event LogInfoUpdated(bytes32 key, ObjectType objectType, StateId state, address updatedBy, Blocknumber lastUpdatedIn);
+    event LogStateChanged(bytes32 key, ObjectType objectType, StateId stateOld, StateId stateNew, address updatedBy, Blocknumber lastUpdatedIn);
 
     struct Metadata {
         ObjectType objectType;
+        StateId state;
         address updatedBy;
         Blocknumber updatedIn;
         Blocknumber createdIn;
@@ -70,13 +71,14 @@ contract KeyValueStore {
     bytes32[] private _keys;
 
     // key store functions
-    function create(bytes32 key, ObjectType objectType, bytes memory data) public {
+    function create(bytes32 key, ObjectType objectType, StateId state, bytes memory data) public {
         Metadata storage metadata = _value[key].metadata;
-        require(metadata.updatedBy == address(0), "ERROR_ALREADY_CREATED");
+        require(metadata.state.eqz(), "ERROR_ALREADY_CREATED");
 
         address createdBy = msg.sender;
         Blocknumber blocknumber = blockBlocknumber();
         metadata.objectType = objectType;
+        metadata.state = state;
         metadata.updatedBy = createdBy;
         metadata.updatedIn = blocknumber;
         metadata.createdIn = blocknumber;
@@ -84,30 +86,30 @@ contract KeyValueStore {
         _value[key].data = data;
         _keys.push(key);
 
-        emit LogInfoCreated(key, objectType, createdBy);
+        emit LogInfoCreated(key, objectType, state, createdBy);
     }
 
-    function update(bytes32 key, bytes memory data) public {
-        update(key, data, true, true);
-    }
+    function update(bytes32 key, StateId state, bytes memory data) public {
+        Metadata storage metadata = _value[key].metadata;
+        StateId stateOld = metadata.state;
+        require(stateOld.gtz(), "ERROR_NOT_EXISTING");
 
-    function update(bytes32 key, bytes memory data, bool updateMetadata, bool log) public {
+        // update data
         _value[key].data = data;
-        Blocknumber blocknumber = blockBlocknumber();
 
-        if(updateMetadata && log) {
-            Metadata storage metadata = _value[key].metadata;
-            require(metadata.updatedBy != address(0), "ERROR_NOT_EXISTING");
+        // update metadata
+        address updatedBy = msg.sender;
+        Blocknumber lastUpdatedIn = metadata.updatedIn;
 
-            if (log) {
-                emit LogInfoUpdated(key, metadata.objectType, msg.sender, metadata.updatedIn);
-            }
-
-            metadata.updatedBy = msg.sender;
-            metadata.updatedIn = blocknumber;
-        } else if (log) {
-            emit LogInfoUpdated(key, POLICY(), msg.sender, blocknumber);
+        if (state != stateOld) {
+            metadata.state = state;
+            emit LogStateChanged(key, metadata.objectType, state, stateOld, updatedBy, lastUpdatedIn);
         }
+
+        metadata.updatedBy = updatedBy;
+        metadata.updatedIn = blockBlocknumber();
+
+        emit LogInfoUpdated(key, metadata.objectType, state, updatedBy, lastUpdatedIn);
     }
 
     function exists(bytes32 key) public view returns (bool) {

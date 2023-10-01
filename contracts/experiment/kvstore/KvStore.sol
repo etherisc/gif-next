@@ -160,7 +160,6 @@ contract KvStore {
         return IBundle.BundleInfo(
             bundleNftId,
             toNftId(123456),
-            ACTIVE(),
             filter,
             amount,
             0,
