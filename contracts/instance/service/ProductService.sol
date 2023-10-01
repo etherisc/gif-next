@@ -134,7 +134,6 @@ contract ProductService is ComponentServiceBase, IProductService {
         returns (IBundle.BundleInfo memory)
     {
         bundleInfo.lockedAmount += collateralAmount;
-        bundleInfo.updatedIn = blockNumber();
         instance.collateralizePolicy(bundleInfo.nftId, policyNftId, collateralAmount);
         return bundleInfo;
     }

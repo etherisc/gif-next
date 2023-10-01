@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {Key32, KeyId, Key32Lib} from "./Key32.sol";
+import {ObjectType} from "./ObjectType.sol";
+
 // uint96 allows for chain ids up to 13 digits
 type NftId is uint96;
 
@@ -10,7 +13,8 @@ using {
     neNftId as !=, 
     NftIdLib.toInt,
     NftIdLib.gtz,
-    NftIdLib.eqz
+    NftIdLib.eqz,
+    NftIdLib.toKey32
 } for NftId global;
 
 // general pure free functions
@@ -53,5 +57,11 @@ library NftIdLib {
     /// @dev Returns true if the values are equal (==).
     function eq(NftId a, NftId b) public pure returns (bool isSame) {
         return eqNftId(a, b);
+    }
+
+    /// @dev Returns the key32 value for the specified nft id and object type.
+    function toKey32(NftId id, ObjectType objectType) public pure returns (Key32 key) {
+        KeyId keyId = KeyId.wrap(bytes31(uint248(NftId.unwrap(id))));
+        return Key32Lib.toKey32(objectType, keyId);
     }
 }

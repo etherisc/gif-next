@@ -26,6 +26,7 @@ import {IPolicyModule} from "../../contracts/instance/module/policy/IPolicy.sol"
 import {IBundleModule} from "../../contracts/instance/module/bundle/IBundle.sol";
 import {IInstanceBase} from "../../contracts/instance/IInstanceBase.sol";
 
+import {IKeyValueStore} from "../../contracts/instance/IKeyValueStore.sol";
 import {IComponentOwnerService} from "../../contracts/instance/service/IComponentOwnerService.sol";
 import {IProductService} from "../../contracts/instance/service/IProductService.sol";
 import {IPoolService} from "../../contracts/instance/service/IPoolService.sol";
@@ -66,6 +67,7 @@ contract TestInstanceModuleBundle  is
 
     }
     function getRegistry() public view override (Registerable, IBundleModule) returns (IRegistry registry) { return super.getRegistry(); }
+    function getKeyValueStore() public view override (InstanceBase, IBundleModule) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
     function getComponentOwnerService() external view override returns(IComponentOwnerService) { return _componentOwnerService; }
     function getProductService() external view override (IBundleModule, IInstanceBase) returns(IProductService service) { return _productService; }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {Blocknumber, blockBlocknumber, zeroBlocknumber} from "../types/Blocknumber.sol";
 import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
+import {NftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 import {StateId} from "../types/StateId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../types/Timestamp.sol";
@@ -23,6 +24,22 @@ contract KeyValueStore is IKeyValueStore {
 
     constructor() {
         _owner = msg.sender;
+    }
+
+    function createWithNftId(NftId nftId, ObjectType objectType, bytes memory data) external {
+        create(
+            bundleNftId.toKey32(objectType),
+            objectType, 
+            _lifecycleModule.getInitialState(objectType),
+            abi.encode(bundleInfo));
+    }
+
+    function updateDataWithNftId(NftId nftId, bytes memory data) external {
+
+    }
+
+    function updateStateWithNftId(NftId nftId, StateId state) external {
+
     }
 
     function create(
@@ -65,20 +82,54 @@ contract KeyValueStore is IKeyValueStore {
         // update data
         _value[key32].data = data;
 
-        // update metadata
-        Key memory key = toKey(key32);
+        // update metadata (and state)
         address updatedBy = msg.sender;
         Blocknumber lastUpdatedIn = metadata.updatedIn;
-
-        if (state != stateOld) {
-            metadata.state = state;
-            emit LogStateChanged(key, state, stateOld, updatedBy, lastUpdatedIn);
-        }
-
+        metadata.state = state;
         metadata.updatedBy = updatedBy;
         metadata.updatedIn = blockBlocknumber();
 
+        // create log entries
+        Key memory key = toKey(key32);
+        emit LogStateUpdated(key, state, stateOld, updatedBy, lastUpdatedIn);
         emit LogInfoUpdated(key, state, updatedBy, lastUpdatedIn);
+    }
+
+    function updateData(Key32 key32, bytes memory data) public {
+        Metadata storage metadata = _value[key32].metadata;
+        StateId state = metadata.state;
+        require(state.gtz(), "ERROR:KVS-021:NOT_EXISTING");
+
+        // update data
+        _value[key32].data = data;
+
+        // update metadata
+        address updatedBy = msg.sender;
+        Blocknumber lastUpdatedIn = metadata.updatedIn;
+        metadata.updatedBy = updatedBy;
+        metadata.updatedIn = blockBlocknumber();
+
+        // create log entry
+        Key memory key = toKey(key32);
+        emit LogInfoUpdated(key, state, updatedBy, lastUpdatedIn);
+    }
+
+    function updateState(Key32 key32, StateId state) public {
+        require(state.gtz(), "ERROR:KVS-020:STATE_UNDEFINED");
+        Metadata storage metadata = _value[key32].metadata;
+        StateId stateOld = metadata.state;
+        require(stateOld.gtz(), "ERROR:KVS-021:NOT_EXISTING");
+
+        // update metadata (and state)
+        address updatedBy = msg.sender;
+        Blocknumber lastUpdatedIn = metadata.updatedIn;
+        metadata.state = state;
+        metadata.updatedBy = updatedBy;
+        metadata.updatedIn = blockBlocknumber();
+
+        // create log entry
+        Key memory key = toKey(key32);
+        emit LogStateUpdated(key, state, stateOld, updatedBy, lastUpdatedIn);
     }
 
     function exists(Key32 key32) public view returns (bool) {

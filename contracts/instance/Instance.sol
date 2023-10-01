@@ -55,9 +55,11 @@ contract Instance is
         PoolModule()
         TreasuryModule()
     {
+        initializeBundleModule(_keyValueStore);
     }
 
     function getRegistry() public view override (Registerable, IBundleModule, IComponentModule, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
+    function getKeyValueStore() public view override (InstanceBase, IBundleModule) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
     function hasRole(RoleId role, address member) public view override (AccessModule, IComponentModule) returns (bool) { return super.hasRole(role, member); }
 

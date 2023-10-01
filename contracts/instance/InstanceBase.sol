@@ -44,7 +44,7 @@ abstract contract InstanceBase is
         _linkToServicesInRegistry();
     }
 
-    function getKeyValueStore() external view override returns (IKeyValueStore keyValueStore) { return _keyValueStore; }
+    function getKeyValueStore() public view virtual override returns (IKeyValueStore keyValueStore) { return _keyValueStore; }
 
     // from versionable
     function getVersion()

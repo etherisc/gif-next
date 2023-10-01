@@ -8,6 +8,7 @@ import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber} from "../../../types/Blocknumber.sol";
 
+import {IKeyValueStore} from "../../IKeyValueStore.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
@@ -16,15 +17,12 @@ interface IBundle {
     struct BundleInfo {
         NftId nftId;
         NftId poolNftId;
-        StateId state; // active, paused, closed (expriy only implicit)
         bytes filter; // required conditions for applications to be considered for collateralization by this bundle
         uint256 capitalAmount; // net investment capital amount (<= balance)
         uint256 lockedAmount; // capital amount linked to collateralizaion of non-closed policies (<= balance)
         uint256 balanceAmount; // total amount of funds: net investment capital + net premiums - payouts
-        Timestamp createdAt;
         Timestamp expiredAt; // no new policies
         Timestamp closedAt;
-        Blocknumber updatedIn;
     }
 }
 
@@ -39,6 +37,8 @@ interface IBundleModule is IBundle {
     ) external;
 
     function setBundleInfo(BundleInfo memory bundleInfo) external;
+    function setBundleState(NftId bundleNftId, StateId state) external;
+
     function collateralizePolicy(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
     function releasePolicy(NftId bundleNftId, NftId policyNftId) external returns(uint256 collateralAmount);
 
@@ -46,6 +46,9 @@ interface IBundleModule is IBundle {
 
     // repeat registry linked signature
     function getRegistry() external view returns (IRegistry registry);
+
+    // repeat instance base signature
+    function getKeyValueStore() external view returns (IKeyValueStore keyValueStore);
 
     // repeat service linked signatures to avoid linearization issues
     function getProductService() external returns(IProductService);
