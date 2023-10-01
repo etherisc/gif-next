@@ -6,7 +6,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
 
-import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 import {IComponent, IComponentModule} from "./IComponent.sol";
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../../types/ObjectType.sol";
@@ -24,20 +23,12 @@ abstract contract ComponentModule is
 
     mapping(ObjectType cType => bytes32 role) private _componentOwnerRole;
 
-    // TODO maybe move this to Instance contract as internal variable?
-    LifecycleModule private _lifecycleModule;
-
     modifier onlyComponentOwnerService() {
         require(
             msg.sender == address(this.getComponentOwnerService()),
             "ERROR:CMP-001:NOT_OWNER_SERVICE"
         );
         _;
-    }
-
-    constructor() {
-        address componentAddress = address(this);
-        _lifecycleModule = LifecycleModule(componentAddress);
     }
 
     function registerComponent(
@@ -49,7 +40,8 @@ abstract contract ComponentModule is
         // create component info
         _componentInfo[nftId] = ComponentInfo(
             nftId,
-            _lifecycleModule.getInitialState(objectType),
+            // _lifecycleModule.getInitialState(objectType),
+            ACTIVE(),
             token
         );
 
@@ -70,13 +62,13 @@ abstract contract ComponentModule is
         // TODO decide if state changes should have explicit functions and not
         // just a generic setXYZInfo and implicit state transitions
         // when in doubt go for the explicit approach ...
-        ObjectType objectType = this.getRegistry().getObjectInfo(nftId).objectType;
-        _lifecycleModule.checkAndLogTransition(
-            nftId,
-            objectType,
-            _componentInfo[nftId].state,
-            info.state
-        );
+        // ObjectType objectType = this.getRegistry().getObjectInfo(nftId).objectType;
+        // _lifecycleModule.checkAndLogTransition(
+        //     nftId,
+        //     objectType,
+        //     _componentInfo[nftId].state,
+        //     info.state
+        // );
         _componentInfo[nftId] = info;
     }
 

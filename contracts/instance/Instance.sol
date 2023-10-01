@@ -4,10 +4,9 @@ pragma solidity ^0.8.19;
 import {NftId} from "../types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 
-import {InstanceBase} from "./InstanceBase.sol";
+import {InstanceBase} from "./base/InstanceBase.sol";
 import {AccessModule} from "./module/access/Access.sol";
 import {CompensationModule} from "./module/compensation/CompensationModule.sol";
-import {LifecycleModule} from "./module/lifecycle/LifecycleModule.sol";
 import {ComponentModule} from "./module/component/ComponentModule.sol";
 import {PolicyModule} from "./module/policy/PolicyModule.sol";
 import {PoolModule} from "./module/pool/PoolModule.sol";
@@ -22,14 +21,13 @@ import {IBundleModule} from "./module/bundle/IBundle.sol";
 import {IComponentModule} from "./module/component/IComponent.sol";
 import {IPoolModule} from "./module/pool/IPoolModule.sol";
 import {IPolicyModule} from "./module/policy/IPolicy.sol";
-import {IInstanceBase} from "./IInstanceBase.sol";
+import {IInstanceBase} from "./base/IInstanceBase.sol";
 
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 
-import {IKeyValueStore} from "./IKeyValueStore.sol";
-import {KeyValueStore} from "./KeyValueStore.sol";
+import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
 contract Instance is
     InstanceBase,
@@ -37,7 +35,6 @@ contract Instance is
     BundleModule,
     ComponentModule,
     CompensationModule,
-    LifecycleModule,
     PolicyModule,
     PoolModule,
     RiskModule,

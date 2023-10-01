@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../../registry/IRegistry.sol";
 
-import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
@@ -15,11 +14,13 @@ import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, REVOKED, DECLINED} f
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
 
-import {IKeyValueStore} from "../../IKeyValueStore.sol";
-import {ILifecycleModule} from "../lifecycle/ILifecycle.sol";
+import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
+import {ModuleBase} from "../../base/ModuleBase.sol";
+
 import {IBundleModule} from "./IBundle.sol";
 
-abstract contract BundleModule is
+abstract contract BundleModule is 
+    ModuleBase,
     IBundleModule
 {
 
@@ -27,9 +28,6 @@ abstract contract BundleModule is
 
     mapping(NftId bundleNftId => LibNftIdSet.Set policies) private _collateralizedPolicies;
     mapping(NftId bundleNftId => mapping(NftId policyNftId => uint256 amount)) private _collateralizationAmount;
-
-    IKeyValueStore private _keyValueStore;
-    LifecycleModule private _lifecycleModule;
 
     modifier onlyBundlePoolService() {
         require(
@@ -57,8 +55,7 @@ abstract contract BundleModule is
     }
 
     function initializeBundleModule(IKeyValueStore keyValueStore) internal {
-        _lifecycleModule = LifecycleModule(address(this));
-        _keyValueStore = keyValueStore;
+        _initialize(keyValueStore, BUNDLE());
     }
 
     function createBundleInfo(
@@ -83,16 +80,7 @@ abstract contract BundleModule is
             zeroTimestamp() // closedAt
         );
 
-        _keyValueStore.createWithNftId(
-            bundleNftId, 
-            BUNDLE(),
-            abi.encode(bundleInfo));
-
-        // _keyValueStore.create(
-        //     _toKey32(bundleNftId), 
-        //     BUNDLE(), 
-        //     _lifecycleModule.getInitialState(BUNDLE()),
-        //     abi.encode(bundleInfo));
+        _create(bundleNftId, abi.encode(bundleInfo));
     }
 
     function setBundleInfo(BundleInfo memory bundleInfo)
@@ -100,22 +88,15 @@ abstract contract BundleModule is
         override
         onlyPoolOrProductService
     {
-        // Key32 key = _toKey32(bundleInfo.nftId);
-        _keyValueStore.updateDataWithNftId(bundleInfo.nftId, abi.encode(bundleInfo));
-
-        // Key32 key = _toKey32(bundleInfo.nftId);
-        // _keyValueStore.updateData(key, abi.encode(bundleInfo));
+        _updateData(bundleInfo.nftId, abi.encode(bundleInfo));
     }
 
-    function setBundleState(NftId bundleNftId, StateId state)
+    function updateBundleState(NftId bundleNftId, StateId state)
         external
         override
         onlyBundlePoolService
     {
-        _keyValueStore.updateStateWithNftId(bundleNftId, state);
-
-        // Key32 key = _toKey32(bundleNftId);
-        // _keyValueStore.updateState(key, state);
+        _updateState(bundleNftId, state);
     }
 
     function collateralizePolicy(
@@ -146,12 +127,10 @@ abstract contract BundleModule is
     }
 
     function getBundleInfo(NftId bundleNftId) external view override returns(BundleInfo memory bundleInfo) {
-        // return _bundleInfo[bundleNftId];
-        Key32 key = _toKey32(bundleNftId);
-        return abi.decode(_keyValueStore.getData(key), (BundleInfo));
+        return abi.decode(_getData(bundleNftId), (BundleInfo));
     }
 
-    function _toKey32(NftId bundleNftId) private pure returns (Key32 key) {
-        return bundleNftId.toKey32(BUNDLE());
-    }    
+    function toBundleKey32(NftId bundleNftId) external view override returns (Key32 key32) {
+        return _toKey32(bundleNftId);
+    } 
 }

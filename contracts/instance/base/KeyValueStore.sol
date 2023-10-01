@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Blocknumber, blockBlocknumber, zeroBlocknumber} from "../types/Blocknumber.sol";
-import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
-import {NftId} from "../types/NftId.sol";
-import {ObjectType} from "../types/ObjectType.sol";
-import {StateId} from "../types/StateId.sol";
-import {Timestamp, blockTimestamp, zeroTimestamp} from "../types/Timestamp.sol";
+import {Blocknumber, blockBlocknumber, zeroBlocknumber} from "../../types/Blocknumber.sol";
+import {Key32, KeyId, Key32Lib} from "../../types/Key32.sol";
+import {NftId} from "../../types/NftId.sol";
+import {ObjectType} from "../../types/ObjectType.sol";
+import {StateId, ACTIVE} from "../../types/StateId.sol";
+import {Timestamp, blockTimestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 
+import {Lifecycle} from "./Lifecycle.sol";
 import {IKeyValueStore} from "./IKeyValueStore.sol";
 
-contract KeyValueStore is IKeyValueStore {
+contract KeyValueStore is Lifecycle, IKeyValueStore {
 
     mapping(Key32 key32 => Value value) private _value;
     address private _owner;
@@ -26,43 +27,26 @@ contract KeyValueStore is IKeyValueStore {
         _owner = msg.sender;
     }
 
-    function createWithNftId(NftId nftId, ObjectType objectType, bytes memory data) external {
-        create(
-            bundleNftId.toKey32(objectType),
-            objectType, 
-            _lifecycleModule.getInitialState(objectType),
-            abi.encode(bundleInfo));
-    }
-
-    function updateDataWithNftId(NftId nftId, bytes memory data) external {
-
-    }
-
-    function updateStateWithNftId(NftId nftId, StateId state) external {
-
-    }
-
     function create(
         Key32 key32, 
         ObjectType objectType, 
-        StateId state, 
         bytes memory data
     )
         public
         onlyOwner
     {
         require(objectType.gtz(), "ERROR:KVS-010:TYPE_UNDEFINED");
-        require(state.gtz(), "ERROR:KVS-011:STATE_UNDEFINED");
 
         Metadata storage metadata = _value[key32].metadata;
         require(metadata.state.eqz(), "ERROR:KVS-012:ALREADY_CREATED");
 
         address createdBy = msg.sender;
         Blocknumber blocknumber = blockBlocknumber();
+        StateId initialState = hasLifecycle(objectType) ? getInitialState(objectType) : ACTIVE();
 
         // set metadata
         metadata.objectType = objectType;
-        metadata.state = state;
+        metadata.state = initialState;
         metadata.updatedBy = createdBy;
         metadata.updatedIn = blocknumber;
         metadata.createdIn = blocknumber;
@@ -70,7 +54,7 @@ contract KeyValueStore is IKeyValueStore {
         // set data
         _value[key32].data = data;
 
-        emit LogInfoCreated(toKey(key32), state, createdBy);
+        emit LogInfoCreated(toKey(key32), initialState, createdBy);
     }
 
     function update(Key32 key32, StateId state, bytes memory data) public {

@@ -14,6 +14,7 @@ using {
     NftIdLib.toInt,
     NftIdLib.gtz,
     NftIdLib.eqz,
+    NftIdLib.toKeyId,
     NftIdLib.toKey32
 } for NftId global;
 
@@ -61,7 +62,11 @@ library NftIdLib {
 
     /// @dev Returns the key32 value for the specified nft id and object type.
     function toKey32(NftId id, ObjectType objectType) public pure returns (Key32 key) {
-        KeyId keyId = KeyId.wrap(bytes31(uint248(NftId.unwrap(id))));
-        return Key32Lib.toKey32(objectType, keyId);
+        return Key32Lib.toKey32(objectType, toKeyId(id));
+    }
+
+    /// @dev Returns the key id value for the specified nft id
+    function toKeyId(NftId id) public pure returns (KeyId keyId) {
+        return KeyId.wrap(bytes31(uint248(NftId.unwrap(id))));
     }
 }

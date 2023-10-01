@@ -15,6 +15,7 @@ abstract contract ComponentServiceBase is ServiceBase {
         NftId registryNftId
     )
         ServiceBase(registry, registryNftId)
+    // solhint-disable-next-line no-empty-blocks
     {
     }
 

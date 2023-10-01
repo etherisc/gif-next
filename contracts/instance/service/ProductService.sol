@@ -22,7 +22,7 @@ import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
-import {ComponentServiceBase} from "./ComponentServiceBase.sol";
+import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IProductService} from "./IProductService.sol";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)

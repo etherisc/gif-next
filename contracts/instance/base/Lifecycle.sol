@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {NftId} from "../../../types/NftId.sol";
-import {ObjectType, PRODUCT, ORACLE, POOL, BUNDLE, POLICY} from "../../../types/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, UNDERWRITTEN, REVOKED, DECLINED} from "../../../types/StateId.sol";
-import {ILifecycleModule} from "./ILifecycle.sol";
+import {NftId} from "../../types/NftId.sol";
+import {ObjectType, PRODUCT, ORACLE, POOL, BUNDLE, POLICY} from "../../types/ObjectType.sol";
+import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, UNDERWRITTEN, REVOKED, DECLINED} from "../../types/StateId.sol";
+import {ILifecycle} from "./ILifecycle.sol";
 
-contract LifecycleModule is ILifecycleModule {
+contract Lifecycle is ILifecycle {
     mapping(ObjectType objectType => StateId initialState)
         private _initialState;
 
@@ -22,38 +22,44 @@ contract LifecycleModule is ILifecycleModule {
         _setupPolicyLifecycle();
     }
 
-    function checkAndLogTransition(
-        NftId nftId,
-        ObjectType objectType,
-        StateId fromId,
-        StateId toId
-    ) public returns (StateId) // add only currentcontract? would that work?
+    function hasLifecycle(
+        ObjectType objectType
+    )
+        public
+        view
+        override
+        returns (bool)
     {
-        if (!_isValidTransition[objectType][fromId][toId]) {
-            revert ErrorInvalidStateTransition(nftId, objectType, fromId, toId);
-        }
-
-        if (objectType == POLICY()) {
-            emit LogPolicyStateChanged(nftId, fromId, toId);
-        } else if (objectType == BUNDLE()) {
-            emit LogBundleStateChanged(nftId, fromId, toId);
-        } else if (
-            objectType == PRODUCT() ||
-            objectType == ORACLE() ||
-            objectType == POOL()
-        ) {
-            emit LogComponentStateChanged(nftId, objectType, fromId, toId);
-        } else {
-            revert ErrorNoLifecycle(nftId, objectType);
-        }
-
-        return toId;
+        return _initialState[objectType].gtz();
     }
 
     function getInitialState(
         ObjectType objectType
-    ) public view returns (StateId) {
+    )
+        public
+        view
+        returns (StateId)
+    {
         return _initialState[objectType];
+    }
+
+    function checkTransition(
+        ObjectType objectType,
+        StateId fromId,
+        StateId toId
+    )
+        public
+        view
+    {
+        // return if no life cycle support
+        if (_initialState[objectType].eqz()) {
+            return;
+        }
+
+        // enforce valid state transition
+        if (!_isValidTransition[objectType][fromId][toId]) {
+            revert ErrorInvalidStateTransition(objectType, fromId, toId);
+        }
     }
 
     function isValidTransition(

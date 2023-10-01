@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {NftId} from "../../contracts/types/NftId.sol";
-import {InstanceBase} from "../../contracts/instance/InstanceBase.sol";
+import {InstanceBase} from "../../contracts/instance/base/InstanceBase.sol";
 
 import {IComponentOwnerService} from "../../contracts/instance/service/IComponentOwnerService.sol";
 import {IProductService} from "../../contracts/instance/service/IProductService.sol";

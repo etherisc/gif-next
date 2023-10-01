@@ -13,7 +13,7 @@ import {POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
-import {ComponentServiceBase} from "./ComponentServiceBase.sol";
+import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IPoolService} from "./IPoolService.sol";
 
 

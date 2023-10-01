@@ -2,9 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {IKeyValueStore} from "./IKeyValueStore.sol";
-import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
-import {IProductService} from "./service/IProductService.sol";
-import {IPoolService} from "./service/IPoolService.sol";
+import {IComponentOwnerService} from "../service/IComponentOwnerService.sol";
+import {IProductService} from "../service/IProductService.sol";
+import {IPoolService} from "../service/IPoolService.sol";
 
 interface IInstanceBase {
     function getKeyValueStore() external view returns (IKeyValueStore keyValueStore);

@@ -3,12 +3,13 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
+import {Key32} from "../../../types/Key32.sol";
 import {NftId} from "../../../types/NftId.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber} from "../../../types/Blocknumber.sol";
 
-import {IKeyValueStore} from "../../IKeyValueStore.sol";
+import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
@@ -37,12 +38,13 @@ interface IBundleModule is IBundle {
     ) external;
 
     function setBundleInfo(BundleInfo memory bundleInfo) external;
-    function setBundleState(NftId bundleNftId, StateId state) external;
+    function updateBundleState(NftId bundleNftId, StateId state) external;
 
     function collateralizePolicy(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
     function releasePolicy(NftId bundleNftId, NftId policyNftId) external returns(uint256 collateralAmount);
 
     function getBundleInfo(NftId bundleNftId) external view returns(BundleInfo memory bundleInfo);
+    function toBundleKey32(NftId bundleNftId) external view returns (Key32 key32);
 
     // repeat registry linked signature
     function getRegistry() external view returns (IRegistry registry);

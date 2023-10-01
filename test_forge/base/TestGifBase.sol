@@ -13,6 +13,7 @@ import {ProductService} from "../../contracts/instance/service/ProductService.so
 import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 
 import {Instance} from "../../contracts/instance/Instance.sol";
+import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/instance/module/treasury/TokenHandler.sol";
 import {TestProduct} from "../../contracts/test/TestProduct.sol";
 import {TestPool} from "../../contracts/test/TestPool.sol";
@@ -40,6 +41,7 @@ contract TestGifBase is Test {
     ProductService public productService;
     PoolService public poolService;
     Instance public instance;
+    IKeyValueStore public keyValueStore;
     TestProduct public product;
     TestPool public pool;
     TokenHandler public tokenHandler;
@@ -216,6 +218,8 @@ contract TestGifBase is Test {
         instance = new Instance(
             address(registry), 
             registry.getNftId());
+
+        keyValueStore = instance.getKeyValueStore();
 
         // solhint-disable-next-line
         console.log("instance deployed at", address(instance));

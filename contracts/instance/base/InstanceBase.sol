@@ -1,21 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Versionable} from "../shared/Versionable.sol";
-import {Registerable} from "../shared/Registerable.sol";
+import {Versionable} from "../../shared/Versionable.sol";
+import {Registerable} from "../../shared/Registerable.sol";
 // import {IRegistry} from "../registry/IRegistry.sol";
 
 // import {IInstance} from "./IInstance.sol";
-import {ObjectType, INSTANCE} from "../types/ObjectType.sol";
-import {NftId} from "../types/NftId.sol";
-import {Version, VersionPart, VersionLib} from "../types/Version.sol";
+import {ObjectType, INSTANCE} from "../../types/ObjectType.sol";
+import {NftId} from "../../types/NftId.sol";
+import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
-import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
-import {IProductService} from "./service/IProductService.sol";
-import {IPoolService} from "./service/IPoolService.sol";
+import {IComponentOwnerService} from "../service/IComponentOwnerService.sol";
+import {IProductService} from "../service/IProductService.sol";
+import {IPoolService} from "../service/IPoolService.sol";
 
 import {IKeyValueStore} from "./IKeyValueStore.sol";
-import {IInstance} from "./IInstance.sol";
+import {IInstance} from "../IInstance.sol";
 import {IInstanceBase} from "./IInstanceBase.sol";
 
 import {KeyValueStore} from "./KeyValueStore.sol";

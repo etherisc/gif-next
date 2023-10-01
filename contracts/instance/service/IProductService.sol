@@ -5,7 +5,7 @@ import {NftId} from "../../types/NftId.sol";
 import {Timestamp} from "../../types/Timestamp.sol";
 import {UFixed} from "../../types/UFixed.sol";
 import {Fee} from "../../types/Fee.sol";
-import {IService} from "./IService.sol";
+import {IService} from "../base/IService.sol";
 
 interface IProductService is IService {
     function setFees(

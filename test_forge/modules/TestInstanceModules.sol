@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {InstanceBase} from "../../contracts/instance/InstanceBase.sol";
+import {InstanceBase} from "../../contracts/instance/base/InstanceBase.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../../contracts/types/RoleId.sol";
 
@@ -11,7 +11,6 @@ import {BundleModule} from "../../contracts/instance/module/bundle/BundleModule.
 import {ComponentModule} from "../../contracts/instance/module/component/ComponentModule.sol";
 import {CompensationModule} from "../../contracts/instance/module/compensation/CompensationModule.sol";
 import {RiskModule} from "../../contracts/instance/module/risk/RiskModule.sol";
-import {LifecycleModule} from "../../contracts/instance/module/lifecycle/LifecycleModule.sol";
 import {PolicyModule} from "../../contracts/instance/module/policy/PolicyModule.sol";
 import {PoolModule} from "../../contracts/instance/module/pool/PoolModule.sol";
 import {TreasuryModule} from "../../contracts/instance/module/treasury/TreasuryModule.sol";
@@ -24,9 +23,9 @@ import {IRiskModule} from "../../contracts/instance/module/risk/IRisk.sol";
 import {IPoolModule} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IPolicyModule} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IBundleModule} from "../../contracts/instance/module/bundle/IBundle.sol";
-import {IInstanceBase} from "../../contracts/instance/IInstanceBase.sol";
 
-import {IKeyValueStore} from "../../contracts/instance/IKeyValueStore.sol";
+import {IInstanceBase} from "../../contracts/instance/base/IInstanceBase.sol";
+import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {IComponentOwnerService} from "../../contracts/instance/service/IComponentOwnerService.sol";
 import {IProductService} from "../../contracts/instance/service/IProductService.sol";
 import {IPoolService} from "../../contracts/instance/service/IPoolService.sol";
