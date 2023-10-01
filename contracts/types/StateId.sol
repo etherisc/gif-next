@@ -5,7 +5,13 @@ pragma solidity ^0.8.19;
 type StateId is uint8;
 
 // type bindings
-using {eqStateId as ==, neStateId as !=, StateIdLib.toInt} for StateId global;
+using {
+    eqStateId as ==, 
+    neStateId as !=, 
+    StateIdLib.eqz,
+    StateIdLib.gtz,
+    StateIdLib.toInt
+} for StateId global;
 
 // general pure free functions
 function APPLIED() pure returns (StateId) {

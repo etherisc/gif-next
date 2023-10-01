@@ -19,13 +19,13 @@ import {IPoolModule} from "./module/pool/IPoolModule.sol";
 import {IRiskModule} from "./module/risk/IRisk.sol";
 import {ITreasuryModule} from "./module/treasury/ITreasury.sol";
 
+import {IKeyValueStore} from "./IKeyValueStore.sol";
 import {IRegistry, IRegistryLinked} from "../registry/IRegistryLinked.sol";
-import {IServiceLinked} from "./IServiceLinked.sol";
 
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
-
+import {IInstanceBase} from "./IInstanceBase.sol";
 
 // solhint-disable-next-line no-empty-blocks
 interface IInstance is
@@ -40,14 +40,16 @@ interface IInstance is
     IComponentModule,
     ITreasuryModule,
     ICompensationModule,
-    IServiceLinked
+    IInstanceBase
 {
     function getRegistry() external view override (IBundleModule, IComponentModule, IPolicyModule, IRegisterable) returns (IRegistry registry);
+    function getOwner() external view override (IOwnable, IAccessModule) returns(address owner);
+
     function hasRole(RoleId role, address member) external view override (IAccessModule, IComponentModule) returns (bool hasRole);    
 
-    function getComponentOwnerService() external view override (IServiceLinked, IComponentModule) returns(IComponentOwnerService);
-    function getProductService() external view override (IServiceLinked, IBundleModule, IPolicyModule) returns(IProductService);
-    function getPoolService() external view override (IServiceLinked, IBundleModule, IPoolModule) returns(IPoolService);
+    function getKeyValueStore() external view override returns (IKeyValueStore keyValueStore);
+    function getComponentOwnerService() external view override (IInstanceBase, IComponentModule) returns(IComponentOwnerService);
+    function getProductService() external view override (IInstanceBase, IBundleModule, IPolicyModule) returns(IProductService);
+    function getPoolService() external view override (IInstanceBase, IBundleModule, IPoolModule) returns(IPoolService);
 
-    function getOwner() external view override (IOwnable, IAccessModule) returns(address owner);
 }

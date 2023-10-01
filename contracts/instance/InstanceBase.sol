@@ -14,14 +14,19 @@ import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 
-import {IServiceLinked} from "./IServiceLinked.sol";
+import {IKeyValueStore} from "./IKeyValueStore.sol";
 import {IInstance} from "./IInstance.sol";
+import {IInstanceBase} from "./IInstanceBase.sol";
+
+import {KeyValueStore} from "./KeyValueStore.sol";
 
 abstract contract InstanceBase is
     Versionable,
     Registerable,
-    IServiceLinked
+    IInstanceBase
 {
+    IKeyValueStore internal _keyValueStore;
+
     IComponentOwnerService internal _componentOwnerService;
     IProductService internal _productService;
     IPoolService internal _poolService;
@@ -33,9 +38,13 @@ abstract contract InstanceBase is
         Registerable(registry, registryNftId)
         Versionable()
     {
+        _keyValueStore = new KeyValueStore();
+
         _registerInterface(type(IInstance).interfaceId);
         _linkToServicesInRegistry();
     }
+
+    function getKeyValueStore() external view override returns (IKeyValueStore keyValueStore) { return _keyValueStore; }
 
     // from versionable
     function getVersion()
