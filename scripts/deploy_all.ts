@@ -151,8 +151,10 @@ async function deployProduct(
         { libraries: {  }});
     
     const testPool = productContractBase as Registerable;
+    logger.debug("registering product");
     const tx = await executeTx(async () => await testPool.register());
     const productNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    logger.info(`product registered - productNftId: ${productNftId}`);
     
     return {
         productAddress,
@@ -186,8 +188,10 @@ async function deployPool(owner: Signer, libraries: LibraryAddresses, registry: 
         );
 
     const testPool = poolContractBase as Registerable;
+    logger.debug("registering pool");
     const tx = await executeTx(async () => await testPool.register());
     const poolNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    logger.info(`pool registered - poolNftId: ${poolNftId}`);
     
     return {
         tokenAddress,

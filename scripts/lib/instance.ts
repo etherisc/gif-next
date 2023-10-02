@@ -41,8 +41,10 @@ export async function deployAndRegisterInstance(
         }});
 
     const instance = instanceBaseContract as Registerable;
+    logger.debug("registering instance");
     const tx = await executeTx(async () => await instance.register());
     const instanceNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    logger.info(`instance registered - instanceNftId: ${instanceNftId}`);
     return {
         instanceAddress,
         instanceNftId,
