@@ -25,22 +25,14 @@ async function main() {
     // deploy instance contracts
     const instance = await deployAndRegisterInstance(instanceOwner, libraries, registry, services);
 
-    // TODO: enable this 
-    // await grantRole(instanceOwner, instance.instanceAddress, Role.POOL_OWNER_ROLE, poolOwner);
-    // await grantRole(instanceOwner, instance.instanceAddress, Role.PRODUCT_OWNER_ROLE, productOwner);
+    await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
+    await grantRole(instanceOwner, libraries, instance, Role.PRODUCT_OWNER_ROLE, productOwner);
 
     
     // deploy pool & product contracts
-    const { poolAddress, tokenAddress } = await deployPool(poolOwner, libraries, registry, instance);
+    const { poolAddress, poolNftId, tokenAddress } = await deployPool(poolOwner, libraries, registry, instance);
     const { productAddress } = await deployProduct(productOwner, libraries, registry, instance, tokenAddress, poolAddress);
     
-
-    // TODO: probably not needed any more
-    // const { instanceNftId, poolNftId, productNftId } = await registerInstanceAndComponents(
-    //     instanceOwner, productOwner, poolOwner,
-    //     componentOwnerServiceAddress,
-    //     registryAddress, instanceAddress, productAddress, poolAddress);
-
     // TODO: fix
     // printAddresses(
     //     registryAddress, chainNftAddress,
@@ -124,35 +116,13 @@ function printAddresses(
     logger.info(addresses);
 }
 
-// TODO: remove this function
-async function registerInstanceAndComponents(
-    instanceOwner: Signer, productOwner: Signer, poolOwner: Signer,
-    componentOwnerServiceAddress: AddressLike,
-    registryAddress: AddressLike, instanceAddress: AddressLike, productAddress: AddressLike, poolAddress: AddressLike
-): Promise<{
-    instanceNftId: string,
-    poolNftId: string,
-    productNftId: string,
-}> {
-    // register instance
-    const instanceNftId = await registerInstance(instanceOwner, instanceAddress, registryAddress);
-    
-    // grant pool role and register pool
-    const poolNftId = await registerComponent(componentOwnerServiceAddress, poolOwner, poolAddress, registryAddress);
-    
-    // grant product role and register product
-    const productNftId = await registerComponent(componentOwnerServiceAddress, productOwner, productAddress, registryAddress);
-
-    return { instanceNftId, poolNftId, productNftId };
-}
-
 async function deployProduct(
     owner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, 
     instance: InstanceAddresses, tokenAddress: AddressLike, poolAddress: AddressLike
 ): Promise<{
     productAddress: AddressLike, productNftId: string,
 }> {
-    const { address: productAddress } = await deployContract(
+    const { address: productAddress, contract: productContractBase } = await deployContract(
         "TestProduct",
         owner,
         [
@@ -163,12 +133,10 @@ async function deployProduct(
         ],
         { libraries: {  }});
     
-    // TODO: enable this when role is accessible
-    // const testPool = poolContractBase as Registerable;
-    // const tx = await executeTx(async () => await testPool.register());
-    // const poolNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
-    const productNftId = "0";
-
+    const testPool = productContractBase as Registerable;
+    const tx = await executeTx(async () => await testPool.register());
+    const productNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    
     return {
         productAddress,
         productNftId,
@@ -200,12 +168,10 @@ async function deployPool(owner: Signer, libraries: LibraryAddresses, registry: 
         { libraries: {  }}
         );
 
-    // TODO: enable this when role is accessible
-    // const testPool = poolContractBase as Registerable;
-    // const tx = await executeTx(async () => await testPool.register());
-    // const poolNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
-    const poolNftId = "0";
-
+    const testPool = poolContractBase as Registerable;
+    const tx = await executeTx(async () => await testPool.register());
+    const poolNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    
     return {
         tokenAddress,
         poolAddress,

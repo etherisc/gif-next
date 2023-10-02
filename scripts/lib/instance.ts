@@ -7,6 +7,7 @@ import { RegistryAddresses, isRegistered } from "./registry";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { ServiceAddresses } from "./services";
+import { RoleIdLib__factory } from "../../typechain-types/factories/contracts/types/RoleId.sol";
 
 const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
 
@@ -36,6 +37,7 @@ export async function deployAndRegisterInstance(
             Key32Lib: libraries.key32LibAddress,
             ObjectTypeLib: libraries.objectTypeLibAddress,
             StateIdLib: libraries.stateIdLibAddress,
+            RoleIdLib: libraries.roleIdLibAddress,
         }});
 
     const instance = instanceBaseContract as Registerable;
@@ -50,22 +52,23 @@ export async function deployAndRegisterInstance(
 
 export enum Role { POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE }
 
-export async function grantRole(instanceOwner: Signer, instanceAddress: AddressLike, role: Role, beneficiary: AddressLike): Promise<void> {
+export async function grantRole(instanceOwner: Signer, libraries: LibraryAddresses, instance: InstanceAddresses, role: Role, beneficiary: AddressLike): Promise<void> {
     const beneficiaryAddress = await resolveAddress(beneficiary);
     logger.debug(`granting role ${Role[role]} to ${beneficiaryAddress}`);
 
-    const instanceAsInstanceOwner = Instance__factory.connect(instanceAddress.toString(), instanceOwner);
+    const instanceAsInstanceOwner = Instance__factory.connect(instance.instanceAddress.toString(), instanceOwner);
+    const roleIdLib = RoleIdLib__factory.connect(libraries.roleIdLibAddress.toString(), instanceOwner);
     
     let roleValue: string;
     if (role === Role.POOL_OWNER_ROLE) {
-        roleValue = await instanceAsInstanceOwner.POOL_OWNER_ROLE();
+        roleValue = await roleIdLib.toRoleId("PoolOwnerRole");
     } else if (role === Role.PRODUCT_OWNER_ROLE) {
-        roleValue = await instanceAsInstanceOwner.PRODUCT_OWNER_ROLE();
+        roleValue = await roleIdLib.toRoleId("ProductOwnerRole");
     } else {
         throw new Error("unknown role");
     }
 
-    const hasRole = await instanceAsInstanceOwner.hasRole(await instanceAsInstanceOwner.POOL_OWNER_ROLE(), beneficiaryAddress);
+    const hasRole = await instanceAsInstanceOwner.hasRole(roleValue, beneficiaryAddress);
     
     if (hasRole) {
         logger.debug(`Role ${roleValue} already granted to ${beneficiaryAddress}`);

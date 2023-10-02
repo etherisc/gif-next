@@ -13,6 +13,7 @@ export type LibraryAddresses = {
     key32LibAddress: AddressLike;
     feeLibAddress: AddressLike;
     stateIdLibAddress: AddressLike;
+    roleIdLibAddress: AddressLike;
 }
 
 export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> {
@@ -52,6 +53,9 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     const { address: libNftIdSetAddress } = await deployContract(
         "LibNftIdSet",
         owner);
+    const { address: roleIdLibAddress } = await deployContract(
+        "RoleIdLib",
+        owner);
     const { address: feeLibAddress } = await deployContract(
         "FeeLib",
         owner,
@@ -74,6 +78,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         key32LibAddress,
         feeLibAddress,
         stateIdLibAddress,
+        roleIdLibAddress,
     };
     
 }

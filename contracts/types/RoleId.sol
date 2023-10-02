@@ -15,15 +15,10 @@ function ORACLE_OWNER_ROLE_NAME() pure returns (string memory) { return "OracleO
 function POOL_OWNER_ROLE_NAME() pure returns (string memory) { return "PoolOwnerRole"; }
 function PRODUCT_OWNER_ROLE_NAME() pure returns (string memory) { return "ProductOwnerRole"; }
 
-function DISTRIBUTOR_OWNER_ROLE() pure returns (RoleId) { return toRoleId("DistributorOwnerRole"); }
-function ORACLE_OWNER_ROLE() pure returns (RoleId) { return toRoleId("OracleOwnerRole"); }
-function POOL_OWNER_ROLE() pure returns (RoleId) { return toRoleId("PoolOwnerRole"); }
-function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return toRoleId("ProductOwnerRole"); }
-
-// @dev Converts a role string into a role id.
-function toRoleId(string memory role) pure returns (RoleId) {
-    return RoleId.wrap(bytes8(keccak256(abi.encode(role))));
-}
+function DISTRIBUTOR_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("DistributorOwnerRole"); }
+function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("OracleOwnerRole"); }
+function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("PoolOwnerRole"); }
+function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("ProductOwnerRole"); }
 
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {
@@ -33,4 +28,11 @@ function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {
 // @dev Returns true iff role ids a and b are different
 function neRoleId(RoleId a, RoleId b) pure returns (bool isDifferent) {
     return RoleId.unwrap(a) != RoleId.unwrap(b);
+}
+
+library RoleIdLib {
+    // @dev Converts a role string into a role id.
+    function toRoleId(string memory role) public pure returns (RoleId) {
+        return RoleId.wrap(bytes8(keccak256(abi.encode(role))));
+    }
 }
