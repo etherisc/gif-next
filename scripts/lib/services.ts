@@ -1,10 +1,10 @@
-import { AddressLike, BaseContract, Signer } from "ethers";
-import { RegistryAddresses } from "./registry";
-import { LibraryAddresses } from "./libraries";
+import { AddressLike, Signer } from "ethers";
+import { Registerable } from "../../typechain-types";
 import { deployContract } from "./deployment";
-import { executeTx, getFieldFromLogs } from "./transaction";
-import { ComponentOwnerService, ProductService, Registerable, ServiceBase } from "../../typechain-types";
 import { IERC721ABI } from "./erc721";
+import { LibraryAddresses } from "./libraries";
+import { RegistryAddresses } from "./registry";
+import { executeTx, getFieldFromLogs } from "./transaction";
 
 export type ServiceAddresses = {
     componentOwnerServiceAddress: AddressLike,

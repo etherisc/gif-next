@@ -1,16 +1,16 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
 import { IChainNft__factory, IRegistry__factory, Registerable, UFixedMathLib__factory } from "../typechain-types";
-import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
+import { getNamedAccounts, printBalance, validateNftOwnerhip, validateOwnership } from "./lib/accounts";
+import { POOL_COLLATERALIZATION_LEVEL, POOL_IS_VERIFYING } from "./lib/constants";
 import { deployContract } from "./lib/deployment";
+import { IERC721ABI } from "./lib/erc721";
 import { InstanceAddresses, Role, deployAndRegisterInstance, grantRole } from "./lib/instance";
 import { LibraryAddresses, deployLibraries } from "./lib/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./lib/registry";
 import { ServiceAddresses, deployAndRegisterServices } from "./lib/services";
-import { logger } from "./logger";
-import { POOL_COLLATERALIZATION_LEVEL, POOL_IS_VERIFYING } from "./lib/constants";
 import { executeTx, getFieldFromLogs } from "./lib/transaction";
-import { IERC721ABI } from "./lib/erc721";
+import { logger } from "./logger";
 
 
 async function main() {
@@ -38,13 +38,12 @@ async function main() {
         tokenAddress, poolAddress, poolNftId,
         productAddress, productNftId);
 
-    // TODO: fix
-    // await verifyOwnership(
-    //     instanceOwner, productOwner, poolOwner,
-    //     registryAddress,
-    //     instanceAddress, 
-    //     instanceNftId, poolNftId, productNftId,
-    //     chainNftAddress);
+    await verifyOwnership(
+        protocolOwner, instanceOwner, productOwner, poolOwner,
+        libraries, registry, services,
+        instance, 
+        tokenAddress, poolAddress, poolNftId,
+        productAddress, productNftId);
 
     // print final balance
     await printBalance(
@@ -60,37 +59,35 @@ async function main() {
  * Check that the instance, instance NFT, pool NFT and product NFTs are owned by their respective owners.
  */
 async function verifyOwnership(
-    instanceOwner: AddressLike, productOwner: AddressLike, poolOwner: AddressLike,
-    registryAddress: AddressLike, 
-    instanceAddress: AddressLike, 
-    instanceNftId: string, poolNftId: string, productNftId: string,
-    chainNftAddress: AddressLike
+    protocolOwner: AddressLike, instanceOwner: AddressLike, productOwner: AddressLike, poolOwner: AddressLike,
+    libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses,
+    instance: InstanceAddresses,
+    tokenAddress: AddressLike, poolAddress: AddressLike, poolNftId: string,
+    productAddress: AddressLike, productNftId: string,
 ) {
-    const chainNft = IChainNft__factory.connect(chainNftAddress.toString(), ethers.provider);
-    if (await chainNft.getRegistryAddress() !== registryAddress) {
+    const chainNft = IChainNft__factory.connect(await resolveAddress(registry.chainNftAddress), ethers.provider);
+    if (await chainNft.getRegistryAddress() !== resolveAddress(registry.registryAddress)) {
         throw new Error("chainNft registry address mismatch");
     }
-    const registry = IRegistry__factory.connect(registryAddress.toString(), ethers.provider);
-    if (await registry.getNftAddress() !== chainNftAddress) {
+    const registryC = IRegistry__factory.connect(await resolveAddress(registry.registryAddress), ethers.provider);
+    if (await registryC.getChainNft() !== registry.chainNftAddress) {
         throw new Error("registry chainNft address mismatch");
     }
 
-    await validateOwnership(instanceOwner, instanceAddress);
+    await validateOwnership(protocolOwner, services.componentOwnerServiceAddress);
+    await validateOwnership(protocolOwner, services.productServiceAddress);
+    await validateOwnership(protocolOwner, services.poolServiceAddress);
 
-    const instanceNftOwner = await chainNft.ownerOf(instanceNftId);
-    if (instanceNftOwner !== await resolveAddress(instanceOwner)) {
-        throw new Error("instance nft owner mismatch");
-    }
+    await validateNftOwnerhip(registry.chainNftAddress, registry.registryNftId, protocolOwner);
+    await validateNftOwnerhip(registry.chainNftAddress, services.componentOwnerServiceNftId, protocolOwner);
+    await validateNftOwnerhip(registry.chainNftAddress, services.productServiceNftId, protocolOwner);
+    await validateNftOwnerhip(registry.chainNftAddress, services.poolServiceNftId, protocolOwner);
 
-    const poolNftOwner = await chainNft.ownerOf(poolNftId);
-    if (poolNftOwner !== await resolveAddress(poolOwner)) {
-        throw new Error("pool nft owner mismatch");
-    }
-
-    const productNftOwner = await chainNft.ownerOf(productNftId);
-    if (productNftOwner !== await resolveAddress(productOwner)) {
-        throw new Error("product nft owner mismatch");
-    }
+    await validateOwnership(instanceOwner, instance.instanceAddress);
+    await validateNftOwnerhip(registry.chainNftAddress, instance.instanceNftId, instanceOwner);
+    
+    await validateNftOwnerhip(registry.chainNftAddress, poolNftId, poolOwner);
+    await validateNftOwnerhip(registry.chainNftAddress, productNftId, productOwner);
 }
 
 function printAddresses(

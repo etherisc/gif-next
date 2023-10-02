@@ -1,7 +1,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { AddressLike, formatEther, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
-import { IOwnable__factory } from "../../typechain-types";
+import { IChainNft__factory, IOwnable__factory } from "../../typechain-types";
 import { logger } from "../logger";
 
 export async function getNamedAccounts(): Promise<{ 
@@ -40,3 +40,13 @@ export async function validateOwnership(owner: AddressLike, address: AddressLike
         throw new Error(`Contract owner is not ${owner}`);
     }
 }
+
+export async function validateNftOwnerhip(chainNftAddress: AddressLike, nftId: string, expectedOwner: AddressLike): Promise<void> {
+    const chainNft = IChainNft__factory.connect(await resolveAddress(chainNftAddress), ethers.provider);
+
+    const componentOwnerServiceNftOwer = await chainNft.ownerOf(nftId);
+    if (componentOwnerServiceNftOwer !== await resolveAddress(expectedOwner)) {
+        throw new Error(`Ownership mismatch - nftId: ${nftId} expected owner: ${expectedOwner} actual owner: ${componentOwnerServiceNftOwer}`);
+    }
+}
+

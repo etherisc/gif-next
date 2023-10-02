@@ -12,18 +12,18 @@ export type RegistryAddresses = {
     chainNftAddress: AddressLike;
 }
 
-export async function isRegistered(signer: Signer, registryAddress: AddressLike, objectAddress: AddressLike): Promise<string|null> {
-    const registryAsInstanceOwner = Registry__factory.connect(registryAddress.toString(), signer);
-    const isRegistered = await registryAsInstanceOwner.isRegistered(objectAddress);
+// export async function isRegistered(signer: Signer, registryAddress: AddressLike, objectAddress: AddressLike): Promise<string|null> {
+//     const registryAsInstanceOwner = Registry__factory.connect(registryAddress.toString(), signer);
+//     const isRegistered = await registryAsInstanceOwner.isRegistered(objectAddress);
 
-    if (! isRegistered) {
-        return null;
-    }
+//     if (! isRegistered) {
+//         return null;
+//     }
     
-    const instanceNftId = await registryAsInstanceOwner.getNftId(objectAddress);
-    logger.info(`Object ${objectAddress} is already registered with NFT ID: ${instanceNftId}`);
-    return instanceNftId.toString();
-}
+//     const instanceNftId = await registryAsInstanceOwner.getNftId(objectAddress);
+//     logger.info(`Object ${objectAddress} is already registered with NFT ID: ${instanceNftId}`);
+//     return instanceNftId.toString();
+// }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
     const { address: registryAddress, contract: registryBaseContract } = await deployContract(
