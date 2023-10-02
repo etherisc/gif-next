@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../../registry/IRegistry.sol";
 
-import {LifecycleModule} from "../../module/lifecycle/LifecycleModule.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../../types/ObjectType.sol";
@@ -12,14 +11,10 @@ import {NftId, NftIdLib} from "../../../types/NftId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
 
-import {LifecycleModule} from "../../module/lifecycle/LifecycleModule.sol";
-
 abstract contract PolicyModule is IPolicyModule {
     using NftIdLib for NftId;
 
     mapping(NftId nftId => PolicyInfo info) private _policyInfo;
-
-    LifecycleModule private _lifecycleModule;
 
     // TODO find a better place to avoid dupliation
     modifier onlyProductService2() {
@@ -28,10 +23,6 @@ abstract contract PolicyModule is IPolicyModule {
             "ERROR:POL-001:NOT_PRODUCT_SERVICE"
         );
         _;
-    }
-
-    constructor() {
-        _lifecycleModule = LifecycleModule(address(this));
     }
 
     function createApplication(
@@ -51,7 +42,8 @@ abstract contract PolicyModule is IPolicyModule {
             productNftId,
             bundleNftId,
             address(0), // beneficiary = policy nft holder
-            _lifecycleModule.getInitialState(POLICY()),
+            // _lifecycleModule.getInitialState(POLICY()),
+            APPLIED(),
             sumInsuredAmount,
             premiumAmount,
             0, // premium paid amount

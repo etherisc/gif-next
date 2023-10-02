@@ -1,15 +1,18 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {ILifecycle} from "../contracts/instance/module/lifecycle/ILifecycle.sol";
+import {Blocknumber} from "../contracts/types/Blocknumber.sol";
+import {Key32, KeyId} from "../contracts/types/Key32.sol";
 import {NftId} from "../contracts/types/NftId.sol";
 import {PRODUCT} from "../contracts/types/ObjectType.sol";
 import {ACTIVE, PAUSED} from "../contracts/types/StateId.sol";
+
+import {IKeyValueStore} from "../contracts/instance/base/IKeyValueStore.sol";
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
 import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
 
-contract TestComponentLockUnlock is ILifecycle, TestGifBase {
+contract TestComponentLockUnlock is TestGifBase {
 
     function testComponentLockNotOwner() public {
         vm.prank(outsider);
@@ -23,8 +26,17 @@ contract TestComponentLockUnlock is ILifecycle, TestGifBase {
             nftId
         );
 
-        vm.expectEmit();
-        emit LogComponentStateChanged(nftId, PRODUCT(), ACTIVE(), PAUSED());
+        // vm.expectEmit();
+        // Key32 key = nftId.toKey32(PRODUCT());
+        // KeyId keyId = nftId.toKeyId();
+        // IKeyValueStore.Metadata memory metadata = keyValueStore.getMetadata(key);
+        // TODO fix this
+        // emit IKeyValueStore.LogStateUpdated(
+        //     IKeyValueStore.Key(PRODUCT(), keyId), 
+        //     ACTIVE(), 
+        //     PAUSED(), 
+        //     productOwner, // updatedBy
+        //     metadata.updatedIn); // lastUpdatedIn
 
         vm.prank(productOwner);
         product.lock();

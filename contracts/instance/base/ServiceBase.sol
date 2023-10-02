@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-// import {IRegistry} from "../../registry/IRegistry.sol";
-// import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
 import {NftId, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, SERVICE} from "../../types/ObjectType.sol";
 import {Version, VersionPart} from "../../types/Version.sol";

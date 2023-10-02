@@ -6,7 +6,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
 
-import {LifecycleModule} from "../module/lifecycle/LifecycleModule.sol";
 import {ITreasuryModule} from "../module/treasury/ITreasury.sol";
 import {TreasuryModule} from "../module/treasury/TreasuryModule.sol";
 import {IComponent, IComponentModule} from "../module/component/IComponent.sol";
@@ -24,7 +23,7 @@ import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {IProductComponent} from "../../components/IProductComponent.sol";
-import {ServiceBase} from "./ServiceBase.sol";
+import {ServiceBase} from "../base/ServiceBase.sol";
 import {IComponentOwnerService} from "./IComponentOwnerService.sol";
 
 contract ComponentOwnerService is

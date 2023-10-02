@@ -13,6 +13,7 @@ from brownie import (
     TestUsdc,
     TestFee,
     BlocknumberLib,
+    Key32Lib,
     NftIdLib,
     LibNftIdSet,
     FeeLib,
@@ -43,8 +44,10 @@ def deploy_libs(owner, force_deploy = False):
 
     libs['BlocknumberLib'] = deploy_lib(BlocknumberLib, owner)
     libs['LibNftIdSet'] = deploy_lib(LibNftIdSet, owner)
+    libs['Key32Lib'] = deploy_lib(Key32Lib, owner)
     libs['NftIdLib'] = deploy_lib(NftIdLib, owner)
     libs['ObjectTypeLib'] = deploy_lib(ObjectTypeLib, owner)
+    libs['StateIdLib'] = deploy_lib(StateIdLib, owner)
     libs['TimestampLib'] = deploy_lib(TimestampLib, owner)
     libs['UFixedMathLib'] = deploy_lib(UFixedMathLib, owner)
     libs['VersionLib'] = deploy_lib(VersionLib, owner)

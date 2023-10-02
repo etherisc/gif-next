@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IService} from "../instance/service/IService.sol";
+import {IService} from "../instance/base/IService.sol";
 
 import {IChainNft} from "./IChainNft.sol";
 import {ChainNft} from "./ChainNft.sol";

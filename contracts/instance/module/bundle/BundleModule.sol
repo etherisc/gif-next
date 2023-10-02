@@ -3,31 +3,31 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../../registry/IRegistry.sol";
 
-import {LifecycleModule} from "../lifecycle/LifecycleModule.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
 import {NftId} from "../../../types/NftId.sol";
+import {Key32, KeyId} from "../../../types/Key32.sol";
 import {LibNftIdSet} from "../../../types/NftIdSet.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL, BUNDLE, POLICY} from "../../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, REVOKED, DECLINED} from "../../../types/StateId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
 
-import {ILifecycleModule} from "../lifecycle/ILifecycle.sol";
+import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
+import {ModuleBase} from "../../base/ModuleBase.sol";
+
 import {IBundleModule} from "./IBundle.sol";
 
-abstract contract BundleModule is
+abstract contract BundleModule is 
+    ModuleBase,
     IBundleModule
 {
 
     using LibNftIdSet for LibNftIdSet.Set;
 
-    mapping(NftId bundleNftId => BundleInfo info) private _bundleInfo;
     mapping(NftId bundleNftId => LibNftIdSet.Set policies) private _collateralizedPolicies;
     mapping(NftId bundleNftId => mapping(NftId policyNftId => uint256 amount)) private _collateralizationAmount;
-
-    LifecycleModule private _lifecycleModule;
 
     modifier onlyBundlePoolService() {
         require(
@@ -54,8 +54,8 @@ abstract contract BundleModule is
         _;
     }
 
-    constructor() {
-        _lifecycleModule = LifecycleModule(address(this));
+    function initializeBundleModule(IKeyValueStore keyValueStore) internal {
+        _initialize(keyValueStore, BUNDLE());
     }
 
     function createBundleInfo(
@@ -69,22 +69,18 @@ abstract contract BundleModule is
         onlyBundlePoolService
         override
     {
-
-        _bundleInfo[bundleNftId] = BundleInfo(
+        BundleInfo memory bundleInfo = BundleInfo(
             bundleNftId,
             poolNftId,
-            _lifecycleModule.getInitialState(BUNDLE()),
             filter,
             amount, // capital
             0, // locked capital
             amount, // balance
-            blockTimestamp(), // createdAt
             blockTimestamp().addSeconds(lifetime), // expiredAt
-            zeroTimestamp(), // closedAt
-            blockNumber() // updatedIn
+            zeroTimestamp() // closedAt
         );
 
-        // TODO add logging
+        _create(bundleNftId, abi.encode(bundleInfo));
     }
 
     function setBundleInfo(BundleInfo memory bundleInfo)
@@ -92,78 +88,16 @@ abstract contract BundleModule is
         override
         onlyPoolOrProductService
     {
-        _bundleInfo[bundleInfo.nftId] = bundleInfo;
+        _updateData(bundleInfo.nftId, abi.encode(bundleInfo));
     }
 
-    // function updateBundleState(
-    //     NftId bundleNftId,
-    //     StateId newState
-    // )
-    //     external    
-    //     // add authz (both product and pool service)
-    //     override
-    // {
-    //     BundleInfo storage info = _bundleInfo[bundleNftId];
-    //     info.state = newState;
-    //     info.updatedIn = blockNumber();
-    // }
-
-    // function extendBundle(
-    //     NftId bundleNftId,
-    //     uint256 lifetimeExtension
-    // )
-    //     external
-    //     onlyBundlePoolService
-    //     override
-    // {
-    //     BundleInfo storage info = _bundleInfo[bundleNftId];
-    //     info.expiredAt = info.expiredAt.addSeconds(lifetimeExtension);
-    //     info.updatedIn = blockNumber();
-    // }
-
-    // function closeBundle(
-    //     NftId bundleNftId
-    // )
-    //     external
-    //     onlyBundlePoolService
-    //     override
-    // {
-    //     BundleInfo storage info = _bundleInfo[bundleNftId];
-    //     info.state = CLOSED();
-    //     info.closedAt = blockTimestamp();
-    //     info.updatedIn = blockNumber();
-    // }
-
-    // function processStake(
-    //     NftId nftId,
-    //     uint256 amount
-    // )
-    //     external
-    //     onlyBundlePoolService
-    //     override
-    // {
-    //     BundleInfo storage info = _bundleInfo[nftId];
-    //     info.capitalAmount += amount;
-    //     info.balanceAmount += amount;
-    //     info.updatedIn = blockNumber();
-    // }
-
-    // function processUnstake(
-    //     NftId nftId,
-    //     uint256 amount
-    // )
-    //     external
-    //     onlyBundlePoolService
-    //     override
-    // {
-    //     BundleInfo storage info = _bundleInfo[nftId];
-    //     // TODO fix book keeping in a way that provides
-    //     // continuous infor regarding profitability
-    //     // this is needed to properly apply performance fees
-    //     info.capitalAmount -= amount;
-    //     info.balanceAmount -= amount;
-    //     info.updatedIn = blockNumber();
-    // }
+    function updateBundleState(NftId bundleNftId, StateId state)
+        external
+        override
+        onlyBundlePoolService
+    {
+        _updateState(bundleNftId, state);
+    }
 
     function collateralizePolicy(
         NftId bundleNftId, 
@@ -187,42 +121,16 @@ abstract contract BundleModule is
         override 
         returns(uint256 collateralAmount)
     {
-    //     BundleInfo storage info = _bundleInfo[bundleNftId];
-    //     info.lockedAmount -= collateralAmount;
-    //     info.updatedIn = blockNumber();
-
         collateralAmount = _collateralizationAmount[bundleNftId][policyNftId];
         delete _collateralizationAmount[bundleNftId][policyNftId];
         _collateralizedPolicies[bundleNftId].remove(policyNftId);
     }
 
-    // function addPremium(NftId bundleNftId, uint256 amount)
-    //     external
-    //     onlyBundleProductService
-    //     override
-    // {
-    //     BundleInfo storage info = _bundleInfo[bundleNftId];
-    //     info.capitalAmount += amount;
-    //     info.balanceAmount += amount;
-    //     info.updatedIn = blockNumber();
-    // }
-
-    // function subtractPayout(NftId bundleNftId, NftId policyNftId, uint256 amount)
-    //     external
-    //     onlyBundleProductService
-    //     override
-    // {
-    //     BundleInfo storage info = _bundleInfo[bundleNftId];
-    //     info.capitalAmount -= amount;
-    //     info.lockedAmount -= amount;
-    //     info.balanceAmount -= amount;
-    //     info.updatedIn = blockNumber();
-
-    //     // deduct amount from sum insured for this policy
-    //     _collateralizationAmount[bundleNftId][policyNftId] -= amount;
-    // }
-
     function getBundleInfo(NftId bundleNftId) external view override returns(BundleInfo memory bundleInfo) {
-        return _bundleInfo[bundleNftId];
+        return abi.decode(_getData(bundleNftId), (BundleInfo));
     }
+
+    function toBundleKey32(NftId bundleNftId) external view override returns (Key32 key32) {
+        return _toKey32(bundleNftId);
+    } 
 }

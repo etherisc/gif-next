@@ -8,7 +8,6 @@ import {Registerable} from "../shared/Registerable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {IServiceLinked} from "../instance/IServiceLinked.sol";
 
 import {IInstance} from "../instance/IInstance.sol";
 import {IComponent, IComponentModule} from "../instance/module/component/IComponent.sol";
