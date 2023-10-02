@@ -43,6 +43,9 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.3",
-    "@openzeppelin/contracts-upgradeable": "^4.9.3"
+    "@openzeppelin/contracts-upgradeable": "^4.9.3",
+    "abi-coder": "^5.0.0",
+    "ethers": "^6.7.1",
+    "winston": "^3.10.0"
   }
 }
