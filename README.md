@@ -23,22 +23,13 @@ npm run coverage
 
 ### Deployment 
 
-```
-hh run --network <networkname> scripts/deploy.ts
-```
+The deploy script will deploy all required contracts and create a test instance with a test product and a test pool. 
 
-Networks:
-- hardhat (dynamically created network - https://hardhat.org/hardhat-network/docs/overview)
-- anvil (anvsil chain running in container next when using devcontainer)
-- mumbai (polygon testnet, requires WEB3_INFURA_PROJECT_ID)
-- mainnet (polygon mainnet, requires WEB3_INFURA_PROJECT_ID)
+```bash
+# run deployment on a locally created ganache instance
+hh run scripts/deploy_all.ts
 
-
-#### Deply all script
-
-The deploy all script will deploy all required contracts and create a test instance with a test product and a test pool. 
-
-```
+# run deployment on another network
 hh run --network <networkname> scripts/deploy_all.ts
 ```
 
