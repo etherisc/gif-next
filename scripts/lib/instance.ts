@@ -1,13 +1,13 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
 import * as iERC721Abi from "../../artifacts/@openzeppelin/contracts/token/ERC721/IERC721.sol/IERC721.json";
-import { Instance, Instance__factory, Registerable, Registry__factory } from "../../typechain-types";
+import { Instance__factory, Registerable } from "../../typechain-types";
+import { RoleIdLib__factory } from "../../typechain-types/factories/contracts/types/RoleId.sol";
 import { logger } from "../logger";
-import { executeTx, getFieldFromLogs } from "./transaction";
-import { RegistryAddresses, isRegistered } from "./registry";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
+import { RegistryAddresses } from "./registry";
 import { ServiceAddresses } from "./services";
-import { RoleIdLib__factory } from "../../typechain-types/factories/contracts/types/RoleId.sol";
+import { executeTx, getFieldFromLogs } from "./transaction";
 
 const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
 

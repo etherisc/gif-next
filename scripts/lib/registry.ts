@@ -1,10 +1,10 @@
-import { AddressLike, Signer, ethers } from "ethers";
-import { Registry, Registry__factory } from "../../typechain-types";
+import { AddressLike, Signer } from "ethers";
+import { Registry } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
+import { IERC721ABI } from "./erc721";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getFieldFromLogs } from "./transaction";
-import { IERC721ABI } from "./erc721";
 
 export type RegistryAddresses = {
     registryAddress: AddressLike;
