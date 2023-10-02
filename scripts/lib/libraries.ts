@@ -10,12 +10,24 @@ export type LibraryAddresses = {
     versionPartLibAddress: AddressLike;
     timestampLibAddress: AddressLike;
     libNftIdSetAddress: AddressLike;
+    key32LibAddress: AddressLike;
+    feeLibAddress: AddressLike;
+    stateIdLibAddress: AddressLike;
 }
 
 export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> {
+    const { address: key32LibAddress } = await deployContract(
+        "Key32Lib",
+        owner);
     const { address: nfIdLibAddress } = await deployContract(
         "NftIdLib",
-        owner);
+        owner,
+        undefined, 
+        {
+            libraries: {
+                Key32Lib: key32LibAddress,
+            }
+        });
     const { address: uFixedMathLibAddress } = await deployContract(
         "UFixedMathLib",
         owner);
@@ -34,10 +46,21 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     const { address: timestampLibAddress } = await deployContract(
         "TimestampLib",
         owner);
+    const { address: stateIdLibAddress } = await deployContract(
+        "StateIdLib",
+        owner);
     const { address: libNftIdSetAddress } = await deployContract(
         "LibNftIdSet",
         owner);
-        
+    const { address: feeLibAddress } = await deployContract(
+        "FeeLib",
+        owner,
+        undefined,
+        {
+            libraries: {
+                UFixedMathLib: uFixedMathLibAddress,
+            }
+        });
 
     return {
         nfIdLibAddress,
@@ -48,6 +71,9 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         versionPartLibAddress,
         timestampLibAddress,
         libNftIdSetAddress,
+        key32LibAddress,
+        feeLibAddress,
+        stateIdLibAddress,
     };
     
 }

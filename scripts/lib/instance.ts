@@ -32,7 +32,10 @@ export async function deployAndRegisterInstance(
             TimestampLib: libraries.timestampLibAddress,
             UFixedMathLib: libraries.uFixedMathLibAddress,
             VersionLib: libraries.versionLibAddress,
-            VersionPartLib: libraries.versionPartLibAddress,
+            FeeLib: libraries.feeLibAddress,
+            Key32Lib: libraries.key32LibAddress,
+            ObjectTypeLib: libraries.objectTypeLibAddress,
+            StateIdLib: libraries.stateIdLibAddress,
         }});
 
     const instance = instanceBaseContract as Registerable;

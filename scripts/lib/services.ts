@@ -20,7 +20,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "ComponentOwnerService",
         owner,
         [registry.registryAddress, registry.registryNftId],
-        { libraries: { NftIdLib: libraries.nfIdLibAddress, BlocknumberLib: libraries.blockNumberLibAddress, VersionLib: libraries.versionLibAddress, VersionPartLib: libraries.versionPartLibAddress }});
+        { libraries: { NftIdLib: libraries.nfIdLibAddress, BlocknumberLib: libraries.blockNumberLibAddress, VersionLib: libraries.versionLibAddress }});
     const componentOwnerService = componentOwnerServiceBaseContract as Registerable;
     let tx = await executeTx(async () => await componentOwnerService.register());
     const componentOwnerServiceNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
@@ -33,9 +33,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 NftIdLib: libraries.nfIdLibAddress,
                 BlocknumberLib: libraries.blockNumberLibAddress, 
                 VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedMathLib: libraries.uFixedMathLibAddress,
+                FeeLib: libraries.feeLibAddress,
             }});
     const productService = productServiceBaseContract as Registerable;
     tx = await executeTx(async () => await productService.register());
@@ -49,7 +49,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             NftIdLib: libraries.nfIdLibAddress,
             BlocknumberLib: libraries.blockNumberLibAddress,
             VersionLib: libraries.versionLibAddress,
-            VersionPartLib: libraries.versionPartLibAddress,
         }});
     const poolService = PoolServiceBaseContract as Registerable;
     tx = await executeTx(async () => await poolService.register());
