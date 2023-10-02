@@ -2,12 +2,11 @@ import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
 import { IChainNft__factory, IRegistry__factory, Registerable, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateOwnership } from "./lib/accounts";
-import { registerComponent } from "./lib/componentownerservice";
 import { deployContract } from "./lib/deployment";
 import { InstanceAddresses, Role, deployAndRegisterInstance, grantRole } from "./lib/instance";
 import { LibraryAddresses, deployLibraries } from "./lib/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./lib/registry";
-import { deployAndRegisterServices } from "./lib/services";
+import { ServiceAddresses, deployAndRegisterServices } from "./lib/services";
 import { logger } from "./logger";
 import { POOL_COLLATERALIZATION_LEVEL, POOL_IS_VERIFYING } from "./lib/constants";
 import { executeTx, getFieldFromLogs } from "./lib/transaction";
@@ -31,14 +30,13 @@ async function main() {
     
     // deploy pool & product contracts
     const { poolAddress, poolNftId, tokenAddress } = await deployPool(poolOwner, libraries, registry, instance);
-    const { productAddress } = await deployProduct(productOwner, libraries, registry, instance, tokenAddress, poolAddress);
+    const { productAddress, productNftId } = await deployProduct(productOwner, libraries, registry, instance, tokenAddress, poolAddress);
     
-    // TODO: fix
-    // printAddresses(
-    //     registryAddress, chainNftAddress,
-    //     componentOwnerServiceAddress, productServiceAddress, 
-    //     instanceAddress,
-    //     tokenAddress, poolAddress, productAddress);
+    printAddresses(
+        libraries, registry, services,
+        instance, 
+        tokenAddress, poolAddress, poolNftId,
+        productAddress, productNftId);
 
     // TODO: fix
     // await verifyOwnership(
@@ -96,23 +94,45 @@ async function verifyOwnership(
 }
 
 function printAddresses(
-    registryAddress: AddressLike, chainNftAddress: AddressLike,
-    componentOwnerServiceAddress: AddressLike, productServiceAddress: AddressLike,
-    instanceAddress: AddressLike,
-    tokenAddress: AddressLike, poolAddress: AddressLike, productAddress: AddressLike
+    libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses,
+    instance: InstanceAddresses,
+    tokenAddress: AddressLike, poolAddress: AddressLike, poolNftId: string,
+    productAddress: AddressLike, productNftId: string,
 ) {
     let addresses = "\nAddresses of deployed smart contracts:\n==========\n";
-    addresses += `registryAddress: ${registryAddress}\n`;
-    addresses += `chainNftAddress: ${chainNftAddress}\n`;
+    addresses += `nftIdLibAddress: ${libraries.nftIdLibAddress}\n`;
+    addresses += `uFixedMathLibAddress: ${libraries.uFixedMathLibAddress}\n`;
+    addresses += `objectTypeLibAddress: ${libraries.objectTypeLibAddress}\n`;
+    addresses += `blockNumberLibAddress: ${libraries.blockNumberLibAddress}\n`;
+    addresses += `versionLibAddress: ${libraries.versionLibAddress}\n`;
+    addresses += `versionPartLibAddress: ${libraries.versionPartLibAddress}\n`;
+    addresses += `timestampLibAddress: ${libraries.timestampLibAddress}\n`;
+    addresses += `libNftIdSetAddress: ${libraries.libNftIdSetAddress}\n`;
+    addresses += `key32LibAddress: ${libraries.key32LibAddress}\n`;
+    addresses += `feeLibAddress: ${libraries.feeLibAddress}\n`;
+    addresses += `stateIdLibAddress: ${libraries.stateIdLibAddress}\n`;
+    addresses += `roleIdLibAddress: ${libraries.roleIdLibAddress}\n`;
     addresses += `--------\n`;
-    addresses += `componentOwnerServiceAddress: ${componentOwnerServiceAddress}\n`;
-    addresses += `productServiceAddress: ${productServiceAddress}\n`;
+    addresses += `registryAddress: ${registry.registryAddress}\n`;
+    addresses += `registryNftId: ${registry.registryNftId}\n`;
+    addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
     addresses += `--------\n`;
-    addresses += `instanceAddress: ${instanceAddress}\n`;
+    addresses += `componentOwnerServiceAddress: ${services.componentOwnerServiceAddress}\n`;
+    addresses += `componentOwnerServiceNftId: ${services.componentOwnerServiceNftId}\n`;
+    addresses += `productServiceAddress: ${services.productServiceAddress}\n`;
+    addresses += `productServiceNftId: ${services.productServiceNftId}\n`;
+    addresses += `poolServiceAddress: ${services.poolServiceAddress}\n`;
+    addresses += `poolServiceNftId: ${services.poolServiceNftId}\n`;
+    addresses += `--------\n`;
+    addresses += `instanceAddress: ${instance.instanceAddress}\n`;
+    addresses += `instanceNftId: ${instance.instanceNftId}\n`;
     addresses += `--------\n`;
     addresses += `tokenAddress: ${tokenAddress}\n`;
     addresses += `poolAddress: ${poolAddress}\n`;
+    addresses += `poolNftId: ${poolNftId}\n`;
     addresses += `productAddress: ${productAddress}\n`;
+    addresses += `productNftId: ${productNftId}\n`;    
+    
     logger.info(addresses);
 }
 

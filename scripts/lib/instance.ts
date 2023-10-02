@@ -28,7 +28,7 @@ export async function deployAndRegisterInstance(
         [registry.registryAddress, registry.registryNftId],
         { libraries: {
             BlocknumberLib: libraries.blockNumberLibAddress,
-            NftIdLib: libraries.nfIdLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
             LibNftIdSet: libraries.libNftIdSetAddress,
             TimestampLib: libraries.timestampLibAddress,
             UFixedMathLib: libraries.uFixedMathLibAddress,

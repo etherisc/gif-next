@@ -21,7 +21,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress, registry.registryNftId],
         { libraries: { 
-            NftIdLib: libraries.nfIdLibAddress, 
+            NftIdLib: libraries.nftIdLibAddress, 
             BlocknumberLib: libraries.blockNumberLibAddress, 
             VersionLib: libraries.versionLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
@@ -35,7 +35,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress, registry.registryNftId],
         { libraries: {
-                NftIdLib: libraries.nfIdLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
                 BlocknumberLib: libraries.blockNumberLibAddress, 
                 VersionLib: libraries.versionLibAddress, 
                 TimestampLib: libraries.timestampLibAddress,
@@ -51,7 +51,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress, registry.registryNftId],
         { libraries: { 
-            NftIdLib: libraries.nfIdLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
             BlocknumberLib: libraries.blockNumberLibAddress,
             VersionLib: libraries.versionLibAddress,
         }});

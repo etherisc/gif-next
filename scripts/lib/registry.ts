@@ -32,7 +32,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         undefined,
         {
             libraries: {
-                NftIdLib: libraries.nfIdLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
             }
         });

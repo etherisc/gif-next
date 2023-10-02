@@ -2,7 +2,7 @@ import { AddressLike, Signer } from "ethers";
 import { deployContract } from "./deployment";
 
 export type LibraryAddresses = {
-    nfIdLibAddress: AddressLike;
+    nftIdLibAddress: AddressLike;
     uFixedMathLibAddress: AddressLike;
     objectTypeLibAddress: AddressLike;
     blockNumberLibAddress: AddressLike;
@@ -20,7 +20,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     const { address: key32LibAddress } = await deployContract(
         "Key32Lib",
         owner);
-    const { address: nfIdLibAddress } = await deployContract(
+    const { address: nftIdLibAddress } = await deployContract(
         "NftIdLib",
         owner,
         undefined, 
@@ -67,7 +67,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
 
     return {
-        nfIdLibAddress,
+        nftIdLibAddress,
         uFixedMathLibAddress,
         objectTypeLibAddress,
         blockNumberLibAddress,
