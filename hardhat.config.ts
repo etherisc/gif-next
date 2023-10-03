@@ -22,6 +22,7 @@ const config: HardhatUserConfig = {
     hardhat: {
     },
     anvil: {
+      chainId: 1337,
       url: "http://anvil:7545",
       accounts: {
         mnemonic: "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",

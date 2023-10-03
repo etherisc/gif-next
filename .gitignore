@@ -22,4 +22,4 @@ test_brownie/__pycache__
 
 # custom stuff
 *.log
-deployment_state.json
+deployment_state_*.json
