@@ -2,7 +2,7 @@ import { AddressLike, BaseContract, Signer, TransactionResponse, resolveAddress 
 import hre, { ethers } from "hardhat";
 import { logger } from "../logger";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
-import { NUMBER_OF_CONFIRMATIONS } from "./constants";
+import { GAS_PRICE, NUMBER_OF_CONFIRMATIONS } from "./constants";
 
 type DeploymentResult = {
     address: AddressLike; 
@@ -100,9 +100,13 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
         const factoryArgs = factoryOptions != undefined ? { ...factoryOptions, signer } : { signer };
         const contractFactory = await ethers.getContractFactory(contractName, factoryArgs);
 
+        const opts = {} as any;
+        if (GAS_PRICE !== undefined) {
+            opts['gasPrice'] = GAS_PRICE;
+        }
         const deployTxResponse = constructorArgs !== undefined
-            ? await contractFactory.deploy(...constructorArgs) 
-            : await contractFactory.deploy();
+            ? await contractFactory.deploy(...constructorArgs, opts) 
+            : await contractFactory.deploy(opts);
         deploymentState.setDeploymentTransaction(contractName, deployTxResponse.deploymentTransaction()?.hash!);
         logger.info(`Waiting for deployment transaction ${deployTxResponse.deploymentTransaction()?.hash} to be mined...`);
         await deployTxResponse.deploymentTransaction()?.wait();
