@@ -1,8 +1,10 @@
 
 import * as fs from 'fs';
 import { logger } from '../logger';
+import hre from 'hardhat';
 
-const DEPLOYMENT_STATE_FILENAME = "deployment_state.json";
+const DEPLOYMENT_STATE_FILENAME = "deployment_state";
+const DEPLOYMENT_STATE_FILENAME_SUFFIX = ".json";
 
 type State = {
     contracts: ContractState[];
@@ -93,11 +95,15 @@ export class DeploymentState {
 
     private persistState() {
         const json = JSON.stringify(this.state);
-        fs.writeFileSync(DEPLOYMENT_STATE_FILENAME, json);
+        fs.writeFileSync(deploymentFilename(), json);
     }
 }
 
-const deploymentStateFromFile = fs.existsSync(DEPLOYMENT_STATE_FILENAME) ? JSON.parse(fs.readFileSync(DEPLOYMENT_STATE_FILENAME).toString()) : null;
+function deploymentFilename(): string {
+    return DEPLOYMENT_STATE_FILENAME + "_" + hre.network.config.chainId + DEPLOYMENT_STATE_FILENAME_SUFFIX;
+}
+
+const deploymentStateFromFile = fs.existsSync(deploymentFilename()) ? JSON.parse(fs.readFileSync(deploymentFilename()).toString()) : null;
 export const deploymentState = new DeploymentState(deploymentStateFromFile);
 
 export const isResumeableDeployment = process.env.RESUMEABLE_DEPLOYMENT === "true";

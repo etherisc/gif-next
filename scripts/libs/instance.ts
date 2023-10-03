@@ -1,15 +1,11 @@
-import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import * as iERC721Abi from "../../artifacts/@openzeppelin/contracts/token/ERC721/IERC721.sol/IERC721.json";
+import { AddressLike, Signer, resolveAddress } from "ethers";
 import { Instance__factory, Registerable } from "../../typechain-types";
 import { RoleIdLib__factory } from "../../typechain-types/factories/contracts/types/RoleId.sol";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
-import { RegistryAddresses } from "./registry";
-import { ServiceAddresses } from "./services";
-import { executeTx, getFieldFromLogs } from "./transaction";
-
-const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
+import { RegistryAddresses, register } from "./registry";
+import { executeTx } from "./transaction";
 
 export type InstanceAddresses = {
     instanceAddress: AddressLike,
@@ -20,7 +16,6 @@ export async function deployAndRegisterInstance(
     owner: Signer, 
     libraries: LibraryAddresses,
     registry: RegistryAddresses,
-    services: ServiceAddresses,
 ): Promise<InstanceAddresses> {
     const { address: instanceAddress, contract: instanceBaseContract } = await deployContract(
         "Instance",
@@ -40,10 +35,7 @@ export async function deployAndRegisterInstance(
             RoleIdLib: libraries.roleIdLibAddress,
         }});
 
-    const instance = instanceBaseContract as Registerable;
-    logger.debug("registering instance");
-    const tx = await executeTx(async () => await instance.register());
-    const instanceNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    const instanceNftId = await register(instanceBaseContract as Registerable, instanceAddress, "Instance", registry, owner);
     logger.info(`instance registered - instanceNftId: ${instanceNftId}`);
     return {
         instanceAddress,

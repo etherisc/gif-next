@@ -1,11 +1,9 @@
 import { AddressLike, Signer } from "ethers";
 import { Registerable } from "../../typechain-types";
-import { deployContract } from "./deployment";
-import { IERC721ABI } from "./erc721";
-import { LibraryAddresses } from "./libraries";
-import { RegistryAddresses } from "./registry";
-import { executeTx, getFieldFromLogs } from "./transaction";
 import { logger } from "../logger";
+import { deployContract } from "./deployment";
+import { LibraryAddresses } from "./libraries";
+import { RegistryAddresses, register } from "./registry";
 
 export type ServiceAddresses = {
     componentOwnerServiceAddress: AddressLike,
@@ -27,10 +25,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             VersionLib: libraries.versionLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
         }});
-    const componentOwnerService = componentOwnerServiceBaseContract as Registerable;
-    logger.debug("registering componentOwnerService");
-    let tx = await executeTx(async () => await componentOwnerService.register());
-    const componentOwnerServiceNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    const componentOwnerServiceNftId = await register(componentOwnerServiceBaseContract as Registerable, componentOwnerServiceAddress, "ComponentOwnerService", registry, owner);
     logger.info(`componentOwnerService registered - componentOwnerServiceNftId: ${componentOwnerServiceNftId}`);
 
     const { address: productServiceAddress, contract: productServiceBaseContract } = await deployContract(
@@ -45,10 +40,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 UFixedMathLib: libraries.uFixedMathLibAddress,
                 FeeLib: libraries.feeLibAddress,
             }});
-    const productService = productServiceBaseContract as Registerable;
-    logger.debug("registering productService");
-    tx = await executeTx(async () => await productService.register());
-    const productServiceNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    const productServiceNftId = await register(productServiceBaseContract as Registerable, productServiceAddress, "ProductService", registry, owner);
     logger.info(`productService registered - productServiceNftId: ${productServiceNftId}`);
 
     const { address: poolServiceAddress, contract: PoolServiceBaseContract } = await deployContract(
@@ -60,10 +52,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             BlocknumberLib: libraries.blockNumberLibAddress,
             VersionLib: libraries.versionLibAddress,
         }});
-    const poolService = PoolServiceBaseContract as Registerable;
-    logger.debug("registering poolService");
-    tx = await executeTx(async () => await poolService.register());
-    const poolServiceNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    const poolServiceNftId = await register(PoolServiceBaseContract as Registerable, poolServiceAddress, "PoolService", registry, owner);
     logger.info(`poolService registered - poolServiceNftId: ${poolServiceNftId}`);
 
     return {

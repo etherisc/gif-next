@@ -1,4 +1,4 @@
-import { getNamedAccounts } from "./lib/accounts";
+import { getNamedAccounts } from "./libs/accounts";
 import { logger } from "./logger";
 
 async function main() {

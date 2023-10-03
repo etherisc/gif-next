@@ -1,5 +1,5 @@
 import { AddressLike, Signer } from "ethers";
-import { Registry } from "../../typechain-types";
+import { Registerable, Registry, Registry__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { IERC721ABI } from "./erc721";
@@ -11,19 +11,6 @@ export type RegistryAddresses = {
     registryNftId: string;
     chainNftAddress: AddressLike;
 }
-
-// export async function isRegistered(signer: Signer, registryAddress: AddressLike, objectAddress: AddressLike): Promise<string|null> {
-//     const registryAsInstanceOwner = Registry__factory.connect(registryAddress.toString(), signer);
-//     const isRegistered = await registryAsInstanceOwner.isRegistered(objectAddress);
-
-//     if (! isRegistered) {
-//         return null;
-//     }
-    
-//     const instanceNftId = await registryAsInstanceOwner.getNftId(objectAddress);
-//     logger.info(`Object ${objectAddress} is already registered with NFT ID: ${instanceNftId}`);
-//     return instanceNftId.toString();
-// }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
     const { address: registryAddress, contract: registryBaseContract } = await deployContract(
@@ -44,15 +31,14 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const registry = registryBaseContract as Registry;
     let registryNftId;
 
-    // TODO: check if NFT is already initialized before intializing
     try {
         const tx = await executeTx(async () => await registry.initialize(chainNftAddress, owner));
         registryNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
-    } catch (error: any) {
-        if (! error.message.includes("ERROR:REG-001:ALREADY_INITIALIZED")) {
+    } catch (error: unknown) {
+        if (! (error as Error).message.includes("ERROR:REG-001:ALREADY_INITIALIZED")) {
             throw error;
         }
-        // TODO: fetch existing RegistryNftId
+        registryNftId = await registry["getNftId(address)"](registryAddress);
     }
 
     logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}. RegistryNftId: ${registryNftId}`);
@@ -61,4 +47,18 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         registryNftId,
         chainNftAddress,
     };
+}
+
+export async function register(registrable: Registerable, address: AddressLike, name: string, registryAddresses: RegistryAddresses, signer: Signer): Promise<string> {
+    const registry = Registry__factory.connect(registryAddresses.registryAddress.toString(), signer);
+    if (await registry["isRegistered(address)"](address)) {
+        const nftId = await registry["getNftId(address)"](address);
+        logger.info(`already registered - nftId: ${nftId}`);
+        return nftId.toString();
+    }
+    logger.debug("registering Registrable " + name);
+    const tx = await executeTx(async () => await registrable.register());
+    const nftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    logger.info(`registered - nftId: ${nftId}`);
+    return nftId;
 }
