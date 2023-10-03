@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { AddressLike, BaseContract, Signer, TransactionResponse, resolveAddress } from "ethers";
 import hre, { ethers } from "hardhat";
 import { logger } from "../logger";
@@ -21,7 +23,7 @@ type DeploymentResult = {
 export async function verifyContract(address: AddressLike, constructorArgs: any[], sourceFileContract: string | undefined) {
     let verified = false;
     let retries = 3;
-    let libraries: Record<string,string> = {};
+    const libraries: Record<string,string> = {};
     let error = undefined;
     while (! verified && retries > 0) {
         retries--;
@@ -79,7 +81,7 @@ export async function verifyContract(address: AddressLike, constructorArgs: any[
     if (! verified && error !== undefined) {
         throw error;
     }
-};
+}
 
 /**
  * Deploy a smart contract to the block chain.
@@ -139,7 +141,7 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
         const deployTxResponse = constructorArgs !== undefined
             ? await contractFactory.deploy(...constructorArgs, opts) 
             : await contractFactory.deploy(opts);
-        deploymentState.setDeploymentTransaction(contractName, deployTxResponse.deploymentTransaction()?.hash!);
+        deploymentState.setDeploymentTransaction(contractName, deployTxResponse.deploymentTransaction()?.hash || "0x");
         logger.info(`Waiting for deployment transaction ${deployTxResponse.deploymentTransaction()?.hash} to be mined...`);
         await deployTxResponse.deploymentTransaction()?.wait();
         logger.debug("... mined");

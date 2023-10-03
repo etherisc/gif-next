@@ -35,8 +35,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     try {
         const tx = await executeTx(async () => await registry.initialize(chainNftAddress, owner));
         registryNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
-    } catch (error: any) {
-        if (! error.message.includes("ERROR:REG-001:ALREADY_INITIALIZED")) {
+    } catch (error: unknown) {
+        if (! (error as Error).message.includes("ERROR:REG-001:ALREADY_INITIALIZED")) {
             throw error;
         }
         registryNftId = await registry["getNftId(address)"](registryAddress);
@@ -58,7 +58,7 @@ export async function register(registrable: Registerable, address: AddressLike, 
         return nftId.toString();
     }
     logger.debug("registering Registrable " + name);
-    let tx = await executeTx(async () => await registrable.register());
+    const tx = await executeTx(async () => await registrable.register());
     const nftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
     logger.info(`registered - nftId: ${nftId}`);
     return nftId;

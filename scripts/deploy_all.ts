@@ -1,13 +1,13 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
 import { IChainNft__factory, IRegistry__factory, Registerable, UFixedMathLib__factory } from "../typechain-types";
-import { getNamedAccounts, printBalance, validateNftOwnerhip, validateOwnership } from "./lib/accounts";
-import { POOL_COLLATERALIZATION_LEVEL, POOL_IS_VERIFYING } from "./lib/constants";
-import { deployContract } from "./lib/deployment";
-import { InstanceAddresses, Role, deployAndRegisterInstance, grantRole } from "./lib/instance";
-import { LibraryAddresses, deployLibraries } from "./lib/libraries";
-import { RegistryAddresses, deployAndInitializeRegistry, register } from "./lib/registry";
-import { ServiceAddresses, deployAndRegisterServices } from "./lib/services";
+import { getNamedAccounts, printBalance, validateNftOwnerhip, validateOwnership } from "./libs/accounts";
+import { POOL_COLLATERALIZATION_LEVEL, POOL_IS_VERIFYING } from "./libs/constants";
+import { deployContract } from "./libs/deployment";
+import { InstanceAddresses, Role, deployAndRegisterInstance, grantRole } from "./libs/instance";
+import { LibraryAddresses, deployLibraries } from "./libs/libraries";
+import { RegistryAddresses, deployAndInitializeRegistry, register } from "./libs/registry";
+import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
 import { logger } from "./logger";
 
 
@@ -20,7 +20,7 @@ async function main() {
     const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
     
     // deploy instance contracts
-    const instance = await deployAndRegisterInstance(instanceOwner, libraries, registry, services);
+    const instance = await deployAndRegisterInstance(instanceOwner, libraries, registry);
 
     await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
     await grantRole(instanceOwner, libraries, instance, Role.PRODUCT_OWNER_ROLE, productOwner);
