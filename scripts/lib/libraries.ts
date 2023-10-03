@@ -34,7 +34,10 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         owner);
     const { address: objectTypeLibAddress } = await deployContract(
         "ObjectTypeLib",
-        owner);
+        owner,
+        undefined,
+        undefined,
+        "contracts/types/ObjectType.sol:ObjectTypeLib");
     const { address: blockNumberLibAddress } = await deployContract(
         "BlocknumberLib",
         owner);
@@ -49,7 +52,10 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         owner);
     const { address: stateIdLibAddress } = await deployContract(
         "StateIdLib",
-        owner);
+        owner, 
+        undefined,
+        undefined,
+        "contracts/types/StateId.sol:StateIdLib");
     const { address: libNftIdSetAddress } = await deployContract(
         "LibNftIdSet",
         owner);
