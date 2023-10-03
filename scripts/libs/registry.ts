@@ -31,7 +31,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const registry = registryBaseContract as Registry;
     let registryNftId;
 
-    // TODO: check if NFT is already initialized before intializing
     try {
         const tx = await executeTx(async () => await registry.initialize(chainNftAddress, owner));
         registryNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");

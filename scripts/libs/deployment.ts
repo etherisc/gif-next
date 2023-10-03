@@ -101,7 +101,6 @@ export async function deployContract(contractName: string, signer: Signer, const
 
     if (deploymentState.getContractAddress(contractName) === undefined) {
         if (deploymentState.getDeploymentTransaction(contractName) === undefined) {
-            // TODO: check if contract exists in registry and continue from there
             return executeAllDeploymentSteps(contractName, signer, constructorArgs, factoryOptions, sourceFileContract);
         } else {
             return awaitDeploymentTxAndVerify(contractName, signer, constructorArgs, sourceFileContract);

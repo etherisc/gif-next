@@ -34,4 +34,5 @@
         "titleBar.inactiveBackground": "#be690099",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
+    "todo-tree.tree.scanMode": "workspace only",
 }
