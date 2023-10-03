@@ -181,8 +181,8 @@ async function deployPool(owner: Signer, libraries: LibraryAddresses, registry: 
             POOL_IS_VERIFYING,
             collateralizationLevel,
         ],
-        { libraries: {  }}
-        );
+        { libraries: {}},
+        "contracts/test/TestPool.sol:TestPool");
 
     const poolNftId = await register(poolContractBase as Registerable, poolAddress, "TestPool", registry, owner);
     logger.info(`pool registered - poolNftId: ${poolNftId}`);
