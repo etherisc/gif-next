@@ -5,9 +5,9 @@ import { RoleIdLib__factory } from "../../typechain-types/factories/contracts/ty
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
-import { RegistryAddresses } from "./registry";
+import { RegistryAddresses, register } from "./registry";
 import { ServiceAddresses } from "./services";
-import { executeTx, getFieldFromLogs } from "./transaction";
+import { executeTx } from "./transaction";
 
 const IERC721ABI = new ethers.Interface(iERC721Abi.abi);
 
@@ -40,10 +40,7 @@ export async function deployAndRegisterInstance(
             RoleIdLib: libraries.roleIdLibAddress,
         }});
 
-    const instance = instanceBaseContract as Registerable;
-    logger.debug("registering instance");
-    const tx = await executeTx(async () => await instance.register());
-    const instanceNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
+    const instanceNftId = await register(instanceBaseContract as Registerable, instanceAddress, "Instance", registry, owner);
     logger.info(`instance registered - instanceNftId: ${instanceNftId}`);
     return {
         instanceAddress,
