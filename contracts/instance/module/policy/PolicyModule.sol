@@ -48,7 +48,8 @@ abstract contract PolicyModule is IPolicyModule {
             premiumAmount,
             0, // premium paid amount
             lifetime, 
-            "", // data
+            "", // applicationData
+            "", // policyData
             blockTimestamp(), // createdAt
             zeroTimestamp(), // activatedAt
             zeroTimestamp(), // expiredAt
