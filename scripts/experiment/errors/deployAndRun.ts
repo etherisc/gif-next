@@ -3,6 +3,7 @@ import { getNamedAccounts } from "../../libs/accounts";
 import { deployContract } from "../../libs/deployment";
 import { executeTx } from "../../libs/transaction";
 import { logger } from "../../logger";
+import util from "util";
 
 async function main() {
     const { protocolOwner: owner } = await getNamedAccounts();
@@ -19,12 +20,18 @@ async function main() {
     const tx2  = await executeTx(async () => await inc["increment(uint256)"](3))
     logger.info(`tx2: ${tx2.hash}`);
 
-    const tx3 = await executeTx(async () => await inc["increment()"]())
-    logger.info(`tx3: ${tx3.hash}`);
+    try {
+        logger.debug("1");
+        const tx3 = await executeTx(async () => await inc["increment()"]())
+        logger.info(`tx3: ${tx3.hash}`);
+    } catch (error: unknown) {
+        logger.error(util.inspect(error, true, 10, true));
+    }
 }
 
 main().catch((error) => {
     logger.error(error.stack);
+    // logger.error(util.inspect(error));
     process.exitCode = 1;
 });
 
