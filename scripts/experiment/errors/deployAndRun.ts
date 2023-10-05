@@ -21,10 +21,10 @@ async function main() {
     logger.info(`tx2: ${tx2.hash}`);
 
     try {
-        logger.debug("1");
         const tx3 = await executeTx(async () => await inc["increment()"]())
         logger.info(`tx3: ${tx3.hash}`);
-    } catch (error: unknown) {
+    } catch (error: any) {
+        logger.error(error.message);
         logger.error(util.inspect(error, true, 10, true));
     }
 }
