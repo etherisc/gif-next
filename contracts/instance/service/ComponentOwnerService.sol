@@ -89,24 +89,24 @@ contract ComponentOwnerService is
         (IRegistry.ObjectInfo memory info,
          IComponent.ProductComponentInfo memory productInfo) = product.getInitialProductInfo();
 
-        require(info.initialOwner == msg.sender, "NOT_OWNER");// owner protection
-        require(info.objectAddress == address(product), "WRONG_ADDRESS");
-        require(info.objectType == PRODUCT(), "NOT_PRODUCT");
+        require(info.initialOwner == msg.sender, "ERROR:COS-002:NOT_OWNER");// owner protection
+        require(info.objectAddress == address(product), "ERROR:COS-003:WRONG_ADDRESS");
+        require(info.objectType == PRODUCT(), "ERROR:COS-004:NOT_PRODUCT");
         // instance is registered
         NftId parentNftId = info.parentNftId;
         IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(parentNftId);
-        require(instanceInfo.objectType == INSTANCE(), "UNKNOWN_INSTANCE");
+        require(instanceInfo.objectType == INSTANCE(), "ERROR:COS-005:UNKNOWN_INSTANCE");
         //.data
         
         // TODO check instance code / version  -> valid if registered?
     
-        info.nftId = _registry.registerFrom(msg.sender, info);
+        nftId = _registry.registerFrom(msg.sender, info);
 
         // "callstack is too deep" with this version
         //_registerProduct(parentNftId, productInfo);
         // using this instead
         _registerProduct(
-            info.nftId,   // TODO ignores productInfo.nftId
+            nftId,   // TODO ignores productInfo.nftId
             parentNftId,  // TODO ignores productInfo.parentNftId
             productInfo.distributorNftId, 
             productInfo.poolNftId,
@@ -130,12 +130,12 @@ contract ComponentOwnerService is
         IComponent.PoolComponentInfo memory poolInfo) = pool.getInitialPoolInfo();
 
         // check ObjectInfo
-        require(info.objectAddress == address(pool), "WRONG_ADDRESS");
-        require(info.initialOwner == msg.sender, "WRONG_OWNER");// owner protection 
-        require(info.objectType == POOL(), "NOT_POOL");
+        require(info.initialOwner == msg.sender, "ERROR:COS-007:NOT_OWNER");// owner protection 
+        require(info.objectAddress == address(pool), "ERROR:COS-008:WRONG_ADDRESS");
+        require(info.objectType == POOL(), "ERROR:COS-009:NOT_POOL");
         // instance is registered
         IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(info.parentNftId);
-        require(instanceInfo.objectType == INSTANCE(), "UNKNOW_INSTANCE"); 
+        require(instanceInfo.objectType == INSTANCE(), "ERROR:COS-010:UNKNOW_INSTANCE"); 
         //.data
 
         nftId = _registry.registerFrom(msg.sender, info);   
@@ -157,7 +157,7 @@ contract ComponentOwnerService is
         require(info.initialOwner == msg.sender);// owner protection
         require(info.objectType == INSTANCE());
         IRegistry.ObjectInfo memory registryInfo = _registry.getObjectInfo(info.parentNftId);
-        require(registryInfo.objectType == REGISTRY(), "WRONG_PARENT"); 
+        require(registryInfo.objectType == REGISTRY(), "ERROR:COS-011:UNKNOWN_REGISTRY"); 
 
         nftId = _registry.registerFrom(msg.sender, info);      
     }
@@ -169,7 +169,7 @@ contract ComponentOwnerService is
         IComponent.ComponentInfo memory info = instance.getComponentInfo(
             component.getNftId()
         );
-        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
+        require(info.nftId.gtz(), "ERROR:COS-012:ERROR_COMPONENT_UNKNOWN");
 
         info.state = PAUSED();
         // setComponentInfo checks for valid state changes
@@ -183,7 +183,7 @@ contract ComponentOwnerService is
         IComponent.ComponentInfo memory info = instance.getComponentInfo(
             component.getNftId()
         );
-        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
+        require(info.nftId.gtz(), "ERROR:COS-013:ERROR_COMPONENT_UNKNOWN");
 
         info.state = ACTIVE();
         // setComponentInfo checks for valid state changes
@@ -210,21 +210,21 @@ contract ComponentOwnerService is
         RoleId typeRole = getRoleForType(PRODUCT());
         require(
             instance.hasRole(typeRole, msg.sender),
-            "ERROR:CMP-004:TYPE_ROLE_MISSING"
+            "ERROR:COS-014:TYPE_ROLE_MISSING"
         );  
 
         // check ProductInfo
         // token is registered -> TODO instance can whitelist tokens too?
         IRegistry.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(token));
-        require(tokenInfo.objectType == TOKEN(), "UNKNOWN_TOKEN"); 
+        require(tokenInfo.objectType == TOKEN(), "ERROR:COS-015:UNKNOWN_TOKEN"); 
         // pool is registered
         IRegistry.ObjectInfo memory poolInfo = _registry.getObjectInfo(poolNftId);
-        require(poolInfo.objectType == POOL(), "UNKNOW_POOL"); 
+        require(poolInfo.objectType == POOL(), "ERROR:COS-016:UNKNOW_POOL"); 
         // pool is on the same instance
-        require(poolInfo.parentNftId == instanceNftId, "POOL_INSTANCE_MISMATCH");
+        require(poolInfo.parentNftId == instanceNftId, "ERROR:COS-017:POOL_INSTANCE_MISMATCH");
         // pool and product have the same token
         ITreasury.PoolSetup memory poolSetup = instance.getPoolSetup(poolNftId);
-        require(tokenInfo.objectAddress == address(poolSetup.token), "PRODUCT_POOL_TOKEN_MISMATCH");
+        require(tokenInfo.objectAddress == address(poolSetup.token), "ERROR:COS-018:PRODUCT_POOL_TOKEN_MISMATCH");
         // TODO pool and product have the same owner?
         //require(_registry.ownerOf(poolNftId) == msg.sender, "NOT_POOL_OWNER");
         // TODO pool is not attached to another product
@@ -257,13 +257,13 @@ contract ComponentOwnerService is
         RoleId typeRole = getRoleForType(POOL());
         require(
             instance.hasRole(typeRole, msg.sender),
-            "ERROR:CMP-004:TYPE_ROLE_MISSING"
+            "ERROR:COS-019:TYPE_ROLE_MISSING"
         );  
 
         // check PoolInfo
         // token is registered -> TODO instance can personaly whitelist tokens too?
         ObjectType tokenType = _registry.getObjectInfo( address(info.token) ).objectType;
-        require(tokenType == TOKEN(), "UNKNOWN_TOKEN");  
+        require(tokenType == TOKEN(), "ERROR:COS-020:UNKNOWN_TOKEN");  
         // TODO add more validations
 
         // component module
