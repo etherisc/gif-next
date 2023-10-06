@@ -227,8 +227,7 @@ contract ComponentOwnerService is
         require(tokenInfo.objectAddress == address(poolSetup.token), "PRODUCT_POOL_TOKEN_MISMATCH");
         // TODO pool and product have the same owner?
         //require(_registry.ownerOf(poolNftId) == msg.sender, "NOT_POOL_OWNER");
-        // pool is not attached to another product
-        require(poolSetup.productNftId.eqz(), "POOL_ALREADY_USED");
+        // TODO pool is not attached to another product
 
         // component module
         instance.registerComponent(
@@ -265,8 +264,6 @@ contract ComponentOwnerService is
         // token is registered -> TODO instance can personaly whitelist tokens too?
         ObjectType tokenType = _registry.getObjectInfo( address(info.token) ).objectType;
         require(tokenType == TOKEN(), "UNKNOWN_TOKEN");  
-        // no product is set
-        require(info.productNftId.eqz());
         // TODO add more validations
 
         // component module
@@ -277,7 +274,6 @@ contract ComponentOwnerService is
         // treasury module
         instance.registerPool(
             info.nftId,
-            info.productNftId,
             info.token,
             info.wallet, 
             info.stackingFee,

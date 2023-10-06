@@ -55,7 +55,7 @@ abstract contract Registerable is
 
         _parentNftId = parentNftId;
         _objectType = objectType;
-        _initialOwner= msg.sender;
+        _initialOwner = msg.sender;
         //_data = data;
 
         // register support for IRegisterable

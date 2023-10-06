@@ -31,7 +31,6 @@ interface ITreasury {
 
     struct PoolSetup { 
         NftId nftId;
-        NftId productNftId;// TODO notified when product is connected...
         IERC20Metadata token;
         address wallet;
         Fee stakingFee;
@@ -59,7 +58,6 @@ interface ITreasuryModule is ITreasury {
 
     function registerPool(
         NftId poolNftId,
-        NftId productNftId,
         IERC20Metadata token,
         address wallet,
         Fee memory stakingFee,

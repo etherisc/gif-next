@@ -11,7 +11,7 @@ import {IPoolModule} from "../../module/pool/IPoolModule.sol";
 import {IComponent, IComponentModule} from "./IComponent.sol";
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../../types/ObjectType.sol";
-import {StateId, zeroStateId, ACTIVE, PAUSED} from "../../../types/StateId.sol";
+import {StateId, ACTIVE, PAUSED} from "../../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../../types/NftId.sol";
 import {Fee} from "../../../types/Fee.sol";
 

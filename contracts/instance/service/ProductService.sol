@@ -25,8 +25,6 @@ import {Version, VersionLib} from "../../types/Version.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IProductService} from "./IProductService.sol";
 
-import {IComponent} from "../module/component/IComponent.sol";
-
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
 contract ProductService is ComponentServiceBase, IProductService {
     using NftIdLib for NftId;

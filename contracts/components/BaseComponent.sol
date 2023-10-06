@@ -39,7 +39,7 @@ abstract contract BaseComponent is
         IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(instanceNftId);
         _instance = IInstance(instanceInfo.objectAddress);
         require(
-            _instance.supportsInterface(type(IInstance).interfaceId),// TODO improved validation needed, hash, ver?
+            _instance.supportsInterface(type(IInstance).interfaceId),
             ""
         );
 

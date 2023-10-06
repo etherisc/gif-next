@@ -27,7 +27,7 @@ interface IComponent {
         NftId instanceNftId;
         NftId distributorNftId;
         NftId poolNftId;
-        IERC20Metadata token;// TODO NftId tokenNftId;
+        IERC20Metadata token;// TODO tokenNftId;
         address wallet;
         Fee policyFee;
         Fee processingFee;
@@ -36,8 +36,8 @@ interface IComponent {
     struct PoolComponentInfo {
         NftId nftId;
         NftId instanceNftId;
-        NftId productNftId;
-        IERC20Metadata token;// TODO NftId tokenNftId;
+        //NftId productNftId;
+        IERC20Metadata token;// TODO tokenNftId;
         address wallet;
         bool isVerifying;
         UFixed collateralizationLevel;
@@ -52,7 +52,6 @@ interface IComponentModule is IComponent {
     function registerComponent(
         NftId nftId,
         ObjectType objectType
-        //,IERC20Metadata token
     ) external;
 
     function setComponentInfo(

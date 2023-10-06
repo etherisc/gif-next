@@ -68,7 +68,6 @@ abstract contract TreasuryModule is ITreasuryModule {
 
     function registerPool(
         NftId poolNftId,
-        NftId productNftId,
         IERC20Metadata token,
         address wallet,
         Fee memory stakingFee,
@@ -79,7 +78,6 @@ abstract contract TreasuryModule is ITreasuryModule {
 
         _poolSetup[poolNftId] = PoolSetup(
             poolNftId,
-            productNftId,
             token,
             wallet,
             stakingFee,

@@ -17,8 +17,6 @@ import {IPool} from "../instance/module/pool/IPoolModule.sol";
 
 contract Pool is BaseComponent, IPoolComponent {
 
-    using FeeLib for Fee;
-
     bool internal _isVerifying;
     UFixed internal _collateralizationLevel;
 
@@ -185,7 +183,6 @@ contract Pool is BaseComponent, IPoolComponent {
         poolInfo = IComponent.PoolComponentInfo(
                         setup.nftId,
                         _instanceNftId,
-                        setup.productNftId,
                         setup.token,
                         setup.wallet,
                         poolModuleInfo.isVerifying,
@@ -204,13 +201,12 @@ contract Pool is BaseComponent, IPoolComponent {
                 IComponent.PoolComponentInfo(
                     zeroNftId(),
                     _instanceNftId,
-                    zeroNftId(), // productNftId
-                    _token,//_registry.getNftId(address(_token)),
+                    _token,
                     _wallet,
                     _isVerifying,
                     _collateralizationLevel,
-                    Fee(UFixed.wrap(0), 0),//zeroFee(), // stackingFee
-                    Fee(UFixed.wrap(0), 0)//zeroFee()  // perfomanceFee
+                    FeeLib.zeroFee(), // stackingFee
+                    FeeLib.zeroFee()  // perfomanceFee
                 )
         );
     }

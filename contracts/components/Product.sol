@@ -16,8 +16,6 @@ import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
 
 contract Product is BaseComponent, IProductComponent {
 
-    using FeeLib for Fee;
-
     IProductService private _productService;
     address private _pool;
 
@@ -122,7 +120,7 @@ contract Product is BaseComponent, IProductComponent {
         external
         view 
         returns (IRegistry.ObjectInfo memory info, IComponent.ProductComponentInfo memory productInfo)
-    {// TODO if info.nftId != productInfo.nftId ???
+    {
 
         info = _registry.getObjectInfo(address(this));
         ITreasury.ProductSetup memory setup = _instance.getProductSetup(info.nftId);
@@ -147,13 +145,13 @@ contract Product is BaseComponent, IProductComponent {
         return (getInitialInfo(), 
                 IComponent.ProductComponentInfo(
                     zeroNftId(), 
-                    _instanceNftId,//_registry.getNftId(address(_instance)),
+                    _instanceNftId,
                     zeroNftId(), // distributor
-                    _registry.getNftId(_pool), // pool
-                    _token,//_registry.getNftId(address(_token)),
+                    _registry.getNftId(_pool),
+                    _token,
                     _wallet,
-                    Fee(UFixed.wrap(0), 0),//zeroFee(), // policyFee
-                    Fee(UFixed.wrap(0), 0)//zeroFee()  // processingFee
+                    FeeLib.zeroFee(), // policyFee
+                    FeeLib.zeroFee()  // processingFee
                 )
         );
     }
