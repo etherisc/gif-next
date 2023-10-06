@@ -21,7 +21,8 @@ interface IPolicy {
         uint256 premiumAmount;
         uint256 premiumPaidAmount;
         uint256 lifetime;
-        bytes data;
+        bytes applicationData;
+        bytes policyData;
         Timestamp createdAt;
         Timestamp activatedAt; // time of underwriting
         Timestamp expiredAt; // no new claims (activatedAt + lifetime)

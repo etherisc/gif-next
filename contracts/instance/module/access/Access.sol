@@ -5,7 +5,7 @@ pragma solidity ^0.8.19;
 // import {AccessControlEnumerable} from "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import {RoleId, toRoleId} from "../../../types/RoleId.sol";
+import {RoleId, RoleIdLib} from "../../../types/RoleId.sol";
 import {DISTRIBUTOR_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../types/RoleId.sol";
 import {DISTRIBUTOR_OWNER_ROLE_NAME, ORACLE_OWNER_ROLE_NAME, POOL_OWNER_ROLE_NAME, PRODUCT_OWNER_ROLE_NAME} from "../../../types/RoleId.sol";
 import {IAccessModule} from "./IAccess.sol";
@@ -45,7 +45,7 @@ abstract contract AccessModule is IAccessModule {
     function createRole(
         string memory roleName
     ) public override onlyAccessOwner returns (RoleId role) {
-        role = toRoleId(roleName);
+        role = RoleIdLib.toRoleId(roleName);
         require(
             !roleExists(role),
             "ERROR:ACS-010:ROLE_ALREADY_EXISTS");
@@ -95,7 +95,7 @@ abstract contract AccessModule is IAccessModule {
     }
 
     function getRoleId(string memory roleName) external pure override returns (RoleId role) {
-        return toRoleId(roleName);
+        return RoleIdLib.toRoleId(roleName);
     }
 
     function getRoleInfo(

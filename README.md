@@ -23,15 +23,22 @@ npm run coverage
 
 ### Deployment 
 
-```
-hh run --network <networkname> scripts/deploy.ts
+The deploy script will deploy all required contracts and create a test instance with a test product and a test pool. 
+
+```bash
+# run deployment on a locally created ganache instance
+hh run scripts/deploy_all.ts
+
+# run deployment on another network
+hh run --network <networkname> scripts/deploy_all.ts
 ```
 
-Networks:
-- hardhat (dynamically created network - https://hardhat.org/hardhat-network/docs/overview)
-- anvil (anvsil chain running in container next when using devcontainer)
-- mumbai (polygon testnet, requires WEB3_INFURA_PROJECT_ID)
-- mainnet (polygon mainnet, requires WEB3_INFURA_PROJECT_ID)
+Environment variables:
+
+- `SKIP_VERIFICATION` set to `true` to skip etherscan verification (required for ganacht and anvil)
+- `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
+- `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
+- `ETHERSCAN_API_KEY` `POLYGONSCAN_API_KEY` the api key for etherscan/polygonscan (required for mumbai and mainnet)
 
 
 ### Console

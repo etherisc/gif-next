@@ -155,7 +155,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         IPoolComponent pool = IPoolComponent(poolAddress);
         pool.underwrite(
             policyInfo.nftId, 
-            policyInfo.data, 
+            policyInfo.applicationData, 
             bundleFilter,
             collateralAmount);
     }

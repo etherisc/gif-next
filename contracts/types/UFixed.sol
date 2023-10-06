@@ -77,23 +77,9 @@ function deltaUFixed(UFixed a, UFixed b) pure returns (UFixed) {
 }
 
 library UFixedMathLib {
-
     int8 public constant EXP = 18;
     uint256 public constant MULTIPLIER = 10 ** uint256(int256(EXP));
     uint256 public constant MULTIPLIER_HALF = MULTIPLIER / 2;
-
-    /// @dev Converts the uint256 to a UFixed.
-    function toUFixed(uint256 a) public pure returns (UFixed) {
-        return UFixed.wrap(a * MULTIPLIER);
-    }
-
-    /// @dev Converts the uint256 to a UFixed with given exponent.
-    function toUFixed(uint256 a, int8 exp) public pure returns (UFixed) {
-        require(EXP + exp >= 0, "ERROR:FM-010:EXPONENT_TOO_SMALL");
-        require(EXP + exp <= 64, "ERROR:FM-011:EXPONENT_TOO_LARGE");
-
-        return UFixed.wrap(a * 10 ** uint8(EXP + exp));
-    }
 
     /// @dev returns the rounding mode DOWN - 0.4 becomes 0, 0.5 becomes 0, 0.6 becomes 0
     function ROUNDING_DOWN() public pure returns (uint8) {
@@ -108,6 +94,19 @@ library UFixedMathLib {
     /// @dev returns the rounding mode HALF_UP - 0.4 becomes 0, 0.5 becomes 1, 0.6 becomes 1
     function ROUNDING_HALF_UP() public pure returns (uint8) {
         return uint8(2);
+    }
+
+    /// @dev Converts the uint256 to a UFixed.
+    function toUFixed(uint256 a) public pure returns (UFixed) {
+        return UFixed.wrap(a * MULTIPLIER);
+    }
+
+    /// @dev Converts the uint256 to a UFixed with given exponent.
+    function toUFixed(uint256 a, int8 exp) public pure returns (UFixed) {
+        require(EXP + exp >= 0, "ERROR:FM-010:EXPONENT_TOO_SMALL");
+        require(EXP + exp <= 64, "ERROR:FM-011:EXPONENT_TOO_LARGE");
+
+        return UFixed.wrap(a * 10 ** uint8(EXP + exp));
     }
 
     /// @dev returns the decimals precision of the UFixed type

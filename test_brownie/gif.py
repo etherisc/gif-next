@@ -18,6 +18,7 @@ from brownie import (
     LibNftIdSet,
     FeeLib,
     ObjectTypeLib,
+    RoleIdLib,
     StateIdLib,
     TimestampLib,
     UFixedMathLib,
@@ -47,6 +48,7 @@ def deploy_libs(owner, force_deploy = False):
     libs['Key32Lib'] = deploy_lib(Key32Lib, owner)
     libs['NftIdLib'] = deploy_lib(NftIdLib, owner)
     libs['ObjectTypeLib'] = deploy_lib(ObjectTypeLib, owner)
+    libs['RoleIdLib'] = deploy_lib(RoleIdLib, owner)
     libs['StateIdLib'] = deploy_lib(StateIdLib, owner)
     libs['TimestampLib'] = deploy_lib(TimestampLib, owner)
     libs['UFixedMathLib'] = deploy_lib(UFixedMathLib, owner)

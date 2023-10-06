@@ -12,12 +12,17 @@ const config: HardhatUserConfig = {
     version: "0.8.20",
     settings: {
       evmVersion: 'paris',
+      optimizer: {
+        enabled: true,
+        runs: 200
+      }
     }
   },
   networks: {
     hardhat: {
     },
     anvil: {
+      chainId: 1337,
       url: "http://anvil:7545",
       accounts: {
         mnemonic: "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
@@ -26,7 +31,12 @@ const config: HardhatUserConfig = {
     },
     mumbai: {
       chainId: 80001,
+      gasPrice: 3100000000,
       url: process.env.NETWORK_URL || 'https://polygon-mumbai.infura.io/v3/' + process.env.WEB3_INFURA_PROJECT_ID,
+      accounts: {
+        mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
+        count: 20,
+      },
     },
     mainnet: {
       chainId: 1,
