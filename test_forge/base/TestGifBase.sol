@@ -7,12 +7,14 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {ChainNft, IChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
 import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
 import {ProductService} from "../../contracts/instance/service/ProductService.sol";
 import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 
 import {Instance} from "../../contracts/instance/Instance.sol";
+//import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/instance/module/treasury/TokenHandler.sol";
 import {TestProduct} from "../../contracts/test/TestProduct.sol";
@@ -21,9 +23,11 @@ import {USDC} from "../mock/Usdc.sol";
 
 import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
-import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
+
+import {ObjectType, POLICY, BUNDLE, PRODUCT, POOL, INSTANCE, TOKEN, REGISTRY} from "../../contracts/types/ObjectType.sol";
 
 // solhint-disable-next-line max-states-count
 contract TestGifBase is Test {
@@ -85,16 +89,16 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
 
-        // deploy registry, nft, and services
+        // deploy registry, nft, services and token
         vm.startPrank(registryOwner);
         _deployRegistry(registryOwner);
         _deployServices();
+        _deployToken();
         vm.stopPrank();
 
         // deploy instance
         vm.startPrank(instanceOwner);
         _deployInstance();
-        _deployToken();
         vm.stopPrank();
 
         // deploy pool
@@ -110,7 +114,7 @@ contract TestGifBase is Test {
         // fund investor
         initialCapitalAmount = initialBundleCapitalization * 10 ** token.decimals();
 
-        vm.prank(instanceOwner);
+        vm.prank(registryOwner);
         token.transfer(investor, initialCapitalAmount);
 
         // approve capital and create bundle
@@ -165,52 +169,53 @@ contract TestGifBase is Test {
 
     function _deployRegistry(address registryNftOwner) internal {
         registry = new Registry();
-        ChainNft nft = new ChainNft(address(registry));
+        //ChainNft nft = new ChainNft(address(registry));
 
-        registry.initialize(address(nft), registryNftOwner);
+        registry.initialize(registryNftOwner);
         registryAddress = address(registry);
         registryNftId = registry.getNftId();
 
         // solhint-disable-next-line
-        console.log("nft deployed at", address(nft));
+        console.log("nft deployed at", address(registry.getChainNft()));
         // solhint-disable-next-line
         console.log("registry deployed at", address(registry));
+        console.log("registry NFT id", registryNftId.toInt());
     }
 
 
     function _deployServices() internal {
         componentOwnerService = new ComponentOwnerService(
             registryAddress, registryNftId);
-        componentOwnerService.register();
+        registry.register(componentOwnerService.getInitialInfo());
 
-        // solhint-disable-next-line
-        console.log("service name", componentOwnerService.NAME());
-        // solhint-disable-next-line
-        console.log("service nft id", componentOwnerService.getNftId().toInt());
-        // solhint-disable-next-line
+        registry.approve(componentOwnerService.getNftId(), PRODUCT(), INSTANCE());
+        registry.approve(componentOwnerService.getNftId(), POOL(), INSTANCE());
+        registry.approve(componentOwnerService.getNftId(), INSTANCE(), REGISTRY());
+
         console.log("component owner service deployed at", address(componentOwnerService));
+        console.log("component owner service NFT id", componentOwnerService.getNftId().toInt());
+        console.log("component owner service name", componentOwnerService.NAME());
 
         productService = new ProductService(
             registryAddress, registryNftId);
-        productService.register();
+        registry.register(productService.getInitialInfo());
 
-        // solhint-disable-next-line
-        console.log("service name", productService.NAME());
-        // solhint-disable-next-line
-        console.log("service nft id", productService.getNftId().toInt());
-        // solhint-disable-next-line
+        registry.approve(productService.getNftId(), POLICY(), PRODUCT());
+
         console.log("product service deployed at", address(productService));
+        console.log("product service NFT id", productService.getNftId().toInt());
+        console.log("product service name", productService.NAME());
+        
 
         poolService = new PoolService(
             registryAddress, registryNftId);
-        poolService.register();
+        registry.register(poolService.getInitialInfo());
 
-        // solhint-disable-next-line
-        console.log("service name", poolService.NAME());
-        // solhint-disable-next-line
-        console.log("service nft id", poolService.getNftId().toInt());
-        // solhint-disable-next-line
+        registry.approve(poolService.getNftId(), BUNDLE(), POOL());
+
         console.log("pool service deployed at", address(poolService));
+        console.log("pool service NFT id", poolService.getNftId().toInt());
+        console.log("pool service name", poolService.NAME());
     }
 
 
@@ -224,9 +229,9 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("instance deployed at", address(instance));
 
-        NftId nftId = instance.register();
+        componentOwnerService.registerInstance(instance);
         // solhint-disable-next-line
-        console.log("instance nft id", nftId.toInt());
+        console.log("instance nft id", instance.getNftId().toInt());
 
         instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
@@ -239,8 +244,19 @@ contract TestGifBase is Test {
         USDC usdc  = new USDC();
         address usdcAddress = address(usdc);
         token = IERC20Metadata(usdcAddress);
+
+        NftId tokenNftId = registry.register(IRegistry.ObjectInfo(
+                zeroNftId(),
+                registry.getNftId(),
+                TOKEN(),
+                usdcAddress,
+                registryOwner,
+                ""
+            )
+        );
         // solhint-disable-next-line
         console.log("token deployed at", usdcAddress);
+        console.log("token NFT id", tokenNftId.toInt());
     }
 
 
@@ -257,20 +273,22 @@ contract TestGifBase is Test {
             isVerifying,
             collateralizationLevel);
 
-        pool.register();
+        componentOwnerService.registerPool(pool);
         // solhint-disable-next-line
         console.log("pool deployed at", address(pool));
+        console.log("pool NFT id", pool.getNftId().toInt());
     }
 
 
     function _deployProduct() internal {
         product = new TestProduct(address(registry), instance.getNftId(), address(token), address(pool));
-        product.register();
+        componentOwnerService.registerProduct(product);
 
         tokenHandler = instance.getTokenHandler(product.getNftId());
 
         // solhint-disable-next-line
         console.log("product deployed at", address(product));
+        console.log("product NFT id", product.getNftId().toInt());
         // solhint-disable-next-line
         console.log("token handler deployed at", address(tokenHandler));
     }
@@ -289,7 +307,7 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("bundle fundet with", amount);
         // solhint-disable-next-line
-        console.log("bundle nft id", address(product));
+        console.log("bundle nft id", bundleNftId.toInt());
     }
 
 }

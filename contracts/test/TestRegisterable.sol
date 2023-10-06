@@ -8,12 +8,8 @@ import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 contract TestRegisterable is Registerable {
 
-    constructor(address registry, NftId registryNftId)
-        Registerable(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, ObjectType objectType)
+        Registerable(registry, registryNftId, objectType)
     // solhint-disable-next-line no-empty-blocks
     {}
-
-    function getType() external pure override returns (ObjectType) {
-        return TOKEN();
-    }
 }

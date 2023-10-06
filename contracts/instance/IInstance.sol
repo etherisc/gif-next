@@ -7,6 +7,7 @@ import {IVersionable} from "../shared/IVersionable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IOwnable} from "../shared/IOwnable.sol";
 import {RoleId} from "../types/RoleId.sol";
+import {NftId} from "../types/NftId.sol";
 
 import {IAccessModule} from "./module/access/IAccess.sol";
 import {IBundleModule} from "./module/bundle/IBundle.sol";
@@ -37,6 +38,7 @@ interface IInstance is
     IComponentModule,
     ITreasuryModule,
     ICompensationModule,
+    IRiskModule,
     IInstanceBase
 {
     function getRegistry() external view override (IBundleModule, IComponentModule, IPolicyModule, IRegisterable) returns (IRegistry registry);

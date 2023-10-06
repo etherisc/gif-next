@@ -35,7 +35,7 @@ abstract contract InstanceBase is
         address registry,
         NftId registryNftId
     )
-        Registerable(registry, registryNftId)
+        Registerable(registry, registryNftId, INSTANCE())
         Versionable()
     {
         _keyValueStore = new KeyValueStore();
@@ -55,12 +55,6 @@ abstract contract InstanceBase is
     {
         return VersionLib.toVersion(3,0,0);
     }
-
-    // from registerable
-    function getType() external pure override returns (ObjectType objectType) {
-        return INSTANCE();
-    }
-
 
     // internal / private functions
     function _linkToServicesInRegistry() internal {

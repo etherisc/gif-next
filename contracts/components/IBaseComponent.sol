@@ -12,8 +12,5 @@ interface IBaseComponent is IRegisterable, IInstanceLinked {
 
     function unlock() external;
 
-    function getToken() external view returns (IERC20Metadata token);
-
     function getWallet() external view returns (address walletAddress);
-
 }

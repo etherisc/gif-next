@@ -8,7 +8,7 @@ import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/tr
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
-import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
@@ -68,11 +68,15 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
         // register bundle with registry
         NftId poolNftId = info.nftId;
-        bundleNftId = _registry.registerObjectForInstance(
-            poolNftId, 
-            BUNDLE(), 
+        IRegistry.ObjectInfo memory bundleInfo = IRegistry.ObjectInfo(
+            zeroNftId(),
+            poolNftId,  
+            BUNDLE(),
+            address(0),
             owner,
-            "");
+            "" 
+        );
+        bundleNftId = _registry.registerFrom(msg.sender, bundleInfo);
 
         // create bundle info in instance
         instance.createBundleInfo(
@@ -110,7 +114,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
         // process token transfer(s)
         if(stakingAmount > 0) {
             TokenHandler tokenHandler = instance.getTokenHandler(poolNftId);
-            address bundleOwner = _registry.getOwner(bundleNftId);
+            address bundleOwner = _registry.ownerOf(bundleNftId);
             address poolWallet = instance.getPoolSetup(poolNftId).wallet;
 
             tokenHandler.transfer(

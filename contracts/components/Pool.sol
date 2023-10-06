@@ -4,13 +4,20 @@ pragma solidity ^0.8.19;
 import {ObjectType, POOL} from "../types/ObjectType.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
-import {NftId} from "../types/NftId.sol";
-import {Fee} from "../types/Fee.sol";
+import {NftId, zeroNftId} from "../types/NftId.sol";
+import {Fee, FeeLib} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
+import {StateId, zeroStateId} from "../types/StateId.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {BaseComponent} from "./BaseComponent.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IComponent} from "../instance/module/component/IComponent.sol";
+import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
+import {IPool} from "../instance/module/pool/IPoolModule.sol";
 
 contract Pool is BaseComponent, IPoolComponent {
+
+    using FeeLib for Fee;
 
     bool internal _isVerifying;
     UFixed internal _collateralizationLevel;
@@ -43,7 +50,7 @@ contract Pool is BaseComponent, IPoolComponent {
         bool verifying,
         UFixed collateralizationLevel
     )
-        BaseComponent(registry, instanceNftId, token)
+        BaseComponent(registry, instanceNftId, token, POOL())
     {
         _isVerifying = verifying;
         // TODO add validation
@@ -167,8 +174,44 @@ contract Pool is BaseComponent, IPoolComponent {
         return _instance.getPoolSetup(getNftId()).performanceFee;
     }
 
-    // from registerable
-    function getType() public pure override returns (ObjectType) {
-        return POOL();
+    function getPoolInfo() external view returns (IRegistry.ObjectInfo memory info, IComponent.PoolComponentInfo memory poolInfo)
+    {// TODO nftId from 3 different sources
+        info = _registry.getObjectInfo(address(this));
+        NftId nftId = info.nftId;
+
+        ITreasury.PoolSetup memory setup = _instance.getPoolSetup(nftId);
+        IPool.PoolInfo memory poolModuleInfo = _instance.getPoolInfo(nftId);
+
+        poolInfo = IComponent.PoolComponentInfo(
+                        setup.nftId,
+                        _instanceNftId,
+                        setup.productNftId,
+                        setup.token,
+                        setup.wallet,
+                        poolModuleInfo.isVerifying,
+                        poolModuleInfo.collateralizationLevel,
+                        setup.stakingFee,
+                        setup.performanceFee
+                    );  
+    }
+
+    function getInitialPoolInfo() 
+        external
+        view 
+        returns (IRegistry.ObjectInfo memory, IComponent.PoolComponentInfo memory)
+    {
+        return (getInitialInfo(),  
+                IComponent.PoolComponentInfo(
+                    zeroNftId(),
+                    _instanceNftId,
+                    zeroNftId(), // productNftId
+                    _token,//_registry.getNftId(address(_token)),
+                    _wallet,
+                    _isVerifying,
+                    _collateralizationLevel,
+                    Fee(UFixed.wrap(0), 0),//zeroFee(), // stackingFee
+                    Fee(UFixed.wrap(0), 0)//zeroFee()  // perfomanceFee
+                )
+        );
     }
 }

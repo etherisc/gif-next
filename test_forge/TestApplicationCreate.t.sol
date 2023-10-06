@@ -29,9 +29,9 @@ contract TestApplicationCreate is TestGifBase {
             bundleNftId
         );
 
-        assertNftId(policyNftId, toNftId(103133705), "policy id not 103133705");
+        assertNftId(policyNftId, toNftId(113133705), "policy id not 113133705");
         assertEq(
-            registry.getOwner(policyNftId),
+            registry.ownerOf(policyNftId),
             customer,
             "customer not policy owner"
         );
@@ -148,7 +148,7 @@ contract TestApplicationCreate is TestGifBase {
         );
 
         // prepare customer to pay premium amount
-        vm.prank(instanceOwner);
+        vm.prank(registryOwner);
         fundAccount(customer, premiumAmount);
 
         TokenHandler tokenHandler = instance.getTokenHandler(
@@ -257,7 +257,7 @@ contract TestApplicationCreate is TestGifBase {
         );
 
         // prepare customer to pay premium amount
-        vm.prank(instanceOwner);
+        vm.prank(registryOwner);
         fundAccount(customer, premiumAmount);
 
         TokenHandler tokenHandler = instance.getTokenHandler(

@@ -5,6 +5,8 @@ import {NftId} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IComponent} from "../instance/module/component/IComponent.sol";
 
 interface IPoolComponent is IBaseComponent {
 
@@ -54,4 +56,8 @@ interface IPoolComponent is IBaseComponent {
         external
         view
         returns (Fee memory performanceFee);
+
+    function getPoolInfo() external view returns (IRegistry.ObjectInfo memory, IComponent.PoolComponentInfo memory);
+
+    function getInitialPoolInfo() external view returns (IRegistry.ObjectInfo memory, IComponent.PoolComponentInfo memory);
 }

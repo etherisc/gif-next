@@ -21,7 +21,7 @@ abstract contract ServiceBase is
         address registry,
         NftId registryNftId
     )
-        Registerable(registry, registryNftId)
+        Registerable(registry, registryNftId, SERVICE())
         Versionable()
     {
         _registerInterface(type(IService).interfaceId);
@@ -29,9 +29,5 @@ abstract contract ServiceBase is
 
     function getMajorVersion() external view override returns(VersionPart majorVersion) {
         return this.getVersion().toMajorPart();
-    }
-
-    function getType() external pure override returns (ObjectType) {
-        return SERVICE();
     }
 }

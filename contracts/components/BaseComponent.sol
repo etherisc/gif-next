@@ -14,6 +14,7 @@ import {IComponent, IComponentModule} from "../instance/module/component/ICompon
 import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
 import {NftId} from "../types/NftId.sol";
+import {ObjectType} from "../types/ObjectType.sol";
 
 abstract contract BaseComponent is
     Registerable,
@@ -25,40 +26,29 @@ abstract contract BaseComponent is
     address internal _wallet;
     IERC20Metadata internal _token;
     IInstance internal _instance;
+    NftId internal _instanceNftId;
 
     constructor(
         address registry,
         NftId instanceNftId,
-        address token
+        address token,
+        ObjectType objectType
     )
-        Registerable(registry, instanceNftId)
+        Registerable(registry, instanceNftId, objectType)
     {
         IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(instanceNftId);
         _instance = IInstance(instanceInfo.objectAddress);
         require(
-            _instance.supportsInterface(type(IInstance).interfaceId),
+            _instance.supportsInterface(type(IInstance).interfaceId),// TODO improved validation needed, hash, ver?
             ""
         );
 
         _componentOwnerService = _instance.getComponentOwnerService();
         _wallet = address(this);
         _token = IERC20Metadata(token);
+        _instanceNftId = instanceNftId;
     }
-
-    // from registerable
-    function register() public override(IRegisterable, Registerable) returns (NftId componentId) {
-        require(msg.sender == getOwner(), "");
-        require(
-            address(_registry) != address(0),
-            "ERROR:COB-001:REGISTRY_ZERO"
-        );
-        require(
-            _registry.isRegistered(address(_instance)),
-            "ERROR:COB:INSTANCE_NOT_REGISTERED"
-        );
-
-        componentId = _componentOwnerService.register(this);
-    }
+    
 
     // from component contract
     function lock() external onlyOwner override {
@@ -76,10 +66,6 @@ abstract contract BaseComponent is
         returns (address walletAddress)
     {
         return _wallet;
-    }
-
-    function getToken() external view override returns (IERC20Metadata token) {
-        return _token;
     }
 
     function getInstance() external view override returns (IInstance instance) {

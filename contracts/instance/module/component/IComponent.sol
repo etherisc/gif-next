@@ -14,14 +14,35 @@ import {Fee} from "../../../types/Fee.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
-// import {IComponentBase} from "../../../components/IComponentBase.sol";
 
 interface IComponent {
     // component dynamic info (static info kept in registry)
     struct ComponentInfo {
         NftId nftId;
         StateId state;
-        IERC20Metadata token;
+        //IERC20Metadata token;
+    }
+    struct ProductComponentInfo {
+        NftId nftId;
+        NftId instanceNftId;
+        NftId distributorNftId;
+        NftId poolNftId;
+        IERC20Metadata token;// TODO NftId tokenNftId;
+        address wallet;
+        Fee policyFee;
+        Fee processingFee;
+    }
+
+    struct PoolComponentInfo {
+        NftId nftId;
+        NftId instanceNftId;
+        NftId productNftId;
+        IERC20Metadata token;// TODO NftId tokenNftId;
+        address wallet;
+        bool isVerifying;
+        UFixed collateralizationLevel;
+        Fee stackingFee;
+        Fee perfomanceFee;
     }
 }
 
@@ -30,8 +51,8 @@ interface IComponentModule is IComponent {
 
     function registerComponent(
         NftId nftId,
-        ObjectType objectType,
-        IERC20Metadata token
+        ObjectType objectType
+        //,IERC20Metadata token
     ) external;
 
     function setComponentInfo(

@@ -17,13 +17,15 @@ import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedMathLib} from "../../types/UFixed.sol";
 import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol";
 import {APPLIED, UNDERWRITTEN, ACTIVE} from "../../types/StateId.sol";
-import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IProductService} from "./IProductService.sol";
+
+import {IComponent} from "../module/component/IComponent.sol";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
 contract ProductService is ComponentServiceBase, IProductService {
@@ -76,12 +78,15 @@ contract ProductService is ComponentServiceBase, IProductService {
         NftId productNftId = productInfo.nftId;
         // TODO add validations (see create bundle in pool service)
 
-        policyNftId = this.getRegistry().registerObjectForInstance(
-            productNftId,
+        IRegistry.ObjectInfo memory policyInfo = IRegistry.ObjectInfo(
+            zeroNftId(),
+            productNftId,  
             POLICY(),
+            address(0),
             applicationOwner,
-            ""
+            "" 
         );
+        policyNftId = _registry.registerFrom(msg.sender, policyInfo);
 
         instance.createApplication(
             productNftId,
@@ -325,8 +330,8 @@ contract ProductService is ComponentServiceBase, IProductService {
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
-            TokenHandler tokenHandler = instance.getTokenHandler(product.productNftId);
-            address policyOwner = _registry.getOwner(policyNftId);
+            TokenHandler tokenHandler = instance.getTokenHandler(product.nftId);
+            address policyOwner = _registry.ownerOf(policyNftId);
             address poolWallet = instance.getPoolSetup(product.poolNftId).wallet;
             netPremiumAmount = premiumAmount;
             Fee memory policyFee = product.policyFee;

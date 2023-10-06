@@ -5,11 +5,13 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
+import {ITreasuryModule} from "../../module/treasury/ITreasury.sol";
+import {IPoolModule} from "../../module/pool/IPoolModule.sol";
 
 import {IComponent, IComponentModule} from "./IComponent.sol";
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL} from "../../../types/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED} from "../../../types/StateId.sol";
+import {StateId, zeroStateId, ACTIVE, PAUSED} from "../../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../../types/NftId.sol";
 import {Fee} from "../../../types/Fee.sol";
 
@@ -33,16 +35,14 @@ abstract contract ComponentModule is
 
     function registerComponent(
         NftId nftId,
-        ObjectType objectType,
-        IERC20Metadata token
+        ObjectType objectType
     ) external override onlyComponentOwnerService {
 
         // create component info
         _componentInfo[nftId] = ComponentInfo(
             nftId,
             // _lifecycleModule.getInitialState(objectType),
-            ACTIVE(),
-            token
+            ACTIVE()
         );
 
         _nftIds.push(nftId);

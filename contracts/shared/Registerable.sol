@@ -16,6 +16,8 @@ abstract contract Registerable is
     IRegistry internal immutable _registry;
     NftId internal immutable _parentNftId;
     address internal immutable _initialOwner;
+    ObjectType internal immutable _objectType;
+    //bytes internal immutable _data;
 
     modifier onlyOwner() virtual {
         require(
@@ -27,10 +29,13 @@ abstract contract Registerable is
 
     constructor(
         address registryAddress,
-        NftId parentNftId
+        NftId parentNftId,
+        ObjectType objectType
     )
         ERC165()
     {
+        // TODO validate objectType
+
         require(
             address(registryAddress) != address(0),
             "ERROR:RGB-010:REGISTRY_ZERO"
@@ -42,45 +47,45 @@ abstract contract Registerable is
             "ERROR:RGB-011:NOT_REGISTRY"
         );
 
-        _parentNftId = parentNftId;
+        
         require(
-            _registry.isRegistered(_parentNftId),
+            _registry.isRegistered(parentNftId),
             "ERROR:RGB-012:PARENT_NOT_REGISTERED"
         );
 
-        _initialOwner = msg.sender;
+        _parentNftId = parentNftId;
+        _objectType = objectType;
+        _initialOwner= msg.sender;
+        //_data = data;
 
         // register support for IRegisterable
         _registerInterface(type(IRegisterable).interfaceId);
     }
 
-    // from IRegistryLinked
-    function register() public onlyOwner virtual override returns (NftId nftId) {
-        return _registry.register(address(this));
-    }
-
-    function getRegistry() public view virtual override returns (IRegistry registry) {
+    function getRegistry() public view virtual returns (IRegistry registry) {
         return _registry;
     }
 
-    function getOwner() public view virtual override returns (address owner) {
-        NftId nftId = _registry.getNftId(address(this));
-        if(nftId == zeroNftId()) {
-            return _initialOwner;
-        }
-
-        return _registry.getOwner(nftId);
+    function getOwner() public view virtual returns (address) {
+        return _registry.ownerOf(address(this));
     }
 
-    function getNftId() public view override returns (NftId nftId) {
+    function getNftId() public view virtual returns (NftId nftId) {
         return _registry.getNftId(address(this));
     }
 
-    function getParentNftId() public view override returns (NftId nftId) {
-        return _parentNftId;
+    function getInfo() external view virtual returns (IRegistry.ObjectInfo memory) {
+        return _registry.getObjectInfo(address(this));
     }
 
-    function getData() public view virtual override returns (bytes memory data) {
-        return "";
+    function getInitialInfo() public view virtual returns (IRegistry.ObjectInfo memory) {
+        return IRegistry.ObjectInfo(
+            zeroNftId(),
+            _parentNftId,
+            _objectType,
+            address(this),
+            _initialOwner,
+            ""
+        );
     }
 }
