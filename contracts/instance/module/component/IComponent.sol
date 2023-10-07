@@ -18,15 +18,8 @@ import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
 
 interface IComponent {
-    // component dynamic info (static info kept in registry)
     struct ComponentInfo {
         NftId nftId;
-        IERC20Metadata token;
-    }
-
-    struct ComponentInfoOld {
-        NftId nftId;
-        StateId state;
         IERC20Metadata token;
     }
 }
@@ -67,31 +60,4 @@ interface IComponentModule is IComponent {
 
     // repeat service linked signaturea to avoid linearization issues
     function getComponentOwnerService() external view returns(IComponentOwnerService);
-}
-
-interface IComponentModuleOld is IComponent {
-    function getRegistry() external view returns (IRegistry registry);
-
-    function registerComponent(
-        NftId nftId,
-        ObjectType objectType,
-        IERC20Metadata token
-    ) external;
-
-    function setComponentInfo(
-        ComponentInfoOld memory info
-    ) external returns (NftId componentNftId);
-
-    function getComponentInfo(
-        NftId nftId
-    ) external view returns (ComponentInfoOld memory info);
-
-    function getComponentCount() external view returns (uint256 numberOfCompnents);
-
-    function getComponentId(uint256 idx) external view returns (NftId nftId);
-
-    // repeat service linked signaturea to avoid linearization issues
-    function getComponentOwnerService() external view returns(IComponentOwnerService);
-
-    function hasRole(RoleId role, address member) external view returns (bool);
 }
