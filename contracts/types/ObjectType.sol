@@ -37,20 +37,24 @@ function STAKE() pure returns (ObjectType) {
     return toObjectType(60);
 }
 
-function PRODUCT() pure returns (ObjectType) {
+function COMPONENT() pure returns (ObjectType) {
     return toObjectType(100);
 }
 
-function DISTRIBUTOR() pure returns (ObjectType) {
+function PRODUCT() pure returns (ObjectType) {
     return toObjectType(110);
 }
 
-function ORACLE() pure returns (ObjectType) {
+function COMPENSATION() pure returns (ObjectType) {
     return toObjectType(120);
 }
 
-function POOL() pure returns (ObjectType) {
+function ORACLE() pure returns (ObjectType) {
     return toObjectType(130);
+}
+
+function POOL() pure returns (ObjectType) {
+    return toObjectType(140);
 }
 
 function POLICY() pure returns (ObjectType) {

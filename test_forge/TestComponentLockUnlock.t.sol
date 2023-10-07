@@ -46,7 +46,7 @@ contract TestComponentLockUnlock is TestGifBase {
         );
         assertNftId(infoBefore.nftId, infoAfter.nftId, "product id not same");
         assertEq(
-            infoAfter.state.toInt(),
+            instance.getComponentState(infoBefore.nftId).toInt(),
             PAUSED().toInt(),
             "component state not paused"
         );
@@ -64,8 +64,14 @@ contract TestComponentLockUnlock is TestGifBase {
         IComponent.ComponentInfo memory infoBefore = instance.getComponentInfo(
             product.getNftId()
         );
+        assertEq(
+            instance.getComponentState(infoBefore.nftId).toInt(),
+            PAUSED().toInt(),
+            "component state not paused"
+        );
 
         product.unlock();
+
         IComponent.ComponentInfo memory infoAfter = instance.getComponentInfo(
             product.getNftId()
         );
@@ -73,12 +79,7 @@ contract TestComponentLockUnlock is TestGifBase {
 
         assertNftId(infoBefore.nftId, infoAfter.nftId, "product id not same");
         assertEq(
-            infoBefore.state.toInt(),
-            PAUSED().toInt(),
-            "component state not paused"
-        );
-        assertEq(
-            infoAfter.state.toInt(),
+            instance.getComponentState(infoAfter.nftId).toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );

@@ -143,28 +143,34 @@ contract ComponentOwnerService is
     function lock(
         IBaseComponent component
     ) external override onlyRegisteredComponent(component) {
+        // TODO use msg.sender to get component and get instance via registered parent nft id
         IInstance instance = component.getInstance();
-        IComponent.ComponentInfo memory info = instance.getComponentInfo(
-            component.getNftId()
-        );
-        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
+        instance.updateComponentState(component.getNftId(), PAUSED());
+        // IInstance instance = component.getInstance();
+        // IComponent.ComponentInfo memory info = instance.getComponentInfo(
+        //     component.getNftId()
+        // );
+        // require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
 
-        info.state = PAUSED();
-        // setComponentInfo checks for valid state changes
-        instance.setComponentInfo(info);
+        // info.state = PAUSED();
+        // // setComponentInfo checks for valid state changes
+        // instance.setComponentInfo(info);
     }
 
     function unlock(
         IBaseComponent component
     ) external override onlyRegisteredComponent(component) {
+        // TODO use msg.sender to get component and get instance via registered parent nft id
         IInstance instance = component.getInstance();
-        IComponent.ComponentInfo memory info = instance.getComponentInfo(
-            component.getNftId()
-        );
-        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
+        instance.updateComponentState(component.getNftId(), ACTIVE());
+        // IInstance instance = component.getInstance();
+        // IComponent.ComponentInfo memory info = instance.getComponentInfo(
+        //     component.getNftId()
+        // );
+        // require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
 
-        info.state = ACTIVE();
-        // setComponentInfo checks for valid state changes
-        instance.setComponentInfo(info);
+        // info.state = ACTIVE();
+        // // setComponentInfo checks for valid state changes
+        // instance.setComponentInfo(info);
     }
 }
