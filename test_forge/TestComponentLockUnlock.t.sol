@@ -2,12 +2,9 @@
 pragma solidity 0.8.20;
 
 import {Blocknumber} from "../contracts/types/Blocknumber.sol";
-import {Key32, KeyId} from "../contracts/types/Key32.sol";
 import {NftId} from "../contracts/types/NftId.sol";
-import {COMPONENT} from "../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../contracts/types/StateId.sol";
 
-import {IKeyValueStore} from "../contracts/instance/base/IKeyValueStore.sol";
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
 import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
@@ -22,10 +19,9 @@ contract TestComponentLockUnlock is TestGifBase {
 
     function testComponentLockOwner() public {
         NftId nftId = product.getNftId();
-        Key32 key = nftId.toKey32(COMPONENT());
 
         assertEq(
-            keyValueStore.getState(key).toInt(),
+            instance.getComponentState(nftId).toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );
@@ -34,7 +30,7 @@ contract TestComponentLockUnlock is TestGifBase {
         product.lock();
 
         assertEq(
-            keyValueStore.getState(key).toInt(),
+            instance.getComponentState(nftId).toInt(),
             PAUSED().toInt(),
             "component state not paused"
         );
@@ -42,10 +38,9 @@ contract TestComponentLockUnlock is TestGifBase {
 
     function testComponentUnlockNotOwner() public {
         NftId nftId = product.getNftId();
-        Key32 key = nftId.toKey32(COMPONENT());
 
         assertEq(
-            keyValueStore.getState(key).toInt(),
+            instance.getComponentState(nftId).toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );
@@ -58,10 +53,9 @@ contract TestComponentLockUnlock is TestGifBase {
 
     function testComponentUnlockOwner() public {
         NftId nftId = product.getNftId();
-        Key32 key = nftId.toKey32(COMPONENT());
 
         assertEq(
-            keyValueStore.getState(key).toInt(),
+            instance.getComponentState(nftId).toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );
@@ -70,7 +64,7 @@ contract TestComponentLockUnlock is TestGifBase {
         product.lock();
 
         assertEq(
-            keyValueStore.getState(key).toInt(),
+            instance.getComponentState(nftId).toInt(),
             PAUSED().toInt(),
             "component state not paused"
         );
@@ -79,7 +73,7 @@ contract TestComponentLockUnlock is TestGifBase {
         vm.stopPrank();
 
         assertEq(
-            keyValueStore.getState(key).toInt(),
+            instance.getComponentState(nftId).toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );

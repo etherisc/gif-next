@@ -85,13 +85,9 @@ contract TestInstanceModuleComponent  is
 
     }
 
-    function getRegistry() public view override (Registerable, IComponentModule) returns (IRegistry registry) { return super.getRegistry(); }
-
     function getComponentOwnerService() external view override (IComponentModule, IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IInstanceBase) returns(IPoolService service) { return _poolService; }
-
-    function getKeyValueStore() public view virtual override (InstanceBase, IComponentModule) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }    
 }
 
 contract TestInstanceModulePolicy  is

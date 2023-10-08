@@ -14,8 +14,7 @@ import {StateId, ACTIVE} from "../contracts/types/StateId.sol";
 contract TestComponentInfo is TestGifBase {
     function testProductInfo() public {
         NftId productNftId = product.getNftId();
-        Key32 key = productNftId.toKey32(COMPONENT());
-        StateId productState = keyValueStore.getState(key);
+        StateId productState = instance.getComponentState(productNftId);
 
         IERC20Metadata componentToken = instance.getComponentToken(productNftId);
         assertEq(address(componentToken), address(token), "unexpected token");
@@ -34,8 +33,7 @@ contract TestComponentInfo is TestGifBase {
 
     function testPoolInfo() public {
         NftId poolNftId = pool.getNftId();
-        Key32 key = poolNftId.toKey32(COMPONENT());
-        StateId poolState = keyValueStore.getState(key);
+        StateId poolState = instance.getComponentState(poolNftId);
 
         IERC20Metadata componentToken = instance.getComponentToken(poolNftId);
         assertEq(address(componentToken), address(token), "unexpected token");
