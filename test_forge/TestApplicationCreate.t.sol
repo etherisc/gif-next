@@ -90,7 +90,6 @@ contract TestApplicationCreate is TestGifBase {
         assertTrue(policyInfo.expiredAt == zeroTimestamp(), "wrong expired at");
         assertTrue(policyInfo.closedAt == zeroTimestamp(), "wrong closed at");
 
-        assertEq(infoAfter.nftId.toInt(), bundleNftId.toInt(), "bundle id unexpected");
         assertEq(infoBefore.lockedAmount, 0, "capital locked not 0");
         assertEq(
             infoAfter.lockedAmount,

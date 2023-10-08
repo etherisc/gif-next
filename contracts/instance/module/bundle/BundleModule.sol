@@ -70,7 +70,6 @@ abstract contract BundleModule is
         override
     {
         BundleInfo memory bundleInfo = BundleInfo(
-            bundleNftId,
             poolNftId,
             filter,
             amount, // capital
@@ -83,12 +82,12 @@ abstract contract BundleModule is
         _create(bundleNftId, abi.encode(bundleInfo));
     }
 
-    function setBundleInfo(BundleInfo memory bundleInfo)
+    function setBundleInfo(NftId bundleNftId, BundleInfo memory bundleInfo)
         external
         override
         onlyPoolOrProductService
     {
-        _updateData(bundleInfo.nftId, abi.encode(bundleInfo));
+        _updateData(bundleNftId, abi.encode(bundleInfo));
     }
 
     function updateBundleState(NftId bundleNftId, StateId state)
@@ -128,5 +127,9 @@ abstract contract BundleModule is
 
     function getBundleInfo(NftId bundleNftId) external view override returns(BundleInfo memory bundleInfo) {
         return abi.decode(_getData(bundleNftId), (BundleInfo));
+    }
+
+    function getBundleState(NftId bundleNftId) external view override returns(StateId state) {
+        return _getState(bundleNftId);
     }
 }
