@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {NftId} from "../../types/NftId.sol";
-import {ObjectType, PRODUCT, ORACLE, POOL, BUNDLE, POLICY} from "../../types/ObjectType.sol";
+import {ObjectType, COMPONENT, BUNDLE, POLICY} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, UNDERWRITTEN, REVOKED, DECLINED} from "../../types/StateId.sol";
 import {ILifecycle} from "./ILifecycle.sol";
 
@@ -14,10 +14,7 @@ contract Lifecycle is ILifecycle {
         private _isValidTransition;
 
     constructor() {
-        _setupComponentLifecycle(PRODUCT());
-        _setupComponentLifecycle(ORACLE());
-        _setupComponentLifecycle(POOL());
-
+        _setupComponentLifecycle();
         _setupBundleLifecycle();
         _setupPolicyLifecycle();
     }
@@ -70,11 +67,11 @@ contract Lifecycle is ILifecycle {
         return _isValidTransition[objectType][fromId][toId];
     }
 
-    function _setupComponentLifecycle(ObjectType objectType) internal {
-        _initialState[objectType] = ACTIVE();
-        _isValidTransition[objectType][ACTIVE()][PAUSED()] = true;
-        _isValidTransition[objectType][PAUSED()][ACTIVE()] = true;
-        _isValidTransition[objectType][PAUSED()][ARCHIVED()] = true;
+    function _setupComponentLifecycle() internal {
+        _initialState[COMPONENT()] = ACTIVE();
+        _isValidTransition[COMPONENT()][ACTIVE()][PAUSED()] = true;
+        _isValidTransition[COMPONENT()][PAUSED()][ACTIVE()] = true;
+        _isValidTransition[COMPONENT()][PAUSED()][ARCHIVED()] = true;
     }
 
     function _setupBundleLifecycle() internal {

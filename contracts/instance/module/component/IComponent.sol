@@ -19,7 +19,6 @@ import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
 
 interface IComponent {
     struct ComponentInfo {
-        NftId nftId;
         IERC20Metadata token;
     }
 }
@@ -28,29 +27,16 @@ interface IComponentModule is IComponent {
 
     function registerComponent(
         NftId nftId,
-        ObjectType objectType,
         IERC20Metadata token
     ) external;
 
-    function setComponentInfo(
-        ComponentInfo memory info
-    ) external;
-
-    function updateComponentState(NftId nftId, StateId state) external;
-
-    function getComponentInfo(
+    function getComponentToken(
         NftId nftId
-    ) external view returns (ComponentInfo memory info);
-
-    function getComponentState(NftId nftId) external view returns (StateId state);
+    ) external view returns (IERC20Metadata token);
 
     function getComponentCount() external view returns (uint256 numberOfCompnents);
 
     function getComponentId(uint256 idx) external view returns (NftId nftId);
-
-    function hasRole(RoleId role, address member) external view returns (bool);
-
-    function toComponentKey32(NftId nftId) external view returns (Key32 key32);
 
     // repeat registry linked signature
     function getRegistry() external view returns (IRegistry registry);

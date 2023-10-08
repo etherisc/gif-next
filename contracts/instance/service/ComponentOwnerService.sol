@@ -11,13 +11,14 @@ import {TreasuryModule} from "../module/treasury/TreasuryModule.sol";
 import {IComponent, IComponentModule} from "../module/component/IComponent.sol";
 import {IBaseComponent} from "../../components/IBaseComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
-
+import {IKeyValueStore} from "../../instance/base/IKeyValueStore.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../types/RoleId.sol";
-import {ObjectType, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
+import {ObjectType, COMPONENT, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
+import {Key32} from "../../types/Key32.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
@@ -97,7 +98,6 @@ contract ComponentOwnerService is
 
         instance.registerComponent(
             nftId,
-            objectType,
             token);
 
         address wallet = component.getWallet();
@@ -145,16 +145,9 @@ contract ComponentOwnerService is
     ) external override onlyRegisteredComponent(component) {
         // TODO use msg.sender to get component and get instance via registered parent nft id
         IInstance instance = component.getInstance();
-        instance.updateComponentState(component.getNftId(), PAUSED());
-        // IInstance instance = component.getInstance();
-        // IComponent.ComponentInfo memory info = instance.getComponentInfo(
-        //     component.getNftId()
-        // );
-        // require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
-
-        // info.state = PAUSED();
-        // // setComponentInfo checks for valid state changes
-        // instance.setComponentInfo(info);
+        NftId nftId = component.getNftId();
+        Key32 key = nftId.toKey32(COMPONENT());
+        instance.updateState(key, PAUSED());
     }
 
     function unlock(
@@ -162,15 +155,8 @@ contract ComponentOwnerService is
     ) external override onlyRegisteredComponent(component) {
         // TODO use msg.sender to get component and get instance via registered parent nft id
         IInstance instance = component.getInstance();
-        instance.updateComponentState(component.getNftId(), ACTIVE());
-        // IInstance instance = component.getInstance();
-        // IComponent.ComponentInfo memory info = instance.getComponentInfo(
-        //     component.getNftId()
-        // );
-        // require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
-
-        // info.state = ACTIVE();
-        // // setComponentInfo checks for valid state changes
-        // instance.setComponentInfo(info);
+        NftId nftId = component.getNftId();
+        Key32 key = nftId.toKey32(COMPONENT());
+        instance.updateState(key, ACTIVE());
     }
 }

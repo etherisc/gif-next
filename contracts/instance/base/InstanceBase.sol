@@ -3,11 +3,11 @@ pragma solidity ^0.8.19;
 
 import {Versionable} from "../../shared/Versionable.sol";
 import {Registerable} from "../../shared/Registerable.sol";
-// import {IRegistry} from "../registry/IRegistry.sol";
 
-// import {IInstance} from "./IInstance.sol";
 import {ObjectType, INSTANCE} from "../../types/ObjectType.sol";
+import {Key32} from "../../types/Key32.sol";
 import {NftId} from "../../types/NftId.sol";
+import {StateId} from "../../types/StateId.sol";
 import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 import {IComponentOwnerService} from "../service/IComponentOwnerService.sol";
@@ -45,6 +45,10 @@ abstract contract InstanceBase is
     }
 
     function getKeyValueStore() public view virtual override returns (IKeyValueStore keyValueStore) { return _keyValueStore; }
+
+    function updateState(Key32 key, StateId state) external override {
+        _keyValueStore.updateState(key, state);
+    }
 
     // from versionable
     function getVersion()

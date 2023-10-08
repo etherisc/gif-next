@@ -42,7 +42,6 @@ abstract contract ComponentModule is
 
     function registerComponent(
         NftId nftId,
-        ObjectType, // objectType,
         IERC20Metadata token
     )
         external
@@ -50,29 +49,12 @@ abstract contract ComponentModule is
         override
     {
         ComponentInfo memory info = ComponentInfo(
-            nftId,
             token
         );
 
         _nftIds.push(nftId);
 
         _create(nftId, abi.encode(info));
-    }
-
-    function setComponentInfo(ComponentInfo memory info)
-        external
-        override
-        onlyComponentOwnerService
-    {
-        _updateData(info.nftId, abi.encode(info));
-    }
-
-    function updateComponentState(NftId nftId, StateId state)
-        external
-        override
-        onlyComponentOwnerService
-    {
-        _updateState(nftId, state);
     }
 
     function getComponentCount()
@@ -90,15 +72,8 @@ abstract contract ComponentModule is
         return _nftIds[idx];
     }
 
-    function getComponentInfo(NftId nftId) external view override returns(ComponentInfo memory info) {
-        return abi.decode(_getData(nftId), (ComponentInfo));
+    function getComponentToken(NftId nftId) external view override returns(IERC20Metadata token) {
+        ComponentInfo memory info = abi.decode(_getData(nftId), (ComponentInfo));
+        return info.token;
     }
-
-    function getComponentState(NftId nftId) external view returns (StateId state) {
-        return _getState(nftId);
-    }
-
-    function toComponentKey32(NftId nftId) external view override returns (Key32 key32) {
-        return _toKey32(nftId);
-    } 
 }

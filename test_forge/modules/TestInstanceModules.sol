@@ -87,8 +87,6 @@ contract TestInstanceModuleComponent  is
 
     function getRegistry() public view override (Registerable, IComponentModule) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function hasRole(RoleId, address) public pure override returns (bool) { return true; }
-
     function getComponentOwnerService() external view override (IComponentModule, IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IInstanceBase) returns(IPoolService service) { return _poolService; }
