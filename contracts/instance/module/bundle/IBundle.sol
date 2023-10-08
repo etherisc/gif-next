@@ -44,13 +44,6 @@ interface IBundleModule is IBundle {
     function releasePolicy(NftId bundleNftId, NftId policyNftId) external returns(uint256 collateralAmount);
 
     function getBundleInfo(NftId bundleNftId) external view returns(BundleInfo memory bundleInfo);
-    function toBundleKey32(NftId bundleNftId) external view returns (Key32 key32);
-
-    // repeat registry linked signature
-    function getRegistry() external view returns (IRegistry registry);
-
-    // repeat instance base signature
-    function getKeyValueStore() external view returns (IKeyValueStore keyValueStore);
 
     // repeat service linked signatures to avoid linearization issues
     function getProductService() external returns(IProductService);

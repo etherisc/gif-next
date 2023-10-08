@@ -39,10 +39,10 @@ interface IInstance is
     ICompensationModule,
     IInstanceBase
 {
-    function getRegistry() external view override (IBundleModule, IPolicyModule, IRegisterable) returns (IRegistry registry);
+    function getRegistry() external view override (IPolicyModule, IRegisterable) returns (IRegistry registry);
     function getOwner() external view override (IOwnable, IAccessModule) returns(address owner);
 
-    function getKeyValueStore() external view override (IBundleModule, IInstanceBase) returns (IKeyValueStore keyValueStore);
+    function getKeyValueStore() external view override (IInstanceBase) returns (IKeyValueStore keyValueStore);
     function getComponentOwnerService() external view override (IInstanceBase, IComponentModule) returns(IComponentOwnerService);
     function getProductService() external view override (IInstanceBase, IBundleModule, IPolicyModule) returns(IProductService);
     function getPoolService() external view override (IInstanceBase, IBundleModule, IPoolModule) returns(IPoolService);

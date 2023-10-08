@@ -129,8 +129,4 @@ abstract contract BundleModule is
     function getBundleInfo(NftId bundleNftId) external view override returns(BundleInfo memory bundleInfo) {
         return abi.decode(_getData(bundleNftId), (BundleInfo));
     }
-
-    function toBundleKey32(NftId bundleNftId) external view override returns (Key32 key32) {
-        return _toKey32(bundleNftId);
-    } 
 }
