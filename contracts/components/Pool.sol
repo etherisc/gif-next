@@ -7,7 +7,6 @@ import {IPoolService} from "../instance/service/IPoolService.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
-import {StateId, zeroStateId} from "../types/StateId.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -177,19 +176,10 @@ contract Pool is BaseComponent, IPoolComponent {
         info = _registry.getObjectInfo(address(this));
         NftId nftId = info.nftId;
 
-        ITreasury.PoolSetup memory setup = _instance.getPoolSetup(nftId);
-        IPool.PoolInfo memory poolModuleInfo = _instance.getPoolInfo(nftId);
-
         poolInfo = IComponent.PoolComponentInfo(
-                        setup.nftId,
-                        _instanceNftId,
-                        setup.token,
-                        setup.wallet,
-                        poolModuleInfo.isVerifying,
-                        poolModuleInfo.collateralizationLevel,
-                        setup.stakingFee,
-                        setup.performanceFee
-                    );  
+                _instance.getPoolSetup(nftId),
+                _instance.getPoolInfo(nftId)
+            );  
     }
 
     function getInitialPoolInfo() 
@@ -199,14 +189,18 @@ contract Pool is BaseComponent, IPoolComponent {
     {
         return (getInitialInfo(),  
                 IComponent.PoolComponentInfo(
-                    zeroNftId(),
-                    _instanceNftId,
-                    _token,
-                    _wallet,
-                    _isVerifying,
-                    _collateralizationLevel,
-                    FeeLib.zeroFee(), // stackingFee
-                    FeeLib.zeroFee()  // perfomanceFee
+                    ITreasury.PoolSetup(
+                        zeroNftId(),
+                        _token, 
+                        _wallet, // wallet
+                        FeeLib.zeroFee(), //stakingFee
+                        FeeLib.zeroFee() //performanceFee
+                    ),
+                    IPool.PoolInfo(
+                        zeroNftId(),
+                        _isVerifying,
+                        _collateralizationLevel
+                    )
                 )
         );
     }

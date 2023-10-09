@@ -87,14 +87,14 @@ contract ComponentOwnerService is
         // TODO check interface 
 
         (IRegistry.ObjectInfo memory info,
-         IComponent.ProductComponentInfo memory productInfo) = product.getInitialProductInfo();
+         ITreasury.ProductSetup memory setup) = product.getInitialProductInfo();
 
         require(info.initialOwner == msg.sender, "ERROR:COS-002:NOT_OWNER");// owner protection
         require(info.objectAddress == address(product), "ERROR:COS-003:WRONG_ADDRESS");
         require(info.objectType == PRODUCT(), "ERROR:COS-004:NOT_PRODUCT");
         // instance is registered
-        NftId parentNftId = info.parentNftId;
-        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(parentNftId);
+        NftId instanceNftId = info.parentNftId;
+        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(instanceNftId);
         require(instanceInfo.objectType == INSTANCE(), "ERROR:COS-005:UNKNOWN_INSTANCE");
         //.data
         
@@ -103,17 +103,11 @@ contract ComponentOwnerService is
         nftId = _registry.registerFrom(msg.sender, info);
 
         // "callstack is too deep" with this version
-        //_registerProduct(parentNftId, productInfo);
-        // using this instead
         _registerProduct(
-            nftId,   // TODO ignores productInfo.nftId
-            parentNftId,  // TODO ignores productInfo.parentNftId
-            productInfo.distributorNftId, 
-            productInfo.poolNftId,
-            productInfo.token,
-            productInfo.wallet,
-            productInfo.policyFee,
-            productInfo.processingFee       
+            nftId, 
+            instanceNftId,
+            IInstance(instanceInfo.objectAddress),
+            setup
         );
     }
     function registerPool(IPoolComponent pool)
@@ -134,14 +128,19 @@ contract ComponentOwnerService is
         require(info.objectAddress == address(pool), "ERROR:COS-008:WRONG_ADDRESS");
         require(info.objectType == POOL(), "ERROR:COS-009:NOT_POOL");
         // instance is registered
-        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(info.parentNftId);
+        NftId instanceNftId = info.parentNftId;
+        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(instanceNftId);
         require(instanceInfo.objectType == INSTANCE(), "ERROR:COS-010:UNKNOW_INSTANCE"); 
         //.data
 
         nftId = _registry.registerFrom(msg.sender, info);   
 
-        poolInfo.nftId = nftId;
-        _registerPool(info.parentNftId, poolInfo);
+        _registerPool(
+            nftId, 
+            instanceNftId,
+            IInstance(instanceInfo.objectAddress),
+            poolInfo
+        );
     }
     //function registerInstance(IInstance instance) // TODO IInstance brakes the tests 
     function registerInstance(IRegisterable instance) 
@@ -153,8 +152,8 @@ contract ComponentOwnerService is
 
         IRegistry.ObjectInfo memory info = instance.getInitialInfo();
 
-        require(info.objectAddress == address(instance));
         require(info.initialOwner == msg.sender);// owner protection
+        require(info.objectAddress == address(instance));
         require(info.objectType == INSTANCE());
         IRegistry.ObjectInfo memory registryInfo = _registry.getObjectInfo(info.parentNftId);
         require(registryInfo.objectType == REGISTRY(), "ERROR:COS-011:UNKNOWN_REGISTRY"); 
@@ -193,18 +192,11 @@ contract ComponentOwnerService is
     function _registerProduct(
         NftId nftId, 
         NftId instanceNftId,
-        NftId distributorNftId,
-        NftId poolNftId,
-        IERC20Metadata token,
-        address wallet,
-        Fee memory policyFee,
-        Fee memory processingFee
+        IInstance instance,
+        ITreasury.ProductSetup memory setup
     )
         internal
     {
-        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(instanceNftId);
-        IInstance instance = IInstance(instanceInfo.objectAddress);
-
         // only product's owner with role
         require(_registry.ownerOf(nftId) == msg.sender);
         RoleId typeRole = getRoleForType(PRODUCT());
@@ -215,17 +207,17 @@ contract ComponentOwnerService is
 
         // check ProductInfo
         // token is registered -> TODO instance can whitelist tokens too?
-        IRegistry.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(token));
+        IRegistry.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(setup.token));
         require(tokenInfo.objectType == TOKEN(), "ERROR:COS-015:UNKNOWN_TOKEN"); 
         // pool is registered
-        IRegistry.ObjectInfo memory poolInfo = _registry.getObjectInfo(poolNftId);
+        IRegistry.ObjectInfo memory poolInfo = _registry.getObjectInfo(setup.poolNftId);
         require(poolInfo.objectType == POOL(), "ERROR:COS-016:UNKNOW_POOL"); 
         // pool is on the same instance
         require(poolInfo.parentNftId == instanceNftId, "ERROR:COS-017:POOL_INSTANCE_MISMATCH");
-        // pool and product have the same token
-        ITreasury.PoolSetup memory poolSetup = instance.getPoolSetup(poolNftId);
+        // pool have the same token
+        ITreasury.PoolSetup memory poolSetup = instance.getPoolSetup(setup.poolNftId);
         require(tokenInfo.objectAddress == address(poolSetup.token), "ERROR:COS-018:PRODUCT_POOL_TOKEN_MISMATCH");
-        // TODO pool and product have the same owner?
+        // TODO pool have the same owner?
         //require(_registry.ownerOf(poolNftId) == msg.sender, "NOT_POOL_OWNER");
         // TODO pool is not attached to another product
 
@@ -235,23 +227,19 @@ contract ComponentOwnerService is
             PRODUCT()
         );
         // treasury module
-        instance.registerProduct(
-            nftId,
-            distributorNftId, 
-            poolNftId,
-            token,
-            wallet,
-            policyFee,
-            processingFee
-        );
+        setup.nftId = nftId;
+        instance.registerProduct(setup);
     }
-    function _registerPool(NftId instanceNftId, IComponent.PoolComponentInfo memory info)
+
+    function _registerPool(
+        NftId nftId,
+        NftId instanceNftId,
+        IInstance instance,
+        IComponent.PoolComponentInfo memory pool
+    )
         internal
     {
-        NftId nftId = info.nftId;
-        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(instanceNftId);
-        IInstance instance = IInstance(instanceInfo.objectAddress);
-    
+
         // pool's owner with role
         require(_registry.ownerOf(nftId) == msg.sender);
         RoleId typeRole = getRoleForType(POOL());
@@ -262,28 +250,22 @@ contract ComponentOwnerService is
 
         // check PoolInfo
         // token is registered -> TODO instance can personaly whitelist tokens too?
-        ObjectType tokenType = _registry.getObjectInfo( address(info.token) ).objectType;
+        address tokenAddress = address(pool.setup.token);
+        ObjectType tokenType = _registry.getObjectInfo(tokenAddress).objectType;
         require(tokenType == TOKEN(), "ERROR:COS-020:UNKNOWN_TOKEN");  
         // TODO add more validations
 
         // component module
         instance.registerComponent(
-            info.nftId,
+            nftId,
             POOL()
         ); 
         // treasury module
-        instance.registerPool(
-            info.nftId,
-            info.token,
-            info.wallet, 
-            info.stackingFee,
-            info.perfomanceFee
-        );  
+        pool.setup.nftId = nftId;
+        instance.registerPool(pool.setup);
+
         // pool module
-        instance.registerPool(
-            info.nftId,
-            info.isVerifying,
-            info.collateralizationLevel
-        );
+        pool.info.nftId = nftId;
+        instance.registerPool(pool.info);
     }  
 }

@@ -47,7 +47,6 @@ contract Registry is
         ObjectType objectType = info.objectType;
         ObjectType parentType = _info[info.parentNftId].objectType;
         require(_allowed[_nftId][objectType][parentType] == true, "ERROR:REG-002:NOT_ALLOWED");
-        require(info.objectAddress != msg.sender, "ERROR:REG-003:NOT_ALLOWED");
         _;
     }
     modifier onlyOwner() {
@@ -65,6 +64,7 @@ contract Registry is
         );
         _protocolOwner = protocolOwner;
 
+        // deploy NFT 
         _chainNft = new ChainNft(address(this));
         _chainNftInternal = ChainNft(_chainNft);
 
@@ -72,12 +72,12 @@ contract Registry is
         _registerProtocol();
         _nftId = _registerRegistry();
 
-        // set allowance for registry owner
+        // set default allowance for registry owner
         approve(_nftId, SERVICE(), REGISTRY());
         approve(_nftId, TOKEN(), REGISTRY());
     }
 
-    // @dev owner either registers contracts or objects, but never both
+    /// @dev owner registers contracts only
     function register(ObjectInfo memory info) 
         public
         override
@@ -85,9 +85,8 @@ contract Registry is
         onlyAllowedForOwner(info)
         returns (NftId nftId)
     {
-        return _registerContract(msg.sender, info);
+        return _registerContract(msg.sender, info);// registry owner is contract owner 
     }
-    // @dev give approval for registered contract or owner
     function approve(
         NftId nftId,
         ObjectType object,
@@ -105,11 +104,13 @@ contract Registry is
             address objectAddress = _info[nftId].objectAddress;
             require(
                 _nftIdByAddress[objectAddress].gtz(),
-                "ERROR:REG-007:NOT_REGISTERED");
+                "ERROR:REG-007:NOT_REGISTERED"
+            );
         }
 
         require(object.gtz() && parent.gtz(),
-                "ERROR:REG-012:NOT_REGISTERED");
+                "ERROR:REG-012:ZERO_TYPE"
+        );
         
         _allowed[nftId][object][parent] = true;
     }
@@ -125,13 +126,14 @@ contract Registry is
     {
         return _allowed[nftId][object][parent];
     }
-
+    /// @dev only for registred and approved contract
     function registerFrom(address from, ObjectInfo memory info)
         external
         onlyAllowedForContract(info)
         returns(NftId nftId)
     {
-        require(from != msg.sender, "ERROR:REG-008:NOT_ALLOWED");
+        require(from != msg.sender, "ERROR:REG-008:NOT_ALLOED"); 
+        require(from > address(0), "ERROR:REG-016:ZERO_ADDRESS");
 
         if(info.objectAddress == address(0)) {
             return _registerObject(from, info);// from is registred storage contract
@@ -144,9 +146,11 @@ contract Registry is
         internal
         returns(NftId nftId)
     {
-        require(_nftIdByAddress[info.objectAddress].eqz(), "ERROR:REG-009:ALREADY_REGISTERED");
-        require(_nftIdByAddress[owner].eqz(), "ERROR:REG-010:OWNER_REGISTERED");
         require(info.initialOwner == owner, "ERROR:REG-015:NOT_OWNER");
+        require(info.objectAddress != owner, "ERROR:REG-003:NOT_ALLOWED");
+
+        require(_nftIdByAddress[info.objectAddress].eqz(), "ERROR:REG-009:ALREADY_REGISTERED");
+        require(_nftIdByAddress[owner].eqz(), "ERROR:REG-010:WRONG_OWNER");
 
         uint256 mintedTokenId = _chainNft.mint(
             owner, 
@@ -183,11 +187,11 @@ contract Registry is
         internal 
         returns(NftId nftId)
     {
-        require(_nftIdByAddress[from].gtz(), "ERROR:REG-011:NOT_REGISTERED");
-        require(info.parentNftId == _nftIdByAddress[from], "NOT_PARENT");
+        require(_nftIdByAddress[from].gtz(), "ERROR:REG-011:NOT_REGISTRED");
+        require(info.parentNftId == _nftIdByAddress[from], "WRONG_PARENT");
 
         uint256 mintedTokenId = _chainNft.mint(
-            info.initialOwner,
+            info.initialOwner,  
             EMPTY_URI);
         nftId = toNftId(mintedTokenId);
         info.nftId = nftId;
@@ -290,14 +294,14 @@ contract Registry is
 
         _chainNftInternal.mint(_protocolOwner, protocolId);
 
-         _info[protocolNftId] = ObjectInfo(
+        _info[protocolNftId] = ObjectInfo(
             protocolNftId,
             zeroNftId(), // parent
             PROTOCOL(),
             address(0),
             _protocolOwner,
             ""
-         );
+        );
     }
     /// @dev registry registration
     /// might also register the global registry when not on mainnet
@@ -323,7 +327,7 @@ contract Registry is
             address(this), 
             _protocolOwner,
             "" 
-         );
+        );
         _nftIdByAddress[address(this)] = registryNftId;
     }
 
@@ -334,15 +338,14 @@ contract Registry is
         _chainNftInternal.mint(_protocolOwner, globalRegistryId);
 
         NftId globalRegistryNftId = toNftId(globalRegistryId);
-        ObjectInfo memory globalRegistryInfo = ObjectInfo(
+
+        _info[globalRegistryNftId] = ObjectInfo(
             globalRegistryNftId,
-            toNftId(_chainNftInternal.PROTOCOL_NFT_ID()),
+            toNftId(_chainNftInternal.PROTOCOL_NFT_ID()), // parent
             REGISTRY(),
             address(0), // contract address
             _protocolOwner,
             "" // data
         );
-
-        _info[globalRegistryNftId] = globalRegistryInfo;
     }
 }

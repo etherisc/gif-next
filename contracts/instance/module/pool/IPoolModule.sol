@@ -17,11 +17,7 @@ interface IPool {
 
 interface IPoolModule is IPool {
 
-    function registerPool(
-        NftId poolNftId, 
-        bool isVerifying, 
-        UFixed collateralizationLevel
-    ) external;
+    function registerPool(PoolInfo memory info) external;
 
     function addBundleToPool(
         NftId bundleNftId,

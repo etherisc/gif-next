@@ -40,15 +40,7 @@ interface ITreasury {
 
 interface ITreasuryModule is ITreasury {
 
-    function registerProduct(
-        NftId productNftId,
-        NftId distributorNftId,
-        NftId poolNftId,
-        IERC20Metadata token,
-        address wallet,
-        Fee memory policyFee,
-        Fee memory processingFee
-    ) external;
+    function registerProduct(ProductSetup memory setup) external;
 
     function setProductFees(
         NftId productNftId,
@@ -56,13 +48,7 @@ interface ITreasuryModule is ITreasury {
         Fee memory processingFee
     ) external;
 
-    function registerPool(
-        NftId poolNftId,
-        IERC20Metadata token,
-        address wallet,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external;
+    function registerPool(PoolSetup memory setup) external;
 
     function setPoolFees(
         NftId poolNftId,

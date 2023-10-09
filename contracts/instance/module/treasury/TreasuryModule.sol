@@ -16,39 +16,28 @@ abstract contract TreasuryModule is ITreasuryModule {
     mapping(NftId poolNftId => PoolSetup setup) private _poolSetup;
     mapping(NftId componentNftId => TokenHandler tokenHanlder) _tokenHandler;
 
-    function registerProduct(
-        NftId productNftId,
-        NftId distributorNftId,
-        NftId poolNftId,
-        IERC20Metadata token,
-        address wallet,
-        Fee memory policyFee,
-        Fee memory processingFee
-    ) external override // TODO add authz (only component module)
+    function registerProduct(ProductSetup memory setup)
+        external override // TODO add authz (only component module)
     {
+        NftId productNftId = setup.nftId;
+        NftId poolNftId = setup.poolNftId;
+        NftId distributorNftId = setup.poolNftId;
+
         require(address(_tokenHandler[productNftId]) == address(0), "ERROR:TRS-010:TOKEN_HANDLER_ALREADY_REGISTERED");
         require(address(_tokenHandler[poolNftId]) == address(0), "ERROR:TRS-011:TOKEN_HANDLER_ALREADY_REGISTERED");
         require(address(_tokenHandler[distributorNftId]) == address(0), "ERROR:TRS-012:TOKEN_HANDLER_ALREADY_REGISTERED");
         // TODO add additional validations
 
         // deploy product specific handler contract
-        TokenHandler tokenHandler = new TokenHandler(productNftId, address(token));
+        TokenHandler tokenHandler = new TokenHandler(productNftId, address(setup.token));
         _tokenHandler[productNftId] = tokenHandler;
         _tokenHandler[poolNftId] = tokenHandler;
         _tokenHandler[distributorNftId] = tokenHandler;
 
         // create product setup
-        _productSetup[productNftId] = ProductSetup(
-            productNftId,
-            distributorNftId,
-            poolNftId,
-            token,
-            wallet,
-            policyFee,
-            processingFee
-        );
+        _productSetup[productNftId] = setup;
 
-        // TODO add logging
+        // TODO add logging 
     }
 
     function setProductFees(
@@ -66,23 +55,13 @@ abstract contract TreasuryModule is ITreasuryModule {
         // TODO add logging
     }
 
-    function registerPool(
-        NftId poolNftId,
-        IERC20Metadata token,
-        address wallet,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external override // TODO add authz (only component module)
+    function registerPool(PoolSetup memory setup) external override // TODO add authz (only component module)
     {
-        // TODO add validation
+        require(
+            _poolSetup[setup.nftId].nftId.eqz(), //TODO use .objectType as existance check against rewrite? -> delete nftId from setup? -> save space
+            "ERROR:PL-010:ALREADY_CREATED");
 
-        _poolSetup[poolNftId] = PoolSetup(
-            poolNftId,
-            token,
-            wallet,
-            stakingFee,
-            performanceFee
-        );
+        _poolSetup[setup.nftId] = setup;
 
         // TODO add logging
     }

@@ -14,6 +14,8 @@ import {Fee} from "../../../types/Fee.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
+import {ITreasury} from "../treasury/ITreasury.sol";
+import {IPool} from "../pool/IPoolModule.sol";
 
 interface IComponent {
     // component dynamic info (static info kept in registry)
@@ -22,27 +24,10 @@ interface IComponent {
         StateId state;
         //IERC20Metadata token;
     }
-    struct ProductComponentInfo {
-        NftId nftId;
-        NftId instanceNftId;
-        NftId distributorNftId;
-        NftId poolNftId;
-        IERC20Metadata token;// TODO tokenNftId;
-        address wallet;
-        Fee policyFee;
-        Fee processingFee;
-    }
-
+    
     struct PoolComponentInfo {
-        NftId nftId;
-        NftId instanceNftId;
-        //NftId productNftId;
-        IERC20Metadata token;// TODO tokenNftId;
-        address wallet;
-        bool isVerifying;
-        UFixed collateralizationLevel;
-        Fee stackingFee;
-        Fee perfomanceFee;
+        ITreasury.PoolSetup setup;
+        IPool.PoolInfo info;
     }
 }
 

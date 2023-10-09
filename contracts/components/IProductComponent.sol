@@ -6,6 +6,7 @@ import {Fee} from "../types/Fee.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
 import {IComponent} from "../instance/module/component/IComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
 
 interface IProductComponent is IBaseComponent {
     function setFees(
@@ -19,7 +20,7 @@ interface IProductComponent is IBaseComponent {
 
     function getProcessingFee() external view returns (Fee memory processingFee);
 
-    function getProductInfo() external view returns (IRegistry.ObjectInfo memory, IComponent.ProductComponentInfo memory);
+    function getProductInfo() external view returns (IRegistry.ObjectInfo memory, ITreasury.ProductSetup memory);
 
-    function getInitialProductInfo() external view returns (IRegistry.ObjectInfo memory, IComponent.ProductComponentInfo memory);
+    function getInitialProductInfo() external view returns (IRegistry.ObjectInfo memory, ITreasury.ProductSetup memory);
 }

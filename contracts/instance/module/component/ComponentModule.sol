@@ -5,8 +5,6 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
-import {ITreasuryModule} from "../../module/treasury/ITreasury.sol";
-import {IPoolModule} from "../../module/pool/IPoolModule.sol";
 
 import {IComponent, IComponentModule} from "./IComponent.sol";
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";

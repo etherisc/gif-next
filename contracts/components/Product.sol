@@ -7,8 +7,6 @@ import {NftId, zeroNftId} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
 import {Timestamp} from "../types/Timestamp.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
-import {UFixed} from "../types/UFixed.sol";
-import {StateId, zeroStateId} from "../types/StateId.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 import {IComponent} from "../instance/module/component/IComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -115,37 +113,22 @@ contract Product is BaseComponent, IProductComponent {
     {
         return _instance.getProductSetup(getNftId()).processingFee;
     }
-
     function getProductInfo() 
         external
         view 
-        returns (IRegistry.ObjectInfo memory info, IComponent.ProductComponentInfo memory productInfo)
-    {
-
+        returns (IRegistry.ObjectInfo memory info, ITreasury.ProductSetup memory productSetup)
+    {// TODO nftId from 2 different sources
         info = _registry.getObjectInfo(address(this));
-        ITreasury.ProductSetup memory setup = _instance.getProductSetup(info.nftId);
-
-        productInfo = IComponent.ProductComponentInfo(
-                            setup.nftId,
-                            _instanceNftId,
-                            setup.distributorNftId,
-                            setup.poolNftId,
-                            setup.token,
-                            setup.wallet,
-                            setup.policyFee,
-                            setup.processingFee                
-                        );
+        productSetup = _instance.getProductSetup(info.nftId);
     }
-
     function getInitialProductInfo() 
         external
         view 
-        returns (IRegistry.ObjectInfo memory, IComponent.ProductComponentInfo memory)
+        returns (IRegistry.ObjectInfo memory, ITreasury.ProductSetup memory)
     {
         return (getInitialInfo(), 
-                IComponent.ProductComponentInfo(
-                    zeroNftId(), 
-                    _instanceNftId,
+                ITreasury.ProductSetup(
+                    zeroNftId(), // product
                     zeroNftId(), // distributor
                     _registry.getNftId(_pool),
                     _token,
