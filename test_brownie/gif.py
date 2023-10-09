@@ -15,6 +15,7 @@ from brownie import (
     BlocknumberLib,
     Key32Lib,
     NftIdLib,
+    RiskIdLib,
     LibNftIdSet,
     FeeLib,
     ObjectTypeLib,
@@ -49,6 +50,7 @@ def deploy_libs(owner, force_deploy = False):
     libs['NftIdLib'] = deploy_lib(NftIdLib, owner)
     libs['ObjectTypeLib'] = deploy_lib(ObjectTypeLib, owner)
     libs['RoleIdLib'] = deploy_lib(RoleIdLib, owner)
+    libs['RiskIdLib'] = deploy_lib(RiskIdLib, owner)
     libs['StateIdLib'] = deploy_lib(StateIdLib, owner)
     libs['TimestampLib'] = deploy_lib(TimestampLib, owner)
     libs['UFixedMathLib'] = deploy_lib(UFixedMathLib, owner)
@@ -101,12 +103,16 @@ def deploy_pool(registry, instance, instance_owner, token, pool_is_verifying, po
     pool_owner_role = instance.getRoleId(POOL_OWNER_ROLE)
     instance.grantRole(pool_owner_role, pool_owner, {'from': instance_owner})
 
+    staking_fee = instance.getZeroFee()
+    performance_fee = instance.getZeroFee()
     pool = TestPool.deploy(
         registry,
         instance.getNftId(),
         token,
         pool_is_verifying, 
         pool_collateralization_level,
+        staking_fee,
+        performance_fee,
         {'from': pool_owner})
     
     pool.register({'from': pool_owner})
@@ -116,11 +122,15 @@ def deploy_product(registry, instance, instance_owner, token, pool, product_owne
     product_owner_role = instance.getRoleId(PRODUCT_OWNER_ROLE)
     instance.grantRole(product_owner_role, product_owner, {'from': instance_owner})
 
+    policy_fee = instance.getZeroFee()
+    processing_fee = instance.getZeroFee()
     product = TestProduct.deploy(
         registry,
         instance.getNftId(),
         token,
         pool,
+        policy_fee,
+        processing_fee,
         {'from': product_owner})
     
     product.register({'from': product_owner})

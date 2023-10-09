@@ -33,6 +33,7 @@ interface IInstance is
     IAccessModule,
     IPolicyModule,
     IPoolModule,
+    IRiskModule,
     IBundleModule,
     IComponentModule,
     ITreasuryModule,

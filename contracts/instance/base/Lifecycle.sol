@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {NftId} from "../../types/NftId.sol";
-import {ObjectType, COMPONENT, BUNDLE, POLICY} from "../../types/ObjectType.sol";
+import {ObjectType, COMPONENT, BUNDLE, POLICY, RISK} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, UNDERWRITTEN, REVOKED, DECLINED} from "../../types/StateId.sol";
 import {ILifecycle} from "./ILifecycle.sol";
 
@@ -14,9 +14,10 @@ contract Lifecycle is ILifecycle {
         private _isValidTransition;
 
     constructor() {
-        _setupComponentLifecycle();
         _setupBundleLifecycle();
+        _setupComponentLifecycle();
         _setupPolicyLifecycle();
+        _setupRiskLifecycle();
     }
 
     function hasLifecycle(
@@ -88,5 +89,12 @@ contract Lifecycle is ILifecycle {
         _isValidTransition[POLICY()][APPLIED()][UNDERWRITTEN()] = true;
         _isValidTransition[POLICY()][UNDERWRITTEN()][ACTIVE()] = true;
         _isValidTransition[POLICY()][ACTIVE()][CLOSED()] = true;
+    }
+
+    function _setupRiskLifecycle() internal {
+        _initialState[RISK()] = ACTIVE();
+        _isValidTransition[RISK()][ACTIVE()][PAUSED()] = true;
+        _isValidTransition[RISK()][PAUSED()][ACTIVE()] = true;
+        _isValidTransition[RISK()][PAUSED()][ARCHIVED()] = true;
     }
 }

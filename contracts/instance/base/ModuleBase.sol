@@ -21,6 +21,13 @@ abstract contract ModuleBase {
         _store = keyValueStore;
     }
 
+    function _create(ObjectType objectType, Key32 key, bytes memory data) internal {
+        _store.create(
+            key, 
+            objectType,
+            data);
+    }
+
     function _create(ObjectType objectType, NftId nftId, bytes memory data) internal {
         _store.create(
             nftId.toKey32(objectType), 

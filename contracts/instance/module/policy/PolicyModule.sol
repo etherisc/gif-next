@@ -7,6 +7,7 @@ import {IProductService} from "../../service/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../../types/NftId.sol";
+import {RiskId} from "../../../types/RiskId.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
 
@@ -34,6 +35,7 @@ abstract contract PolicyModule is
     function createPolicyInfo(
         NftId policyNftId,
         NftId productNftId,
+        RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
@@ -47,6 +49,7 @@ abstract contract PolicyModule is
             productNftId,
             bundleNftId,
             address(0), // beneficiary = policy nft holder
+            riskId,
             sumInsuredAmount,
             premiumAmount,
             0, // premium paid amount

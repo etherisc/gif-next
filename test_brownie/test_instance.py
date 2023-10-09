@@ -46,8 +46,6 @@ def test_instance(
 
     instance_nft_id = instance.getNftId()
 
-    assert False
-
     # check instance registration
     assert registry.isRegistered[NFT_ID](instance_nft_id)
     assert registry.isRegistered[ADDRESS](instance)

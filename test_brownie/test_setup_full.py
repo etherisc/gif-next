@@ -107,8 +107,37 @@ def test_product(
     assert info['data'] == '0x'
 
     # check link to pool and other parts of product setup
-    setup = instance.getProductSetup(product_nft_id).dict()
-    assert setup['productNftId'] == product_nft_id
-    assert setup['poolNftId'] == pool_nft_id
-    assert setup['token'] == usdc
-    assert setup['wallet'] == product
+    treasury_info = instance.getTreasuryInfo(product_nft_id).dict()
+    assert treasury_info['poolNftId'] == pool_nft_id
+    assert treasury_info['token'] == usdc
+
+    assert False
+
+
+def test_create_bundle(
+    usdc: TestUsdc,
+    all_services: map,
+    registry: Registry,
+    registry_owner: Account,
+    instance: Instance,
+    instance_owner: Instance,
+    pool: TestPool,
+    pool_owner: Account,
+    investor: Account
+):
+    assert False
+
+
+def test_create_policy(
+    usdc: TestUsdc,
+    all_services: map,
+    registry: Registry,
+    registry_owner: Account,
+    instance: Instance,
+    instance_owner: Instance,
+    pool: TestPool,
+    product: TestProduct,
+    product_owner: Account,
+    customer: Account
+):
+    assert False

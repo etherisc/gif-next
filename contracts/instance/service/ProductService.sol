@@ -6,6 +6,7 @@ import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IPolicy, IPolicyModule} from "../module/policy/IPolicy.sol";
 import {IPool} from "../module/pool/IPoolModule.sol";
+import {IRisk} from "../module/risk/IRisk.sol";
 import {IBundle} from "../module/bundle/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
 import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
@@ -15,11 +16,13 @@ import {Versionable} from "../../shared/Versionable.sol";
 
 import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedMathLib} from "../../types/UFixed.sol";
+import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol";
 import {APPLIED, UNDERWRITTEN, ACTIVE} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
-import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
+import {RiskId} from "../../types/RiskId.sol";
+import {StateId} from "../../types/StateId.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
@@ -69,8 +72,44 @@ contract ProductService is ComponentServiceBase, IProductService {
         instance.setTreasuryInfo(productNftId, treasuryInfo);
     }
 
+    function createRisk(
+        RiskId riskId,
+        bytes memory data
+    ) external override {
+        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        NftId productNftId = productInfo.nftId;
+        instance.createRisk(
+            riskId,
+            productNftId,
+            data
+        );
+    }
+
+    function setRiskInfo(
+        RiskId riskId,
+        IRisk.RiskInfo memory info
+    ) external {
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        instance.setRiskInfo(
+            riskId,
+            info
+        );
+    }
+
+    function updateRiskState(
+        RiskId riskId,
+        StateId state
+    ) external {
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        instance.updateRiskState(
+            riskId,
+            state
+        );
+    }
+
     function createApplication(
         address applicationOwner,
+        RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
@@ -90,6 +129,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         instance.createPolicyInfo(
             policyNftId,
             productNftId,
+            riskId,
             sumInsuredAmount,
             premiumAmount,
             lifetime,

@@ -5,6 +5,7 @@ import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {NftId} from "../../../types/NftId.sol";
+import {RiskId} from "../../../types/RiskId.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
 
@@ -14,6 +15,7 @@ interface IPolicy {
         NftId productNftId;
         NftId bundleNftId;
         address beneficiary;
+        RiskId riskId;
         uint256 sumInsuredAmount;
         uint256 premiumAmount;
         uint256 premiumPaidAmount;
@@ -28,8 +30,9 @@ interface IPolicy {
 
 interface IPolicyModule is IPolicy {
     function createPolicyInfo(
-        NftId productNftId,
         NftId policyNftId,
+        NftId productNftId,
+        RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,

@@ -44,6 +44,7 @@ from test_brownie.const import (
     INSTANCE_OWNER,
     PRODUCT_OWNER,
     POOL_OWNER,
+    INVESTOR,
     CUSTOMER,
     CUSTOMER_2,
     OUTSIDER
@@ -86,6 +87,10 @@ def product_owner(accounts) -> Account:
 @pytest.fixture(scope="module")
 def pool_owner(accounts) -> Account:
     return accounts[ACCOUNTS[POOL_OWNER]]
+
+@pytest.fixture(scope="module")
+def investor(accounts) -> Account:
+    return accounts[ACCOUNTS[INVESTOR]]
 
 @pytest.fixture(scope="module")
 def customer(accounts) -> Account:
