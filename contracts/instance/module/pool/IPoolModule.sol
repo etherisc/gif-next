@@ -9,7 +9,6 @@ import {IPoolService} from "../../service/IPoolService.sol";
 
 interface IPool {
     struct PoolInfo {
-        NftId nftId;
         bool isVerifying;
         UFixed collateralizationLevel;
     }
