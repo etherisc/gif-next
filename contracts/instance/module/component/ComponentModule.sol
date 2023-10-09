@@ -33,16 +33,14 @@ abstract contract ComponentModule is
 
     function registerComponent(
         NftId nftId,
-        ObjectType, // objectType,
-        IERC20Metadata token
+        ObjectType objectType
     ) external override onlyComponentOwnerService {
 
         // create component info
         _componentInfo[nftId] = ComponentInfo(
             nftId,
             // _lifecycleModule.getInitialState(objectType),
-            ACTIVE(),
-            token
+            ACTIVE()
         );
 
         _nftIds.push(nftId);

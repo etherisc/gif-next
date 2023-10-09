@@ -6,11 +6,18 @@ import {ObjectType} from "../../types/ObjectType.sol";
 import {RoleId} from "../../types/RoleId.sol";
 import {IBaseComponent} from "../../components/IBaseComponent.sol";
 import {IService} from "../base/IService.sol";
+import {IProductComponent} from "../../components/IProductComponent.sol";
+import {IPoolComponent} from "../../components/IPoolComponent.sol";
+import {IRegisterable} from "../../shared/IRegisterable.sol";
 
 // TODO rename to registry service
 interface IComponentOwnerService is IService {
 
-    function register(IBaseComponent component) external returns(NftId componentNftId);
+    function registerPool(IPoolComponent pool) external returns(NftId nftId);
+
+    function registerProduct(IProductComponent product) external returns(NftId nftId);
+    // TODO move into InstanceService
+    function registerInstance(IRegisterable instance) external returns(NftId nftId);
 
     // TODO move to product/pool services
     function lock(IBaseComponent component) external;

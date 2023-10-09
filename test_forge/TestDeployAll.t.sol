@@ -8,13 +8,13 @@ import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol
 
 contract TestDeployAll is TestGifBase {
     function testDeployAllRegistryCountWithProduct() public {
-        assertEq(registry.getObjectCount(), 10, "getObjectCount not 10");
+        assertEq(registry.getObjectCount(), 11, "getObjectCount not 11");
     }
 
     function testDeployAllInstanceOwner() public {
         NftId nftId = registry.getNftId(address(instance));
         assertEq(
-            registry.getOwner(nftId),
+            registry.ownerOf(nftId),
             instanceOwner,
             "unexpected instance owner"
         );
@@ -27,13 +27,13 @@ contract TestDeployAll is TestGifBase {
             instance.getNftId(),
             "registry and instance nft id differ"
         );
-        assertNftId(nftId, toNftId(63133705), "instance getNftId not 63133705");
+        assertNftId(nftId, toNftId(73133705), "instance getNftId not 73133705");
     }
 
     function testDeployAllProductOwner() public {
         NftId nftId = registry.getNftId(address(product));
         assertEq(
-            registry.getOwner(nftId),
+            registry.ownerOf(nftId),
             productOwner,
             "unexpected product owner"
         );
@@ -57,7 +57,7 @@ contract TestDeployAll is TestGifBase {
             product.getNftId(),
             "registry and product nft id differ"
         );
-        assertNftId(nftId, toNftId(83133705), "product getNftId not 83133705");
+        assertNftId(nftId, toNftId(93133705), "product getNftId not 93133705");
     }
 
     function testDeployAllProductPoolLink() public {
@@ -72,6 +72,6 @@ contract TestDeployAll is TestGifBase {
     function testDeployAllPoolNftId() public {
         NftId nftId = registry.getNftId(address(pool));
         assertNftId(nftId, pool.getNftId(), "registry and pool nft id differ");
-        assertNftId(nftId, toNftId(73133705), "pool getNftId not 73133705");
+        assertNftId(nftId, toNftId(83133705), "pool getNftId not 83133705");
     }
 }

@@ -30,23 +30,15 @@ abstract contract PoolModule is
         _;
     }
 
-    function registerPool(
-        NftId nftId, 
-        bool isVerifying,
-        UFixed collateralizationRate
-    )
+    function registerPool(PoolInfo memory info)
         public
         override
     {
         require(
-            _poolInfo[nftId].nftId.eqz(), 
+            _poolInfo[info.nftId].nftId.eqz(), 
             "ERROR:PL-010:ALREADY_CREATED");
 
-        _poolInfo[nftId] = PoolInfo(
-            nftId,
-            isVerifying,
-            collateralizationRate
-        );
+        _poolInfo[info.nftId] = info;
 
         // TODO add logging
     }

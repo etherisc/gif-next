@@ -14,7 +14,7 @@ interface ITreasury {
     // TODO add errors
 
     struct ProductSetup {
-        NftId productNftId;
+        NftId nftId;
         NftId distributorNftId;
         NftId poolNftId;
         IERC20Metadata token;
@@ -29,8 +29,9 @@ interface ITreasury {
         Fee commissionFee;
     }
 
-    struct PoolSetup {
-        NftId poolNftId;
+    struct PoolSetup { 
+        NftId nftId;
+        IERC20Metadata token;
         address wallet;
         Fee stakingFee;
         Fee performanceFee;
@@ -39,15 +40,7 @@ interface ITreasury {
 
 interface ITreasuryModule is ITreasury {
 
-    function registerProduct(
-        NftId productNftId,
-        NftId distributorNftId,
-        NftId poolNftId,
-        IERC20Metadata token,
-        address wallet,
-        Fee memory policyFee,
-        Fee memory processingFee
-    ) external;
+    function registerProduct(ProductSetup memory setup) external;
 
     function setProductFees(
         NftId productNftId,
@@ -55,12 +48,7 @@ interface ITreasuryModule is ITreasury {
         Fee memory processingFee
     ) external;
 
-    function registerPool(
-        NftId poolNftId,
-        address wallet,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external;
+    function registerPool(PoolSetup memory setup) external;
 
     function setPoolFees(
         NftId poolNftId,

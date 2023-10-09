@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {NftId, zeroNftId} from "../../types/NftId.sol";
-import {ObjectType, SERVICE} from "../../types/ObjectType.sol";
+import {NftId} from "../../types/NftId.sol";
+import {SERVICE} from "../../types/ObjectType.sol";
 import {Version, VersionPart} from "../../types/Version.sol";
 
 import {Registerable} from "../../shared/Registerable.sol";
-import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
 import {IService} from "./IService.sol";
@@ -21,7 +20,7 @@ abstract contract ServiceBase is
         address registry,
         NftId registryNftId
     )
-        Registerable(registry, registryNftId)
+        Registerable(registry, registryNftId, SERVICE())
         Versionable()
     {
         _registerInterface(type(IService).interfaceId);
@@ -29,9 +28,5 @@ abstract contract ServiceBase is
 
     function getMajorVersion() external view override returns(VersionPart majorVersion) {
         return this.getVersion().toMajorPart();
-    }
-
-    function getType() external pure override returns (ObjectType) {
-        return SERVICE();
     }
 }

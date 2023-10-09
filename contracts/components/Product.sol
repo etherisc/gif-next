@@ -3,22 +3,26 @@ pragma solidity ^0.8.19;
 
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId} from "../types/NftId.sol";
+import {NftId, zeroNftId} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
 import {Timestamp} from "../types/Timestamp.sol";
-import {Fee} from "../types/Fee.sol";
+import {Fee, FeeLib} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
+import {IComponent} from "../instance/module/component/IComponent.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
 
 contract Product is BaseComponent, IProductComponent {
+
     IProductService private _productService;
     address private _pool;
 
     constructor(
         address registry,
-        NftId instanceNftid,
+        NftId instanceNftId,
         address token,
         address pool
-    ) BaseComponent(registry, instanceNftid, token) {
+    ) BaseComponent(registry, instanceNftId, token, PRODUCT()) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = pool;
@@ -109,9 +113,29 @@ contract Product is BaseComponent, IProductComponent {
     {
         return _instance.getProductSetup(getNftId()).processingFee;
     }
-
-    // from registerable
-    function getType() public pure override returns (ObjectType) {
-        return PRODUCT();
+    function getProductInfo() 
+        external
+        view 
+        returns (IRegistry.ObjectInfo memory info, ITreasury.ProductSetup memory productSetup)
+    {// TODO nftId from 2 different sources
+        info = _registry.getObjectInfo(address(this));
+        productSetup = _instance.getProductSetup(info.nftId);
+    }
+    function getInitialProductInfo() 
+        external
+        view 
+        returns (IRegistry.ObjectInfo memory, ITreasury.ProductSetup memory)
+    {
+        return (getInitialInfo(), 
+                ITreasury.ProductSetup(
+                    zeroNftId(), // product
+                    zeroNftId(), // distributor
+                    _registry.getNftId(_pool),
+                    _token,
+                    _wallet,
+                    FeeLib.zeroFee(), // policyFee
+                    FeeLib.zeroFee()  // processingFee
+                )
+        );
     }
 }

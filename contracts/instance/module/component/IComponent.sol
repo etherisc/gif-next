@@ -14,14 +14,20 @@ import {Fee} from "../../../types/Fee.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
-// import {IComponentBase} from "../../../components/IComponentBase.sol";
+import {ITreasury} from "../treasury/ITreasury.sol";
+import {IPool} from "../pool/IPoolModule.sol";
 
 interface IComponent {
     // component dynamic info (static info kept in registry)
     struct ComponentInfo {
         NftId nftId;
         StateId state;
-        IERC20Metadata token;
+        //IERC20Metadata token;
+    }
+    
+    struct PoolComponentInfo {
+        ITreasury.PoolSetup setup;
+        IPool.PoolInfo info;
     }
 }
 
@@ -30,8 +36,7 @@ interface IComponentModule is IComponent {
 
     function registerComponent(
         NftId nftId,
-        ObjectType objectType,
-        IERC20Metadata token
+        ObjectType objectType
     ) external;
 
     function setComponentInfo(

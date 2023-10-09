@@ -18,20 +18,25 @@ interface IRegistry is IERC165 {
         bytes data;
     }
 
-    function register(address objectAddress) external returns (NftId nftId);
+    function register(ObjectInfo memory info) external returns (NftId nftId);
+    
+    function registerFrom(address from, ObjectInfo memory info) external returns (NftId nftId);
 
-    function registerObjectForInstance(
-        NftId parentNftid,
-        ObjectType objectType,
-        address initialOwner,
-        bytes memory data
-    ) external returns (NftId nftId);
+    function approve(
+        NftId registrator,
+        ObjectType object,
+        ObjectType parent)
+    external;
+
+    function allowance(
+        NftId registrator,
+        ObjectType object, 
+        ObjectType parent
+    ) external view returns (bool);
 
     function getServiceAddress(string memory serviceName, VersionPart majorVersion) external view returns (address serviceAddress);
 
     function getObjectCount() external view returns (uint256);
-
-    function getNftId() external view returns (NftId nftId);
 
     function getNftId(
         address objectAddress
@@ -41,13 +46,19 @@ interface IRegistry is IERC165 {
         NftId nftId
     ) external view returns (ObjectInfo memory info);
 
+    function getObjectInfo(
+        address object
+    ) external view returns (ObjectInfo memory info);
+
     function getName(
         NftId nftId
     ) external view returns (string memory name);
 
     function getProtocolOwner() external view returns (address);
 
-    function getOwner(NftId nftId) external view returns (address ownerAddress);
+    function ownerOf(NftId nftId) external view returns (address);
+
+    function ownerOf(address contractAddress) external view returns (address);
 
     function isRegistered(NftId nftId) external view returns (bool);
 

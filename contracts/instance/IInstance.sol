@@ -37,6 +37,7 @@ interface IInstance is
     IComponentModule,
     ITreasuryModule,
     ICompensationModule,
+    IRiskModule,
     IInstanceBase
 {
     function getRegistry() external view override (IBundleModule, IComponentModule, IPolicyModule, IRegisterable) returns (IRegistry registry);

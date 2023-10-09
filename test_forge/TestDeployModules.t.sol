@@ -41,7 +41,7 @@ contract TestDeployModules is TestGifBase {
             regAddr, regNftId);
         _stopMeasureGas();
 
-        instanceBase.register();
+        componentOwnerService.registerInstance(instanceBase);
         vm.stopPrank();
 
         NftId baseNftId = instanceBase.getNftId();
@@ -56,7 +56,7 @@ contract TestDeployModules is TestGifBase {
             registryNftId);
 
         vm.prank(instanceOwner);
-        instance.register();
+        componentOwnerService.registerInstance(instance);
     }
 
     function testInstanceModuleBundle() public {
@@ -64,7 +64,7 @@ contract TestDeployModules is TestGifBase {
         TestInstanceModuleBundle instance = new TestInstanceModuleBundle(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
-        instance.register();
+        componentOwnerService.registerInstance(instance);
     }
 
     function testInstanceModuleComponent() public {
@@ -72,7 +72,7 @@ contract TestDeployModules is TestGifBase {
         TestInstanceModuleComponent instance = new TestInstanceModuleComponent(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
-        instance.register();
+        componentOwnerService.registerInstance(instance);
     }
 
     function testInstanceModulePolicy() public {
@@ -80,7 +80,7 @@ contract TestDeployModules is TestGifBase {
         TestInstanceModulePolicy instance = new TestInstanceModulePolicy(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
-        instance.register();
+        componentOwnerService.registerInstance(instance);
     }
 
     function testInstanceModulePool() public {
@@ -88,7 +88,7 @@ contract TestDeployModules is TestGifBase {
         TestInstanceModulePool instance = new TestInstanceModulePool(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
-        instance.register();
+        componentOwnerService.registerInstance(instance);
     }
 
     function testInstanceModuleTreasury() public {
@@ -96,7 +96,7 @@ contract TestDeployModules is TestGifBase {
         TestInstanceModuleTreasury instance = new TestInstanceModuleTreasury(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
-        instance.register();
+        componentOwnerService.registerInstance(instance);
     }
 
     function testInstanceModuleCompensation() public {
@@ -104,7 +104,7 @@ contract TestDeployModules is TestGifBase {
         TestInstanceModuleCompensation instance = new TestInstanceModuleCompensation(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
-        instance.register();
+        componentOwnerService.registerInstance(instance);
     }
 
     function testInstanceModuleRisk() public {
@@ -112,6 +112,6 @@ contract TestDeployModules is TestGifBase {
         TestInstanceModuleRisk instance = new TestInstanceModuleRisk(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
-        instance.register();
+        componentOwnerService.registerInstance(instance);
     }
 }
