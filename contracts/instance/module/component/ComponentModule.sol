@@ -26,7 +26,7 @@ abstract contract ComponentModule is
     }
 
     function initializeComponentModule(IKeyValueStore keyValueStore) internal {
-        _initialize(keyValueStore, COMPONENT());
+        _initialize(keyValueStore);
     }
 
     function registerComponent(
@@ -39,7 +39,23 @@ abstract contract ComponentModule is
     {
         ComponentInfo memory info = ComponentInfo(token);
         _nftIds.push(nftId);
-        _create(nftId, abi.encode(info));
+        _create(COMPONENT(), nftId, abi.encode(info));
+    }
+
+    function getComponentState(
+        NftId nftId
+    ) 
+        external 
+        view 
+        override
+        returns (StateId state)
+    {
+        return _getState(COMPONENT(), nftId);
+    }
+
+    function getComponentToken(NftId nftId) external view override returns(IERC20Metadata token) {
+        ComponentInfo memory info = abi.decode(_getData(COMPONENT(), nftId), (ComponentInfo));
+        return info.token;
     }
 
     function getComponentCount()
@@ -55,21 +71,5 @@ abstract contract ComponentModule is
         uint256 idx
     ) external view override returns (NftId componentNftId) {
         return _nftIds[idx];
-    }
-
-    function getComponentState(
-        NftId nftId
-    ) 
-        external 
-        view 
-        override
-        returns (StateId state)
-    {
-        return _getState(nftId);
-    }
-
-    function getComponentToken(NftId nftId) external view override returns(IERC20Metadata token) {
-        ComponentInfo memory info = abi.decode(_getData(nftId), (ComponentInfo));
-        return info.token;
     }
 }

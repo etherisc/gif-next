@@ -37,9 +37,8 @@ contract TestApplicationCreate is TestGifBase {
         );
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
-        assertNftId(info.nftId, policyNftId, "policy id differs");
         assertEq(
-            info.state.toInt(),
+            instance.getPolicyState(policyNftId).toInt(),
             APPLIED().toInt(),
             "policy state not applied"
         );
@@ -52,7 +51,6 @@ contract TestApplicationCreate is TestGifBase {
         assertEq(info.premiumAmount, premiumAmount, "wrong premium amount");
         assertEq(info.lifetime, lifetime, "wrong lifetime");
 
-        assertTrue(info.createdAt == blockTimestamp(), "wrong created at");
         assertTrue(info.activatedAt == zeroTimestamp(), "wrong activated at");
         assertTrue(info.expiredAt == zeroTimestamp(), "wrong expired at");
         assertTrue(info.closedAt == zeroTimestamp(), "wrong closed at");
@@ -78,9 +76,8 @@ contract TestApplicationCreate is TestGifBase {
         IBundle.BundleInfo memory infoAfter = instance.getBundleInfo(bundleNftId);
         IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
 
-        assertNftId(policyInfo.nftId, policyNftId, "policy id differs");
         assertEq(
-            policyInfo.state.toInt(),
+            instance.getPolicyState(policyNftId).toInt(),
             UNDERWRITTEN().toInt(),
             "policy state not underwritten"
         );
@@ -178,9 +175,8 @@ contract TestApplicationCreate is TestGifBase {
             activateAt);
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
-        assertNftId(info.nftId, policyNftId, "policy id differs");
         assertEq(
-            info.state.toInt(),
+            instance.getPolicyState(policyNftId).toInt(),
             ACTIVE().toInt(),
             "policy state not active"
         );

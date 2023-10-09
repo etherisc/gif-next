@@ -53,7 +53,9 @@ contract Instance is
         TreasuryModule()
     {
         initializeBundleModule(_keyValueStore);
+        initializeCompensationModule(_keyValueStore);
         initializeComponentModule(_keyValueStore);
+        initializePolicyModule(_keyValueStore);
     }
 
     function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }

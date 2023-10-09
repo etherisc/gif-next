@@ -83,9 +83,9 @@ contract ProductService is ComponentServiceBase, IProductService {
             ""
         );
 
-        instance.createApplication(
-            productNftId,
+        instance.createPolicyInfo(
             policyNftId,
+            productNftId,
             sumInsuredAmount,
             premiumAmount,
             lifetime,
@@ -139,6 +139,7 @@ contract ProductService is ComponentServiceBase, IProductService {
 
     function _underwriteByPool(
         ITreasury.ProductSetup memory productSetup,
+        NftId policyNftId,
         IPolicy.PolicyInfo memory policyInfo,
         bytes memory bundleFilter,
         uint256 collateralAmount
@@ -148,7 +149,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         address poolAddress = _registry.getObjectInfo(productSetup.poolNftId).objectAddress;
         IPoolComponent pool = IPoolComponent(poolAddress);
         pool.underwrite(
-            policyInfo.nftId, 
+            policyNftId, 
             policyInfo.applicationData, 
             bundleFilter,
             collateralAmount);
@@ -173,7 +174,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         NftId productNftId = productInfo.nftId;
         IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
         require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
-        require(policyInfo.state == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
+        require(instance.getPolicyState(policyNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
 
         ITreasury.ProductSetup memory productSetup;
         NftId bundleNftId;
@@ -199,17 +200,14 @@ contract ProductService is ComponentServiceBase, IProductService {
             collateralAmount);
 
         // set policy state to underwritten
-        // TODO add require for state change
-        policyInfo.state = UNDERWRITTEN();
-        policyInfo.updatedIn = blockNumber();
+        instance.updatePolicyState(policyNftId, UNDERWRITTEN());
 
         // optional activation of policy
         if(activateAt > zeroTimestamp()) {
             policyInfo.activatedAt = activateAt;
             policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-            // TODO add require for state change
-            policyInfo.state = ACTIVE();
+            instance.updatePolicyState(policyNftId, ACTIVE());
         }
 
         // optional collection of premium
@@ -224,7 +222,7 @@ contract ProductService is ComponentServiceBase, IProductService {
             bundleInfo.balanceAmount += netPremiumAmount;
         }
 
-        instance.setPolicyInfo(policyInfo);
+        instance.setPolicyInfo(policyNftId, policyInfo);
         instance.setBundleInfo(bundleNftId, bundleInfo);
 
         // involve pool if necessary
@@ -235,6 +233,7 @@ contract ProductService is ComponentServiceBase, IProductService {
             if(poolInfo.isVerifying) {
                 _underwriteByPool(
                     productSetup,
+                    policyNftId,
                     policyInfo,
                     bundleInfo.filter,
                     collateralAmount
@@ -264,7 +263,6 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         // policy level book keeping for premium paid
         policyInfo.premiumPaidAmount += premiumAmount;
-        policyInfo.updatedIn = blockNumber();
 
         // optional activation of policy
         if(activateAt > zeroTimestamp()) {
@@ -275,11 +273,10 @@ contract ProductService is ComponentServiceBase, IProductService {
             policyInfo.activatedAt = activateAt;
             policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-            // TODO add require for state change
-            policyInfo.state = ACTIVE();
+            instance.updatePolicyState(policyNftId, ACTIVE());
         }
 
-        instance.setPolicyInfo(policyInfo);
+        instance.setPolicyInfo(policyNftId, policyInfo);
 
         // TODO add logging
     }
@@ -297,10 +294,8 @@ contract ProductService is ComponentServiceBase, IProductService {
         policyInfo.activatedAt = activateAt;
         policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-        // TODO add require for state change
-        policyInfo.state = ACTIVE();
-
-        instance.setPolicyInfo(policyInfo);
+        instance.setPolicyInfo(policyNftId, policyInfo);
+        instance.updatePolicyState(policyNftId, ACTIVE());
 
         // TODO add logging
     }

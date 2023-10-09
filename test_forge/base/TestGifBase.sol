@@ -258,8 +258,12 @@ contract TestGifBase is Test {
             collateralizationLevel);
 
         pool.register();
+        uint256 nftId = pool.getNftId().toInt();
+        uint256 state = instance.getComponentState(pool.getNftId()).toInt();
         // solhint-disable-next-line
         console.log("pool deployed at", address(pool));
+        // solhint-disable-next-line
+        console.log("pool nftId", nftId, "state", state);
     }
 
 
@@ -267,12 +271,15 @@ contract TestGifBase is Test {
         product = new TestProduct(address(registry), instance.getNftId(), address(token), address(pool));
         product.register();
 
+        uint256 nftId = product.getNftId().toInt();
+        uint256 state = instance.getComponentState(product.getNftId()).toInt();
         tokenHandler = instance.getTokenHandler(product.getNftId());
-
         // solhint-disable-next-line
         console.log("product deployed at", address(product));
         // solhint-disable-next-line
-        console.log("token handler deployed at", address(tokenHandler));
+        console.log("product nftId", nftId, "state", state);
+        // solhint-disable-next-line
+        console.log("product token handler deployed at", address(tokenHandler));
     }
 
     function _createBundle(
@@ -289,7 +296,7 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("bundle fundet with", amount);
         // solhint-disable-next-line
-        console.log("bundle nft id", address(product));
+        console.log("bundle nft id", bundleNftId.toInt());
     }
 
 }

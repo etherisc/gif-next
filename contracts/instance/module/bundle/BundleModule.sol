@@ -55,7 +55,7 @@ abstract contract BundleModule is
     }
 
     function initializeBundleModule(IKeyValueStore keyValueStore) internal {
-        _initialize(keyValueStore, BUNDLE());
+        _initialize(keyValueStore);
     }
 
     function createBundleInfo(
@@ -69,7 +69,7 @@ abstract contract BundleModule is
         onlyBundlePoolService
         override
     {
-        BundleInfo memory bundleInfo = BundleInfo(
+        BundleInfo memory info = BundleInfo(
             poolNftId,
             filter,
             amount, // capital
@@ -79,15 +79,15 @@ abstract contract BundleModule is
             zeroTimestamp() // closedAt
         );
 
-        _create(bundleNftId, abi.encode(bundleInfo));
+        _create(BUNDLE(), bundleNftId, abi.encode(info));
     }
 
-    function setBundleInfo(NftId bundleNftId, BundleInfo memory bundleInfo)
+    function setBundleInfo(NftId bundleNftId, BundleInfo memory info)
         external
         override
         onlyPoolOrProductService
     {
-        _updateData(bundleNftId, abi.encode(bundleInfo));
+        _updateData(BUNDLE(), bundleNftId, abi.encode(info));
     }
 
     function updateBundleState(NftId bundleNftId, StateId state)
@@ -95,7 +95,7 @@ abstract contract BundleModule is
         override
         onlyBundlePoolService
     {
-        _updateState(bundleNftId, state);
+        _updateState(BUNDLE(), bundleNftId, state);
     }
 
     function collateralizePolicy(
@@ -126,10 +126,10 @@ abstract contract BundleModule is
     }
 
     function getBundleInfo(NftId bundleNftId) external view override returns(BundleInfo memory bundleInfo) {
-        return abi.decode(_getData(bundleNftId), (BundleInfo));
+        return abi.decode(_getData(BUNDLE(), bundleNftId), (BundleInfo));
     }
 
     function getBundleState(NftId bundleNftId) external view override returns(StateId state) {
-        return _getState(bundleNftId);
+        return _getState(BUNDLE(), bundleNftId);
     }
 }

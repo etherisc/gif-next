@@ -256,13 +256,13 @@ sizes before
 | TestInstanceModuleTreasury     | 7.563     | 17.013      |
 ---
 sizes after
-| Instance                       | 22.413    | 2.163       |
+| Instance                       | 22.108    | 2.468       |
 | TestInstanceBase               | 3.485     | 21.091      |
 | TestInstanceModuleAccess       | 8.036     | 16.54       |
-| TestInstanceModuleBundle       | 7.827     | 16.749      |
+| TestInstanceModuleBundle       | 8.354     | 16.222      |
 | TestInstanceModuleCompensation | 3.485     | 21.091      |
-| TestInstanceModuleComponent    | 5.006     | 19.57       |
-| TestInstanceModulePolicy       | 7.114     | 17.462      |
+| TestInstanceModuleComponent    | 5.291     | 19.285      |
+| TestInstanceModulePolicy       | 7.335     | 17.241      |
 | TestInstanceModulePool         | 4.989     | 19.587      |
 | TestInstanceModuleRisk         | 3.485     | 21.091      |
 | TestInstanceModuleTreasury     | 7.743     | 16.833      |
