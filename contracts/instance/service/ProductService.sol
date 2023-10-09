@@ -62,7 +62,11 @@ contract ProductService is ComponentServiceBase, IProductService {
         override
     {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        instance.setProductFees(productInfo.nftId, policyFee, processingFee);
+        NftId productNftId = productInfo.nftId;
+        ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(productNftId);
+        treasuryInfo.policyFee = policyFee;
+        treasuryInfo.processingFee = processingFee;
+        instance.setTreasuryInfo(productNftId, treasuryInfo);
     }
 
     function createApplication(
@@ -102,20 +106,20 @@ contract ProductService is ComponentServiceBase, IProductService {
         internal
         view
         returns (
-            ITreasury.ProductSetup memory productSetup,
+            ITreasury.TreasuryInfo memory treasuryInfo,
             NftId bundleNftId,
             IBundle.BundleInfo memory bundleInfo,
             uint256 collateralAmount
         )
     {
         // check match between policy and bundle (via pool)
-        productSetup = instance.getProductSetup(policyInfo.productNftId);
+        treasuryInfo = instance.getTreasuryInfo(policyInfo.productNftId);
         bundleNftId = policyInfo.bundleNftId;
         bundleInfo = instance.getBundleInfo(bundleNftId);
-        require(bundleInfo.poolNftId == productSetup.poolNftId, "POLICY_BUNDLE_MISMATCH");
+        require(bundleInfo.poolNftId == treasuryInfo.poolNftId, "POLICY_BUNDLE_MISMATCH");
 
         // calculate required collateral
-        NftId poolNftId = productSetup.poolNftId;
+        NftId poolNftId = treasuryInfo.poolNftId;
         IPool.PoolInfo memory poolInfo = instance.getPoolInfo(poolNftId);
 
         // obtain remaining return values
@@ -138,7 +142,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     }
 
     function _underwriteByPool(
-        ITreasury.ProductSetup memory productSetup,
+        ITreasury.TreasuryInfo memory treasuryInfo,
         NftId policyNftId,
         IPolicy.PolicyInfo memory policyInfo,
         bytes memory bundleFilter,
@@ -146,7 +150,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     )
         internal
     {
-        address poolAddress = _registry.getObjectInfo(productSetup.poolNftId).objectAddress;
+        address poolAddress = _registry.getObjectInfo(treasuryInfo.poolNftId).objectAddress;
         IPoolComponent pool = IPoolComponent(poolAddress);
         pool.underwrite(
             policyNftId, 
@@ -176,13 +180,13 @@ contract ProductService is ComponentServiceBase, IProductService {
         require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
         require(instance.getPolicyState(policyNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
 
-        ITreasury.ProductSetup memory productSetup;
+        ITreasury.TreasuryInfo memory treasuryInfo;
         NftId bundleNftId;
         IBundle.BundleInfo memory bundleInfo;
         uint256 collateralAmount;
 
         (
-            productSetup,
+            treasuryInfo,
             bundleNftId,
             bundleInfo,
             collateralAmount
@@ -214,7 +218,8 @@ contract ProductService is ComponentServiceBase, IProductService {
         if(requirePremiumPayment) {
             uint256 netPremiumAmount = _processPremiumByTreasury(
                 instance, 
-                productSetup, 
+                productInfo.nftId,
+                treasuryInfo, 
                 policyNftId, 
                 policyInfo.premiumAmount);
 
@@ -227,12 +232,12 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         // involve pool if necessary
         {
-            NftId poolNftId = productSetup.poolNftId;
+            NftId poolNftId = treasuryInfo.poolNftId;
             IPool.PoolInfo memory poolInfo = instance.getPoolInfo(poolNftId);
 
             if(poolInfo.isVerifying) {
                 _underwriteByPool(
-                    productSetup,
+                    treasuryInfo,
                     policyNftId,
                     policyInfo,
                     bundleInfo.filter,
@@ -256,10 +261,10 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         // perform actual token transfers
         IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
-        ITreasury.ProductSetup memory product = instance.getProductSetup(productInfo.nftId);
+        ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(productInfo.nftId);
 
         uint256 premiumAmount = policyInfo.premiumAmount;
-        _processPremiumByTreasury(instance, product, policyNftId, premiumAmount);
+        _processPremiumByTreasury(instance, productInfo.nftId, treasuryInfo, policyNftId, premiumAmount);
 
         // policy level book keeping for premium paid
         policyInfo.premiumPaidAmount += premiumAmount;
@@ -315,12 +320,14 @@ contract ProductService is ComponentServiceBase, IProductService {
         view
         returns (NftId poolNftid)
     {
-        return instance.getProductSetup(productNftId).poolNftId;
+        return instance.getTreasuryInfo(productNftId).poolNftId;
     }
+
 
     function _processPremiumByTreasury(
         IInstance instance,
-        ITreasury.ProductSetup memory product,
+        NftId productNftId,
+        ITreasury.TreasuryInfo memory treasuryInfo,
         NftId policyNftId,
         uint256 premiumAmount
     )
@@ -329,11 +336,11 @@ contract ProductService is ComponentServiceBase, IProductService {
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
-            TokenHandler tokenHandler = instance.getTokenHandler(product.productNftId);
+            TokenHandler tokenHandler = instance.getTokenHandler(productNftId);
             address policyOwner = _registry.getOwner(policyNftId);
-            address poolWallet = instance.getPoolSetup(product.poolNftId).wallet;
+            address poolWallet = instance.getComponentWallet(treasuryInfo.poolNftId);
             netPremiumAmount = premiumAmount;
-            Fee memory policyFee = product.policyFee;
+            Fee memory policyFee = treasuryInfo.policyFee;
 
             if (FeeLib.feeIsZero(policyFee)) {
                 tokenHandler.transfer(
@@ -347,7 +354,8 @@ contract ProductService is ComponentServiceBase, IProductService {
                     policyFee
                 );
 
-                tokenHandler.transfer(policyOwner, product.wallet, feeAmount);
+                address productWallet = instance.getComponentWallet(productNftId);
+                tokenHandler.transfer(policyOwner, productWallet, feeAmount);
                 tokenHandler.transfer(policyOwner, poolWallet, netAmount);
                 netPremiumAmount = netAmount;
             }

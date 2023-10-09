@@ -4,100 +4,125 @@ pragma solidity ^0.8.19;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {NftId} from "../../../types/NftId.sol";
+import {TREASURY} from "../../../types/ObjectType.sol";
 import {Fee, FeeLib} from "../../../types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../../types/UFixed.sol";
 import {TokenHandler} from "./TokenHandler.sol";
+import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
 import {ITreasuryModule} from "./ITreasury.sol";
+import {ModuleBase} from "../../base/ModuleBase.sol";
 
-abstract contract TreasuryModule is ITreasuryModule {
-    mapping(NftId productNftId => ProductSetup setup) private _productSetup;
-    mapping(NftId distributorNftId => DistributorSetup setup)
-        private _distributorSetup;
-    mapping(NftId poolNftId => PoolSetup setup) private _poolSetup;
-    mapping(NftId componentNftId => TokenHandler tokenHanlder) _tokenHandler;
+abstract contract TreasuryModule is
+    ModuleBase,
+    ITreasuryModule
+{
+    // relation of distributor and pool nft map to product nft
+    mapping(NftId componentNftId => NftId productNftId) internal _productNft;
+    // relation of component nft to token hanlder
+    mapping(NftId componentNftId => TokenHandler tokenHandler) internal _tokenHandler;
+    Fee internal _zeroFee;
+    
 
-    function registerProduct(
+    function initializeTreasuryModule(IKeyValueStore keyValueStore) internal {
+        _initialize(keyValueStore);
+        _zeroFee = FeeLib.zeroFee();
+    }
+
+    function registerProductSetup(
         NftId productNftId,
-        NftId distributorNftId,
+        NftId compensationNftId,
         NftId poolNftId,
         IERC20Metadata token,
-        address wallet,
         Fee memory policyFee,
-        Fee memory processingFee
+        Fee memory processingFee,
+        Fee memory stakingFee,
+        Fee memory performanceFee
     ) external override // TODO add authz (only component module)
     {
         require(address(_tokenHandler[productNftId]) == address(0), "ERROR:TRS-010:TOKEN_HANDLER_ALREADY_REGISTERED");
-        require(address(_tokenHandler[poolNftId]) == address(0), "ERROR:TRS-011:TOKEN_HANDLER_ALREADY_REGISTERED");
-        require(address(_tokenHandler[distributorNftId]) == address(0), "ERROR:TRS-012:TOKEN_HANDLER_ALREADY_REGISTERED");
-        // TODO add additional validations
+        require(_productNft[compensationNftId].eqz(), "ERROR:TRS-011:COMPENSATION_ALREADY_LINKED");
+        require(_productNft[poolNftId].eqz(), "ERROR:TRS-012:POOL_ALREADY_LINKED");
 
         // deploy product specific handler contract
         TokenHandler tokenHandler = new TokenHandler(productNftId, address(token));
         _tokenHandler[productNftId] = tokenHandler;
-        _tokenHandler[poolNftId] = tokenHandler;
-        _tokenHandler[distributorNftId] = tokenHandler;
+        _productNft[compensationNftId] = productNftId;
+        _productNft[poolNftId] = productNftId;
 
-        // create product setup
-        _productSetup[productNftId] = ProductSetup(
-            productNftId,
-            distributorNftId,
+        TreasuryInfo memory info = TreasuryInfo(
+            compensationNftId,
             poolNftId,
             token,
-            wallet,
+            _zeroFee,
             policyFee,
-            processingFee
-        );
-
-        // TODO add logging
-    }
-
-    function setProductFees(
-        NftId productNftId,
-        Fee memory policyFee,
-        Fee memory processingFee
-    ) external override // TODO add authz (only component owner service)
-    {
-        // TODO add validation
-
-        ProductSetup storage setup = _productSetup[productNftId];
-        setup.policyFee = policyFee;
-        setup.processingFee = processingFee;
-
-        // TODO add logging
-    }
-
-    function registerPool(
-        NftId poolNftId,
-        address wallet,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external override // TODO add authz (only component module)
-    {
-        // TODO add validation
-
-        _poolSetup[poolNftId] = PoolSetup(
-            poolNftId,
-            wallet,
+            processingFee,
             stakingFee,
             performanceFee
         );
 
-        // TODO add logging
+        _create(TREASURY(), productNftId, abi.encode(info));
     }
 
-    function setPoolFees(
-        NftId poolNftId,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external override // TODO add authz (only component owner service)
+    function setTreasuryInfo(
+        NftId productNftId,
+        TreasuryInfo memory info
+    )
+        external
+        // TODO add authz (only component module)
+        override
     {
-        // TODO add validation
+        _updateData(TREASURY(), productNftId, abi.encode(info));
+    }
 
-        PoolSetup storage setup = _poolSetup[poolNftId];
-        setup.stakingFee = stakingFee;
-        setup.performanceFee = performanceFee;
+    // function setProductFees(
+    //     NftId productNftId,
+    //     Fee memory policyFee,
+    //     Fee memory processingFee
+    // ) external override // TODO add authz (only component owner service)
+    // {
+    //     TreasuryInfo memory info = getTreasuryInfo(productNftId);
+    //     require(address(info.token) != address(0), "ERROR:TRS-020:NOT_FOUND");
 
-        // TODO add logging
+    //     info.policyFee = policyFee;
+    //     info.processingFee = processingFee;
+
+    //     _updateData(TREASURY(), productNftId, abi.encode(info));
+    // }
+
+    // function setCompensationFees(
+    //     NftId compensationNftId,
+    //     Fee memory distributionFee
+    // ) external override // TODO add authz (only component owner service)
+    // {
+    //     NftId productNftId = _productNft[compensationNftId];
+    //     TreasuryInfo memory info = getTreasuryInfo(productNftId);
+    //     require(address(info.token) != address(0), "ERROR:TRS-030:NOT_FOUND");
+
+    //     info.commissionFee = distributionFee;
+
+    //     _updateData(TREASURY(), productNftId, abi.encode(info));
+    // }
+
+    // function setPoolFees(
+    //     NftId poolNftId,
+    //     Fee memory stakingFee,
+    //     Fee memory performanceFee
+    // ) external override // TODO add authz (only component owner service)
+    // {
+    //     NftId productNftId = _productNft[poolNftId];
+    //     TreasuryInfo memory info = getTreasuryInfo(productNftId);
+    //     require(address(info.token) != address(0), "ERROR:TRS-040:NOT_FOUND");
+
+    //     info.stakingFee = stakingFee;
+    //     info.performanceFee = performanceFee;
+
+    //     _updateData(TREASURY(), productNftId, abi.encode(info));
+    // }
+
+    function getProductNftId(
+        NftId componentNftId
+    ) external view returns (NftId productNftId) {
+        return _productNft[componentNftId];
     }
 
     function getTokenHandler(
@@ -106,16 +131,10 @@ abstract contract TreasuryModule is ITreasuryModule {
         return _tokenHandler[componentNftId];
     }
 
-    function getProductSetup(
+    function getTreasuryInfo(
         NftId productNftId
-    ) external view override returns (ProductSetup memory setup) {
-        return _productSetup[productNftId];
-    }
-
-    function getPoolSetup(
-        NftId poolNftId
-    ) external view override returns (PoolSetup memory setup) {
-        return _poolSetup[poolNftId];
+    ) public view override returns (TreasuryInfo memory info) {
+        return abi.decode(_getData(TREASURY(), productNftId), (TreasuryInfo));
     }
 
     function calculateFeeAmount(
@@ -132,8 +151,8 @@ abstract contract TreasuryModule is ITreasuryModule {
         return FeeLib.toFee(fractionalFee, fixedFee);
     }
 
-    function getZeroFee() external pure override returns (Fee memory fee) {
-        return FeeLib.zeroFee();
+    function getZeroFee() external view override returns (Fee memory fee) {
+        return _zeroFee;
     }
 
     function getUFixed(

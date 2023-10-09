@@ -10,14 +10,16 @@ import {NftId} from "../../../types/NftId.sol";
 interface IComponent {
     struct ComponentInfo {
         IERC20Metadata token;
+        address wallet;
     }
 }
 
 interface IComponentModule is IComponent {
 
-    function registerComponent(NftId nftId, IERC20Metadata token) external;
+    function registerComponent(NftId nftId, IERC20Metadata token, address wallet) external;
     function getComponentState(NftId nftId) external view returns (StateId state);
     function getComponentToken(NftId nftId) external view returns (IERC20Metadata token);
+    function getComponentWallet(NftId nftId) external view returns (address wallet);
 
     function getComponentCount() external view returns (uint256 numberOfCompnents);
     function getComponentId(uint256 idx) external view returns (NftId nftId);

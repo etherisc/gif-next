@@ -98,28 +98,28 @@ contract ComponentOwnerService is
 
         instance.registerComponent(
             nftId,
-            token);
-
-        address wallet = component.getWallet();
+            token,
+            component.getWallet()); 
 
         // component type specific registration actions
         if (component.getType() == PRODUCT()) {
             IProductComponent product = IProductComponent(address(component));
             NftId poolNftId = product.getPoolNftId();
             require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
-            // validate pool token and product token are same
+            IPoolComponent pool = IPoolComponent(_registry.getObjectInfo(poolNftId).objectAddress);
 
             // register with tresury
             // implement and add validation
             NftId distributorNftId = zeroNftId();
-            instance.registerProduct(
+            instance.registerProductSetup(
                 nftId,
                 distributorNftId,
                 poolNftId,
                 token,
-                wallet,
                 product.getPolicyFee(),
-                product.getProcessingFee()
+                product.getProcessingFee(),
+                pool.getStakingFee(),
+                pool.getPerformanceFee()
             );
         } else if (component.getType() == POOL()) {
             IPoolComponent pool = IPoolComponent(address(component));
@@ -129,15 +129,8 @@ contract ComponentOwnerService is
                 nftId,
                 pool.isVerifying(),
                 pool.getCollateralizationLevel());
-
-            // register with tresury
-            instance.registerPool(
-                nftId,
-                wallet,
-                pool.getStakingFee(),
-                pool.getPerformanceFee());
         }
-        // TODO add distribution
+        // TODO add compensation
     }
 
     function lock(

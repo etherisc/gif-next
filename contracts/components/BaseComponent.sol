@@ -13,6 +13,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {IComponent, IComponentModule} from "../instance/module/component/IComponent.sol";
 import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
+import {Fee, FeeLib} from "../types/Fee.sol";
 import {NftId} from "../types/NftId.sol";
 
 abstract contract BaseComponent is
@@ -25,6 +26,8 @@ abstract contract BaseComponent is
     address internal _wallet;
     IERC20Metadata internal _token;
     IInstance internal _instance;
+    bool internal _isRegistered;
+    Fee internal _zeroFee;
 
     constructor(
         address registry,
@@ -43,6 +46,8 @@ abstract contract BaseComponent is
         _componentOwnerService = _instance.getComponentOwnerService();
         _wallet = address(this);
         _token = IERC20Metadata(token);
+        _isRegistered = false;
+        _zeroFee = FeeLib.zeroFee();
     }
 
     // from registerable
@@ -57,7 +62,8 @@ abstract contract BaseComponent is
             "ERROR:COB:INSTANCE_NOT_REGISTERED"
         );
 
-        componentId = _componentOwnerService.register(this);
+        _isRegistered = true;
+        return _componentOwnerService.register(this);
     }
 
     // from component contract

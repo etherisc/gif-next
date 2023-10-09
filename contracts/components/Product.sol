@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId} from "../types/NftId.sol";
@@ -10,18 +11,24 @@ import {Fee} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 
 contract Product is BaseComponent, IProductComponent {
-    IProductService private _productService;
-    address private _pool;
+    IProductService internal _productService;
+    address internal _pool;
+    Fee internal _initialPolicyFee;
+    Fee internal _initialProcessingFee;
 
     constructor(
         address registry,
         NftId instanceNftid,
         address token,
-        address pool
+        address pool,
+        Fee memory policyFee,
+        Fee memory processingFee
     ) BaseComponent(registry, instanceNftid, token) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = pool;
+        _initialPolicyFee = policyFee;
+        _initialProcessingFee = processingFee;        
     }
 
     function _createApplication(
@@ -98,7 +105,12 @@ contract Product is BaseComponent, IProductComponent {
         override
         returns (Fee memory policyFee)
     {
-        return _instance.getProductSetup(getNftId()).policyFee;
+        NftId productNftId = getNftId();
+        if (address(_instance.getTokenHandler(productNftId)) != address(0)) {
+            return _instance.getTreasuryInfo(productNftId).policyFee;
+        } else {
+            return _initialPolicyFee;
+        }
     }
 
     function getProcessingFee()
@@ -107,7 +119,12 @@ contract Product is BaseComponent, IProductComponent {
         override
         returns (Fee memory processingFee)
     {
-        return _instance.getProductSetup(getNftId()).processingFee;
+        NftId productNftId = getNftId();
+        if (address(_instance.getTokenHandler(productNftId)) != address(0)) {
+            return _instance.getTreasuryInfo(productNftId).processingFee;
+        } else {
+            return _initialProcessingFee;
+        }
     }
 
     // from registerable

@@ -41,6 +41,10 @@ function COMPONENT() pure returns (ObjectType) {
     return toObjectType(100);
 }
 
+function TREASURY() pure returns (ObjectType) {
+    return toObjectType(101);
+}
+
 function PRODUCT() pure returns (ObjectType) {
     return toObjectType(110);
 }

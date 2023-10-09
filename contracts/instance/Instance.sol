@@ -57,6 +57,7 @@ contract Instance is
         initializeComponentModule(_keyValueStore);
         initializePolicyModule(_keyValueStore);
         initializePoolModule(_keyValueStore);
+        initializeRiskModule(_keyValueStore);
     }
 
     function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }

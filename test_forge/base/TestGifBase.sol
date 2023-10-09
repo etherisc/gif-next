@@ -22,6 +22,7 @@ import {USDC} from "../../contracts/test/Usdc.sol";
 import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
+import {Fee} from "../../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 
@@ -250,14 +251,19 @@ contract TestGifBase is Test {
     )
         internal
     {
+        Fee memory stakingFee = instance.getZeroFee();
+        Fee memory performanceFee = instance.getZeroFee();
         pool = new TestPool(
             address(registry), 
             instance.getNftId(), 
             address(token),
             isVerifying,
-            collateralizationLevel);
+            collateralizationLevel,
+            stakingFee,
+            performanceFee);
 
         pool.register();
+
         uint256 nftId = pool.getNftId().toInt();
         uint256 state = instance.getComponentState(pool.getNftId()).toInt();
         // solhint-disable-next-line
@@ -268,7 +274,16 @@ contract TestGifBase is Test {
 
 
     function _deployProduct() internal {
-        product = new TestProduct(address(registry), instance.getNftId(), address(token), address(pool));
+        Fee memory policyFee = instance.getZeroFee();
+        Fee memory processingFee = instance.getZeroFee();
+        product = new TestProduct(
+            address(registry), 
+            instance.getNftId(), 
+            address(token), 
+            address(pool),
+            policyFee,
+            processingFee);
+
         product.register();
 
         uint256 nftId = product.getNftId().toInt();

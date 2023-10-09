@@ -10,8 +10,15 @@ contract TestProduct is Product {
 
     event LogTestProductSender(address sender);
 
-    constructor(address registry, NftId instanceNftid, address token, address pool)
-        Product(registry, instanceNftid, token, pool)
+    constructor(
+        address registry,
+        NftId instanceNftid,
+        address token,
+        address pool,
+        Fee memory policyFee,
+        Fee memory processingFee
+    )
+        Product(registry, instanceNftid, token, pool, policyFee, processingFee)
     // solhint-disable-next-line no-empty-blocks
     {}
 

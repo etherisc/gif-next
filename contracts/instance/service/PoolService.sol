@@ -50,8 +50,13 @@ contract PoolService is ComponentServiceBase, IPoolService {
         external
         override
     {
-        (IRegistry.ObjectInfo memory info, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
-        instance.setPoolFees(info.nftId, stakingFee, performanceFee);
+        (IRegistry.ObjectInfo memory poolInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+
+        NftId productNftId = instance.getProductNftId(poolInfo.nftId);
+        ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(productNftId);
+        treasuryInfo.stakingFee = stakingFee;
+        treasuryInfo.performanceFee = performanceFee;
+        instance.setTreasuryInfo(productNftId, treasuryInfo);
     }
 
     function createBundle(
@@ -109,9 +114,10 @@ contract PoolService is ComponentServiceBase, IPoolService {
     {
         // process token transfer(s)
         if(stakingAmount > 0) {
-            TokenHandler tokenHandler = instance.getTokenHandler(poolNftId);
+            NftId productNftId = instance.getProductNftId(poolNftId);
+            TokenHandler tokenHandler = instance.getTokenHandler(productNftId);
             address bundleOwner = _registry.getOwner(bundleNftId);
-            address poolWallet = instance.getPoolSetup(poolNftId).wallet;
+            address poolWallet = instance.getComponentWallet(poolNftId);
 
             tokenHandler.transfer(
                 bundleOwner,
