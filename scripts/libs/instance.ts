@@ -33,6 +33,7 @@ export async function deployAndRegisterInstance(
             ObjectTypeLib: libraries.objectTypeLibAddress,
             StateIdLib: libraries.stateIdLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
+            RiskIdLib: libraries.riskIdLibAddress,
         }});
 
     const instanceNftId = await register(instanceBaseContract as Registerable, instanceAddress, "Instance", registry, owner);

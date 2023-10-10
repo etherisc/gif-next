@@ -24,6 +24,12 @@ BUNDLE = 220
 CLAIM = 211
 PAYOUT = 212
 
+# GIF object states
+APPLIED = 10
+DECLINED = 30
+UNDERWRITTEN = 40
+ACTIVE = 100
+
 # GIF services
 COMPONENT_OWNER_SERVICE_NAME = 'ComponentOwnerService'
 PRODUCT_SERVICE_NAME = 'ProductService'

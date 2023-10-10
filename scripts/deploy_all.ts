@@ -1,6 +1,6 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
-import { IChainNft__factory, IRegistry__factory, Registerable, UFixedMathLib__factory } from "../typechain-types";
+import { IChainNft__factory, IRegistry__factory, Instance__factory, Registerable, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateNftOwnerhip, validateOwnership } from "./libs/accounts";
 import { POOL_COLLATERALIZATION_LEVEL, POOL_IS_VERIFYING } from "./libs/constants";
 import { deployContract } from "./libs/deployment";
@@ -109,6 +109,7 @@ function printAddresses(
     addresses += `feeLibAddress: ${libraries.feeLibAddress}\n`;
     addresses += `stateIdLibAddress: ${libraries.stateIdLibAddress}\n`;
     addresses += `roleIdLibAddress: ${libraries.roleIdLibAddress}\n`;
+    addresses += `riskIdLibAddress: ${libraries.riskIdLibAddress}\n`;
     addresses += `--------\n`;
     addresses += `registryAddress: ${registry.registryAddress}\n`;
     addresses += `registryNftId: ${registry.registryNftId}\n`;
@@ -139,6 +140,8 @@ async function deployProduct(
 ): Promise<{
     productAddress: AddressLike, productNftId: string,
 }> {
+    const zeroFee = [0,0];
+
     const { address: productAddress, contract: productContractBase } = await deployContract(
         "TestProduct",
         owner,
@@ -147,8 +150,13 @@ async function deployProduct(
             instance.instanceNftId,
             tokenAddress,
             poolAddress,
+            zeroFee,
+            zeroFee
         ],
-        { libraries: {  }});
+        { libraries: {
+            RiskIdLib: libraries.riskIdLibAddress,
+            FeeLib: libraries.feeLibAddress,
+        }});
     
     const productNftId = await register(productContractBase as Registerable, productAddress, "TestProduct", registry, owner)
     logger.info(`product registered - productNftId: ${productNftId}`);
@@ -170,6 +178,7 @@ async function deployPool(owner: Signer, libraries: LibraryAddresses, registry: 
 
     const uFixedMathLib = UFixedMathLib__factory.connect(libraries.uFixedMathLibAddress.toString(), owner);
     const collateralizationLevel = await uFixedMathLib["toUFixed(uint256)"](POOL_COLLATERALIZATION_LEVEL);
+    const zeroFee = [0,0];
 
     const { address: poolAddress, contract: poolContractBase } = await deployContract(
         "TestPool",
@@ -180,8 +189,13 @@ async function deployPool(owner: Signer, libraries: LibraryAddresses, registry: 
             tokenAddress,
             POOL_IS_VERIFYING,
             collateralizationLevel,
+            zeroFee,
+            zeroFee
         ],
-        { libraries: {}},
+        { libraries: {
+            NftIdLib: libraries.nftIdLibAddress,
+            FeeLib: libraries.feeLibAddress,
+        }},
         "contracts/test/TestPool.sol:TestPool");
 
     const poolNftId = await register(poolContractBase as Registerable, poolAddress, "TestPool", registry, owner);

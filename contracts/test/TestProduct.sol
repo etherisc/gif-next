@@ -12,8 +12,6 @@ contract TestProduct is Product {
     event LogTestProductSender(address sender);
 
     string public constant DEFAULT_RISK_NAME = "DEFAULT_RISK";
-    RiskId public defaultRiskId;
-
     bool private defaultRiskCreated;
 
     constructor(
@@ -49,7 +47,7 @@ contract TestProduct is Product {
 
         nftId = _createApplication(
             msg.sender, // policy holder
-            defaultRiskId,
+            getDefaultRiskId(),
             sumInsuredAmount,
             premiumAmount,
             lifetime,

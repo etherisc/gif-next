@@ -23,11 +23,22 @@ npm run coverage
 
 ### Deployment 
 
+Install the dependencies before running the script below for the first time.
+
+```bash
+npm install
+```
+
 The deploy script will deploy all required contracts and create a test instance with a test product and a test pool. 
 
 ```bash
 # run deployment on a locally created ganache instance
+export SKIP_VERIFICATION=true
 hh run scripts/deploy_all.ts
+```
+
+```bash
+# set appropriate values vor env variables (see below)
 
 # run deployment on another network
 hh run --network <networkname> scripts/deploy_all.ts
@@ -256,13 +267,13 @@ sizes before
 | TestInstanceModuleTreasury     | 7.563     | 17.013      |
 ---
 sizes after
-| Instance                       | 21.776    | 2.8         |
+| Instance                       | 22.727    | 1.849       |
 | TestInstanceBase               | 3.485     | 21.091      |
 | TestInstanceModuleAccess       | 8.036     | 16.54       |
 | TestInstanceModuleBundle       | 8.354     | 16.222      |
 | TestInstanceModuleCompensation | 3.485     | 21.091      |
 | TestInstanceModuleComponent    | 5.482     | 19.094      |
-| TestInstanceModulePolicy       | 7.335     | 17.241      |
+| TestInstanceModulePolicy       | 7.502     | 17.074      |
 | TestInstanceModulePool         | 5.522     | 19.054      |
-| TestInstanceModuleRisk         | 3.485     | 21.091      |
+| TestInstanceModuleRisk         | 4.635     | 19.941      |
 | TestInstanceModuleTreasury     | 8.945     | 15.631      |
