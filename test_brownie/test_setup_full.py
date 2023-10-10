@@ -30,9 +30,13 @@ from test_brownie.const import (
     VERSION,
     COMPONENT_OWNER_SERVICE_NAME,
     PRODUCT_SERVICE_NAME,
-    POOL_SERVICE_NAME
+    POOL_SERVICE_NAME,
+    ACTIVE,
+    APPLIED,
+    UNDERWRITTEN
 )
 
+from test_brownie.gif import create_bundle
 from test_brownie.util import contract_from_address
 
 # enforce function isolation for tests below
@@ -107,8 +111,121 @@ def test_product(
     assert info['data'] == '0x'
 
     # check link to pool and other parts of product setup
-    setup = instance.getProductSetup(product_nft_id).dict()
-    assert setup['productNftId'] == product_nft_id
-    assert setup['poolNftId'] == pool_nft_id
-    assert setup['token'] == usdc
-    assert setup['wallet'] == product
+    treasury_info = instance.getTreasuryInfo(product_nft_id).dict()
+    assert treasury_info['poolNftId'] == pool_nft_id
+    assert treasury_info['token'] == usdc
+
+
+def test_create_bundle_full(
+    usdc: TestUsdc,
+    all_services: map,
+    registry: Registry,
+    registry_owner: Account,
+    instance: Instance,
+    pool: TestPool,
+    investor: Account,
+    product: TestProduct
+):
+    assert pool.getToken() == usdc
+    assert instance.getBundleCount(pool.getNftId()) == 0
+    assert usdc.balanceOf(pool) == 0
+
+    initial_bundle_capacity = 1000 * 10 ** usdc.decimals()
+    lifetime = 31 * 24 * 3600
+    bundle_filter = ""
+    transfer_helper = instance.getTokenHandler(product.getNftId())
+
+    usdc.transfer(investor, initial_bundle_capacity, {'from': registry_owner})
+    usdc.approve(transfer_helper, initial_bundle_capacity, {'from': investor})
+    tx = pool.createBundle(initial_bundle_capacity, 31 * 24 * 3600, "", {'from': investor})
+
+    assert instance.getBundleCount(pool.getNftId()) == 1
+    assert usdc.balanceOf(pool) == initial_bundle_capacity
+
+    bundle_nft_id = instance.getBundleNftId(pool.getNftId(), 0)
+    bundle_info = instance.getBundleInfo(bundle_nft_id).dict()
+
+    assert registry.getOwner(bundle_nft_id) == investor
+    assert bundle_info['balanceAmount'] == initial_bundle_capacity
+    assert bundle_info['capitalAmount'] == initial_bundle_capacity
+    assert bundle_info['lockedAmount'] == 0
+
+    assert instance.getBundleState(bundle_nft_id) == ACTIVE
+
+
+def test_create_bundle_simple(
+    usdc: TestUsdc,
+    all_services: map,
+    registry: Registry,
+    registry_owner: Account,
+    instance: Instance,
+    pool: TestPool,
+    investor: Account,
+    product: TestProduct
+):
+    assert pool.getToken() == usdc
+    assert instance.getBundleCount(pool.getNftId()) == 0
+    assert usdc.balanceOf(pool) == 0
+
+    bundle_capacity = 42 * 10 ** usdc.decimals()
+    bundle_nft_id = create_bundle(
+        instance,
+        product,
+        pool,
+        registry_owner,
+        investor,
+        bundle_capacity
+    )
+
+    assert instance.getBundleCount(pool.getNftId()) == 1
+    assert usdc.balanceOf(pool) == bundle_capacity
+
+    bundle_info = instance.getBundleInfo(bundle_nft_id).dict()
+
+    assert registry.getOwner(bundle_nft_id) == investor
+    assert bundle_info['balanceAmount'] == bundle_capacity
+    assert bundle_info['capitalAmount'] == bundle_capacity
+    assert bundle_info['lockedAmount'] == 0
+
+    assert instance.getBundleState(bundle_nft_id) == ACTIVE
+
+
+
+def test_create_policy(
+    usdc: TestUsdc,
+    all_services: map,
+    registry: Registry,
+    registry_owner: Account,
+    instance: Instance,
+    pool: TestPool,
+    investor: Account,
+    product: TestProduct,
+    customer: Account
+):
+    bundle_capacity = 1000 * 10 ** usdc.decimals()
+    bundle_nft_id = create_bundle(
+        instance,
+        product,
+        pool,
+        registry_owner,
+        investor,
+        bundle_capacity
+    )
+
+    sum_insured = 500 * 10 ** usdc.decimals()
+    premium = sum_insured / 10
+    lifetime = 365 * 24 * 3600
+
+    tx = product.applyForPolicy(sum_insured, premium, lifetime, bundle_nft_id, {'from': customer})
+    policy_nft_id = tx.events['Transfer']['tokenId']
+
+    assert registry.getOwner(policy_nft_id) == customer
+    assert instance.getPolicyState(policy_nft_id) == APPLIED
+
+    policy_info = instance.getPolicyInfo(policy_nft_id).dict()
+
+    assert policy_info['riskId'] == product.getDefaultRiskId()
+    assert policy_info['sumInsuredAmount'] == sum_insured
+    assert policy_info['premiumAmount'] == premium
+    assert policy_info['premiumPaidAmount'] == 0
+    assert policy_info['lifetime'] == lifetime

@@ -14,9 +14,11 @@ contract TestPool is Pool {
         NftId instanceNftid,
         address token,
         bool isVerifying,
-        UFixed collateralizationLevel
+        UFixed collateralizationLevel,
+        Fee memory stakingFee,
+        Fee memory performanceFee
     )
-        Pool(registry, instanceNftid, token, isVerifying, collateralizationLevel)
+        Pool(registry, instanceNftid, token, isVerifying, collateralizationLevel, stakingFee, performanceFee)
     // solhint-disable-next-line no-empty-blocks
     {}
 }

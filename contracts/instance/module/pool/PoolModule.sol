@@ -8,18 +8,22 @@ import {IPolicy, IPolicyModule} from "../../module/policy/IPolicy.sol";
 import {ITreasuryModule} from "../../module/treasury/ITreasury.sol";
 
 import {NftId} from "../../../types/NftId.sol";
+import {POOL} from "../../../types/ObjectType.sol";
 import {LibNftIdSet} from "../../../types/NftIdSet.sol";
 import {StateId, APPLIED} from "../../../types/StateId.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 
+import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
 import {IPoolModule} from "./IPoolModule.sol";
+import {ModuleBase} from "../../base/ModuleBase.sol";
 
 abstract contract PoolModule is
+    ModuleBase,
     IPoolModule
 {
     using LibNftIdSet for LibNftIdSet.Set;
 
-    mapping(NftId poolNftId => PoolInfo info) private _poolInfo;
+    // mapping(NftId poolNftId => PoolInfo info) private _poolInfo;
     mapping(NftId poolNftId => LibNftIdSet.Set bundles) private _bundlesForPool;
 
     modifier poolServiceCallingPool() {
@@ -30,6 +34,10 @@ abstract contract PoolModule is
         _;
     }
 
+    function initializePoolModule(IKeyValueStore keyValueStore) internal {
+        _initialize(keyValueStore);
+    }
+
     function registerPool(
         NftId nftId, 
         bool isVerifying,
@@ -38,17 +46,12 @@ abstract contract PoolModule is
         public
         override
     {
-        require(
-            _poolInfo[nftId].nftId.eqz(), 
-            "ERROR:PL-010:ALREADY_CREATED");
-
-        _poolInfo[nftId] = PoolInfo(
-            nftId,
+        PoolInfo memory info  = PoolInfo(
             isVerifying,
             collateralizationRate
         );
 
-        // TODO add logging
+        _create(POOL(), nftId, abi.encode(info));
     }
 
     function addBundleToPool(
@@ -71,7 +74,7 @@ abstract contract PoolModule is
     function getPoolInfo(
         NftId nftId
     ) external view override returns (PoolInfo memory info) {
-        info = _poolInfo[nftId];
+        return abi.decode(_getData(POOL(), nftId), (PoolInfo));
     }
 
 

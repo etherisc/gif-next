@@ -29,9 +29,9 @@ interface IKeyValueStore is ILifecycle {
         Blocknumber createdIn;
     }
 
-    event LogInfoCreated(Key key, StateId state, address createdBy);
-    event LogInfoUpdated(Key key, StateId state, address updatedBy, Blocknumber lastUpdatedIn);
-    event LogStateUpdated(Key key, StateId stateOld, StateId stateNew, address updatedBy, Blocknumber lastUpdatedIn);
+    event LogInfoCreated(Key key, StateId state, address createdBy, address txOrigin);
+    event LogInfoUpdated(Key key, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogStateUpdated(Key key, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     // generic state changing functions
     function create(Key32 key, ObjectType objectType, bytes memory data) external;
@@ -46,4 +46,5 @@ interface IKeyValueStore is ILifecycle {
     function getState(Key32 key) external view returns (StateId state);
 
     function toKey32(ObjectType objectType, KeyId id) external pure returns(Key32);
+    function toKey(Key32 key32) external pure returns(Key memory key);
 }

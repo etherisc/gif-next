@@ -33,18 +33,17 @@ interface IInstance is
     IAccessModule,
     IPolicyModule,
     IPoolModule,
+    IRiskModule,
     IBundleModule,
     IComponentModule,
     ITreasuryModule,
     ICompensationModule,
     IInstanceBase
 {
-    function getRegistry() external view override (IBundleModule, IComponentModule, IPolicyModule, IRegisterable) returns (IRegistry registry);
+    function getRegistry() external view override (IPolicyModule, IRegisterable) returns (IRegistry registry);
     function getOwner() external view override (IOwnable, IAccessModule) returns(address owner);
 
-    function hasRole(RoleId role, address member) external view override (IAccessModule, IComponentModule) returns (bool hasRole);    
-
-    function getKeyValueStore() external view override (IBundleModule, IInstanceBase) returns (IKeyValueStore keyValueStore);
+    function getKeyValueStore() external view override (IInstanceBase) returns (IKeyValueStore keyValueStore);
     function getComponentOwnerService() external view override (IInstanceBase, IComponentModule) returns(IComponentOwnerService);
     function getProductService() external view override (IInstanceBase, IBundleModule, IPolicyModule) returns(IProductService);
     function getPoolService() external view override (IInstanceBase, IBundleModule, IPoolModule) returns(IPoolService);

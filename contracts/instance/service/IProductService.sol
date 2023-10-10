@@ -1,11 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IRisk} from "../module/risk/IRisk.sol";
+import {IService} from "../base/IService.sol";
+
 import {NftId} from "../../types/NftId.sol";
+import {RiskId} from "../../types/RiskId.sol";
+import {StateId} from "../../types/StateId.sol";
 import {Timestamp} from "../../types/Timestamp.sol";
 import {UFixed} from "../../types/UFixed.sol";
 import {Fee} from "../../types/Fee.sol";
-import {IService} from "../base/IService.sol";
 
 interface IProductService is IService {
     function setFees(
@@ -13,8 +17,24 @@ interface IProductService is IService {
         Fee memory processingFee
     ) external;
 
+    function createRisk(
+        RiskId riskId,
+        bytes memory data
+    ) external;
+
+    function setRiskInfo(
+        RiskId riskId,
+        IRisk.RiskInfo memory data
+    ) external;
+
+    function updateRiskState(
+        RiskId riskId,
+        StateId state
+    ) external;
+
     function createApplication(
         address applicationOwner,
+        RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,

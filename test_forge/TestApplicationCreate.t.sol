@@ -37,9 +37,8 @@ contract TestApplicationCreate is TestGifBase {
         );
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
-        assertNftId(info.nftId, policyNftId, "policy id differs");
         assertEq(
-            info.state.toInt(),
+            instance.getPolicyState(policyNftId).toInt(),
             APPLIED().toInt(),
             "policy state not applied"
         );
@@ -52,7 +51,6 @@ contract TestApplicationCreate is TestGifBase {
         assertEq(info.premiumAmount, premiumAmount, "wrong premium amount");
         assertEq(info.lifetime, lifetime, "wrong lifetime");
 
-        assertTrue(info.createdAt == blockTimestamp(), "wrong created at");
         assertTrue(info.activatedAt == zeroTimestamp(), "wrong activated at");
         assertTrue(info.expiredAt == zeroTimestamp(), "wrong expired at");
         assertTrue(info.closedAt == zeroTimestamp(), "wrong closed at");
@@ -78,9 +76,8 @@ contract TestApplicationCreate is TestGifBase {
         IBundle.BundleInfo memory infoAfter = instance.getBundleInfo(bundleNftId);
         IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
 
-        assertNftId(policyInfo.nftId, policyNftId, "policy id differs");
         assertEq(
-            policyInfo.state.toInt(),
+            instance.getPolicyState(policyNftId).toInt(),
             UNDERWRITTEN().toInt(),
             "policy state not underwritten"
         );
@@ -90,7 +87,6 @@ contract TestApplicationCreate is TestGifBase {
         assertTrue(policyInfo.expiredAt == zeroTimestamp(), "wrong expired at");
         assertTrue(policyInfo.closedAt == zeroTimestamp(), "wrong closed at");
 
-        assertEq(infoAfter.nftId.toInt(), bundleNftId.toInt(), "bundle id unexpected");
         assertEq(infoBefore.lockedAmount, 0, "capital locked not 0");
         assertEq(
             infoAfter.lockedAmount,
@@ -107,14 +103,14 @@ contract TestApplicationCreate is TestGifBase {
 
         // check updated policy fee
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
-        ITreasuryModule.ProductSetup memory setup = treasuryModule
-            .getProductSetup(product.getNftId());
+        ITreasuryModule.TreasuryInfo memory info = treasuryModule
+            .getTreasuryInfo(product.getNftId());
         assertTrue(
-            FeeLib.feeIsSame(setup.policyFee, FeeLib.zeroFee()),
+            FeeLib.feeIsSame(info.policyFee, FeeLib.zeroFee()),
             "updated policyFee not zeroFee"
         );
         assertTrue(
-            FeeLib.feeIsSame(setup.processingFee, FeeLib.zeroFee()),
+            FeeLib.feeIsSame(info.processingFee, FeeLib.zeroFee()),
             "updated processingFee not zeroFee"
         );
 
@@ -178,29 +174,28 @@ contract TestApplicationCreate is TestGifBase {
             requirePremiumPayment,
             activateAt);
 
-        IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
-        assertNftId(info.nftId, policyNftId, "policy id differs");
+        IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
         assertEq(
-            info.state.toInt(),
+            instance.getPolicyState(policyNftId).toInt(),
             ACTIVE().toInt(),
             "policy state not active"
         );
 
         // solhint-disable-next-line not-rely-on-time
-        assertTrue(info.activatedAt == activateAt, "wrong activated at");
+        assertTrue(policyInfo.activatedAt == activateAt, "wrong activated at");
         assertTrue(
-            info.expiredAt ==
-            activateAt.addSeconds(info.lifetime),
+            policyInfo.expiredAt ==
+            activateAt.addSeconds(policyInfo.lifetime),
             "wrong expired at"
         );
-        assertTrue(info.closedAt == zeroTimestamp(), "wrong closed at");
+        assertTrue(policyInfo.closedAt == zeroTimestamp(), "wrong closed at");
         assertEq(
-            info.premiumAmount,
+            policyInfo.premiumAmount,
             premiumAmount,
             "unexpected policy premium amount (after)"
         );
         assertEq(
-            info.premiumPaidAmount,
+            policyInfo.premiumPaidAmount,
             premiumAmount,
             "unexpected policy premium paid amount (after)"
         );
@@ -214,16 +209,16 @@ contract TestApplicationCreate is TestGifBase {
     function testUnderwriteAndActivatePolicyCollectPremiumWithFee() public {
         // check initial policy fee
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
-        ITreasuryModule.ProductSetup memory setup = treasuryModule
-            .getProductSetup(product.getNftId());
+        ITreasuryModule.TreasuryInfo memory info = treasuryModule
+            .getTreasuryInfo(product.getNftId());
         Fee memory expectedInitialPolicyFee = FeeLib.zeroFee();
 
         assertTrue(
-            FeeLib.feeIsSame(setup.policyFee, expectedInitialPolicyFee),
+            FeeLib.feeIsSame(info.policyFee, expectedInitialPolicyFee),
             "initial policyFee not zeroFee"
         );
         assertTrue(
-            FeeLib.feeIsZero(setup.processingFee),
+            FeeLib.feeIsZero(info.processingFee),
             "initial processingFee not zeroFee"
         );
 
@@ -237,13 +232,13 @@ contract TestApplicationCreate is TestGifBase {
         product.setFees(policyFee, zeroFee);
 
         // check updated policy fee
-        setup = treasuryModule.getProductSetup(product.getNftId());
+        info = treasuryModule.getTreasuryInfo(product.getNftId());
         assertTrue(
-            FeeLib.feeIsSame(setup.policyFee, policyFee),
+            FeeLib.feeIsSame(info.policyFee, policyFee),
             "updated policyFee not 15% + 20 cents"
         );
         assertTrue(
-            FeeLib.feeIsSame(setup.processingFee, FeeLib.zeroFee()),
+            FeeLib.feeIsSame(info.processingFee, FeeLib.zeroFee()),
             "updated processingFee not zeroFee"
         );
 
@@ -276,14 +271,14 @@ contract TestApplicationCreate is TestGifBase {
             requirePremiumPayment,
             activateAt);
 
-        IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
+        IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
         assertEq(
-            info.premiumAmount,
+            policyInfo.premiumAmount,
             premiumAmount,
             "unexpected policy premium amount (after)"
         );
         assertEq(
-            info.premiumPaidAmount,
+            policyInfo.premiumPaidAmount,
             premiumAmount,
             "unexpected policy premium paid amount (after)"
         );

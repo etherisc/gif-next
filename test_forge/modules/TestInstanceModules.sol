@@ -65,8 +65,8 @@ contract TestInstanceModuleBundle  is
     {
 
     }
-    function getRegistry() public view override (Registerable, IBundleModule) returns (IRegistry registry) { return super.getRegistry(); }
-    function getKeyValueStore() public view override (InstanceBase, IBundleModule) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
+    function getRegistry() public view override (Registerable) returns (IRegistry registry) { return super.getRegistry(); }
+    function getKeyValueStore() public view override (InstanceBase) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
     function getComponentOwnerService() external view override returns(IComponentOwnerService) { return _componentOwnerService; }
     function getProductService() external view override (IBundleModule, IInstanceBase) returns(IProductService service) { return _productService; }
@@ -84,10 +84,6 @@ contract TestInstanceModuleComponent  is
     {
 
     }
-
-    function getRegistry() public view override (Registerable, IComponentModule) returns (IRegistry registry) { return super.getRegistry(); }
-
-    function hasRole(RoleId, address) public pure override returns (bool) { return true; }
 
     function getComponentOwnerService() external view override (IComponentModule, IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }

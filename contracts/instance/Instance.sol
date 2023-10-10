@@ -53,12 +53,15 @@ contract Instance is
         TreasuryModule()
     {
         initializeBundleModule(_keyValueStore);
+        initializeCompensationModule(_keyValueStore);
+        initializeComponentModule(_keyValueStore);
+        initializePolicyModule(_keyValueStore);
+        initializePoolModule(_keyValueStore);
+        initializeRiskModule(_keyValueStore);
     }
 
-    function getRegistry() public view override (Registerable, IBundleModule, IComponentModule, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
-    function getKeyValueStore() public view override (InstanceBase, IBundleModule) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
-
-    function hasRole(RoleId role, address member) public view override (AccessModule, IComponentModule) returns (bool) { return super.hasRole(role, member); }
+    function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
+    function getKeyValueStore() public view override (InstanceBase) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
     function getComponentOwnerService() external view override (IComponentModule, IInstanceBase) returns(IComponentOwnerService service) { return _componentOwnerService; }
     function getProductService() external view override (IBundleModule, IPolicyModule, IInstanceBase) returns(IProductService service) { return _productService; }

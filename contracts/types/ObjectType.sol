@@ -37,36 +37,48 @@ function STAKE() pure returns (ObjectType) {
     return toObjectType(60);
 }
 
-function PRODUCT() pure returns (ObjectType) {
+function COMPONENT() pure returns (ObjectType) {
     return toObjectType(100);
 }
 
-function DISTRIBUTOR() pure returns (ObjectType) {
+function TREASURY() pure returns (ObjectType) {
+    return toObjectType(101);
+}
+
+function PRODUCT() pure returns (ObjectType) {
     return toObjectType(110);
 }
 
-function ORACLE() pure returns (ObjectType) {
+function COMPENSATION() pure returns (ObjectType) {
     return toObjectType(120);
 }
 
-function POOL() pure returns (ObjectType) {
+function ORACLE() pure returns (ObjectType) {
     return toObjectType(130);
 }
 
-function POLICY() pure returns (ObjectType) {
+function POOL() pure returns (ObjectType) {
+    return toObjectType(140);
+}
+
+function RISK() pure returns (ObjectType) {
     return toObjectType(200);
 }
 
-function BUNDLE() pure returns (ObjectType) {
+function POLICY() pure returns (ObjectType) {
     return toObjectType(210);
 }
 
+function BUNDLE() pure returns (ObjectType) {
+    return toObjectType(220);
+}
+
 function CLAIM() pure returns (ObjectType) {
-    return toObjectType(201);
+    return toObjectType(211);
 }
 
 function PAYOUT() pure returns (ObjectType) {
-    return toObjectType(202);
+    return toObjectType(212);
 }
 
 /// @dev Converts the uint8 to a ObjectType.

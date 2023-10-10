@@ -16,7 +16,6 @@ import {IPoolService} from "../../service/IPoolService.sol";
 interface IBundle {
 
     struct BundleInfo {
-        NftId nftId;
         NftId poolNftId;
         bytes filter; // required conditions for applications to be considered for collateralization by this bundle
         uint256 capitalAmount; // net investment capital amount (<= balance)
@@ -37,20 +36,14 @@ interface IBundleModule is IBundle {
         bytes calldata filter
     ) external;
 
-    function setBundleInfo(BundleInfo memory bundleInfo) external;
-    function updateBundleState(NftId bundleNftId, StateId state) external;
+    function setBundleInfo(NftId nftId, BundleInfo memory bundleInfo) external;
+    function updateBundleState(NftId nftId, StateId state) external;
 
     function collateralizePolicy(NftId bundleNftId, NftId policyNftId, uint256 amount) external;
     function releasePolicy(NftId bundleNftId, NftId policyNftId) external returns(uint256 collateralAmount);
 
-    function getBundleInfo(NftId bundleNftId) external view returns(BundleInfo memory bundleInfo);
-    function toBundleKey32(NftId bundleNftId) external view returns (Key32 key32);
-
-    // repeat registry linked signature
-    function getRegistry() external view returns (IRegistry registry);
-
-    // repeat instance base signature
-    function getKeyValueStore() external view returns (IKeyValueStore keyValueStore);
+    function getBundleInfo(NftId nftId) external view returns(BundleInfo memory bundleInfo);
+    function getBundleState(NftId nftId) external view returns(StateId state);
 
     // repeat service linked signatures to avoid linearization issues
     function getProductService() external returns(IProductService);

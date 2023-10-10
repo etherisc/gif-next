@@ -15,6 +15,9 @@ contract Pool is BaseComponent, IPoolComponent {
     bool internal _isVerifying;
     UFixed internal _collateralizationLevel;
 
+    Fee internal _initialStakingFee;
+    Fee internal _initialPerformanceFee;
+
     // may be used to interact with instance by derived contracts
     IPoolService internal _poolService;
 
@@ -41,13 +44,17 @@ contract Pool is BaseComponent, IPoolComponent {
         // TODO refactor into tokenNftId
         address token,
         bool verifying,
-        UFixed collateralizationLevel
+        UFixed collateralizationLevel,
+        Fee memory stakingFee,
+        Fee memory performanceFee
     )
         BaseComponent(registry, instanceNftId, token)
     {
         _isVerifying = verifying;
         // TODO add validation
         _collateralizationLevel = collateralizationLevel;
+        _initialStakingFee = stakingFee;
+        _initialPerformanceFee = performanceFee;
 
         _poolService = _instance.getPoolService();
         _productService = _instance.getProductService();
@@ -155,7 +162,12 @@ contract Pool is BaseComponent, IPoolComponent {
         override
         returns (Fee memory stakingFee)
     {
-        return _instance.getPoolSetup(getNftId()).stakingFee;
+        NftId productNftId = _instance.getProductNftId(getNftId());
+        if (productNftId.gtz()) {
+            return _instance.getTreasuryInfo(productNftId).stakingFee;
+        } else {
+            return _initialStakingFee;
+        }
     }
 
     function getPerformanceFee()
@@ -164,7 +176,12 @@ contract Pool is BaseComponent, IPoolComponent {
         override
         returns (Fee memory performanceFee)
     {
-        return _instance.getPoolSetup(getNftId()).performanceFee;
+        NftId productNftId = _instance.getProductNftId(getNftId());
+        if (productNftId.gtz()) {
+            return _instance.getTreasuryInfo(productNftId).performanceFee;
+        } else {
+            return _initialPerformanceFee;
+        }
     }
 
     // from registerable
