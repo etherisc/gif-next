@@ -6,8 +6,8 @@ import {RoleId} from "../types/RoleId.sol";
 
 import {InstanceBase} from "./base/InstanceBase.sol";
 import {AccessModule} from "./module/access/Access.sol";
-import {CompensationModule} from "./module/compensation/CompensationModule.sol";
 import {ComponentModule} from "./module/component/ComponentModule.sol";
+import {DistributionModule} from "./module/distribution/DistributionModule.sol";
 import {PolicyModule} from "./module/policy/PolicyModule.sol";
 import {PoolModule} from "./module/pool/PoolModule.sol";
 import {RiskModule} from "./module/risk/RiskModule.sol";
@@ -34,7 +34,7 @@ contract Instance is
     AccessModule,
     BundleModule,
     ComponentModule,
-    CompensationModule,
+    DistributionModule,
     PolicyModule,
     PoolModule,
     RiskModule,
@@ -47,14 +47,15 @@ contract Instance is
         InstanceBase(registry, registryNftId)
         AccessModule()
         BundleModule()
+        DistributionModule()
         ComponentModule()
         PolicyModule()
         PoolModule()
         TreasuryModule()
     {
         initializeBundleModule(_keyValueStore);
-        initializeCompensationModule(_keyValueStore);
         initializeComponentModule(_keyValueStore);
+        initializeDistributionModule(_keyValueStore);
         initializePolicyModule(_keyValueStore);
         initializePoolModule(_keyValueStore);
         initializeRiskModule(_keyValueStore);
