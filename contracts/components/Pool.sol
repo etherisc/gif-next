@@ -61,6 +61,7 @@ contract Pool is BaseComponent, IPoolComponent {
     }
 
     function createBundle(
+        Fee memory fee,
         uint256 initialAmount,
         uint256 lifetime,
         bytes memory filter
@@ -72,6 +73,7 @@ contract Pool is BaseComponent, IPoolComponent {
         address owner = msg.sender;
         bundleNftId = _poolService.createBundle(
             owner,
+            fee,
             initialAmount,
             lifetime,
             filter
@@ -140,6 +142,7 @@ contract Pool is BaseComponent, IPoolComponent {
 
     function _createBundle(
         address bundleOwner,
+        Fee memory fee,
         uint256 amount,
         uint256 lifetime, 
         bytes calldata filter
@@ -149,6 +152,7 @@ contract Pool is BaseComponent, IPoolComponent {
     {
         bundleNftId = _poolService.createBundle(
             bundleOwner,
+            fee,
             amount,
             lifetime,
             filter

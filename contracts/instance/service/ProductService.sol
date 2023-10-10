@@ -2,7 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
+import {IProductComponent} from "../../components/IProductComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
+import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IPolicy, IPolicyModule} from "../module/policy/IPolicy.sol";
 import {IPool} from "../module/pool/IPoolModule.sol";
@@ -21,6 +23,7 @@ import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol"
 import {APPLIED, UNDERWRITTEN, ACTIVE} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
+import {ReferralId} from "../../types/ReferralId.sol";
 import {RiskId} from "../../types/RiskId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
@@ -107,13 +110,94 @@ contract ProductService is ComponentServiceBase, IProductService {
         );
     }
 
+    function _getAndVerifyInstanceAndProduct() internal view returns (IProductComponent product) {
+        IRegistry.ObjectInfo memory productInfo;
+        (productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        product = IProductComponent(productInfo.objectAddress);
+    }
+
+    function calculatePremium(
+        RiskId riskId,
+        uint256 sumInsuredAmount,
+        uint256 lifetime,
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        public
+        view 
+        override
+        returns (
+            uint256 premiumAmount,
+            uint256 productFeeAmount,
+            uint256 poolFeeAmount,
+            uint256 bundleFeeAmount,
+            uint256 distributionFeeAmount
+        )
+    {
+        IProductComponent product = _getAndVerifyInstanceAndProduct();
+        uint256 netPremiumAmount = product.calculateNetPremium(
+            sumInsuredAmount,
+            riskId,
+            lifetime,
+            applicationData
+        );
+
+        (
+            productFeeAmount,
+            poolFeeAmount,
+            bundleFeeAmount,
+            distributionFeeAmount
+        ) = _calculateFeeAmounts(
+            netPremiumAmount,
+            product,
+            bundleNftId,
+            referralId
+        );
+
+        premiumAmount = netPremiumAmount + productFeeAmount;
+        premiumAmount += poolFeeAmount + bundleFeeAmount;
+        premiumAmount += distributionFeeAmount;
+    }
+
+    function _calculateFeeAmounts(
+        uint256 netPremiumAmount,
+        IProductComponent product,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        internal
+        view
+        returns (
+            uint256 productFeeAmount,
+            uint256 poolFeeAmount,
+            uint256 bundleFeeAmount,
+            uint256 distributionFeeAmount
+        )
+    {
+        IInstance instance = product.getInstance();
+        ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(product.getNftId());
+        IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
+        require(bundleInfo.poolNftId == treasuryInfo.poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
+
+        (productFeeAmount,) = FeeLib.calculateFee(treasuryInfo.policyFee, netPremiumAmount);
+        (poolFeeAmount,) = FeeLib.calculateFee(treasuryInfo.poolFee, netPremiumAmount);
+        (bundleFeeAmount,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
+
+        IRegistry.ObjectInfo memory distributionInfo = _registry.getObjectInfo(treasuryInfo.distributionNftId);
+        IDistributionComponent distribution = IDistributionComponent(distributionInfo.objectAddress);
+        distributionFeeAmount = distribution.calculateFeeAmount(referralId, netPremiumAmount);
+    }
+
+
     function createApplication(
         address applicationOwner,
         RiskId riskId,
         uint256 sumInsuredAmount,
-        uint256 premiumAmount,
         uint256 lifetime,
-        NftId bundleNftId
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
     ) external override returns (NftId policyNftId) {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         NftId productNftId = productInfo.nftId;
@@ -124,6 +208,15 @@ contract ProductService is ComponentServiceBase, IProductService {
             POLICY(),
             applicationOwner,
             ""
+        );
+
+        (uint256 premiumAmount,,,,) = calculatePremium(
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
         );
 
         instance.createPolicyInfo(
@@ -197,6 +290,16 @@ contract ProductService is ComponentServiceBase, IProductService {
             policyInfo.applicationData, 
             bundleFilter,
             collateralAmount);
+    }
+
+
+    function revoke(
+        NftId policyNftId
+    )
+        external
+        override
+    {
+        require(false, "ERROR:PRS-234:NOT_YET_IMPLEMENTED");
     }
 
 

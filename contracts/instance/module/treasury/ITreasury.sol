@@ -15,14 +15,14 @@ interface ITreasury {
 
     // treasury info is linked to product nft id
     struct TreasuryInfo {
-        NftId compensationNftId;
+        NftId distributionNftId;
         NftId poolNftId;
         IERC20Metadata token;
-        Fee commissionFee;
-        Fee policyFee;
-        Fee processingFee;
-        Fee stakingFee;
-        Fee performanceFee;
+        Fee policyFee; // product fee on net premium
+        Fee processingFee; // product fee on payout amounts
+        Fee poolFee; // pool fee on net premium
+        Fee stakingFee; // pool fee on staked capital from investor
+        Fee performanceFee; // pool fee on profits from capital investors
     }
 }
 

@@ -141,7 +141,7 @@ abstract contract TreasuryModule is
         uint256 amount,
         Fee memory fee
     ) public pure override returns (uint256 feeAmount, uint256 netAmount) {
-        return FeeLib.calculateFee(amount, fee);
+        return FeeLib.calculateFee(fee, amount);
     }
 
     function getFee(

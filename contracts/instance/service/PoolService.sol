@@ -61,6 +61,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
     function createBundle(
         address owner, 
+        Fee memory fee, 
         uint256 stakingAmount, 
         uint256 lifetime, 
         bytes calldata filter
@@ -83,6 +84,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
         instance.createBundleInfo(
             bundleNftId,
             poolNftId,
+            fee,
             stakingAmount,
             lifetime,
             filter);

@@ -115,10 +115,13 @@ contract TestGifBase is Test {
         token.transfer(investor, initialCapitalAmount);
 
         // approve capital and create bundle
+        Fee memory bundleFee = instance.getZeroFee();
+
         vm.startPrank(investor);
         token.approve(address(tokenHandler), initialCapitalAmount);
 
         _createBundle(
+            bundleFee,
             initialCapitalAmount,
             bundleLifetime);
         vm.stopPrank();
@@ -298,12 +301,14 @@ contract TestGifBase is Test {
     }
 
     function _createBundle(
+        Fee memory fee,
         uint256 amount,
         uint256 lifetime
     ) 
         internal
     {
         bundleNftId = pool.createBundle(
+            fee,
             amount,
             lifetime,
             "");

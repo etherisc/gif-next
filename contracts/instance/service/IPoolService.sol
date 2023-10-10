@@ -13,6 +13,7 @@ interface IPoolService is IService {
 
     function createBundle(
         address owner,
+        Fee memory fee, 
         uint256 amount,
         uint256 lifetime, 
         bytes calldata filter

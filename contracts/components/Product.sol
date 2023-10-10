@@ -7,6 +7,7 @@ import {IProductService} from "../instance/service/IProductService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
+import {ReferralId} from "../types/ReferralId.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {StateId} from "../types/StateId.sol";
 import {Timestamp} from "../types/Timestamp.sol";
@@ -32,6 +33,45 @@ contract Product is BaseComponent, IProductComponent {
         _pool = pool;
         _initialPolicyFee = policyFee;
         _initialProcessingFee = processingFee;        
+    }
+
+
+    function calculatePremium(
+        uint256 sumInsuredAmount,
+        RiskId riskId,
+        uint256 lifetime,
+        bytes memory applicationData,
+        ReferralId referralId,
+        NftId bundleNftId
+    )
+        external 
+        view 
+        override 
+        returns (uint256 premiumAmount)
+    {
+        (premiumAmount,,,,) = _productService.calculatePremium(
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+    }
+
+
+    function calculateNetPremium(
+        uint256 sumInsuredAmount,
+        RiskId riskId,
+        uint256 lifetime,
+        bytes memory applicationData
+    )
+        external
+        view
+        override
+        returns (uint256 netPremiumAmount)
+    {
+
     }
 
     function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {
@@ -80,17 +120,19 @@ contract Product is BaseComponent, IProductComponent {
         address applicationOwner,
         RiskId riskId,
         uint256 sumInsuredAmount,
-        uint256 premiumAmount,
         uint256 lifetime,
-        NftId bundleNftId
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
     ) internal returns (NftId nftId) {
         nftId = _productService.createApplication(
             applicationOwner,
             riskId,
             sumInsuredAmount,
-            premiumAmount,
             lifetime,
-            bundleNftId
+            applicationData,
+            bundleNftId,
+            referralId
         );
     }
 

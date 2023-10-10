@@ -14,6 +14,7 @@ interface IPoolComponent is IBaseComponent {
      * @dev creates a new bundle for this pool.
      */
     function createBundle(
+        Fee memory fee,
         uint256 initialAmount,
         uint256 lifetime,
         bytes memory filter

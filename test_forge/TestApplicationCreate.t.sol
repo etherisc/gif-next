@@ -10,6 +10,7 @@ import {APPLIED, UNDERWRITTEN, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
+import {ReferralId, ReferralIdLib} from "../contracts/types/ReferralId.sol";
 import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";
 import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
 import {IComponentOwnerService} from "../contracts/instance/service/IComponentOwnerService.sol";
@@ -19,14 +20,15 @@ contract TestApplicationCreate is TestGifBase {
     uint256 public sumInsuredAmount = 1000 * 10 ** 6;
     uint256 public premiumAmount = 110 * 10 ** 6;
     uint256 public lifetime = 365 * 24 * 3600;
+    ReferralId public referralId = ReferralIdLib.zeroReferralId();
 
     function testApplicationCreateSimple() public {
         vm.prank(customer);
         NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount,
-            premiumAmount,
             lifetime,
-            bundleNftId
+            bundleNftId,
+            referralId
         );
 
         assertNftId(policyNftId, toNftId(103133705), "policy id not 103133705");
@@ -60,9 +62,9 @@ contract TestApplicationCreate is TestGifBase {
         vm.prank(customer);
         NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount,
-            premiumAmount,
             lifetime,
-            bundleNftId
+            bundleNftId,
+            referralId
         );
 
         // get bundle details before underwriting (and token transfer)
@@ -117,9 +119,9 @@ contract TestApplicationCreate is TestGifBase {
         vm.prank(customer);
         NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount,
-            premiumAmount,
             lifetime,
-            bundleNftId
+            bundleNftId,
+            referralId
         );
 
         // check bookkeeping before collecting premium
@@ -246,9 +248,9 @@ contract TestApplicationCreate is TestGifBase {
         vm.prank(customer);
         NftId policyNftId = product.applyForPolicy(
             sumInsuredAmount,
-            premiumAmount,
             lifetime,
-            bundleNftId
+            bundleNftId,
+            referralId
         );
 
         // prepare customer to pay premium amount

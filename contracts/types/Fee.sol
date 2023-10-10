@@ -11,8 +11,8 @@ struct Fee {
 library FeeLib {
 
     function calculateFee(
-        uint256 amount,
-        Fee memory fee
+        Fee memory fee,
+        uint256 amount
     )
         public
         pure
