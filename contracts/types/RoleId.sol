@@ -10,12 +10,12 @@ using {
 } for RoleId global;
 
 // general pure free functions
-function DISTRIBUTOR_OWNER_ROLE_NAME() pure returns (string memory) { return "DistributorOwnerRole"; }
+function DISTRIBUTION_OWNER_ROLE_NAME() pure returns (string memory) { return "DistributionOwnerRole"; }
 function ORACLE_OWNER_ROLE_NAME() pure returns (string memory) { return "OracleOwnerRole"; }
 function POOL_OWNER_ROLE_NAME() pure returns (string memory) { return "PoolOwnerRole"; }
 function PRODUCT_OWNER_ROLE_NAME() pure returns (string memory) { return "ProductOwnerRole"; }
 
-function DISTRIBUTOR_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("DistributorOwnerRole"); }
+function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("DistributionOwnerRole"); }
 function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("OracleOwnerRole"); }
 function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("PoolOwnerRole"); }
 function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("ProductOwnerRole"); }

@@ -16,9 +16,10 @@ contract TestInstanceInitialSetup is TestGifBase {
         // 6. 53133705 pool service
         // 7. 63133705 instance
         // 8. 73133705 pool
-        // 9. 83133705 product
-        // 10. 93133705 bundle
-        assertEq(registry.getObjectCount(), 10, "getObjectCount not 10");
+        // 9. 83133705 distribution
+        // 10. 93133705 product
+        // 11. 103133705 bundle
+        assertEq(registry.getObjectCount(), 11, "getObjectCount not 11");
     }
 
     function testRegistryNftId() public {

@@ -49,6 +49,8 @@ interface IPoolComponent is IBaseComponent {
 
     function getCollateralizationLevel() external view returns (UFixed collateralizationLevel);
 
+    function getPoolFee() external view returns (Fee memory poolFee);
+
     function getStakingFee() external view returns (Fee memory stakingFee);
 
     function getPerformanceFee()

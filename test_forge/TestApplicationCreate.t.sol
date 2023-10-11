@@ -18,9 +18,23 @@ import {ITreasuryModule} from "../contracts/instance/module/treasury/ITreasury.s
 
 contract TestApplicationCreate is TestGifBase {
     uint256 public sumInsuredAmount = 1000 * 10 ** 6;
-    uint256 public premiumAmount = 110 * 10 ** 6;
     uint256 public lifetime = 365 * 24 * 3600;
+    uint256 public premiumAmount = calculateExpectedPremium();
     ReferralId public referralId = ReferralIdLib.zeroReferralId();
+
+    function calculateExpectedPremium() public view returns (uint256 expectedPremiumAmount) {
+        uint256 netPremiumAmount = sumInsuredAmount / 10;
+
+        Fee memory totalFee = FeeLib.percentageFee(0
+            + initialProductFeePercentage
+            + initialPoolFeePercentage
+            + initialBundleFeePercentage
+            + initialDistributionFeePercentage            
+        );
+        (uint256 feeAmount,) = FeeLib.calculateFee(totalFee, netPremiumAmount);
+
+        return netPremiumAmount + feeAmount;
+    }
 
     function testApplicationCreateSimple() public {
         vm.prank(customer);
@@ -31,7 +45,7 @@ contract TestApplicationCreate is TestGifBase {
             referralId
         );
 
-        assertNftId(policyNftId, toNftId(103133705), "policy id not 103133705");
+        assertNftId(policyNftId, toNftId(113133705), "policy id not 113133705");
         assertEq(
             registry.getOwner(policyNftId),
             customer,
@@ -50,6 +64,7 @@ contract TestApplicationCreate is TestGifBase {
             sumInsuredAmount,
             "wrong sum insured amount"
         );
+
         assertEq(info.premiumAmount, premiumAmount, "wrong premium amount");
         assertEq(info.lifetime, lifetime, "wrong lifetime");
 
@@ -108,8 +123,8 @@ contract TestApplicationCreate is TestGifBase {
         ITreasuryModule.TreasuryInfo memory info = treasuryModule
             .getTreasuryInfo(product.getNftId());
         assertTrue(
-            FeeLib.feeIsSame(info.policyFee, FeeLib.zeroFee()),
-            "updated policyFee not zeroFee"
+            FeeLib.feeIsSame(info.productFee, FeeLib.zeroFee()),
+            "updated productFee not zeroFee"
         );
         assertTrue(
             FeeLib.feeIsSame(info.processingFee, FeeLib.zeroFee()),
@@ -201,6 +216,10 @@ contract TestApplicationCreate is TestGifBase {
             premiumAmount,
             "unexpected policy premium paid amount (after)"
         );
+
+        // TODO needs proper premium collection and fee distribution
+        // to be implemented
+        premiumAmount = calculateExpectedPremium();
         assertEq(
             token.balanceOf(pool.getWallet()),
             initialCapitalAmount + premiumAmount,
@@ -213,35 +232,45 @@ contract TestApplicationCreate is TestGifBase {
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
         ITreasuryModule.TreasuryInfo memory info = treasuryModule
             .getTreasuryInfo(product.getNftId());
-        Fee memory expectedInitialPolicyFee = FeeLib.zeroFee();
 
         assertTrue(
-            FeeLib.feeIsSame(info.policyFee, expectedInitialPolicyFee),
-            "initial policyFee not zeroFee"
+            FeeLib.feeIsSame(info.productFee, product.getProductFee()),
+            "unexpected initial productFee"
         );
+
         assertTrue(
-            FeeLib.feeIsZero(info.processingFee),
-            "initial processingFee not zeroFee"
+            FeeLib.feeIsSame(info.processingFee, product.getProcessingFee()),
+            "unexpected initial processingFee"
         );
 
         // updated policy fee (15% + 20 cents)
         UFixed fractionalFee = UFixedMathLib.toUFixed(15, -2);
         uint256 fixedFee = 2 * 10 ** (token.decimals() - 1);
-        Fee memory policyFee = FeeLib.toFee(fractionalFee, fixedFee);
+        Fee memory productFee = FeeLib.toFee(fractionalFee, fixedFee);
 
         Fee memory zeroFee = FeeLib.zeroFee();
         vm.prank(productOwner);
-        product.setFees(policyFee, zeroFee);
+        product.setFees(productFee, zeroFee);
 
         // check updated policy fee
         info = treasuryModule.getTreasuryInfo(product.getNftId());
         assertTrue(
-            FeeLib.feeIsSame(info.policyFee, policyFee),
+            FeeLib.feeIsSame(info.productFee, productFee),
             "updated policyFee not 15% + 20 cents"
         );
         assertTrue(
             FeeLib.feeIsSame(info.processingFee, FeeLib.zeroFee()),
             "updated processingFee not zeroFee"
+        );
+
+        bytes memory applicationData = "";
+        premiumAmount = product.calculatePremium(
+            sumInsuredAmount,
+            product.getDefaultRiskId(),
+            lifetime,
+            applicationData,
+            referralId,
+            bundleNftId
         );
 
         // create appliation
@@ -286,13 +315,13 @@ contract TestApplicationCreate is TestGifBase {
         );
 
         (
-            uint256 policyFeeAmount,
+            uint256 productFeeAmount,
             uint256 netPremiumAmount
-        ) = instance.calculateFeeAmount(premiumAmount, policyFee);
+        ) = instance.calculateFeeAmount(premiumAmount, productFee);
 
         assertEq(
             token.balanceOf(product.getWallet()),
-            policyFeeAmount,
+            productFeeAmount,
             "unexpected product balance (after)"
         );
         assertEq(

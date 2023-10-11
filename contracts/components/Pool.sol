@@ -15,6 +15,7 @@ contract Pool is BaseComponent, IPoolComponent {
     bool internal _isVerifying;
     UFixed internal _collateralizationLevel;
 
+    Fee internal _initialPoolFee;
     Fee internal _initialStakingFee;
     Fee internal _initialPerformanceFee;
 
@@ -45,6 +46,7 @@ contract Pool is BaseComponent, IPoolComponent {
         address token,
         bool verifying,
         UFixed collateralizationLevel,
+        Fee memory poolFee,
         Fee memory stakingFee,
         Fee memory performanceFee
     )
@@ -53,6 +55,7 @@ contract Pool is BaseComponent, IPoolComponent {
         _isVerifying = verifying;
         // TODO add validation
         _collateralizationLevel = collateralizationLevel;
+        _initialPoolFee = poolFee;
         _initialStakingFee = stakingFee;
         _initialPerformanceFee = performanceFee;
 
@@ -160,6 +163,20 @@ contract Pool is BaseComponent, IPoolComponent {
     }
 
     // from pool component
+    function getPoolFee()
+        external
+        view
+        override
+        returns (Fee memory poolFee)
+    {
+        NftId productNftId = _instance.getProductNftId(getNftId());
+        if (_instance.hasTreasuryInfo(productNftId)) {
+            return _instance.getTreasuryInfo(productNftId).poolFee;
+        } else {
+            return _initialPoolFee;
+        }
+    }
+
     function getStakingFee()
         external
         view
@@ -167,7 +184,7 @@ contract Pool is BaseComponent, IPoolComponent {
         returns (Fee memory stakingFee)
     {
         NftId productNftId = _instance.getProductNftId(getNftId());
-        if (productNftId.gtz()) {
+        if (_instance.hasTreasuryInfo(productNftId)) {
             return _instance.getTreasuryInfo(productNftId).stakingFee;
         } else {
             return _initialStakingFee;
@@ -181,7 +198,7 @@ contract Pool is BaseComponent, IPoolComponent {
         returns (Fee memory performanceFee)
     {
         NftId productNftId = _instance.getProductNftId(getNftId());
-        if (productNftId.gtz()) {
+        if (_instance.hasTreasuryInfo(productNftId)) {
             return _instance.getTreasuryInfo(productNftId).performanceFee;
         } else {
             return _initialPerformanceFee;

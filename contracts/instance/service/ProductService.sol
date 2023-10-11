@@ -61,7 +61,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     }
 
     function setFees(
-        Fee memory policyFee,
+        Fee memory productFee,
         Fee memory processingFee
     )
         external
@@ -70,7 +70,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         NftId productNftId = productInfo.nftId;
         ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(productNftId);
-        treasuryInfo.policyFee = policyFee;
+        treasuryInfo.productFee = productFee;
         treasuryInfo.processingFee = processingFee;
         instance.setTreasuryInfo(productNftId, treasuryInfo);
     }
@@ -180,7 +180,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
         require(bundleInfo.poolNftId == treasuryInfo.poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
 
-        (productFeeAmount,) = FeeLib.calculateFee(treasuryInfo.policyFee, netPremiumAmount);
+        (productFeeAmount,) = FeeLib.calculateFee(treasuryInfo.productFee, netPremiumAmount);
         (poolFeeAmount,) = FeeLib.calculateFee(treasuryInfo.poolFee, netPremiumAmount);
         (bundleFeeAmount,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
 
@@ -483,9 +483,9 @@ contract ProductService is ComponentServiceBase, IProductService {
             address policyOwner = _registry.getOwner(policyNftId);
             address poolWallet = instance.getComponentWallet(treasuryInfo.poolNftId);
             netPremiumAmount = premiumAmount;
-            Fee memory policyFee = treasuryInfo.policyFee;
+            Fee memory productFee = treasuryInfo.productFee;
 
-            if (FeeLib.feeIsZero(policyFee)) {
+            if (FeeLib.feeIsZero(productFee)) {
                 tokenHandler.transfer(
                     policyOwner,
                     poolWallet,
@@ -494,7 +494,7 @@ contract ProductService is ComponentServiceBase, IProductService {
             } else {
                 (uint256 feeAmount, uint256 netAmount) = instance.calculateFeeAmount(
                     premiumAmount,
-                    policyFee
+                    productFee
                 );
 
                 address productWallet = instance.getComponentWallet(productNftId);

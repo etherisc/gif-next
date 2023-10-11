@@ -17,14 +17,15 @@ import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/instance/module/treasury/TokenHandler.sol";
 import {TestProduct} from "../../contracts/test/TestProduct.sol";
 import {TestPool} from "../../contracts/test/TestPool.sol";
+import {TestDistribution} from "../../contracts/test/TestDistribution.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
 
 import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
-import {Fee} from "../../contracts/types/Fee.sol";
+import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
-import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
+import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 
 // solhint-disable-next-line max-states-count
 contract TestGifBase is Test {
@@ -45,6 +46,7 @@ contract TestGifBase is Test {
     IKeyValueStore public keyValueStore;
     TestProduct public product;
     TestPool public pool;
+    TestDistribution public distribution;
     TokenHandler public tokenHandler;
 
     address public registryAddress;
@@ -56,26 +58,36 @@ contract TestGifBase is Test {
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
     address public poolOwner = makeAddr("poolOwner");
+    address public distributionOwner = makeAddr("distributionOwner");
     address public customer = makeAddr("customer");
     address public investor = makeAddr("investor");
     address public outsider = makeAddr("outsider");
+
+    uint8 initialProductFeePercentage = 2;
+    uint8 initialPoolFeePercentage = 3;
+    uint8 initialBundleFeePercentage = 4;
+    uint8 initialDistributionFeePercentage = 10;
+
+    Fee public initialProductFee = FeeLib.percentageFee(initialProductFeePercentage);
+    Fee public initialPoolFee = FeeLib.percentageFee(initialPoolFeePercentage);
+    Fee public initialBundleFee = FeeLib.percentageFee(initialBundleFeePercentage);
+    Fee public initialDistributionFee = FeeLib.percentageFee(initialDistributionFeePercentage);
+
+    bool poolIsVerifying = true;
+    bool distributionIsVerifying = true;
+    UFixed poolCollateralizationLevelIs100 = UFixedMathLib.toUFixed(1);
 
     string private _checkpointLabel;
     uint256 private _checkpointGasLeft = 1; // Start the slot warm.
 
     function setUp() public virtual {
-        bool poolIsVerifying = true;
-        UFixed poolCollateralizationLevelIs100 = UFixedMathLib.toUFixed(1);
-
         _setUp(
-            poolIsVerifying,
             poolCollateralizationLevelIs100,
             DEFAULT_BUNDLE_CAPITALIZATION,
             DEFAULT_BUNDLE_LIFETIME);
     }
 
     function _setUp(
-        bool poolIsVerifying,
         UFixed poolCollateralizationLevel,
         uint256 initialBundleCapitalization,
         uint256 bundleLifetime
@@ -103,6 +115,11 @@ contract TestGifBase is Test {
         _deployPool(poolIsVerifying, poolCollateralizationLevel);
         vm.stopPrank();
 
+        // deploy distribution
+        vm.startPrank(distributionOwner);
+        _deployDistribution(distributionIsVerifying);
+        vm.stopPrank();
+
         // deploy product
         vm.startPrank(productOwner);
         _deployProduct();
@@ -115,13 +132,11 @@ contract TestGifBase is Test {
         token.transfer(investor, initialCapitalAmount);
 
         // approve capital and create bundle
-        Fee memory bundleFee = instance.getZeroFee();
-
         vm.startPrank(investor);
         token.approve(address(tokenHandler), initialCapitalAmount);
 
         _createBundle(
-            bundleFee,
+            initialBundleFee,
             initialCapitalAmount,
             bundleLifetime);
         vm.stopPrank();
@@ -234,8 +249,9 @@ contract TestGifBase is Test {
 
         instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
         // solhint-disable-next-line
-        console.log("product and pool roles granted");
+        console.log("product pool, and distribution roles granted");
     }
 
 
@@ -254,14 +270,16 @@ contract TestGifBase is Test {
     )
         internal
     {
-        Fee memory stakingFee = instance.getZeroFee();
-        Fee memory performanceFee = instance.getZeroFee();
+        Fee memory stakingFee = FeeLib.zeroFee();
+        Fee memory performanceFee = FeeLib.zeroFee();
+
         pool = new TestPool(
             address(registry), 
             instance.getNftId(), 
             address(token),
             isVerifying,
             collateralizationLevel,
+            initialPoolFee,
             stakingFee,
             performanceFee);
 
@@ -276,15 +294,40 @@ contract TestGifBase is Test {
     }
 
 
+    function _deployDistribution(
+        bool isVerifying
+    )
+        internal
+    {
+        Fee memory distributionFee = FeeLib.percentageFee(15);
+        distribution = new TestDistribution(
+            address(registry), 
+            instance.getNftId(), 
+            address(token),
+            isVerifying,
+            initialDistributionFee);
+
+        distribution.register();
+
+        uint256 nftId = distribution.getNftId().toInt();
+        uint256 state = instance.getComponentState(distribution.getNftId()).toInt();
+        // solhint-disable-next-line
+        console.log("distribution deployed at", address(pool));
+        // solhint-disable-next-line
+        console.log("distribution nftId", nftId, "state", state);
+    }
+
+
     function _deployProduct() internal {
-        Fee memory policyFee = instance.getZeroFee();
         Fee memory processingFee = instance.getZeroFee();
+
         product = new TestProduct(
             address(registry), 
             instance.getNftId(), 
             address(token), 
             address(pool),
-            policyFee,
+            address(distribution),
+            initialProductFee,
             processingFee);
 
         product.register();

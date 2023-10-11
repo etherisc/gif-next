@@ -8,7 +8,7 @@ import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol
 
 contract TestDeployAll is TestGifBase {
     function testDeployAllRegistryCountWithProduct() public {
-        assertEq(registry.getObjectCount(), 10, "getObjectCount not 10");
+        assertEq(registry.getObjectCount(), 11, "getObjectCount not 11");
     }
 
     function testDeployAllInstanceOwner() public {
@@ -50,6 +50,16 @@ contract TestDeployAll is TestGifBase {
         );
     }
 
+    function testDeployAllDistributionNftId() public {
+        NftId nftId = registry.getNftId(address(distribution));
+        assertNftId(
+            nftId,
+            distribution.getNftId(),
+            "registry and distribution nft id differ"
+        );
+        assertNftId(nftId, toNftId(83133705), "distribution getNftId not 83133705");
+    }
+
     function testDeployAllProductNftId() public {
         NftId nftId = registry.getNftId(address(product));
         assertNftId(
@@ -57,15 +67,21 @@ contract TestDeployAll is TestGifBase {
             product.getNftId(),
             "registry and product nft id differ"
         );
-        assertNftId(nftId, toNftId(83133705), "product getNftId not 83133705");
+        assertNftId(nftId, toNftId(93133705), "product getNftId not 93133705");
     }
 
-    function testDeployAllProductPoolLink() public {
+    function testDeployAllProductPoolDistributionLink() public {
         NftId poolNftId = product.getPoolNftId();
+        NftId distributionNftId = product.getDistributionNftId();
         assertNftId(
             pool.getNftId(),
             poolNftId,
             "pool nft id does not match with linked product"
+        );
+        assertNftId(
+            distribution.getNftId(),
+            distributionNftId,
+            "distribution nft id does not match with linked product"
         );
     }
 

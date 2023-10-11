@@ -35,7 +35,12 @@ library FeeLib {
         return Fee(fractionalFee, fixedFee);
     }
 
-    /// @dev Return the zero fee struct (0, 0)
+    /// @dev Return the percent fee struct (x%, 0)
+    function percentageFee(uint8 percent) public pure returns (Fee memory fee) {
+        return Fee(UFixedMathLib.toUFixed(percent, -2), 0);
+    }
+
+    /// @dev Return a zero fee struct (0, 0)
     function zeroFee() public pure returns (Fee memory fee) {
         return Fee(UFixed.wrap(0), 0);
     }

@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {Fee} from "../types/Fee.sol";
 import {NftId} from "../types/NftId.sol";
 import {ReferralId} from "../types/ReferralId.sol";
-import {RiskId} from "../types/RiskId.sol";
 
 import {IBaseComponent} from "./IBaseComponent.sol";
 
@@ -33,6 +32,12 @@ interface IDistributionComponent is IBaseComponent {
         ReferralId referralId,
         uint256 feeAmount
     ) external;
+
+    /// @dev returns true iff the referral id is valid
+    function referralIsValid(ReferralId referralId) external view returns (bool isValid);
+
+    /// @dev default distribution fee, ie when not using any valid referralId
+    function getDistributionFee() external view returns (Fee memory distributionFee);
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying);

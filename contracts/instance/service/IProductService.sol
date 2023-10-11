@@ -14,7 +14,7 @@ import {Fee} from "../../types/Fee.sol";
 
 interface IProductService is IService {
     function setFees(
-        Fee memory policyFee,
+        Fee memory productFee,
         Fee memory processingFee
     ) external;
 

@@ -20,10 +20,11 @@ contract TestProduct is Product {
         NftId instanceNftid,
         address token,
         address pool,
-        Fee memory policyFee,
+        address distribution,
+        Fee memory productFee,
         Fee memory processingFee
     )
-        Product(registry, instanceNftid, token, pool, policyFee, processingFee)
+        Product(registry, instanceNftid, token, pool, distribution, productFee, processingFee)
     // solhint-disable-next-line no-empty-blocks
     {
     }

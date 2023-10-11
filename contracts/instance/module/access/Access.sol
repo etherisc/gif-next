@@ -6,8 +6,8 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {RoleId, RoleIdLib} from "../../../types/RoleId.sol";
-import {DISTRIBUTOR_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../types/RoleId.sol";
-import {DISTRIBUTOR_OWNER_ROLE_NAME, ORACLE_OWNER_ROLE_NAME, POOL_OWNER_ROLE_NAME, PRODUCT_OWNER_ROLE_NAME} from "../../../types/RoleId.sol";
+import {DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../types/RoleId.sol";
+import {DISTRIBUTION_OWNER_ROLE_NAME, ORACLE_OWNER_ROLE_NAME, POOL_OWNER_ROLE_NAME, PRODUCT_OWNER_ROLE_NAME} from "../../../types/RoleId.sol";
 import {IAccessModule} from "./IAccess.sol";
 
 abstract contract AccessModule is IAccessModule {
@@ -36,7 +36,7 @@ abstract contract AccessModule is IAccessModule {
     }
 
     constructor() {
-        _createRole(DISTRIBUTOR_OWNER_ROLE(), DISTRIBUTOR_OWNER_ROLE_NAME());
+        _createRole(DISTRIBUTION_OWNER_ROLE(), DISTRIBUTION_OWNER_ROLE_NAME());
         _createRole(ORACLE_OWNER_ROLE(), ORACLE_OWNER_ROLE_NAME());
         _createRole(POOL_OWNER_ROLE(), POOL_OWNER_ROLE_NAME());
         _createRole(PRODUCT_OWNER_ROLE(), PRODUCT_OWNER_ROLE_NAME());

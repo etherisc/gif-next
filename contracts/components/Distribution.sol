@@ -3,11 +3,9 @@ pragma solidity ^0.8.19;
 
 import {ObjectType, DISTRIBUTION} from "../types/ObjectType.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
-// import {IPoolService} from "../instance/service/IPoolService.sol";
 import {NftId} from "../types/NftId.sol";
 import {ReferralId} from "../types/ReferralId.sol";
-// import {Fee} from "../types/Fee.sol";
-// import {UFixed} from "../types/UFixed.sol";
+import {Fee, FeeLib} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
 
@@ -16,6 +14,7 @@ contract Distribution is
     IDistributionComponent
 {
 
+    Fee internal _initialDistributionFee;
     bool internal _isVerifying;
 
     // only relevant to protect callback functions for "active" pools
@@ -33,11 +32,14 @@ contract Distribution is
         NftId instanceNftId,
         // TODO refactor into tokenNftId
         address token,
-        bool verifying
+        bool verifying,
+        Fee memory distributionFee
     )
         BaseComponent(registry, instanceNftId, token)
     {
         _isVerifying = verifying;
+        _initialDistributionFee = distributionFee;
+
         _productService = _instance.getProductService();
     }
 
@@ -51,8 +53,8 @@ contract Distribution is
         virtual override
         returns (uint256 feeAmount)
     {
-        // default is no fees
-        return 0 * netPremiumAmount;
+        Fee memory fee = getDistributionFee();
+        (feeAmount,) = FeeLib.calculateFee(fee, netPremiumAmount);
     }
 
 
@@ -89,6 +91,21 @@ contract Distribution is
         virtual override
     {
         // default is no action
+    }
+
+    function referralIsValid(ReferralId referralId) external view returns (bool isValid) {
+        // default is invalid
+        return false;
+    }
+
+    /// @dev default distribution fee, ie when not using any valid referralId
+    function getDistributionFee() public view returns (Fee memory distributionFee) {
+        NftId productNftId = _instance.getProductNftId(getNftId());
+        if (_instance.hasTreasuryInfo(productNftId)) {
+            return _instance.getTreasuryInfo(productNftId).distributionFee;
+        } else {
+            return _initialDistributionFee;
+        }
     }
 
 

@@ -10,7 +10,7 @@ import {IBaseComponent} from "./IBaseComponent.sol";
 
 interface IProductComponent is IBaseComponent {
     function setFees(
-        Fee memory policyFee,
+        Fee memory productFee,
         Fee memory processingFee
     ) external;
 
@@ -30,8 +30,9 @@ interface IProductComponent is IBaseComponent {
         bytes memory applicationData
     ) external view returns (uint256 netPremiumAmount);    
 
-    function getPolicyFee() external view returns (Fee memory policyFee);
+    function getProductFee() external view returns (Fee memory productFee);
     function getProcessingFee() external view returns (Fee memory processingFee);
 
     function getPoolNftId() external view returns (NftId poolNftId);
+    function getDistributionNftId() external view returns (NftId distributionNftId);
 }

@@ -280,6 +280,7 @@ contract Registry is
         _isValidType[PRODUCT()] = true;
         _isValidType[ORACLE()] = true;
         _isValidType[POOL()] = true;
+        _isValidType[DISTRIBUTION()] = true;
         _isValidType[POLICY()] = true;
         _isValidType[BUNDLE()] = true;
     }
