@@ -6,8 +6,8 @@ import { POOL_COLLATERALIZATION_LEVEL, POOL_IS_VERIFYING } from "./libs/constant
 import { deployContract } from "./libs/deployment";
 import { InstanceAddresses, Role, deployAndRegisterInstance, grantRole } from "./libs/instance";
 import { LibraryAddresses, deployLibraries } from "./libs/libraries";
-import { RegistryAddresses, deployAndInitializeRegistry, register } from "./libs/registry";
-import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
+import { RegistryAddresses, deployAndInitializeRegistry, registerContract } from "./libs/registry";
+import { ServiceAddresses, deployAndRegisterServices, registerPool, registerProduct } from "./libs/services";
 import { logger } from "./logger";
 
 
@@ -17,23 +17,25 @@ async function main() {
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
+    const { tokenAddress, tokenNftId } = await deployToken(protocolOwner, registry);
     const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
     
     // deploy instance contracts
-    const instance = await deployAndRegisterInstance(instanceOwner, libraries, registry);
+    const instance = await deployAndRegisterInstance(instanceOwner, libraries, services, registry);
 
     await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
     await grantRole(instanceOwner, libraries, instance, Role.PRODUCT_OWNER_ROLE, productOwner);
 
     
     // deploy pool & product contracts
-    const { poolAddress, poolNftId, tokenAddress } = await deployPool(poolOwner, libraries, registry, instance);
-    const { productAddress, productNftId } = await deployProduct(productOwner, libraries, registry, instance, tokenAddress, poolAddress);
+    const { poolAddress, poolNftId } = await deployPool(poolOwner, libraries, registry, instance, services, tokenAddress);
+    const { productAddress, productNftId } = await deployProduct(productOwner, libraries, registry, instance, services, tokenAddress, poolAddress);
     
     printAddresses(
         libraries, registry, services,
         instance, 
-        tokenAddress, poolAddress, poolNftId,
+        tokenAddress, tokenNftId,
+        poolAddress, poolNftId,
         productAddress, productNftId);
 
     await verifyOwnership(
@@ -91,9 +93,12 @@ async function verifyOwnership(
 }
 
 function printAddresses(
-    libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses,
+    libraries: LibraryAddresses, 
+    registry: RegistryAddresses, 
+    services: ServiceAddresses,
     instance: InstanceAddresses,
-    tokenAddress: AddressLike, poolAddress: AddressLike, poolNftId: string,
+    tokenAddress: AddressLike, tokenNftId: string,
+    poolAddress: AddressLike, poolNftId: string,
     productAddress: AddressLike, productNftId: string,
 ) {
     let addresses = "\nAddresses of deployed smart contracts:\n==========\n";
@@ -113,6 +118,8 @@ function printAddresses(
     addresses += `registryAddress: ${registry.registryAddress}\n`;
     addresses += `registryNftId: ${registry.registryNftId}\n`;
     addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
+    addresses += `tokenAddress: ${tokenAddress}\n`;
+    addresses += `tokenNftId: ${tokenNftId}\n`;
     addresses += `--------\n`;
     addresses += `componentOwnerServiceAddress: ${services.componentOwnerServiceAddress}\n`;
     addresses += `componentOwnerServiceNftId: ${services.componentOwnerServiceNftId}\n`;
@@ -124,7 +131,6 @@ function printAddresses(
     addresses += `instanceAddress: ${instance.instanceAddress}\n`;
     addresses += `instanceNftId: ${instance.instanceNftId}\n`;
     addresses += `--------\n`;
-    addresses += `tokenAddress: ${tokenAddress}\n`;
     addresses += `poolAddress: ${poolAddress}\n`;
     addresses += `poolNftId: ${poolNftId}\n`;
     addresses += `productAddress: ${productAddress}\n`;
@@ -133,9 +139,29 @@ function printAddresses(
     logger.info(addresses);
 }
 
+async function deployToken(owner: Signer, registry: RegistryAddresses): Promise<{
+    tokenAddress: AddressLike,
+    tokenNftId: string
+    }> {
+    const { address: tokenAddress } = await deployContract(
+        "USDC",
+        owner);
+
+    const tokenNftId = await registerContract(tokenAddress, "USDC", registry, owner);
+
+    return {
+        tokenAddress,
+        tokenNftId
+    }
+}
+
 async function deployProduct(
-    owner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, 
-    instance: InstanceAddresses, tokenAddress: AddressLike, poolAddress: AddressLike
+    owner: Signer, libraries: LibraryAddresses, 
+    registry: RegistryAddresses, 
+    instance: InstanceAddresses, 
+    services: ServiceAddresses, 
+    tokenAddress: AddressLike, 
+    poolAddress: AddressLike
 ): Promise<{
     productAddress: AddressLike, productNftId: string,
 }> {
@@ -148,9 +174,12 @@ async function deployProduct(
             tokenAddress,
             poolAddress,
         ],
-        { libraries: {  }});
+        { libraries: {
+            FeeLib: libraries.feeLibAddress
+        }},
+        "contracts/test/TestProduct.sol:TestProduct");
     
-    const productNftId = await register(productContractBase as Registerable, productAddress, "TestProduct", registry, owner)
+    const productNftId = await registerProduct(productContractBase as Registerable, productAddress, "TestProduct", services, registry, owner)
     logger.info(`product registered - productNftId: ${productNftId}`);
     
     return {
@@ -159,15 +188,10 @@ async function deployProduct(
     };
 }
 
-async function deployPool(owner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, instance: InstanceAddresses): Promise<{
-    tokenAddress: AddressLike,
+async function deployPool(owner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, instance: InstanceAddresses, services: ServiceAddresses, tokenAddress: AddressLike): Promise<{
     poolAddress: AddressLike,
     poolNftId: string,
 }> {
-    const { address: tokenAddress } = await deployContract(
-        "USDC",
-        owner);
-
     const uFixedMathLib = UFixedMathLib__factory.connect(libraries.uFixedMathLibAddress.toString(), owner);
     const collateralizationLevel = await uFixedMathLib["toUFixed(uint256)"](POOL_COLLATERALIZATION_LEVEL);
 
@@ -181,14 +205,15 @@ async function deployPool(owner: Signer, libraries: LibraryAddresses, registry: 
             POOL_IS_VERIFYING,
             collateralizationLevel,
         ],
-        { libraries: {}},
+        { libraries: {
+            FeeLib: libraries.feeLibAddress
+        }},
         "contracts/test/TestPool.sol:TestPool");
 
-    const poolNftId = await register(poolContractBase as Registerable, poolAddress, "TestPool", registry, owner);
+    const poolNftId = await registerPool(poolContractBase as Registerable, poolAddress, "TestPool", services, registry, owner);
     logger.info(`pool registered - poolNftId: ${poolNftId}`);
     
     return {
-        tokenAddress,
         poolAddress,
         poolNftId,
     };

@@ -4,8 +4,9 @@ import { RoleIdLib__factory } from "../../typechain-types/factories/contracts/ty
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
-import { RegistryAddresses, register } from "./registry";
+import { RegistryAddresses } from "./registry";
 import { executeTx } from "./transaction";
+import { ServiceAddresses, registerInstance } from "./services";
 
 export type InstanceAddresses = {
     instanceAddress: AddressLike,
@@ -15,6 +16,7 @@ export type InstanceAddresses = {
 export async function deployAndRegisterInstance(
     owner: Signer, 
     libraries: LibraryAddresses,
+    services: ServiceAddresses,
     registry: RegistryAddresses,
 ): Promise<InstanceAddresses> {
     const { address: instanceAddress, contract: instanceBaseContract } = await deployContract(
@@ -35,7 +37,8 @@ export async function deployAndRegisterInstance(
             RoleIdLib: libraries.roleIdLibAddress,
         }});
 
-    const instanceNftId = await register(instanceBaseContract as Registerable, instanceAddress, "Instance", registry, owner);
+    const instanceNftId = await registerInstance(instanceBaseContract as Registerable, instanceAddress, "Instance", services, registry, owner);
+
     logger.info(`instance registered - instanceNftId: ${instanceNftId}`);
     return {
         instanceAddress,

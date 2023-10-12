@@ -9,6 +9,10 @@ import {VersionPart} from "../types/Version.sol";
 import {IChainNft} from "./IChainNft.sol";
 
 interface IRegistry is IERC165 {
+
+    event Approval(NftId indexed nftId, ObjectType objectType, ObjectType parentType);
+
+
     struct ObjectInfo {
         NftId nftId;
         NftId parentNftId;

@@ -87,7 +87,7 @@ contract ComponentOwnerService is
         // TODO check interface 
 
         (IRegistry.ObjectInfo memory info,
-         ITreasury.ProductSetup memory setup) = product.getInitialProductInfo();
+        ITreasury.ProductSetup memory setup) = product.getInitialProductInfo();
 
         require(info.initialOwner == msg.sender, "ERROR:COS-002:NOT_OWNER");// owner protection
         require(info.objectAddress == address(product), "ERROR:COS-003:WRONG_ADDRESS");
@@ -102,7 +102,6 @@ contract ComponentOwnerService is
     
         nftId = _registry.registerFrom(msg.sender, info);
 
-        // "callstack is too deep" with this version
         _registerProduct(
             nftId, 
             instanceNftId,
@@ -123,7 +122,6 @@ contract ComponentOwnerService is
         (IRegistry.ObjectInfo memory info,
         IComponent.PoolComponentInfo memory poolInfo) = pool.getInitialPoolInfo();
 
-        // check ObjectInfo
         require(info.initialOwner == msg.sender, "ERROR:COS-007:NOT_OWNER");// owner protection 
         require(info.objectAddress == address(pool), "ERROR:COS-008:WRONG_ADDRESS");
         require(info.objectType == POOL(), "ERROR:COS-009:NOT_POOL");
@@ -198,14 +196,14 @@ contract ComponentOwnerService is
         internal
     {
         // only product's owner with role
-        require(_registry.ownerOf(nftId) == msg.sender);
+        //require(_registry.ownerOf(nftId) == msg.sender);
         RoleId typeRole = getRoleForType(PRODUCT());
         require(
             instance.hasRole(typeRole, msg.sender),
             "ERROR:COS-014:TYPE_ROLE_MISSING"
         );  
 
-        // check ProductInfo
+        // check product setup
         // token is registered -> TODO instance can whitelist tokens too?
         IRegistry.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(setup.token));
         require(tokenInfo.objectType == TOKEN(), "ERROR:COS-015:UNKNOWN_TOKEN"); 
@@ -241,14 +239,14 @@ contract ComponentOwnerService is
     {
 
         // pool's owner with role
-        require(_registry.ownerOf(nftId) == msg.sender);
+        //require(_registry.ownerOf(nftId) == msg.sender);
         RoleId typeRole = getRoleForType(POOL());
         require(
             instance.hasRole(typeRole, msg.sender),
             "ERROR:COS-019:TYPE_ROLE_MISSING"
         );  
 
-        // check PoolInfo
+        // check pool setup and info
         // token is registered -> TODO instance can personaly whitelist tokens too?
         address tokenAddress = address(pool.setup.token);
         ObjectType tokenType = _registry.getObjectInfo(tokenAddress).objectType;
