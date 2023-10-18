@@ -7,6 +7,7 @@ import {IService} from "../base/IService.sol";
 
 interface IPoolService is IService {
     function setFees(
+        Fee memory poolFee,
         Fee memory stakingFee,
         Fee memory performanceFee
     ) external;
@@ -18,6 +19,11 @@ interface IPoolService is IService {
         uint256 lifetime, 
         bytes calldata filter
     ) external returns(NftId bundleNftId);
+
+    function setBundleFee(
+        NftId bundleNftId,
+        Fee memory fee
+    ) external;
 
     // function fundBundle(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 

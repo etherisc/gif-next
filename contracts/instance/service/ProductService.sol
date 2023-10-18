@@ -200,11 +200,10 @@ contract ProductService is ComponentServiceBase, IProductService {
         ReferralId referralId
     ) external override returns (NftId policyNftId) {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        NftId productNftId = productInfo.nftId;
         // TODO add validations (see create bundle in pool service)
 
         policyNftId = this.getRegistry().registerObjectForInstance(
-            productNftId,
+            productInfo.nftId,
             POLICY(),
             applicationOwner,
             ""
@@ -221,7 +220,8 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         instance.createPolicyInfo(
             policyNftId,
-            productNftId,
+            productInfo.nftId,
+            referralId,
             riskId,
             sumInsuredAmount,
             premiumAmount,

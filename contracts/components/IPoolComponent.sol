@@ -10,6 +10,12 @@ interface IPoolComponent is IBaseComponent {
 
     event LogUnderwrittenByPool(NftId policyNftId, uint256 collateralizationAmount, address pool);
 
+    function setFees(
+        Fee memory poolFee,
+        Fee memory stakingFee,
+        Fee memory performanceFee
+    ) external;
+
     /**
      * @dev creates a new bundle for this pool.
      */
@@ -19,6 +25,11 @@ interface IPoolComponent is IBaseComponent {
         uint256 lifetime,
         bytes memory filter
     ) external returns(NftId bundleNftId);
+
+    function setBundleFee(
+        NftId policyNftId, 
+        Fee memory fee
+    ) external;
 
     /** 
      * @dev this is a callback function that is called by the product service when underwriting a policy.

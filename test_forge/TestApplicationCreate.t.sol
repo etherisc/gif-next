@@ -19,11 +19,15 @@ import {ITreasuryModule} from "../contracts/instance/module/treasury/ITreasury.s
 contract TestApplicationCreate is TestGifBase {
     uint256 public sumInsuredAmount = 1000 * 10 ** 6;
     uint256 public lifetime = 365 * 24 * 3600;
-    uint256 public premiumAmount = calculateExpectedPremium();
+    uint256 public premiumAmount = calculateExpectedPremiumWithFees();
     ReferralId public referralId = ReferralIdLib.zeroReferralId();
 
-    function calculateExpectedPremium() public view returns (uint256 expectedPremiumAmount) {
-        uint256 netPremiumAmount = sumInsuredAmount / 10;
+    function calculateExpectedPremiumWithNoFees() public view returns (uint256 expectedPremiumAmount) {
+        return sumInsuredAmount / 10;
+    }
+
+    function calculateExpectedPremiumWithFees() public view returns (uint256 expectedPremiumAmount) {
+        uint256 netPremiumAmount = calculateExpectedPremiumWithNoFees();
 
         Fee memory totalFee = FeeLib.percentageFee(0
             + initialProductFeePercentage
@@ -45,7 +49,7 @@ contract TestApplicationCreate is TestGifBase {
             referralId
         );
 
-        assertNftId(policyNftId, toNftId(113133705), "policy id not 113133705");
+        assertNftId(policyNftId, toNftId(123133705), "policy id not 123133705");
         assertEq(
             registry.getOwner(policyNftId),
             customer,
@@ -113,22 +117,43 @@ contract TestApplicationCreate is TestGifBase {
     }
 
     function testUnderwriteAndActivatePolicyCollectPremiumNoFee() public {
-        // set fees to zeroFee
         Fee memory zeroFee = FeeLib.zeroFee();
+
+        // set fees to zeroFee
+        vm.prank(distributionOwner);
+        distribution.setFees(zeroFee);
+
         vm.prank(productOwner);
         product.setFees(zeroFee, zeroFee);
+
+        vm.prank(poolOwner);
+        pool.setFees(zeroFee, zeroFee, zeroFee);
+
+        vm.prank(poolOwner);
+        pool.setBundleFee(bundleNftId, zeroFee);
 
         // check updated policy fee
         ITreasuryModule treasuryModule = ITreasuryModule(address(instance));
         ITreasuryModule.TreasuryInfo memory info = treasuryModule
             .getTreasuryInfo(product.getNftId());
+
+        assertTrue(
+            FeeLib.feeIsSame(info.distributionFee, FeeLib.zeroFee()),
+            "updated distributionFee not zeroFee"
+        );
         assertTrue(
             FeeLib.feeIsSame(info.productFee, FeeLib.zeroFee()),
             "updated productFee not zeroFee"
         );
         assertTrue(
-            FeeLib.feeIsSame(info.processingFee, FeeLib.zeroFee()),
-            "updated processingFee not zeroFee"
+            FeeLib.feeIsSame(info.poolFee, FeeLib.zeroFee()),
+            "updated poolFee not zeroFee"
+        );
+
+        IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
+        assertTrue(
+            FeeLib.feeIsSame(bundleInfo.fee, FeeLib.zeroFee()),
+            "updated bundle fee not zeroFee"
         );
 
         vm.prank(customer);
@@ -144,9 +169,11 @@ contract TestApplicationCreate is TestGifBase {
             policyNftId
         );
 
+        uint256 noFeePremiumAmount = calculateExpectedPremiumWithNoFees();
+
         assertEq(
             infoBefore.premiumAmount,
-            premiumAmount,
+            noFeePremiumAmount,
             "unexpected policy premium amount"
         );
         assertEq(
@@ -162,7 +189,7 @@ contract TestApplicationCreate is TestGifBase {
 
         // prepare customer to pay premium amount
         vm.prank(instanceOwner);
-        fundAccount(customer, premiumAmount);
+        fundAccount(customer, noFeePremiumAmount);
 
         TokenHandler tokenHandler = instance.getTokenHandler(
             product.getNftId()
@@ -170,16 +197,16 @@ contract TestApplicationCreate is TestGifBase {
         address tokenHandlerAddress = address(tokenHandler);
 
         vm.prank(customer);
-        token.approve(tokenHandlerAddress, premiumAmount);
+        token.approve(tokenHandlerAddress, noFeePremiumAmount);
 
         assertEq(
             token.balanceOf(customer),
-            premiumAmount,
+            noFeePremiumAmount,
             "customer balance not premium"
         );
         assertEq(
             token.allowance(customer, tokenHandlerAddress),
-            premiumAmount,
+            noFeePremiumAmount,
             "customer token approval not premium"
         );
 
@@ -208,21 +235,20 @@ contract TestApplicationCreate is TestGifBase {
         assertTrue(policyInfo.closedAt == zeroTimestamp(), "wrong closed at");
         assertEq(
             policyInfo.premiumAmount,
-            premiumAmount,
+            noFeePremiumAmount,
             "unexpected policy premium amount (after)"
         );
         assertEq(
             policyInfo.premiumPaidAmount,
-            premiumAmount,
+            noFeePremiumAmount,
             "unexpected policy premium paid amount (after)"
         );
 
         // TODO needs proper premium collection and fee distribution
         // to be implemented
-        premiumAmount = calculateExpectedPremium();
         assertEq(
             token.balanceOf(pool.getWallet()),
-            initialCapitalAmount + premiumAmount,
+            initialCapitalAmount + noFeePremiumAmount,
             "unexpected pool balance (after)"
         );
     }

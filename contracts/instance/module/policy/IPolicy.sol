@@ -5,6 +5,7 @@ import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {NftId} from "../../../types/NftId.sol";
+import {ReferralId} from "../../../types/ReferralId.sol";
 import {RiskId} from "../../../types/RiskId.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
@@ -14,6 +15,7 @@ interface IPolicy {
     struct PolicyInfo {
         NftId productNftId;
         NftId bundleNftId;
+        ReferralId referralId;
         address beneficiary;
         RiskId riskId;
         uint256 sumInsuredAmount;
@@ -32,6 +34,7 @@ interface IPolicyModule is IPolicy {
     function createPolicyInfo(
         NftId policyNftId,
         NftId productNftId,
+        ReferralId referralId,
         RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,

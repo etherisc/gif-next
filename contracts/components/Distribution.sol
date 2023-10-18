@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {ObjectType, DISTRIBUTION} from "../types/ObjectType.sol";
+import {IDistributionService} from "../instance/service/IDistributionService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {NftId} from "../types/NftId.sol";
 import {ReferralId} from "../types/ReferralId.sol";
@@ -17,7 +18,7 @@ contract Distribution is
     Fee internal _initialDistributionFee;
     bool internal _isVerifying;
 
-    // only relevant to protect callback functions for "active" pools
+    IDistributionService private _distributionService;
     IProductService private _productService;
 
     modifier onlyProductService() {
@@ -40,9 +41,19 @@ contract Distribution is
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 
+        _distributionService = _instance.getDistributionService();
         _productService = _instance.getProductService();
     }
 
+
+    function setFees(
+        Fee memory distributionFee
+    )
+        external
+        override
+    {
+        _distributionService.setFees(distributionFee);
+    }
 
     function calculateFeeAmount(
         ReferralId referralId,

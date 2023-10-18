@@ -21,6 +21,7 @@ import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 import {IRegistry, IRegistryLinked} from "../registry/IRegistryLinked.sol";
 
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
+import {IDistributionService} from "./service/IDistributionService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IInstanceBase} from "./base/IInstanceBase.sol";
@@ -45,6 +46,7 @@ interface IInstance is
 
     function getKeyValueStore() external view override (IInstanceBase) returns (IKeyValueStore keyValueStore);
     function getComponentOwnerService() external view override (IInstanceBase, IComponentModule) returns(IComponentOwnerService);
+    function getDistributionService() external view override returns(IDistributionService);
     function getProductService() external view override (IInstanceBase, IBundleModule, IPolicyModule) returns(IProductService);
     function getPoolService() external view override (IInstanceBase, IBundleModule, IPoolModule) returns(IPoolService);
 

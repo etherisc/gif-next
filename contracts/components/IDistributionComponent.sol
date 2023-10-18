@@ -9,6 +9,10 @@ import {IBaseComponent} from "./IBaseComponent.sol";
 
 interface IDistributionComponent is IBaseComponent {
 
+    function setFees(
+        Fee memory distributionFee
+    ) external;
+
     function calculateFeeAmount(
         ReferralId referralId,
         uint256 netPremiumAmount

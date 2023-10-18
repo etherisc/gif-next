@@ -24,6 +24,7 @@ import {IPolicyModule} from "./module/policy/IPolicy.sol";
 import {IInstanceBase} from "./base/IInstanceBase.sol";
 
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
+import {IDistributionService} from "./service/IDistributionService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 
@@ -65,6 +66,7 @@ contract Instance is
     function getKeyValueStore() public view override (InstanceBase) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
     function getComponentOwnerService() external view override (IComponentModule, IInstanceBase) returns(IComponentOwnerService service) { return _componentOwnerService; }
+    function getDistributionService() external view override (IInstanceBase) returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IBundleModule, IPolicyModule, IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IBundleModule, IPoolModule, IInstanceBase) returns(IPoolService service) { return _poolService; }
 

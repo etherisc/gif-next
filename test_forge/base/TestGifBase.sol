@@ -9,6 +9,7 @@ import {ChainNft, IChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 
 import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
+import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
 import {ProductService} from "../../contracts/instance/service/ProductService.sol";
 import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 
@@ -40,6 +41,7 @@ contract TestGifBase is Test {
     Registry public registry;
     IERC20Metadata public token;
     ComponentOwnerService public componentOwnerService;
+    DistributionService public distributionService;
     ProductService public productService;
     PoolService public poolService;
     Instance public instance;
@@ -198,6 +200,7 @@ contract TestGifBase is Test {
 
 
     function _deployServices() internal {
+        //--- component owner service ---------------------------------//
         componentOwnerService = new ComponentOwnerService(
             registryAddress, registryNftId);
         componentOwnerService.register();
@@ -209,6 +212,19 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("component owner service deployed at", address(componentOwnerService));
 
+        //--- distribution service ---------------------------------//
+        distributionService = new DistributionService(
+            registryAddress, registryNftId);
+        distributionService.register();
+
+        // solhint-disable-next-line
+        console.log("service name", distributionService.NAME());
+        // solhint-disable-next-line
+        console.log("service nft id", distributionService.getNftId().toInt());
+        // solhint-disable-next-line
+        console.log("distribution service deployed at", address(distributionService));
+
+        //--- product service ---------------------------------//
         productService = new ProductService(
             registryAddress, registryNftId);
         productService.register();
@@ -220,6 +236,7 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("product service deployed at", address(productService));
 
+        //--- pool service ---------------------------------//
         poolService = new PoolService(
             registryAddress, registryNftId);
         poolService.register();

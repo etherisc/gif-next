@@ -63,6 +63,18 @@ contract Pool is BaseComponent, IPoolComponent {
         _productService = _instance.getProductService();
     }
 
+    function setFees(
+        Fee memory poolFee,
+        Fee memory stakingFee,
+        Fee memory performanceFee
+    )
+        external
+        onlyOwner
+        override
+    {
+        _poolService.setFees(poolFee, stakingFee, performanceFee);
+    }
+
     function createBundle(
         Fee memory fee,
         uint256 initialAmount,
@@ -83,6 +95,17 @@ contract Pool is BaseComponent, IPoolComponent {
         );
 
         // TODO add logging
+    }
+
+    function setBundleFee(
+        NftId bundleNftId, 
+        Fee memory fee
+    )
+        external
+        override
+        // TODO add onlyBundleOwner
+    {
+        _poolService.setBundleFee(bundleNftId, fee);
     }
 
     /**
