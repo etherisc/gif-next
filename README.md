@@ -1,5 +1,24 @@
 # gif-next (Generic Insurance Framework next version)
 
+## Add OpenZeppelin V5 Dependencies
+
+```shell
+forge install openzeppelin-contracts-500=OpenZeppelin/openzeppelin-contracts@v5.0.0
+cd cd lib/openzeppelin-contracts-500
+git checkout tags/v5.0.0
+cd ../..
+```
+
+See `remappings.txt` to see how to work with different OpenZeppelin versions in parallel
+
+```
+cat remappings.txt 
+@openzeppelin5/contracts/=lib/openzeppelin-contracts-500/contracts/
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+```
+
+
 ## Submodules checkout
 
 This repository uses submodules. To checkout or update to the latest submodules, run the following command after updating to any revision (or checking out the repository)
@@ -201,6 +220,7 @@ sudo apt update
 sudo apt install python3-pip
 pip install eth-brownie
 brownie pm install OpenZeppelin/openzeppelin-contracts@4.9.3
+brownie pm install OpenZeppelin/openzeppelin-contracts@5.0.0
 ```
 
 ```bash

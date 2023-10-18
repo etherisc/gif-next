@@ -22,7 +22,7 @@ abstract contract Versionable is IVersionable {
     // and needs to call internal function call _activate() 
     function activate(address implementation, address activatedBy)
         external
-        override
+        virtual override
     { 
         _activate(implementation, activatedBy);
     }
