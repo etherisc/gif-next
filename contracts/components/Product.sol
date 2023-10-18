@@ -71,7 +71,7 @@ contract Product is BaseComponent, IProductComponent {
     )
         external
         view
-        override
+        virtual override
         returns (uint256 netPremiumAmount)
     {
         // default 10% of sum insured

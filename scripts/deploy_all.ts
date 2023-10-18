@@ -1,6 +1,6 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
-import { IChainNft__factory, IRegistry__factory, Instance__factory, Registerable, UFixedMathLib__factory } from "../typechain-types";
+import { IChainNft__factory, IRegistry__factory, Registerable, UFixedMathLib__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateNftOwnerhip, validateOwnership } from "./libs/accounts";
 import { POOL_COLLATERALIZATION_LEVEL, POOL_IS_VERIFYING, DISTRIBUTION_IS_VERIFYING } from "./libs/constants";
 import { deployContract } from "./libs/deployment";
@@ -29,7 +29,7 @@ async function main() {
     
     // deploy pool & product contracts
     const { poolAddress, poolNftId, tokenAddress } = await deployPool(poolOwner, libraries, registry, instance);
-    const { distributionAddress, distributionNftId } = await deployDistribution(distributionOwner, libraries, registry, instance);
+    const { distributionAddress, distributionNftId } = await deployDistribution(distributionOwner, libraries, registry, instance, tokenAddress);
     const { productAddress, productNftId } = await deployProduct(productOwner, libraries, registry, instance, tokenAddress, poolAddress, distributionAddress);
     
     printAddresses(
@@ -54,6 +54,7 @@ async function main() {
         ["protocolOwner", protocolOwner] ,
         ["instanceOwner", instanceOwner] , 
         ["productOwner", productOwner], 
+        ["distributionOwner", distributionOwner], 
         ["poolOwner", poolOwner]);
 }
 
@@ -141,9 +142,9 @@ function printAddresses(
     addresses += `--------\n`;
     addresses += `tokenAddress: ${tokenAddress}\n`;
     addresses += `poolAddress: ${poolAddress}\n`;
-    addresses += `distgributionNftId: ${poolNftId}\n`;
-    addresses += `distributionAddress: ${poolAddress}\n`;
     addresses += `poolNftId: ${poolNftId}\n`;
+    addresses += `distributionAddress: ${distributionAddress}\n`;
+    addresses += `distributionNftId: ${distributionNftId}\n`;
     addresses += `productAddress: ${productAddress}\n`;
     addresses += `productNftId: ${productNftId}\n`;    
     
@@ -185,15 +186,13 @@ async function deployProduct(
     };
 }
 
-async function deployDistribution(owner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, instance: InstanceAddresses): Promise<{
-    tokenAddress: AddressLike,
+async function deployDistribution(
+    owner: Signer, libraries: LibraryAddresses, 
+    registry: RegistryAddresses, instance: InstanceAddresses, tokenAddress: AddressLike
+): Promise<{
     distributionAddress: AddressLike,
     distributionNftId: string,
 }> {
-    const { address: tokenAddress } = await deployContract(
-        "USDC",
-        owner);
-
     const zeroFee = [0,0];
     const { address: distributionAddress, contract: distributionContractBase } = await deployContract(
         "TestDistribution",
@@ -214,7 +213,6 @@ async function deployDistribution(owner: Signer, libraries: LibraryAddresses, re
     logger.info(`distribution registered - distributionNftId: ${distributionNftId}`);
     
     return {
-        tokenAddress,
         distributionAddress,
         distributionNftId,
     };
