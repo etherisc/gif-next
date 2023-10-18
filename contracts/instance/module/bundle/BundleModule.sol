@@ -6,6 +6,7 @@ import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
+import {Fee} from "../../../types/Fee.sol";
 import {NftId} from "../../../types/NftId.sol";
 import {Key32, KeyId} from "../../../types/Key32.sol";
 import {LibNftIdSet} from "../../../types/NftIdSet.sol";
@@ -61,6 +62,7 @@ abstract contract BundleModule is
     function createBundleInfo(
         NftId bundleNftId,
         NftId poolNftId,
+        Fee memory fee,
         uint256 amount, 
         uint256 lifetime, 
         bytes calldata filter
@@ -71,6 +73,7 @@ abstract contract BundleModule is
     {
         BundleInfo memory info = BundleInfo(
             poolNftId,
+            fee,
             filter,
             amount, // capital
             0, // locked capital
@@ -127,9 +130,5 @@ abstract contract BundleModule is
 
     function getBundleInfo(NftId bundleNftId) external view override returns(BundleInfo memory bundleInfo) {
         return abi.decode(_getData(BUNDLE(), bundleNftId), (BundleInfo));
-    }
-
-    function getBundleState(NftId bundleNftId) external view override returns(StateId state) {
-        return _getState(BUNDLE(), bundleNftId);
     }
 }

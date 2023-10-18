@@ -11,6 +11,7 @@ import {StateId} from "../../types/StateId.sol";
 import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 import {IComponentOwnerService} from "../service/IComponentOwnerService.sol";
+import {IDistributionService} from "../service/IDistributionService.sol";
 import {IProductService} from "../service/IProductService.sol";
 import {IPoolService} from "../service/IPoolService.sol";
 
@@ -28,6 +29,7 @@ abstract contract InstanceBase is
     IKeyValueStore internal _keyValueStore;
 
     IComponentOwnerService internal _componentOwnerService;
+    IDistributionService internal _distributionService;
     IProductService internal _productService;
     IPoolService internal _poolService;
 
@@ -50,6 +52,10 @@ abstract contract InstanceBase is
         _keyValueStore.updateState(key, state);
     }
 
+    function getState(Key32 key) external view override returns (StateId state) {
+        return _keyValueStore.getState(key);
+    }
+
     // from versionable
     function getVersion()
         public 
@@ -70,6 +76,7 @@ abstract contract InstanceBase is
     function _linkToServicesInRegistry() internal {
         VersionPart majorVersion = getVersion().toMajorPart();
         _componentOwnerService = IComponentOwnerService(_getAndCheck("ComponentOwnerService", majorVersion));
+        _distributionService = IDistributionService(_getAndCheck("DistributionService", majorVersion));
         _productService = IProductService(_getAndCheck("ProductService", majorVersion));
         _poolService = IPoolService(_getAndCheck("PoolService", majorVersion));
     }

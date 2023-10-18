@@ -43,6 +43,10 @@ abstract contract ModuleBase {
         _store.updateState(nftId.toKey32(objectType), state);
     }
 
+    function _exists(ObjectType objectType, NftId nftId) internal view returns (bool hasData) {
+        return _store.exists(nftId.toKey32(objectType));
+    }
+
     function _getData(ObjectType objectType, NftId nftId) internal view returns(bytes memory data) {
         return _store.getData(nftId.toKey32(objectType));
     }

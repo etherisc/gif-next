@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {Product} from "../../contracts/components/Product.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
+import {ReferralId} from "../types/ReferralId.sol";
 import {RiskId} from "../../contracts/types/RiskId.sol";
 import {Timestamp, blockTimestamp} from "../../contracts/types/Timestamp.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
@@ -19,10 +20,11 @@ contract TestProduct is Product {
         NftId instanceNftid,
         address token,
         address pool,
-        Fee memory policyFee,
+        address distribution,
+        Fee memory productFee,
         Fee memory processingFee
     )
-        Product(registry, instanceNftid, token, pool, policyFee, processingFee)
+        Product(registry, instanceNftid, token, pool, distribution, productFee, processingFee)
     // solhint-disable-next-line no-empty-blocks
     {
     }
@@ -33,25 +35,29 @@ contract TestProduct is Product {
 
     function applyForPolicy(
         uint256 sumInsuredAmount,
-        uint256 premiumAmount,
         uint256 lifetime,
-        NftId bundleNftId
+        NftId bundleNftId,
+        ReferralId referralId
     )
         external
         returns(NftId nftId)
     {
+        RiskId riskId = getDefaultRiskId();
+        bytes memory applicationData = "";
+
         if (!defaultRiskCreated) {
-            _createRisk(getDefaultRiskId() , "");
+            _createRisk(riskId, "");
             defaultRiskCreated = true;
         }
 
         nftId = _createApplication(
             msg.sender, // policy holder
-            getDefaultRiskId(),
+            riskId,
             sumInsuredAmount,
-            premiumAmount,
             lifetime,
-            bundleNftId
+            applicationData,
+            bundleNftId,
+            referralId
         );
     }
 

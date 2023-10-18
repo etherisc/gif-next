@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
+import {IBundle} from "../../instance/module/bundle/IBundle.sol";
 import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
@@ -44,6 +45,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
     }
 
     function setFees(
+        Fee memory poolFee,
         Fee memory stakingFee,
         Fee memory performanceFee
     )
@@ -54,6 +56,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
         NftId productNftId = instance.getProductNftId(poolInfo.nftId);
         ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(productNftId);
+        treasuryInfo.poolFee = poolFee;
         treasuryInfo.stakingFee = stakingFee;
         treasuryInfo.performanceFee = performanceFee;
         instance.setTreasuryInfo(productNftId, treasuryInfo);
@@ -61,6 +64,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
     function createBundle(
         address owner, 
+        Fee memory fee, 
         uint256 stakingAmount, 
         uint256 lifetime, 
         bytes calldata filter
@@ -83,6 +87,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
         instance.createBundleInfo(
             bundleNftId,
             poolNftId,
+            fee,
             stakingAmount,
             lifetime,
             filter);
@@ -101,6 +106,21 @@ contract PoolService is ComponentServiceBase, IPoolService {
             stakingAmount);
 
         // TODO add logging
+    }
+
+    function setBundleFee(
+        NftId bundleNftId,
+        Fee memory fee
+    )
+        external
+        override
+    {
+        (IRegistry.ObjectInfo memory poolInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
+        require(bundleInfo.poolNftId.gtz(), "ERROR:PLS-010:BUNDLE_UNKNOWN");
+        require(poolInfo.nftId == bundleInfo.poolNftId, "ERROR:PLS-011:BUNDLE_POOL_MISMATCH");
+        bundleInfo.fee = fee;
+        instance.setBundleInfo(bundleNftId, bundleInfo);
     }
 
 

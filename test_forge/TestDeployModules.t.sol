@@ -20,7 +20,7 @@ import {
     TestInstanceModuleAccess, 
     TestInstanceModuleBundle, 
     TestInstanceModuleComponent, 
-    TestInstanceModuleCompensation,
+    TestInstanceModuleDistribution,
     TestInstanceModulePolicy, 
     TestInstanceModulePool, 
     TestInstanceModuleRisk, 
@@ -101,7 +101,7 @@ contract TestDeployModules is TestGifBase {
 
     function testInstanceModuleCompensation() public {
         vm.prank(instanceOwner);
-        TestInstanceModuleCompensation instance = new TestInstanceModuleCompensation(registryAddress, registryNftId);
+        TestInstanceModuleDistribution instance = new TestInstanceModuleDistribution(registryAddress, registryNftId);
 
         vm.prank(instanceOwner);
         instance.register();

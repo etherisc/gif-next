@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import {Blocknumber} from "../contracts/types/Blocknumber.sol";
 import {NftId} from "../contracts/types/NftId.sol";
+import {COMPONENT} from "../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../contracts/types/StateId.sol";
 
 import {TestGifBase} from "./base/TestGifBase.sol";
@@ -21,7 +22,7 @@ contract TestComponentLockUnlock is TestGifBase {
         NftId nftId = product.getNftId();
 
         assertEq(
-            instance.getComponentState(nftId).toInt(),
+            instance.getState(nftId.toKey32(COMPONENT())).toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );
@@ -30,7 +31,7 @@ contract TestComponentLockUnlock is TestGifBase {
         product.lock();
 
         assertEq(
-            instance.getComponentState(nftId).toInt(),
+            instance.getState(nftId.toKey32(COMPONENT())).toInt(),
             PAUSED().toInt(),
             "component state not paused"
         );
@@ -40,7 +41,7 @@ contract TestComponentLockUnlock is TestGifBase {
         NftId nftId = product.getNftId();
 
         assertEq(
-            instance.getComponentState(nftId).toInt(),
+            instance.getState(nftId.toKey32(COMPONENT())).toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );
@@ -55,7 +56,7 @@ contract TestComponentLockUnlock is TestGifBase {
         NftId nftId = product.getNftId();
 
         assertEq(
-            instance.getComponentState(nftId).toInt(),
+            instance.getState(nftId.toKey32(COMPONENT())).toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );
@@ -64,7 +65,7 @@ contract TestComponentLockUnlock is TestGifBase {
         product.lock();
 
         assertEq(
-            instance.getComponentState(nftId).toInt(),
+            instance.getState(nftId.toKey32(COMPONENT())).toInt(),
             PAUSED().toInt(),
             "component state not paused"
         );
@@ -73,7 +74,7 @@ contract TestComponentLockUnlock is TestGifBase {
         vm.stopPrank();
 
         assertEq(
-            instance.getComponentState(nftId).toInt(),
+            instance.getState(nftId.toKey32(COMPONENT())).toInt(),
             ACTIVE().toInt(),
             "component state not active"
         );

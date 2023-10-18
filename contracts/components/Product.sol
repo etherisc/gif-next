@@ -7,6 +7,7 @@ import {IProductService} from "../instance/service/IProductService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
+import {ReferralId} from "../types/ReferralId.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {StateId} from "../types/StateId.sol";
 import {Timestamp} from "../types/Timestamp.sol";
@@ -16,7 +17,8 @@ import {BaseComponent} from "./BaseComponent.sol";
 contract Product is BaseComponent, IProductComponent {
     IProductService internal _productService;
     address internal _pool;
-    Fee internal _initialPolicyFee;
+    address internal _distribution;
+    Fee internal _initialProductFee;
     Fee internal _initialProcessingFee;
 
     constructor(
@@ -24,14 +26,56 @@ contract Product is BaseComponent, IProductComponent {
         NftId instanceNftid,
         address token,
         address pool,
-        Fee memory policyFee,
+        address distribution,
+        Fee memory productFee,
         Fee memory processingFee
     ) BaseComponent(registry, instanceNftid, token) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = pool;
-        _initialPolicyFee = policyFee;
+        _distribution = distribution;
+        _initialProductFee = productFee;
         _initialProcessingFee = processingFee;        
+    }
+
+
+    function calculatePremium(
+        uint256 sumInsuredAmount,
+        RiskId riskId,
+        uint256 lifetime,
+        bytes memory applicationData,
+        ReferralId referralId,
+        NftId bundleNftId
+    )
+        external 
+        view 
+        override 
+        returns (uint256 premiumAmount)
+    {
+        (premiumAmount,,,,) = _productService.calculatePremium(
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+    }
+
+
+    function calculateNetPremium(
+        uint256 sumInsuredAmount,
+        RiskId riskId,
+        uint256 lifetime,
+        bytes memory applicationData
+    )
+        external
+        view
+        virtual override
+        returns (uint256 netPremiumAmount)
+    {
+        // default 10% of sum insured
+        return sumInsuredAmount / 10;
     }
 
     function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {
@@ -72,25 +116,23 @@ contract Product is BaseComponent, IProductComponent {
         return _instance.getRiskInfo(id);
     }
 
-    function _getRiskState(RiskId id) internal view returns (StateId state) {
-        return _instance.getRiskState(id);
-    }
-
     function _createApplication(
         address applicationOwner,
         RiskId riskId,
         uint256 sumInsuredAmount,
-        uint256 premiumAmount,
         uint256 lifetime,
-        NftId bundleNftId
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
     ) internal returns (NftId nftId) {
         nftId = _productService.createApplication(
             applicationOwner,
             riskId,
             sumInsuredAmount,
-            premiumAmount,
             lifetime,
-            bundleNftId
+            applicationData,
+            bundleNftId,
+            referralId
         );
     }
 
@@ -133,30 +175,34 @@ contract Product is BaseComponent, IProductComponent {
         return _registry.getNftId(_pool);
     }
 
+    function getDistributionNftId() external view override returns (NftId distributionNftId) {
+        return _registry.getNftId(_distribution);
+    }
+
     // from product component
     function setFees(
-        Fee memory policyFee,
+        Fee memory productFee,
         Fee memory processingFee
     )
         external
         onlyOwner
         override
     {
-        _productService.setFees(policyFee, processingFee);
+        _productService.setFees(productFee, processingFee);
     }
 
 
-    function getPolicyFee()
+    function getProductFee()
         external
         view
         override
-        returns (Fee memory policyFee)
+        returns (Fee memory productFee)
     {
         NftId productNftId = getNftId();
-        if (address(_instance.getTokenHandler(productNftId)) != address(0)) {
-            return _instance.getTreasuryInfo(productNftId).policyFee;
+        if (_instance.hasTreasuryInfo(productNftId)) {
+            return _instance.getTreasuryInfo(productNftId).productFee;
         } else {
-            return _initialPolicyFee;
+            return _initialProductFee;
         }
     }
 
@@ -167,7 +213,7 @@ contract Product is BaseComponent, IProductComponent {
         returns (Fee memory processingFee)
     {
         NftId productNftId = getNftId();
-        if (address(_instance.getTokenHandler(productNftId)) != address(0)) {
+        if (_instance.hasTreasuryInfo(productNftId)) {
             return _instance.getTreasuryInfo(productNftId).processingFee;
         } else {
             return _initialProcessingFee;

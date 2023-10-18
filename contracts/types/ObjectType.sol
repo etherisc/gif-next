@@ -49,7 +49,7 @@ function PRODUCT() pure returns (ObjectType) {
     return toObjectType(110);
 }
 
-function COMPENSATION() pure returns (ObjectType) {
+function DISTRIBUTION() pure returns (ObjectType) {
     return toObjectType(120);
 }
 
@@ -69,16 +69,20 @@ function POLICY() pure returns (ObjectType) {
     return toObjectType(210);
 }
 
-function BUNDLE() pure returns (ObjectType) {
-    return toObjectType(220);
+function REFERRAL() pure returns (ObjectType) {
+    return toObjectType(212);
 }
 
 function CLAIM() pure returns (ObjectType) {
-    return toObjectType(211);
+    return toObjectType(214);
 }
 
 function PAYOUT() pure returns (ObjectType) {
-    return toObjectType(212);
+    return toObjectType(216);
+}
+
+function BUNDLE() pure returns (ObjectType) {
+    return toObjectType(220);
 }
 
 /// @dev Converts the uint8 to a ObjectType.

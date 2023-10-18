@@ -17,7 +17,6 @@ interface IComponent {
 interface IComponentModule is IComponent {
 
     function registerComponent(NftId nftId, IERC20Metadata token, address wallet) external;
-    function getComponentState(NftId nftId) external view returns (StateId state);
     function getComponentToken(NftId nftId) external view returns (IERC20Metadata token);
     function getComponentWallet(NftId nftId) external view returns (address wallet);
 

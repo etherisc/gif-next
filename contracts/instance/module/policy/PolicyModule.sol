@@ -7,6 +7,7 @@ import {IProductService} from "../../service/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../../types/NftId.sol";
+import {ReferralId} from "../../../types/ReferralId.sol";
 import {RiskId} from "../../../types/RiskId.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
@@ -35,6 +36,7 @@ abstract contract PolicyModule is
     function createPolicyInfo(
         NftId policyNftId,
         NftId productNftId,
+        ReferralId referralId,
         RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
@@ -48,6 +50,7 @@ abstract contract PolicyModule is
         PolicyInfo memory info = PolicyInfo(
             productNftId,
             bundleNftId,
+            referralId,
             address(0), // beneficiary = policy nft holder
             riskId,
             sumInsuredAmount,
@@ -84,9 +87,5 @@ abstract contract PolicyModule is
         NftId nftId
     ) external view returns (PolicyInfo memory info) {
         return abi.decode(_getData(POLICY(), nftId), (PolicyInfo));
-    }
-
-    function getPolicyState(NftId nftId) external view override returns(StateId state) {
-        return _getState(POLICY(), nftId);
     }
 }
