@@ -31,13 +31,18 @@ from test_brownie.const import (
     COMPONENT_OWNER_SERVICE_NAME,
     PRODUCT_SERVICE_NAME,
     POOL_SERVICE_NAME,
+    BUNDLE,
+    POLICY,
     ACTIVE,
     APPLIED,
     UNDERWRITTEN
 )
 
 from test_brownie.gif import create_bundle
-from test_brownie.util import contract_from_address
+from test_brownie.util import (
+    contract_from_address,
+    s2b
+)
 
 # enforce function isolation for tests below
 @pytest.fixture(autouse=True)
@@ -118,6 +123,7 @@ def test_product(
 
 def test_create_bundle_full(
     usdc: TestUsdc,
+    all_libs: map, 
     all_services: map,
     registry: Registry,
     registry_owner: Account,
@@ -130,6 +136,7 @@ def test_create_bundle_full(
     assert instance.getBundleCount(pool.getNftId()) == 0
     assert usdc.balanceOf(pool) == 0
 
+    bundle_fee = instance.getZeroFee()
     initial_bundle_capacity = 1000 * 10 ** usdc.decimals()
     lifetime = 31 * 24 * 3600
     bundle_filter = ""
@@ -137,7 +144,7 @@ def test_create_bundle_full(
 
     usdc.transfer(investor, initial_bundle_capacity, {'from': registry_owner})
     usdc.approve(transfer_helper, initial_bundle_capacity, {'from': investor})
-    tx = pool.createBundle(initial_bundle_capacity, 31 * 24 * 3600, "", {'from': investor})
+    tx = pool.createBundle(bundle_fee, initial_bundle_capacity, 31 * 24 * 3600, "", {'from': investor})
 
     assert instance.getBundleCount(pool.getNftId()) == 1
     assert usdc.balanceOf(pool) == initial_bundle_capacity
@@ -150,11 +157,13 @@ def test_create_bundle_full(
     assert bundle_info['capitalAmount'] == initial_bundle_capacity
     assert bundle_info['lockedAmount'] == 0
 
-    assert instance.getBundleState(bundle_nft_id) == ACTIVE
+    bundle_key = all_libs['NftIdLib'].toKey32(bundle_nft_id, BUNDLE)
+    assert instance.getState(bundle_key) == ACTIVE
 
 
 def test_create_bundle_simple(
     usdc: TestUsdc,
+    all_libs: map,
     all_services: map,
     registry: Registry,
     registry_owner: Account,
@@ -167,6 +176,7 @@ def test_create_bundle_simple(
     assert instance.getBundleCount(pool.getNftId()) == 0
     assert usdc.balanceOf(pool) == 0
 
+    bundle_fee = instance.getZeroFee()
     bundle_capacity = 42 * 10 ** usdc.decimals()
     bundle_nft_id = create_bundle(
         instance,
@@ -174,6 +184,7 @@ def test_create_bundle_simple(
         pool,
         registry_owner,
         investor,
+        bundle_fee,
         bundle_capacity
     )
 
@@ -187,12 +198,14 @@ def test_create_bundle_simple(
     assert bundle_info['capitalAmount'] == bundle_capacity
     assert bundle_info['lockedAmount'] == 0
 
-    assert instance.getBundleState(bundle_nft_id) == ACTIVE
+    bundle_key = all_libs['NftIdLib'].toKey32(bundle_nft_id, BUNDLE)
+    assert instance.getState(bundle_key) == ACTIVE
 
 
 
 def test_create_policy(
     usdc: TestUsdc,
+    all_libs: map,
     all_services: map,
     registry: Registry,
     registry_owner: Account,
@@ -202,6 +215,7 @@ def test_create_policy(
     product: TestProduct,
     customer: Account
 ):
+    bundle_fee = instance.getZeroFee()
     bundle_capacity = 1000 * 10 ** usdc.decimals()
     bundle_nft_id = create_bundle(
         instance,
@@ -209,23 +223,34 @@ def test_create_policy(
         pool,
         registry_owner,
         investor,
+        bundle_fee,
         bundle_capacity
     )
+    referral_code = 'SAVE!!!'
+    referral_id = all_libs['ReferralIdLib'].toReferralId(referral_code)
 
     sum_insured = 500 * 10 ** usdc.decimals()
-    premium = sum_insured / 10
     lifetime = 365 * 24 * 3600
+    risk_id = s2b("")
+    application_data = s2b("")
 
-    tx = product.applyForPolicy(sum_insured, premium, lifetime, bundle_nft_id, {'from': customer})
+    tx = product.applyForPolicy(sum_insured, lifetime, bundle_nft_id, referral_id, {'from': customer})
     policy_nft_id = tx.events['Transfer']['tokenId']
 
     assert registry.getOwner(policy_nft_id) == customer
-    assert instance.getPolicyState(policy_nft_id) == APPLIED
+
+    policy_key = all_libs['NftIdLib'].toKey32(policy_nft_id, POLICY)
+    assert instance.getState(policy_key) == APPLIED
+
+    premium_expected = product.calculatePremium(
+        sum_insured, risk_id, lifetime, application_data, referral_id, bundle_nft_id
+    )
 
     policy_info = instance.getPolicyInfo(policy_nft_id).dict()
 
     assert policy_info['riskId'] == product.getDefaultRiskId()
     assert policy_info['sumInsuredAmount'] == sum_insured
-    assert policy_info['premiumAmount'] == premium
+    assert policy_info['premiumAmount'] == premium_expected
     assert policy_info['premiumPaidAmount'] == 0
     assert policy_info['lifetime'] == lifetime
+    assert policy_info['referralId'] == referral_id

@@ -21,7 +21,6 @@ contract Registry is
     string public constant EMPTY_URI = "";
 
     mapping(NftId nftId => ObjectInfo info) private _info;
-    mapping(NftId nftId => address owner) private _owner;
     mapping(address object => NftId nftId) private _nftIdByAddress;
     mapping(ObjectType objectType => bool) private _isValidType;
     mapping(ObjectType objectType => mapping(ObjectType objectParentType => bool)) private _isValidParentType;
