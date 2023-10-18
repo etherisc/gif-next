@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {Test, Vm, console} from "../lib/forge-std/src/Test.sol";
-import {ProxyAdmin} from "@openzeppelin5/contracts/proxy/transparent/ProxyAdmin.sol";
 import {VersionLib} from "../contracts/types/Version.sol";
 import {IVersionable} from "../contracts/shared/IVersionable.sol";
 import {Proxy} from "../contracts/shared/Proxy.sol";
@@ -14,13 +13,16 @@ contract ProxyTest is Test {
 
     function testProductV01Deploy() public {
         Proxy proxy = new Proxy();
+        // solhint-disable-next-line
         console.log("proxy[address]", address(proxy));
         assertTrue(address(proxy) != address(0), "proxy address zero");
 
         IVersionable versionable = proxy.deploy(address(new ContractV01()));
+        // solhint-disable-next-line
         console.log("versionable[address]", address(versionable));
         assertTrue(address(versionable) != address(0), "versionable address zero");
 
+        // solhint-disable-next-line
         console.log("version[int]", versionable.getVersion().toInt());
         assertTrue(versionable.getVersion() == VersionLib.toVersion(1,0,0), "version not (1,0,0)");
 
@@ -54,17 +56,22 @@ contract ProxyTest is Test {
         proxy.deploy(address(new ContractV01()));
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
+        // solhint-disable-next-line
         console.log(entries.length, "log entries");
 
         string memory logAdminChangedSignature = vm.toString(keccak256("AdminChanged(address,address)"));
+        // solhint-disable-next-line
         console.log("keccak256('AdminChanged(address,address)')", logAdminChangedSignature);
 
         // admin changed
         if(entries.length > 4) {
+            // solhint-disable-next-line
             console.log("entries[4]", vm.toString(entries[4].topics[0]));
             if(entries[4].topics[0] == keccak256("AdminChanged(address,address)")) {
+                // solhint-disable-next-line
                 console.log("AdminChanged topics", entries[4].topics.length);
                 (address oldAdmin, address newAdmin) = abi.decode(entries[4].data, (address,address));
+                // solhint-disable-next-line
                 console.log("AdminChanged", oldAdmin, newAdmin);
 
                 assertEq(address(proxy.getProxyAdmin()), newAdmin, "non-matching admin addresses");
