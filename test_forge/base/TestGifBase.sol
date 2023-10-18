@@ -24,6 +24,7 @@ import {USDC} from "../../contracts/test/Usdc.sol";
 import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
+import {POOL, PRODUCT, DISTRIBUTION} from "../../contracts/types/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
@@ -303,7 +304,7 @@ contract TestGifBase is Test {
         pool.register();
 
         uint256 nftId = pool.getNftId().toInt();
-        uint256 state = instance.getComponentState(pool.getNftId()).toInt();
+        uint256 state = instance.getState(pool.getNftId().toKey32(POOL())).toInt();
         // solhint-disable-next-line
         console.log("pool deployed at", address(pool));
         // solhint-disable-next-line
@@ -327,7 +328,7 @@ contract TestGifBase is Test {
         distribution.register();
 
         uint256 nftId = distribution.getNftId().toInt();
-        uint256 state = instance.getComponentState(distribution.getNftId()).toInt();
+        uint256 state = instance.getState(distribution.getNftId().toKey32(DISTRIBUTION())).toInt();
         // solhint-disable-next-line
         console.log("distribution deployed at", address(pool));
         // solhint-disable-next-line
@@ -350,7 +351,7 @@ contract TestGifBase is Test {
         product.register();
 
         uint256 nftId = product.getNftId().toInt();
-        uint256 state = instance.getComponentState(product.getNftId()).toInt();
+        uint256 state = instance.getState(product.getNftId().toKey32(PRODUCT())).toInt();
         tokenHandler = instance.getTokenHandler(product.getNftId());
         // solhint-disable-next-line
         console.log("product deployed at", address(product));

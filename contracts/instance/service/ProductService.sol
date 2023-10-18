@@ -321,7 +321,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         NftId productNftId = productInfo.nftId;
         IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
         require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
-        require(instance.getPolicyState(policyNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
+        require(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
 
         ITreasury.TreasuryInfo memory treasuryInfo;
         NftId bundleNftId;

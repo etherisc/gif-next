@@ -116,10 +116,6 @@ contract Product is BaseComponent, IProductComponent {
         return _instance.getRiskInfo(id);
     }
 
-    function _getRiskState(RiskId id) internal view returns (StateId state) {
-        return _instance.getRiskState(id);
-    }
-
     function _createApplication(
         address applicationOwner,
         RiskId riskId,

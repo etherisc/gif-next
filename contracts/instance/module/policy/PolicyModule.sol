@@ -88,8 +88,4 @@ abstract contract PolicyModule is
     ) external view returns (PolicyInfo memory info) {
         return abi.decode(_getData(POLICY(), nftId), (PolicyInfo));
     }
-
-    function getPolicyState(NftId nftId) external view override returns(StateId state) {
-        return _getState(POLICY(), nftId);
-    }
 }

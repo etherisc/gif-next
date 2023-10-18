@@ -43,17 +43,6 @@ abstract contract ComponentModule is
         _create(COMPONENT(), nftId, abi.encode(info));
     }
 
-    function getComponentState(
-        NftId nftId
-    ) 
-        external 
-        view 
-        override
-        returns (StateId state)
-    {
-        return _getState(COMPONENT(), nftId);
-    }
-
     function getComponentToken(NftId nftId) external view override returns(IERC20Metadata token) {
         ComponentInfo memory info = abi.decode(_getData(COMPONENT(), nftId), (ComponentInfo));
         return info.token;

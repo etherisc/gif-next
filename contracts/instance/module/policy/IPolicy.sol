@@ -55,8 +55,6 @@ interface IPolicyModule is IPolicy {
         NftId nftId
     ) external view returns (PolicyInfo memory info);
 
-    function getPolicyState(NftId nftId) external view returns (StateId state);
-
     // repeat registry linked signature
     function getRegistry() external view returns (IRegistry registry);
 

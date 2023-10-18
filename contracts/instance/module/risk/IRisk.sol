@@ -23,5 +23,4 @@ interface IRiskModule is IRisk {
     function updateRiskState(RiskId riskId, StateId state) external;
 
     function getRiskInfo(RiskId riskId) external view returns (RiskInfo memory info);
-    function getRiskState(RiskId riskId) external view returns (StateId state);
 }

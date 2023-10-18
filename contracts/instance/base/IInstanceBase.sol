@@ -13,6 +13,7 @@ import {IPoolService} from "../service/IPoolService.sol";
 interface IInstanceBase {
     function getKeyValueStore() external view returns (IKeyValueStore keyValueStore);
     function updateState(Key32 key, StateId state) external;
+    function getState(Key32 key) external view returns (StateId state);
 
     function getComponentOwnerService() external view returns(IComponentOwnerService service);
     function getDistributionService() external view returns(IDistributionService);

@@ -46,7 +46,6 @@ interface IBundleModule is IBundle {
     function releasePolicy(NftId bundleNftId, NftId policyNftId) external returns(uint256 collateralAmount);
 
     function getBundleInfo(NftId nftId) external view returns(BundleInfo memory bundleInfo);
-    function getBundleState(NftId nftId) external view returns(StateId state);
 
     // repeat service linked signatures to avoid linearization issues
     function getProductService() external returns(IProductService);

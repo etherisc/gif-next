@@ -45,7 +45,7 @@ export async function deployAndRegisterInstance(
 }
 
 
-export enum Role { POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE }
+export enum Role { POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, PRODUCT_OWNER_ROLE }
 
 export async function grantRole(instanceOwner: Signer, libraries: LibraryAddresses, instance: InstanceAddresses, role: Role, beneficiary: AddressLike): Promise<void> {
     const beneficiaryAddress = await resolveAddress(beneficiary);
@@ -57,6 +57,8 @@ export async function grantRole(instanceOwner: Signer, libraries: LibraryAddress
     let roleValue: string;
     if (role === Role.POOL_OWNER_ROLE) {
         roleValue = await roleIdLib.toRoleId("PoolOwnerRole");
+    } else if (role === Role.DISTRIBUTION_OWNER_ROLE) {
+        roleValue = await roleIdLib.toRoleId("DistributionOwnerRole");
     } else if (role === Role.PRODUCT_OWNER_ROLE) {
         roleValue = await roleIdLib.toRoleId("ProductOwnerRole");
     } else {

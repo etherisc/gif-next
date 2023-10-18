@@ -8,6 +8,8 @@ import { RegistryAddresses, register } from "./registry";
 export type ServiceAddresses = {
     componentOwnerServiceAddress: AddressLike,
     componentOwnerServiceNftId: string,
+    distributionServiceAddress: AddressLike,
+    distributionServiceNftId: string,
     productServiceAddress: AddressLike,
     productServiceNftId: string,
     poolServiceAddress: AddressLike,
@@ -27,6 +29,18 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         }});
     const componentOwnerServiceNftId = await register(componentOwnerServiceBaseContract as Registerable, componentOwnerServiceAddress, "ComponentOwnerService", registry, owner);
     logger.info(`componentOwnerService registered - componentOwnerServiceNftId: ${componentOwnerServiceNftId}`);
+
+    const { address: distributionServiceAddress, contract: distributionServiceBaseContract } = await deployContract(
+        "DistributionService",
+        owner,
+        [registry.registryAddress, registry.registryNftId],
+        { libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress, 
+                VersionLib: libraries.versionLibAddress, 
+            }});
+    const distributionServiceNftId = await register(distributionServiceBaseContract as Registerable, distributionServiceAddress, "DistributionService", registry, owner);
+    logger.info(`distributionService registered - distributionServiceNftId: ${distributionServiceNftId}`);
 
     const { address: productServiceAddress, contract: productServiceBaseContract } = await deployContract(
         "ProductService",
@@ -58,6 +72,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     return {
         componentOwnerServiceAddress,
         componentOwnerServiceNftId,
+        distributionServiceAddress,
+        distributionServiceNftId,
         productServiceAddress,
         productServiceNftId,
         poolServiceAddress,

@@ -59,12 +59,4 @@ contract RiskModule is
     {
 
     }
-
-    function getRiskState(RiskId riskId)
-        external
-        view
-        returns (StateId state)
-    {
-
-    }
 }

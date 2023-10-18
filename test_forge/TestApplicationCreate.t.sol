@@ -10,6 +10,7 @@ import {APPLIED, UNDERWRITTEN, ACTIVE} from "../contracts/types/StateId.sol";
 import {NftId, toNftId} from "../contracts/types/NftId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
+import {POLICY} from "../contracts/types/ObjectType.sol";
 import {ReferralId, ReferralIdLib} from "../contracts/types/ReferralId.sol";
 import {UFixed, UFixedMathLib} from "../contracts/types/UFixed.sol";
 import {IComponent} from "../contracts/instance/module/component/IComponent.sol";
@@ -58,7 +59,7 @@ contract TestApplicationCreate is TestGifBase {
 
         IPolicy.PolicyInfo memory info = instance.getPolicyInfo(policyNftId);
         assertEq(
-            instance.getPolicyState(policyNftId).toInt(),
+            instance.getState(policyNftId.toKey32(POLICY())).toInt(),
             APPLIED().toInt(),
             "policy state not applied"
         );
@@ -98,7 +99,7 @@ contract TestApplicationCreate is TestGifBase {
         IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
 
         assertEq(
-            instance.getPolicyState(policyNftId).toInt(),
+            instance.getState(policyNftId.toKey32(POLICY())).toInt(),
             UNDERWRITTEN().toInt(),
             "policy state not underwritten"
         );
@@ -220,7 +221,7 @@ contract TestApplicationCreate is TestGifBase {
 
         IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
         assertEq(
-            instance.getPolicyState(policyNftId).toInt(),
+            instance.getState(policyNftId.toKey32(POLICY())).toInt(),
             ACTIVE().toInt(),
             "policy state not active"
         );

@@ -52,6 +52,10 @@ abstract contract InstanceBase is
         _keyValueStore.updateState(key, state);
     }
 
+    function getState(Key32 key) external view override returns (StateId state) {
+        return _keyValueStore.getState(key);
+    }
+
     // from versionable
     function getVersion()
         public 
