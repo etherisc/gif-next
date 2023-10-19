@@ -2,9 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {Version, VersionLib} from "../../contracts/types/Version.sol";
-import {Versionable} from "../../contracts/shared/Versionable.sol";
+import {VersionableUpgradeable} from "../../contracts/shared/VersionableUpgradeable.sol";
 
-contract ContractV01 is Versionable {
+contract ContractV01 is VersionableUpgradeable {
 
     // IMPORTANT 1. version needed for upgradable versions
     // _activate is using this to check if this is a new version

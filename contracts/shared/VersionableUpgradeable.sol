@@ -39,7 +39,7 @@ abstract contract VersionableUpgradeable is
         external
         virtual
         override
-        onlyInitialising
+        onlyInitializing
     { 
         _activate(implementation, activatedBy);
     }
