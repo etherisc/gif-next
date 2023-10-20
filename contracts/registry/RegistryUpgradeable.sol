@@ -14,7 +14,7 @@ import {VersionPart} from "../types/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
 
 // TODO make registry upgradable
-contract Registry is
+contract RegistryUpgradeable is
     Initializable,
     IRegisterable,
     IRegistry
@@ -61,6 +61,7 @@ contract Registry is
         address protocolOwner
     )
         public 
+        initializer
     {
         RegistryStorageV1 storage $ = _getRegistryStorageV1();
 
