@@ -10,12 +10,23 @@ import {IChainNft} from "./IChainNft.sol";
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {NftId, toNftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
-import {VersionPart} from "../types/Version.sol";
+import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
 
-// TODO make registry upgradable
+import {VersionableUpgradeable} from "../shared/VersionableUpgradeable.sol";
+
+
+/// IMPORTANT
+// Upgradeable contract MUST:
+// 1) inherit from Versionable
+// 2) implement version() function
+// 3) implement initialize() function with initializer modifier 
+// 4) implement upgrade() function with reinitializer(version().toInt()) modifier
+// 5) have onlyInitialising modifier for each function callable during deployment and/or upgrade
+// 6) use default empty constructor -> _disableInitializer() called from Versionable contructor
+// 7) use namespace storage
 contract RegistryUpgradeable is
-    Initializable,
+    VersionableUpgradeable,
     IRegisterable,
     IRegistry
 {
@@ -43,25 +54,47 @@ contract RegistryUpgradeable is
         address _protocolOwner;
     }
 
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Registry")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 private constant RegistryStorageLocation = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
 
+    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Registry")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 internal constant RegistryStorageLocationV1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
+
+    // TODO: private or internal ?
+    // 1) new version have access only to its own storage slot (if previous versions did not expose theirs)
+    //    - have to chain initializers
+    //      + simple
+    //      - slow/costly, initialization gas usage will grow faster then 1) 
+    //      - initialization functions count/code likely will grow with each new version
+    //    - new functions have access only to a local storage slot
+    // 2) each intializer of each version have access to each "registry storage locations" he knows about -> 
+    //    + no initializers chaining
+    //    + new variables can be added to older versions storage hmmm...redefine storage struct 
     function _getRegistryStorageV1() private pure returns (RegistryStorageV1 storage $) {
         assembly {
-            $.slot := RegistryStorageLocation
+            $.slot := RegistryStorageLocationV1
         }
     }
 
-    // TODO refactor once registry becomes upgradable
-    // @Dev the protocol owner will get ownership of the
+    /// @dev the protocol owner will get ownership of the
     // protocol nft and the global registry nft minted in this 
     // initializer function 
     function initialize(
-        address chainNft, 
-        address protocolOwner
+        address implementation,
+        address activatedBy,
+        bytes memory activationData
     )
-        public 
+        public
+        virtual override 
         initializer
+    {
+        _activate(implementation, activatedBy);
+
+        address protocolOwner = abi.decode(activationData, (address));
+
+        _initializeV01(protocolOwner);
+    }
+    function _initializeV01(address protocolOwner) 
+        internal 
+        onlyInitializing
     {
         RegistryStorageV1 storage $ = _getRegistryStorageV1();
 
@@ -70,12 +103,20 @@ contract RegistryUpgradeable is
             "ERROR:REG-001:ALREADY_INITIALIZED"
         );
 
-        $._initialOwner = msg.sender;
+        $._initialOwner = msg.sender; // TODO here delegate call from proxy constructor, msg.sender is proxy deployer -> Proxy.sol
         $._protocolOwner = protocolOwner;
 
-        $._chainNft = IChainNft(chainNft);
-        $._chainNftInternal = ChainNft(chainNft);
-
+        // TODO if registry can be instantiated only by verified entity then we can trust chainNft argument
+        // otherwise better to deploy here? -> adds 10Kb to deployment size
+        // TODO _chainNft upgradability? "new ChainNft()" or "proxy.depoy()" ???
+        // TODO ChainNft knows about registry address at construction time -> thus creating ChainNft here
+        // deploy NFT 
+        $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
+        $._chainNft = IChainNft($._chainNftInternal);
+        // use NFT
+        //$._chainNft = IChainNft(chainNft);
+        //$._chainNftInternal = ChainNft(chainNft);
+        
         // initial registry setup
         _registerProtocol();
         $._nftId = _registerRegistry();
@@ -85,6 +126,18 @@ contract RegistryUpgradeable is
         _setupValidParentTypes();
     }
 
+
+    // can not upgrade to the first version
+    function upgrade(
+        address implementation,
+        address activatedBy,
+        bytes memory upgradeData
+    )
+        external
+        virtual
+    {
+        revert();
+    }
 
     function register(
         address objectAddress
@@ -255,7 +308,20 @@ contract RegistryUpgradeable is
         return this;
     }
 
+    // from IVersionable
+    function getVersion() public pure virtual override returns (Version) {
+        return VersionLib.toVersion(1, 0, 0);
+    } 
+
     // from IRegisterable
+    // TODO 
+    // 1) Registerable can not register itself -> otherwise register have to trust owner address provided by registerable
+    // registerable owner MUST call register and provide registerable address
+    // it will work if component was delegate called ??? NO
+    // owner-DELEGATE_CALL->component.register()-CALL->registryService->register()
+    // owner-CALL->proxy-DELEGATE_CALL->compoment.register()-CALL->registryService->register()
+    // 2) Who is msg.sender here???
+    //  Registration of Instance or Service (any deployed by GIF contract) msg.sender is done in proxe contructor
     function register() external pure override returns (NftId nftId) {
         return zeroNftId();
     }
@@ -264,28 +330,28 @@ contract RegistryUpgradeable is
         return REGISTRY();
     }
 
-
     function getOwner() public view override returns (address owner) {
         RegistryStorageV1 storage $ = _getRegistryStorageV1();
         return $._nftId.gtz() ? this.getOwner($._nftId) : $._initialOwner;
     }
 
-    function getNftId() external view override (IRegisterable, IRegistry) returns (NftId nftId) {
+    function getNftId() public view override (IRegisterable, IRegistry) returns (NftId nftId) {
         return _getRegistryStorageV1()._nftId;
     }
 
-    function getParentNftId() external view returns (NftId nftId) {
+    function getParentNftId() public view returns (NftId nftId) {
         RegistryStorageV1 storage $ = _getRegistryStorageV1();
         // we're the global registry
-        if(block.chainid == 1) {
+        /*if(block.chainid == 1) {
             return toNftId($._chainNftInternal.PROTOCOL_NFT_ID());
         }
         else {
             return toNftId($._chainNftInternal.GLOBAL_REGISTRY_ID());
-        }
+        }*/
+        nftId = $._info[$._nftId].parentNftId;
     }
 
-    function getData() external pure returns (bytes memory data) {
+    function getData() public pure returns (bytes memory data) {
         return "";
     }
 
@@ -295,7 +361,7 @@ contract RegistryUpgradeable is
     }
 
     /// @dev defines which types are allowed to register
-    function _setupValidTypes() internal {
+    function _setupValidTypes() internal onlyInitializing {
         RegistryStorageV1 storage $ = _getRegistryStorageV1();
         $._isValidType[REGISTRY()] = true; // only for global registry 
         $._isValidType[TOKEN()] = true;
@@ -311,7 +377,7 @@ contract RegistryUpgradeable is
     }
 
     /// @dev defines which types - parent type relations are allowed to register
-    function _setupValidParentTypes() internal {
+    function _setupValidParentTypes() internal onlyInitializing {
         RegistryStorageV1 storage $ = _getRegistryStorageV1();
         // registry as parent
         $._isValidParentType[TOKEN()][REGISTRY()] = true;
@@ -333,7 +399,11 @@ contract RegistryUpgradeable is
     }
 
     /// @dev protocol registration used to anchor the dip ecosystem relations
-    function _registerProtocol() virtual internal {
+    function _registerProtocol() 
+        virtual 
+        internal
+        onlyInitializing 
+    {
         RegistryStorageV1 storage $ = _getRegistryStorageV1();
 
         uint256 protocolId = $._chainNftInternal.PROTOCOL_NFT_ID();
@@ -354,7 +424,12 @@ contract RegistryUpgradeable is
 
     /// @dev registry registration
     /// might also register the global registry when not on mainnet
-    function _registerRegistry() virtual internal returns (NftId registryNftId) {
+    function _registerRegistry() 
+        virtual 
+        internal
+        onlyInitializing 
+        returns (NftId registryNftId) 
+    {
         RegistryStorageV1 storage $ = _getRegistryStorageV1();
 
         uint256 registryId = $._chainNftInternal.calculateTokenId(2);
@@ -366,12 +441,43 @@ contract RegistryUpgradeable is
         }
 
         $._chainNftInternal.mint($._protocolOwner, registryId);
-        _registerObjectInfo(this, registryNftId);
+
+        // TODO error when deploying registry proxy 
+        // in that case "this" is proxy address, "msg.sender" is proxy deployer, here in delegate call
+        // _registerObjectInfo() treats "this" as "IRegisterable"
+        // thus registerable.anyFunction() calls proxy... 
+        /*_registerObjectInfo(this, registryNftId);*/
+
+        NftId parentNftId;
+        // we're the global registry
+        if(block.chainid == 1) {
+            parentNftId = toNftId($._chainNftInternal.PROTOCOL_NFT_ID());
+        }
+        else {
+            parentNftId = toNftId($._chainNftInternal.GLOBAL_REGISTRY_ID());
+        }
+        ObjectInfo memory registryInfo = ObjectInfo(
+            registryNftId,
+            parentNftId, // registerable is proxy address, when in delegate call  
+            REGISTRY(),
+            address(this),  // proxy address
+            $._protocolOwner, // registry owner is different from proxy owner 
+            ""
+        );
+
+        $._info[registryNftId] = registryInfo;
+        $._nftIdByAddress[address(this)] = registryNftId;
+
+        // add logging
     }
 
 
     /// @dev global registry registration for non mainnet registries
-    function _registerGlobalRegistry() virtual internal {
+    function _registerGlobalRegistry() 
+        virtual 
+        internal
+        onlyInitializing
+    {
         RegistryStorageV1 storage $ = _getRegistryStorageV1();
 
         uint256 globalRegistryId = $._chainNftInternal.GLOBAL_REGISTRY_ID();
@@ -390,23 +496,25 @@ contract RegistryUpgradeable is
         $._info[globalRegistryNftId] = globalRegistryInfo;
     }
 
-
     function _registerObjectInfo(
         IRegisterable registerable,
         NftId nftId
-    ) internal virtual {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
-
+    ) 
+        internal 
+        virtual
+        onlyInitializing
+    {
         address objectAddress = address(registerable);
         ObjectInfo memory info = ObjectInfo(
             nftId,
-            registerable.getParentNftId(),
+            registerable.getParentNftId(), 
             registerable.getType(),
             objectAddress,
             registerable.getOwner(),
             registerable.getData()
         );
 
+        RegistryStorageV1 storage $ = _getRegistryStorageV1();
         $._info[nftId] = info;
         $._nftIdByAddress[objectAddress] = nftId;
 
@@ -414,3 +522,16 @@ contract RegistryUpgradeable is
     }
 
 }
+
+/*
+    **************** New implementation is set from delegate call ******************
+    Implementation controled proxy?
+    1). Proxy allows implV1 to change proxy.implementation variable to a new one (e.g. ImplV2) -> this is called reinitialization
+    2). calls to proxy after reinitialization will point to new implementation -> like switching context -> old implementsations cuts itself from proxy
+    2). Proxy can have:
+        a). safe implementation which it uses after construction by default
+            safe implementation allows one reinitialization to implementation needed (can be done in one call after initialization)
+        b). two impelemtations
+            the first for upgrades (have reinitialize function which changes the address the second one)
+            the second for appication specific stuff
+*/

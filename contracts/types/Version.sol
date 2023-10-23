@@ -23,6 +23,7 @@ using {
     versionGt as >,
     versionEq as ==,
     VersionLib.toInt,
+    VersionLib.toUint64,
     VersionLib.toMajorPart,
     VersionLib.toVersionParts
 }
@@ -33,6 +34,8 @@ function versionEq(Version a, Version b) pure returns(bool isSame) { return Vers
 
 library VersionLib {
     function toInt(Version version) external pure returns(uint) { return Version.unwrap(version); }
+
+    function toUint64(Version version) external pure returns(uint64) { return Version.unwrap(version); }
 
     function toMajorPart(Version version)
         external    
@@ -87,6 +90,11 @@ library VersionLib {
         return Version.wrap(
             uint24(
                 (major << 16) + (minor << 8) + patch));
+    }
+
+    // TODO check for overflow?
+    function toVersion(uint64 versionNumber) external pure returns(Version) {
+        return Version.wrap(uint24(versionNumber));
     }
 
     function zeroVersion() external pure returns(Version) {

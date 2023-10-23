@@ -9,7 +9,7 @@ import {IVersionable} from "./IVersionable.sol";
 
 contract ProxyWithProxyAdminGetter is TransparentUpgradeableProxy {
 
-    constructor(address implementation, address initialProxyAdminOwner,bytes memory data)
+    constructor(address implementation, address initialProxyAdminOwner, bytes memory data)
         TransparentUpgradeableProxy(implementation, initialProxyAdminOwner, data)
     {}
 
@@ -18,7 +18,9 @@ contract ProxyWithProxyAdminGetter is TransparentUpgradeableProxy {
 
 contract Proxy is Ownable {
 
-    string public constant ACTIVATE_SIGNATURE = "activate(address,address)";
+    // TODO use contract functions selectors ???
+    string public constant INITIALIZE_SIGNATURE = "initialize(address,address,bytes)";
+    string public constant UPGRADE_SIGNATURE = "upgrade(address,address,bytes)";
 
     ProxyWithProxyAdminGetter private _proxy;
     bool private _isDeployed;
@@ -29,12 +31,16 @@ contract Proxy is Ownable {
     {
     }
 
-    function getData(address implementation, address proxyOwner) public pure returns (bytes memory data) {
-        return abi.encodeWithSignature(ACTIVATE_SIGNATURE, implementation, proxyOwner);
+    function getDeployData(address implementation, address proxyOwner, bytes memory deployData) public pure returns (bytes memory data) {
+        return abi.encodeWithSignature(INITIALIZE_SIGNATURE, implementation, proxyOwner, deployData);
+    }
+
+    function getUpgradeData(address implementation, address proxyOwner, bytes memory upgradeData) public pure returns (bytes memory data) {
+        return abi.encodeWithSignature(UPGRADE_SIGNATURE, implementation, proxyOwner, upgradeData);
     }
 
     /// @dev deploy initial contract
-    function deploy(address initialImplementation)
+    function deploy(address initialImplementation, bytes memory deployData)
         external
         onlyOwner()
         returns (IVersionable versionable)
@@ -43,8 +49,8 @@ contract Proxy is Ownable {
 
         address currentProxyOwner = owner();
         address initialProxyAdminOwner = address(this);
-        bytes memory data = getData(initialImplementation, currentProxyOwner);
-
+        bytes memory data = getDeployData(initialImplementation, currentProxyOwner, deployData);
+        
         _proxy = new ProxyWithProxyAdminGetter(
             initialImplementation,
             initialProxyAdminOwner,
@@ -56,7 +62,7 @@ contract Proxy is Ownable {
     }
 
     /// @dev upgrade existing contract
-    function upgrade(address newImplementation)
+    function upgrade(address newImplementation, bytes memory upgradeData)
         external
         onlyOwner
         returns (IVersionable versionable)
@@ -67,7 +73,7 @@ contract Proxy is Ownable {
         // ProxyAdmin proxyAdmin = _proxy.getProxyAdmin();
         ProxyAdmin proxyAdmin = getProxyAdmin();
         ITransparentUpgradeableProxy proxy = ITransparentUpgradeableProxy(address(_proxy));
-        bytes memory data = getData(newImplementation, currentProxyOwner);
+        bytes memory data = getUpgradeData(newImplementation, currentProxyOwner, upgradeData);
 
         proxyAdmin.upgradeAndCall(
             proxy,

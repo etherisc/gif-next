@@ -5,7 +5,7 @@ import {Initializable} from "@openzeppelin5/contracts/proxy/utils/Initializable.
 
 import {Blocknumber, blockNumber} from "../types/Blocknumber.sol";
 import {Timestamp, blockTimestamp} from "../types/Timestamp.sol";
-import {Version, VersionPart} from "../types/Version.sol";
+import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 
 import {IVersionable} from "./IVersionable.sol";
 
@@ -17,6 +17,7 @@ abstract contract VersionableUpgradeable is
     struct VersionableStorage {
         mapping(Version version => VersionInfo info) _versionHistory;
         Version [] _versions;
+        Version _v1;
     }
 
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Versionable")) - 1)) & ~bytes32(uint256(0xff))
@@ -28,46 +29,49 @@ abstract contract VersionableUpgradeable is
         }
     }
 
-    // controlled activation for controller contract
     constructor() {
-        _activate(address(0), msg.sender);
+        _disableInitializers();
     }
 
     // IMPORTANT this function needs to be implemented by each new version
-    // and needs to call internal function call _activate() 
-    function activate(address implementation, address activatedBy)
-        external
+    // and needs to call internal function _activate() 
+    // INITIALIZER FUNCTION
+    function initialize(
+        address implementation,
+        address activatedBy,
+        bytes memory activationData
+    )
+        public
         virtual
-        override
-        onlyInitializing
+        initializer
     { 
         _activate(implementation, activatedBy);
     }
 
-
     // can only be called once per contract
     // needs to be called inside the proxy upgrade tx
+    // TODO run reinitializer(version().toUint64()) modifier after "version()" is checked, 
     function _activate(
         address implementation,
         address activatedBy
     )
         internal
+        onlyInitializing
     {
         VersionableStorage storage $ = _getVersionableStorage();
 
+        uint64 version = _getInitializedVersion();
+
         Version thisVersion = getVersion();
-        require(
-            !isActivated(thisVersion),
-            "ERROR:VRN-001:VERSION_ALREADY_ACTIVATED"
-        );
-        
-        // require increasing version number
-        if($._versions.length > 0) {
-            Version lastVersion = $._versions[$._versions.length - 1];
-            require(
-                thisVersion > lastVersion,
-                "ERROR:VRN-002:VERSION_NOT_INCREASING"
-            );
+
+        if(version == 1) {
+            // thisVersion is alias to version "1"
+            $._v1 = thisVersion;
+        }
+        else {
+            Version initializedVersion = VersionLib.toVersion(version);
+            //require(initializedVersion == thisVersion, "");
+            require(thisVersion > $._v1, "");
         }
 
         // update version history
@@ -83,7 +87,7 @@ abstract contract VersionableUpgradeable is
         emit LogVersionableActivated(thisVersion, implementation, activatedBy);
     }
 
-
+    // TODO previous version(s) can not be activated -> check that _version is the current one
     function isActivated(Version _version) public override view returns(bool) {
         return _getVersionableStorage()._versionHistory[_version].activatedIn.toInt() > 0;
     }
@@ -96,7 +100,6 @@ abstract contract VersionableUpgradeable is
         return _getVersionableStorage()._versions.length;
     }
 
-
     function getVersion(uint256 idx) external view override returns(Version) {
         return _getVersionableStorage()._versions[idx];
     }
@@ -104,5 +107,14 @@ abstract contract VersionableUpgradeable is
 
     function getVersionInfo(Version _version) external override view returns(VersionInfo memory) {
         return _getVersionableStorage()._versionHistory[_version];
+    }
+
+    /*function getInitializedVersion() external view returns(Version)
+    {
+        return VersionLib.toVersion(_getInitializedVersion());
+    }*/
+    function getInitializedVersion() external view returns(uint64)
+    {
+        return _getInitializedVersion();
     }
 }
