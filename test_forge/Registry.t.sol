@@ -97,3 +97,4 @@ contract RegistryTest is Test {
         console.log("after upgrade, registry initialized version[int]", registry.getInitializedVersion());
 
     }
+}
