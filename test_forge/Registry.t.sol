@@ -10,7 +10,7 @@ import {VersionLib} from "../contracts/types/Version.sol";
 import {NftId} from "../contracts/types/NftId.sol";
 import {IVersionable} from "../contracts/shared/IVersionable.sol";
 import {VersionableUpgradeable} from "../contracts/shared/VersionableUpgradeable.sol";
-import {Proxy} from "../contracts/shared/Proxy.sol";
+import {ProxyDeployer} from "../contracts/shared/Proxy.sol";
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
 
 //import {IRegistry} from "../contracts/registry/IRegistry.sol";
@@ -28,7 +28,7 @@ contract RegistryTest is Test {
 
     function testRegistryV01Deploy() public 
     {
-        Proxy proxy = new Proxy();
+        ProxyDeployer proxy = new ProxyDeployer();
         // solhint-disable-next-line
         console.log("proxy deployer address", address(proxy));
         assertTrue(address(proxy) != address(0), "proxy deployer address zero");
@@ -50,10 +50,11 @@ contract RegistryTest is Test {
         console.log("registry NFT[int]", registryNftId.toInt()); 
         console.log("registry version[int]", registry.getVersion().toInt());
         console.log("registry initialized version[int]", registry.getInitializedVersion());
+        console.log("registry NFT deployed at", address(registry.getChainNft()));
     }    
     function testRegistryV01DeployAndUpgradeToV02() public
     {
-        Proxy proxy = new Proxy();
+        ProxyDeployer proxy = new ProxyDeployer();
         // solhint-disable-next-line
         console.log("proxy deployer[address]", address(proxy));
         assertTrue(address(proxy) != address(0), "proxy deployer address zero");
@@ -77,6 +78,7 @@ contract RegistryTest is Test {
         console.log("registry NFT[int]", registryNftId.toInt()); 
         console.log("registry version[int]", registry.getVersion().toInt());
         console.log("registry initialized version[int]", registry.getInitializedVersion());
+        console.log("registry NFT deployed at", address(registry.getChainNft()));
 
         // upgrade
         bytes memory upgradeData = abi.encode(uint(0));
@@ -85,16 +87,17 @@ contract RegistryTest is Test {
         assertTrue(versionable.getVersion() == VersionLib.toVersion(1,1,0), "version not (1,1,0)");
         assertTrue(VersionLib.toVersion(versionable.getInitializedVersion()) == VersionLib.toVersion(1,1,0), "initialized version not (1,1,0)");
 
-        RegistryV02 registryV2 = RegistryV02(registryAddress);
-        NftId registryV2NftId = registry.getNftId();
-        uint v2data = registryV2.getRegistryDataV2();
+        RegistryV02 registryV02 = RegistryV02(registryAddress);
+        NftId registryV2NftId = registryV02.getNftId();
+        uint v2data = registryV02.getRegistryDataV2();
 
         assertEq(v2data, type(uint).max, "unxpected value of initialized V2 variable");
         assertEq(registryNftId.toInt(), registryV2NftId.toInt(), "nftId of v1 differs from v2");
 
-        console.log("after upgrade registry NFT[int]", registryV2NftId.toInt()); 
-        console.log("after upgrade, registry version[int]", registry.getVersion().toInt());
-        console.log("after upgrade, registry initialized version[int]", registry.getInitializedVersion());
+        console.log("after upgrade, registry NFT[int]", registryV2NftId.toInt()); 
+        console.log("after upgrade, registry version[int]", registryV02.getVersion().toInt());
+        console.log("after upgrade, registry initialized version[int]", registryV02.getInitializedVersion());
+        console.log("after upgrade, registry NFT deployed at", address(registry.getChainNft()));
 
     }
 }

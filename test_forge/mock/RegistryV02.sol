@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-//import {Initializable} from "@openzeppelin5/contracts/proxy/utils/Initializable.sol";
-
 import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {ObjectType} from "../../contracts/types/ObjectType.sol";
@@ -61,7 +59,7 @@ contract RegistryV02 is RegistryUpgradeable
     function initialize(
         address implementation, 
         address activatedBy,
-        bytes memory activationData
+        bytes memory initializationData
     )
         public
         virtual
@@ -71,7 +69,7 @@ contract RegistryV02 is RegistryUpgradeable
         // activate V2
         _activate(implementation, activatedBy);
 
-        address protocolOwner = abi.decode(activationData, (address));
+        address protocolOwner = abi.decode(initializationData, (address));
         //  = getDataV1(activationData);
 
         _initializeV02(protocolOwner);
@@ -100,10 +98,10 @@ contract RegistryV02 is RegistryUpgradeable
         return VersionLib.toVersion(1, 1, 0);
     } 
 
-
+    // custom initializer is cheaper in terms of gas usage
+    // but more expensive in terms of code space accupied
     function _initializeV02(address protocolOwner)
         internal
-        onlyInitializing
     {
         _initializeV01(protocolOwner);
 

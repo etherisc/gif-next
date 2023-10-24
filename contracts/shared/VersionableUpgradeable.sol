@@ -69,7 +69,7 @@ abstract contract VersionableUpgradeable is
             $._v1 = thisVersion;
         }
         else {
-            Version initializedVersion = VersionLib.toVersion(version);
+            //Version initializedVersion = VersionLib.toVersion(version);
             //require(initializedVersion == thisVersion, "");
             require(thisVersion > $._v1, "");
         }

@@ -16,7 +16,8 @@ contract ProxyWithProxyAdminGetter is TransparentUpgradeableProxy {
     function getProxyAdmin() external returns (ProxyAdmin) { return ProxyAdmin(_proxyAdmin()); }
 }
 
-contract Proxy is Ownable {
+// renamed because of name collision with OZ Proxy -> local proxy type was missing in typechain-types
+contract ProxyDeployer is Ownable {
 
     // TODO use contract functions selectors ???
     string public constant INITIALIZE_SIGNATURE = "initialize(address,address,bytes)";

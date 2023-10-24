@@ -59,15 +59,30 @@ contract RegistryUpgradeable is
     bytes32 internal constant RegistryStorageLocationV1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
 
     // TODO: private or internal ?
-    // 1) new version have access only to its own storage slot (if previous versions did not expose theirs)
+    // NOTE: independently of any choice, we can define a new storage struct V02 in version V02 
+    //       which is exact copy of V01 + new in V02 while saving the order
+    //       and put it at StorageLocationV02 == StorageLocationV01
+    //          BUT why do we need to spent contract code size to define the same address???
+    //              developer will be able to access "private" locations with easy any way
+    //              basically, we know V01 location, why do we need to redefine it each time???
+    // NOTE: IMPORTANT to keep contract code size growth (and gas usage) as low as possible
+    //       practically (best case scenario) we want upgradeability functionality footstep on gas usage was some constant + some dynamic part.
+    //       both MUST be minimized 
+    //          BUT upgrade the limit will be reached eventually
+    //          
+    //      
+    // 1) new version have access only to its own storage slot (previous versions did not exposed theirs)
     //    - have to chain initializers
     //      + simple
-    //      - slow/costly, initialization gas usage will grow faster then 1) 
-    //      - initialization functions count/code likely will grow with each new version
-    //    - new functions have access only to a local storage slot
+    //      - slow/costly, initialization gas usage will grow faster then 2) 
+    //      - initialization functions code size likely will grow with each new version, but slower then 2)
+    //    - new functions have access only to a local storage: slot -> developer needs to redifine "same" functions and structs over and over again.
+    //    + strictly follow default implementation in OZv5. 
+    //    + new functions have access only to a local storage: ???
     // 2) each intializer of each version have access to each "registry storage locations" he knows about -> 
     //    + no initializers chaining
-    //    + new variables can be added to older versions storage hmmm...redefine storage struct 
+    //    + new variables can be added to older versions storage hmmm...redefine storage struct -> ineffective
+    //    - custom initializer are big, code size likely will grow faster then 1)
     function _getRegistryStorageV1() private pure returns (RegistryStorageV1 storage $) {
         assembly {
             $.slot := RegistryStorageLocationV1
@@ -79,8 +94,8 @@ contract RegistryUpgradeable is
     // initializer function 
     function initialize(
         address implementation,
-        address activatedBy,
-        bytes memory activationData
+        address activatedBy, // TODO can it be a msg.sender ? 
+        bytes memory initializationData
     )
         public
         virtual override 
@@ -88,7 +103,7 @@ contract RegistryUpgradeable is
     {
         _activate(implementation, activatedBy);
 
-        address protocolOwner = abi.decode(activationData, (address));
+        address protocolOwner = abi.decode(initializationData, (address));
 
         _initializeV01(protocolOwner);
     }
@@ -109,7 +124,7 @@ contract RegistryUpgradeable is
         // TODO if registry can be instantiated only by verified entity then we can trust chainNft argument
         // otherwise better to deploy here? -> adds 10Kb to deployment size
         // TODO _chainNft upgradability? "new ChainNft()" or "proxy.depoy()" ???
-        // TODO ChainNft knows about registry address at construction time -> thus creating ChainNft here
+        // ChainNft knows about registry address at construction time -> thus creating ChainNft here
         // deploy NFT 
         $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
         $._chainNft = IChainNft($._chainNftInternal);
@@ -458,7 +473,7 @@ contract RegistryUpgradeable is
         }
         ObjectInfo memory registryInfo = ObjectInfo(
             registryNftId,
-            parentNftId, // registerable is proxy address, when in delegate call  
+            parentNftId,
             REGISTRY(),
             address(this),  // proxy address
             $._protocolOwner, // registry owner is different from proxy owner 
@@ -522,16 +537,3 @@ contract RegistryUpgradeable is
     }
 
 }
-
-/*
-    **************** New implementation is set from delegate call ******************
-    Implementation controled proxy?
-    1). Proxy allows implV1 to change proxy.implementation variable to a new one (e.g. ImplV2) -> this is called reinitialization
-    2). calls to proxy after reinitialization will point to new implementation -> like switching context -> old implementsations cuts itself from proxy
-    2). Proxy can have:
-        a). safe implementation which it uses after construction by default
-            safe implementation allows one reinitialization to implementation needed (can be done in one call after initialization)
-        b). two impelemtations
-            the first for upgrades (have reinitialize function which changes the address the second one)
-            the second for appication specific stuff
-*/
