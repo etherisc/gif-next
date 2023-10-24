@@ -43,7 +43,7 @@ abstract contract Versionable is Initializable, IVersionable {
     {
         Version thisVersion = getVersion();
         require(
-            !isActivated(thisVersion),
+            !isInitialized(thisVersion),
             "ERROR:VRN-001:VERSION_ALREADY_ACTIVATED"
         );
         
@@ -66,11 +66,11 @@ abstract contract Versionable is Initializable, IVersionable {
             blockNumber()
         );
 
-        emit LogVersionableActivated(thisVersion, implementation, activatedBy);
+        emit LogVersionableInitialized(thisVersion, implementation, activatedBy);
     }
 
 
-    function isActivated(Version _version) public override view returns(bool) {
+    function isInitialized(Version _version) public override view returns(bool) {
         return _versionHistory[_version].activatedIn.toInt() > 0;
     }
 

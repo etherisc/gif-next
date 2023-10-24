@@ -15,7 +15,7 @@ interface IVersionable {
         Blocknumber activatedIn;
     }
 
-    event LogVersionableActivated(Version version, address implementation, address activatedBy);
+    event LogVersionableInitialized(Version version, address implementation, address activatedBy);
 
     // TODO uncomment when all implementations are ready
     /**
@@ -38,7 +38,7 @@ interface IVersionable {
     /**
      * @dev returns true if the specified version has been activated for the current contract
      */
-    function isActivated(Version version) external view returns(bool);
+    function isInitialized(Version version) external view returns(bool);
 
     /**
      * @dev returns currently active version of this contract

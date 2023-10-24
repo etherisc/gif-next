@@ -14,109 +14,111 @@ import {RegistryUpgradeable} from "../../contracts/registry/RegistryUpgradeable.
 
 contract RegistryV02 is RegistryUpgradeable
 {
+
+    //--- constants -----------------------------------------------------------------
+    // the same address as V1
+    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Registry")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 private constant STORAGE_LOCATION_V2 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
+
+    //--- storage layout -------------------------------------------------------------
+
     // @custom:storage-location erc7201:etherisc.storage.Registry
-    struct RegistryStorageV2 {
+    struct StorageV2 {
 
         // copy of V1
-        mapping(NftId nftId => ObjectInfo info) _info;
-        mapping(address object => NftId nftId) _nftIdByAddress;
-        mapping(ObjectType objectType => bool) _isValidType;
-        mapping(ObjectType objectType => mapping(ObjectType objectParentType => bool)) _isValidParentType;
+        mapping(NftId nftId => ObjectInfo info) info;
+        mapping(address object => NftId nftId) nftIdByAddress;
+        mapping(ObjectType objectType => bool) isValidType;
+        mapping(ObjectType objectType => mapping(ObjectType objectParentType => bool)) isValidParentType;
 
-        mapping(NftId nftId => string stringValue) _string;
-        mapping(bytes32 serviceNameHash => mapping(VersionPart majorVersion => address service)) _service;
+        mapping(NftId nftId => string stringValue) name;
+        mapping(bytes32 serviceNameHash => mapping(VersionPart majorVersion => address service)) service;
 
-        NftId _nftId;
-        IChainNft _chainNft;
-        ChainNft _chainNftInternal;
-        address _initialOwner;
-
-        address _protocolOwner;
+        NftId nftId;
+        IChainNft chainNft;
+        ChainNft chainNftInternal;
+        address initialOwner;
+        address protocolOwner;
 
         // V2 addition
         uint dataV2;
     }
-    
-    /*struct RegistryStorageV2 {
-        uint dataV2;
-    }*/
+    //--- state --------------------------------------------------------------------
 
-    // the same address as V1
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Registry")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 private constant RegistryStorageLocationV2 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
+    //--- external/public state changing functions  --------------------------------
 
-    // or use internal _getRegistryStorageV1() or _getRegistryStorage() ???
-    function _getRegistryStorageV2() private pure returns (RegistryStorageV2 storage $) {
-        assembly {
-            $.slot := RegistryStorageLocationV2
-        }
+    //--- external/public view and pure functions  --------------------------------
+
+    function getDataV2()
+        public
+        view
+        returns(uint)
+    {
+        return _getStorageV2().dataV2;
     }
 
-    function getRegistryDataV2() public view returns(uint) {
-        RegistryStorageV2 storage $ = _getRegistryStorageV2();
-        return $.dataV2;
-    }
-
-    
+    //--- from Versionable --------------------------------------
     function initialize(
         address implementation, 
         address activatedBy,
-        bytes memory activationData
+        bytes memory data
     )
         public
-        virtual
-        override
+        virtual override
         initializer
     {
-        // activate V2
-        _activate(implementation, activatedBy);
-
-        address protocolOwner = abi.decode(activationData, (address));
-        //  = getDataV1(activationData);
-
-        _initializeV02(protocolOwner);
+        _updateVersionHistory(implementation, activatedBy);
+        _initializeV02(data);
     }  
 
     function upgrade(
         address newImplementation, 
         address activatedBy,
-        bytes memory upgradeData
+        bytes memory data
     )
         external
         virtual override
         reinitializer(VersionLib.toUint64(getVersion()))
     {
-        // activate V2
-        _activate(newImplementation, activatedBy);
-
-        address protocolOwner = abi.decode(upgradeData, (address));
-        //  = getDataV1(activationData);
-
-        _upgradeFromV01(protocolOwner);
+        _updateVersionHistory(newImplementation, activatedBy);
+        _upgradeFromV01();
     }
 
-    function getVersion() public pure override returns (Version)
+    function getVersion()
+        public
+        pure
+        override
+        returns (Version)
     {
         return VersionLib.toVersion(1, 1, 0);
     } 
 
 
-    function _initializeV02(address protocolOwner)
+    function _initializeV02(bytes memory data)
         internal
         onlyInitializing
     {
-        _initializeV01(protocolOwner);
-
-        _upgradeFromV01(protocolOwner);
+        _initializeV01(data);
+        _upgradeFromV01();
     }
 
-    function _upgradeFromV01(address protocolOwner)
+    function _upgradeFromV01()
         private
         onlyInitializing
     {
-        // V02 specific 
-        RegistryStorageV2 storage $ = _getRegistryStorageV2();
-
+        StorageV2 storage $ = _getStorageV2();
         $.dataV2 = type(uint).max; 
     }
+
+    function _getStorageV2()
+        private
+        pure 
+        returns (StorageV2 storage s)
+    {
+        // solhint-disable no-inline-assembly
+        assembly {
+            s.slot := STORAGE_LOCATION_V2
+        }
+    }
+
 }

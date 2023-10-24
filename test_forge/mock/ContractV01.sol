@@ -14,7 +14,7 @@ contract ContractV01 is VersionableUpgradeable {
         virtual override
         initializer
     {
-        _activate(implementation, activatedBy);
+        _updateVersionHistory(implementation, activatedBy);
         //initializeV01(data);
     }
 

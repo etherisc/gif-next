@@ -19,8 +19,10 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         undefined,
         {
             libraries: {
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionLib: libraries.versionLibAddress,
             }
         });
     const { address: chainNftAddress } = await deployContract(

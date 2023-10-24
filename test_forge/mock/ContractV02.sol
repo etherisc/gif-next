@@ -13,7 +13,7 @@ contract ContractV02 is ContractV01 {
         virtual override
         initializer
     {
-        _activate(implementation, activatedBy);
+        _updateVersionHistory(implementation, activatedBy);
 
         initializeV02(activationData);
     }

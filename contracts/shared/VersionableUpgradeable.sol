@@ -34,7 +34,7 @@ abstract contract VersionableUpgradeable is
     }
 
     // IMPORTANT this function needs to be implemented by each new version
-    // and needs to call internal function _activate() 
+    // and needs to call internal function _updateVersionHistory() 
     // INITIALIZER FUNCTION
     function initialize(
         address implementation,
@@ -45,13 +45,13 @@ abstract contract VersionableUpgradeable is
         virtual
         initializer
     { 
-        _activate(implementation, activatedBy);
+        _updateVersionHistory(implementation, activatedBy);
     }
 
     // can only be called once per contract
     // needs to be called inside the proxy upgrade tx
     // TODO run reinitializer(version().toUint64()) modifier after "version()" is checked, 
-    function _activate(
+    function _updateVersionHistory(
         address implementation,
         address activatedBy
     )
@@ -84,11 +84,11 @@ abstract contract VersionableUpgradeable is
             blockNumber()
         );
 
-        emit LogVersionableActivated(thisVersion, implementation, activatedBy);
+        emit LogVersionableInitialized(thisVersion, implementation, activatedBy);
     }
 
     // TODO previous version(s) can not be activated -> check that _version is the current one
-    function isActivated(Version _version) public override view returns(bool) {
+    function isInitialized(Version _version) public override view returns(bool) {
         return _getVersionableStorage()._versionHistory[_version].activatedIn.toInt() > 0;
     }
 
