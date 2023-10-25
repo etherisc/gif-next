@@ -461,6 +461,8 @@ contract RegistryUpgradeable is
         // in that case "this" is proxy address, "msg.sender" is proxy deployer, here in delegate call
         // _registerObjectInfo() treats "this" as "IRegisterable"
         // thus registerable.anyFunction() calls proxy... 
+        // + all functions callable inside initializer/reinitializer modifiers MUST have onlyInitialising modifier
+        // now _registerObjectInfo() is used only outside of initializer/reinitializer modifiers
         /*_registerObjectInfo(this, registryNftId);*/
 
         NftId parentNftId;
@@ -517,7 +519,6 @@ contract RegistryUpgradeable is
     ) 
         internal 
         virtual
-        onlyInitializing
     {
         address objectAddress = address(registerable);
         ObjectInfo memory info = ObjectInfo(

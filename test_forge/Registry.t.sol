@@ -88,16 +88,16 @@ contract RegistryTest is Test {
         assertTrue(VersionLib.toVersion(versionable.getInitializedVersion()) == VersionLib.toVersion(1,1,0), "initialized version not (1,1,0)");
 
         RegistryV02 registryV02 = RegistryV02(registryAddress);
-        NftId registryV2NftId = registryV02.getNftId();
+        NftId registryV02NftId = registryV02.getNftId();
         uint v2data = registryV02.getRegistryDataV2();
 
         assertEq(v2data, type(uint).max, "unxpected value of initialized V2 variable");
-        assertEq(registryNftId.toInt(), registryV2NftId.toInt(), "nftId of v1 differs from v2");
+        assertEq(registryNftId.toInt(), registryV02NftId.toInt(), "nftId of V1 differs from V2");
 
-        console.log("after upgrade, registry NFT[int]", registryV2NftId.toInt()); 
+        console.log("after upgrade, registry NFT[int]", registryV02NftId.toInt()); 
         console.log("after upgrade, registry version[int]", registryV02.getVersion().toInt());
         console.log("after upgrade, registry initialized version[int]", registryV02.getInitializedVersion());
-        console.log("after upgrade, registry NFT deployed at", address(registry.getChainNft()));
+        console.log("after upgrade, registry NFT deployed at", address(registryV02.getChainNft()));
 
     }
 }

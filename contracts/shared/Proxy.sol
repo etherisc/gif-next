@@ -19,6 +19,8 @@ contract ProxyWithProxyAdminGetter is TransparentUpgradeableProxy {
 // renamed because of name collision with OZ Proxy -> local proxy type was missing in typechain-types
 contract ProxyDeployer is Ownable {
 
+    event ProxyDeployed(address indexed proxy);
+
     // TODO use contract functions selectors ???
     string public constant INITIALIZE_SIGNATURE = "initialize(address,address,bytes)";
     string public constant UPGRADE_SIGNATURE = "upgrade(address,address,bytes)";
@@ -60,6 +62,8 @@ contract ProxyDeployer is Ownable {
 
         _isDeployed = true;
         versionable = IVersionable(address(_proxy));
+
+        emit ProxyDeployed(address(_proxy));
     }
 
     /// @dev upgrade existing contract
