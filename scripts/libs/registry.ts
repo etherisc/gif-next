@@ -1,13 +1,14 @@
-import { AddressLike, Signer, AbiCoder } from "ethers";
-import { Registerable, RegistryUpgradeable, Registry__factory, ProxyDeployer } from "../../typechain-types";
+import { AbiCoder, AddressLike, Signer } from "ethers";
+import { ethers } from "hardhat";
+import * as iProxyDeployerAbi from "../../artifacts/contracts/shared/Proxy.sol/ProxyDeployer.json";
+import { ProxyDeployer, Registerable, RegistryUpgradeable, Registry__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
-import { IERC721ABI } from "./erc721";
 import { IERC1967ABI } from "./erc1967";
+import { IERC721ABI } from "./erc721";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getFieldFromLogs } from "./transaction";
 
-import * as iProxyDeployerAbi from "../../artifacts/contracts/shared/Proxy.sol/ProxyDeployer.json";
 const PROXYDEPLOYERABI = new ethers.Interface(iProxyDeployerAbi.abi);
 
 
@@ -53,7 +54,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         const tx = await executeTx(async () => await deployer.deploy(registryImplementation, intializationData))
         registryImplFromLogs = getFieldFromLogs(tx, IERC1967ABI, "Upgraded", "implementation")
         // get tx return value...the only possible way is to emit event with this value...or use ethers.js staticCall to execute as view function first?
-        //const staticCall = await proxy.callStatic.deploy(registryImplementation, intializationData);
+        //const result = await proxy.staticCall.deploy(registryImplementation, intializationData);        
         registryAddressFromLogs = getFieldFromLogs(tx, PROXYDEPLOYERABI, "ProxyDeployed", "proxy");
         // tx executes with 3 "Transfer" events, using one with the lastest index
         registryNftIdFromLogs = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId") 
@@ -63,9 +64,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         }
     }
 
-    const registry = registryImplementationContract.attach(registryAddressFromLogs);
+    const registry = registryImplementationContract.attach(registryAddressFromLogs) as RegistryUpgradeable;
 
-    const chainNftAddress = await registry["getChainNft"]();
+    const chainNftAddress = await registry.getChainNft();
     const registryOwner = await registry["getOwner()"]();
 
     logger.info(`Registry proxy deployed at ${registryAddressFromLogs}`);
