@@ -7,24 +7,19 @@ import {VersionableUpgradeable} from "../../contracts/shared/VersionableUpgradea
 
 contract ContractV01 is VersionableUpgradeable {
 
-    // IMPORTANT this function needs to be implemented by each new version
-    // and needs to call internal function call _activate() 
-    function initialize(address implementation, address activatedBy, bytes memory activationData)
-        public
-        virtual override
-        initializer
-    {
-        _activate(implementation, activatedBy);
-        //initializeV01(data);
+    // @custom:storage-location erc7201:etherisc.storage.Registry
+    struct StorageV1 {
+        // some initial variables
+        uint some;
     }
 
-    // IMPORTANT this function needs to be implemented by each new version
-    // and needs to call internal function call _activate() 
-    function upgrade(address implementation, address activatedBy, bytes memory upgradeData)
-        public
-        virtual
-    {
-        revert();
+    // keccak256(abi.encode(uint256(keccak256("gif-next.test_forge.mock.contractV01.sol")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant locationV1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
+
+    function _getStorage() private pure returns (StorageV1 storage $) {
+        assembly {
+            $.slot := locationV1
+        }
     }
 
     // IMPORTANT 1. version needed for upgradable versions
@@ -44,8 +39,9 @@ contract ContractV01 is VersionableUpgradeable {
         return "hi from version 1";
     }
 
-    function initializeV01(bytes memory data)
+    function _initialize(bytes memory data)
         internal
+        virtual override
         onlyInitializing
     {}
 }

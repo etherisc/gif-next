@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
-import {NftId} from "../../contracts/types/NftId.sol";
+import {NftId, toNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType} from "../../contracts/types/ObjectType.sol";
 
 import {IChainNft} from "../../contracts/registry/IChainNft.sol";
@@ -13,9 +13,9 @@ import {RegistryUpgradeable} from "../../contracts/registry/RegistryUpgradeable.
 contract RegistryV02 is RegistryUpgradeable
 {
     // @custom:storage-location erc7201:etherisc.storage.Registry
-    struct RegistryStorageV2 {
+    struct StorageV2 {
 
-        // copy of V1
+        // copy pasted from V1
         mapping(NftId nftId => ObjectInfo info) _info;
         mapping(address object => NftId nftId) _nftIdByAddress;
         mapping(ObjectType objectType => bool) _isValidType;
@@ -35,86 +35,62 @@ contract RegistryV02 is RegistryUpgradeable
         uint dataV2;
     }
     
-    /*struct RegistryStorageV2 {
-        uint dataV2;
-    }*/
-
-    // the same address as V1
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Registry")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 private constant RegistryStorageLocationV2 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
-
-    // or use internal _getRegistryStorageV1() or _getRegistryStorage() ???
-    function _getRegistryStorageV2() private pure returns (RegistryStorageV2 storage $) {
+    function _getStorageV02() private pure returns (StorageV2 storage $) {
         assembly {
-            $.slot := RegistryStorageLocationV2
+            $.slot := locationV1
         }
     }
 
-    function getRegistryDataV2() public view returns(uint) {
-        RegistryStorageV2 storage $ = _getRegistryStorageV2();
+    function getDataV2() public view returns(uint) {
+        StorageV2 storage $ = _getStorageV02();
         return $.dataV2;
     }
 
-    
-    function initialize(
-        address implementation, 
-        address activatedBy,
-        bytes memory initializationData
-    )
-        public
-        virtual
-        override
-        initializer
-    {
-        // activate V2
-        _activate(implementation, activatedBy);
-
-        address protocolOwner = abi.decode(initializationData, (address));
-        //  = getDataV1(activationData);
-
-        _initializeV02(protocolOwner);
-    }  
-
-    function upgrade(
-        address newImplementation, 
-        address activatedBy,
-        bytes memory upgradeData
-    )
-        external
-        virtual override
-        reinitializer(VersionLib.toUint64(getVersion()))
-    {
-        // activate V2
-        _activate(newImplementation, activatedBy);
-
-        address protocolOwner = abi.decode(upgradeData, (address));
-        //  = getDataV1(activationData);
-
-        _upgradeFromV01(protocolOwner);
-    }
-
-    function getVersion() public pure override returns (Version)
+    function getVersion() 
+        public 
+        pure 
+        virtual override 
+        returns (Version)
     {
         return VersionLib.toVersion(1, 1, 0);
     } 
 
-    // custom initializer is cheaper in terms of gas usage
-    // but more expensive in terms of code space accupied
-    function _initializeV02(address protocolOwner)
+    // do not define if no changes to storage
+    function _initialize(bytes memory data)
         internal
-    {
-        _initializeV01(protocolOwner);
-
-        _upgradeFromV01(protocolOwner);
-    }
-
-    function _upgradeFromV01(address protocolOwner)
-        private
+        virtual override
         onlyInitializing
     {
-        // V02 specific 
-        RegistryStorageV2 storage $ = _getRegistryStorageV2();
+        // copy paste from V1 
+        // change getter function
+        address protocolOwner = abi.decode(data, (address));
+        StorageV2 storage $ = _getStorageV02();
 
+        $._initialOwner = msg.sender;
+        $._protocolOwner = protocolOwner;
+
+        $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
+        $._chainNft = IChainNft($._chainNftInternal);
+        
+        // initial registry setup
+        _registerProtocol();
+        $._nftId = _registerRegistry();
+
+        // setup rules for further registrations
+        _setupValidTypes();
+        _setupValidParentTypes();
+
+        //new in this version 
+        $.dataV2 = type(uint).max;
+    }
+
+    function _upgrade(bytes memory data)
+        internal
+        virtual override
+        onlyInitializing
+    {
+        // add changes 
+        StorageV2 storage $ = _getStorageV02();
         $.dataV2 = type(uint).max; 
     }
 }

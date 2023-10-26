@@ -13,14 +13,14 @@ abstract contract VersionableUpgradeable is
     Initializable,
     IVersionable 
 {
-    /// @custom:storage-location erc7201:etherisc.storage.Versionable
+    /// @custom:storage-location erc7201:gif-next.contracts.shared.Versionable.sol
     struct VersionableStorage {
         mapping(Version version => VersionInfo info) _versionHistory;
         Version [] _versions;
         Version _v1;
     }
 
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Versionable")) - 1)) & ~bytes32(uint256(0xff))
+    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.Versionable.sol")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant VersionableStorageLocation = 0x4f61291a8ac3d020d0a7d919a76b8592aa88385744dee3f8b4f3873b969ed900;
     
     function _getVersionableStorage() private pure returns (VersionableStorage storage $) {
@@ -33,19 +33,39 @@ abstract contract VersionableUpgradeable is
         _disableInitializers();
     }
 
-    // IMPORTANT this function needs to be implemented by each new version
-    // and needs to call internal function _activate() 
-    // INITIALIZER FUNCTION
     function initialize(
         address implementation,
-        address activatedBy,
-        bytes memory activationData
+        address activatedBy, // TODO can it be a msg.sender ? 
+        bytes memory data
     )
         public
-        virtual
+        virtual 
         initializer
-    { 
+    {
         _activate(implementation, activatedBy);
+        _initialize(data);
+    }
+    function upgrade(
+        address implementation,
+        address activatedBy,
+        bytes memory data
+    )
+        external
+        virtual
+        reinitializer(VersionLib.toUint64(getVersion()))
+    {
+        _activate(implementation, activatedBy);
+        _upgrade(data);
+    }
+    // IMPORTANT each version must implement this function 
+    // each implementation MUST use onlyInitialising modifier
+    function _initialize(bytes memory data) virtual internal;
+
+    // IMPORTANT each version except version "1" must implement this function 
+    // each implementation MUST use onlyInitialising modifier
+    function _upgrade(bytes memory data) virtual internal
+    {
+        revert();
     }
 
     // can only be called once per contract
@@ -55,7 +75,7 @@ abstract contract VersionableUpgradeable is
         address implementation,
         address activatedBy
     )
-        internal
+        private
         onlyInitializing
     {
         VersionableStorage storage $ = _getVersionableStorage();
@@ -87,7 +107,7 @@ abstract contract VersionableUpgradeable is
         emit LogVersionableActivated(thisVersion, implementation, activatedBy);
     }
 
-    // TODO previous version(s) can not be activated -> check that _version is the current one
+    // TODO previous version(s) can not be active -> check that _version is the current one
     function isActivated(Version _version) public override view returns(bool) {
         return _getVersionableStorage()._versionHistory[_version].activatedIn.toInt() > 0;
     }
@@ -109,10 +129,6 @@ abstract contract VersionableUpgradeable is
         return _getVersionableStorage()._versionHistory[_version];
     }
 
-    /*function getInitializedVersion() external view returns(Version)
-    {
-        return VersionLib.toVersion(_getInitializedVersion());
-    }*/
     function getInitializedVersion() external view returns(uint64)
     {
         return _getInitializedVersion();

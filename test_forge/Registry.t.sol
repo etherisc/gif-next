@@ -26,6 +26,8 @@ contract RegistryTest is Test {
 
     NftId public registryNftId;
 
+    // gas cost of initialize: 3020886
+    // deployment size 22264 
     function testRegistryV01Deploy() public 
     {
         ProxyDeployer proxy = new ProxyDeployer();
@@ -54,7 +56,41 @@ contract RegistryTest is Test {
         console.log("registry initialized version[int]", registry.getInitializedVersion());
         console.log("registry NFT deployed at", address(registry.getChainNft()));
         /* solhint-enable */ 
-    }    
+    }  
+    // gas cost of initialize: 3043005  
+    // deployment size 22342 
+    function testRegistryV02Deploy() public
+    {
+        ProxyDeployer proxy = new ProxyDeployer();
+        // solhint-disable-next-line
+        console.log("proxy deployer address", address(proxy));
+        assertTrue(address(proxy) != address(0), "proxy deployer address zero");
+
+        bytes memory initializationData = abi.encode(registryOwner);
+        IVersionable versionable = proxy.deploy(address(new RegistryV02()), initializationData);
+        // solhint-disable-next-line
+        console.log("registry proxy address", address(versionable));
+        assertTrue(address(versionable) != address(0), "registry proxy address zero");
+
+        // solhint-disable-next-line
+        assertTrue(versionable.getVersion() == VersionLib.toVersion(1,1,0), "version not (1,1,0)");
+        assertTrue(versionable.getInitializedVersion() == 1, "initialized version not 1.1.0");
+
+        address registryAddress = address(versionable);
+        RegistryV02 registry = RegistryV02(registryAddress);
+        registryNftId = registry.getNftId();
+        uint v2data = registry.getDataV2();
+
+        assertEq(v2data, type(uint).max, "unxpected value of initialized V2 variable");
+
+        /* solhint-disable */
+        console.log("registry deployed at", registryAddress);
+        console.log("registry NFT[int]", registryNftId.toInt()); 
+        console.log("registry version[int]", registry.getVersion().toInt());
+        console.log("registry initialized version[int]", registry.getInitializedVersion());
+        console.log("registry NFT deployed at", address(registry.getChainNft()));
+        /* solhint-enable */ 
+    }
     function testRegistryV01DeployAndUpgradeToV02() public
     {
         ProxyDeployer proxy = new ProxyDeployer();

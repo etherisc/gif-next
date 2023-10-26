@@ -25,6 +25,15 @@ import {VersionableUpgradeable} from "../shared/VersionableUpgradeable.sol";
 // 5) have onlyInitialising modifier for each function callable during deployment and/or upgrade
 // 6) use default empty constructor -> _disableInitializer() called from Versionable contructor
 // 7) use namespace storage
+//
+// IMPORTANT
+// Each version MUST:
+// 1) define its own storage struct (MUST NOT use struct type inside)
+// 2) define private getter for its storage struct (MUST use default implementation, change ONLY return type)
+// 3) use the same "locationV1" var in each getter
+// 4) define _initialize()/_upgrade() 
+
+
 contract RegistryUpgradeable is
     VersionableUpgradeable,
     IRegisterable,
@@ -34,8 +43,8 @@ contract RegistryUpgradeable is
 
     string public constant EMPTY_URI = "";
 
-    // @custom:storage-location erc7201:etherisc.storage.Registry
-    struct RegistryStorageV1 {// TODO encode version? at least just apropriate naming
+    // @custom:storage-location erc7201:gif-next.contracts.registry.Registry.sol
+    struct StorageV1 {
 
         mapping(NftId nftId => ObjectInfo info) _info;
         mapping(address object => NftId nftId) _nftIdByAddress;
@@ -54,83 +63,35 @@ contract RegistryUpgradeable is
         address _protocolOwner;
     }
 
+    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.registry.Registry.sol")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant locationV1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
 
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Registry")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 internal constant RegistryStorageLocationV1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
-
-    // TODO: private or internal ?
-    // NOTE: independently of any choice, we can define a new storage struct V02 in version V02 
-    //       which is exact copy of V01 + new in V02 while saving the order
-    //       and put it at StorageLocationV02 == StorageLocationV01
-    //          BUT why do we need to spent contract code size to define the same address???
-    //              developer will be able to access "private" locations with easy any way
-    //              basically, we know V01 location, why do we need to redefine it each time???
-    // NOTE: IMPORTANT to keep contract code size growth (and gas usage) as low as possible
-    //       practically (best case scenario) we want upgradeability functionality footstep on gas usage was some constant + some dynamic part.
-    //       both MUST be minimized 
-    //          BUT upgrade the limit will be reached eventually
-    //          
-    //      
-    // 1) new version have access only to its own storage slot (previous versions did not exposed theirs)
-    //    - have to chain initializers
-    //      + simple
-    //      - slow/costly, initialization gas usage will grow faster then 2) 
-    //      - initialization functions code size likely will grow with each new version, but slower then 2)
-    //    - new functions have access only to a local storage: slot -> developer needs to redifine "same" functions and structs over and over again.
-    //    + strictly follow default implementation in OZv5. 
-    //    + new functions have access only to a local storage: ???
-    // 2) each intializer of each version have access to each "registry storage locations" he knows about -> 
-    //    + no initializers chaining
-    //    + new variables can be added to older versions storage hmmm...redefine storage struct -> ineffective
-    //    - custom initializer are big, code size likely will grow faster then 1)
-    function _getRegistryStorageV1() private pure returns (RegistryStorageV1 storage $) {
+    // IMPORTANT Every new version must implement this function
+    // keep it private -> if unreachable from the next version then not included in its byte code
+    // each version MUST use the same locationV1 
+    function _getStorage() private pure returns (StorageV1 storage $) {
         assembly {
-            $.slot := RegistryStorageLocationV1
+            $.slot := locationV1
         }
     }
 
     /// @dev the protocol owner will get ownership of the
     // protocol nft and the global registry nft minted in this 
     // initializer function 
-    function initialize(
-        address implementation,
-        address activatedBy, // TODO can it be a msg.sender ? 
-        bytes memory initializationData
-    )
-        public
-        virtual override 
-        initializer
-    {
-        _activate(implementation, activatedBy);
-
-        address protocolOwner = abi.decode(initializationData, (address));
-
-        _initializeV01(protocolOwner);
-    }
-    function _initializeV01(address protocolOwner) 
+    function _initialize(bytes memory data) 
         internal 
+        virtual override
         onlyInitializing
     {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
-
-        require(
-            address($._chainNft) == address(0),
-            "ERROR:REG-001:ALREADY_INITIALIZED"
-        );
+        address protocolOwner = abi.decode(data, (address));
+        StorageV1 storage $ = _getStorage();
 
         $._initialOwner = msg.sender; // TODO here delegate call from proxy constructor, msg.sender is proxy deployer -> Proxy.sol
         $._protocolOwner = protocolOwner;
 
-        // TODO if registry can be instantiated only by verified entity then we can trust chainNft argument
-        // otherwise better to deploy here? -> adds 10Kb to deployment size
-        // TODO _chainNft upgradability? "new ChainNft()" or "proxy.depoy()" ???
-        // ChainNft knows about registry address at construction time -> thus creating ChainNft here
         // deploy NFT 
         $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
         $._chainNft = IChainNft($._chainNftInternal);
-        // use NFT
-        //$._chainNft = IChainNft(chainNft);
-        //$._chainNftInternal = ChainNft(chainNft);
         
         // initial registry setup
         _registerProtocol();
@@ -141,26 +102,13 @@ contract RegistryUpgradeable is
         _setupValidParentTypes();
     }
 
-
-    // can not upgrade to the first version
-    function upgrade(
-        address implementation,
-        address activatedBy,
-        bytes memory upgradeData
-    )
-        external
-        virtual
-    {
-        revert();
-    }
-
     function register(
         address objectAddress
     )
     // TODO add authz (only services may register components etc)
     // we have to check how we do authz for registring services (just restrict to protocol owner/registry owner)
     external override returns (NftId nftId) {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
 
         require(
             $._nftIdByAddress[objectAddress].eqz(),
@@ -240,7 +188,7 @@ contract RegistryUpgradeable is
             NftId nftId
         )
     {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
 
         // TODO add more validation
         require(
@@ -266,51 +214,51 @@ contract RegistryUpgradeable is
     }
 
     function getObjectCount() external view override returns (uint256) {
-        return _getRegistryStorageV1()._chainNft.totalSupply();
+        return _getStorage()._chainNft.totalSupply();
     }
 
     function getNftId(
         address object
     ) external view override returns (NftId id) {
-        return _getRegistryStorageV1()._nftIdByAddress[object];
+        return _getStorage()._nftIdByAddress[object];
     }
 
     function isRegistered(
         NftId nftId
     ) public view override returns (bool) {
-        return _getRegistryStorageV1()._info[nftId].objectType.gtz();
+        return _getStorage()._info[nftId].objectType.gtz();
     }
 
     function isRegistered(
         address object
     ) external view override returns (bool) {
-        return _getRegistryStorageV1()._nftIdByAddress[object].gtz();
+        return _getStorage()._nftIdByAddress[object].gtz();
     }
 
     function getObjectInfo(
         NftId nftId
     ) external view override returns (ObjectInfo memory info) {
-        return _getRegistryStorageV1()._info[nftId];
+        return _getStorage()._info[nftId];
     }
 
     function getName(
         NftId nftId
     ) external view returns (string memory name) {
-        return _getRegistryStorageV1()._string[nftId];
+        return _getStorage()._string[nftId];
     }
 
     function getOwner(NftId nftId) external view override returns (address) {
-        return _getRegistryStorageV1()._chainNft.ownerOf(nftId.toInt());
+        return _getStorage()._chainNft.ownerOf(nftId.toInt());
     }
 
     function getChainNft() external view override returns (IChainNft) {
-        return _getRegistryStorageV1()._chainNft;
+        return _getStorage()._chainNft;
     }
 
     // special case to retrive a gif service
     function getServiceAddress(string memory serviceName, VersionPart majorVersion) external view override returns (address serviceAddress) {
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-        return _getRegistryStorageV1()._service[serviceNameHash][majorVersion];
+        return _getStorage()._service[serviceNameHash][majorVersion];
     }
 
     // from IERC165
@@ -346,16 +294,16 @@ contract RegistryUpgradeable is
     }
 
     function getOwner() public view override returns (address owner) {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
         return $._nftId.gtz() ? this.getOwner($._nftId) : $._initialOwner;
     }
 
     function getNftId() public view override (IRegisterable, IRegistry) returns (NftId nftId) {
-        return _getRegistryStorageV1()._nftId;
+        return _getStorage()._nftId;
     }
 
     function getParentNftId() public view returns (NftId nftId) {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
         // we're the global registry
         /*if(block.chainid == 1) {
             return toNftId($._chainNftInternal.PROTOCOL_NFT_ID());
@@ -372,12 +320,12 @@ contract RegistryUpgradeable is
 
     // registry specific functions
     function getProtocolOwner() external view override returns (address) {
-        return _getRegistryStorageV1()._protocolOwner;
+        return _getStorage()._protocolOwner;
     }
 
     /// @dev defines which types are allowed to register
     function _setupValidTypes() internal onlyInitializing {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
         $._isValidType[REGISTRY()] = true; // only for global registry 
         $._isValidType[TOKEN()] = true;
         $._isValidType[SERVICE()] = true;
@@ -393,7 +341,7 @@ contract RegistryUpgradeable is
 
     /// @dev defines which types - parent type relations are allowed to register
     function _setupValidParentTypes() internal onlyInitializing {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
         // registry as parent
         $._isValidParentType[TOKEN()][REGISTRY()] = true;
         $._isValidParentType[SERVICE()][REGISTRY()] = true;
@@ -419,7 +367,7 @@ contract RegistryUpgradeable is
         internal
         onlyInitializing 
     {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
 
         uint256 protocolId = $._chainNftInternal.PROTOCOL_NFT_ID();
         $._chainNftInternal.mint($._protocolOwner, protocolId);
@@ -445,7 +393,7 @@ contract RegistryUpgradeable is
         onlyInitializing 
         returns (NftId registryNftId) 
     {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
 
         uint256 registryId = $._chainNftInternal.calculateTokenId(2);
         registryNftId = toNftId(registryId);
@@ -495,7 +443,7 @@ contract RegistryUpgradeable is
         internal
         onlyInitializing
     {
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
 
         uint256 globalRegistryId = $._chainNftInternal.GLOBAL_REGISTRY_ID();
         $._chainNftInternal.mint($._protocolOwner, globalRegistryId);
@@ -530,7 +478,7 @@ contract RegistryUpgradeable is
             registerable.getData()
         );
 
-        RegistryStorageV1 storage $ = _getRegistryStorageV1();
+        StorageV1 storage $ = _getStorage();
         $._info[nftId] = info;
         $._nftIdByAddress[objectAddress] = nftId;
 

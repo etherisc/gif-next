@@ -6,31 +6,19 @@ import {ContractV01} from "./ContractV01.sol";
 
 contract ContractV02 is ContractV01 {
 
-    // IMPORTANT this function needs to be implemented by each new version
-    // and needs to call internal function call _activate() 
-    function initialize(address implementation, address activatedBy, bytes memory activationData)
-        public
-        virtual override
-        initializer
-    {
-        _activate(implementation, activatedBy);
-
-        initializeV02(activationData);
+    struct StorageV2 {
+        // copy paste StorageV1
+        uint something;
+        // add changes
+        bool isDifferent;
     }
 
-    // IMPORTANT this function needs to be implemented by each new version
-    // and needs to call internal function call _activate() 
-    function upgrade(address implementation, address activatedBy, bytes memory upgradeData)
-        public
-        virtual override
-        reinitializer(getVersion().toUint64())
-    {
-        initializeV2FromV1(upgradeData);
+    function _getStorageV2() private pure returns (StorageV2 storage $) {
+        assembly {
+            $.slot := locationV1
+        }
     }
 
-    // IMPORTANT 1. version needed for upgradable versions
-    // _activate is using this to check if this is a new version
-    // and if this version is higher than the last activated version
     function getVersion()
         public
         pure
@@ -44,18 +32,19 @@ contract ContractV02 is ContractV01 {
         return "hi from version 2";
     }
 
-    function initializeV02(bytes memory data)
+    function _initialize(bytes memory data)
         internal
+        virtual override
         onlyInitializing
     {
-        initializeV01(data);
-
-        initializeV2FromV1(data);
+        // copy paste V1
+        // add changes 
     }
-    function initializeV2FromV1(bytes memory data)
-        private
+    function _upgrade(bytes memory data)
+        internal
+        virtual override
         onlyInitializing
     {
-
+        // add changes
     }
 }
