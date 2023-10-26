@@ -16,8 +16,6 @@ import {ChainNft} from "../contracts/registry/ChainNft.sol";
 //import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {RegistryUpgradeable} from "../contracts/registry/RegistryUpgradeable.sol";
 import {RegistryV02} from "./mock/RegistryV02.sol";
-import {RegistryV03} from "./mock/RegistryV03.sol";
-import {RegistryV04} from "./mock/RegistryV04.sol";
 
 contract RegistryTest is Test {
 
