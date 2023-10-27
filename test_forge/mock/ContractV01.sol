@@ -2,12 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {Version, VersionLib} from "../../contracts/types/Version.sol";
-import {VersionableUpgradeable} from "../../contracts/shared/VersionableUpgradeable.sol";
+import {Versionable} from "../../contracts/shared/Versionable.sol";
 
 
-contract ContractV01 is VersionableUpgradeable {
+contract ContractV01 is Versionable {
 
-    // @custom:storage-location erc7201:etherisc.storage.Registry
+    // @custom:storage-location erc7201:gif-next.test_forge.mock.contractV01.sol
     struct StorageV1 {
         // some initial variables
         uint some;
@@ -18,7 +18,7 @@ contract ContractV01 is VersionableUpgradeable {
 
     function _getStorage() private pure returns (StorageV1 storage $) {
         assembly {
-            $.slot := locationV1
+            $.slot := LOCATION_V1
         }
     }
 
@@ -35,13 +35,17 @@ contract ContractV01 is VersionableUpgradeable {
     }
 
 
-    function getDataV01() external view returns(bytes memory) {
+    function getDataV01() 
+        external 
+        view 
+        returns(bytes memory) 
+    {
         return "hi from version 1";
     }
 
     function _initialize(bytes memory data)
         internal
-        virtual override
         onlyInitializing
+        virtual override
     {}
 }
