@@ -20,18 +20,20 @@ import {VersionableUpgradeable} from "../shared/VersionableUpgradeable.sol";
 // Upgradeable contract MUST:
 // 1) inherit from Versionable
 // 2) implement version() function
-// 3) implement initialize() function with initializer modifier 
-// 4) implement upgrade() function with reinitializer(version().toInt()) modifier
+// 3) implement internal _initialize() function with onlyInitializing modifier 
+// 4) implement internal _upgrade() function with onlyInitializing modifier (1st version MUST revert)
 // 5) have onlyInitialising modifier for each function callable during deployment and/or upgrade
 // 6) use default empty constructor -> _disableInitializer() called from Versionable contructor
 // 7) use namespace storage
 //
 // IMPORTANT
 // Each version MUST:
-// 1) define its own storage struct (MUST NOT use struct type inside)
-// 2) define private getter for its storage struct (MUST use default implementation, change ONLY return type)
+// 1) define its own namespace storage struct ONLY if changes were introduced to storage (MUST NOT use struct type inside)
+// 2) ALWAYS define private getter even if no changes were introduced to storage struct (MUST use default implementation, change ONLY return type)
 // 3) use the same "locationV1" var in each getter
-// 4) define _initialize()/_upgrade() 
+// Optional:
+// 4) implement public initialize() with intializer modifier
+// 5) implement public upgrade() with reinitializer(VersionLib.toUint64(getVersion())) (1st version MUST revert)
 
 
 contract RegistryUpgradeable is
@@ -43,6 +45,8 @@ contract RegistryUpgradeable is
 
     string public constant EMPTY_URI = "";
 
+    // IMPORTANT Every new version with storage changes must implement its own struct
+    // copy paste previous version and add changes
     // @custom:storage-location erc7201:gif-next.contracts.registry.Registry.sol
     struct StorageV1 {
 
@@ -68,7 +72,7 @@ contract RegistryUpgradeable is
 
     // IMPORTANT Every new version must implement this function
     // keep it private -> if unreachable from the next version then not included in its byte code
-    // each version MUST use the same locationV1 
+    // each version MUST use the same locationV1, just change return type
     function _getStorage() private pure returns (StorageV1 storage $) {
         assembly {
             $.slot := locationV1
@@ -280,11 +284,7 @@ contract RegistryUpgradeable is
     // TODO 
     // 1) Registerable can not register itself -> otherwise register have to trust owner address provided by registerable
     // registerable owner MUST call register and provide registerable address
-    // it will work if component was delegate called ??? NO
-    // owner-DELEGATE_CALL->component.register()-CALL->registryService->register()
-    // owner-CALL->proxy-DELEGATE_CALL->compoment.register()-CALL->registryService->register()
     // 2) Who is msg.sender here???
-    //  Registration of Instance or Service (any deployed by GIF contract) msg.sender is done in proxe contructor
     function register() external pure override returns (NftId nftId) {
         return zeroNftId();
     }
@@ -304,13 +304,6 @@ contract RegistryUpgradeable is
 
     function getParentNftId() public view returns (NftId nftId) {
         StorageV1 storage $ = _getStorage();
-        // we're the global registry
-        /*if(block.chainid == 1) {
-            return toNftId($._chainNftInternal.PROTOCOL_NFT_ID());
-        }
-        else {
-            return toNftId($._chainNftInternal.GLOBAL_REGISTRY_ID());
-        }*/
         nftId = $._info[$._nftId].parentNftId;
     }
 
@@ -404,14 +397,6 @@ contract RegistryUpgradeable is
         }
 
         $._chainNftInternal.mint($._protocolOwner, registryId);
-
-        // TODO error when deploying registry proxy 
-        // in that case "this" is proxy address, "msg.sender" is proxy deployer, here in delegate call
-        // _registerObjectInfo() treats "this" as "IRegisterable"
-        // thus registerable.anyFunction() calls proxy... 
-        // + all functions callable inside initializer/reinitializer modifiers MUST have onlyInitialising modifier
-        // now _registerObjectInfo() is used only outside of initializer/reinitializer modifiers
-        /*_registerObjectInfo(this, registryNftId);*/
 
         NftId parentNftId;
         // we're the global registry

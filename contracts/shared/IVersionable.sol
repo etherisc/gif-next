@@ -19,18 +19,18 @@ interface IVersionable {
 
     // TODO uncomment when all implementations are ready
     /**
-     * @dev IMPORTANT this function MUST be implemented by each new version
-     * any such implementation MUST be guarded by initializer modifier
-     * any such implementation MUST call internal function _activate() 
-     * any new version MUST inherit from previous version
+     * @dev IMPORTANT
+     * implementation MUST be guarded by initializer modifier
+     * implementation MUST call internal function _activate() 
+     * new version MUST inherit from previous version
      */
     function initialize(address implementation, address activatedBy, bytes memory activationData) external;
 
     /**
-     * @dev IMPORTANT this function MUST be implemented by each new version
-     * any such implementation MUST be guarded by reinitializer(version().toUint64()) modifier
-     * any such implementation MUST call internal function _activate() 
-     * any new version MUST inherit from previous version
+     * @dev
+     * implementation MUST be guarded by reinitializer(version().toUint64()) modifier
+     * implementation MUST call internal function _activate() 
+     * new version MUST inherit from previous version
      * the first verion MUST revert 
      */
     function upgrade(address implementation, address activatedBy, bytes memory upgradeData) external;

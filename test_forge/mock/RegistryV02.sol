@@ -9,7 +9,9 @@ import {IChainNft} from "../../contracts/registry/IChainNft.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {RegistryUpgradeable} from "../../contracts/registry/RegistryUpgradeable.sol";
 
-
+// V02 is used to test upgradeability gas usage/byte code footprint - both MUST BE constant, the same as with V01
+// 1) introduces no changes to storage 
+// 2) implements empty _upgrade()
 contract RegistryV02 is RegistryUpgradeable
 {
     // @custom:storage-location erc7201:etherisc.storage.Registry
@@ -32,7 +34,7 @@ contract RegistryV02 is RegistryUpgradeable
         address _protocolOwner;
 
         // V2 addition
-        uint dataV2;
+        //uint dataV2;
     }
     
     function _getStorageV02() private pure returns (StorageV2 storage $) {
@@ -41,10 +43,10 @@ contract RegistryV02 is RegistryUpgradeable
         }
     }
 
-    function getDataV2() public view returns(uint) {
+    /*function getDataV2() public view returns(uint) {
         StorageV2 storage $ = _getStorageV02();
         return $.dataV2;
-    }
+    }*/
 
     function getVersion() 
         public 
@@ -81,7 +83,7 @@ contract RegistryV02 is RegistryUpgradeable
         _setupValidParentTypes();
 
         //new in this version 
-        $.dataV2 = type(uint).max;
+        //$.dataV2 = type(uint).max;
     }
 
     function _upgrade(bytes memory data)
@@ -90,7 +92,7 @@ contract RegistryV02 is RegistryUpgradeable
         onlyInitializing
     {
         // add changes 
-        StorageV2 storage $ = _getStorageV02();
-        $.dataV2 = type(uint).max; 
+        //StorageV2 storage $ = _getStorageV02();
+        //$.dataV2 = type(uint).max; 
     }
 }

@@ -79,9 +79,9 @@ contract RegistryTest is Test {
         address registryAddress = address(versionable);
         RegistryV02 registry = RegistryV02(registryAddress);
         registryNftId = registry.getNftId();
-        uint v2data = registry.getDataV2();
+        //uint v2data = registry.getDataV2();
 
-        assertEq(v2data, type(uint).max, "unxpected value of initialized V2 variable");
+        //assertEq(v2data, type(uint).max, "unxpected value of initialized V2 variable");
 
         /* solhint-disable */
         console.log("registry deployed at", registryAddress);
@@ -130,9 +130,9 @@ contract RegistryTest is Test {
 
         RegistryV02 registryV02 = RegistryV02(registryAddress);
         NftId registryV02NftId = registryV02.getNftId();
-        uint v2data = registryV02.getDataV2();
+        //uint v2data = registryV02.getDataV2();
 
-        assertEq(v2data, type(uint).max, "unxpected value of initialized V2 variable");
+        //assertEq(v2data, type(uint).max, "unxpected value of initialized V2 variable");
         assertEq(registryNftId.toInt(), registryV02NftId.toInt(), "nftId of V1 differs from V2");
 
         /* solhint-disable */

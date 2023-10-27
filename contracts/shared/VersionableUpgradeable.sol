@@ -63,8 +63,7 @@ abstract contract VersionableUpgradeable is
 
     // IMPORTANT each version except version "1" must implement this function 
     // each implementation MUST use onlyInitialising modifier
-    function _upgrade(bytes memory data) virtual internal
-    {
+    function _upgrade(bytes memory data) virtual internal {
         revert();
     }
 
@@ -89,9 +88,7 @@ abstract contract VersionableUpgradeable is
             $._v1 = thisVersion;
         }
         else {
-            //Version initializedVersion = VersionLib.toVersion(version);
-            //require(initializedVersion == thisVersion, "");
-            require(thisVersion > $._v1, "");
+            require(thisVersion > $._v1, "INVALID VERSION");
         }
 
         // update version history
