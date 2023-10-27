@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Initializable} from "@openzeppelin5/contracts/proxy/utils/Initializable.sol";
-
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IService} from "../instance/base/IService.sol";
 
@@ -79,7 +77,7 @@ contract Registry is
         $._initialOwner = msg.sender;
         $._protocolOwner = protocolOwner;
 
-        // TODO call another contract which keeps and deploys ChainNft byte code  
+        // TODO deployment size is to big, call another contract which keeps and deploys ChainNft byte code  
         // deploy NFT 
         $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
         $._chainNft = IChainNft($._chainNftInternal);

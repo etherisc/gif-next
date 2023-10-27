@@ -29,6 +29,9 @@ import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 
+import {ProxyDeployer} from "../../contracts/shared/Proxy.sol";
+import {IVersionable} from "../../contracts/shared/IVersionable.sol";
+
 // solhint-disable-next-line max-states-count
 contract TestGifBase is Test {
 
@@ -38,7 +41,8 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    ChainNft public chainNft;
+    ProxyDeployer proxy;
+    //ChainNft public chainNft;
     Registry public registry;
     IERC20Metadata public token;
     ComponentOwnerService public componentOwnerService;
@@ -103,6 +107,7 @@ contract TestGifBase is Test {
 
         // deploy registry, nft, and services
         vm.startPrank(registryOwner);
+        _deployProxyDeployer(); // registryOwner is proxies admin
         _deployRegistry(registryOwner);
         _deployServices();
         vm.stopPrank();
@@ -185,18 +190,29 @@ contract TestGifBase is Test {
         console.log(message, gasDelta);
     }
 
-    function _deployRegistry(address registryNftOwner) internal {
-        registry = new Registry();
-        ChainNft nft = new ChainNft(address(registry));
+    function _deployProxyDeployer() internal {
+        proxy = new ProxyDeployer();
+    }
 
-        registry.initialize(address(nft), registryNftOwner);
-        registryAddress = address(registry);
+    function _deployRegistry(address registryNftOwner) internal {
+        //registry = new Registry();
+        //ChainNft nft = new ChainNft(address(registry));
+        //registry.initialize(address(nft), registryNftOwner);
+
+        bytes memory initializationData = abi.encode(registryNftOwner);
+        IVersionable versionable = proxy.deploy(address(new Registry()), initializationData);
+
+        registryAddress = address(versionable);
+
+        registry = Registry(registryAddress);
         registryNftId = registry.getNftId();
+        IChainNft nft = registry.getChainNft();
 
         // solhint-disable-next-line
         console.log("nft deployed at", address(nft));
         // solhint-disable-next-line
         console.log("registry deployed at", address(registry));
+        console.log("registry nft is", registryNftId.toInt());
     }
 
 

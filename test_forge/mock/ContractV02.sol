@@ -14,7 +14,6 @@ contract ContractV02 is ContractV01 {
         bool isDifferent;
     }
 
-    // keccak256(abi.encode(uint256(keccak256("gif-next.test_forge.mock.contractV01.sol")) - 1)) & ~bytes32(uint256(0xff));
     function _getStorageV2() private pure returns (StorageV2 storage $) {
         assembly {
             $.slot := LOCATION_V1
@@ -36,16 +35,17 @@ contract ContractV02 is ContractV01 {
 
     function _initialize(bytes memory data)
         internal
-        virtual override
         onlyInitializing
+        virtual override
     {
         // copy paste V1
         // add changes 
     }
+
     function _upgrade(bytes memory data)
         internal
-        virtual override
         onlyInitializing
+        virtual override
     {
         // add changes
     }

@@ -29,7 +29,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const deployer = deployerBaseContract as ProxyDeployer;
 
     const { address: registryImplementation, contract: registryBaseContract } = await deployContract(
-        "RegistryUpgradeable",
+        "Registry",
         owner,
         undefined,
         {

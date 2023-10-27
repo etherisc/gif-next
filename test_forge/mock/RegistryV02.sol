@@ -51,7 +51,7 @@ contract RegistryV02 is Registry
 
     function _upgrade(bytes memory data)
         internal
-        virtual override
         onlyInitializing
+        virtual override
     {}
 }

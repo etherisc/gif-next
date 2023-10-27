@@ -56,6 +56,7 @@ contract RegistryTest is Test {
         console.log("registry NFT deployed at", address(registry.getChainNft()));
         /* solhint-enable */ 
     }  
+
     // gas cost of initialize: 3020886  
     // deployment size 22300 
     function testRegistryV02Deploy() public
@@ -87,7 +88,7 @@ contract RegistryTest is Test {
         console.log("registry NFT deployed at", address(registry.getChainNft()));
         /* solhint-enable */ 
     }
-    // TODO creation of ChainNft increases deployment size to much! -> do something
+
     // gas cost of initialize: 3043002  
     // deployment size 22366 
     function testRegistryV03Deploy() public
@@ -122,6 +123,7 @@ contract RegistryTest is Test {
         console.log("registry NFT deployed at", address(registry.getChainNft()));
         /* solhint-enable */ 
     }
+
     function testRegistryV01DeployAndUpgradeToV02() public
     {
         ProxyDeployer proxy = new ProxyDeployer();
@@ -171,6 +173,7 @@ contract RegistryTest is Test {
         console.log("after upgrade, registry NFT deployed at", address(registryV02.getChainNft()));
         /* solhint-enable */ 
     }
+    
     function testRegistryV01DeployAndUpgradeToV03() public
     {
         ProxyDeployer proxy = new ProxyDeployer();

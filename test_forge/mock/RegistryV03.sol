@@ -51,8 +51,8 @@ contract RegistryV03 is RegistryV02
 
     function _initialize(bytes memory data)
         internal
-        virtual override
         onlyInitializing
+        virtual override
     {
         // copy paste from V1 
         // change getter function

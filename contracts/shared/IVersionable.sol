@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Blocknumber, blockNumber} from "../types/Blocknumber.sol";
-import {Timestamp, blockTimestamp} from "../types/Timestamp.sol";
-import {Version, VersionPart} from "../types/Version.sol";
+import {Blocknumber} from "../types/Blocknumber.sol";
+import {Timestamp} from "../types/Timestamp.sol";
+import {Version} from "../types/Version.sol";
 
 
 /// IMPORTANT
@@ -49,7 +49,7 @@ interface IVersionable {
     /**
      * @dev IMPORTANT
      * implementation MUST be guarded by initializer modifier
-     * implementation MUST call internal function _updateVersionHistory._updateVersion() 
+     * implementation MUST call internal function Versionable._updateVersionHistory 
      * new version MUST inherit from previous version
      */
     function initialize(address implementation, address activatedBy, bytes memory activationData) external;
@@ -57,7 +57,7 @@ interface IVersionable {
     /**
      * @dev
      * implementation MUST be guarded by reinitializer(version().toUint64()) modifier
-     * implementation MUST call internal function _updateVersionHistory._updateVersion()
+     * implementation MUST call internal function Versionable._updateVersionHistory
      * new version MUST inherit from previous version
      * the first verion MUST revert 
      */
