@@ -15,16 +15,16 @@ import {Version} from "../types/Version.sol";
 // 5) have onlyInitialising modifier for each function callable inside _initialize()/_upgrade() (MUST use different functions for initialization/upgrade and normal operations)
 // 6) use default empty constructor -> _disableInitializer() is called from Versionable contructor
 // 7) use namespace storage
-// 8) since now inheritance is used for upgradability, contract MUST BE inherited only by the next version 
+// 8) since now inheritance is used for upgradability, contract MUST BE inherited ONLY by the next version 
 // Upgradeable contract SHOULD:
 // 9) define all non private methods as virtual (in order to be able to upgrade them latter)
 //
 // IMPORTANT
 // Each version MUST:
-// 1) ALWAYS define namespace storage struct (even if no changes were introduced)
+// 1) define namespace storage struct if accessing storage
 //      - DO NOT use structs inside, except
 //      - CAN use structs ONLY inside mappings
-// 2) ALWAYS define private getter (even if no changes were introduced)
+// 2) ALWAYS define private getter if accessing storage
 //      - MUST use default implementation, CAN change ONLY return type
 //      - MUST use the same "LOCATION_V1"
 
