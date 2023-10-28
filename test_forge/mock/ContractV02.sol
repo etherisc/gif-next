@@ -14,12 +14,6 @@ contract ContractV02 is ContractV01 {
         bool isDifferent;
     }
 
-    function _getStorageV2() private pure returns (StorageV2 storage $) {
-        assembly {
-            $.slot := LOCATION_V1
-        }
-    }
-
     function getVersion()
         public
         pure
@@ -48,5 +42,11 @@ contract ContractV02 is ContractV01 {
         virtual override
     {
         // add changes
+    }
+
+    function _getStorageV2() private pure returns (StorageV2 storage $) {
+        assembly {
+            $.slot := LOCATION_V1
+        }
     }
 }

@@ -15,6 +15,10 @@ abstract contract Versionable is
     Initializable,
     IVersionable 
 {
+    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.Versionable.sol")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant VERSIONABLE_LOCATION_V1 = 0x4f61291a8ac3d020d0a7d919a76b8592aa88385744dee3f8b4f3873b969ed900;
+
+
     /// @custom:storage-location erc7201:gif-next.contracts.shared.Versionable.sol
     struct VersionableStorage {
         mapping(Version version => VersionInfo info) _versionHistory;
@@ -22,14 +26,6 @@ abstract contract Versionable is
         Version _v1;
     }
 
-    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.Versionable.sol")) - 1)) & ~bytes32(uint256(0xff))
-    bytes32 private constant VersionableStorageLocation = 0x4f61291a8ac3d020d0a7d919a76b8592aa88385744dee3f8b4f3873b969ed900;
-    
-    function _getVersionableStorage() private pure returns (VersionableStorage storage $) {
-        assembly {
-            $.slot := VersionableStorageLocation
-        }
-    }
 
     constructor() {
         _disableInitializers();
@@ -46,6 +42,8 @@ abstract contract Versionable is
         _updateVersionHistory(implementation, activatedBy);
         _initialize(data);
     }
+
+
     function upgrade(
         address implementation,
         address activatedBy,
@@ -57,13 +55,40 @@ abstract contract Versionable is
         _updateVersionHistory(implementation, activatedBy);
         _upgrade(data);
     }
+
+    function isInitialized(Version _version) public override view returns(bool) {
+        return _getVersionableStorage()._versionHistory[_version].activatedIn.toInt() > 0;
+    }
+
+    function getVersion() public pure virtual returns(Version);
+
+    function getVersionCount() external view override returns(uint256) {
+        return _getVersionableStorage()._versions.length;
+    }
+
+    function getVersion(uint256 idx) external view override returns(Version) {
+        return _getVersionableStorage()._versions[idx];
+    }
+
+    function getVersionInfo(Version _version) external override view returns(VersionInfo memory) {
+        return _getVersionableStorage()._versionHistory[_version];
+    }
+
+    function getInitializedVersion() public view returns(uint64) {
+        return _getInitializedVersion();
+    }
+
+
+
     // IMPORTANT each version must implement this function 
     // each implementation MUST use onlyInitialising modifier
+    // each implementation MUST call intializers of all base contracts...
     function _initialize(bytes memory data) 
         internal
         onlyInitializing
         virtual 
     {}
+
 
     // IMPORTANT each version except version "1" must implement this function 
     // each implementation MUST use onlyInitialising modifier
@@ -73,6 +98,12 @@ abstract contract Versionable is
         virtual
     {
         revert();
+    }
+
+    function _getVersionableStorage() private pure returns (VersionableStorage storage $) {
+        assembly {
+            $.slot := VERSIONABLE_LOCATION_V1
+        }
     }
 
     // can only be called once per contract
@@ -110,32 +141,5 @@ abstract contract Versionable is
         );
 
         emit LogVersionableInitialized(thisVersion, implementation, activatedBy);
-    }
-
-    // TODO previous version(s) can not be active -> check that _version is the latest one
-    function isInitialized(Version _version) public override view returns(bool) {
-        return _getVersionableStorage()._versionHistory[_version].activatedIn.toInt() > 0;
-    }
-
-
-    function getVersion() public pure virtual returns(Version);
-
-
-    function getVersionCount() external view override returns(uint256) {
-        return _getVersionableStorage()._versions.length;
-    }
-
-    function getVersion(uint256 idx) external view override returns(Version) {
-        return _getVersionableStorage()._versions[idx];
-    }
-
-
-    function getVersionInfo(Version _version) external override view returns(VersionInfo memory) {
-        return _getVersionableStorage()._versionHistory[_version];
-    }
-
-    function getInitializedVersion() external view returns(uint64)
-    {
-        return _getInitializedVersion();
     }
 }

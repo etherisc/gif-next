@@ -34,12 +34,6 @@ contract RegistryV02 is Registry
         address _protocolOwner;
     }
 
-    function _getStorageV2() private pure returns (StorageV2 storage $) {
-        assembly {
-            $.slot := LOCATION_V1
-        }
-    }
-
     function getVersion() 
         public 
         pure 
@@ -54,4 +48,10 @@ contract RegistryV02 is Registry
         onlyInitializing
         virtual override
     {}
+
+    function _getStorageV2() private pure returns (StorageV2 storage $) {
+        assembly {
+            $.slot := REGISTRY_LOCATION_V1
+        }
+    }
 }

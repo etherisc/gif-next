@@ -23,6 +23,11 @@ contract Registry is
 
     string public constant EMPTY_URI = "";
 
+    // TODO do not use gif-next in namespace id
+    // TODO ask openzeppelin about public location
+    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.registry.Registry.sol")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant REGISTRY_LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
+
     // IMPORTANT Every new version with storage changes must implement its own struct
     // copy paste previous version and add changes
     // @custom:storage-location erc7201:gif-next.contracts.registry.Registry.sol
@@ -44,51 +49,7 @@ contract Registry is
         /// @dev will own protocol nft and registry nft(s) minted during initialize
         address _protocolOwner;
         // if struct goes here
-        // then you cannot add new vars here
-    }
-
-    // TODO do not use gif-next in namespace id
-    // TODO ask openzeppelin about public location
-    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.registry.Registry.sol")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
-
-    // TODO check how usage of "$.data" influences gas costs 
-    // IMPORTANT Every new version must implement this function
-    // keep it private -> if unreachable from the next version then not included in its byte code
-    // each version MUST use the same locationV1, just change return type
-    function _getStorage() private pure returns (StorageV1 storage $) {
-        assembly {
-            $.slot := LOCATION_V1
-        }
-    }
-
-    /// @dev the protocol owner will get ownership of the
-    // protocol nft and the global registry nft minted in this 
-    // initializer function 
-    function _initialize(bytes memory data) 
-        internal
-        onlyInitializing
-        virtual override
-    {
-        address protocolOwner = abi.decode(data, (address));
-        StorageV1 storage $ = _getStorage();
-
-         // TODO here delegate call from proxy constructor, msg.sender is proxy deployer -> Proxy.sol
-        $._initialOwner = msg.sender;
-        $._protocolOwner = protocolOwner;
-
-        // TODO deployment size is to big, call another contract which keeps and deploys ChainNft byte code  
-        // deploy NFT 
-        $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
-        $._chainNft = IChainNft($._chainNftInternal);
-        
-        // initial registry setup
-        _registerProtocol();
-        $._nftId = _registerRegistry();
-
-        // setup rules for further registrations
-        _setupValidTypes();
-        _setupValidParentTypes();
+        // then you cannot add new vars after
     }
 
     function register(
@@ -202,52 +163,51 @@ contract Registry is
         // add logging
     }
 
+    // from IRegistry
     function getObjectCount() external view override returns (uint256) {
         return _getStorage()._chainNft.totalSupply();
     }
 
-    function getNftId(
-        address object
-    ) external view override returns (NftId id) {
+    function getNftId(address object) external view override returns (NftId id) {
         return _getStorage()._nftIdByAddress[object];
-    }
-
-    function isRegistered(
-        NftId nftId
-    ) public view override returns (bool) {
-        return _getStorage()._info[nftId].objectType.gtz();
-    }
-
-    function isRegistered(
-        address object
-    ) external view override returns (bool) {
-        return _getStorage()._nftIdByAddress[object].gtz();
-    }
-
-    function getObjectInfo(
-        NftId nftId
-    ) external view override returns (ObjectInfo memory info) {
-        return _getStorage()._info[nftId];
-    }
-
-    function getName(
-        NftId nftId
-    ) external view returns (string memory name) {
-        return _getStorage()._string[nftId];
     }
 
     function getOwner(NftId nftId) external view override returns (address) {
         return _getStorage()._chainNft.ownerOf(nftId.toInt());
     }
 
-    function getChainNft() external view override returns (IChainNft) {
-        return _getStorage()._chainNft;
+    function getName(NftId nftId) external view returns (string memory name) {
+        return _getStorage()._string[nftId];
+    }
+
+    function getObjectInfo(NftId nftId) external view override returns (ObjectInfo memory info) {
+        return _getStorage()._info[nftId];
+    }
+
+    function isRegistered(NftId nftId) public view override returns (bool) {
+        return _getStorage()._info[nftId].objectType.gtz();
+    }
+
+    function isRegistered(address object) external view override returns (bool) {
+        return _getStorage()._nftIdByAddress[object].gtz();
     }
 
     // special case to retrive a gif service
-    function getServiceAddress(string memory serviceName, VersionPart majorVersion) external view override returns (address serviceAddress) {
+    function getServiceAddress(
+        string memory serviceName, 
+        VersionPart majorVersion
+    ) external view override returns (address serviceAddress) 
+    {
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
         return _getStorage()._service[serviceNameHash][majorVersion];
+    }
+
+    function getProtocolOwner() external view override returns (address) {
+        return _getStorage()._protocolOwner;
+    }
+
+    function getChainNft() external view override returns (IChainNft) {
+        return _getStorage()._chainNft;
     }
 
     // from IERC165
@@ -255,17 +215,21 @@ contract Registry is
         return interfaceId == type(IRegistry).interfaceId;
     }
 
-    // from IRegistryLinked
-    function getRegistry() external view override returns (IRegistry registry) {
-        return this;
-    }
-
     // from IVersionable
     function getVersion() public pure virtual override returns (Version) {
         return VersionLib.toVersion(1, 0, 0);
     } 
 
+    // from IOwnable
+    function getOwner() public view override returns (address owner) {
+        StorageV1 storage $ = _getStorage();
+        return $._nftId.gtz() ? this.getOwner($._nftId) : $._initialOwner;
+    }
+
     // from IRegisterable
+    function getRegistry() external view override returns (IRegistry registry) {
+        return this;
+    }
     // TODO 
     // 1) Registerable can not register itself -> otherwise register have to trust owner address provided by registerable
     // registerable owner MUST call register and provide registerable address
@@ -278,12 +242,7 @@ contract Registry is
         return REGISTRY();
     }
 
-    function getOwner() public view override returns (address owner) {
-        StorageV1 storage $ = _getStorage();
-        return $._nftId.gtz() ? this.getOwner($._nftId) : $._initialOwner;
-    }
-
-    function getNftId() public view override (IRegisterable, IRegistry) returns (NftId nftId) {
+    function getNftId() public view override returns (NftId nftId) {
         return _getStorage()._nftId;
     }
 
@@ -297,9 +256,6 @@ contract Registry is
     }
 
     // registry specific functions
-    function getProtocolOwner() external view override returns (address) {
-        return _getStorage()._protocolOwner;
-    }
 
     /// @dev defines which types are allowed to register
     function _setupValidTypes() internal onlyInitializing {
@@ -341,9 +297,9 @@ contract Registry is
 
     /// @dev protocol registration used to anchor the dip ecosystem relations
     function _registerProtocol() 
-        virtual 
         internal
         onlyInitializing 
+        virtual // TODO virtual?
     {
         StorageV1 storage $ = _getStorage();
 
@@ -365,10 +321,10 @@ contract Registry is
 
     /// @dev registry registration
     /// might also register the global registry when not on mainnet
-    function _registerRegistry() 
-        virtual 
+    function _registerRegistry()  
         internal
         onlyInitializing 
+        virtual
         returns (NftId registryNftId) 
     {
         StorageV1 storage $ = _getStorage();
@@ -391,6 +347,7 @@ contract Registry is
         else {
             parentNftId = toNftId($._chainNftInternal.GLOBAL_REGISTRY_ID());
         }
+
         ObjectInfo memory registryInfo = ObjectInfo(
             registryNftId,
             parentNftId,
@@ -409,9 +366,9 @@ contract Registry is
 
     /// @dev global registry registration for non mainnet registries
     function _registerGlobalRegistry() 
-        virtual 
         internal
         onlyInitializing
+        virtual
     {
         StorageV1 storage $ = _getStorage();
 
@@ -453,6 +410,47 @@ contract Registry is
         $._nftIdByAddress[objectAddress] = nftId;
 
         // add logging
+    }
+
+    // TODO check how usage of "$.data" influences gas costs 
+    // IMPORTANT Every new version must implement this function
+    // keep it private -> if unreachable from the next version then not included in its byte code
+    // each version MUST use the same REGISTRY_LOCATION_V1, just change return type
+    function _getStorage() private pure returns (StorageV1 storage $) {
+        assembly {
+            $.slot := REGISTRY_LOCATION_V1
+        }
+    }
+
+    // from Versionable 
+
+    /// @dev the protocol owner will get ownership of the
+    // protocol nft and the global registry nft minted in this 
+    // initializer function 
+    function _initialize(bytes memory data) 
+        internal
+        onlyInitializing
+        virtual override
+    {
+        address protocolOwner = abi.decode(data, (address));
+        StorageV1 storage $ = _getStorage();
+
+         // TODO here delegate call from proxy constructor, msg.sender is proxy deployer -> Proxy.sol
+        $._initialOwner = msg.sender;
+        $._protocolOwner = protocolOwner;
+
+        // TODO deployment size is too big, call another contract which keeps and deploys ChainNft byte code  
+        // deploy NFT 
+        $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
+        $._chainNft = IChainNft($._chainNftInternal);
+        
+        // initial registry setup
+        _registerProtocol();
+        $._nftId = _registerRegistry();
+
+        // setup rules for further registrations
+        _setupValidTypes();
+        _setupValidParentTypes();
     }
 
 }

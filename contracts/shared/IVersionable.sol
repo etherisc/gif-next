@@ -13,8 +13,11 @@ import {Version} from "../types/Version.sol";
 // 3) implement internal _initialize() function with onlyInitializing modifier 
 // 4) implement internal _upgrade() function with onlyInitializing modifier (1st version MUST revert)
 // 5) have onlyInitialising modifier for each function callable inside _initialize()/_upgrade() (MUST use different functions for initialization/upgrade and normal operations)
-// 6) use default empty constructor -> _disableInitializer() called from Versionable contructor
+// 6) use default empty constructor -> _disableInitializer() is called from Versionable contructor
 // 7) use namespace storage
+// 8) since now inheritance is used for upgradability, contract MUST BE inherited only by the next version 
+// Upgradeable contract SHOULD:
+// 9) define all non private methods as virtual (in order to be able to upgrade them latter)
 //
 // IMPORTANT
 // Each version MUST:
@@ -24,14 +27,6 @@ import {Version} from "../types/Version.sol";
 // 2) ALWAYS define private getter (even if no changes were introduced)
 //      - MUST use default implementation, CAN change ONLY return type
 //      - MUST use the same "LOCATION_V1"
-// Optional:
-// 4) implement public initialize() 
-//      - MUST use intializer modifier
-//      - MUST call Versionable._updateVersionHistory()
-// 5) implement public upgrade()
-//      - 1st version MUST revert
-//      - MUST use reinitializer(VersionLib.toUint64(getVersion())) modifier
-//      - MUST call Versionable._updateVersionHistory()
 
 interface IVersionable {
 
@@ -69,7 +64,9 @@ interface IVersionable {
     function isInitialized(Version version) external view returns(bool);
 
     /**
-     * @dev returns currently active version of this contract
+     * @dev returns version of this contract
+     * each new implementation MUST implement this function
+     * version number MUST increase 
      */
     function getVersion() external pure returns(Version);
 
@@ -89,6 +86,9 @@ interface IVersionable {
     function getVersionInfo(Version version) external view returns(VersionInfo memory versionInfo);
 
     // TODO make sure it is needed here
+    /**
+     * @dev returns currently active version
+     */
     function getInitializedVersion() external view returns(uint64);
 
 }

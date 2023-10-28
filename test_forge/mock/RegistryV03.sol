@@ -34,10 +34,10 @@ contract RegistryV03 is RegistryV02
         uint dataV3;
     }
 
-    function _getStorageV3() private pure returns (StorageV3 storage $) {
-        assembly {
-            $.slot := LOCATION_V1
-        }
+    // new func
+    function getDataV3() public view returns(uint) {
+        StorageV3 storage $ = _getStorageV3();
+        return $.dataV3;
     }
 
     function getVersion() 
@@ -87,9 +87,9 @@ contract RegistryV03 is RegistryV02
         $.dataV3 = type(uint).max; 
     }
 
-    // new func
-    function getDataV3() public view returns(uint) {
-        StorageV3 storage $ = _getStorageV3();
-        return $.dataV3;
+    function _getStorageV3() private pure returns (StorageV3 storage $) {
+        assembly {
+            $.slot := REGISTRY_LOCATION_V1
+        }
     }
 }
