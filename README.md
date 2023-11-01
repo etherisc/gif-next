@@ -272,28 +272,43 @@ pool_id = pool.getNftId()
 product_id = product.getNftId()
 ```
 
-## migrate to kv store
+## Registry and Services
 
-sizes before
-| Instance                       | 23.178    | 1.398       |
-| TestInstanceBase               | 3.305     | 21.271      |
-| TestInstanceModuleAccess       | 7.86      | 16.716      |
-| TestInstanceModuleBundle       | 7.586     | 16.99       |
-| TestInstanceModuleCompensation | 3.305     | 21.271      |
-| TestInstanceModuleComponent    | 5.123     | 19.453      |
-| TestInstanceModulePolicy       | 6.937     | 17.639      |
-| TestInstanceModulePool         | 4.809     | 19.767      |
-| TestInstanceModuleRisk         | 3.305     | 21.271      |
-| TestInstanceModuleTreasury     | 7.563     | 17.013      |
----
-sizes after
-| Instance                       | 22.727    | 1.849       |
-| TestInstanceBase               | 3.485     | 21.091      |
-| TestInstanceModuleAccess       | 8.036     | 16.54       |
-| TestInstanceModuleBundle       | 8.354     | 16.222      |
-| TestInstanceModuleCompensation | 3.485     | 21.091      |
-| TestInstanceModuleComponent    | 5.482     | 19.094      |
-| TestInstanceModulePolicy       | 7.502     | 17.074      |
-| TestInstanceModulePool         | 5.522     | 19.054      |
-| TestInstanceModuleRisk         | 4.635     | 19.941      |
-| TestInstanceModuleTreasury     | 8.945     | 15.631      |
+### Principles
+
+- 1 service per object type and major version
+- registry service guards write access to registry
+- all other objects registered via registry service
+- root object for the complete tree is the protocol object
+- under the root object a single registry object is registered (= global registry/ethereum mainnet)
+
+
+### Service Responsibilities
+
+Registry Service
+
+- deployed and registered during bootstrapping of registry
+- used to register tokens and other services by registry owner
+- an object may only be registered by the service designated by the type of the object
+- to register an object the parent object needs already be registered
+- the type of the object to be registered needs to match a valid child type/parent type combination
+
+Instance Service
+
+- deploys master instance during its own bootstrapping (if allowed by contract size)
+- registered via registry service by registry owner
+- registeres master instance during its own registration by regsitry owner
+- deploys and registeres new instances (= instance factory) by instance owner (instance owner is a permissionless role, anybody may creates a new instance)
+- provides upgrade functionality to instance owners
+
+Product Service
+
+- registered via registry service by registry owner
+- registers products for registered instances via registry service by product owner (product owner role is permissend by the product's instance)
+- registers applications/policies for registered products via registry service
+
+Distribution Service
+
+- registered via registry service by registry owner
+- registers distribution components for registered products via registry service by distribution owner (distribution owner role is permissend by the product's instance)
+- registers distributors for registered distribution components via registry service
