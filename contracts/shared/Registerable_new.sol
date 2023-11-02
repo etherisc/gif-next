@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+//import {Initializable} from "@openzeppelin5/contracts/proxy/utils/Initializable.sol"; 
+
 import {NftId, zeroNftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 
@@ -12,10 +14,10 @@ import {Versionable} from "./Versionable.sol";
 
 import {ERC165} from "./ERC165.sol";
 
-// Stateless Registerable is easyer to integrate with Versionable  ??
 abstract contract Registerable_new is
-    ERC165,
+    ERC165, // TODO not v5, not upgradeable 
     IRegisterable_new,
+    //Initializable,
     Versionable
 {
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.Registerable.sol")) - 1)) & ~bytes32(uint256(0xff));
@@ -23,9 +25,9 @@ abstract contract Registerable_new is
 
     struct RegisterableStorage {
         IRegistry_new _registry;
-        //NftId _parentNftId;
-        //address _initialOwner;
-        //ObjectType _objectType;
+        NftId _parentNftId;
+        address _initialOwner;
+        ObjectType _objectType;
         //bytes _data;
     }
 
@@ -43,56 +45,43 @@ abstract contract Registerable_new is
         _;
     }
 
-    function _initialize_registerable(IRegistry_new registry)
+    function _initializeRegisterable(
+        address registryAddress,
+        NftId parentNftId,
+        ObjectType objectType
+        //bytes memory data
+    )
         internal
         onlyInitializing
         virtual
     {
-        RegisterableStorage storage $ = _getRegisterableStorage();
-        $._registry = registry;
-    }
-
-    /*constructor(
-        address registryAddress,
-        NftId parentNftId,
-        ObjectType objectType
-    )
-        ERC165()
-    {
-        // TODO validate objectType
-
         require(
-            address(registryAddress) != address(0),
+            registryAddress != address(0),
             "ERROR:RGB-010:REGISTRY_ZERO"
         );
 
-        _registry = IRegistry_My(registryAddress);
+        IRegistry_new registry = IRegistry_new(registryAddress);
         require(
-            _registry.supportsInterface(type(IRegistry).interfaceId),
+            registry.supportsInterface(type(IRegistry_new).interfaceId),
             "ERROR:RGB-011:NOT_REGISTRY"
         );
 
-        
-        require(
-            _registry.isRegistered(parentNftId),
-            "ERROR:RGB-012:PARENT_NOT_REGISTERED"
-        );
+        RegisterableStorage storage $ = _getRegisterableStorage();
+        $._registry = registry;
+        $._parentNftId = parentNftId;
+        $._objectType = objectType;
+        $._initialOwner = msg.sender; // TODO correct? if during proxy deployment only?
+        //$._data = data;
 
-        _parentNftId = parentNftId;
-        _objectType = objectType;
-        _initialOwner = msg.sender;
-        //_data = data;
-
-        // register support for IRegisterable
-        _registerInterface(type(IRegisterable).interfaceId);
-    }*/
+        _registerInterface(type(Registerable_new).interfaceId);
+    }
 
     // from IOwnable
     function getOwner() public view virtual returns (address) {
         return _getRegisterableStorage()._registry.ownerOf(address(this));
     }
 
-    // from IRegistry
+    // from IRegisterable
     function getRegistry() public view virtual returns (IRegistry_new registry) {
         return _getRegisterableStorage()._registry;
     }
@@ -101,20 +90,19 @@ abstract contract Registerable_new is
         return _getRegisterableStorage()._registry.getNftId(address(this));
     }
 
-    function getInfo() external view virtual returns (IRegistry_new.ObjectInfo memory) {
+    function getInfo() public view virtual returns (IRegistry_new.ObjectInfo memory) {
         return _getRegisterableStorage()._registry.getObjectInfo(address(this));
     }
-    // each registerable must define 
-    function getInitialInfo() public pure virtual returns (IRegistry_new.ObjectInfo memory);
-    /*function getInitialInfo() public view virtual returns (IRegistry.ObjectInfo memory) {
-        return IRegistry.ObjectInfo(
+
+    function getInitialInfo() public view virtual returns (IRegistry_new.ObjectInfo memory) {
+        RegisterableStorage storage $ = _getRegisterableStorage();
+        return IRegistry_new.ObjectInfo(
             zeroNftId(),
-            _parentNftId,
-            _objectType,
-            address(this),
-            _initialOwner,
+            $._parentNftId,
+            $._objectType,
+            address(this), 
+            $._initialOwner,
             ""
         );
     }
-    */
 }

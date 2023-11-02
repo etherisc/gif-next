@@ -16,7 +16,7 @@ import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT
 import {Versionable} from "../shared/Versionable.sol";
 
 
-contract Registry_My is
+contract Registry_new is
     Versionable,
     IRegisterable_new,// Registerable_new
     IRegistry_new
