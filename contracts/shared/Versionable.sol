@@ -1,13 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {Initializable} from "@openzeppelin5/contracts/proxy/utils/Initializable.sol";
+
 import {Blocknumber, blockNumber} from "../types/Blocknumber.sol";
 import {Timestamp, blockTimestamp} from "../types/Timestamp.sol";
 import {Version, VersionPart} from "../types/Version.sol";
 
 import {IVersionable} from "./IVersionable.sol";
 
-abstract contract Versionable is IVersionable {
+abstract contract Versionable is Initializable, IVersionable {
 
     mapping(Version version => VersionInfo info) private _versionHistory;
     Version [] private _versions;
@@ -20,12 +22,15 @@ abstract contract Versionable is IVersionable {
 
     // IMPORTANT this function needs to be implemented by each new version
     // and needs to call internal function call _activate() 
-    function activate(address implementation, address activatedBy)
+    function initialize(address implementation, address activatedBy, bytes memory initializationData)
         external
-        virtual override
+        virtual
     { 
         _activate(implementation, activatedBy);
     }
+    // TODO mock, delete when implementations are ready
+    function activate(address implementation, address activatedBy, bytes memory activatinData) public {}
+    function upgrade(address implementation, address activatedBy, bytes memory upgradeData) external {}
 
 
     // can only be called once per contract
@@ -38,7 +43,7 @@ abstract contract Versionable is IVersionable {
     {
         Version thisVersion = getVersion();
         require(
-            !isActivated(thisVersion),
+            !isInitialized(thisVersion),
             "ERROR:VRN-001:VERSION_ALREADY_ACTIVATED"
         );
         
@@ -61,11 +66,11 @@ abstract contract Versionable is IVersionable {
             blockNumber()
         );
 
-        emit LogVersionableActivated(thisVersion, implementation, activatedBy);
+        emit LogVersionableInitialized(thisVersion, implementation, activatedBy);
     }
 
 
-    function isActivated(Version _version) public override view returns(bool) {
+    function isInitialized(Version _version) public override view returns(bool) {
         return _versionHistory[_version].activatedIn.toInt() > 0;
     }
 
@@ -85,5 +90,10 @@ abstract contract Versionable is IVersionable {
 
     function getVersionInfo(Version _version) external override view returns(VersionInfo memory) {
         return _versionHistory[_version];
+    }
+
+    function getInitializedVersion() external view returns(uint64)
+    {
+        return _getInitializedVersion();
     }
 }

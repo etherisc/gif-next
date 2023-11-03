@@ -17,7 +17,8 @@ contract ProxyTest is Test {
         console.log("proxy[address]", address(proxy));
         assertTrue(address(proxy) != address(0), "proxy address zero");
 
-        IVersionable versionable = proxy.deploy(address(new ContractV01()));
+        bytes memory initializationData = abi.encode(uint(42));
+        IVersionable versionable = proxy.deploy(address(new ContractV01()), initializationData);
         // solhint-disable-next-line
         console.log("versionable[address]", address(versionable));
         assertTrue(address(versionable) != address(0), "versionable address zero");
@@ -37,8 +38,10 @@ contract ProxyTest is Test {
     function testProductV01DeployAndUpgrade() public {
 
         Proxy proxy = new Proxy();
-        IVersionable versionable = proxy.deploy(address(new ContractV01()));
-        proxy.upgrade(address(new ContractV02()));
+        bytes memory initializationData = abi.encode(uint(0));
+        bytes memory upgradeData = abi.encode(uint(0));
+        IVersionable versionable = proxy.deploy(address(new ContractV01()), initializationData);
+        proxy.upgrade(address(new ContractV02()), upgradeData);
 
         assertTrue(versionable.getVersion() == VersionLib.toVersion(1,0,1), "version not (1,0,1)");
 
@@ -53,7 +56,8 @@ contract ProxyTest is Test {
         Proxy proxy = new Proxy();
 
         vm.recordLogs();
-        proxy.deploy(address(new ContractV01()));
+        bytes memory initializationData = abi.encode(uint(0));
+        proxy.deploy(address(new ContractV01()), initializationData);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
         // solhint-disable-next-line
