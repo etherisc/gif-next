@@ -286,7 +286,7 @@ contract Pool is BaseComponent, IPoolComponent {
         public
         view
         virtual override 
-        returns (IRegistry_new.ObjectInfo memory, bytes memory data)
+        returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {
         (
             IRegistry_new.ObjectInfo memory info, 
@@ -313,7 +313,7 @@ contract Pool is BaseComponent, IPoolComponent {
         public
         view
         virtual override 
-        returns (IRegistry_new.ObjectInfo memory, bytes memory data)
+        returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {// TODO simplify
         // from Registry
         IRegistry_new.ObjectInfo memory info = getRegistry().getObjectInfo(address(this));//getInfo();

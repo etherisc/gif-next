@@ -271,7 +271,7 @@ contract Product is BaseComponent, IProductComponent {
         public
         view 
         virtual override
-        returns (IRegistry_new.ObjectInfo memory, bytes memory data)
+        returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {
         // from Registry
         (
@@ -305,7 +305,7 @@ contract Product is BaseComponent, IProductComponent {
         public
         view 
         virtual override
-        returns (IRegistry_new.ObjectInfo memory, bytes memory data)
+        returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {
         // from Registry
         IRegistry_new.ObjectInfo memory info = getRegistry().getObjectInfo(address(this));//super.getInfo();
