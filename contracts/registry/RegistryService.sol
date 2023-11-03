@@ -216,7 +216,6 @@ contract RegistryService is
         internal
     {
         // only product's owner with role
-        //require(_registry.ownerOf(nftId) == msg.sender);
         RoleId typeRole = getRoleForType(PRODUCT());
         require(
             instance.hasRole(typeRole, msg.sender),
@@ -241,19 +240,18 @@ contract RegistryService is
         require(poolInfo.objectType == POOL(), "ERROR:COS-016:UNKNOW_POOL"); 
         // pool is on the same instance
         require(poolInfo.parentNftId == instanceNftId, "ERROR:COS-017:POOL_INSTANCE_MISMATCH");
-        // pool have the same token
+        // TODO pool have the same token
         //ITreasury.PoolSetup memory poolSetup = instance.getPoolSetup(info.poolNftId);
         //require(tokenInfo.objectAddress == address(poolSetup.token), "ERROR:COS-018:PRODUCT_POOL_TOKEN_MISMATCH");
-        // TODO pool have the same owner?
-        //require(_registry.ownerOf(poolNftId) == msg.sender, "NOT_POOL_OWNER");
+        // TODO pool is not linked
 
         // distribution is registered
         IRegistry_new.ObjectInfo memory distributionInfo = _registry.getObjectInfo(info.distributionNftId);
         require(distributionInfo.objectType == DISTRIBUTION(), "ERROR:COS-016:UNKNOW_DISTRIBUTION"); 
         // distribution is on the same instance
         require(distributionInfo.parentNftId == instanceNftId, "ERROR:COS-017:DISTRIBUTION_INSTANCE_MISMATCH");
-        // TODO distribution have the same owner?
-        //require(_registry.ownerOf(distributionNftId) == msg.sender, "NOT_DISTRIBUTION_OWNER");
+        // TODO distribution have the same token
+        // TODO distribution is not linked
 
         // component module
         instance.registerComponent(
@@ -302,7 +300,6 @@ contract RegistryService is
     {
 
         // pool's owner with role
-        //require(_registry.ownerOf(nftId) == msg.sender);
         RoleId typeRole = getRoleForType(POOL());
         require(
             instance.hasRole(typeRole, msg.sender),
@@ -312,10 +309,10 @@ contract RegistryService is
         (
             IPool.PoolInfo memory info,
             address wallet,
-            IERC20Metadata token, , ,
-            /*poolFee,
-            stakingFee,
-            performanceFee*/
+            IERC20Metadata token,
+            /*poolFee*/,
+            /*stakingFee*/,
+            /*performanceFee*/
         )  = abi.decode(data, (IPool.PoolInfo, address, IERC20Metadata, Fee, Fee, Fee));
 
         IRegistry_new _registry = getRegistry();
@@ -323,6 +320,7 @@ contract RegistryService is
         // token is registered
         ObjectType tokenType = _registry.getObjectInfo(address(token)).objectType;
         require(tokenType == TOKEN(), "ERROR:COS-020:UNKNOWN_TOKEN");  
+        require(info.collateralizationRate > 0, "COLLATERALIZATION_ZERO");
         // TODO add more validations
 
         // component module
@@ -350,7 +348,7 @@ contract RegistryService is
         (address registry,
         NftId registryNftId) = abi.decode(data, (address, NftId));
 
-        _initializeServiceBase(registry, registryNftId);
+        //_initializeServiceBase(registry, registryNftId);
 
         _registerInterface(type(IRegistryService).interfaceId);
     }

@@ -19,6 +19,8 @@ interface IRegistryService is IService {
     function registerPool(IPoolComponent pool) external returns(NftId nftId);
 
     function registerDistribution(IDistributionComponent distribution) external returns(NftId nftId);
+
+    //function registerService()
     // TODO not here?
     function getRoleForType(ObjectType cType) external pure returns (RoleId role);
 }

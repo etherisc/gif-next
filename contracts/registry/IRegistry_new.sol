@@ -10,7 +10,9 @@ import {IChainNft} from "./IChainNft.sol";
 
 interface IRegistry_new is IERC165 {
 
-    event Approval(NftId indexed nftId, ObjectType objectType, ObjectType parentType);
+    //event Approval(NftId indexed nftId, ObjectType objectType, ObjectType parentType);
+
+    event Approval(NftId indexed nftId, ObjectType objectType);
 
     struct ObjectInfo {
         NftId nftId;
@@ -28,10 +30,15 @@ interface IRegistry_new is IERC165 {
         ObjectInfo memory info
     ) external returns (NftId nftId);
 
-    function approve(
-        NftId registrator,
+    /*function approve(
+        NftId registrar,
         ObjectType object,
         ObjectType parent
+    ) external;*/
+
+    function approve(
+        NftId registrar,
+        ObjectType object
     ) external;
 
     function allowance(

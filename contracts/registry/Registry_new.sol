@@ -26,9 +26,8 @@ contract Registry_new is
     string public constant EMPTY_URI = "";
 
     // TODO do not use gif-next in namespace id
-    // TODO ask openzeppelin about public location
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.registry.Registry.sol")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant REGISTRY_LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
+    bytes32 private constant REGISTRY_LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
 
     // IMPORTANT Every new version with storage changes must implement its own struct
     // copy paste previous version and add changes
@@ -37,9 +36,15 @@ contract Registry_new is
 
         mapping(NftId nftId => ObjectInfo info) _info;
         mapping(address object => NftId nftId) _nftIdByAddress;
+        //mapping(NftId registrator => mapping(
+        //        ObjectType parentType => mapping(
+        //        ObjectType objectType => bool))) _allowed;
+
         mapping(NftId registrator => mapping(
-                ObjectType parentType => mapping(
-                ObjectType objectType => bool))) _allowed;
+                ObjectType parentType => bool)) _allowed;
+
+        mapping(ObjectType objectType => mapping(
+                ObjectType objectParentType => bool)) _isValidParentType;
 
         mapping(NftId nftId => string stringValue) _string;
         mapping(bytes32 serviceNameHash => mapping(
@@ -51,12 +56,10 @@ contract Registry_new is
 
         /// @dev will own protocol nft and registry nft(s) minted during initialize
         address _protocolOwner;
-        // if struct goes here
-        // then you cannot add new vars after
     }
 
     /// @dev allowance for nft accosiated with registered (contract) address 
-    modifier onlyAllowedForRegistrar(ObjectInfo memory info) {
+    /*modifier onlyAllowedForRegistrar(ObjectInfo memory info) {
         RegistryStorageV1 storage $ = _storage();
         NftId registrar = $._nftIdByAddress[msg.sender];
         ObjectType objectType = info.objectType;
@@ -71,7 +74,29 @@ contract Registry_new is
         ObjectType parentType = $._info[info.parentNftId].objectType;
         require($._allowed[$._nftId][objectType][parentType] == true, "ERROR:REG-002:NOT_ALLOWED");
         _;
+    }*/
+
+    /// @dev allowance for nft accosiated with registered (contract) address
+    // assumption: object of type `objectType` can have only one type of parent `parentType`
+    modifier onlyAllowedForRegistrar(ObjectInfo memory info) {
+        RegistryStorageV1 storage $ = _storage();
+        NftId registrar = $._nftIdByAddress[msg.sender];
+        ObjectType objectType = info.objectType;
+        ObjectType parentType = $._info[info.parentNftId].objectType;
+        require($._allowed[registrar][objectType], "ERROR:REG-001:NOT_ALLOWED");
+        require($._isValidParentType[objectType][parentType], "ERROR:REG-006:PARENT_TYPE_INVALID");
+        _;
     }
+    /// @dev alowance for nft accosiated with registry owner
+    modifier onlyAllowedForOwner(ObjectInfo memory info) {
+        RegistryStorageV1 storage $ = _storage();
+        ObjectType objectType = info.objectType;
+        ObjectType parentType = $._info[info.parentNftId].objectType;
+        require($._allowed[$._nftId][objectType], "ERROR:REG-002:NOT_ALLOWED");
+        require($._isValidParentType[objectType][parentType], "ERROR:REG-006:PARENT_TYPE_INVALID");
+        _;
+    }
+
     modifier onlyOwner() {
         require(getOwner() == msg.sender, "ERROR:REG-004:NOT_OWNER");
         _;
@@ -110,15 +135,34 @@ contract Registry_new is
             $._service[serviceNameHash][majorVersion] = info.objectAddress;
         }
     }
+    // 1) if only registry service can register -> no need for registerFrom and approval mechanism here
+    // 2) if other services are allowed to register -> 
+    // allow one service per type
+    /// @dev only registered and approved contract
+    function registerFrom(address from, ObjectInfo memory info)
+        external
+        onlyAllowedForRegistrar(info)
+        returns(NftId nftId)
+    {
+        require(from != msg.sender, "ERROR:REG-008:NOT_ALLOWED"); 
+        require(from > address(0), "ERROR:REG-016:ZERO_ADDRESS");
 
-    function approve(
+        if(info.objectAddress == address(0)) {
+            return _registerObject(from, info);// from is registered storage contract and parent
+        } else {
+            return _registerContract(from, info);// from is contract owner
+        }
+    }
+
+    // approve ObjectType instead of nftId
+    // one service per ObjectType
+    /*function approve(
         NftId nftId,
         ObjectType object,
         ObjectType parent
     ) 
         public
         onlyOwner()
-        //override
     {
         RegistryStorageV1 storage $ = _storage();
 
@@ -141,7 +185,52 @@ contract Registry_new is
         $._allowed[nftId][object][parent] = true;
 
         emit Approval(nftId, object, parent);
+    }*/
+
+    // object type defines parent type
+    function approve(
+        NftId registrarNftId,
+        ObjectType objectType
+    ) 
+        public
+        onlyOwner()
+    {
+        RegistryStorageV1 storage $ = _storage();
+
+        if(registrarNftId != $._nftId) {
+            require(
+                $._info[registrarNftId].objectType == SERVICE(),
+                "ERROR:REG-006:NOT_SERVICE"
+            );
+            address objectAddress = $._info[registrarNftId].objectAddress;
+            require(
+                $._nftIdByAddress[objectAddress].gtz(),
+                "ERROR:REG-007:NOT_REGISTERED"
+            );
+        }
+
+        require(
+            objectType.gtz(),
+            "ERROR:REG-012:ZERO_TYPE"
+        );
+
+        $._allowed[registrarNftId][objectType] = true;
+
+        emit Approval(registrarNftId, objectType);
     }
+
+    /*function allowance(
+        NftId nftId, 
+        ObjectType object, 
+        ObjectType parent
+    ) 
+        external
+        view 
+        returns (bool)
+    {
+        RegistryStorageV1 storage $ = _storage();
+        return $._allowed[nftId][object][parent];
+    }*/
 
     function allowance(
         NftId nftId, 
@@ -153,23 +242,7 @@ contract Registry_new is
         returns (bool)
     {
         RegistryStorageV1 storage $ = _storage();
-        return $._allowed[nftId][object][parent];
-    }
-
-    /// @dev only registered and approved contract
-    function registerFrom(address from, ObjectInfo memory info)
-        external
-        onlyAllowedForRegistrar(info)
-        returns(NftId nftId)
-    {
-        require(from != msg.sender, "ERROR:REG-008:NOT_ALLOWED"); 
-        require(from > address(0), "ERROR:REG-016:ZERO_ADDRESS");
-
-        if(info.objectAddress == address(0)) {
-            return _registerObject(from, info);// from is registered storage contract and parent
-        } else {
-            return _registerContract(from, info);// from is contract owner
-        }
+        return $._allowed[nftId][object];
     }
 
     // from IVersionable
@@ -250,25 +323,6 @@ contract Registry_new is
         return this;
     }
 
-    /*function getInfo() public view override returns (IRegistry_new.ObjectInfo memory info) {
-        RegistryStorageV1 storage $ = _storage();
-        return $._info[$._nftId];
-    }*/
-
-    /*function getInitialInfo() external view override returns (IRegistry_new.ObjectInfo memory) {
-        return getInfo();
-    }*/
-    /*function getInitialInfo() external pure override returns (IRegistry_new.ObjectInfo memory) {
-        return ObjectInfo(
-            zeroNftId(), // nftId
-            zeroNftId(), // parentNftId
-            REGISTRY(),
-            address(0), // objectAddress
-            address(0), // initialOwner
-            ""//data
-        );
-    }*/ 
-
     function getInfo() 
         public 
         view 
@@ -317,6 +371,7 @@ contract Registry_new is
         require(info.objectAddress != owner, "ERROR:REG-003:SELF_REGISTRATION");
 
         require($._nftIdByAddress[info.objectAddress].eqz(), "ERROR:REG-009:ALREADY_REGISTERED");
+        // TODO do we need it here?
         require($._nftIdByAddress[owner].eqz(), "ERROR:REG-010:OWNER_REGISTERED");
 
         uint256 mintedTokenId = $._chainNft.mint(
@@ -412,7 +467,6 @@ contract Registry_new is
         onlyInitializing
         virtual
     {
-
         RegistryStorageV1 storage $ = _storage();
 
         uint256 globalRegistryId = $._chainNftInternal.GLOBAL_REGISTRY_ID();
@@ -428,6 +482,28 @@ contract Registry_new is
             $._protocolOwner,
             "" // data
         );
+    }
+
+    /// @dev defines which types - parent type relations are allowed to register
+    function _setupValidParentTypes() internal {
+        RegistryStorageV1 storage $ = _storage();
+        // registry as parent
+        $._isValidParentType[TOKEN()][REGISTRY()] = true;
+        $._isValidParentType[SERVICE()][REGISTRY()] = true;
+        $._isValidParentType[INSTANCE()][REGISTRY()] = true;
+
+        // instance as parent
+        $._isValidParentType[PRODUCT()][INSTANCE()] = true;
+        $._isValidParentType[DISTRIBUTION()][INSTANCE()] = true;
+        $._isValidParentType[ORACLE()][INSTANCE()] = true;
+        $._isValidParentType[POOL()][INSTANCE()] = true;
+
+        // product as parent
+        $._isValidParentType[POLICY()][PRODUCT()] = true;
+
+        // pool as parent
+        $._isValidParentType[BUNDLE()][POOL()] = true;
+        $._isValidParentType[STAKE()][POOL()] = true;
     }
 
     // TODO check how usage of "$.data" influences gas costs 
@@ -470,6 +546,8 @@ contract Registry_new is
         // initial registry setup
         _registerProtocol();
         $._nftId = _registerRegistry();
+
+        _setupValidParentTypes();
 
         // set default allowance for registry owner
         approve($._nftId, SERVICE(), REGISTRY());
