@@ -5,14 +5,16 @@ import {IRisk} from "../instance/module/risk/IRisk.sol";
 import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId} from "../types/NftId.sol";
+import {NftId, zeroNftId} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
 import {ReferralId} from "../types/ReferralId.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {StateId} from "../types/StateId.sol";
 import {Timestamp} from "../types/Timestamp.sol";
-import {Fee} from "../types/Fee.sol";
+import {Fee, FeeLib} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
+
+import {IRegistry_new} from "../registry/IRegistry_new.sol";
 
 contract Product is BaseComponent, IProductComponent {
     IProductService internal _productService;
@@ -20,6 +22,9 @@ contract Product is BaseComponent, IProductComponent {
     address internal _distribution;
     Fee internal _initialProductFee;
     Fee internal _initialProcessingFee;
+
+    NftId internal _poolNftId;
+    NftId internal _distributionNftId;
 
     constructor(
         address registry,
@@ -29,7 +34,7 @@ contract Product is BaseComponent, IProductComponent {
         address distribution,
         Fee memory productFee,
         Fee memory processingFee
-    ) BaseComponent(registry, instanceNftid, token) {
+    ) BaseComponent(registry, instanceNftid, token, PRODUCT()) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = pool;
@@ -172,11 +177,11 @@ contract Product is BaseComponent, IProductComponent {
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {
-        return _registry.getNftId(_pool);
+        return getRegistry().getNftId(_pool);
     }
 
     function getDistributionNftId() external view override returns (NftId distributionNftId) {
-        return _registry.getNftId(_distribution);
+        return getRegistry().getNftId(_distribution);
     }
 
     // from product component
@@ -220,8 +225,99 @@ contract Product is BaseComponent, IProductComponent {
         }
     }
 
-    // from registerable
-    function getType() public pure override returns (ObjectType) {
-        return PRODUCT();
+    // from IRegisterable
+ 
+    /*function getProductInfo() 
+        public
+        view 
+        returns (IRegistry_new.ObjectInfo memory, ProductComponentInfo memory)//ITreasury.TreasuryInfo memory setup)
+    {
+        IRegistry_new.ObjectInfo memory info = getInfo();
+        ITreasury.TreasuryInfo memory setup = _instance.getTreasuryInfo(info.nftId);
+        
+        return (
+            info,
+            ProductComponentInfo(
+                _wallet,
+                setup.token,
+                setup.poolNftId,
+                setup.distributionNftId,
+                setup.productFee, 
+                setup.processingFee 
+            )
+        );
+    }*/
+
+    /*function getInitialProductInfo() 
+        public
+        view 
+        returns (IRegistry_new.ObjectInfo memory, ProductComponentInfo memory)
+    {
+        return (
+            getInitialInfo(),
+            ProductComponentInfo(
+                _wallet,
+                _token,
+                _poolNftId,
+                _distributionNftId,
+                _initialProductFee,
+                _initialProcessingFee
+            )
+        );
+    }*/
+
+    // TODO used only once, occupies space
+    function getInitialInfo() 
+        public
+        view 
+        virtual override
+        returns (IRegistry_new.ObjectInfo memory, bytes memory data)
+    {
+        // from Registry
+        (
+            IRegistry_new.ObjectInfo memory info, 
+            bytes memory data
+        ) = super.getInitialInfo();
+        // from linked Pool
+        // TODO read pool configurations
+        // 1) from pool directly or 2) from instance ??? -> 2)
+
+        return (
+            info,
+            abi.encode(
+                ITreasury.TreasuryInfo(
+                    _poolNftId,
+                    _distributionNftId,
+                    _token,
+                    _initialProductFee,
+                    _initialProcessingFee,
+                    FeeLib.zeroFee(),//pool.getPoolFee(),
+                    FeeLib.zeroFee(),//pool.getStakingFee(),
+                    FeeLib.zeroFee(),//pool.getPerformanceFee(),
+                    FeeLib.zeroFee()//distribution.getDistributionFee()
+                ),
+                _wallet
+            )
+        );
+    }
+
+    function getInfo() 
+        public
+        view 
+        virtual override
+        returns (IRegistry_new.ObjectInfo memory, bytes memory data)
+    {
+        // from Registry
+        IRegistry_new.ObjectInfo memory info = getRegistry().getObjectInfo(address(this));//super.getInfo();
+        // from TreasuryModule
+        ITreasury.TreasuryInfo memory treasuryModuleInfo = _instance.getTreasuryInfo(info.nftId);
+        
+        return (
+            info,
+            abi.encode(
+                treasuryModuleInfo,
+                _wallet
+            )
+        );
     }
 }

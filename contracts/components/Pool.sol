@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import {ObjectType, POOL} from "../types/ObjectType.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
@@ -9,6 +9,10 @@ import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {BaseComponent} from "./BaseComponent.sol";
+
+import {IRegistry_new} from "../registry/IRegistry_new.sol";
+import {IPool} from "../instance/module/pool/IPoolModule.sol";
+import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
 
 contract Pool is BaseComponent, IPoolComponent {
 
@@ -50,7 +54,7 @@ contract Pool is BaseComponent, IPoolComponent {
         Fee memory stakingFee,
         Fee memory performanceFee
     )
-        BaseComponent(registry, instanceNftId, token)
+        BaseComponent(registry, instanceNftId, token, POOL())
     {
         _isVerifying = verifying;
         // TODO add validation
@@ -228,8 +232,108 @@ contract Pool is BaseComponent, IPoolComponent {
         }
     }
 
-    // from registerable
-    function getType() public pure override returns (ObjectType) {
-        return POOL();
+    // from IRegisterable
+
+    /*function getPoolInfo() 
+        public
+        view 
+        returns (IRegistry_new.ObjectInfo memory, IPoolComponent.PoolComponentInfo memory)
+    {// TODO nftId from 2 different sources
+        // TODO simplify
+        // from Registry
+        IRegistry_new.ObjectInfo memory info = getInfo();
+        NftId poolNftId = info.nftId;
+        // from PoolModule
+        IPool.PoolInfo memory poolModuleInfo = _instance.getPoolInfo(poolNftId);
+        // from TreasuryModule
+        NftId productNftId = _instance.getProductNftId(poolNftId);
+        ITreasury.TreasuryInfo memory setup = _instance.getTreasuryInfo(productNftId);
+
+        return (
+            info,
+            IPoolComponent.PoolComponentInfo(
+                _wallet, //TODO read from instance?
+                _token, // TODO read from instance?
+                poolModuleInfo.isVerifying,
+                poolModuleInfo.collateralizationLevel,
+                setup.poolFee,
+                setup.stakingFee,
+                setup.performanceFee
+            )
+        );
+    }*/
+
+    /*function getInitialPoolInfo() 
+        public
+        view 
+        returns (IRegistry_new.ObjectInfo memory, IPoolComponent.PoolComponentInfo memory)
+    {
+        return (getInitialInfo(),
+                IPoolComponent.PoolComponentInfo(
+                    _wallet,
+                    _token,
+                    _isVerifying,
+                    _collateralizationLevel,
+                    _initialPoolFee,
+                    _initialStakingFee,
+                    _initialPerformanceFee
+                )
+        );
+    }*/
+
+    // TODO used only once, occupies space
+    function getInitialInfo() 
+        public
+        view
+        virtual override 
+        returns (IRegistry_new.ObjectInfo memory, bytes memory data)
+    {
+        (
+            IRegistry_new.ObjectInfo memory info, 
+            bytes memory data
+        ) = super.getInitialInfo();
+
+        return (
+            info,
+            abi.encode(
+                IPool.PoolInfo(
+                    _isVerifying,
+                    _collateralizationLevel
+                ),
+                _wallet,
+                _token,
+                _initialPoolFee,
+                _initialStakingFee,
+                _initialPerformanceFee
+            )
+        );
+    }
+
+    function getInfo() 
+        public
+        view
+        virtual override 
+        returns (IRegistry_new.ObjectInfo memory, bytes memory data)
+    {// TODO simplify
+        // from Registry
+        IRegistry_new.ObjectInfo memory info = getRegistry().getObjectInfo(address(this));//getInfo();
+        NftId poolNftId = info.nftId;
+        // from PoolModule
+        IPool.PoolInfo memory poolModuleInfo = _instance.getPoolInfo(poolNftId);
+        // from TreasuryModule
+        NftId productNftId = _instance.getProductNftId(poolNftId);
+        ITreasury.TreasuryInfo memory treasuryModuleInfo = _instance.getTreasuryInfo(productNftId);
+
+        return (
+            info,
+            abi.encode(
+                poolModuleInfo,
+                _wallet, //TODO read from instance?
+                _token,  //TODO read from instance?
+                treasuryModuleInfo.poolFee,
+                treasuryModuleInfo.stakingFee,
+                treasuryModuleInfo.performanceFee
+            )
+        );
     }
 }

@@ -9,6 +9,7 @@ import {ReferralId} from "../types/ReferralId.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
+import {IRegistry_new} from "../registry/IRegistry_new.sol";
 
 contract Distribution is
     BaseComponent,
@@ -36,7 +37,7 @@ contract Distribution is
         bool verifying,
         Fee memory distributionFee
     )
-        BaseComponent(registry, instanceNftId, token)
+        BaseComponent(registry, instanceNftId, token, DISTRIBUTION())
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
@@ -125,8 +126,59 @@ contract Distribution is
         return _isVerifying;
     }
 
-    // from registerable
-    function getType() public pure override returns (ObjectType) {
-        return DISTRIBUTION();
+    // from IRegisterable
+
+    /*function getDistributionInfo() public view returns(IRegistry_new.ObjectInfo memory, IDistributionComponent.DistributionComponentInfo memory)
+    {
+        return(getInfo(),
+                DistributionComponentInfo(
+                    _initialDistributionFee,
+                    _isVerifying
+                )            
+        );
+    }
+
+    function getInitialDistributionInfo() public view returns(IRegistry_new.ObjectInfo memory, IDistributionComponent.DistributionComponentInfo memory)
+    {
+        return (getInitialInfo(),
+                DistributionComponentInfo(
+                    _initialDistributionFee,
+                    _isVerifying
+                )
+        );
+    }*/
+
+    function getInfo() 
+        public 
+        view
+        virtual 
+        returns(IRegistry_new.ObjectInfo memory, bytes memory)
+    {
+        return(
+            getRegistry().getObjectInfo(address(this)),
+            abi.encode(
+                _initialDistributionFee,
+                _isVerifying   
+            )         
+        );
+    }
+
+    function getInitialInfo() 
+        public 
+        view 
+        returns(IRegistry_new.ObjectInfo memory, bytes memory)
+    {
+        (
+            IRegistry_new.ObjectInfo memory info, 
+            bytes memory data
+        ) = super.getInitialInfo();
+
+        return (
+            info,
+            abi.encode(
+                _initialDistributionFee,
+                _isVerifying
+            )
+        );
     }
 }

@@ -6,7 +6,14 @@ import {ReferralId} from "../types/ReferralId.sol";
 import {NftId} from "../types/NftId.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
 
+import {IRegistry_new} from "../registry/IRegistry_new.sol";
+
 interface IDistributionComponent is IBaseComponent {
+
+    /*struct DistributionComponentInfo {
+        Fee initialDistributionFee;
+        bool isVerifying;
+    }*/
 
     function setFees(
         Fee memory distributionFee
@@ -44,4 +51,8 @@ interface IDistributionComponent is IBaseComponent {
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying);
+
+    //function getDistributionInfo() external view returns (IRegistry_new.ObjectInfo memory, IDistributionComponent.DistributionComponentInfo memory);
+
+    //function getInitialDistributionInfo() external view returns (IRegistry_new.ObjectInfo memory, IDistributionComponent.DistributionComponentInfo memory);
 }
