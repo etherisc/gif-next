@@ -14,6 +14,9 @@ import {IRegistry_new} from "../registry/IRegistry_new.sol";
 import {IPool} from "../instance/module/pool/IPoolModule.sol";
 import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
 
+import {IRegisterable_new} from "../shared/IRegisterable_new.sol";
+import {Registerable_new} from "../shared/Registerable_new.sol";
+
 contract Pool is BaseComponent, IPoolComponent {
 
     bool internal _isVerifying;
@@ -285,7 +288,7 @@ contract Pool is BaseComponent, IPoolComponent {
     function getInitialInfo() 
         public
         view
-        override 
+        override (IRegisterable_new, Registerable_new)
         returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {
         (
@@ -312,7 +315,7 @@ contract Pool is BaseComponent, IPoolComponent {
     function getInfo() 
         public
         view
-        override 
+        override (IRegisterable_new, Registerable_new)
         returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {// TODO simplify
         // from Registry

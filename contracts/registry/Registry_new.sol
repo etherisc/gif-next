@@ -250,15 +250,15 @@ contract Registry_new is
         return this;
     }
 
-    function getInfo() public view override returns (IRegistry_new.ObjectInfo memory info) {
+    /*function getInfo() public view override returns (IRegistry_new.ObjectInfo memory info) {
         RegistryStorageV1 storage $ = _storage();
         return $._info[$._nftId];
-    }
+    }*/
 
     /*function getInitialInfo() external view override returns (IRegistry_new.ObjectInfo memory) {
         return getInfo();
     }*/
-    function getInitialInfo() external pure override returns (IRegistry_new.ObjectInfo memory) {
+    /*function getInitialInfo() external pure override returns (IRegistry_new.ObjectInfo memory) {
         return ObjectInfo(
             zeroNftId(), // nftId
             zeroNftId(), // parentNftId
@@ -267,7 +267,39 @@ contract Registry_new is
             address(0), // initialOwner
             ""//data
         );
-    }   
+    }*/ 
+
+    function getInfo() 
+        public 
+        view 
+        override 
+        returns (IRegistry_new.ObjectInfo memory, bytes memory) 
+    {
+        RegistryStorageV1 storage $ = _storage();
+        return (
+            $._info[$._nftId],
+            bytes("")
+        );
+    }  
+    function getInitialInfo() 
+        external 
+        view 
+        override 
+        returns (IRegistry_new.ObjectInfo memory, bytes memory)
+    {
+        return getInfo();
+        /*return(
+            ObjectInfo(
+                zeroNftId(), // nftId
+                zeroNftId(), // parentNftId
+                REGISTRY(),
+                address(0), // objectAddress
+                address(0), // initialOwner
+                ""//data
+            ),
+            bytes("")
+        );*/
+    }
 
     function getNftId() external view override (IRegisterable_new) returns (NftId) {
         return _storage()._nftId;

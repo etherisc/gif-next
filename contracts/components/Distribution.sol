@@ -10,6 +10,8 @@ import {Fee, FeeLib} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
 import {IRegistry_new} from "../registry/IRegistry_new.sol";
+import {IRegisterable_new} from "../shared/IRegisterable_new.sol";
+import {Registerable_new} from "../shared/Registerable_new.sol";
 
 contract Distribution is
     BaseComponent,
@@ -151,7 +153,7 @@ contract Distribution is
     function getInfo() 
         public 
         view
-        override 
+        override (IRegisterable_new, Registerable_new)
         returns(IRegistry_new.ObjectInfo memory, bytes memory)
     {
         return(
@@ -166,7 +168,7 @@ contract Distribution is
     function getInitialInfo() 
         public 
         view
-        override
+        override (IRegisterable_new, Registerable_new)
         returns(IRegistry_new.ObjectInfo memory, bytes memory)
     {
         (
