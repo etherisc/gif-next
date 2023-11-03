@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-//import {Initializable} from "@openzeppelin5/contracts/proxy/utils/Initializable.sol"; 
+import {Initializable} from "@openzeppelin5/contracts/proxy/utils/Initializable.sol"; 
 
 import {NftId, zeroNftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
@@ -17,8 +17,7 @@ import {ERC165} from "./ERC165.sol";
 abstract contract Registerable_new is
     ERC165, // TODO not v5, not upgradeable 
     IRegisterable_new,
-    //Initializable,
-    Versionable
+    Initializable
 {
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.Registerable.sol")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant REGISTERABLE_LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
@@ -90,7 +89,7 @@ abstract contract Registerable_new is
         return _getRegisterableStorage()._registry.getNftId(address(this));
     }
 
-    function getInfo() public view virtual returns (IRegistry_new.ObjectInfo memory) {
+    /*function getInfo() public view virtual returns (IRegistry_new.ObjectInfo memory) {
         return _getRegisterableStorage()._registry.getObjectInfo(address(this));
     }
 
@@ -103,6 +102,38 @@ abstract contract Registerable_new is
             address(this), 
             $._initialOwner,
             ""
+        );
+    }*/
+
+    function getInfo() 
+        public 
+        view 
+        virtual 
+        returns (IRegistry_new.ObjectInfo memory, bytes memory data) 
+    {
+        return (
+            _getRegisterableStorage()._registry.getObjectInfo(address(this)),
+            bytes("")
+        );
+    }
+
+    function getInitialInfo() 
+        public 
+        view 
+        virtual 
+        returns (IRegistry_new.ObjectInfo memory, bytes memory data) 
+    {
+        RegisterableStorage storage $ = _getRegisterableStorage();
+        return (
+            IRegistry_new.ObjectInfo(
+                zeroNftId(),
+                $._parentNftId,
+                $._objectType,
+                address(this), 
+                $._initialOwner,
+                ""
+            ),
+            bytes("")
         );
     }
 }

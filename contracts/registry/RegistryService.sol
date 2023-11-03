@@ -69,11 +69,16 @@ contract RegistryService is
 
         // TODO check interface 
 
-        (IRegistry_new.ObjectInfo memory info,
-        IProductComponent.ProductComponentInfo memory productInfo) = product.getInitialProductInfo();
+        //(IRegistry_new.ObjectInfo memory info,
+        //IProductComponent.ProductComponentInfo memory productInfo) = product.getInitialProductInfo();
 
-        // TODO read pool and distribution fees then start calls to trusted contracts -> "atomic" procedure
-        // motivation: registry/instance state may change during state transition
+        // IMPORTANT: DO NOT mix calls to untrusted and trusted contracts
+        // motivation: registry/instance state may change during this call
+
+        (
+            IRegistry_new.ObjectInfo memory info, 
+            bytes memory data
+        ) = product.getInitialInfo();// overloading registerable function
 
         IRegistry_new _registry = getRegistry();
 
@@ -92,7 +97,7 @@ contract RegistryService is
             nftId, 
             instanceNftId,
             IInstance(instanceInfo.objectAddress),
-            productInfo
+            data
         );
     }
 
@@ -105,8 +110,13 @@ contract RegistryService is
 
         // TODO check interface      
 
-        (IRegistry_new.ObjectInfo memory info,
-        IPoolComponent.PoolComponentInfo memory poolInfo) = pool.getInitialPoolInfo();
+        //(IRegistry_new.ObjectInfo memory info,
+        //IPoolComponent.PoolComponentInfo memory poolInfo) = pool.getInitialPoolInfo();
+
+        (
+            IRegistry_new.ObjectInfo memory info, 
+            bytes memory data
+        ) = pool.getInitialInfo();// overloading registerable function
 
         IRegistry_new _registry = getRegistry();
 
@@ -125,7 +135,7 @@ contract RegistryService is
             nftId, 
             instanceNftId,
             IInstance(instanceInfo.objectAddress),
-            poolInfo
+            data
         );
     }
 
@@ -138,8 +148,13 @@ contract RegistryService is
 
         // TODO check interface      
 
-        (IRegistry_new.ObjectInfo memory info,
-        IDistributionComponent.DistributionComponentInfo memory distributionInfo) = distribution.getInitialDistributionInfo();
+        //(IRegistry_new.ObjectInfo memory info,
+        //IDistributionComponent.DistributionComponentInfo memory distributionInfo) = distribution.getInitialDistributionInfo();
+
+        (
+            IRegistry_new.ObjectInfo memory info, 
+            bytes memory data
+        ) = distribution.getInitialInfo();// overloading registerable function
 
         IRegistry_new _registry = getRegistry();
 
@@ -156,15 +171,30 @@ contract RegistryService is
         //_registerDistribution();
     }
 
-
+    // IMPORTANT called always: deployment->initialization->registration?
+    // or: deployment->registration->initialization?
+    // TODO initial data used only once, instance may not keep initialization data to save space? or it to dangerous?
+    // like when you deploying an instance you are providing initialization data and this data goes into instance.initialize() and registryService.registryInstance()
+    // or you can call instance.initialize() from here???
     //function registerInstance(IInstance instance) // TODO IInstance brakes the tests 
-    function registerInstance(IRegisterable_new instance) 
+    function registerInstance(IRegisterable_new instance)//, bytes memory data) 
         external 
         returns(NftId nftId) 
     {
         // TODO check interface 
 
-        IRegistry_new.ObjectInfo memory info = instance.getInitialInfo();
+    
+        //IRegistry_new.ObjectInfo memory info = instance.getInitialInfo();
+
+        // scenario
+        //instance = proxy.deploy(instanceImplementation);
+        //instance.initialize(data);// save space instance code space
+        //registryService.registerInstance(instance, data);
+        
+        (
+            IRegistry_new.ObjectInfo memory info, 
+            bytes memory data
+        ) = instance.getInitialInfo();// default registerable function
 
         IRegistry_new _registry = getRegistry();
 
@@ -181,7 +211,7 @@ contract RegistryService is
         NftId nftId, 
         NftId instanceNftId,
         IInstance instance,
-        IProductComponent.ProductComponentInfo memory info
+        bytes memory data
     )
         internal
     {
@@ -191,9 +221,16 @@ contract RegistryService is
         require(
             instance.hasRole(typeRole, msg.sender),
             "ERROR:COS-014:TYPE_ROLE_MISSING"
-        );  
+        ); 
+
+        (
+            ITreasury.TreasuryInfo memory info,
+            address wallet
+        )  = abi.decode(data, (ITreasury.TreasuryInfo, address));
 
         IRegistry_new _registry = getRegistry();
+
+        //require(wallet > 0);
 
         // token is registered -> TODO instance can whitelist tokens too?
         IRegistry_new.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(info.token));
@@ -222,12 +259,13 @@ contract RegistryService is
         instance.registerComponent(
             nftId,
             info.token,
-            info.wallet
+            wallet // TODO move wallet into TreasuryInfo?
         );
         // treasury module
         instance.registerProductSetup(
             nftId, 
-            ITreasury.TreasuryInfo(
+            info
+            /*ITreasury.TreasuryInfo(
                 info.poolNftId,
                 info.distributionNftId,
                 info.token,
@@ -237,9 +275,11 @@ contract RegistryService is
                 FeeLib.zeroFee(),//pool.getStakingFee(),
                 FeeLib.zeroFee(),//pool.getPerformanceFee(),
                 FeeLib.zeroFee()//distribution.getDistributionFee()
-            )
+            )*/
         );
     }
+
+    // From Versionable
 
     function getVersion()
         public 
@@ -256,7 +296,7 @@ contract RegistryService is
         NftId nftId,
         NftId instanceNftId,
         IInstance instance,
-        IPoolComponent.PoolComponentInfo memory info
+        bytes memory data
     )
         internal
     {
@@ -269,31 +309,33 @@ contract RegistryService is
             "ERROR:COS-019:TYPE_ROLE_MISSING"
         );  
 
+        (
+            IPool.PoolInfo memory info,
+            address wallet,
+            IERC20Metadata token, , ,
+            /*poolFee,
+            stakingFee,
+            performanceFee*/
+        )  = abi.decode(data, (IPool.PoolInfo, address, IERC20Metadata, Fee, Fee, Fee));
+
         IRegistry_new _registry = getRegistry();
 
-        // check pool setup and info
-        // token is registered -> TODO instance can personaly whitelist tokens too?
-        address tokenAddress = address(info.token);
-        ObjectType tokenType = _registry.getObjectInfo(tokenAddress).objectType;
+        // token is registered
+        ObjectType tokenType = _registry.getObjectInfo(address(token)).objectType;
         require(tokenType == TOKEN(), "ERROR:COS-020:UNKNOWN_TOKEN");  
         // TODO add more validations
 
         // component module
         instance.registerComponent(
             nftId,
-            info.token,
-            info.wallet
+            token,
+            wallet
         ); 
-        // treasury module
-        //instance.registerPool(nftId, pool.setup);
 
         // pool module
         instance.registerPool(
             nftId, 
-            IPool.PoolInfo(
-                info.isVerifying,
-                info.collateralizationLevel  
-            )  
+            info
         );
     } 
 
@@ -302,7 +344,7 @@ contract RegistryService is
     // top level initializer
     function _initialize(bytes memory data) 
         internal
-        onlyInitializing
+        onlyInitializing // TODO better to use initialier?
         virtual override
     {
         (address registry,
