@@ -285,7 +285,7 @@ contract Pool is BaseComponent, IPoolComponent {
     function getInitialInfo() 
         public
         view
-        virtual override 
+        override 
         returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {
         (
@@ -312,7 +312,7 @@ contract Pool is BaseComponent, IPoolComponent {
     function getInfo() 
         public
         view
-        virtual override 
+        override 
         returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {// TODO simplify
         // from Registry

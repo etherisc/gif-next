@@ -270,7 +270,7 @@ contract Product is BaseComponent, IProductComponent {
     function getInitialInfo() 
         public
         view 
-        virtual override
+        override
         returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {
         // from Registry
@@ -304,7 +304,7 @@ contract Product is BaseComponent, IProductComponent {
     function getInfo() 
         public
         view 
-        virtual override
+        override
         returns (IRegistry_new.ObjectInfo memory, bytes memory)
     {
         // from Registry

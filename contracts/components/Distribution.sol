@@ -151,7 +151,7 @@ contract Distribution is
     function getInfo() 
         public 
         view
-        virtual 
+        override 
         returns(IRegistry_new.ObjectInfo memory, bytes memory)
     {
         return(
@@ -165,7 +165,8 @@ contract Distribution is
 
     function getInitialInfo() 
         public 
-        view 
+        view
+        override
         returns(IRegistry_new.ObjectInfo memory, bytes memory)
     {
         (
