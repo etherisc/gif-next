@@ -26,6 +26,16 @@ abstract contract PoolModule is
     // mapping(NftId poolNftId => PoolInfo info) private _poolInfo;
     mapping(NftId poolNftId => LibNftIdSet.Set bundles) private _bundlesForPool;
 
+
+    // TODO try to keep 1 modifier in 1 place...
+    modifier onlyRegistryService() virtual {
+        require(
+            msg.sender == address(this.getRegistryService()),
+            "ERROR:CMP-001:NOT_REGISTRY_SERVICE"
+        );
+        _;
+    }
+
     modifier poolServiceCallingPool() {
         require(
             msg.sender == address(this.getPoolService()),
@@ -40,17 +50,12 @@ abstract contract PoolModule is
 
     function registerPool(
         NftId nftId, 
-        bool isVerifying,
-        UFixed collateralizationRate
+        PoolInfo memory info
     )
         public
+        onlyRegistryService
         override
     {
-        PoolInfo memory info  = PoolInfo(
-            isVerifying,
-            collateralizationRate
-        );
-
         _create(POOL(), nftId, abi.encode(info));
     }
 

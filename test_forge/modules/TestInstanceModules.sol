@@ -23,9 +23,12 @@ import {IRiskModule} from "../../contracts/instance/module/risk/IRisk.sol";
 import {IPoolModule} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IPolicyModule} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IBundleModule} from "../../contracts/instance/module/bundle/IBundle.sol";
+import {ITreasuryModule} from "../../contracts/instance/module/treasury/ITreasury.sol";
 
 import {IInstanceBase} from "../../contracts/instance/base/IInstanceBase.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
+
+import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {IComponentOwnerService} from "../../contracts/instance/service/IComponentOwnerService.sol";
 import {IDistributionService} from "../../contracts/instance/service/IDistributionService.sol";
 import {IProductService} from "../../contracts/instance/service/IProductService.sol";
@@ -36,8 +39,8 @@ contract TestInstanceModuleAccess  is
     InstanceBase,
     AccessModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         AccessModule()
     // solhint-disable-next-line no-empty-blocks
     {
@@ -48,6 +51,7 @@ contract TestInstanceModuleAccess  is
 
     function hasRole(RoleId role, address member) public view override (AccessModule) returns (bool) { return super.hasRole(role, member); }
 
+    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override returns(IComponentOwnerService service) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override returns(IProductService service) { return _productService; }
@@ -60,8 +64,8 @@ contract TestInstanceModuleBundle  is
     InstanceBase,
     BundleModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         BundleModule()
     // solhint-disable-next-line no-empty-blocks
     {
@@ -70,6 +74,7 @@ contract TestInstanceModuleBundle  is
     function getRegistry() public view override (Registerable) returns (IRegistry registry) { return super.getRegistry(); }
     function getKeyValueStore() public view override (InstanceBase) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
+    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IBundleModule, IInstanceBase) returns(IProductService service) { return _productService; }
@@ -80,14 +85,15 @@ contract TestInstanceModuleComponent  is
     InstanceBase,
     ComponentModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         ComponentModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
     }
 
+    function getRegistryService() external view override (IComponentModule, IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IComponentModule, IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
@@ -98,8 +104,8 @@ contract TestInstanceModulePolicy  is
     InstanceBase,
     PolicyModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         PolicyModule()
     // solhint-disable-next-line no-empty-blocks
     {
@@ -108,6 +114,7 @@ contract TestInstanceModulePolicy  is
 
     function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
 
+    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IPolicyModule, IInstanceBase) returns(IProductService service) { return _productService; }
@@ -118,14 +125,15 @@ contract TestInstanceModulePool  is
     InstanceBase,
     PoolModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         PoolModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
     }
 
+    function getRegistryService() external view override (IInstanceBase, IPoolModule) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
@@ -136,14 +144,15 @@ contract TestInstanceModuleTreasury  is
     InstanceBase,
     TreasuryModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         TreasuryModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
     }
 
+    function getRegistryService() external view override (IInstanceBase, ITreasuryModule) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
@@ -154,14 +163,15 @@ contract TestInstanceModuleDistribution is
     InstanceBase,
     DistributionModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         DistributionModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
     }
 
+    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
@@ -172,14 +182,15 @@ contract TestInstanceModuleRisk is
     InstanceBase,
     RiskModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         RiskModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
     }
 
+    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }

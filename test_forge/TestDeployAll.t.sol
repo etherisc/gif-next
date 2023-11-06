@@ -8,13 +8,13 @@ import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol
 
 contract TestDeployAll is TestGifBase {
     function testDeployAllRegistryCountWithProduct() public {
-        assertEq(registry.getObjectCount(), 12, "getObjectCount not 12");
+        assertEq(registry.getObjectCount(), 14, "getObjectCount not 14");
     }
 
     function testDeployAllInstanceOwner() public {
         NftId nftId = registry.getNftId(address(instance));
         assertEq(
-            registry.getOwner(nftId),
+            registry.ownerOf(nftId),
             instanceOwner,
             "unexpected instance owner"
         );
@@ -27,13 +27,13 @@ contract TestDeployAll is TestGifBase {
             instance.getNftId(),
             "registry and instance nft id differ"
         );
-        assertNftId(nftId, toNftId(73133705), "instance getNftId not 73133705");
+        assertNftId(nftId, toNftId(93133705), "instance getNftId not 93133705");
     }
 
     function testDeployAllProductOwner() public {
         NftId nftId = registry.getNftId(address(product));
         assertEq(
-            registry.getOwner(nftId),
+            registry.ownerOf(nftId),
             productOwner,
             "unexpected product owner"
         );
@@ -57,7 +57,7 @@ contract TestDeployAll is TestGifBase {
             distribution.getNftId(),
             "registry and distribution nft id differ"
         );
-        assertNftId(nftId, toNftId(93133705), "distribution getNftId not 93133705");
+        assertNftId(nftId, toNftId(113133705), "distribution getNftId not 113133705");
     }
 
     function testDeployAllProductNftId() public {
@@ -67,7 +67,7 @@ contract TestDeployAll is TestGifBase {
             product.getNftId(),
             "registry and product nft id differ"
         );
-        assertNftId(nftId, toNftId(103133705), "product getNftId not 103133705");
+        assertNftId(nftId, toNftId(123133705), "product getNftId not 123133705");
     }
 
     function testDeployAllProductPoolDistributionLink() public {
@@ -88,6 +88,6 @@ contract TestDeployAll is TestGifBase {
     function testDeployAllPoolNftId() public {
         NftId nftId = registry.getNftId(address(pool));
         assertNftId(nftId, pool.getNftId(), "registry and pool nft id differ");
-        assertNftId(nftId, toNftId(83133705), "pool getNftId not 83133705");
+        assertNftId(nftId, toNftId(103133705), "pool getNftId not 103133705");
     }
 }

@@ -9,9 +9,9 @@ import {ReferralId} from "../types/ReferralId.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
-import {IRegistry_new} from "../registry/IRegistry_new.sol";
-import {IRegisterable_new} from "../shared/IRegisterable_new.sol";
-import {Registerable_new} from "../shared/Registerable_new.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
+import {Registerable} from "../shared/Registerable.sol";
 
 contract Distribution is
     BaseComponent,
@@ -37,15 +37,18 @@ contract Distribution is
         // TODO refactor into tokenNftId
         address token,
         bool verifying,
-        Fee memory distributionFee
+        Fee memory distributionFee,
+        address initialOwner
     )
-        BaseComponent(registry, instanceNftId, token, DISTRIBUTION())
+        BaseComponent(registry, instanceNftId, token, DISTRIBUTION(), initialOwner)
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 
         _distributionService = _instance.getDistributionService();
         _productService = _instance.getProductService();
+
+        _registerInterface(type(IDistributionComponent).interfaceId);
     }
 
 
@@ -130,49 +133,14 @@ contract Distribution is
 
     // from IRegisterable
 
-    /*function getDistributionInfo() public view returns(IRegistry_new.ObjectInfo memory, IDistributionComponent.DistributionComponentInfo memory)
-    {
-        return(getInfo(),
-                DistributionComponentInfo(
-                    _initialDistributionFee,
-                    _isVerifying
-                )            
-        );
-    }
-
-    function getInitialDistributionInfo() public view returns(IRegistry_new.ObjectInfo memory, IDistributionComponent.DistributionComponentInfo memory)
-    {
-        return (getInitialInfo(),
-                DistributionComponentInfo(
-                    _initialDistributionFee,
-                    _isVerifying
-                )
-        );
-    }*/
-
-    function getInfo() 
-        public 
-        view
-        override (IRegisterable_new, Registerable_new)
-        returns(IRegistry_new.ObjectInfo memory, bytes memory)
-    {
-        return(
-            getRegistry().getObjectInfo(address(this)),
-            abi.encode(
-                _initialDistributionFee,
-                _isVerifying   
-            )         
-        );
-    }
-
     function getInitialInfo() 
         public 
         view
-        override (IRegisterable_new, Registerable_new)
-        returns(IRegistry_new.ObjectInfo memory, bytes memory)
+        override (IRegisterable, Registerable)
+        returns(IRegistry.ObjectInfo memory, bytes memory)
     {
         (
-            IRegistry_new.ObjectInfo memory info, 
+            IRegistry.ObjectInfo memory info, 
             bytes memory data
         ) = super.getInitialInfo();
 

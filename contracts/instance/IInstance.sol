@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin5/contracts/utils/introspection/IERC165.sol";
 
 import {IVersionable} from "../shared/IVersionable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
@@ -20,6 +20,7 @@ import {ITreasuryModule} from "./module/treasury/ITreasury.sol";
 import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 import {IRegistry, IRegistryLinked} from "../registry/IRegistryLinked.sol";
 
+import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IProductService} from "./service/IProductService.sol";
@@ -45,6 +46,8 @@ interface IInstance is
     function getOwner() external view override (IOwnable, IAccessModule) returns(address owner);
 
     function getKeyValueStore() external view override (IInstanceBase) returns (IKeyValueStore keyValueStore);
+
+    function getRegistryService() external view override (IInstanceBase, IComponentModule, ITreasuryModule, IPoolModule) returns(IRegistryService);
     function getComponentOwnerService() external view override (IInstanceBase, IComponentModule) returns(IComponentOwnerService);
     function getDistributionService() external view override returns(IDistributionService);
     function getProductService() external view override (IInstanceBase, IBundleModule, IPolicyModule) returns(IProductService);

@@ -17,9 +17,10 @@ contract TestPool is Pool {
         UFixed collateralizationLevel,
         Fee memory poolFee,
         Fee memory stakingFee,
-        Fee memory performanceFee
+        Fee memory performanceFee,
+        address initialOwner
     )
-        Pool(registry, instanceNftid, token, isVerifying, collateralizationLevel, poolFee, stakingFee, performanceFee)
+        Pool(registry, instanceNftid, token, isVerifying, collateralizationLevel, poolFee, stakingFee, performanceFee, initialOwner)
     // solhint-disable-next-line no-empty-blocks
     {}
 }

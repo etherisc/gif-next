@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
@@ -38,17 +38,18 @@ contract ComponentOwnerService is
     string public constant NAME = "ComponentOwnerService";
 
     modifier onlyRegisteredComponent(IBaseComponent component) {
-        NftId nftId = _registry.getNftId(address(component));
+        NftId nftId = getRegistry().getNftId(address(component));
         require(nftId.gtz(), "ERROR:COS-001:COMPONENT_UNKNOWN");
         _;
     }
 
     constructor(
         address registry,
-        NftId registryNftId
-    ) ServiceBase(registry, registryNftId) // solhint-disable-next-line no-empty-blocks
+        NftId registryNftId,
+        address initialOwner
+    )
     {
-
+        _initializeServiceBase(registry, registryNftId, initialOwner);
     }
 
     function getVersion()
@@ -79,60 +80,6 @@ contract ComponentOwnerService is
         if (cType == ORACLE()) {
             return ORACLE_OWNER_ROLE();
         }
-    }
-
-    function register(
-        IBaseComponent component
-    ) external override returns (NftId nftId) {
-        address initialOwner = component.getOwner();
-        require(
-            msg.sender == address(component),
-            "ERROR:COS-003:NOT_COMPONENT"
-        );
-
-        IInstance instance = component.getInstance();
-        ObjectType objectType = component.getType();
-        RoleId typeRole = getRoleForType(objectType);
-        require(
-            instance.hasRole(typeRole, initialOwner),
-            "ERROR:CMP-004:TYPE_ROLE_MISSING"
-        );
-
-        nftId = _registry.register(address(component));
-        IERC20Metadata token = component.getToken();
-
-        instance.registerComponent(
-            nftId,
-            token,
-            component.getWallet()); 
-
-        // component type specific registration actions
-        if (component.getType() == PRODUCT()) {
-            IProductComponent product = IProductComponent(address(component));
-
-            NftId poolNftId = product.getPoolNftId();
-            require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
-            IPoolComponent pool = IPoolComponent(_registry.getObjectInfo(poolNftId).objectAddress);
-
-            NftId distributionNftId = product.getDistributionNftId();
-            IDistributionComponent distribution = IDistributionComponent(_registry.getObjectInfo(distributionNftId).objectAddress);
-
-            // register with tresury
-            instance.registerProductSetup(
-                product,
-                pool,
-                distribution
-            );
-        } else if (component.getType() == POOL()) {
-            IPoolComponent pool = IPoolComponent(address(component));
-
-            // register with pool
-            instance.registerPool(
-                nftId,
-                pool.isVerifying(),
-                pool.getCollateralizationLevel());
-        }
-        // TODO add compensation
     }
 
     function lock(

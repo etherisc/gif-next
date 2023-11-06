@@ -9,7 +9,7 @@ import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/tr
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
-import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
@@ -25,8 +25,9 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
     constructor(
         address registry,
-        NftId registryNftId
-    ) ComponentServiceBase(registry, registryNftId) // solhint-disable-next-line no-empty-blocks
+        NftId registryNftId,
+        address initialOwner
+    ) ComponentServiceBase(registry, registryNftId, initialOwner)
     {
         _registerInterface(type(IPoolService).interfaceId);
     }
@@ -77,11 +78,17 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
         // register bundle with registry
         NftId poolNftId = info.nftId;
-        bundleNftId = _registry.registerObjectForInstance(
-            poolNftId, 
-            BUNDLE(), 
-            owner,
-            "");
+        bundleNftId = getRegistry().registerFrom(
+            msg.sender, 
+            IRegistry.ObjectInfo(
+                zeroNftId(),
+                poolNftId,
+                BUNDLE(),
+                address(0),
+                owner,
+                ""
+            )
+        );
 
         // create bundle info in instance
         instance.createBundleInfo(
@@ -136,7 +143,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
         if(stakingAmount > 0) {
             NftId productNftId = instance.getProductNftId(poolNftId);
             TokenHandler tokenHandler = instance.getTokenHandler(productNftId);
-            address bundleOwner = _registry.getOwner(bundleNftId);
+            address bundleOwner = getRegistry().ownerOf(bundleNftId);
             address poolWallet = instance.getComponentWallet(poolNftId);
 
             tokenHandler.transfer(

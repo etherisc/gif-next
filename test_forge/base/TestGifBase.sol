@@ -1,12 +1,12 @@
-// SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {ChainNft, IChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
 import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
 import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
@@ -23,14 +23,16 @@ import {USDC} from "../../contracts/test/Usdc.sol";
 
 import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
-import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
-import {POOL, PRODUCT, DISTRIBUTION} from "../../contracts/types/ObjectType.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
+import {REGISTRY, TOKEN, INSTANCE, POOL, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/types/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
+import {Version} from "../../contracts/types/Version.sol";
 
 import {ProxyDeployer} from "../../contracts/shared/Proxy.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
+import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 
 // solhint-disable-next-line max-states-count
 contract TestGifBase is Test {
@@ -41,15 +43,37 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    ProxyDeployer proxy;
-    //ChainNft public chainNft;
+    ProxyDeployer public registryProxyAdmin;
+    Registry public registryImplementation;
+    ChainNft public chainNft;
     Registry public registry;
+
+    ProxyDeployer public registryServiceProxyAdmin;
+    RegistryService public registryServiceImplementation;
+    RegistryService public registryService;
+
     IERC20Metadata public token;
+
+    //ProxyDeployer public componentOwnerServiceProxyAdmin;
+    //ComponentOwnerService public componentOwnerServiceImplementation;
     ComponentOwnerService public componentOwnerService;
+
+    //ProxyDeployer public distributionServiceProxyAdmin;
+    //DistributionService public distributionServiceImplementation;    
     DistributionService public distributionService;
+
+    //ProxyDeployer public productServiceProxyAdmin; 
+    //ProductService public productServiceImplementation;
     ProductService public productService;
+
+    //ProxyDeployer public poolServiceProxyAdmin; 
+    //PoolService public poolServiceImplementation;
     PoolService public poolService;
+
+    //ProxyDeployer public instanceProxyAdmin; 
+    //Instance public instanceImplementation;
     Instance public instance;
+
     IKeyValueStore public keyValueStore;
     TestProduct public product;
     TestPool public pool;
@@ -105,17 +129,17 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
 
-        // deploy registry, nft, and services
+        // deploy registry, nft, services and token
         vm.startPrank(registryOwner);
-        _deployProxyDeployer(); // registryOwner is proxies admin
-        _deployRegistry(registryOwner);
+        _deployRegistry();
+        _deployRegistryService();
         _deployServices();
+        _deployToken();
         vm.stopPrank();
 
         // deploy instance
         vm.startPrank(instanceOwner);
         _deployInstance();
-        _deployToken();
         vm.stopPrank();
 
         // deploy pool
@@ -136,7 +160,7 @@ contract TestGifBase is Test {
         // fund investor
         initialCapitalAmount = initialBundleCapitalization * 10 ** token.decimals();
 
-        vm.prank(instanceOwner);
+        vm.prank(registryOwner);
         token.transfer(investor, initialCapitalAmount);
 
         // approve capital and create bundle
@@ -190,96 +214,180 @@ contract TestGifBase is Test {
         console.log(message, gasDelta);
     }
 
-    function _deployProxyDeployer() internal {
-        proxy = new ProxyDeployer();
-    }
+    function _deployRegistry() internal
+    {
+        registryProxyAdmin = new ProxyDeployer();
+        registryImplementation = new Registry();
 
-    function _deployRegistry(address registryNftOwner) internal {
-        //registry = new Registry();
-        //ChainNft nft = new ChainNft(address(registry));
-        //registry.initialize(address(nft), registryNftOwner);
-
-        bytes memory initializationData = abi.encode(registryNftOwner);
-        IVersionable versionable = proxy.deploy(address(new Registry()), initializationData);
-
+        bytes memory initializationData = abi.encode(registryOwner);
+        IVersionable versionable = registryProxyAdmin.deploy(address(registryImplementation), initializationData);
+        
         registryAddress = address(versionable);
-
         registry = Registry(registryAddress);
         registryNftId = registry.getNftId();
-        IChainNft nft = registry.getChainNft();
+        address chainNftAddress = address(registry.getChainNft());
+        chainNft = ChainNft(chainNftAddress);
 
-        // solhint-disable-next-line
-        console.log("nft deployed at", address(nft));
-        // solhint-disable-next-line
+        /* solhint-disable */
+        console.log("registry implementation deployed at", address(registryImplementation));  
+        console.log("registry proxy admin deployed at", address(registryProxyAdmin));
         console.log("registry deployed at", address(registry));
-        console.log("registry nft is", registryNftId.toInt());
+        console.log("with protocol nft id", chainNft.PROTOCOL_NFT_ID());
+        console.log("with global registry nft id", chainNft.GLOBAL_REGISTRY_ID());
+        console.log("registry nft id", registry.getNftId().toInt());
+        console.log("registry version", registry.getVersion().toInt());
+        /* solhint-enable */
+    }
+
+    function _deployRegistryService() internal
+    {
+        registryServiceProxyAdmin = new ProxyDeployer();
+        registryServiceImplementation = new RegistryService();
+
+        bytes memory initializationData = abi.encode(registry, registryNftId, registryOwner);
+        IVersionable versionable = registryServiceProxyAdmin.deploy(address(registryServiceImplementation), initializationData);
+        address registryServiceAddress = address(versionable);
+
+        registryService = RegistryService(registryServiceAddress); 
+        (IRegistry.ObjectInfo memory info, ) = registryService.getInitialInfo();
+        
+        registry.register(info);
+        registry.approve(registryService.getNftId(), INSTANCE());
+        registry.approve(registryService.getNftId(), PRODUCT());
+        registry.approve(registryService.getNftId(), POOL());
+        registry.approve(registryService.getNftId(), DISTRIBUTION());
+
+        /* solhint-disable */
+        console.log("service name", registryService.NAME());
+        console.log("service implementation deployed at", address(registryServiceImplementation));  
+        console.log("service proxy admin deployed at", address(registryServiceProxyAdmin));
+        console.log("service deployed at", address(registryService));
+        console.log("service nft id", registryService.getNftId().toInt());
+        console.log("service version", registryService.getVersion().toInt());
+        console.log("service allowance is set to INSTANCE, PRODUCT, POOL and DISTRIBUTION");
+        /* solhint-enable */
     }
 
 
-    function _deployServices() internal {
+    function _deployServices() internal 
+    {
         //--- component owner service ---------------------------------//
-        componentOwnerService = new ComponentOwnerService(
-            registryAddress, registryNftId);
-        componentOwnerService.register();
+        /*componentOwnerServiceProxyAdmin = new ProxyDeployer();
+        componentOwnerServiceImplementation = new ComponentOwnerService();
+        bytes memory initializationData = abi.encode(registry, registryNftId, registryOwner);
+        IVersionable versionable = componentOwnerServiceProxyAdmin.deploy(address(componentOwnerServiceImplementation), initializationData);
+        address componentOwnerServiceAddress = address(versionable);
+        
+        componentOwnerService = ComponentOwnerService(componentOwnerServiceAddress);*/
+        componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner);
+        (IRegistry.ObjectInfo memory info, ) = componentOwnerService.getInitialInfo();
 
-        // solhint-disable-next-line
+        registry.register(info);
+
+        /* solhint-disable */
         console.log("service name", componentOwnerService.NAME());
-        // solhint-disable-next-line
+        //console.log("service implementation deployed at", address(componentOwnerServiceImplementation));  
+        //console.log("service proxy admin deployed at", address(componentOwnerServiceProxyAdmin));
+        console.log("service deployed at", address(componentOwnerService));
         console.log("service nft id", componentOwnerService.getNftId().toInt());
-        // solhint-disable-next-line
-        console.log("component owner service deployed at", address(componentOwnerService));
+        //console.log("service version", componentOwnerService.getVersion().toInt());
+        /* solhint-enable */
 
         //--- distribution service ---------------------------------//
-        distributionService = new DistributionService(
-            registryAddress, registryNftId);
-        distributionService.register();
+        /*distributionServiceProxyAdmin = new ProxyDeployer();
+        distributionServiceImplementation = new DistributionService();
+        //initializationData = abi.encode(registry, registryNftId, registryOwner);
+        versionable = distributionServiceProxyAdmin.deploy(address(distributionServiceImplementation), initializationData);
+        address  distributionServiceAddress = address(versionable);
 
-        // solhint-disable-next-line
+        distributionService = DistributionService(distributionServiceAddress);*/
+        distributionService = new DistributionService(registryAddress, registryNftId, registryOwner);
+
+        (info, ) = distributionService.getInitialInfo();
+
+        registry.register(info);
+
+        /* solhint-disable */
         console.log("service name", distributionService.NAME());
-        // solhint-disable-next-line
+        //console.log("service implementation deployed at", address(distributionServiceImplementation));  
+        //console.log("service proxy admin deployed at", address(distributionServiceProxyAdmin));
+        console.log("service deployed at", address(distributionService));
         console.log("service nft id", distributionService.getNftId().toInt());
-        // solhint-disable-next-line
-        console.log("distribution service deployed at", address(distributionService));
+        //console.log("service version", distributionService.getVersion().toInt());
+        /* solhint-enable */
 
         //--- product service ---------------------------------//
-        productService = new ProductService(
-            registryAddress, registryNftId);
-        productService.register();
+        /*productServiceProxyAdmin = new ProxyDeployer();
+        productServiceImplementation = new ProductService();
+        //initializationData = abi.encode(registry, registryNftId, registryOwner);
+        versionable = productServiceProxyAdmin.deploy(address(productServiceImplementation), initializationData);
+        address  productServiceAddress = address(versionable);
 
-        // solhint-disable-next-line
+        productService = ProductService(productServiceAddress);*/
+        productService = new ProductService(registryAddress, registryNftId, registryOwner);
+
+        (info, ) = productService.getInitialInfo();
+        registry.register(info);
+        registry.approve(productService.getNftId(), POLICY());
+
+        /* solhint-disable */
         console.log("service name", productService.NAME());
-        // solhint-disable-next-line
+        //console.log("service implementation deployed at", address(productServiceImplementation));  
+        //console.log("service proxy admin deployed at", address(productServiceProxyAdmin));
+        console.log("service deployed at", address(productService));
         console.log("service nft id", productService.getNftId().toInt());
-        // solhint-disable-next-line
-        console.log("product service deployed at", address(productService));
+        //console.log("service version", productService.getVersion().toInt());
+        console.log("service allowance is set to POLICY");
+        /* solhint-enable */
 
         //--- pool service ---------------------------------//
-        poolService = new PoolService(
-            registryAddress, registryNftId);
-        poolService.register();
+        /*poolServiceProxyAdmin = new ProxyDeployer();
+        poolServiceImplementation = new PoolService();
+        //initializationData = abi.encode(registry, registryNftId, registryOwner);
+        versionable = poolServiceProxyAdmin.deploy(address(poolServiceImplementation), initializationData);
+        address  poolServiceAddress = address(versionable);
 
-        // solhint-disable-next-line
+        poolService = PoolService(poolServiceAddress);*/
+        poolService = new PoolService(registryAddress, registryNftId, registryOwner);
+
+        (info, ) = poolService.getInitialInfo();
+        registry.register(info);
+        registry.approve(poolService.getNftId(), BUNDLE());
+
+        /* solhint-disable */
         console.log("service name", poolService.NAME());
-        // solhint-disable-next-line
+        //console.log("service implementation deployed at", address(poolServiceImplementation));  
+        //console.log("service proxy admin deployed at", address(poolServiceProxyAdmin));
+        console.log("service deployed at", address(poolService));
         console.log("service nft id", poolService.getNftId().toInt());
-        // solhint-disable-next-line
-        console.log("pool service deployed at", address(poolService));
+        //console.log("service version", poolService.getVersion().toInt());
+        console.log("service allowance is set to BUNDLE");
+        /* solhint-enable */
     }
 
 
     function _deployInstance() internal {
-        instance = new Instance(
-            address(registry), 
-            registry.getNftId());
+        /*instanceProxyAdmin = new ProxyDeployer();
+        instanceImplementation = new Instance();
+
+        bytes memory initializationData = abi.encode(registry, registryNftId);
+        IVersionable versionable = instanceProxyAdmin.deploy(address(instanceImplementation), initializationData);
+        address instanceAddress = address(versionable);
+
+        instance = Instance(instanceAddress);*/
+        instance = new Instance(registryAddress, registryNftId, instanceOwner);
 
         keyValueStore = instance.getKeyValueStore();
 
-        // solhint-disable-next-line
-        console.log("instance deployed at", address(instance));
+        registryService.registerInstance(instance);
 
-        NftId nftId = instance.register();
-        // solhint-disable-next-line
-        console.log("instance nft id", nftId.toInt());
+        /* solhint-disable */
+        //console.log("instance implementation deployed at", address(instanceImplementation));  
+        //console.log("instance proxy admin deployed at", address(instanceProxyAdmin));
+        console.log("instance deployed at", address(instance));
+        console.log("instance nft id", instance.getNftId().toInt());
+        //console.log("instance version", instance.getVersion().toInt());
+        /* solhint-enable */
 
         instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
@@ -293,6 +401,18 @@ contract TestGifBase is Test {
         USDC usdc  = new USDC();
         address usdcAddress = address(usdc);
         token = IERC20Metadata(usdcAddress);
+
+        NftId tokenNftId = registry.register(IRegistry.ObjectInfo(
+                zeroNftId(),
+                registry.getNftId(),
+                TOKEN(),
+                usdcAddress,
+                registryOwner,
+                ""
+            )
+        );
+        // solhint-disable-next-line
+        console.log("token NFT id", tokenNftId.toInt());
         // solhint-disable-next-line
         console.log("token deployed at", usdcAddress);
     }
@@ -315,9 +435,10 @@ contract TestGifBase is Test {
             collateralizationLevel,
             initialPoolFee,
             stakingFee,
-            performanceFee);
+            performanceFee,
+            poolOwner);
 
-        pool.register();
+        registryService.registerPool(pool);
 
         uint256 nftId = pool.getNftId().toInt();
         uint256 state = instance.getState(pool.getNftId().toKey32(POOL())).toInt();
@@ -339,9 +460,10 @@ contract TestGifBase is Test {
             instance.getNftId(), 
             address(token),
             isVerifying,
-            initialDistributionFee);
+            initialDistributionFee,
+            distributionOwner);
 
-        distribution.register();
+        registryService.registerDistribution(distribution);
 
         uint256 nftId = distribution.getNftId().toInt();
         uint256 state = instance.getState(distribution.getNftId().toKey32(DISTRIBUTION())).toInt();
@@ -362,9 +484,10 @@ contract TestGifBase is Test {
             address(pool),
             address(distribution),
             initialProductFee,
-            processingFee);
+            processingFee,
+            productOwner);
 
-        product.register();
+        registryService.registerProduct(product);
 
         uint256 nftId = product.getNftId().toInt();
         uint256 state = instance.getState(product.getNftId().toKey32(PRODUCT())).toInt();

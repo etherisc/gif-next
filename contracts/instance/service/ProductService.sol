@@ -21,7 +21,7 @@ import {UFixed, UFixedMathLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol";
 import {APPLIED, UNDERWRITTEN, ACTIVE} from "../../types/StateId.sol";
-import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {ReferralId} from "../../types/ReferralId.sol";
 import {RiskId} from "../../types/RiskId.sol";
@@ -41,8 +41,9 @@ contract ProductService is ComponentServiceBase, IProductService {
 
     constructor(
         address registry,
-        NftId registryNftId
-    ) ComponentServiceBase(registry, registryNftId) // solhint-disable-next-line no-empty-blocks
+        NftId registryNftId,
+        address initialOwner
+    ) ComponentServiceBase(registry, registryNftId, initialOwner)
     {
         _registerInterface(type(IProductService).interfaceId);
     }
@@ -184,7 +185,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         (poolFeeAmount,) = FeeLib.calculateFee(treasuryInfo.poolFee, netPremiumAmount);
         (bundleFeeAmount,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
 
-        IRegistry.ObjectInfo memory distributionInfo = _registry.getObjectInfo(treasuryInfo.distributionNftId);
+        IRegistry.ObjectInfo memory distributionInfo = getRegistry().getObjectInfo(treasuryInfo.distributionNftId);
         IDistributionComponent distribution = IDistributionComponent(distributionInfo.objectAddress);
         distributionFeeAmount = distribution.calculateFeeAmount(referralId, netPremiumAmount);
     }
@@ -202,11 +203,16 @@ contract ProductService is ComponentServiceBase, IProductService {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         // TODO add validations (see create bundle in pool service)
 
-        policyNftId = this.getRegistry().registerObjectForInstance(
-            productInfo.nftId,
-            POLICY(),
-            applicationOwner,
-            ""
+        policyNftId = getRegistry().registerFrom(
+            msg.sender,
+            IRegistry.ObjectInfo(
+                zeroNftId(),
+                productInfo.nftId,
+                POLICY(),
+                address(0),
+                applicationOwner,
+                ""
+            )
         );
 
         (uint256 premiumAmount,,,,) = calculatePremium(
@@ -283,7 +289,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     )
         internal
     {
-        address poolAddress = _registry.getObjectInfo(treasuryInfo.poolNftId).objectAddress;
+        address poolAddress = getRegistry().getObjectInfo(treasuryInfo.poolNftId).objectAddress;
         IPoolComponent pool = IPoolComponent(poolAddress);
         pool.underwrite(
             policyNftId, 
@@ -480,7 +486,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         // process token transfer(s)
         if(premiumAmount > 0) {
             TokenHandler tokenHandler = instance.getTokenHandler(productNftId);
-            address policyOwner = _registry.getOwner(policyNftId);
+            address policyOwner = getRegistry().ownerOf(policyNftId);
             address poolWallet = instance.getComponentWallet(treasuryInfo.poolNftId);
             netPremiumAmount = premiumAmount;
             Fee memory productFee = treasuryInfo.productFee;

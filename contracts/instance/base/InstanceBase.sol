@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import {Versionable} from "../../shared/Versionable.sol";
 import {Registerable} from "../../shared/Registerable.sol";
@@ -10,6 +10,7 @@ import {NftId} from "../../types/NftId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
+import {IRegistryService} from "../../../contracts/registry/IRegistryService.sol";
 import {IComponentOwnerService} from "../service/IComponentOwnerService.sol";
 import {IDistributionService} from "../service/IDistributionService.sol";
 import {IProductService} from "../service/IProductService.sol";
@@ -28,6 +29,7 @@ abstract contract InstanceBase is
 {
     IKeyValueStore internal _keyValueStore;
 
+    IRegistryService internal _registryService;
     IComponentOwnerService internal _componentOwnerService;
     IDistributionService internal _distributionService;
     IProductService internal _productService;
@@ -35,11 +37,12 @@ abstract contract InstanceBase is
 
     constructor(
         address registry,
-        NftId registryNftId
+        NftId registryNftId,
+        address initialOwner
     )
-        Registerable(registry, registryNftId)
         Versionable()
     {
+        _initializeRegisterable(registry, registryNftId, INSTANCE(), initialOwner);
         _keyValueStore = new KeyValueStore();
 
         _registerInterface(type(IInstance).interfaceId);
@@ -67,14 +70,11 @@ abstract contract InstanceBase is
     }
 
     // from registerable
-    function getType() external pure override returns (ObjectType objectType) {
-        return INSTANCE();
-    }
-
 
     // internal / private functions
     function _linkToServicesInRegistry() internal {
         VersionPart majorVersion = getVersion().toMajorPart();
+        _registryService = IRegistryService(_getAndCheck("RegistryService", majorVersion));
         _componentOwnerService = IComponentOwnerService(_getAndCheck("ComponentOwnerService", majorVersion));
         _distributionService = IDistributionService(_getAndCheck("DistributionService", majorVersion));
         _productService = IProductService(_getAndCheck("ProductService", majorVersion));
@@ -82,7 +82,7 @@ abstract contract InstanceBase is
     }
 
     function _getAndCheck(string memory serviceName, VersionPart majorVersion) internal view returns (address serviceAddress) {
-        serviceAddress = _registry.getServiceAddress(serviceName, majorVersion);
+        serviceAddress = getRegistry().getServiceAddress(serviceName, majorVersion);
         require(
             serviceAddress != address(0),
             "ERROR:INS-001:NOT_REGISTERED"

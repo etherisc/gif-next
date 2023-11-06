@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin5/contracts/utils/introspection/IERC165.sol";
 
 import {NftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
@@ -9,6 +9,11 @@ import {VersionPart} from "../types/Version.sol";
 import {IChainNft} from "./IChainNft.sol";
 
 interface IRegistry is IERC165 {
+
+    event Approval(NftId indexed nftId, ObjectType objectType);
+
+    //TODO add more events
+
     struct ObjectInfo {
         NftId nftId;
         NftId parentNftId;
@@ -18,30 +23,41 @@ interface IRegistry is IERC165 {
         bytes data;
     }
 
-    function register(address objectAddress) external returns (NftId nftId);
-
-    function registerObjectForInstance(
-        NftId parentNftid,
-        ObjectType objectType,
-        address initialOwner,
-        bytes memory data
+    function register(ObjectInfo memory info) external returns (NftId nftId);
+    
+    function registerFrom(
+        address from, 
+        ObjectInfo memory info
     ) external returns (NftId nftId);
+
+    function approve(
+        NftId registrar,
+        ObjectType object
+    ) external;
+
+    function allowance(
+        NftId registrator,
+        ObjectType object
+    ) external view returns (bool);
 
     function getObjectCount() external view returns (uint256);
 
-    //function getNftId() external view returns (NftId nftId);
-
+    //nftIdOf
     function getNftId(address objectAddress) external view returns (NftId nftId);
-
-    function getOwner(NftId nftId) external view returns (address ownerAddress);
-
+    // nameOf
     function getName(NftId nftId) external view returns (string memory name);
 
+    function ownerOf(NftId nftId) external view returns (address);
+
+    function ownerOf(address contractAddress) external view returns (address);
+    // infoOf()
     function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory info);
+    // infoOf()
+    function getObjectInfo(address object) external view returns (ObjectInfo memory info);
 
     function isRegistered(NftId nftId) external view returns (bool);
 
-    function isRegistered(address objectAddress) external view returns (bool);
+    function isRegistered(address contractAddress) external view returns (bool);
 
     function getServiceAddress(
         string memory serviceName, 

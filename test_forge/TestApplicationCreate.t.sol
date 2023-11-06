@@ -50,9 +50,9 @@ contract TestApplicationCreate is TestGifBase {
             referralId
         );
 
-        assertNftId(policyNftId, toNftId(123133705), "policy id not 123133705");
+        assertNftId(policyNftId, toNftId(143133705), "policy id not 143133705");
         assertEq(
-            registry.getOwner(policyNftId),
+            registry.ownerOf(policyNftId),
             customer,
             "customer not policy owner"
         );

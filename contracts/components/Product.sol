@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {IRisk} from "../instance/module/risk/IRisk.sol";
 import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
@@ -14,13 +16,16 @@ import {Timestamp} from "../types/Timestamp.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 
-import {IRegistry_new} from "../registry/IRegistry_new.sol";
-import {IRegisterable_new} from "../shared/IRegisterable_new.sol";
-import {Registerable_new} from "../shared/Registerable_new.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
+import {Registerable} from "../shared/Registerable.sol";
+
+import {IPool} from "../instance/module/pool/IPoolModule.sol";
+import {IPoolComponent} from "../components/IPoolComponent.sol";
 
 contract Product is BaseComponent, IProductComponent {
     IProductService internal _productService;
-    address internal _pool;
+    IPoolComponent internal _pool;
     address internal _distribution;
     Fee internal _initialProductFee;
     Fee internal _initialProcessingFee;
@@ -35,14 +40,20 @@ contract Product is BaseComponent, IProductComponent {
         address pool,
         address distribution,
         Fee memory productFee,
-        Fee memory processingFee
-    ) BaseComponent(registry, instanceNftid, token, PRODUCT()) {
+        Fee memory processingFee,
+        address initialOwner
+    ) BaseComponent(registry, instanceNftid, token, PRODUCT(), initialOwner) {
         // TODO add validation
         _productService = _instance.getProductService();
-        _pool = pool;
+        _pool = IPoolComponent(pool);
         _distribution = distribution;
         _initialProductFee = productFee;
-        _initialProcessingFee = processingFee;        
+        _initialProcessingFee = processingFee;  
+
+        _poolNftId = getRegistry().getNftId(address(_pool));
+        _distributionNftId = getRegistry().getNftId(_distribution);
+
+        _registerInterface(type(IProductComponent).interfaceId);      
     }
 
 
@@ -179,7 +190,7 @@ contract Product is BaseComponent, IProductComponent {
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {
-        return getRegistry().getNftId(_pool);
+        return getRegistry().getNftId(address(_pool));
     }
 
     function getDistributionNftId() external view override returns (NftId distributionNftId) {
@@ -198,7 +209,7 @@ contract Product is BaseComponent, IProductComponent {
         _productService.setFees(productFee, processingFee);
     }
 
-
+    // TODO delete, call instance intead
     function getProductFee()
         external
         view
@@ -228,64 +239,46 @@ contract Product is BaseComponent, IProductComponent {
     }
 
     // from IRegisterable
- 
-    /*function getProductInfo() 
-        public
-        view 
-        returns (IRegistry_new.ObjectInfo memory, ProductComponentInfo memory)//ITreasury.TreasuryInfo memory setup)
-    {
-        IRegistry_new.ObjectInfo memory info = getInfo();
-        ITreasury.TreasuryInfo memory setup = _instance.getTreasuryInfo(info.nftId);
-        
-        return (
-            info,
-            ProductComponentInfo(
-                _wallet,
-                setup.token,
-                setup.poolNftId,
-                setup.distributionNftId,
-                setup.productFee, 
-                setup.processingFee 
-            )
-        );
-    }*/
-
-    /*function getInitialProductInfo() 
-        public
-        view 
-        returns (IRegistry_new.ObjectInfo memory, ProductComponentInfo memory)
-    {
-        return (
-            getInitialInfo(),
-            ProductComponentInfo(
-                _wallet,
-                _token,
-                _poolNftId,
-                _distributionNftId,
-                _initialProductFee,
-                _initialProcessingFee
-            )
-        );
-    }*/
 
     // TODO used only once, occupies space
     function getInitialInfo() 
         public
         view 
-        override (IRegisterable_new, Registerable_new)
-        returns (IRegistry_new.ObjectInfo memory, bytes memory)
+        override (IRegisterable, Registerable)
+        returns (IRegistry.ObjectInfo memory, bytes memory)
     {
-        // from Registry
+        // from Registerable
         (
-            IRegistry_new.ObjectInfo memory info, 
+            IRegistry.ObjectInfo memory productInfo, 
             bytes memory data
         ) = super.getInitialInfo();
-        // from linked Pool
-        // TODO read pool configurations
-        // 1) from pool directly or 2) from instance ??? -> 2)
+ 
+        // TODO read pool & distribution fees
+        // 1) from pool -> the only option -> pool must be registered first?
+        // 2) from instance -> all fees are set into instance at product registration which is ongoing here
+        // checks are done in registryProduct() where THIS function is called
+        //require(getRegistry().getObjectInfo(_poolNftId).objectType == POOL(), "POOL_NOT_REGISTERED");
+        //require(getRegistry().getObjectInfo(_distributionNftId).objectType == DISTRIBUTION(), "DISTRIBUTION_NOT_REGISTERED");
+        
+        // from PoolComponent
+        (
+            IRegistry.ObjectInfo memory poolInfo, 
+            bytes memory poolData
+        ) = _pool.getInitialInfo();
+
+        (
+            /*IPool.PoolInfo memory info*/,
+            /*address wallet*/,
+            /*IERC20Metadata token*/,
+            Fee memory initialPoolFee,
+            Fee memory initialStakingFee,
+            Fee memory initialPerformanceFee
+        )  = abi.decode(poolData, (IPool.PoolInfo, address, IERC20Metadata, Fee, Fee, Fee));
+
+        // TODO from DistributionComponent
 
         return (
-            info,
+            productInfo,
             abi.encode(
                 ITreasury.TreasuryInfo(
                     _poolNftId,
@@ -293,31 +286,11 @@ contract Product is BaseComponent, IProductComponent {
                     _token,
                     _initialProductFee,
                     _initialProcessingFee,
-                    FeeLib.zeroFee(),//pool.getPoolFee(),
-                    FeeLib.zeroFee(),//pool.getStakingFee(),
-                    FeeLib.zeroFee(),//pool.getPerformanceFee(),
-                    FeeLib.zeroFee()//distribution.getDistributionFee()
+                    initialPoolFee,
+                    initialStakingFee,
+                    initialPerformanceFee,
+                    FeeLib.zeroFee()//_instance.getDistributionFee(_distributionNftId)
                 ),
-                _wallet
-            )
-        );
-    }
-
-    function getInfo() 
-        public
-        view 
-        override (IRegisterable_new, Registerable_new)
-        returns (IRegistry_new.ObjectInfo memory, bytes memory)
-    {
-        // from Registry
-        IRegistry_new.ObjectInfo memory info = getRegistry().getObjectInfo(address(this));//super.getInfo();
-        // from TreasuryModule
-        ITreasury.TreasuryInfo memory treasuryModuleInfo = _instance.getTreasuryInfo(info.nftId);
-        
-        return (
-            info,
-            abi.encode(
-                treasuryModuleInfo,
                 _wallet
             )
         );

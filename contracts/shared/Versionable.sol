@@ -30,10 +30,10 @@ abstract contract Versionable is
     constructor() {
         _disableInitializers();
     }
-
+    // TODO write test where new version of private _updateVersionHistory is added and used... 
     function initialize(
         address implementation,
-        address activatedBy, // TODO can it be a msg.sender ? 
+        address activatedBy,
         bytes memory data
     )
         public
@@ -87,7 +87,9 @@ abstract contract Versionable is
         internal
         onlyInitializing
         virtual 
-    {}
+    {
+        revert();
+    }
 
 
     // IMPORTANT each version except version "1" must implement this function 

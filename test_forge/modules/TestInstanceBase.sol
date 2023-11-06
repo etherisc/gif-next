@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {NftId} from "../../contracts/types/NftId.sol";
 import {InstanceBase} from "../../contracts/instance/base/InstanceBase.sol";
 
+import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {IComponentOwnerService} from "../../contracts/instance/service/IComponentOwnerService.sol";
 import {IDistributionService} from "../../contracts/instance/service/IDistributionService.sol";
 import {IProductService} from "../../contracts/instance/service/IProductService.sol";
@@ -14,13 +15,15 @@ contract TestInstanceBase  is
 {
     constructor(
         address registry,
-        NftId registryNftId
+        NftId registryNftId,
+        address initialOwner
     )
-        InstanceBase(registry, registryNftId)
+        InstanceBase(registry, registryNftId, initialOwner)
     // solhint-disable-next-line no-empty-blocks
     {
     }
 
+    function getRegistryService() external view override returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override returns(IComponentOwnerService service) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override returns(IProductService service) { return _productService; }

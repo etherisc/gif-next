@@ -24,8 +24,9 @@ contract DistributionService is
 
     constructor(
         address registry,
-        NftId registryNftId
-    ) ComponentServiceBase(registry, registryNftId) // solhint-disable-next-line no-empty-blocks
+        NftId registryNftId,
+        address initialOwner
+    ) ComponentServiceBase(registry, registryNftId, initialOwner)
     {
         _registerInterface(type(IDistributionService).interfaceId);
     }

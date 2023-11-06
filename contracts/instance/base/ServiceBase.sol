@@ -17,21 +17,15 @@ abstract contract ServiceBase is
     IService
 {
 
-    constructor(
-        address registry,
-        NftId registryNftId
-    )
-        Registerable(registry, registryNftId)
-        Versionable()
-    {
-        _registerInterface(type(IService).interfaceId);
-    }
-
     function getMajorVersion() external view override returns(VersionPart majorVersion) {
         return this.getVersion().toMajorPart();
     }
 
-    function getType() external pure override returns (ObjectType) {
-        return SERVICE();
+    function _initializeServiceBase(address registry, NftId registryNftId, address initialOwner)
+        internal 
+        //onlyInitializing //TODO uncomment when "fully" upgradeable
+    {
+        _initializeRegisterable(registry, registryNftId, SERVICE(), initialOwner);
+        _registerInterface(type(IService).interfaceId);
     }
 }

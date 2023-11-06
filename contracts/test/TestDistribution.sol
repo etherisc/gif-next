@@ -13,9 +13,10 @@ contract TestDistribution is Distribution {
         NftId instanceNftid,
         address token,
         bool isVerifying,
-        Fee memory distributionFee
+        Fee memory distributionFee,
+        address initialOwner
     )
-        Distribution(registry, instanceNftid, token, isVerifying, distributionFee)
+        Distribution(registry, instanceNftid, token, isVerifying, distributionFee, initialOwner)
     // solhint-disable-next-line no-empty-blocks
     {}
 }

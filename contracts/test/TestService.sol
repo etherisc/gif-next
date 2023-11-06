@@ -12,10 +12,11 @@ contract TestService is ServiceBase {
 
     string public constant NAME = "TestService";
 
-    constructor(address registry, NftId registryNftId)
-        ServiceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
     // solhint-disable-next-line no-empty-blocks
-    {}
+    {
+        _initializeServiceBase(registry, registryNftId, initialOwner);
+    }
 
     function getVersion()
         public 

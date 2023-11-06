@@ -1,15 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-//import {IRegisterable} from "../shared/IRegisterable.sol";
-//import {Registerable} from "../shared/Registerable.sol";
-import {IRegisterable_new} from "../shared/IRegisterable_new.sol";
-import {Registerable_new} from "../shared/Registerable_new.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
+import {Registerable} from "../shared/Registerable.sol";
 
-//import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegistry_new} from "../registry/IRegistry_new.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
 import {IInstance} from "../instance/IInstance.sol";
@@ -21,7 +18,7 @@ import {NftId} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
 
 abstract contract BaseComponent is
-    Registerable_new,
+    Registerable,
     IBaseComponent
 {
     IComponentOwnerService internal _componentOwnerService;
@@ -29,7 +26,7 @@ abstract contract BaseComponent is
     address internal _deployer;
     address internal _wallet;
     IERC20Metadata internal _token;
-    IInstance internal _instance; // each component have parentNftId as instance
+    IInstance internal _instance;
     bool internal _isRegistered;
     Fee internal _zeroFee;
 
@@ -37,13 +34,13 @@ abstract contract BaseComponent is
         address registry,
         NftId instanceNftId,
         address token,
-        ObjectType componentType 
+        ObjectType componentType,
+        address initialOwner
     )
-        //Registerable_new(registry, instanceNftId, componentType)
     {
-        _initializeRegisterable(registry, instanceNftId, componentType);
+        _initializeRegisterable(registry, instanceNftId, componentType, initialOwner);
 
-        IRegistry_new.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
+        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
         _instance = IInstance(instanceInfo.objectAddress);
         require(
             _instance.supportsInterface(type(IInstance).interfaceId),
@@ -56,24 +53,6 @@ abstract contract BaseComponent is
         _isRegistered = false;
         _zeroFee = FeeLib.zeroFee();
     }
-
-    // from registerable
-    /*function register() public override(IRegisterable_new, Registerable_new) returns (NftId componentId) {
-
-        IRegistry_new _registry = getRegistry();
-        require(msg.sender == getOwner(), "");
-        require(
-            address(_registry) != address(0),
-            "ERROR:COB-001:REGISTRY_ZERO"
-        );
-        require(
-            _registry.isRegistered(address(_instance)),
-            "ERROR:COB:INSTANCE_NOT_REGISTERED"
-        );
-
-        _isRegistered = true;
-        return _componentOwnerService.register(this);
-    }*/
 
     // from component contract
     function lock() external onlyOwner override {

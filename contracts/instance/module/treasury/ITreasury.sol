@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IDistributionComponent} from "../../../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../../../components/IPoolComponent.sol";
 import {IProductComponent} from "../../../components/IProductComponent.sol";
+import {IRegistryService} from "../../../../contracts/registry/IRegistryService.sol";
 
 import {NftId} from "../../../types/NftId.sol";
 import {UFixed} from "../../../types/UFixed.sol";
@@ -33,9 +34,8 @@ interface ITreasury {
 interface ITreasuryModule is ITreasury {
 
     function registerProductSetup(
-        IProductComponent product,
-        IPoolComponent pool,
-        IDistributionComponent distribution
+        NftId productNftId,
+        TreasuryInfo memory info
     ) external;
 
     function setTreasuryInfo(
@@ -79,4 +79,6 @@ interface ITreasuryModule is ITreasury {
         uint256 a, 
         int8 exp
     ) external pure returns (UFixed);
+
+    function getRegistryService() external view returns(IRegistryService);
 }
