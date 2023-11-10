@@ -91,6 +91,8 @@ contract Registry is
         onlyAllowedForOwner(info)
         returns (NftId nftId)
     {
+        require(info.objectAddress > address(0), "ERROR:REG-003:ZERO_ADDRESS");
+        
         nftId = _registerContract(msg.sender, info);// registry owner is contract owner
 
         // special case services 
@@ -123,7 +125,7 @@ contract Registry is
         onlyAllowedForRegistrar(info)
         returns(NftId nftId)
     {
-        require(from != msg.sender, "ERROR:REG-008:NOT_isAllowed"); 
+        require(from != msg.sender, "ERROR:REG-008:NOT_ALLOWED"); 
         require(from > address(0), "ERROR:REG-016:ZERO_ADDRESS");
 
         if(info.objectAddress == address(0)) {
@@ -176,8 +178,7 @@ contract Registry is
         view 
         returns (bool)
     {
-        RegistryStorageV1 storage $ = _getStorage();
-        return $._isAllowed[nftId][object];
+        return _getStorage()._isAllowed[nftId][object];
     }
 
     // from IRegistry
@@ -262,7 +263,7 @@ contract Registry is
         external 
         view 
         override 
-        returns (IRegistry.ObjectInfo memory, bytes memory)
+        returns (ObjectInfo memory, bytes memory)
     {
         RegistryStorageV1 storage $ = _getStorage();
         return (
@@ -300,19 +301,20 @@ contract Registry is
         $._nftIdByAddress[info.objectAddress] = nftId;
     }
 
-    function _registerObject(address from, ObjectInfo memory info)
+    function _registerObject(address parent, ObjectInfo memory info)
         internal 
         returns(NftId nftId)
     {
         RegistryStorageV1 storage $ = _getStorage();
 
-        require($._nftIdByAddress[from].gtz(), "ERROR:REG-011:FROM_NOT_REGISTERED");
-        require($._nftIdByAddress[from] == info.parentNftId, "ERROR:REG-017:FROM_NOT_PARENT");
+        require($._nftIdByAddress[parent].gtz(), "ERROR:REG-011:PARENT_NOT_REGISTERED");
+        require($._nftIdByAddress[parent] == info.parentNftId, "ERROR:REG-017:NOT_PARENT");
 
         uint256 mintedTokenId = $._chainNft.mint(
             info.initialOwner, // trust  
             EMPTY_URI);
         nftId = toNftId(mintedTokenId);
+
         info.nftId = nftId;
         $._info[nftId] = info;
     }
@@ -353,16 +355,19 @@ contract Registry is
         uint256 registryId = $._chainNftInternal.calculateTokenId(2);
         registryNftId = toNftId(registryId);
 
-        // we're not the global registry
-        if(registryId != $._chainNftInternal.GLOBAL_REGISTRY_ID()) {
+        NftId parentNftId;
+
+        if(registryId != $._chainNftInternal.GLOBAL_REGISTRY_ID()) 
+        {// we're not the global registry
             _registerGlobalRegistry();
+            parentNftId = toNftId($._chainNftInternal.GLOBAL_REGISTRY_ID());
+        }
+        else 
+        {// we are global registry
+            parentNftId = toNftId($._chainNftInternal.PROTOCOL_NFT_ID());
         }
 
         $._chainNftInternal.mint($._protocolOwner, registryId);
-
-        NftId parentNftId = block.chainid == 1 ?
-                            toNftId($._chainNftInternal.PROTOCOL_NFT_ID()) :
-                            toNftId($._chainNftInternal.GLOBAL_REGISTRY_ID());
 
         $._info[registryNftId] = ObjectInfo(
             registryNftId,
