@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {ERC721, ERC721Enumerable} from "@openzeppelin5/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {IChainNft} from "./IChainNft.sol";
 
 contract ChainNft is ERC721Enumerable, IChainNft {
@@ -68,7 +68,7 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     }
 
     function burn(uint256 tokenId) external override onlyRegistry {
-        _requireMinted(tokenId);
+        _requireOwned(tokenId);
         _burn(tokenId);
         delete _uri[tokenId];
     }
@@ -79,18 +79,18 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     ) external override onlyRegistry {
         require(bytes(uri).length > 0, "ERROR:CRG-011:URI_EMPTY");
 
-        _requireMinted(tokenId);
+        _requireOwned(tokenId);
         _uri[tokenId] = uri;
     }
 
     function exists(uint256 tokenId) external view override returns (bool) {
-        return _exists(tokenId);
+        return _ownerOf(tokenId) != address(0);
     }
 
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
-        _requireMinted(tokenId);
+        _requireOwned(tokenId);
         return _uri[tokenId];
     }
 
