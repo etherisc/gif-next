@@ -46,7 +46,10 @@ contract RegistryService is
         returns(NftId nftId)
     {
         // self registration is not allowed
-        require(msg.sender != address(product));
+        require(
+            msg.sender != address(product), 
+            "ERROR:RS-001:SELF_REGISTRATION"
+        );
 
         require(
             product.supportsInterface(type(IProductComponent).interfaceId),
@@ -75,7 +78,10 @@ contract RegistryService is
         returns(NftId nftId)
     {
         // self registration is not allowed
-        require(msg.sender != address(pool));
+        require(
+            msg.sender != address(pool),
+            "ERROR:RS-001:SELF_REGISTRATION"
+        );
 
         require(
             pool.supportsInterface(type(IPoolComponent).interfaceId),
@@ -104,7 +110,10 @@ contract RegistryService is
         returns(NftId nftId)
     {
         // self registration not allowed
-        require(msg.sender != address(distribution));
+        require(
+            msg.sender != address(distribution),
+            "ERROR:RS-001:SELF_REGISTRATION"
+        );
 
         require(
             distribution.supportsInterface(type(IDistributionComponent).interfaceId),
@@ -127,6 +136,12 @@ contract RegistryService is
         external 
         returns(NftId nftId) 
     {
+        // self registration not allowed
+        require(
+            msg.sender != address(instance),
+            "ERROR:RS-001:SELF_REGISTRATION"
+        );
+
         require(
             instance.supportsInterface(type(IInstance).interfaceId),
             "ERROR:RS-031:NOT_INSTANCE"
@@ -141,7 +156,7 @@ contract RegistryService is
         
         // instance after registration
         // TODO tell instance about its nftId 
-        // TODO tell every registerable about its parantNftId
+        // TODO tell every registerable about its parentNftId -> but it knows about it...
     }
 
     function getRoleForType(
@@ -168,7 +183,7 @@ contract RegistryService is
     function getVersion()
         public 
         pure 
-        virtual override (IVersionable, Versionable)
+        virtual override (IVersionable, ServiceBase)
         returns(Version)
     {
         return VersionLib.toVersion(3,0,0);
@@ -177,14 +192,13 @@ contract RegistryService is
     // from Versionable
 
     // top level initializer
-    function _initialize(bytes memory data) 
+    function _initialize(address initialOwner, bytes memory data) 
         internal
         onlyInitializing // TODO better to use initialier?
         virtual override
     {
         (address registry,
-        NftId registryNftId,
-        address initialOwner) = abi.decode(data, (address, NftId, address));
+        NftId registryNftId) = abi.decode(data, (address, NftId));
 
         _initializeServiceBase(registry, registryNftId, initialOwner);
 
@@ -263,6 +277,7 @@ contract RegistryService is
             info.token,
             wallet // TODO move wallet into TreasuryInfo?
         );
+
         // treasury module
         instance.registerProductSetup(
             nftId, 
