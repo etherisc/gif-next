@@ -18,6 +18,8 @@ import {Version} from "../types/Version.sol";
 // 8) since now inheritance is used for upgradability, contract MUST BE inherited ONLY by the next version 
 // Upgradeable contract SHOULD:
 // 9) define all non private methods as virtual (in order to be able to upgrade them latter)
+//    otherwise, it is still possible to upgrade contract, but everyone who is using it will have to switch to a new fucntions
+//    in some cases this ok but not in the others...
 //
 // IMPORTANT
 // Each version MUST:

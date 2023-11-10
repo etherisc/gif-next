@@ -446,12 +446,11 @@ contract Registry is
     // thus msg.sender is proxy deployer, NOT protocolOwner 
     // The protocol owner will get ownership of the
     // protocol nft and the global registry nft (both minted here) 
-    function _initialize(bytes memory data)
+    function _initialize(address protocolOwner, bytes memory data)
         internal
         onlyInitializing
         virtual override
     {
-        address protocolOwner = abi.decode(data, (address));
         RegistryStorageV1 storage $ = _getStorage();
 
         require(

@@ -219,7 +219,7 @@ contract TestGifBase is Test {
         registryProxyAdmin = new ProxyDeployer();
         registryImplementation = new Registry();
 
-        bytes memory initializationData = abi.encode(registryOwner);
+        bytes memory initializationData = bytes("");
         IVersionable versionable = registryProxyAdmin.deploy(address(registryImplementation), initializationData);
         
         registryAddress = address(versionable);
@@ -244,7 +244,7 @@ contract TestGifBase is Test {
         registryServiceProxyAdmin = new ProxyDeployer();
         registryServiceImplementation = new RegistryService();
 
-        bytes memory initializationData = abi.encode(registry, registryNftId, registryOwner);
+        bytes memory initializationData = abi.encode(registry, registryNftId);
         IVersionable versionable = registryServiceProxyAdmin.deploy(address(registryServiceImplementation), initializationData);
         address registryServiceAddress = address(versionable);
 

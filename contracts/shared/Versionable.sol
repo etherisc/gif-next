@@ -40,7 +40,7 @@ abstract contract Versionable is
         initializer
     {
         _updateVersionHistory(implementation, activatedBy);
-        _initialize(data);
+        _initialize(activatedBy, data);
     }
 
 
@@ -83,7 +83,7 @@ abstract contract Versionable is
     // IMPORTANT each version must implement this function 
     // each implementation MUST use onlyInitialising modifier
     // each implementation MUST call intializers of all base contracts...
-    function _initialize(bytes memory data) 
+    function _initialize(address owner, bytes memory data) 
         internal
         onlyInitializing
         virtual 
