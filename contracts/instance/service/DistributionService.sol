@@ -31,14 +31,6 @@ contract DistributionService is
         _registerInterface(type(IDistributionService).interfaceId);
     }
 
-    function getVersion()
-        public 
-        pure 
-        virtual override (IVersionable, Versionable)
-        returns(Version)
-    {
-        return VersionLib.toVersion(3,0,0);
-    }
 
     function getName() external pure override returns(string memory name) {
         return NAME;

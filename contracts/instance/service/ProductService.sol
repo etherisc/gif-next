@@ -48,14 +48,6 @@ contract ProductService is ComponentServiceBase, IProductService {
         _registerInterface(type(IProductService).interfaceId);
     }
 
-    function getVersion()
-        public 
-        pure 
-        virtual override (IVersionable, Versionable)
-        returns(Version)
-    {
-        return VersionLib.toVersion(3,0,0);
-    }
 
     function getName() external pure override returns(string memory name) {
         return NAME;

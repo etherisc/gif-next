@@ -7,7 +7,6 @@ import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
 
 interface IPoolComponent is IBaseComponent {
 

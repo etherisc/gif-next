@@ -50,15 +50,7 @@ contract ComponentOwnerService is
     )
     {
         _initializeServiceBase(registry, registryNftId, initialOwner);
-    }
-
-    function getVersion()
-        public 
-        pure 
-        virtual override (IVersionable, Versionable)
-        returns(Version)
-    {
-        return VersionLib.toVersion(3,0,0);
+        _registerInterface(type(IComponentOwnerService).interfaceId);
     }
 
     function getName() external pure override returns(string memory name) {

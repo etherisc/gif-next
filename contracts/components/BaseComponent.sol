@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -27,8 +26,6 @@ abstract contract BaseComponent is
     address internal _wallet;
     IERC20Metadata internal _token;
     IInstance internal _instance;
-    bool internal _isRegistered;
-    Fee internal _zeroFee;
 
     constructor(
         address registry,
@@ -50,8 +47,6 @@ abstract contract BaseComponent is
         _componentOwnerService = _instance.getComponentOwnerService();
         _wallet = address(this);
         _token = IERC20Metadata(token);
-        _isRegistered = false;
-        _zeroFee = FeeLib.zeroFee();
     }
 
     // from component contract

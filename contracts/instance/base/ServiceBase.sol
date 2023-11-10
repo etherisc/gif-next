@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {NftId, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, SERVICE} from "../../types/ObjectType.sol";
-import {Version, VersionPart} from "../../types/Version.sol";
+import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 import {Registerable} from "../../shared/Registerable.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
@@ -19,6 +19,16 @@ abstract contract ServiceBase is
 
     function getMajorVersion() external view override returns(VersionPart majorVersion) {
         return this.getVersion().toMajorPart();
+    }
+
+    // from Versionable
+    function getVersion()
+        public 
+        pure 
+        virtual override (IVersionable, Versionable)
+        returns(Version)
+    {
+        return VersionLib.toVersion(3,0,0);
     }
 
     function _initializeServiceBase(address registry, NftId registryNftId, address initialOwner)

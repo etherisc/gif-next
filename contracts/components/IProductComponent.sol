@@ -9,9 +9,6 @@ import {RiskId} from "../types/RiskId.sol";
 
 import {IBaseComponent} from "./IBaseComponent.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
-import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
-
 interface IProductComponent is IBaseComponent {
 
     function setFees(
