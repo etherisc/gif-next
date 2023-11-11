@@ -518,7 +518,7 @@ contract RegistryTest is Test {
     // TODO add vm.expectEmit() with events
     function _approve_all_types(NftId nftId, bool expectRevert) internal
     {
-        _assert_allowance_all_types(nftId, PROTOCOL(), false); // expectTrue
+        _assert_allowance_all_types(nftId, PROTOCOL(), false); // assertTrue
         _assert_allowance_all_types(nftId, REGISTRY(), false);
         _assert_allowance_all_types(nftId, SERVICE(), false);
         _assert_allowance_all_types(nftId, TOKEN(), false);
@@ -604,7 +604,7 @@ contract RegistryTest is Test {
             //emit Registry.Approval(nftId, SERVICE());// TODO make public or what???
             registry.approve(nftId, SERVICE(), REGISTRY());
 
-            _assert_allowance_all_types(nftId, PROTOCOL(), false); // expectTrue
+            _assert_allowance_all_types(nftId, PROTOCOL(), false); // assertTrue
             _assert_allowance_all_types(nftId, REGISTRY(), false);
             _assert_allowance_all_types(nftId, SERVICE(), REGISTRY());
             _assert_allowance_all_types(nftId, TOKEN(), false);
@@ -643,7 +643,7 @@ contract RegistryTest is Test {
         } else {
             registry.approve(nftId, TOKEN(), REGISTRY());
 
-            _assert_allowance_all_types(nftId, PROTOCOL(), false); // expectTrue
+            _assert_allowance_all_types(nftId, PROTOCOL(), false); // assertTrue
             _assert_allowance_all_types(nftId, REGISTRY(), false);
             _assert_allowance_all_types(nftId, SERVICE(), REGISTRY());
             _assert_allowance_all_types(nftId, TOKEN(), REGISTRY());
@@ -682,7 +682,7 @@ contract RegistryTest is Test {
         } else {
             registry.approve(nftId, INSTANCE(), REGISTRY());
 
-            _assert_allowance_all_types(nftId, PROTOCOL(), false); // expectTrue
+            _assert_allowance_all_types(nftId, PROTOCOL(), false); // assertTrue
             _assert_allowance_all_types(nftId, REGISTRY(), false);
             _assert_allowance_all_types(nftId, SERVICE(), REGISTRY());
             _assert_allowance_all_types(nftId, TOKEN(), REGISTRY());
@@ -721,7 +721,7 @@ contract RegistryTest is Test {
         } else {
             registry.approve(nftId, PRODUCT(), INSTANCE());
 
-            _assert_allowance_all_types(nftId, PROTOCOL(), false); // expectTrue
+            _assert_allowance_all_types(nftId, PROTOCOL(), false); // assertTrue
             _assert_allowance_all_types(nftId, REGISTRY(), false);
             _assert_allowance_all_types(nftId, SERVICE(), REGISTRY());
             _assert_allowance_all_types(nftId, TOKEN(), REGISTRY());
@@ -760,7 +760,7 @@ contract RegistryTest is Test {
         } else {
             registry.approve(nftId, POOL(), INSTANCE());
 
-            _assert_allowance_all_types(nftId, PROTOCOL(), false); // expectTrue
+            _assert_allowance_all_types(nftId, PROTOCOL(), false); // assertTrue
             _assert_allowance_all_types(nftId, REGISTRY(), false);
             _assert_allowance_all_types(nftId, SERVICE(), REGISTRY());
             _assert_allowance_all_types(nftId, TOKEN(), REGISTRY());
@@ -799,7 +799,7 @@ contract RegistryTest is Test {
         } else {
             registry.approve(nftId, DISTRIBUTION(), INSTANCE());
 
-            _assert_allowance_all_types(nftId, PROTOCOL(), false); // expectTrue
+            _assert_allowance_all_types(nftId, PROTOCOL(), false); // assertTrue
             _assert_allowance_all_types(nftId, REGISTRY(), false);
             _assert_allowance_all_types(nftId, SERVICE(), REGISTRY());
             _assert_allowance_all_types(nftId, TOKEN(), REGISTRY());
@@ -838,7 +838,7 @@ contract RegistryTest is Test {
         } else {
             registry.approve(nftId, POLICY(), PRODUCT());
 
-            _assert_allowance_all_types(nftId, PROTOCOL(), false); // expectTrue
+            _assert_allowance_all_types(nftId, PROTOCOL(), false); // assertTrue
             _assert_allowance_all_types(nftId, REGISTRY(), false);
             _assert_allowance_all_types(nftId, SERVICE(), REGISTRY());
             _assert_allowance_all_types(nftId, TOKEN(), REGISTRY());
@@ -877,7 +877,7 @@ contract RegistryTest is Test {
         } else {
             registry.approve(nftId, BUNDLE(), POOL());
 
-            _assert_allowance_all_types(nftId, PROTOCOL(), false); // expectTrue
+            _assert_allowance_all_types(nftId, PROTOCOL(), false); // assertTrue
             _assert_allowance_all_types(nftId, REGISTRY(), false);
             _assert_allowance_all_types(nftId, SERVICE(), REGISTRY());
             _assert_allowance_all_types(nftId, TOKEN(), REGISTRY());
@@ -932,65 +932,11 @@ contract RegistryTest is Test {
         console.log("test approving `%s` (registry nft id) for all types by registry owner:%s", registryNftId.toInt(), serviceAddress);
         _approve_all_types(registryNftId, true); // SELF_APROVAL
 
-        //_register_all_types(registryOwner, false);
-
         console.log("Registering all contract types");
 
-        tokenNftId = registry.register(IRegistry.ObjectInfo(
-            zeroNftId(),
-            registryNftId,
-            TOKEN(),
-            tokenAddress,
-            registryOwner,
-            ""
-        ));
+        _register_all_types(registryOwner, false, false, false);
 
-        serviceNftId = registry.register(IRegistry.ObjectInfo(
-            zeroNftId(),
-            registryNftId,
-            SERVICE(),
-            serviceAddress,
-            registryOwner,
-            ""
-        ));
-
-        instanceNftId = registry.register(IRegistry.ObjectInfo(
-            zeroNftId(),
-            registryNftId,
-            INSTANCE(),
-            instanceAddress,
-            registryOwner,
-            ""
-        ));
-
-        productNftId = registry.register(IRegistry.ObjectInfo(
-            zeroNftId(),
-            instanceNftId,
-            PRODUCT(),
-            productAddress,
-            registryOwner,
-            ""
-        ));
-
-        poolNftId = registry.register(IRegistry.ObjectInfo(
-            zeroNftId(),
-            instanceNftId,
-            POOL(),
-            poolAddress,
-            registryOwner,
-            ""
-        ));
-
-        distributionNftId = registry.register(IRegistry.ObjectInfo(
-            zeroNftId(),
-            instanceNftId,
-            DISTRIBUTION(),
-            distributionAddress,
-            registryOwner,
-            ""
-        ));
-
-        // TODO do not test register here -> use registerFrom() fro BUNDLE and POLICY
+        // TODO use registerFrom() for BUNDLE and POLICY
         /*vm.expectRevert(); //ZERO_ADDRESS
         policyNftId = registry.register(IRegistry.ObjectInfo(
             zeroNftId(),
@@ -1028,5 +974,301 @@ contract RegistryTest is Test {
         //_approve_all_types(policyNftId, true); // registred bundle // NOT_SERVICE
 
         vm.stopPrank();
+    }
+
+    function _register_all_types(address owner, bool useZeroAddress, bool useZeroNftId, bool expectRevert) internal
+    {
+        console.log("test `register all objects types` with parameters:");
+        console.log(" - initial owner:%d", owner);
+        useZeroAddress ? 
+            console.log(" - objects addresses: 0") :
+            console.log(" - objects addresses: default");
+        useZeroNftId ? 
+            console.log(" - objects parentNftId: 0") :
+            console.log(" - objects parentNftId: default");
+
+        // PROTOCOL
+        console.log("registering PROTOCOL type");
+        vm.expectRevert(); // NOT_ALLOWED
+        registry.register(IRegistry.ObjectInfo(
+            zeroNftId(),
+            registryNftId,
+            PROTOCOL(),
+            address(0),
+            owner,
+            ""
+        ));
+        vm.expectRevert(); // NOT_ALLOWED
+        registry.register(IRegistry.ObjectInfo(
+            zeroNftId(),
+            registryNftId,
+            PROTOCOL(),
+            address(123456), 
+            owner,
+            ""
+        ));
+        // TODO add other combintions 
+
+        // REGISTRY
+        console.log("registering REGISTER type");
+        vm.expectRevert(); // NOT_ALLOWED
+        registry.register(IRegistry.ObjectInfo(
+            zeroNftId(),
+            registryNftId,
+            REGISTRY(),
+            address(1234567), 
+            owner,
+            ""
+        ));
+        vm.expectRevert(); // NOT_ALLOWED
+        registry.register(IRegistry.ObjectInfo(
+            zeroNftId(),
+            registryNftId,
+            REGISTRY(),
+            registryAddress, 
+            owner,
+            ""
+        ));
+
+        // SERVICE
+        console.log("registering SERVICE type");
+        assertTrue( eqObjectInfo( registry.getObjectInfo(serviceAddress), zeroObjectInfo() ), "getObjectInfo(serviceAddress) returned non zero info");
+        IRegistry.ObjectInfo memory testInfo = IRegistry.ObjectInfo(
+            zeroNftId(),
+            useZeroNftId ? zeroNftId() : registryNftId,
+            SERVICE(),
+            useZeroAddress ? address(0) : serviceAddress,
+            owner,
+            ""
+        );
+
+        if(expectRevert) {
+            vm.expectRevert();
+            registry.register(testInfo);
+        } else {
+            serviceNftId = registry.register(testInfo);
+            testInfo.nftId = serviceNftId;
+
+            assertTrue( eqObjectInfo( registry.getObjectInfo(serviceAddress), testInfo ), "getObjectInfo(serviceAddress) returned unexpected info" );   
+            assertTrue( eqObjectInfo( registry.getObjectInfo(serviceNftId), testInfo ), "getObjectInfo(serviceNftId) returned unexpected info" );           
+        }
+
+        // TOKEN
+        console.log("registering TOKEN type");
+        assertTrue( eqObjectInfo( registry.getObjectInfo(tokenAddress), zeroObjectInfo() ), "getObjectInfo(tokenAddress) returned non zero info" );
+        testInfo = IRegistry.ObjectInfo(
+            zeroNftId(),
+            useZeroNftId ? zeroNftId() : registryNftId,
+            TOKEN(),
+            useZeroAddress ? address(0) : tokenAddress,
+            owner,
+            ""
+        );
+
+        if(expectRevert) {
+            vm.expectRevert();
+            registry.register(testInfo);
+        } else {
+            tokenNftId = registry.register(testInfo);
+            testInfo.nftId = tokenNftId;
+
+            assertTrue( eqObjectInfo( registry.getObjectInfo(tokenAddress), testInfo ), "getObjectInfo(tokenAddress) returned unexpected info" ); 
+            assertTrue( eqObjectInfo( registry.getObjectInfo(tokenNftId), testInfo ), "getObjectInfo(tokenNftId) returned unexpected info" );
+        }
+        
+        // INSTANCE
+        console.log("registering INSTANCE type");
+        assertTrue( eqObjectInfo( registry.getObjectInfo(instanceAddress), zeroObjectInfo() ), "getObjectInfo(instanceAddress) returned non zero info" );
+        testInfo = IRegistry.ObjectInfo(
+            zeroNftId(),
+            useZeroNftId ? zeroNftId() : registryNftId,
+            INSTANCE(),
+            useZeroAddress ? address(0) : instanceAddress,
+            owner,
+            ""
+        );
+
+        if(expectRevert) {
+            vm.expectRevert();
+            registry.register(testInfo);
+        } else {
+            instanceNftId = registry.register(testInfo);
+            testInfo.nftId = instanceNftId;
+
+            assertTrue( eqObjectInfo( registry.getObjectInfo(instanceAddress), testInfo ), "getObjectInfo(instanceAddress) returned unexpected info" ); 
+            assertTrue( eqObjectInfo( registry.getObjectInfo(instanceNftId), testInfo ), "getObjectInfo(instanceNftId) returned unexpected info" );
+        }
+
+        // PRODUCT
+        console.log("registering PRODUCT type");
+        assertTrue( eqObjectInfo( registry.getObjectInfo(productAddress), zeroObjectInfo() ), "getObjectInfo(productAddress) returned non zero info" );
+        testInfo = IRegistry.ObjectInfo(
+            zeroNftId(),
+            useZeroNftId ? zeroNftId() : instanceNftId,
+            PRODUCT(),
+            useZeroAddress ? address(0) : productAddress,
+            owner,
+            ""
+        );
+
+        if(expectRevert) {
+            vm.expectRevert();
+            registry.register(testInfo);
+        } else {
+            productNftId = registry.register(testInfo);
+            testInfo.nftId = productNftId;
+
+            assertTrue( eqObjectInfo( registry.getObjectInfo(productAddress), testInfo ), "getObjectInfo(productAddress) returned unexpected info" ); 
+            assertTrue( eqObjectInfo( registry.getObjectInfo(productNftId), testInfo ), "getObjectInfo(productNftId) returned unexpected info" );
+        }
+
+
+        // POOL
+        console.log("registering POOL type");
+        assertTrue( eqObjectInfo( registry.getObjectInfo(poolAddress), zeroObjectInfo() ), "getObjectInfo(poolAddress) returned non zero info" );
+        testInfo = IRegistry.ObjectInfo(
+            zeroNftId(),
+            useZeroNftId ? zeroNftId() : instanceNftId,
+            POOL(),
+            useZeroAddress ? address(0) : poolAddress,
+            owner,
+            ""
+        );
+
+        if(expectRevert) {
+            vm.expectRevert();
+            registry.register(testInfo);
+        } else {
+            poolNftId = registry.register(testInfo);
+            testInfo.nftId = poolNftId;
+
+            assertTrue( eqObjectInfo( registry.getObjectInfo(poolAddress), testInfo ), "getObjectInfo(poolAddress) returned unexpected info" ); 
+            assertTrue( eqObjectInfo( registry.getObjectInfo(poolNftId), testInfo ), "getObjectInfo(poolNftId) returned unexpected info" );
+        }
+
+        // DISTRIBUTION
+        console.log("registering DISTRIBUTION type");
+        assertTrue( eqObjectInfo( registry.getObjectInfo(distributionAddress), zeroObjectInfo() ), "getObjectInfo(distributionAddress) returned non zero info" );
+        testInfo = IRegistry.ObjectInfo(
+            zeroNftId(),
+            useZeroNftId ? zeroNftId() : instanceNftId,
+            DISTRIBUTION(),
+            useZeroAddress ? address(0) : distributionAddress,
+            owner,
+            ""
+        );
+
+        if(expectRevert) {
+            vm.expectRevert();
+            registry.register(testInfo);
+        } else {
+            distributionNftId = registry.register(testInfo);
+            testInfo.nftId = distributionNftId;
+
+            assertTrue( eqObjectInfo( registry.getObjectInfo(distributionAddress), testInfo ), "getObjectInfo(distributionAddress) returned unexpected info" ); 
+            assertTrue( eqObjectInfo( registry.getObjectInfo(distributionNftId), testInfo ), "getObjectInfo(distributionNftId) returned unexpected info" );
+        }
+
+        // TODO non-zero address object like POLICY, BUNDLE\
+        console.log("registering POLICY type");
+        vm.expectRevert();// ZERRO_ADDRESS
+        policyNftId = registry.register(IRegistry.ObjectInfo(
+            zeroNftId(),
+            productNftId,
+            POLICY(),
+            address(0),
+            registryOwner,
+            ""
+        ));
+
+        console.log("registering BUNDLE type");
+        vm.expectRevert();// ZERRO_ADDRESS
+        bundleNftId = registry.register(IRegistry.ObjectInfo(
+            zeroNftId(),
+            poolNftId,
+            BUNDLE(),
+            address(0),
+            registryOwner,
+            ""
+        ));       
+    }
+
+    function test_register() public
+    {
+        test_RegistryV01Deploy();
+
+        console.log("TEST `register()` FUNCTION");
+
+        bool useZeroAddress = false;
+        bool useZeroNftId = false;
+
+        TestService service = new TestService(address(registry), registryNftId, registryOwner);
+        serviceAddress = address(service);
+
+        assertTrue( eqObjectInfo(registry.getObjectInfo(unknownNftId), zeroObjectInfo()) );
+        assertTrue( eqObjectInfo(registry.getObjectInfo(address(service)), zeroObjectInfo()) );
+
+        console.log("By outsider:%d", outsider);
+        vm.startPrank(outsider);
+
+        vm.stopPrank();
+        
+        console.log("By registry owner:%d", registryOwner);
+        vm.startPrank(registryOwner);
+        
+        //object-parent type OK
+
+        // initialOwner NOK, objectAddress OK, objectParent OK, all types
+        //console.log();
+        useZeroAddress = false;
+        useZeroNftId =  false;
+        _register_all_types(outsider, useZeroAddress, useZeroNftId, true);
+        // initialOwner NOK, objectAddress ZERO, objectParent OK, all types
+        useZeroAddress = true;
+        useZeroNftId =  false;
+        _register_all_types(outsider, useZeroAddress, useZeroNftId, true);
+        // initialOwner NOK, objectAddress OK, objectParent ZERO, all types
+        useZeroAddress = false;
+        useZeroNftId =  true;
+        _register_all_types(outsider, useZeroAddress, useZeroNftId, true);        
+        // initialOwner NOK, objectAddress ZERO, objectParent ZERO, all types
+        useZeroAddress = true;
+        useZeroNftId =  true;
+        _register_all_types(outsider, useZeroAddress, useZeroNftId, true);
+        
+        // initialOwner OK, objectAddress ZERO, objectParent OK, all types
+        useZeroAddress = true;
+        useZeroNftId =  false;
+        _register_all_types(registryOwner, useZeroAddress, useZeroNftId, true);
+        // initialOwner OK, objectAddress OK, objectParent ZERO, all types
+        useZeroAddress = false;
+        useZeroNftId =  true;
+        _register_all_types(registryOwner, useZeroAddress, useZeroNftId, true);
+        // initialOwner OK, objectAddress ZERO, objectParent ZERO, all types
+        useZeroAddress = true;
+        useZeroNftId =  true;
+        _register_all_types(registryOwner, useZeroAddress, useZeroNftId, true);
+        // initialOwner OK, objectAddress OK, objectParent OK, all types
+        useZeroAddress = false;
+        useZeroNftId =  false;
+        _register_all_types(registryOwner, useZeroAddress, useZeroNftId, false);
+
+        // unregistered parentNftId, all types
+        // unknownType
+        // used objectAddress, all types
+        // invalid objectType - parentType pair
+
+        // all contract types
+        // all object types
+
+        vm.stopPrank();
+        /*struct ObjectInfo {
+            NftId nftId;
+            NftId parentNftId; // registered, unregistered, zero, of valid type, of invalid type
+            ObjectType objectType; // zero
+            address objectAddress;// zero, used
+            address initialOwner;// registry owner, not registry owner, zero
+            bytes data;
+        }*/      
     }
 }
