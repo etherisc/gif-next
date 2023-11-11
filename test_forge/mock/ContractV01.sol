@@ -33,7 +33,7 @@ contract ContractV01 is Versionable {
         return "hi from version 1";
     }
 
-    function _initialize(bytes memory data)
+    function _initialize(address owner, bytes memory data)
         internal
         onlyInitializing
         virtual override

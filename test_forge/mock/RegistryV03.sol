@@ -8,8 +8,8 @@ import {ObjectType} from "../../contracts/types/ObjectType.sol";
 import {IChainNft} from "../../contracts/registry/IChainNft.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {RegistryV02} from "./RegistryV02.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
-import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../../contracts/types/ObjectType.sol";
 
 contract RegistryV03 is RegistryV02
 {
@@ -20,11 +20,11 @@ contract RegistryV03 is RegistryV02
     // @custom:storage-location erc7201:gif-next.contracts.registry.Registry.sol
     struct StorageV3 {
         // copy pasted from V1
-        mapping(NftId nftId => ObjectInfo info) _info;
+        mapping(NftId nftId => IRegistry.ObjectInfo info) _info;
         mapping(address object => NftId nftId) _nftIdByAddress;
 
         mapping(NftId registrator => mapping(
-                ObjectType objectType => bool)) _isAllowed;
+                ObjectType objectType => bool)) _isApproved;
 
         mapping(ObjectType objectType => mapping(
                 ObjectType parentType => bool)) _isValidParentType;
@@ -58,12 +58,12 @@ contract RegistryV03 is RegistryV02
         return VersionLib.toVersion(1, 2, 0);
     } 
 
-    function _initialize(bytes memory data)
+    // TODO using functions from version 1...
+    function _initialize(address protocolOwner, bytes memory data)
         internal
         onlyInitializing
         virtual override
     {
-        address protocolOwner = abi.decode(data, (address));
         StorageV3 storage $ = _getStorageV3();
 
         require(
@@ -84,7 +84,7 @@ contract RegistryV03 is RegistryV02
         _setupValidParentTypes();
 
         // set default allowance for registry owner
-        _setupAllowance();
+        //_setupAllowance();
 
         // new addition
         $.dataV3 = type(uint).max;

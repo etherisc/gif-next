@@ -252,10 +252,10 @@ contract TestGifBase is Test {
         (IRegistry.ObjectInfo memory info, ) = registryService.getInitialInfo();
         
         registry.register(info);
-        registry.approve(registryService.getNftId(), INSTANCE());
-        registry.approve(registryService.getNftId(), PRODUCT());
-        registry.approve(registryService.getNftId(), POOL());
-        registry.approve(registryService.getNftId(), DISTRIBUTION());
+        registry.approve(registryService.getNftId(), INSTANCE(), REGISTRY());
+        registry.approve(registryService.getNftId(), PRODUCT(), INSTANCE());
+        registry.approve(registryService.getNftId(), POOL(), INSTANCE());
+        registry.approve(registryService.getNftId(), DISTRIBUTION(), INSTANCE());
 
         /* solhint-disable */
         console.log("service name", registryService.NAME());
@@ -328,7 +328,7 @@ contract TestGifBase is Test {
 
         (info, ) = productService.getInitialInfo();
         registry.register(info);
-        registry.approve(productService.getNftId(), POLICY());
+        registry.approve(productService.getNftId(), POLICY(), PRODUCT());
 
         /* solhint-disable */
         console.log("service name", productService.NAME());
@@ -352,7 +352,7 @@ contract TestGifBase is Test {
 
         (info, ) = poolService.getInitialInfo();
         registry.register(info);
-        registry.approve(poolService.getNftId(), BUNDLE());
+        registry.approve(poolService.getNftId(), BUNDLE(), POOL());
 
         /* solhint-disable */
         console.log("service name", poolService.NAME());

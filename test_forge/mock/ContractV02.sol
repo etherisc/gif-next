@@ -27,7 +27,7 @@ contract ContractV02 is ContractV01 {
         return "hi from version 2";
     }
 
-    function _initialize(bytes memory data)
+    function _initialize(address owner, bytes memory data)
         internal
         onlyInitializing
         virtual override
