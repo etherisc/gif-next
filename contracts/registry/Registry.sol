@@ -42,7 +42,7 @@ contract Registry is
         mapping(address object => NftId nftId) _nftIdByAddress;
 
         mapping(NftId registrator => mapping(
-                ObjectType objectType => bool)) _isAllowed;
+                ObjectType objectType => bool)) _isApproved;
 
         mapping(ObjectType objectType => mapping(
                 ObjectType parentType => bool)) _isValidParentType;
@@ -65,16 +65,14 @@ contract Registry is
         NftId registrar = $._nftIdByAddress[msg.sender];
         ObjectType objectType = info.objectType;
         ObjectType parentType = $._info[info.parentNftId].objectType;
-        require($._isAllowed[registrar][objectType], "ERROR:REG-001:NOT_ALLOWED");
-        require($._isValidParentType[objectType][parentType], "ERROR:REG-006:PARENT_TYPE_INVALID");
+        require(allowance(registrar, objectType, parentType), "ERROR:REG-001:NOT_APPROVED");
         _;
     }
-    /// @dev alowance for nft accosiated with registry owner
+    /// @dev allowance for nft accosiated with registry owner
     modifier onlyAllowedForOwner(ObjectInfo memory info) {
         RegistryStorageV1 storage $ = _getStorage();
         ObjectType objectType = info.objectType;
         ObjectType parentType = $._info[info.parentNftId].objectType;
-        require($._isAllowed[$._nftId][objectType], "ERROR:REG-002:NOT_ALLOWED");
         require($._isValidParentType[objectType][parentType], "ERROR:REG-006:PARENT_TYPE_INVALID");
         _;
     }
@@ -84,7 +82,8 @@ contract Registry is
         _;
     }
 
-    /// @dev owner registers contracts only
+    /// @dev owner registers contracts only -> object address is never 0
+    // owner registers any combination from _isValidParentType[][]
     function register(ObjectInfo memory info) 
         public
         onlyOwner() 
@@ -125,7 +124,7 @@ contract Registry is
         onlyAllowedForRegistrar(info)
         returns(NftId nftId)
     {
-        require(from != msg.sender, "ERROR:REG-008:NOT_ALLOWED"); 
+        require(from != msg.sender, "ERROR:REG-008:FROM_IS_SENDER"); 
         require(from > address(0), "ERROR:REG-016:ZERO_ADDRESS");
 
         if(info.objectAddress == address(0)) {
@@ -135,50 +134,58 @@ contract Registry is
         }
     }
 
-    // 1) if only registry service can register -> no need for registerFrom() and approval mechanism here
-    // 2) if other services are allowed to register -> need for registerFrom() and approval mechanism here
-    // allow one service per type
-    // object type defines parent type
+    /// @dev owner can approve only registered contract (registrar, service)
+    // owner can approve only combinations specified in _isValidParentType
+    // to approve, owner must provide valid combination 
+    // if contract get approved -> it can registerFrom()
+    // allowance is checked only during registerFrom()
+    // self-approval not allowed
     function approve(
         NftId registrarNftId,
-        ObjectType objectType
+        ObjectType objectType,
+        ObjectType parentType
     ) 
         public
         onlyOwner()
     {
         RegistryStorageV1 storage $ = _getStorage();
 
-        if(registrarNftId != $._nftId) {
-            require(
-                $._info[registrarNftId].objectType == SERVICE(),
-                "ERROR:REG-006:NOT_SERVICE"
-            );
-            address objectAddress = $._info[registrarNftId].objectAddress;
-            require(
-                $._nftIdByAddress[objectAddress].gtz(),
-                "ERROR:REG-007:NOT_REGISTERED"
-            );
-        }
+        require(
+            registrarNftId != $._nftId,
+            "ERROR:REG-005:SELF_ALLOWANCE"); 
+
+        address registrarAddress = $._info[registrarNftId].objectAddress;
+            
+        require(
+            $._nftIdByAddress[registrarAddress].gtz(),
+            "ERROR:REG-007:NOT_REGISTERED");
 
         require(
-            objectType.gtz(),
-            "ERROR:REG-012:ZERO_TYPE"
-        );
+            $._info[registrarNftId].objectType == SERVICE(),
+            "ERROR:REG-006:NOT_SERVICE");
+        // if exists a valid combination -> it will be checked during registerFrom()
+        // assume valid combinations are constants -> can be upgraded
+        require(
+            $._isValidParentType[objectType][parentType],
+            "ERROR:REG-007:OBJECT_PARENT_MISMATCH");
 
-        $._isAllowed[registrarNftId][objectType] = true;
+        $._isApproved[registrarNftId][objectType] = true;
 
         emit Approval(registrarNftId, objectType);
     }
 
     function allowance(
         NftId nftId, 
-        ObjectType object
+        ObjectType object,
+        ObjectType parent
     ) 
-        external
+        public
         view 
         returns (bool)
     {
-        return _getStorage()._isAllowed[nftId][object];
+        RegistryStorageV1 storage $ = _getStorage();
+        return ($._isApproved[nftId][object] &&
+                $._isValidParentType[object][parent]);
     }
 
     // from IRegistry
@@ -406,6 +413,7 @@ contract Registry is
 
     /// @dev defines which object - parent types relations are allowed to register
     // IMPORTANT: each object type MUST have the only parent type
+    // IMPORTANT: DO NOT use "zero type" here
     function _setupValidParentTypes() internal onlyInitializing {
         RegistryStorageV1 storage $ = _getStorage();
         // registry as parent
@@ -427,12 +435,6 @@ contract Registry is
         $._isValidParentType[STAKE()][POOL()] = true;
     }
 
-    /// @dev default allowance for registry owner
-    function _setupAllowance() internal onlyInitializing {
-        RegistryStorageV1 storage $ = _getStorage();
-        $._isAllowed[$._nftId][SERVICE()] = true;
-        $._isAllowed[$._nftId][TOKEN()] = true;
-    }
 
     // TODO check how usage of "$.data" influences gas costs 
     // IMPORTANT Every new version must implement this function
@@ -474,8 +476,5 @@ contract Registry is
 
         // set object parent relations
         _setupValidParentTypes();
-
-        // set default allowance for registry owner
-        _setupAllowance();
     }
 }

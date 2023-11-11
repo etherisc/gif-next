@@ -32,12 +32,14 @@ interface IRegistry is IERC165 {
 
     function approve(
         NftId registrar,
-        ObjectType object
+        ObjectType object,
+        ObjectType parent
     ) external;
 
     function allowance(
-        NftId registrator,
-        ObjectType object
+        NftId registrar,
+        ObjectType object,
+        ObjectType parent
     ) external view returns (bool);
 
     function getObjectCount() external view returns (uint256);
