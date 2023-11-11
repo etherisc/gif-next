@@ -8,6 +8,7 @@ import {ObjectType} from "../../contracts/types/ObjectType.sol";
 import {IChainNft} from "../../contracts/registry/IChainNft.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
 // V02 is used to test upgradeability gas usage/byte code footprint - both MUST BE constant, mostly the same as with V01
 // 1) introduces no changes to storage and code
@@ -24,11 +25,11 @@ contract RegistryV02 is Registry
     // @custom:storage-location erc7201:gif-next.contracts.registry.Registry.sol
     struct StorageV2 {
         // copy pasted from V1
-        mapping(NftId nftId => ObjectInfo info) _info;
+        mapping(NftId nftId => IRegistry.ObjectInfo info) _info;
         mapping(address object => NftId nftId) _nftIdByAddress;
 
         mapping(NftId registrator => mapping(
-                ObjectType objectType => bool)) _isAllowed;
+                ObjectType objectType => bool)) _isApproved;
 
         mapping(ObjectType objectType => mapping(
                 ObjectType parentType => bool)) _isValidParentType;
@@ -53,12 +54,11 @@ contract RegistryV02 is Registry
         return VersionLib.toVersion(1, 1, 0);
     } 
 
-    function _initialize(bytes memory data)
+    function _initialize(address protocolOwner, bytes memory data)
         internal
         onlyInitializing
         virtual override
     {
-        address protocolOwner = abi.decode(data, (address));
         StorageV2 storage $ = _getStorageV2();
 
         require(
@@ -77,9 +77,6 @@ contract RegistryV02 is Registry
 
         // set object parent relations
         _setupValidParentTypes();
-
-        // set default allowance for registry owner
-        _setupAllowance();
     }
 
     function _upgrade(bytes memory data)
