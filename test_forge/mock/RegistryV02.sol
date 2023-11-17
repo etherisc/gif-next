@@ -25,14 +25,16 @@ contract RegistryV02 is Registry
     // @custom:storage-location erc7201:gif-next.contracts.registry.Registry.sol
     struct StorageV2 {
         // copy pasted from V1
-        mapping(NftId nftId => IRegistry.ObjectInfo info) _info;
+        mapping(NftId nftId => ObjectInfo info) _info;
         mapping(address object => NftId nftId) _nftIdByAddress;
 
         mapping(NftId registrator => mapping(
                 ObjectType objectType => bool)) _isApproved;
 
         mapping(ObjectType objectType => mapping(
-                ObjectType parentType => bool)) _isValidParentType;
+                ObjectType parentType => bool)) _isValidCombination;
+
+        mapping(ObjectType objectType => bool) _isContract;
 
         mapping(NftId nftId => string stringValue) _string;
         mapping(bytes32 serviceNameHash => mapping(
@@ -56,7 +58,7 @@ contract RegistryV02 is Registry
 
     function _initialize(address protocolOwner, bytes memory data)
         internal
-        onlyInitializing
+        initializer
         virtual override
     {
         StorageV2 storage $ = _getStorageV2();
@@ -76,7 +78,9 @@ contract RegistryV02 is Registry
         $._nftId = _registerRegistry();
 
         // set object parent relations
-        _setupValidParentTypes();
+        _setupValidObjectParentCombinations();
+
+        _registerInterface(type(IRegistry).interfaceId);
     }
 
     function _upgrade(bytes memory data)

@@ -10,9 +10,11 @@ import {IChainNft} from "./IChainNft.sol";
 
 interface IRegistry is IERC165 {
 
-    event Approval(NftId indexed nftId, ObjectType objectType);
+    event LogObjectRegistered(NftId nftId, NftId parentNftId, ObjectType objectType, address objectAddress, address initialOwner);
 
-    //TODO add more events
+    event LogServiceRegistered(address service, string serviceName, VersionPart majorVersion); 
+
+    event LogApproval(NftId nftId, ObjectType objectType);
 
     struct ObjectInfo {
         NftId nftId;
@@ -38,8 +40,7 @@ interface IRegistry is IERC165 {
 
     function allowance(
         NftId registrar,
-        ObjectType object,
-        ObjectType parent
+        ObjectType object
     ) external view returns (bool);
 
     function getObjectCount() external view returns (uint256);
