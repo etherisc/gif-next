@@ -9,6 +9,8 @@ import {IChainNft} from "../../contracts/registry/IChainNft.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IVersionable} from "../../contracts/shared/Versionable.sol";
+import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
 // V02 is used to test upgradeability gas usage/byte code footprint - both MUST BE constant, mostly the same as with V01
 // 1) introduces no changes to storage and code
@@ -32,7 +34,10 @@ contract RegistryV02 is Registry
                 ObjectType objectType => bool)) _isApproved;
 
         mapping(ObjectType objectType => mapping(
-                ObjectType parentType => bool)) _isValidCombination;
+                ObjectType parentType => bool)) _isValidContractCombination;
+
+        mapping(ObjectType objectType => mapping(
+                ObjectType parentType => bool)) _isValidObjectCombination;
 
         mapping(ObjectType objectType => bool) _isContract;
 
@@ -63,10 +68,7 @@ contract RegistryV02 is Registry
     {
         StorageV2 storage $ = _getStorageV2();
 
-        require(
-            address($._chainNft) == address(0),
-            "ERROR:REG-005:ALREADY_INITIALIZED"
-        );
+        assert(address($._chainNftInternal) == address(0));
         $._protocolOwner = protocolOwner;
 
         // deploy NFT 
@@ -81,6 +83,8 @@ contract RegistryV02 is Registry
         _setupValidObjectParentCombinations();
 
         _registerInterface(type(IRegistry).interfaceId);
+        _registerInterface(type(IRegisterable).interfaceId);
+        _registerInterface(type(IVersionable).interfaceId);
     }
 
     function _upgrade(bytes memory data)

@@ -12,6 +12,7 @@ import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
 
 import {Versionable} from "../shared/Versionable.sol";
+import {IVersionable} from "../shared/Versionable.sol";
 import {ERC165} from "../shared/ERC165.sol";
 
 
@@ -28,30 +29,29 @@ contract Registry is
 {
     // register
     error NotOwner();
-    error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
     error ServiceInterfaceNotSupported(IService service);
     error ServiceAlreadyRegistered(IService service);
             
-    // registerFrom        
+    // registerFrom 
+    error NoAllowance(NftId registrarNftId, ObjectType objectType);      
     error FromIsRegistrar();
     error FromIsZero();
-    error NoAllowance(NftId registrarNftId, ObjectType objectType);
 
     // approve
     // NotOwner
     error NotRegisteredContract(NftId registrarNftId);
     error NotService(NftId registrarNftId);
-    // InvalidTypesCombination
+    error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
 
     // _verifyContract
-    error NotContractType(ObjectType objectType);
+    // InvalidTypesCombination
     error ContractAddressZero();
     error SelfRegistration();
     error ContractAlreadyRegistered(address objectAddress);
     error ContractOwnerIsRegistered(address owner);
 
     // _verifyObject
-    error NotObjectType(ObjectType objectType);
+    // InvalidTypesCombination
     error ObjectAddressNotZero();
     error InitialOwnerIsZero();
     error InitialOwnerIsParent();
@@ -77,7 +77,10 @@ contract Registry is
                 ObjectType objectType => bool)) _isApproved;
 
         mapping(ObjectType objectType => mapping(
-                ObjectType parentType => bool)) _isValidCombination;
+                ObjectType parentType => bool)) _isValidContractCombination;
+
+        mapping(ObjectType objectType => mapping(
+                ObjectType parentType => bool)) _isValidObjectCombination;
 
         mapping(ObjectType objectType => bool) _isContract;
 
@@ -100,6 +103,15 @@ contract Registry is
         _;
     }
 
+    modifier onlyWithApproval(ObjectType objectType) {
+        RegistryStorageV1 storage $ = _getStorage();
+        NftId registrarNftId = $._nftIdByAddress[msg.sender];
+        if(allowance(registrarNftId, objectType) == false) {
+            revert NoAllowance(registrarNftId, objectType);
+        }
+        _;       
+    }
+
     /// @dev 
     //  msg.sender - ONLY registry owner
     //      registers ONLY valid type combinations 
@@ -110,19 +122,11 @@ contract Registry is
         onlyOwner
         returns(NftId nftId)
     {
-        RegistryStorageV1 storage $ = _getStorage();
-        ObjectType objectType = info.objectType;
-        ObjectType parentType = $._info[info.parentNftId].objectType;
-
-        if($._isValidCombination[objectType][parentType] == false) {
-            revert InvalidTypesCombination(objectType, parentType);
-        }
-
         info.initialOwner = msg.sender; // enforce owner instead of check
 
         _verifyContract(info);
 
-        nftId = _registerInfo(info, true); 
+        nftId = _registerContract(info); 
 
         // special case -> TODO unsafe to call service here -> add function register(info, serviceInfo) or what???
         if(info.objectType == SERVICE()) {
@@ -136,6 +140,7 @@ contract Registry is
             bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
 
             // service specific state
+            RegistryStorageV1 storage $ = _getStorage();
             $._string[nftId] = serviceName;
 
             if($._service[serviceNameHash][majorVersion] != address(0)) {
@@ -144,7 +149,7 @@ contract Registry is
 
             $._service[serviceNameHash][majorVersion] = info.objectAddress;
 
-            emit LogServiceRegistered(address(service), serviceName, majorVersion); 
+            emit LogServiceRegistration(address(service), serviceName, majorVersion); 
         }
     }
     /// @dev 
@@ -156,7 +161,7 @@ contract Registry is
     //      CAN register contracts AND objects
     //      CAN NOT register itself
     // from - registrar's msg.sender 
-    //      either contract owner or registered parent contract (assumption)
+    //      either contract owner or registered parent contract
     //      MUST NOT equal 0
     //      MUST NOT equal registrar
     function registerFrom(
@@ -164,6 +169,7 @@ contract Registry is
         ObjectInfo memory info
     )
         external
+        onlyWithApproval(info.objectType) 
         returns(NftId nftId)
     {
         address registrar = msg.sender;
@@ -176,19 +182,6 @@ contract Registry is
             revert FromIsRegistrar(); 
         }
 
-        RegistryStorageV1 storage $ = _getStorage();
-        NftId registrarNftId = $._nftIdByAddress[registrar];
-        ObjectType objectType = info.objectType;
-        ObjectType parentType = $._info[info.parentNftId].objectType;
-
-        if(allowance(registrarNftId, objectType) == false) {
-            revert NoAllowance(registrarNftId, objectType);
-        }
-
-        if($._isValidCombination[objectType][parentType] == false) {
-            revert InvalidTypesCombination(objectType, parentType);
-        }
-
         // TODO if any of parameters is "zero" -> usually expected behavior is revert
         if(info.objectAddress > address(0)) 
         {
@@ -196,13 +189,13 @@ contract Registry is
 
             _verifyContract(info);
 
-            nftId = _registerInfo(info, true);//isContract
+            nftId = _registerContract(info);
         }
         else
         {
             _verifyObject(registrar, from, info);
 
-            nftId = _registerInfo(info, false);
+            nftId = _registerInfo(info);
         }
     }
     
@@ -231,7 +224,9 @@ contract Registry is
             revert NotService(registrarNftId);
         }
 
-        if($._isValidCombination[objectType][parentType] == false) {
+        if(
+            $._isValidContractCombination[objectType][parentType] == false &&
+            $._isValidObjectCombination[objectType][parentType] == false) {
             revert InvalidTypesCombination(objectType, parentType);
         }
 
@@ -352,8 +347,11 @@ contract Registry is
     {
         RegistryStorageV1 storage $ = _getStorage();
 
-        if($._isContract[info.objectType] == false) {
-            revert NotContractType(info.objectType);
+        ObjectType objectType = info.objectType;
+        ObjectType parentType = $._info[info.parentNftId].objectType;
+
+        if($._isValidContractCombination[objectType][parentType] == false) {
+            revert InvalidTypesCombination(objectType, parentType);
         }
 
         if(info.objectAddress == address(0)) {
@@ -389,8 +387,11 @@ contract Registry is
     {
         RegistryStorageV1 storage $ = _getStorage();
 
-        if($._isContract[info.objectType]) {
-            revert NotObjectType(info.objectType);
+        ObjectType objectType = info.objectType;
+        ObjectType parentType = $._info[info.parentNftId].objectType;
+
+        if($._isValidObjectCombination[objectType][parentType] == false) {
+            revert InvalidTypesCombination(objectType, parentType);
         }
 
         if(info.objectAddress > address(0)) {
@@ -418,7 +419,7 @@ contract Registry is
         }
     }
 
-    function _registerInfo(ObjectInfo memory info, bool isContract)
+    function _registerInfo(ObjectInfo memory info)
         internal
         returns(NftId nftId)
     {
@@ -431,11 +432,17 @@ contract Registry is
         info.nftId = nftId;
         $._info[nftId] = info;
 
-        if(isContract) {
-            $._nftIdByAddress[info.objectAddress] = nftId; 
-        }
+        emit LogRegistration(nftId, info.parentNftId, info.objectType, info.objectAddress, info.initialOwner);
+    }
 
-        emit LogObjectRegistered(nftId, info.parentNftId, info.objectType, info.objectAddress, info.initialOwner);
+    function _registerContract(ObjectInfo memory info)
+        internal
+        returns(NftId nftId)
+    {
+        nftId = _registerInfo(info);
+
+        RegistryStorageV1 storage $ = _getStorage();
+        $._nftIdByAddress[info.objectAddress] = nftId;
     }
     /// @dev protocol registration used to anchor the dip ecosystem relations
     function _registerProtocol() 
@@ -525,34 +532,28 @@ contract Registry is
     /// @dev defines which object - parent types relations are allowed to register
     // IMPORTANT: each object type MUST have the only parent type
     // IMPORTANT: DO NOT use "zero type" here
-    function _setupValidObjectParentCombinations() internal onlyInitializing {
+    function _setupValidObjectParentCombinations() 
+        internal 
+        onlyInitializing 
+    {
         RegistryStorageV1 storage $ = _getStorage();
         // registry as parent
-        $._isValidCombination[TOKEN()][REGISTRY()] = true;
-        $._isValidCombination[SERVICE()][REGISTRY()] = true;
-        $._isValidCombination[INSTANCE()][REGISTRY()] = true;
+        $._isValidContractCombination[TOKEN()][REGISTRY()] = true;
+        $._isValidContractCombination[SERVICE()][REGISTRY()] = true;
+        $._isValidContractCombination[INSTANCE()][REGISTRY()] = true;
 
         // instance as parent
-        $._isValidCombination[PRODUCT()][INSTANCE()] = true;
-        $._isValidCombination[DISTRIBUTION()][INSTANCE()] = true;
-        $._isValidCombination[ORACLE()][INSTANCE()] = true;
-        $._isValidCombination[POOL()][INSTANCE()] = true;
+        $._isValidContractCombination[PRODUCT()][INSTANCE()] = true;
+        $._isValidContractCombination[DISTRIBUTION()][INSTANCE()] = true;
+        $._isValidContractCombination[ORACLE()][INSTANCE()] = true;
+        $._isValidContractCombination[POOL()][INSTANCE()] = true;
 
         // product as parent
-        $._isValidCombination[POLICY()][PRODUCT()] = true;
+        $._isValidObjectCombination[POLICY()][PRODUCT()] = true;
 
         // pool as parent
-        $._isValidCombination[BUNDLE()][POOL()] = true;
-        $._isValidCombination[STAKE()][POOL()] = true;
-
-        // define registerable types associated with contracts
-        $._isContract[SERVICE()] = true;
-        $._isContract[TOKEN()] = true;            
-        $._isContract[INSTANCE()] = true;
-        $._isContract[PRODUCT()] = true;
-        $._isContract[POOL()] = true;
-        $._isContract[ORACLE()] = true;
-        $._isContract[DISTRIBUTION()] = true;
+        $._isValidObjectCombination[BUNDLE()][POOL()] = true;
+        $._isValidObjectCombination[STAKE()][POOL()] = true;
     }
 
     // TODO check how usage of "$.data" influences gas costs 
@@ -579,7 +580,7 @@ contract Registry is
     {
         RegistryStorageV1 storage $ = _getStorage();
 
-        assert($._chainNftInternal == 0);
+        assert(address($._chainNftInternal) == address(0));
 
         $._protocolOwner = protocolOwner;
 
@@ -595,5 +596,7 @@ contract Registry is
         _setupValidObjectParentCombinations();
 
         _registerInterface(type(IRegistry).interfaceId);
+        _registerInterface(type(IRegisterable).interfaceId);
+        _registerInterface(type(IVersionable).interfaceId);
     }
 }

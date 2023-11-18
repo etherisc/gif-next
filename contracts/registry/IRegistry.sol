@@ -10,11 +10,11 @@ import {IChainNft} from "./IChainNft.sol";
 
 interface IRegistry is IERC165 {
 
-    event LogObjectRegistered(NftId nftId, NftId parentNftId, ObjectType objectType, address objectAddress, address initialOwner);
+    event LogRegistration(NftId indexed nftId, NftId parentNftId, ObjectType objectType, address objectAddress, address initialOwner);
 
-    event LogServiceRegistered(address service, string serviceName, VersionPart majorVersion); 
+    event LogServiceRegistration(address indexed service, string serviceName, VersionPart majorVersion); 
 
-    event LogApproval(NftId nftId, ObjectType objectType);
+    event LogApproval(NftId indexed nftId, ObjectType objectType);
 
     struct ObjectInfo {
         NftId nftId;
