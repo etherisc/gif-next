@@ -45,7 +45,7 @@ contract Registry is
 
     // _verifyContract
     // InvalidTypesCombination
-    error ContractAddressZero();
+    error NotContractAddress();
     error SelfRegistration();
     error ContractAlreadyRegistered(address objectAddress);
     error ContractOwnerIsRegistered(address owner);
@@ -60,6 +60,8 @@ contract Registry is
     error ParentMismatch(NftId parentNftId);
 
     string public constant EMPTY_URI = "";
+
+    bytes32 public constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;
 
     // TODO do not use gif-next in namespace id
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.registry.Registry.sol")) - 1)) & ~bytes32(uint256(0xff));
@@ -81,8 +83,6 @@ contract Registry is
 
         mapping(ObjectType objectType => mapping(
                 ObjectType parentType => bool)) _isValidObjectCombination;
-
-        mapping(ObjectType objectType => bool) _isContract;
 
         mapping(NftId nftId => string stringValue) _string;
         mapping(bytes32 serviceNameHash => mapping(
@@ -257,10 +257,6 @@ contract Registry is
         return _getStorage()._nftIdByAddress[object];
     }
 
-    function getName(NftId nftId) external view returns (string memory name) {
-        return _getStorage()._string[nftId];
-    }
-
     function ownerOf(NftId nftId) public view override returns (address) {
         return _getStorage()._chainNft.ownerOf(nftId.toInt());
     }
@@ -285,6 +281,10 @@ contract Registry is
 
     function isRegistered(address object) external view override returns (bool) {
         return _getStorage()._nftIdByAddress[object].gtz();
+    }
+
+    function getServiceName(NftId nftId) external view returns (string memory name) {
+        return _getStorage()._string[nftId];
     }
 
     // special case to retrive a gif service
@@ -354,8 +354,12 @@ contract Registry is
             revert InvalidTypesCombination(objectType, parentType);
         }
 
-        if(info.objectAddress == address(0)) {
-            revert ContractAddressZero();
+        // address(0).codehash is 0
+        bytes32 codeHash = info.objectAddress.codehash;
+        if(
+            codeHash == 0 ||
+            codeHash == EOA_CODEHASH) {
+            revert NotContractAddress();
         }
 
         if(info.objectAddress == info.initialOwner) {

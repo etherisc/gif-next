@@ -39,8 +39,6 @@ contract RegistryV02 is Registry
         mapping(ObjectType objectType => mapping(
                 ObjectType parentType => bool)) _isValidObjectCombination;
 
-        mapping(ObjectType objectType => bool) _isContract;
-
         mapping(NftId nftId => string stringValue) _string;
         mapping(bytes32 serviceNameHash => mapping(
                 VersionPart majorVersion => address service)) _service;

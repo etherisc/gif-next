@@ -47,8 +47,6 @@ interface IRegistry is IERC165 {
 
     //nftIdOf
     function getNftId(address objectAddress) external view returns (NftId nftId);
-    // nameOf
-    function getName(NftId nftId) external view returns (string memory name);
 
     function ownerOf(NftId nftId) external view returns (address);
 
@@ -61,6 +59,8 @@ interface IRegistry is IERC165 {
     function isRegistered(NftId nftId) external view returns (bool);
 
     function isRegistered(address contractAddress) external view returns (bool);
+
+    function getServiceName(NftId nftId) external view returns (string memory name);
 
     function getServiceAddress(
         string memory serviceName, 
