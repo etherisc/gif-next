@@ -42,7 +42,8 @@ abstract contract InstanceBase is
     )
         Versionable()
     {
-        _initializeRegisterable(registry, registryNftId, INSTANCE(), initialOwner);
+        bytes memory data = "";
+        _initializeRegisterable(registry, registryNftId, INSTANCE(), initialOwner, data);
         _keyValueStore = new KeyValueStore();
 
         _registerInterface(type(IInstance).interfaceId);
@@ -66,7 +67,7 @@ abstract contract InstanceBase is
         virtual override
         returns(Version)
     {
-        return VersionLib.toVersion(3,0,0);
+        return VersionLib.toVersion(1,0,0);
     }
 
     // from registerable

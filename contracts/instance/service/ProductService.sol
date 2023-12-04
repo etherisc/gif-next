@@ -28,6 +28,8 @@ import {RiskId} from "../../types/RiskId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
+import {IService} from "../base/IService.sol";
+import {ServiceBase} from "../base/ServiceBase.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IProductService} from "./IProductService.sol";
 
@@ -49,7 +51,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     }
 
 
-    function getName() external pure override returns(string memory name) {
+    function getName() public pure override(IService, ServiceBase) returns(string memory name) {
         return NAME;
     }
 

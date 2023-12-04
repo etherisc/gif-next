@@ -4,24 +4,26 @@ pragma solidity ^0.8.20;
 import {NftId} from "../../contracts/types/NftId.sol";
 import {ObjectType} from "../../contracts/types/ObjectType.sol";
 import {RoleId} from "../../contracts/types/RoleId.sol";
-import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
 import {IService} from "../../contracts/instance/base/IService.sol";
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
-import {IProductComponent} from "../../contracts/components/IProductComponent.sol";
-import {IPoolComponent} from "../../contracts/components/IPoolComponent.sol";
-import {IDistributionComponent} from "../../contracts/components/IDistributionComponent.sol";
+import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
+import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
 
-// TODO rename to registry service
 interface IRegistryService is IService {
 
-    function registerProduct(IProductComponent product) external returns(NftId nftId);
+    function registerToken(address tokenAddress) external returns(NftId nftId);
 
-    function registerPool(IPoolComponent pool) external returns(NftId nftId);
+    function registerService(IService service)  external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
-    function registerDistribution(IDistributionComponent distribution) external returns(NftId nftId);
+    //function registerComponent(IBaseComponent component, ObjectType componentType, address owner) 
+    function registerComponent(IBaseComponent component, ObjectType componentType)
+        external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
-    //function registerService()
-    // TODO not here?
-    function getRoleForType(ObjectType cType) external pure returns (RoleId role);
+    //function registerInstance(IRegisterable instance, address owner)
+    function registerInstance(IRegisterable instance)
+        external returns(IRegistry.ObjectInfo memory info, bytes memory data); 
+
+    function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 }
 

@@ -14,6 +14,8 @@ import {POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
+import {IService} from "../base/IService.sol";
+import {ServiceBase} from "../base/ServiceBase.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IPoolService} from "./IPoolService.sol";
 
@@ -32,7 +34,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
         _registerInterface(type(IPoolService).interfaceId);
     }
 
-    function getName() external pure override returns(string memory name) {
+    function getName() public pure override(IService, ServiceBase) returns(string memory name) {
         return NAME;
     }
 

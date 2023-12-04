@@ -25,7 +25,7 @@ abstract contract Registerable is
         NftId _parentNftId;
         address _initialOwner;
         ObjectType _objectType;
-        //bytes _data;
+        bytes _data;
     }
 
     function _getRegisterableStorage() private pure returns (RegisterableStorage storage $) {
@@ -46,8 +46,8 @@ abstract contract Registerable is
         address registryAddress,
         NftId parentNftId,
         ObjectType objectType,
-        address initialOwner
-        //,bytes memory data
+        address initialOwner,
+        bytes memory data
     )
         internal
         //onlyInitializing//TODO uncomment when "fully" upgradeable
@@ -57,6 +57,9 @@ abstract contract Registerable is
             registryAddress != address(0),
             "ERROR:RGB-010:REGISTRY_ZERO"
         );
+
+        // TODO check parentNftId -> registry.isRegistered(parentNftId)
+        // TODO check object-parent type pair -> registry.isValidTypeCombo() or something...verify with registry that setup will be able to register...
 
         IRegistry registry = IRegistry(registryAddress);
         require(
@@ -69,7 +72,7 @@ abstract contract Registerable is
         $._parentNftId = parentNftId;
         $._objectType = objectType;
         $._initialOwner = initialOwner;// not msg.sender because called in proxy constructor where msg.sender is proxy deployer
-        //$._data = data;
+        $._data = data;
 
         _registerInterface(type(Registerable).interfaceId);
     }
@@ -102,7 +105,7 @@ abstract contract Registerable is
                 $._objectType,
                 address(this), 
                 $._initialOwner,
-                ""
+                $._data
             ),
             bytes("")
         );

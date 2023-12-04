@@ -9,6 +9,7 @@ import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {BaseComponent} from "./BaseComponent.sol";
+import {IBaseComponent} from "./BaseComponent.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IPool} from "../instance/module/pool/IPoolModule.sol";
@@ -71,6 +72,7 @@ contract Pool is BaseComponent, IPoolComponent {
         _productService = _instance.getProductService();
 
         _registerInterface(type(IPoolComponent).interfaceId);
+        _registerInterface(type(IBaseComponent).interfaceId);
     }
 
     function createBundle(

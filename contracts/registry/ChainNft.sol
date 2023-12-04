@@ -37,7 +37,7 @@ contract ChainNft is ERC721Enumerable, IChainNft {
         _chainIdInt = block.chainid;
         _chainIdDigits = _countDigits(_chainIdInt);
         _chainIdMultiplier = 10 ** _chainIdDigits;
-        _idNext = 3;
+        _idNext = 4;
     }
 
     /**

@@ -20,16 +20,18 @@ import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, PRODUCT, ORACLE, POOL, TOKEN, INSTANCE, DISTRIBUTION} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, TOKEN, SERVICE, PRODUCT, ORACLE, POOL, TOKEN, INSTANCE, DISTRIBUTION, POLICY} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
-import {Version, VersionLib} from "../../contracts/types/Version.sol";
+import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
 import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 
 
 import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
+import {IService} from "../../contracts/instance/base/IService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
+import {Registry} from "../registry/Registry.sol";
 
 contract RegistryService is
     ServiceBase,
@@ -37,394 +39,329 @@ contract RegistryService is
 {
     using NftIdLib for NftId;
 
+    error NotRegistryOwner();
+    error MissingAllowance();
+
+    error NotToken();
+    error NotService();
+    error NotComponent();
+    error NotInstance();
+
+    error InvalidAddress(address registerableAddress);
+    error InvalidInitialOwner(address initialOwner);
+    error SelfRegistration();
+    error InvalidType(ObjectType objectType);
+
     string public constant NAME = "RegistryService";
 
-    // IMPORTANT: MUST NOT call component (untrusted contract) inbetween calls to registry/instance (trusted contracts)
+    bytes32 public constant REGISTRY_CREATIONCODE_HASH = 0x7e569c7200a12c63728b648d78f84be7e32ef6804f9ee723e15363ce34d01251;
+
+    address constant public NFT_LOCK_ADDRESS = address(0x1);
+
+    /// @dev 
+    //  msg.sender - ONLY registry owner
+    //      CAN register ANY non IRegisterable address
+    //      CAN register ONLY valid object-parent types combinations for TOKEN
+    //      CAN NOT register IRegisterable address
+    //      CAN NOT register itself
+    // IMPORTANT: MUST NOT call untrusted contract inbetween calls to registry/instance (trusted contracts)
     // motivation: registry/instance state may change during external call
-    function registerProduct(IProductComponent product)
-        external 
-        returns(NftId nftId)
-    {
-        // self registration is not allowed
-        require(
-            msg.sender != address(product), 
-            "ERROR:RS-001:SELF_REGISTRATION"
-        );
-
-        require(
-            product.supportsInterface(type(IProductComponent).interfaceId),
-            "ERROR:RS-001:NOT_PRODUCT"
-        );
-
-        (
-            IInstance instance,
-            NftId instanceNftId, 
-            IRegistry.ObjectInfo memory info, 
-            bytes memory data
-        ) = _verifyComponent(product, PRODUCT());
-
-        nftId = getRegistry().registerFrom(msg.sender, info);
-
-        _registerProduct(
-            nftId, 
-            instanceNftId,
-            instance,
-            data
-        );
-    }
-
-    function registerPool(IPoolComponent pool)
-        external 
-        returns(NftId nftId)
-    {
-        // self registration is not allowed
-        require(
-            msg.sender != address(pool),
-            "ERROR:RS-001:SELF_REGISTRATION"
-        );
-
-        require(
-            pool.supportsInterface(type(IPoolComponent).interfaceId),
-            "ERROR:RS-025:NOT_POOL"
-        );
-
-        (
-            IInstance instance,
-            NftId instanceNftId, 
-            IRegistry.ObjectInfo memory info, 
-            bytes memory data
-        ) = _verifyComponent(pool, POOL());
-
-        nftId = getRegistry().registerFrom(msg.sender, info);   
-
-        _registerPool(
-            nftId, 
-            instanceNftId,
-            instance,
-            data
-        );
-    }
-
-    function registerDistribution(IDistributionComponent distribution) 
-        external 
-        returns(NftId nftId)
-    {
-        // self registration not allowed
-        require(
-            msg.sender != address(distribution),
-            "ERROR:RS-001:SELF_REGISTRATION"
-        );
-
-        require(
-            distribution.supportsInterface(type(IDistributionComponent).interfaceId),
-            "ERROR:RS-026:NOT_DISTRIBUTION"
-        );   
-        
-        (
-            IInstance instance,
-            NftId instanceNftId, 
-            IRegistry.ObjectInfo memory info, 
-            bytes memory data
-        ) = _verifyComponent(distribution, DISTRIBUTION());
-
-        nftId = getRegistry().registerFrom(msg.sender, info); 
-
-        //_registerDistribution();
-    }
-
-    function registerInstance(IRegisterable instance)
+    function registerToken(address tokenAddress)
         external 
         returns(NftId nftId) 
     {
-        // self registration not allowed
-        require(
-            msg.sender != address(instance),
-            "ERROR:RS-001:SELF_REGISTRATION"
+        IRegisterable registerable = IRegisterable(tokenAddress);
+        bool isRegisterable;
+
+        // registryOwner can not register IRegisterable as TOKEN
+        try registerable.supportsInterface(type(IRegisterable).interfaceId) returns(bool result) {
+            isRegisterable = result;
+        } catch {// TODO specify expected error type
+            isRegisterable = false;
+        }
+
+        if(isRegisterable) {
+            revert NotToken();
+        } 
+
+        IRegistry registry = getRegistry();
+
+        if(msg.sender != registry.ownerOf(address(registry))) {
+            revert NotRegistryOwner();
+        }
+
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            zeroNftId(), // any value
+            registry.getNftId(address(registry)),
+            TOKEN(),
+            tokenAddress,
+            NFT_LOCK_ADDRESS,//registry.getLockAddress(),//msg.sender,
+            "" // any value
         );
 
-        require(
-            instance.supportsInterface(type(IInstance).interfaceId),
-            "ERROR:RS-031:NOT_INSTANCE"
-        ); 
-
-        (
-            IRegistry.ObjectInfo memory info, 
-            //bytes memory data
-        ) = _verifyInstance(instance);
-
-        nftId = getRegistry().registerFrom(msg.sender, info);     
-        
-        // instance after registration
-        // TODO tell instance about its nftId 
-        // TODO tell every registerable about its parentNftId -> but it knows about it...
+        nftId = registry.register(info);
     }
 
-    function getRoleForType(
-        ObjectType cType
-    ) public pure override returns (RoleId role) {
-        if (cType == PRODUCT()) {
-            return PRODUCT_OWNER_ROLE();
+    /// @dev 
+    //  msg.sender - ONLY registry owner
+    //      CAN register ONLY valid object-parent types combinations for SERVICE
+    //      CAN register ONLY IRegisterable address he owns
+    //      CAN NOT register itself
+    // IMPORTANT: MUST NOT check owner before calling external contract
+    function registerService(IService service)
+        external
+        returns(
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) 
+    {
+        if(service.supportsInterface(type(IService).interfaceId) == false) {
+            revert NotService();
+        } 
+
+        // TODO read also a version?
+        (
+            info, 
+            data
+        ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
+
+        IRegistry registry = getRegistry();
+
+        if(msg.sender != registry.ownerOf(address(registry))) {
+            revert NotRegistryOwner();
         }
-        if (cType == POOL()) {
-            return POOL_OWNER_ROLE();
+
+        info.initialOwner = NFT_LOCK_ADDRESS;//registry.getLockAddress();
+        info.nftId = registry.register(info);
+
+        return (
+            info,
+            data
+        );
+    }
+
+    // TODO: when called by approved service: add owner arg (service must pass it's msg.sender as owner) & check service allowance
+    // anybody can register component if instance gives a corresponding role
+    //function registerComponent(IBaseComponent component, ObjectType componentType, address owner)
+    function registerComponent(IBaseComponent component, ObjectType componentType)
+        external
+        returns(
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) 
+    {
+        if(component.supportsInterface(type(IBaseComponent).interfaceId) == false) {
+            revert NotComponent();
         }
-        if (cType == ORACLE()) {
-            return ORACLE_OWNER_ROLE();
+
+        (
+            info, 
+            data
+        ) = _getAndVerifyContractInfo(component, componentType, msg.sender);
+
+        IRegistry registry = getRegistry();
+
+        //if(registry.allowance(registry.getNftId(msg.sender), componentType) == false) {
+        //    revert MissingAllowance();
+        //}      
+
+        info.nftId = registry.register(info);
+
+        return (
+            info,
+            data
+        );  
+    }
+
+    // TODO: when called by approved service: add owner arg (service must pass it's msg.sender as owner) & check service allowance
+    //function registerInstance(IRegisterable instance, address owner)
+    function registerInstance(IRegisterable instance)
+        external 
+        returns(
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) 
+    {
+        if(instance.supportsInterface(type(IInstance).interfaceId) == false) {
+            revert NotInstance();
         }
+
+        (
+            info, 
+            data
+        ) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);// owner);
+
+        IRegistry registry = getRegistry();
+
+        //if(registry.allowance(registry.getNftId(msg.sender), INSTANCE()) == false) {
+        //    revert MissingAllowance();
+        //}
+
+        info.nftId = registry.register(info);     
+        
+        return (
+            info,
+            data            
+        );
+    }
+
+    /// @dev trust approved service that initial owner is valid
+    function registerPolicy(IRegistry.ObjectInfo memory info)
+        external 
+        returns(NftId nftId) 
+    {
+        IRegistry registry = getRegistry();
+
+        if(registry.allowance(registry.getNftId(msg.sender), POLICY()) == false) {
+            revert MissingAllowance();
+        }
+
+        _verifyObjectInfo(info, POLICY());
+
+        nftId = registry.register(info);
     }
 
     // From IService
-    function getName() external pure returns(string memory) {
+    function getName() public pure override(IService, ServiceBase) returns(string memory) {
         return NAME;
     }
 
-    // From Versionable
-
-    function getVersion()
-        public 
-        pure 
-        virtual override (IVersionable, ServiceBase)
-        returns(Version)
-    {
-        return VersionLib.toVersion(3,0,0);
-    } 
 
     // from Versionable
 
-    // top level initializer
-    function _initialize(address initialOwner, bytes memory data) 
+    /// @dev top level initializer
+    // 1) registry is non upgradeable -> don't need a proxy and uses constructor !
+    // 2) deploy registry service first -> from its initialization func it is easier to deploy registry then vice versa
+    // 3) deploy registry -> pass registry service address as constructor argument
+    // registry is getting instantiated and locked to registry service address forever
+    // owner of registry is the same as of registry service
+    function _initialize(address protocolOwner, bytes memory registryCreationCode)
         internal
-        onlyInitializing // TODO better to use initialier?
+        initializer
         virtual override
     {
-        (address registry,
-        NftId registryNftId) = abi.decode(data, (address, NftId));
+        // TODO check when stable
+        //require(keccak256(registryCreationCode) == REGISTRY_CREATIONCODE_HASH, "INVALID_REGISTRY_CREATIONCODE");
 
-        _initializeServiceBase(registry, registryNftId, initialOwner);
+        bytes memory bytecode = abi.encodePacked(
+            registryCreationCode, 
+            abi.encode(
+                protocolOwner, 
+                address(this), 
+                NAME, 
+                getMajorVersion()
+            )
+        );
+        address registryAddress;
+
+        assembly {
+            registryAddress := create(0, add(bytecode, 0x20), mload(bytecode))  
+
+            if iszero(extcodesize(registryAddress)) {
+                revert(0, 0)
+            }
+        }
+
+        IRegistry registry = IRegistry(registryAddress);
+        NftId registryNftId = registry.getNftId(registryAddress);
+
+        _initializeServiceBase(registryAddress, registryNftId, protocolOwner);
 
         _registerInterface(type(IRegistryService).interfaceId);
     }
 
-    // Internals
-
-    function _registerProduct(
-        NftId nftId, 
-        NftId instanceNftId,
-        IInstance instance,
-        bytes memory data
+    // parent check done in registry because of approve()
+    function _getAndVerifyContractInfo(
+        IRegisterable registerable,
+        ObjectType objectType,
+        address owner
     )
-        internal
-    {
-        // only product's owner with role
-        RoleId typeRole = getRoleForType(PRODUCT());
-        require(
-            instance.hasRole(typeRole, msg.sender),
-            "ERROR:RS-014:TYPE_ROLE_MISSING"
-        ); 
-
-        (
-            ITreasury.TreasuryInfo memory info,
-            address wallet
-        )  = abi.decode(data, (ITreasury.TreasuryInfo, address));
-
-        IRegistry _registry = getRegistry();
-
-        require(
-            wallet > address(0), 
-            "ERROR:RS-015:ZERO_WALLET"
-        );
-
-        IRegistry.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(info.token));
-
-        require(
-            tokenInfo.objectType == TOKEN(),
-            "ERROR:RS-016:UNKNOWN_TOKEN"
-        ); 
-
-        IRegistry.ObjectInfo memory poolInfo = _registry.getObjectInfo(info.poolNftId);
-
-        require(
-            poolInfo.objectType == POOL(),
-            "ERROR:RS-017:UNKNOWN_POOL"
-        ); 
-
-        require(
-            poolInfo.parentNftId == instanceNftId, 
-            "ERROR:RS-018:POOL_INSTANCE_MISMATCH"
-        );
-        // TODO pool have the same token
-        //ITreasury.PoolSetup memory poolSetup = instance.getPoolSetup(info.poolNftId);
-        //require(tokenInfo.objectAddress == address(poolSetup.token), "ERROR:COS-018:PRODUCT_POOL_TOKEN_MISMATCH");
-        // TODO pool is not linked
-
-        IRegistry.ObjectInfo memory distributionInfo = _registry.getObjectInfo(info.distributionNftId);
-
-        require(
-            distributionInfo.objectType == DISTRIBUTION(), 
-            "ERROR:RS-019:UNKNOWN_DISTRIBUTION"
-        ); 
-
-        require(
-            distributionInfo.parentNftId == instanceNftId, 
-            "ERROR:RS-020:DISTRIBUTION_INSTANCE_MISMATCH"
-        );
-        // TODO distribution have the same token
-        // TODO distribution is not linked
-
-        // component module
-        instance.registerComponent(
-            nftId,
-            info.token,
-            wallet // TODO move wallet into TreasuryInfo?
-        );
-
-        // treasury module
-        instance.registerProductSetup(
-            nftId, 
-            info
-        );
-    }
-
-    function _registerPool(
-        NftId nftId,
-        NftId instanceNftId,
-        IInstance instance,
-        bytes memory data
-    )
-        internal
-    {
-        // pool's owner with role
-        RoleId typeRole = getRoleForType(POOL());
-        require(
-            instance.hasRole(typeRole, msg.sender),
-            "ERROR:RS-021:TYPE_ROLE_MISSING"
-        );  
-
-        (
-            IPool.PoolInfo memory info,
-            address wallet,
-            IERC20Metadata token,
-            /*poolFee*/,
-            /*stakingFee*/,
-            /*performanceFee*/
-        )  = abi.decode(data, (IPool.PoolInfo, address, IERC20Metadata, Fee, Fee, Fee));
-
-        IRegistry _registry = getRegistry();
-
-        require(
-            wallet > address(0),
-            "ERROR:RS-022:ZERO_WALLET"
-        );
-
-        ObjectType tokenType = _registry.getObjectInfo(address(token)).objectType;
-
-        require(
-            tokenType == TOKEN(), 
-            "ERROR:RS-023:UNKNOWN_TOKEN"
-        );  
-
-        require(
-            UFixedMathLib.gtz(info.collateralizationLevel), 
-            "ERROR:RS-024:ZERO_COLLATERALIZATION"
-        );
-
-        // TODO add more validations
-
-        // component module
-        instance.registerComponent(
-            nftId,
-            token,
-            wallet
-        ); 
-
-        // pool module
-        instance.registerPool(
-            nftId, 
-            info
-        );
-    } 
-
-    function _verifyComponent(IRegisterable component, ObjectType componentType)
         internal
         returns(
-            IInstance,
-            NftId, 
-            IRegistry.ObjectInfo memory, 
-            bytes memory)
-    {
-        (
             IRegistry.ObjectInfo memory info, 
             bytes memory data
-        ) = component.getInitialInfo();
+        )
+    {
+        (
+            info, 
+            data
+        ) = registerable.getInitialInfo();
 
-        require(// owner protection
-            info.initialOwner == msg.sender, 
-            "ERROR:RS-002:NOT_OWNER"
-        );
+        if(info.objectAddress != address(registerable)) {
+            revert InvalidAddress(info.objectAddress);
+        }
 
-        require(
-            info.objectAddress == address(component),
-            "ERROR:RS-003:WRONG_ADDRESS"
-        );
+        if(
+            getRegistry().isRegistered(owner) ||
+            info.initialOwner != owner) { // contract owner protection
+            revert InvalidInitialOwner(info.initialOwner);
+        }
 
-        require(
-            info.objectType == componentType, 
-            "ERROR:RS-004:OBJECT_TYPE_INVALID"
-        );
+        if(msg.sender == address(registerable)) {
+            revert SelfRegistration();
+        }
+        
+        if(info.objectType != objectType) {
+            revert InvalidType(info.objectType);
+        }
 
-        NftId instanceNftId = info.parentNftId;
-        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
+        /*NftId parentNftId = info.parentNftId;
+        IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(parentNftId);
 
-        require(
-            instanceInfo.objectType == INSTANCE(), 
-            "ERROR:RS-005:UNKNOWN_INSTANCE"
-        );
-
-        //.data
+        if(parentInfo.objectType != parentType) { // parent registration + type
+            revert InvalidParent(parentNftId);
+        }*/
 
         return(
-            IInstance(instanceInfo.objectAddress),
-            instanceNftId,
-            info, // MUST explicitly return this vars!
+            info,
             data
         );
     }
 
-    function _verifyInstance(IRegisterable instance)
+    // parent checks done in registry because of approve()
+    function _verifyObjectInfo(
+        IRegistry.ObjectInfo memory info,
+        ObjectType objectType
+    )
         internal
-        returns(
-            IRegistry.ObjectInfo memory, 
-            bytes memory)
+        view
     {
-        (
-            IRegistry.ObjectInfo memory info, 
-            bytes memory data
-        ) = instance.getInitialInfo();
+        if(info.objectAddress > address(0)) {
+            revert InvalidAddress(info.objectAddress);
+        }
 
-        require(// owner protection
-            info.initialOwner == msg.sender, 
-            "ERROR:RS-032:NOT_OWNER"
-        );
+        if(
+            getRegistry().isRegistered(info.initialOwner) ||
+            info.initialOwner == address(0)) {
+            // TODO non registered address can register object(e.g. POLICY()) and then transfer associated nft to registered contract
+            // what are motivations to do so?
+            // at least registered contract can not register objects by itself, SERVICE, 
+            revert InvalidInitialOwner(info.initialOwner); 
+        }
 
-        require(
-            info.objectAddress == address(instance), 
-            "ERROR:RS-033:WRONG_ADDRESS"
-        );
+        // can catch all 3 if check that initialOwner is not registered
+        /*if(info.initialOwner == msg.sender) {
+            revert InitialOwnerIsParent();
+        }
 
-        require(
-            info.objectType == INSTANCE(), 
-            "ERROR:RS-034:NOT_INSTANCE"
-        );
+        if(info.initialOwner == address(this)) {
+            revert InitialOwnerIsService();
+        }
 
-        IRegistry.ObjectInfo memory registryInfo = getRegistry().getObjectInfo(info.parentNftId);
+        if(info.initialOwner == address(getRegistry())) {
+            revert InitialOwnerIsRegistry();
+        }*/
 
-        require(
-            registryInfo.objectType == REGISTRY(), 
-            "ERROR:RS-013:UNKNOWN_REGISTRY"
-        ); 
+        
+        if(info.objectType != objectType) {
+            revert InvalidType(info.objectType);
+        }
 
-        //.data
+        /*NftId parentNftId = info.parentNftId;
+        IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(parentNftId);
 
-        return (info, data); // MUST explicitly return this vars!
+        if(parentInfo.objectType != parentType) { // parent registration + type
+            revert InvalidParent(parentNftId);
+        }*/        
     }
 }

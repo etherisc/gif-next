@@ -13,57 +13,40 @@ import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT
 
 import {Versionable} from "../shared/Versionable.sol";
 import {IVersionable} from "../shared/Versionable.sol";
+import {IOwnable} from "../shared/IOwnable.sol";
 import {ERC165} from "../shared/ERC165.sol";
 
 
 // IMPORTANT
 // Each NFT minted by registry is accosiated with:
-// 1) NFT owner ( used in register() )
-// 2) registred contract OR object stored in registered (parent) contract ( used in registerFrom() )
+// 1) NFT owner
+// 2) registred contract OR object stored in registered (parent) contract
+// Four registration flows:
+// 1) non IRegisterable address by registryOwner (TOKEN)
+// 2) IRegisterable address by registryOwner (SERVICE)
+// 3) IRegisterable address by contract owner (INSTANCE, COMPONENT) -> wil be changed to "by approved service" 
+// 4) state object by approved service
 
 contract Registry is
     ERC165,
     Versionable,
-    IRegisterable,
     IRegistry
 {
     // register
-    error NotOwner();
-    error ServiceInterfaceNotSupported(IService service);
-    error ServiceAlreadyRegistered(IService service);
+    error NotRegistryService();
+    error ContractAlreadyRegistered(address objectAddress);
+    error InvalidServiceVersion(VersionPart majorVersion);
+    error ServiceNameAlreadyRegistered(string name, VersionPart majorVersion);
             
-    // registerFrom 
-    error NoAllowance(NftId registrarNftId, ObjectType objectType);      
-    error FromIsRegistrar();
-    error FromIsZero();
-
     // approve
-    // NotOwner
+    error NotOwner();
     error NotRegisteredContract(NftId registrarNftId);
     error NotService(NftId registrarNftId);
     error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
 
-    // _verifyContract
-    // InvalidTypesCombination
-    error NotContractAddress();
-    error SelfRegistration();
-    error ContractAlreadyRegistered(address objectAddress);
-    error ContractOwnerIsRegistered(address owner);
-
-    // _verifyObject
-    // InvalidTypesCombination
-    error ObjectAddressNotZero();
-    error InitialOwnerIsZero();
-    error InitialOwnerIsParent();
-    error InitialOwnerIsRegistrar();
-    error ParentNotRegistered(address parent);
-    error ParentMismatch(NftId parentNftId);
-
     string public constant EMPTY_URI = "";
 
-    bytes32 public constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;
-
-    // TODO do not use gif-next in namespace id
+    address constant public NFT_LOCK_ADDRESS = address(0x1);
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.registry.Registry.sol")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 private constant REGISTRY_LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
 
@@ -84,17 +67,30 @@ contract Registry is
         mapping(ObjectType objectType => mapping(
                 ObjectType parentType => bool)) _isValidObjectCombination;
 
-        mapping(NftId nftId => string stringValue) _string;
+        mapping(NftId nftId => string name) _string;
         mapping(bytes32 serviceNameHash => mapping(
                 VersionPart majorVersion => address service)) _service;
 
-        NftId _nftId;
+        NftId _registryNftId;
+        NftId _serviceNftId; // set in stone upon registry creation
         IChainNft _chainNft;
         ChainNft _chainNftInternal;
 
-        /// @dev will own protocol nft and registry nft(s) minted during initialize
+        /// @dev will own protocol, global registry, registry and registry service nfts minted during creation
+        // TODO registry nft can be transfered while protocol, global registry and registry service nfts are not transferable
+        // TODO get owner from one place -> nft contract
         address _protocolOwner;
     }
+
+    /*
+    modifier onlyInitialOwner() {
+        RegistryStorageV1 storage $ = _getStorage();
+        if(
+            msg.sender != getOwner() ||
+            msg.sender != $._info[$._registryNftId].initialOwner) {
+            revert NotInitialOwner();
+        }
+    }*/
 
     modifier onlyOwner() {
         if(msg.sender != getOwner()) {
@@ -103,100 +99,125 @@ contract Registry is
         _;
     }
 
-    modifier onlyWithApproval(ObjectType objectType) {
+    modifier onlyRegistryService() {
         RegistryStorageV1 storage $ = _getStorage();
-        NftId registrarNftId = $._nftIdByAddress[msg.sender];
-        if(allowance(registrarNftId, objectType) == false) {
-            revert NoAllowance(registrarNftId, objectType);
+        if(msg.sender != $._info[$._serviceNftId].objectAddress) {
+            revert NotRegistryService();
         }
-        _;       
+        _;
     }
 
-    /// @dev 
-    //  msg.sender - ONLY registry owner
-    //      registers ONLY valid type combinations 
-    //      CAN register contracts ONLY
-    //      CAN NOT register itself
+    constructor(address protocolOwner, address registryService, string memory serviceName, VersionPart majorVersion)
+    {
+        RegistryStorageV1 storage $ = _getStorage();
+
+        assert(address($._chainNftInternal) == address(0));
+
+        // TODO registry owner can change, while protocol is not?
+        $._protocolOwner = protocolOwner;
+
+        // deploy NFT 
+        $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
+        $._chainNft = IChainNft($._chainNftInternal);
+
+        // initial registry setup
+        _registerProtocol();
+
+        _registerRegistry();
+
+        _registerRegistryService(registryService, serviceName, majorVersion);
+
+        // set object parent relations
+        _setupValidObjectParentCombinations();
+
+        _registerInterface(type(IRegistry).interfaceId);
+        _registerInterface(type(IVersionable).interfaceId);
+        _registerInterface(type(IOwnable).interfaceId);
+    }
+
+    /// @dev registry protects only from tampering existing records and invalid types pairs
+    // TODO service registration means its approval for some type?
     function register(ObjectInfo memory info)
         external
-        onlyOwner
+        onlyRegistryService
         returns(NftId nftId)
     {
-        info.initialOwner = msg.sender; // enforce owner instead of check
+        RegistryStorageV1 storage $ = _getStorage();
 
-        _verifyContract(info);
+        uint256 mintedTokenId = $._chainNft.mint(
+            info.initialOwner,
+            EMPTY_URI);
+        nftId = toNftId(mintedTokenId);
 
-        nftId = _registerContract(info); 
+        // TODO move nftId out of info struct
+        // getters by nftId -> return struct without nftId
+        // getters by address -> return nftId AND struct
+        info.nftId = nftId;
+        $._info[nftId] = info;
 
-        // special case -> TODO unsafe to call service here -> add function register(info, serviceInfo) or what???
-        if(info.objectType == SERVICE()) {
-            IService service = IService(info.objectAddress);
-            if(service.supportsInterface(type(IService).interfaceId) == false) {
-                revert ServiceInterfaceNotSupported(service); 
-            }
+        ObjectType objectType = info.objectType;
+        ObjectType parentType = $._info[info.parentNftId].objectType; 
 
-            string memory serviceName = service.getName();
-            VersionPart majorVersion = service.getMajorVersion();
-            bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-
-            // service specific state
-            RegistryStorageV1 storage $ = _getStorage();
-            $._string[nftId] = serviceName;
-
-            if($._service[serviceNameHash][majorVersion] != address(0)) {
-                revert ServiceAlreadyRegistered(service);
-            }
-
-            $._service[serviceNameHash][majorVersion] = info.objectAddress;
-
-            emit LogServiceRegistration(address(service), serviceName, majorVersion); 
-        }
-    }
-    /// @dev 
-    // msg.sender - registrar
-    //      MUST BE a registered contract
-    //      MUST BE approved by registry owner
-    //      registers ONLY valid type combinations
-    //      registers ONLY within it's approval
-    //      CAN register contracts AND objects
-    //      CAN NOT register itself
-    // from - registrar's msg.sender 
-    //      either contract owner or registered parent contract
-    //      MUST NOT equal 0
-    //      MUST NOT equal registrar
-    function registerFrom(
-        address from,
-        ObjectInfo memory info
-    )
-        external
-        onlyWithApproval(info.objectType) 
-        returns(NftId nftId)
-    {
-        address registrar = msg.sender;
-
-        if(from == address(0)) {
-            revert FromIsZero();
-        }
-
-        if(from == registrar) {
-            revert FromIsRegistrar(); 
-        }
-
-        // TODO if any of parameters is "zero" -> usually expected behavior is revert
         if(info.objectAddress > address(0)) 
         {
-            info.initialOwner = from; // enforce instead of check
+            // TODO if need to add types latter -> at least call this check from registry service
+            // parent is registered + object-parent types are valid
+            if($._isValidContractCombination[objectType][parentType] == false) {
+                revert InvalidTypesCombination(objectType, parentType);
+            }
 
-            _verifyContract(info);
+            address contractAddress = info.objectAddress;
 
-            nftId = _registerContract(info);
+            if($._nftIdByAddress[contractAddress].gtz()) { 
+                revert ContractAlreadyRegistered(contractAddress);
+            }
+
+            $._nftIdByAddress[contractAddress] = nftId;
+
+            // special case
+            if(info.objectType == SERVICE())
+            {
+                (
+                    string memory serviceName,
+                    VersionPart majorVersion
+                ) = abi.decode(info.data, (string, VersionPart));
+                bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
+
+                // TODO MUST guarantee consistency of registerable.getVersion() and majorVersion here
+                // TODO update $._serviceNftId when registryService with new major version is registered? -> it is fixed in current setup -> upgrade registryService address?
+                // TODO do not use names -> each object type is registered by corresponding service -> done through approve() -> merge approve() and service type here?
+                if(
+                    majorVersion.toInt() > 1 &&
+                    $._service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)] == address(0)) {
+                    revert InvalidServiceVersion(majorVersion);
+                }
+                
+                if($._service[serviceNameHash][majorVersion] != address(0)) {
+                    revert ServiceNameAlreadyRegistered(serviceName, majorVersion);
+                }
+
+                $._string[nftId] = serviceName;
+                $._service[serviceNameHash][majorVersion] = contractAddress;
+
+                emit LogServiceNameRegistration(serviceName, majorVersion); 
+            }
         }
         else
         {
-            _verifyObject(registrar, from, info);
-
-            nftId = _registerInfo(info);
+            if($._isValidObjectCombination[objectType][parentType] == false) {
+                revert InvalidTypesCombination(objectType, parentType);
+            }
         }
+
+        emit LogRegistration(nftId, info.parentNftId, info.objectType, info.objectAddress, info.initialOwner);
+    }
+
+    function registerFrom(
+        address from, 
+        ObjectInfo memory info
+    ) external returns (NftId nftId) 
+    {
+        revert();
     }
     
 
@@ -206,22 +227,22 @@ contract Registry is
     //     CAN approve any combination specified in _isValidCombination
     //     CAN NOT approve itself
     function approve(
-        NftId registrarNftId,
+        NftId serviceNftId,
         ObjectType objectType,
-        ObjectType parentType
+        ObjectType parentType 
     ) 
         public
         onlyOwner()
     {
         RegistryStorageV1 storage $ = _getStorage();
-        address registrarAddress = $._info[registrarNftId].objectAddress;
+        address serviceAddress = $._info[serviceNftId].objectAddress;
             
-        if($._nftIdByAddress[registrarAddress].eqz()) {
-            revert NotRegisteredContract(registrarNftId);
+        if($._nftIdByAddress[serviceAddress].eqz()) {
+            revert NotRegisteredContract(serviceNftId);
         }
 
-        if($._info[registrarNftId].objectType != SERVICE()) {
-            revert NotService(registrarNftId);
+        if($._info[serviceNftId].objectType != SERVICE()) {
+            revert NotService(serviceNftId);
         }
 
         if(
@@ -230,14 +251,16 @@ contract Registry is
             revert InvalidTypesCombination(objectType, parentType);
         }
 
-        $._isApproved[registrarNftId][objectType] = true;
+        $._isApproved[serviceNftId][objectType] = true;
 
-        emit LogApproval(registrarNftId, objectType);
+        emit LogApproval(serviceNftId, objectType);
     }
 
+    // TODO allowance by address?
     /// @dev returns false for registry owner nft
+    // TODO but registry owner can upgrade registry service not to check allowance....
     function allowance(
-        NftId nftId, 
+        NftId nftId,
         ObjectType object
     ) 
         public
@@ -283,7 +306,7 @@ contract Registry is
         return _getStorage()._nftIdByAddress[object].gtz();
     }
 
-    function getServiceName(NftId nftId) external view returns (string memory name) {
+    function getServiceName(NftId nftId) external view returns (string memory) {
         return _getStorage()._string[nftId];
     }
 
@@ -291,7 +314,7 @@ contract Registry is
     function getServiceAddress(
         string memory serviceName, 
         VersionPart majorVersion
-    ) external view override returns (address) 
+    ) external view returns (address)
     {
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
         return _getStorage()._service[serviceNameHash][majorVersion];
@@ -311,162 +334,29 @@ contract Registry is
     } 
 
     // from IOwnable
-    function getOwner() public view override returns (address owner) {
+    function getOwner() public view returns (address owner) {
         return ownerOf(address(this));
-    }
-
-    // from IRegisterable
-    function getRegistry() external view override returns (IRegistry) {
-        return this;
-    }
-
-    function getInitialInfo() 
-        external 
-        view 
-        override 
-        returns (ObjectInfo memory, bytes memory)
-    {
-        RegistryStorageV1 storage $ = _getStorage();
-        return (
-            $._info[$._nftId],
-            bytes("")
-        );
-    }
-
-    function getNftId() external view override (IRegisterable) returns (NftId) {
-        return _getStorage()._nftId;
     }
 
     // Internals
 
-    function _verifyContract(
-        ObjectInfo memory info
-    )
-        internal
-        view
-    {
-        RegistryStorageV1 storage $ = _getStorage();
-
-        ObjectType objectType = info.objectType;
-        ObjectType parentType = $._info[info.parentNftId].objectType;
-
-        if($._isValidContractCombination[objectType][parentType] == false) {
-            revert InvalidTypesCombination(objectType, parentType);
-        }
-
-        // address(0).codehash is 0
-        bytes32 codeHash = info.objectAddress.codehash;
-        if(
-            codeHash == 0 ||
-            codeHash == EOA_CODEHASH) {
-            revert NotContractAddress();
-        }
-
-        if(info.objectAddress == info.initialOwner) {
-            revert SelfRegistration();
-        }
-        
-        if($._nftIdByAddress[info.objectAddress].gtz()) { 
-            revert ContractAlreadyRegistered(info.objectAddress);
-        }
-        // TODO why do we need it here:
-        // 1) contract owner is registryOwner
-        //   'info.objectAddress != owner' guarantees that registryOwner will not be able to regiter itself -> registryOwner allways not registered... 
-        //    if registryOwner wants to become registered/registrar in the future? -> it MUST transfer ownership first -> thus will became unable to use register()
-        //    then if _nftId transfered to registered contract -> it MUST not be able to use register() -> catched by this require
-        // 2) contract owner is not registryOwner 
-        //    situations like: owner is Product which calls RegistryService.registerInstance() -> Product will become an owner of Instance -> catched by this require 
-        if($._nftIdByAddress[info.initialOwner].gtz()) {
-            revert ContractOwnerIsRegistered(info.initialOwner);
-        }
-    }
-
-    function _verifyObject(
-        address registrar,
-        address parent,
-        ObjectInfo memory info
-    )
-        internal
-        view
-    {
-        RegistryStorageV1 storage $ = _getStorage();
-
-        ObjectType objectType = info.objectType;
-        ObjectType parentType = $._info[info.parentNftId].objectType;
-
-        if($._isValidObjectCombination[objectType][parentType] == false) {
-            revert InvalidTypesCombination(objectType, parentType);
-        }
-
-        if(info.objectAddress > address(0)) {
-            revert ObjectAddressNotZero();
-        }
-
-        if(info.initialOwner == address(0)) {
-            revert InitialOwnerIsZero();
-        }
-
-        if(info.initialOwner == parent) {
-            revert InitialOwnerIsParent();
-        }
-
-        if(info.initialOwner == registrar) {
-            revert InitialOwnerIsRegistrar();
-        }
-
-        if($._nftIdByAddress[parent].eqz()) {
-            revert ParentNotRegistered(parent);
-        }
-
-        if($._nftIdByAddress[parent] != info.parentNftId) {
-            revert ParentMismatch(info.parentNftId); 
-        }
-    }
-
-    function _registerInfo(ObjectInfo memory info)
-        internal
-        returns(NftId nftId)
-    {
-        RegistryStorageV1 storage $ = _getStorage();
-        uint256 mintedTokenId = $._chainNft.mint(
-            info.initialOwner,
-            EMPTY_URI);
-        nftId = toNftId(mintedTokenId);
-
-        info.nftId = nftId;
-        $._info[nftId] = info;
-
-        emit LogRegistration(nftId, info.parentNftId, info.objectType, info.objectAddress, info.initialOwner);
-    }
-
-    function _registerContract(ObjectInfo memory info)
-        internal
-        returns(NftId nftId)
-    {
-        nftId = _registerInfo(info);
-
-        RegistryStorageV1 storage $ = _getStorage();
-        $._nftIdByAddress[info.objectAddress] = nftId;
-    }
     /// @dev protocol registration used to anchor the dip ecosystem relations
     function _registerProtocol() 
         internal
-        onlyInitializing
-        virtual
     {
         RegistryStorageV1 storage $ = _getStorage();
 
         uint256 protocolId = $._chainNftInternal.PROTOCOL_NFT_ID();
         NftId protocolNftId = toNftId(protocolId);
 
-        $._chainNftInternal.mint($._protocolOwner, protocolId);
+        $._chainNftInternal.mint(NFT_LOCK_ADDRESS, protocolId);
 
         $._info[protocolNftId] = ObjectInfo(
             protocolNftId,
             zeroNftId(), // parent
             PROTOCOL(),
             address(0),
-            $._protocolOwner,
+            NFT_LOCK_ADDRESS,//$._protocolOwner,
             ""
         );
     }
@@ -475,8 +365,6 @@ contract Registry is
     /// might also register the global registry when not on mainnet
     function _registerRegistry() 
         internal
-        onlyInitializing
-        virtual
         returns(NftId registryNftId) 
     {
         RegistryStorageV1 storage $ = _getStorage();
@@ -507,19 +395,19 @@ contract Registry is
             "" 
         );
         $._nftIdByAddress[address(this)] = registryNftId;
+        $._registryNftId = registryNftId;
     }
 
 
     /// @dev global registry registration for non mainnet registries
     function _registerGlobalRegistry() 
         internal
-        onlyInitializing
-        virtual
     {
         RegistryStorageV1 storage $ = _getStorage();
 
         uint256 globalRegistryId = $._chainNftInternal.GLOBAL_REGISTRY_ID();
-        $._chainNftInternal.mint($._protocolOwner, globalRegistryId);
+
+        $._chainNftInternal.mint(NFT_LOCK_ADDRESS, globalRegistryId);
 
         NftId globalRegistryNftId = toNftId(globalRegistryId);
 
@@ -528,34 +416,67 @@ contract Registry is
             toNftId($._chainNftInternal.PROTOCOL_NFT_ID()), // parent
             REGISTRY(),
             address(0), // contract address
-            $._protocolOwner,
+            NFT_LOCK_ADDRESS,//$._protocolOwner,
             "" // data
         );
     }
 
-    /// @dev defines which object - parent types relations are allowed to register
-    // IMPORTANT: each object type MUST have the only parent type
-    // IMPORTANT: DO NOT use "zero type" here
-    function _setupValidObjectParentCombinations() 
-        internal 
-        onlyInitializing 
+    function _registerRegistryService(address serviceAddress, string memory serviceName, VersionPart majorVersion)
+        internal
+        returns(NftId serviceNftId) 
     {
         RegistryStorageV1 storage $ = _getStorage();
-        // registry as parent
+
+        uint256 serviceId = $._chainNftInternal.calculateTokenId(3);
+        serviceNftId = toNftId(serviceId);        
+
+        $._chainNftInternal.mint(NFT_LOCK_ADDRESS, serviceId);
+
+        $._info[serviceNftId] = ObjectInfo(
+            serviceNftId,
+            $._registryNftId,
+            SERVICE(),
+            serviceAddress, 
+            NFT_LOCK_ADDRESS,//$._protocolOwner,
+            "" 
+        );
+
+        $._nftIdByAddress[serviceAddress] = serviceNftId;
+
+        bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
+        $._service[serviceNameHash][majorVersion] = serviceAddress;
+        $._string[serviceNftId] = serviceName;
+        $._serviceNftId = serviceNftId;
+    }
+
+    /// @dev defines which object - parent types relations are allowed to register
+    // IMPORTANT: 
+    // 1) EACH object type MUST have only one parent type across ALL mappings
+    // 2) DO NOT use object type (e.g. POLCY, BUNDLE, STAKE) as parent type
+    // 3) DO NOT use REGISTRY as object type
+    // 2) DO NOT use PROTOCOL and "zeroObjectType"
+    function _setupValidObjectParentCombinations() 
+        internal 
+    {
+        RegistryStorageV1 storage $ = _getStorage();
+
+        // registry as parent, ONLY registry owner
         $._isValidContractCombination[TOKEN()][REGISTRY()] = true;
         $._isValidContractCombination[SERVICE()][REGISTRY()] = true;
+
+        // registry as parent, ONLY approved
         $._isValidContractCombination[INSTANCE()][REGISTRY()] = true;
 
-        // instance as parent
+        // instance as parent, ONLY approved
         $._isValidContractCombination[PRODUCT()][INSTANCE()] = true;
         $._isValidContractCombination[DISTRIBUTION()][INSTANCE()] = true;
         $._isValidContractCombination[ORACLE()][INSTANCE()] = true;
         $._isValidContractCombination[POOL()][INSTANCE()] = true;
 
-        // product as parent
+        // product as parent, ONLY approved
         $._isValidObjectCombination[POLICY()][PRODUCT()] = true;
 
-        // pool as parent
+        // pool as parent, ONLY approved
         $._isValidObjectCombination[BUNDLE()][POOL()] = true;
         $._isValidObjectCombination[STAKE()][POOL()] = true;
     }
@@ -570,37 +491,4 @@ contract Registry is
         }
     }
 
-    // From Versionable 
-
-    /// @dev top level initializer function
-    // Expected to be called from proxy constructor,
-    // thus msg.sender is proxy deployer, NOT protocolOwner 
-    // The protocol owner will get ownership of the
-    // protocol nft and the global registry nft (both minted here) 
-    function _initialize(address protocolOwner, bytes memory data)
-        internal
-        initializer
-        virtual override
-    {
-        RegistryStorageV1 storage $ = _getStorage();
-
-        assert(address($._chainNftInternal) == address(0));
-
-        $._protocolOwner = protocolOwner;
-
-        // deploy NFT 
-        $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
-        $._chainNft = IChainNft($._chainNftInternal);
-        
-        // initial registry setup
-        _registerProtocol();
-        $._nftId = _registerRegistry();
-
-        // set object parent relations
-        _setupValidObjectParentCombinations();
-
-        _registerInterface(type(IRegistry).interfaceId);
-        _registerInterface(type(IRegisterable).interfaceId);
-        _registerInterface(type(IVersionable).interfaceId);
-    }
 }

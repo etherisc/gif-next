@@ -3,16 +3,17 @@ pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin5/contracts/utils/introspection/IERC165.sol";
 
+import {IOwnable} from "../shared/IOwnable.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 import {VersionPart} from "../types/Version.sol";
 import {IChainNft} from "./IChainNft.sol";
 
-interface IRegistry is IERC165 {
+interface IRegistry is IERC165, IOwnable {
 
     event LogRegistration(NftId indexed nftId, NftId parentNftId, ObjectType objectType, address objectAddress, address initialOwner);
 
-    event LogServiceRegistration(address indexed service, string serviceName, VersionPart majorVersion); 
+    event LogServiceNameRegistration(string serviceName, VersionPart majorVersion); 
 
     event LogApproval(NftId indexed nftId, ObjectType objectType);
 
@@ -23,7 +24,7 @@ interface IRegistry is IERC165 {
         address objectAddress;
         address initialOwner;
         bytes data;
-    }
+    }// TODO delete nftId and initialOwner(if not used) from struct
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
     

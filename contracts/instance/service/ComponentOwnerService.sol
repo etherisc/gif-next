@@ -26,8 +26,9 @@ import {Version, VersionLib} from "../../types/Version.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IProductComponent} from "../../components/IProductComponent.sol";
-import {ServiceBase} from "../base/ServiceBase.sol";
+import {IService} from "../base/IService.sol";
 import {IComponentOwnerService} from "./IComponentOwnerService.sol";
+import {ServiceBase} from "../base/ServiceBase.sol";
 
 contract ComponentOwnerService is
     ServiceBase,
@@ -53,7 +54,7 @@ contract ComponentOwnerService is
         _registerInterface(type(IComponentOwnerService).interfaceId);
     }
 
-    function getName() external pure override returns(string memory name) {
+    function getName() public pure override(IService, ServiceBase) returns(string memory name) {
         return NAME;
     }
 

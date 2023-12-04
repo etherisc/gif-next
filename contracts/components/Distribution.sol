@@ -12,6 +12,7 @@ import {IDistributionComponent} from "./IDistributionComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
+import {IBaseComponent} from "./IBaseComponent.sol";
 
 contract Distribution is
     BaseComponent,
@@ -49,6 +50,7 @@ contract Distribution is
         _productService = _instance.getProductService();
 
         _registerInterface(type(IDistributionComponent).interfaceId);
+        _registerInterface(type(IBaseComponent).interfaceId);
     }
 
 

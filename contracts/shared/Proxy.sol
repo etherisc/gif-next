@@ -43,18 +43,42 @@ contract ProxyDeployer is Ownable {
     }
 
     /// @dev deploy initial contract
-    function deploy(address initialImplementation, bytes memory deployData)
+    function deploy(address initialImplementation, bytes memory initializationData)
         external
         onlyOwner()
         returns (IVersionable versionable)
     {
         require(!_isDeployed, "ERROR:PRX-010:ALREADY_DEPLOYED");
 
-        address currentProxyOwner = owner();
-        address initialProxyAdminOwner = address(this);
-        bytes memory data = getDeployData(initialImplementation, currentProxyOwner, deployData);
+        address currentProxyOwner = owner(); // used by implementation
+        address initialProxyAdminOwner = address(this); // used by proxy
+        bytes memory data = getDeployData(initialImplementation, currentProxyOwner, initializationData);
         
         _proxy = new ProxyWithProxyAdminGetter(
+            initialImplementation,
+            initialProxyAdminOwner,
+            data
+        );
+
+        _isDeployed = true;
+        versionable = IVersionable(address(_proxy));
+
+        emit ProxyDeployed(address(_proxy));
+    }
+
+    function deployWithSalt(address initialImplementation, bytes memory initializationData, bytes32 salt)
+        external
+        onlyOwner()
+        returns (IVersionable versionable)
+    {
+        require(!_isDeployed, "ERROR:PRX-011:ALREADY_DEPLOYED");
+
+        address currentProxyOwner = owner(); // used by implementation
+        address initialProxyAdminOwner = address(this); // used by proxy
+        bytes memory data = getDeployData(initialImplementation, currentProxyOwner, initializationData);
+
+        // via create2
+        _proxy = new ProxyWithProxyAdminGetter{salt: salt}(
             initialImplementation,
             initialProxyAdminOwner,
             data

@@ -94,6 +94,7 @@ library VersionLib {
 
     // TODO check for overflow?
     function toVersion(uint64 versionNumber) external pure returns(Version) {
+        //assert(versionNumber <= type(Version).max);
         return Version.wrap(uint24(versionNumber));
     }
 

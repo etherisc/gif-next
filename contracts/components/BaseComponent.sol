@@ -35,7 +35,8 @@ abstract contract BaseComponent is
         address initialOwner
     )
     {
-        _initializeRegisterable(registry, instanceNftId, componentType, initialOwner);
+        bytes memory data = "";
+        _initializeRegisterable(registry, instanceNftId, componentType, initialOwner, data);
 
         IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
         _instance = IInstance(instanceInfo.objectAddress);

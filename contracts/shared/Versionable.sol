@@ -43,7 +43,7 @@ abstract contract Versionable is
         _initialize(activatedBy, data);
     }
 
-
+    // TODO activatedBy MUST ALWAYS be an owner?
     function upgrade(
         address implementation,
         address activatedBy,
@@ -62,15 +62,15 @@ abstract contract Versionable is
 
     function getVersion() public pure virtual returns(Version);
 
-    function getVersionCount() external view override returns(uint256) {
+    function getVersionCount() public view override returns(uint256) {
         return _getVersionableStorage()._versions.length;
     }
 
-    function getVersion(uint256 idx) external view override returns(Version) {
+    function getVersion(uint256 idx) public view override returns(Version) {
         return _getVersionableStorage()._versions[idx];
     }
 
-    function getVersionInfo(Version _version) external override view returns(VersionInfo memory) {
+    function getVersionInfo(Version _version) public override view returns(VersionInfo memory) {
         return _getVersionableStorage()._versionHistory[_version];
     }
 

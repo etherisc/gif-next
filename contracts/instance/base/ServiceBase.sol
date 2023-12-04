@@ -16,9 +16,10 @@ abstract contract ServiceBase is
     Versionable,
     IService
 {
+    function getName() public pure virtual override returns(string memory name);
 
-    function getMajorVersion() external view override returns(VersionPart majorVersion) {
-        return this.getVersion().toMajorPart();
+    function getMajorVersion() public view virtual override returns(VersionPart majorVersion) {
+        return getVersion().toMajorPart(); 
     }
 
     // from Versionable
@@ -28,14 +29,15 @@ abstract contract ServiceBase is
         virtual override (IVersionable, Versionable)
         returns(Version)
     {
-        return VersionLib.toVersion(3,0,0);
+        return VersionLib.toVersion(1,0,0);
     }
 
     function _initializeServiceBase(address registry, NftId registryNftId, address initialOwner)
         internal 
         //onlyInitializing //TODO uncomment when "fully" upgradeable
-    {
-        _initializeRegisterable(registry, registryNftId, SERVICE(), initialOwner);
+    {// service must provide its name and version upon registration
+        bytes memory data = abi.encode(getName(), getMajorVersion());
+        _initializeRegisterable(registry, registryNftId, SERVICE(), initialOwner, data);
         _registerInterface(type(IService).interfaceId);
     }
 }

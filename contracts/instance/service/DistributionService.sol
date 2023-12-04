@@ -13,6 +13,8 @@ import {Version, VersionLib} from "../../types/Version.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
+import {IService} from "../base/IService.sol";
+import {ServiceBase} from "../base/ServiceBase.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 
@@ -32,7 +34,7 @@ contract DistributionService is
     }
 
 
-    function getName() external pure override returns(string memory name) {
+    function getName() public pure override(IService, ServiceBase) returns(string memory name) {
         return NAME;
     }
 
