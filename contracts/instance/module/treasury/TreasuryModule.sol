@@ -25,10 +25,10 @@ abstract contract TreasuryModule is
     mapping(NftId componentNftId => TokenHandler tokenHandler) internal _tokenHandler;
     Fee internal _zeroFee;
     
-    modifier onlyRegistryService() virtual {
+    modifier onlyComponentOwnerService() virtual {
         require(
-            msg.sender == address(this.getRegistryService()),
-            "ERROR:CMP-001:NOT_REGISTRY_SERVICE"
+            msg.sender == address(this.getComponentOwnerService()),
+            "ERROR:CMP-001:NOT_COPONENT_OWNER_SERVICE"
         );
         _;
     }
@@ -44,7 +44,7 @@ abstract contract TreasuryModule is
         TreasuryInfo memory setup
     ) 
         external
-        onlyRegistryService
+        onlyComponentOwnerService
     {
         NftId poolNftId = setup.poolNftId;
         NftId distributionNftId = setup.distributionNftId;

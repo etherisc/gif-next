@@ -28,10 +28,10 @@ abstract contract PoolModule is
 
 
     // TODO try to keep 1 modifier in 1 place...
-    modifier onlyRegistryService() virtual {
+    modifier onlyComponentOwnerService() virtual {
         require(
-            msg.sender == address(this.getRegistryService()),
-            "ERROR:CMP-001:NOT_REGISTRY_SERVICE"
+            msg.sender == address(this.getComponentOwnerService()),
+            "ERROR:CMP-001:NOT_COMPONENT_OWNER_SERVICE"
         );
         _;
     }
@@ -53,7 +53,7 @@ abstract contract PoolModule is
         PoolInfo memory info
     )
         public
-        onlyRegistryService
+        onlyComponentOwnerService
         override
     {
         _create(POOL(), nftId, abi.encode(info));

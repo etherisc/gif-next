@@ -197,8 +197,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         // TODO add validations (see create bundle in pool service)
 
-        policyNftId = getRegistry().registerFrom(
-            msg.sender,
+        policyNftId = getRegistryService().registerPolicy(
             IRegistry.ObjectInfo(
                 zeroNftId(),
                 productInfo.nftId,

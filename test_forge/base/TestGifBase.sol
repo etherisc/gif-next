@@ -239,7 +239,7 @@ contract TestGifBase is Test {
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
         console.log("global registry nft id", chainNft.GLOBAL_REGISTRY_ID());
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
-        console.log("registry version %s\n", registry.getVersion().toInt());
+        //console.log("registry version %s\n", registry.getVersion().toInt());
 
         console.log("registry service name", registryService.NAME());
         console.log("registry service implementation deployed at", address(registryServiceImplementation));  
@@ -263,6 +263,10 @@ contract TestGifBase is Test {
         
         componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
         registryService.registerService(componentOwnerService);
+        registry.approve(componentOwnerService.getNftId(), PRODUCT(), INSTANCE());
+        registry.approve(componentOwnerService.getNftId(), POOL(), INSTANCE());
+        registry.approve(componentOwnerService.getNftId(), DISTRIBUTION(), INSTANCE());
+        registry.approve(componentOwnerService.getNftId(), ORACLE(), INSTANCE());
 
         /* solhint-disable */
         console.log("service name", componentOwnerService.NAME());
@@ -403,7 +407,7 @@ contract TestGifBase is Test {
             performanceFee,
             poolOwner);
 
-        registryService.registerComponent(pool, POOL());
+        componentOwnerService.register(pool, POOL());
 
         uint256 nftId = pool.getNftId().toInt();
         uint256 state = instance.getState(pool.getNftId().toKey32(POOL())).toInt();
@@ -428,7 +432,7 @@ contract TestGifBase is Test {
             initialDistributionFee,
             distributionOwner);
 
-        registryService.registerComponent(distribution, DISTRIBUTION());
+        componentOwnerService.register(distribution, DISTRIBUTION());
 
         uint256 nftId = distribution.getNftId().toInt();
         uint256 state = instance.getState(distribution.getNftId().toKey32(DISTRIBUTION())).toInt();
@@ -452,7 +456,8 @@ contract TestGifBase is Test {
             processingFee,
             productOwner);
 
-        registryService.registerComponent(product, PRODUCT());
+        componentOwnerService.register(product, PRODUCT());
+        //registryService.registerComponent(product, PRODUCT());
 
         uint256 nftId = product.getNftId().toInt();
         uint256 state = instance.getState(product.getNftId().toKey32(PRODUCT())).toInt();

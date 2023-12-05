@@ -28,7 +28,6 @@ import {ITreasuryModule} from "../../contracts/instance/module/treasury/ITreasur
 import {IInstanceBase} from "../../contracts/instance/base/IInstanceBase.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 
-import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {IComponentOwnerService} from "../../contracts/instance/service/IComponentOwnerService.sol";
 import {IDistributionService} from "../../contracts/instance/service/IDistributionService.sol";
 import {IProductService} from "../../contracts/instance/service/IProductService.sol";
@@ -51,7 +50,6 @@ contract TestInstanceModuleAccess  is
 
     function hasRole(RoleId role, address member) public view override (AccessModule) returns (bool) { return super.hasRole(role, member); }
 
-    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override returns(IComponentOwnerService service) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override returns(IProductService service) { return _productService; }
@@ -74,7 +72,6 @@ contract TestInstanceModuleBundle  is
     function getRegistry() public view override (Registerable) returns (IRegistry registry) { return super.getRegistry(); }
     function getKeyValueStore() public view override (InstanceBase) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
-    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IBundleModule, IInstanceBase) returns(IProductService service) { return _productService; }
@@ -93,7 +90,6 @@ contract TestInstanceModuleComponent  is
 
     }
 
-    function getRegistryService() external view override (IComponentModule, IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IComponentModule, IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
@@ -114,7 +110,6 @@ contract TestInstanceModulePolicy  is
 
     function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IPolicyModule, IInstanceBase) returns(IProductService service) { return _productService; }
@@ -133,8 +128,7 @@ contract TestInstanceModulePool  is
 
     }
 
-    function getRegistryService() external view override (IInstanceBase, IPoolModule) returns(IRegistryService) { return _registryService; }
-    function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getComponentOwnerService() external view override (IInstanceBase, IPoolModule) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IPoolModule, IInstanceBase) returns(IPoolService service) { return _poolService; }
@@ -152,8 +146,7 @@ contract TestInstanceModuleTreasury  is
 
     }
 
-    function getRegistryService() external view override (IInstanceBase, ITreasuryModule) returns(IRegistryService) { return _registryService; }
-    function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getComponentOwnerService() external view override (IInstanceBase, ITreasuryModule) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IInstanceBase) returns(IPoolService service) { return _poolService; }
@@ -171,7 +164,6 @@ contract TestInstanceModuleDistribution is
 
     }
 
-    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
@@ -190,7 +182,6 @@ contract TestInstanceModuleRisk is
 
     }
 
-    function getRegistryService() external view override (IInstanceBase) returns(IRegistryService) { return _registryService; }
     function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }

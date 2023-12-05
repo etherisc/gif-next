@@ -11,8 +11,6 @@ import {NftId, toNftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
 
-import {Versionable} from "../shared/Versionable.sol";
-import {IVersionable} from "../shared/Versionable.sol";
 import {IOwnable} from "../shared/IOwnable.sol";
 import {ERC165} from "../shared/ERC165.sol";
 
@@ -29,7 +27,6 @@ import {ERC165} from "../shared/ERC165.sol";
 
 contract Registry is
     ERC165,
-    Versionable,
     IRegistry
 {
     // register
@@ -47,47 +44,39 @@ contract Registry is
     string public constant EMPTY_URI = "";
 
     address constant public NFT_LOCK_ADDRESS = address(0x1);
-    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.registry.Registry.sol")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 private constant REGISTRY_LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
 
-    // IMPORTANT Every new version must implement its own storage struct
-    // copy paste previous version and append changes to the end 
-    // @custom:storage-location erc7201:gif-next.contracts.registry.Registry.sol
-    struct RegistryStorageV1 {
+    mapping(NftId nftId => ObjectInfo info) _info;
+    mapping(address object => NftId nftId) _nftIdByAddress;
 
-        mapping(NftId nftId => ObjectInfo info) _info;
-        mapping(address object => NftId nftId) _nftIdByAddress;
+    mapping(NftId registrator => mapping(
+            ObjectType objectType => bool)) _isApproved;
 
-        mapping(NftId registrator => mapping(
-                ObjectType objectType => bool)) _isApproved;
+    mapping(ObjectType objectType => mapping(
+            ObjectType parentType => bool)) _isValidContractCombination;
 
-        mapping(ObjectType objectType => mapping(
-                ObjectType parentType => bool)) _isValidContractCombination;
+    mapping(ObjectType objectType => mapping(
+            ObjectType parentType => bool)) _isValidObjectCombination;
 
-        mapping(ObjectType objectType => mapping(
-                ObjectType parentType => bool)) _isValidObjectCombination;
+    mapping(NftId nftId => string name) _string;
+    mapping(bytes32 serviceNameHash => mapping(
+            VersionPart majorVersion => address service)) _service;
 
-        mapping(NftId nftId => string name) _string;
-        mapping(bytes32 serviceNameHash => mapping(
-                VersionPart majorVersion => address service)) _service;
+    NftId _registryNftId;
+    NftId _serviceNftId; // set in stone upon registry creation
+    IChainNft _chainNft;
+    ChainNft _chainNftInternal;
 
-        NftId _registryNftId;
-        NftId _serviceNftId; // set in stone upon registry creation
-        IChainNft _chainNft;
-        ChainNft _chainNftInternal;
-
-        /// @dev will own protocol, global registry, registry and registry service nfts minted during creation
-        // TODO registry nft can be transfered while protocol, global registry and registry service nfts are not transferable
-        // TODO get owner from one place -> nft contract
-        address _protocolOwner;
-    }
+    /// @dev will own protocol, global registry, registry and registry service nfts minted during creation
+    // TODO registry nft can be transfered while protocol, global registry and registry service nfts are not transferable
+    // TODO get owner from one place -> nft contract
+    address _protocolOwner;
 
     /*
     modifier onlyInitialOwner() {
-        RegistryStorageV1 storage $ = _getStorage();
+        
         if(
             msg.sender != getOwner() ||
-            msg.sender != $._info[$._registryNftId].initialOwner) {
+            msg.sender != _info[_registryNftId].initialOwner) {
             revert NotInitialOwner();
         }
     }*/
@@ -100,8 +89,8 @@ contract Registry is
     }
 
     modifier onlyRegistryService() {
-        RegistryStorageV1 storage $ = _getStorage();
-        if(msg.sender != $._info[$._serviceNftId].objectAddress) {
+        
+        if(msg.sender != _info[_serviceNftId].objectAddress) {
             revert NotRegistryService();
         }
         _;
@@ -109,16 +98,12 @@ contract Registry is
 
     constructor(address protocolOwner, address registryService, string memory serviceName, VersionPart majorVersion)
     {
-        RegistryStorageV1 storage $ = _getStorage();
-
-        assert(address($._chainNftInternal) == address(0));
-
         // TODO registry owner can change, while protocol is not?
-        $._protocolOwner = protocolOwner;
+        _protocolOwner = protocolOwner;
 
         // deploy NFT 
-        $._chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
-        $._chainNft = IChainNft($._chainNftInternal);
+        _chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
+        _chainNft = IChainNft(_chainNftInternal);
 
         // initial registry setup
         _registerProtocol();
@@ -131,7 +116,6 @@ contract Registry is
         _setupValidObjectParentCombinations();
 
         _registerInterface(type(IRegistry).interfaceId);
-        _registerInterface(type(IVersionable).interfaceId);
         _registerInterface(type(IOwnable).interfaceId);
     }
 
@@ -142,9 +126,7 @@ contract Registry is
         onlyRegistryService
         returns(NftId nftId)
     {
-        RegistryStorageV1 storage $ = _getStorage();
-
-        uint256 mintedTokenId = $._chainNft.mint(
+        uint256 mintedTokenId = _chainNft.mint(
             info.initialOwner,
             EMPTY_URI);
         nftId = toNftId(mintedTokenId);
@@ -153,26 +135,26 @@ contract Registry is
         // getters by nftId -> return struct without nftId
         // getters by address -> return nftId AND struct
         info.nftId = nftId;
-        $._info[nftId] = info;
+        _info[nftId] = info;
 
         ObjectType objectType = info.objectType;
-        ObjectType parentType = $._info[info.parentNftId].objectType; 
+        ObjectType parentType = _info[info.parentNftId].objectType; 
 
         if(info.objectAddress > address(0)) 
         {
             // TODO if need to add types latter -> at least call this check from registry service
             // parent is registered + object-parent types are valid
-            if($._isValidContractCombination[objectType][parentType] == false) {
+            if(_isValidContractCombination[objectType][parentType] == false) {
                 revert InvalidTypesCombination(objectType, parentType);
             }
 
             address contractAddress = info.objectAddress;
 
-            if($._nftIdByAddress[contractAddress].gtz()) { 
+            if(_nftIdByAddress[contractAddress].gtz()) { 
                 revert ContractAlreadyRegistered(contractAddress);
             }
 
-            $._nftIdByAddress[contractAddress] = nftId;
+            _nftIdByAddress[contractAddress] = nftId;
 
             // special case
             if(info.objectType == SERVICE())
@@ -184,27 +166,27 @@ contract Registry is
                 bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
 
                 // TODO MUST guarantee consistency of registerable.getVersion() and majorVersion here
-                // TODO update $._serviceNftId when registryService with new major version is registered? -> it is fixed in current setup -> upgrade registryService address?
+                // TODO update _serviceNftId when registryService with new major version is registered? -> it is fixed in current setup -> upgrade registryService address?
                 // TODO do not use names -> each object type is registered by corresponding service -> done through approve() -> merge approve() and service type here?
                 if(
                     majorVersion.toInt() > 1 &&
-                    $._service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)] == address(0)) {
+                    _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)] == address(0)) {
                     revert InvalidServiceVersion(majorVersion);
                 }
                 
-                if($._service[serviceNameHash][majorVersion] != address(0)) {
+                if(_service[serviceNameHash][majorVersion] != address(0)) {
                     revert ServiceNameAlreadyRegistered(serviceName, majorVersion);
                 }
 
-                $._string[nftId] = serviceName;
-                $._service[serviceNameHash][majorVersion] = contractAddress;
+                _string[nftId] = serviceName;
+                _service[serviceNameHash][majorVersion] = contractAddress;
 
                 emit LogServiceNameRegistration(serviceName, majorVersion); 
             }
         }
         else
         {
-            if($._isValidObjectCombination[objectType][parentType] == false) {
+            if(_isValidObjectCombination[objectType][parentType] == false) {
                 revert InvalidTypesCombination(objectType, parentType);
             }
         }
@@ -234,24 +216,23 @@ contract Registry is
         public
         onlyOwner()
     {
-        RegistryStorageV1 storage $ = _getStorage();
-        address serviceAddress = $._info[serviceNftId].objectAddress;
+        address serviceAddress = _info[serviceNftId].objectAddress;
             
-        if($._nftIdByAddress[serviceAddress].eqz()) {
+        if(_nftIdByAddress[serviceAddress].eqz()) {
             revert NotRegisteredContract(serviceNftId);
         }
 
-        if($._info[serviceNftId].objectType != SERVICE()) {
+        if(_info[serviceNftId].objectType != SERVICE()) {
             revert NotService(serviceNftId);
         }
 
         if(
-            $._isValidContractCombination[objectType][parentType] == false &&
-            $._isValidObjectCombination[objectType][parentType] == false) {
+            _isValidContractCombination[objectType][parentType] == false &&
+            _isValidObjectCombination[objectType][parentType] == false) {
             revert InvalidTypesCombination(objectType, parentType);
         }
 
-        $._isApproved[serviceNftId][objectType] = true;
+        _isApproved[serviceNftId][objectType] = true;
 
         emit LogApproval(serviceNftId, objectType);
     }
@@ -267,47 +248,47 @@ contract Registry is
         view 
         returns (bool)
     {
-        return _getStorage()._isApproved[nftId][object];
+        return _isApproved[nftId][object];
     }
 
     // from IRegistry
     function getObjectCount() external view override returns (uint256) {
-        RegistryStorageV1 storage $ = _getStorage();
-        return $._chainNft.totalSupply();
+        
+        return _chainNft.totalSupply();
     }
 
     function getNftId(address object) external view override returns (NftId id) {
-        return _getStorage()._nftIdByAddress[object];
+        return _nftIdByAddress[object];
     }
 
     function ownerOf(NftId nftId) public view override returns (address) {
-        return _getStorage()._chainNft.ownerOf(nftId.toInt());
+        return _chainNft.ownerOf(nftId.toInt());
     }
 
     function ownerOf(address contractAddress) public view returns (address) {
-        RegistryStorageV1 storage $ = _getStorage();
-        return $._chainNft.ownerOf($._nftIdByAddress[contractAddress].toInt());
+        
+        return _chainNft.ownerOf(_nftIdByAddress[contractAddress].toInt());
     }
 
     function getObjectInfo(NftId nftId) external view override returns (ObjectInfo memory) {
-        return _getStorage()._info[nftId];
+        return _info[nftId];
     }
 
     function getObjectInfo(address object) external view override returns (ObjectInfo memory) {
-        RegistryStorageV1 storage $ = _getStorage();
-        return $._info[$._nftIdByAddress[object]];
+        
+        return _info[_nftIdByAddress[object]];
     }
 
     function isRegistered(NftId nftId) public view override returns (bool) {
-        return _getStorage()._info[nftId].objectType.gtz();
+        return _info[nftId].objectType.gtz();
     }
 
     function isRegistered(address object) external view override returns (bool) {
-        return _getStorage()._nftIdByAddress[object].gtz();
+        return _nftIdByAddress[object].gtz();
     }
 
     function getServiceName(NftId nftId) external view returns (string memory) {
-        return _getStorage()._string[nftId];
+        return _string[nftId];
     }
 
     // special case to retrive a gif service
@@ -317,46 +298,39 @@ contract Registry is
     ) external view returns (address)
     {
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-        return _getStorage()._service[serviceNameHash][majorVersion];
+        return _service[serviceNameHash][majorVersion];
     }
 
     function getProtocolOwner() external view override returns (address) {
-        return _getStorage()._protocolOwner;
+        return _protocolOwner;
     }
 
     function getChainNft() external view override returns (IChainNft) {
-        return _getStorage()._chainNft;
+        return _chainNft;
     }
-
-    // from IVersionable
-    function getVersion() public pure virtual override returns (Version) {
-        return VersionLib.toVersion(1, 0, 0);
-    } 
 
     // from IOwnable
     function getOwner() public view returns (address owner) {
         return ownerOf(address(this));
     }
 
-    // Internals
+    // Internals, called only in constructor
 
     /// @dev protocol registration used to anchor the dip ecosystem relations
     function _registerProtocol() 
         internal
     {
-        RegistryStorageV1 storage $ = _getStorage();
-
-        uint256 protocolId = $._chainNftInternal.PROTOCOL_NFT_ID();
+        uint256 protocolId = _chainNftInternal.PROTOCOL_NFT_ID();
         NftId protocolNftId = toNftId(protocolId);
 
-        $._chainNftInternal.mint(NFT_LOCK_ADDRESS, protocolId);
+        _chainNftInternal.mint(NFT_LOCK_ADDRESS, protocolId);
 
-        $._info[protocolNftId] = ObjectInfo(
+        _info[protocolNftId] = ObjectInfo(
             protocolNftId,
             zeroNftId(), // parent
             PROTOCOL(),
             address(0),
-            NFT_LOCK_ADDRESS,//$._protocolOwner,
+            NFT_LOCK_ADDRESS,//_protocolOwner,
             ""
         );
     }
@@ -365,37 +339,34 @@ contract Registry is
     /// might also register the global registry when not on mainnet
     function _registerRegistry() 
         internal
-        returns(NftId registryNftId) 
     {
-        RegistryStorageV1 storage $ = _getStorage();
-
-        uint256 registryId = $._chainNftInternal.calculateTokenId(2);
-        registryNftId = toNftId(registryId);
+        uint256 registryId = _chainNftInternal.calculateTokenId(2);
+        NftId registryNftId = toNftId(registryId);
 
         NftId parentNftId;
 
-        if(registryId != $._chainNftInternal.GLOBAL_REGISTRY_ID()) 
+        if(registryId != _chainNftInternal.GLOBAL_REGISTRY_ID()) 
         {// we're not the global registry
             _registerGlobalRegistry();
-            parentNftId = toNftId($._chainNftInternal.GLOBAL_REGISTRY_ID());
+            parentNftId = toNftId(_chainNftInternal.GLOBAL_REGISTRY_ID());
         }
         else 
         {// we are global registry
-            parentNftId = toNftId($._chainNftInternal.PROTOCOL_NFT_ID());
+            parentNftId = toNftId(_chainNftInternal.PROTOCOL_NFT_ID());
         }
 
-        $._chainNftInternal.mint($._protocolOwner, registryId);
+        _chainNftInternal.mint(_protocolOwner, registryId);
 
-        $._info[registryNftId] = ObjectInfo(
+        _info[registryNftId] = ObjectInfo(
             registryNftId,
             parentNftId,
             REGISTRY(),
             address(this), 
-            $._protocolOwner,
+            _protocolOwner,
             "" 
         );
-        $._nftIdByAddress[address(this)] = registryNftId;
-        $._registryNftId = registryNftId;
+        _nftIdByAddress[address(this)] = registryNftId;
+        _registryNftId = registryNftId;
     }
 
 
@@ -403,20 +374,18 @@ contract Registry is
     function _registerGlobalRegistry() 
         internal
     {
-        RegistryStorageV1 storage $ = _getStorage();
+        uint256 globalRegistryId = _chainNftInternal.GLOBAL_REGISTRY_ID();
 
-        uint256 globalRegistryId = $._chainNftInternal.GLOBAL_REGISTRY_ID();
-
-        $._chainNftInternal.mint(NFT_LOCK_ADDRESS, globalRegistryId);
+        _chainNftInternal.mint(NFT_LOCK_ADDRESS, globalRegistryId);
 
         NftId globalRegistryNftId = toNftId(globalRegistryId);
 
-        $._info[globalRegistryNftId] = ObjectInfo(
+        _info[globalRegistryNftId] = ObjectInfo(
             globalRegistryNftId,
-            toNftId($._chainNftInternal.PROTOCOL_NFT_ID()), // parent
+            toNftId(_chainNftInternal.PROTOCOL_NFT_ID()), // parent
             REGISTRY(),
             address(0), // contract address
-            NFT_LOCK_ADDRESS,//$._protocolOwner,
+            NFT_LOCK_ADDRESS,//_protocolOwner,
             "" // data
         );
     }
@@ -425,28 +394,26 @@ contract Registry is
         internal
         returns(NftId serviceNftId) 
     {
-        RegistryStorageV1 storage $ = _getStorage();
-
-        uint256 serviceId = $._chainNftInternal.calculateTokenId(3);
+        uint256 serviceId = _chainNftInternal.calculateTokenId(3);
         serviceNftId = toNftId(serviceId);        
 
-        $._chainNftInternal.mint(NFT_LOCK_ADDRESS, serviceId);
+        _chainNftInternal.mint(NFT_LOCK_ADDRESS, serviceId);
 
-        $._info[serviceNftId] = ObjectInfo(
+        _info[serviceNftId] = ObjectInfo(
             serviceNftId,
-            $._registryNftId,
+            _registryNftId,
             SERVICE(),
             serviceAddress, 
-            NFT_LOCK_ADDRESS,//$._protocolOwner,
+            NFT_LOCK_ADDRESS,//_protocolOwner,
             "" 
         );
 
-        $._nftIdByAddress[serviceAddress] = serviceNftId;
+        _nftIdByAddress[serviceAddress] = serviceNftId;
 
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-        $._service[serviceNameHash][majorVersion] = serviceAddress;
-        $._string[serviceNftId] = serviceName;
-        $._serviceNftId = serviceNftId;
+        _service[serviceNameHash][majorVersion] = serviceAddress;
+        _string[serviceNftId] = serviceName;
+        _serviceNftId = serviceNftId;
     }
 
     /// @dev defines which object - parent types relations are allowed to register
@@ -458,37 +425,24 @@ contract Registry is
     function _setupValidObjectParentCombinations() 
         internal 
     {
-        RegistryStorageV1 storage $ = _getStorage();
-
         // registry as parent, ONLY registry owner
-        $._isValidContractCombination[TOKEN()][REGISTRY()] = true;
-        $._isValidContractCombination[SERVICE()][REGISTRY()] = true;
+        _isValidContractCombination[TOKEN()][REGISTRY()] = true;
+        _isValidContractCombination[SERVICE()][REGISTRY()] = true;
 
         // registry as parent, ONLY approved
-        $._isValidContractCombination[INSTANCE()][REGISTRY()] = true;
+        _isValidContractCombination[INSTANCE()][REGISTRY()] = true;
 
         // instance as parent, ONLY approved
-        $._isValidContractCombination[PRODUCT()][INSTANCE()] = true;
-        $._isValidContractCombination[DISTRIBUTION()][INSTANCE()] = true;
-        $._isValidContractCombination[ORACLE()][INSTANCE()] = true;
-        $._isValidContractCombination[POOL()][INSTANCE()] = true;
+        _isValidContractCombination[PRODUCT()][INSTANCE()] = true;
+        _isValidContractCombination[DISTRIBUTION()][INSTANCE()] = true;
+        _isValidContractCombination[ORACLE()][INSTANCE()] = true;
+        _isValidContractCombination[POOL()][INSTANCE()] = true;
 
         // product as parent, ONLY approved
-        $._isValidObjectCombination[POLICY()][PRODUCT()] = true;
+        _isValidObjectCombination[POLICY()][PRODUCT()] = true;
 
         // pool as parent, ONLY approved
-        $._isValidObjectCombination[BUNDLE()][POOL()] = true;
-        $._isValidObjectCombination[STAKE()][POOL()] = true;
+        _isValidObjectCombination[BUNDLE()][POOL()] = true;
+        _isValidObjectCombination[STAKE()][POOL()] = true;
     }
-
-    // TODO check how usage of "$.data" influences gas costs 
-    // IMPORTANT Every new version must implement this function
-    // keep it private -> if unreachable from the next version then not included in its byte code
-    // each version MUST use the same REGISTRY_LOCATION_V1, just change return type
-    function _getStorage() private pure returns (RegistryStorageV1 storage $) {
-        assembly {
-            $.slot := REGISTRY_LOCATION_V1
-        }
-    }
-
 }

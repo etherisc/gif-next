@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
-import {IRegistryService} from "../../../../contracts/registry/IRegistryService.sol";
 
 import {StateId} from "../../../types/StateId.sol";
 import {NftId} from "../../../types/NftId.sol";
@@ -25,6 +24,5 @@ interface IComponentModule is IComponent {
     function getComponentId(uint256 idx) external view returns (NftId nftId);
 
     // repeat service linked signaturea to avoid linearization issues
-    function getRegistryService() external view returns(IRegistryService);
     function getComponentOwnerService() external view returns(IComponentOwnerService);
 }

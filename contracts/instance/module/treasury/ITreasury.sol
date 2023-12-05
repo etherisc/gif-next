@@ -5,7 +5,7 @@ import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IE
 import {IDistributionComponent} from "../../../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../../../components/IPoolComponent.sol";
 import {IProductComponent} from "../../../components/IProductComponent.sol";
-import {IRegistryService} from "../../../../contracts/registry/IRegistryService.sol";
+import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
 
 import {NftId} from "../../../types/NftId.sol";
 import {UFixed} from "../../../types/UFixed.sol";
@@ -80,5 +80,5 @@ interface ITreasuryModule is ITreasury {
         int8 exp
     ) external pure returns (UFixed);
 
-    function getRegistryService() external view returns(IRegistryService);
+    function getComponentOwnerService() external view returns(IComponentOwnerService);
 }

@@ -71,8 +71,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
         // register bundle with registry
         NftId poolNftId = info.nftId;
-        bundleNftId = getRegistry().registerFrom(
-            msg.sender, 
+        bundleNftId = getRegistryService().registerBundle(
             IRegistry.ObjectInfo(
                 zeroNftId(),
                 poolNftId,

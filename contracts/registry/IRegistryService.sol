@@ -16,8 +16,8 @@ interface IRegistryService is IService {
 
     function registerService(IService service)  external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
-    //function registerComponent(IBaseComponent component, ObjectType componentType, address owner) 
-    function registerComponent(IBaseComponent component, ObjectType componentType)
+    //function registerComponent(IBaseComponent component, ObjectType componentType)
+    function registerComponent(IBaseComponent component, ObjectType componentType, address owner) 
         external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
     //function registerInstance(IRegisterable instance, address owner)
@@ -25,5 +25,9 @@ interface IRegistryService is IService {
         external returns(IRegistry.ObjectInfo memory info, bytes memory data); 
 
     function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
+
+    function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
+
+    function registerObject(IRegistry.ObjectInfo memory info, ObjectType objectType) external returns(NftId nftId);
 }
 

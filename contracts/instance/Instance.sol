@@ -24,7 +24,6 @@ import {IPolicyModule} from "./module/policy/IPolicy.sol";
 import {IInstanceBase} from "./base/IInstanceBase.sol";
 import {ITreasuryModule} from "./module/treasury/ITreasury.sol";
 
-import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IProductService} from "./service/IProductService.sol";
@@ -65,9 +64,9 @@ contract Instance is
         initializeRiskModule(_keyValueStore);
     }
 
-    modifier onlyRegistryService() override (ComponentModule, TreasuryModule, PoolModule) {
+    modifier onlyComponentOwnerService() override (ComponentModule, PoolModule, TreasuryModule) {
         require(
-            msg.sender == address(this.getRegistryService()),
+            msg.sender == address(this.getComponentOwnerService()),
             "ERROR:CMP-001:NOT_REGISTRY_SERVICE"
         );
         _;
@@ -77,8 +76,7 @@ contract Instance is
 
     function getKeyValueStore() public view override (InstanceBase) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
-    function getRegistryService() external view override (IInstanceBase, IComponentModule, ITreasuryModule, IPoolModule) returns(IRegistryService) { return _registryService; }
-    function getComponentOwnerService() external view override (IComponentModule, IInstanceBase) returns(IComponentOwnerService service) { return _componentOwnerService; }
+    function getComponentOwnerService() external view override (IInstanceBase, IComponentModule, ITreasuryModule, IPoolModule) returns(IComponentOwnerService service) { return _componentOwnerService; }
     function getDistributionService() external view override (IInstanceBase) returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IBundleModule, IPolicyModule, IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IBundleModule, IPoolModule, IInstanceBase) returns(IPoolService service) { return _poolService; }

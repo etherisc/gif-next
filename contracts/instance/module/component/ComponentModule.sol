@@ -18,10 +18,10 @@ abstract contract ComponentModule is
     NftId[] private _nftIds;
 
     // TODO try to keep 1 modifier in 1 place...
-    modifier onlyRegistryService() virtual {
+    modifier onlyComponentOwnerService() virtual {
         require(
-            msg.sender == address(this.getRegistryService()),
-            "ERROR:CMP-001:NOT_REGISTRY_SERVICE"
+            msg.sender == address(this.getComponentOwnerService()),
+            "ERROR:CMP-001:NOT_COMPONENT_OWNER_SERVICE"
         );
         _;
     }
@@ -36,7 +36,7 @@ abstract contract ComponentModule is
         address wallet
     )
         external
-        onlyRegistryService
+        onlyComponentOwnerService
         override
     {
         ComponentInfo memory info = ComponentInfo(token, wallet);

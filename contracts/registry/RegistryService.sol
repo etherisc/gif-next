@@ -6,8 +6,8 @@ import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IE
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
-import {ITreasury, ITreasuryModule} from "../../contracts/instance/module/treasury/ITreasury.sol";
-import {TreasuryModule} from "../../contracts/instance/module/treasury/TreasuryModule.sol";
+//import {ITreasury, ITreasuryModule} from "../../contracts/instance/module/treasury/ITreasury.sol";
+//import {TreasuryModule} from "../../contracts/instance/module/treasury/TreasuryModule.sol";
 import {IComponent, IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
@@ -20,12 +20,12 @@ import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, TOKEN, SERVICE, PRODUCT, ORACLE, POOL, TOKEN, INSTANCE, DISTRIBUTION, POLICY} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, TOKEN, SERVICE, PRODUCT, ORACLE, POOL, TOKEN, INSTANCE, DISTRIBUTION, POLICY, BUNDLE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
-import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
+//import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 
 
 import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
@@ -142,8 +142,8 @@ contract RegistryService is
 
     // TODO: when called by approved service: add owner arg (service must pass it's msg.sender as owner) & check service allowance
     // anybody can register component if instance gives a corresponding role
-    //function registerComponent(IBaseComponent component, ObjectType componentType, address owner)
-    function registerComponent(IBaseComponent component, ObjectType componentType)
+    //function registerComponent(IBaseComponent component, ObjectType componentType)
+    function registerComponent(IBaseComponent component, ObjectType componentType, address owner)
         external
         returns(
             IRegistry.ObjectInfo memory info,
@@ -157,13 +157,14 @@ contract RegistryService is
         (
             info, 
             data
-        ) = _getAndVerifyContractInfo(component, componentType, msg.sender);
+        ) = _getAndVerifyContractInfo(component, componentType, owner);
 
         IRegistry registry = getRegistry();
+        NftId serviceNftId = registry.getNftId(msg.sender);
 
-        //if(registry.allowance(registry.getNftId(msg.sender), componentType) == false) {
-        //    revert MissingAllowance();
-        //}      
+        if(registry.allowance(serviceNftId, componentType) == false) {
+            revert MissingAllowance();
+        }      
 
         info.nftId = registry.register(info);
 
@@ -211,12 +212,45 @@ contract RegistryService is
         returns(NftId nftId) 
     {
         IRegistry registry = getRegistry();
+        NftId senderNftId = registry.getNftId(msg.sender);
 
-        if(registry.allowance(registry.getNftId(msg.sender), POLICY()) == false) {
+        if(registry.allowance(senderNftId, POLICY()) == false) {
             revert MissingAllowance();
         }
 
         _verifyObjectInfo(info, POLICY());
+
+        nftId = registry.register(info);
+    }
+
+    function registerBundle(IRegistry.ObjectInfo memory info)
+        external 
+        returns(NftId nftId) 
+    {
+        IRegistry registry = getRegistry();
+        NftId senderNftId = registry.getNftId(msg.sender);
+
+        if(registry.allowance(senderNftId, BUNDLE()) == false) {
+            revert MissingAllowance();
+        }
+
+        _verifyObjectInfo(info, BUNDLE());
+
+        nftId = registry.register(info);
+    }
+
+    function registerObject(IRegistry.ObjectInfo memory info, ObjectType objectType)
+        external 
+        returns(NftId nftId) 
+    {
+        IRegistry registry = getRegistry();
+        NftId senderNftId = registry.getNftId(msg.sender);
+
+        if(registry.allowance(senderNftId, objectType) == false) {
+            revert MissingAllowance();
+        }
+
+        _verifyObjectInfo(info, objectType);
 
         nftId = registry.register(info);
     }
@@ -234,7 +268,6 @@ contract RegistryService is
     // 2) deploy registry service first -> from its initialization func it is easier to deploy registry then vice versa
     // 3) deploy registry -> pass registry service address as constructor argument
     // registry is getting instantiated and locked to registry service address forever
-    // owner of registry is the same as of registry service
     function _initialize(address protocolOwner, bytes memory registryCreationCode)
         internal
         initializer
