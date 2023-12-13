@@ -5,3 +5,14 @@ libs = ['node_modules', 'lib']
 test = 'test_forge'
 cache_path  = 'cache_forge'
 
+ffi = true
+
+[fuzz]
+runs = 600
+max_test_rejects = 100
+dictionary_weight = 40
+include_storage = true
+include_push_bytes = true
+max_fuzz_dictionary_addresses = 15728640
+max_fuzz_dictionary_values = 6553600
+

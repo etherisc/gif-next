@@ -880,7 +880,7 @@ contract RegistryTest is Test, FoundryRandom {
         _stopPrank();
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register(address sender, IRegistry.ObjectInfo memory info) public
     {
         // fuzz serviceName?
@@ -910,7 +910,7 @@ contract RegistryTest is Test, FoundryRandom {
     // objectType - random
     // objectAddress - random
     // initialOwner - set of registered nfts -> TODO use constant set of nfts as parents aka _nftIdByType?
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_000001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -925,7 +925,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_000010(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, address initialOwner) public //, bytes memory data
     {
         // special case: foundry cheatcodes contract
@@ -943,7 +943,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_000011(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -958,7 +958,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_000100(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, address objectAddress, address initialOwner) public //, bytes memory data
     {
         // special case: foundry cheatcodes contract
@@ -976,7 +976,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_000101(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -991,7 +991,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_000110(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx,  uint objectAddressIdx, address initialOwner) public //, bytes memory data
     {
         // special case: foundry cheatcodes contract
@@ -1009,7 +1009,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_000111(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx,  uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -1024,7 +1024,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_001000(address sender, NftId nftId, uint8 parentIdx, ObjectType objectType, address objectAddress, address initialOwner) public //, bytes memory data
     {
         // special case: foundry cheatcodes contract
@@ -1042,7 +1042,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_001001(address sender, NftId nftId, uint8 parentIdx, ObjectType objectType, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -1057,7 +1057,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_001010(address sender, NftId nftId, uint8 parentIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner) public //, bytes memory data
     {
         // special case: foundry cheatcodes contract
@@ -1075,7 +1075,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_001011(address sender, NftId nftId, uint8 parentIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -1090,7 +1090,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_001100(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, address objectAddress, address initialOwner) public //, bytes memory data
     {
         // special case: foundry cheatcodes contract
@@ -1108,7 +1108,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_001101(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, address objectAddress, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -1123,7 +1123,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_001110(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner) public
     {
         // special case: foundry cheatcodes contract
@@ -1141,7 +1141,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_001111(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -1156,7 +1156,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_register_zeroObjectAddress_001111(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -1171,7 +1171,7 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_approve(address sender, NftId nftId, ObjectType objectType, ObjectType parentType) public
     {
         _startPrank(sender);
@@ -1189,7 +1189,7 @@ contract RegistryTest is Test, FoundryRandom {
         }
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_approve_0001(address sender, NftId nftId, ObjectType objectType, uint8 parentTypeIdx) public
     {
         testFuzz_approve(
@@ -1200,7 +1200,7 @@ contract RegistryTest is Test, FoundryRandom {
         );
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_approve_0010(address sender, NftId nftId, uint8 objectTypeIdx, ObjectType parentType) public
     {
         testFuzz_approve(
@@ -1211,7 +1211,7 @@ contract RegistryTest is Test, FoundryRandom {
         );
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_approve_0011(address sender, NftId nftId, uint8 objectTypeIdx, uint8 parentTypeIdx) public
     {
         testFuzz_approve(
@@ -1222,7 +1222,7 @@ contract RegistryTest is Test, FoundryRandom {
         );
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_approve_0100(address sender, uint nftIdIdx, ObjectType objectType, ObjectType parentType) public
     {
         testFuzz_approve(
@@ -1233,7 +1233,7 @@ contract RegistryTest is Test, FoundryRandom {
         );        
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_approve_0101(address sender, uint nftIdIdx, ObjectType objectType, uint8 parentTypeIdx) public
     {
         testFuzz_approve(
@@ -1244,7 +1244,7 @@ contract RegistryTest is Test, FoundryRandom {
         );
     }
 
-    /// forge-config: default.fuzz.runs = 20000
+    
     function testFuzz_approve_0110(address sender, uint nftIdIdx, uint8 objectTypeIdx, ObjectType parentType) public
     {
         testFuzz_approve(
@@ -1255,7 +1255,6 @@ contract RegistryTest is Test, FoundryRandom {
         );
     }
 
-    /// forge-config: default.fuzz.runs = 20000
     function testFuzz_approve_0111(address sender, uint nftIdIdx, uint8 objectTypeIdx, uint8 parentTypeIdx) public
     {
         testFuzz_approve(
