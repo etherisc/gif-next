@@ -304,6 +304,43 @@ contract RegistryTest is Test, FoundryRandom {
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }
 
+    function _afterRegistration_setUp(IRegistry.ObjectInfo memory info) internal 
+    {
+        NftId nftId = info.nftId;
+        assert(_info[nftId].nftId == zeroNftId());
+
+        EnumerableSet.add(_nftIds , nftId.toInt());
+        _info[nftId] = info;
+
+        if(info.objectAddress > address(0)) { 
+            assert(_nftIdByAddress[info.objectAddress] == zeroNftId());
+            _nftIdByAddress[info.objectAddress] = nftId; 
+
+            EnumerableSet.add(_addresses, info.objectAddress);
+            EnumerableSet.add(_addresses, info.initialOwner);
+        }
+
+        if(info.objectType == SERVICE())
+        {
+            _servicesCount++;
+
+            (
+                string memory serviceName,
+                VersionPart majorVersion
+            ) = _decodeServiceParameters(info.data);
+
+            bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
+            assert(_service[serviceNameHash][majorVersion].nftId == zeroNftId());
+            _service[serviceNameHash][majorVersion].nftId = nftId;
+            _service[serviceNameHash][majorVersion].address_ = info.objectAddress;
+        }
+        
+
+        // TODO starting _nftIdByType[info.objectType] value can be non zero
+        //assertEq(_nftIdByType[info.objectType].toInt(), zeroNftId().toInt(), "Test error: _nftIdByType[] rewrite found");
+        //_nftIdByType[info.objectType] = nftId;
+    }
+
     function _startPrank(address sender_) internal {
         vm.startPrank(sender_);
         _sender = sender_;
@@ -579,33 +616,6 @@ contract RegistryTest is Test, FoundryRandom {
             _assert_allowance(nftId, objectType, false);
         }
     }
-    // nftId has allowance only for assertTrueType
-    // ASSUMPTION: only one type combination for each valid objectType is possible
-    function _assertFalse_allowance_all_types(NftId nftId, ObjectType assertTrueType) internal
-    {
-        bool assertTrueTypeFound = false;
-
-        console.log("assertFalse allowance() for ALL types except %s\n", _typeName[assertTrueType]);
-
-        for(uint typeIdx = 0; typeIdx < _types.length; typeIdx++)
-        {
-            ObjectType objectType = _types[typeIdx];
-
-            if(objectType == assertTrueType)
-            {
-                assertFalse(assertTrueTypeFound, "Test error: more then 1 assertTrueType found");
-                assertTrueTypeFound = true;
-
-                _assert_allowance(nftId, objectType, true); 
-            }
-            else
-            {
-                _assert_allowance(nftId, objectType, false);
-            }
-        }
-
-        assertTrue(assertTrueTypeFound, "Test error: no assertTrueType found");
-    }
 
     function _assert_approve(NftId nftId, ObjectType objectType, ObjectType parentType, bytes memory revertMsg) internal
     {
@@ -680,45 +690,6 @@ contract RegistryTest is Test, FoundryRandom {
         //console.log("----\n");
 
     }
-    // approves objectType for all parentTypes
-    // detects `InvalidTypesCombination`
-    // `InvalidTypesCombination` MUST BE the last check in approve() function
-    function _assert_approve_objectType(NftId nftId, ObjectType objectType, bytes memory expectedRevertMsg) internal
-    {
-        bytes memory revertMsg;
-        for(uint parentIdx = 0; parentIdx < _types.length; parentIdx++)
-        {
-            ObjectType parentType = _types[parentIdx];
-
-            if(
-                expectedRevertMsg.length == 0 &&
-                !_isValidContractTypesCombo[objectType][parentType] &&
-                !_isValidObjectTypesCombo[objectType][parentType]) 
-            {
-                revertMsg = abi.encodeWithSelector(Registry.InvalidTypesCombination.selector, objectType, parentType);
-            }
-            else
-            {
-                revertMsg = expectedRevertMsg;
-            }
-
-            // TODO check nftId allowance for all types before/after
-            _assert_approve(nftId, objectType, parentType, revertMsg);
-        }
-    }
-    function _assert_approve_all_typesV2(NftId nftId, bytes memory expectedRevertMsg) public
-    {
-        console.log("Checking all initial allowances \n");
-
-        _assertFalse_allowance_all_types(nftId);
-
-        for(uint objectIdx = 0; objectIdx < _types.length; objectIdx++)
-        {
-            ObjectType objectType = _types[objectIdx];
-
-            _assert_approve_objectType(nftId, objectType, expectedRevertMsg);
-        }
-    }
 
     function _assert_register(IRegistry.ObjectInfo memory info, bool expectRevert, bytes memory revertMsg) internal returns (NftId nftId)
     {
@@ -768,43 +739,6 @@ contract RegistryTest is Test, FoundryRandom {
             console.log("registered { nftId: %d , type: %s }\n", nftId.toInt(), _typeName[info.objectType]);
         }
         //console.log("returned: %d\n", nftId.toInt());
-    }
-
-    function _afterRegistration_setUp(IRegistry.ObjectInfo memory info) internal 
-    {
-        NftId nftId = info.nftId;
-        assert(_info[nftId].nftId == zeroNftId());
-
-        EnumerableSet.add(_nftIds , nftId.toInt());
-        _info[nftId] = info;
-
-        if(info.objectAddress > address(0)) { 
-            assert(_nftIdByAddress[info.objectAddress] == zeroNftId());
-            _nftIdByAddress[info.objectAddress] = nftId; 
-
-            EnumerableSet.add(_addresses, info.objectAddress);
-            EnumerableSet.add(_addresses, info.initialOwner);
-        }
-
-        if(info.objectType == SERVICE())
-        {
-            _servicesCount++;
-
-            (
-                string memory serviceName,
-                VersionPart majorVersion
-            ) = _decodeServiceParameters(info.data);
-
-            bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-            assert(_service[serviceNameHash][majorVersion].nftId == zeroNftId());
-            _service[serviceNameHash][majorVersion].nftId = nftId;
-            _service[serviceNameHash][majorVersion].address_ = info.objectAddress;
-        }
-        
-
-        // TODO starting _nftIdByType[info.objectType] value can be non zero
-        //assertEq(_nftIdByType[info.objectType].toInt(), zeroNftId().toInt(), "Test error: _nftIdByType[] rewrite found");
-        //_nftIdByType[info.objectType] = nftId;
     }
 
     function _assert_register_with_default_checks(
@@ -885,77 +819,6 @@ contract RegistryTest is Test, FoundryRandom {
         nftId = _assert_register(info, expectRevert, expectedRevertMsg);
     }
 
-    // register objectType, each registered nft used as parent
-    function _assert_register_object_type_with_all_registered_nfts(
-        address initialOwner, 
-        ObjectType objectType, 
-        bool expectRevert, 
-        bytes memory expectedRevertMsg//,
-        //bool revertBeforeTypeCheck,    
-        //mapping(ObjectType objectType => mapping(
-        //ObjectType parentType => bool)) storage isValidCombo
-    ) internal
-    {
-        bytes memory data;
-
-        // if no revert expected -> force default checks
-        //revertBeforeTypeCheck = expectRevert ? revertBeforeTypeCheck : false;
-
-        // TODO register multiple major versions and service names
-        // TODO move into parent loop -> may be > 1 service registration during whole loop
-        //special case service
-        if(objectType == SERVICE()) 
-        {// encode service name and major version
-            data = abi.encode(_nextServiceName(), VersionLib.toVersionPart(1));
-        }
-
-        // loop through all registered parents
-        // TODO add zero parent nft case (with 0 & non 0 address)
-        for(uint nftIdIdx = 0; nftIdIdx < EnumerableSet.length(_nftIds); nftIdIdx++)
-        {
-            IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-                zeroNftId(), // can be any -> random?
-                toNftId(EnumerableSet.at(_nftIds, nftIdIdx)),//parentNftId
-                objectType,
-                _nextAddress(), //objectAddress,
-                initialOwner, // can be any
-                data
-            );
-
-            NftId nftId = _assert_register_with_default_checks(info, expectRevert, expectedRevertMsg);//, revertBeforeTypeCheck, isValidCombo);
-        }
-    }
-
-    // register (ALL, ALL) types combinations
-    // assumes each objectType have only one valid parentType
-    // assumes each type assigned specific nftId and address
-    // building hierahcy tree from top to down, SERVICE registered first, then INASTANCE and so on
-    function _assert_register_all_types(
-        address initialOwner, 
-        bool expectRevert, 
-        bytes memory expectedRevertMsg
-        //bool revertBeforeTypeCheck,
-        //mapping(ObjectType objectType => mapping(
-        //ObjectType parentType => bool)) storage isValidCombo
-    ) internal 
-    {
-        for(uint objectTypeIdx = 0; objectTypeIdx < _types.length; objectTypeIdx++)
-        {// checks for registered parents
-            ObjectType objectType = _types[objectTypeIdx];
-
-            console.log("Registering %s with all parent nfts, each represent a type\n", _typeName[objectType]);
-            //console.log("expectRevert: %s\n", expectRevert);
-
-            // checks for contract types 
-            // assume that only one type pair can be registered in one call -> no address reuse in subsequent attempts in this case 
-            _assert_register_object_type_with_all_registered_nfts(initialOwner, objectType, expectRevert, expectedRevertMsg);//, revertBeforeTypeCheck, isValidCombo);
-            // check for object types
-            
-            
-            // check for non registered parent
-        }
-    }
-    
     function test_specific_register_case() public
     {
         _startPrank(0xb6F322D9421ae42BBbB5CC277CE23Dbb08b3aC1f);//_startPrank(registryService);
