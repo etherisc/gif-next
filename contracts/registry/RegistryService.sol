@@ -62,10 +62,11 @@ contract RegistryService is
     //  msg.sender - ONLY registry owner
     //      CAN register ANY non IRegisterable address
     //      CAN register ONLY valid object-parent types combinations for TOKEN
-    //      CAN NOT register IRegisterable address
     //      CAN NOT register itself
     // IMPORTANT: MUST NOT call untrusted contract inbetween calls to registry/instance (trusted contracts)
     // motivation: registry/instance state may change during external call
+    // TODO it may be usefull to have transferable token nft in order to delist token, make it invalid for new beginings
+    // TODO: MUST prohibit registration of precompiles addresses
     function registerToken(address tokenAddress)
         external 
         returns(NftId nftId) 
@@ -76,7 +77,7 @@ contract RegistryService is
         // registryOwner can not register IRegisterable as TOKEN
         try registerable.supportsInterface(type(IRegisterable).interfaceId) returns(bool result) {
             isRegisterable = result;
-        } catch {// TODO specify expected error type
+        } catch {
             isRegisterable = false;
         }
 
@@ -119,7 +120,6 @@ contract RegistryService is
             revert NotService();
         } 
 
-        // TODO read also a version?
         (
             info, 
             data
@@ -140,7 +140,6 @@ contract RegistryService is
         );
     }
 
-    // TODO: when called by approved service: add owner arg (service must pass it's msg.sender as owner) & check service allowance
     // anybody can register component if instance gives a corresponding role
     //function registerComponent(IBaseComponent component, ObjectType componentType)
     function registerComponent(IBaseComponent component, ObjectType componentType, address owner)
@@ -206,7 +205,6 @@ contract RegistryService is
         );
     }
 
-    /// @dev trust approved service that initial owner is valid
     function registerPolicy(IRegistry.ObjectInfo memory info)
         external 
         returns(NftId nftId) 
@@ -239,21 +237,6 @@ contract RegistryService is
         nftId = registry.register(info);
     }
 
-    function registerObject(IRegistry.ObjectInfo memory info, ObjectType objectType)
-        external 
-        returns(NftId nftId) 
-    {
-        IRegistry registry = getRegistry();
-        NftId senderNftId = registry.getNftId(msg.sender);
-
-        if(registry.allowance(senderNftId, objectType) == false) {
-            revert MissingAllowance();
-        }
-
-        _verifyObjectInfo(info, objectType);
-
-        nftId = registry.register(info);
-    }
 
     // From IService
     function getName() public pure override(IService, ServiceBase) returns(string memory) {
@@ -279,8 +262,7 @@ contract RegistryService is
         bytes memory bytecode = abi.encodePacked(
             registryCreationCode, 
             abi.encode(
-                protocolOwner, 
-                address(this), 
+                protocolOwner,
                 NAME, 
                 getMajorVersion()
             )

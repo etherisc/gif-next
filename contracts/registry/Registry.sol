@@ -22,8 +22,8 @@ import {ERC165} from "../shared/ERC165.sol";
 // Four registration flows:
 // 1) non IRegisterable address by registryOwner (TOKEN)
 // 2) IRegisterable address by registryOwner (SERVICE)
-// 3) IRegisterable address by contract owner (INSTANCE, COMPONENT) -> wil be changed to "by approved service" 
-// 4) state object by approved service
+// 3) IRegisterable address by approved service (INSTANCE, COMPONENT)
+// 4) state object by approved service (POLICY, BUNDLE, STAKE)
 
 contract Registry is
     ERC165,
@@ -31,6 +31,7 @@ contract Registry is
 {
     // register
     error NotRegistryService();
+    error ZeroParentAddress();
     error ContractAlreadyRegistered(address objectAddress);
     error InvalidServiceVersion(VersionPart majorVersion);
     error ServiceNameAlreadyRegistered(string name, VersionPart majorVersion);
@@ -73,7 +74,6 @@ contract Registry is
 
     /*
     modifier onlyInitialOwner() {
-        
         if(
             msg.sender != getOwner() ||
             msg.sender != _info[_registryNftId].initialOwner) {
@@ -96,8 +96,12 @@ contract Registry is
         _;
     }
 
-    constructor(address protocolOwner, address registryService, string memory serviceName, VersionPart majorVersion)
+    // TODO use const serviceName "RegistryService"
+    constructor(address protocolOwner, string memory serviceName, VersionPart majorVersion)
     {
+        require(protocolOwner > address(0), "Registry: protocol owner is 0");
+        require(majorVersion.toInt() > 0, "Registry: initial major version of registry service is 0");
+
         // TODO registry owner can change, while protocol is not?
         _protocolOwner = protocolOwner;
 
@@ -110,7 +114,7 @@ contract Registry is
 
         _registerRegistry();
 
-        _registerRegistryService(registryService, serviceName, majorVersion);
+        _registerRegistryService(serviceName, majorVersion);
 
         // set object parent relations
         _setupValidObjectParentCombinations();
@@ -120,12 +124,27 @@ contract Registry is
     }
 
     /// @dev registry protects only from tampering existing records and invalid types pairs
+    // IMPORTANT: rare case when parentNftId is not registered and == next nftId -> technincally this is ZeroParentAddress error
+    // to catch this check parent address before minting !!!!
     // TODO service registration means its approval for some type?
     function register(ObjectInfo memory info)
         external
         onlyRegistryService
         returns(NftId nftId)
     {
+        ObjectType objectType = info.objectType;
+        NftId parentNftId = info.parentNftId;
+        ObjectType parentType = _info[parentNftId].objectType; // see function header
+        address parentAddress = _info[parentNftId].objectAddress;
+
+        // parent is contract -> need to check? -> check before minting
+        // special case: global registry nft as parent when not on mainnet -> global registry address is 0
+        // special case: when parentNftId == _chainNft.mint(), check for zero parent address before mint
+        // special case: when parentNftId == _chainNft.mint() && objectAddress == initialOwner
+        if(parentAddress == address(0)) {
+            revert ZeroParentAddress();
+        }
+
         uint256 mintedTokenId = _chainNft.mint(
             info.initialOwner,
             EMPTY_URI);
@@ -136,9 +155,6 @@ contract Registry is
         // getters by address -> return nftId AND struct
         info.nftId = nftId;
         _info[nftId] = info;
-
-        ObjectType objectType = info.objectType;
-        ObjectType parentType = _info[info.parentNftId].objectType; 
 
         if(info.objectAddress > address(0)) 
         {
@@ -157,7 +173,7 @@ contract Registry is
             _nftIdByAddress[contractAddress] = nftId;
 
             // special case
-            if(info.objectType == SERVICE())
+            if(objectType == SERVICE())
             {
                 (
                     string memory serviceName,
@@ -166,11 +182,13 @@ contract Registry is
                 bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
 
                 // TODO MUST guarantee consistency of registerable.getVersion() and majorVersion here
-                // TODO update _serviceNftId when registryService with new major version is registered? -> it is fixed in current setup -> upgrade registryService address?
-                // TODO do not use names -> each object type is registered by corresponding service -> done through approve() -> merge approve() and service type here?
+                // TODO update _serviceNftId when registryService with new major version is registered? -> it is fixed in current setup
+                // TODO do not use names -> each object type is registered by corresponding service -> conflicting with approve()
                 if(
-                    majorVersion.toInt() > 1 &&
-                    _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)] == address(0)) {
+                    majorVersion.toInt() == 0 ||
+                    (majorVersion.toInt() > 1 &&
+                    _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)] == address(0) )
+                ) {
                     revert InvalidServiceVersion(majorVersion);
                 }
                 
@@ -208,6 +226,9 @@ contract Registry is
     //     CAN approve only registered service contract
     //     CAN approve any combination specified in _isValidCombination
     //     CAN NOT approve itself
+    // TODO in case where exists exactly one registered service per objectType (and major version):
+    // - registration and approve is a single operation, no need for separate approve() function
+    // - then approve can be used to adding new valid object-parent combinations???
     function approve(
         NftId serviceNftId,
         ObjectType objectType,
@@ -237,9 +258,9 @@ contract Registry is
         emit LogApproval(serviceNftId, objectType);
     }
 
-    // TODO allowance by address?
     /// @dev returns false for registry owner nft
-    // TODO but registry owner can upgrade registry service not to check allowance....
+    // TODO allowance by address?
+    // TODO checked by registry service -> but registry owner can upgrade registry service not to check allowance....
     function allowance(
         NftId nftId,
         ObjectType object
@@ -329,8 +350,8 @@ contract Registry is
             protocolNftId,
             zeroNftId(), // parent
             PROTOCOL(),
-            address(0),
-            NFT_LOCK_ADDRESS,//_protocolOwner,
+            address(0), // objectAddress
+            NFT_LOCK_ADDRESS,// initialOwner
             ""
         );
     }
@@ -384,18 +405,17 @@ contract Registry is
             globalRegistryNftId,
             toNftId(_chainNftInternal.PROTOCOL_NFT_ID()), // parent
             REGISTRY(),
-            address(0), // contract address
-            NFT_LOCK_ADDRESS,//_protocolOwner,
+            address(0), // objectAddress
+            NFT_LOCK_ADDRESS, // initialOwner
             "" // data
         );
     }
 
-    function _registerRegistryService(address serviceAddress, string memory serviceName, VersionPart majorVersion)
+    function _registerRegistryService(string memory serviceName, VersionPart majorVersion)
         internal
-        returns(NftId serviceNftId) 
     {
         uint256 serviceId = _chainNftInternal.calculateTokenId(3);
-        serviceNftId = toNftId(serviceId);        
+        NftId serviceNftId = toNftId(serviceId);        
 
         _chainNftInternal.mint(NFT_LOCK_ADDRESS, serviceId);
 
@@ -403,15 +423,15 @@ contract Registry is
             serviceNftId,
             _registryNftId,
             SERVICE(),
-            serviceAddress, 
-            NFT_LOCK_ADDRESS,//_protocolOwner,
+            msg.sender, // service deploys registry
+            NFT_LOCK_ADDRESS, // initialOwner,
             "" 
         );
 
-        _nftIdByAddress[serviceAddress] = serviceNftId;
+        _nftIdByAddress[msg.sender] = serviceNftId;
 
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-        _service[serviceNameHash][majorVersion] = serviceAddress;
+        _service[serviceNameHash][majorVersion] = msg.sender;
         _string[serviceNftId] = serviceName;
         _serviceNftId = serviceNftId;
     }

@@ -10,7 +10,6 @@ import {NftId} from "../../types/NftId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
-import {IRegistryService} from "../../../contracts/registry/IRegistryService.sol";
 import {IComponentOwnerService} from "../service/IComponentOwnerService.sol";
 import {IDistributionService} from "../service/IDistributionService.sol";
 import {IProductService} from "../service/IProductService.sol";
@@ -29,7 +28,6 @@ abstract contract InstanceBase is
 {
     IKeyValueStore internal _keyValueStore;
 
-    IRegistryService internal _registryService;
     IComponentOwnerService internal _componentOwnerService;
     IDistributionService internal _distributionService;
     IProductService internal _productService;
@@ -75,7 +73,6 @@ abstract contract InstanceBase is
     // internal / private functions
     function _linkToServicesInRegistry() internal {
         VersionPart majorVersion = getVersion().toMajorPart();
-        _registryService = IRegistryService(_getAndCheck("RegistryService", majorVersion));
         _componentOwnerService = IComponentOwnerService(_getAndCheck("ComponentOwnerService", majorVersion));
         _distributionService = IDistributionService(_getAndCheck("DistributionService", majorVersion));
         _productService = IProductService(_getAndCheck("ProductService", majorVersion));

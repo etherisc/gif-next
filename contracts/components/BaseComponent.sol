@@ -48,6 +48,8 @@ abstract contract BaseComponent is
         _componentOwnerService = _instance.getComponentOwnerService();
         _wallet = address(this);
         _token = IERC20Metadata(token);
+
+        _registerInterface(type(IBaseComponent).interfaceId);
     }
 
     // from component contract

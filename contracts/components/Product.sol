@@ -22,7 +22,6 @@ import {Registerable} from "../shared/Registerable.sol";
 
 import {IPool} from "../instance/module/pool/IPoolModule.sol";
 import {IPoolComponent} from "../components/IPoolComponent.sol";
-import {IBaseComponent} from "./IBaseComponent.sol";
 
 contract Product is BaseComponent, IProductComponent {
     IProductService internal _productService;
@@ -54,8 +53,7 @@ contract Product is BaseComponent, IProductComponent {
         _poolNftId = getRegistry().getNftId(address(_pool));
         _distributionNftId = getRegistry().getNftId(_distribution);
 
-        _registerInterface(type(IProductComponent).interfaceId);
-        _registerInterface(type(IBaseComponent).interfaceId);    
+        _registerInterface(type(IProductComponent).interfaceId);  
     }
 
 

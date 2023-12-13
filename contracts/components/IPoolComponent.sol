@@ -1,12 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-
 import {NftId} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
-
 
 interface IPoolComponent is IBaseComponent {
 

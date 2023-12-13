@@ -33,7 +33,7 @@ contract TestDeployModules is TestGifBase {
     function testInstanceBase() public {
 
         address regAddr = address(registry);
-        NftId regNftId = registry.getNftId();
+        NftId regNftId = registry.getNftId(address(registry));
 
         vm.startPrank(instanceOwner);
         _startMeasureGas("InstanceBase");
