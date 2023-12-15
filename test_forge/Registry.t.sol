@@ -65,6 +65,7 @@ contract RegistryTest is Test, FoundryRandom {
 
     address constant NFT_LOCK_ADDRESS = address(0x1);
     bytes32 constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;//keccak256("");
+    uint constant ITTERATIONS_AMMOUNT = 250;
 
     address public proxyOwner = makeAddr("proxyOwner");
     address public outsider = makeAddr("outsider");// MUST != registryOwner
@@ -378,7 +379,7 @@ contract RegistryTest is Test, FoundryRandom {
 
     function _decodeServiceParameters(bytes memory data) internal returns(string memory serviceName, VersionPart majorVersion)
     {
-        console.log("Decoding service parameters");
+        //console.log("Decoding service parameters");
         (
             serviceName,
             majorVersion
@@ -390,7 +391,7 @@ contract RegistryTest is Test, FoundryRandom {
         //    } catch {
         //        console.log("unable to decode data");
         //    }
-        console.log("Decoding ok");
+        //console.log("Decoding ok");
     }
 
     function _nextAddress() internal returns (address nextAddress)
@@ -444,6 +445,7 @@ contract RegistryTest is Test, FoundryRandom {
 
     function _checkNonUpgradeableRegistryGetters() internal
     {
+        //console.log("Checking all IRegistry getters");
         // check getters without args
         assertEq(registry.getProtocolOwner(), registryOwner, "getProtocolOwner() returned unexpected value");
         assertEq(address(registry.getChainNft()), chainNftAddress, "getChainNft() returned unexpected value");
@@ -505,7 +507,7 @@ contract RegistryTest is Test, FoundryRandom {
     // assert getters related to a single nftId
     function _assert_registry_getters(NftId nftId, IRegistry.ObjectInfo memory expectedInfo, address expectedOwner) internal
     {// uncomment log to debug tests
-        console.log("Checking all IRegistry getters for nftId: %s", nftId.toInt());
+        //console.log("Checking IRegistry getters for nftId: %s", nftId.toInt());
         //console.log("expected:");
         //_logObjectInfo(expectedInfo);
         //console.log("        owner: %s\n", expectedOwner);
@@ -595,7 +597,7 @@ contract RegistryTest is Test, FoundryRandom {
 
     function _assert_allowance_all_types(NftId nftId) internal
     {
-        console.log("assert allowance { nftId: %s , objectType: ALL }\n", nftId.toInt());
+        //console.log("assert allowance { nftId: %s , objectType: ALL }\n", nftId.toInt());
 
         for(uint typeIdx = 0; typeIdx < _types.length; typeIdx++)
         {
@@ -607,7 +609,7 @@ contract RegistryTest is Test, FoundryRandom {
     // nftId has no allowance for all objectTypes
     function _assertFalse_allowance_all_types(NftId nftId) internal
     {
-        console.log("assertFalse allowance() for ALL types\n");
+        //console.log("assertFalse allowance() for ALL types\n");
 
         for(uint typeIdx = 0; typeIdx < _types.length; typeIdx++)
         {
@@ -668,51 +670,27 @@ contract RegistryTest is Test, FoundryRandom {
             revertMsg = abi.encodeWithSelector(Registry.InvalidTypesCombination.selector, objectType, parentType);
         } 
 
-        //console.log("approving { nftId: %d , objectType: %s , parentType: %s }", nftId.toInt(), _typeName[objectType], _typeName[parentType]);
-        //console.log("sender: %s", _getSenderName());
-        //revertMsg.length > 0 ? console.log("expect revert: true\n") :
-        //                        console.log("expect revert: false\n");
-
-        if(revertMsg.length > 0) 
-        { 
-            vm.expectRevert(revertMsg);
-        }
-
-        registry.approve(nftId, objectType, parentType);
-
-        if(revertMsg.length == 0)
-        {
-            _isApproved[nftId][objectType] = true;
- 
-            _checkNonUpgradeableRegistryGetters();            
-        }
-
-        //console.log("----\n");
-
+        _assert_approve(nftId, objectType, parentType, revertMsg);
     }
 
     function _assert_register(IRegistry.ObjectInfo memory info, bool expectRevert, bytes memory revertMsg) internal returns (NftId nftId)
     {
-        console.log("registering:"); 
-        console.log("        nftId: %s", info.nftId.toInt()); 
-        console.log("   parenNftId: %s", info.parentNftId.toInt());
-        console.log("   objectType: %s", _getTypeName(info.objectType));   
-        console.log("objectAddress: %s", info.objectAddress);   
-        console.log(" initialOwner: %s", info.initialOwner);
+        //console.log("registering:"); 
+        //_logObjectInfo(info);
         if(info.objectType == SERVICE()) {
             (
                 string memory name,
                 VersionPart majorVersion
             ) = _decodeServiceParameters(info.data);
-            console.log("  serviceName: %s", name);   
-            console.log(" majorVersion: %s", majorVersion.toInt());  
+            //console.log("  serviceName: %s", name);   
+            //console.log(" majorVersion: %s", majorVersion.toInt());  
         } 
-        console.log("-------------");  
-        console.log("   parentType: %s", _typeName[_info[info.parentNftId].objectType]);
-        console.log("parentAddress: %s", _info[info.parentNftId].objectAddress);
-        console.log("       sender: %s", _getSenderName());
-        console.log("expect revert: %s", expectRevert);
-        console.log("revert reason: %s\n", _errorName[bytes4(revertMsg)]);
+        //console.log("-------------");  
+        //console.log("   parentType: %s", _typeName[_info[info.parentNftId].objectType]);
+        //console.log("parentAddress: %s", _info[info.parentNftId].objectAddress);
+        //console.log("       sender: %s", _getSenderName());
+        //console.log("expect revert: %s", expectRevert);
+        //console.log("revert reason: %s\n", _errorName[bytes4(revertMsg)]);
 
         if(expectRevert)
         {
@@ -741,13 +719,11 @@ contract RegistryTest is Test, FoundryRandom {
         //console.log("returned: %d\n", nftId.toInt());
     }
 
-    function _assert_register_with_default_checks(
-        IRegistry.ObjectInfo memory info,
-        bool expectRevert,
-        bytes memory expectedRevertMsg
-    )
-        internal returns (NftId nftId)
+    // TODO do not check service related errors here?
+    function _assert_register_with_default_checks(IRegistry.ObjectInfo memory info) internal returns (NftId nftId)
     {
+        bool expectRevert;
+        bytes memory expectedRevertMsg;
         NftId parentNftId = info.parentNftId;
         address parentAddress = _info[parentNftId].objectAddress;
         ObjectType parentType = _info[parentNftId].objectType;
@@ -757,7 +733,7 @@ contract RegistryTest is Test, FoundryRandom {
             expectedRevertMsg = abi.encodeWithSelector(Registry.NotRegistryService.selector);
             expectRevert = true;
         }
-        else if(parentAddress == address(0)) // when specified parentNftId is next nftId ->
+        else if(parentAddress == address(0)) 
         {// special case: MUST NOT register with global registry as parent when not on mainnet (global registry have valid type as parent but 0 address in this case)
             expectedRevertMsg = abi.encodeWithSelector(Registry.ZeroParentAddress.selector);
             expectRevert = true;
@@ -768,9 +744,9 @@ contract RegistryTest is Test, FoundryRandom {
             info.initialOwner.codehash != 0)
         )// now none of GIF contracts are supporting erc721 receiver interface -> components and tokens could -> but not now
         {// ERC721 check
-            console.log("initialOwner is in addresses set: %s", EnumerableSet.contains(_addresses, info.initialOwner));
-            console.log("initialOwner codehash: %s", uint(info.initialOwner.codehash));
-            console.log("EOA codehash %s", uint(EOA_CODEHASH));
+            //console.log("initialOwner is in addresses set: %s", EnumerableSet.contains(_addresses, info.initialOwner));
+            //console.log("initialOwner codehash: %s", uint(info.initialOwner.codehash));
+            //console.log("EOA codehash %s", uint(EOA_CODEHASH));
             expectedRevertMsg = abi.encodeWithSelector(IERC721Errors.ERC721InvalidReceiver.selector, info.initialOwner);
             expectRevert = true;
         }
@@ -799,7 +775,7 @@ contract RegistryTest is Test, FoundryRandom {
                     (majorVersion.toInt() > 1 &&
                     _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)].address_ == address(0) )
                 )
-                {// major version must increase by 1
+                {// major version > 0 and must increase by 1
                     expectedRevertMsg = abi.encodeWithSelector(Registry.InvalidServiceVersion.selector, majorVersion);
                     expectRevert = true;
                 }
@@ -819,70 +795,180 @@ contract RegistryTest is Test, FoundryRandom {
         nftId = _assert_register(info, expectRevert, expectedRevertMsg);
     }
 
-    function test_specific_register_case() public
+    // previously failing cases 
+    function test_register_specificCases() public
     {
-        _startPrank(0xb6F322D9421ae42BBbB5CC277CE23Dbb08b3aC1f);//_startPrank(registryService);
-
         bytes memory data = abi.encode("TestService", VersionLib.toVersionPart(1));
 
+        _startPrank(0xb6F322D9421ae42BBbB5CC277CE23Dbb08b3aC1f);
 
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            toNftId(16158753772191290777002328881),
-            toNftId(193),
-            toObjectType(160),
-            0x9c538400FeC769e651E6552221C88A29660f0DE5,
-            0x643A203932303038363435323830353333323539,
-            data//""
+        _assert_register_with_default_checks(
+            IRegistry.ObjectInfo(
+                toNftId(16158753772191290777002328881),
+                toNftId(193),
+                toObjectType(160),
+                0x9c538400FeC769e651E6552221C88A29660f0DE5,
+                0x643A203932303038363435323830353333323539,
+                ""                
+            )
         );
 
-        // previously failing cases 
+        _stopPrank();
+        _startPrank(registryService);
 
-        /* parentNftId == _chainNft.mint() && objectAddress == initialOwner
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            toNftId(3471),
-            toNftId(43133705),
-            toObjectType(128),
-            0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
-            0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
-            data//""
+        // parentNftId == _chainNft.mint() && objectAddress == initialOwner
+        _assert_register_with_default_checks(
+            IRegistry.ObjectInfo(
+                toNftId(3471),
+                toNftId(43133705),
+                toObjectType(128),
+                0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
+                0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
+                ""              
+            )
         );
-        */
 
-        /* precompile address as owner
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            toNftId(76658180398758015949026343204),
-            toNftId(17762988911415987093326017078),
-            toObjectType(21),
-            0x85Cf4Fe71daF5271f8a5C1D4E6BB4bc91f792e27,
-            0x0000000000000000000000000000000000000008,
-            data//""
+        // precompile address as owner
+        _assert_register_with_default_checks(
+            IRegistry.ObjectInfo(
+                toNftId(76658180398758015949026343204),
+                toNftId(17762988911415987093326017078),
+                toObjectType(21),
+                0x85Cf4Fe71daF5271f8a5C1D4E6BB4bc91f792e27,
+                0x0000000000000000000000000000000000000008,
+                ""            
+            )
         );
-        */
 
-        /* initialOwner is cheat codes contract address
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            toNftId(15842010466351085404296329522),
-            toNftId(16017),
-            toObjectType(19),
-            0x0C168C3a4589B65fFf12444A0c88125a416927DD,
-            0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
-            data//""
+        // initialOwner is cheat codes contract address
+        _assert_register_with_default_checks(
+            IRegistry.ObjectInfo(
+                toNftId(15842010466351085404296329522),
+                toNftId(16017),
+                toObjectType(19),
+                0x0C168C3a4589B65fFf12444A0c88125a416927DD,
+                0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
+                ""        
+            )
         );
-        */
 
-        //0, 162, 0, 0x733A203078373333613230333037383337333333, 0x4e59b44847b379578588920cA78FbF26c0B4956C IMPORTANT !!!
+        _assert_register_with_default_checks(
+            IRegistry.ObjectInfo(
+                toNftId(0),
+                toNftId(162),
+                toObjectType(0),
+                0x733A203078373333613230333037383337333333,
+                0x4e59b44847b379578588920cA78FbF26c0B4956C,
+                ""        
+            )
+        );
 
 
+//(133133705, 23133705, 40, 0x0000000000000000000000000000000000000001, 0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4, 0x000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000
+//ContractAlreadyRegistered(0x0000000000000000000000000000000000000001)
+        _assert_register_with_default_checks(
+            IRegistry.ObjectInfo(
+                toNftId(133133705),
+                registryNftId,
+                SERVICE(),
+                0x0000000000000000000000000000000000000001,
+                0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
+                abi.encode("asasas", VersionLib.toVersionPart(1))
+            )
+        );
 
-        _assert_register_with_default_checks(info, false, "");
-        //_assert_register(info, false, ""); 
+        _stopPrank();
+        _startPrank(0x0000000000000000000000000000000042966C69);
+
+        _assert_register_with_default_checks(
+            IRegistry.ObjectInfo(
+                toNftId(22045),
+                toNftId(EnumerableSet.at(_nftIds, 2620112370 % EnumerableSet.length(_nftIds))),
+                _types[199 % _types.length],
+                address(0),
+                0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
+                ""        
+            )
+        );
+        //0x0000000000000000000000000000000042966C69, 22045, 2620112370, 199, 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D]
+        _stopPrank();
+        _startPrank(0x000000000000000000000000000000000000185e);
+
+        _assert_register_with_default_checks(
+            IRegistry.ObjectInfo(
+                toNftId(5764),
+                toNftId(EnumerableSet.at(_nftIds, 1794 % EnumerableSet.length(_nftIds))),
+                _types[167 % _types.length],
+                address(0),
+                0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
+                ""        
+            )
+        );
+        //0x000000000000000000000000000000000000185e, 5764, 1794, 167, 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
+        _stopPrank();
+        
+    }
+
+    function test_ownerNftTransfer() public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            zeroNftId(), // any nftId
+            registryNftId,
+            SERVICE(),
+            address(uint160(randomNumber(type(uint160).max))),
+            outsider, // any address capable to receive nft
+            abi.encode("NewService", VersionLib.toVersionPart(1))
+        );
+
+        bytes memory reason_NotRegistryService = abi.encodeWithSelector(Registry.NotRegistryService.selector);
+        bytes memory reason_NotOwner = abi.encodeWithSelector(Registry.NotOwner.selector);
+
+        _startPrank(outsider);
+
+        _assert_register(info, true, reason_NotRegistryService);
+
+        _assert_approve(registryServiceNftId, PRODUCT(), INSTANCE(), reason_NotOwner);
+
+        _stopPrank();
+
+        _startPrank(registryOwner);
+
+        _assert_register(info, true, reason_NotRegistryService);
+
+        _assert_approve(registryServiceNftId, PRODUCT(), INSTANCE(), "");
+
+
+        chainNft.transferFrom(registryOwner, outsider, registryNftId.toInt());
+
+
+        _assert_register(info, true, reason_NotRegistryService);
+
+        _assert_approve(registryServiceNftId, POOL(), INSTANCE(), reason_NotOwner);
+
+        _stopPrank();
+
+        _startPrank(outsider);
+
+        _assert_register(info, true, reason_NotRegistryService);
+
+        _assert_approve(registryServiceNftId, POOL(), INSTANCE(), "");
+
+        _stopPrank();
+
+        _startPrank(registryService);
+
+        _assert_register(info, false, "");
+
+        _assert_approve(registryServiceNftId, ORACLE(), INSTANCE(), reason_NotOwner);
 
         _stopPrank();
     }
-
     
     function testFuzz_register(address sender, IRegistry.ObjectInfo memory info) public
     {
+        // gives error (Invalid data) only during fuzzing when minting nft to foundry's cheatcodes contract
+        vm.assume(info.initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+
         // fuzz serviceName?
         if(info.objectType == SERVICE()) {
             info.data = abi.encode("TestService", VersionLib.toVersionPart(1));
@@ -892,14 +978,14 @@ contract RegistryTest is Test, FoundryRandom {
 
         _startPrank(sender);
 
-        _assert_register_with_default_checks(info, true, ""); // NotRegistryService
+        _assert_register_with_default_checks(info); // NotRegistryService
 
         _stopPrank();
 
         if(sender != registryService) {
             _startPrank(registryService);
 
-            _assert_register_with_default_checks(info, false, "");
+            _assert_register_with_default_checks(info);
 
             _stopPrank();
         }
@@ -909,8 +995,7 @@ contract RegistryTest is Test, FoundryRandom {
     // parentNftId - random
     // objectType - random
     // objectAddress - random
-    // initialOwner - set of registered nfts -> TODO use constant set of nfts as parents aka _nftIdByType?
-    
+    // initialOwner - set of addresses (registered + senders)
     function testFuzz_register_000001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
@@ -928,8 +1013,7 @@ contract RegistryTest is Test, FoundryRandom {
     
     function testFuzz_register_000010(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, address initialOwner) public //, bytes memory data
     {
-        // special case: foundry cheatcodes contract
-        vm.assume(initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
+
         
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -961,9 +1045,6 @@ contract RegistryTest is Test, FoundryRandom {
     
     function testFuzz_register_000100(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, address objectAddress, address initialOwner) public //, bytes memory data
     {
-        // special case: foundry cheatcodes contract
-        vm.assume(initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
@@ -994,9 +1075,6 @@ contract RegistryTest is Test, FoundryRandom {
     
     function testFuzz_register_000110(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx,  uint objectAddressIdx, address initialOwner) public //, bytes memory data
     {
-        // special case: foundry cheatcodes contract
-        vm.assume(initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
@@ -1025,11 +1103,8 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001000(address sender, NftId nftId, uint8 parentIdx, ObjectType objectType, address objectAddress, address initialOwner) public //, bytes memory data
+    function testFuzz_register_001000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, address objectAddress, address initialOwner) public //, bytes memory data
     {
-        // special case: foundry cheatcodes contract
-        vm.assume(initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
@@ -1043,7 +1118,7 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001001(address sender, NftId nftId, uint8 parentIdx, ObjectType objectType, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
+    function testFuzz_register_001001(address sender, NftId nftId, uint parentIdx, ObjectType objectType, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -1058,11 +1133,8 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001010(address sender, NftId nftId, uint8 parentIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner) public //, bytes memory data
+    function testFuzz_register_001010(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner) public //, bytes memory data
     {
-        // special case: foundry cheatcodes contract
-        vm.assume(initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
@@ -1076,7 +1148,7 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001011(address sender, NftId nftId, uint8 parentIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
+    function testFuzz_register_001011(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -1091,11 +1163,8 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001100(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, address objectAddress, address initialOwner) public //, bytes memory data
+    function testFuzz_register_001100(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, address objectAddress, address initialOwner) public //, bytes memory data
     {
-        // special case: foundry cheatcodes contract
-        vm.assume(initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
@@ -1109,7 +1178,7 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001101(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, address objectAddress, uint initialOwnerIdx) public
+    function testFuzz_register_001101(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, address objectAddress, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -1124,11 +1193,8 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001110(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner) public
+    function testFuzz_register_001110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner) public
     {
-        // special case: foundry cheatcodes contract
-        vm.assume(initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);
-
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
@@ -1142,7 +1208,7 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001111(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx) public
+    function testFuzz_register_001111(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -1156,8 +1222,105 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    
-    function testFuzz_register_zeroObjectAddress_001111(address sender, NftId nftId, uint8 parentIdx, uint8 objectTypeIdx, uint initialOwnerIdx) public
+    function testFuzz_register_zeroObjectAddress(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, address initialOwner) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            address(0),
+            initialOwner,
+            ""
+        );
+
+        testFuzz_register(sender, info);
+    }
+
+    function testFuzz_register_zeroObjectAddress_00001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint initialOwnerIdx) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            address(0),
+            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            ""
+        );
+
+        testFuzz_register(sender, info);
+    }
+
+    function testFuzz_register_zeroObjectAddress_00010(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, address initialOwner) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            _types[objectTypeIdx % _types.length],
+            address(0),
+            initialOwner,
+            ""
+        );
+
+        testFuzz_register(sender, info);
+    }
+
+    function testFuzz_register_zeroObjectAddress_00011(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, uint initialOwnerIdx) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            _types[objectTypeIdx % _types.length],
+            address(0),
+            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            ""
+        );
+
+        testFuzz_register(sender, info);
+    }
+
+    function testFuzz_register_zeroObjectAddress_00100(address sender, NftId nftId, uint parentIdx, ObjectType objectType, address initialOwner) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            objectType,
+            address(0),
+            initialOwner,
+            ""
+        );
+
+        testFuzz_register(sender, info);
+    }
+
+    function testFuzz_register_zeroObjectAddress_00101(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint initialOwnerIdx) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            objectType,
+            address(0),
+            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            ""
+        );
+
+        testFuzz_register(sender, info);
+    }
+
+    function testFuzz_register_zeroObjectAddress_00110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, address initialOwner) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            _types[objectTypeIdx % _types.length],
+            address(0),
+            initialOwner,
+            ""
+        );
+
+        testFuzz_register(sender, info);
+    }
+
+    function testFuzz_register_zeroObjectAddress_00111(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -1266,7 +1429,6 @@ contract RegistryTest is Test, FoundryRandom {
     }
 }
 
-// TODO -> forge-config: default.fuzz.runs = 20000 instead of 256
 contract RegistryTestWithPreset is RegistryTest
 { 
     function setUp() public override
