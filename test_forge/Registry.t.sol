@@ -51,6 +51,7 @@ function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
             zeroNftId(),
             zeroNftId(),
             zeroObjectType(),
+            false,
             address(0),
             address(0),
             bytes("")
@@ -149,6 +150,7 @@ contract RegistryTest is Test, FoundryRandom {
                 protocolNftId,
                 zeroNftId(),
                 PROTOCOL(),
+                false,
                 address(0),
                 NFT_LOCK_ADDRESS,//registryOwner,
                 ""
@@ -163,6 +165,7 @@ contract RegistryTest is Test, FoundryRandom {
                 registryNftId,
                 protocolNftId,
                 REGISTRY(),
+                false,
                 address(registry), // update when deployed 
                 registryOwner,
                 "" 
@@ -178,6 +181,7 @@ contract RegistryTest is Test, FoundryRandom {
                 globalRegistryNftId,
                 protocolNftId,
                 REGISTRY(),
+                false,
                 address(0),
                 NFT_LOCK_ADDRESS,//registryOwner,
                 "" 
@@ -187,6 +191,7 @@ contract RegistryTest is Test, FoundryRandom {
                 registryNftId,
                 globalRegistryNftId,
                 REGISTRY(),
+                false,
                 address(registry), // update when deployed 
                 registryOwner,
                 "" 
@@ -197,6 +202,7 @@ contract RegistryTest is Test, FoundryRandom {
             registryServiceNftId,
             registryNftId,
             SERVICE(),
+            false,
             registryService, // is dummy contract address without erc721 receiver support
             NFT_LOCK_ADDRESS,//registryOwner,
             ""
@@ -817,6 +823,7 @@ contract RegistryTest is Test, FoundryRandom {
                 toNftId(16158753772191290777002328881),
                 toNftId(193),
                 toObjectType(160),
+                false, // isInterceptor
                 0x9c538400FeC769e651E6552221C88A29660f0DE5,
                 0x643A203932303038363435323830353333323539,
                 ""                
@@ -832,6 +839,7 @@ contract RegistryTest is Test, FoundryRandom {
                 toNftId(3471),
                 toNftId(43133705),
                 toObjectType(128),
+                false, // isInterceptor
                 0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
                 0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
                 ""              
@@ -844,6 +852,7 @@ contract RegistryTest is Test, FoundryRandom {
                 toNftId(76658180398758015949026343204),
                 toNftId(17762988911415987093326017078),
                 toObjectType(21),
+                false, // isInterceptor
                 0x85Cf4Fe71daF5271f8a5C1D4E6BB4bc91f792e27,
                 0x0000000000000000000000000000000000000008,
                 ""            
@@ -856,6 +865,7 @@ contract RegistryTest is Test, FoundryRandom {
                 toNftId(15842010466351085404296329522),
                 toNftId(16017),
                 toObjectType(19),
+                false, // isInterceptor
                 0x0C168C3a4589B65fFf12444A0c88125a416927DD,
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
                 ""        
@@ -867,6 +877,7 @@ contract RegistryTest is Test, FoundryRandom {
                 toNftId(0),
                 toNftId(162),
                 toObjectType(0),
+                false, // isInterceptor
                 0x733A203078373333613230333037383337333333,
                 0x4e59b44847b379578588920cA78FbF26c0B4956C,
                 ""        
@@ -881,6 +892,7 @@ contract RegistryTest is Test, FoundryRandom {
                 toNftId(133133705),
                 registryNftId,
                 SERVICE(),
+                false, // isInterceptor
                 0x0000000000000000000000000000000000000001,
                 0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
                 abi.encode("asasas", VersionLib.toVersionPart(1))
@@ -895,6 +907,7 @@ contract RegistryTest is Test, FoundryRandom {
                 toNftId(22045),
                 toNftId(EnumerableSet.at(_nftIds, 2620112370 % EnumerableSet.length(_nftIds))),
                 _types[199 % _types.length],
+                false, // isInterceptor
                 address(0),
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
                 ""        
@@ -909,6 +922,7 @@ contract RegistryTest is Test, FoundryRandom {
                 toNftId(5764),
                 toNftId(EnumerableSet.at(_nftIds, 1794 % EnumerableSet.length(_nftIds))),
                 _types[167 % _types.length],
+                false,
                 address(0),
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
                 ""        
@@ -925,6 +939,7 @@ contract RegistryTest is Test, FoundryRandom {
             zeroNftId(), // any nftId
             registryNftId,
             SERVICE(),
+            false,
             address(uint160(randomNumber(type(uint160).max))),
             outsider, // any address capable to receive nft
             abi.encode("NewService", VersionLib.toVersionPart(GIF_VERSION))
@@ -1006,12 +1021,13 @@ contract RegistryTest is Test, FoundryRandom {
     // objectType - random
     // objectAddress - random
     // initialOwner - set of addresses (registered + senders)
-    function testFuzz_register_000001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
+    function testFuzz_register_000001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             objectType,
+            isInterceptor,
             objectAddress,
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1021,7 +1037,7 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_000010(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, address initialOwner) public //, bytes memory data
+    function testFuzz_register_000010(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, uint objectAddressIdx, address initialOwner) public //, bytes memory data
     {
 
         
@@ -1029,6 +1045,7 @@ contract RegistryTest is Test, FoundryRandom {
             nftId,
             parentNftId,
             objectType,
+            isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
             initialOwner,
             ""
@@ -1038,12 +1055,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_000011(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
+    function testFuzz_register_000011(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             objectType,
+            isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1053,12 +1071,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_000100(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, address objectAddress, address initialOwner) public //, bytes memory data
+    function testFuzz_register_000100(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, address initialOwner) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             objectAddress,
             initialOwner,
             ""
@@ -1068,12 +1087,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_000101(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
+    function testFuzz_register_000101(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             objectAddress,
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1083,12 +1103,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_000110(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx,  uint objectAddressIdx, address initialOwner) public //, bytes memory data
+    function testFuzz_register_000110(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor,  uint objectAddressIdx, address initialOwner) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
             initialOwner,
             ""
@@ -1098,12 +1119,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_000111(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx,  uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
+    function testFuzz_register_000111(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor,  uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1113,12 +1135,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, address objectAddress, address initialOwner) public //, bytes memory data
+    function testFuzz_register_001000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
+            isInterceptor,
             objectAddress,
             initialOwner,
             ""
@@ -1128,12 +1151,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001001(address sender, NftId nftId, uint parentIdx, ObjectType objectType, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
+    function testFuzz_register_001001(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, address objectAddress, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
+            isInterceptor,
             objectAddress,
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1143,12 +1167,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001010(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner) public //, bytes memory data
+    function testFuzz_register_001010(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, uint objectAddressIdx, address initialOwner) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
+            isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
             initialOwner,
             ""
@@ -1158,12 +1183,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001011(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
+    function testFuzz_register_001011(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, uint objectAddressIdx, uint initialOwnerIdx) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
+            isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1173,12 +1199,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001100(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, address objectAddress, address initialOwner) public //, bytes memory data
+    function testFuzz_register_001100(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, address initialOwner) public //, bytes memory data
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             objectAddress,
             initialOwner,
             ""
@@ -1188,12 +1215,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001101(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, address objectAddress, uint initialOwnerIdx) public
+    function testFuzz_register_001101(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             objectAddress,
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1203,12 +1231,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner) public
+    function testFuzz_register_001110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, uint objectAddressIdx, address initialOwner) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
             initialOwner,
             ""
@@ -1218,12 +1247,13 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     
-    function testFuzz_register_001111(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx) public
+    function testFuzz_register_001111(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, uint objectAddressIdx, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1232,12 +1262,13 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    function testFuzz_register_zeroObjectAddress(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, address initialOwner) public
+    function testFuzz_register_zeroObjectAddress(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             objectType,
+            isInterceptor,
             address(0),
             initialOwner,
             ""
@@ -1246,12 +1277,13 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    function testFuzz_register_zeroObjectAddress_00001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint initialOwnerIdx) public
+    function testFuzz_register_zeroObjectAddress_00001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             objectType,
+            isInterceptor,
             address(0),
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1260,12 +1292,13 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    function testFuzz_register_zeroObjectAddress_00010(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, address initialOwner) public
+    function testFuzz_register_zeroObjectAddress_00010(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, address initialOwner) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             address(0),
             initialOwner,
             ""
@@ -1274,12 +1307,13 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    function testFuzz_register_zeroObjectAddress_00011(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, uint initialOwnerIdx) public
+    function testFuzz_register_zeroObjectAddress_00011(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             address(0),
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1288,12 +1322,13 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    function testFuzz_register_zeroObjectAddress_00100(address sender, NftId nftId, uint parentIdx, ObjectType objectType, address initialOwner) public
+    function testFuzz_register_zeroObjectAddress_00100(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, address initialOwner) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
+            isInterceptor,
             address(0),
             initialOwner,
             ""
@@ -1302,12 +1337,13 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    function testFuzz_register_zeroObjectAddress_00101(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint initialOwnerIdx) public
+    function testFuzz_register_zeroObjectAddress_00101(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
+            isInterceptor,
             address(0),
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""
@@ -1316,12 +1352,13 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    function testFuzz_register_zeroObjectAddress_00110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, address initialOwner) public
+    function testFuzz_register_zeroObjectAddress_00110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             address(0),
             initialOwner,
             ""
@@ -1330,12 +1367,13 @@ contract RegistryTest is Test, FoundryRandom {
         testFuzz_register(sender, info);
     }
 
-    function testFuzz_register_zeroObjectAddress_00111(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint initialOwnerIdx) public
+    function testFuzz_register_zeroObjectAddress_00111(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, uint initialOwnerIdx) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
+            isInterceptor,
             address(0),
             EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
             ""

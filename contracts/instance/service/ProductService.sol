@@ -202,6 +202,7 @@ contract ProductService is ComponentServiceBase, IProductService {
                 zeroNftId(),
                 productInfo.nftId,
                 POLICY(),
+                false, // intercepting property for policies is defined on product
                 address(0),
                 applicationOwner,
                 ""

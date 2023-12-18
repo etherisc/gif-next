@@ -21,6 +21,7 @@ interface IRegistry is IERC165, IOwnable {
         NftId nftId;
         NftId parentNftId;
         ObjectType objectType;
+        bool isInterceptor;
         address objectAddress;
         address initialOwner;
         bytes data;

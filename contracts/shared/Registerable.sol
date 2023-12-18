@@ -25,6 +25,7 @@ abstract contract Registerable is
         NftId _parentNftId;
         address _initialOwner;
         ObjectType _objectType;
+        bool _isInterceptor;
         bytes _data;
     }
 
@@ -46,6 +47,7 @@ abstract contract Registerable is
         address registryAddress,
         NftId parentNftId,
         ObjectType objectType,
+        bool isInterceptor,
         address initialOwner,
         bytes memory data
     )
@@ -71,6 +73,7 @@ abstract contract Registerable is
         $._registry = registry;
         $._parentNftId = parentNftId;
         $._objectType = objectType;
+        $._isInterceptor = isInterceptor;
         $._initialOwner = initialOwner;// not msg.sender because called in proxy constructor where msg.sender is proxy deployer
         $._data = data;
 
@@ -103,6 +106,7 @@ abstract contract Registerable is
                 zeroNftId(),
                 $._parentNftId,
                 $._objectType,
+                $._isInterceptor,
                 address(this), 
                 $._initialOwner,
                 $._data

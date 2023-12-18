@@ -2,7 +2,10 @@
 pragma solidity ^0.8.20;
 
 import {ERC721, ERC721Enumerable} from "@openzeppelin5/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {IERC721} from "@openzeppelin5/contracts/token/ERC721/IERC721.sol";
+
 import {IChainNft} from "./IChainNft.sol";
+import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
 contract ChainNft is ERC721Enumerable, IChainNft {
     string public constant NAME = "Dezentralized Insurance Protocol Registry";
@@ -10,6 +13,9 @@ contract ChainNft is ERC721Enumerable, IChainNft {
 
     uint256 public constant PROTOCOL_NFT_ID = 1101;
     uint256 public constant GLOBAL_REGISTRY_ID = 2101;
+
+    // remember interceptors
+    mapping(uint256 tokenId => address interceptor) private _interceptor;
 
     // remember token uri
     mapping(uint256 tokenId => string uri) private _uri;
@@ -41,13 +47,31 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     }
 
     /**
+    * @dev mints a token for a specified token id
+    * not part of the IRegistry interface only needed for
+    * initial registry setup (protocol and global registry objects)
+    */
+    function mint(address to, uint256 tokenId) external onlyRegistry {
+        _totalMinted++;
+        _safeMint(to, tokenId);
+    }
+
+
+    /**
     * @dev mints the next token to register new objects
+    * non-zero transferInterceptors are recorded and called during nft token transfers.
+    * the contract receiving such a notification may decides to revert or record the transfer
     */
     function mint(
         address to,
+        address interceptor,
         string memory uri
-    ) external override onlyRegistry returns (uint256 tokenId) {
+    ) public onlyRegistry returns (uint256 tokenId) {
         tokenId = _getNextTokenId();
+
+        if (interceptor != address(0)) {
+            _interceptor[tokenId] = interceptor;
+        }
 
         if (bytes(uri).length > 0) {
             _uri[tokenId] = uri;
@@ -57,15 +81,19 @@ contract ChainNft is ERC721Enumerable, IChainNft {
         _totalMinted++;
     }
 
+
     /**
-    * @dev mints a token for a specified token id
-    * not part of the IRegistry interface only needed for
-    * initial registry setup (protocol and global registry objects)
-    */
-    function mint(address to, uint256 tokenId) external onlyRegistry {
-        _totalMinted++;
-        _safeMint(to, tokenId);
+     * @dev amend the open zeppelin transferFrom function by an interceptor call if such an interceptor is defined for the nft token id
+     * this allows distribution, product and pool components to be notified when distributors, policies and bundles are transferred.
+     */
+    function transferFrom(address from, address to, uint256 tokenId) public override (ERC721, IERC721) {
+        super.transferFrom(from, to, tokenId);
+
+        if (_interceptor[tokenId] != address(0)) {
+            ITransferInterceptor(_interceptor[tokenId]).nftTransferFrom(from, to, tokenId);
+        }
     }
+
 
     function burn(uint256 tokenId) external override onlyRegistry {
         _requireOwned(tokenId);

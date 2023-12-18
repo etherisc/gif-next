@@ -37,7 +37,7 @@ abstract contract ServiceBase is
         //onlyInitializing //TODO uncomment when "fully" upgradeable
     {// service must provide its name and version upon registration
         bytes memory data = abi.encode(getName(), getMajorVersion());
-        _initializeRegisterable(registry, registryNftId, SERVICE(), initialOwner, data);
+        _initializeRegisterable(registry, registryNftId, SERVICE(), false, initialOwner, data);
         _registerInterface(type(IService).interfaceId);
     }
 }

@@ -37,12 +37,13 @@ contract Product is BaseComponent, IProductComponent {
         address registry,
         NftId instanceNftid,
         address token,
+        bool isInterceptor,
         address pool,
         address distribution,
         Fee memory productFee,
         Fee memory processingFee,
         address initialOwner
-    ) BaseComponent(registry, instanceNftid, token, PRODUCT(), initialOwner) {
+    ) BaseComponent(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = IPoolComponent(pool);

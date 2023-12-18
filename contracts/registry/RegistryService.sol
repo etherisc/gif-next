@@ -95,6 +95,7 @@ contract RegistryService is
             zeroNftId(), // any value
             registry.getNftId(address(registry)),
             TOKEN(),
+            false, // isInterceptor
             tokenAddress,
             NFT_LOCK_ADDRESS,//registry.getLockAddress(),//msg.sender,
             "" // any value

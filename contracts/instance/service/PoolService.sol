@@ -76,6 +76,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
                 zeroNftId(),
                 poolNftId,
                 BUNDLE(),
+                false, // intercepting property for bundles is defined on pool
                 address(0),
                 owner,
                 ""

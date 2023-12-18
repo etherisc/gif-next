@@ -6,6 +6,7 @@ import {IERC721Enumerable} from "@openzeppelin5/contracts/token/ERC721/extension
 interface IChainNft is IERC721Enumerable {
     function mint(
         address to,
+        address interceptor,
         string memory uri
     ) external returns (uint256 tokenId);
 

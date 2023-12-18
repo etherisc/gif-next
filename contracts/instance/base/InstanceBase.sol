@@ -41,7 +41,7 @@ abstract contract InstanceBase is
         Versionable()
     {
         bytes memory data = "";
-        _initializeRegisterable(registry, registryNftId, INSTANCE(), initialOwner, data);
+        _initializeRegisterable(registry, registryNftId, INSTANCE(), true, initialOwner, data);
         _keyValueStore = new KeyValueStore();
 
         _registerInterface(type(IInstance).interfaceId);

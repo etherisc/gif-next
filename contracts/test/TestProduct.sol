@@ -19,13 +19,14 @@ contract TestProduct is Product {
         address registry,
         NftId instanceNftid,
         address token,
+        bool isInterceptor,
         address pool,
         address distribution,
         Fee memory productFee,
         Fee memory processingFee,
         address initialOwner
     )
-        Product(registry, instanceNftid, token, pool, distribution, productFee, processingFee, initialOwner)
+        Product(registry, instanceNftid, token, isInterceptor, pool, distribution, productFee, processingFee, initialOwner)
     // solhint-disable-next-line no-empty-blocks
     {
     }

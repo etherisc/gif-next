@@ -130,8 +130,9 @@ contract TestGifBase is Test {
         vm.stopPrank();
 
         // deploy pool
+        bool poolIsInterceptor = false;
         vm.startPrank(poolOwner);
-        _deployPool(poolIsVerifying, poolCollateralizationLevel);
+        _deployPool(poolIsInterceptor, poolIsVerifying, poolCollateralizationLevel);
         vm.stopPrank();
 
         // deploy distribution
@@ -339,6 +340,7 @@ contract TestGifBase is Test {
 
 
     function _deployPool(
+        bool isInterceptor,
         bool isVerifying,
         UFixed collateralizationLevel
     )
@@ -351,6 +353,7 @@ contract TestGifBase is Test {
             address(registry), 
             instance.getNftId(), 
             address(token),
+            false, // isInterceptor
             isVerifying,
             collateralizationLevel,
             initialPoolFee,
@@ -401,6 +404,7 @@ contract TestGifBase is Test {
             address(registry), 
             instance.getNftId(), 
             address(token), 
+            false, // isInterceptor
             address(pool),
             address(distribution),
             initialProductFee,

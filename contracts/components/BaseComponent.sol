@@ -32,11 +32,12 @@ abstract contract BaseComponent is
         NftId instanceNftId,
         address token,
         ObjectType componentType,
+        bool isInterceptor,
         address initialOwner
     )
     {
         bytes memory data = "";
-        _initializeRegisterable(registry, instanceNftId, componentType, initialOwner, data);
+        _initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
 
         IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
         _instance = IInstance(instanceInfo.objectAddress);

@@ -10,6 +10,7 @@ import {IRegistry} from "./IRegistry.sol";
 import {NftId, toNftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
+import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
 import {IOwnable} from "../shared/IOwnable.sol";
 import {ERC165} from "../shared/ERC165.sol";
@@ -136,8 +137,9 @@ contract Registry is
     {
         ObjectType objectType = info.objectType;
         NftId parentNftId = info.parentNftId;
-        ObjectType parentType = _info[parentNftId].objectType; // see function header
-        address parentAddress = _info[parentNftId].objectAddress;
+        ObjectInfo memory parentInfo = _info[parentNftId];
+        ObjectType parentType = parentInfo.objectType; // see function header
+        address parentAddress = parentInfo.objectAddress;
 
         // parent is contract -> need to check? -> check before minting
         // special case: global registry nft as parent when not on mainnet -> global registry address is 0
@@ -147,8 +149,11 @@ contract Registry is
             revert ZeroParentAddress();
         }
 
+        address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
+
         uint256 mintedTokenId = _chainNft.mint(
             info.initialOwner,
+            interceptor,
             EMPTY_URI);
         nftId = toNftId(mintedTokenId);
 
@@ -352,6 +357,7 @@ contract Registry is
             protocolNftId,
             zeroNftId(), // parent
             PROTOCOL(),
+            false, // isInterceptor
             address(0), // objectAddress
             NFT_LOCK_ADDRESS,// initialOwner
             ""
@@ -384,6 +390,7 @@ contract Registry is
             registryNftId,
             parentNftId,
             REGISTRY(),
+            false, // isInterceptor
             address(this), 
             _protocolOwner,
             "" 
@@ -407,6 +414,7 @@ contract Registry is
             globalRegistryNftId,
             toNftId(_chainNftInternal.PROTOCOL_NFT_ID()), // parent
             REGISTRY(),
+            false, // isInterceptor
             address(0), // objectAddress
             NFT_LOCK_ADDRESS, // initialOwner
             "" // data
@@ -425,6 +433,7 @@ contract Registry is
             serviceNftId,
             _registryNftId,
             SERVICE(),
+            false, // isInterceptor
             msg.sender, // service deploys registry
             NFT_LOCK_ADDRESS, // initialOwner,
             "" 
@@ -436,6 +445,32 @@ contract Registry is
         _service[serviceNameHash][majorVersion] = msg.sender;
         _string[serviceNftId] = serviceName;
         _serviceNftId = serviceNftId;
+    }
+
+    /// @dev obtain interceptor address for this nft if applicable, address(0) otherwise
+    function _getInterceptor(
+        bool isInterceptor, 
+        address objectAddress,
+        bool parentIsInterceptor,
+        address parentObjectAddress
+    )
+        internal 
+        view 
+        returns (address interceptor) 
+    {
+        if (objectAddress == address(0)) {
+            if (parentIsInterceptor) {
+                return parentObjectAddress;
+            } else {
+                return address(0);
+            }
+        }
+
+        if (isInterceptor) {
+            return objectAddress;
+        }
+
+        return address(0);
     }
 
     /// @dev defines which object - parent types relations are allowed to register

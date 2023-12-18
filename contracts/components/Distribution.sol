@@ -40,7 +40,7 @@ contract Distribution is
         Fee memory distributionFee,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, token, DISTRIBUTION(), initialOwner)
+        BaseComponent(registry, instanceNftId, token, DISTRIBUTION(), true, initialOwner)
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
