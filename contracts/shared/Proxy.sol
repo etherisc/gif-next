@@ -1,21 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IVersionable} from "./IVersionable.sol";
 import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
 import {ProxyAdmin} from "@openzeppelin5/contracts/proxy/transparent/ProxyAdmin.sol";
-import {TransparentUpgradeableProxy, ITransparentUpgradeableProxy} from "@openzeppelin5/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {ITransparentUpgradeableProxy} from "@openzeppelin5/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {IVersionable} from "./IVersionable.sol";
-
-contract UpgradableProxyWithAdmin is TransparentUpgradeableProxy {
-
-    constructor(address implementation, address initialProxyAdminOwner, bytes memory data)
-        TransparentUpgradeableProxy(implementation, initialProxyAdminOwner, data)
-    {}
-
-    function getProxyAdmin() external returns (ProxyAdmin) { return ProxyAdmin(_proxyAdmin()); }
-}
+import {UpgradableProxyWithAdmin} from "./UpgradableProxyWithAdmin.sol";
+import {IVersionable} from "./IVersionable.sol";
 
 // renamed because of name collision with OZ Proxy -> local proxy type was missing in typechain-types
 contract ProxyDeployer is Ownable {
@@ -29,14 +21,6 @@ contract ProxyDeployer is Ownable {
     constructor()
         Ownable(msg.sender)
     {
-    }
-
-    function getDeployData(address implementation, address proxyOwner, bytes memory deployData) public pure returns (bytes memory data) {
-        return abi.encodeWithSelector(IVersionable.initialize.selector, implementation, proxyOwner, deployData);
-    }
-
-    function getUpgradeData(address implementation, address proxyOwner, bytes memory upgradeData) public pure returns (bytes memory data) {
-        return abi.encodeWithSelector(IVersionable.upgrade.selector, implementation, proxyOwner, upgradeData);
     }
 
     /// @dev deploy initial contract
@@ -107,6 +91,14 @@ contract ProxyDeployer is Ownable {
             data);
 
         versionable = IVersionable(address(_proxy));
+    }
+
+    function getDeployData(address implementation, address proxyOwner, bytes memory deployData) public pure returns (bytes memory data) {
+        return abi.encodeWithSelector(IVersionable.initialize.selector, implementation, proxyOwner, deployData);
+    }
+
+    function getUpgradeData(address implementation, address proxyOwner, bytes memory upgradeData) public pure returns (bytes memory data) {
+        return abi.encodeWithSelector(IVersionable.upgrade.selector, implementation, proxyOwner, upgradeData);
     }
 
     function getProxyAdmin() public returns (ProxyAdmin) {
