@@ -26,6 +26,8 @@ import {IChainNft} from "../contracts/registry/IChainNft.sol";
 
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
+import {RegistryService} from "../contracts/registry/RegistryService.sol";
+import {RegistryServiceManager} from "../contracts/registry/RegistryServiceManager.sol";
 
 import {TestService} from "../contracts/test/TestService.sol";
 import {TestRegisterable} from "../contracts/test/TestRegisterable.sol";
@@ -410,6 +412,7 @@ contract RegistryTest is Test, FoundryRandom {
     {
         console.log("Deploying non upgradeable registry");
 
+        // ORIGINAL VERSION
         bytes memory bytecode = abi.encodePacked(
             type(Registry).creationCode, 
             abi.encode(
@@ -427,6 +430,12 @@ contract RegistryTest is Test, FoundryRandom {
                 revert(0, 0)
             }
         }
+        // NEW VERSION
+        // RegistryService implementation = new RegistryService();
+        // RegistryServiceManager registryServiceManager = new RegistryServiceManager(address(implementation));
+        // RegistryService registryService = registryServiceManager.deployRegistryService();
+        // address registryAddress = address(registryService.getRegistry());
+        // END OF NEW VERSION
 
         assertNotEq(registryAddress, address(0), "registry address is 0");
         console.log("registry address %s", registryAddress);

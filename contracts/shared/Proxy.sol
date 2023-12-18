@@ -44,7 +44,7 @@ contract ProxyDeployer is Ownable {
 
     /// @dev deploy initial contract
     function deploy(address initialImplementation, bytes memory initializationData)
-        external
+        public
         onlyOwner()
         returns (IVersionable versionable)
     {
@@ -67,7 +67,7 @@ contract ProxyDeployer is Ownable {
     }
 
     function deployWithSalt(address initialImplementation, bytes memory initializationData, bytes32 salt)
-        external
+        public
         onlyOwner()
         returns (IVersionable versionable)
     {
@@ -92,8 +92,9 @@ contract ProxyDeployer is Ownable {
 
     /// @dev upgrade existing contract
     function upgrade(address newImplementation, bytes memory upgradeData)
-        external
-        onlyOwner
+        public
+        virtual
+        onlyOwner()
         returns (IVersionable versionable)
     {
         require(_isDeployed, "ERROR:PRX-020:NOT_YET_DEPLOYED");
