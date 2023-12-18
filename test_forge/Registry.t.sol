@@ -20,7 +20,7 @@ import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGIS
 
 import {IVersionable} from "../contracts/shared/IVersionable.sol";
 import {IRegisterable} from "../contracts/shared/IRegisterable.sol";
-import {ProxyDeployer, ProxyWithProxyAdminGetter} from "../contracts/shared/Proxy.sol";
+import {ProxyDeployer} from "../contracts/shared/Proxy.sol";
 import {ChainNft} from "../contracts/registry/ChainNft.sol";
 import {IChainNft} from "../contracts/registry/IChainNft.sol";
 

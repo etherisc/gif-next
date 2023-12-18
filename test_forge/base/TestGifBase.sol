@@ -30,7 +30,7 @@ import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 import {Version} from "../../contracts/types/Version.sol";
 
-import {ProxyDeployer, ProxyWithProxyAdminGetter} from "../../contracts/shared/Proxy.sol";
+import {ProxyDeployer} from "../../contracts/shared/Proxy.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";

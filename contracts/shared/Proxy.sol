@@ -8,7 +8,7 @@ import {TransparentUpgradeableProxy, ITransparentUpgradeableProxy} from "@openze
 
 import {IVersionable} from "./IVersionable.sol";
 
-contract ProxyWithProxyAdminGetter is TransparentUpgradeableProxy {
+contract UpgradableProxyWithAdmin is TransparentUpgradeableProxy {
 
     constructor(address implementation, address initialProxyAdminOwner, bytes memory data)
         TransparentUpgradeableProxy(implementation, initialProxyAdminOwner, data)
@@ -22,7 +22,7 @@ contract ProxyDeployer is Ownable {
 
     event ProxyDeployed(address indexed proxy);
 
-    ProxyWithProxyAdminGetter private _proxy;
+    UpgradableProxyWithAdmin private _proxy;
     bool private _isDeployed;
 
     /// @dev only used to capture proxy owner
@@ -51,7 +51,7 @@ contract ProxyDeployer is Ownable {
         address initialProxyAdminOwner = address(this); // used by proxy
         bytes memory data = getDeployData(initialImplementation, currentProxyOwner, initializationData);
         
-        _proxy = new ProxyWithProxyAdminGetter(
+        _proxy = new UpgradableProxyWithAdmin(
             initialImplementation,
             initialProxyAdminOwner,
             data
@@ -75,7 +75,7 @@ contract ProxyDeployer is Ownable {
         bytes memory data = getDeployData(initialImplementation, currentProxyOwner, initializationData);
 
         // via create2
-        _proxy = new ProxyWithProxyAdminGetter{salt: salt}(
+        _proxy = new UpgradableProxyWithAdmin{salt: salt}(
             initialImplementation,
             initialProxyAdminOwner,
             data
