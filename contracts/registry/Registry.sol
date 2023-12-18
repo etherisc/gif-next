@@ -42,6 +42,8 @@ contract Registry is
     error NotService(NftId registrarNftId);
     error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
 
+    uint256 public constant MAJOR_VERSION_MIN = 3;
+    
     string public constant EMPTY_URI = "";
 
     address constant public NFT_LOCK_ADDRESS = address(0x1);
@@ -185,8 +187,8 @@ contract Registry is
                 // TODO update _serviceNftId when registryService with new major version is registered? -> it is fixed in current setup
                 // TODO do not use names -> each object type is registered by corresponding service -> conflicting with approve()
                 if(
-                    majorVersion.toInt() == 0 ||
-                    (majorVersion.toInt() > 1 &&
+                    majorVersion.toInt() < MAJOR_VERSION_MIN ||
+                    (majorVersion.toInt() > MAJOR_VERSION_MIN &&
                     _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)] == address(0) )
                 ) {
                     revert InvalidServiceVersion(majorVersion);

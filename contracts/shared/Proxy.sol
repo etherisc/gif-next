@@ -97,7 +97,6 @@ contract ProxyDeployer is Ownable {
         require(_isDeployed, "ERROR:PRX-020:NOT_YET_DEPLOYED");
 
         address currentProxyOwner = owner();
-        // ProxyAdmin proxyAdmin = _proxy.getProxyAdmin();
         ProxyAdmin proxyAdmin = getProxyAdmin();
         ITransparentUpgradeableProxy proxy = ITransparentUpgradeableProxy(address(_proxy));
         bytes memory data = getUpgradeData(newImplementation, currentProxyOwner, upgradeData);

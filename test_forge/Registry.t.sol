@@ -69,6 +69,8 @@ contract RegistryTest is Test, FoundryRandom {
     bytes32 constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;//keccak256("");
     uint constant ITTERATIONS_AMMOUNT = 250;
 
+    uint constant GIF_VERSION = 3;
+
     address public proxyOwner = makeAddr("proxyOwner");
     address public outsider = makeAddr("outsider");// MUST != registryOwner
     address public registryOwner = makeAddr("registryOwner");
@@ -780,8 +782,8 @@ contract RegistryTest is Test, FoundryRandom {
                 bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
 
                 if(
-                    majorVersion.toInt() == 0 ||
-                    (majorVersion.toInt() > 1 &&
+                    majorVersion.toInt() < GIF_VERSION ||
+                    (majorVersion.toInt() > GIF_VERSION &&
                     _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)].address_ == address(0) )
                 )
                 {// major version > 0 and must increase by 1
@@ -926,7 +928,7 @@ contract RegistryTest is Test, FoundryRandom {
             SERVICE(),
             address(uint160(randomNumber(type(uint160).max))),
             outsider, // any address capable to receive nft
-            abi.encode("NewService", VersionLib.toVersionPart(1))
+            abi.encode("NewService", VersionLib.toVersionPart(GIF_VERSION))
         );
 
         bytes memory reason_NotRegistryService = abi.encodeWithSelector(Registry.NotRegistryService.selector);

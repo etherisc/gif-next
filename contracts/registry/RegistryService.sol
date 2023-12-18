@@ -267,6 +267,7 @@ contract RegistryService is
                 getMajorVersion()
             )
         );
+
         address registryAddress;
 
         assembly {

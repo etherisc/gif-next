@@ -29,7 +29,7 @@ abstract contract ServiceBase is
         virtual override (IVersionable, Versionable)
         returns(Version)
     {
-        return VersionLib.toVersion(1,0,0);
+        return VersionLib.toVersion(3,0,0);
     }
 
     function _initializeServiceBase(address registry, NftId registryNftId, address initialOwner)
