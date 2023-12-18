@@ -9,11 +9,16 @@ import {IVersionable} from "./IVersionable.sol";
 import {UpgradableProxyWithAdmin} from "./UpgradableProxyWithAdmin.sol";
 import {IVersionable} from "./IVersionable.sol";
 
-// renamed because of name collision with OZ Proxy -> local proxy type was missing in typechain-types
+/// @dev manages proxy deployments for upgradable contracs of type IVersionable
 contract ProxyManager is Ownable {
 
-    event ProxyDeployed(address indexed proxy, address initialImplementation);
-    event ProxyUpgraded(address indexed proxy, address upgradedImplementation);
+    event LogProxyDeployed(address indexed proxy, address initialImplementation);
+    event LogProxyDeployedWithSalt(address indexed proxy, address initialImplementation);
+    event LogProxyUpgraded(address indexed proxy, address upgradedImplementation);
+
+    error ErrorAlreadyDeployed();
+    error ErrorAlreadyDeployedWithSalt();
+    error ErrorNotYetDeployed();
 
     UpgradableProxyWithAdmin private _proxy;
     bool private _isDeployed;
@@ -29,7 +34,7 @@ contract ProxyManager is Ownable {
         onlyOwner()
         returns (IVersionable versionable)
     {
-        require(!_isDeployed, "ERROR:PRX-010:ALREADY_DEPLOYED");
+        if (_isDeployed) { revert ErrorAlreadyDeployed(); }
 
         address currentProxyOwner = owner(); // used by implementation
         address initialProxyAdminOwner = address(this); // used by proxy
@@ -44,7 +49,7 @@ contract ProxyManager is Ownable {
         _isDeployed = true;
         versionable = IVersionable(address(_proxy));
 
-        emit ProxyDeployed(address(_proxy), initialImplementation);
+        emit LogProxyDeployed(address(_proxy), initialImplementation);
     }
 
     function deployWithSalt(address initialImplementation, bytes memory initializationData, bytes32 salt)
@@ -52,7 +57,7 @@ contract ProxyManager is Ownable {
         onlyOwner()
         returns (IVersionable versionable)
     {
-        require(!_isDeployed, "ERROR:PRX-011:ALREADY_DEPLOYED");
+        if (_isDeployed) { revert ErrorAlreadyDeployedWithSalt(); }
 
         address currentProxyOwner = owner(); // used by implementation
         address initialProxyAdminOwner = address(this); // used by proxy
@@ -68,7 +73,7 @@ contract ProxyManager is Ownable {
         _isDeployed = true;
         versionable = IVersionable(address(_proxy));
 
-        emit ProxyDeployed(address(_proxy), initialImplementation);
+        emit LogProxyDeployedWithSalt(address(_proxy), initialImplementation);
     }
 
     /// @dev upgrade existing contract
@@ -78,7 +83,7 @@ contract ProxyManager is Ownable {
         onlyOwner()
         returns (IVersionable versionable)
     {
-        require(_isDeployed, "ERROR:PRX-020:NOT_YET_DEPLOYED");
+        if (!_isDeployed) { revert ErrorNotYetDeployed(); }
 
         address currentProxyOwner = owner();
         ProxyAdmin proxyAdmin = getProxyAdmin();
@@ -92,7 +97,7 @@ contract ProxyManager is Ownable {
 
         versionable = IVersionable(address(_proxy));
 
-        emit ProxyUpgraded(address(_proxy), newImplementation);
+        emit LogProxyUpgraded(address(_proxy), newImplementation);
 
     }
 
