@@ -4,21 +4,21 @@ pragma solidity ^0.8.20;
 import {Test, Vm, console} from "../lib/forge-std/src/Test.sol";
 import {VersionLib} from "../contracts/types/Version.sol";
 import {IVersionable} from "../contracts/shared/IVersionable.sol";
-import {ProxyDeployer} from "../contracts/shared/Proxy.sol";
+import {ProxyManager} from "../contracts/shared/ProxyManager.sol";
 
 import {ContractV01} from "./mock/ContractV01.sol";
 import {ContractV02} from "./mock/ContractV02.sol";
 
-contract ProxyTest is Test {
+contract ProxyManagerTest is Test {
 
     function testProductV01Deploy() public {
-        ProxyDeployer proxy = new ProxyDeployer();
+        ProxyManager proxyManager = new ProxyManager();
         // solhint-disable-next-line
-        console.log("proxy[address]", address(proxy));
-        assertTrue(address(proxy) != address(0), "proxy address zero");
+        console.log("proxyManager[address]", address(proxyManager));
+        assertTrue(address(proxyManager) != address(0), "proxyManager address zero");
 
         bytes memory initializationData = abi.encode(uint(42));
-        IVersionable versionable = proxy.deploy(address(new ContractV01()), initializationData);
+        IVersionable versionable = proxyManager.deploy(address(new ContractV01()), initializationData);
         // solhint-disable-next-line
         console.log("versionable[address]", address(versionable));
         assertTrue(address(versionable) != address(0), "versionable address zero");
@@ -37,11 +37,11 @@ contract ProxyTest is Test {
 
     function testProductV01DeployAndUpgrade() public {
 
-        ProxyDeployer proxy = new ProxyDeployer();
+        ProxyManager proxyManager = new ProxyManager();
         bytes memory initializationData = abi.encode(uint(0));
         bytes memory upgradeData = abi.encode(uint(0));
-        IVersionable versionable = proxy.deploy(address(new ContractV01()), initializationData);
-        proxy.upgrade(address(new ContractV02()), upgradeData);
+        IVersionable versionable = proxyManager.deploy(address(new ContractV01()), initializationData);
+        proxyManager.upgrade(address(new ContractV02()), upgradeData);
 
         assertTrue(versionable.getVersion() == VersionLib.toVersion(1,0,1), "version not (1,0,1)");
 
@@ -53,11 +53,11 @@ contract ProxyTest is Test {
     // getting the proxy admin address via logs
     // https://forum.openzeppelin.com/t/version-5-how-can-should-the-proxyadmin-of-the-transparentupgradableproxy-be-used/38127
     function testProductV01DeployCheckProxyAdminAddress() public {
-        ProxyDeployer proxy = new ProxyDeployer();
+        ProxyManager proxyManager = new ProxyManager();
 
         vm.recordLogs();
         bytes memory initializationData = abi.encode(uint(0));
-        proxy.deploy(address(new ContractV01()), initializationData);
+        proxyManager.deploy(address(new ContractV01()), initializationData);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
         // solhint-disable-next-line
@@ -78,7 +78,7 @@ contract ProxyTest is Test {
                 // solhint-disable-next-line
                 console.log("AdminChanged", oldAdmin, newAdmin);
 
-                assertEq(address(proxy.getProxyAdmin()), newAdmin, "non-matching admin addresses");
+                assertEq(address(proxyManager.getProxyAdmin()), newAdmin, "non-matching admin addresses");
             } 
         }
     }

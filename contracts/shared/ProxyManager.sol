@@ -10,9 +10,10 @@ import {UpgradableProxyWithAdmin} from "./UpgradableProxyWithAdmin.sol";
 import {IVersionable} from "./IVersionable.sol";
 
 // renamed because of name collision with OZ Proxy -> local proxy type was missing in typechain-types
-contract ProxyDeployer is Ownable {
+contract ProxyManager is Ownable {
 
-    event ProxyDeployed(address indexed proxy);
+    event ProxyDeployed(address indexed proxy, address initialImplementation);
+    event ProxyUpgraded(address indexed proxy, address upgradedImplementation);
 
     UpgradableProxyWithAdmin private _proxy;
     bool private _isDeployed;
@@ -20,8 +21,7 @@ contract ProxyDeployer is Ownable {
     /// @dev only used to capture proxy owner
     constructor()
         Ownable(msg.sender)
-    {
-    }
+    { }
 
     /// @dev deploy initial contract
     function deploy(address initialImplementation, bytes memory initializationData)
@@ -44,7 +44,7 @@ contract ProxyDeployer is Ownable {
         _isDeployed = true;
         versionable = IVersionable(address(_proxy));
 
-        emit ProxyDeployed(address(_proxy));
+        emit ProxyDeployed(address(_proxy), initialImplementation);
     }
 
     function deployWithSalt(address initialImplementation, bytes memory initializationData, bytes32 salt)
@@ -68,7 +68,7 @@ contract ProxyDeployer is Ownable {
         _isDeployed = true;
         versionable = IVersionable(address(_proxy));
 
-        emit ProxyDeployed(address(_proxy));
+        emit ProxyDeployed(address(_proxy), initialImplementation);
     }
 
     /// @dev upgrade existing contract
@@ -91,6 +91,9 @@ contract ProxyDeployer is Ownable {
             data);
 
         versionable = IVersionable(address(_proxy));
+
+        emit ProxyUpgraded(address(_proxy), newImplementation);
+
     }
 
     function getDeployData(address implementation, address proxyOwner, bytes memory deployData) public pure returns (bytes memory data) {

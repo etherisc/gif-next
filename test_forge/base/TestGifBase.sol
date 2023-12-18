@@ -30,7 +30,7 @@ import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 import {Version} from "../../contracts/types/Version.sol";
 
-import {ProxyDeployer} from "../../contracts/shared/Proxy.sol";
+import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -44,35 +44,22 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    ProxyDeployer public registryProxyAdmin;
+    ProxyManager public registryProxyAdmin;
     Registry public registryImplementation;
     ChainNft public chainNft;
     Registry public registry;
 
-    ProxyDeployer public registryServiceProxyAdmin;
+    ProxyManager public registryServiceProxyAdmin;
     RegistryService public registryServiceImplementation;
     RegistryService public registryService;
 
     IERC20Metadata public token;
 
-    //ProxyDeployer public componentOwnerServiceProxyAdmin;
-    //ComponentOwnerService public componentOwnerServiceImplementation;
     ComponentOwnerService public componentOwnerService;
-
-    //ProxyDeployer public distributionServiceProxyAdmin;
-    //DistributionService public distributionServiceImplementation;    
     DistributionService public distributionService;
-
-    //ProxyDeployer public productServiceProxyAdmin; 
-    //ProductService public productServiceImplementation;
     ProductService public productService;
-
-    //ProxyDeployer public poolServiceProxyAdmin; 
-    //PoolService public poolServiceImplementation;
     PoolService public poolService;
 
-    //ProxyDeployer public instanceProxyAdmin; 
-    //Instance public instanceImplementation;
     Instance public instance;
 
     IKeyValueStore public keyValueStore;
@@ -217,7 +204,7 @@ contract TestGifBase is Test {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        registryServiceProxyAdmin = new ProxyDeployer();
+        registryServiceProxyAdmin = new ProxyManager();
         registryServiceImplementation = new RegistryService();
 
         IVersionable versionable = registryServiceProxyAdmin.deploy(address(registryServiceImplementation), type(Registry).creationCode);
@@ -254,12 +241,6 @@ contract TestGifBase is Test {
     function _deployServices() internal 
     {
         //--- component owner service ---------------------------------//
-        /*componentOwnerServiceProxyAdmin = new ProxyDeployer();
-        componentOwnerServiceImplementation = new ComponentOwnerService();
-        bytes memory initializationData = abi.encode(registry, registryNftId, registryOwner);
-        IVersionable versionable = componentOwnerServiceProxyAdmin.deploy(address(componentOwnerServiceImplementation), initializationData);
-        address componentOwnerServiceAddress = address(versionable);
-        componentOwnerService = ComponentOwnerService(componentOwnerServiceAddress);*/
         
         componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
         registryService.registerService(componentOwnerService);
@@ -270,40 +251,22 @@ contract TestGifBase is Test {
 
         /* solhint-disable */
         console.log("service name", componentOwnerService.NAME());
-        //console.log("service implementation deployed at", address(componentOwnerServiceImplementation));  
-        //console.log("service proxy admin deployed at", address(componentOwnerServiceProxyAdmin));
         console.log("service deployed at", address(componentOwnerService));
         console.log("service nft id", componentOwnerService.getNftId().toInt());
-        //console.log("service version", componentOwnerService.getVersion().toInt());
         /* solhint-enable */
 
         //--- distribution service ---------------------------------//
-        /*distributionServiceProxyAdmin = new ProxyDeployer();
-        distributionServiceImplementation = new DistributionService();
-        //initializationData = abi.encode(registry, registryNftId, registryOwner);
-        versionable = distributionServiceProxyAdmin.deploy(address(distributionServiceImplementation), initializationData);
-        address  distributionServiceAddress = address(versionable);
-        distributionService = DistributionService(distributionServiceAddress);*/
         
         distributionService = new DistributionService(registryAddress, registryNftId, registryOwner);
         registryService.registerService(distributionService);
 
         /* solhint-disable */
         console.log("service name", distributionService.NAME());
-        //console.log("service implementation deployed at", address(distributionServiceImplementation));  
-        //console.log("service proxy admin deployed at", address(distributionServiceProxyAdmin));
         console.log("service deployed at", address(distributionService));
         console.log("service nft id", distributionService.getNftId().toInt());
-        //console.log("service version", distributionService.getVersion().toInt());
         /* solhint-enable */
 
         //--- product service ---------------------------------//
-        /*productServiceProxyAdmin = new ProxyDeployer();
-        productServiceImplementation = new ProductService();
-        //initializationData = abi.encode(registry, registryNftId, registryOwner);
-        versionable = productServiceProxyAdmin.deploy(address(productServiceImplementation), initializationData);
-        address  productServiceAddress = address(versionable);
-        productService = ProductService(productServiceAddress);*/
 
         productService = new ProductService(registryAddress, registryNftId, registryOwner);
         registryService.registerService(productService);
@@ -311,21 +274,12 @@ contract TestGifBase is Test {
 
         /* solhint-disable */
         console.log("service name", productService.NAME());
-        //console.log("service implementation deployed at", address(productServiceImplementation));  
-        //console.log("service proxy admin deployed at", address(productServiceProxyAdmin));
         console.log("service deployed at", address(productService));
         console.log("service nft id", productService.getNftId().toInt());
-        //console.log("service version", productService.getVersion().toInt());
         console.log("service allowance is set to POLICY");
         /* solhint-enable */
 
         //--- pool service ---------------------------------//
-        /*poolServiceProxyAdmin = new ProxyDeployer();
-        poolServiceImplementation = new PoolService();
-        //initializationData = abi.encode(registry, registryNftId, registryOwner);
-        versionable = poolServiceProxyAdmin.deploy(address(poolServiceImplementation), initializationData);
-        address poolServiceAddress = address(versionable);
-        poolService = PoolService(poolServiceAddress);*/
         
         poolService = new PoolService(registryAddress, registryNftId, registryOwner);
         registryService.registerService(poolService);
@@ -333,11 +287,8 @@ contract TestGifBase is Test {
 
         /* solhint-disable */
         console.log("service name", poolService.NAME());
-        //console.log("service implementation deployed at", address(poolServiceImplementation));  
-        //console.log("service proxy admin deployed at", address(poolServiceProxyAdmin));
         console.log("service deployed at", address(poolService));
         console.log("service nft id", poolService.getNftId().toInt());
-        //console.log("service version", poolService.getVersion().toInt());
         console.log("service allowance is set to BUNDLE");
         /* solhint-enable */
     }
