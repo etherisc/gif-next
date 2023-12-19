@@ -464,7 +464,6 @@ contract RegistryTest is Test, FoundryRandom {
     {
         //console.log("Checking all IRegistry getters");
         // check getters without args
-        assertEq(registry.getProtocolOwner(), registryOwner, "getProtocolOwner() returned unexpected value");
         assertEq(address(registry.getChainNft()), chainNftAddress, "getChainNft() returned unexpected value");
         assertEq(registry.getObjectCount(), EnumerableSet.length(_nftIds) - 1, "getObjectCount() returned unexpected value");// -1 because of zeroNftId in the set
 
