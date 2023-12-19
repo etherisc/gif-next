@@ -23,7 +23,7 @@ contract RegistryInstallerTest is Test {
     IRegistry public registry;
     ChainNft public chainNft;
 
-    function setUp() public virtual {
+    function setUp() public {
 
         vm.prank(registryOwner);
         registryInstaller = new RegistryInstaller();
