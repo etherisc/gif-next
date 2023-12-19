@@ -71,18 +71,18 @@ contract RegistryTest is Test, FoundryRandom {
 
     event LogApproval(NftId indexed nftId, ObjectType objectType);
 
-    address constant NFT_LOCK_ADDRESS = address(0x1); // SERVICE and TOKEN nfts are minted for
-    bytes32 constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;
-    uint constant ITTERATIONS_AMMOUNT = 250;
+    address public constant NFT_LOCK_ADDRESS = address(0x1); // SERVICE and TOKEN nfts are minted for
+    bytes32 public constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;
+    uint public constant ITTERATIONS_AMMOUNT = 250;
 
-    uint8 constant GIF_VERSION = 3;
+    uint8 public constant GIF_VERSION = 3;
 
     address public proxyOwner = makeAddr("proxyOwner");
     address public outsider = makeAddr("outsider");
     address public registryOwner = makeAddr("registryOwner");
 
-    address _sender; // use with _startPrank(), _stopPrank()
-    uint _nextId; // use with chainNft.calculateId()
+    address public _sender; // use with _startPrank(), _stopPrank()
+    uint public _nextId; // use with chainNft.calculateId()
 
     IRegistry public registry;
     ChainNft public chainNft;
@@ -387,12 +387,14 @@ contract RegistryTest is Test, FoundryRandom {
     }
 
     function _logObjectInfo(IRegistry.ObjectInfo memory info) internal {
+        // solhint-disable no-console
         console.log("        nftId: %d", info.nftId.toInt());
         console.log("  parentNftId: %d", info.parentNftId.toInt());
         console.log("   objectType: %s", _typeName[info.objectType]);
         console.log("objectAddress: %s", info.objectAddress);
         console.log(" initialOwner: %s", info.initialOwner);
         //console.log("         data: %d", info.data);
+        // solhint-enable
     }
 
     function _decodeServiceParameters(bytes memory data) internal returns(string memory serviceName, VersionPart majorVersion)
@@ -420,6 +422,7 @@ contract RegistryTest is Test, FoundryRandom {
     // TODO test constructor arguments
     function _deployNonUpgradeableRegistry() internal
     {
+        // solhint-disable-next-line
         console.log("Deploying non upgradeable registry");
 
         // ORIGINAL VERSION
@@ -441,6 +444,7 @@ contract RegistryTest is Test, FoundryRandom {
         }
 
         assertNotEq(registryAddress, address(0), "registry address is 0");
+        // solhint-disable-next-line
         console.log("registry address %s", registryAddress);
 
         registry = IRegistry(registryAddress);
@@ -449,6 +453,7 @@ contract RegistryTest is Test, FoundryRandom {
         chainNft = ChainNft(chainNftAddress);
         
         assertNotEq(chainNftAddress, address(0), "chain nft address is 0");
+        // solhint-disable-next-line
         console.log("chain nft address %s\n", chainNftAddress);
 
         assertEq(protocolNftId.toInt(), chainNft.PROTOCOL_NFT_ID(), "PROTOCOL_NFT_ID() returned unexpected value");
@@ -1620,6 +1625,7 @@ contract RegistryTestWithPreset is RegistryTest
     {
         IRegistry.ObjectInfo memory info;
 
+        // solhint-disable no-console
         console.log("Registering token\n");
 
         info.nftId = toNftId(randomNumber(type(uint96).max));
@@ -1728,5 +1734,6 @@ contract RegistryTestWithPreset is RegistryTest
         _nftIdByType[STAKE()] = _assert_register(info, false, "");  
 
         console.log("Registered stake\n");
+        // solhint-enable
     }
 }

@@ -9,12 +9,10 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
 import {IInstance} from "../instance/IInstance.sol";
-import {IComponent, IComponentModule} from "../instance/module/component/IComponent.sol";
 import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
-import {Fee, FeeLib} from "../types/Fee.sol";
 import {NftId} from "../types/NftId.sol";
-import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
+import {ObjectType} from "../types/ObjectType.sol";
 
 abstract contract BaseComponent is
     Registerable,

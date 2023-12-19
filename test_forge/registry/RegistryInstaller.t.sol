@@ -56,15 +56,19 @@ contract RegistryDeploy is Test {
 
     function _logObject(string memory prefix, NftId nftId) internal view {
         Registry.ObjectInfo memory info = registry.getObjectInfo(nftId);
+
+        // solhint-disable no-console
         console.log(prefix, "nftId", nftId.toInt());
         console.log(prefix, "parentNftId", info.parentNftId.toInt());
         console.log(prefix, "type", info.objectType.toInt());
         console.log(prefix, "address", info.objectAddress);
         console.log(prefix, "owner", registry.ownerOf(nftId));
+        // solhint-enable
     }
 
     function test_registryIsDeployed() public {
 
+        // solhint-disable no-console
         console.log("registry owner", address(registryOwner));
         console.log("registry installer", address(registryInstaller));
         console.log("registry installer owner", registryInstaller.owner());
@@ -74,6 +78,7 @@ contract RegistryDeploy is Test {
         console.log("registry service owner", registryService.getOwner());
         console.log("registry", address(registry));
         console.log("registry owner", registry.getOwner());
+        // solhint-enable
 
         console.log("registered objects", registry.getObjectCount());
         _logObject("protocol", toNftId(1101));
