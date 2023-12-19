@@ -1,98 +1,88 @@
-import { AbiCoder, AddressLike, Signer } from "ethers";
-import { ethers } from "hardhat";
-import * as iProxyDeployerAbi from "../../artifacts/contracts/shared/Proxy.sol/ProxyDeployer.json";
-import { ProxyDeployer, Registerable, RegistryUpgradeable, Registry__factory } from "../../typechain-types";
+import { AddressLike, Signer } from "ethers";
+import { ChainNft, ChainNft__factory, ProxyManager, Registry, RegistryInstaller, RegistryService, RegistryService__factory, Registry__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
-import { IERC1967ABI } from "./erc1967";
-import { IERC721ABI } from "./erc721";
 import { LibraryAddresses } from "./libraries";
-import { executeTx, getFieldFromLogs } from "./transaction";
-
-const PROXYDEPLOYERABI = new ethers.Interface(iProxyDeployerAbi.abi);
 
 
 export type RegistryAddresses = {
-    registryAdmin: AddressLike;
-    registryAddress: AddressLike; //proxy
-    registryImplementation: AddressLike; 
-    registryNftId: string;
+    registryAddress: AddressLike; 
+    registry: Registry;
+
+    registryServiceAddress: AddressLike;
+    registryService: RegistryService;
+
     chainNftAddress: AddressLike;
+    chainNft: ChainNft;
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
 
-    const { address: registryAdmin, contract: deployerBaseContract } = await deployContract(
-        "ProxyDeployer",
-        owner
-        );
-    const deployer = deployerBaseContract as ProxyDeployer;
-
-    const { address: registryImplementation, contract: registryBaseContract } = await deployContract(
-        "Registry",
+    const { address: proxyManagerAddress, contract: proxyManagerBaseContract } = await deployContract(
+        "ProxyManager",
         owner,
         undefined,
+        {
+            // libraries: {
+            //     VersionLib: libraries.versionLibAddress,
+            //     BlocknumberLib: libraries.blockNumberLibAddress
+            // }
+        });
+    const proxyManager = proxyManagerBaseContract as ProxyManager;
+
+    const { address: registryServiceImplementationAddress } = await deployContract(
+        "RegistryService",
+        owner,
+        undefined,
+        {
+            libraries: {
+                VersionLib: libraries.versionLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress
+            }
+        });
+
+    const { address: registryInstallerAddress, contract: registryInstallerBaseContract } = await deployContract(
+        "RegistryInstaller",
+        owner,
+        [proxyManagerAddress, registryServiceImplementationAddress],
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 VersionLib: libraries.versionLibAddress,
-                BlocknumberLib: libraries.blockNumberLibAddress
+                VersionPartLib: libraries.versionPartLibAddress,
             }
         });
-    const registryImplementationContract = registryBaseContract as RegistryUpgradeable;
+    const registryInstaller = registryInstallerBaseContract as RegistryInstaller;
 
-    const abi = AbiCoder.defaultAbiCoder();
-    const ownerAddress = await owner.getAddress();
-    const intializationData = abi.encode(["address"], [ownerAddress]);
+    await proxyManager.transferOwnership(registryInstallerAddress);
+    logger.info(`ProxyManager ownership transferred to ${registryInstallerAddress}`);
 
-    let registryNftIdFromLogs;
-    let registryAddressFromLogs;
-    let registryImplFromLogs;
-    
-    try {
-        const tx = await executeTx(async () => await deployer.deploy(registryImplementation, intializationData))
-        registryImplFromLogs = getFieldFromLogs(tx, IERC1967ABI, "Upgraded", "implementation")
-        // get tx return value...the only possible way is to emit event with this value...or use ethers.js staticCall to execute as view function first?
-        //const result = await proxy.staticCall.deploy(registryImplementation, intializationData);        
-        registryAddressFromLogs = getFieldFromLogs(tx, PROXYDEPLOYERABI, "ProxyDeployed", "proxy");
-        // tx executes with 3 "Transfer" events, using one with the lastest index
-        registryNftIdFromLogs = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId") 
-    } catch (error: unknown) {
-        if (! (error as Error).message.includes("ERROR:REG-001:ALREADY_INITIALIZED")) {
-            throw error;
-        }
-    }
+    await registryInstaller.installRegistryServiceWithRegistry();
+    logger.info(`Registry installed`);
 
-    const registry = registryImplementationContract.attach(registryAddressFromLogs) as RegistryUpgradeable;
+    const registryServiceAddress = await registryInstaller.getRegistryService();
+    const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
+
+    const registryAddress = await registryService.getRegistry();
+    const registry = Registry__factory.connect(registryAddress, owner);
 
     const chainNftAddress = await registry.getChainNft();
-    const registryOwner = await registry["getOwner()"]();
+    const chainNft = ChainNft__factory.connect(chainNftAddress, owner);
 
-    logger.info(`Registry proxy deployed at ${registryAddressFromLogs}`);
-    logger.info(`Registry proxy admin is ${registryAdmin}`);
-    logger.info(`Registry implementation is ${registryImplFromLogs}`);
-    logger.info(`Registry owner is ${registryOwner}`);
-    logger.info(`Registry initialized with ChainNft: ${chainNftAddress}, RegistryNftId: ${registryNftIdFromLogs}`);
+    logger.info(`RegistryService deployed at ${registryServiceAddress}`);
+    logger.info(`Registry deployed at ${registryAddress}`);
+    logger.info(`ChainNft deployed at ${chainNftAddress}`);
+
     return {
-        registryAdmin,
-        registryAddress: registryAddressFromLogs,
-        registryImplementation: registryImplFromLogs,
-        registryNftId: registryNftIdFromLogs,
-        chainNftAddress
-    };
-}
+        registryAddress,
+        registry,
 
-export async function register(registrable: Registerable, address: AddressLike, name: string, registryAddresses: RegistryAddresses, signer: Signer): Promise<string> {
-    const registry = Registry__factory.connect(registryAddresses.registryAddress.toString(), signer);
-    if (await registry["isRegistered(address)"](address)) {
-        const nftId = await registry["getNftId(address)"](address);
-        logger.info(`already registered - nftId: ${nftId}`);
-        return nftId.toString();
-    }
-    logger.debug("registering Registrable " + name);
-    const tx = await executeTx(async () => await registrable.register());
-    const nftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
-    logger.info(`registered - nftId: ${nftId}`);
-    return nftId;
+        registryServiceAddress,
+        registryService,
+
+        chainNftAddress,
+        chainNft
+    };
+
 }
