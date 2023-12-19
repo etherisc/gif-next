@@ -39,14 +39,14 @@ library ContractDeployerLib {
     /// @dev gets the creation code for the new contract
     // for terminology see eg https://www.rareskills.io/post/ethereum-contract-creation-code
     function getCreationCode(
-        bytes memory byteCodeWithInitiCode, // what you get with type(<Contract>).creationCode
+        bytes memory byteCodeWithInitCode, // what you get with type(<Contract>).creationCode
         bytes memory encodedConstructorArguments // what you get with 
     )
         public
         pure
         returns (bytes memory creationCode)
     {
-        return abi.encodePacked(byteCodeWithInitiCode, encodedConstructorArguments);
+        return abi.encodePacked(byteCodeWithInitCode, encodedConstructorArguments);
     }
 
 

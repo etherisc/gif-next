@@ -9,7 +9,7 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
+import {Registry, RegistryBytecodeProvider} from "../../contracts/registry/Registry.sol";
 import {RegistryInstaller} from "../../contracts/registry/RegistryInstaller.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 
@@ -17,33 +17,25 @@ contract RegistryDeploy is Test {
 
     address public registryOwner = makeAddr("registryOwner");
 
-    ProxyManager public proxyManager;
+    // ProxyManager public proxyManager;
     RegistryInstaller public registryInstaller;
     RegistryService public registryService;
-    Registry public registry;
+    IRegistry public registry;
     ChainNft public chainNft;
 
     function setUp() public virtual {
 
         vm.startPrank(registryOwner);
-        proxyManager = new ProxyManager();
+        RegistryBytecodeProvider registryCodeProvider = new RegistryBytecodeProvider();
         RegistryService implementation = new RegistryService();
 
         registryInstaller = new RegistryInstaller(
-            address(proxyManager), 
-            address(implementation));
-
-        // transfer proxy owner to registry installer
-        proxyManager.transferOwnership(address(registryInstaller));
-
-        // setup upgradable registry and deploy and initialize registry
-        // will also hand back proxy ownership to owner of installer
-        registryInstaller.installRegistryServiceWithRegistry();
+            address(implementation), 
+            registryCodeProvider.REGISTRY_BYTECODE_WITH_INITCODE());
         vm.stopPrank();
 
         registryService = registryInstaller.getRegistryService();
-        address registryAddress = address(registryService.getRegistry());
-        registry = Registry(registryAddress);
+        registry = registryInstaller.getRegistry();
 
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);
@@ -72,8 +64,6 @@ contract RegistryDeploy is Test {
         console.log("registry owner", address(registryOwner));
         console.log("registry installer", address(registryInstaller));
         console.log("registry installer owner", registryInstaller.owner());
-        console.log("proxy manager", address(proxyManager));
-        console.log("proxy manager owner", proxyManager.owner());
         console.log("registry service", address(registryService));
         console.log("registry service owner", registryService.getOwner());
         console.log("registry", address(registry));
@@ -87,7 +77,6 @@ contract RegistryDeploy is Test {
         _logObject("registryService", address(registryService));
 
         // check for zero addresses
-        assertTrue(address(proxyManager) != address(0), "proxy manager zero");
         assertTrue(address(registryInstaller) != address(0), "registry installer zero");
         assertTrue(address(registryService) != address(0), "registry service zero");
         assertTrue(address(registry) != address(0), "registry zero");

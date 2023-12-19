@@ -493,6 +493,6 @@ contract Registry is
 }
 
 // use to deploy with hardhat
-contract RegistryCreationCode {
-    bytes constant public registryCreationCode = type(Registry).creationCode;
+contract RegistryBytecodeProvider {
+    bytes constant public REGISTRY_BYTECODE_WITH_INITCODE = type(Registry).creationCode;
 }

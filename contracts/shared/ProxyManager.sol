@@ -20,8 +20,8 @@ contract ProxyManager is Ownable {
     error ErrorAlreadyDeployedWithSalt();
     error ErrorNotYetDeployed();
 
-    UpgradableProxyWithAdmin private _proxy;
-    bool private _isDeployed;
+    UpgradableProxyWithAdmin internal _proxy;
+    bool internal _isDeployed;
 
     /// @dev only used to capture proxy owner
     constructor()
@@ -31,6 +31,7 @@ contract ProxyManager is Ownable {
     /// @dev deploy initial contract
     function deploy(address initialImplementation, bytes memory initializationData)
         public
+        virtual
         onlyOwner()
         returns (IVersionable versionable)
     {
@@ -54,6 +55,7 @@ contract ProxyManager is Ownable {
 
     function deployWithSalt(address initialImplementation, bytes memory initializationData, bytes32 salt)
         public
+        virtual
         onlyOwner()
         returns (IVersionable versionable)
     {
