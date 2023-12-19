@@ -9,11 +9,11 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
-import {Registry, RegistryBytecodeProvider} from "../../contracts/registry/Registry.sol";
+// import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryInstaller} from "../../contracts/registry/RegistryInstaller.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 
-contract RegistryDeploy is Test {
+contract RegistryInstallerTest is Test {
 
     address public registryOwner = makeAddr("registryOwner");
 
@@ -25,14 +25,8 @@ contract RegistryDeploy is Test {
 
     function setUp() public virtual {
 
-        vm.startPrank(registryOwner);
-        RegistryBytecodeProvider registryCodeProvider = new RegistryBytecodeProvider();
-        RegistryService implementation = new RegistryService();
-
-        registryInstaller = new RegistryInstaller(
-            address(implementation), 
-            registryCodeProvider.REGISTRY_BYTECODE_WITH_INITCODE());
-        vm.stopPrank();
+        vm.prank(registryOwner);
+        registryInstaller = new RegistryInstaller();
 
         registryService = registryInstaller.getRegistryService();
         registry = registryInstaller.getRegistry();
@@ -47,7 +41,7 @@ contract RegistryDeploy is Test {
     }
 
     function _logObject(string memory prefix, NftId nftId) internal view {
-        Registry.ObjectInfo memory info = registry.getObjectInfo(nftId);
+        IRegistry.ObjectInfo memory info = registry.getObjectInfo(nftId);
 
         // solhint-disable no-console
         console.log(prefix, "nftId", nftId.toInt());

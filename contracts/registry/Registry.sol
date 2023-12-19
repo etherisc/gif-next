@@ -491,8 +491,3 @@ contract Registry is
         _isValidObjectCombination[STAKE()][POOL()] = true;
     }
 }
-
-// use to deploy with hardhat
-contract RegistryBytecodeProvider {
-    bytes constant public REGISTRY_BYTECODE_WITH_INITCODE = type(Registry).creationCode;
-}
