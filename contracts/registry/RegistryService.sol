@@ -6,8 +6,7 @@ import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IE
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
-//import {ITreasury, ITreasuryModule} from "../../contracts/instance/module/treasury/ITreasury.sol";
-//import {TreasuryModule} from "../../contracts/instance/module/treasury/TreasuryModule.sol";
+import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {IComponent, IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
@@ -25,8 +24,6 @@ import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
-//import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
-
 
 import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
 import {IService} from "../../contracts/instance/base/IService.sol";
@@ -54,7 +51,8 @@ contract RegistryService is
 
     string public constant NAME = "RegistryService";
 
-    bytes32 public constant REGISTRY_CREATIONCODE_HASH = 0x7e569c7200a12c63728b648d78f84be7e32ef6804f9ee723e15363ce34d01251;
+    // TODO update to real hash when registry is stable
+    bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 
     address constant public NFT_LOCK_ADDRESS = address(0x1);
 
@@ -252,31 +250,25 @@ contract RegistryService is
     // 2) deploy registry service first -> from its initialization func it is easier to deploy registry then vice versa
     // 3) deploy registry -> pass registry service address as constructor argument
     // registry is getting instantiated and locked to registry service address forever
-    function _initialize(address owner, bytes memory registryCreationCode)
+    function _initialize(
+        address owner, 
+        bytes memory registryByteCodeWithInitCode
+    )
         internal
         initializer
         virtual override
     {
-        // TODO check when stable
-        //require(keccak256(registryCreationCode) == REGISTRY_CREATIONCODE_HASH, "INVALID_REGISTRY_CREATIONCODE");
+        bytes memory encodedConstructorArguments = abi.encode(
+            owner,
+            getMajorVersion());
 
-        bytes memory bytecode = abi.encodePacked(
-            registryCreationCode, 
-            abi.encode(
-                owner,
-                getMajorVersion()
-            )
-        );
+        bytes memory registryCreationCode = ContractDeployerLib.getCreationCode(
+            registryByteCodeWithInitCode,
+            encodedConstructorArguments);
 
-        address registryAddress;
-
-        assembly {
-            registryAddress := create(0, add(bytecode, 0x20), mload(bytecode))  
-
-            if iszero(extcodesize(registryAddress)) {
-                revert(0, 0)
-            }
-        }
+        address registryAddress = ContractDeployerLib.deploy(
+            registryCreationCode,
+            REGISTRY_CREATION_CODE_HASH);
 
         IRegistry registry = IRegistry(registryAddress);
         NftId registryNftId = registry.getNftId(registryAddress);
