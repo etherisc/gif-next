@@ -97,7 +97,7 @@ contract RegistryService is
             TOKEN(),
             false, // isInterceptor
             tokenAddress,
-            NFT_LOCK_ADDRESS,//registry.getLockAddress(),//msg.sender,
+            NFT_LOCK_ADDRESS,
             "" // any value
         );
 
@@ -264,7 +264,6 @@ contract RegistryService is
             registryCreationCode, 
             abi.encode(
                 protocolOwner,
-                NAME, 
                 getMajorVersion()
             )
         );

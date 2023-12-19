@@ -99,11 +99,10 @@ contract Registry is
         _;
     }
 
-    // TODO use const serviceName "RegistryService"
-    constructor(address protocolOwner, string memory serviceName, VersionPart majorVersion)
+    constructor(address protocolOwner, VersionPart majorVersion)
     {
         require(protocolOwner > address(0), "Registry: protocol owner is 0");
-        require(majorVersion.toInt() > 0, "Registry: initial major version of registry service is 0");
+        require(majorVersion.toInt() == MAJOR_VERSION_MIN, "Registry: initial major version of registry service is not MAJOR_VERSION_MIN");
 
         // TODO registry owner can change, while protocol is not?
         _protocolOwner = protocolOwner;
@@ -117,7 +116,7 @@ contract Registry is
 
         _registerRegistry();
 
-        _registerRegistryService(serviceName, majorVersion);
+        _registerRegistryService();
 
         // set object parent relations
         _setupValidObjectParentCombinations();
@@ -421,7 +420,7 @@ contract Registry is
         );
     }
 
-    function _registerRegistryService(string memory serviceName, VersionPart majorVersion)
+    function _registerRegistryService()
         internal
     {
         uint256 serviceId = _chainNftInternal.calculateTokenId(3);
@@ -441,8 +440,9 @@ contract Registry is
 
         _nftIdByAddress[msg.sender] = serviceNftId;
 
+        string memory serviceName = "RegistryService";
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-        _service[serviceNameHash][majorVersion] = msg.sender;
+        _service[serviceNameHash][VersionLib.toVersionPart(MAJOR_VERSION_MIN)] = msg.sender;
         _string[serviceNftId] = serviceName;
         _serviceNftId = serviceNftId;
     }
