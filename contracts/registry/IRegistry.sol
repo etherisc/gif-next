@@ -69,7 +69,5 @@ interface IRegistry is IERC165, IOwnable {
         VersionPart majorVersion
     ) external view returns (address serviceAddress);
 
-    function getProtocolOwner() external view returns (address);
-
     function getChainNft() external view returns (IChainNft);
 }

@@ -252,7 +252,7 @@ contract RegistryService is
     // 2) deploy registry service first -> from its initialization func it is easier to deploy registry then vice versa
     // 3) deploy registry -> pass registry service address as constructor argument
     // registry is getting instantiated and locked to registry service address forever
-    function _initialize(address protocolOwner, bytes memory registryCreationCode)
+    function _initialize(address owner, bytes memory registryCreationCode)
         internal
         initializer
         virtual override
@@ -263,7 +263,7 @@ contract RegistryService is
         bytes memory bytecode = abi.encodePacked(
             registryCreationCode, 
             abi.encode(
-                protocolOwner,
+                owner,
                 getMajorVersion()
             )
         );
@@ -281,7 +281,7 @@ contract RegistryService is
         IRegistry registry = IRegistry(registryAddress);
         NftId registryNftId = registry.getNftId(registryAddress);
 
-        _initializeServiceBase(registryAddress, registryNftId, protocolOwner);
+        _initializeServiceBase(registryAddress, registryNftId, owner);
 
         _registerInterface(type(IRegistryService).interfaceId);
     }

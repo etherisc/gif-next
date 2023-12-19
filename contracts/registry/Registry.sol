@@ -70,11 +70,6 @@ contract Registry is
     IChainNft _chainNft;
     ChainNft _chainNftInternal;
 
-    /// @dev will own protocol, global registry, registry and registry service nfts minted during creation
-    // TODO registry nft can be transfered while protocol, global registry and registry service nfts are not transferable
-    // TODO get owner from one place -> nft contract
-    address _protocolOwner;
-
     /*
     modifier onlyInitialOwner() {
         if(
@@ -99,13 +94,10 @@ contract Registry is
         _;
     }
 
-    constructor(address protocolOwner, VersionPart majorVersion)
+    constructor(address registryOwner, VersionPart majorVersion)
     {
-        require(protocolOwner > address(0), "Registry: protocol owner is 0");
+        require(registryOwner > address(0), "Registry: protocol owner is 0");
         require(majorVersion.toInt() == MAJOR_VERSION_MIN, "Registry: initial major version of registry service is not MAJOR_VERSION_MIN");
-
-        // TODO registry owner can change, while protocol is not?
-        _protocolOwner = protocolOwner;
 
         // deploy NFT 
         _chainNftInternal = new ChainNft(address(this));// adds 10kb to deployment size
@@ -114,7 +106,7 @@ contract Registry is
         // initial registry setup
         _registerProtocol();
 
-        _registerRegistry();
+        _registerRegistry(registryOwner);
 
         _registerRegistryService();
 
@@ -328,10 +320,6 @@ contract Registry is
         return _service[serviceNameHash][majorVersion];
     }
 
-    function getProtocolOwner() external view override returns (address) {
-        return _protocolOwner;
-    }
-
     function getChainNft() external view override returns (IChainNft) {
         return _chainNft;
     }
@@ -365,7 +353,7 @@ contract Registry is
 
     /// @dev registry registration
     /// might also register the global registry when not on mainnet
-    function _registerRegistry() 
+    function _registerRegistry(address registryOwner) 
         internal
     {
         uint256 registryId = _chainNftInternal.calculateTokenId(2);
@@ -383,7 +371,7 @@ contract Registry is
             parentNftId = toNftId(_chainNftInternal.PROTOCOL_NFT_ID());
         }
 
-        _chainNftInternal.mint(_protocolOwner, registryId);
+        _chainNftInternal.mint(registryOwner, registryId);
 
         _info[registryNftId] = ObjectInfo(
             registryNftId,
@@ -391,7 +379,7 @@ contract Registry is
             REGISTRY(),
             false, // isInterceptor
             address(this), 
-            _protocolOwner,
+            registryOwner,
             "" 
         );
         _nftIdByAddress[address(this)] = registryNftId;
@@ -502,4 +490,9 @@ contract Registry is
         _isValidObjectCombination[BUNDLE()][POOL()] = true;
         _isValidObjectCombination[STAKE()][POOL()] = true;
     }
+}
+
+// use to deploy with hardhat
+contract RegistryCreationCode {
+    bytes constant public registryCreationCode = type(Registry).creationCode;
 }
