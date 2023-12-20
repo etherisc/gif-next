@@ -6,11 +6,13 @@ import {ProxyAdmin} from "@openzeppelin5/contracts/proxy/transparent/ProxyAdmin.
 import {ITransparentUpgradeableProxy} from "@openzeppelin5/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 import {IVersionable} from "./IVersionable.sol";
+import {NftOwnable} from "./NftOwnable.sol";
 import {UpgradableProxyWithAdmin} from "./UpgradableProxyWithAdmin.sol";
-import {IVersionable} from "./IVersionable.sol";
 
 /// @dev manages proxy deployments for upgradable contracs of type IVersionable
-contract ProxyManager is Ownable {
+contract ProxyManager is
+    NftOwnable
+{
 
     event LogProxyDeployed(address indexed proxy, address initialImplementation);
     event LogProxyDeployedWithSalt(address indexed proxy, address initialImplementation);
@@ -25,7 +27,7 @@ contract ProxyManager is Ownable {
 
     /// @dev only used to capture proxy owner
     constructor()
-        Ownable(msg.sender)
+        NftOwnable()
     { }
 
     /// @dev deploy initial contract
@@ -37,7 +39,7 @@ contract ProxyManager is Ownable {
     {
         if (_isDeployed) { revert ErrorAlreadyDeployed(); }
 
-        address currentProxyOwner = owner(); // used by implementation
+        address currentProxyOwner = getOwner(); // used by implementation
         address initialProxyAdminOwner = address(this); // used by proxy
         bytes memory data = getDeployData(initialImplementation, currentProxyOwner, initializationData);
         
@@ -53,29 +55,13 @@ contract ProxyManager is Ownable {
         emit LogProxyDeployed(address(_proxy), initialImplementation);
     }
 
-    function deployWithSalt(address initialImplementation, bytes memory initializationData, bytes32 salt)
+    function linkToRegistry(address registryAddress)
         public
         virtual
-        onlyOwner()
-        returns (IVersionable versionable)
     {
-        if (_isDeployed) { revert ErrorAlreadyDeployedWithSalt(); }
-
-        address currentProxyOwner = owner(); // used by implementation
-        address initialProxyAdminOwner = address(this); // used by proxy
-        bytes memory data = getDeployData(initialImplementation, currentProxyOwner, initializationData);
-
-        // via create2
-        _proxy = new UpgradableProxyWithAdmin{salt: salt}(
-            initialImplementation,
-            initialProxyAdminOwner,
-            data
-        );
-
-        _isDeployed = true;
-        versionable = IVersionable(address(_proxy));
-
-        emit LogProxyDeployedWithSalt(address(_proxy), initialImplementation);
+        // links ownership for this proxy manager to the owner of the underlying proxy nft
+        // applies onlyOwner modifier internally
+        linkToRegistry(registryAddress, address(_proxy));
     }
 
     /// @dev upgrade existing contract
@@ -87,8 +73,8 @@ contract ProxyManager is Ownable {
     {
         if (!_isDeployed) { revert ErrorNotYetDeployed(); }
 
-        address currentProxyOwner = owner();
-        ProxyAdmin proxyAdmin = getProxyAdmin();
+        address currentProxyOwner = getOwner();
+        ProxyAdmin proxyAdmin = getProxy().getProxyAdmin();
         ITransparentUpgradeableProxy proxy = ITransparentUpgradeableProxy(address(_proxy));
         bytes memory data = getUpgradeData(newImplementation, currentProxyOwner, upgradeData);
 
@@ -111,7 +97,7 @@ contract ProxyManager is Ownable {
         return abi.encodeWithSelector(IVersionable.upgrade.selector, implementation, proxyOwner, upgradeData);
     }
 
-    function getProxyAdmin() public returns (ProxyAdmin) {
-        return _proxy.getProxyAdmin();
+    function getProxy() public returns (UpgradableProxyWithAdmin) {
+        return _proxy;
     }
 }

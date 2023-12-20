@@ -18,7 +18,7 @@ import {IRiskModule} from "./module/risk/IRisk.sol";
 import {ITreasuryModule} from "./module/treasury/ITreasury.sol";
 
 import {IKeyValueStore} from "./base/IKeyValueStore.sol";
-import {IRegistry} from "../registry/IRegistryLinked.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";

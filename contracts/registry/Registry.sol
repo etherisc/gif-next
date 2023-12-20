@@ -44,10 +44,9 @@ contract Registry is
     error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
 
     uint256 public constant MAJOR_VERSION_MIN = 3;
-    
+    address public constant NFT_LOCK_ADDRESS = address(0x1);
+    uint256 public constant REGISTRY_SERVICE_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
-
-    address constant public NFT_LOCK_ADDRESS = address(0x1);
 
     mapping(NftId nftId => ObjectInfo info) _info;
     mapping(address object => NftId nftId) _nftIdByAddress;
@@ -105,10 +104,8 @@ contract Registry is
 
         // initial registry setup
         _registerProtocol();
-
         _registerRegistry(registryOwner);
-
-        _registerRegistryService();
+        _registerRegistryService(registryOwner);
 
         // set object parent relations
         _setupValidObjectParentCombinations();
@@ -408,13 +405,13 @@ contract Registry is
         );
     }
 
-    function _registerRegistryService()
+    function _registerRegistryService(address registryOwner)
         internal
     {
-        uint256 serviceId = _chainNftInternal.calculateTokenId(3);
+        uint256 serviceId = _chainNftInternal.calculateTokenId(REGISTRY_SERVICE_TOKEN_SEQUENCE_ID);
         NftId serviceNftId = toNftId(serviceId);        
 
-        _chainNftInternal.mint(NFT_LOCK_ADDRESS, serviceId);
+        _chainNftInternal.mint(registryOwner, serviceId);
 
         _info[serviceNftId] = ObjectInfo(
             serviceNftId,
@@ -422,7 +419,7 @@ contract Registry is
             SERVICE(),
             false, // isInterceptor
             msg.sender, // service deploys registry
-            NFT_LOCK_ADDRESS, // initialOwner,
+            registryOwner, // initialOwner,
             "" 
         );
 

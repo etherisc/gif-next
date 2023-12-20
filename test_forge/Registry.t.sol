@@ -209,7 +209,7 @@ contract RegistryTest is Test, FoundryRandom {
             SERVICE(),
             false,
             registryService, // is dummy contract address without erc721 receiver support
-            NFT_LOCK_ADDRESS,
+            registryOwner,
             ""
         );
         

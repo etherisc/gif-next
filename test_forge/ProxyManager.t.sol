@@ -78,7 +78,7 @@ contract ProxyManagerTest is Test {
                 // solhint-disable-next-line
                 console.log("AdminChanged", oldAdmin, newAdmin);
 
-                assertEq(address(proxyManager.getProxyAdmin()), newAdmin, "non-matching admin addresses");
+                assertEq(address(proxyManager.getProxy().getProxyAdmin()), newAdmin, "non-matching admin addresses");
             } 
         }
     }

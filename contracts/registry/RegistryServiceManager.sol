@@ -8,7 +8,7 @@ import {ProxyManager} from "../shared/ProxyManager.sol";
 import {RegistryService} from "./RegistryService.sol";
 
 
-contract RegistryInstaller is
+contract RegistryServiceManager is
     ProxyManager
 {
     error ErrorRegistryServiceWithZeroAddress();
@@ -32,6 +32,11 @@ contract RegistryInstaller is
 
         _registryService = RegistryService(address(versionable));
 
+        // link ownership of registry service manager ot nft owner of registry service
+        linkToRegistry(
+            address(_registryService.getRegistry()),
+            address(_registryService));
+
         // implies that after this constructor call only upgrade functionality is available
         _isDeployed = true;
     }
@@ -43,13 +48,5 @@ contract RegistryInstaller is
         returns (RegistryService registryService)
     {
         return _registryService;
-    }
-
-    function getRegistry()
-        external
-        view
-        returns (IRegistry registry)
-    {
-        return _registryService.getRegistry();
     }
 }
