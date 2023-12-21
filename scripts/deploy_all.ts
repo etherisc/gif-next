@@ -119,6 +119,7 @@ function printAddresses(
     addresses += `riskIdLibAddress: ${libraries.riskIdLibAddress}\n`;
     addresses += `--------\n`;
     addresses += `registryAddress: ${registry.registryAddress}\n`;
+    addresses += `registryServiceAddress: ${registry.registryServiceAddress}\n`;
     addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
     addresses += `--------\n`;
     // addresses += `componentOwnerServiceAddress: ${services.componentOwnerServiceAddress}\n`;
