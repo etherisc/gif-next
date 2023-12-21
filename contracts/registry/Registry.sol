@@ -12,7 +12,6 @@ import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
 import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
-import {IOwnable} from "../shared/IOwnable.sol";
 import {ERC165} from "../shared/ERC165.sol";
 
 
@@ -111,7 +110,6 @@ contract Registry is
         _setupValidObjectParentCombinations();
 
         _registerInterface(type(IRegistry).interfaceId);
-        _registerInterface(type(IOwnable).interfaceId);
     }
 
     /// @dev registry protects only from tampering existing records and invalid types pairs
@@ -321,7 +319,6 @@ contract Registry is
         return _chainNft;
     }
 
-    // from IOwnable
     function getOwner() public view returns (address owner) {
         return ownerOf(address(this));
     }

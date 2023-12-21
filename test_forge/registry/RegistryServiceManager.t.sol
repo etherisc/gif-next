@@ -51,7 +51,8 @@ contract RegistryServiceManagerTest is Test {
         console.log("registry service owner", registryService.getOwner());
         console.log("registry", address(registry));
         console.log("registry nft", registry.getNftId(address(registry)).toInt());
-        console.log("registry owner", registry.getOwner());
+        console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
+        console.log("registry owner (opt 2)", registry.getOwner());
         // solhint-enable
 
         console.log("registered objects", registry.getObjectCount());
@@ -73,6 +74,7 @@ contract RegistryServiceManagerTest is Test {
         // check ownership
         assertEq(registryServiceManager.getOwner(), registryOwner, "service manager owner not registry owner");
         assertEq(registry.getOwner(), registryOwner, "registry owner not owner of registry");
+        assertEq(registry.getOwner(), registry.ownerOf(address(registry)), "non matching registry owners");
 
         // check registered objects
         assertTrue(registry.isRegistered(address(registry)), "registry itself not registered");

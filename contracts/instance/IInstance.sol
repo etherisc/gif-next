@@ -5,7 +5,6 @@ import {IERC165} from "@openzeppelin5/contracts/utils/introspection/IERC165.sol"
 
 import {IVersionable} from "../shared/IVersionable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IOwnable} from "../shared/IOwnable.sol";
 import {RoleId} from "../types/RoleId.sol";
 
 import {IAccessModule} from "./module/access/IAccess.sol";
@@ -42,7 +41,7 @@ interface IInstance is
     IInstanceBase
 {
     function getRegistry() external view override (IPolicyModule, IRegisterable) returns (IRegistry registry);
-    function getOwner() external view override (IOwnable, IAccessModule) returns(address owner);
+    function getOwner() external view override (IRegisterable, IAccessModule) returns(address owner);
 
     function getKeyValueStore() external view override (IInstanceBase) returns (IKeyValueStore keyValueStore);
 

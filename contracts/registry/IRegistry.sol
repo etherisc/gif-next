@@ -3,13 +3,12 @@ pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin5/contracts/utils/introspection/IERC165.sol";
 
-import {IOwnable} from "../shared/IOwnable.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 import {VersionPart} from "../types/Version.sol";
 import {IChainNft} from "./IChainNft.sol";
 
-interface IRegistry is IERC165, IOwnable {
+interface IRegistry is IERC165 {
 
     event LogRegistration(NftId indexed nftId, NftId parentNftId, ObjectType objectType, address objectAddress, address initialOwner);
 
@@ -47,15 +46,14 @@ interface IRegistry is IERC165, IOwnable {
 
     function getObjectCount() external view returns (uint256);
 
-    //nftIdOf
     function getNftId(address objectAddress) external view returns (NftId nftId);
 
     function ownerOf(NftId nftId) external view returns (address);
 
     function ownerOf(address contractAddress) external view returns (address);
-    // infoOf()
+
     function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory info);
-    // infoOf()
+
     function getObjectInfo(address object) external view returns (ObjectInfo memory info);
 
     function isRegistered(NftId nftId) external view returns (bool);
@@ -70,4 +68,6 @@ interface IRegistry is IERC165, IOwnable {
     ) external view returns (address serviceAddress);
 
     function getChainNft() external view returns (IChainNft);
+
+    function getOwner() external view returns (address);
 }

@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IOwnable} from "./IOwnable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
 
-contract NftOwnable is
-    IOwnable
-{
+contract NftOwnable {
     error ErrorNftOwnableUnauthorized(address account);
 
     error ErrorAlreadyInitialized(address registry, NftId nftId);
