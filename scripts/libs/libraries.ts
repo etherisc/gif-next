@@ -15,6 +15,7 @@ export type LibraryAddresses = {
     stateIdLibAddress: AddressLike;
     roleIdLibAddress: AddressLike;
     riskIdLibAddress: AddressLike;
+    contractDeployerLibAddress: AddressLike;
 }
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
@@ -109,6 +110,13 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
     LIBRARY_ADDRESSES.set("FeeLib", feeLibAddress);
 
+
+    const { address: contractDeployerLibAddress } = await deployContract(
+        "ContractDeployerLib",
+        owner);
+    LIBRARY_ADDRESSES.set("ContractDeployerLib", contractDeployerLibAddress);
+
+        
     return {
         nftIdLibAddress,
         uFixedMathLibAddress,
@@ -122,7 +130,8 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         feeLibAddress,
         stateIdLibAddress,
         roleIdLibAddress,
-        riskIdLibAddress
+        riskIdLibAddress,
+        contractDeployerLibAddress,
     };
     
 }

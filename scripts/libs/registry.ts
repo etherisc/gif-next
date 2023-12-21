@@ -1,5 +1,5 @@
 import { AddressLike, Signer } from "ethers";
-import { ChainNft, ChainNft__factory, ProxyManager, Registry, RegistryInstaller, RegistryService, RegistryService__factory, Registry__factory } from "../../typechain-types";
+import { ChainNft, ChainNft__factory, Registry, RegistryService, RegistryServiceManager, RegistryService__factory, Registry__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -18,50 +18,23 @@ export type RegistryAddresses = {
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
 
-    const { address: proxyManagerAddress, contract: proxyManagerBaseContract } = await deployContract(
-        "ProxyManager",
+    const { contract: registryServiceManagerBaseContract } = await deployContract(
+        "RegistryServiceManager",
         owner,
         undefined,
-        {
-            // libraries: {
-            //     VersionLib: libraries.versionLibAddress,
-            //     BlocknumberLib: libraries.blockNumberLibAddress
-            // }
-        });
-    const proxyManager = proxyManagerBaseContract as ProxyManager;
-
-    const { address: registryServiceImplementationAddress } = await deployContract(
-        "RegistryService",
-        owner,
-        undefined,
-        {
-            libraries: {
-                VersionLib: libraries.versionLibAddress,
-                BlocknumberLib: libraries.blockNumberLibAddress
-            }
-        });
-
-    const { address: registryInstallerAddress, contract: registryInstallerBaseContract } = await deployContract(
-        "RegistryInstaller",
-        owner,
-        [proxyManagerAddress, registryServiceImplementationAddress],
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
+                ContractDeployerLib: libraries.contractDeployerLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
             }
         });
-    const registryInstaller = registryInstallerBaseContract as RegistryInstaller;
+    const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
 
-    await proxyManager.transferOwnership(registryInstallerAddress);
-    logger.info(`ProxyManager ownership transferred to ${registryInstallerAddress}`);
-
-    await registryInstaller.installRegistryServiceWithRegistry();
-    logger.info(`Registry installed`);
-
-    const registryServiceAddress = await registryInstaller.getRegistryService();
+    const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
 
     const registryAddress = await registryService.getRegistry();
