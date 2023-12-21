@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {IERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
+import {IERC721Enumerable} from "@openzeppelin5/contracts/token/ERC721/extensions/IERC721Enumerable.sol";
 
 interface IChainNft is IERC721Enumerable {
     function mint(
         address to,
+        address interceptor,
         string memory uri
     ) external returns (uint256 tokenId);
 

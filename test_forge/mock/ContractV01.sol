@@ -2,13 +2,20 @@
 pragma solidity ^0.8.20;
 
 import {Version, VersionLib} from "../../contracts/types/Version.sol";
-import {VersionableUpgradeable} from "../../contracts/shared/VersionableUpgradeable.sol";
+import {Versionable} from "../../contracts/shared/Versionable.sol";
 
-contract ContractV01 is VersionableUpgradeable {
 
-    // IMPORTANT 1. version needed for upgradable versions
-    // _activate is using this to check if this is a new version
-    // and if this version is higher than the last activated version
+contract ContractV01 is Versionable {
+
+    // keccak256(abi.encode(uint256(keccak256("gif-next.test_forge.mock.contractV01.sol")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
+
+    // @custom:storage-location erc7201:gif-next.test_forge.mock.contractV01.sol
+    struct StorageV1 {
+        // some initial variables
+        uint some;
+    }
+
     function getVersion()
         public
         pure
@@ -18,17 +25,23 @@ contract ContractV01 is VersionableUpgradeable {
         return VersionLib.toVersion(1, 0, 0);
     }
 
-    // IMPORTANT this function needs to be implemented by each new version
-    // and needs to call internal function call _activate() 
-    function activate(address implementation, address activatedBy)
+    function getDataV01() 
         external 
-        virtual override
-    { 
-        // ensure proper version history
-        _activate(implementation, activatedBy);
+        view 
+        returns(bytes memory) 
+    {
+        return "hi from version 1";
     }
 
-    function getDataV01() external view returns(bytes memory) {
-        return "hi from version 1";
+    function _initialize(address owner, bytes memory data)
+        internal
+        onlyInitializing
+        virtual override
+    {}
+
+    function _getStorage() private pure returns (StorageV1 storage $) {
+        assembly {
+            $.slot := LOCATION_V1
+        }
     }
 }

@@ -23,9 +23,11 @@ import {IRiskModule} from "../../contracts/instance/module/risk/IRisk.sol";
 import {IPoolModule} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IPolicyModule} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IBundleModule} from "../../contracts/instance/module/bundle/IBundle.sol";
+import {ITreasuryModule} from "../../contracts/instance/module/treasury/ITreasury.sol";
 
 import {IInstanceBase} from "../../contracts/instance/base/IInstanceBase.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
+
 import {IComponentOwnerService} from "../../contracts/instance/service/IComponentOwnerService.sol";
 import {IDistributionService} from "../../contracts/instance/service/IDistributionService.sol";
 import {IProductService} from "../../contracts/instance/service/IProductService.sol";
@@ -36,8 +38,8 @@ contract TestInstanceModuleAccess  is
     InstanceBase,
     AccessModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         AccessModule()
     // solhint-disable-next-line no-empty-blocks
     {
@@ -60,8 +62,8 @@ contract TestInstanceModuleBundle  is
     InstanceBase,
     BundleModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         BundleModule()
     // solhint-disable-next-line no-empty-blocks
     {
@@ -80,8 +82,8 @@ contract TestInstanceModuleComponent  is
     InstanceBase,
     ComponentModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         ComponentModule()
     // solhint-disable-next-line no-empty-blocks
     {
@@ -98,8 +100,8 @@ contract TestInstanceModulePolicy  is
     InstanceBase,
     PolicyModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         PolicyModule()
     // solhint-disable-next-line no-empty-blocks
     {
@@ -118,15 +120,15 @@ contract TestInstanceModulePool  is
     InstanceBase,
     PoolModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         PoolModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
     }
 
-    function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getComponentOwnerService() external view override (IInstanceBase, IPoolModule) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IPoolModule, IInstanceBase) returns(IPoolService service) { return _poolService; }
@@ -136,15 +138,15 @@ contract TestInstanceModuleTreasury  is
     InstanceBase,
     TreasuryModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         TreasuryModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
     }
 
-    function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
+    function getComponentOwnerService() external view override (IInstanceBase, ITreasuryModule) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IInstanceBase) returns(IPoolService service) { return _poolService; }
@@ -154,8 +156,8 @@ contract TestInstanceModuleDistribution is
     InstanceBase,
     DistributionModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         DistributionModule()
     // solhint-disable-next-line no-empty-blocks
     {
@@ -172,8 +174,8 @@ contract TestInstanceModuleRisk is
     InstanceBase,
     RiskModule
 {
-    constructor(address registry, NftId registryNftId)
-        InstanceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
+        InstanceBase(registry, registryNftId, initialOwner)
         RiskModule()
     // solhint-disable-next-line no-empty-blocks
     {

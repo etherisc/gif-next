@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import {NftId} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
@@ -60,12 +60,6 @@ interface IPoolComponent is IBaseComponent {
 
     function getCollateralizationLevel() external view returns (UFixed collateralizationLevel);
 
-    function getPoolFee() external view returns (Fee memory poolFee);
+    function getFees() external view returns (Fee memory poolFee, Fee memory stakingFee, Fee memory performanceFee);
 
-    function getStakingFee() external view returns (Fee memory stakingFee);
-
-    function getPerformanceFee()
-        external
-        view
-        returns (Fee memory performanceFee);
 }

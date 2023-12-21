@@ -14,9 +14,10 @@ contract TestInstanceBase  is
 {
     constructor(
         address registry,
-        NftId registryNftId
+        NftId registryNftId,
+        address initialOwner
     )
-        InstanceBase(registry, registryNftId)
+        InstanceBase(registry, registryNftId, initialOwner)
     // solhint-disable-next-line no-empty-blocks
     {
     }

@@ -10,8 +10,6 @@ import {IService} from "../base/IService.sol";
 // TODO rename to registry service
 interface IComponentOwnerService is IService {
 
-    function register(IBaseComponent component) external returns(NftId componentNftId);
-
     // TODO move to product/pool services
     function lock(IBaseComponent component) external;
 

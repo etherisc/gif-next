@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC165} from "@openzeppelin5/contracts/utils/introspection/IERC165.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../types/NftId.sol";
@@ -12,13 +12,11 @@ import {IOwnable} from "./IOwnable.sol";
 interface IRegisterable is IERC165, IOwnable {
     function getRegistry() external view returns (IRegistry registry);
 
-    function register() external returns (NftId nftId);
-
-    function getType() external pure returns (ObjectType objectType);
-
     function getNftId() external view returns (NftId nftId);
 
-    function getParentNftId() external view returns (NftId nftId);
+    function getInitialInfo() 
+        external 
+        view
+        returns (IRegistry.ObjectInfo memory, bytes memory data);
 
-    function getData() external view returns (bytes memory data);
 }

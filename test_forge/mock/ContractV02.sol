@@ -6,9 +6,14 @@ import {ContractV01} from "./ContractV01.sol";
 
 contract ContractV02 is ContractV01 {
 
-    // IMPORTANT 1. version needed for upgradable versions
-    // _activate is using this to check if this is a new version
-    // and if this version is higher than the last activated version
+    // @custom:storage-location erc7201:gif-next.test_forge.mock.contractV01.sol
+    struct StorageV2 {
+        // copy paste StorageV1
+        uint something;
+        // add changes
+        bool isDifferent;
+    }
+
     function getVersion()
         public
         pure
@@ -18,17 +23,30 @@ contract ContractV02 is ContractV01 {
         return VersionLib.toVersion(1, 0, 1);
     }
 
-    // IMPORTANT this function needs to be implemented by each new version
-    // and needs to call internal function call _activate() 
-    function activate(address implementation, address activatedBy)
-        external 
-        virtual override
-    { 
-        // ensure proper version history
-        _activate(implementation, activatedBy);
-    }
-
     function getDataV02() external view returns(bytes memory) {
         return "hi from version 2";
+    }
+
+    function _initialize(address owner, bytes memory data)
+        internal
+        onlyInitializing
+        virtual override
+    {
+        // copy paste V1
+        // add changes 
+    }
+
+    function _upgrade(bytes memory data)
+        internal
+        onlyInitializing
+        virtual override
+    {
+        // add changes
+    }
+
+    function _getStorageV2() private pure returns (StorageV2 storage $) {
+        assembly {
+            $.slot := LOCATION_V1
+        }
     }
 }

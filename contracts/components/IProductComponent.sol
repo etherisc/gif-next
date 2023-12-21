@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import {Fee} from "../types/Fee.sol";
 import {NftId} from "../types/NftId.sol";
@@ -9,6 +9,7 @@ import {RiskId} from "../types/RiskId.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
 
 interface IProductComponent is IBaseComponent {
+
     function setFees(
         Fee memory productFee,
         Fee memory processingFee

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {ObjectType, DISTRIBUTION} from "../types/ObjectType.sol";
+import {DISTRIBUTION} from "../types/ObjectType.sol";
 import {IDistributionService} from "../instance/service/IDistributionService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {NftId} from "../types/NftId.sol";
@@ -9,6 +9,9 @@ import {ReferralId} from "../types/ReferralId.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
+import {Registerable} from "../shared/Registerable.sol";
 
 contract Distribution is
     BaseComponent,
@@ -34,15 +37,18 @@ contract Distribution is
         // TODO refactor into tokenNftId
         address token,
         bool verifying,
-        Fee memory distributionFee
+        Fee memory distributionFee,
+        address initialOwner
     )
-        BaseComponent(registry, instanceNftId, token)
+        BaseComponent(registry, instanceNftId, token, DISTRIBUTION(), true, initialOwner)
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 
         _distributionService = _instance.getDistributionService();
         _productService = _instance.getProductService();
+
+        _registerInterface(type(IDistributionComponent).interfaceId);
     }
 
 
@@ -125,8 +131,25 @@ contract Distribution is
         return _isVerifying;
     }
 
-    // from registerable
-    function getType() public pure override returns (ObjectType) {
-        return DISTRIBUTION();
+    // from IRegisterable
+
+    function getInitialInfo() 
+        public 
+        view
+        override (IRegisterable, Registerable)
+        returns(IRegistry.ObjectInfo memory, bytes memory)
+    {
+        (
+            IRegistry.ObjectInfo memory info, 
+            bytes memory data
+        ) = super.getInitialInfo();
+
+        return (
+            info,
+            abi.encode(
+                _initialDistributionFee,
+                _isVerifying
+            )
+        );
     }
 }

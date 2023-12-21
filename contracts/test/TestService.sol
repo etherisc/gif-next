@@ -8,25 +8,19 @@ import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 
+//import {IService} from "../../contracts/instance/base/IService.sol";
+
 contract TestService is ServiceBase {
 
     string public constant NAME = "TestService";
 
-    constructor(address registry, NftId registryNftId)
-        ServiceBase(registry, registryNftId)
+    constructor(address registry, NftId registryNftId, address initialOwner)
     // solhint-disable-next-line no-empty-blocks
-    {}
-
-    function getVersion()
-        public 
-        pure 
-        virtual override (IVersionable, Versionable)
-        returns(Version)
     {
-        return VersionLib.toVersion(3,0,0);
+        _initializeServiceBase(registry, registryNftId, initialOwner);
     }
 
-    function getName() external pure override returns(string memory name) {
+    function getName() public pure override returns(string memory name) {
         return NAME;
     }
 }

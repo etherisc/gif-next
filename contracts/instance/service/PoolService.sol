@@ -9,11 +9,13 @@ import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/tr
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
-import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
+import {IService} from "../base/IService.sol";
+import {ServiceBase} from "../base/ServiceBase.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IPoolService} from "./IPoolService.sol";
 
@@ -25,22 +27,14 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
     constructor(
         address registry,
-        NftId registryNftId
-    ) ComponentServiceBase(registry, registryNftId) // solhint-disable-next-line no-empty-blocks
+        NftId registryNftId,
+        address initialOwner
+    ) ComponentServiceBase(registry, registryNftId, initialOwner)
     {
         _registerInterface(type(IPoolService).interfaceId);
     }
 
-    function getVersion()
-        public 
-        pure 
-        virtual override (IVersionable, Versionable)
-        returns(Version)
-    {
-        return VersionLib.toVersion(3,0,0);
-    }
-
-    function getName() external pure override returns(string memory name) {
+    function getName() public pure override(IService, ServiceBase) returns(string memory name) {
         return NAME;
     }
 
@@ -77,11 +71,17 @@ contract PoolService is ComponentServiceBase, IPoolService {
 
         // register bundle with registry
         NftId poolNftId = info.nftId;
-        bundleNftId = _registry.registerObjectForInstance(
-            poolNftId, 
-            BUNDLE(), 
-            owner,
-            "");
+        bundleNftId = getRegistryService().registerBundle(
+            IRegistry.ObjectInfo(
+                zeroNftId(),
+                poolNftId,
+                BUNDLE(),
+                false, // intercepting property for bundles is defined on pool
+                address(0),
+                owner,
+                ""
+            )
+        );
 
         // create bundle info in instance
         instance.createBundleInfo(
@@ -136,7 +136,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
         if(stakingAmount > 0) {
             NftId productNftId = instance.getProductNftId(poolNftId);
             TokenHandler tokenHandler = instance.getTokenHandler(productNftId);
-            address bundleOwner = _registry.getOwner(bundleNftId);
+            address bundleOwner = getRegistry().ownerOf(bundleNftId);
             address poolWallet = instance.getComponentWallet(poolNftId);
 
             tokenHandler.transfer(

@@ -1,64 +1,61 @@
 import { AddressLike, Signer } from "ethers";
-import { Registerable, Registry, RegistryUpgradeable, Registry__factory } from "../../typechain-types";
+import { ChainNft, ChainNft__factory, Registry, RegistryService, RegistryServiceManager, RegistryService__factory, Registry__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
-import { IERC721ABI } from "./erc721";
 import { LibraryAddresses } from "./libraries";
-import { executeTx, getFieldFromLogs } from "./transaction";
+
 
 export type RegistryAddresses = {
-    registryAddress: AddressLike;
-    registryNftId: string;
+    registryAddress: AddressLike; 
+    registry: Registry;
+
+    registryServiceAddress: AddressLike;
+    registryService: RegistryService;
+
     chainNftAddress: AddressLike;
+    chainNft: ChainNft;
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
-    const { address: registryAddress, contract: registryBaseContract } = await deployContract(
-        "RegistryUpgradeable",
+
+    const { contract: registryServiceManagerBaseContract } = await deployContract(
+        "RegistryServiceManager",
         owner,
         undefined,
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionLib: libraries.versionLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
+                ContractDeployerLib: libraries.contractDeployerLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
             }
         });
-    const { address: chainNftAddress } = await deployContract(
-        "ChainNft",
-        owner,
-        [registryAddress]);
+    const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
 
-    const registry = registryBaseContract as Registry;
-    let registryNftId;
+    const registryServiceAddress = await registryServiceManager.getRegistryService();
+    const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
 
-    try {
-        const tx = await executeTx(async () => await registry.initialize(chainNftAddress, owner));
-        registryNftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
-    } catch (error: unknown) {
-        if (! (error as Error).message.includes("ERROR:REG-001:ALREADY_INITIALIZED")) {
-            throw error;
-        }
-        registryNftId = await registry["getNftId(address)"](registryAddress);
-    }
+    const registryAddress = await registryService.getRegistry();
+    const registry = Registry__factory.connect(registryAddress, owner);
 
-    logger.info(`Registry initialized with ChainNft @ ${chainNftAddress}. RegistryNftId: ${registryNftId}`);
+    const chainNftAddress = await registry.getChainNft();
+    const chainNft = ChainNft__factory.connect(chainNftAddress, owner);
+
+    logger.info(`RegistryService deployed at ${registryServiceAddress}`);
+    logger.info(`Registry deployed at ${registryAddress}`);
+    logger.info(`ChainNft deployed at ${chainNftAddress}`);
+
     return {
         registryAddress,
-        registryNftId,
-        chainNftAddress,
-    };
-}
+        registry,
 
-export async function register(registrable: Registerable, address: AddressLike, name: string, registryAddresses: RegistryAddresses, signer: Signer): Promise<string> {
-    const registry = Registry__factory.connect(registryAddresses.registryAddress.toString(), signer);
-    if (await registry["isRegistered(address)"](address)) {
-        const nftId = await registry["getNftId(address)"](address);
-        logger.info(`already registered - nftId: ${nftId}`);
-        return nftId.toString();
-    }
-    logger.debug("registering Registrable " + name);
-    const tx = await executeTx(async () => await registrable.register());
-    const nftId = getFieldFromLogs(tx, IERC721ABI, "Transfer", "tokenId");
-    logger.info(`registered - nftId: ${nftId}`);
-    return nftId;
+        registryServiceAddress,
+        registryService,
+
+        chainNftAddress,
+        chainNft
+    };
+
 }

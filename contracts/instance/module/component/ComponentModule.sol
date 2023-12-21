@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
 import {IComponentModule} from "./IComponent.sol";
 
@@ -17,10 +17,11 @@ abstract contract ComponentModule is
 
     NftId[] private _nftIds;
 
-    modifier onlyComponentOwnerService() {
+    // TODO try to keep 1 modifier in 1 place...
+    modifier onlyComponentOwnerService() virtual {
         require(
             msg.sender == address(this.getComponentOwnerService()),
-            "ERROR:CMP-001:NOT_OWNER_SERVICE"
+            "ERROR:CMP-001:NOT_COMPONENT_OWNER_SERVICE"
         );
         _;
     }

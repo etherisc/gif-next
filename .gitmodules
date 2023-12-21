@@ -10,3 +10,6 @@
 [submodule "lib/openzeppelin-contracts-500"]
 	path = lib/openzeppelin-contracts-500
 	url = https://github.com/openzeppelin/openzeppelin-contracts
+[submodule "lib/foundry-random"]
+	path = lib/foundry-random
+	url = https://github.com/joejordan/foundry-random

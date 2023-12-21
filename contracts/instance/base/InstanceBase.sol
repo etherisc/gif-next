@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import {Versionable} from "../../shared/Versionable.sol";
 import {Registerable} from "../../shared/Registerable.sol";
@@ -35,11 +35,13 @@ abstract contract InstanceBase is
 
     constructor(
         address registry,
-        NftId registryNftId
+        NftId registryNftId,
+        address initialOwner
     )
-        Registerable(registry, registryNftId)
         Versionable()
     {
+        bytes memory data = "";
+        _initializeRegisterable(registry, registryNftId, INSTANCE(), true, initialOwner, data);
         _keyValueStore = new KeyValueStore();
 
         _registerInterface(type(IInstance).interfaceId);
@@ -67,10 +69,6 @@ abstract contract InstanceBase is
     }
 
     // from registerable
-    function getType() external pure override returns (ObjectType objectType) {
-        return INSTANCE();
-    }
-
 
     // internal / private functions
     function _linkToServicesInRegistry() internal {
@@ -82,7 +80,7 @@ abstract contract InstanceBase is
     }
 
     function _getAndCheck(string memory serviceName, VersionPart majorVersion) internal view returns (address serviceAddress) {
-        serviceAddress = _registry.getServiceAddress(serviceName, majorVersion);
+        serviceAddress = getRegistry().getServiceAddress(serviceName, majorVersion);
         require(
             serviceAddress != address(0),
             "ERROR:INS-001:NOT_REGISTERED"

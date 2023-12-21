@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {NftId, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, SERVICE} from "../../types/ObjectType.sol";
-import {Version, VersionPart} from "../../types/Version.sol";
+import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 import {Registerable} from "../../shared/Registerable.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
@@ -16,22 +16,28 @@ abstract contract ServiceBase is
     Versionable,
     IService
 {
+    function getName() public pure virtual override returns(string memory name);
 
-    constructor(
-        address registry,
-        NftId registryNftId
-    )
-        Registerable(registry, registryNftId)
-        Versionable()
+    function getMajorVersion() public view virtual override returns(VersionPart majorVersion) {
+        return getVersion().toMajorPart(); 
+    }
+
+    // from Versionable
+    function getVersion()
+        public 
+        pure 
+        virtual override (IVersionable, Versionable)
+        returns(Version)
     {
+        return VersionLib.toVersion(3,0,0);
+    }
+
+    function _initializeServiceBase(address registry, NftId registryNftId, address initialOwner)
+        internal 
+        //onlyInitializing //TODO uncomment when "fully" upgradeable
+    {// service must provide its name and version upon registration
+        bytes memory data = abi.encode(getName(), getMajorVersion());
+        _initializeRegisterable(registry, registryNftId, SERVICE(), false, initialOwner, data);
         _registerInterface(type(IService).interfaceId);
-    }
-
-    function getMajorVersion() external view override returns(VersionPart majorVersion) {
-        return this.getVersion().toMajorPart();
-    }
-
-    function getType() external pure override returns (ObjectType) {
-        return SERVICE();
     }
 }

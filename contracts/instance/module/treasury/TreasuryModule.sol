@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IDistributionComponent} from "../../../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../../../components/IPoolComponent.sol";
 import {IProductComponent} from "../../../components/IProductComponent.sol";
@@ -25,48 +25,41 @@ abstract contract TreasuryModule is
     mapping(NftId componentNftId => TokenHandler tokenHandler) internal _tokenHandler;
     Fee internal _zeroFee;
     
+    modifier onlyComponentOwnerService() virtual {
+        require(
+            msg.sender == address(this.getComponentOwnerService()),
+            "ERROR:CMP-001:NOT_COPONENT_OWNER_SERVICE"
+        );
+        _;
+    }
 
-    function initializeTreasuryModule(IKeyValueStore keyValueStore) internal {
+    function _initializeTreasuryModule(IKeyValueStore keyValueStore) internal {
+        //_initializeModuleBase(keyValueStore);
         _initialize(keyValueStore);
         _zeroFee = FeeLib.zeroFee();
     }
 
     function registerProductSetup(
-        IProductComponent product,
-        IPoolComponent pool,
-        IDistributionComponent distribution
-    ) external override // TODO add authz (only component module)
+        NftId productNftId,
+        TreasuryInfo memory setup
+    ) 
+        external
+        onlyComponentOwnerService
     {
-        NftId productNftId = product.getNftId();
-        NftId poolNftId = pool.getNftId();
-        NftId distributionNftId = distribution.getNftId();
-
-        require(productNftId.gtz(), "ERROR:TRS-010:PRODUCT_UNDEFINED");
-        require(poolNftId.gtz(), "ERROR:TRS-011:POOL_UNDEFINED");
+        NftId poolNftId = setup.poolNftId;
+        NftId distributionNftId = setup.distributionNftId;
 
         require(address(_tokenHandler[productNftId]) == address(0), "ERROR:TRS-012:TOKEN_HANDLER_ALREADY_REGISTERED");
         require(_productNft[poolNftId].eqz(), "ERROR:TRS-013:POOL_ALREADY_LINKED");
         require(_productNft[distributionNftId].eqz(), "ERROR:TRS-014:COMPENSATION_ALREADY_LINKED");
 
+        // TODO deploy TokenHandler with separate contract to save space
         // deploy product specific handler contract
-        IERC20Metadata token = product.getToken();
-        _tokenHandler[productNftId] = new TokenHandler(productNftId, address(token));
+        _tokenHandler[productNftId] = new TokenHandler(productNftId, address(setup.token));
         _productNft[distributionNftId] = productNftId;
         _productNft[poolNftId] = productNftId;
 
-        TreasuryInfo memory info = TreasuryInfo(
-            poolNftId,
-            distributionNftId,
-            token,
-            product.getProductFee(),
-            product.getProcessingFee(),
-            pool.getPoolFee(),
-            pool.getStakingFee(),
-            pool.getPerformanceFee(),
-            distribution.getDistributionFee()
-        );
-
-        _create(TREASURY(), productNftId, abi.encode(info));
+        _create(TREASURY(), productNftId, abi.encode(setup));
     }
 
     function setTreasuryInfo(

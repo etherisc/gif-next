@@ -6,6 +6,7 @@ import {NftId} from "../../../types/NftId.sol";
 import {UFixed} from "../../../types/UFixed.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
+import {IComponentOwnerService} from "../../service/IComponentOwnerService.sol";
 
 interface IPool {
     struct PoolInfo {
@@ -17,9 +18,8 @@ interface IPool {
 interface IPoolModule is IPool {
 
     function registerPool(
-        NftId poolNftId, 
-        bool isVerifying, 
-        UFixed collateralizationLevel
+        NftId nftId, 
+        PoolInfo memory info
     ) external;
 
     function addBundleToPool(
@@ -36,5 +36,6 @@ interface IPoolModule is IPool {
     function getBundleNftId(NftId poolNftId, uint256 index) external view returns (NftId bundleNftId);
 
     // repeat service linked signatures to avoid linearization issues
+    function getComponentOwnerService() external view returns(IComponentOwnerService);
     function getPoolService() external returns(IPoolService);
 }
