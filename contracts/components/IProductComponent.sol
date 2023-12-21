@@ -6,9 +6,7 @@ import {NftId} from "../types/NftId.sol";
 import {ReferralId} from "../types/ReferralId.sol";
 import {RiskId} from "../types/RiskId.sol";
 
-import {IBaseComponent} from "./IBaseComponent.sol";
-
-interface IProductComponent is IBaseComponent {
+interface IProductComponent {
 
     function setFees(
         Fee memory productFee,

@@ -21,11 +21,11 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
 
 import {IPool} from "../instance/module/pool/IPoolModule.sol";
-import {IPoolComponent} from "../components/IPoolComponent.sol";
+import {Pool} from "../components/Pool.sol";
 
 contract Product is BaseComponent, IProductComponent {
     IProductService internal _productService;
-    IPoolComponent internal _pool;
+    Pool internal _pool;
     address internal _distribution;
     Fee internal _initialProductFee;
     Fee internal _initialProcessingFee;
@@ -46,7 +46,7 @@ contract Product is BaseComponent, IProductComponent {
     ) BaseComponent(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
         _productService = _instance.getProductService();
-        _pool = IPoolComponent(pool);
+        _pool = Pool(pool);
         _distribution = distribution;
         _initialProductFee = productFee;
         _initialProcessingFee = processingFee;  

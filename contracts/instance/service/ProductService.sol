@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IProductComponent} from "../../components/IProductComponent.sol";
+import {Product} from "../../components/Product.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IInstance} from "../../instance/IInstance.sol";
@@ -105,10 +106,10 @@ contract ProductService is ComponentServiceBase, IProductService {
         );
     }
 
-    function _getAndVerifyInstanceAndProduct() internal view returns (IProductComponent product) {
+    function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
         (productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        product = IProductComponent(productInfo.objectAddress);
+        product = Product(productInfo.objectAddress);
     }
 
     function calculatePremium(
@@ -130,7 +131,7 @@ contract ProductService is ComponentServiceBase, IProductService {
             uint256 distributionFeeAmount
         )
     {
-        IProductComponent product = _getAndVerifyInstanceAndProduct();
+        Product product = _getAndVerifyInstanceAndProduct();
         uint256 netPremiumAmount = product.calculateNetPremium(
             sumInsuredAmount,
             riskId,
@@ -157,7 +158,7 @@ contract ProductService is ComponentServiceBase, IProductService {
 
     function _calculateFeeAmounts(
         uint256 netPremiumAmount,
-        IProductComponent product,
+        Product product,
         NftId bundleNftId,
         ReferralId referralId
     )
