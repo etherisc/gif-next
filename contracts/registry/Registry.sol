@@ -94,7 +94,7 @@ contract Registry is
 
     constructor(address registryOwner, VersionPart majorVersion)
     {
-        require(registryOwner > address(0), "Registry: protocol owner is 0");
+        require(registryOwner > address(0), "Registry: registry owner is 0");
         require(majorVersion.toInt() == MAJOR_VERSION_MIN, "Registry: initial major version of registry service is not MAJOR_VERSION_MIN");
 
         // deploy NFT 
@@ -112,10 +112,11 @@ contract Registry is
         _registerInterface(type(IRegistry).interfaceId);
     }
 
-    /// @dev registry protects only from tampering existing records and invalid types pairs
+    /// @dev registry protects only against tampering existing records, registering with invalid types pairs and 0 parent address
     // IMPORTANT: rare case when parentNftId is not registered and == next nftId -> technincally this is ZeroParentAddress error
     // to catch this check parent address before minting !!!!
     // TODO service registration means its approval for some type?
+    // TODO registration of precompile addresses
     function register(ObjectInfo memory info)
         external
         onlyRegistryService
@@ -137,6 +138,9 @@ contract Registry is
 
         address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
 
+        // TODO does external call
+        // check for receiver in registry service?
+        // use unsafe transfer?
         uint256 mintedTokenId = _chainNft.mint(
             info.initialOwner,
             interceptor,
@@ -174,7 +178,7 @@ contract Registry is
                 ) = abi.decode(info.data, (string, VersionPart));
                 bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
 
-                // TODO MUST guarantee consistency of registerable.getVersion() and majorVersion here
+                // TODO MUST guarantee consistency of service.getVersion() and majorVersion here
                 // TODO update _serviceNftId when registryService with new major version is registered? -> it is fixed in current setup
                 // TODO do not use names -> each object type is registered by corresponding service -> conflicting with approve()
                 if(
@@ -202,7 +206,7 @@ contract Registry is
             }
         }
 
-        emit LogRegistration(nftId, info.parentNftId, info.objectType, info.objectAddress, info.initialOwner);
+        emit LogRegistration(nftId, info.parentNftId, info.objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
     }
 
     function registerFrom(
