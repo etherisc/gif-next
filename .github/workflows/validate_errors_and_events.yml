@@ -22,7 +22,7 @@ jobs:
         run: .github/workflows/scripts/list_all_errorcodes.sh > tmp/errorcodes.md
       
       - name: Archive error codes
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: error-codes
           path: tmp/errorcodes.md
