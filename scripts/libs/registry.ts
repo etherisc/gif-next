@@ -1,5 +1,5 @@
-import { AddressLike, Signer } from "ethers";
-import { ChainNft, ChainNft__factory, Registry, RegistryService, RegistryServiceManager, RegistryService__factory, Registry__factory } from "../../typechain-types";
+import { AddressLike, Signer, resolveAddress } from "ethers";
+import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryService, RegistryServiceManager, RegistryService__factory, Registry__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, verifyContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -20,7 +20,6 @@ export type RegistryAddresses = {
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
-
     const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
         "RegistryServiceManager",
         owner,
@@ -64,21 +63,46 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         chainNft
     } as RegistryAddresses;
 
-    await verifyRegistryComponents(regAdr, await owner.getAddress())
+    await verifyRegistryComponents(regAdr, owner)
 
     return regAdr;
 }
 
-async function verifyRegistryComponents(registryAddress: RegistryAddresses, ownerAddress: AddressLike) {
+async function verifyRegistryComponents(registryAddress: RegistryAddresses, owner: Signer) {
+    if (process.env.SKIP_VERIFICATION?.toLowerCase() === "true") {
+        return;
+    }
+
     logger.info("Verifying additional registry components");
 
-    logger.debug("Verifying registryService");
-    await verifyContract(registryAddress.registryAddress, [ownerAddress, 3], undefined);
+    logger.debug("Verifying registry");
+    await verifyContract(registryAddress.registryAddress, [await owner.getAddress(), 3], undefined);
+    
     logger.debug("Verifying chainNft");
     await verifyContract(registryAddress.chainNftAddress, [registryAddress.registryAddress], undefined);
-    // TODO: fix this
-    // logger.debug("Verifying registryServiceManager");
-    // await verifyContract(registryAddress.registryServiceAddress, [], undefined);
+    
+    logger.debug("Verifying registryService");
+    const [registryServiceImplenenationAddress] = await getImplementationAddress(registryAddress.registryServiceAddress, owner);
+    // const registryCreationCode = abiRegistry.bytecode;
+
+    // const proxyManager = ProxyManager__factory.connect(await resolveAddress(registryAddress.registryServiceAddress), owner);
+    // const initData = await proxyManager.getDeployData(
+    //     registryServiceImplenenationAddress, await owner.getAddress(), registryCreationCode);
+    await verifyContract(
+        registryServiceImplenenationAddress, 
+        [], 
+        undefined);
     
     logger.info("Additional registry components verified");
+}
+
+async function getImplementationAddress(proxyAddress: AddressLike, owner: Signer): Promise<[string, string]> {
+    const versionable = IVersionable__factory.connect(await resolveAddress(proxyAddress), owner);
+    const version = await versionable["getVersion()"]();
+    const versonInfo = await versionable.getVersionInfo(version);
+    const implementationAddress = versonInfo.implementation;
+    const activatedBy = versonInfo.activatedBy;
+    logger.debug(implementationAddress);
+    logger.debug(activatedBy);
+    return [implementationAddress, activatedBy];
 }
