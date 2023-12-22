@@ -104,7 +104,10 @@ contract ComponentOwnerService is
         (
             IRegistry.ObjectInfo memory info,
             bytes memory data
-        ) = getRegistryService().registerComponent(component, componentType, msg.sender);	
+        ) = getRegistryService().registerComponent(
+            component, 
+            componentType, 
+            msg.sender);	
 
         NftId instanceNftId = info.parentNftId;
         address instancAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;

@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IERC165} from "@openzeppelin5/contracts/utils/introspection/IERC165.sol";
 
+import {INftOwnable} from "../shared/INftOwnable.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {RoleId} from "../types/RoleId.sol";
@@ -40,8 +41,8 @@ interface IInstance is
     IDistributionModule,
     IInstanceBase
 {
-    function getRegistry() external view override (IPolicyModule, IRegisterable) returns (IRegistry registry);
-    function getOwner() external view override (IRegisterable, IAccessModule) returns(address owner);
+    function getRegistry() external view override (INftOwnable) returns (IRegistry registry);
+    function getOwner() external view override (IAccessModule, INftOwnable) returns(address owner);
 
     function getKeyValueStore() external view override (IInstanceBase) returns (IKeyValueStore keyValueStore);
 

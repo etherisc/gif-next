@@ -83,15 +83,14 @@ contract RegistryService is
             revert NotToken();
         } 
 
-        IRegistry registry = getRegistry();
-
-        if(msg.sender != registry.ownerOf(address(registry))) {
+        NftId registryNftId = _registry.getNftId(address(_registry));
+        if(msg.sender != _registry.ownerOf(registryNftId)) {
             revert NotRegistryOwner();
         }
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             zeroNftId(), // any value
-            registry.getNftId(address(registry)),
+            registryNftId, // parent nft id
             TOKEN(),
             false, // isInterceptor
             tokenAddress,
@@ -99,7 +98,7 @@ contract RegistryService is
             "" // any value
         );
 
-        nftId = registry.register(info);
+        nftId = _registry.register(info);
     }
 
     /// @dev 
@@ -124,14 +123,14 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
 
-        IRegistry registry = getRegistry();
-
-        if(msg.sender != registry.ownerOf(address(registry))) {
+        NftId registryNftId = _registry.getNftId(address(_registry));
+        if(msg.sender != _registry.ownerOf(registryNftId)) {
             revert NotRegistryOwner();
         }
 
         info.initialOwner = NFT_LOCK_ADDRESS;//registry.getLockAddress();
-        info.nftId = registry.register(info);
+        info.nftId = _registry.register(info);
+        service.linkToRegisteredNftId();
 
         return (
             info,
@@ -148,7 +147,7 @@ contract RegistryService is
             bytes memory data
         ) 
     {
-        if(component.supportsInterface(type(IBaseComponent).interfaceId) == false) {
+        if(!component.supportsInterface(type(IBaseComponent).interfaceId)) {
             revert NotComponent();
         }
 
@@ -157,14 +156,14 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(component, componentType, owner);
 
-        IRegistry registry = getRegistry();
-        NftId serviceNftId = registry.getNftId(msg.sender);
+        NftId serviceNftId = _registry.getNftId(msg.sender);
 
-        if(registry.allowance(serviceNftId, componentType) == false) {
+        if(!_registry.allowance(serviceNftId, componentType)) {
             revert MissingAllowance();
         }      
 
-        info.nftId = registry.register(info);
+        info.nftId = _registry.register(info);
+        component.linkToRegisteredNftId();
 
         return (
             info,
@@ -190,13 +189,8 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);// owner);
 
-        IRegistry registry = getRegistry();
-
-        //if(registry.allowance(registry.getNftId(msg.sender), INSTANCE()) == false) {
-        //    revert MissingAllowance();
-        //}
-
-        info.nftId = registry.register(info);     
+        info.nftId = _registry.register(info);
+        instance.linkToRegisteredNftId();
         
         return (
             info,
@@ -208,32 +202,30 @@ contract RegistryService is
         external 
         returns(NftId nftId) 
     {
-        IRegistry registry = getRegistry();
-        NftId senderNftId = registry.getNftId(msg.sender);
+        NftId senderNftId = _registry.getNftId(msg.sender);
 
-        if(registry.allowance(senderNftId, POLICY()) == false) {
+        if(_registry.allowance(senderNftId, POLICY()) == false) {
             revert MissingAllowance();
         }
 
         _verifyObjectInfo(info, POLICY());
 
-        nftId = registry.register(info);
+        nftId = _registry.register(info);
     }
 
     function registerBundle(IRegistry.ObjectInfo memory info)
         external 
         returns(NftId nftId) 
     {
-        IRegistry registry = getRegistry();
-        NftId senderNftId = registry.getNftId(msg.sender);
+        NftId senderNftId = _registry.getNftId(msg.sender);
 
-        if(registry.allowance(senderNftId, BUNDLE()) == false) {
+        if(_registry.allowance(senderNftId, BUNDLE()) == false) {
             revert MissingAllowance();
         }
 
         _verifyObjectInfo(info, BUNDLE());
 
-        nftId = registry.register(info);
+        nftId = _registry.register(info);
     }
 
 
@@ -274,6 +266,7 @@ contract RegistryService is
         NftId registryNftId = registry.getNftId(registryAddress);
 
         _initializeServiceBase(registryAddress, registryNftId, owner);
+        linkToRegisteredNftId();
 
         _registerInterface(type(IRegistryService).interfaceId);
     }

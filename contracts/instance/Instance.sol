@@ -2,6 +2,8 @@
 pragma solidity ^0.8.19;
 
 import {NftId} from "../types/NftId.sol";
+import {INftOwnable} from "../shared/INftOwnable.sol";
+import {NftOwnable} from "../shared/NftOwnable.sol";
 import {RoleId} from "../types/RoleId.sol";
 
 import {InstanceBase} from "./base/InstanceBase.sol";
@@ -72,7 +74,7 @@ contract Instance is
         _;
     }
 
-    function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
+    function getRegistry() public view override (INftOwnable, NftOwnable) returns (IRegistry registry) { return super.getRegistry(); }
 
     function getKeyValueStore() public view override (InstanceBase) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
@@ -81,5 +83,5 @@ contract Instance is
     function getProductService() external view override (IBundleModule, IPolicyModule, IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IBundleModule, IPoolModule, IInstanceBase) returns(IPoolService service) { return _poolService; }
 
-    function getOwner() public view override (IAccessModule, Registerable) returns(address owner) { return super.getOwner(); }
+    function getOwner() public view override (IAccessModule, INftOwnable, NftOwnable) returns(address owner) { return super.getOwner(); }
 }

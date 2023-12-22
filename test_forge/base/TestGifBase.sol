@@ -34,6 +34,7 @@ import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
+import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 
 // solhint-disable-next-line max-states-count
 contract TestGifBase is Test {
@@ -49,6 +50,7 @@ contract TestGifBase is Test {
     ChainNft public chainNft;
     Registry public registry;
 
+    RegistryServiceManager public registryServiceManager;
     ProxyManager public registryServiceProxyAdmin;
     RegistryService public registryServiceImplementation;
     RegistryService public registryService;
@@ -205,13 +207,8 @@ contract TestGifBase is Test {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        registryServiceProxyAdmin = new ProxyManager();
-        registryServiceImplementation = new RegistryService();
-
-        IVersionable versionable = registryServiceProxyAdmin.deploy(address(registryServiceImplementation), type(Registry).creationCode);
-        
-        address registryServiceAddress = address(versionable);
-        registryService = RegistryService(registryServiceAddress);
+        registryServiceManager = new RegistryServiceManager();
+        registryService = registryServiceManager.getRegistryService();
 
         IRegistry registry_ = registryService.getRegistry();
         registryAddress = address(registry_);
@@ -221,20 +218,22 @@ contract TestGifBase is Test {
         chainNft = ChainNft(chainNftAddress);
 
         /* solhint-disable */
-        console.log("registry implementation deployed at", address(registryImplementation));  
-        console.log("registry proxy admin deployed at", address(registryProxyAdmin));
         console.log("registry deployed at", address(registry));
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
         console.log("global registry nft id", chainNft.GLOBAL_REGISTRY_ID());
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
-        //console.log("registry version %s\n", registry.getVersion().toInt());
 
-        console.log("registry service name", registryService.NAME());
-        console.log("registry service implementation deployed at", address(registryServiceImplementation));  
-        console.log("registry service proxy admin deployed at", address(registryServiceProxyAdmin));
-        console.log("registry service deployed at", address(registryService));
-        console.log("registry service nft id", registryService.getNftId().toInt());
-        console.log("registry service version %s\n", registryService.getVersion().toInt());
+        console.log("registry owner", address(registryOwner));
+        console.log("registry service manager", address(registryServiceManager));
+        console.log("registry service manager nft", registryServiceManager.getNftId().toInt());
+        console.log("registry service manager owner", registryServiceManager.getOwner());
+        console.log("registry service", address(registryService));
+        console.log("registry service nft", registryService.getNftId().toInt());
+        console.log("registry service owner", registryService.getOwner());
+        console.log("registry", address(registry));
+        console.log("registry nft", registry.getNftId(address(registry)).toInt());
+        console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
+        console.log("registry owner (opt 2)", registry.getOwner());
         /* solhint-enable */
     }
 
@@ -245,6 +244,8 @@ contract TestGifBase is Test {
         
         componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
         registryService.registerService(componentOwnerService);
+        assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
+
         registry.approve(componentOwnerService.getNftId(), PRODUCT(), INSTANCE());
         registry.approve(componentOwnerService.getNftId(), POOL(), INSTANCE());
         registry.approve(componentOwnerService.getNftId(), DISTRIBUTION(), INSTANCE());
@@ -306,9 +307,10 @@ contract TestGifBase is Test {
         instance = Instance(instanceAddress);*/
         instance = new Instance(registryAddress, registryNftId, instanceOwner);
 
+        registryService.registerInstance(instance);
+
         keyValueStore = instance.getKeyValueStore();
 
-        registryService.registerInstance(instance);
 
         /* solhint-disable */
         //console.log("instance implementation deployed at", address(instanceImplementation));  

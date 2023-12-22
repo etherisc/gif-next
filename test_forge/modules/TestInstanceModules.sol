@@ -4,6 +4,8 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {InstanceBase} from "../../contracts/instance/base/InstanceBase.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
+import {NftOwnable} from "../../contracts/shared/NftOwnable.sol";
+import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {RoleId} from "../../contracts/types/RoleId.sol";
 
 import {AccessModule} from "../../contracts/instance/module/access/Access.sol";
@@ -46,7 +48,7 @@ contract TestInstanceModuleAccess  is
 
     }
 
-    function getRegistry() public view override (Registerable) returns (IRegistry registry) { return super.getRegistry(); }
+    // function getRegistry() public view override (Registerable) returns (IRegistry registry) { return super.getRegistry(); }
 
     function hasRole(RoleId role, address member) public view override (AccessModule) returns (bool) { return super.hasRole(role, member); }
 
@@ -55,7 +57,7 @@ contract TestInstanceModuleAccess  is
     function getProductService() external view override returns(IProductService service) { return _productService; }
     function getPoolService() external view override returns(IPoolService service) { return _poolService; }
 
-    function getOwner() public view override (IAccessModule, Registerable) returns (address owner) { return super.getOwner(); }
+    function getOwner() public view override (IAccessModule, NftOwnable, INftOwnable) returns (address owner) { return super.getOwner(); }
 }
 
 contract TestInstanceModuleBundle  is
@@ -69,7 +71,7 @@ contract TestInstanceModuleBundle  is
     {
 
     }
-    function getRegistry() public view override (Registerable) returns (IRegistry registry) { return super.getRegistry(); }
+    // function getRegistry() public view override (Registerable) returns (IRegistry registry) { return super.getRegistry(); }
     function getKeyValueStore() public view override (InstanceBase) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
     function getComponentOwnerService() external view override returns(IComponentOwnerService) { return _componentOwnerService; }
@@ -108,7 +110,7 @@ contract TestInstanceModulePolicy  is
 
     }
 
-    function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
+    // function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
 
     function getComponentOwnerService() external view override (IInstanceBase) returns(IComponentOwnerService) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }

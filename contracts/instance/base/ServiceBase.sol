@@ -6,6 +6,7 @@ import {ObjectType, SERVICE} from "../../types/ObjectType.sol";
 import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 import {Registerable} from "../../shared/Registerable.sol";
+import {IRegistry} from "../../registry/IRegistry.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 

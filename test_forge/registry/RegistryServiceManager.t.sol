@@ -8,7 +8,7 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
-import {NftOwnable} from "../../contracts/shared/NftOwnable.sol";
+import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -71,8 +71,14 @@ contract RegistryServiceManagerTest is Test {
         assertEq(address(registryService.getRegistry()), address(registry), "unexpected registry address");
         assertEq(address(registry.getChainNft()), address(chainNft), "unexpected chain nft address");
 
+        // check nft ids
+        assertTrue(registry.getNftId(address(registryService)).gtz(), "registry service nft id (option 1) zero");
+        assertTrue(registryService.getNftId().gtz(), "registry service nft id (option 2) zero");
+        assertEq(registryService.getNftId().toInt(), registry.getNftId(address(registryService)).toInt(), "registry service nft id mismatch");
+        
         // check ownership
         assertEq(registryServiceManager.getOwner(), registryOwner, "service manager owner not registry owner");
+        assertEq(registryService.getOwner(), registryOwner, "registry owner not owner of registry");
         assertEq(registry.getOwner(), registryOwner, "registry owner not owner of registry");
         assertEq(registry.getOwner(), registry.ownerOf(address(registry)), "non matching registry owners");
 
@@ -91,7 +97,7 @@ contract RegistryServiceManagerTest is Test {
         // attempt to redploy with non-owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                NftOwnable.ErrorNftOwnableUnauthorized.selector,
+                INftOwnable.ErrorNotOwner.selector,
                 registryOwnerNew));
         vm.prank(registryOwnerNew);
         registryServiceManager.deploy(
@@ -118,7 +124,7 @@ contract RegistryServiceManagerTest is Test {
         // attempt to redploy with non-owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                NftOwnable.ErrorNftOwnableUnauthorized.selector,
+                INftOwnable.ErrorNotOwner.selector,
                 registryOwnerNew));
         vm.prank(registryOwnerNew);
         registryServiceManager.upgrade(
@@ -168,7 +174,7 @@ contract RegistryServiceManagerTest is Test {
         // attempt to upgrade with old owner
         vm.expectRevert(
             abi.encodeWithSelector(
-                NftOwnable.ErrorNftOwnableUnauthorized.selector,
+                INftOwnable.ErrorNotOwner.selector,
                 registryOwner));
         vm.prank(registryOwner);
         registryServiceManager.upgrade(

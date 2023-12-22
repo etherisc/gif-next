@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import {Blocknumber} from "../contracts/types/Blocknumber.sol";
 import {NftId} from "../contracts/types/NftId.sol";
+import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
 import {COMPONENT} from "../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../contracts/types/StateId.sol";
 
@@ -14,7 +15,10 @@ contract TestComponentLockUnlock is TestGifBase {
 
     function testComponentLockNotOwner() public {
         vm.prank(outsider);
-        vm.expectRevert("ERROR:RGB-001:NOT_OWNER");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                INftOwnable.ErrorNotOwner.selector,
+                outsider));
         product.lock();
     }
 
@@ -47,7 +51,10 @@ contract TestComponentLockUnlock is TestGifBase {
         );
 
         vm.prank(outsider);
-        vm.expectRevert("ERROR:RGB-001:NOT_OWNER");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                INftOwnable.ErrorNotOwner.selector,
+                outsider));
         product.unlock();
     }
 

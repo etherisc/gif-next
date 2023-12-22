@@ -1,17 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {INftOwnable} from "./INftOwnable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
 
-contract NftOwnable {
-    error ErrorNftOwnableUnauthorized(address account);
-
-    error ErrorAlreadyInitialized(address registry, NftId nftId);
-    error ErrorRegistryAlreadyInitialized(address registry);
-    error ErrorRegistryNotInitialized();
-    error ErrorRegistryAddressZero();
-    error ErrorContractNotRegistered(address contractAddress);
+contract NftOwnable is INftOwnable {
 
     IRegistry internal _registry;
     NftId private _nftId;
@@ -22,7 +16,7 @@ contract NftOwnable {
 
         // owner == address(0) is eg uninitialized upgradable contract
         if (owner != address(0) && msg.sender != owner) {
-            revert ErrorNftOwnableUnauthorized(msg.sender);
+            revert ErrorNotOwner(msg.sender);
         }
         _;
     }
@@ -30,6 +24,39 @@ contract NftOwnable {
     constructor() {
         _initialOwner = msg.sender;
     }
+
+    /// @dev initialization for upgradable contracts
+    function _initializeNftOwnable(
+        address initialOwner,
+        address registryAddress
+    )
+        internal
+        virtual
+    {
+        _initialOwner = initialOwner;
+        _linkToRegistry(registryAddress);
+    }
+
+    /// @dev fetch nft from registry after registration
+    function linkToRegisteredNftId() public {
+        if (_nftId.gtz()) {
+            revert ErrorAlreadyLinked(address(_registry), _nftId);
+        }
+
+        if (address(_registry) == address(0)) {
+            revert ErrorRegistryNotInitialized();
+        }
+
+        address contractAddress = address(this);
+
+        if (!_registry.isRegistered(contractAddress)) {
+            revert ErrorContractNotRegistered(contractAddress);
+        }
+
+        _nftId = _registry.getNftId(contractAddress);
+    }
+
+    // TODO likely need an additinoal internal function for components
 
     // function only needed during bootstrapping on a new chain
     function linkToRegistry(
@@ -41,18 +68,10 @@ contract NftOwnable {
         returns (NftId)
     {
         if (_nftId.gtz()) {
-            revert ErrorAlreadyInitialized(address(_registry), _nftId);
+            revert ErrorAlreadyLinked(address(_registry), _nftId);
         }
 
-        if (address(_registry) != address(0)) {
-            revert ErrorRegistryAlreadyInitialized(address(_registry));
-        }
-
-        if (registryAddress == address(0)) {
-            revert ErrorRegistryAddressZero();
-        }
-
-        _registry = IRegistry(registryAddress);
+        _linkToRegistry(registryAddress);
 
         if (!_registry.isRegistered(contractAddress)) {
             revert ErrorContractNotRegistered(contractAddress);
@@ -64,21 +83,40 @@ contract NftOwnable {
     }
 
 
-    function getRegistry() external view returns (IRegistry) {
+    function getRegistry() public view virtual override returns (IRegistry) {
         return _registry;
     }
 
 
-    function getNftId() external view returns (NftId) {
+    function getNftId() public view virtual override returns (NftId) {
         return _nftId;
     }
 
 
-    function getOwner() public view returns (address) {
+    function getOwner() public view virtual override returns (address) {
         if (_nftId.gtz()) {
             return _registry.ownerOf(_nftId);
         }
 
         return _initialOwner;
+    }
+
+
+    function _linkToRegistry(address registryAddress)
+        internal
+    {
+        if (address(_registry) != address(0)) {
+            revert ErrorRegistryAlreadyInitialized(address(_registry));
+        }
+
+        if (registryAddress == address(0)) {
+            revert ErrorRegistryAddressZero();
+        }
+
+        _registry = IRegistry(registryAddress);
+
+        if (!_registry.supportsInterface(type(IRegistry).interfaceId)) {
+            revert ErrorNotRegistry(registryAddress);
+        }
     }
 }
