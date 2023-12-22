@@ -54,7 +54,8 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
         // set data
         _value[key32].data = data;
 
-        emit LogInfoCreated(toKey(key32), initialState, createdBy);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogInfoCreated(toKey(key32), initialState, createdBy, tx.origin);
     }
 
     function update(Key32 key32, StateId state, bytes memory data) 
@@ -78,8 +79,10 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
 
         // create log entries
         Key memory key = toKey(key32);
-        emit LogStateUpdated(key, state, stateOld, updatedBy, lastUpdatedIn);
-        emit LogInfoUpdated(key, state, updatedBy, lastUpdatedIn);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogStateUpdated(key, state, stateOld, updatedBy, tx.origin, lastUpdatedIn);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogInfoUpdated(key, state, updatedBy, tx.origin, lastUpdatedIn);
     }
 
     function updateData(Key32 key32, bytes memory data) 
@@ -101,7 +104,8 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
 
         // create log entry
         Key memory key = toKey(key32);
-        emit LogInfoUpdated(key, state, updatedBy, lastUpdatedIn);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogInfoUpdated(key, state, updatedBy, tx.origin, lastUpdatedIn);
     }
 
     function updateState(Key32 key32, StateId state)
@@ -122,7 +126,8 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
 
         // create log entry
         Key memory key = toKey(key32);
-        emit LogStateUpdated(key, state, stateOld, updatedBy, lastUpdatedIn);
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogStateUpdated(key, state, stateOld, updatedBy, tx.origin, lastUpdatedIn);
     }
 
     function exists(Key32 key32) public view returns (bool) {
@@ -145,11 +150,11 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
         return _value[key32].metadata.state;
     }
 
-    function toKey32(ObjectType objectType, KeyId id) external pure returns(Key32) {
+    function toKey32(ObjectType objectType, KeyId id) external pure override returns(Key32) {
         return Key32Lib.toKey32(objectType, id);
     }
 
-    function toKey(Key32 key32) public pure returns (Key memory key) {
+    function toKey(Key32 key32) public pure override returns (Key memory key) {
         (ObjectType objectType, KeyId id) = key32.toKey();
         return Key(objectType, id);
     }

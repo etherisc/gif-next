@@ -1,5 +1,24 @@
 # gif-next (Generic Insurance Framework next version)
 
+## Add OpenZeppelin V5 Dependencies
+
+```shell
+forge install openzeppelin-contracts-500=OpenZeppelin/openzeppelin-contracts@v5.0.0
+cd cd lib/openzeppelin-contracts-500
+git checkout tags/v5.0.0
+cd ../..
+```
+
+See `remappings.txt` to see how to work with different OpenZeppelin versions in parallel
+
+```
+cat remappings.txt 
+@openzeppelin5/contracts/=lib/openzeppelin-contracts-500/contracts/
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
+@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/
+```
+
+
 ## Submodules checkout
 
 This repository uses submodules. To checkout or update to the latest submodules, run the following command after updating to any revision (or checking out the repository)
@@ -23,11 +42,22 @@ npm run coverage
 
 ### Deployment 
 
+Install the dependencies before running the script below for the first time.
+
+```bash
+npm install
+```
+
 The deploy script will deploy all required contracts and create a test instance with a test product and a test pool. 
 
 ```bash
 # run deployment on a locally created ganache instance
+export SKIP_VERIFICATION=true
 hh run scripts/deploy_all.ts
+```
+
+```bash
+# set appropriate values vor env variables (see below)
 
 # run deployment on another network
 hh run --network <networkname> scripts/deploy_all.ts
@@ -190,6 +220,7 @@ sudo apt update
 sudo apt install python3-pip
 pip install eth-brownie
 brownie pm install OpenZeppelin/openzeppelin-contracts@4.9.3
+brownie pm install OpenZeppelin/openzeppelin-contracts@5.0.0
 ```
 
 ```bash
@@ -241,3 +272,43 @@ pool_id = pool.getNftId()
 product_id = product.getNftId()
 ```
 
+## Registry and Services
+
+### Principles
+
+- 1 service per object type and major version
+- registry service guards write access to registry
+- all other objects registered via registry service
+- root object for the complete tree is the protocol object
+- under the root object a single registry object is registered (= global registry/ethereum mainnet)
+
+
+### Service Responsibilities
+
+Registry Service
+
+- deployed and registered during bootstrapping of registry
+- used to register tokens and other services by registry owner
+- an object may only be registered by the service designated by the type of the object
+- to register an object the parent object needs already be registered
+- the type of the object to be registered needs to match a valid child type/parent type combination
+
+Instance Service
+
+- deploys master instance during its own bootstrapping (if allowed by contract size)
+- registered via registry service by registry owner
+- registeres master instance during its own registration by regsitry owner
+- deploys and registeres new instances (= instance factory) by instance owner (instance owner is a permissionless role, anybody may creates a new instance)
+- provides upgrade functionality to instance owners
+
+Product Service
+
+- registered via registry service by registry owner
+- registers products for registered instances via registry service by product owner (product owner role is permissend by the product's instance)
+- registers applications/policies for registered products via registry service
+
+Distribution Service
+
+- registered via registry service by registry owner
+- registers distribution components for registered products via registry service by distribution owner (distribution owner role is permissend by the product's instance)
+- registers distributors for registered distribution components via registry service

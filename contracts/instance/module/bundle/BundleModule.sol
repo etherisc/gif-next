@@ -6,6 +6,7 @@ import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPoolService} from "../../service/IPoolService.sol";
 
+import {Fee} from "../../../types/Fee.sol";
 import {NftId} from "../../../types/NftId.sol";
 import {Key32, KeyId} from "../../../types/Key32.sol";
 import {LibNftIdSet} from "../../../types/NftIdSet.sol";
@@ -55,12 +56,13 @@ abstract contract BundleModule is
     }
 
     function initializeBundleModule(IKeyValueStore keyValueStore) internal {
-        _initialize(keyValueStore, BUNDLE());
+        _initialize(keyValueStore);
     }
 
     function createBundleInfo(
         NftId bundleNftId,
         NftId poolNftId,
+        Fee memory fee,
         uint256 amount, 
         uint256 lifetime, 
         bytes calldata filter
@@ -69,9 +71,9 @@ abstract contract BundleModule is
         onlyBundlePoolService
         override
     {
-        BundleInfo memory bundleInfo = BundleInfo(
-            bundleNftId,
+        BundleInfo memory info = BundleInfo(
             poolNftId,
+            fee,
             filter,
             amount, // capital
             0, // locked capital
@@ -80,15 +82,15 @@ abstract contract BundleModule is
             zeroTimestamp() // closedAt
         );
 
-        _create(bundleNftId, abi.encode(bundleInfo));
+        _create(BUNDLE(), bundleNftId, abi.encode(info));
     }
 
-    function setBundleInfo(BundleInfo memory bundleInfo)
+    function setBundleInfo(NftId bundleNftId, BundleInfo memory info)
         external
         override
         onlyPoolOrProductService
     {
-        _updateData(bundleInfo.nftId, abi.encode(bundleInfo));
+        _updateData(BUNDLE(), bundleNftId, abi.encode(info));
     }
 
     function updateBundleState(NftId bundleNftId, StateId state)
@@ -96,7 +98,7 @@ abstract contract BundleModule is
         override
         onlyBundlePoolService
     {
-        _updateState(bundleNftId, state);
+        _updateState(BUNDLE(), bundleNftId, state);
     }
 
     function collateralizePolicy(
@@ -127,10 +129,6 @@ abstract contract BundleModule is
     }
 
     function getBundleInfo(NftId bundleNftId) external view override returns(BundleInfo memory bundleInfo) {
-        return abi.decode(_getData(bundleNftId), (BundleInfo));
+        return abi.decode(_getData(BUNDLE(), bundleNftId), (BundleInfo));
     }
-
-    function toBundleKey32(NftId bundleNftId) external view override returns (Key32 key32) {
-        return _toKey32(bundleNftId);
-    } 
 }

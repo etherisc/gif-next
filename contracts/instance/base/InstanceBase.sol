@@ -3,14 +3,15 @@ pragma solidity ^0.8.19;
 
 import {Versionable} from "../../shared/Versionable.sol";
 import {Registerable} from "../../shared/Registerable.sol";
-// import {IRegistry} from "../registry/IRegistry.sol";
 
-// import {IInstance} from "./IInstance.sol";
 import {ObjectType, INSTANCE} from "../../types/ObjectType.sol";
+import {Key32} from "../../types/Key32.sol";
 import {NftId} from "../../types/NftId.sol";
+import {StateId} from "../../types/StateId.sol";
 import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 import {IComponentOwnerService} from "../service/IComponentOwnerService.sol";
+import {IDistributionService} from "../service/IDistributionService.sol";
 import {IProductService} from "../service/IProductService.sol";
 import {IPoolService} from "../service/IPoolService.sol";
 
@@ -28,6 +29,7 @@ abstract contract InstanceBase is
     IKeyValueStore internal _keyValueStore;
 
     IComponentOwnerService internal _componentOwnerService;
+    IDistributionService internal _distributionService;
     IProductService internal _productService;
     IPoolService internal _poolService;
 
@@ -45,6 +47,14 @@ abstract contract InstanceBase is
     }
 
     function getKeyValueStore() public view virtual override returns (IKeyValueStore keyValueStore) { return _keyValueStore; }
+
+    function updateState(Key32 key, StateId state) external override {
+        _keyValueStore.updateState(key, state);
+    }
+
+    function getState(Key32 key) external view override returns (StateId state) {
+        return _keyValueStore.getState(key);
+    }
 
     // from versionable
     function getVersion()
@@ -66,6 +76,7 @@ abstract contract InstanceBase is
     function _linkToServicesInRegistry() internal {
         VersionPart majorVersion = getVersion().toMajorPart();
         _componentOwnerService = IComponentOwnerService(_getAndCheck("ComponentOwnerService", majorVersion));
+        _distributionService = IDistributionService(_getAndCheck("DistributionService", majorVersion));
         _productService = IProductService(_getAndCheck("ProductService", majorVersion));
         _poolService = IPoolService(_getAndCheck("PoolService", majorVersion));
     }

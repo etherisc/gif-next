@@ -9,6 +9,7 @@ import {ChainNft, IChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 
 import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
+import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
 import {ProductService} from "../../contracts/instance/service/ProductService.sol";
 import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 
@@ -17,13 +18,16 @@ import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/instance/module/treasury/TokenHandler.sol";
 import {TestProduct} from "../../contracts/test/TestProduct.sol";
 import {TestPool} from "../../contracts/test/TestPool.sol";
+import {TestDistribution} from "../../contracts/test/TestDistribution.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
 
 import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib} from "../../contracts/types/NftId.sol";
+import {POOL, PRODUCT, DISTRIBUTION} from "../../contracts/types/ObjectType.sol";
+import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
-import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
+import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 
 // solhint-disable-next-line max-states-count
 contract TestGifBase is Test {
@@ -38,12 +42,14 @@ contract TestGifBase is Test {
     Registry public registry;
     IERC20Metadata public token;
     ComponentOwnerService public componentOwnerService;
+    DistributionService public distributionService;
     ProductService public productService;
     PoolService public poolService;
     Instance public instance;
     IKeyValueStore public keyValueStore;
     TestProduct public product;
     TestPool public pool;
+    TestDistribution public distribution;
     TokenHandler public tokenHandler;
 
     address public registryAddress;
@@ -55,26 +61,36 @@ contract TestGifBase is Test {
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
     address public poolOwner = makeAddr("poolOwner");
+    address public distributionOwner = makeAddr("distributionOwner");
     address public customer = makeAddr("customer");
     address public investor = makeAddr("investor");
     address public outsider = makeAddr("outsider");
+
+    uint8 initialProductFeePercentage = 2;
+    uint8 initialPoolFeePercentage = 3;
+    uint8 initialBundleFeePercentage = 4;
+    uint8 initialDistributionFeePercentage = 10;
+
+    Fee public initialProductFee = FeeLib.percentageFee(initialProductFeePercentage);
+    Fee public initialPoolFee = FeeLib.percentageFee(initialPoolFeePercentage);
+    Fee public initialBundleFee = FeeLib.percentageFee(initialBundleFeePercentage);
+    Fee public initialDistributionFee = FeeLib.percentageFee(initialDistributionFeePercentage);
+
+    bool poolIsVerifying = true;
+    bool distributionIsVerifying = true;
+    UFixed poolCollateralizationLevelIs100 = UFixedMathLib.toUFixed(1);
 
     string private _checkpointLabel;
     uint256 private _checkpointGasLeft = 1; // Start the slot warm.
 
     function setUp() public virtual {
-        bool poolIsVerifying = true;
-        UFixed poolCollateralizationLevelIs100 = UFixedMathLib.toUFixed(1);
-
         _setUp(
-            poolIsVerifying,
             poolCollateralizationLevelIs100,
             DEFAULT_BUNDLE_CAPITALIZATION,
             DEFAULT_BUNDLE_LIFETIME);
     }
 
     function _setUp(
-        bool poolIsVerifying,
         UFixed poolCollateralizationLevel,
         uint256 initialBundleCapitalization,
         uint256 bundleLifetime
@@ -102,6 +118,11 @@ contract TestGifBase is Test {
         _deployPool(poolIsVerifying, poolCollateralizationLevel);
         vm.stopPrank();
 
+        // deploy distribution
+        vm.startPrank(distributionOwner);
+        _deployDistribution(distributionIsVerifying);
+        vm.stopPrank();
+
         // deploy product
         vm.startPrank(productOwner);
         _deployProduct();
@@ -118,6 +139,7 @@ contract TestGifBase is Test {
         token.approve(address(tokenHandler), initialCapitalAmount);
 
         _createBundle(
+            initialBundleFee,
             initialCapitalAmount,
             bundleLifetime);
         vm.stopPrank();
@@ -179,6 +201,7 @@ contract TestGifBase is Test {
 
 
     function _deployServices() internal {
+        //--- component owner service ---------------------------------//
         componentOwnerService = new ComponentOwnerService(
             registryAddress, registryNftId);
         componentOwnerService.register();
@@ -190,6 +213,19 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("component owner service deployed at", address(componentOwnerService));
 
+        //--- distribution service ---------------------------------//
+        distributionService = new DistributionService(
+            registryAddress, registryNftId);
+        distributionService.register();
+
+        // solhint-disable-next-line
+        console.log("service name", distributionService.NAME());
+        // solhint-disable-next-line
+        console.log("service nft id", distributionService.getNftId().toInt());
+        // solhint-disable-next-line
+        console.log("distribution service deployed at", address(distributionService));
+
+        //--- product service ---------------------------------//
         productService = new ProductService(
             registryAddress, registryNftId);
         productService.register();
@@ -201,6 +237,7 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("product service deployed at", address(productService));
 
+        //--- pool service ---------------------------------//
         poolService = new PoolService(
             registryAddress, registryNftId);
         poolService.register();
@@ -230,8 +267,9 @@ contract TestGifBase is Test {
 
         instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
         // solhint-disable-next-line
-        console.log("product and pool roles granted");
+        console.log("product pool, and distribution roles granted");
     }
 
 
@@ -250,38 +288,88 @@ contract TestGifBase is Test {
     )
         internal
     {
+        Fee memory stakingFee = FeeLib.zeroFee();
+        Fee memory performanceFee = FeeLib.zeroFee();
+
         pool = new TestPool(
             address(registry), 
             instance.getNftId(), 
             address(token),
             isVerifying,
-            collateralizationLevel);
+            collateralizationLevel,
+            initialPoolFee,
+            stakingFee,
+            performanceFee);
 
         pool.register();
+
+        uint256 nftId = pool.getNftId().toInt();
+        uint256 state = instance.getState(pool.getNftId().toKey32(POOL())).toInt();
         // solhint-disable-next-line
         console.log("pool deployed at", address(pool));
+        // solhint-disable-next-line
+        console.log("pool nftId", nftId, "state", state);
+    }
+
+
+    function _deployDistribution(
+        bool isVerifying
+    )
+        internal
+    {
+        Fee memory distributionFee = FeeLib.percentageFee(15);
+        distribution = new TestDistribution(
+            address(registry), 
+            instance.getNftId(), 
+            address(token),
+            isVerifying,
+            initialDistributionFee);
+
+        distribution.register();
+
+        uint256 nftId = distribution.getNftId().toInt();
+        uint256 state = instance.getState(distribution.getNftId().toKey32(DISTRIBUTION())).toInt();
+        // solhint-disable-next-line
+        console.log("distribution deployed at", address(pool));
+        // solhint-disable-next-line
+        console.log("distribution nftId", nftId, "state", state);
     }
 
 
     function _deployProduct() internal {
-        product = new TestProduct(address(registry), instance.getNftId(), address(token), address(pool));
+        Fee memory processingFee = instance.getZeroFee();
+
+        product = new TestProduct(
+            address(registry), 
+            instance.getNftId(), 
+            address(token), 
+            address(pool),
+            address(distribution),
+            initialProductFee,
+            processingFee);
+
         product.register();
 
+        uint256 nftId = product.getNftId().toInt();
+        uint256 state = instance.getState(product.getNftId().toKey32(PRODUCT())).toInt();
         tokenHandler = instance.getTokenHandler(product.getNftId());
-
         // solhint-disable-next-line
         console.log("product deployed at", address(product));
         // solhint-disable-next-line
-        console.log("token handler deployed at", address(tokenHandler));
+        console.log("product nftId", nftId, "state", state);
+        // solhint-disable-next-line
+        console.log("product token handler deployed at", address(tokenHandler));
     }
 
     function _createBundle(
+        Fee memory fee,
         uint256 amount,
         uint256 lifetime
     ) 
         internal
     {
         bundleNftId = pool.createBundle(
+            fee,
             amount,
             lifetime,
             "");
@@ -289,7 +377,7 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("bundle fundet with", amount);
         // solhint-disable-next-line
-        console.log("bundle nft id", address(product));
+        console.log("bundle nft id", bundleNftId.toInt());
     }
 
 }

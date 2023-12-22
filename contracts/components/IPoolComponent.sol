@@ -10,14 +10,26 @@ interface IPoolComponent is IBaseComponent {
 
     event LogUnderwrittenByPool(NftId policyNftId, uint256 collateralizationAmount, address pool);
 
+    function setFees(
+        Fee memory poolFee,
+        Fee memory stakingFee,
+        Fee memory performanceFee
+    ) external;
+
     /**
      * @dev creates a new bundle for this pool.
      */
     function createBundle(
+        Fee memory fee,
         uint256 initialAmount,
         uint256 lifetime,
         bytes memory filter
     ) external returns(NftId bundleNftId);
+
+    function setBundleFee(
+        NftId policyNftId, 
+        Fee memory fee
+    ) external;
 
     /** 
      * @dev this is a callback function that is called by the product service when underwriting a policy.
@@ -47,6 +59,8 @@ interface IPoolComponent is IBaseComponent {
     function isVerifying() external view returns (bool verifying);
 
     function getCollateralizationLevel() external view returns (UFixed collateralizationLevel);
+
+    function getPoolFee() external view returns (Fee memory poolFee);
 
     function getStakingFee() external view returns (Fee memory stakingFee);
 

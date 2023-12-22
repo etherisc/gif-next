@@ -14,6 +14,7 @@ export type LibraryAddresses = {
     feeLibAddress: AddressLike;
     stateIdLibAddress: AddressLike;
     roleIdLibAddress: AddressLike;
+    riskIdLibAddress: AddressLike;
 }
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
@@ -86,6 +87,17 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         owner);
     LIBRARY_ADDRESSES.set("RoleIdLib", roleIdLibAddress);
 
+    const { address: riskIdLibAddress } = await deployContract(
+        "RiskIdLib",
+        owner,
+        undefined, 
+        {
+            libraries: {
+                Key32Lib: key32LibAddress,
+            }
+        });
+    LIBRARY_ADDRESSES.set("RiskIdLib", riskIdLibAddress);
+
     const { address: feeLibAddress } = await deployContract(
         "FeeLib",
         owner,
@@ -110,6 +122,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         feeLibAddress,
         stateIdLibAddress,
         roleIdLibAddress,
+        riskIdLibAddress
     };
     
 }

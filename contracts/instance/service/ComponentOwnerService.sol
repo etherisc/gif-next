@@ -11,17 +11,20 @@ import {TreasuryModule} from "../module/treasury/TreasuryModule.sol";
 import {IComponent, IComponentModule} from "../module/component/IComponent.sol";
 import {IBaseComponent} from "../../components/IBaseComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
-
+import {IKeyValueStore} from "../../instance/base/IKeyValueStore.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
-import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../types/RoleId.sol";
-import {ObjectType, PRODUCT, ORACLE, POOL} from "../../types/ObjectType.sol";
+import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../types/RoleId.sol";
+import {ObjectType, COMPONENT, PRODUCT, ORACLE, POOL, DISTRIBUTION} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
+import {Key32} from "../../types/Key32.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
+import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
+import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IProductComponent} from "../../components/IProductComponent.sol";
 import {ServiceBase} from "../base/ServiceBase.sol";
 import {IComponentOwnerService} from "./IComponentOwnerService.sol";
@@ -70,6 +73,9 @@ contract ComponentOwnerService is
         if (cType == POOL()) {
             return POOL_OWNER_ROLE();
         }
+        if (cType == DISTRIBUTION()) {
+            return DISTRIBUTION_OWNER_ROLE();
+        }
         if (cType == ORACLE()) {
             return ORACLE_OWNER_ROLE();
         }
@@ -97,29 +103,25 @@ contract ComponentOwnerService is
 
         instance.registerComponent(
             nftId,
-            objectType,
-            token);
-
-        address wallet = component.getWallet();
+            token,
+            component.getWallet()); 
 
         // component type specific registration actions
         if (component.getType() == PRODUCT()) {
             IProductComponent product = IProductComponent(address(component));
+
             NftId poolNftId = product.getPoolNftId();
             require(poolNftId.gtz(), "ERROR:CMP-005:POOL_UNKNOWN");
-            // validate pool token and product token are same
+            IPoolComponent pool = IPoolComponent(_registry.getObjectInfo(poolNftId).objectAddress);
+
+            NftId distributionNftId = product.getDistributionNftId();
+            IDistributionComponent distribution = IDistributionComponent(_registry.getObjectInfo(distributionNftId).objectAddress);
 
             // register with tresury
-            // implement and add validation
-            NftId distributorNftId = zeroNftId();
-            instance.registerProduct(
-                nftId,
-                distributorNftId,
-                poolNftId,
-                token,
-                wallet,
-                product.getPolicyFee(),
-                product.getProcessingFee()
+            instance.registerProductSetup(
+                product,
+                pool,
+                distribution
             );
         } else if (component.getType() == POOL()) {
             IPoolComponent pool = IPoolComponent(address(component));
@@ -129,42 +131,27 @@ contract ComponentOwnerService is
                 nftId,
                 pool.isVerifying(),
                 pool.getCollateralizationLevel());
-
-            // register with tresury
-            instance.registerPool(
-                nftId,
-                wallet,
-                pool.getStakingFee(),
-                pool.getPerformanceFee());
         }
-        // TODO add distribution
+        // TODO add compensation
     }
 
     function lock(
         IBaseComponent component
     ) external override onlyRegisteredComponent(component) {
+        // TODO use msg.sender to get component and get instance via registered parent nft id
         IInstance instance = component.getInstance();
-        IComponent.ComponentInfo memory info = instance.getComponentInfo(
-            component.getNftId()
-        );
-        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
-
-        info.state = PAUSED();
-        // setComponentInfo checks for valid state changes
-        instance.setComponentInfo(info);
+        NftId nftId = component.getNftId();
+        Key32 key = nftId.toKey32(COMPONENT());
+        instance.updateState(key, PAUSED());
     }
 
     function unlock(
         IBaseComponent component
     ) external override onlyRegisteredComponent(component) {
+        // TODO use msg.sender to get component and get instance via registered parent nft id
         IInstance instance = component.getInstance();
-        IComponent.ComponentInfo memory info = instance.getComponentInfo(
-            component.getNftId()
-        );
-        require(info.nftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
-
-        info.state = ACTIVE();
-        // setComponentInfo checks for valid state changes
-        instance.setComponentInfo(info);
+        NftId nftId = component.getNftId();
+        Key32 key = nftId.toKey32(COMPONENT());
+        instance.updateState(key, ACTIVE());
     }
 }

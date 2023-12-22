@@ -10,8 +10,9 @@ from brownie import (
     ProductService,
     PoolService,
     Instance,
-    TestProduct,
+    TestDistribution,
     TestPool,
+    TestProduct,
     TestUsdc,
     TestFee,
     NftIdLib,
@@ -34,6 +35,7 @@ from test_brownie.gif import (
     deploy_registry,
     deploy_services,
     deploy_instance,
+    deploy_distribution,
     deploy_pool,
     deploy_product,
 ) 
@@ -42,8 +44,10 @@ from test_brownie.const import (
     ACCOUNTS,
     REGISTRY_OWNER,
     INSTANCE_OWNER,
-    PRODUCT_OWNER,
+    DISTRIBUTION_OWNER,
     POOL_OWNER,
+    PRODUCT_OWNER,
+    INVESTOR,
     CUSTOMER,
     CUSTOMER_2,
     OUTSIDER
@@ -80,12 +84,20 @@ def instance_owner(accounts) -> Account:
     return accounts[ACCOUNTS[INSTANCE_OWNER]]
 
 @pytest.fixture(scope="module")
-def product_owner(accounts) -> Account:
-    return accounts[ACCOUNTS[PRODUCT_OWNER]]
+def distribution_owner(accounts) -> Account:
+    return accounts[ACCOUNTS[DISTRIBUTION_OWNER]]
 
 @pytest.fixture(scope="module")
 def pool_owner(accounts) -> Account:
     return accounts[ACCOUNTS[POOL_OWNER]]
+
+@pytest.fixture(scope="module")
+def product_owner(accounts) -> Account:
+    return accounts[ACCOUNTS[PRODUCT_OWNER]]
+
+@pytest.fixture(scope="module")
+def investor(accounts) -> Account:
+    return accounts[ACCOUNTS[INVESTOR]]
 
 @pytest.fixture(scope="module")
 def customer(accounts) -> Account:
@@ -152,6 +164,12 @@ def instance(all_services, registry, instance_owner) -> Instance:
     return deploy_instance(registry, instance_owner)
 
 @pytest.fixture(scope="module")
+def distribution(registry, instance, instance_owner, usdc, distribution_owner) -> TestDistribution:
+    distribution_is_verifying = True
+
+    return deploy_distribution(registry, instance, instance_owner, usdc, distribution_is_verifying, distribution_owner)
+
+@pytest.fixture(scope="module")
 def pool(registry, instance, instance_owner, usdc, pool_owner) -> TestPool:
     pool_is_verifying = True
     pool_collateralization_level = instance.getUFixed(1)
@@ -159,6 +177,6 @@ def pool(registry, instance, instance_owner, usdc, pool_owner) -> TestPool:
     return deploy_pool(registry, instance, instance_owner, usdc, pool_is_verifying, pool_collateralization_level, pool_owner)
 
 @pytest.fixture(scope="module")
-def product(registry, instance, instance_owner, usdc, pool, product_owner) -> TestProduct:
-    return deploy_product(registry, instance, instance_owner, usdc, pool, product_owner)
+def product(registry, instance, instance_owner, usdc, distribution, pool, product_owner) -> TestProduct:
+    return deploy_product(registry, instance, instance_owner, usdc, distribution, pool, product_owner)
 

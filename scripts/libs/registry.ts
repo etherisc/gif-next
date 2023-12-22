@@ -1,5 +1,5 @@
 import { AddressLike, Signer } from "ethers";
-import { Registerable, Registry, Registry__factory } from "../../typechain-types";
+import { Registerable, Registry, RegistryUpgradeable, Registry__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { IERC721ABI } from "./erc721";
@@ -14,7 +14,7 @@ export type RegistryAddresses = {
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
     const { address: registryAddress, contract: registryBaseContract } = await deployContract(
-        "Registry",
+        "RegistryUpgradeable",
         owner,
         undefined,
         {
