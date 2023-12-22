@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
+
+import {Initializable} from "@openzeppelin5/contracts/proxy/utils/Initializable.sol";
 
 import {Blocknumber, blockNumber} from "../types/Blocknumber.sol";
 import {Timestamp, blockTimestamp} from "../types/Timestamp.sol";
@@ -7,11 +9,24 @@ import {Version, VersionPart} from "../types/Version.sol";
 
 import {IVersionable} from "./IVersionable.sol";
 
-abstract contract Versionable is IVersionable {
+abstract contract VersionableUpgradeable is 
+    Initializable,
+    IVersionable 
+{
+    /// @custom:storage-location erc7201:etherisc.storage.Versionable
+    struct VersionableStorage {
+        mapping(Version version => VersionInfo info) _versionHistory;
+        Version [] _versions;
+    }
 
-    mapping(Version version => VersionInfo info) private _versionHistory;
-    Version [] private _versions;
-
+    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Versionable")) - 1)) & ~bytes32(uint256(0xff))
+    bytes32 private constant VersionableStorageLocation = 0x4f61291a8ac3d020d0a7d919a76b8592aa88385744dee3f8b4f3873b969ed900;
+    
+    function _getVersionableStorage() private pure returns (VersionableStorage storage $) {
+        assembly {
+            $.slot := VersionableStorageLocation
+        }
+    }
 
     // controlled activation for controller contract
     constructor() {
@@ -22,20 +37,24 @@ abstract contract Versionable is IVersionable {
     // and needs to call internal function call _activate() 
     function activate(address implementation, address activatedBy)
         external
-        virtual override
+        virtual
+        override
+        onlyInitializing
     { 
         _activate(implementation, activatedBy);
     }
 
 
     // can only be called once per contract
-    // needs bo be called inside the proxy upgrade tx
+    // needs to be called inside the proxy upgrade tx
     function _activate(
         address implementation,
         address activatedBy
     )
         internal
     {
+        VersionableStorage storage $ = _getVersionableStorage();
+
         Version thisVersion = getVersion();
         require(
             !isActivated(thisVersion),
@@ -43,8 +62,8 @@ abstract contract Versionable is IVersionable {
         );
         
         // require increasing version number
-        if(_versions.length > 0) {
-            Version lastVersion = _versions[_versions.length - 1];
+        if($._versions.length > 0) {
+            Version lastVersion = $._versions[$._versions.length - 1];
             require(
                 thisVersion > lastVersion,
                 "ERROR:VRN-002:VERSION_NOT_INCREASING"
@@ -52,8 +71,8 @@ abstract contract Versionable is IVersionable {
         }
 
         // update version history
-        _versions.push(thisVersion);
-        _versionHistory[thisVersion] = VersionInfo(
+        $._versions.push(thisVersion);
+        $._versionHistory[thisVersion] = VersionInfo(
             thisVersion,
             implementation,
             activatedBy,
@@ -66,7 +85,7 @@ abstract contract Versionable is IVersionable {
 
 
     function isActivated(Version _version) public override view returns(bool) {
-        return _versionHistory[_version].activatedIn.toInt() > 0;
+        return _getVersionableStorage()._versionHistory[_version].activatedIn.toInt() > 0;
     }
 
 
@@ -74,16 +93,16 @@ abstract contract Versionable is IVersionable {
 
 
     function getVersionCount() external view override returns(uint256) {
-        return _versions.length;
+        return _getVersionableStorage()._versions.length;
     }
 
 
     function getVersion(uint256 idx) external view override returns(Version) {
-        return _versions[idx];
+        return _getVersionableStorage()._versions[idx];
     }
 
 
     function getVersionInfo(Version _version) external override view returns(VersionInfo memory) {
-        return _versionHistory[_version];
+        return _getVersionableStorage()._versionHistory[_version];
     }
 }

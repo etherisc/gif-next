@@ -5,43 +5,45 @@ import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {NftId} from "../../../types/NftId.sol";
+import {ReferralId} from "../../../types/ReferralId.sol";
+import {RiskId} from "../../../types/RiskId.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";
-import {Blocknumber} from "../../../types/Blocknumber.sol";
 
 // TODO check if there is value to introuce IContract and let IPolicy derive from IContract
 interface IPolicy {
     struct PolicyInfo {
-        NftId nftId;
         NftId productNftId;
         NftId bundleNftId;
+        ReferralId referralId;
         address beneficiary;
-        StateId state; // applied, withdrawn, rejected, active, closed
+        RiskId riskId;
         uint256 sumInsuredAmount;
         uint256 premiumAmount;
         uint256 premiumPaidAmount;
         uint256 lifetime;
         bytes applicationData;
         bytes policyData;
-        Timestamp createdAt;
         Timestamp activatedAt; // time of underwriting
         Timestamp expiredAt; // no new claims (activatedAt + lifetime)
         Timestamp closedAt; // no locked capital
-        Blocknumber updatedIn; // write log entries in a way to support backtracking of all state changes
     }
 }
 
 interface IPolicyModule is IPolicy {
-    function createApplication(
-        NftId productNftId,
+    function createPolicyInfo(
         NftId policyNftId,
+        NftId productNftId,
+        ReferralId referralId,
+        RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
         NftId bundleNftId
     ) external;
 
-    function setPolicyInfo(PolicyInfo memory policyInfo) external;
+    function setPolicyInfo(NftId policyNftId, PolicyInfo memory info) external;
+    function updatePolicyState(NftId nftId, StateId state) external;
 
     // function underwrite(NftId nftId) external;
 

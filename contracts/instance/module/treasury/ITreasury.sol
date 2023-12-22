@@ -2,6 +2,9 @@
 pragma solidity ^0.8.19;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IDistributionComponent} from "../../../components/IDistributionComponent.sol";
+import {IPoolComponent} from "../../../components/IPoolComponent.sol";
+import {IProductComponent} from "../../../components/IProductComponent.sol";
 
 import {NftId} from "../../../types/NftId.sol";
 import {UFixed} from "../../../types/UFixed.sol";
@@ -13,72 +16,48 @@ interface ITreasury {
     // TODO add events
     // TODO add errors
 
-    struct ProductSetup {
-        NftId productNftId;
-        NftId distributorNftId;
+    // treasury info is linked to product nft id
+    struct TreasuryInfo {
         NftId poolNftId;
+        NftId distributionNftId;
         IERC20Metadata token;
-        address wallet;
-        Fee policyFee;
-        Fee processingFee;
-    }
-
-    struct DistributorSetup {
-        NftId distributorNftId;
-        address wallet;
-        Fee commissionFee;
-    }
-
-    struct PoolSetup {
-        NftId poolNftId;
-        address wallet;
-        Fee stakingFee;
-        Fee performanceFee;
+        Fee productFee; // product fee on net premium
+        Fee processingFee; // product fee on payout amounts
+        Fee poolFee; // pool fee on net premium
+        Fee stakingFee; // pool fee on staked capital from investor
+        Fee performanceFee; // pool fee on profits from capital investors
+        Fee distributionFee; // default distribution fee (no referral id)
     }
 }
 
 interface ITreasuryModule is ITreasury {
 
-    function registerProduct(
+    function registerProductSetup(
+        IProductComponent product,
+        IPoolComponent pool,
+        IDistributionComponent distribution
+    ) external;
+
+    function setTreasuryInfo(
         NftId productNftId,
-        NftId distributorNftId,
-        NftId poolNftId,
-        IERC20Metadata token,
-        address wallet,
-        Fee memory policyFee,
-        Fee memory processingFee
+        TreasuryInfo memory info
     ) external;
 
-    function setProductFees(
-        NftId productNftId,
-        Fee memory policyFee,
-        Fee memory processingFee
-    ) external;
+    function hasTreasuryInfo(
+        NftId productNftId
+    ) external view returns (bool hasInfo);
 
-    function registerPool(
-        NftId poolNftId,
-        address wallet,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external;
+    function getTreasuryInfo(
+        NftId productNftId
+    ) external view returns (TreasuryInfo memory info);
 
-    function setPoolFees(
-        NftId poolNftId,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external;
+    function getProductNftId(
+        NftId componentNftId
+    ) external view returns (NftId productNftId);
 
     function getTokenHandler(
         NftId componentNftId
     ) external view returns (TokenHandler tokenHandler);
-
-    function getProductSetup(
-        NftId productNftId
-    ) external view returns (ProductSetup memory setup);
-
-    function getPoolSetup(
-        NftId poolNftId
-    ) external view returns (PoolSetup memory setup);
 
     function calculateFeeAmount(
         uint256 amount,
@@ -90,7 +69,7 @@ interface ITreasuryModule is ITreasury {
         uint256 fixedFee
     ) external pure returns (Fee memory fee);
 
-    function getZeroFee() external pure returns (Fee memory fee);
+    function getZeroFee() external view returns (Fee memory fee);
 
     function getUFixed(
         uint256 a

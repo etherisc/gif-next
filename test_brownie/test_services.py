@@ -23,8 +23,9 @@ from test_brownie.const import (
     SERVICE,
     VERSION,
     COMPONENT_OWNER_SERVICE_NAME,
+    DISTRIBUTION_SERVICE_NAME,
+    POOL_SERVICE_NAME,
     PRODUCT_SERVICE_NAME,
-    POOL_SERVICE_NAME
 )
 
 from test_brownie.util import contract_from_address
@@ -93,14 +94,14 @@ def test_component_owner_service(
     )
 
 
-def test_product_service(
+def test_distribution_service(
     all_services: map,
     registry: Registry,
     registry_owner: Account,
     version_lib: TestVersion
 ):
     _test_service(
-        PRODUCT_SERVICE_NAME,
+        DISTRIBUTION_SERVICE_NAME,
         2, 
         all_services,
         registry,
@@ -118,6 +119,22 @@ def test_pool_service(
     _test_service(
         POOL_SERVICE_NAME,
         3, 
+        all_services,
+        registry,
+        registry_owner,
+        version_lib
+    )
+
+
+def test_product_service(
+    all_services: map,
+    registry: Registry,
+    registry_owner: Account,
+    version_lib: TestVersion
+):
+    _test_service(
+        PRODUCT_SERVICE_NAME,
+        4, 
         all_services,
         registry,
         registry_owner,

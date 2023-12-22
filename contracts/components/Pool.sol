@@ -15,6 +15,10 @@ contract Pool is BaseComponent, IPoolComponent {
     bool internal _isVerifying;
     UFixed internal _collateralizationLevel;
 
+    Fee internal _initialPoolFee;
+    Fee internal _initialStakingFee;
+    Fee internal _initialPerformanceFee;
+
     // may be used to interact with instance by derived contracts
     IPoolService internal _poolService;
 
@@ -41,19 +45,38 @@ contract Pool is BaseComponent, IPoolComponent {
         // TODO refactor into tokenNftId
         address token,
         bool verifying,
-        UFixed collateralizationLevel
+        UFixed collateralizationLevel,
+        Fee memory poolFee,
+        Fee memory stakingFee,
+        Fee memory performanceFee
     )
         BaseComponent(registry, instanceNftId, token)
     {
         _isVerifying = verifying;
         // TODO add validation
         _collateralizationLevel = collateralizationLevel;
+        _initialPoolFee = poolFee;
+        _initialStakingFee = stakingFee;
+        _initialPerformanceFee = performanceFee;
 
         _poolService = _instance.getPoolService();
         _productService = _instance.getProductService();
     }
 
+    function setFees(
+        Fee memory poolFee,
+        Fee memory stakingFee,
+        Fee memory performanceFee
+    )
+        external
+        onlyOwner
+        override
+    {
+        _poolService.setFees(poolFee, stakingFee, performanceFee);
+    }
+
     function createBundle(
+        Fee memory fee,
         uint256 initialAmount,
         uint256 lifetime,
         bytes memory filter
@@ -65,12 +88,24 @@ contract Pool is BaseComponent, IPoolComponent {
         address owner = msg.sender;
         bundleNftId = _poolService.createBundle(
             owner,
+            fee,
             initialAmount,
             lifetime,
             filter
         );
 
         // TODO add logging
+    }
+
+    function setBundleFee(
+        NftId bundleNftId, 
+        Fee memory fee
+    )
+        external
+        override
+        // TODO add onlyBundleOwner
+    {
+        _poolService.setBundleFee(bundleNftId, fee);
     }
 
     /**
@@ -133,6 +168,7 @@ contract Pool is BaseComponent, IPoolComponent {
 
     function _createBundle(
         address bundleOwner,
+        Fee memory fee,
         uint256 amount,
         uint256 lifetime, 
         bytes calldata filter
@@ -142,6 +178,7 @@ contract Pool is BaseComponent, IPoolComponent {
     {
         bundleNftId = _poolService.createBundle(
             bundleOwner,
+            fee,
             amount,
             lifetime,
             filter
@@ -149,13 +186,32 @@ contract Pool is BaseComponent, IPoolComponent {
     }
 
     // from pool component
+    function getPoolFee()
+        external
+        view
+        override
+        returns (Fee memory poolFee)
+    {
+        NftId productNftId = _instance.getProductNftId(getNftId());
+        if (_instance.hasTreasuryInfo(productNftId)) {
+            return _instance.getTreasuryInfo(productNftId).poolFee;
+        } else {
+            return _initialPoolFee;
+        }
+    }
+
     function getStakingFee()
         external
         view
         override
         returns (Fee memory stakingFee)
     {
-        return _instance.getPoolSetup(getNftId()).stakingFee;
+        NftId productNftId = _instance.getProductNftId(getNftId());
+        if (_instance.hasTreasuryInfo(productNftId)) {
+            return _instance.getTreasuryInfo(productNftId).stakingFee;
+        } else {
+            return _initialStakingFee;
+        }
     }
 
     function getPerformanceFee()
@@ -164,7 +220,12 @@ contract Pool is BaseComponent, IPoolComponent {
         override
         returns (Fee memory performanceFee)
     {
-        return _instance.getPoolSetup(getNftId()).performanceFee;
+        NftId productNftId = _instance.getProductNftId(getNftId());
+        if (_instance.hasTreasuryInfo(productNftId)) {
+            return _instance.getTreasuryInfo(productNftId).performanceFee;
+        } else {
+            return _initialPerformanceFee;
+        }
     }
 
     // from registerable

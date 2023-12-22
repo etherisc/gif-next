@@ -6,8 +6,8 @@ import {RoleId} from "../types/RoleId.sol";
 
 import {InstanceBase} from "./base/InstanceBase.sol";
 import {AccessModule} from "./module/access/Access.sol";
-import {CompensationModule} from "./module/compensation/CompensationModule.sol";
 import {ComponentModule} from "./module/component/ComponentModule.sol";
+import {DistributionModule} from "./module/distribution/DistributionModule.sol";
 import {PolicyModule} from "./module/policy/PolicyModule.sol";
 import {PoolModule} from "./module/pool/PoolModule.sol";
 import {RiskModule} from "./module/risk/RiskModule.sol";
@@ -24,6 +24,7 @@ import {IPolicyModule} from "./module/policy/IPolicy.sol";
 import {IInstanceBase} from "./base/IInstanceBase.sol";
 
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
+import {IDistributionService} from "./service/IDistributionService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 
@@ -34,7 +35,7 @@ contract Instance is
     AccessModule,
     BundleModule,
     ComponentModule,
-    CompensationModule,
+    DistributionModule,
     PolicyModule,
     PoolModule,
     RiskModule,
@@ -47,20 +48,25 @@ contract Instance is
         InstanceBase(registry, registryNftId)
         AccessModule()
         BundleModule()
+        DistributionModule()
         ComponentModule()
         PolicyModule()
         PoolModule()
         TreasuryModule()
     {
         initializeBundleModule(_keyValueStore);
+        initializeComponentModule(_keyValueStore);
+        initializeDistributionModule(_keyValueStore);
+        initializePolicyModule(_keyValueStore);
+        initializePoolModule(_keyValueStore);
+        initializeRiskModule(_keyValueStore);
     }
 
-    function getRegistry() public view override (Registerable, IBundleModule, IComponentModule, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
-    function getKeyValueStore() public view override (InstanceBase, IBundleModule) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
-
-    function hasRole(RoleId role, address member) public view override (AccessModule, IComponentModule) returns (bool) { return super.hasRole(role, member); }
+    function getRegistry() public view override (Registerable, IPolicyModule) returns (IRegistry registry) { return super.getRegistry(); }
+    function getKeyValueStore() public view override (InstanceBase) returns (IKeyValueStore keyValueStore) { return super.getKeyValueStore(); }
 
     function getComponentOwnerService() external view override (IComponentModule, IInstanceBase) returns(IComponentOwnerService service) { return _componentOwnerService; }
+    function getDistributionService() external view override (IInstanceBase) returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override (IBundleModule, IPolicyModule, IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IBundleModule, IPoolModule, IInstanceBase) returns(IPoolService service) { return _poolService; }
 

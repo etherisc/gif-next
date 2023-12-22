@@ -6,15 +6,19 @@ import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../../types/ObjectType.sol";
-import {APPLIED, ACTIVE, UNDERWRITTEN} from "../../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../../types/NftId.sol";
+import {ReferralId} from "../../../types/ReferralId.sol";
+import {RiskId} from "../../../types/RiskId.sol";
+import {StateId} from "../../../types/StateId.sol";
 import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
-import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
 
-abstract contract PolicyModule is IPolicyModule {
-    using NftIdLib for NftId;
+import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
+import {ModuleBase} from "../../base/ModuleBase.sol";
 
-    mapping(NftId nftId => PolicyInfo info) private _policyInfo;
+abstract contract PolicyModule is
+    ModuleBase,
+    IPolicyModule
+{
 
     // TODO find a better place to avoid dupliation
     modifier onlyProductService2() {
@@ -25,9 +29,15 @@ abstract contract PolicyModule is IPolicyModule {
         _;
     }
 
-    function createApplication(
-        NftId productNftId,
+    function initializePolicyModule(IKeyValueStore keyValueStore) internal {
+        _initialize(keyValueStore);
+    }
+
+    function createPolicyInfo(
         NftId policyNftId,
+        NftId productNftId,
+        ReferralId referralId,
+        RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 premiumAmount,
         uint256 lifetime,
@@ -37,41 +47,45 @@ abstract contract PolicyModule is IPolicyModule {
         onlyProductService2
         override
     {
-        _policyInfo[policyNftId] = PolicyInfo(
-            policyNftId,
+        PolicyInfo memory info = PolicyInfo(
             productNftId,
             bundleNftId,
+            referralId,
             address(0), // beneficiary = policy nft holder
-            // _lifecycleModule.getInitialState(POLICY()),
-            APPLIED(),
+            riskId,
             sumInsuredAmount,
             premiumAmount,
             0, // premium paid amount
             lifetime, 
             "", // applicationData
             "", // policyData
-            blockTimestamp(), // createdAt
             zeroTimestamp(), // activatedAt
             zeroTimestamp(), // expiredAt
-            zeroTimestamp(), // closedAt
-            blockNumber() // updatedIn
+            zeroTimestamp() // closedAt
         );
 
-        // TODO add logging
+        _create(POLICY(), policyNftId, abi.encode(info));
     }
 
-    function setPolicyInfo(PolicyInfo memory policyInfo)
+    function setPolicyInfo(NftId policyNftId, PolicyInfo memory info)
         external
         override
         onlyProductService2
     {
-        _policyInfo[policyInfo.nftId] = policyInfo;
+        _updateData(POLICY(), policyNftId, abi.encode(info));
+    }
+
+    function updatePolicyState(NftId bundleNftId, StateId state)
+        external
+        override
+        onlyProductService2
+    {
+        _updateState(POLICY(), bundleNftId, state);
     }
 
     function getPolicyInfo(
         NftId nftId
     ) external view returns (PolicyInfo memory info) {
-        return _policyInfo[nftId];
+        return abi.decode(_getData(POLICY(), nftId), (PolicyInfo));
     }
-
 }
