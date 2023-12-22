@@ -55,15 +55,6 @@ contract ProxyManager is
         emit LogProxyDeployed(address(_proxy), initialImplementation);
     }
 
-    function linkToRegistry(address registryAddress)
-        public
-        virtual
-    {
-        // links ownership for this proxy manager to the owner of the underlying proxy nft
-        // applies onlyOwner modifier internally
-        linkToRegistry(registryAddress, address(_proxy));
-    }
-
     /// @dev upgrade existing contract
     function upgrade(address newImplementation, bytes memory upgradeData)
         public

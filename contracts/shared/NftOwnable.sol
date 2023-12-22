@@ -11,6 +11,7 @@ contract NftOwnable is INftOwnable {
     NftId private _nftId;
     address private _initialOwner; 
 
+    /// @dev enforces msg.sender is owner of nft (or initial owner of nft ownable)
     modifier onlyOwner() {
         address owner = getOwner();
 
@@ -25,19 +26,10 @@ contract NftOwnable is INftOwnable {
         _initialOwner = msg.sender;
     }
 
-    /// @dev initialization for upgradable contracts
-    function _initializeNftOwnable(
-        address initialOwner,
-        address registryAddress
-    )
-        internal
-        virtual
-    {
-        _initialOwner = initialOwner;
-        _linkToRegistry(registryAddress);
-    }
-
-    /// @dev fetch nft from registry after registration
+    /// @dev links this contract to nft after registration
+    // needs to be done once per registered contract and 
+    // reduces registry calls to check ownership
+    // does not need any protection as function can only do the "right thing"
     function linkToRegisteredNftId() public {
         if (_nftId.gtz()) {
             revert ErrorAlreadyLinked(address(_registry), _nftId);
@@ -54,32 +46,6 @@ contract NftOwnable is INftOwnable {
         }
 
         _nftId = _registry.getNftId(contractAddress);
-    }
-
-    // TODO likely need an additinoal internal function for components
-
-    // function only needed during bootstrapping on a new chain
-    function linkToRegistry(
-        address registryAddress,
-        address contractAddress
-    )
-        internal
-        onlyOwner()
-        returns (NftId)
-    {
-        if (_nftId.gtz()) {
-            revert ErrorAlreadyLinked(address(_registry), _nftId);
-        }
-
-        _linkToRegistry(registryAddress);
-
-        if (!_registry.isRegistered(contractAddress)) {
-            revert ErrorContractNotRegistered(contractAddress);
-        }
-
-        _nftId = _registry.getNftId(contractAddress);
-
-        return _nftId;
     }
 
 
@@ -102,8 +68,48 @@ contract NftOwnable is INftOwnable {
     }
 
 
-    function _linkToRegistry(address registryAddress)
+    /// @dev initialization for upgradable contracts
+    // used in _initializeRegisterable
+    function _initializeNftOwnable(
+        address initialOwner,
+        address registryAddress
+    )
         internal
+        virtual
+    {
+        _initialOwner = initialOwner;
+        _setRegistry(registryAddress);
+    }
+
+
+    /// @dev used in constructor of registry service manager
+    // links ownership of registry service manager ot nft owner of registry service
+    function _linkToNftOwnable(
+        address registryAddress,
+        address nftOwnableAddress
+    )
+        internal
+        onlyOwner()
+        returns (NftId)
+    {
+        if (_nftId.gtz()) {
+            revert ErrorAlreadyLinked(address(_registry), _nftId);
+        }
+
+        _setRegistry(registryAddress);
+
+        if (!_registry.isRegistered(nftOwnableAddress)) {
+            revert ErrorContractNotRegistered(nftOwnableAddress);
+        }
+
+        _nftId = _registry.getNftId(nftOwnableAddress);
+
+        return _nftId;
+    }
+
+
+    function _setRegistry(address registryAddress)
+        private
     {
         if (address(_registry) != address(0)) {
             revert ErrorRegistryAlreadyInitialized(address(_registry));
@@ -113,9 +119,17 @@ contract NftOwnable is INftOwnable {
             revert ErrorRegistryAddressZero();
         }
 
+        if (registryAddress.code.length == 0) {
+            revert ErrorNotRegistry(registryAddress);
+        }
+
         _registry = IRegistry(registryAddress);
 
-        if (!_registry.supportsInterface(type(IRegistry).interfaceId)) {
+        try _registry.supportsInterface(type(IRegistry).interfaceId) returns (bool isRegistry) {
+            if (!isRegistry) {
+                revert ErrorNotRegistry(registryAddress);
+            }
+        } catch {
             revert ErrorNotRegistry(registryAddress);
         }
     }
