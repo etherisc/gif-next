@@ -4,15 +4,15 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IInstance} from "../instance/IInstance.sol";
+// import {IInstance} from "../instance/IInstance.sol";
 
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-import {IComponent, IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
-import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
+// import {IComponent, IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
+// import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
-import {IPoolComponent} from "../../contracts/components/IPoolComponent.sol";
-import {IProductComponent} from "../../contracts/components/IProductComponent.sol";
-import {IDistributionComponent} from "../../contracts/components/IDistributionComponent.sol";
+// import {IPoolComponent} from "../../contracts/components/IPoolComponent.sol";
+// import {IProductComponent} from "../../contracts/components/IProductComponent.sol";
+// import {IDistributionComponent} from "../../contracts/components/IDistributionComponent.sol";
 
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
@@ -180,22 +180,23 @@ contract RegistryService is
             bytes memory data
         ) 
     {
-        if(instance.supportsInterface(type(IInstance).interfaceId) == false) {
-            revert NotInstance();
-        }
+        // TODO reactivate later
+        // if(instance.supportsInterface(type(IInstance).interfaceId) == false) {
+        //     revert NotInstance();
+        // }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);// owner);
+        // (
+        //     info, 
+        //     data
+        // ) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);// owner);
 
-        info.nftId = _registry.register(info);
-        instance.linkToRegisteredNftId();
+        // info.nftId = _registry.register(info);
+        // instance.linkToRegisteredNftId();
         
-        return (
-            info,
-            data            
-        );
+        // return (
+        //     info,
+        //     data            
+        // );
     }
 
     function registerPolicy(IRegistry.ObjectInfo memory info)

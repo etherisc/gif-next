@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import {ObjectType} from "./ObjectType.sol";
 
@@ -10,7 +10,8 @@ type KeyId is bytes31;
 using {
     eqKey32 as ==, 
     neKey32 as !=,
-    Key32Lib.toKey
+    Key32Lib.toKeyId,
+    Key32Lib.toObjectType
 } for Key32 global;
 
 // @dev Returns true iff keys are identical
@@ -37,9 +38,13 @@ library Key32Lib {
         return Key32.wrap(bytes32(uintKey));
     }
 
-    function toKey(Key32 key) public pure returns (ObjectType objectType, KeyId id) {
+    function toObjectType(Key32 key) public pure returns (ObjectType objectType) {
         bytes32 key32 = Key32.unwrap(key);
         objectType = ObjectType.wrap(uint8(uint256(key32 & TYPE_MASK) >> TYPE_SHIFT));
+    }
+
+    function toKeyId(Key32 key) public pure returns (KeyId id) {
+        bytes32 key32 = Key32.unwrap(key);
         id = KeyId.wrap(bytes31((key32 & ID_MASK) << ID_SHIFT));
     }
 }

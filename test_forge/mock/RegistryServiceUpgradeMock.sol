@@ -2,9 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
-import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {Version, VersionLib} from "../../contracts/types/Version.sol";
+import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
 
 
 contract RegistryServiceUpgradeMock is RegistryService {
