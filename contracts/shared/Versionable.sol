@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Initializable} from "@openzeppelin5/contracts/proxy/utils/Initializable.sol";
 
 import {Blocknumber, blockNumber} from "../types/Blocknumber.sol";
-import {Timestamp, blockTimestamp} from "../types/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
 import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 
 import {IVersionable} from "./IVersionable.sol";
@@ -138,7 +138,7 @@ abstract contract Versionable is
             thisVersion,
             implementation,
             activatedBy,
-            blockTimestamp(),
+            TimestampLib.blockTimestamp(),
             blockNumber()
         );
 

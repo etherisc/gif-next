@@ -18,7 +18,7 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
-import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
+import {RoleId} from "../../contracts/types/RoleId.sol";
 import {ObjectType, REGISTRY, TOKEN, SERVICE, PRODUCT, ORACLE, POOL, TOKEN, INSTANCE, DISTRIBUTION, POLICY, BUNDLE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
