@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 type ObjectType is uint8;
 
@@ -17,31 +17,44 @@ function PROTOCOL() pure returns (ObjectType) {
     return toObjectType(10);
 }
 
-function REGISTRY() pure returns (ObjectType) {
+function ROLE() pure returns (ObjectType) {
     return toObjectType(20);
 }
 
-function TOKEN() pure returns (ObjectType) {
+function TARGET() pure returns (ObjectType) {
     return toObjectType(30);
 }
 
-function SERVICE() pure returns (ObjectType) {
+function REGISTRY() pure returns (ObjectType) {
     return toObjectType(40);
 }
 
-function INSTANCE() pure returns (ObjectType) {
+function TOKEN() pure returns (ObjectType) {
     return toObjectType(50);
 }
 
-function STAKE() pure returns (ObjectType) {
+function SERVICE() pure returns (ObjectType) {
     return toObjectType(60);
+}
+
+function INSTANCE() pure returns (ObjectType) {
+    return toObjectType(70);
+}
+
+function STAKE() pure returns (ObjectType) {
+    return toObjectType(80);
 }
 
 function COMPONENT() pure returns (ObjectType) {
     return toObjectType(100);
 }
 
+// TODO replace by PRODUCT_SETUP
 function TREASURY() pure returns (ObjectType) {
+    return toObjectType(101);
+}
+
+function PRODUCT_SETUP() pure returns (ObjectType) {
     return toObjectType(101);
 }
 
@@ -51,6 +64,18 @@ function PRODUCT() pure returns (ObjectType) {
 
 function DISTRIBUTION() pure returns (ObjectType) {
     return toObjectType(120);
+}
+
+function DISTRIBUTION_TYPE() pure returns (ObjectType) {
+    return toObjectType(121);
+}
+
+function DISTRIBUTOR() pure returns (ObjectType) {
+    return toObjectType(122);
+}
+
+function REFERRAL() pure returns (ObjectType) {
+    return toObjectType(123);
 }
 
 function ORACLE() pure returns (ObjectType) {
@@ -69,20 +94,16 @@ function POLICY() pure returns (ObjectType) {
     return toObjectType(210);
 }
 
-function REFERRAL() pure returns (ObjectType) {
-    return toObjectType(212);
+function BUNDLE() pure returns (ObjectType) {
+    return toObjectType(220);
 }
 
 function CLAIM() pure returns (ObjectType) {
-    return toObjectType(214);
+    return toObjectType(211);
 }
 
 function PAYOUT() pure returns (ObjectType) {
-    return toObjectType(216);
-}
-
-function BUNDLE() pure returns (ObjectType) {
-    return toObjectType(220);
+    return toObjectType(212);
 }
 
 /// @dev Converts the uint8 to a ObjectType.
