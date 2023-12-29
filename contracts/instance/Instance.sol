@@ -22,7 +22,8 @@ import {StateId, ACTIVE} from "../types/StateId.sol";
 
 contract Instance is
     AccessManagedSimple,
-    KeyValueStore
+    KeyValueStore,
+    IInstance
 {
 
     uint64 public constant ADMIN_ROLE = type(uint64).min;
