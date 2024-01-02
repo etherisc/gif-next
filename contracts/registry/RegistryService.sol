@@ -2,8 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {AccessManagedUpgradeable} from "@openzeppelin5/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
@@ -28,9 +29,10 @@ import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.so
 import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
 import {IService} from "../../contracts/instance/base/IService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
-import {Registry} from "../registry/Registry.sol";
+import {Registry} from "./Registry.sol";
 
 contract RegistryService is
+    AccessManagedUpgradeable,
     ServiceBase,
     IRegistryService
 {

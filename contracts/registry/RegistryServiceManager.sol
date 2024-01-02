@@ -37,10 +37,11 @@ contract RegistryServiceManager is
 
         _accessManager = AccessManager(accessManagerAddress);
 
+        encodedConstructorArguments = abi.encode(accessManagerAddress, type(Registry).creationCode);
 
         IVersionable versionable = deploy(
             address(new RegistryService()), 
-            type(Registry).creationCode);
+            encodedConstructorArguments);
 
         _registryService = RegistryService(address(versionable));
 
@@ -65,7 +66,7 @@ contract RegistryServiceManager is
     function getAccessManager()
         external
         view
-        returns (RegistryService registryService)
+        returns (AccessManager)
     {
         return _accessManager;
     }
