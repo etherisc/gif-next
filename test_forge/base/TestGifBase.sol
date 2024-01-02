@@ -1,5 +1,7 @@
 pragma solidity 0.8.20;
 
+import {AccessManager} from "@openzeppelin5/contracts/access/manager/AccessManager.sol";
+
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -45,15 +47,18 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    ProxyManager public registryProxyAdmin;
-    Registry public registryImplementation;
-    ChainNft public chainNft;
-    Registry public registry;
+    uint64 constant PRODUCT_REGISTRAR_ROLE = 1;
+    uint64 constant POOL_REGISTRAR_ROLE = 2;
+    uint64 constant DISTRIBUTION_REGISTRAR_ROLE = 3;
+    uint64 constant POLICY_REGISTRAR_ROLE = 4;
+    uint64 constant BUNDLE_REGISTRAR_ROLE = 5;
+
 
     RegistryServiceManager public registryServiceManager;
-    ProxyManager public registryServiceProxyAdmin;
-    RegistryService public registryServiceImplementation;
+    AccessManager accessManager;
     RegistryService public registryService;
+    Registry public registry;
+    ChainNft public chainNft;
 
     IERC20Metadata public token;
 
@@ -122,6 +127,7 @@ contract TestGifBase is Test {
         // deploy registry, nft, services and token
         vm.startPrank(registryOwner);
         _deployRegistryServiceAndRegistry();
+        _configureAccessManagerRoles();
         _deployServices();
         _deployToken();
         vm.stopPrank();
@@ -208,6 +214,9 @@ contract TestGifBase is Test {
     function _deployRegistryServiceAndRegistry() internal
     {
         registryServiceManager = new RegistryServiceManager();
+
+        accessManager = registryServiceManager.getAccessManager();
+
         registryService = registryServiceManager.getRegistryService();
 
         IRegistry registry_ = registryService.getRegistry();
@@ -237,6 +246,44 @@ contract TestGifBase is Test {
         /* solhint-enable */
     }
 
+    function _configureAccessManagerRoles() internal
+    {
+        bytes4[] memory functionSelector = new bytes4[](1);
+        functionSelector[0] = RegistryService.registerProduct.selector;
+
+        accessManager.setTargetFunctionRole(
+            address(registryService), 
+            functionSelector, 
+            PRODUCT_REGISTRAR_ROLE);
+
+        functionSelector[0] = RegistryService.registerPool.selector;
+
+        accessManager.setTargetFunctionRole(
+            address(registryService), 
+            functionSelector, 
+            POOL_REGISTRAR_ROLE);
+
+        functionSelector[0] = RegistryService.registerDistribution.selector;
+
+        accessManager.setTargetFunctionRole(
+            address(registryService), 
+            functionSelector, 
+            DISTRIBUTION_REGISTRAR_ROLE);
+
+        functionSelector[0] = RegistryService.registerPolicy.selector;
+
+        accessManager.setTargetFunctionRole(
+            address(registryService), 
+            functionSelector, 
+            POLICY_REGISTRAR_ROLE);
+
+        functionSelector[0] = RegistryService.registerBundle.selector;
+
+        accessManager.setTargetFunctionRole(
+            address(registryService), 
+            functionSelector, 
+            BUNDLE_REGISTRAR_ROLE);
+    }
 
     function _deployServices() internal 
     {
@@ -246,10 +293,9 @@ contract TestGifBase is Test {
         registryService.registerService(componentOwnerService);
         assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
 
-        registry.approve(componentOwnerService.getNftId(), PRODUCT(), INSTANCE());
-        registry.approve(componentOwnerService.getNftId(), POOL(), INSTANCE());
-        registry.approve(componentOwnerService.getNftId(), DISTRIBUTION(), INSTANCE());
-        registry.approve(componentOwnerService.getNftId(), ORACLE(), INSTANCE());
+        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE, address(componentOwnerService), 0);
+        accessManager.grantRole(POOL_REGISTRAR_ROLE, address(componentOwnerService), 0);
+        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE, address(componentOwnerService), 0);
 
         /* solhint-disable */
         console.log("service name", componentOwnerService.NAME());
@@ -272,7 +318,7 @@ contract TestGifBase is Test {
 
         productService = new ProductService(registryAddress, registryNftId, registryOwner);
         registryService.registerService(productService);
-        registry.approve(productService.getNftId(), POLICY(), PRODUCT());
+        accessManager.grantRole(POLICY_REGISTRAR_ROLE, address(productService), 0);
 
         /* solhint-disable */
         console.log("service name", productService.NAME());
@@ -285,7 +331,7 @@ contract TestGifBase is Test {
         
         poolService = new PoolService(registryAddress, registryNftId, registryOwner);
         registryService.registerService(poolService);
-        registry.approve(poolService.getNftId(), BUNDLE(), POOL());
+        accessManager.grantRole(BUNDLE_REGISTRAR_ROLE, address(poolService), 0);
 
         /* solhint-disable */
         console.log("service name", poolService.NAME());
@@ -363,7 +409,7 @@ contract TestGifBase is Test {
             performanceFee,
             poolOwner);
 
-        componentOwnerService.register(pool, POOL());
+        componentOwnerService.registerPool(pool);
 
         uint256 nftId = pool.getNftId().toInt();
         uint256 state = instance.getState(pool.getNftId().toKey32(POOL())).toInt();
@@ -388,7 +434,7 @@ contract TestGifBase is Test {
             initialDistributionFee,
             distributionOwner);
 
-        componentOwnerService.register(distribution, DISTRIBUTION());
+        componentOwnerService.registerDistribution(distribution);
 
         uint256 nftId = distribution.getNftId().toInt();
         uint256 state = instance.getState(distribution.getNftId().toKey32(DISTRIBUTION())).toInt();
@@ -413,7 +459,7 @@ contract TestGifBase is Test {
             processingFee,
             productOwner);
 
-        componentOwnerService.register(product, PRODUCT());
+        componentOwnerService.registerProduct(product);
         //registryService.registerComponent(product, PRODUCT());
 
         uint256 nftId = product.getNftId().toInt();

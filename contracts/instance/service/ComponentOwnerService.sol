@@ -94,47 +94,84 @@ contract ComponentOwnerService is
         return IRegistryService(service);
     }
 
-    // TODO if user passes type BUNDLE??? -> registerComponent() must catch this
-    function register(	
-        IBaseComponent component,
-        ObjectType componentType 	
+    function registerProduct(	
+        IBaseComponent product
     ) external returns (NftId nftId) {	
 
         // TODO some info parameters from component and from register may differ -> getObjectInfo() after registration?
         (
             IRegistry.ObjectInfo memory info,
             bytes memory data
-        ) = getRegistryService().registerComponent(
-            component, 
-            componentType, 
+        ) = getRegistryService().registerProduct(
+            product,
             msg.sender);	
 
         NftId instanceNftId = info.parentNftId;
-        address instancAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;
-        IInstance instance = IInstance(instancAddress);
+        address instanceAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;
+        IInstance instance = IInstance(instanceAddress);
 
-        RoleId typeRole = getRoleForType(componentType);
+        RoleId typeRole = getRoleForType(PRODUCT());
+        if(instance.hasRole(typeRole, msg.sender) == false) {
+            revert MissingTypeRole();
+        }
+        
+        _registerProduct(
+                info.nftId, 
+                instanceNftId,
+                instance,
+                data
+        );
+    }
+
+    function registerPool(	
+        IBaseComponent pool
+    ) external returns (NftId nftId) {	
+
+        // TODO some info parameters from component and from register may differ -> getObjectInfo() after registration?
+        (
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) = getRegistryService().registerPool(
+            pool,
+            msg.sender);	
+
+        NftId instanceNftId = info.parentNftId;
+        address instanceAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;
+        IInstance instance = IInstance(instanceAddress);
+
+        RoleId typeRole = getRoleForType(POOL());
         if(instance.hasRole(typeRole, msg.sender) == false) {
             revert MissingTypeRole();
         } 
 
-        // component type specific registration actions	
-        if (componentType == PRODUCT()) {	
-            _registerProduct(
-                    info.nftId, 
-                    instanceNftId,
-                    instance,
-                    data
-            );
-        } else if (componentType == POOL()) {	
-            _registerPool(
-                info.nftId,
-                instanceNftId,
-                instance,
-                data
-            );
-        }	
-        // TODO add distribution and oracle	
+        _registerPool(
+            info.nftId,
+            instanceNftId,
+            instance,
+            data
+        );
+    }
+
+    function registerDistribution(	
+        IBaseComponent distribution
+    ) external returns (NftId nftId) {	
+
+        // TODO some info parameters from component and from register may differ -> getObjectInfo() after registration?
+        (
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) = getRegistryService().registerDistribution(
+            distribution,
+            msg.sender);	
+
+        NftId instanceNftId = info.parentNftId;
+        address instanceAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;
+        IInstance instance = IInstance(instanceAddress);
+
+        RoleId typeRole = getRoleForType(DISTRIBUTION());
+        if(instance.hasRole(typeRole, msg.sender) == false) {
+            revert MissingTypeRole();
+        }
     }
 
     function lock(

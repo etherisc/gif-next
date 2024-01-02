@@ -2,6 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {ERC165Checker} from "@openzeppelin5/contracts/utils/introspection/ERC165Checker.sol";
+import {IERC721Receiver} from "@openzeppelin5/contracts/token/ERC721/IERC721Receiver.sol";
 import {AccessManagedUpgradeable} from "@openzeppelin5/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
@@ -30,6 +32,7 @@ import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
 import {IService} from "../../contracts/instance/base/IService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {Registry} from "./Registry.sol";
+import {ChainNft} from "./ChainNft.sol";
 
 contract RegistryService is
     AccessManagedUpgradeable,
@@ -38,31 +41,40 @@ contract RegistryService is
 {
     using NftIdLib for NftId;
 
+    error SelfRegistration();
     error NotRegistryOwner();
-    error MissingAllowance();
 
     error NotToken();
     error NotService();
-    error NotComponent();
     error NotInstance();
+    error NotProduct();
+    error NotPool();
+    error NotDistribution();
 
-    error InvalidAddress(address registerableAddress);
+    error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
+    error UnexpectedRegisterableAddress(address expected, address found);
+    error NotRegisterableOwner(address expectedOwner);
+    error RegisterableOwnerIsZero();   
+    error RegisterableOwnerIsRegistered();
     error InvalidInitialOwner(address initialOwner);
-    error SelfRegistration();
-    error InvalidType(ObjectType objectType);
+    error InvalidAddress(address registerableAddress);
 
+
+    // Initial value for constant variable has to be compile-time constant
+    // TODO define types as constants?
+    //ObjectType public constant SERVICE_TYPE = REGISTRY(); 
     string public constant NAME = "RegistryService";
 
     // TODO update to real hash when registry is stable
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 
-    address constant public NFT_LOCK_ADDRESS = address(0x1);
+    address public constant NFT_LOCK_ADDRESS = address(0x1);
 
     /// @dev 
     //  msg.sender - ONLY registry owner
-    //      CAN register ANY non IRegisterable address
-    //      CAN register ONLY valid object-parent types combinations for TOKEN
     //      CAN NOT register itself
+    //      CAN NOT register IRegisterable address
+    //      CAN register ONLY valid object-parent types combinations for TOKEN
     // IMPORTANT: MUST NOT call untrusted contract inbetween calls to registry/instance (trusted contracts)
     // motivation: registry/instance state may change during external call
     // TODO it may be usefull to have transferable token nft in order to delist token, make it invalid for new beginings
@@ -71,21 +83,18 @@ contract RegistryService is
         external 
         returns(NftId nftId) 
     {
-        IRegisterable registerable = IRegisterable(tokenAddress);
-        bool isRegisterable;
+        if(msg.sender == tokenAddress) {
+            revert SelfRegistration();
+        }    
 
-        // registryOwner can not register IRegisterable as TOKEN
-        try registerable.supportsInterface(type(IRegisterable).interfaceId) returns(bool result) {
-            isRegisterable = result;
-        } catch {
-            isRegisterable = false;
+        // MUST not revert if no ERC165 support
+        if(tokenAddress.code.length == 0 ||
+            ERC165Checker.supportsInterface(tokenAddress, type(IRegisterable).interfaceId)) {
+            revert NotToken();
         }
 
-        if(isRegisterable) {
-            revert NotToken();
-        } 
-
         NftId registryNftId = _registry.getNftId(address(_registry));
+
         if(msg.sender != _registry.ownerOf(registryNftId)) {
             revert NotRegistryOwner();
         }
@@ -105,9 +114,9 @@ contract RegistryService is
 
     /// @dev 
     //  msg.sender - ONLY registry owner
+    //      CAN NOT register itself
     //      CAN register ONLY valid object-parent types combinations for SERVICE
     //      CAN register ONLY IRegisterable address he owns
-    //      CAN NOT register itself
     // IMPORTANT: MUST NOT check owner before calling external contract
     function registerService(IService service)
         external
@@ -116,83 +125,59 @@ contract RegistryService is
             bytes memory data
         ) 
     {
-        if(service.supportsInterface(type(IService).interfaceId) == false) {
+        if(msg.sender == address(service)) {
+            revert SelfRegistration();
+        }
+
+        // CAN revert if no ERC165 support -> will revert with empty message 
+        if(!service.supportsInterface(type(IService).interfaceId)) {
             revert NotService();
-        } 
+        }
 
         (
             info, 
             data
         ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
 
-        NftId registryNftId = _registry.getNftId(address(_registry));
-        if(msg.sender != _registry.ownerOf(registryNftId)) {
+        if(msg.sender != _registry.getOwner()) {
             revert NotRegistryOwner();
         }
 
-        info.initialOwner = NFT_LOCK_ADDRESS;//registry.getLockAddress();
         info.nftId = _registry.register(info);
         service.linkToRegisteredNftId();
-
         return (
             info,
             data
         );
     }
 
-    // anybody can register component if instance gives a corresponding role
-    //function registerComponent(IBaseComponent component, ObjectType componentType)
-    function registerComponent(IBaseComponent component, ObjectType componentType, address owner)
+    // If msg.sender is approved service: 
+    // 1) add owner arg (service MUST pass it's msg.sender as owner)
+    // 2) check service allowance 
+    // 3) comment self registrstion check
+    //function registerInstance(IRegisterable instance, address owner)
+    function registerInstance(IRegisterable instance)
         external
         returns(
             IRegistry.ObjectInfo memory info,
             bytes memory data
         ) 
     {
-        if(!component.supportsInterface(type(IBaseComponent).interfaceId)) {
-            revert NotComponent();
+        if(msg.sender == address(instance)) {
+            revert SelfRegistration();
         }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(component, componentType, owner);
-
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
-        if(!_registry.allowance(serviceNftId, componentType)) {
-            revert MissingAllowance();
-        }      
-
-        info.nftId = _registry.register(info);
-        component.linkToRegisteredNftId();
-
-        return (
-            info,
-            data
-        );  
-    }
-
-    // TODO: when called by approved service: add owner arg (service must pass it's msg.sender as owner) & check service allowance
-    //function registerInstance(IRegisterable instance, address owner)
-    function registerInstance(IRegisterable instance)
-        external 
-        returns(
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
-        ) 
-    {
-        if(instance.supportsInterface(type(IInstance).interfaceId) == false) {
+        if(!instance.supportsInterface(type(IInstance).interfaceId)) {
             revert NotInstance();
         }
 
         (
             info, 
             data
-        ) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);// owner);
+        ) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);
 
         info.nftId = _registry.register(info);
-        instance.linkToRegisteredNftId();
+        instance.linkToRegisteredNftId(); // asume safe
         
         return (
             info,
@@ -200,15 +185,98 @@ contract RegistryService is
         );
     }
 
+    function registerProduct(IBaseComponent product, address owner)
+        external
+        restricted
+        returns(
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) 
+    {
+        // CAN revert if no ERC165 support -> will revert with empty message 
+        if(!product.supportsInterface(type(IProductComponent).interfaceId)) {
+            revert NotProduct();
+        }
+
+        (
+            info, 
+            data
+        ) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
+
+        NftId serviceNftId = _registry.getNftId(msg.sender);
+
+        info.nftId = _registry.register(info);
+        // TODO unsafe, let component or its owner derive nftId latter, when state assumptions and modifications of GIF contracts are finished  
+        product.linkToRegisteredNftId();
+
+        return (
+            info,
+            data
+        );  
+    }
+
+    function registerPool(IBaseComponent pool, address owner)
+        external
+        restricted
+        returns(
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) 
+    {
+        if(!pool.supportsInterface(type(IPoolComponent).interfaceId)) {
+            revert NotPool();
+        }
+
+        (
+            info, 
+            data
+        ) = _getAndVerifyContractInfo(pool, POOL(), owner);
+
+        NftId serviceNftId = _registry.getNftId(msg.sender);
+
+        info.nftId = _registry.register(info);
+        pool.linkToRegisteredNftId();
+
+        return (
+            info,
+            data
+        );  
+    }
+
+   function registerDistribution(IBaseComponent distribution, address owner)
+        external
+        restricted
+        returns(
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) 
+    {
+        if(!distribution.supportsInterface(type(IDistributionComponent).interfaceId)) {
+            revert NotDistribution();
+        }
+
+        (
+            info, 
+            data
+        ) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
+
+        NftId serviceNftId = _registry.getNftId(msg.sender);
+
+        info.nftId = _registry.register(info); 
+        distribution.linkToRegisteredNftId();
+
+        return (
+            info,
+            data
+        );  
+    }
+
     function registerPolicy(IRegistry.ObjectInfo memory info)
-        external 
+        external
+        restricted 
         returns(NftId nftId) 
     {
         NftId senderNftId = _registry.getNftId(msg.sender);
-
-        if(_registry.allowance(senderNftId, POLICY()) == false) {
-            revert MissingAllowance();
-        }
 
         _verifyObjectInfo(info, POLICY());
 
@@ -216,14 +284,12 @@ contract RegistryService is
     }
 
     function registerBundle(IRegistry.ObjectInfo memory info)
-        external 
+        external
+        restricted 
         returns(NftId nftId) 
     {
-        NftId senderNftId = _registry.getNftId(msg.sender);
 
-        if(_registry.allowance(senderNftId, BUNDLE()) == false) {
-            revert MissingAllowance();
-        }
+        NftId senderNftId = _registry.getNftId(msg.sender);
 
         _verifyObjectInfo(info, BUNDLE());
 
@@ -235,6 +301,9 @@ contract RegistryService is
     function getName() public pure override(IService, ServiceBase) returns(string memory) {
         return NAME;
     }
+    //function getType() public pure override(IService, ServiceBase) returns(ObjectType serviceType) {
+    //    return SERVICE_TYPE;
+    //}
 
 
     // from Versionable
@@ -246,12 +315,19 @@ contract RegistryService is
     // registry is getting instantiated and locked to registry service address forever
     function _initialize(
         address owner, 
-        bytes memory registryByteCodeWithInitCode
+        bytes memory data
     )
         internal
         initializer
         virtual override
     {
+        (
+            address initialAuthority,
+            bytes memory registryByteCodeWithInitCode
+        ) = abi.decode(data, (address, bytes));
+
+        __AccessManaged_init(initialAuthority);
+
         bytes memory encodedConstructorArguments = abi.encode(
             owner,
             getMajorVersion());
@@ -260,26 +336,28 @@ contract RegistryService is
             registryByteCodeWithInitCode,
             encodedConstructorArguments);
 
-        address registryAddress = ContractDeployerLib.deploy(
+        IRegistry registry = IRegistry(ContractDeployerLib.deploy(
             registryCreationCode,
-            REGISTRY_CREATION_CODE_HASH);
+            REGISTRY_CREATION_CODE_HASH));
 
-        IRegistry registry = IRegistry(registryAddress);
-        NftId registryNftId = registry.getNftId(registryAddress);
+        NftId registryNftId = registry.getNftId(address(registry));
 
-        _initializeServiceBase(registryAddress, registryNftId, owner);
-        linkToRegisteredNftId();
+        _initializeServiceBase(address(registry), registryNftId, owner);
 
+        // TODO why do registry service proxy need to keep its nftId??? -> no registryServiceNftId checks in implementation
+        // if they are -> use registry address to obtain owner of registry service nft (works the same with any registerable and(or) implementation)
+        linkToRegisteredNftId(); 
         _registerInterface(type(IRegistryService).interfaceId);
     }
 
     // parent check done in registry because of approve()
     function _getAndVerifyContractInfo(
         IRegisterable registerable,
-        ObjectType objectType,
-        address owner
+        ObjectType expectedType, // assume can be valid only
+        address expectedOwner // assume can be 0
     )
         internal
+        //view
         returns(
             IRegistry.ObjectInfo memory info, 
             bytes memory data
@@ -290,22 +368,26 @@ contract RegistryService is
             data
         ) = registerable.getInitialInfo();
 
+        if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
+            revert UnexpectedRegisterableType(expectedType, info.objectType);
+        }
+
         if(info.objectAddress != address(registerable)) {
-            revert InvalidAddress(info.objectAddress);
+            revert UnexpectedRegisterableAddress(address(registerable), info.objectAddress);
         }
 
-        if(
-            getRegistry().isRegistered(owner) ||
-            info.initialOwner != owner) { // contract owner protection
-            revert InvalidInitialOwner(info.initialOwner);
+        address owner = info.initialOwner;
+
+        if(owner != expectedOwner) { // registerable owner protection
+            revert NotRegisterableOwner(expectedOwner);
         }
 
-        if(msg.sender == address(registerable)) {
-            revert SelfRegistration();
+        if(owner == address(0)) {
+            revert RegisterableOwnerIsZero();
         }
         
-        if(info.objectType != objectType) {
-            revert InvalidType(info.objectType);
+        if(getRegistry().isRegistered(owner)) { 
+            revert RegisterableOwnerIsRegistered();
         }
 
         /*NftId parentNftId = info.parentNftId;
@@ -354,11 +436,6 @@ contract RegistryService is
         if(info.initialOwner == address(getRegistry())) {
             revert InitialOwnerIsRegistry();
         }*/
-
-        
-        if(info.objectType != objectType) {
-            revert InvalidType(info.objectType);
-        }
 
         /*NftId parentNftId = info.parentNftId;
         IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(parentNftId);
