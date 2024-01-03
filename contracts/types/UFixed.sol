@@ -127,7 +127,7 @@ library UFixedMathLib {
                     UFixed.unwrap(a) + MULTIPLIER_HALF,
                     1,
                     MULTIPLIER,
-                    Math.Rounding.Down
+                    Math.Rounding.Floor
                 );
         } else if (rounding == ROUNDING_DOWN()) {
             return
@@ -135,11 +135,11 @@ library UFixedMathLib {
                     UFixed.unwrap(a),
                     1,
                     MULTIPLIER,
-                    Math.Rounding.Down
+                    Math.Rounding.Floor
                 );
         } else {
             return
-                Math.mulDiv(UFixed.unwrap(a), 1, MULTIPLIER, Math.Rounding.Up);
+                Math.mulDiv(UFixed.unwrap(a), 1, MULTIPLIER, Math.Rounding.Ceil);
         }
     }
 
