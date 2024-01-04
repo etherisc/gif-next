@@ -75,7 +75,7 @@ contract Registerable is
         RegisterableStorage storage $ = _getRegisterableStorage();
         return (
             IRegistry.ObjectInfo(
-                zeroNftId(),
+                getNftId(),
                 $._parentNftId,
                 $._objectType,
                 $._isInterceptor,
