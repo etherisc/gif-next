@@ -4,44 +4,49 @@ import { RoleIdLib__factory } from "../../typechain-types/factories/contracts/ty
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
-import { RegistryAddresses, register } from "./registry";
+import { RegistryAddresses } from "./registry";
 import { executeTx } from "./transaction";
 
 export type InstanceAddresses = {
-    instanceAddress: AddressLike,
-    instanceNftId: string,
+    masterInstanceAddress: AddressLike,
+    masterInstanceNftId: string,
 }
 
-export async function deployAndRegisterInstance(
+export async function deployAndRegisterMasterInstance(
     owner: Signer, 
     libraries: LibraryAddresses,
     registry: RegistryAddresses,
 ): Promise<InstanceAddresses> {
+    const { address: accessManagerAddress, contract: accessManagerBaseContract } = await deployContract(
+        "AccessManagerSimple",
+        owner,
+        [await resolveAddress(owner)]);
+
     const { address: instanceAddress, contract: instanceBaseContract } = await deployContract(
         "Instance",
         owner,
-        [registry.registryAddress, registry.registryNftId],
-        { libraries: {
-            BlocknumberLib: libraries.blockNumberLibAddress,
-            NftIdLib: libraries.nftIdLibAddress,
-            LibNftIdSet: libraries.libNftIdSetAddress,
-            TimestampLib: libraries.timestampLibAddress,
-            UFixedMathLib: libraries.uFixedMathLibAddress,
-            VersionLib: libraries.versionLibAddress,
-            FeeLib: libraries.feeLibAddress,
-            Key32Lib: libraries.key32LibAddress,
-            ObjectTypeLib: libraries.objectTypeLibAddress,
-            StateIdLib: libraries.stateIdLibAddress,
-            RoleIdLib: libraries.roleIdLibAddress,
-            RiskIdLib: libraries.riskIdLibAddress,
-        }});
+        [accessManagerAddress],
+        { 
+            libraries: {
+                Key32Lib: libraries.key32LibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
+                RiskIdLib: libraries.riskIdLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
+                StateIdLib: libraries.stateIdLibAddress,
+            }
+        }
+    );
 
-    const instanceNftId = await register(instanceBaseContract as Registerable, instanceAddress, "Instance", registry, owner);
-    logger.info(`instance registered - instanceNftId: ${instanceNftId}`);
+    // TODO register instance in registry
+    // const rcpt = await executeTx(async () => await registry.registryService.registerInstance(instanceAddress));
+    
+    // TODO get nftId from `LogRegistration` event
+    
+    // logger.info(`instance registered - instanceNftId: ${instanceNftId}`);
     return {
-        instanceAddress,
-        instanceNftId,
-    };
+        
+    } as InstanceAddresses;
 }
 
 

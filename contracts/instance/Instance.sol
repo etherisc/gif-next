@@ -20,11 +20,13 @@ import {ObjectType, BUNDLE, DISTRIBUTION, POLICY, POOL, ROLE, PRODUCT, TARGET} f
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {StateId, ACTIVE} from "../types/StateId.sol";
+import {ERC165} from "../shared/ERC165.sol";
 
 contract Instance is
     AccessManagedSimple,
     KeyValueStore,
-    IInstance
+    IInstance,
+    ERC165
 {
 
     uint64 public constant ADMIN_ROLE = type(uint64).min;
@@ -47,6 +49,8 @@ contract Instance is
         _accessManager = AccessManagerSimple(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
         _createRole(RoleIdLib.toRoleId(PUBLIC_ROLE), "PublicRole", false, false);
+
+        _registerInterface(type(IInstance).interfaceId);
     }
 
     //--- Role ------------------------------------------------------//
