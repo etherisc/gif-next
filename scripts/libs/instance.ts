@@ -38,6 +38,8 @@ export async function deployAndRegisterMasterInstance(
         }
     );
 
+    // TODO deploy instancereader
+
     // TODO register instance in registry
     // const rcpt = await executeTx(async () => await registry.registryService.registerInstance(instanceAddress));
     
