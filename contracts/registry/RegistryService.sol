@@ -357,7 +357,7 @@ contract RegistryService is
         address expectedOwner // assume can be 0
     )
         internal
-        //view
+        view
         returns(
             IRegistry.ObjectInfo memory info, 
             bytes memory data
