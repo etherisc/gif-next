@@ -294,7 +294,7 @@ contract RegistryService is
 
         if(
             getRegistry().isRegistered(owner) ||
-            info.initialOwner != owner) { // contract owner protection
+            info.initialOwner != owner) { // contract owner protection 
             revert InvalidInitialOwner(info.initialOwner);
         }
 

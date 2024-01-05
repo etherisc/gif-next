@@ -6,6 +6,7 @@ import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
 import { logger } from "./logger";
 import { deployAndRegisterMasterInstance } from "./libs/instance";
+import { deployAndRegisterServices } from "./libs/services";
 
 
 async function main() {
@@ -14,7 +15,7 @@ async function main() {
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
-    // const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
+    // TODO const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
     
     // // deploy instance contracts
     const instance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry);

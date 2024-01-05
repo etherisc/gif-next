@@ -38,14 +38,31 @@ export async function deployAndRegisterMasterInstance(
         }
     );
 
-    // TODO deploy instancereader
-
-    // TODO register instance in registry
+    // FIXME register instance in registry
     // const rcpt = await executeTx(async () => await registry.registryService.registerInstance(instanceAddress));
-    
+
     // TODO get nftId from `LogRegistration` event
-    
     // logger.info(`instance registered - instanceNftId: ${instanceNftId}`);
+    const instanceNftId = 21101;
+
+
+    // FIXME: fix InstanceReader deployment (correct nftId for instance)
+    // const { address: instanceReaderAddress, contract: instanceReaderBaseContract } = await deployContract(
+    //     "InstanceReader",
+    //     owner,
+    //     [registry.registryAddress, instanceNftId],
+    //     { 
+    //         libraries: {
+    //             DistributorTypeLib: libraries.distributorTypeLibAddress,
+    //             NftIdLib: libraries.nftIdLibAddress,
+    //             ReferralLib: libraries.referralLibAddress,
+    //             RiskIdLib: libraries.riskIdLibAddress,
+    //             TimestampLib: libraries.timestampLibAddress,
+    //             UFixedMathLib: libraries.uFixedMathLibAddress,
+    //         }
+    //     }
+    // );
+    
     return {
         
     } as InstanceAddresses;

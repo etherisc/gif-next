@@ -75,25 +75,25 @@ contract InstanceService is ServiceBase, IInstanceService {
         initializer
         virtual override
     {
-        // TODO clone master instance
-        bytes memory encodedConstructorArguments = abi.encode(
-            _accessManagerMaster);
+        // bytes memory encodedConstructorArguments = abi.encode(
+        //     _registryAddress);
 
-        bytes memory instanceCreationCode = ContractDeployerLib.getCreationCode(
-            instanceByteCodeWithInitCode,
-            encodedConstructorArguments);
+        // bytes memory instanceCreationCode = ContractDeployerLib.getCreationCode(
+        //     instanceByteCodeWithInitCode,
+        //     encodedConstructorArguments);
 
-        address instanceAddress = ContractDeployerLib.deploy(
-            instanceCreationCode,
-            INSTANCE_CREATION_CODE_HASH);
+        // address instanceAddress = ContractDeployerLib.deploy(
+        //     instanceCreationCode,
+        //     INSTANCE_CREATION_CODE_HASH);
 
-        // TODO register instance in registry  
-        IRegistry registry = IRegistry(_registryAddress);
-        NftId instanceNftId = registry.getNftId(instanceAddress);
+        // // TODO register instance in registry  
+        // IRegistry registry = IRegistry(_registryAddress);
+        // NftId instanceNftId = registry.getNftId(instanceAddress);
 
-        _initializeServiceBase(instanceAddress, instanceNftId, owner);
-        linkToRegisteredNftId();
+        // _initializeServiceBase(instanceAddress, instanceNftId, owner);
+        // linkToRegisteredNftId();
 
+        _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IInstanceService).interfaceId);
     }
 

@@ -5,6 +5,9 @@ import {Instance} from "./Instance.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {ProxyManager} from "../shared/ProxyManager.sol";
 import {InstanceService} from "./InstanceService.sol";
+import {Registry} from "../registry/Registry.sol";
+import {RegistryService} from "../registry/RegistryService.sol";
+import {VersionLib} from "../types/Version.sol";
 
 contract InstanceServiceManager is ProxyManager {
 
@@ -16,15 +19,24 @@ contract InstanceServiceManager is ProxyManager {
     )
         ProxyManager()
     {
+        InstanceService instSrv = new InstanceService(registryAddress);
+        bytes memory initCode = type(InstanceService).creationCode;
         IVersionable versionable = deploy(
-            address(new InstanceService(registryAddress)), 
-            type(Instance).creationCode);
+            address(instSrv), 
+            initCode);
 
         _instanceService = InstanceService(address(versionable));
 
+        Registry registry = Registry(registryAddress);
+        address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        RegistryService registryService = RegistryService(registryServiceAddress);
+
+        registryService.registerService(_instanceService);
+        // RegistryService registryService = _instanceService.getRegistryService();
+
         // link ownership of instance service manager ot nft owner of instance service
         _linkToNftOwnable(
-            address(_instanceService.getInstance()),
+            address(registryAddress),
             address(_instanceService));
 
         // implies that after this constructor call only upgrade functionality is available
