@@ -60,8 +60,8 @@ contract RegisterTokenTest is RegistryServiceTestBase {
 
         assertEq(registry.getNftId(address(contractWithoutIERC165)).toInt(), nftId.toInt(), "NftId of token registered is different");
         assertEq(info.objectType.toInt(), TOKEN().toInt(), "Type of token registered is not TOKEN");
-        assertEq(address(contractWithoutIERC165), info.objectAddress, "Address of token registered is different");
-        assertEq(NFT_LOCK_ADDRESS, info.initialOwner, "Initial owner of the token is different");
+        assertEq(info.objectAddress, address(contractWithoutIERC165), "Address of token registered is different");
+        assertEq(info.initialOwner, NFT_LOCK_ADDRESS, "Initial owner of the token is different");
     }
 
     function test_withIERC165() public
@@ -74,8 +74,8 @@ contract RegisterTokenTest is RegistryServiceTestBase {
 
         assertEq(registry.getNftId(address(erc165)).toInt(), nftId.toInt(), "NftId of token registered is different");
         assertEq(info.objectType.toInt(), TOKEN().toInt(), "Type of token registered is not TOKEN");
-        assertEq(address(erc165), info.objectAddress, "Address of token registered is different");
-        assertEq(NFT_LOCK_ADDRESS, info.initialOwner, "Initial owner of the token is different");
+        assertEq(info.objectAddress, address(erc165), "Address of token registered is different");
+        assertEq(info.initialOwner, NFT_LOCK_ADDRESS, "Initial owner of the token is different");
     }
 
     function test_withIRegisterable() public

@@ -118,6 +118,24 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         vm.stopPrank();
     }
 
+    function _assert_registered_contract(
+        address registerable, 
+        IRegistry.ObjectInfo memory infoFromRegistryService, 
+        bytes memory dataFromRegistryService) 
+        public
+    {
+        IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(infoFromRegistryService.nftId);
+
+        (
+            IRegistry.ObjectInfo memory infoFromRegisterable,
+            bytes memory dataFromRegisterable
+        ) = IRegisterable(registerable).getInitialInfo();
+
+        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegistryService), "Invalid info returned #1");
+        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegisterable), "Invalid info returned #2");
+        assertEq(dataFromRegistryService, dataFromRegisterable, "Invalid data returned");
+    }
+
     /*function _checkRegistryServiceGetters(address registryService, address implementation, Version version, uint64 initializedVersion, uint256 versionsCount)
     {
         _assert_versionable_getters(IVersionable(registryService), implementation, version, initializedVersion, versionsCount);

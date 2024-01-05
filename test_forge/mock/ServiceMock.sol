@@ -114,9 +114,9 @@ contract ServiceMockWithRandomInvalidAddress is ServiceBase {
     }
 }
 
-contract ServiceMockWithTooOldVersion is ServiceBase {
+contract ServiceMockOldVersion is ServiceBase {
 
-    string public constant NAME = "ServiceMockWithTooOldVersion";
+    string public constant NAME = "ServiceMock";
 
     constructor(address registry, NftId registryNftId, address initialOwner)
     {
@@ -133,9 +133,9 @@ contract ServiceMockWithTooOldVersion is ServiceBase {
     }
 }
 
-contract ServiceMockWithTooNewVersion is ServiceBase {
+contract ServiceMockNewVersion is ServiceBase {
 
-    string public constant NAME = "ServiceMockWithTooNewVersion";
+    string public constant NAME = "ServiceMock";
 
     constructor(address registry, NftId registryNftId, address initialOwner)
     {
@@ -151,4 +151,3 @@ contract ServiceMockWithTooNewVersion is ServiceBase {
         return VersionLib.toVersion(4,0,0);
     }
 }
-

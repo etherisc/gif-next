@@ -16,34 +16,9 @@ import {RegistryServiceTestBase} from "./RegistryServiceTestBase.sol";
 import {ServiceMock, 
         ServiceMockWithRandomInvalidType, 
         ServiceMockWithRandomInvalidAddress, 
-        ServiceMockWithTooNewVersion, 
-        ServiceMockWithTooOldVersion} from "../mock/ServiceMock.sol";
+        ServiceMockNewVersion, 
+        ServiceMockOldVersion} from "../mock/ServiceMock.sol";
 
-// Helper functions to test IRegistry.ObjectInfo structs 
-function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) pure returns (bool isSame) {
-    return (
-        (a.nftId == b.nftId) &&
-        (a.parentNftId == b.parentNftId) &&
-        (a.objectType == b.objectType) &&
-        (a.objectAddress == b.objectAddress) &&
-        (a.initialOwner == b.initialOwner) /*&&
-        (a.data == b.data)*/
-    );
-}
-
-function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
-    return (
-        IRegistry.ObjectInfo(
-            zeroNftId(),
-            zeroNftId(),
-            zeroObjectType(),
-            false,
-            address(0),
-            address(0),
-            bytes("")
-        )
-    );
-}
 
 contract RegisterServiceTest is RegistryServiceTestBase {
 
@@ -120,18 +95,10 @@ contract RegisterServiceTest is RegistryServiceTestBase {
             bytes memory data 
         ) = registryService.registerService(service);
 
-        IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(info.nftId);
-        (
-            IRegistry.ObjectInfo memory infoFromService,
-            bytes memory dataFromService
-        ) = service.getInitialInfo();
-
-        assertTrue(eqObjectInfo(infoFromRegistry, info), "Invalid info returned #1");
-        assertTrue(eqObjectInfo(infoFromRegistry, infoFromService), "Invalid info returned #2");
-        assertEq(data, dataFromService, "Invalid data returned");
+        _assert_registered_contract(address(service), info, data);
     }
 
-    function test_withInvalidObjectType() public 
+    function test_withInvalidType() public 
     {
         ServiceMockWithRandomInvalidType service = new ServiceMockWithRandomInvalidType(
             address(registry),
@@ -149,7 +116,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         registryService.registerService(service);
     }
 
-    function test_withInvalidObjectAddress() public 
+    function test_withInvalidAddress() public 
     {
         ServiceMockWithRandomInvalidAddress service = new ServiceMockWithRandomInvalidAddress(
             address(registry),
@@ -167,7 +134,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         registryService.registerService(service);
     }
 
-    function test_whenNotInitialOwner() public
+    function test_whenCallerIsNotInitialOwner() public
     {
         ServiceMock service = new ServiceMock(
             address(registry),
@@ -201,9 +168,43 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         registryService.registerService(service);  
     }
 
+    function test_withRegisteredInitialOwner() public
+    {
+        ServiceMock service = new ServiceMock(
+            address(registry),
+            registryNftId,
+            address(registry)
+        );
+
+        vm.prank(address(registry));
+
+        vm.expectRevert(abi.encodeWithSelector(
+            RegistryService.RegisterableOwnerIsRegistered.selector));
+
+        registryService.registerService(service);  
+    }
+
+    function test_whenParentIsNotRegistry() public
+    {
+        ServiceMock service = new ServiceMock(
+            address(registry),
+            registryServiceNftId,
+            registryOwner
+        ); 
+
+        vm.prank(registryOwner);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            Registry.InvalidTypesCombination.selector,
+            SERVICE(),
+            SERVICE()));
+
+        registryService.registerService(service);         
+    }
+
     function test_withTooOldVersion() public
     {
-        ServiceMockWithTooOldVersion service = new ServiceMockWithTooOldVersion(
+        ServiceMockOldVersion service = new ServiceMockOldVersion(
             address(registry),
             registryNftId,
             registryOwner
@@ -220,7 +221,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
     function test_withTooNewVersion() public
     {
-        ServiceMockWithTooNewVersion service = new ServiceMockWithTooNewVersion(
+        ServiceMockNewVersion service = new ServiceMockNewVersion(
             address(registry),
             registryNftId,
             registryOwner
@@ -235,15 +236,15 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         registryService.registerService(service);  
     }
 
-    function test_registerDuplicateServiceName() public 
+    function test_withDuplicateName() public 
     {
-        ServiceMock service_1 = new ServiceMock(
+        ServiceMock service = new ServiceMock(
             address(registry),
             registryNftId,
             registryOwner
         );  
 
-        ServiceMock service_2 = new ServiceMock(
+        ServiceMock duplicateService = new ServiceMock(
             address(registry),
             registryNftId,
             registryOwner
@@ -251,22 +252,37 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
         vm.startPrank(registryOwner);
 
-        registryService.registerService(service_1);  
+        registryService.registerService(service);  
 
         vm.expectRevert(abi.encodeWithSelector(
             Registry.ServiceNameAlreadyRegistered.selector, 
-            service_1.getName(), service_1.getMajorVersion()));
+            service.getName(), service.getMajorVersion()));
 
-        registryService.registerService(service_2);  
+        registryService.registerService(duplicateService);  
+
+        vm.stopPrank();
+    }
+
+    function test_withNextVersion() public
+    {
+        ServiceMock service = new ServiceMock(
+            address(registry),
+            registryNftId,
+            registryOwner
+        );  
+
+        ServiceMockNewVersion newService = new ServiceMockNewVersion(
+            address(registry),
+            registryNftId,
+            registryOwner            
+        );
+
+        vm.startPrank(registryOwner);
+
+        registryService.registerService(service);
+
+        registryService.registerService(newService);
+
+        vm.stopPrank();
     }
 }
-
-/*
-        NftId nftId;
-        NftId parentNftId;
-        ObjectType objectType;
-        bool isInterceptor;
-        address objectAddress;
-        address initialOwner;
-        bytes data;
-        */

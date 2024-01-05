@@ -243,7 +243,7 @@ contract RegistryService is
         );  
     }
 
-   function registerDistribution(IBaseComponent distribution, address owner)
+    function registerDistribution(IBaseComponent distribution, address owner)
         external
         restricted
         returns(
