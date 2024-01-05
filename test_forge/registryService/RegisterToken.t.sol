@@ -2,13 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {blockTimestamp} from "../../contracts/types/Timestamp.sol";
-import {blockBlocknumber} from "../../contracts/types/Blocknumber.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/types/Version.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
-import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, TOKEN} from "../../contracts/types/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -16,8 +12,6 @@ import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 
 import {RegistryServiceTestBase} from "./RegistryServiceTestBase.sol";
-
-
 
 contract RegisterTokenTest is RegistryServiceTestBase {
 
