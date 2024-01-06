@@ -158,8 +158,6 @@ contract Registry_Concrete_Tests is RegistryTestBase {
 
         _assert_register(info, true, reason_NotRegistryService);
 
-        _assert_approve(registryServiceNftId, PRODUCT(), INSTANCE(), reason_NotOwner);
-
         _stopPrank();
 
         // registryOwner can approve only
@@ -167,15 +165,10 @@ contract Registry_Concrete_Tests is RegistryTestBase {
 
         _assert_register(info, true, reason_NotRegistryService);
 
-        _assert_approve(registryServiceNftId, PRODUCT(), INSTANCE(), "");
-
-
         chainNft.safeTransferFrom(registryOwner, outsider, registryNftId.toInt());
 
         // registryOwner is not owner anymore, can not register and approve
         _assert_register(info, true, reason_NotRegistryService);
-
-        _assert_approve(registryServiceNftId, POOL(), INSTANCE(), reason_NotOwner);
 
         _stopPrank();
 
@@ -184,16 +177,12 @@ contract Registry_Concrete_Tests is RegistryTestBase {
 
         _assert_register(info, false, "");
 
-        _assert_approve(registryServiceNftId, POOL(), INSTANCE(), reason_NotOwner);
-
         _stopPrank();
 
         // outsider is new owner, can approve only
         _startPrank(outsider);
 
         _assert_register(info, true, reason_NotRegistryService);
-
-        _assert_approve(registryServiceNftId, POOL(), INSTANCE(), "");
 
         _stopPrank();
     }

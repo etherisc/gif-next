@@ -33,8 +33,9 @@ function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory
         (a.parentNftId == b.parentNftId) &&
         (a.objectType == b.objectType) &&
         (a.objectAddress == b.objectAddress) &&
-        (a.initialOwner == b.initialOwner) /*&&
-        (a.data == b.data)*/
+        (a.initialOwner == b.initialOwner) &&
+        (a.data.length == b.data.length) &&
+        keccak256(a.data) == keccak256(b.data)
     );
 }
 
@@ -62,11 +63,9 @@ function toBool(uint256 uintVal) pure returns (bool boolVal)
 contract RegistryTestBase is Test, FoundryRandom {
 
     // keep indentical to IRegistry events
-    event LogRegistration(NftId indexed nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
+    event LogRegistration(IRegistry.ObjectInfo info);
 
-    event LogServiceNameRegistration(string serviceName, VersionPart majorVersion); 
-
-    event LogApproval(NftId indexed nftId, ObjectType objectType);
+    event LogServiceNameRegistration(string serviceName, VersionPart majorVersion);
 
     address public constant NFT_LOCK_ADDRESS = address(0x1); // SERVICE and TOKEN nfts are minted for
     bytes32 public constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;
@@ -596,110 +595,6 @@ contract RegistryTestBase is Test, FoundryRandom {
             assertEq(registry.getServiceName(nftId) , serviceName , "getServiceName(nftId) returned unexpected value");
             assertEq(registry.getServiceAddress(serviceName, majorVersion) , expectedInfo.objectAddress, "getServiceAddress(name, versionPart) returned unexpected value");  
         }
-
-        _assert_allowance_all_types(nftId);
-    }
-
-    function _assert_allowance(NftId nftId, ObjectType objectType, bool assertValue) internal
-    {
-        // solhint-disable no-console
-        //console.log("checking allowance for { nftId: %d , objectType: %s }", nftId.toInt(), _typeName[objectType]);
-        //console.log("expected: %s", assertValue);
-        // solhint-enable
-
-        bool allowance = registry.allowance(nftId, objectType);
-
-        assertEq(allowance, assertValue, "allowance(nftId, objectType) returned unexpected value");
-
-        // solhint-disable-next-line
-        //console.log("returned: %s\n", allowance);
-    }
-
-    function _assert_allowance_all_types(NftId nftId) internal
-    {
-        // solhint-disable-next-line
-        //console.log("assert allowance { nftId: %s , objectType: ALL }\n", nftId.toInt());
-
-        for(uint typeIdx = 0; typeIdx < _types.length; typeIdx++)
-        {
-            ObjectType objectType = _types[typeIdx];
-
-            _assert_allowance(nftId, objectType, _isApproved[nftId][objectType]);
-        }
-    }
-    // nftId has no allowance for all objectTypes
-    function _assertFalse_allowance_all_types(NftId nftId) internal
-    {
-        // solhint-disable-next-line
-        //console.log("assertFalse allowance() for ALL types\n");
-
-        for(uint typeIdx = 0; typeIdx < _types.length; typeIdx++)
-        {
-            ObjectType objectType = _types[typeIdx];
-
-            _assert_allowance(nftId, objectType, false);
-        }
-    }
-
-    function _assert_approve(NftId nftId, ObjectType objectType, ObjectType parentType, bytes memory revertMsg) internal
-    {
-        if(revertMsg.length == 0)
-        {
-            _assert_allowance(nftId, objectType, _isApproved[nftId][objectType] );
-        }
-
-        // solhint-disable no-console
-        //console.log("approving { nftId: %d , objectType: %s , parentType: %s }", nftId.toInt(), _typeName[objectType], _typeName[parentType]);
-        //console.log("sender: %s", _getSenderName());
-        //revertMsg.length > 0 ? console.log("expect revert: true\n") :
-        //                        console.log("expect revert: false\n");
-        // solhint-enable
-
-        if(revertMsg.length > 0) 
-        { 
-            vm.expectRevert(revertMsg);
-        }
-        else
-        {
-            vm.expectEmit();
-            emit LogApproval(nftId, objectType);
-        }
-
-        registry.approve(nftId, objectType, parentType);
-
-        if(revertMsg.length == 0)
-        {
-            _isApproved[nftId][objectType] = true;
-            _checkNonUpgradeableRegistryGetters();  
-        }      
-
-        // solhint-disable-next-line
-        //console.log("----\n");
-    }
-
-    function _assert_approve_with_default_checks(NftId nftId, ObjectType objectType, ObjectType parentType) internal
-    {
-        bytes memory revertMsg;
-
-        if(_sender != registryOwner) 
-        {
-            revertMsg = abi.encodeWithSelector(Registry.NotOwner.selector);             
-        }
-        else if(_nftIdByAddress[ _info[nftId].objectAddress ] == zeroNftId())
-        {
-            revertMsg = abi.encodeWithSelector(Registry.NotRegisteredContract.selector, nftId);
-        }
-        else if(_info[nftId].objectType != SERVICE()) 
-        {
-            revertMsg = abi.encodeWithSelector(Registry.NotService.selector, nftId);
-        }
-        else if(_isValidContractTypesCombo[objectType][parentType] == false &&
-                _isValidObjectTypesCombo[objectType][parentType] == false) 
-        {
-            revertMsg = abi.encodeWithSelector(Registry.InvalidTypesCombination.selector, objectType, parentType);
-        } 
-
-        _assert_approve(nftId, objectType, parentType, revertMsg);
     }
 
     function _assert_register(IRegistry.ObjectInfo memory info, bool expectRevert, bytes memory revertMsg) internal returns (NftId nftId)
@@ -737,14 +632,15 @@ contract RegistryTestBase is Test, FoundryRandom {
                 emit LogServiceNameRegistration(name, majorVersion);
             }
             vm.expectEmit();
-            emit LogRegistration( 
+            emit LogRegistration(IRegistry.ObjectInfo( 
                 toNftId(chainNft.calculateTokenId(_nextId)), 
                 info.parentNftId, 
                 info.objectType, 
                 info.isInterceptor,
                 info.objectAddress, 
-                info.initialOwner
-            );
+                info.initialOwner,
+                info.data
+            ));
         }
 
         nftId = registry.register(info); 

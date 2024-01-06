@@ -68,14 +68,6 @@ contract Registry is
     IChainNft _chainNft;
     ChainNft _chainNftInternal;
 
-    /*
-    modifier onlyInitialOwner() {
-        if(
-            msg.sender != getOwner() ||
-            msg.sender != _info[_registryNftId].initialOwner) {
-            revert NotInitialOwner();
-        }
-    }*/
 
     modifier onlyOwner() {
         if(msg.sender != getOwner()) {
@@ -113,8 +105,6 @@ contract Registry is
     }
 
     /// @dev registry protects only against tampering existing records, registering with invalid types pairs and 0 parent address
-    // IMPORTANT: rare case when parentNftId is not registered and == next nftId -> technincally this is ZeroParentAddress error
-    // to catch this check parent address before minting !!!!
     // TODO service registration means its approval for some type?
     // TODO registration of precompile addresses
     function register(ObjectInfo memory info)
@@ -139,8 +129,6 @@ contract Registry is
         address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
 
         // TODO does external call
-        // check for receiver in registry service?
-        // use unsafe transfer?
         uint256 mintedTokenId = _chainNft.mint(
             info.initialOwner,
             interceptor,
@@ -170,33 +158,8 @@ contract Registry is
             _nftIdByAddress[contractAddress] = nftId;
 
             // special case
-            if(objectType == SERVICE())
-            {
-                (
-                    string memory serviceName,
-                    VersionPart majorVersion
-                ) = abi.decode(info.data, (string, VersionPart));
-                bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-
-                // TODO MUST guarantee consistency of service.getVersion() and majorVersion here
-                // TODO update _serviceNftId when registryService with new major version is registered? -> it is fixed in current setup
-                // TODO do not use names -> each object type is registered by corresponding service -> conflicting with approve()
-                if(
-                    majorVersion.toInt() < MAJOR_VERSION_MIN ||
-                    (majorVersion.toInt() > MAJOR_VERSION_MIN &&
-                    _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)] == address(0) )
-                ) {
-                    revert InvalidServiceVersion(majorVersion);
-                }
-                
-                if(_service[serviceNameHash][majorVersion] != address(0)) {
-                    revert ServiceNameAlreadyRegistered(serviceName, majorVersion);
-                }
-
-                _string[nftId] = serviceName;
-                _service[serviceNameHash][majorVersion] = contractAddress;
-
-                emit LogServiceNameRegistration(serviceName, majorVersion); 
+            if(objectType == SERVICE()) {
+                _registerService(info);
             }
         }
         else
@@ -206,67 +169,7 @@ contract Registry is
             }
         }
 
-        emit LogRegistration(nftId, info.parentNftId, info.objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
-    }
-
-    function registerFrom(
-        address from, 
-        ObjectInfo memory info
-    ) external returns (NftId nftId) 
-    {
-        revert();
-    }
-    
-
-    /// @dev 
-    // msg.sender - registry owner 
-    //     CAN approve only registered service contract
-    //     CAN approve any combination specified in _isValidCombination
-    //     CAN NOT approve itself
-    // TODO in case where exists exactly one registered service per objectType (and major version):
-    // - registration and approve is a single operation, no need for separate approve() function
-    // - then approve can be used to adding new valid object-parent combinations???
-    function approve(
-        NftId serviceNftId,
-        ObjectType objectType,
-        ObjectType parentType 
-    ) 
-        public
-        onlyOwner()
-    {
-        address serviceAddress = _info[serviceNftId].objectAddress;
-            
-        if(_nftIdByAddress[serviceAddress].eqz()) {
-            revert NotRegisteredContract(serviceNftId);
-        }
-
-        if(_info[serviceNftId].objectType != SERVICE()) {
-            revert NotService(serviceNftId);
-        }
-
-        if(
-            _isValidContractCombination[objectType][parentType] == false &&
-            _isValidObjectCombination[objectType][parentType] == false) {
-            revert InvalidTypesCombination(objectType, parentType);
-        }
-
-        _isApproved[serviceNftId][objectType] = true;
-
-        emit LogApproval(serviceNftId, objectType);
-    }
-
-    /// @dev returns false for registry owner nft
-    // TODO allowance by address?
-    // TODO checked by registry service -> but registry owner can upgrade registry service not to check allowance....
-    function allowance(
-        NftId nftId,
-        ObjectType object
-    ) 
-        public
-        view 
-        returns (bool)
-    {
-        return _isApproved[nftId][object];
+        emit LogRegistration(info);
     }
 
     // from IRegistry
@@ -327,7 +230,65 @@ contract Registry is
         return ownerOf(address(this));
     }
 
-    // Internals, called only in constructor
+    // Internals
+
+    function _registerService(ObjectInfo memory info)
+        internal
+    {
+        (
+            string memory serviceName,
+            VersionPart majorVersion
+        ) = abi.decode(info.data, (string, VersionPart));
+        bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
+
+        // TODO MUST guarantee consistency of service.getVersion() and majorVersion here
+        // TODO update _serviceNftId when registryService with new major version is registered? -> it is fixed in current setup -> can lock up
+        // TODO do not use names -> each object type is registered by corresponding service -> conflicting with approve()
+        if(
+            majorVersion.toInt() < MAJOR_VERSION_MIN ||
+            (majorVersion.toInt() > MAJOR_VERSION_MIN &&
+            _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)] == address(0) )
+        ) {
+            revert InvalidServiceVersion(majorVersion);
+        }
+        
+        if(_service[serviceNameHash][majorVersion] != address(0)) {
+            revert ServiceNameAlreadyRegistered(serviceName, majorVersion);
+        }
+
+        _string[info.nftId] = serviceName;
+        _service[serviceNameHash][majorVersion] = info.objectAddress;
+
+        emit LogServiceNameRegistration(serviceName, majorVersion); 
+    }
+
+    /// @dev obtain interceptor address for this nft if applicable, address(0) otherwise
+    function _getInterceptor(
+        bool isInterceptor, 
+        address objectAddress,
+        bool parentIsInterceptor,
+        address parentObjectAddress
+    )
+        internal 
+        view 
+        returns (address interceptor) 
+    {
+        if (objectAddress == address(0)) {
+            if (parentIsInterceptor) {
+                return parentObjectAddress;
+            } else {
+                return address(0);
+            }
+        }
+
+        if (isInterceptor) {
+            return objectAddress;
+        }
+
+        return address(0);
+    }
+
+    // Internals called only in constructor
 
     /// @dev protocol registration used to anchor the dip ecosystem relations
     function _registerProtocol() 
@@ -431,32 +392,6 @@ contract Registry is
         _service[serviceNameHash][VersionLib.toVersionPart(MAJOR_VERSION_MIN)] = msg.sender;
         _string[serviceNftId] = serviceName;
         _serviceNftId = serviceNftId;
-    }
-
-    /// @dev obtain interceptor address for this nft if applicable, address(0) otherwise
-    function _getInterceptor(
-        bool isInterceptor, 
-        address objectAddress,
-        bool parentIsInterceptor,
-        address parentObjectAddress
-    )
-        internal 
-        view 
-        returns (address interceptor) 
-    {
-        if (objectAddress == address(0)) {
-            if (parentIsInterceptor) {
-                return parentObjectAddress;
-            } else {
-                return address(0);
-            }
-        }
-
-        if (isInterceptor) {
-            return objectAddress;
-        }
-
-        return address(0);
     }
 
     /// @dev defines which object - parent types relations are allowed to register
