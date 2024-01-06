@@ -29,17 +29,18 @@ contract RegisterableMock is Registerable {
 
 contract RegisterableMockWithFakeAddress is Registerable {
 
-    address _fakeRegisterableAddress;
+    address public _fakeAddress;
+
     constructor(
-        address fakeRegisterableAddress,
         address registryAddress,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory data)
+        bytes memory data,
+        address fakeAddress)
     {
-        _fakeRegisterableAddress = fakeRegisterableAddress;
+        _fakeAddress = fakeAddress;
 
         _initializeRegisterable(
             registryAddress,
@@ -61,7 +62,7 @@ contract RegisterableMockWithFakeAddress is Registerable {
             bytes memory data
         ) = super.getInitialInfo();
 
-        info.objectAddress = _fakeRegisterableAddress;
+        info.objectAddress = _fakeAddress;
 
         return (info, data);
     }

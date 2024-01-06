@@ -124,14 +124,14 @@ contract RegisterServiceTest is RegistryServiceTestBase {
             registryOwner
         );
 
-        vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.UnexpectedRegisterableAddress.selector,
-            address(service),
-            service._invalidAddress()));
-
         vm.prank(registryOwner);
 
-        registryService.registerService(service);
+        (
+            IRegistry.ObjectInfo memory info,
+            bytes memory data 
+        ) = registryService.registerService(service);
+
+        _assert_registered_contract(address(service), info, data);
     }
 
     function test_whenCallerIsNotInitialOwner() public

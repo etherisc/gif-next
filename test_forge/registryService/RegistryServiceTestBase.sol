@@ -11,7 +11,7 @@ import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
-import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../contracts/types/ObjectType.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 
@@ -35,8 +35,9 @@ function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory
         (a.parentNftId == b.parentNftId) &&
         (a.objectType == b.objectType) &&
         (a.objectAddress == b.objectAddress) &&
-        (a.initialOwner == b.initialOwner) /*&&
-        (a.data == b.data)*/
+        (a.initialOwner == b.initialOwner) &&
+        (a.data.length == b.data.length) &&
+        keccak256(a.data) == keccak256(b.data)
     );
 }
 
@@ -63,7 +64,7 @@ function toBool(uint256 uintVal) pure returns (bool boolVal)
 
 contract RegistryServiceTestBase is Test, FoundryRandom {
 
-    address public constant NFT_LOCK_ADDRESS = address(0x1); // TOKEN nfts are minted for
+    address public constant NFT_LOCK_ADDRESS = address(0x1);
 
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
@@ -97,7 +98,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         registerableOwnedByRegistryOwner = new RegisterableMock(
             address(registry), 
             registryNftId, 
-            toObjectType(randomNumber(type(uint96).max)),
+            toObjectType(randomNumber(type(uint8).max)),
             toBool(randomNumber(1)),
             address(uint160(randomNumber(type(uint160).max))),
             ""
@@ -109,7 +110,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         registerableOwnedByOutsider = new RegisterableMock(
             address(registry), 
             registryNftId, 
-            toObjectType(randomNumber(type(uint96).max)),
+            toObjectType(randomNumber(type(uint8).max)),
             toBool(randomNumber(1)),
             address(uint160(randomNumber(type(uint160).max))),
             ""
@@ -131,9 +132,14 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
             bytes memory dataFromRegisterable
         ) = IRegisterable(registerable).getInitialInfo();
 
-        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegistryService), "Invalid info returned #1");
-        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegisterable), "Invalid info returned #2");
-        assertEq(dataFromRegistryService, dataFromRegisterable, "Invalid data returned");
+        infoFromRegisterable.objectAddress = address(registerable);
+
+        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegistryService), 
+            "Info from registry is different from info in registry service");
+        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegisterable), 
+            "Info from registry is different from info in registerable");
+        assertEq(dataFromRegistryService, dataFromRegisterable, 
+            "Data from registry service is different from data in registerable");
     }
 
     /*function _checkRegistryServiceGetters(address registryService, address implementation, Version version, uint64 initializedVersion, uint256 versionsCount)

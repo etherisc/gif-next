@@ -165,14 +165,14 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
             registryOwner
         );
 
-        vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.UnexpectedRegisterableAddress.selector,
-            address(instance),
-            instance._invalidAddress()));
-
         vm.prank(registryOwner);
 
-        registryService.registerInstance(instance);
+        (
+            IRegistry.ObjectInfo memory info,
+            bytes memory data 
+        ) = registryService.registerInstance(instance);
+
+        _assert_registered_contract(address(instance), info, data);  
     }
 
     function test_whenCallerIsNotInitialOwner() public
@@ -243,13 +243,3 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
         registryService.registerInstance(instance);      
     }
 }
-
-/*
-        NftId nftId;
-        NftId parentNftId;
-        ObjectType objectType;
-        bool isInterceptor;
-        address objectAddress;
-        address initialOwner;
-        bytes data;
-        */

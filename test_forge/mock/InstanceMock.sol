@@ -28,7 +28,6 @@ contract InstanceMockWithRandomInvalidType is Instance {
 
     constructor(address registry, NftId registryNftId, address initialOwner)
         Instance(registry, registryNftId, initialOwner)
-    // solhint-disable-next-line no-empty-blocks
     {
         FoundryRandom rng = new FoundryRandom();
 
