@@ -18,30 +18,20 @@ contract RegistryServiceManager is
 
     RegistryService private _registryService; 
 
-    AccessManager _accessManager;
+    AccessManager private _accessManager;
 
     /// @dev initializes proxy manager with registry service implementation and deploys registry
     constructor(
     )
         ProxyManager()
     {
-        bytes memory encodedConstructorArguments = abi.encode(msg.sender);
+        _accessManager = new AccessManager(msg.sender);
 
-        bytes memory accessManagerCreationCode = ContractDeployerLib.getCreationCode(
-            type(AccessManager).creationCode,
-            encodedConstructorArguments);
-
-        address accessManagerAddress = ContractDeployerLib.deploy(
-            accessManagerCreationCode,
-            ACCESS_MANAGER_CREATION_CODE_HASH);
-
-        _accessManager = AccessManager(accessManagerAddress);
-
-        encodedConstructorArguments = abi.encode(accessManagerAddress, type(Registry).creationCode);
+        bytes memory initializationData = abi.encode(address(_accessManager), type(Registry).creationCode);
 
         IVersionable versionable = deploy(
             address(new RegistryService()), 
-            encodedConstructorArguments);
+            initializationData);
 
         _registryService = RegistryService(address(versionable));
 
