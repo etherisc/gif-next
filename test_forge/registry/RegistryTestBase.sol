@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
-import {IERC721Errors} from "@openzeppelin5/contracts/interfaces/draft-IERC6093.sol";
-import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {EnumerableSet} from "@openzeppelin5/contracts/utils/structs/EnumerableSet.sol";
-import {Strings} from "@openzeppelin5/contracts/utils/Strings.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";

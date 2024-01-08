@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {ERC165Checker} from "@openzeppelin5/contracts/utils/introspection/ERC165Checker.sol";
-import {IERC721Receiver} from "@openzeppelin5/contracts/token/ERC721/IERC721Receiver.sol";
-import {AccessManagedUpgradeable} from "@openzeppelin5/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";

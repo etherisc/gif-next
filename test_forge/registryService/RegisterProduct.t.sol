@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {IAccessManaged} from "@openzeppelin5/contracts/access/manager/IAccessManaged.sol";
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";

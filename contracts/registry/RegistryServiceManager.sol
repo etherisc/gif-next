@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {AccessManager} from "@openzeppelin5/contracts/access/manager/AccessManager.sol";
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 

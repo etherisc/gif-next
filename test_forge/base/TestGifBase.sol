@@ -1,10 +1,10 @@
 pragma solidity 0.8.20;
 
-import {AccessManager} from "@openzeppelin5/contracts/access/manager/AccessManager.sol";
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {ChainNft, IChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";

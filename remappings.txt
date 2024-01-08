@@ -1,5 +1,3 @@
-@openzeppelin5/contracts/=lib/openzeppelin-contracts-500/contracts/
-@openzeppelin5/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable-500/contracts/
 @openzeppelin/contracts/=lib/openzeppelin-contracts-500/contracts/
 @openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable-500/contracts/
 ds-test/=lib/forge-std/lib/ds-test/src/

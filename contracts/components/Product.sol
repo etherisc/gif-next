@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IRisk} from "../instance/module/risk/IRisk.sol";
 import {ITreasury} from "../instance/module/treasury/ITreasury.sol";

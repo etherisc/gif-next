@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {console} from "../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "./base/TestGifBase.sol";
