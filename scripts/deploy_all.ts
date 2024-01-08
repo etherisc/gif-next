@@ -10,12 +10,12 @@ import { deployAndRegisterServices } from "./libs/services";
 
 
 async function main() {
-    const { protocolOwner, masterInstanceOwner } = await getNamedAccounts();
+    const { protocolOwner, masterInstanceOwner, instanceServiceOwner } = await getNamedAccounts();
 
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
-    // TODO const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
+    const services = await deployAndRegisterServices(instanceServiceOwner, registry, libraries);
     
     // // deploy instance contracts
     const instance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry);

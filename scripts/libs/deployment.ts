@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { AddressLike, BaseContract, Signer, TransactionResponse, resolveAddress } from "ethers";
+import { AddressLike, BaseContract, Signer, TransactionReceipt, TransactionResponse, resolveAddress } from "ethers";
 import hre, { ethers } from "hardhat";
 import { logger } from "../logger";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
@@ -11,6 +11,7 @@ import { util } from "chai";
 type DeploymentResult = {
     address: AddressLike; 
     deploymentTransaction: TransactionResponse | null;
+    deploymentReceipt: TransactionReceipt | null;
     contract: BaseContract | null;
 }
 
@@ -146,6 +147,7 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
         logger.debug("... mined");
         
         const deployedContractAddress = deployTxResponse.target;
+        const deploymentReceipt = await ethers.provider.getTransactionReceipt(deployTxResponse.deploymentTransaction()?.hash || "0x");
         deploymentState.setContractAddress(contractName, await resolveAddress(deployedContractAddress));
         logger.info(`${contractName} deployed to ${deployedContractAddress}`);
         
@@ -154,6 +156,7 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
         return { 
             address: deployedContractAddress, 
             deploymentTransaction: deployTxResponse.deploymentTransaction(), 
+            deploymentReceipt: deploymentReceipt,
             contract: deployTxResponse 
         };
 }

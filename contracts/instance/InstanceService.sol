@@ -24,10 +24,6 @@ contract InstanceService is ServiceBase, IInstanceService {
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
     string public constant NAME = "InstanceService";
 
-    constructor(address registryAddress) ServiceBase() {
-        _registryAddress = registryAddress;
-    }
-
     function createInstanceClone()
         external 
         returns (
@@ -69,7 +65,7 @@ contract InstanceService is ServiceBase, IInstanceService {
     // registry is getting instantiated and locked to registry service address forever
     function _initialize(
         address owner, 
-        bytes memory instanceByteCodeWithInitCode
+        bytes memory data
     )
         internal
         initializer
@@ -86,13 +82,15 @@ contract InstanceService is ServiceBase, IInstanceService {
         //     instanceCreationCode,
         //     INSTANCE_CREATION_CODE_HASH);
 
+        address initialOwner = address(0);
+        (_registryAddress, initialOwner) = abi.decode(data, (address, address));
+
         // // TODO register instance in registry  
-        // IRegistry registry = IRegistry(_registryAddress);
-        // NftId instanceNftId = registry.getNftId(instanceAddress);
+        IRegistry registry = IRegistry(_registryAddress);
+        NftId registryNftId = registry.getNftId(_registryAddress);
 
-        // _initializeServiceBase(instanceAddress, instanceNftId, owner);
-        // linkToRegisteredNftId();
-
+        _initializeServiceBase(_registryAddress, registryNftId, initialOwner);
+        
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IInstanceService).interfaceId);
     }

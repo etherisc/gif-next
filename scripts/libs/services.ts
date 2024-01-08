@@ -1,18 +1,17 @@
 import { AddressLike, Signer } from "ethers";
-import { InstanceService, InstanceServiceManager, Registerable } from "../../typechain-types";
+import { InstanceService, InstanceServiceManager, InstanceService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
-import { RegistryAddresses, register } from "./registry";
-import { executeTx, getFieldFromLogs } from "./transaction";
+import { RegistryAddresses } from "./registry";
+import { getFieldFromLogs } from "./transaction";
 // import IRegistry abi
-import IRegistryABI from "../../artifacts/contracts/registry/IRegistry.sol/IRegistry.json";
-import { IRegistryInterface } from "../../typechain-types/contracts/registry/IRegistry";
 
 export type ServiceAddresses = {
     instanceServiceNftId: string,
     instanceServiceAddress: AddressLike,
     instanceService: InstanceService,
+    instanceServiceManagerAddress: AddressLike,
     // componentOwnerServiceAddress: AddressLike,
     // componentOwnerServiceNftId: string,
     // distributionServiceAddress: AddressLike,
@@ -24,7 +23,7 @@ export type ServiceAddresses = {
 }
 
 export async function deployAndRegisterServices(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses): Promise<ServiceAddresses> {
-    const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract } = await deployContract(
+    const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, deploymentTransaction: ismDplTx, deploymentReceipt: ismDplRcpt } = await deployContract(
         "InstanceServiceManager",
         owner,
         [registry.registryAddress],
@@ -42,15 +41,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
     const instanceServiceManager = instanceServiceManagerBaseContract as InstanceServiceManager;
     const instanceServiceAddress = await instanceServiceManager.getInstanceService();
-
-    logger.info(`instanceService deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress}`);
-
-    // TODO - register as owner if instanceServiceManager
-    logger.info(`registering instanceService as owner => ${await owner.getAddress()}`);
-    const rcpt = await executeTx(() => registry.registryService.connect(owner).registerService(instanceServiceAddress));
-    const nfdId = getFieldFromLogs(rcpt, registry.registry.interface, "LogRegistration", "nftId");
+    const instanceServiceNfdId = getFieldFromLogs(ismDplRcpt!, registry.registry.interface, "LogRegistration", "nftId");
     
-    logger.info(`instanceService registered - instanceServiceAddress: ${instanceServiceAddress} nftId: ${nfdId}`);
+    logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
+
+    const instanceService = InstanceService__factory.connect(instanceServiceAddress, owner);
 
     // const componentOwnerServiceNftId = await register(componentOwnerServiceBaseContract as Registerable, componentOwnerServiceAddress, "ComponentOwnerService", registry, owner);
     // logger.info(`componentOwnerService registered - componentOwnerServiceNftId: ${componentOwnerServiceNftId}`);
@@ -95,6 +90,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     // logger.info(`poolService registered - poolServiceNftId: ${poolServiceNftId}`);
 
     return {
+        instanceServiceNftId: instanceServiceNfdId as string,
+        instanceServiceAddress: instanceServiceAddress,
+        instanceService: instanceService,
+        instanceServiceManagerAddress: instanceServiceManagerAddress,
         // componentOwnerServiceAddress,
         // componentOwnerServiceNftId,
         // distributionServiceAddress,

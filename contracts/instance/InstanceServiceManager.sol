@@ -19,11 +19,12 @@ contract InstanceServiceManager is ProxyManager {
     )
         ProxyManager()
     {
-        InstanceService instSrv = new InstanceService(registryAddress);
-        bytes memory initCode = type(InstanceService).creationCode;
+        InstanceService instSrv = new InstanceService();
+        // bytes memory initCode = type(InstanceService).creationCode;
+        bytes memory data = abi.encode(registryAddress, address(this));
         IVersionable versionable = deploy(
             address(instSrv), 
-            initCode);
+            data);
 
         _instanceService = InstanceService(address(versionable));
 

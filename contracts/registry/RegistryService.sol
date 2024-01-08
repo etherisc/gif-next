@@ -45,7 +45,7 @@ contract RegistryService is
     error NotInstance();
 
     error InvalidAddress(address registerableAddress);
-    error InvalidInitialOwner(address initialOwner);
+    error InvalidInitialOwner(address initialOwner, address owner);
     error SelfRegistration();
     error InvalidType(ObjectType objectType);
 
@@ -109,6 +109,7 @@ contract RegistryService is
     // IMPORTANT: MUST NOT check owner before calling external contract
     function registerService(IService service)
         external
+        // TODO restrict access
         returns(
             IRegistry.ObjectInfo memory info,
             bytes memory data
@@ -117,16 +118,11 @@ contract RegistryService is
         if(service.supportsInterface(type(IService).interfaceId) == false) {
             revert NotService();
         } 
-
+        
         (
             info, 
             data
         ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
-
-        NftId registryNftId = _registry.getNftId(address(_registry));
-        if(msg.sender != _registry.ownerOf(registryNftId)) {
-            revert NotRegistryOwner();
-        }
 
         info.initialOwner = NFT_LOCK_ADDRESS;//registry.getLockAddress();
         info.nftId = _registry.register(info);
@@ -295,7 +291,7 @@ contract RegistryService is
         if(
             getRegistry().isRegistered(owner) ||
             info.initialOwner != owner) { // contract owner protection 
-            revert InvalidInitialOwner(info.initialOwner);
+            revert InvalidInitialOwner(info.initialOwner, owner);
         }
 
         if(msg.sender == address(registerable)) {
@@ -337,7 +333,7 @@ contract RegistryService is
             // TODO non registered address can register object(e.g. POLICY()) and then transfer associated nft to registered contract
             // what are motivations to do so?
             // at least registered contract can not register objects by itself, SERVICE, 
-            revert InvalidInitialOwner(info.initialOwner); 
+            revert InvalidInitialOwner(info.initialOwner, address(0)); 
         }
 
         // can catch all 3 if check that initialOwner is not registered
