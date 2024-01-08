@@ -27,6 +27,26 @@ contract RegisterableMock is Registerable {
     }
 }
 
+contract SelfOwnedRegisterableMock is Registerable {
+
+    constructor(
+        address registryAddress,
+        NftId parentNftId,
+        ObjectType objectType,
+        bool isInterceptor,
+        bytes memory data) 
+        public
+    {
+        _initializeRegisterable(
+            registryAddress,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(this),
+            data);        
+    }
+}
+
 contract RegisterableMockWithFakeAddress is Registerable {
 
     address public _fakeAddress;

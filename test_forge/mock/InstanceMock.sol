@@ -22,6 +22,14 @@ contract InstanceMock is Instance {
     {}
 }
 
+contract SelfOwnedInstanceMock is Instance {
+
+    constructor(address registry, NftId registryNftId)
+        Instance(registry, registryNftId, address(this))
+    // solhint-disable-next-line no-empty-blocks
+    {}
+}
+
 contract InstanceMockWithRandomInvalidType is Instance {
 
     ObjectType public _invalidType;

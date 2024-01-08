@@ -13,10 +13,6 @@ import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
-//import {IVersionable} from "../../contracts/shared/IVersionable.sol";
-//import {Versionable} from "../../contracts/shared/Versionable.sol";
-
-//import {IService} from "../../contracts/instance/base/IService.sol";
 
 contract ServiceMock is ServiceBase {
 
@@ -25,6 +21,20 @@ contract ServiceMock is ServiceBase {
     constructor(address registry, NftId registryNftId, address initialOwner)
     {
         _initializeServiceBase(registry, registryNftId, initialOwner);
+    }
+
+    function getName() public pure override returns(string memory name) {
+        return NAME;
+    }
+}
+
+contract SelfOwnedServiceMock is ServiceBase {
+
+    string public constant NAME = "SelfOwnedServiceMock";
+
+    constructor(address registry, NftId registryNftId)
+    {
+        _initializeServiceBase(registry, registryNftId, address(this));
     }
 
     function getName() public pure override returns(string memory name) {

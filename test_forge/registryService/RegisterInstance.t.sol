@@ -20,16 +20,21 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceTestBase} from "./RegistryServiceTestBase.sol";
 
 import {InstanceMock,
+        SelfOwnedInstanceMock,
         InstanceMockWithRandomInvalidType, 
         InstanceMockWithRandomInvalidAddress} from "../mock/InstanceMock.sol";
 
 contract RegisterInstanceTest is RegistryServiceTestBase {
 
+    address instanceOwner = makeAddr("instanceOwner");
+
+    IService componentOwnerService;
+
     function setUp() public override
     {
         super.setUp();
 
-        IService componentOwnerService = new ComponentOwnerService(
+        componentOwnerService = new ComponentOwnerService(
             address(registry), 
             registryNftId, 
             registryOwner            
@@ -60,14 +65,14 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
         vm.stopPrank();
     }
 
-    function test_callByOutsider() public
+    function test_callByInitialOwner() public
     {
         InstanceMock instance = new InstanceMock(
             address(registry), 
             registryNftId, 
-            outsider);
+            instanceOwner);
 
-        vm.prank(outsider);
+        vm.prank(instanceOwner);
 
         (
             IRegistry.ObjectInfo memory info,
@@ -79,17 +84,19 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
 
     function test_selfRegistration() public
     {
-        vm.prank(registryOwner);
+        SelfOwnedInstanceMock selfOwnedInstance = new SelfOwnedInstanceMock(
+            address(registry), 
+            registryNftId); 
+
+        vm.prank(address(selfOwnedInstance));
 
         vm.expectRevert(abi.encodeWithSelector(RegistryService.SelfRegistration.selector));
 
-        registryService.registerInstance(IInstance(registryOwner));        
+        registryService.registerInstance(selfOwnedInstance); 
     }
 
     function test_withEOA() public
     {
-        vm.prank(registryOwner);
-
         vm.expectRevert();
 
         registryService.registerInstance(IInstance(EOA));
@@ -97,17 +104,13 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
 
     function test_contractWithoutIERC165() public
     {
-        vm.prank(registryOwner);
-
         vm.expectRevert();
 
-        registryService.registerInstance(IInstance(address(contractWithoutIERC165)));
+        registryService.registerInstance(IInstance(contractWithoutIERC165));
     }
 
     function test_withIERC165() public
     {
-        vm.prank(registryOwner);
-
         vm.expectRevert(abi.encodeWithSelector(RegistryService.NotInstance.selector));
 
         registryService.registerInstance(IInstance(address(erc165)));
@@ -115,8 +118,6 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
 
     function test_withIRegisterable() public
     {
-        vm.prank(registryOwner);
-
         vm.expectRevert(abi.encodeWithSelector(RegistryService.NotInstance.selector));
 
         registryService.registerInstance(IInstance(address(registerableOwnedByRegistryOwner)));
@@ -127,9 +128,9 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
         InstanceMock instance = new InstanceMock(
             address(registry), 
             registryNftId, 
-            registryOwner);
+            instanceOwner);
 
-        vm.prank(registryOwner);
+        vm.prank(instanceOwner);
 
         (
             IRegistry.ObjectInfo memory info,
@@ -144,7 +145,7 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
         InstanceMockWithRandomInvalidType instance = new InstanceMockWithRandomInvalidType(
             address(registry),
             registryNftId,
-            registryOwner
+            instanceOwner
         );
 
         vm.expectRevert(abi.encodeWithSelector(
@@ -152,7 +153,7 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
             INSTANCE(),
             instance._invalidType()));
 
-        vm.prank(registryOwner);
+        vm.prank(instanceOwner);
 
         registryService.registerInstance(instance);
     }
@@ -162,10 +163,10 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
         InstanceMockWithRandomInvalidAddress instance = new InstanceMockWithRandomInvalidAddress(
             address(registry),
             registryNftId,
-            registryOwner
+            instanceOwner
         );
 
-        vm.prank(registryOwner);
+        vm.prank(instanceOwner);
 
         (
             IRegistry.ObjectInfo memory info,
@@ -180,8 +181,8 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
         InstanceMock instance = new InstanceMock(
             address(registry),
             registryNftId,
-            outsider
-        );  
+            instanceOwner
+        );
     
         vm.prank(registryOwner);
 
@@ -189,7 +190,15 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
             RegistryService.NotRegisterableOwner.selector,
             registryOwner));
 
-        registryService.registerInstance(instance);  
+        registryService.registerInstance(instance);   
+
+        vm.prank(outsider);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            RegistryService.NotRegisterableOwner.selector,
+            outsider));
+
+        registryService.registerInstance(instance);   
     }
 
     function test_withZeroInitialOwner() public
@@ -200,11 +209,11 @@ contract RegisterInstanceTest is RegistryServiceTestBase {
             address(0)
         );  
 
-        vm.prank(registryOwner);
+        vm.prank(instanceOwner);
 
         vm.expectRevert(abi.encodeWithSelector(
             RegistryService.NotRegisterableOwner.selector,
-            registryOwner));
+            instanceOwner));
 
         registryService.registerInstance(instance);  
     }

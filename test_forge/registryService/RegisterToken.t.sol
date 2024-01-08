@@ -30,7 +30,13 @@ contract RegisterTokenTest is RegistryServiceTestBase {
 
         vm.expectRevert(abi.encodeWithSelector(RegistryService.SelfRegistration.selector));
 
-        registryService.registerToken(registryOwner);        
+        registryService.registerToken(registryOwner);
+
+        vm.prank(contractWithoutIERC165);
+
+        vm.expectRevert(abi.encodeWithSelector(RegistryService.SelfRegistration.selector));
+
+        registryService.registerToken(contractWithoutIERC165);
     }
 
     function test_withEOA() public
@@ -48,13 +54,13 @@ contract RegisterTokenTest is RegistryServiceTestBase {
     {
         vm.prank(registryOwner);
 
-        NftId nftId = registryService.registerToken(address(contractWithoutIERC165));
+        NftId nftId = registryService.registerToken(contractWithoutIERC165);
 
         IRegistry.ObjectInfo memory info = registry.getObjectInfo(nftId);
 
-        assertEq(registry.getNftId(address(contractWithoutIERC165)).toInt(), nftId.toInt(), "NftId of token registered is different");
+        assertEq(registry.getNftId(contractWithoutIERC165).toInt(), nftId.toInt(), "NftId of token registered is different");
         assertEq(info.objectType.toInt(), TOKEN().toInt(), "Type of token registered is not TOKEN");
-        assertEq(info.objectAddress, address(contractWithoutIERC165), "Address of token registered is different");
+        assertEq(info.objectAddress, contractWithoutIERC165, "Address of token registered is different");
         assertEq(info.initialOwner, NFT_LOCK_ADDRESS, "Initial owner of the token is different");
     }
 
@@ -62,13 +68,13 @@ contract RegisterTokenTest is RegistryServiceTestBase {
     {
         vm.prank(registryOwner);
 
-        NftId nftId = registryService.registerToken(address(erc165));
+        NftId nftId = registryService.registerToken(erc165);
 
         IRegistry.ObjectInfo memory info = registry.getObjectInfo(nftId);
 
-        assertEq(registry.getNftId(address(erc165)).toInt(), nftId.toInt(), "NftId of token registered is different");
+        assertEq(registry.getNftId(erc165).toInt(), nftId.toInt(), "NftId of token registered is different");
         assertEq(info.objectType.toInt(), TOKEN().toInt(), "Type of token registered is not TOKEN");
-        assertEq(info.objectAddress, address(erc165), "Address of token registered is different");
+        assertEq(info.objectAddress, erc165, "Address of token registered is different");
         assertEq(info.initialOwner, NFT_LOCK_ADDRESS, "Initial owner of the token is different");
     }
 

@@ -20,6 +20,13 @@ function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("
 function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("PoolOwnerRole"); }
 function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId("ProductOwnerRole"); }
 
+function PRODUCT_REGISTRAR_ROLE() pure returns(uint64 roleId) { return 1; }
+function POOL_REGISTRAR_ROLE() pure returns(uint64 roleId) { return 2; }
+function DISTRIBUTION_REGISTRAR_ROLE() pure returns(uint64 roleId) { return 3; }
+function ORACLE_REGISTRAR_ROLE() pure returns(uint64 roleId) { return 4; }
+function POLICY_REGISTRAR_ROLE() pure returns(uint64 roleId) { return 5; }
+function BUNDLE_REGISTRAR_ROLE() pure returns(uint64 roleId) { return 6; }
+
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {
     return RoleId.unwrap(a) == RoleId.unwrap(b);

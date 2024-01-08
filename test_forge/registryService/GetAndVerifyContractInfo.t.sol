@@ -13,7 +13,9 @@ import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceHarnessTestBase, toBool, eqObjectInfo} from "./RegistryServiceHarnessTestBase.sol";
 
-import {RegisterableMock, RegisterableMockWithFakeAddress} from "../mock/RegisterableMock.sol";
+import {RegisterableMock,
+        SelfOwnedRegisterableMock,
+        RegisterableMockWithFakeAddress} from "../mock/RegisterableMock.sol";
 
 
 contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
@@ -225,5 +227,26 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             registerable,
             registerableType,
             address(registry));  
+    }
+
+    function test_withSelfOwnedRegisterable() public
+    {
+        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        
+        SelfOwnedRegisterableMock registerable = new SelfOwnedRegisterableMock(
+            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // parentNftId
+            registerableType,
+            toBool(randomNumber(1)), // isInterceptor
+            ""
+        );     
+
+        vm.expectRevert(abi.encodeWithSelector(
+            RegistryService.SelfRegistration.selector)); 
+
+        registryServiceHarness.getAndVerifyContractInfo(
+            registerable,
+            registerableType,
+            address(registerable)); 
     }
 }

@@ -13,7 +13,8 @@ import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceTestBase} from "./RegistryServiceTestBase.sol";
 
-import {ServiceMock, 
+import {ServiceMock,
+        SelfOwnedServiceMock,
         ServiceMockWithRandomInvalidType, 
         ServiceMockWithRandomInvalidAddress, 
         ServiceMockNewVersion, 
@@ -40,15 +41,41 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     {
         vm.prank(registryOwner);
 
+        vm.expectRevert();
+        registryService.registerService(IService(registryOwner));
+
+        vm.prank(outsider);
+
+        vm.expectRevert();
+
+        registryService.registerService(IService(outsider));    
+
+        ServiceMock service = new ServiceMock(
+            address(registry), 
+            registryNftId, 
+            registryOwner);
+
+        vm.prank(address(service));
+
+        vm.expectRevert(abi.encodeWithSelector(
+            RegistryService.NotRegisterableOwner.selector,
+            address(service)));
+
+        registryService.registerService(service);  
+
+        SelfOwnedServiceMock selfOwnedService = new SelfOwnedServiceMock(
+            address(registry), 
+            registryNftId);
+
+        vm.prank(address(selfOwnedService));
+
         vm.expectRevert(abi.encodeWithSelector(RegistryService.SelfRegistration.selector));
 
-        registryService.registerService(IService(registryOwner));        
+        registryService.registerService(selfOwnedService);  
     }
 
     function test_withEOA() public
     {
-        vm.prank(registryOwner);
-
         vm.expectRevert();
 
         registryService.registerService(IService(EOA));
@@ -56,26 +83,20 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
     function test_contractWithoutIERC165() public
     {
-        vm.prank(registryOwner);
-
         vm.expectRevert();
 
-        registryService.registerService(IService(address(contractWithoutIERC165)));
+        registryService.registerService(IService(contractWithoutIERC165));
     }
 
     function test_withIERC165() public
     {
-        vm.prank(registryOwner);
-
         vm.expectRevert(abi.encodeWithSelector(RegistryService.NotService.selector));
 
-        registryService.registerService(IService(address(erc165)));
+        registryService.registerService(IService(erc165));
     }
 
     function test_withIRegisterable() public
     {
-        vm.prank(registryOwner);
-
         vm.expectRevert(abi.encodeWithSelector(RegistryService.NotService.selector));
 
         registryService.registerService(IService(address(registerableOwnedByRegistryOwner)));

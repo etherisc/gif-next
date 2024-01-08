@@ -1,20 +1,20 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {Ownable} from "@openzeppelin5/contracts/access/Ownable.sol";
-import {IERC721Errors} from "@openzeppelin5/contracts/interfaces/draft-IERC6093.sol";
-import {IERC20Metadata} from "@openzeppelin5/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {AccessManager} from "@openzeppelin5/contracts/access/manager/AccessManager.sol";
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
+import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
-import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, SERVICE} from "../../contracts/types/ObjectType.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 
+import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IService} from "../../contracts/instance/base/IService.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -72,6 +72,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
     address public invalidAddress = makeAddr("invalidAddress");
 
     RegistryServiceManager public registryServiceManager;
+    AccessManager accessManager;
     RegistryService public registryService;
     IRegistry public registry;
 
@@ -82,32 +83,19 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
     address public erc165 = address(new ERC165()); 
 
     RegisterableMock public registerableOwnedByRegistryOwner;
-    RegisterableMock public registerableOwnedByOutsider;
 
     function setUp() public virtual
     {
         vm.startPrank(registryOwner);
         registryServiceManager = new RegistryServiceManager();
-
+        accessManager = registryServiceManager.getAccessManager();
         registryService = registryServiceManager.getRegistryService();
         registry = registryServiceManager.getRegistry();
-        registryServiceNftId = registry.getNftId(address(registryService));
 
+        registryServiceNftId = registry.getNftId(address(registryService));
         registryNftId = registry.getNftId(address(registry));
 
         registerableOwnedByRegistryOwner = new RegisterableMock(
-            address(registry), 
-            registryNftId, 
-            toObjectType(randomNumber(type(uint8).max)),
-            toBool(randomNumber(1)),
-            address(uint160(randomNumber(type(uint160).max))),
-            ""
-        ); 
-
-        vm.stopPrank();
-        vm.startPrank(outsider);
-
-        registerableOwnedByOutsider = new RegisterableMock(
             address(registry), 
             registryNftId, 
             toObjectType(randomNumber(type(uint8).max)),
@@ -142,10 +130,16 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
             "Data from registry service is different from data in registerable");
     }
 
-    /*function _checkRegistryServiceGetters(address registryService, address implementation, Version version, uint64 initializedVersion, uint256 versionsCount)
+    /*function _assert_registryServiceGetters(address owner, address implementation, Version version, uint64 initializedVersion, uint256 versionsCount) internal
     {
-        _assert_versionable_getters(IVersionable(registryService), implementation, version, initializedVersion, versionsCount);
-        _assert_registerable_getters(IRegisterable(registryService), registryService.getRegistry());
+        _assert_versionableGetters(implementation, version, initializedVersion, versionsCount);
+        _assert_registerableGetters(IRegistry.ObjectInfo(
+            registryServiceNftId, 
+            registryNftId, 
+            SERVICE(),
+            address(registryService),
+            owner,
+            ""));
 
         //IService
         assertTrue(Strings.equal(registryService.getName(), "RegistryService"), "getName() returned unexpected value");
@@ -153,9 +147,9 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         assertEq(registryService.getMajorVersion(), majorVersion, "getMajorVersion() returned unexpected value" );
     }
 
-    function _assert_versionable_getters(IVersionable versionable, address implementation, Version version, uint64 initializedVersion, uint256 versionsCount) internal
+    function _assert_versionableGetters(address implementation, Version version, uint64 initializedVersion, uint256 versionsCount) internal
     {
-        console.log("Checking all IVersionable getters\n");
+        IVersionable versionable = IVersionable(address(registryService));
 
         assertNotEq(address(versionable), address(0), "test parameter error: versionable address is zero");
         assertNotEq(implementation, address(0), "test parameter error: implementation address is zero");
@@ -177,22 +171,18 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         assertEq(TimestampLib.toInt(versionInfo.activatedAt), TimestampLib.toInt(blockTimestamp()), "getVersionInfo(version).activatedAt returned unxpected value");
         assertEq(BlocknumberLib.toInt(versionInfo.activatedIn), BlocknumberLib.toInt(blockBlocknumber()), "getVersionInfo(version).activatedIn returned unxpected value");        
     }
-    function _assert_registerable_getters(IRegisterable registerable, address registry) internal
+    function _assert_registerableGetters(IRegistry.ObjectInfo info) internal
     {
-        console.log("Checking all IRegisterable getters\n");
+        IRegisterable registerable = IRegisterable(address(registryService));
 
         assertEq(address(registerable.getRegistry()), address(registry), "getRegistry() returned unxpected value");
         // TODO global registry case
-        assertEq(registerable.getNftId().toInt(), registryNftId.toInt(), "getNftId() returned unxpected value #1");
-        assertNotEq(registerable.getNftId().toInt(), protocolNftId.toInt(), "getNftId() returned unexpected value #2");
-        assertNotEq(registerable.getNftId().toInt(), globalRegistryNftId.toInt(), "getNftId() returned unexpected value #3");        
+        assertEq(registerable.getNftId().toInt(), info.nftId.toInt(), "getNftId() returned unxpected value #1");
 
-        (IRegistry.ObjectInfo memory initialInfo, bytes memory initialData) = registerable.getInitialInfo();
-        assertEq(initialInfo.nftId.toInt(), registryNftId.toInt(), "getInitialInfo().nftId returned unexpected value");
-        assertEq(initialInfo.parentNftId.toInt(), globalRegistryNftId.toInt(), "getInitialInfo().parentNftId returned unexpected value");
-        assertEq(initialInfo.objectType.toInt(), REGISTRY().toInt(), "getInitialInfo().objectType returned unexpected value");
-        assertEq(initialInfo.objectAddress, address(registry), "getInitialInfo().objectAddress returned unexpected value");
-        assertEq(initialInfo.initialOwner, registryOwner, "getInitialInfo().initialOwner returned unexpected value");
-        assertTrue(initialInfo.data.length == 0, "getInitialInfo().data returned unexpected value");       
+        (IRegistry.ObjectInfo memory infoFromRegisterable, bytes memory dataFromRegisterable) = registerable.getInitialInfo();
+        IRegistry.ObjectInfo infoFromRegistry = registry.getObjectInfo(registryServiceNftId);
+        
+        assertTrue(eqObjectInfo(info, infoFromRegisterable), "getInitialInfo() returned unexpected value");
+        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegisterable), "getInitialInfo() returned unexpected value");
     }*/
 }

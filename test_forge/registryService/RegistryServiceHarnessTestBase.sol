@@ -78,12 +78,14 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
                 RegistryService.NotRegisterableOwner.selector,
                 expectedOwner));
             expectRevert = true;
+        } else if(info.initialOwner == address(registerable)) {
+            vm.expectRevert(abi.encodeWithSelector(RegistryService.SelfRegistration.selector));
+            expectRevert = true;
         } else if(info.initialOwner == address(0)) {
-            vm.expectRevert(abi.encodeWithSelector(
-                RegistryService.RegisterableOwnerIsZero.selector));
+            vm.expectRevert(abi.encodeWithSelector(RegistryService.RegisterableOwnerIsZero.selector));
+            expectRevert = true;
         }else if(registry.isRegistered(info.initialOwner)) { 
-            vm.expectRevert(abi.encodeWithSelector(
-                RegistryService.RegisterableOwnerIsRegistered.selector));
+            vm.expectRevert(abi.encodeWithSelector(RegistryService.RegisterableOwnerIsRegistered.selector));
             expectRevert = true;
         }
 

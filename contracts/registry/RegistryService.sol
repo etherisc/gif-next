@@ -124,9 +124,6 @@ contract RegistryService is
             bytes memory data
         ) 
     {
-        if(msg.sender == address(service)) {
-            revert SelfRegistration();
-        }
 
         // CAN revert if no ERC165 support -> will revert with empty message 
         if(!service.supportsInterface(type(IService).interfaceId)) {
@@ -162,9 +159,6 @@ contract RegistryService is
             bytes memory data
         ) 
     {
-        if(msg.sender == address(instance)) {
-            revert SelfRegistration();
-        }
 
         if(!instance.supportsInterface(type(IInstance).interfaceId)) {
             revert NotInstance();
@@ -376,6 +370,10 @@ contract RegistryService is
 
         if(owner != expectedOwner) { // registerable owner protection
             revert NotRegisterableOwner(expectedOwner);
+        }
+
+        if(owner == address(registerable)) {
+            revert SelfRegistration();
         }
 
         if(owner == address(0)) {
