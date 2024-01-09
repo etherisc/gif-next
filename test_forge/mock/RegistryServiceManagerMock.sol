@@ -9,8 +9,9 @@ import {RegistryServiceHarness} from "../registryService/RegistryServiceHarness.
 contract RegistryServiceManagerMock is RegistryServiceManager
 {
     constructor(
+        address accessManager
     )
-        RegistryServiceManager()
+        RegistryServiceManager(accessManager)
     {
         bytes memory emptyUpgradeData;
 

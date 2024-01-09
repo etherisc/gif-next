@@ -214,10 +214,8 @@ contract TestGifBase is Test {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        registryServiceManager = new RegistryServiceManager();
-
-        accessManager = registryServiceManager.getAccessManager();
-
+        accessManager = new AccessManager(registryOwner);
+        registryServiceManager = new RegistryServiceManager(address(accessManager));
         registryService = registryServiceManager.getRegistryService();
 
         IRegistry registry_ = registryService.getRegistry();

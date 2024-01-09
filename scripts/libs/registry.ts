@@ -20,21 +20,28 @@ export type RegistryAddresses = {
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
-    const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
-        "RegistryServiceManager",
+    const { address: accessManagerAddress } = await deployContract(
+        "AccessManager",
         owner,
-        undefined,
+        [owner],
         {
-            libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress,
-                VersionLib: libraries.versionLibAddress,
-                VersionPartLib: libraries.versionPartLibAddress,
-                ContractDeployerLib: libraries.contractDeployerLibAddress,
-                BlocknumberLib: libraries.blockNumberLibAddress,
-            }
         });
-    const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
+
+        const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
+            "RegistryServiceManager",
+            owner,
+            [accessManagerAddress],
+            {
+                libraries: {
+                    NftIdLib: libraries.nftIdLibAddress,
+                    ObjectTypeLib: libraries.objectTypeLibAddress,
+                    VersionLib: libraries.versionLibAddress,
+                    VersionPartLib: libraries.versionPartLibAddress,
+                    ContractDeployerLib: libraries.contractDeployerLibAddress,
+                    BlocknumberLib: libraries.blockNumberLibAddress,
+                }
+            });
+        const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
 
     const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);

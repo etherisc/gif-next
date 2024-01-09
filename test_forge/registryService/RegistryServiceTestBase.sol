@@ -87,8 +87,8 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
     function setUp() public virtual
     {
         vm.startPrank(registryOwner);
-        registryServiceManager = new RegistryServiceManager();
-        accessManager = registryServiceManager.getAccessManager();
+        accessManager = new AccessManager(registryOwner);
+        registryServiceManager = new RegistryServiceManager(address(accessManager));
         registryService = registryServiceManager.getRegistryService();
         registry = registryServiceManager.getRegistry();
 

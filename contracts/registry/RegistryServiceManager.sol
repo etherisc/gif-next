@@ -22,12 +22,13 @@ contract RegistryServiceManager is
 
     /// @dev initializes proxy manager with registry service implementation and deploys registry
     constructor(
+        address accessManager
     )
         ProxyManager()
     {
-        _accessManager = new AccessManager(msg.sender);
+        _accessManager = AccessManager(accessManager);
 
-        bytes memory initializationData = abi.encode(address(_accessManager), type(Registry).creationCode);
+        bytes memory initializationData = abi.encode(accessManager, type(Registry).creationCode);
 
         IVersionable versionable = deploy(
             address(new RegistryService()), 
