@@ -67,7 +67,8 @@ export async function deployAndRegisterMasterInstance(
     // );
     
     return {
-        
+        masterInstanceAddress: instanceAddress,
+        masterInstanceNftId: masterInstanceNfdId,
     } as InstanceAddresses;
 }
 
