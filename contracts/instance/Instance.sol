@@ -48,11 +48,11 @@ contract Instance is
     constructor(address accessManagerAddress, address registryAddress, NftId registryNftId)
         AccessManagedSimple(accessManagerAddress)
     {
+        // TODO move to initializer method and remove constructor - required for the instance to be cloneable
         _accessManager = AccessManagerSimple(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
         _createRole(RoleIdLib.toRoleId(PUBLIC_ROLE), "PublicRole", false, false);
 
-        // TODO is registry the master instances' parent?
         _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, msg.sender, "");
 
         _registerInterface(type(IInstance).interfaceId);
