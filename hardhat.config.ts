@@ -2,6 +2,7 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-foundry";
 import "@nomicfoundation/hardhat-verify";
+import "solidity-docgen";
 
 // load .env file 
 import { config as dotEnvConfig } from "dotenv";
@@ -17,6 +18,9 @@ const config: HardhatUserConfig = {
         runs: 200
       }
     }
+  },
+  docgen: {
+    pages: 'files',
   },
   networks: {
     hardhat: {

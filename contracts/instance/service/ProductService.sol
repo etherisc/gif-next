@@ -18,7 +18,7 @@ import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
 import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
-import {UFixed, UFixedMathLib} from "../../types/UFixed.sol";
+import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol";
 import {APPLIED, UNDERWRITTEN, ACTIVE} from "../../types/StateId.sol";
@@ -394,7 +394,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     }
 
     function calculateRequiredCollateral(UFixed collateralizationLevel, uint256 sumInsuredAmount) public pure override returns(uint256 collateralAmount) {
-        UFixed sumInsuredUFixed = UFixedMathLib.toUFixed(sumInsuredAmount);
+        UFixed sumInsuredUFixed = UFixedLib.toUFixed(sumInsuredAmount);
         UFixed collateralUFixed =  collateralizationLevel * sumInsuredUFixed;
         return collateralUFixed.toInt();
     } 

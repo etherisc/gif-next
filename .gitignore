@@ -6,6 +6,7 @@ typechain
 typechain-types
 
 # Hardhat files
+docs
 cache
 artifacts
 

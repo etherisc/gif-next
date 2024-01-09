@@ -8,7 +8,6 @@ import {IVersionable} from "../shared/IVersionable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {RoleId} from "../types/RoleId.sol";
 
-import {IAccessModule} from "./module/access/IAccess.sol";
 import {IBundleModule} from "./module/bundle/IBundle.sol";
 import {IDistributionModule} from "./module/distribution/IDistribution.sol";
 import {IComponentModule} from "./module/component/IComponent.sol";
@@ -31,7 +30,6 @@ interface IInstance is
     IERC165,
     IVersionable,
     IRegisterable,
-    IAccessModule,
     IPolicyModule,
     IPoolModule,
     IRiskModule,
@@ -42,7 +40,7 @@ interface IInstance is
     IInstanceBase
 {
     function getRegistry() external view override (INftOwnable) returns (IRegistry registry);
-    function getOwner() external view override (IAccessModule, INftOwnable) returns(address owner);
+    function getOwner() external view override returns(address owner);
 
     function getKeyValueStore() external view override (IInstanceBase) returns (IKeyValueStore keyValueStore);
 

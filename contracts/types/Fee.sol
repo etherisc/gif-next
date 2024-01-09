@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {UFixed, UFixedMathLib} from "./UFixed.sol";
+import {UFixed, UFixedLib} from "./UFixed.sol";
 
 struct Fee {
     UFixed fractionalFee;
@@ -21,7 +21,7 @@ library FeeLib {
             uint256 netAmount
         )
     {
-        UFixed fractionalAmount = UFixedMathLib.toUFixed(amount) *
+        UFixed fractionalAmount = UFixedLib.toUFixed(amount) *
             fee.fractionalFee;
         feeAmount = fractionalAmount.toInt() + fee.fixedFee;
         netAmount = amount - feeAmount;
@@ -37,7 +37,7 @@ library FeeLib {
 
     /// @dev Return the percent fee struct (x%, 0)
     function percentageFee(uint8 percent) public pure returns (Fee memory fee) {
-        return Fee(UFixedMathLib.toUFixed(percent, -2), 0);
+        return Fee(UFixedLib.toUFixed(percent, -2), 0);
     }
 
     /// @dev Return a zero fee struct (0, 0)

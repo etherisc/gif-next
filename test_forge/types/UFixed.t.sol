@@ -2,13 +2,13 @@
 pragma solidity 0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {UFixedMathLib, UFixed} from "../../contracts/types/UFixed.sol";
+import {UFixed, UFixedLib} from "../../contracts/types/UFixed.sol";
 
 contract UFixedTest is Test {
-    using UFixedMathLib for UFixed;
+    using UFixedLib for UFixed;
 
     function testTestDecimals() public {
-        assertEq(UFixedMathLib.decimals(), 18);
+        assertEq(UFixedLib.decimals(), 18);
     }
 
     function testOpEqual() public {
@@ -31,30 +31,30 @@ contract UFixedTest is Test {
 
     function testItof() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
-        assertTrue(a == UFixedMathLib.toUFixed(1));
+        assertTrue(a == UFixedLib.toUFixed(1));
     }
 
     function testItofExp() public {
-        UFixed a = UFixedMathLib.toUFixed(1, 2);
+        UFixed a = UFixedLib.toUFixed(1, 2);
         assertTrue(a.toInt() == 100);
 
         // 0.01 * 100
-        UFixed b = UFixedMathLib.toUFixed(1, -2).mul(UFixedMathLib.toUFixed(1, 2));
+        UFixed b = UFixedLib.toUFixed(1, -2).mul(UFixedLib.toUFixed(1, 2));
         assertTrue(b.toInt() == 1);
 
         // smalltest possible value
-        UFixedMathLib.toUFixed(1, -18);
+        UFixedLib.toUFixed(1, -18);
         // one order of magnitude smaller reverts
         vm.expectRevert("ERROR:FM-010:EXPONENT_TOO_SMALL");
-        UFixedMathLib.toUFixed(1, -19);
+        UFixedLib.toUFixed(1, -19);
 
         // largest possible value -- 10 ** 46 (64 - EXP(18))
         assertTrue(
-            UFixedMathLib.toUFixed(1, 46) == UFixedMathLib.toUFixed(1 * 10 ** 46)
+            UFixedLib.toUFixed(1, 46) == UFixedLib.toUFixed(1 * 10 ** 46)
         );
         // one order of magnitude larger reverts
         vm.expectRevert("ERROR:FM-011:EXPONENT_TOO_LARGE");
-        UFixedMathLib.toUFixed(1, 64 - 18 + 1);
+        UFixedLib.toUFixed(1, 64 - 18 + 1);
     }
 
     function testFtoi() public {
@@ -64,19 +64,19 @@ contract UFixedTest is Test {
 
     function testFtoiRounding() public {
         UFixed a = UFixed.wrap(4 * 10 ** 17);
-        assertTrue(a.toIntWithRounding(UFixedMathLib.ROUNDING_UP()) == 1);
-        assertTrue(a.toIntWithRounding(UFixedMathLib.ROUNDING_DOWN()) == 0);
-        assertTrue(a.toIntWithRounding(UFixedMathLib.ROUNDING_HALF_UP()) == 0);
+        assertTrue(a.toIntWithRounding(UFixedLib.ROUNDING_UP()) == 1);
+        assertTrue(a.toIntWithRounding(UFixedLib.ROUNDING_DOWN()) == 0);
+        assertTrue(a.toIntWithRounding(UFixedLib.ROUNDING_HALF_UP()) == 0);
 
         UFixed b = UFixed.wrap(5 * 10 ** 17);
-        assertTrue(b.toIntWithRounding(UFixedMathLib.ROUNDING_UP()) == 1);
-        assertTrue(b.toIntWithRounding(UFixedMathLib.ROUNDING_DOWN()) == 0);
-        assertTrue(b.toIntWithRounding(UFixedMathLib.ROUNDING_HALF_UP()) == 1);
+        assertTrue(b.toIntWithRounding(UFixedLib.ROUNDING_UP()) == 1);
+        assertTrue(b.toIntWithRounding(UFixedLib.ROUNDING_DOWN()) == 0);
+        assertTrue(b.toIntWithRounding(UFixedLib.ROUNDING_HALF_UP()) == 1);
 
         UFixed c = UFixed.wrap(6 * 10 ** 17);
-        assertTrue(c.toIntWithRounding(UFixedMathLib.ROUNDING_UP()) == 1);
-        assertTrue(c.toIntWithRounding(UFixedMathLib.ROUNDING_DOWN()) == 0);
-        assertTrue(c.toIntWithRounding(UFixedMathLib.ROUNDING_HALF_UP()) == 1);
+        assertTrue(c.toIntWithRounding(UFixedLib.ROUNDING_UP()) == 1);
+        assertTrue(c.toIntWithRounding(UFixedLib.ROUNDING_DOWN()) == 0);
+        assertTrue(c.toIntWithRounding(UFixedLib.ROUNDING_HALF_UP()) == 1);
     }
 
     function testOpAdd() public {
@@ -359,14 +359,14 @@ contract UFixedTest is Test {
     function testDelta() public {
         UFixed a = UFixed.wrap(1 * 10 ** 18);
         UFixed b = UFixed.wrap(0 * 10 ** 18);
-        assertTrue(a.delta(b).eq(UFixedMathLib.toUFixed(1)));
-        assertTrue(b.delta(a).eq(UFixedMathLib.toUFixed(1)));
+        assertTrue(a.delta(b).eq(UFixedLib.toUFixed(1)));
+        assertTrue(b.delta(a).eq(UFixedLib.toUFixed(1)));
 
         UFixed c = UFixed.wrap(2 * 10 ** 18);
-        assertTrue(c.delta(a).eq(UFixedMathLib.toUFixed(1)));
-        assertTrue(a.delta(c).eq(UFixedMathLib.toUFixed(1)));
+        assertTrue(c.delta(a).eq(UFixedLib.toUFixed(1)));
+        assertTrue(a.delta(c).eq(UFixedLib.toUFixed(1)));
 
-        assertTrue(c.delta(b).eq(UFixedMathLib.toUFixed(2)));
-        assertTrue(b.delta(c).eq(UFixedMathLib.toUFixed(2)));
+        assertTrue(c.delta(b).eq(UFixedLib.toUFixed(2)));
+        assertTrue(b.delta(c).eq(UFixedLib.toUFixed(2)));
     }
 }

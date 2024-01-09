@@ -40,6 +40,17 @@ npm run test-with-gas
 npm run coverage
 ```
 
+### Docgen
+
+Produce `solidty-docgen` documentation using the command below.
+
+```shell
+hh docgen
+```
+
+The resulting markdown files are written to `docs`
+
+
 ### Deployment 
 
 Install the dependencies before running the script below for the first time.

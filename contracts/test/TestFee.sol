@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {UFixed, UFixedMathLib} from "../types/UFixed.sol";
+import {UFixed, UFixedLib} from "../types/UFixed.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 
 contract TestFee {
@@ -15,7 +15,7 @@ contract TestFee {
         pure 
         returns(Fee memory fee)
     {
-        return FeeLib.toFee(UFixedMathLib.toUFixed(fractionalValue, exponent), fixedValue);
+        return FeeLib.toFee(UFixedLib.toUFixed(fractionalValue, exponent), fixedValue);
     }
 
     function getZeroFee() external pure returns(Fee memory fee) {

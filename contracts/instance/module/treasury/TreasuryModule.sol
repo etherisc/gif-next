@@ -9,7 +9,7 @@ import {IProductComponent} from "../../../components/IProductComponent.sol";
 import {NftId} from "../../../types/NftId.sol";
 import {TREASURY} from "../../../types/ObjectType.sol";
 import {Fee, FeeLib} from "../../../types/Fee.sol";
-import {UFixed, UFixedMathLib} from "../../../types/UFixed.sol";
+import {UFixed, UFixedLib} from "../../../types/UFixed.sol";
 import {TokenHandler} from "./TokenHandler.sol";
 import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
 import {ITreasuryModule} from "./ITreasury.sol";
@@ -118,7 +118,7 @@ abstract contract TreasuryModule is
     function getUFixed(
         uint256 a
     ) external pure override returns (UFixed) {
-        return UFixedMathLib.toUFixed(a);
+        return UFixedLib.toUFixed(a);
     }
 
     function getUFixed(
@@ -126,6 +126,6 @@ abstract contract TreasuryModule is
         int8 exp
     ) external pure returns (UFixed)
     {
-        return UFixedMathLib.toUFixed(a, exp);
+        return UFixedLib.toUFixed(a, exp);
     }
 }

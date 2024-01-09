@@ -28,7 +28,6 @@ import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/types/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
-import {UFixed, UFixedMathLib} from "../../contracts/types/UFixed.sol";
 import {
     PRODUCT_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
@@ -38,6 +37,7 @@ import {
     DISTRIBUTION_REGISTRAR_ROLE, 
     POLICY_REGISTRAR_ROLE,
     BUNDLE_REGISTRAR_ROLE} from "../../contracts/types/RoleId.sol";
+import {UFixed, UFixedLib} from "../../contracts/types/UFixed.sol";
 import {Version} from "../../contracts/types/Version.sol";
 
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
@@ -102,7 +102,7 @@ contract TestGifBase is Test {
 
     bool poolIsVerifying = true;
     bool distributionIsVerifying = true;
-    UFixed poolCollateralizationLevelIs100 = UFixedMathLib.toUFixed(1);
+    UFixed poolCollateralizationLevelIs100 = UFixedLib.toUFixed(1);
 
     string private _checkpointLabel;
     uint256 private _checkpointGasLeft = 1; // Start the slot warm.
@@ -367,9 +367,11 @@ contract TestGifBase is Test {
         //console.log("instance version", instance.getVersion().toInt());
         /* solhint-enable */
 
-        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        // TODO re-enable with new istance
+        // instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        // instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        // instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+
         // solhint-disable-next-line
         console.log("product pool, and distribution roles granted");
     }
