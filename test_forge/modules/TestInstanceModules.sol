@@ -8,7 +8,6 @@ import {NftOwnable} from "../../contracts/shared/NftOwnable.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {RoleId} from "../../contracts/types/RoleId.sol";
 
-import {AccessModule} from "../../contracts/instance/module/access/Access.sol";
 import {BundleModule} from "../../contracts/instance/module/bundle/BundleModule.sol";
 import {ComponentModule} from "../../contracts/instance/module/component/ComponentModule.sol";
 import {DistributionModule} from "../../contracts/instance/module/distribution/DistributionModule.sol";
@@ -18,7 +17,6 @@ import {PoolModule} from "../../contracts/instance/module/pool/PoolModule.sol";
 import {TreasuryModule} from "../../contracts/instance/module/treasury/TreasuryModule.sol";
 
 import {Registerable} from "../../contracts/shared/Registerable.sol";
-import {IAccessModule} from "../../contracts/instance/module/access/IAccess.sol";
 import {IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
 import {IDistributionModule} from "../../contracts/instance/module/distribution/IDistribution.sol";
 import {IRiskModule} from "../../contracts/instance/module/risk/IRisk.sol";
@@ -37,12 +35,10 @@ import {IPoolService} from "../../contracts/instance/service/IPoolService.sol";
 
 
 contract TestInstanceModuleAccess  is
-    InstanceBase,
-    AccessModule
+    InstanceBase
 {
     constructor(address registry, NftId registryNftId, address initialOwner)
         InstanceBase(registry, registryNftId, initialOwner)
-        AccessModule()
     // solhint-disable-next-line no-empty-blocks
     {
 
@@ -50,14 +46,14 @@ contract TestInstanceModuleAccess  is
 
     // function getRegistry() public view override (Registerable) returns (IRegistry registry) { return super.getRegistry(); }
 
-    function hasRole(RoleId role, address member) public view override (AccessModule) returns (bool) { return super.hasRole(role, member); }
+    // function hasRole(RoleId role, address member) public view returns (bool) { return super.hasRole(role, member); }
 
     function getComponentOwnerService() external view override returns(IComponentOwnerService service) { return _componentOwnerService; }
     function getDistributionService() external view override returns(IDistributionService service) { return _distributionService; }
     function getProductService() external view override returns(IProductService service) { return _productService; }
     function getPoolService() external view override returns(IPoolService service) { return _poolService; }
 
-    function getOwner() public view override (IAccessModule, NftOwnable, INftOwnable) returns (address owner) { return super.getOwner(); }
+    function getOwner() public view override (NftOwnable, INftOwnable) returns (address owner) { return super.getOwner(); }
 }
 
 contract TestInstanceModuleBundle  is

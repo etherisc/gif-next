@@ -3,7 +3,8 @@ import { deployContract } from "./deployment";
 
 export type LibraryAddresses = {
     nftIdLibAddress: AddressLike;
-    uFixedMathLibAddress: AddressLike;
+    mathLibAddress: AddressLike;
+    uFixedLibAddress: AddressLike;
     objectTypeLibAddress: AddressLike;
     blockNumberLibAddress: AddressLike;
     versionLibAddress: AddressLike;
@@ -37,10 +38,15 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
     LIBRARY_ADDRESSES.set("NftIdLib", nftIdLibAddress);
 
-    const { address: uFixedMathLibAddress } = await deployContract(
-        "UFixedMathLib",
+    const { address: uFixedLibAddress } = await deployContract(
+        "UFixedLib",
         owner);
-    LIBRARY_ADDRESSES.set("UFixedMathLib", uFixedMathLibAddress);
+    LIBRARY_ADDRESSES.set("UFixedLib", uFixedLibAddress);
+
+    const { address: mathLibAddress } = await deployContract(
+        "MathLib",
+        owner);
+    LIBRARY_ADDRESSES.set("MathLib", mathLibAddress);
 
     const { address: objectTypeLibAddress } = await deployContract(
         "ObjectTypeLib",
@@ -105,7 +111,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         undefined,
         {
             libraries: {
-                UFixedMathLib: uFixedMathLibAddress,
+                UFixedLib: uFixedLibAddress,
             }
         });
     LIBRARY_ADDRESSES.set("FeeLib", feeLibAddress);
@@ -119,7 +125,8 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         
     return {
         nftIdLibAddress,
-        uFixedMathLibAddress,
+        mathLibAddress,
+        uFixedLibAddress,
         objectTypeLibAddress,
         blockNumberLibAddress,
         versionLibAddress,

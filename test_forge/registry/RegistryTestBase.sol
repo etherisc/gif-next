@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -131,7 +132,8 @@ contract RegistryTestBase is Test, FoundryRandom {
     {
         _startPrank(registryOwner);
 
-        registryServiceManager = new RegistryServiceManager();
+        AccessManager accessManager = new AccessManager(registryOwner);
+        registryServiceManager = new RegistryServiceManager(address(accessManager));
 
         registryService = registryServiceManager.getRegistryService();
         registry = registryServiceManager.getRegistry();

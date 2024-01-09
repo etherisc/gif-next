@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
@@ -23,8 +24,10 @@ contract NftOwnableTest is Test {
 
     function setUp() public {
 
-        vm.prank(registryOwner);
-        RegistryServiceManager registryServiceManager = new RegistryServiceManager();
+        vm.startPrank(registryOwner);
+        AccessManager accessManager = new AccessManager(registryOwner);
+        RegistryServiceManager registryServiceManager = new RegistryServiceManager(address(accessManager));
+        vm.stopPrank();
 
         registryService = registryServiceManager.getRegistryService();
         registry = registryServiceManager.getRegistry();

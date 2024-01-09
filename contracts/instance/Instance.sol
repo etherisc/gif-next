@@ -7,7 +7,6 @@ import {NftOwnable} from "../shared/NftOwnable.sol";
 import {RoleId} from "../types/RoleId.sol";
 
 import {InstanceBase} from "./base/InstanceBase.sol";
-import {AccessModule} from "./module/access/Access.sol";
 import {ComponentModule} from "./module/component/ComponentModule.sol";
 import {DistributionModule} from "./module/distribution/DistributionModule.sol";
 import {PolicyModule} from "./module/policy/PolicyModule.sol";
@@ -18,7 +17,6 @@ import {TreasuryModule} from "./module/treasury/TreasuryModule.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {Registerable} from "../shared/Registerable.sol";
-import {IAccessModule} from "./module/access/IAccess.sol";
 import {IBundleModule} from "./module/bundle/IBundle.sol";
 import {IComponentModule} from "./module/component/IComponent.sol";
 import {IPoolModule} from "./module/pool/IPoolModule.sol";
@@ -35,7 +33,6 @@ import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
 contract Instance is
     InstanceBase,
-    AccessModule,
     BundleModule,
     ComponentModule,
     DistributionModule,
@@ -50,7 +47,6 @@ contract Instance is
         address initialOwner
     )
         InstanceBase(registry, registryNftId, initialOwner)
-        AccessModule()
         BundleModule()
         DistributionModule()
         ComponentModule()
@@ -83,5 +79,5 @@ contract Instance is
     function getProductService() external view override (IBundleModule, IPolicyModule, IInstanceBase) returns(IProductService service) { return _productService; }
     function getPoolService() external view override (IBundleModule, IPoolModule, IInstanceBase) returns(IPoolService service) { return _poolService; }
 
-    function getOwner() public view override (IAccessModule, INftOwnable, NftOwnable) returns(address owner) { return super.getOwner(); }
+    function getOwner() public view override (INftOwnable, NftOwnable) returns(address owner) { return super.getOwner(); }
 }

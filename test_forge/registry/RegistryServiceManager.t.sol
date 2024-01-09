@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
@@ -21,6 +22,8 @@ contract RegistryServiceManagerTest is Test {
     address public registryOwner = makeAddr("registryOwner");
     address public registryOwnerNew = makeAddr("registryOwnerNew");
 
+    AccessManager public accessManager;
+
     // ProxyManager public proxyManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
@@ -29,8 +32,10 @@ contract RegistryServiceManagerTest is Test {
 
     function setUp() public {
 
-        vm.prank(registryOwner);
-        registryServiceManager = new RegistryServiceManager();
+        vm.startPrank(registryOwner);
+        accessManager = new AccessManager(registryOwner);
+        registryServiceManager = new RegistryServiceManager(address(accessManager));
+        vm.stopPrank();
 
         registryService = registryServiceManager.getRegistryService();
         registry = registryServiceManager.getRegistry();

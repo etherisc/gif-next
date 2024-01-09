@@ -5,6 +5,7 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, toObjectType} from "../../contracts/types/ObjectType.sol";
 
@@ -47,8 +48,10 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
 
     function setUp() public virtual
     {
-        vm.prank(registryOwner);
-        registryServiceManager = new RegistryServiceManagerMock();
+        vm.startPrank(registryOwner);
+        AccessManager accessManager = new AccessManager(registryOwner);
+        registryServiceManager = new RegistryServiceManagerMock(address(accessManager));
+        vm.stopPrank();
 
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManager.getRegistryService()));
         registry = registryServiceManager.getRegistry();

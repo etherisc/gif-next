@@ -22,7 +22,7 @@ import {Key32} from "../../types/Key32.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
-import {UFixed, UFixedMathLib} from "../../types/UFixed.sol";
+import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
@@ -111,9 +111,10 @@ contract ComponentOwnerService is
         IInstance instance = IInstance(instanceAddress);
 
         RoleId typeRole = getRoleForType(PRODUCT());
-        if(instance.hasRole(typeRole, msg.sender) == false) {
-            revert MissingTypeRole();
-        }
+        // TODO refactor to use access manager infra
+        // if(instance.hasRole(typeRole, msg.sender) == false) {
+        //     revert MissingTypeRole();
+        // }
         
         _registerProduct(
                 info.nftId, 
@@ -140,9 +141,10 @@ contract ComponentOwnerService is
         IInstance instance = IInstance(instanceAddress);
 
         RoleId typeRole = getRoleForType(POOL());
-        if(instance.hasRole(typeRole, msg.sender) == false) {
-            revert MissingTypeRole();
-        } 
+        // TODO refactor to use access manager infra
+        // if(instance.hasRole(typeRole, msg.sender) == false) {
+        //     revert MissingTypeRole();
+        // } 
 
         _registerPool(
             info.nftId,
@@ -169,9 +171,10 @@ contract ComponentOwnerService is
         IInstance instance = IInstance(instanceAddress);
 
         RoleId typeRole = getRoleForType(DISTRIBUTION());
-        if(instance.hasRole(typeRole, msg.sender) == false) {
-            revert MissingTypeRole();
-        }
+        // TODO refactor to use access manager infra
+        // if(instance.hasRole(typeRole, msg.sender) == false) {
+        //     revert MissingTypeRole();
+        // }
     }
 
     function lock(
@@ -290,7 +293,7 @@ contract ComponentOwnerService is
             revert InvalidToken();
         } 
 
-        if(UFixedMathLib.eqz(info.collateralizationLevel)) { 
+        if(UFixedLib.eqz(info.collateralizationLevel)) { 
             revert CollateralizationLevelIsZero();
         }
 
