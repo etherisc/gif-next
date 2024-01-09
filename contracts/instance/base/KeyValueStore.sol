@@ -14,25 +14,12 @@ import {IKeyValueStore} from "./IKeyValueStore.sol";
 contract KeyValueStore is Lifecycle, IKeyValueStore {
 
     mapping(Key32 key32 => Value value) private _value;
-    address private _owner;
-
-    modifier onlyOwner() {
-        require(
-            msg.sender == _owner,
-            "ERROR:KVS-001:NOT_OWNER");
-        _;
-    }
-
-    constructor() {
-        _owner = msg.sender;
-    }
 
     function create(
         Key32 key32, 
         bytes memory data
     )
-        public
-        onlyOwner
+        internal
     {
         _create(key32, data);
     }
@@ -72,8 +59,7 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
         bytes memory data,
         StateId state
     ) 
-        public
-        onlyOwner
+        internal
     {
         _update(key32, data, state);
     }
@@ -108,8 +94,7 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
     }
 
     function updateData(Key32 key32, bytes memory data) 
-        public
-        onlyOwner
+        internal
     {
         _updateData(key32, data);
     }
@@ -136,8 +121,7 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
     }
 
     function updateState(Key32 key32, StateId state)
-        public
-        onlyOwner
+        internal
     {
         _updateState(key32, state);
     }

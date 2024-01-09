@@ -9,6 +9,7 @@ import {StateId} from "../../types/StateId.sol";
 
 import {ILifecycle} from "./ILifecycle.sol";
 
+// TODO remove - internal only?
 interface IKeyValueStore is ILifecycle {
 
     struct Value {
@@ -33,10 +34,10 @@ interface IKeyValueStore is ILifecycle {
     event LogStateUpdated(ObjectType objectType, KeyId keyId, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     // generic state changing functions
-    function create(Key32 key, bytes memory data) external;
-    function update(Key32 key, bytes memory data, StateId state) external;
-    function updateData(Key32 key, bytes memory data) external;
-    function updateState(Key32 key, StateId state) external;
+    // function create(Key32 key, bytes memory data) external;
+    // function update(Key32 key, bytes memory data, StateId state) external;
+    // function updateData(Key32 key, bytes memory data) external;
+    // function updateState(Key32 key, StateId state) external;
 
     function exists(Key32 key) external view returns (bool);
     function get(Key32 key) external view returns (Value memory value);

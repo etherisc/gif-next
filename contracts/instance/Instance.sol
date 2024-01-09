@@ -16,17 +16,19 @@ import {KeyValueStore} from "./base/KeyValueStore.sol";
 import {IInstance} from "./IInstance.sol";
 import {NftId} from "../types/NftId.sol";
 import {NumberId} from "../types/NumberId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, POLICY, POOL, ROLE, PRODUCT, TARGET} from "../types/ObjectType.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET} from "../types/ObjectType.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {StateId, ACTIVE} from "../types/StateId.sol";
 import {ERC165} from "../shared/ERC165.sol";
+import {Registerable} from "../shared/Registerable.sol";
 
 contract Instance is
     AccessManagedSimple,
     KeyValueStore,
     IInstance,
-    ERC165
+    ERC165,
+    Registerable
 {
 
     uint64 public constant ADMIN_ROLE = type(uint64).min;
@@ -43,12 +45,15 @@ contract Instance is
 
     AccessManagerSimple internal _accessManager;
 
-    constructor(address accessManagerAddress)
+    constructor(address accessManagerAddress, address registryAddress, NftId registryNftId)
         AccessManagedSimple(accessManagerAddress)
     {
         _accessManager = AccessManagerSimple(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
         _createRole(RoleIdLib.toRoleId(PUBLIC_ROLE), "PublicRole", false, false);
+
+        // TODO is registry the master instances' parent?
+        _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, msg.sender, "");
 
         _registerInterface(type(IInstance).interfaceId);
     }

@@ -1,11 +1,11 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { Instance__factory, Registerable } from "../../typechain-types";
+import { IRegistryService__factory, Instance__factory } from "../../typechain-types";
 import { RoleIdLib__factory } from "../../typechain-types/factories/contracts/types/RoleId.sol";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
-import { executeTx } from "./transaction";
+import { executeTx, getFieldFromLogs } from "./transaction";
 
 export type InstanceAddresses = {
     masterInstanceAddress: AddressLike,
@@ -17,15 +17,15 @@ export async function deployAndRegisterMasterInstance(
     libraries: LibraryAddresses,
     registry: RegistryAddresses,
 ): Promise<InstanceAddresses> {
-    const { address: accessManagerAddress, contract: accessManagerBaseContract } = await deployContract(
+    const { address: accessManagerAddress } = await deployContract(
         "AccessManagerSimple",
         owner,
         [await resolveAddress(owner)]);
 
-    const { address: instanceAddress, contract: instanceBaseContract } = await deployContract(
+    const { address: instanceAddress } = await deployContract(
         "Instance",
         owner,
-        [accessManagerAddress],
+        [accessManagerAddress, registry.registryAddress, registry.registryNftId],
         { 
             libraries: {
                 Key32Lib: libraries.key32LibAddress,
@@ -39,11 +39,14 @@ export async function deployAndRegisterMasterInstance(
     );
 
     // FIXME register instance in registry
-    // const rcpt = await executeTx(async () => await registry.registryService.registerInstance(instanceAddress));
+    logger.debug(`registering instance ${instanceAddress} in registry ...`);
+    const registryServiceAsInstanceOwner = IRegistryService__factory.connect(await resolveAddress(registry.registryServiceAddress), owner);
+    const rcpt = await executeTx(async () => await registryServiceAsInstanceOwner.registerInstance(instanceAddress));
+    const masterInstanceNfdId = getFieldFromLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
 
     // TODO get nftId from `LogRegistration` event
-    // logger.info(`instance registered - instanceNftId: ${instanceNftId}`);
-    const instanceNftId = 21101;
+    logger.info(`instance registered - masterInstanceNftId: ${masterInstanceNfdId}`);
+    // const instanceNftId = 21101;
 
 
     // FIXME: fix InstanceReader deployment (correct nftId for instance)
@@ -69,33 +72,33 @@ export async function deployAndRegisterMasterInstance(
 }
 
 
-export enum Role { POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, PRODUCT_OWNER_ROLE }
+// export enum Role { POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, PRODUCT_OWNER_ROLE }
 
-export async function grantRole(instanceOwner: Signer, libraries: LibraryAddresses, instance: InstanceAddresses, role: Role, beneficiary: AddressLike): Promise<void> {
-    const beneficiaryAddress = await resolveAddress(beneficiary);
-    logger.debug(`granting role ${Role[role]} to ${beneficiaryAddress}`);
+// export async function grantRole(instanceOwner: Signer, libraries: LibraryAddresses, instance: InstanceAddresses, role: Role, beneficiary: AddressLike): Promise<void> {
+//     const beneficiaryAddress = await resolveAddress(beneficiary);
+//     logger.debug(`granting role ${Role[role]} to ${beneficiaryAddress}`);
 
-    const instanceAsInstanceOwner = Instance__factory.connect(instance.instanceAddress.toString(), instanceOwner);
-    const roleIdLib = RoleIdLib__factory.connect(libraries.roleIdLibAddress.toString(), instanceOwner);
+//     const instanceAsInstanceOwner = Instance__factory.connect(instance.instanceAddress.toString(), instanceOwner);
+//     const roleIdLib = RoleIdLib__factory.connect(libraries.roleIdLibAddress.toString(), instanceOwner);
     
-    let roleValue: string;
-    if (role === Role.POOL_OWNER_ROLE) {
-        roleValue = await roleIdLib.toRoleId("PoolOwnerRole");
-    } else if (role === Role.DISTRIBUTION_OWNER_ROLE) {
-        roleValue = await roleIdLib.toRoleId("DistributionOwnerRole");
-    } else if (role === Role.PRODUCT_OWNER_ROLE) {
-        roleValue = await roleIdLib.toRoleId("ProductOwnerRole");
-    } else {
-        throw new Error("unknown role");
-    }
+//     let roleValue: string;
+//     if (role === Role.POOL_OWNER_ROLE) {
+//         roleValue = await roleIdLib.toRoleId("PoolOwnerRole");
+//     } else if (role === Role.DISTRIBUTION_OWNER_ROLE) {
+//         roleValue = await roleIdLib.toRoleId("DistributionOwnerRole");
+//     } else if (role === Role.PRODUCT_OWNER_ROLE) {
+//         roleValue = await roleIdLib.toRoleId("ProductOwnerRole");
+//     } else {
+//         throw new Error("unknown role");
+//     }
 
-    const hasRole = await instanceAsInstanceOwner.hasRole(roleValue, beneficiaryAddress);
+//     const hasRole = await instanceAsInstanceOwner.hasRole(roleValue, beneficiaryAddress);
     
-    if (hasRole) {
-        logger.debug(`Role ${roleValue} already granted to ${beneficiaryAddress}`);
-        return;
-    }
+//     if (hasRole) {
+//         logger.debug(`Role ${roleValue} already granted to ${beneficiaryAddress}`);
+//         return;
+//     }
 
-    await executeTx(async () => await instanceAsInstanceOwner.grantRole(roleValue, beneficiaryAddress));
-    logger.info(`Granted role ${roleValue} to ${beneficiaryAddress}`);
-}
+//     await executeTx(async () => await instanceAsInstanceOwner.grantRole(roleValue, beneficiaryAddress));
+//     logger.info(`Granted role ${roleValue} to ${beneficiaryAddress}`);
+// }
