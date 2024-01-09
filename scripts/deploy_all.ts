@@ -105,7 +105,8 @@ function printAddresses(
 ) {
     let addresses = "\nAddresses of deployed smart contracts:\n==========\n";
     addresses += `nftIdLibAddress: ${libraries.nftIdLibAddress}\n`;
-    addresses += `uFixedMathLibAddress: ${libraries.uFixedMathLibAddress}\n`;
+    addresses += `mathLibAddress: ${libraries.mathLibAddress}\n`;
+    addresses += `uFixedLibAddress: ${libraries.uFixedLibAddress}\n`;
     addresses += `objectTypeLibAddress: ${libraries.objectTypeLibAddress}\n`;
     addresses += `blockNumberLibAddress: ${libraries.blockNumberLibAddress}\n`;
     addresses += `versionLibAddress: ${libraries.versionLibAddress}\n`;
