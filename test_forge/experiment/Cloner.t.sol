@@ -12,11 +12,13 @@ contract ClonerTest is Test {
     }
 
     function test_clonerSetUp() public {
+        // solhint-disable no-console
         console.log("cloner", address(cloner));
         console.log("mock1", address(cloner.mock1()));
         console.log("mock2", address(cloner.mock2()));
         console.log("mock1.getValue()", cloner.mock1().getValue());
         console.log("mock2.getValue()", cloner.mock2().getValue());
+        // solhint-enable
 
         assertEq(cloner.mock1().getValue(), 42, "unexpected cloner.mock1().getValue()");
         assertEq(cloner.mock2().getValue(), 42, "unexpected cloner.mock2().getValue()");
