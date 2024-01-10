@@ -13,6 +13,7 @@ artifacts
 # forge files
 cache_forge
 artifacts_forge
+lcov.info 
 
 # brownie
 build

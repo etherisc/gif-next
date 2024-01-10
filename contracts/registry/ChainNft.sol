@@ -4,15 +4,24 @@ pragma solidity ^0.8.20;
 import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import {IChainNft} from "./IChainNft.sol";
 import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
-contract ChainNft is ERC721Enumerable, IChainNft {
-    string public constant NAME = "Dezentralized Insurance Protocol Registry";
-    string public constant SYMBOL = "DIPR";
+contract ChainNft is ERC721Enumerable {
+
+    // constants
+    string public constant NAME = "Dezentralized Insurance Protocol NFT";
+    string public constant SYMBOL = "DIPNFT";
 
     uint256 public constant PROTOCOL_NFT_ID = 1101;
     uint256 public constant GLOBAL_REGISTRY_ID = 2101;
+
+    // custom errors
+    error CallerNotRegistry(address caller);
+    error RegistryAddressZero();
+    error NftUriEmpty();
+    error NftUriAlreadySet();
+
+    // contract state
 
     // remember interceptors
     mapping(uint256 tokenId => address interceptor) private _interceptor;
@@ -31,17 +40,24 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     uint256 internal _totalMinted;
 
     modifier onlyRegistry() {
-        require(msg.sender == _registry, "ERROR:NFT-001:CALLER_NOT_REGISTRY");
+        if (msg.sender != _registry) { revert CallerNotRegistry(msg.sender); }
         _;
     }
 
     constructor(address registry) ERC721(NAME, SYMBOL) {
-        require(registry != address(0), "ERROR:NFT-010:REGISTRY_ZERO");
+        if (registry == address(0)) { revert RegistryAddressZero(); }
 
         _registry = registry;
-
         _chainIdInt = block.chainid;
-        _chainIdDigits = _countDigits(_chainIdInt);
+        _chainIdDigits = 0;
+
+        // count digis
+        uint256 num = _chainIdInt;
+        while (num != 0) {
+            _chainIdDigits++;
+            num /= 10;
+        }
+
         _chainIdMultiplier = 10 ** _chainIdDigits;
         _idNext = 4;
     }
@@ -77,8 +93,8 @@ contract ChainNft is ERC721Enumerable, IChainNft {
             _uri[tokenId] = uri;
         }
 
-        _safeMint(to, tokenId);
         _totalMinted++;
+        _safeMint(to, tokenId);
     }
 
 
@@ -95,7 +111,7 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     }
 
 
-    function burn(uint256 tokenId) external override onlyRegistry {
+    function burn(uint256 tokenId) external onlyRegistry {
         _requireOwned(tokenId);
         _burn(tokenId);
         delete _uri[tokenId];
@@ -104,29 +120,36 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     function setURI(
         uint256 tokenId,
         string memory uri
-    ) external override onlyRegistry {
-        require(bytes(uri).length > 0, "ERROR:CRG-011:URI_EMPTY");
+    ) external onlyRegistry {
+        if (bytes(uri).length == 0) { revert NftUriEmpty(); }
+        if (bytes(_uri[tokenId]).length > 0) { revert NftUriAlreadySet(); }
 
         _requireOwned(tokenId);
         _uri[tokenId] = uri;
     }
 
-    function exists(uint256 tokenId) external view override returns (bool) {
+    function exists(uint256 tokenId) external view returns (bool) {
         return _ownerOf(tokenId) != address(0);
     }
 
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
+        // gif generally does not revert for view functions
+        // this is an exception to keep the openzeppelin nft semantics
         _requireOwned(tokenId);
         return _uri[tokenId];
     }
 
-    function getRegistryAddress() external view override returns (address) {
+    function getInterceptor(uint256 tokenId) external view returns (address) {
+        return _interceptor[tokenId];
+    }
+
+    function getRegistryAddress() external view returns (address) {
         return _registry;
     }
 
-    function totalMinted() external view override returns (uint256) {
+    function totalMinted() external view returns (uint256) {
         return _totalMinted;
     }
 
@@ -175,13 +198,5 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     function _getNextTokenId() private returns (uint256 id) {
         id = calculateTokenId(_idNext);
         _idNext++;
-    }
-
-    function _countDigits(uint256 num) private pure returns (uint256 count) {
-        count = 0;
-        while (num != 0) {
-            count++;
-            num /= 10;
-        }
     }
 }

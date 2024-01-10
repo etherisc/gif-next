@@ -18,8 +18,6 @@ import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/types/ObjectType.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
-import {IChainNft} from "../../contracts/registry/IChainNft.sol";
-
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 
