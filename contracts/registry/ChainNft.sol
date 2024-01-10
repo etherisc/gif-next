@@ -4,10 +4,9 @@ pragma solidity ^0.8.20;
 import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-import {IChainNft} from "./IChainNft.sol";
 import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
-contract ChainNft is ERC721Enumerable, IChainNft {
+contract ChainNft is ERC721Enumerable {
     string public constant NAME = "Dezentralized Insurance Protocol Registry";
     string public constant SYMBOL = "DIPR";
 
@@ -95,7 +94,7 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     }
 
 
-    function burn(uint256 tokenId) external override onlyRegistry {
+    function burn(uint256 tokenId) external onlyRegistry {
         _requireOwned(tokenId);
         _burn(tokenId);
         delete _uri[tokenId];
@@ -104,14 +103,14 @@ contract ChainNft is ERC721Enumerable, IChainNft {
     function setURI(
         uint256 tokenId,
         string memory uri
-    ) external override onlyRegistry {
+    ) external onlyRegistry {
         require(bytes(uri).length > 0, "ERROR:CRG-011:URI_EMPTY");
 
         _requireOwned(tokenId);
         _uri[tokenId] = uri;
     }
 
-    function exists(uint256 tokenId) external view override returns (bool) {
+    function exists(uint256 tokenId) external view returns (bool) {
         return _ownerOf(tokenId) != address(0);
     }
 
@@ -122,11 +121,11 @@ contract ChainNft is ERC721Enumerable, IChainNft {
         return _uri[tokenId];
     }
 
-    function getRegistryAddress() external view override returns (address) {
+    function getRegistryAddress() external view returns (address) {
         return _registry;
     }
 
-    function totalMinted() external view override returns (uint256) {
+    function totalMinted() external view returns (uint256) {
         return _totalMinted;
     }
 

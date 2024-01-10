@@ -6,7 +6,7 @@ import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {ChainNft, IChainNft} from "../../contracts/registry/ChainNft.sol";
+import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 
