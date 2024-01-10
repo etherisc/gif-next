@@ -1,6 +1,6 @@
 import { AddressLike, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
-import { IChainNft__factory, IRegistry__factory } from "../typechain-types";
+import { ChainNft__factory, IRegistry__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance } from "./libs/accounts";
 import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
@@ -66,7 +66,7 @@ async function verifyOwnership(
     // productAddress: AddressLike, productNftId: string,
 ) {
     logger.debug("validating ownerships ...");
-    const chainNft = IChainNft__factory.connect(await resolveAddress(registry.chainNftAddress), ethers.provider);
+    const chainNft = ChainNft__factory.connect(await resolveAddress(registry.chainNftAddress), ethers.provider);
     if (await chainNft.getRegistryAddress() !== resolveAddress(registry.registryAddress)) {
         throw new Error("chainNft registry address mismatch");
     }

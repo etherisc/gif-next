@@ -49,7 +49,15 @@ contract ChainNft is ERC721Enumerable {
 
         _registry = registry;
         _chainIdInt = block.chainid;
-        _chainIdDigits = _countDigits(_chainIdInt);
+        _chainIdDigits = 0;
+
+        // count digis
+        uint256 num = _chainIdInt;
+        while (num != 0) {
+            _chainIdDigits++;
+            num /= 10;
+        }
+
         _chainIdMultiplier = 10 ** _chainIdDigits;
         _idNext = 4;
     }
@@ -85,8 +93,8 @@ contract ChainNft is ERC721Enumerable {
             _uri[tokenId] = uri;
         }
 
-        _safeMint(to, tokenId);
         _totalMinted++;
+        _safeMint(to, tokenId);
     }
 
 
@@ -131,6 +139,10 @@ contract ChainNft is ERC721Enumerable {
         // this is an exception to keep the openzeppelin nft semantics
         _requireOwned(tokenId);
         return _uri[tokenId];
+    }
+
+    function getInterceptor(uint256 tokenId) external view returns (address) {
+        return _interceptor[tokenId];
     }
 
     function getRegistryAddress() external view returns (address) {
@@ -186,13 +198,5 @@ contract ChainNft is ERC721Enumerable {
     function _getNextTokenId() private returns (uint256 id) {
         id = calculateTokenId(_idNext);
         _idNext++;
-    }
-
-    function _countDigits(uint256 num) private pure returns (uint256 count) {
-        count = 0;
-        while (num != 0) {
-            count++;
-            num /= 10;
-        }
     }
 }
