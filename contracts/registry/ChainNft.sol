@@ -7,11 +7,21 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
 contract ChainNft is ERC721Enumerable {
-    string public constant NAME = "Dezentralized Insurance Protocol Registry";
-    string public constant SYMBOL = "DIPR";
+
+    // constants
+    string public constant NAME = "Dezentralized Insurance Protocol NFT";
+    string public constant SYMBOL = "DIPNFT";
 
     uint256 public constant PROTOCOL_NFT_ID = 1101;
     uint256 public constant GLOBAL_REGISTRY_ID = 2101;
+
+    // custom errors
+    error CallerNotRegistry(address caller);
+    error RegistryAddressZero();
+    error NftUriEmpty();
+    error NftUriAlreadySet();
+
+    // contract state
 
     // remember interceptors
     mapping(uint256 tokenId => address interceptor) private _interceptor;
@@ -30,15 +40,14 @@ contract ChainNft is ERC721Enumerable {
     uint256 internal _totalMinted;
 
     modifier onlyRegistry() {
-        require(msg.sender == _registry, "ERROR:NFT-001:CALLER_NOT_REGISTRY");
+        if (msg.sender != _registry) { revert CallerNotRegistry(msg.sender); }
         _;
     }
 
     constructor(address registry) ERC721(NAME, SYMBOL) {
-        require(registry != address(0), "ERROR:NFT-010:REGISTRY_ZERO");
+        if (registry == address(0)) { revert RegistryAddressZero(); }
 
         _registry = registry;
-
         _chainIdInt = block.chainid;
         _chainIdDigits = _countDigits(_chainIdInt);
         _chainIdMultiplier = 10 ** _chainIdDigits;
@@ -104,7 +113,8 @@ contract ChainNft is ERC721Enumerable {
         uint256 tokenId,
         string memory uri
     ) external onlyRegistry {
-        require(bytes(uri).length > 0, "ERROR:CRG-011:URI_EMPTY");
+        if (bytes(uri).length == 0) { revert NftUriEmpty(); }
+        if (bytes(_uri[tokenId]).length > 0) { revert NftUriAlreadySet(); }
 
         _requireOwned(tokenId);
         _uri[tokenId] = uri;
@@ -117,6 +127,8 @@ contract ChainNft is ERC721Enumerable {
     function tokenURI(
         uint256 tokenId
     ) public view override returns (string memory) {
+        // gif generally does not revert for view functions
+        // this is an exception to keep the openzeppelin nft semantics
         _requireOwned(tokenId);
         return _uri[tokenId];
     }
