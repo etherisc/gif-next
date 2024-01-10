@@ -1,4 +1,4 @@
-# gif-next (Generic Insurance Framework next version)
+# GIF-Next (Generic Insurance Framework, next version)
 
 ## Add OpenZeppelin V5 Dependencies
 
@@ -282,6 +282,98 @@ instance_id = instance.getNftId()
 pool_id = pool.getNftId()
 product_id = product.getNftId()
 ```
+
+## Objects
+
+### Registry
+
+Mandatory properties
+
+* One registry per chain
+* Global registry: the registry on mainnet
+* One entry per protocol object
+* Once registered object properties are immutable
+* Globally unique NFT minted per protocol object (chain id is embedded in NFT id)
+* Object ownership defined by NFT ownernship
+* Typed objects (instance, product, policy, ...)
+* Each object has parent object (only one exception: protocol object does not have parent object)
+* Parent object type is defined by type of child object
+
+Object properties (for smart contracts)
+* Objects that represent a smart contract record its contract address
+* With one exception (see next point) smart contract addresses refer to the address on the same chain as the registry
+* The global registry also holds entries for all the registries on different chains than mainnet, in these cases the addresses refer to the chains of these chain specific registries (this is the only case where registered addresses do not refer to the same chain)
+
+Optional properties
+
+* Objects can have names
+* Object names are unique per chain
+* Objects may define an intercepting property, in which case a predefined smart contract is involved in NFT transfers of the objects NFT (transfer may trigger actions, transfer may be blocked etc)
+* 
+
+Ownership property
+
+* Object ownership defined by ownership of NFT representing the object
+* Protocol
+  * Fixed/predefined owner (address without private key)
+* Registry
+  * Allows registration of token and services (per major release)
+  * May transfer ownership
+* Token
+  * Fixed/predefined owner (address without private key)
+  * TODO add whitelisting for token per major release
+* Service
+  * Allows upgrades of services as long as major version is same
+  * Until further notice the same entity as the registry owner
+  * May transfer ownership
+* Instance
+  * Granting/revoking of roles (both default + custom)
+  * Management of custom roles and targets
+  * May lock instance and/or components
+  * May transfer ownership
+* Component (Product, Pool, Distribution, Oracle)
+  * Register component
+  * Set component wallet (which receives fees, holds funds)
+  * May lock component
+  * May transfer ownership
+  * Additional use case specific features
+* Policy
+  * Represents policy holder
+  * Receive payouts (GIF default behaviour)
+  * May transfer ownership
+* Bundle
+  * Represents funds owner
+  * May withdraw funds not locked by active policies
+  * May transfer ownership
+* Distributor
+  * Receives commissions from sales (GIF default behaviour)
+  * May transfer ownership
+
+Intercepting property
+  * Service owner is indirectly owner of service manager contract
+
+* Instance
+  * intercepts transfer of instance owner (new owner needs access manager admin rights for custom roles and targets)
+  * intercepts transfer of components, to do what? check that new owner has necessary roles?
+* Product
+  * intercepts transfer of policies (use case specific: eg. limit/disallow transfers)
+* Pool:
+  * intercepts transfer of bundles (use case specific: eg. limit/disallow transfers)
+* Distribution
+  * intercepts transfer of distributors (bookkeeping: only one distributor per address allowed)
+* Oracle
+  * likely meaningless
+
+
+### Instance
+
+### Product
+
+### Pool
+
+### Distribution
+
+### Oracle
 
 ## Registry and Services
 
