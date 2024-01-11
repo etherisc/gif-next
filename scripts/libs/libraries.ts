@@ -91,7 +91,13 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: roleIdLibAddress } = await deployContract(
         "RoleIdLib",
-        owner);
+        owner,
+        undefined,
+        {
+            libraries: {
+                Key32Lib: key32LibAddress,
+            }
+        });
     LIBRARY_ADDRESSES.set("RoleIdLib", roleIdLibAddress);
 
     const { address: riskIdLibAddress } = await deployContract(
