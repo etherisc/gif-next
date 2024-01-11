@@ -158,7 +158,6 @@ contract RegistryService is
             bytes memory data
         ) 
     {
-
         if(!instance.supportsInterface(type(IInstance).interfaceId)) {
             revert NotInstance();
         }

@@ -1,20 +1,21 @@
-import { ContractTransactionReceipt, Interface, ethers } from "ethers";
+import { Interface, TransactionReceipt, ethers } from "ethers";
+import { logger } from "../logger";
 
 /**
  * Extract a field from the logs of a transaction. 
  */
-export function getFieldFromLogs(tx: ContractTransactionReceipt, abiInterface: Interface, eventName: string, fieldName: string): any | null {
+export function getFieldFromLogs(tx: TransactionReceipt, abiInterface: Interface, eventName: string, fieldName: string): unknown | null {
     const logs = tx?.logs;
-    let value: any | null = null;
+    let value: unknown | null = null;
     
     logs?.forEach(log => {
         const parsedLog = abiInterface.parseLog({ data: log.data, topics: log.topics as string[] });
-        // logger.debug(`parsedLog.name: ${parsedLog?.name}`);
+        logger.debug(`parsedLog.name: ${parsedLog?.name} ${parsedLog?.args}`);
         if (parsedLog?.name === eventName) {
             // destructuring assignment to fetch the value of the field `fieldName` from the object `p.args`
             const { [fieldName]: v } = parsedLog.args;
             value = v;
-            // logger.debug(`${eventName}: ${value}`);
+            logger.debug(`${eventName}: ${value}`);
         }
     });
 
