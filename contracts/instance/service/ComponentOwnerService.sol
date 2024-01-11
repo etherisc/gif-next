@@ -207,58 +207,60 @@ contract ComponentOwnerService is
     )
         internal
     {
-        (
-            ITreasury.TreasuryInfo memory info,
-            address wallet
-        )  = abi.decode(data, (ITreasury.TreasuryInfo, address));
+        // TODO change treasury info to product setup info
+        (ISetup.ProductSetupInfo memory info) = abi.decode(data, (ISetup.ProductSetupInfo));
+        // (
+        //     ITreasury.TreasuryInfo memory info,
+        //     address wallet
+        // )  = abi.decode(data, (ITreasury.TreasuryInfo, address));
 
-        IRegistry _registry = getRegistry();
+        // IRegistry _registry = getRegistry();
 
-        if(wallet == address(0)) {
-            revert WalletIsZero();
-        }
+        // if(wallet == address(0)) {
+        //     revert WalletIsZero();
+        // }
 
-        IRegistry.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(info.token));
+        // IRegistry.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(info.token));
 
-        if(tokenInfo.objectType != TOKEN()) {
-            revert InvalidToken();
-        } 
+        // if(tokenInfo.objectType != TOKEN()) {
+        //     revert InvalidToken();
+        // } 
 
-        IRegistry.ObjectInfo memory poolInfo = _registry.getObjectInfo(info.poolNftId);
+        // IRegistry.ObjectInfo memory poolInfo = _registry.getObjectInfo(info.poolNftId);
 
-        if(poolInfo.objectType != POOL()) {
-            revert InvalidPool();
-        }
+        // if(poolInfo.objectType != POOL()) {
+        //     revert InvalidPool();
+        // }
 
-        if(poolInfo.parentNftId != instanceNftId) {
-            revert InvalidPoolsInstance();
-        }
-        // TODO pool have the same token
-        //ITreasury.PoolSetup memory poolSetup = instance.getPoolSetup(info.poolNftId);
-        //require(tokenInfo.objectAddress == address(poolSetup.token), "ERROR:COS-018:PRODUCT_POOL_TOKEN_MISMATCH");
-        // TODO pool is not linked
+        // if(poolInfo.parentNftId != instanceNftId) {
+        //     revert InvalidPoolsInstance();
+        // }
+        // // TODO pool have the same token
+        // //ITreasury.PoolSetup memory poolSetup = instance.getPoolSetup(info.poolNftId);
+        // //require(tokenInfo.objectAddress == address(poolSetup.token), "ERROR:COS-018:PRODUCT_POOL_TOKEN_MISMATCH");
+        // // TODO pool is not linked
 
-        IRegistry.ObjectInfo memory distributionInfo = _registry.getObjectInfo(info.distributionNftId);
+        // IRegistry.ObjectInfo memory distributionInfo = _registry.getObjectInfo(info.distributionNftId);
 
-        if(distributionInfo.objectType != DISTRIBUTION()) {
-            revert  InvalidDistribution();
-        } 
+        // if(distributionInfo.objectType != DISTRIBUTION()) {
+        //     revert  InvalidDistribution();
+        // } 
 
-        if(distributionInfo.parentNftId != instanceNftId) {
-            revert InvalidDistributionsInstance();
-        }
-        // TODO distribution have the same token
-        // TODO distribution is not linked
+        // if(distributionInfo.parentNftId != instanceNftId) {
+        //     revert InvalidDistributionsInstance();
+        // }
+        // // TODO distribution have the same token
+        // // TODO distribution is not linked
 
-        // component module
-        instance.registerComponent(
-            nftId,
-            info.token,
-            wallet // TODO move wallet into TreasuryInfo?
-        );
+        // // component module
+        // instance.registerComponent(
+        //     nftId,
+        //     info.token,
+        //     wallet // TODO move wallet into TreasuryInfo?
+        // );
 
         // treasury module
-        instance.registerProductSetup(
+        instance.createProductSetup(
             nftId, 
             info
         );
@@ -299,15 +301,15 @@ contract ComponentOwnerService is
 
         // TODO add more validations
 
-        // component module
-        instance.registerComponent(
-            nftId,
-            token,
-            wallet
-        ); 
+        // // component module
+        // instance.registerComponent(
+        //     nftId,
+        //     token,
+        //     wallet
+        // ); 
 
         // pool module
-        instance.registerPool(
+        instance.createPoolSetup(
             nftId, 
             info
         );

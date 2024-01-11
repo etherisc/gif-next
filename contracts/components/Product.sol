@@ -19,6 +19,7 @@ import {BaseComponent} from "./BaseComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 
 import {ISetup} from "../instance/module/ISetup.sol";
 import {Pool} from "../components/Pool.sol";
@@ -281,18 +282,18 @@ contract Product is BaseComponent, IProductComponent {
         return (
             productInfo,
             abi.encode(
-                ITreasury.TreasuryInfo(
-                    _poolNftId,
-                    _distributionNftId,
+                ISetup.ProductSetupInfo(
                     _token,
+                    new TokenHandler(address(_token)),
+                    _distributionNftId,
+                    _poolNftId,
+                    FeeLib.zeroFee(), //_instance.getDistributionFee(_distributionNftId)
                     _initialProductFee,
                     _initialProcessingFee,
                     initialPoolFee,
                     initialStakingFee,
-                    initialPerformanceFee,
-                    FeeLib.zeroFee()//_instance.getDistributionFee(_distributionNftId)
-                ),
-                _wallet
+                    initialPerformanceFee
+                )
             )
         );
     }

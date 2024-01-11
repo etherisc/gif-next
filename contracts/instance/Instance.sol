@@ -194,11 +194,11 @@ contract Instance is
     }
 
     //--- DistributionSetup ------------------------------------------------------//
-    function createDistributionSetup(NftId distributionNftId, ISetup.ProductSetupInfo memory setup) external restricted() {
+    function createDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup) external restricted() {
         create(_toNftKey32(distributionNftId, DISTRIBUTION()), abi.encode(setup));
     }
 
-    function updateDistributionSetup(NftId distributionNftId, ISetup.ProductSetupInfo memory setup, StateId newState) external restricted() {
+    function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external restricted() {
         update(_toNftKey32(distributionNftId, DISTRIBUTION()), abi.encode(setup), newState);
     }
 
@@ -207,11 +207,11 @@ contract Instance is
     }
 
     //--- PoolSetup ------------------------------------------------------//
-    function createPoolSetup(NftId distributionNftId, ISetup.ProductSetupInfo memory setup) external restricted() {
+    function createPoolSetup(NftId distributionNftId, ISetup.PoolSetupInfo memory setup) external restricted() {
         create(_toNftKey32(distributionNftId, POOL()), abi.encode(setup));
     }
 
-    function updatePoolSetup(NftId distributionNftId, ISetup.ProductSetupInfo memory setup, StateId newState) external restricted() {
+    function updatePoolSetup(NftId distributionNftId, ISetup.PoolSetupInfo memory setup, StateId newState) external restricted() {
         update(_toNftKey32(distributionNftId, POOL()), abi.encode(setup), newState);
     }
 

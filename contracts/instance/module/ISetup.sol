@@ -5,6 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Fee} from "../../types/Fee.sol";
 import {NftId} from "../../types/NftId.sol";
+import {UFixed} from "../../types/UFixed.sol";
 import {TokenHandler} from "../../shared/TokenHandler.sol";
 
 interface ISetup {
@@ -32,6 +33,7 @@ interface ISetup {
     struct PoolSetupInfo {
         NftId productNftId;
         TokenHandler tokenHandler;
+        UFixed collateralizationLevel;
         Fee poolFee; // pool fee on net premium
         Fee stakingFee; // pool fee on staked capital from investor
         Fee performanceFee; // pool fee on profits from capital investors
