@@ -7,7 +7,7 @@ import {IRisk} from "../instance/module/IRisk.sol";
 import {ITreasury} from "../instance/module/ITreasury.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId, zeroNftId} from "../types/NftId.sol";
+import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
@@ -21,10 +21,15 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
+import {InstanceReader} from "../instance/InstanceReader.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {Pool} from "../components/Pool.sol";
 
+import {zeroNftId} from "../types/NftId.sol";
+
 contract Product is BaseComponent, IProductComponent {
+    using NftIdLib for NftId;
+
     IProductService internal _productService;
     Pool internal _pool;
     address internal _distribution;
@@ -44,7 +49,7 @@ contract Product is BaseComponent, IProductComponent {
         Fee memory productFee,
         Fee memory processingFee,
         address initialOwner
-    ) BaseComponent(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
+    ) BaseComponent(registry, instanceNftid, zeroNftId(), token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
         _productService = _instance.getProductService();
         _pool = Pool(pool);
@@ -133,7 +138,7 @@ contract Product is BaseComponent, IProductComponent {
     }
 
     function _getRiskInfo(RiskId id) internal view returns (IRisk.RiskInfo memory info) {
-        return _instance.getRiskInfo(id);
+        return _instance.getInstanceReader().getRiskInfo(id);
     }
 
     function _createApplication(
@@ -211,33 +216,24 @@ contract Product is BaseComponent, IProductComponent {
         _productService.setFees(productFee, processingFee);
     }
 
-    // TODO delete, call instance intead
-    function getProductFee()
-        external
-        view
-        override
-        returns (Fee memory productFee)
-    {
-        NftId productNftId = getNftId();
-        if (_instance.hasTreasuryInfo(productNftId)) {
-            return _instance.getTreasuryInfo(productNftId).productFee;
-        } else {
-            return _initialProductFee;
-        }
-    }
+    function getSetupInfo() public view returns (ISetup.ProductSetupInfo memory setupInfo) {
+        if (getNftId().eq(zeroNftId())) {
+            return ISetup.ProductSetupInfo(
+                _token,
+                new TokenHandler(address(_token)),
+                _distributionNftId,
+                _poolNftId,
+                FeeLib.zeroFee(), //_instance.getDistributionFee(_distributionNftId)
+                _initialProductFee,
+                _initialProcessingFee,
+                FeeLib.zeroFee(), //_instance.getPoolFee(_poolNftId)
+                FeeLib.zeroFee(), //_instance.getStakingFee(_poolNftId)
+                FeeLib.zeroFee() //_instance.getPerformanceFee(_poolNftId)
+            );
+        } 
 
-    function getProcessingFee()
-        external
-        view
-        override
-        returns (Fee memory processingFee)
-    {
-        NftId productNftId = getNftId();
-        if (_instance.hasTreasuryInfo(productNftId)) {
-            return _instance.getTreasuryInfo(productNftId).processingFee;
-        } else {
-            return _initialProcessingFee;
-        }
+        InstanceReader reader = _instance.getInstanceReader();
+        return reader.getProductSetupInfo(getNftId());
     }
 
     // from IRegisterable

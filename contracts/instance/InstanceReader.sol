@@ -7,7 +7,7 @@ import {DistributorType} from "../types/DistributorType.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {Key32} from "../types/Key32.sol";
 import {NftId} from "../types/NftId.sol";
-import {ObjectType, DISTRIBUTOR, INSTANCE, PRODUCT, POLICY, TREASURY} from "../types/ObjectType.sol";
+import {ObjectType, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, TREASURY} from "../types/ObjectType.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../types/Referral.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RiskId} from "../types/RiskId.sol";
@@ -20,6 +20,7 @@ import {IInstance} from "./IInstance.sol";
 import {IKeyValueStore} from "../instance/base/IKeyValueStore.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 import {ITreasury} from "../instance/module/ITreasury.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
 
@@ -126,6 +127,38 @@ contract InstanceReader {
         }
     }
 
+    function getDistributionSetupInfo(NftId distributionNftId)
+        public
+        view
+        returns (ISetup.DistributionSetupInfo memory info)
+    {
+        bytes memory data = _store.getData(toDistributionKey(distributionNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (ISetup.DistributionSetupInfo));
+        }
+    }
+
+    function getPoolSetupInfo(NftId poolNftId)
+        public
+        view
+        returns (ISetup.PoolSetupInfo memory info)
+    {
+        bytes memory data = _store.getData(toPoolKey(poolNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (ISetup.PoolSetupInfo));
+        }
+    }
+
+    function getProductSetupInfo(NftId productNftId)
+        public
+        view
+        returns (ISetup.ProductSetupInfo memory info)
+    {
+        bytes memory data = _store.getData(toProductKey(productNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (ISetup.ProductSetupInfo));
+        }
+    }
 
     function getReferralInfo(ReferralId referralId)
         public 
@@ -212,6 +245,18 @@ contract InstanceReader {
         return distributorNftId.toKey32(DISTRIBUTOR());
     }
 
+    function toDistributionKey(NftId distributionNftId) public pure returns (Key32) { 
+        return distributionNftId.toKey32(DISTRIBUTION());
+    }
+
+    function toPoolKey(NftId poolNftId) public pure returns (Key32) { 
+        return poolNftId.toKey32(POOL());
+    }
+
+    function toProductKey(NftId productNftId) public pure returns (Key32) { 
+        return productNftId.toKey32(PRODUCT());
+    }
+
     // low level function
     function getInstance() external view returns (IInstance instance) {
         return _instance;
@@ -226,10 +271,10 @@ contract InstanceReader {
     }
 
     function toUFixed(uint256 value, int8 exp) public pure returns (UFixed) {
-        return MathLib.toUFixed(value, exp);
+        return UFixedLib.toUFixed(value, exp);
     }
 
     function toInt(UFixed value) public pure returns (uint256) {
-        return MathLib.toInt(value);
+        return UFixedLib.toInt(value);
     }
 }

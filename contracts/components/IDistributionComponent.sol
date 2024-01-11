@@ -38,9 +38,6 @@ interface IDistributionComponent {
     /// @dev returns true iff the referral id is valid
     function referralIsValid(ReferralId referralId) external view returns (bool isValid);
 
-    /// @dev default distribution fee, ie when not using any valid referralId
-    function getDistributionFee() external view returns (Fee memory distributionFee);
-
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying);
 }

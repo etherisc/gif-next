@@ -29,9 +29,7 @@ interface IProductComponent {
         bytes memory applicationData
     ) external view returns (uint256 netPremiumAmount);    
 
-    function getProductFee() external view returns (Fee memory productFee);
-    function getProcessingFee() external view returns (Fee memory processingFee);
-
+    
     function getPoolNftId() external view returns (NftId poolNftId);
     function getDistributionNftId() external view returns (NftId distributionNftId);
 }

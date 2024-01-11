@@ -124,6 +124,7 @@ contract PoolService is ComponentServiceBase, IPoolService {
     }
 
 
+
     function _processStakingByTreasury(
         IInstance instance,
         NftId poolNftId,

@@ -3,6 +3,8 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
+import {InstanceReader} from "../../instance/InstanceReader.sol";
+import {ISetup} from "../../instance/module/ISetup.sol";
 import {ITreasury} from "../../instance/module/ITreasury.sol";
 
 import {NftId} from "../../types/NftId.sol";
@@ -45,8 +47,11 @@ contract DistributionService is
         override
     {
         (IRegistry.ObjectInfo memory distributionInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
+        InstanceReader instanceReader = instance.getInstanceReader();
 
-        NftId productNftId = instance.getProductNftId(distributionInfo.nftId);
+        ISetup.DistributionSetupInfo memory info = instanceReader.getDistributionSetupInfo(getNftId());
+
+        NftId productNftId = info.productNftId;
         ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(productNftId);
         treasuryInfo.distributionFee = distributionFee;
         instance.setTreasuryInfo(productNftId, treasuryInfo);
