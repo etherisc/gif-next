@@ -23,19 +23,21 @@ import {ServiceMock,
 
 contract RegisterServiceTest is RegistryServiceTestBase {
 
-    function test_callByOutsider() public
-    {
-        ServiceMock service = new ServiceMock(
-            address(registry), 
-            registryNftId, 
-            outsider);
+    // TODO this must be changed - registryService.registerService must use accessmanager for checking permissions as 
+    // services are not always owned by registry owner - actually only registry service is owned by registry owner
+    // function test_callByOutsider() public
+    // {
+    //     ServiceMock service = new ServiceMock(
+    //         address(registry), 
+    //         registryNftId, 
+    //         outsider);
 
-        vm.prank(outsider);
+    //     vm.prank(outsider);
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryService.NotRegistryOwner.selector)); 
+    //     vm.expectRevert(abi.encodeWithSelector(RegistryService.NotRegistryOwner.selector)); 
 
-        registryService.registerService(service);        
-    }
+    //     registryService.registerService(service);        
+    // }
 
     function test_selfRegistration() public
     {

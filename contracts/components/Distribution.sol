@@ -50,8 +50,9 @@ contract Distribution is
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 
-        _distributionService = _instance.getDistributionService();
-        _productService = _instance.getProductService();
+        // TODO: reactivate when services are available again
+        // _distributionService = _instance.getDistributionService();
+        // _productService = _instance.getProductService();
 
         _registerInterface(type(IDistributionComponent).interfaceId);
     }
@@ -125,7 +126,7 @@ contract Distribution is
         if (getNftId().eq(zeroNftId())) {
             return ISetup.DistributionSetupInfo(
                 _productNftId,
-                new TokenHandler(address(_token)),
+                TokenHandler(address(0)),
                 _initialDistributionFee,
                 _isVerifying,
                 address(0)

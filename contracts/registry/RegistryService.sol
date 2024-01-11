@@ -119,7 +119,9 @@ contract RegistryService is
     // IMPORTANT: MUST NOT check owner before calling external contract
     function registerService(IService service)
         external
-        // TODO restrict access
+        // TODO restrict access - registryService.registerService must use accessmanager for checking permissions as 
+        // services are not always owned by registry owner - actually only registry service is owned by registry owner
+
         returns(
             IRegistry.ObjectInfo memory info,
             bytes memory data

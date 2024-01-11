@@ -51,7 +51,8 @@ contract Product is BaseComponent, IProductComponent {
         address initialOwner
     ) BaseComponent(registry, instanceNftid, zeroNftId(), token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
-        _productService = _instance.getProductService();
+        // TODO: reactivate when services are available again
+        // _productService = _instance.getProductService();
         _pool = Pool(pool);
         _distribution = distribution;
         _initialProductFee = productFee;
@@ -220,7 +221,7 @@ contract Product is BaseComponent, IProductComponent {
         if (getNftId().eq(zeroNftId())) {
             return ISetup.ProductSetupInfo(
                 _token,
-                new TokenHandler(address(_token)),
+                TokenHandler(address(0)),
                 _distributionNftId,
                 _poolNftId,
                 FeeLib.zeroFee(), //_instance.getDistributionFee(_distributionNftId)
@@ -280,7 +281,7 @@ contract Product is BaseComponent, IProductComponent {
             abi.encode(
                 ISetup.ProductSetupInfo(
                     _token,
-                    new TokenHandler(address(_token)),
+                    TokenHandler(address(0)),
                     _distributionNftId,
                     _poolNftId,
                     FeeLib.zeroFee(), //_instance.getDistributionFee(_distributionNftId)

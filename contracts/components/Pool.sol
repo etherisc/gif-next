@@ -75,8 +75,9 @@ contract Pool is BaseComponent, IPoolComponent {
         _initialStakingFee = stakingFee;
         _initialPerformanceFee = performanceFee;
 
-        _poolService = _instance.getPoolService();
-        _productService = _instance.getProductService();
+        // TODO: reactivate when services are available again
+        // _poolService = _instance.getPoolService();
+        // _productService = _instance.getProductService();
 
         _registerInterface(type(IPoolComponent).interfaceId);
     }
@@ -173,7 +174,7 @@ contract Pool is BaseComponent, IPoolComponent {
         if (getNftId().eq(zeroNftId())) {
             return ISetup.PoolSetupInfo(
                 _productNftId,
-                new TokenHandler(address(_token)),
+                TokenHandler(address(0)),
                 _collateralizationLevel,
                 _initialPoolFee,
                 _initialStakingFee,
@@ -207,7 +208,7 @@ contract Pool is BaseComponent, IPoolComponent {
             abi.encode(
                 ISetup.PoolSetupInfo(
                     getProductNftId(),
-                    new TokenHandler(address(getToken())),
+                    TokenHandler(address(0)),
                     _collateralizationLevel,
                     _initialPoolFee,
                     _initialStakingFee,

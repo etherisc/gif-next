@@ -15,9 +15,10 @@ import {NftId} from "../types/NftId.sol";
 interface IInstance is IERC165 {
 
     function getComponentOwnerService() external view returns (IComponentOwnerService);
-    function getDistributionService() external view returns (IDistributionService);
-    function getProductService() external view returns (IProductService);
-    function getPoolService() external view returns (IPoolService);
+    // TODO: renable these when we have the services
+    // function getDistributionService() external view returns (IDistributionService);
+    // function getProductService() external view returns (IProductService);
+    // function getPoolService() external view returns (IPoolService);
 
     function createProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup) external;
     function createDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup) external;

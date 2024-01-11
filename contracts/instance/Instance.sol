@@ -24,13 +24,7 @@ import {StateId, ACTIVE} from "../types/StateId.sol";
 import {ERC165} from "../shared/ERC165.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {ComponentOwnerService} from "./service/ComponentOwnerService.sol";
-import {DistributionService} from "./service/DistributionService.sol";
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
-import {IDistributionService} from "./service/IDistributionService.sol";
-import {IProductService} from "./service/IProductService.sol";
-import {IPoolService} from "./service/IPoolService.sol";
-import {PoolService} from "./service/PoolService.sol";
-import {ProductService} from "./service/ProductService.sol";
 import {VersionPart} from "../types/Version.sol";
 
 contract Instance is
@@ -414,17 +408,20 @@ contract Instance is
         return ComponentOwnerService(_registry.getServiceAddress("ComponentOwnerService", VersionPart.wrap(3)));
     }
 
-    function getDistributionService() external view returns (IDistributionService) {
-        return DistributionService(_registry.getServiceAddress("DistributionService", VersionPart.wrap(3)));
-    }
+    // TODO reactivate when services are available
+    // function getDistributionService() external view returns (IDistributionService) {
+    //     return DistributionService(_registry.getServiceAddress("DistributionService", VersionPart.wrap(3)));
+    // }
 
-    function getProductService() external view returns (IProductService) {
-        return ProductService(_registry.getServiceAddress("ProductService", VersionPart.wrap(3)));
-    }
+    // TODO reactivate when services are available
+    // function getProductService() external view returns (IProductService) {
+    //     return ProductService(_registry.getServiceAddress("ProductService", VersionPart.wrap(3)));
+    // }
 
-    function getPoolService() external view returns (IPoolService) {
-        return PoolService(_registry.getServiceAddress("PoolService", VersionPart.wrap(3)));
-    }
+    // TODO reactivate when services are available
+    // function getPoolService() external view returns (IPoolService) {
+    //     return PoolService(_registry.getServiceAddress("PoolService", VersionPart.wrap(3)));
+    // }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
         if (address(_instanceReader) != address(0)) {
