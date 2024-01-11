@@ -3,8 +3,8 @@ pragma solidity ^0.8.19;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IRisk} from "../instance/module/risk/IRisk.sol";
-import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
+import {IRisk} from "../instance/module/IRisk.sol";
+import {ITreasury} from "../instance/module/ITreasury.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
@@ -20,7 +20,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
 
-import {IPool} from "../instance/module/pool/IPoolModule.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 import {Pool} from "../components/Pool.sol";
 
 contract Product is BaseComponent, IProductComponent {
@@ -274,7 +274,7 @@ contract Product is BaseComponent, IProductComponent {
             Fee memory initialPoolFee,
             Fee memory initialStakingFee,
             Fee memory initialPerformanceFee
-        )  = abi.decode(poolData, (IPool.PoolInfo, address, IERC20Metadata, Fee, Fee, Fee));
+        )  = abi.decode(poolData, (ISetup.PoolSetupInfo, address, IERC20Metadata, Fee, Fee, Fee));
 
         // TODO from DistributionComponent
 

@@ -3,8 +3,8 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
-import {IBundle} from "../../instance/module/bundle/IBundle.sol";
-import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
+import {IBundle} from "../../instance/module/IBundle.sol";
+import {ITreasury, TokenHandler} from "../../instance/module/ITreasury.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";

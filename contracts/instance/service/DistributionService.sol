@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
-import {ITreasury} from "../../instance/module/treasury/ITreasury.sol";
+import {ITreasury} from "../../instance/module/ITreasury.sol";
 
 import {NftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";

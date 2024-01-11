@@ -6,9 +6,9 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../IInstance.sol";
 
-import {ITreasury, ITreasuryModule} from "../module/treasury/ITreasury.sol";
-import {TreasuryModule} from "../module/treasury/TreasuryModule.sol";
-import {IComponent, IComponentModule} from "../module/component/IComponent.sol";
+import {ITreasury} from "../module/ITreasury.sol";
+// import {TreasuryModule} from "../module/TreasuryModule.sol";
+import {ISetup} from "../module/ISetup.sol";
 import {IBaseComponent} from "../../components/IBaseComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IKeyValueStore} from "../../instance/base/IKeyValueStore.sol";
@@ -30,7 +30,7 @@ import {IProductComponent} from "../../components/IProductComponent.sol";
 import {IService} from "../base/IService.sol";
 import {IComponentOwnerService} from "./IComponentOwnerService.sol";
 import {ServiceBase} from "../base/ServiceBase.sol";
-import {IPool, IPoolModule} from "../module/pool/IPoolModule.sol";
+// import {IPool, IPoolModule} from "../module/IPoolModule.sol";
 
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 
@@ -184,7 +184,7 @@ contract ComponentOwnerService is
         IInstance instance = component.getInstance();
         NftId nftId = component.getNftId();
         Key32 key = nftId.toKey32(COMPONENT());
-        instance.updateState(key, PAUSED());
+        // instance.updateState(key, PAUSED());
     }
 
     function unlock(
@@ -194,7 +194,7 @@ contract ComponentOwnerService is
         IInstance instance = component.getInstance();
         NftId nftId = component.getNftId();
         Key32 key = nftId.toKey32(COMPONENT());
-        instance.updateState(key, ACTIVE());
+        // instance.updateState(key, ACTIVE());
     }
 
     // Internals
@@ -273,13 +273,13 @@ contract ComponentOwnerService is
         internal
     {
         (
-            IPool.PoolInfo memory info,
+            ISetup.PoolSetupInfo memory info,
             address wallet,
             IERC20Metadata token,
             /*poolFee*/,
             /*stakingFee*/,
             /*performanceFee*/
-        )  = abi.decode(data, (IPool.PoolInfo, address, IERC20Metadata, Fee, Fee, Fee));
+        )  = abi.decode(data, (ISetup.PoolSetupInfo, address, IERC20Metadata, Fee, Fee, Fee));
 
         IRegistry _registry = getRegistry();
 

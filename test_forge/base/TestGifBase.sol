@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
@@ -17,14 +18,14 @@ import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
-import {TokenHandler} from "../../contracts/instance/module/treasury/TokenHandler.sol";
+import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {TestProduct} from "../../contracts/test/TestProduct.sol";
 import {TestPool} from "../../contracts/test/TestPool.sol";
 import {TestDistribution} from "../../contracts/test/TestDistribution.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
 
-import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
-import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
+// import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
+// import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/types/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";

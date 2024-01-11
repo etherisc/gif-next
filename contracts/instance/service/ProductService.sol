@@ -6,13 +6,15 @@ import {IProductComponent} from "../../components/IProductComponent.sol";
 import {Product} from "../../components/Product.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
-import {IInstance} from "../../instance/IInstance.sol";
-import {IPolicy, IPolicyModule} from "../module/policy/IPolicy.sol";
-import {IPool} from "../module/pool/IPoolModule.sol";
-import {IRisk} from "../module/risk/IRisk.sol";
-import {IBundle} from "../module/bundle/IBundle.sol";
+import {IInstance} from "../IInstance.sol";
+import {IPolicy} from "../module/IPolicy.sol";
+import {IRisk} from "../module/IRisk.sol";
+import {IBundle} from "../module/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
-import {ITreasury, ITreasuryModule, TokenHandler} from "../../instance/module/treasury/ITreasury.sol";
+import {ITreasury} from "../module/ITreasury.sol";
+import {ISetup} from "../module/ISetup.sol";
+
+import {TokenHandler} from "../../shared/TokenHandler.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
@@ -254,7 +256,7 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         // calculate required collateral
         NftId poolNftId = treasuryInfo.poolNftId;
-        IPool.PoolInfo memory poolInfo = instance.getPoolInfo(poolNftId);
+        ISetup.PoolSetupInfo memory poolInfo = instance.getPoolInfo(poolNftId);
 
         // obtain remaining return values
         collateralAmount = calculateRequiredCollateral(poolInfo.collateralizationLevel, policyInfo.sumInsuredAmount);
@@ -377,7 +379,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         // involve pool if necessary
         {
             NftId poolNftId = treasuryInfo.poolNftId;
-            IPool.PoolInfo memory poolInfo = instance.getPoolInfo(poolNftId);
+            ISetup.PoolSetupInfo memory poolInfo = instance.getPoolInfo(poolNftId);
 
             if(poolInfo.isVerifying) {
                 _underwriteByPool(

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IRisk} from "../module/risk/IRisk.sol";
+import {IRisk} from "../module/IRisk.sol";
 import {IService} from "../base/IService.sol";
 
 import {NftId} from "../../types/NftId.sol";

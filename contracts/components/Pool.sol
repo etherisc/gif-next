@@ -9,10 +9,12 @@ import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {BaseComponent} from "./BaseComponent.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IPool} from "../instance/module/pool/IPoolModule.sol";
-import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
+// import {IPool} from "../instance/module/pool/IPoolModule.sol";
+import {ITreasury} from "../instance/module/ITreasury.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
@@ -49,6 +51,7 @@ contract Pool is BaseComponent, IPoolComponent {
     constructor(
         address registry,
         NftId instanceNftId,
+        NftId productNftId,
         // TODO refactor into tokenNftId
         address token,
         bool isInterceptor,
@@ -59,7 +62,7 @@ contract Pool is BaseComponent, IPoolComponent {
         Fee memory performanceFee,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, token, POOL(), isInterceptor, initialOwner)
+        BaseComponent(registry, instanceNftId, productNftId, token, POOL(), isInterceptor, initialOwner)
     {
         _isVerifying = verifying;
         // TODO add validation
@@ -194,15 +197,15 @@ contract Pool is BaseComponent, IPoolComponent {
         return (
             info,
             abi.encode(
-                IPool.PoolInfo(
+                ISetup.PoolSetupInfo(
+                    getProductNftId(),
+                    new TokenHandler(address(getToken())),
+                    _initialPoolFee,
+                    _initialStakingFee,
+                    _initialPerformanceFee,
                     _isVerifying,
-                    _collateralizationLevel
-                ),
-                _wallet,
-                _token,
-                _initialPoolFee,
-                _initialStakingFee,
-                _initialPerformanceFee
+                    _wallet
+                )
             )
         );
     }
