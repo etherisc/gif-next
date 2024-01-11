@@ -5,7 +5,7 @@ import {IRegistry} from "../../../registry/IRegistry.sol";
 import {IInstance} from "../../IInstance.sol";
 import {IProductService} from "../../service/IProductService.sol";
 import {NftId} from "../../../types/NftId.sol";
-import {ReferralId} from "../../../types/ReferralId.sol";
+import {ReferralId} from "../../../types/Referral.sol";
 import {RiskId} from "../../../types/RiskId.sol";
 import {StateId} from "../../../types/StateId.sol";
 import {Timestamp} from "../../../types/Timestamp.sol";

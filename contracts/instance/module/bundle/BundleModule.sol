@@ -12,7 +12,7 @@ import {Key32, KeyId} from "../../../types/Key32.sol";
 import {LibNftIdSet} from "../../../types/NftIdSet.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL, BUNDLE, POLICY} from "../../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, REVOKED, DECLINED} from "../../../types/StateId.sol";
-import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../../../types/Timestamp.sol";
 import {Blocknumber, blockNumber} from "../../../types/Blocknumber.sol";
 
 import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
@@ -78,7 +78,7 @@ abstract contract BundleModule is
             amount, // capital
             0, // locked capital
             amount, // balance
-            blockTimestamp().addSeconds(lifetime), // expiredAt
+            TimestampLib.blockTimestamp().addSeconds(lifetime), // expiredAt
             zeroTimestamp() // closedAt
         );
 

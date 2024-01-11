@@ -253,35 +253,35 @@ contract TestGifBase is Test {
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            PRODUCT_REGISTRAR_ROLE());
+            PRODUCT_REGISTRAR_ROLE().toInt());
 
         functionSelector[0] = RegistryService.registerPool.selector;
 
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            POOL_REGISTRAR_ROLE());
+            POOL_REGISTRAR_ROLE().toInt());
 
         functionSelector[0] = RegistryService.registerDistribution.selector;
 
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            DISTRIBUTION_REGISTRAR_ROLE());
+            DISTRIBUTION_REGISTRAR_ROLE().toInt());
 
         functionSelector[0] = RegistryService.registerPolicy.selector;
 
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            POLICY_REGISTRAR_ROLE());
+            POLICY_REGISTRAR_ROLE().toInt());
 
         functionSelector[0] = RegistryService.registerBundle.selector;
 
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            BUNDLE_REGISTRAR_ROLE());
+            BUNDLE_REGISTRAR_ROLE().toInt());
     }
 
     function _deployServices() internal 
@@ -292,9 +292,9 @@ contract TestGifBase is Test {
         registryService.registerService(componentOwnerService);
         assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
 
-        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE(), address(componentOwnerService), 0);
-        accessManager.grantRole(POOL_REGISTRAR_ROLE(), address(componentOwnerService), 0);
-        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE(), address(componentOwnerService), 0);
+        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
 
         /* solhint-disable */
         console.log("service name", componentOwnerService.NAME());
@@ -317,7 +317,7 @@ contract TestGifBase is Test {
 
         productService = new ProductService(registryAddress, registryNftId, registryOwner);
         registryService.registerService(productService);
-        accessManager.grantRole(POLICY_REGISTRAR_ROLE(), address(productService), 0);
+        accessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(productService), 0);
 
         /* solhint-disable */
         console.log("service name", productService.NAME());
@@ -330,7 +330,7 @@ contract TestGifBase is Test {
         
         poolService = new PoolService(registryAddress, registryNftId, registryOwner);
         registryService.registerService(poolService);
-        accessManager.grantRole(BUNDLE_REGISTRAR_ROLE(), address(poolService), 0);
+        accessManager.grantRole(BUNDLE_REGISTRAR_ROLE().toInt(), address(poolService), 0);
 
         /* solhint-disable */
         console.log("service name", poolService.NAME());

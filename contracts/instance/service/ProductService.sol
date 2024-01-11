@@ -24,7 +24,7 @@ import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol"
 import {APPLIED, UNDERWRITTEN, ACTIVE} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
-import {ReferralId} from "../../types/ReferralId.sol";
+import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {Version, VersionLib} from "../../types/Version.sol";

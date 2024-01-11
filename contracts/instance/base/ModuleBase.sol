@@ -9,7 +9,7 @@ import {LibNftIdSet} from "../../types/NftIdSet.sol";
 import {NftId} from "../../types/NftId.sol";
 import {ObjectType, PRODUCT, ORACLE, POOL, BUNDLE, POLICY} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, REVOKED, DECLINED} from "../../types/StateId.sol";
-import {Timestamp, blockTimestamp, zeroTimestamp} from "../../types/Timestamp.sol";
+import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 
 import {IKeyValueStore} from "./IKeyValueStore.sol";
 

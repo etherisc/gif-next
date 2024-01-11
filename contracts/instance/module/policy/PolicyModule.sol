@@ -7,10 +7,10 @@ import {IProductService} from "../../service/IProductService.sol";
 import {IPolicy, IPolicyModule} from "./IPolicy.sol";
 import {ObjectType, POLICY} from "../../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../../types/NftId.sol";
-import {ReferralId} from "../../../types/ReferralId.sol";
+import {ReferralId} from "../../../types/Referral.sol";
 import {RiskId} from "../../../types/RiskId.sol";
 import {StateId} from "../../../types/StateId.sol";
-import {Timestamp, blockTimestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
+import {Timestamp, zeroTimestamp} from "../../../types/Timestamp.sol";
 
 import {IKeyValueStore} from "../../base/IKeyValueStore.sol";
 import {ModuleBase} from "../../base/ModuleBase.sol";

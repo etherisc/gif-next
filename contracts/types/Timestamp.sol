@@ -50,9 +50,9 @@ function toTimestamp(uint256 timestamp) pure returns (Timestamp) {
     return Timestamp.wrap(uint40(timestamp));
 }
 
-function blockTimestamp() view returns (Timestamp) {
-    return toTimestamp(block.timestamp);
-}
+// function blockTimestamp() view returns (Timestamp) {
+//     return toTimestamp(block.timestamp);
+// }
 
 /// @dev Return the Timestamp zero (0)
 function zeroTimestamp() pure returns (Timestamp) {
@@ -60,6 +60,10 @@ function zeroTimestamp() pure returns (Timestamp) {
 }
 
 library TimestampLib {
+    function blockTimestamp() public view returns (Timestamp) {
+        return Timestamp.wrap(uint40(block.timestamp));
+    }
+    
     /// @dev return true if Timestamp a is after Timestamp b
     function gt(Timestamp a, Timestamp b) public pure returns (bool isAfter) {
         return gtTimestamp(a, b);

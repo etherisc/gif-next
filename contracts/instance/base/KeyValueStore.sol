@@ -6,7 +6,7 @@ import {Key32, KeyId, Key32Lib} from "../../types/Key32.sol";
 import {NftId} from "../../types/NftId.sol";
 import {ObjectType} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE} from "../../types/StateId.sol";
-import {Timestamp, blockTimestamp, zeroTimestamp} from "../../types/Timestamp.sol";
+import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 
 import {Lifecycle} from "./Lifecycle.sol";
 import {IKeyValueStore} from "./IKeyValueStore.sol";
@@ -155,7 +155,8 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
     }
 
     function toKey(Key32 key32) public pure override returns (Key memory key) {
-        (ObjectType objectType, KeyId id) = key32.toKey();
+        ObjectType objectType = key32.toObjectType();
+        KeyId id = key32.toKeyId();
         return Key(objectType, id);
     }
 }

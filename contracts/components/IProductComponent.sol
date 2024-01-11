@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Fee} from "../types/Fee.sol";
 import {NftId} from "../types/NftId.sol";
-import {ReferralId} from "../types/ReferralId.sol";
+import {ReferralId} from "../types/Referral.sol";
 import {RiskId} from "../types/RiskId.sol";
 
 interface IProductComponent {

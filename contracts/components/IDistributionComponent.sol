@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Fee} from "../types/Fee.sol";
-import {ReferralId} from "../types/ReferralId.sol";
+import {ReferralId} from "../types/Referral.sol";
 import {NftId} from "../types/NftId.sol";
 
 interface IDistributionComponent {

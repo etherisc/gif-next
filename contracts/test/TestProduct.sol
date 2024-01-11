@@ -3,9 +3,9 @@ pragma solidity ^0.8.19;
 
 import {Product} from "../../contracts/components/Product.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
-import {ReferralId} from "../types/ReferralId.sol";
+import {ReferralId} from "../types/Referral.sol";
 import {RiskId} from "../../contracts/types/RiskId.sol";
-import {Timestamp, blockTimestamp} from "../../contracts/types/Timestamp.sol";
+import {Timestamp} from "../../contracts/types/Timestamp.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
 
 contract TestProduct is Product {
