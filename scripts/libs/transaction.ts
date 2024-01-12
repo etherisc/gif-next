@@ -10,7 +10,7 @@ export function getFieldFromLogs(tx: TransactionReceipt, abiInterface: Interface
     
     logs?.forEach(log => {
         const parsedLog = abiInterface.parseLog({ data: log.data, topics: log.topics as string[] });
-        logger.debug(`parsedLog.name: ${parsedLog?.name} ${parsedLog?.args}`);
+        // logger.debug(`parsedLog.name: ${parsedLog?.name} ${parsedLog?.args}`);
         if (parsedLog?.name === eventName) {
             // destructuring assignment to fetch the value of the field `fieldName` from the object `p.args`
             const { [fieldName]: v } = parsedLog.args;
