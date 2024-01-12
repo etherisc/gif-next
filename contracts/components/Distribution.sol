@@ -4,19 +4,23 @@ pragma solidity ^0.8.19;
 import {DISTRIBUTION} from "../types/ObjectType.sol";
 import {IDistributionService} from "../instance/service/IDistributionService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
-import {NftId} from "../types/NftId.sol";
-import {ReferralId} from "../types/ReferralId.sol";
+import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
+import {ReferralId} from "../types/Referral.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 import {Registerable} from "../shared/Registerable.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 
 contract Distribution is
     BaseComponent,
     IDistributionComponent
 {
+    using NftIdLib for NftId;
 
     Fee internal _initialDistributionFee;
     bool internal _isVerifying;
@@ -34,19 +38,21 @@ contract Distribution is
     constructor(
         address registry,
         NftId instanceNftId,
+        NftId productNftId,
         // TODO refactor into tokenNftId
         address token,
         bool verifying,
         Fee memory distributionFee,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, token, DISTRIBUTION(), true, initialOwner)
+        BaseComponent(registry, instanceNftId, productNftId, token, DISTRIBUTION(), true, initialOwner)
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 
-        _distributionService = _instance.getDistributionService();
-        _productService = _instance.getProductService();
+        // TODO: reactivate when services are available again
+        // _distributionService = _instance.getDistributionService();
+        // _productService = _instance.getProductService();
 
         _registerInterface(type(IDistributionComponent).interfaceId);
     }
@@ -70,7 +76,8 @@ contract Distribution is
         virtual override
         returns (uint256 feeAmount)
     {
-        Fee memory fee = getDistributionFee();
+        ISetup.DistributionSetupInfo memory setupInfo = getSetupInfo();
+        Fee memory fee = setupInfo.distributionFee;
         (feeAmount,) = FeeLib.calculateFee(fee, netPremiumAmount);
     }
 
@@ -115,16 +122,20 @@ contract Distribution is
         return false;
     }
 
-    /// @dev default distribution fee, ie when not using any valid referralId
-    function getDistributionFee() public view returns (Fee memory distributionFee) {
-        NftId productNftId = _instance.getProductNftId(getNftId());
-        if (_instance.hasTreasuryInfo(productNftId)) {
-            return _instance.getTreasuryInfo(productNftId).distributionFee;
-        } else {
-            return _initialDistributionFee;
-        }
-    }
+    function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
+        if (getNftId().eq(zeroNftId())) {
+            return ISetup.DistributionSetupInfo(
+                _productNftId,
+                TokenHandler(address(0)),
+                _initialDistributionFee,
+                _isVerifying,
+                address(0)
+            );
+        } 
 
+        InstanceReader reader = _instance.getInstanceReader();
+        return reader.getDistributionSetupInfo(getNftId());
+    }
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying) {

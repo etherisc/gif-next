@@ -59,6 +59,4 @@ interface IPoolComponent {
 
     function getCollateralizationLevel() external view returns (UFixed collateralizationLevel);
 
-    function getFees() external view returns (Fee memory poolFee, Fee memory stakingFee, Fee memory performanceFee);
-
 }

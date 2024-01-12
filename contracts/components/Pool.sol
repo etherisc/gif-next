@@ -4,20 +4,26 @@ pragma solidity ^0.8.20;
 import {ObjectType, POOL} from "../types/ObjectType.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
-import {NftId} from "../types/NftId.sol";
+import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {BaseComponent} from "./BaseComponent.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IPool} from "../instance/module/pool/IPoolModule.sol";
-import {ITreasury} from "../instance/module/treasury/ITreasury.sol";
+
+// import {IPool} from "../instance/module/pool/IPoolModule.sol";
+import {ITreasury} from "../instance/module/ITreasury.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
 
 contract Pool is BaseComponent, IPoolComponent {
+    using NftIdLib for NftId;
 
     bool internal _isVerifying;
     UFixed internal _collateralizationLevel;
@@ -49,6 +55,7 @@ contract Pool is BaseComponent, IPoolComponent {
     constructor(
         address registry,
         NftId instanceNftId,
+        NftId productNftId,
         // TODO refactor into tokenNftId
         address token,
         bool isInterceptor,
@@ -59,7 +66,7 @@ contract Pool is BaseComponent, IPoolComponent {
         Fee memory performanceFee,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, token, POOL(), isInterceptor, initialOwner)
+        BaseComponent(registry, instanceNftId, productNftId, token, POOL(), isInterceptor, initialOwner)
     {
         _isVerifying = verifying;
         // TODO add validation
@@ -68,8 +75,9 @@ contract Pool is BaseComponent, IPoolComponent {
         _initialStakingFee = stakingFee;
         _initialPerformanceFee = performanceFee;
 
-        _poolService = _instance.getPoolService();
-        _productService = _instance.getProductService();
+        // TODO: reactivate when services are available again
+        // _poolService = _instance.getPoolService();
+        // _productService = _instance.getProductService();
 
         _registerInterface(type(IPoolComponent).interfaceId);
     }
@@ -160,20 +168,24 @@ contract Pool is BaseComponent, IPoolComponent {
     {
         _poolService.setBundleFee(bundleNftId, fee);
     }
-    // TODO delete, call instance instead
-    function getFees()
-        external
-        view
-        override
-        returns (Fee memory, Fee memory, Fee memory)
-    {
-        NftId productNftId = _instance.getProductNftId(getNftId());
-        //if (_instance.hasTreasuryInfo(productNftId)) {
-            ITreasury.TreasuryInfo memory info = _instance.getTreasuryInfo(productNftId);
-            return (info.poolFee, info.stakingFee, info.performanceFee);
-        //} else {
-        //    return (_initialPoolFee, _initialStakingFee, _initialPerformanceFee);
-        //}
+
+    function getSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
+        // TODO fix this
+        if (getNftId().eq(zeroNftId())) {
+            return ISetup.PoolSetupInfo(
+                _productNftId,
+                TokenHandler(address(0)),
+                _collateralizationLevel,
+                _initialPoolFee,
+                _initialStakingFee,
+                _initialPerformanceFee,
+                _isVerifying,
+                _wallet
+            );
+        } 
+
+        InstanceReader reader = _instance.getInstanceReader();
+        return reader.getPoolSetupInfo(getNftId());
     }
 
     // from IRegisterable
@@ -194,15 +206,16 @@ contract Pool is BaseComponent, IPoolComponent {
         return (
             info,
             abi.encode(
-                IPool.PoolInfo(
+                ISetup.PoolSetupInfo(
+                    getProductNftId(),
+                    TokenHandler(address(0)),
+                    _collateralizationLevel,
+                    _initialPoolFee,
+                    _initialStakingFee,
+                    _initialPerformanceFee,
                     _isVerifying,
-                    _collateralizationLevel
-                ),
-                _wallet,
-                _token,
-                _initialPoolFee,
-                _initialStakingFee,
-                _initialPerformanceFee
+                    _wallet
+                )
             )
         );
     }

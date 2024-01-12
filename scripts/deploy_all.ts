@@ -5,18 +5,20 @@ import { getNamedAccounts, printBalance } from "./libs/accounts";
 import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
 import { logger } from "./logger";
+import { deployAndRegisterMasterInstance } from "./libs/instance";
+import { deployAndRegisterServices } from "./libs/services";
 
 
 async function main() {
-    const { protocolOwner } = await getNamedAccounts();
+    const { protocolOwner, masterInstanceOwner, instanceServiceOwner } = await getNamedAccounts();
 
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
-    // const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
+    const services = await deployAndRegisterServices(instanceServiceOwner, registry, libraries);
     
     // // deploy instance contracts
-    // const instance = await deployAndRegisterInstance(instanceOwner, libraries, registry);
+    const instance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry);
 
     // await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
     // await grantRole(instanceOwner, libraries, instance, Role.DISTRIBUTION_OWNER_ROLE, distributionOwner);

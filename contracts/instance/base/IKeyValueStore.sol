@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 import {Blocknumber, blockBlocknumber, zeroBlocknumber} from "../../types/Blocknumber.sol";
 import {Key32, KeyId} from "../../types/Key32.sol";
@@ -9,12 +9,8 @@ import {StateId} from "../../types/StateId.sol";
 
 import {ILifecycle} from "./ILifecycle.sol";
 
+// TODO remove - internal only?
 interface IKeyValueStore is ILifecycle {
-
-    struct Key {
-        ObjectType objectType;
-        KeyId id;
-    }
 
     struct Value {
         Metadata metadata;
@@ -24,20 +20,24 @@ interface IKeyValueStore is ILifecycle {
     struct Metadata {
         ObjectType objectType;
         StateId state;
+        // TODO updatedBy needs concept that says what value should go here
+        // eg account outside gif objects that initiated the tx
+        // implies the caller needs to be propagated through all calls up to key values store itself
+        // to always have the instance address there doesn't seem to make sense
         address updatedBy;
         Blocknumber updatedIn;
         Blocknumber createdIn;
     }
 
-    event LogInfoCreated(Key key, StateId state, address createdBy, address txOrigin);
-    event LogInfoUpdated(Key key, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogStateUpdated(Key key, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogInfoCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
+    event LogInfoUpdated(ObjectType objectType, KeyId keyId, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogStateUpdated(ObjectType objectType, KeyId keyId, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     // generic state changing functions
-    function create(Key32 key, ObjectType objectType, bytes memory data) external;
-    function update(Key32 key, StateId state, bytes memory data) external;
-    function updateData(Key32 key, bytes memory data) external;
-    function updateState(Key32 key, StateId state) external;
+    // function create(Key32 key, bytes memory data) external;
+    // function update(Key32 key, bytes memory data, StateId state) external;
+    // function updateData(Key32 key, bytes memory data) external;
+    // function updateState(Key32 key, StateId state) external;
 
     function exists(Key32 key) external view returns (bool);
     function get(Key32 key) external view returns (Value memory value);
@@ -46,5 +46,4 @@ interface IKeyValueStore is ILifecycle {
     function getState(Key32 key) external view returns (StateId state);
 
     function toKey32(ObjectType objectType, KeyId id) external pure returns(Key32);
-    function toKey(Key32 key32) external pure returns(Key memory key);
 }

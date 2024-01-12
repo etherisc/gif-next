@@ -17,6 +17,8 @@ export type LibraryAddresses = {
     roleIdLibAddress: AddressLike;
     riskIdLibAddress: AddressLike;
     contractDeployerLibAddress: AddressLike;
+    distributorTypeLibAddress: AddressLike;
+    referralLibAddress: AddressLike;
 }
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
@@ -91,7 +93,13 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: roleIdLibAddress } = await deployContract(
         "RoleIdLib",
-        owner);
+        owner,
+        undefined,
+        {
+            libraries: {
+                Key32Lib: key32LibAddress,
+            }
+        });
     LIBRARY_ADDRESSES.set("RoleIdLib", roleIdLibAddress);
 
     const { address: riskIdLibAddress } = await deployContract(
@@ -122,6 +130,28 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         owner);
     LIBRARY_ADDRESSES.set("ContractDeployerLib", contractDeployerLibAddress);
 
+    const { address: distributorTypeLibAddress } = await deployContract(
+        "DistributorTypeLib",
+        owner,
+        undefined,
+        {
+            libraries: {
+                Key32Lib: key32LibAddress,
+            }
+        });
+    LIBRARY_ADDRESSES.set("DistributorTypeLib", distributorTypeLibAddress);
+
+    // ReferralLib
+    const { address: referralLibAddress } = await deployContract(
+        "ReferralLib",
+        owner,
+        undefined,
+        {
+            libraries: {
+                Key32Lib: key32LibAddress,
+            }
+        });
+
         
     return {
         nftIdLibAddress,
@@ -139,6 +169,8 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         roleIdLibAddress,
         riskIdLibAddress,
         contractDeployerLibAddress,
+        distributorTypeLibAddress,
+        referralLibAddress,
     };
     
 }

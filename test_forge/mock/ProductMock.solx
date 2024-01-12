@@ -92,7 +92,7 @@ contract ProductMockWithRandomInvalidAddress is BaseComponent {
         bool isInterceptor,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, address(0), PRODUCT(), isInterceptor, initialOwner)
+        BaseComponent(registry, instanceNftId,  address(0), PRODUCT(), isInterceptor, initialOwner)
     {
         FoundryRandom rng = new FoundryRandom();
 

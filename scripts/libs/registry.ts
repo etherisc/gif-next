@@ -11,6 +11,7 @@ export type RegistryAddresses = {
 
     registryAddress: AddressLike; 
     registry: Registry;
+    registryNftId: bigint;
 
     registryServiceAddress: AddressLike;
     registryService: RegistryService;
@@ -39,6 +40,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                     VersionPartLib: libraries.versionPartLibAddress,
                     ContractDeployerLib: libraries.contractDeployerLibAddress,
                     BlocknumberLib: libraries.blockNumberLibAddress,
+                    TimestampLib: libraries.timestampLibAddress,
                 }
             });
         const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
@@ -48,6 +50,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const registryAddress = await registryService.getRegistry();
     const registry = Registry__factory.connect(registryAddress, owner);
+    const registryNftId = await registry.getNftId(registryAddress);
 
     const chainNftAddress = await registry.getChainNft();
     const chainNft = ChainNft__factory.connect(chainNftAddress, owner);
@@ -62,6 +65,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         
         registryAddress,
         registry,
+        registryNftId,
 
         registryServiceAddress,
         registryService,

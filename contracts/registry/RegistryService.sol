@@ -10,8 +10,8 @@ import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-import {IComponent, IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
-import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
+// import {IComponent, IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
+// import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
 import {IPoolComponent} from "../../contracts/components/IPoolComponent.sol";
 import {IProductComponent} from "../../contracts/components/IProductComponent.sol";
@@ -119,6 +119,9 @@ contract RegistryService is
     // IMPORTANT: MUST NOT check owner before calling external contract
     function registerService(IService service)
         external
+        // TODO restrict access - registryService.registerService must use accessmanager for checking permissions as 
+        // services are not always owned by registry owner - actually only registry service is owned by registry owner
+
         returns(
             IRegistry.ObjectInfo memory info,
             bytes memory data
@@ -134,10 +137,6 @@ contract RegistryService is
             info, 
             data
         ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
-
-        if(msg.sender != _registry.getOwner()) {
-            revert NotRegistryOwner();
-        }
 
         info.nftId = _registry.register(info);
         service.linkToRegisteredNftId();
@@ -159,7 +158,6 @@ contract RegistryService is
             bytes memory data
         ) 
     {
-
         if(!instance.supportsInterface(type(IInstance).interfaceId)) {
             revert NotInstance();
         }

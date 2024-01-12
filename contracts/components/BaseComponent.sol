@@ -24,10 +24,12 @@ abstract contract BaseComponent is
     address internal _wallet;
     IERC20Metadata internal _token;
     IInstance internal _instance;
+    NftId internal _productNftId;
 
     constructor(
         address registry,
         NftId instanceNftId,
+        NftId productNftId,
         address token,
         ObjectType componentType,
         bool isInterceptor,
@@ -47,6 +49,7 @@ abstract contract BaseComponent is
         _componentOwnerService = _instance.getComponentOwnerService();
         _wallet = address(this);
         _token = IERC20Metadata(token);
+        _productNftId = productNftId;
 
         _registerInterface(type(IBaseComponent).interfaceId);
     }
@@ -69,11 +72,15 @@ abstract contract BaseComponent is
         return _wallet;
     }
 
-    function getToken() external view override returns (IERC20Metadata token) {
+    function getToken() public view override returns (IERC20Metadata token) {
         return _token;
     }
 
-    function getInstance() external view override returns (IInstance instance) {
+    function getInstance() public view override returns (IInstance instance) {
         return _instance;
+    }
+
+    function getProductNftId() public view override returns (NftId productNftId) {
+        return _productNftId;
     }
 }

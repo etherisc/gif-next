@@ -67,35 +67,35 @@ contract RegisterProductTest is RegistryServiceTestBase {
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            PRODUCT_REGISTRAR_ROLE());
+            PRODUCT_REGISTRAR_ROLE().toInt());
 
         functionSelector[0] = RegistryService.registerPool.selector;
 
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            POOL_REGISTRAR_ROLE());
+            POOL_REGISTRAR_ROLE().toInt());
 
         functionSelector[0] = RegistryService.registerDistribution.selector;
 
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            DISTRIBUTION_REGISTRAR_ROLE());
+            DISTRIBUTION_REGISTRAR_ROLE().toInt());
 
         functionSelector[0] = RegistryService.registerPolicy.selector;
 
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            POLICY_REGISTRAR_ROLE());
+            POLICY_REGISTRAR_ROLE().toInt());
 
         functionSelector[0] = RegistryService.registerBundle.selector;
 
         accessManager.setTargetFunctionRole(
             address(registryService), 
             functionSelector, 
-            BUNDLE_REGISTRAR_ROLE());
+            BUNDLE_REGISTRAR_ROLE().toInt());
     }
 
     function _registerServices() internal
@@ -126,9 +126,9 @@ contract RegisterProductTest is RegistryServiceTestBase {
         registryService.registerService(poolService);
         registryService.registerService(distributionService);
 
-        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE(), address(componentOwnerService), 0);
-        accessManager.grantRole(POOL_REGISTRAR_ROLE(), address(componentOwnerService), 0);
-        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE(), address(componentOwnerService), 0);
+        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
     }
 
     function test_callByAddressWithProductRegistrarRole() public
