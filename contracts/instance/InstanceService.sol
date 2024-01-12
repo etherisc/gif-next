@@ -7,18 +7,22 @@ import {AccessManagerSimple} from "./AccessManagerSimple.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
-import {Service} from "../shared/Service.sol";
+import {InstanceReader} from "./InstanceReader.sol";
+import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IService} from "../shared/IService.sol";
+import {Registry} from "../registry/Registry.sol";
+import {RegistryService} from "../registry/RegistryService.sol";
+import {IService} from "../../contracts/instance/base/IService.sol";
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-import {NftId, NftIdLib, zeroNftId} from "../types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
+import {VersionLib} from "../types/Version.sol";
 
 contract InstanceService is Service, IInstanceService {
 
     address internal _registryAddress;
     address internal _accessManagerMaster;
-    address internal _instanceAccessManagerMaster;
     address internal _instanceMaster;
+    address internal _instanceReaderMaster;
 
     // TODO update to real hash when instance is stable
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
@@ -27,31 +31,52 @@ contract InstanceService is Service, IInstanceService {
     function createInstanceClone()
         external 
         returns (
-            AccessManagerSimple am, 
-            InstanceAccessManager im, 
-            Instance i
+            AccessManagerSimple clonedAccessManager, 
+            Instance clonedInstance,
+            NftId instanceNftId,
+            InstanceReader clonedInstanceReader
         )
     {
-        am = AccessManagerSimple(Clones.clone(_accessManagerMaster));
-        im = InstanceAccessManager(Clones.clone(_instanceAccessManagerMaster));
-        i = Instance(Clones.clone(_instanceMaster));
+        Registry registry = Registry(_registryAddress);
+        NftId registryNftId = registry.getNftId(_registryAddress);
+        address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        RegistryService registryService = RegistryService(registryServiceAddress);
+
+        clonedAccessManager = AccessManagerSimple(Clones.clone(_accessManagerMaster));
+        clonedAccessManager.initialize(msg.sender);
+
+        clonedInstance = Instance(Clones.clone(_instanceMaster));
+        clonedInstance.initialize(address(clonedAccessManager), _registryAddress, registryNftId);
+        ( IRegistry.ObjectInfo memory info, ) = registryService.registerInstance(clonedInstance);
+        instanceNftId = info.nftId;
+        
+        clonedInstanceReader = InstanceReader(Clones.clone(address(_instanceReaderMaster)));
+        clonedInstanceReader.initialize(_registryAddress, instanceNftId);
     }
 
-    function setAccessManagerMaster(address accessManager) external {
-        _accessManagerMaster = accessManager;
+    function setAccessManagerMaster(address accessManagerMaster) external {
+        _accessManagerMaster = accessManagerMaster;
     }
 
-    function setInstanceAccessManagerMaster(address instanceAccessManager) external {
-        _instanceAccessManagerMaster = instanceAccessManager;
+    function setInstanceMaster(address instanceMaster) external {
+        _instanceMaster = instanceMaster;
     }
 
-    function setInstanceMaster(address instance) external {
-        _instanceMaster = instance;
+    function setInstanceReaderMaster(address instanceReaderMaster) external {
+        _instanceReaderMaster = instanceReaderMaster;
     }
 
-    function getAccessManagerMaster() external view returns (address) { return address(_accessManagerMaster); }
-    function getInstanceAccessManagerMaster() external view returns (address) { return address(_instanceAccessManagerMaster); }
-    function getInstanceMaster() external view returns (address) { return address(_instanceMaster); }
+    function getInstanceReaderMaster() external view returns (address) {
+        return _instanceReaderMaster;
+    }
+
+    function getInstanceMaster() external view returns (address) {
+        return _instanceMaster;
+    }
+
+    function getAccessManagerMaster() external view returns (address) {
+        return _accessManagerMaster;
+    }
 
     // From IService
     function getName() public pure override(IService, Service) returns(string memory) {
