@@ -5,12 +5,12 @@ import { getNamedAccounts, printBalance, validateNftOwnerhip } from "./libs/acco
 import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
 import { logger } from "./logger";
-import { InstanceAddresses, deployAndRegisterMasterInstance } from "./libs/instance";
+import { InstanceAddresses, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
 import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
 
 
 async function main() {
-    const { protocolOwner, masterInstanceOwner, instanceServiceOwner } = await getNamedAccounts();
+    const { protocolOwner, masterInstanceOwner, instanceServiceOwner, instanceOwner } = await getNamedAccounts();
 
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
@@ -18,7 +18,8 @@ async function main() {
     const services = await deployAndRegisterServices(instanceServiceOwner, registry, libraries);
     
     // // deploy instance contracts
-    const masterInstance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry);
+    const masterInstance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry, services);
+    // TODO const clonedInstance = await cloneInstance(masterInstance, libraries, registry, services, instanceOwner);
 
     // await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
     // await grantRole(instanceOwner, libraries, instance, Role.DISTRIBUTION_OWNER_ROLE, distributionOwner);
@@ -32,7 +33,6 @@ async function main() {
     
     printAddresses(libraries, registry, services, masterInstance);
 
-    // TODO reenable
     await verifyOwnership(
         protocolOwner, masterInstanceOwner,
         //, productOwner, poolOwner, distributionOwner,
@@ -49,6 +49,7 @@ async function main() {
         ["protocolOwner", protocolOwner],
         ["masterInstanceOwner", masterInstanceOwner] , 
         ["instanceServiceOwner", instanceServiceOwner],
+        ["instanceOwner", instanceOwner],
         // ["productOwner", productOwner], 
         // ["distributionOwner", distributionOwner], 
         // ["poolOwner", poolOwner]

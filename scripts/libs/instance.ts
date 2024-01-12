@@ -1,10 +1,11 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { IRegistryService__factory } from "../../typechain-types";
+import { IRegistryService__factory, InstanceService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
 import { executeTx, getFieldFromLogs } from "./transaction";
+import { ServiceAddresses } from "./services";
 
 export type InstanceAddresses = {
     instanceAddress: AddressLike,
@@ -15,6 +16,7 @@ export async function deployAndRegisterMasterInstance(
     owner: Signer, 
     libraries: LibraryAddresses,
     registry: RegistryAddresses,
+    services: ServiceAddresses,
 ): Promise<InstanceAddresses> {
     const { address: accessManagerAddress } = await deployContract(
         "AccessManagerSimple",
@@ -50,27 +52,37 @@ export async function deployAndRegisterMasterInstance(
     // const instanceNftId = 21101;
 
 
-    // FIXME: fix InstanceReader deployment (correct nftId for instance)
-    // const { address: instanceReaderAddress, contract: instanceReaderBaseContract } = await deployContract(
-    //     "InstanceReader",
-    //     owner,
-    //     [registry.registryAddress, instanceNftId],
-    //     { 
-    //         libraries: {
-    //             DistributorTypeLib: libraries.distributorTypeLibAddress,
-    //             NftIdLib: libraries.nftIdLibAddress,
-    //             ReferralLib: libraries.referralLibAddress,
-    //             RiskIdLib: libraries.riskIdLibAddress,
-    //             TimestampLib: libraries.timestampLibAddress,
-    //             UFixedMathLib: libraries.uFixedMathLibAddress,
-    //         }
-    //     }
-    // );
+    const { address: instanceReaderAddress } = await deployContract(
+        "InstanceReader",
+        owner,
+        [registry.registryAddress, masterInstanceNfdId],
+        { 
+            libraries: {
+                DistributorTypeLib: libraries.distributorTypeLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                ReferralLib: libraries.referralLibAddress,
+                RiskIdLib: libraries.riskIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                UFixedLib: libraries.uFixedLibAddress,
+            }
+        }
+    );
+
+    logger.debug(`setting master addresses into instance service`);
+    await executeTx(() => services.instanceService.setAccessManagerMaster(accessManagerAddress));
+    await executeTx(() => services.instanceService.setInstanceMaster(instanceAddress));
+    await executeTx(() => services.instanceService.setInstanceReaderMaster(instanceReaderAddress));
+    logger.info(`master addresses set`);
     
     return {
         instanceAddress: instanceAddress,
         instanceNftId: masterInstanceNfdId,
     } as InstanceAddresses;
+}
+
+export async function cloneInstance(masterInstance: InstanceAddresses, libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses, instanceOwner: Signer) {
+    const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(services.instanceServiceAddress), instanceOwner);
+    const cloneTx = executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
 }
 
 

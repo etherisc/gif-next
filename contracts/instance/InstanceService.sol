@@ -55,14 +55,23 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function setAccessManagerMaster(address accessManagerMaster) external {
+        require(
+            _accessManagerMaster == address(0),
+            "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
         _accessManagerMaster = accessManagerMaster;
     }
 
     function setInstanceMaster(address instanceMaster) external {
+        require(
+            _instanceMaster == address(0),
+            "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
         _instanceMaster = instanceMaster;
     }
 
     function setInstanceReaderMaster(address instanceReaderMaster) external {
+        require(
+            _instanceReaderMaster == address(0),
+            "ERROR:CRD-003:INSTANCE_READER_MASTER_ALREADY_SET");
         _instanceReaderMaster = instanceReaderMaster;
     }
 
