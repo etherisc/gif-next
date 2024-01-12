@@ -46,6 +46,8 @@ contract AccessManagerSimple is Context, IAccessManagerSimple {
         uint32 nonce;
     }
 
+    bool private _initialized;
+
     uint64 public constant ADMIN_ROLE = type(uint64).min; // 0
     uint64 public constant PUBLIC_ROLE = type(uint64).max; // 2**64-1
 
@@ -67,13 +69,21 @@ contract AccessManagerSimple is Context, IAccessManagerSimple {
     }
 
     constructor(address initialAdmin) {
+        initialize(initialAdmin);
+    }
+    
+    function initialize(address initialAdmin) public {
+        require(!_initialized, "AccessManager: already initialized");
+        
         if (initialAdmin == address(0)) {
             revert AccessManagerInvalidInitialAdmin(address(0));
         }
 
         // admin is active immediately and without any execution delay.
         _grantRole(ADMIN_ROLE, initialAdmin, 0, 0);
+        _initialized = true;
     }
+
 
     // =================================================== GETTERS ====================================================
     /// @inheritdoc IAccessManagerSimple

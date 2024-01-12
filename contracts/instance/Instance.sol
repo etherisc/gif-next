@@ -41,6 +41,8 @@ contract Instance is
 
     uint32 public constant EXECUTION_DELAY = 0;
 
+    bool private _initialized;
+
     mapping(ShortString name => RoleId roleId) internal _role;
     mapping(RoleId roleId => EnumerableSet.AddressSet roleMembers) internal _roleMembers; 
     RoleId [] internal _roles;
@@ -53,14 +55,20 @@ contract Instance is
     constructor(address accessManagerAddress, address registryAddress, NftId registryNftId)
         AccessManagedSimple(accessManagerAddress)
     {
-        // TODO move to initializer method and remove constructor - required for the instance to be cloneable
+        initialize(accessManagerAddress, registryAddress, registryNftId);
+    }
+
+    function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId) public {
+        require(!_initialized, "Contract instance has already been initialized");
+
         _accessManager = AccessManagerSimple(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
         _createRole(RoleIdLib.toRoleId(PUBLIC_ROLE), "PublicRole", false, false);
 
         _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, msg.sender, "");
 
-        _registerInterface(type(IInstance).interfaceId);
+        _registerInterface(type(IInstance).interfaceId);    
+        _initialized = true;
     }
 
     //--- Role ------------------------------------------------------//
@@ -424,9 +432,7 @@ contract Instance is
     // }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        if (address(_instanceReader) != address(0)) {
-            revert("InstanceReader is set");
-        }
+        require(address(_instanceReader) == address(0), "InstanceReader is set");
         _instanceReader = instanceReader;
     }
 
