@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IRisk} from "../module/IRisk.sol";
-import {IService} from "../base/IService.sol";
+import {IService} from "../../shared/IService.sol";
 
 import {NftId} from "../../types/NftId.sol";
 import {ReferralId} from "../../types/Referral.sol";

@@ -7,13 +7,13 @@ import {AccessManagerSimple} from "./AccessManagerSimple.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
-import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
+import {Service} from "../shared/Service.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IService} from "../../contracts/instance/base/IService.sol";
+import {IService} from "../shared/IService.sol";
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../types/NftId.sol";
 
-contract InstanceService is ServiceBase, IInstanceService {
+contract InstanceService is Service, IInstanceService {
 
     address internal _registryAddress;
     address internal _accessManagerMaster;
@@ -54,7 +54,7 @@ contract InstanceService is ServiceBase, IInstanceService {
     function getInstanceMaster() external view returns (address) { return address(_instanceMaster); }
 
     // From IService
-    function getName() public pure override(IService, ServiceBase) returns(string memory) {
+    function getName() public pure override(IService, Service) returns(string memory) {
         return NAME;
     }
     
@@ -89,7 +89,7 @@ contract InstanceService is ServiceBase, IInstanceService {
         IRegistry registry = IRegistry(_registryAddress);
         NftId registryNftId = registry.getNftId(_registryAddress);
 
-        _initializeServiceBase(_registryAddress, registryNftId, initialOwner);
+        _initializeService(_registryAddress, initialOwner);
         
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IInstanceService).interfaceId);

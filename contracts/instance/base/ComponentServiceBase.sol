@@ -7,10 +7,10 @@ import {IInstance} from "../../instance/IInstance.sol";
 import {ObjectType, INSTANCE, PRODUCT, POOL} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 
-import {ServiceBase} from "./ServiceBase.sol";
+import {Service} from "../../shared/Service.sol";
 import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
-abstract contract ComponentServiceBase is ServiceBase {
+abstract contract ComponentServiceBase is Service {
 
     constructor(
         address registry,
@@ -18,7 +18,7 @@ abstract contract ComponentServiceBase is ServiceBase {
         address initialOwner
     )
     {
-        _initializeServiceBase(registry, registryNftId, initialOwner);
+        _initializeService(registry, initialOwner);
     }
 
 

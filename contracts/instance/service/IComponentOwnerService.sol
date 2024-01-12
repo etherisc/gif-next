@@ -5,7 +5,7 @@ import {NftId} from "../../types/NftId.sol";
 import {ObjectType} from "../../types/ObjectType.sol";
 import {RoleId} from "../../types/RoleId.sol";
 import {IBaseComponent} from "../../components/IBaseComponent.sol";
-import {IService} from "../base/IService.sol";
+import {IService} from "../../shared/IService.sol";
 
 // TODO rename to registry service
 interface IComponentOwnerService is IService {

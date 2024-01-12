@@ -27,15 +27,15 @@ import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IProductComponent} from "../../components/IProductComponent.sol";
-import {IService} from "../base/IService.sol";
+import {IService} from "../../shared/IService.sol";
 import {IComponentOwnerService} from "./IComponentOwnerService.sol";
-import {ServiceBase} from "../base/ServiceBase.sol";
+import {Service} from "../../shared/Service.sol";
 // import {IPool, IPoolModule} from "../module/IPoolModule.sol";
 
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 
 contract ComponentOwnerService is
-    ServiceBase,
+    Service,
     IComponentOwnerService
 {
     using NftIdLib for NftId;
@@ -64,11 +64,11 @@ contract ComponentOwnerService is
         address initialOwner
     )
     {
-        _initializeServiceBase(registry, registryNftId, initialOwner);
+        _initializeService(registry, initialOwner);
         _registerInterface(type(IComponentOwnerService).interfaceId);
     }
 
-    function getName() public pure override(IService, ServiceBase) returns(string memory name) {
+    function getName() public pure override(IService, Service) returns(string memory name) {
         return NAME;
     }
 

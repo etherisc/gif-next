@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {NftId} from "../../contracts/types/NftId.sol";
-import {ObjectType} from "../../contracts/types/ObjectType.sol";
-import {RoleId} from "../../contracts/types/RoleId.sol";
-import {IService} from "../../contracts/instance/base/IService.sol";
-import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {NftId} from "../types/NftId.sol";
+import {ObjectType} from "../types/ObjectType.sol";
+import {RoleId} from "../types/RoleId.sol";
+import {IService} from "../shared/IService.sol";
+import {IRegistry} from "./IRegistry.sol";
 
-import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
-import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
+import {IBaseComponent} from "../components/IBaseComponent.sol";
 
 interface IRegistryService is IService {
 

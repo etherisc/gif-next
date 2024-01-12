@@ -6,7 +6,7 @@ import {VersionLib, Version, VersionPart} from "../../contracts/types/Version.so
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, SERVICE, INSTANCE} from "../../contracts/types/ObjectType.sol";
 
-import {IService} from "../../contracts/instance/base/IService.sol";
+import {IService} from "../../contracts/shared/IService.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
