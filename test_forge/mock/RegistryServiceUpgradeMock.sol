@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
-import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
+import {Service} from "../../contracts/shared/Service.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {Version, VersionLib} from "../../contracts/types/Version.sol";
 
@@ -25,7 +25,7 @@ contract RegistryServiceUpgradeMock is RegistryService {
     function getVersion()
         public
         pure
-        virtual override (IVersionable, ServiceBase)
+        virtual override (IVersionable, Service)
         returns(Version)
     {
         return VersionLib.toVersion(3, 0, 1);

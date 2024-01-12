@@ -6,7 +6,7 @@ import {Version, VersionLib} from "../../contracts/types/Version.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
+import {Service} from "../../contracts/shared/Service.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 
 
@@ -45,7 +45,7 @@ contract RegistryServiceHarness is RegistryService {
     function getVersion()
         public
         pure
-        virtual override (IVersionable, ServiceBase)
+        virtual override (IVersionable, Service)
         returns(Version)
     {
         return VersionLib.toVersion(3, 3, 3);

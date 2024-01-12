@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {VersionPart} from "../../types/Version.sol";
+import {VersionPart} from "../types/Version.sol";
 
-import {IRegisterable} from "../../shared/IRegisterable.sol";
-import {IVersionable} from "../../shared/IVersionable.sol";
+import {IRegisterable} from "./IRegisterable.sol";
+import {IVersionable} from "./IVersionable.sol";
 
 interface IService is 
     IRegisterable,

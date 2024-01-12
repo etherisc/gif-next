@@ -9,18 +9,18 @@ import {ObjectType, toObjectType, SERVICE} from "../../contracts/types/ObjectTyp
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
-import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
+import {Service} from "../../contracts/shared/Service.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 
-contract ServiceMock is ServiceBase {
+contract ServiceMock is Service {
 
     string public constant NAME = "ServiceMock";
 
     constructor(address registry, NftId registryNftId, address initialOwner)
     {
-        _initializeServiceBase(registry, registryNftId, initialOwner);
+        _initializeService(registry, initialOwner);
     }
 
     function getName() public pure override returns(string memory name) {
@@ -28,13 +28,13 @@ contract ServiceMock is ServiceBase {
     }
 }
 
-contract SelfOwnedServiceMock is ServiceBase {
+contract SelfOwnedServiceMock is Service {
 
     string public constant NAME = "SelfOwnedServiceMock";
 
     constructor(address registry, NftId registryNftId)
     {
-        _initializeServiceBase(registry, registryNftId, address(this));
+        _initializeService(registry, address(this));
     }
 
     function getName() public pure override returns(string memory name) {
@@ -42,7 +42,7 @@ contract SelfOwnedServiceMock is ServiceBase {
     }
 }
 
-contract ServiceMockWithRandomInvalidType is ServiceBase {
+contract ServiceMockWithRandomInvalidType is Service {
 
     string public constant NAME = "ServiceMockWithRandomInvalidType";
 
@@ -50,7 +50,7 @@ contract ServiceMockWithRandomInvalidType is ServiceBase {
 
     constructor(address registry, NftId registryNftId, address initialOwner)
     {
-        _initializeServiceBase(registry, registryNftId, initialOwner);
+        _initializeService(registry, initialOwner);
 
         FoundryRandom rng = new FoundryRandom();
 
@@ -83,7 +83,7 @@ contract ServiceMockWithRandomInvalidType is ServiceBase {
     }
 }
 
-contract ServiceMockWithRandomInvalidAddress is ServiceBase {
+contract ServiceMockWithRandomInvalidAddress is Service {
 
     string public constant NAME = "ServiceMockWithRandomInvalidAddress";
 
@@ -91,7 +91,7 @@ contract ServiceMockWithRandomInvalidAddress is ServiceBase {
 
     constructor(address registry, NftId registryNftId, address initialOwner)
     {
-        _initializeServiceBase(registry, registryNftId, initialOwner);
+        _initializeService(registry, initialOwner);
 
         FoundryRandom rng = new FoundryRandom();
 
@@ -124,13 +124,13 @@ contract ServiceMockWithRandomInvalidAddress is ServiceBase {
     }
 }
 
-contract ServiceMockOldVersion is ServiceBase {
+contract ServiceMockOldVersion is Service {
 
     string public constant NAME = "ServiceMock";
 
     constructor(address registry, NftId registryNftId, address initialOwner)
     {
-        _initializeServiceBase(registry, registryNftId, initialOwner);
+        _initializeService(registry, initialOwner);
     }
 
     function getName() public pure override returns(string memory name) {
@@ -143,13 +143,13 @@ contract ServiceMockOldVersion is ServiceBase {
     }
 }
 
-contract ServiceMockNewVersion is ServiceBase {
+contract ServiceMockNewVersion is Service {
 
     string public constant NAME = "ServiceMock";
 
     constructor(address registry, NftId registryNftId, address initialOwner)
     {
-        _initializeServiceBase(registry, registryNftId, initialOwner);
+        _initializeService(registry, initialOwner);
     }
 
     function getName() public pure override returns(string memory name) {

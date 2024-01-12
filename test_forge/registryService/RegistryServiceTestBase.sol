@@ -16,7 +16,7 @@ import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
-import {IService} from "../../contracts/instance/base/IService.sol";
+import {IService} from "../../contracts/shared/IService.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";

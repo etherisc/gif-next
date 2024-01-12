@@ -28,15 +28,15 @@ import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
 
-import {ServiceBase} from "../../contracts/instance/base/ServiceBase.sol";
-import {IService} from "../../contracts/instance/base/IService.sol";
+import {Service} from "../shared/Service.sol";
+import {IService} from "../shared/IService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {Registry} from "./Registry.sol";
 import {ChainNft} from "./ChainNft.sol";
 
 contract RegistryService is
     AccessManagedUpgradeable,
-    ServiceBase,
+    Service,
     IRegistryService
 {
     using NftIdLib for NftId;
@@ -289,7 +289,7 @@ contract RegistryService is
 
 
     // From IService
-    function getName() public pure override(IService, ServiceBase) returns(string memory) {
+    function getName() public pure override(IService, Service) returns(string memory) {
         return NAME;
     }
     //function getType() public pure override(IService, ServiceBase) returns(ObjectType serviceType) {
@@ -333,7 +333,7 @@ contract RegistryService is
 
         NftId registryNftId = registry.getNftId(address(registry));
 
-        _initializeServiceBase(address(registry), registryNftId, owner);
+        _initializeService(address(registry), owner);
 
         // TODO why do registry service proxy need to keep its nftId??? -> no registryServiceNftId checks in implementation
         // if they are -> use registry address to obtain owner of registry service nft (works the same with any registerable and(or) implementation)
