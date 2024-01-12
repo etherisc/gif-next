@@ -7,8 +7,8 @@ import { RegistryAddresses } from "./registry";
 import { executeTx, getFieldFromLogs } from "./transaction";
 
 export type InstanceAddresses = {
-    masterInstanceAddress: AddressLike,
-    masterInstanceNftId: string,
+    instanceAddress: AddressLike,
+    instanceNftId: string,
 }
 
 export async function deployAndRegisterMasterInstance(
@@ -68,8 +68,8 @@ export async function deployAndRegisterMasterInstance(
     // );
     
     return {
-        masterInstanceAddress: instanceAddress,
-        masterInstanceNftId: masterInstanceNfdId,
+        instanceAddress: instanceAddress,
+        instanceNftId: masterInstanceNfdId,
     } as InstanceAddresses;
 }
 

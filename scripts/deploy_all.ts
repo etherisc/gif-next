@@ -18,7 +18,7 @@ async function main() {
     const services = await deployAndRegisterServices(instanceServiceOwner, registry, libraries);
     
     // // deploy instance contracts
-    const instance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry);
+    const masterInstance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry);
 
     // await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
     // await grantRole(instanceOwner, libraries, instance, Role.DISTRIBUTION_OWNER_ROLE, distributionOwner);
@@ -30,14 +30,14 @@ async function main() {
     // const { distributionAddress, distributionNftId } = await deployDistribution(distributionOwner, libraries, registry, instance, tokenAddress);
     // const { productAddress, productNftId } = await deployProduct(productOwner, libraries, registry, instance, tokenAddress, poolAddress, distributionAddress);
     
-    printAddresses(libraries, registry, services, instance);
+    printAddresses(libraries, registry, services, masterInstance);
 
     // TODO reenable
     await verifyOwnership(
         protocolOwner, masterInstanceOwner,
         //, productOwner, poolOwner, distributionOwner,
         libraries, registry, //services,
-        instance, 
+        masterInstance, 
         // tokenAddress, 
         // poolAddress, poolNftId,
         // distributionAddress, distributionNftId,
@@ -64,7 +64,7 @@ async function verifyOwnership(
     protocolOwner: AddressLike, masterInstanceOwner: AddressLike,
     // productOwner: AddressLike, poolOwner: AddressLike, distributionOwner: AddressLike,
     libraries: LibraryAddresses, registry: RegistryAddresses, //services: ServiceAddresses,
-    instance: InstanceAddresses,
+    masterInstance: InstanceAddresses,
     // tokenAddress: AddressLike, 
     // poolAddress: AddressLike, poolNftId: string,
     // distributionAddress: AddressLike, distributionNftId: string,
@@ -90,14 +90,14 @@ async function verifyOwnership(
     // await validateNftOwnerhip(registry.chainNftAddress, services.productServiceNftId, protocolOwner);
     // await validateNftOwnerhip(registry.chainNftAddress, services.poolServiceNftId, protocolOwner);
     
-    if (instance.masterInstanceNftId === undefined) {
+    if (masterInstance.instanceNftId === undefined) {
         throw new Error("instance masterInstanceNftId undefined");
     }
-    const masterInstanceNftIdFromReg = await registry.registry.getNftId(instance.masterInstanceAddress);
-    if (BigInt(instance.masterInstanceNftId) !== masterInstanceNftIdFromReg) {
-        throw new Error(`instance masterInstanceNftId (${instance.masterInstanceNftId}) mismatch: ${masterInstanceNftIdFromReg}`);
+    const masterInstanceNftIdFromReg = await registry.registry.getNftId(masterInstance.instanceAddress);
+    if (BigInt(masterInstance.instanceNftId) !== masterInstanceNftIdFromReg) {
+        throw new Error(`instance masterInstanceNftId (${masterInstance.instanceNftId}) mismatch: ${masterInstanceNftIdFromReg}`);
     }
-    await validateNftOwnerhip(registry.chainNftAddress, instance.masterInstanceNftId, masterInstanceOwner);
+    await validateNftOwnerhip(registry.chainNftAddress, masterInstance.instanceNftId, masterInstanceOwner);
     
     // await validateNftOwnerhip(registry.chainNftAddress, instance.instanceNftId, instanceOwner);
     
@@ -110,7 +110,7 @@ async function verifyOwnership(
 function printAddresses(
     libraries: LibraryAddresses, registry: RegistryAddresses, 
     services: ServiceAddresses,
-    instance: InstanceAddresses,
+    masterInstance: InstanceAddresses,
     // tokenAddress: AddressLike, 
     // poolAddress: AddressLike, poolNftId: string,
     // distributionAddress: AddressLike, distributionNftId: string,
@@ -153,8 +153,8 @@ function printAddresses(
     // addresses += `distributionServiceAddress: ${services.distributionServiceAddress}\n`;
     // addresses += `distributionServiceNftId: ${services.distributionServiceNftId}\n`;
     // addresses += `--------\n`;
-    addresses += `masterInstanceAddress: ${instance.masterInstanceAddress}\n`;
-    addresses += `masterInstanceNftId: ${instance.masterInstanceNftId}\n`;
+    addresses += `masterInstanceAddress: ${masterInstance.instanceAddress}\n`;
+    addresses += `masterInstanceNftId: ${masterInstance.instanceNftId}\n`;
     // addresses += `--------\n`;
     // addresses += `tokenAddress: ${tokenAddress}\n`;
     // addresses += `poolAddress: ${poolAddress}\n`;
