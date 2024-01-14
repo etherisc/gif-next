@@ -306,15 +306,15 @@ contract RegistryTestBase is Test, FoundryRandom {
         _addressName[address(registry)] = "Registry";
         _addressName[address(registryService)] = "registryService";
         
-        _errorName[Registry.NotRegistryService.selector] = "NotRegistryService"; 
-        _errorName[Registry.ZeroParentAddress.selector] = "ZeroParentAddress"; 
-        _errorName[Registry.ContractAlreadyRegistered.selector] = "ContractAlreadyRegistered";
-        _errorName[Registry.InvalidServiceVersion.selector] = "InvalidServiceVersion";
-        _errorName[Registry.ServiceNameAlreadyRegistered.selector] = "ServiceNameAlreadyRegistered";
-        _errorName[Registry.NotOwner.selector] = "NotOwner";
-        _errorName[Registry.NotRegisteredContract.selector] = "NotRegisteredContract";
-        _errorName[Registry.NotService.selector] = "NotService"; 
-        _errorName[Registry.InvalidTypesCombination.selector] = "InvalidTypesCombination"; 
+        _errorName[IRegistry.NotRegistryService.selector] = "NotRegistryService"; 
+        _errorName[IRegistry.ZeroParentAddress.selector] = "ZeroParentAddress"; 
+        _errorName[IRegistry.ContractAlreadyRegistered.selector] = "ContractAlreadyRegistered";
+        _errorName[IRegistry.InvalidServiceVersion.selector] = "InvalidServiceVersion";
+        _errorName[IRegistry.ServiceNameAlreadyRegistered.selector] = "ServiceNameAlreadyRegistered";
+        _errorName[IRegistry.NotOwner.selector] = "NotOwner";
+        _errorName[IRegistry.NotRegisteredContract.selector] = "NotRegisteredContract";
+        _errorName[IRegistry.NotService.selector] = "NotService"; 
+        _errorName[IRegistry.InvalidTypesCombination.selector] = "InvalidTypesCombination"; 
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }
 
@@ -673,12 +673,12 @@ contract RegistryTestBase is Test, FoundryRandom {
 
         if(_sender != address(registryService)) 
         {// auth check
-            expectedRevertMsg = abi.encodeWithSelector(Registry.NotRegistryService.selector);
+            expectedRevertMsg = abi.encodeWithSelector(IRegistry.NotRegistryService.selector);
             expectRevert = true;
         }
         else if(parentAddress == address(0)) 
         {// special case: MUST NOT register with global registry as parent when not on mainnet (global registry have valid type as parent but 0 address in this case)
-            expectedRevertMsg = abi.encodeWithSelector(Registry.ZeroParentAddress.selector);
+            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ZeroParentAddress.selector);
             expectRevert = true;
         }
         else if(
@@ -697,12 +697,12 @@ contract RegistryTestBase is Test, FoundryRandom {
         {// contract checks
             if(_isValidContractTypesCombo[info.objectType][parentType] == false) 
             {// parent must be registered + object-parent types combo must be valid
-                expectedRevertMsg = abi.encodeWithSelector(Registry.InvalidTypesCombination.selector, info.objectType, parentType);
+                expectedRevertMsg = abi.encodeWithSelector(IRegistry.InvalidTypesCombination.selector, info.objectType, parentType);
                 expectRevert = true;
             }
             else if(_nftIdByAddress[info.objectAddress] != zeroNftId())
             {
-                expectedRevertMsg = abi.encodeWithSelector(Registry.ContractAlreadyRegistered.selector, info.objectAddress);
+                expectedRevertMsg = abi.encodeWithSelector(IRegistry.ContractAlreadyRegistered.selector, info.objectAddress);
                 expectRevert = true;
             }
             else if(info.objectType == SERVICE()) 
@@ -719,19 +719,19 @@ contract RegistryTestBase is Test, FoundryRandom {
                     _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)].address_ == address(0) )
                 )
                 {// major version >= GIF_VERSION and must increase by 1
-                    expectedRevertMsg = abi.encodeWithSelector(Registry.InvalidServiceVersion.selector, majorVersion);
+                    expectedRevertMsg = abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, majorVersion);
                     expectRevert = true;
                 }
                 else if(_service[serviceNameHash][majorVersion].address_ != address(0))
                 {
-                    expectedRevertMsg = abi.encodeWithSelector(Registry.ServiceNameAlreadyRegistered.selector, serviceName, majorVersion);
+                    expectedRevertMsg = abi.encodeWithSelector(IRegistry.ServiceNameAlreadyRegistered.selector, serviceName, majorVersion);
                     expectRevert = true;
                 }
             }
         }
         else if(_isValidObjectTypesCombo[info.objectType][parentType] == false) 
         {// state object checks, parent must be registered + object-parent types combo must be valid
-            expectedRevertMsg = abi.encodeWithSelector(Registry.InvalidTypesCombination.selector, info.objectType, parentType);
+            expectedRevertMsg = abi.encodeWithSelector(IRegistry.InvalidTypesCombination.selector, info.objectType, parentType);
             expectRevert = true;
         }
         

@@ -7,7 +7,7 @@ import {IService} from "../shared/IService.sol";
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {NftId, toNftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
-import {Version, VersionPart, VersionLib} from "../types/Version.sol";
+import {Version, VersionPart, VersionLib, VersionPartLib} from "../types/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
 import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
@@ -28,23 +28,12 @@ contract Registry is
     ERC165,
     IRegistry
 {
-    // register
-    error NotRegistryService();
-    error ZeroParentAddress();
-    error ContractAlreadyRegistered(address objectAddress);
-    error InvalidServiceVersion(VersionPart majorVersion);
-    error ServiceNameAlreadyRegistered(string name, VersionPart majorVersion);
-            
-    // approve
-    error NotOwner();
-    error NotRegisteredContract(NftId registrarNftId);
-    error NotService(NftId registrarNftId);
-    error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
-
-    uint256 public constant MAJOR_VERSION_MIN = 3;
     address public constant NFT_LOCK_ADDRESS = address(0x1);
     uint256 public constant REGISTRY_SERVICE_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
+
+    VersionPart internal _majorVersionMin;
+    VersionPart internal _majorVersionMax;
 
     mapping(NftId nftId => ObjectInfo info) internal _info;
     mapping(address object => NftId nftId) internal _nftIdByAddress;
@@ -58,6 +47,9 @@ contract Registry is
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) internal _isValidObjectCombination;
 
+    mapping(address token => mapping(
+            VersionPart majorVersion => bool)) internal _tokenIsActive;
+
     mapping(NftId nftId => string name) internal _string;
     mapping(bytes32 serviceNameHash => mapping(
             VersionPart majorVersion => address service)) internal _service;
@@ -69,7 +61,7 @@ contract Registry is
 
     modifier onlyOwner() {
         if(msg.sender != getOwner()) {
-            revert NotOwner();
+            revert NotOwner(msg.sender);
         }
         _;
     }
@@ -85,7 +77,11 @@ contract Registry is
     constructor(address registryOwner, VersionPart majorVersion)
     {
         require(registryOwner > address(0), "Registry: registry owner is 0");
-        require(majorVersion.toInt() == MAJOR_VERSION_MIN, "Registry: initial major version of registry service is not MAJOR_VERSION_MIN");
+
+        // major version at constructor time
+        _majorVersionMin = VersionPartLib.toVersionPart(3);
+        _majorVersionMax = _majorVersionMin;
+        emit LogInitialMajorVersionSet(_majorVersionMin);
 
         // deploy NFT 
         _chainNft = new ChainNft(address(this));// adds 10kb to deployment size
@@ -99,6 +95,23 @@ contract Registry is
         _setupValidObjectParentCombinations();
 
         _registerInterface(type(IRegistry).interfaceId);
+    }
+
+    // from IRegistry
+
+    function setMajorVersionMax(VersionPart newMajorVersionMax)
+        external
+        onlyOwner
+    {
+        // ensure major version increments is one
+        uint256 oldMax = _majorVersionMax.toInt();
+        uint256 newMax = newMajorVersionMax.toInt();
+        if (newMax <= oldMax || newMax - oldMax != 1) {
+            revert MajorVersionMaxIncreaseInvalid(newMajorVersionMax, _majorVersionMax);
+        }
+
+        _majorVersionMax = newMajorVersionMax;
+        emit LogMajorVersionMaxSet(_majorVersionMax);
     }
 
     /// @dev registry protects only against tampering existing records, registering with invalid types pairs and 0 parent address
@@ -169,10 +182,40 @@ contract Registry is
         emit LogRegistration(info);
     }
 
-    // from IRegistry
+    function setTokenActive(address token, VersionPart majorVersion, bool active)
+        external
+        onlyOwner
+    {
+        // verify that token is registered
+        if (_info[_nftIdByAddress[token]].nftId.eqz()) {
+            revert TokenNotRegistered(token);
+        }
+
+        // verify valid major version
+        if (false) {
+
+        }
+
+        _tokenIsActive[token][majorVersion] = active;
+
+        emit LogTokenStateSet(token, majorVersion, active);
+    }
+
+    function getMajorVersionMin() external view returns (VersionPart) { 
+        return _majorVersionMin;
+    }
+
+    function getMajorVersionMax() external view returns (VersionPart) { 
+        return _majorVersionMax;
+    }
+
     function getObjectCount() external view override returns (uint256) {
         
         return _chainNft.totalSupply();
+    }
+
+    function getNftId() external view returns (NftId nftId) {
+        return _registryNftId;
     }
 
     function getNftId(address object) external view override returns (NftId id) {
@@ -203,6 +246,10 @@ contract Registry is
 
     function isRegistered(address object) external view override returns (bool) {
         return _nftIdByAddress[object].gtz();
+    }
+
+    function isTokenActive(address token, VersionPart majorVersion) external view returns (bool) {
+        return _tokenIsActive[token][majorVersion];
     }
 
     function getServiceName(NftId nftId) external view returns (string memory) {
@@ -238,14 +285,8 @@ contract Registry is
         ) = abi.decode(info.data, (string, VersionPart));
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
 
-        // TODO MUST guarantee consistency of service.getVersion() and majorVersion here
-        // TODO update _serviceNftId when registryService with new major version is registered? -> it is fixed in current setup -> can lock up
-        // TODO do not use names -> each object type is registered by corresponding service -> conflicting with approve()
-        if(
-            majorVersion.toInt() < MAJOR_VERSION_MIN ||
-            (majorVersion.toInt() > MAJOR_VERSION_MIN &&
-            _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)] == address(0) )
-        ) {
+        // ensures consistency of service.getVersion() and majorVersion here
+        if(majorVersion != _majorVersionMax) {
             revert InvalidServiceVersion(majorVersion);
         }
         
@@ -386,7 +427,7 @@ contract Registry is
 
         string memory serviceName = "RegistryService";
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-        _service[serviceNameHash][VersionLib.toVersionPart(MAJOR_VERSION_MIN)] = msg.sender;
+        _service[serviceNameHash][_majorVersionMin] = msg.sender;
         _string[serviceNftId] = serviceName;
         _serviceNftId = serviceNftId;
     }

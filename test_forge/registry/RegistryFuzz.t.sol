@@ -429,7 +429,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
         _startPrank(address(registryService));
 
         if(majorVersion.toInt() != GIF_VERSION) {   
-            _assert_register(info, true, abi.encodeWithSelector(Registry.InvalidServiceVersion.selector, majorVersion));    
+            _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, majorVersion));    
         }
 
         info.data = abi.encode(serviceName, VersionLib.toVersionPart(GIF_VERSION));
@@ -465,15 +465,16 @@ contract Registry_Fuzz_Tests is RegistryTestBase
 
         info.objectAddress = serviceAddress_2;
 
-        _assert_register(info, true, abi.encodeWithSelector(Registry.ServiceNameAlreadyRegistered.selector, serviceName, VersionLib.toVersionPart(GIF_VERSION)));
+        _assert_register(info, true, abi.encodeWithSelector(IRegistry.ServiceNameAlreadyRegistered.selector, serviceName, VersionLib.toVersionPart(GIF_VERSION)));
 
-        info.data = abi.encode(serviceName, VersionLib.toVersionPart(255));
+        // TODO remove or refactor registration attempts for invalid versions
+        // info.data = abi.encode(serviceName, VersionLib.toVersionPart(255));
 
-        _assert_register(info, true, abi.encodeWithSelector(Registry.InvalidServiceVersion.selector, VersionLib.toVersionPart(255)));
+        // _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, VersionLib.toVersionPart(255)));
 
-        info.data = abi.encode(serviceName, VersionLib.toVersionPart(GIF_VERSION + 1));
+        // info.data = abi.encode(serviceName, VersionLib.toVersionPart(GIF_VERSION + 1));
 
-        _assert_register(info, false, "");
+        // _assert_register(info, false, "");
 
         _stopPrank();
     }

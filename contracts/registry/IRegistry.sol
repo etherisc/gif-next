@@ -10,9 +10,29 @@ import {VersionPart} from "../types/Version.sol";
 
 interface IRegistry is IERC165 {
 
+    event LogInitialMajorVersionSet(VersionPart majorVersion);
+    event LogMajorVersionMaxSet(VersionPart majorVersionMax);
     event LogRegistration(ObjectInfo info);
-
+    event LogTokenStateSet(address token, VersionPart majorVersion, bool active);
     event LogServiceNameRegistration(string serviceName, VersionPart majorVersion); 
+
+    // supported versions
+    error MajorVersionMaxIncreaseInvalid(VersionPart newMajorVersionMax, VersionPart existingMaxMajorVersion);
+    error TokenMajorVersionInvalid(VersionPart majorVersion);
+
+    // register
+    error TokenNotRegistered(address token);
+    error NotRegistryService();
+    error ZeroParentAddress();
+    error ContractAlreadyRegistered(address objectAddress);
+    error InvalidServiceVersion(VersionPart majorVersion);
+    error ServiceNameAlreadyRegistered(string name, VersionPart majorVersion);
+            
+    // approve
+    error NotOwner(address account);
+    error NotRegisteredContract(NftId registrarNftId);
+    error NotService(NftId registrarNftId);
+    error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
 
 
     struct ObjectInfo {
@@ -26,10 +46,19 @@ interface IRegistry is IERC165 {
     }// TODO delete nftId and initialOwner(if not used) from struct
     // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
 
+    function setMajorVersionMax(VersionPart newMajorVersionMax) external;
+
     function register(ObjectInfo memory info) external returns (NftId nftId);
-    
+
+    function setTokenActive(address token, VersionPart majorVersion, bool active) external;
+
+    function getMajorVersionMin() external view returns (VersionPart);
+
+    function getMajorVersionMax() external view returns (VersionPart);
 
     function getObjectCount() external view returns (uint256);
+
+    function getNftId() external view returns (NftId nftId);
 
     function getNftId(address objectAddress) external view returns (NftId nftId);
 
@@ -44,6 +73,8 @@ interface IRegistry is IERC165 {
     function isRegistered(NftId nftId) external view returns (bool);
 
     function isRegistered(address contractAddress) external view returns (bool);
+
+    function isTokenActive(address token, VersionPart majorVersion) external view returns (bool);
 
     function getServiceName(NftId nftId) external view returns (string memory name);
 

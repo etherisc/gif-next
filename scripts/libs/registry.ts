@@ -50,7 +50,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const registryAddress = await registryService.getRegistry();
     const registry = Registry__factory.connect(registryAddress, owner);
-    const registryNftId = await registry.getNftId(registryAddress);
+    const registryNftId = await registry["getNftId(address)"](registryAddress);
 
     const chainNftAddress = await registry.getChainNft();
     const chainNft = ChainNft__factory.connect(chainNftAddress, owner);

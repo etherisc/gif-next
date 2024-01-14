@@ -150,8 +150,8 @@ contract Registry_Concrete_Tests is RegistryTestBase {
             info.objectAddress = address(uint160(info.objectAddress) + 1);
         }
 
-        bytes memory reason_NotRegistryService = abi.encodeWithSelector(Registry.NotRegistryService.selector);
-        bytes memory reason_NotOwner = abi.encodeWithSelector(Registry.NotOwner.selector);
+        bytes memory reason_NotRegistryService = abi.encodeWithSelector(IRegistry.NotRegistryService.selector);
+        bytes memory reason_NotOwner = abi.encodeWithSelector(IRegistry.NotOwner.selector);
 
         // outsider can not register and approve 
         _startPrank(outsider);
@@ -209,7 +209,7 @@ contract Registry_Concrete_Tests is RegistryTestBase {
         for(uint8 majorVersion = 0; majorVersion < GIF_VERSION; majorVersion++)
         {
             info.data = abi.encode("SomeTestName", VersionLib.toVersionPart(majorVersion));
-            _assert_register(info, true, abi.encodeWithSelector(Registry.InvalidServiceVersion.selector, VersionLib.toVersionPart(majorVersion)));
+            _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, VersionLib.toVersionPart(majorVersion)));
         }
 
         _stopPrank();
