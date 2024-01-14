@@ -24,6 +24,7 @@ interface IRegistry is IERC165 {
         address initialOwner;
         bytes data;
     }// TODO delete nftId and initialOwner(if not used) from struct
+    // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
     
