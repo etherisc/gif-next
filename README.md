@@ -119,7 +119,11 @@ forge test -vvvv --mt test_decimals
 # provide gas report for a single test
 forge test --mt test_decimals --gas-report
 
+# provide code coverage report
 forge coverage
+forge coverage --report lcov 
+
+
 ```
 
 Chisel session

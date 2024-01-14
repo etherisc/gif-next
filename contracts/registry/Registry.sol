@@ -187,13 +187,23 @@ contract Registry is
         onlyOwner
     {
         // verify that token is registered
-        if (_info[_nftIdByAddress[token]].nftId.eqz()) {
+        ObjectInfo memory info = _info[_nftIdByAddress[token]];
+        if (info.nftId.eqz()) {
             revert TokenNotRegistered(token);
         }
 
-        // verify valid major version
-        if (false) {
+        // verify provided address is a registered token
+        if (info.objectType != TOKEN()) {
+            revert NotToken(token);
+        }
 
+        // verify valid major version
+        // ensure major version increments is one
+        uint256 version = majorVersion.toInt();
+        uint256 versionMin = _majorVersionMin.toInt();
+        uint256 versionMax = _majorVersionMax.toInt();
+        if (version < versionMin || version > versionMax) {
+            revert TokenMajorVersionInvalid(majorVersion);
         }
 
         _tokenIsActive[token][majorVersion] = active;

@@ -18,10 +18,13 @@ interface IRegistry is IERC165 {
 
     // supported versions
     error MajorVersionMaxIncreaseInvalid(VersionPart newMajorVersionMax, VersionPart existingMaxMajorVersion);
+
+    // token whitelisting
+    error TokenNotRegistered(address token);
+    error NotToken(address token);
     error TokenMajorVersionInvalid(VersionPart majorVersion);
 
     // register
-    error TokenNotRegistered(address token);
     error NotRegistryService();
     error ZeroParentAddress();
     error ContractAlreadyRegistered(address objectAddress);

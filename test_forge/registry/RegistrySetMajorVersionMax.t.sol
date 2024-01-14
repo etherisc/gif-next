@@ -22,6 +22,15 @@ contract RegistryMajorVersionTests is RegistryTestBase {
         assertEq(registry.getMajorVersionMax().toInt(), 3, "initial major version maximum not 3");
     }
 
+    function test_registryNftId() public {
+        assertEq(registry.getNftId().toInt(), registryNftId.toInt(), "unexpected registry nft id");
+        assertEq(
+            registry.getNftId().toInt(), 
+            registry.getNftId(address(registry)).toInt(), 
+            "unexpected registry nft id (version 2)"
+        );
+    }
+
     function test_registryIncreaseMajorVersionMaxHappyCase() public {
 
         vm.prank(registryOwner);
