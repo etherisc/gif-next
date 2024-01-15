@@ -28,12 +28,12 @@ contract Registry is
     ERC165,
     IRegistry
 {
+    uint256 public constant GIF_MAJOR_VERSION_AT_DEPLOYMENT = 3; // at registry deploymnet time
     address public constant NFT_LOCK_ADDRESS = address(0x1);
     uint256 public constant REGISTRY_SERVICE_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
 
-    VersionPart internal _majorVersionMin;
-    VersionPart internal _majorVersionMax;
+    VersionPart internal _majorVersion;
 
     mapping(NftId nftId => ObjectInfo info) internal _info;
     mapping(address object => NftId nftId) internal _nftIdByAddress;
@@ -79,9 +79,8 @@ contract Registry is
         require(registryOwner > address(0), "Registry: registry owner is 0");
 
         // major version at constructor time
-        _majorVersionMin = VersionPartLib.toVersionPart(3);
-        _majorVersionMax = _majorVersionMin;
-        emit LogInitialMajorVersionSet(_majorVersionMin);
+        _majorVersion = VersionLib.toVersionPart(GIF_MAJOR_VERSION_AT_DEPLOYMENT);
+        emit LogInitialMajorVersionSet(_majorVersion);
 
         // deploy NFT 
         _chainNft = new ChainNft(address(this));// adds 10kb to deployment size
@@ -99,19 +98,19 @@ contract Registry is
 
     // from IRegistry
 
-    function setMajorVersionMax(VersionPart newMajorVersionMax)
+    function setMajorVersion(VersionPart newMajorVersion)
         external
         onlyOwner
     {
         // ensure major version increments is one
-        uint256 oldMax = _majorVersionMax.toInt();
-        uint256 newMax = newMajorVersionMax.toInt();
+        uint256 oldMax = _majorVersion.toInt();
+        uint256 newMax = newMajorVersion.toInt();
         if (newMax <= oldMax || newMax - oldMax != 1) {
-            revert MajorVersionMaxIncreaseInvalid(newMajorVersionMax, _majorVersionMax);
+            revert MajorVersionMaxIncreaseInvalid(newMajorVersion, _majorVersion);
         }
 
-        _majorVersionMax = newMajorVersionMax;
-        emit LogMajorVersionMaxSet(_majorVersionMax);
+        _majorVersion = newMajorVersion;
+        emit LogMajorVersionSet(_majorVersion);
     }
 
     /// @dev registry protects only against tampering existing records, registering with invalid types pairs and 0 parent address
@@ -200,9 +199,8 @@ contract Registry is
         // verify valid major version
         // ensure major version increments is one
         uint256 version = majorVersion.toInt();
-        uint256 versionMin = _majorVersionMin.toInt();
-        uint256 versionMax = _majorVersionMax.toInt();
-        if (version < versionMin || version > versionMax) {
+        uint256 versionNow = _majorVersion.toInt();
+        if (version < GIF_MAJOR_VERSION_AT_DEPLOYMENT || version > versionNow) {
             revert TokenMajorVersionInvalid(majorVersion);
         }
 
@@ -211,16 +209,12 @@ contract Registry is
         emit LogTokenStateSet(token, majorVersion, active);
     }
 
-    function getMajorVersionMin() external view returns (VersionPart) { 
-        return _majorVersionMin;
-    }
-
-    function getMajorVersionMax() external view returns (VersionPart) { 
-        return _majorVersionMax;
+    /// @dev latest GIF release version 
+    function getMajorVersion() external view returns (VersionPart) { 
+        return _majorVersion;
     }
 
     function getObjectCount() external view override returns (uint256) {
-        
         return _chainNft.totalSupply();
     }
 
@@ -296,7 +290,7 @@ contract Registry is
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
 
         // ensures consistency of service.getVersion() and majorVersion here
-        if(majorVersion != _majorVersionMax) {
+        if(majorVersion != _majorVersion) {
             revert InvalidServiceVersion(majorVersion);
         }
         
@@ -437,7 +431,7 @@ contract Registry is
 
         string memory serviceName = "RegistryService";
         bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-        _service[serviceNameHash][_majorVersionMin] = msg.sender;
+        _service[serviceNameHash][VersionLib.toVersionPart(GIF_MAJOR_VERSION_AT_DEPLOYMENT)] = msg.sender;
         _string[serviceNftId] = serviceName;
         _serviceNftId = serviceNftId;
     }

@@ -11,7 +11,7 @@ import {VersionPart} from "../types/Version.sol";
 interface IRegistry is IERC165 {
 
     event LogInitialMajorVersionSet(VersionPart majorVersion);
-    event LogMajorVersionMaxSet(VersionPart majorVersionMax);
+    event LogMajorVersionSet(VersionPart majorVersionMax);
     event LogRegistration(ObjectInfo info);
     event LogTokenStateSet(address token, VersionPart majorVersion, bool active);
     event LogServiceNameRegistration(string serviceName, VersionPart majorVersion); 
@@ -49,15 +49,13 @@ interface IRegistry is IERC165 {
     }// TODO delete nftId and initialOwner(if not used) from struct
     // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
 
-    function setMajorVersionMax(VersionPart newMajorVersionMax) external;
+    function setMajorVersion(VersionPart newMajorVersionMax) external;
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
 
     function setTokenActive(address token, VersionPart majorVersion, bool active) external;
 
-    function getMajorVersionMin() external view returns (VersionPart);
-
-    function getMajorVersionMax() external view returns (VersionPart);
+    function getMajorVersion() external view returns (VersionPart);
 
     function getObjectCount() external view returns (uint256);
 
