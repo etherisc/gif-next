@@ -4,7 +4,7 @@ import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
-import { getFieldFromLogs } from "./transaction";
+import { getFieldFromTxRcptLogs } from "./transaction";
 // import IRegistry abi
 
 export type ServiceAddresses = {
@@ -23,7 +23,7 @@ export type ServiceAddresses = {
 }
 
 export async function deployAndRegisterServices(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses): Promise<ServiceAddresses> {
-    const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, deploymentTransaction: ismDplTx, deploymentReceipt: ismDplRcpt } = await deployContract(
+    const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, deploymentReceipt: ismDplRcpt } = await deployContract(
         "InstanceServiceManager",
         owner,
         [registry.registryAddress],
@@ -41,7 +41,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
     const instanceServiceManager = instanceServiceManagerBaseContract as InstanceServiceManager;
     const instanceServiceAddress = await instanceServiceManager.getInstanceService();
-    const instanceServiceNfdId = getFieldFromLogs(ismDplRcpt!, registry.registry.interface, "LogRegistration", "nftId");
+    const logRegistrationInfo = getFieldFromTxRcptLogs(ismDplRcpt!, registry.registry.interface, "LogRegistration", "info");
+    const instanceServiceNfdId = (logRegistrationInfo as unknown[])[0];
+
     
     logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
 

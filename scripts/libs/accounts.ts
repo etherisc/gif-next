@@ -1,7 +1,7 @@
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { AddressLike, formatEther, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
-import { IChainNft__factory } from "../../typechain-types";
+import { ChainNft__factory } from "../../typechain-types";
 import { logger } from "../logger";
 
 export async function getNamedAccounts(): Promise<{ 
@@ -11,6 +11,7 @@ export async function getNamedAccounts(): Promise<{
     productOwner: HardhatEthersSigner; 
     poolOwner: HardhatEthersSigner; 
     distributionOwner: HardhatEthersSigner; 
+    instanceOwner: HardhatEthersSigner;
 }> {
     const signers = await ethers.getSigners();
     const protocolOwner = signers[0];
@@ -19,15 +20,17 @@ export async function getNamedAccounts(): Promise<{
     const poolOwner = signers[3];
     const distributionOwner = signers[4];
     const instanceServiceOwner = signers[5];
+    const instanceOwner = signers[10];
     await printBalance(
         ["protocolOwner", protocolOwner] ,
         ["masterInstanceOwner", masterInstanceOwner] , 
         ["productOwner", productOwner], 
         ["poolOwner", poolOwner],
         ["distributionOwner", distributionOwner],
-        ["instanceServiceOwner", instanceServiceOwner]
+        ["instanceServiceOwner", instanceServiceOwner],
+        ["instanceOwner", instanceOwner],
     );
-    return { protocolOwner, masterInstanceOwner, productOwner, poolOwner, distributionOwner, instanceServiceOwner }; 
+    return { protocolOwner, masterInstanceOwner, productOwner, poolOwner, distributionOwner, instanceServiceOwner, instanceOwner }; 
 }
 
 export async function printBalance(...signers: [string,HardhatEthersSigner][]) {
@@ -39,7 +42,7 @@ export async function printBalance(...signers: [string,HardhatEthersSigner][]) {
 
 
 export async function validateNftOwnerhip(chainNftAddress: AddressLike, nftId: string, expectedOwner: AddressLike): Promise<void> {
-    const chainNft = IChainNft__factory.connect(await resolveAddress(chainNftAddress), ethers.provider);
+    const chainNft = ChainNft__factory.connect(await resolveAddress(chainNftAddress), ethers.provider);
 
     const componentOwnerServiceNftOwer = await chainNft.ownerOf(nftId);
     if (componentOwnerServiceNftOwer !== await resolveAddress(expectedOwner)) {

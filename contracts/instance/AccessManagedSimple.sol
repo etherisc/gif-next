@@ -19,6 +19,7 @@ import {IAccessManagerSimple} from "./IAccessManagerSimple.sol";
  * functions, and ideally only used in `external` functions. See {restricted}.
  */
 abstract contract AccessManagedSimple is Context, IAccessManaged {
+    bool private _initialized;
     address private _authority;
 
     bool private _consumingSchedule;
@@ -27,8 +28,15 @@ abstract contract AccessManagedSimple is Context, IAccessManaged {
      * @dev Initializes the contract connected to an initial authority.
      */
     constructor(address initialAuthority) {
-        _setAuthority(initialAuthority);
+        initialize(initialAuthority);
     }
+
+    function initialize(address initialAuthority) public {
+        require(!_initialized, "AccessManaged: already initialized");
+        _setAuthority(initialAuthority);
+        _initialized = true;
+    }
+
 
     /**
      * @dev Restricts access to a function as defined by the connected Authority for this contract and the

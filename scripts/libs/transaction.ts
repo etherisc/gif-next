@@ -4,13 +4,20 @@ import { logger } from "../logger";
 /**
  * Extract a field from the logs of a transaction. 
  */
-export function getFieldFromLogs(tx: TransactionReceipt, abiInterface: Interface, eventName: string, fieldName: string): unknown | null {
+export function getFieldFromTxRcptLogs(tx: TransactionReceipt, abiInterface: Interface, eventName: string, fieldName: string): unknown | null {
     const logs = tx?.logs;
+    if (logs === undefined) {
+        return null;
+    }
+    return getFieldFromLogs(logs, abiInterface, eventName, fieldName);
+}
+
+export function getFieldFromLogs(logs: readonly ethers.Log[], abiInterface: Interface, eventName: string, fieldName: string): unknown | null {
     let value: unknown | null = null;
     
     logs?.forEach(log => {
         const parsedLog = abiInterface.parseLog({ data: log.data, topics: log.topics as string[] });
-        logger.debug(`parsedLog.name: ${parsedLog?.name} ${parsedLog?.args}`);
+        // logger.debug(`parsedLog.name: ${parsedLog?.name} ${parsedLog?.args}`);
         if (parsedLog?.name === eventName) {
             // destructuring assignment to fetch the value of the field `fieldName` from the object `p.args`
             const { [fieldName]: v } = parsedLog.args;
@@ -21,6 +28,7 @@ export function getFieldFromLogs(tx: TransactionReceipt, abiInterface: Interface
 
     return value;
 }
+
 
 /**
  * Execute a transaction and wait for it to be mined. Then check if the transaction was successful. 
