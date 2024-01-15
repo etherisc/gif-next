@@ -15,6 +15,8 @@ import {ComponentOwnerService} from "../../contracts/instance/service/ComponentO
 // import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
 // import {ProductService} from "../../contracts/instance/service/ProductService.sol";
 // import {PoolService} from "../../contracts/instance/service/PoolService.sol";
+import {InstanceService} from "../../contracts/instance/InstanceService.sol";
+import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
@@ -64,6 +66,9 @@ contract TestGifBase is Test {
 
     IERC20Metadata public token;
 
+    InstanceServiceManager public instanceServiceManager;
+    InstanceService public instanceService;
+    NftId public instanceServiceNftId;
     ComponentOwnerService public componentOwnerService;
     // TODO: reactivate when services are working again
     // DistributionService public distributionService;
@@ -293,21 +298,31 @@ contract TestGifBase is Test {
 
     function _deployServices() internal 
     {
-        //--- component owner service ---------------------------------//
-        
-        componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
-        registryService.registerService(componentOwnerService);
-        assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
+        // --- instance service ---------------------------------//
+        instanceServiceManager = new InstanceServiceManager(address(registry));
+        instanceService = instanceServiceManager.getInstanceService();
+        instanceServiceNftId = registry.getNftId(address(instanceService));
 
-        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // /* solhint-disable */
+        console.log("instanceService name", instanceService.NAME());
+        console.log("instanceService deployed at", address(instanceService));
+        console.log("instanceService nft id", instanceService.getNftId().toInt());
+        // /* solhint-enable */
 
-        /* solhint-disable */
-        console.log("service name", componentOwnerService.NAME());
-        console.log("service deployed at", address(componentOwnerService));
-        console.log("service nft id", componentOwnerService.getNftId().toInt());
-        /* solhint-enable */
+        // //--- component owner service ---------------------------------//
+        // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
+        // registryService.registerService(componentOwnerService);
+        // assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
+
+        // accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+
+        // /* solhint-disable */
+        // console.log("service name", componentOwnerService.NAME());
+        // console.log("service deployed at", address(componentOwnerService));
+        // console.log("service nft id", componentOwnerService.getNftId().toInt());
+        // /* solhint-enable */
 
         // TODO: reactivate when services are working again
         //--- distribution service ---------------------------------//
