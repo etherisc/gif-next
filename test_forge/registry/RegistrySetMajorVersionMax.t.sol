@@ -18,8 +18,8 @@ contract RegistryMajorVersionTests is RegistryTestBase {
     VersionPart public majorVersion6 = VersionPartLib.toVersionPart(6);
 
     function test_registryInitialMajorVersions() public {
-        assertEq(registry.getMajorVersionMin().toInt(), 3, "initial major version minimum not 3");
-        assertEq(registry.getMajorVersionMax().toInt(), 3, "initial major version maximum not 3");
+        assertEq(registry.getMajorVersion().toInt(), 3, "initial major version minimum not 3");
+        assertEq(registry.GIF_MAJOR_VERSION_AT_DEPLOYMENT(), 3, "initial major version maximum not 3");
     }
 
     function test_registryNftId() public {
@@ -31,19 +31,17 @@ contract RegistryMajorVersionTests is RegistryTestBase {
         );
     }
 
-    function test_registryIncreaseMajorVersionMaxHappyCase() public {
+    function test_registryIncreaseMajorVersionHappyCase() public {
 
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion4);
+        registry.setMajorVersion(majorVersion4);
 
-        assertEq(registry.getMajorVersionMin().toInt(), 3, "initial major version minimum not 3");
-        assertEq(registry.getMajorVersionMax().toInt(), 4, "initial major version maximum not 4");
+        assertEq(registry.getMajorVersion().toInt(), 4, "initial major version maximum not 4");
 
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion5);
+        registry.setMajorVersion(majorVersion5);
 
-        assertEq(registry.getMajorVersionMin().toInt(), 3, "initial major version minimum not 3");
-        assertEq(registry.getMajorVersionMax().toInt(), 5, "initial major version maximum not 4");
+        assertEq(registry.getMajorVersion().toInt(), 5, "initial major version maximum not 4");
     }
 
     function test_registryIncreaseMajorVersionInvalid() public {
@@ -52,29 +50,29 @@ contract RegistryMajorVersionTests is RegistryTestBase {
         vm.expectRevert(
             abi.encodeWithSelector(IRegistry.MajorVersionMaxIncreaseInvalid.selector,
                 majorVersion2,
-                registry.getMajorVersionMax()));
+                registry.getMajorVersion()));
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion2);
+        registry.setMajorVersion(majorVersion2);
 
         // attempt to increase to current version (too low)
         vm.expectRevert(
             abi.encodeWithSelector(IRegistry.MajorVersionMaxIncreaseInvalid.selector,
                 majorVersion3,
-                registry.getMajorVersionMax()));
+                registry.getMajorVersion()));
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion3);
+        registry.setMajorVersion(majorVersion3);
 
         // attempt to increase to too big version
         vm.expectRevert(
             abi.encodeWithSelector(IRegistry.MajorVersionMaxIncreaseInvalid.selector,
                 majorVersion5,
-                registry.getMajorVersionMax()));
+                registry.getMajorVersion()));
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion5);
+        registry.setMajorVersion(majorVersion5);
 
         // increase max version from 3 to 4
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion4);
+        registry.setMajorVersion(majorVersion4);
 
         // redo all checks from above
 
@@ -82,34 +80,34 @@ contract RegistryMajorVersionTests is RegistryTestBase {
         vm.expectRevert(
             abi.encodeWithSelector(IRegistry.MajorVersionMaxIncreaseInvalid.selector,
                 majorVersion3,
-                registry.getMajorVersionMax()));
+                registry.getMajorVersion()));
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion3);
+        registry.setMajorVersion(majorVersion3);
 
         // attempt to increase to current version (too low)
         vm.expectRevert(
             abi.encodeWithSelector(IRegistry.MajorVersionMaxIncreaseInvalid.selector,
                 majorVersion4,
-                registry.getMajorVersionMax()));
+                registry.getMajorVersion()));
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion4);
+        registry.setMajorVersion(majorVersion4);
 
         // attempt to increase to too big version
         vm.expectRevert(
             abi.encodeWithSelector(IRegistry.MajorVersionMaxIncreaseInvalid.selector,
                 majorVersion6,
-                registry.getMajorVersionMax()));
+                registry.getMajorVersion()));
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion6);
+        registry.setMajorVersion(majorVersion6);
     }
 
-    function test_registryIncreaseMajorVersionMaxNotOwner() public {
+    function test_registryIncreaseMajorVersionNotOwner() public {
 
         vm.expectRevert(
             abi.encodeWithSelector(IRegistry.NotOwner.selector, 
                 outsider));
         vm.prank(outsider);
-        registry.setMajorVersionMax(majorVersion4);
+        registry.setMajorVersion(majorVersion4);
     }
 }
 

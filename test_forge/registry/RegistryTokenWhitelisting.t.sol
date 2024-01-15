@@ -36,9 +36,9 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         assertFalse(registry.isRegistered(address(dip)), "dip is registered");
         assertTrue(registry.isRegistered(address(usdc)), "usdc not registered");
 
-        assertFalse(registry.isTokenActive(address(registryService), registry.getMajorVersionMax()), "registry service active in current relase");
-        assertFalse(registry.isTokenActive(address(dip), registry.getMajorVersionMax()), "dip active in current relase");
-        assertFalse(registry.isTokenActive(address(usdc), registry.getMajorVersionMax()), "usdc active in current relase");
+        assertFalse(registry.isTokenActive(address(registryService), registry.getMajorVersion()), "registry service active in current relase");
+        assertFalse(registry.isTokenActive(address(dip), registry.getMajorVersion()), "dip active in current relase");
+        assertFalse(registry.isTokenActive(address(usdc), registry.getMajorVersion()), "usdc active in current relase");
     }
 
     function test_registryTokenWhitelistHappyCase() public {
@@ -49,9 +49,9 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         assertFalse(registry.isRegistered(address(dip)), "dip is registered");
         assertTrue(registry.isRegistered(address(usdc)), "usdc not registered");
 
-        assertTrue(registry.isTokenActive(address(usdc), registry.getMajorVersionMax()), "usdc not whitelisted in current relase");
-        assertFalse(registry.isTokenActive(address(registryService), registry.getMajorVersionMax()), "registry service active in current relase");
-        assertFalse(registry.isTokenActive(address(dip), registry.getMajorVersionMax()), "dip whitelisted in current relase");
+        assertTrue(registry.isTokenActive(address(usdc), registry.getMajorVersion()), "usdc not whitelisted in current relase");
+        assertFalse(registry.isTokenActive(address(registryService), registry.getMajorVersion()), "registry service active in current relase");
+        assertFalse(registry.isTokenActive(address(dip), registry.getMajorVersion()), "dip whitelisted in current relase");
     }
 
     function test_registryTokenWhitelistTwoReleasesHappyCase() public {
@@ -66,7 +66,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         assertFalse(registry.isTokenActive(address(usdc), majorVersion4), "usdc whitelisted in version 4");
 
         vm.startPrank(registryOwner);
-        registry.setMajorVersionMax(majorVersion4);
+        registry.setMajorVersion(majorVersion4);
         registry.setTokenActive(address(usdc), majorVersion4, whitelist);
         vm.stopPrank();
 
@@ -108,7 +108,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
 
         // increase max version from 3 to 4
         vm.prank(registryOwner);
-        registry.setMajorVersionMax(majorVersion4);
+        registry.setMajorVersion(majorVersion4);
 
         // redo all checks from above
 

@@ -75,7 +75,7 @@ contract RegistryTestBase is Test, FoundryRandom {
 
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
-    IRegistry public registry;
+    Registry public registry;
     ChainNft public chainNft;
 
     address public _sender; // use with _startPrank(), _stopPrank()
@@ -133,7 +133,7 @@ contract RegistryTestBase is Test, FoundryRandom {
         registryServiceManager = new RegistryServiceManager(address(accessManager));
 
         registryService = registryServiceManager.getRegistryService();
-        registry = registryServiceManager.getRegistry();
+        registry = Registry(address((registryServiceManager.getRegistry())));
 
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);
