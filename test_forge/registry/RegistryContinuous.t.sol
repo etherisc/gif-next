@@ -474,38 +474,65 @@ contract Registry_Continous_Tests is RegistryTestBase
         // services may only be registered for major version == registry.getMajorVersionMax()
         // before servies can be registered for next major version registry.setMajorVersionMax needs to be called to increase major version max
 
-        // _startPrank(address(registryService));
+        uint256 testVersionMax = type(uint8).max / 4; // because of `out of gas` error
+        uint256 majorVersion = registry.getMajorVersion().toInt();
 
-        // uint8 maxVersion = type(uint8).max / 4; // because of `out of gas` error
+        while(majorVersion < testVersionMax)
+        {
+            while(EnumerableSet.contains(_registeredAddresses, info.objectAddress)) 
+            {// guarantee objectAddress is fresh
+                info.objectAddress = address(uint160(info.objectAddress) + 1);
+            }
+            // try register incredibly new version 
+            info.data = abi.encode(serviceName, VersionLib.toVersionPart(type(uint8).max - majorVersion));
 
-        // for(uint8 majorVersion = GIF_VERSION; majorVersion < maxVersion; majorVersion++)
-        // {
-        //     while(EnumerableSet.contains(_registeredAddresses, info.objectAddress)) 
-        //     {// guarantee objectAddress is fresh
-        //         info.objectAddress = address(uint160(info.objectAddress) + 1);
-        //     }
+            _startPrank(address(registryService));
 
-        //     info.data = abi.encode(serviceName, VersionLib.toVersionPart(type(uint8).max - majorVersion));
+            _assert_register(
+                info, 
+                true, // expectRevert
+                abi.encodeWithSelector(
+                    IRegistry.InvalidServiceVersion.selector, 
+                    VersionLib.toVersionPart(type(uint8).max - majorVersion))
+            );
 
-        //     _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, VersionLib.toVersionPart(type(uint8).max - majorVersion) ));
+            // try register next version 
+            info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion + 1));
 
-        //     info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion + 1));
+            _assert_register(
+                info, 
+                true, // expectRevert
+                abi.encodeWithSelector(
+                    IRegistry.InvalidServiceVersion.selector, 
+                    VersionLib.toVersionPart(majorVersion + 1))
+            );
 
-        //     _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, VersionLib.toVersionPart(majorVersion + 1) ));
+            info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion - 1));
 
-        //     info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion - 1));
+            // try to register previous version
+            _assert_register(
+                info, 
+                true, // expectRevert
+                abi.encodeWithSelector(
+                    IRegistry.InvalidServiceVersion.selector, 
+                    VersionLib.toVersionPart(majorVersion - 1))
+            );
 
-        //     if(majorVersion == GIF_VERSION) { // version - 1 is empty  
-        //         _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, VersionLib.toVersionPart(majorVersion - 1) ));
-        //     }
-        //     else {// version - 1 is already registered 
-        //         _assert_register(info, true, abi.encodeWithSelector(IRegistry.ServiceNameAlreadyRegistered.selector, serviceName, VersionLib.toVersionPart(majorVersion - 1) ));
-        //     }
+            // register with current GIF major version 
+            info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion));
 
-        //     info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion));
+            _assert_register(info, false, "");
 
-        //     _assert_register(info, false, "");
-        // }
+            _stopPrank();
+            _startPrank(registryOwner);
+
+            // increase GIF major version
+            majorVersion++;
+            registry.setMajorVersion(VersionLib.toVersionPart(majorVersion));
+            
+
+            _stopPrank();
+        }
 
         // solhint-disable no-console
         console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
