@@ -55,17 +55,17 @@ contract Instance is
     constructor(address accessManagerAddress, address registryAddress, NftId registryNftId)
         AccessManagedSimple(accessManagerAddress)
     {
-        initialize(accessManagerAddress, registryAddress, registryNftId);
+        initialize(accessManagerAddress, registryAddress, registryNftId, msg.sender);
     }
 
-    function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId) public {
+    function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) public {
         require(!_initialized, "Contract instance has already been initialized");
 
         _accessManager = AccessManagerSimple(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
         _createRole(RoleIdLib.toRoleId(PUBLIC_ROLE), "PublicRole", false, false);
 
-        _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, msg.sender, "");
+        _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
 
         _registerInterface(type(IInstance).interfaceId);    
         _initialized = true;

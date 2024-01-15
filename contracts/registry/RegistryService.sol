@@ -366,8 +366,13 @@ contract RegistryService is
 
         address owner = info.initialOwner;
 
-        if(owner != expectedOwner) { // registerable owner protection
-            revert NotRegisterableOwner(expectedOwner);
+        // solhint-disable-next-line 
+        if(expectedType == INSTANCE()) { 
+            // any address may create a new instance via instance service
+        } else {
+            if(owner != expectedOwner) { // registerable owner protection
+                revert NotRegisterableOwner(expectedOwner);
+            }
         }
 
         if(owner == address(registerable)) {

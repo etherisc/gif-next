@@ -4,7 +4,7 @@ import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
-import { getFieldFromLogs } from "./transaction";
+import { getFieldFromTxRcptLogs } from "./transaction";
 // import IRegistry abi
 
 export type ServiceAddresses = {
@@ -41,7 +41,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
     const instanceServiceManager = instanceServiceManagerBaseContract as InstanceServiceManager;
     const instanceServiceAddress = await instanceServiceManager.getInstanceService();
-    const logRegistrationInfo = getFieldFromLogs(ismDplRcpt!, registry.registry.interface, "LogRegistration", "info");
+    const logRegistrationInfo = getFieldFromTxRcptLogs(ismDplRcpt!, registry.registry.interface, "LogRegistration", "info");
     const instanceServiceNfdId = (logRegistrationInfo as unknown[])[0];
 
     

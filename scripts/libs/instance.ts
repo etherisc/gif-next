@@ -4,7 +4,7 @@ import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
-import { executeTx, getFieldFromLogs } from "./transaction";
+import { executeTx, getFieldFromLogs, getFieldFromTxRcptLogs } from "./transaction";
 import { ServiceAddresses } from "./services";
 
 export type InstanceAddresses = {
@@ -44,7 +44,7 @@ export async function deployAndRegisterMasterInstance(
     const registryServiceAsInstanceOwner = IRegistryService__factory.connect(await resolveAddress(registry.registryServiceAddress), owner);
     const rcpt = await executeTx(async () => await registryServiceAsInstanceOwner.registerInstance(instanceAddress));
     // this extracts the ObjectInfo struct from the LogRegistration event
-    const logRegistrationInfo = getFieldFromLogs(rcpt!, registry.registry.interface, "LogRegistration", "info");
+    const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "info");
     // nftId is the first field of the ObjectInfo struct
     const masterInstanceNfdId = (logRegistrationInfo as unknown[])[0];
     
@@ -80,9 +80,19 @@ export async function deployAndRegisterMasterInstance(
     } as InstanceAddresses;
 }
 
-export async function cloneInstance(masterInstance: InstanceAddresses, libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses, instanceOwner: Signer) {
+export async function cloneInstance(masterInstance: InstanceAddresses, libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses, instanceOwner: Signer): Promise<InstanceAddresses> {
     const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(services.instanceServiceAddress), instanceOwner);
-    const cloneTx = executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
+    logger.debug(`cloning instance ${masterInstance.instanceAddress} ...`);
+    const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
+    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAddress");
+    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceNftId");
+    
+    logger.info(`instance cloned - clonedInstanceNftId: ${clonedInstanceNftId}`);
+    
+    return {
+        instanceAddress: clonedInstanceAddress,
+        instanceNftId: clonedInstanceNftId as string,
+    } as InstanceAddresses;
 }
 
 

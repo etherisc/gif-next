@@ -46,12 +46,14 @@ contract InstanceService is Service, IInstanceService {
         clonedAccessManager.initialize(msg.sender);
 
         clonedInstance = Instance(Clones.clone(_instanceMaster));
-        clonedInstance.initialize(address(clonedAccessManager), _registryAddress, registryNftId);
+        clonedInstance.initialize(address(clonedAccessManager), _registryAddress, registryNftId, msg.sender);
         ( IRegistry.ObjectInfo memory info, ) = registryService.registerInstance(clonedInstance);
         instanceNftId = info.nftId;
         
         clonedInstanceReader = InstanceReader(Clones.clone(address(_instanceReaderMaster)));
         clonedInstanceReader.initialize(_registryAddress, instanceNftId);
+
+        emit LogInstanceCloned(address(clonedAccessManager), address(clonedInstance), address(clonedInstanceReader), instanceNftId);
     }
 
     function setAccessManagerMaster(address accessManagerMaster) external {

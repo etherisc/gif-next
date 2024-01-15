@@ -19,7 +19,7 @@ async function main() {
     
     // // deploy instance contracts
     const masterInstance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry, services);
-    // TODO const clonedInstance = await cloneInstance(masterInstance, libraries, registry, services, instanceOwner);
+    const clonedInstance = await cloneInstance(masterInstance, libraries, registry, services, instanceOwner);
 
     // await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
     // await grantRole(instanceOwner, libraries, instance, Role.DISTRIBUTION_OWNER_ROLE, distributionOwner);
@@ -31,7 +31,7 @@ async function main() {
     // const { distributionAddress, distributionNftId } = await deployDistribution(distributionOwner, libraries, registry, instance, tokenAddress);
     // const { productAddress, productNftId } = await deployProduct(productOwner, libraries, registry, instance, tokenAddress, poolAddress, distributionAddress);
     
-    printAddresses(libraries, registry, services, masterInstance);
+    printAddresses(libraries, registry, services, masterInstance, clonedInstance);
 
     await verifyOwnership(
         protocolOwner, masterInstanceOwner,
@@ -111,7 +111,7 @@ async function verifyOwnership(
 function printAddresses(
     libraries: LibraryAddresses, registry: RegistryAddresses, 
     services: ServiceAddresses,
-    masterInstance: InstanceAddresses,
+    masterInstance: InstanceAddresses, clonedInstance: InstanceAddresses,
     // tokenAddress: AddressLike, 
     // poolAddress: AddressLike, poolNftId: string,
     // distributionAddress: AddressLike, distributionNftId: string,
@@ -156,7 +156,10 @@ function printAddresses(
     // addresses += `--------\n`;
     addresses += `masterInstanceAddress: ${masterInstance.instanceAddress}\n`;
     addresses += `masterInstanceNftId: ${masterInstance.instanceNftId}\n`;
-    // addresses += `--------\n`;
+    addresses += `--------\n`;
+    addresses += `clonedInstanceAddress: ${clonedInstance.instanceAddress}\n`;
+    addresses += `clonedInstanceNftId: ${clonedInstance.instanceNftId}\n`;
+    addresses += `--------\n`;
     // addresses += `tokenAddress: ${tokenAddress}\n`;
     // addresses += `poolAddress: ${poolAddress}\n`;
     // addresses += `poolNftId: ${poolNftId}\n`;

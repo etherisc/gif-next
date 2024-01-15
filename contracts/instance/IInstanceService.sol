@@ -10,8 +10,21 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IBaseComponent} from "../components/IBaseComponent.sol";
 
+import {AccessManagerSimple} from "./AccessManagerSimple.sol";
+import {Instance} from "./Instance.sol";
+import {InstanceReader} from "./InstanceReader.sol";
+
 interface IInstanceService is IService {
 
-    
+    event LogInstanceCloned(address clonedAccessManagerAddress, address clonedInstanceAddress, address clonedInstanceReaderAddress, NftId clonedInstanceNftId);
+
+    function createInstanceClone()
+        external 
+        returns (
+            AccessManagerSimple clonedAccessManager, 
+            Instance clonedInstance,
+            NftId instanceNftId,
+            InstanceReader clonedInstanceReader
+        );
 }
 
