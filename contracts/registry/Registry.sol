@@ -48,7 +48,7 @@ contract Registry is
             ObjectType parentType => bool)) internal _isValidObjectCombination;
 
     mapping(address token => mapping(
-            VersionPart majorVersion => bool)) internal _tokenIsActive;
+            VersionPart majorVersion => bool isActive)) internal _tokenIsActive;
 
     mapping(NftId nftId => string name) internal _string;
     mapping(bytes32 serviceNameHash => mapping(
