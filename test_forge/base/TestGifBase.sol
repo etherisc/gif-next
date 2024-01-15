@@ -18,7 +18,9 @@ import {ComponentOwnerService} from "../../contracts/instance/service/ComponentO
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 
+import {AccessManagerSimple} from "../../contracts/instance/AccessManagerSimple.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
+import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 // import {TestProduct} from "../../contracts/test/TestProduct.sol";
@@ -75,6 +77,11 @@ contract TestGifBase is Test {
     // ProductService public productService;
     // PoolService public poolService;
 
+    AccessManagerSimple masterInstanceAccessManager;
+    Instance masterInstance;
+    NftId masterInstanceNftId;
+    InstanceReader masterInstanceReader;
+
     Instance public instance;
 
     IKeyValueStore public keyValueStore;
@@ -92,6 +99,7 @@ contract TestGifBase is Test {
     uint256 public initialCapitalAmount;
 
     address public registryOwner = makeAddr("registryOwner");
+    address public masterInstanceOwner = makeAddr("masterInstanceOwner");
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
     address public poolOwner = makeAddr("poolOwner");
@@ -140,6 +148,13 @@ contract TestGifBase is Test {
         _deployRegistryServiceAndRegistry();
         _configureAccessManagerRoles();
         _deployServices();
+        vm.stopPrank();
+
+        vm.startPrank(masterInstanceOwner);
+        _deployMasterInstance();
+        vm.stopPrank();
+
+        vm.startPrank(registryOwner);
         _deployToken();
         vm.stopPrank();
 
@@ -361,6 +376,24 @@ contract TestGifBase is Test {
         // console.log("service nft id", poolService.getNftId().toInt());
         // console.log("service allowance is set to BUNDLE");
         // /* solhint-enable */
+    }
+
+    function _deployMasterInstance() internal 
+    {
+        masterInstanceAccessManager = new AccessManagerSimple(masterInstanceOwner);
+        masterInstance = new Instance(address(masterInstanceAccessManager), address(registry), registryNftId);
+        ( IRegistry.ObjectInfo memory masterInstanceObjectInfo, ) = registryService.registerInstance(masterInstance);
+        masterInstanceNftId = masterInstanceObjectInfo.nftId;
+        masterInstanceReader = new InstanceReader(address(registry), masterInstanceNftId);
+        
+        // solhint-disable
+        console.log("master instance deployed at", address(masterInstance));
+        console.log("master instance nft id", masterInstanceNftId.toInt());
+        // solhint-enable
+
+        instanceService.setAccessManagerMaster(address(masterInstanceAccessManager));
+        instanceService.setInstanceMaster(address(masterInstance));
+        instanceService.setInstanceReaderMaster(address(masterInstanceReader));
     }
 
 

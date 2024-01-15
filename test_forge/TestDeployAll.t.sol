@@ -10,9 +10,16 @@ contract TestDeployAll is TestGifBase {
     using NftIdLib for NftId;
 
     function testDeployAll() public {
-        assertEq(registry.getObjectCount(), 6, "object count for base setup not 6");
+        assertEq(registry.getObjectCount(), 7, "object count for base setup not 6");
+        
+        // validate instance service
         assertTrue(registry.getNftId(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");
         assertTrue(address(instanceServiceManager) != address(0), "instance service manager is zero address");
+
+        // validate master instance
+        assertTrue(registry.getNftId(address(masterInstance)).eq(masterInstanceNftId), "master instance nft does not match");
+        assertTrue(address(masterInstanceAccessManager) != address(0), "master instance access manager is zero address");
+        assertTrue(address(masterInstanceReader) != address(0), "master instance reader is zero address");
     }
 
     // function testDeployAllInstanceOwner() public {
