@@ -15,8 +15,12 @@ import {ComponentOwnerService} from "../../contracts/instance/service/ComponentO
 // import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
 // import {ProductService} from "../../contracts/instance/service/ProductService.sol";
 // import {PoolService} from "../../contracts/instance/service/PoolService.sol";
+import {InstanceService} from "../../contracts/instance/InstanceService.sol";
+import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 
+import {AccessManagerSimple} from "../../contracts/instance/AccessManagerSimple.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
+import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 // import {TestProduct} from "../../contracts/test/TestProduct.sol";
@@ -64,11 +68,19 @@ contract TestGifBase is Test {
 
     IERC20Metadata public token;
 
+    InstanceServiceManager public instanceServiceManager;
+    InstanceService public instanceService;
+    NftId public instanceServiceNftId;
     ComponentOwnerService public componentOwnerService;
     // TODO: reactivate when services are working again
     // DistributionService public distributionService;
     // ProductService public productService;
     // PoolService public poolService;
+
+    AccessManagerSimple masterInstanceAccessManager;
+    Instance masterInstance;
+    NftId masterInstanceNftId;
+    InstanceReader masterInstanceReader;
 
     Instance public instance;
 
@@ -87,6 +99,7 @@ contract TestGifBase is Test {
     uint256 public initialCapitalAmount;
 
     address public registryOwner = makeAddr("registryOwner");
+    address public masterInstanceOwner = makeAddr("masterInstanceOwner");
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
     address public poolOwner = makeAddr("poolOwner");
@@ -135,6 +148,13 @@ contract TestGifBase is Test {
         _deployRegistryServiceAndRegistry();
         _configureAccessManagerRoles();
         _deployServices();
+        vm.stopPrank();
+
+        vm.startPrank(masterInstanceOwner);
+        _deployMasterInstance();
+        vm.stopPrank();
+
+        vm.startPrank(registryOwner);
         _deployToken();
         vm.stopPrank();
 
@@ -293,21 +313,31 @@ contract TestGifBase is Test {
 
     function _deployServices() internal 
     {
-        //--- component owner service ---------------------------------//
-        
-        componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
-        registryService.registerService(componentOwnerService);
-        assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
+        // --- instance service ---------------------------------//
+        instanceServiceManager = new InstanceServiceManager(address(registry));
+        instanceService = instanceServiceManager.getInstanceService();
+        instanceServiceNftId = registry.getNftId(address(instanceService));
 
-        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // /* solhint-disable */
+        console.log("instanceService name", instanceService.NAME());
+        console.log("instanceService deployed at", address(instanceService));
+        console.log("instanceService nft id", instanceService.getNftId().toInt());
+        // /* solhint-enable */
 
-        /* solhint-disable */
-        console.log("service name", componentOwnerService.NAME());
-        console.log("service deployed at", address(componentOwnerService));
-        console.log("service nft id", componentOwnerService.getNftId().toInt());
-        /* solhint-enable */
+        // //--- component owner service ---------------------------------//
+        // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
+        // registryService.registerService(componentOwnerService);
+        // assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
+
+        // accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+
+        // /* solhint-disable */
+        // console.log("service name", componentOwnerService.NAME());
+        // console.log("service deployed at", address(componentOwnerService));
+        // console.log("service nft id", componentOwnerService.getNftId().toInt());
+        // /* solhint-enable */
 
         // TODO: reactivate when services are working again
         //--- distribution service ---------------------------------//
@@ -346,6 +376,24 @@ contract TestGifBase is Test {
         // console.log("service nft id", poolService.getNftId().toInt());
         // console.log("service allowance is set to BUNDLE");
         // /* solhint-enable */
+    }
+
+    function _deployMasterInstance() internal 
+    {
+        masterInstanceAccessManager = new AccessManagerSimple(masterInstanceOwner);
+        masterInstance = new Instance(address(masterInstanceAccessManager), address(registry), registryNftId);
+        ( IRegistry.ObjectInfo memory masterInstanceObjectInfo, ) = registryService.registerInstance(masterInstance);
+        masterInstanceNftId = masterInstanceObjectInfo.nftId;
+        masterInstanceReader = new InstanceReader(address(registry), masterInstanceNftId);
+        
+        // solhint-disable
+        console.log("master instance deployed at", address(masterInstance));
+        console.log("master instance nft id", masterInstanceNftId.toInt());
+        // solhint-enable
+
+        instanceService.setAccessManagerMaster(address(masterInstanceAccessManager));
+        instanceService.setInstanceMaster(address(masterInstance));
+        instanceService.setInstanceReaderMaster(address(masterInstanceReader));
     }
 
 
