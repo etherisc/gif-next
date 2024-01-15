@@ -28,7 +28,7 @@ contract Registry is
     ERC165,
     IRegistry
 {
-    uint256 public constant GIF_MAJOR_VERSION_AT_DEPLOYMENT = 3; // at registry deploymnet time
+    uint256 public constant GIF_MAJOR_VERSION_AT_DEPLOYMENT = 3;
     address public constant NFT_LOCK_ADDRESS = address(0x1);
     uint256 public constant REGISTRY_SERVICE_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
@@ -98,6 +98,7 @@ contract Registry is
 
     // from IRegistry
 
+    /// @dev latest GIF release version 
     function setMajorVersion(VersionPart newMajorVersion)
         external
         onlyOwner
@@ -181,6 +182,9 @@ contract Registry is
         emit LogRegistration(info);
     }
 
+    /// @dev token state is informative, registry have no clue about used tokens
+    // component owner is responsible for token selection and operations
+    // service MUST deny registration of component with inactive token 
     function setTokenActive(address token, VersionPart majorVersion, bool active)
         external
         onlyOwner
