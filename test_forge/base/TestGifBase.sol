@@ -82,7 +82,10 @@ contract TestGifBase is Test {
     NftId masterInstanceNftId;
     InstanceReader masterInstanceReader;
 
+    AccessManagerSimple instanceAccessManager;
     Instance public instance;
+    NftId public instanceNftId;
+    InstanceReader public instanceReader;
 
     IKeyValueStore public keyValueStore;
     // TestProduct public product;
@@ -160,8 +163,7 @@ contract TestGifBase is Test {
 
         // deploy instance
         vm.startPrank(instanceOwner);
-        // TODO fix this
-        // _deployInstance();
+        _createInstance();
         vm.stopPrank();
 
         // TODO: reactivate when services are working again
@@ -397,38 +399,23 @@ contract TestGifBase is Test {
     }
 
 
-    function _deployInstance() internal {
-        /*instanceProxyAdmin = new ProxyDeployer();
-        instanceImplementation = new Instance();
+    function _createInstance() internal {
+        ( 
+            instanceAccessManager, 
+            instance,
+            instanceNftId,
+            instanceReader
+        ) = instanceService.createInstanceClone();
 
-        bytes memory initializationData = abi.encode(registry, registryNftId);
-        IVersionable versionable = instanceProxyAdmin.deploy(address(instanceImplementation), initializationData);
-        address instanceAddress = address(versionable);
-
-        instance = Instance(instanceAddress);*/
-        // TODO: reactivate this
-        // instance = new Instance(registryAddress, registryNftId, instanceOwner);
-
-        registryService.registerInstance(instance);
-
-        keyValueStore = instance;
-
-
-        /* solhint-disable */
-        //console.log("instance implementation deployed at", address(instanceImplementation));  
-        //console.log("instance proxy admin deployed at", address(instanceProxyAdmin));
-        console.log("instance deployed at", address(instance));
-        console.log("instance nft id", instance.getNftId().toInt());
-        //console.log("instance version", instance.getVersion().toInt());
-        /* solhint-enable */
-
-        // TODO re-enable with new istance
-        // instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        // instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        // instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-
+        
         // solhint-disable-next-line
-        console.log("product pool, and distribution roles granted");
+        console.log("instance deployed at", address(instance));
+        // solhint-disable-next-line
+        console.log("instance nft id", instanceNftId.toInt());
+        // solhint-disable-next-line
+        console.log("instance access manager deployed at", address(instanceAccessManager));
+        // solhint-disable-next-line
+        console.log("instance reader deployed at", address(instanceReader));
     }
 
 
