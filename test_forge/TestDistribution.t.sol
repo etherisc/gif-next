@@ -16,9 +16,11 @@ contract TestDistribution is TestGifBase {
 
 
     function testSetupDistribution() public {
-        vm.startPrank(registryOwner);
-        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), distributionOwner, 0);
+        vm.startPrank(instanceOwner);
+        instance.grantRole(DISTRIBUTION_REGISTRAR_ROLE(), distributionOwner);
+        instance.grantRole(DISTRIBUTION_REGISTRAR_ROLE(), address(distributionService));
         vm.stopPrank();
+        
 
         vm.startPrank(distributionOwner);
         distribution = new Distribution(
@@ -30,11 +32,7 @@ contract TestDistribution is TestGifBase {
             distributionOwner
         );
 
-        (IRegistry.ObjectInfo memory distributionObjInfo, ) = registryService.registerDistribution(
-            distribution,
-            distributionOwner
-        );
-        NftId distributionNftId = distributionObjInfo.nftId;
+        NftId distributionNftId = distributionService.register(address(distribution), distributionOwner);
 
         ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
         Fee memory distributionFee = distributionSetupInfo.distributionFee;

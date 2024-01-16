@@ -121,20 +121,21 @@ contract Distribution is
         return false;
     }
 
-    function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
-        if (getNftId().eq(zeroNftId())) {
-            return ISetup.DistributionSetupInfo(
-                _productNftId,
-                TokenHandler(address(0)),
-                _initialDistributionFee,
-                _isVerifying,
-                address(0)
-            );
-        } 
+    function getInitialSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
+        return ISetup.DistributionSetupInfo(
+            _productNftId,
+            TokenHandler(address(_token)),
+            _initialDistributionFee,
+            _isVerifying,
+            address(0) // TODO: use correct wallet
+        );
+    }
 
+    function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
         InstanceReader reader = _instance.getInstanceReader();
         return reader.getDistributionSetupInfo(getNftId());
     }
+    
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying) {

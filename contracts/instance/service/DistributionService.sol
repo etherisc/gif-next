@@ -2,6 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
+import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {ISetup} from "../../instance/module/ISetup.sol";
@@ -20,6 +21,7 @@ import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IDistributionService} from "./IDistributionService.sol";
+import {Distribution} from "../../components/Distribution.sol";
 
 string constant DISTRIBUTION_SERVICE_NAME = "DistributionService";
 
@@ -55,6 +57,25 @@ contract DistributionService is
 
     function getName() public pure override(IService, Service) returns(string memory name) {
         return NAME;
+    }
+
+    function register(address distributionComponentAddress, address componentOwner) 
+        external 
+        // TODO restricted 
+        returns (NftId distributionNftId)
+    {
+        // TODO validate permission of componentOwner
+        Distribution distribution = Distribution(distributionComponentAddress);
+        IRegistryService registryService = getRegistryService();
+        (IRegistry.ObjectInfo memory distributionObjInfo, ) = registryService.registerDistribution(
+            distribution,
+            componentOwner
+        );
+        distributionNftId = distributionObjInfo.nftId;
+
+        ISetup.DistributionSetupInfo memory initialSetup = distribution.getInitialSetupInfo();
+        IInstance instance = distribution.getInstance();
+        instance.createDistributionSetup(distributionNftId, initialSetup);
     }
 
     function setFees(
