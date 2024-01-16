@@ -12,16 +12,6 @@ import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 abstract contract ComponentServiceBase is Service {
 
-    constructor(
-        address registry,
-        NftId registryNftId,
-        address initialOwner
-    )
-    {
-        _initializeService(registry, initialOwner);
-    }
-
-
     function _getAndVerifyComponentInfoAndInstance(
         ObjectType objectType
     )

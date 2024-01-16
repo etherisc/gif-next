@@ -58,6 +58,10 @@ function PAID() pure returns (StateId) {
     return toStateId(220);
 }
 
+function KEEP_STATE() pure returns (StateId) {
+    return toStateId(type(uint8).max);
+}
+
 /// @dev Converts the uint8 to a StateId.
 function toStateId(uint256 id) pure returns (StateId) {
     return StateId.wrap(uint8(id));
