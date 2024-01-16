@@ -38,14 +38,13 @@ contract Distribution is
     constructor(
         address registry,
         NftId instanceNftId,
-        NftId productNftId,
         // TODO refactor into tokenNftId
         address token,
         bool verifying,
         Fee memory distributionFee,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, productNftId, token, DISTRIBUTION(), true, initialOwner)
+        BaseComponent(registry, instanceNftId, token, DISTRIBUTION(), true, initialOwner)
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;

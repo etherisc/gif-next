@@ -49,7 +49,7 @@ contract Product is BaseComponent, IProductComponent {
         Fee memory productFee,
         Fee memory processingFee,
         address initialOwner
-    ) BaseComponent(registry, instanceNftid, zeroNftId(), token, PRODUCT(), isInterceptor, initialOwner) {
+    ) BaseComponent(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
         // TODO: reactivate when services are available again
         // _productService = _instance.getProductService();

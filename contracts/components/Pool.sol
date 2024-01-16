@@ -55,7 +55,6 @@ contract Pool is BaseComponent, IPoolComponent {
     constructor(
         address registry,
         NftId instanceNftId,
-        NftId productNftId,
         // TODO refactor into tokenNftId
         address token,
         bool isInterceptor,
@@ -66,7 +65,7 @@ contract Pool is BaseComponent, IPoolComponent {
         Fee memory performanceFee,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, productNftId, token, POOL(), isInterceptor, initialOwner)
+        BaseComponent(registry, instanceNftId, token, POOL(), isInterceptor, initialOwner)
     {
         _isVerifying = verifying;
         // TODO add validation
