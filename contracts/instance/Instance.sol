@@ -25,6 +25,7 @@ import {ERC165} from "../shared/ERC165.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {ComponentOwnerService} from "./service/ComponentOwnerService.sol";
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
+import {IDistributionService} from "./service/IDistributionService.sol";
 import {VersionPart} from "../types/Version.sol";
 
 contract Instance is
@@ -416,10 +417,9 @@ contract Instance is
         return ComponentOwnerService(_registry.getServiceAddress("ComponentOwnerService", VersionPart.wrap(3)));
     }
 
-    // TODO reactivate when services are available
-    // function getDistributionService() external view returns (IDistributionService) {
-    //     return DistributionService(_registry.getServiceAddress("DistributionService", VersionPart.wrap(3)));
-    // }
+    function getDistributionService() external view returns (IDistributionService) {
+        return IDistributionService(_registry.getServiceAddress("DistributionService", VersionPart.wrap(3)));
+    }
 
     // TODO reactivate when services are available
     // function getProductService() external view returns (IProductService) {
