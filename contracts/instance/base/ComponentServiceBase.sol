@@ -32,7 +32,7 @@ abstract contract ComponentServiceBase is Service {
             IInstance instance
         )
     {
-        NftId componentNftId = getRegistry().getNftId(msg.sender);
+        NftId componentNftId = _registry.getNftId(msg.sender);
         require(componentNftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
 
         info = getRegistry().getObjectInfo(componentNftId);

@@ -15,8 +15,7 @@ import {Version, VersionLib} from "../../types/Version.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
-import {IService} from "../base/IService.sol";
-import {ServiceBase} from "../base/ServiceBase.sol";
+import {IService} from "../../shared/IService.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 
@@ -36,7 +35,7 @@ contract DistributionService is
     }
 
 
-    function getName() public pure override(IService, ServiceBase) returns(string memory name) {
+    function getName() public pure override(IService) returns(string memory name) {
         return NAME;
     }
 
@@ -46,14 +45,12 @@ contract DistributionService is
         external
         override
     {
-        (IRegistry.ObjectInfo memory distributionInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         ISetup.DistributionSetupInfo memory info = instanceReader.getDistributionSetupInfo(getNftId());
-
-        NftId productNftId = info.productNftId;
-        ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(productNftId);
-        treasuryInfo.distributionFee = distributionFee;
-        instance.setTreasuryInfo(productNftId, treasuryInfo);
+        info.distributionFee = distributionFee;
+        
+        instance.updateDistributionSetup(info);
     }
 }
