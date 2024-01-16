@@ -28,6 +28,7 @@ import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 // import {TestProduct} from "../../contracts/test/TestProduct.sol";
 // import {TestPool} from "../../contracts/test/TestPool.sol";
 // import {TestDistribution} from "../../contracts/test/TestDistribution.sol";
+import {Distribution} from "../../contracts/components/Distribution.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
 
 // import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
@@ -97,7 +98,7 @@ contract TestGifBase is Test {
     // TestPool public pool;
     // TestDistribution public distribution;
     int public pool = 0;
-    int public distribution = 0;
+    Distribution public distribution;
     int public product = 0;
     TokenHandler public tokenHandler;
 

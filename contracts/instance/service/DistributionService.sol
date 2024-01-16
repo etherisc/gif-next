@@ -7,7 +7,7 @@ import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {ISetup} from "../../instance/module/ISetup.sol";
 import {ITreasury} from "../../instance/module/ITreasury.sol";
 
-import {NftId} from "../../types/NftId.sol";
+import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
 import {DISTRIBUTION} from "../../types/ObjectType.sol";
@@ -27,6 +27,8 @@ contract DistributionService is
     ComponentServiceBase,
     IDistributionService
 {
+    using NftIdLib for NftId;
+
     string public constant NAME = "DistributionService";
 
     address internal _registryAddress;
