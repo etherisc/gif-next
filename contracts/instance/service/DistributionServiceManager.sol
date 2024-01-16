@@ -27,9 +27,9 @@ contract DistributionServiceManager is ProxyManager {
         _distributionService = DistributionService(address(versionable));
 
         Registry registry = Registry(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress(_distributionService.getName(), VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
-
+        
         registryService.registerService(_distributionService);
         
         // link ownership of instance service manager ot nft owner of instance service

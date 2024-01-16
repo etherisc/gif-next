@@ -27,16 +27,17 @@ contract DistributionService is
     ComponentServiceBase,
     IDistributionService
 {
-    
+    string public constant NAME = "DistributionService";
+
     address internal _registryAddress;
     
-    function initialize(
+    function _initialize(
         address owner, 
         bytes memory data
     )
         internal
         initializer
-        virtual
+        virtual override
     {
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
@@ -44,12 +45,14 @@ contract DistributionService is
         // IRegistry registry = IRegistry(_registryAddress);
 
         _initializeService(_registryAddress, initialOwner);
+
+        _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IDistributionService).interfaceId);
     }
 
 
     function getName() public pure override(IService, Service) returns(string memory name) {
-        return DISTRIBUTION_SERVICE_NAME;
+        return NAME;
     }
 
     function setFees(

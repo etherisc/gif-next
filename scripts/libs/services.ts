@@ -1,5 +1,5 @@
 import { AddressLike, Signer } from "ethers";
-import { InstanceService, InstanceServiceManager, InstanceService__factory } from "../../typechain-types";
+import { DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -14,8 +14,10 @@ export type ServiceAddresses = {
     instanceServiceManagerAddress: AddressLike,
     // componentOwnerServiceAddress: AddressLike,
     // componentOwnerServiceNftId: string,
-    // distributionServiceAddress: AddressLike,
-    // distributionServiceNftId: string,
+    distributionServiceAddress: AddressLike,
+    distributionServiceNftId: string,
+    distributionService: InstanceService,
+    distributionServiceManagerAddress: AddressLike,
     // productServiceAddress: AddressLike,
     // productServiceNftId: string,
     // poolServiceAddress: AddressLike,
@@ -29,12 +31,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         [registry.registryAddress],
         { libraries: { 
             BlocknumberLib: libraries.blockNumberLibAddress, 
-            // ContractDeployerLib: libraries.contractDeployerLibAddress,
             NftIdLib: libraries.nftIdLibAddress, 
-            // ObjectTypeLib: libraries.objectTypeLibAddress,
-            // RiskIdLib: libraries.riskIdLibAddress,
-            // RoleIdLib: libraries.roleIdLibAddress,
-            // StateIdLib: libraries.stateIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
         }});
@@ -43,26 +40,27 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const instanceServiceAddress = await instanceServiceManager.getInstanceService();
     const logRegistrationInfo = getFieldFromTxRcptLogs(ismDplRcpt!, registry.registry.interface, "LogRegistration", "info");
     const instanceServiceNfdId = (logRegistrationInfo as unknown[])[0];
-
-    
+    const instanceService = InstanceService__factory.connect(instanceServiceAddress, owner);
     logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
 
-    const instanceService = InstanceService__factory.connect(instanceServiceAddress, owner);
 
-    // const componentOwnerServiceNftId = await register(componentOwnerServiceBaseContract as Registerable, componentOwnerServiceAddress, "ComponentOwnerService", registry, owner);
-    // logger.info(`componentOwnerService registered - componentOwnerServiceNftId: ${componentOwnerServiceNftId}`);
-
-    // const { address: distributionServiceAddress, contract: distributionServiceBaseContract } = await deployContract(
-    //     "DistributionService",
-    //     owner,
-    //     [registry.registryAddress, registry.registryNftId],
-    //     { libraries: {
-    //             NftIdLib: libraries.nftIdLibAddress,
-    //             BlocknumberLib: libraries.blockNumberLibAddress, 
-    //             VersionLib: libraries.versionLibAddress, 
-    //         }});
-    // const distributionServiceNftId = await register(distributionServiceBaseContract as Registerable, distributionServiceAddress, "DistributionService", registry, owner);
-    // logger.info(`distributionService registered - distributionServiceNftId: ${distributionServiceNftId}`);
+    const { address: distributionServiceManagerAddress, contract: distributionServiceManagerBaseContract, deploymentReceipt: dsmDplRcpt } = await deployContract(
+        "DistributionServiceManager",
+        owner,
+        [registry.registryAddress],
+        { libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress, 
+                TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress, 
+            }});
+    
+    const distributionServiceManager = distributionServiceManagerBaseContract as DistributionServiceManager;
+    const distributionServiceAddress = await distributionServiceManager.getDistributionService();
+    const logRegistrationInfoDs = getFieldFromTxRcptLogs(dsmDplRcpt!, registry.registry.interface, "LogRegistration", "info");
+    const distributionServiceNftId = (logRegistrationInfoDs as unknown[])[0];
+    const distributionService = InstanceService__factory.connect(distributionServiceAddress, owner);
+    logger.info(`distributionServiceManager deployed - distributionServiceAddress: ${distributionServiceAddress} distributionServiceManagerAddress: ${distributionServiceManagerAddress} nftId: ${distributionServiceNftId}`);
 
     // const { address: productServiceAddress, contract: productServiceBaseContract } = await deployContract(
     //     "ProductService",
@@ -98,8 +96,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         instanceServiceManagerAddress: instanceServiceManagerAddress,
         // componentOwnerServiceAddress,
         // componentOwnerServiceNftId,
-        // distributionServiceAddress,
-        // distributionServiceNftId,
+        distributionServiceAddress,
+        distributionServiceNftId: distributionServiceNftId as string,
+        distributionService,
+        distributionServiceManagerAddress,
         // productServiceAddress,
         // productServiceNftId,
         // poolServiceAddress,

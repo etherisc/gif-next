@@ -13,7 +13,8 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
-// import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
+import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
+import {DistributionServiceManager} from "../../contracts/instance/service/DistributionServiceManager.sol";
 // import {ProductService} from "../../contracts/instance/service/ProductService.sol";
 // import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
@@ -75,7 +76,9 @@ contract TestGifBase is Test {
     NftId public instanceServiceNftId;
     ComponentOwnerService public componentOwnerService;
     // TODO: reactivate when services are working again
-    // DistributionService public distributionService;
+    DistributionServiceManager public distributionServiceManager;
+    DistributionService public distributionService;
+    NftId public distributionServiceNftId;
     // ProductService public productService;
     // PoolService public poolService;
 
@@ -326,11 +329,22 @@ contract TestGifBase is Test {
         instanceService = instanceServiceManager.getInstanceService();
         instanceServiceNftId = registry.getNftId(address(instanceService));
 
-        // /* solhint-disable */
-        console.log("instanceService name", instanceService.NAME());
+        // solhint-disable 
+        console.log("instanceService name", instanceService.getName());
         console.log("instanceService deployed at", address(instanceService));
         console.log("instanceService nft id", instanceService.getNftId().toInt());
-        // /* solhint-enable */
+        // solhint-enable 
+
+        // --- distribution service ---------------------------------//
+        distributionServiceManager = new DistributionServiceManager(address(registry));
+        distributionService = distributionServiceManager.getDistributionService();
+        distributionServiceNftId = registry.getNftId(address(distributionService));
+
+        // solhint-disable 
+        console.log("distributionService name", distributionService.getName());
+        console.log("distributionService deployed at", address(distributionService));
+        console.log("distributionService nft id", distributionService.getNftId().toInt());
+        // solhint-enable
 
         // //--- component owner service ---------------------------------//
         // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
