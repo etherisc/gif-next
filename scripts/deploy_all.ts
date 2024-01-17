@@ -94,7 +94,7 @@ async function verifyOwnership(
     if (masterInstance.instanceNftId === undefined) {
         throw new Error("instance masterInstanceNftId undefined");
     }
-    const masterInstanceNftIdFromReg = await registry.registry.getNftId(masterInstance.instanceAddress);
+    const masterInstanceNftIdFromReg = await registry.registry["getNftId(address)"](masterInstance.instanceAddress);
     if (BigInt(masterInstance.instanceNftId) !== masterInstanceNftIdFromReg) {
         throw new Error(`instance masterInstanceNftId (${masterInstance.instanceNftId}) mismatch: ${masterInstanceNftIdFromReg}`);
     }

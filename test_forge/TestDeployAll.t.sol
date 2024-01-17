@@ -9,8 +9,8 @@ import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol
 contract TestDeployAll is TestGifBase {
     using NftIdLib for NftId;
 
-    function testDeployAll() public {
-        assertEq(registry.getObjectCount(), 8, "object count for base setup not 6");
+    function testDeployAllOverview() public {
+        assertEq(registry.getObjectCount(), 7, "unexpected object count for base setup");
         
         // validate instance service
         assertTrue(registry.getNftId(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");
