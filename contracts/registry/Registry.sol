@@ -213,10 +213,27 @@ contract Registry is
         emit LogTokenStateSet(token, majorVersion, active);
     }
 
-    /// @dev latest GIF release version 
+    /// @dev earliest GIF major version 
+    function getMajorVersionMin() external view returns (VersionPart) {
+        return VersionLib.toVersionPart(GIF_MAJOR_VERSION_AT_DEPLOYMENT);
+    }
+
+    // TODO make distinction between active an not yet active version
+    // need to be thought trough, not yet clear if necessary
+    // need to answer question: what is the latest version during the upgrade process?
+    // likely setting up a new gif version does not fit into a single tx
+    // in this case we might want to have a period where the latest version is
+    // in the process of being set up while the latest active version is 1 major release smaller
+    /// @dev latest GIF major version (might not yet be active)
+    function getMajorVersionMax() external view returns (VersionPart) {
+        return _majorVersion;
+    }
+
+    /// @dev latest active GIF release version 
     function getMajorVersion() external view returns (VersionPart) { 
         return _majorVersion;
     }
+    
 
     function getObjectCount() external view override returns (uint256) {
         return _chainNft.totalSupply();

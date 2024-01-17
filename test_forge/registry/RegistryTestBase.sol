@@ -22,6 +22,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
+import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 
 // Helper functions to test IRegistry.ObjectInfo structs 
@@ -76,6 +77,7 @@ contract RegistryTestBase is Test, FoundryRandom {
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
     Registry public registry;
+    TokenRegistry public tokenRegistry;
     ChainNft public chainNft;
 
     address public _sender; // use with _startPrank(), _stopPrank()
@@ -134,6 +136,7 @@ contract RegistryTestBase is Test, FoundryRandom {
 
         registryService = registryServiceManager.getRegistryService();
         registry = Registry(address((registryServiceManager.getRegistry())));
+        tokenRegistry = registryServiceManager.getTokenRegistry();
 
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);

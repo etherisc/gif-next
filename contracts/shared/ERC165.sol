@@ -7,12 +7,16 @@ contract ERC165 is IERC165 {
     mapping(bytes4 => bool) private _isSupported;
 
     constructor() {
-        // register support for ERC165
-        _registerInterface(type(IERC165).interfaceId);
+        _initializeERC165();
     }
 
     function supportsInterface(bytes4 interfaceId) external view override returns (bool) {
         return _isSupported[interfaceId];
+    }
+
+    // @dev register support for ERC165 itself
+    function _initializeERC165() internal {
+        _isSupported[type(IERC165).interfaceId] = true;
     }
 
     function _registerInterface(bytes4 interfaceId) internal {

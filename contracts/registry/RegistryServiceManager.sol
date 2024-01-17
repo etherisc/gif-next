@@ -9,6 +9,7 @@ import {Registry} from "./Registry.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {ProxyManager} from "../shared/ProxyManager.sol";
 import {RegistryService} from "./RegistryService.sol";
+import {TokenRegistry} from "./TokenRegistry.sol";
 
 
 contract RegistryServiceManager is
@@ -16,9 +17,9 @@ contract RegistryServiceManager is
 {
     bytes32 constant public ACCESS_MANAGER_CREATION_CODE_HASH = 0x0;
 
-    RegistryService private _registryService; 
-
     AccessManager private _accessManager;
+    RegistryService private _registryService; 
+    TokenRegistry private _tokenRegistry;
 
     /// @dev initializes proxy manager with registry service implementation and deploys registry
     constructor(
@@ -41,11 +42,25 @@ contract RegistryServiceManager is
             address(_registryService.getRegistry()),
             address(_registryService));
 
+        // deploy token registry
+        _tokenRegistry = new TokenRegistry(
+            address(_registryService.getRegistry()),
+            address(_registryService));
+
         // implies that after this constructor call only upgrade functionality is available
         _isDeployed = true;
     }
 
     //--- view functions ----------------------------------------------------//
+
+    function getAccessManager()
+        external
+        view
+        returns (AccessManager)
+    {
+        return _accessManager;
+    }
+
     function getRegistryService()
         external
         view
@@ -54,11 +69,11 @@ contract RegistryServiceManager is
         return _registryService;
     }
 
-    function getAccessManager()
+    function getTokenRegistry()
         external
         view
-        returns (AccessManager)
+        returns (TokenRegistry)
     {
-        return _accessManager;
+        return _tokenRegistry;
     }
 }
