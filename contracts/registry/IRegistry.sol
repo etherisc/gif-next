@@ -56,7 +56,9 @@ interface IRegistry is IERC165 {
     function setTokenActive(address token, VersionPart majorVersion, bool active) external;
 
     function getMajorVersionMin() external view returns (VersionPart);
+
     function getMajorVersionMax() external view returns (VersionPart);
+
     function getMajorVersion() external view returns (VersionPart);
 
     function getObjectCount() external view returns (uint256);

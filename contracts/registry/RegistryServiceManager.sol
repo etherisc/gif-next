@@ -43,9 +43,10 @@ contract RegistryServiceManager is
             address(_registryService));
 
         // deploy token registry
-        _tokenRegistry = new TokenRegistry(
-            address(_registryService.getRegistry()),
-            address(_registryService));
+
+        // _tokenRegistry = new TokenRegistry(
+        //     address(_registryService.getRegistry()),
+        //     address(_registryService));
 
         // implies that after this constructor call only upgrade functionality is available
         _isDeployed = true;

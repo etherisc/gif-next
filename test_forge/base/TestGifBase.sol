@@ -10,6 +10,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
 // import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
@@ -61,6 +62,7 @@ contract TestGifBase is Test {
     RegistryService public registryService;
     Registry public registry;
     ChainNft public chainNft;
+    TokenRegistry public tokenRegistry;
 
     IERC20Metadata public token;
 
@@ -232,6 +234,9 @@ contract TestGifBase is Test {
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);
 
+        tokenRegistry = new TokenRegistry();
+        tokenRegistry.linkToNftOwnable(registryAddress);
+
         /* solhint-disable */
         console.log("registry deployed at", address(registry));
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
@@ -249,6 +254,7 @@ contract TestGifBase is Test {
         console.log("registry nft", registry.getNftId(address(registry)).toInt());
         console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
         console.log("registry owner (opt 2)", registry.getOwner());
+        console.log("token registry", address(tokenRegistry));
         /* solhint-enable */
     }
 
@@ -387,11 +393,9 @@ contract TestGifBase is Test {
     function _deployToken() internal {
         USDC usdc  = new USDC();
         address usdcAddress = address(usdc);
-        token = IERC20Metadata(usdcAddress);
 
-        NftId tokenNftId = registryService.registerToken(usdcAddress);
-        // solhint-disable-next-line
-        console.log("token NFT id", tokenNftId.toInt());
+        tokenRegistry.setActive(usdcAddress, registry.getMajorVersion(), true);
+
         // solhint-disable-next-line
         console.log("token deployed at", usdcAddress);
     }

@@ -136,10 +136,12 @@ contract RegistryTestBase is Test, FoundryRandom {
 
         registryService = registryServiceManager.getRegistryService();
         registry = Registry(address((registryServiceManager.getRegistry())));
-        tokenRegistry = registryServiceManager.getTokenRegistry();
 
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);
+
+        tokenRegistry = new TokenRegistry();
+        tokenRegistry.linkToNftOwnable(address(registry));
 
         _stopPrank();
 

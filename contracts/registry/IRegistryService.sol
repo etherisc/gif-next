@@ -12,8 +12,6 @@ import {IBaseComponent} from "../components/IBaseComponent.sol";
 
 interface IRegistryService is IService {
 
-    function registerToken(address tokenAddress) external returns(NftId nftId);
-
     function registerService(IService service)  external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
     function registerInstance(IRegisterable instance)

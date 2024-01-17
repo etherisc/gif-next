@@ -14,6 +14,8 @@ contract TokenRegistry is
     NftOwnable
 {
 
+    string public constant REGISTRY_SERVICE_NAME = "RegistryService";
+
     event LogRegistered(address token, string symbol, uint256 decimals);
     event LogTokenStateSet(address token, VersionPart majorVersion, bool active);
 
@@ -26,11 +28,20 @@ contract TokenRegistry is
     mapping(address token => bool registered) internal _registered;
     mapping(address token => mapping(VersionPart majorVersion => bool isActive)) internal _active;
 
-    constructor(address registry, address registryService)
+    constructor()
         NftOwnable()
+    { }
+
+
+    /// @dev link ownership of token registry to nft owner of registry service
+    function linkToNftOwnable(address registryAddress) 
+        external
+        onlyOwner
     {
-        // link ownership of token registry to nft owner of registry service
-        _linkToNftOwnable(registry, registryService);
+        IRegistry registry = IRegistry(registryAddress);
+        address registryServiceAddress = registry.getServiceAddress(REGISTRY_SERVICE_NAME, registry.getMajorVersion());
+
+        _linkToNftOwnable(registryAddress, registryServiceAddress);
     }
 
     /// @dev token state is informative, registry have no clue about used tokens
