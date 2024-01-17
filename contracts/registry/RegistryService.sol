@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
@@ -22,7 +20,7 @@ import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, TOKEN, SERVICE, PRODUCT, ORACLE, POOL, TOKEN, INSTANCE, DISTRIBUTION, POLICY, BUNDLE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
@@ -41,10 +39,10 @@ contract RegistryService is
 {
     using NftIdLib for NftId;
 
+    // TODO move errors to interface contract
     error SelfRegistration();
     error NotRegistryOwner();
 
-    error NotToken();
     error NotService();
     error NotInstance();
     error NotProduct();
@@ -58,7 +56,6 @@ contract RegistryService is
     error InvalidInitialOwner(address initialOwner);
     error InvalidAddress(address registerableAddress);
 
-
     // Initial value for constant variable has to be compile-time constant
     // TODO define types as constants?
     //ObjectType public constant SERVICE_TYPE = REGISTRY(); 
@@ -68,48 +65,6 @@ contract RegistryService is
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 
     address public constant NFT_LOCK_ADDRESS = address(0x1);
-
-    /// @dev 
-    //  msg.sender - ONLY registry owner
-    //      CAN NOT register itself
-    //      CAN NOT register IRegisterable address
-    //      CAN register ONLY valid object-parent types combinations for TOKEN
-    // IMPORTANT: MUST NOT call untrusted contract inbetween calls to registry/instance (trusted contracts)
-    // motivation: registry/instance state may change during external call
-    // TODO it may be usefull to have transferable token nft in order to delist token, make it invalid for new beginings
-    // TODO: MUST prohibit registration of precompiles addresses
-    function registerToken(address tokenAddress)
-        external 
-        returns(NftId nftId) 
-    {
-        if(msg.sender == tokenAddress) {
-            revert SelfRegistration();
-        }    
-
-        // MUST not revert if no ERC165 support
-        if(tokenAddress.code.length == 0 ||
-            ERC165Checker.supportsInterface(tokenAddress, type(IRegisterable).interfaceId)) {
-            revert NotToken();
-        }
-
-        NftId registryNftId = _registry.getNftId(address(_registry));
-
-        if(msg.sender != _registry.ownerOf(registryNftId)) {
-            revert NotRegistryOwner();
-        }
-
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            zeroNftId(), // any value
-            registryNftId, // parent nft id
-            TOKEN(),
-            false, // isInterceptor
-            tokenAddress,
-            NFT_LOCK_ADDRESS,
-            "" // any value
-        );
-
-        nftId = _registry.register(info);
-    }
 
     /// @dev 
     //  msg.sender - ONLY registry owner

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {VersionLib, Version, VersionPart} from "../../contracts/types/Version.sol";
+import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/types/Version.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, ObjectTypeLib, zeroObjectType, SERVICE} from "../../contracts/types/ObjectType.sol";
 
@@ -235,7 +235,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         );  
 
         vm.expectRevert(abi.encodeWithSelector(
-            Registry.InvalidServiceVersion.selector,
+            IRegistry.InvalidServiceVersion.selector,
             service.getMajorVersion()));
 
         vm.prank(registryOwner);
@@ -252,7 +252,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         );  
 
         vm.expectRevert(abi.encodeWithSelector(
-            Registry.InvalidServiceVersion.selector, 
+            IRegistry.InvalidServiceVersion.selector, 
             service.getMajorVersion()));
 
         vm.prank(registryOwner);
@@ -279,7 +279,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         registryService.registerService(service);  
 
         vm.expectRevert(abi.encodeWithSelector(
-            Registry.ServiceNameAlreadyRegistered.selector, 
+            IRegistry.ServiceNameAlreadyRegistered.selector, 
             service.getName(), service.getMajorVersion()));
 
         registryService.registerService(duplicateService);  
@@ -305,6 +305,16 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
         registryService.registerService(service);
 
+        // attempt to register service for major release > getMajorVersion()
+        VersionPart majorVersion4 = VersionPartLib.toVersionPart(4);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IRegistry.InvalidServiceVersion.selector,
+                majorVersion4));
+        registryService.registerService(newService);
+
+        // increase major version to 4 and retry (expected outcome: registration does not revert)
+        registry.setMajorVersion(majorVersion4);
         registryService.registerService(newService);
 
         vm.stopPrank();

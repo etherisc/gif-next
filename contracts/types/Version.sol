@@ -6,15 +6,18 @@ type VersionPart is uint8;
 using {
     versionPartGt as >,
     versionPartEq as ==,
+    versionPartNe as !=,
     VersionPartLib.toInt
 }
     for VersionPart global;
 
 function versionPartGt(VersionPart a, VersionPart b) pure returns(bool isGreaterThan) { return VersionPart.unwrap(a) > VersionPart.unwrap(b); }
 function versionPartEq(VersionPart a, VersionPart b) pure returns(bool isSame) { return VersionPart.unwrap(a) == VersionPart.unwrap(b); }
+function versionPartNe(VersionPart a, VersionPart b) pure returns(bool isSame) { return VersionPart.unwrap(a) != VersionPart.unwrap(b); }
 
 library VersionPartLib {
-    function toInt(VersionPart x) external pure returns(uint) { return VersionPart.unwrap(x); }
+    function toInt(VersionPart a) external pure returns(uint) { return VersionPart.unwrap(a); }
+    function toVersionPart(uint256 a) external pure returns(VersionPart) { return VersionPart.wrap(uint8(a)); }
 }
 
 type Version is uint24; // contains major,minor,patch version parts

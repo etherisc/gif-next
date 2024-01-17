@@ -49,6 +49,7 @@ contract Registerable is
         //onlyInitializing//TODO uncomment when "fully" upgradeable
         virtual
     {
+        _initializeERC165();
         _initializeNftOwnable(
             initialOwner,
             registryAddress);
