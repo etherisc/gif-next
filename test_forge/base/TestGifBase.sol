@@ -406,7 +406,6 @@ contract TestGifBase is Test {
 
     function _configureServiceAuthorizations() internal 
     {
-        // FIXME: check if this could be done by RegistryServiceManager
         accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(distributionService), 0);
         bytes4[] memory registryServiceRegisterDistributionSelectors = new bytes4[](1);
         registryServiceRegisterDistributionSelectors[0] = registryService.registerDistribution.selector;
