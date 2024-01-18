@@ -406,6 +406,8 @@ contract TestGifBase is Test {
 
     function _configureServiceAuthorizations() internal 
     {
+        // grant DISTRIBUTION_REGISTRAR_ROLE to distribution service
+        // allow role DISTRIBUTION_REGISTRAR_ROLE to call registerDistribution on registry service
         accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(distributionService), 0);
         bytes4[] memory registryServiceRegisterDistributionSelectors = new bytes4[](1);
         registryServiceRegisterDistributionSelectors[0] = registryService.registerDistribution.selector;

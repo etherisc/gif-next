@@ -1,5 +1,5 @@
-import { AddressLike, Signer } from "ethers";
-import { DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory } from "../../typechain-types";
+import { AddressLike, Signer, getBytes, hexlify, resolveAddress, toBeArray, toUtf8Bytes } from "ethers";
+import { AccessManager__factory, DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory, RiskIdLib__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -107,3 +107,23 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         // poolServiceNftId,
     };
 }
+
+const DISTRIBUTION_REGISTRAR_ROLE = 1000;
+
+
+export async function authorizeServices(protocolOwner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses) {
+    const registryAccessManagerAddress = await registry.registryServiceManager.getAccessManager();
+    const registryAccessManager = AccessManager__factory.connect(registryAccessManagerAddress, protocolOwner);
+
+    // grant DISTRIBUTION_REGISTRAR_ROLE to distribution service
+    // allow role DISTRIBUTION_REGISTRAR_ROLE to call registerDistribution on registry service
+    await registryAccessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE, services.distributionServiceAddress, 0);
+    const fctSelector = registry.registryService.interface.getFunction("registerDistribution").selector;
+    logger.debug(`setting function role for ${hexlify(fctSelector)} to ${DISTRIBUTION_REGISTRAR_ROLE}`);
+    await registryAccessManager.setTargetFunctionRole(
+        registry.registryService,
+        [fctSelector],
+        DISTRIBUTION_REGISTRAR_ROLE,
+    );
+}
+
