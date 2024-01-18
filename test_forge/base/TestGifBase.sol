@@ -44,6 +44,8 @@ import {
     POOL_REGISTRAR_ROLE, 
     DISTRIBUTION_REGISTRAR_ROLE, 
     POLICY_REGISTRAR_ROLE,
+    DISTRIBUTION_SERVICE_ROLE,
+    INSTANCE_SERVICE_ROLE,
     BUNDLE_REGISTRAR_ROLE} from "../../contracts/types/RoleId.sol";
 import {UFixed, UFixedLib} from "../../contracts/types/UFixed.sol";
 import {Version} from "../../contracts/types/Version.sol";
@@ -157,6 +159,7 @@ contract TestGifBase is Test {
         _deployRegistryServiceAndRegistry();
         _configureAccessManagerRoles();
         _deployServices();
+        _configureServiceAuthorizations();
         vm.stopPrank();
 
         vm.startPrank(masterInstanceOwner);
@@ -170,6 +173,7 @@ contract TestGifBase is Test {
         // deploy instance
         vm.startPrank(instanceOwner);
         _createInstance();
+        _configureInstanceAuthorizations();
         vm.stopPrank();
 
         // TODO: reactivate when services are working again
@@ -401,6 +405,18 @@ contract TestGifBase is Test {
         // /* solhint-enable */
     }
 
+    function _configureServiceAuthorizations() internal 
+    {
+        // FIXME: check if this could be done by RegistryServiceManager
+        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(distributionService), 0);
+        bytes4[] memory registryServiceRegisterDistributionSelectors = new bytes4[](1);
+        registryServiceRegisterDistributionSelectors[0] = registryService.registerDistribution.selector;
+        accessManager.setTargetFunctionRole(
+            address(registryService),
+            registryServiceRegisterDistributionSelectors, 
+            DISTRIBUTION_REGISTRAR_ROLE().toInt());
+    }
+
     function _deployMasterInstance() internal 
     {
         masterInstanceAccessManager = new AccessManagerSimple(masterInstanceOwner);
@@ -437,6 +453,19 @@ contract TestGifBase is Test {
         console.log("instance access manager deployed at", address(instanceAccessManager));
         // solhint-disable-next-line
         console.log("instance reader deployed at", address(instanceReader));
+    }
+
+    function _configureInstanceAuthorizations() internal 
+    {
+        // FIXME: move to clone instance method
+        instanceAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), address(distributionService), 0);
+        bytes4[] memory instanceCreateDistributionSelectors = new bytes4[](2);
+        instanceCreateDistributionSelectors[0] = instance.createDistributionSetup.selector;
+        instanceCreateDistributionSelectors[1] = instance.updateDistributionSetup.selector;
+        instanceAccessManager.setTargetFunctionRole(
+            address(instance),
+            instanceCreateDistributionSelectors, 
+            DISTRIBUTION_SERVICE_ROLE().toInt());
     }
 
 

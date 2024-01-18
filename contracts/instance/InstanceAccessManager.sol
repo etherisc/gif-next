@@ -79,9 +79,9 @@ contract InstanceAccessManager is
     AccessManagerSimple internal _accessManager;
 
     constructor(address accessManager)
-        AccessManagedSimple(accessManager)
     {
         _accessManager = AccessManagerSimple(accessManager);
+        initializeAccessManagedSimple(accessManager);
 
         _createRole(RoleIdLib.toRoleId(_accessManager.ADMIN_ROLE()), ADMIN_ROLE_NAME, false, false);
         _createRole(RoleIdLib.toRoleId(_accessManager.PUBLIC_ROLE()), PUBLIC_ROLE_NAME, false, false);

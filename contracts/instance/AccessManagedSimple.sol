@@ -24,14 +24,7 @@ abstract contract AccessManagedSimple is Context, IAccessManaged {
 
     bool private _consumingSchedule;
 
-    /**
-     * @dev Initializes the contract connected to an initial authority.
-     */
-    constructor(address initialAuthority) {
-        initialize(initialAuthority);
-    }
-
-    function initialize(address initialAuthority) public {
+    function initializeAccessManagedSimple(address initialAuthority) internal {
         require(!_initialized, "AccessManaged: already initialized");
         _setAuthority(initialAuthority);
         _initialized = true;

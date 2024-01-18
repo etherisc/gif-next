@@ -54,13 +54,14 @@ contract Instance is
     InstanceReader internal _instanceReader;
 
     constructor(address accessManagerAddress, address registryAddress, NftId registryNftId)
-        AccessManagedSimple(accessManagerAddress)
     {
         initialize(accessManagerAddress, registryAddress, registryNftId, msg.sender);
     }
 
     function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) public {
         require(!_initialized, "Contract instance has already been initialized");
+
+        initializeAccessManagedSimple(accessManagerAddress);
 
         _accessManager = AccessManagerSimple(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);

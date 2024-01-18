@@ -16,6 +16,7 @@ import {IService} from "../shared/IService.sol";
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {VersionLib} from "../types/Version.sol";
+import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -37,13 +38,15 @@ contract InstanceService is Service, IInstanceService {
             InstanceReader clonedInstanceReader
         )
     {
+        address instanceOwner = msg.sender;
         Registry registry = Registry(_registryAddress);
         NftId registryNftId = registry.getNftId(_registryAddress);
         address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
 
         clonedAccessManager = AccessManagerSimple(Clones.clone(_accessManagerMaster));
-        clonedAccessManager.initialize(msg.sender);
+        // initial as this
+        clonedAccessManager.initialize(address(this));
 
         clonedInstance = Instance(Clones.clone(_instanceMaster));
         clonedInstance.initialize(address(clonedAccessManager), _registryAddress, registryNftId, msg.sender);
@@ -53,7 +56,28 @@ contract InstanceService is Service, IInstanceService {
         clonedInstanceReader = InstanceReader(Clones.clone(address(_instanceReaderMaster)));
         clonedInstanceReader.initialize(_registryAddress, instanceNftId);
 
+        _grantAuthorizations(clonedAccessManager, clonedInstance);
+
+        clonedInstance.setInstanceReader(clonedInstanceReader);
+
+        // switch instance ownership to instance owner
+        clonedAccessManager.grantRole(ADMIN_ROLE().toInt(), instanceOwner, 0);
+        clonedAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(this));
+
         emit LogInstanceCloned(address(clonedAccessManager), address(clonedInstance), address(clonedInstanceReader), instanceNftId);
+    }
+
+    function _grantAuthorizations(AccessManagerSimple clonedAccessManager, Instance clonedInstance) internal {
+        // grant initial permissions (if any)
+
+        // example
+        // clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE().toInt(), address(this), 0);
+        // bytes4[] memory instanceSetInstanceReaderSelectors = new bytes4[](1);
+        // instanceSetInstanceReaderSelectors[0] = clonedInstance.setInstanceReader.selector;
+        // clonedAccessManager.setTargetFunctionRole(
+        //     address(clonedInstance),
+        //     instanceSetInstanceReaderSelectors, 
+        //     INSTANCE_SERVICE_ROLE().toInt());
     }
 
     function setAccessManagerMaster(address accessManagerMaster) external {

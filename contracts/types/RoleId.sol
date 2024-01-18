@@ -22,6 +22,8 @@ function ORACLE_OWNER_ROLE_NAME() pure returns (string memory) { return "OracleO
 function POOL_OWNER_ROLE_NAME() pure returns (string memory) { return "PoolOwnerRole"; }
 function PRODUCT_OWNER_ROLE_NAME() pure returns (string memory) { return "ProductOwnerRole"; }
 
+function ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(0); }
+
 // TODO correct numbers (maybe they are already defined in RegistryService)
 function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(100); }
 function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(200); }
@@ -33,6 +35,10 @@ function POLICY_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRole
 function BUNDLE_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1200); }
 function POOL_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1300); }
 function PRODUCT_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1400); }
+
+function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10000); }
+
+function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(11000); }
 
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {

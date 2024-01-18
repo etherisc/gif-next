@@ -15,13 +15,7 @@ contract TestDistribution is TestGifBase {
     using NftIdLib for NftId;
 
 
-    function testSetupDistribution() public {
-        vm.startPrank(instanceOwner);
-        instance.grantRole(DISTRIBUTION_REGISTRAR_ROLE(), distributionOwner);
-        instance.grantRole(DISTRIBUTION_REGISTRAR_ROLE(), address(distributionService));
-        vm.stopPrank();
-        
-
+    function testSetFees() public {
         vm.startPrank(distributionOwner);
         distribution = new Distribution(
             address(registry),
