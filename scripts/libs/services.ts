@@ -34,6 +34,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             NftIdLib: libraries.nftIdLibAddress, 
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
+            RoleIdLib: libraries.roleIdLibAddress,
         }});
 
     const instanceServiceManager = instanceServiceManagerBaseContract as InstanceServiceManager;
