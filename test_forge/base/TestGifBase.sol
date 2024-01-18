@@ -173,7 +173,6 @@ contract TestGifBase is Test {
         // deploy instance
         vm.startPrank(instanceOwner);
         _createInstance();
-        _configureInstanceAuthorizations();
         vm.stopPrank();
 
         // TODO: reactivate when services are working again
@@ -454,20 +453,6 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("instance reader deployed at", address(instanceReader));
     }
-
-    function _configureInstanceAuthorizations() internal 
-    {
-        // FIXME: move to clone instance method
-        instanceAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), address(distributionService), 0);
-        bytes4[] memory instanceCreateDistributionSelectors = new bytes4[](2);
-        instanceCreateDistributionSelectors[0] = instance.createDistributionSetup.selector;
-        instanceCreateDistributionSelectors[1] = instance.updateDistributionSetup.selector;
-        instanceAccessManager.setTargetFunctionRole(
-            address(instance),
-            instanceCreateDistributionSelectors, 
-            DISTRIBUTION_SERVICE_ROLE().toInt());
-    }
-
 
     function _deployToken() internal {
         USDC usdc  = new USDC();

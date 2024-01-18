@@ -16,7 +16,7 @@ import {IService} from "../shared/IService.sol";
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {VersionLib} from "../types/Version.sol";
-import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -56,7 +56,7 @@ contract InstanceService is Service, IInstanceService {
         clonedInstanceReader = InstanceReader(Clones.clone(address(_instanceReaderMaster)));
         clonedInstanceReader.initialize(_registryAddress, instanceNftId);
 
-        _grantAuthorizations(clonedAccessManager, clonedInstance);
+        _grantInitialAuthorizations(clonedAccessManager, clonedInstance);
 
         clonedInstance.setInstanceReader(clonedInstanceReader);
 
@@ -67,17 +67,17 @@ contract InstanceService is Service, IInstanceService {
         emit LogInstanceCloned(address(clonedAccessManager), address(clonedInstance), address(clonedInstanceReader), instanceNftId);
     }
 
-    function _grantAuthorizations(AccessManagerSimple clonedAccessManager, Instance clonedInstance) internal {
-        // grant initial permissions (if any)
-
-        // example
-        // clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE().toInt(), address(this), 0);
-        // bytes4[] memory instanceSetInstanceReaderSelectors = new bytes4[](1);
-        // instanceSetInstanceReaderSelectors[0] = clonedInstance.setInstanceReader.selector;
-        // clonedAccessManager.setTargetFunctionRole(
-        //     address(clonedInstance),
-        //     instanceSetInstanceReaderSelectors, 
-        //     INSTANCE_SERVICE_ROLE().toInt());
+    function _grantInitialAuthorizations(AccessManagerSimple clonedAccessManager, Instance clonedInstance) internal {
+        address distributionServiceAddress = _registry.getServiceAddress("DistributionService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        
+        clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), distributionServiceAddress, 0);
+        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](2);
+        instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
+        instanceDistributionServiceSelectors[1] = clonedInstance.updateDistributionSetup.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            address(clonedInstance),
+            instanceDistributionServiceSelectors, 
+            DISTRIBUTION_SERVICE_ROLE().toInt());
     }
 
     function setAccessManagerMaster(address accessManagerMaster) external {
@@ -144,10 +144,6 @@ contract InstanceService is Service, IInstanceService {
 
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
-
-        // // TODO register instance in registry  
-        IRegistry registry = IRegistry(_registryAddress);
-        NftId registryNftId = registry.getNftId(_registryAddress);
 
         _initializeService(_registryAddress, initialOwner);
         
