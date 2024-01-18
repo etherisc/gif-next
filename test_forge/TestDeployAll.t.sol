@@ -10,7 +10,7 @@ contract TestDeployAll is TestGifBase {
     using NftIdLib for NftId;
 
     function testDeployAllOverview() public {
-        assertEq(registry.getObjectCount(), 9, "object count for base setup not 6");
+        assertEq(registry.getObjectCount(), 8, "invalid object count for base setup");
         
         // validate instance service
         assertTrue(registry.getNftId(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");
