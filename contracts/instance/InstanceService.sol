@@ -62,7 +62,7 @@ contract InstanceService is Service, IInstanceService {
         _grantInitialAuthorizations(clonedAccessManager, clonedInstance);
 
         clonedInstance.setInstanceReader(clonedInstanceReader);
-
+        
         // to complete setup switch instance ownership to the instance owner
         // TODO: use a role less powerful than admin, maybe INSTANCE_ADMIN (does not exist yet)
         clonedAccessManager.grantRole(ADMIN_ROLE().toInt(), instanceOwner, 0);
