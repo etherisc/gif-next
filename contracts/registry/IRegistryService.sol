@@ -27,6 +27,11 @@ interface IRegistryService is IService {
      error RegisterableOwnerIsZero();   
      error RegisterableOwnerIsRegistered();
 
+     struct functionConfig {
+          RoleId roleId;
+          bytes4[] selector;
+     }
+
      function registerService(IService service)  external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
      function registerInstance(IRegisterable instance)
@@ -44,5 +49,7 @@ interface IRegistryService is IService {
      function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 
      function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
+
+     function getFunctionConfigs() external pure returns(functionConfig[] memory config);
 }
 

@@ -17,6 +17,13 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
+import {RoleId, 
+        PRODUCT_REGISTRAR_ROLE,
+        POOL_REGISTRAR_ROLE,
+        DISTRIBUTION_REGISTRAR_ROLE,
+        POLICY_REGISTRAR_ROLE,
+        BUNDLE_REGISTRAR_ROLE,
+        STAKE_REGISTRAR_ROLE} from "../../contracts/types/RoleId.sol";
 import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
@@ -221,6 +228,27 @@ contract RegistryService is
     //function getType() public pure override(IService, ServiceBase) returns(ObjectType serviceType) {
     //    return SERVICE_TYPE;
     //}
+
+    function getFunctionConfigs() external pure virtual returns(functionConfig[] memory config)
+    {
+        config[0].roleId = PRODUCT_REGISTRAR_ROLE();
+        config[0].selector[0] = RegistryService.registerProduct.selector;
+
+        config[1].roleId = POOL_REGISTRAR_ROLE();
+        config[1].selector[0] = RegistryService.registerPool.selector;
+
+        config[2].roleId = DISTRIBUTION_REGISTRAR_ROLE();
+        config[2].selector[0] = RegistryService.registerDistribution.selector;
+
+        config[3].roleId = POLICY_REGISTRAR_ROLE();
+        config[3].selector[0] = RegistryService.registerPolicy.selector;
+
+        config[4].roleId = BUNDLE_REGISTRAR_ROLE();
+        config[4].selector[0] = RegistryService.registerBundle.selector;
+
+        config[5].roleId = STAKE_REGISTRAR_ROLE();
+        config[5].selector[0] = RegistryService.registerStake.selector;
+    }
 
 
     // from Versionable
