@@ -78,7 +78,6 @@ contract TestGifBase is Test {
     InstanceService public instanceService;
     NftId public instanceServiceNftId;
     ComponentOwnerService public componentOwnerService;
-    // TODO: reactivate when services are working again
     DistributionServiceManager public distributionServiceManager;
     DistributionService public distributionService;
     NftId public distributionServiceNftId;
@@ -363,18 +362,6 @@ contract TestGifBase is Test {
         // console.log("service name", componentOwnerService.NAME());
         // console.log("service deployed at", address(componentOwnerService));
         // console.log("service nft id", componentOwnerService.getNftId().toInt());
-        // /* solhint-enable */
-
-        // TODO: reactivate when services are working again
-        //--- distribution service ---------------------------------//
-        
-        // distributionService = new DistributionService(registryAddress, registryNftId, registryOwner);
-        // registryService.registerService(distributionService);
-
-        // /* solhint-disable */
-        // console.log("service name", distributionService.NAME());
-        // console.log("service deployed at", address(distributionService));
-        // console.log("service nft id", distributionService.getNftId().toInt());
         // /* solhint-enable */
 
         // //--- product service ---------------------------------//
