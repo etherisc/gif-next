@@ -34,6 +34,9 @@ function BUNDLE_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRole
 function POOL_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1300); }
 function PRODUCT_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1400); }
 
+function REGISTRY_SERVICE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1900); }
+function REGISTRY_SERVICE_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
+
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {
     return RoleId.unwrap(a) == RoleId.unwrap(b);
