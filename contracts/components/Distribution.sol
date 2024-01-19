@@ -127,7 +127,7 @@ contract Distribution is
             TokenHandler(address(_token)),
             _initialDistributionFee,
             _isVerifying,
-            address(0) // TODO: use correct wallet
+            address(this)
         );
     }
 
