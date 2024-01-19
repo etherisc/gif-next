@@ -11,13 +11,15 @@ import {IInstance} from "../instance/IInstance.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
-import {NftId} from "../types/NftId.sol";
+import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 
 abstract contract BaseComponent is
     Registerable,
     IBaseComponent
 {
+    using NftIdLib for NftId;
+
     IComponentOwnerService internal _componentOwnerService;
 
     address internal _deployer;
@@ -29,7 +31,6 @@ abstract contract BaseComponent is
     constructor(
         address registry,
         NftId instanceNftId,
-        NftId productNftId,
         address token,
         ObjectType componentType,
         bool isInterceptor,
@@ -49,7 +50,6 @@ abstract contract BaseComponent is
         _componentOwnerService = _instance.getComponentOwnerService();
         _wallet = address(this);
         _token = IERC20Metadata(token);
-        _productNftId = productNftId;
 
         _registerInterface(type(IBaseComponent).interfaceId);
     }
@@ -78,6 +78,11 @@ abstract contract BaseComponent is
 
     function getInstance() public view override returns (IInstance instance) {
         return _instance;
+    }
+
+    function setProductNftId(NftId productNftId) public override onlyOwner {
+        require(_productNftId.eq(zeroNftId()), "product nft id already set");
+        _productNftId = productNftId;
     }
 
     function getProductNftId() public view override returns (NftId productNftId) {

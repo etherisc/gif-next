@@ -6,7 +6,7 @@ import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
 import { logger } from "./logger";
 import { InstanceAddresses, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
-import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
+import { ServiceAddresses, authorizeServices, deployAndRegisterServices } from "./libs/services";
 
 
 async function main() {
@@ -15,7 +15,8 @@ async function main() {
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
-    const services = await deployAndRegisterServices(instanceServiceOwner, registry, libraries);
+    const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
+    await authorizeServices(protocolOwner, libraries, registry, services);
     
     // // deploy instance contracts
     const masterInstance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry, services);
@@ -144,6 +145,9 @@ function printAddresses(
     addresses += `instanceServiceManagerAddress: ${services.instanceServiceManagerAddress}\n`;
     addresses += `instanceServiceAddress: ${services.instanceServiceAddress}\n`;
     addresses += `instanceServiceNftId: ${services.instanceServiceNftId}\n`;
+    addresses += `distributionServiceManagerAddress: ${services.distributionServiceManagerAddress}\n`;
+    addresses += `distributionServiceAddress: ${services.distributionServiceAddress}\n`;
+    addresses += `distributionServiceNftId: ${services.distributionServiceNftId}\n`;
     addresses += `--------\n`;
 
     // addresses += `componentOwnerServiceAddress: ${services.componentOwnerServiceAddress}\n`;

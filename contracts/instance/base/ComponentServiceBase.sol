@@ -12,16 +12,6 @@ import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 abstract contract ComponentServiceBase is Service {
 
-    constructor(
-        address registry,
-        NftId registryNftId,
-        address initialOwner
-    )
-    {
-        _initializeService(registry, initialOwner);
-    }
-
-
     function _getAndVerifyComponentInfoAndInstance(
         ObjectType objectType
     )
@@ -32,7 +22,7 @@ abstract contract ComponentServiceBase is Service {
             IInstance instance
         )
     {
-        NftId componentNftId = getRegistry().getNftId(msg.sender);
+        NftId componentNftId = _registry.getNftId(msg.sender);
         require(componentNftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
 
         info = getRegistry().getObjectInfo(componentNftId);

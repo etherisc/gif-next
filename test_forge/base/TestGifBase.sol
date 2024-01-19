@@ -13,7 +13,8 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
-// import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
+import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
+import {DistributionServiceManager} from "../../contracts/instance/service/DistributionServiceManager.sol";
 // import {ProductService} from "../../contracts/instance/service/ProductService.sol";
 // import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
@@ -27,6 +28,7 @@ import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 // import {TestProduct} from "../../contracts/test/TestProduct.sol";
 // import {TestPool} from "../../contracts/test/TestPool.sol";
 // import {TestDistribution} from "../../contracts/test/TestDistribution.sol";
+import {Distribution} from "../../contracts/components/Distribution.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
 
 // import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
@@ -42,6 +44,8 @@ import {
     POOL_REGISTRAR_ROLE, 
     DISTRIBUTION_REGISTRAR_ROLE, 
     POLICY_REGISTRAR_ROLE,
+    DISTRIBUTION_SERVICE_ROLE,
+    INSTANCE_SERVICE_ROLE,
     BUNDLE_REGISTRAR_ROLE} from "../../contracts/types/RoleId.sol";
 import {UFixed, UFixedLib} from "../../contracts/types/UFixed.sol";
 import {Version} from "../../contracts/types/Version.sol";
@@ -74,8 +78,9 @@ contract TestGifBase is Test {
     InstanceService public instanceService;
     NftId public instanceServiceNftId;
     ComponentOwnerService public componentOwnerService;
-    // TODO: reactivate when services are working again
-    // DistributionService public distributionService;
+    DistributionServiceManager public distributionServiceManager;
+    DistributionService public distributionService;
+    NftId public distributionServiceNftId;
     // ProductService public productService;
     // PoolService public poolService;
 
@@ -94,7 +99,7 @@ contract TestGifBase is Test {
     // TestPool public pool;
     // TestDistribution public distribution;
     int public pool = 0;
-    int public distribution = 0;
+    Distribution public distribution;
     int public product = 0;
     TokenHandler public tokenHandler;
 
@@ -153,6 +158,7 @@ contract TestGifBase is Test {
         _deployRegistryServiceAndRegistry();
         _configureAccessManagerRoles();
         _deployServices();
+        _configureServiceAuthorizations();
         vm.stopPrank();
 
         vm.startPrank(masterInstanceOwner);
@@ -326,11 +332,22 @@ contract TestGifBase is Test {
         instanceService = instanceServiceManager.getInstanceService();
         instanceServiceNftId = registry.getNftId(address(instanceService));
 
-        // /* solhint-disable */
-        console.log("instanceService name", instanceService.NAME());
+        // solhint-disable 
+        console.log("instanceService name", instanceService.getName());
         console.log("instanceService deployed at", address(instanceService));
         console.log("instanceService nft id", instanceService.getNftId().toInt());
-        // /* solhint-enable */
+        // solhint-enable 
+
+        // --- distribution service ---------------------------------//
+        distributionServiceManager = new DistributionServiceManager(address(registry));
+        distributionService = distributionServiceManager.getDistributionService();
+        distributionServiceNftId = registry.getNftId(address(distributionService));
+
+        // solhint-disable 
+        console.log("distributionService name", distributionService.getName());
+        console.log("distributionService deployed at", address(distributionService));
+        console.log("distributionService nft id", distributionService.getNftId().toInt());
+        // solhint-enable
 
         // //--- component owner service ---------------------------------//
         // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
@@ -345,18 +362,6 @@ contract TestGifBase is Test {
         // console.log("service name", componentOwnerService.NAME());
         // console.log("service deployed at", address(componentOwnerService));
         // console.log("service nft id", componentOwnerService.getNftId().toInt());
-        // /* solhint-enable */
-
-        // TODO: reactivate when services are working again
-        //--- distribution service ---------------------------------//
-        
-        // distributionService = new DistributionService(registryAddress, registryNftId, registryOwner);
-        // registryService.registerService(distributionService);
-
-        // /* solhint-disable */
-        // console.log("service name", distributionService.NAME());
-        // console.log("service deployed at", address(distributionService));
-        // console.log("service nft id", distributionService.getNftId().toInt());
         // /* solhint-enable */
 
         // //--- product service ---------------------------------//
@@ -384,6 +389,19 @@ contract TestGifBase is Test {
         // console.log("service nft id", poolService.getNftId().toInt());
         // console.log("service allowance is set to BUNDLE");
         // /* solhint-enable */
+    }
+
+    function _configureServiceAuthorizations() internal 
+    {
+        // grant DISTRIBUTION_REGISTRAR_ROLE to distribution service
+        // allow role DISTRIBUTION_REGISTRAR_ROLE to call registerDistribution on registry service
+        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(distributionService), 0);
+        bytes4[] memory registryServiceRegisterDistributionSelectors = new bytes4[](1);
+        registryServiceRegisterDistributionSelectors[0] = registryService.registerDistribution.selector;
+        accessManager.setTargetFunctionRole(
+            address(registryService),
+            registryServiceRegisterDistributionSelectors, 
+            DISTRIBUTION_REGISTRAR_ROLE().toInt());
     }
 
     function _deployMasterInstance() internal 
@@ -423,7 +441,6 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("instance reader deployed at", address(instanceReader));
     }
-
 
     function _deployToken() internal {
         USDC usdc  = new USDC();

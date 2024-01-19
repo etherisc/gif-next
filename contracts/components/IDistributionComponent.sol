@@ -4,8 +4,11 @@ pragma solidity ^0.8.19;
 import {Fee} from "../types/Fee.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {NftId} from "../types/NftId.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 
 interface IDistributionComponent {
+
+    function getInitialSetupInfo() external view returns (ISetup.DistributionSetupInfo memory setupInfo);
 
     function setFees(
         Fee memory distributionFee
