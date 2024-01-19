@@ -139,6 +139,7 @@ function printAddresses(
     addresses += `registryServiceManagerAddress: ${registry.registryServiceManagerAddress}\n`;
     addresses += `registryNftId: ${registry.registryNftId}\n`;
     addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
+    addresses += `tokenRegistryAddress: ${registry.tokenRegistryAddress}\n`;
     addresses += `--------\n`;
     addresses += `instanceServiceManagerAddress: ${services.instanceServiceManagerAddress}\n`;
     addresses += `instanceServiceAddress: ${services.instanceServiceAddress}\n`;

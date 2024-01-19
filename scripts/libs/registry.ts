@@ -1,5 +1,5 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryService, RegistryServiceManager, RegistryService__factory, Registry__factory } from "../../typechain-types";
+import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryService, RegistryServiceManager, RegistryService__factory, Registry__factory, TokenRegistry } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, verifyContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -18,6 +18,9 @@ export type RegistryAddresses = {
 
     chainNftAddress: AddressLike;
     chainNft: ChainNft;
+
+    tokenRegistryAddress: AddressLike;
+    tokenRegistry: TokenRegistry;
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
@@ -28,22 +31,22 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
         });
 
-        const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
-            "RegistryServiceManager",
-            owner,
-            [accessManagerAddress],
-            {
-                libraries: {
-                    NftIdLib: libraries.nftIdLibAddress,
-                    ObjectTypeLib: libraries.objectTypeLibAddress,
-                    VersionLib: libraries.versionLibAddress,
-                    VersionPartLib: libraries.versionPartLibAddress,
-                    ContractDeployerLib: libraries.contractDeployerLibAddress,
-                    BlocknumberLib: libraries.blockNumberLibAddress,
-                    TimestampLib: libraries.timestampLibAddress,
-                }
-            });
-        const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
+    const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
+        "RegistryServiceManager",
+        owner,
+        [accessManagerAddress],
+        {
+            libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionLib: libraries.versionLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
+                ContractDeployerLib: libraries.contractDeployerLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+            }
+        });
+    const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
 
     const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
@@ -55,9 +58,23 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const chainNftAddress = await registry.getChainNft();
     const chainNft = ChainNft__factory.connect(chainNftAddress, owner);
 
+    const { address: tokenRegistryAddress, contract: tokenRegistryBaseContract } = await deployContract(
+        "TokenRegistry",
+        owner,
+        undefined,
+        {
+            libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
+            }
+        });
+    const tokenRegistry = tokenRegistryBaseContract as TokenRegistry;
+    await tokenRegistry.linkToNftOwnable(registryAddress, );
+
     logger.info(`RegistryService deployed at ${registryServiceAddress}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);
+    logger.info(`TokenRegistry deployed at ${tokenRegistryAddress}`);
 
     const regAdr = {
         registryServiceManagerAddress,
@@ -71,7 +88,10 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         registryService,
 
         chainNftAddress,
-        chainNft
+        chainNft,
+
+        tokenRegistryAddress,
+        tokenRegistry,
     } as RegistryAddresses;
 
     await verifyRegistryComponents(regAdr, owner)
