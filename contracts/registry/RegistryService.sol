@@ -17,8 +17,7 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
-import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
@@ -36,22 +35,6 @@ contract RegistryService is
 {
     using NftIdLib for NftId;
 
-    // TODO move errors to interface contract
-    error SelfRegistration();
-    error NotRegistryOwner();
-
-    error NotService();
-    error NotInstance();
-    error NotProduct();
-    error NotPool();
-    error NotDistribution();
-
-    error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
-    error NotRegisterableOwner(address expectedOwner);
-    error RegisterableOwnerIsZero();   
-    error RegisterableOwnerIsRegistered();
-    error InvalidInitialOwner(address initialOwner);
-    error InvalidAddress(address registerableAddress);
 
     // Initial value for constant variable has to be compile-time constant
     // TODO define types as constants?
@@ -221,6 +204,15 @@ contract RegistryService is
         nftId = _registry.register(info);
     }
 
+    function registerStake(IRegistry.ObjectInfo memory info)
+        external
+        restricted 
+        returns(NftId nftId) 
+    {
+        _verifyObjectInfo(info, STAKE());
+
+        nftId = _registry.register(info);
+    }
 
     // From IService
     function getName() public pure override(IService, Service) returns(string memory) {

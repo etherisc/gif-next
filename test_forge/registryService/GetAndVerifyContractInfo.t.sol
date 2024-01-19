@@ -71,7 +71,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.UnexpectedRegisterableType.selector,
+            IRegistryService.UnexpectedRegisterableType.selector,
             expectedType,
             registerableType));
 
@@ -130,7 +130,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.NotRegisterableOwner.selector,
+            IRegistryService.NotRegisterableOwner.selector,
             outsider));
 
         registryServiceHarness.getAndVerifyContractInfo(
@@ -153,7 +153,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.NotRegisterableOwner.selector,
+            IRegistryService.NotRegisterableOwner.selector,
             address(0)));
 
         registryServiceHarness.getAndVerifyContractInfo(
@@ -176,7 +176,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.NotRegisterableOwner.selector,
+            IRegistryService.NotRegisterableOwner.selector,
             registerableOwner));
 
         registryServiceHarness.getAndVerifyContractInfo(
@@ -199,7 +199,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.RegisterableOwnerIsZero.selector));
+            IRegistryService.RegisterableOwnerIsZero.selector));
 
         registryServiceHarness.getAndVerifyContractInfo(
             registerable,
@@ -221,7 +221,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.RegisterableOwnerIsRegistered.selector));
+            IRegistryService.RegisterableOwnerIsRegistered.selector));
 
         registryServiceHarness.getAndVerifyContractInfo(
             registerable,
@@ -242,7 +242,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );     
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.SelfRegistration.selector)); 
+            IRegistryService.SelfRegistration.selector)); 
 
         registryServiceHarness.getAndVerifyContractInfo(
             registerable,

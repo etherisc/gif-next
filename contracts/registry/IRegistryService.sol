@@ -12,22 +12,37 @@ import {IBaseComponent} from "../components/IBaseComponent.sol";
 
 interface IRegistryService is IService {
 
-    function registerService(IService service)  external returns(IRegistry.ObjectInfo memory info, bytes memory data);
+     error NotRegistryOwner();
 
-    function registerInstance(IRegisterable instance)
-        external returns(IRegistry.ObjectInfo memory info, bytes memory data); 
+     error NotService();
+     error NotInstance();
+     error NotProduct();
+     error NotPool();
+     error NotDistribution();
 
-    function registerProduct(IBaseComponent product, address owner)
-         external returns(IRegistry.ObjectInfo memory info, bytes memory data);
+     error UnexpectedRegisterableAddress(address expected, address found);
+     error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
+     error NotRegisterableOwner(address expectedOwner);
+     error SelfRegistration();
+     error RegisterableOwnerIsZero();   
+     error RegisterableOwnerIsRegistered();
 
-    function registerPool(IBaseComponent pool, address owner)
-         external returns(IRegistry.ObjectInfo memory info, bytes memory data);
+     function registerService(IService service)  external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
-    function registerDistribution(IBaseComponent distribution, address owner)
-         external returns(IRegistry.ObjectInfo memory info, bytes memory data);
+     function registerInstance(IRegisterable instance)
+          external returns(IRegistry.ObjectInfo memory info, bytes memory data); 
 
-    function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId); // -> easy to upgrade
+     function registerProduct(IBaseComponent product, address owner)
+          external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
-    function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
+     function registerPool(IBaseComponent pool, address owner)
+          external returns(IRegistry.ObjectInfo memory info, bytes memory data);
+
+     function registerDistribution(IBaseComponent distribution, address owner)
+          external returns(IRegistry.ObjectInfo memory info, bytes memory data);
+
+     function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
+
+     function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
 }
 

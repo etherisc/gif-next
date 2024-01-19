@@ -10,7 +10,7 @@ import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, toObjectType} from "../../contracts/types/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
 import {RegisterableMock} from "../mock/RegisterableMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
@@ -72,23 +72,23 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
 
         if(info.objectType != expectedType) {
             vm.expectRevert(abi.encodeWithSelector(
-                RegistryService.UnexpectedRegisterableType.selector,
+                IRegistryService.UnexpectedRegisterableType.selector,
                 expectedType,
                 info.objectType));
             expectRevert = true;
         } else if(info.initialOwner != expectedOwner) { 
             vm.expectRevert(abi.encodeWithSelector(
-                RegistryService.NotRegisterableOwner.selector,
+                IRegistryService.NotRegisterableOwner.selector,
                 expectedOwner));
             expectRevert = true;
         } else if(info.initialOwner == address(registerable)) {
-            vm.expectRevert(abi.encodeWithSelector(RegistryService.SelfRegistration.selector));
+            vm.expectRevert(abi.encodeWithSelector(IRegistryService.SelfRegistration.selector));
             expectRevert = true;
         } else if(info.initialOwner == address(0)) {
-            vm.expectRevert(abi.encodeWithSelector(RegistryService.RegisterableOwnerIsZero.selector));
+            vm.expectRevert(abi.encodeWithSelector(IRegistryService.RegisterableOwnerIsZero.selector));
             expectRevert = true;
         }else if(registry.isRegistered(info.initialOwner)) { 
-            vm.expectRevert(abi.encodeWithSelector(RegistryService.RegisterableOwnerIsRegistered.selector));
+            vm.expectRevert(abi.encodeWithSelector(IRegistryService.RegisterableOwnerIsRegistered.selector));
             expectRevert = true;
         }
 
