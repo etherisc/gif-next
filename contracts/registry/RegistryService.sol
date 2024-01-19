@@ -8,8 +8,6 @@ import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-// import {IComponent, IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
-// import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
 import {IPoolComponent} from "../../contracts/components/IPoolComponent.sol";
 import {IProductComponent} from "../../contracts/components/IProductComponent.sol";
@@ -30,7 +28,6 @@ import {Service} from "../shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {Registry} from "./Registry.sol";
-import {ChainNft} from "./ChainNft.sol";
 
 contract RegistryService is
     AccessManagedUpgradeable,
@@ -74,9 +71,7 @@ contract RegistryService is
     // IMPORTANT: MUST NOT check owner before calling external contract
     function registerService(IService service)
         external
-        // TODO restrict access - registryService.registerService must use accessmanager for checking permissions as 
-        // services are not always owned by registry owner - actually only registry service is owned by registry owner
-
+        restricted
         returns(
             IRegistry.ObjectInfo memory info,
             bytes memory data
@@ -101,11 +96,6 @@ contract RegistryService is
         );
     }
 
-    // If msg.sender is approved service: 
-    // 1) add owner arg (service MUST pass it's msg.sender as owner)
-    // 2) check service allowance 
-    // 3) comment self registrstion check
-    //function registerInstance(IRegisterable instance, address owner)
     function registerInstance(IRegisterable instance)
         external
         returns(
@@ -149,8 +139,6 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
 
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
         info.nftId = _registry.register(info);
         // TODO unsafe, let component or its owner derive nftId latter, when state assumptions and modifications of GIF contracts are finished  
         product.linkToRegisteredNftId();
@@ -178,8 +166,6 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(pool, POOL(), owner);
 
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
         info.nftId = _registry.register(info);
         pool.linkToRegisteredNftId();
 
@@ -206,8 +192,6 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
 
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
         info.nftId = _registry.register(info); 
         distribution.linkToRegisteredNftId();
 
@@ -222,8 +206,6 @@ contract RegistryService is
         restricted 
         returns(NftId nftId) 
     {
-        NftId senderNftId = _registry.getNftId(msg.sender);
-
         _verifyObjectInfo(info, POLICY());
 
         nftId = _registry.register(info);
@@ -234,9 +216,6 @@ contract RegistryService is
         restricted 
         returns(NftId nftId) 
     {
-
-        NftId senderNftId = _registry.getNftId(msg.sender);
-
         _verifyObjectInfo(info, BUNDLE());
 
         nftId = _registry.register(info);
@@ -296,7 +275,6 @@ contract RegistryService is
         _registerInterface(type(IRegistryService).interfaceId);
     }
 
-    // parent check done in registry because of approve()
     function _getAndVerifyContractInfo(
         IRegisterable registerable,
         ObjectType expectedType, // assume can be valid only
@@ -324,6 +302,7 @@ contract RegistryService is
         // solhint-disable-next-line 
         if(expectedType == INSTANCE()) { 
             // any address may create a new instance via instance service
+            // but "if(owner != expectedOwner)" is mandatory to prevent registration of instance beloning to someone else
         } else {
             if(owner != expectedOwner) { // registerable owner protection
                 revert NotRegisterableOwner(expectedOwner);
@@ -358,22 +337,29 @@ contract RegistryService is
     // parent checks done in registry because of approve()
     function _verifyObjectInfo(
         IRegistry.ObjectInfo memory info,
-        ObjectType objectType
+        ObjectType expectedType
     )
         internal
         view
     {
+        // enforce instead of check?
+        //info.objectAddress = address(0);
         if(info.objectAddress > address(0)) {
-            revert InvalidAddress(info.objectAddress);
+            revert UnexpectedRegisterableAddress(address(0), info.objectAddress);
         }
 
-        if(
-            getRegistry().isRegistered(info.initialOwner) ||
-            info.initialOwner == address(0)) {
-            // TODO non registered address can register object(e.g. POLICY()) and then transfer associated nft to registered contract
-            // what are motivations to do so?
-            // at least registered contract can not register objects by itself, SERVICE, 
-            revert InvalidInitialOwner(info.initialOwner); 
+        if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
+            revert UnexpectedRegisterableType(expectedType, info.objectType);
+        }
+
+        address owner = info.initialOwner;
+
+        if(owner == address(0)) {
+            revert RegisterableOwnerIsZero();
+        }
+
+        if(getRegistry().isRegistered(owner)) { 
+            revert RegisterableOwnerIsRegistered();
         }
 
         // can catch all 3 if check that initialOwner is not registered
