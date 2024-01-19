@@ -15,7 +15,7 @@ import {RoleId,
 
 import {Registry} from "./Registry.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
-import {ProxyManager} from "../shared/ProxyManager.sol";
+import {IRegistryService} from "./RegistryService.sol";
 import {RegistryService} from "./RegistryService.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 
@@ -167,15 +167,23 @@ contract RegistryServiceManager is
         _setTargetFunctionRole(address(_tokenRegistry), functionSelector, REGISTRY_SERVICE_MANAGER_ROLE());
 
         // configure REGISTRY_SERVICE_MANAGER_ROLE for RegistryService
+        // asume registerService() is allways present 
         functionSelector[0] = RegistryService.registerService.selector;
         _setTargetFunctionRole(address(_registryService), functionSelector, REGISTRY_SERVICE_MANAGER_ROLE());
     }
 
     function _configureRegistrarRoles() private        
     {
-        bytes4[] memory functionSelector = new bytes4[](1);
+        IRegistryService.functionConfig[] memory config = _registryService.getFunctionConfigs();
         address registryService = address(_registryService);
 
+        for(uint idx = 0; idx < config.length; idx++)
+        {
+            // TODO save config in order to compare with new after upgrade
+            _setTargetFunctionRole(registryService, config[idx].selector, config[idx].roleId);
+        }
+
+        /*bytes4[] memory functionSelector = new bytes4[](1);
         functionSelector[0] = RegistryService.registerProduct.selector;
         _setTargetFunctionRole(registryService, functionSelector, PRODUCT_REGISTRAR_ROLE());
 
@@ -189,7 +197,7 @@ contract RegistryServiceManager is
         _setTargetFunctionRole(registryService, functionSelector, POLICY_REGISTRAR_ROLE());
 
         functionSelector[0] = RegistryService.registerBundle.selector;
-        _setTargetFunctionRole(registryService, functionSelector, BUNDLE_REGISTRAR_ROLE());
+        _setTargetFunctionRole(registryService, functionSelector, BUNDLE_REGISTRAR_ROLE());*/
     }
     
     // TODO do not set roles admins if granting/revoking through RegistryServiceManager!!! 
