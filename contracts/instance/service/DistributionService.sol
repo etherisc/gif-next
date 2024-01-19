@@ -10,6 +10,7 @@ import {ITreasury} from "../../instance/module/ITreasury.sol";
 
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
+import {DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
 import {DISTRIBUTION} from "../../types/ObjectType.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
@@ -22,6 +23,9 @@ import {Service} from "../../shared/Service.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 import {Distribution} from "../../components/Distribution.sol";
+import {InstanceService} from "../InstanceService.sol";
+import {Instance} from "../Instance.sol";
+import {INftOwnable} from "../../shared/INftOwnable.sol";
 
 string constant DISTRIBUTION_SERVICE_NAME = "DistributionService";
 
@@ -34,6 +38,7 @@ contract DistributionService is
     string public constant NAME = "DistributionService";
 
     address internal _registryAddress;
+    InstanceService internal _instanceService;
     
     function _initialize(
         address owner, 
@@ -46,7 +51,8 @@ contract DistributionService is
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        // IRegistry registry = IRegistry(_registryAddress);
+        IRegistry registry = IRegistry(_registryAddress);
+        _instanceService = InstanceService(registry.getServiceAddress("InstanceService", getMajorVersion()));
 
         _initializeService(_registryAddress, initialOwner);
 
@@ -64,8 +70,12 @@ contract DistributionService is
         returns (NftId distributionNftId)
     {
         address componentOwner = msg.sender;
-        // TODO validate permission of componentOwner. check if componentOwner has correct permission on instance via InstanceService - DISTRIBUTION_OWNER
         Distribution distribution = Distribution(distributionComponentAddress);
+        IInstance instance = distribution.getInstance();
+        INftOwnable nftOwnable = INftOwnable(address(instance));
+        
+        require(_instanceService.hasRole(componentOwner, DISTRIBUTION_OWNER_ROLE(), nftOwnable.getNftId()), "ERROR:DIS-001:NOT_DISTRIBUTION_OWNER");
+        
         IRegistryService registryService = getRegistryService();
         (IRegistry.ObjectInfo memory distributionObjInfo, ) = registryService.registerDistribution(
             distribution,
@@ -74,7 +84,6 @@ contract DistributionService is
         distributionNftId = distributionObjInfo.nftId;
 
         ISetup.DistributionSetupInfo memory initialSetup = distribution.getInitialSetupInfo();
-        IInstance instance = distribution.getInstance();
         instance.createDistributionSetup(distributionNftId, initialSetup);
     }
 

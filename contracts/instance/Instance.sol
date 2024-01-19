@@ -62,7 +62,7 @@ contract Instance is
         require(!_initialized, "Contract instance has already been initialized");
 
         initializeAccessManagedSimple(accessManagerAddress);
-
+                
         _accessManager = AccessManagerSimple(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
         _createRole(RoleIdLib.toRoleId(PUBLIC_ROLE), "PublicRole", false, false);

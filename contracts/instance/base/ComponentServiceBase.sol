@@ -12,6 +12,8 @@ import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 abstract contract ComponentServiceBase is Service {
 
+    error CallerIsNotComponentOwner();
+
     function _getAndVerifyComponentInfoAndInstance(
         ObjectType objectType
     )

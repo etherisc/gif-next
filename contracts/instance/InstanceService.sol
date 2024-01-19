@@ -15,6 +15,7 @@ import {Service} from "../../contracts/shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
+import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
 import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE} from "../types/RoleId.sol";
 
@@ -61,7 +62,7 @@ contract InstanceService is Service, IInstanceService {
         _grantInitialAuthorizations(clonedAccessManager, clonedInstance);
 
         clonedInstance.setInstanceReader(clonedInstanceReader);
-
+        
         // to complete setup switch instance ownership to the instance owner
         // TODO: use a role less powerful than admin, maybe INSTANCE_ADMIN (does not exist yet)
         clonedAccessManager.grantRole(ADMIN_ROLE().toInt(), instanceOwner, 0);
@@ -154,8 +155,16 @@ contract InstanceService is Service, IInstanceService {
         _registerInterface(type(IInstanceService).interfaceId);
     }
 
-    function getInstance() external view returns (Instance) {
-        return Instance(address(this));
+    function hasRole(address account, RoleId role, NftId instanceNftId) external view returns (bool) {
+        IRegistry.ObjectInfo memory instanceObjectInfo = getRegistry().getObjectInfo(instanceNftId);
+        address instanceAddress = instanceObjectInfo.objectAddress;
+        Instance instance = Instance(instanceAddress);
+        AccessManagerSimple accessManager = AccessManagerSimple(instance.authority());
+        (bool isMember, uint32 executionDelay) = accessManager.hasRole(role.toInt(), account);
+        if (executionDelay > 0) {
+            return false;
+        } 
+        return isMember;
     }
 }
 

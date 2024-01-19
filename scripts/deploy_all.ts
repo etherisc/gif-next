@@ -10,7 +10,7 @@ import { ServiceAddresses, authorizeServices, deployAndRegisterServices } from "
 
 
 async function main() {
-    const { protocolOwner, masterInstanceOwner, instanceServiceOwner, instanceOwner } = await getNamedAccounts();
+    const { protocolOwner, masterInstanceOwner, instanceOwner } = await getNamedAccounts();
 
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
@@ -49,7 +49,7 @@ async function main() {
     await printBalance(
         ["protocolOwner", protocolOwner],
         ["masterInstanceOwner", masterInstanceOwner] , 
-        ["instanceServiceOwner", instanceServiceOwner],
+        // ["instanceServiceOwner", instanceServiceOwner],
         ["instanceOwner", instanceOwner],
         // ["productOwner", productOwner], 
         // ["distributionOwner", distributionOwner], 
