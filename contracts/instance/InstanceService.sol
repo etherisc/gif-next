@@ -44,8 +44,10 @@ contract InstanceService is Service, IInstanceService {
         address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
 
+        // initially set the authority of the access managar to this (being the instance service). 
+        // This will allow the instance service to bootstrap the authorizations of the instance
+        // and then transfer the ownership of the access manager to the instance owner once everything is setup
         clonedAccessManager = AccessManagerSimple(Clones.clone(_accessManagerMaster));
-        // initial as this
         clonedAccessManager.initialize(address(this));
 
         clonedInstance = Instance(Clones.clone(_instanceMaster));
@@ -60,7 +62,8 @@ contract InstanceService is Service, IInstanceService {
 
         clonedInstance.setInstanceReader(clonedInstanceReader);
 
-        // switch instance ownership to instance owner
+        // to complete setup switch instance ownership to the instance owner
+        // TODO: use a role less powerful than admin, maybe INSTANCE_ADMIN (does not exist yet)
         clonedAccessManager.grantRole(ADMIN_ROLE().toInt(), instanceOwner, 0);
         clonedAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(this));
 
