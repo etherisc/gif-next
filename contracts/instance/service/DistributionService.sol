@@ -74,7 +74,6 @@ contract DistributionService is
         IInstance instance = distribution.getInstance();
         INftOwnable nftOwnable = INftOwnable(address(instance));
         
-        // TODO validate permission of componentOwner. check if componentOwner has correct permission on instance via InstanceService - DISTRIBUTION_OWNER
         require(_instanceService.hasRole(componentOwner, DISTRIBUTION_OWNER_ROLE(), nftOwnable.getNftId()), "ERROR:POL-002:NOT_DISTRIBUTION_OWNER");
         
         IRegistryService registryService = getRegistryService();
