@@ -59,12 +59,12 @@ contract DistributionService is
         return NAME;
     }
 
-    function register(address distributionComponentAddress, address componentOwner) 
+    function register(address distributionComponentAddress) 
         external 
-        // TODO restricted 
         returns (NftId distributionNftId)
     {
-        // TODO validate permission of componentOwner
+        address componentOwner = msg.sender;
+        // TODO validate permission of componentOwner. check if componentOwner has correct permission on instance via InstanceService - DISTRIBUTION_OWNER
         Distribution distribution = Distribution(distributionComponentAddress);
         IRegistryService registryService = getRegistryService();
         (IRegistry.ObjectInfo memory distributionObjInfo, ) = registryService.registerDistribution(

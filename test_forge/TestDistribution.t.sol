@@ -26,7 +26,7 @@ contract TestDistribution is TestGifBase {
             distributionOwner
         );
 
-        NftId distributionNftId = distributionService.register(address(distribution), distributionOwner);
+        NftId distributionNftId = distributionService.register(address(distribution));
 
         ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
         Fee memory distributionFee = distributionSetupInfo.distributionFee;
