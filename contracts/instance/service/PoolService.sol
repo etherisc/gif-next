@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {Pool} from "../../components/Pool.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IBundle} from "../../instance/module/IBundle.sol";
@@ -9,9 +10,11 @@ import {ISetup} from "../module/ISetup.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
+import {INftOwnable} from "../../shared/INftOwnable.sol";
 
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {POOL, BUNDLE} from "../../types/ObjectType.sol";
+import {POOL_OWNER_ROLE} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
@@ -21,6 +24,7 @@ import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IPoolService} from "./IPoolService.sol";
+import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
 
@@ -60,6 +64,28 @@ contract PoolService is
 
     function getName() public pure override(Service, IService) returns(string memory name) {
         return NAME;
+    }
+
+    function register(address poolComponentAddress) 
+        external 
+        returns (NftId poolNftId)
+    {
+        address componentOwner = msg.sender;
+        Pool pool = Pool(poolComponentAddress);
+        IInstance instance = pool.getInstance();
+        INftOwnable nftOwnable = INftOwnable(address(instance));
+        
+        require(_instanceService.hasRole(componentOwner, POOL_OWNER_ROLE(), nftOwnable.getNftId()), "ERROR:POS-001:NOT_POOL_OWNER_ROLE");
+        
+        IRegistryService registryService = getRegistryService();
+        (IRegistry.ObjectInfo memory poolObjInfo, ) = registryService.registerPool(
+            pool,
+            componentOwner
+        );
+        poolNftId = poolObjInfo.nftId;
+
+        ISetup.PoolSetupInfo memory initialSetup = pool.getInitialSetupInfo();
+        instance.createPoolSetup(poolNftId, initialSetup);
     }
 
     function setFees(
