@@ -25,7 +25,7 @@ contract TestDistributionService is TestGifBase {
             distributionOwner
         );
 
-        vm.expectRevert("ERROR:DIS-001:NOT_DISTRIBUTION_OWNER");
+        vm.expectRevert("ERROR:DIS-001:NOT_DISTRIBUTION_OWNER_ROLE");
         NftId distributionNftId = distributionService.register(address(distribution));
     }
 
