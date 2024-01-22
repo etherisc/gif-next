@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/types/Version.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
@@ -23,75 +25,84 @@ import {ServiceMock,
 
 contract RegisterServiceTest is RegistryServiceTestBase {
 
-    // TODO this must be changed - registryService.registerService must use accessmanager for checking permissions as 
-    // services are not always owned by registry owner - actually only registry service is owned by registry owner
-    // function test_callByOutsider() public
-    // {
-    //     ServiceMock service = new ServiceMock(
-    //         address(registry), 
-    //         registryNftId, 
-    //         outsider);
-
-    //     vm.prank(outsider);
-
-    //     vm.expectRevert(abi.encodeWithSelector(IRegistryService.NotRegistryOwner.selector)); 
-
-    //     registryService.registerService(service);        
-    // }
-
-    function test_selfRegistration() public
+    function test_callByAddressWithAdminRoleHappyCase() public
     {
-        vm.prank(registryOwner);
-
-        vm.expectRevert();
-        registryService.registerService(IService(registryOwner));
-
-        vm.prank(outsider);
-
-        vm.expectRevert();
-
-        registryService.registerService(IService(outsider));    
-
         ServiceMock service = new ServiceMock(
             address(registry), 
             registryNftId, 
             registryOwner);
 
-        vm.prank(address(service));
+        // registryOwner is admin
+        vm.prank(registryOwner);
+
+        (
+            IRegistry.ObjectInfo memory info,
+            bytes memory data 
+        ) = registryService.registerService(service);
+
+        _assert_registered_contract(address(service), info, data);        
+    }
+
+    function test_callByAddressWithoutAdminRole() public
+    {
+        // address without any role
+        ServiceMock service = new ServiceMock(
+            address(registry), 
+            registryNftId, 
+            outsider);
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.NotRegisterableOwner.selector,
-            address(service)));
+            IAccessManaged.AccessManagedUnauthorized.selector,
+            outsider));
+        vm.prank(outsider);
 
-        registryService.registerService(service);  
+        registryService.registerService(service);
 
-        SelfOwnedServiceMock selfOwnedService = new SelfOwnedServiceMock(
+        // address with different role (component registrar role)
+        service = new ServiceMock(
             address(registry), 
-            registryNftId);
+            registryNftId, 
+            address(componentOwnerService));
 
-        vm.prank(address(selfOwnedService));
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccessManaged.AccessManagedUnauthorized.selector,
+            address(componentOwnerService)));
+        vm.prank(address(componentOwnerService));
 
-        vm.expectRevert(abi.encodeWithSelector(IRegistryService.SelfRegistration.selector));
+        registryService.registerService(service);
+    }
 
-        registryService.registerService(selfOwnedService);  
+    function test_selfRegistration() public
+    {
+        vm.prank(registryOwner);
+        vm.expectRevert();
+
+        registryService.registerService(IService(registryOwner));
+
+        // when registryOwner is IService...
+        // 1). owns itself -> SelfRegistration
+        // 2). owned by somebody else -> NotRegisterableOwner
     }
 
     function test_withEOA() public
     {
+        vm.prank(registryOwner);
         vm.expectRevert();
 
         registryService.registerService(IService(EOA));
     }
 
-    function test_contractWithoutIERC165() public
+    function test_withoutIERC165Support() public
     {
+        vm.prank(registryOwner);        
         vm.expectRevert();
 
         registryService.registerService(IService(contractWithoutIERC165));
     }
 
-    function test_withIERC165() public
+    function test_withIERC165Support() public
     {
+        vm.prank(registryOwner);
         vm.expectRevert(abi.encodeWithSelector(IRegistryService.NotService.selector));
 
         registryService.registerService(IService(erc165));
@@ -99,12 +110,13 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
     function test_withIRegisterable() public
     {
+        vm.prank(registryOwner);
         vm.expectRevert(abi.encodeWithSelector(IRegistryService.NotService.selector));
 
         registryService.registerService(IService(address(registerableOwnedByRegistryOwner)));
     }
 
-    function test_withIService() public
+    function test_withIServiceHappyCase() public
     {
         ServiceMock service = new ServiceMock(
             address(registry), 
@@ -139,7 +151,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         registryService.registerService(service);
     }
 
-    function test_withInvalidAddress() public 
+    function test_withInvalidAddressHappyCase() public 
     {
         ServiceMockWithRandomInvalidAddress service = new ServiceMockWithRandomInvalidAddress(
             address(registry),
@@ -190,8 +202,8 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
         registryService.registerService(service);  
     }
-
-    function test_withRegisteredInitialOwner() public
+    // registryOwner/admin must be initialOwner -> must register itself first
+    /*function test_withRegisteredInitialOwner() public
     {
         ServiceMock service = new ServiceMock(
             address(registry),
@@ -199,13 +211,13 @@ contract RegisterServiceTest is RegistryServiceTestBase {
             address(registry)
         );
 
-        vm.prank(address(registry));
+        vm.prank(registryOwner);
 
         vm.expectRevert(abi.encodeWithSelector(
             IRegistryService.RegisterableOwnerIsRegistered.selector));
 
         registryService.registerService(service);  
-    }
+    }*/
 
     // TODO refactor test
     function test_whenParentIsNotRegistry() public
@@ -224,6 +236,31 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         //     SERVICE()));
 
         // registryService.registerService(service);         
+    }
+
+    function test_whenServiceIsAlreadyRegistered() public
+    {
+        ServiceMock service = new ServiceMock(
+            address(registry), 
+            registryNftId, 
+            registryOwner);
+
+        vm.startPrank(registryOwner);
+
+        (
+            IRegistry.ObjectInfo memory info,
+            bytes memory data 
+        ) = registryService.registerService(service);
+
+        _assert_registered_contract(address(service), info, data); 
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IRegistry.ContractAlreadyRegistered.selector,
+            address(service)));
+
+        registryService.registerService(service);
+
+        vm.stopPrank();
     }
 
     function test_withTooOldVersion() public
@@ -268,7 +305,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
             registryOwner
         );  
 
-        ServiceMock duplicateService = new ServiceMock(
+        ServiceMock serviceWithDuplicateName = new ServiceMock(
             address(registry),
             registryNftId,
             registryOwner
@@ -276,18 +313,23 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
         vm.startPrank(registryOwner);
 
-        registryService.registerService(service);  
+        (
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) = registryService.registerService(service);  
+
+        _assert_registered_contract(address(service), info, data);
 
         vm.expectRevert(abi.encodeWithSelector(
             IRegistry.ServiceNameAlreadyRegistered.selector, 
             service.getName(), service.getMajorVersion()));
 
-        registryService.registerService(duplicateService);  
+        registryService.registerService(serviceWithDuplicateName);  
 
         vm.stopPrank();
     }
 
-    function test_withNextVersion() public
+    function test_withNextVersionHappyCase() public
     {
         ServiceMock service = new ServiceMock(
             address(registry),
@@ -295,7 +337,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
             registryOwner
         );  
 
-        ServiceMockNewVersion newService = new ServiceMockNewVersion(
+        ServiceMockNewVersion serviceWithNextVersion = new ServiceMockNewVersion(
             address(registry),
             registryNftId,
             registryOwner            
@@ -303,7 +345,12 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
         vm.startPrank(registryOwner);
 
-        registryService.registerService(service);
+        (
+            IRegistry.ObjectInfo memory info,
+            bytes memory data
+        ) = registryService.registerService(service); 
+
+        _assert_registered_contract(address(service), info, data);
 
         // attempt to register service for major release > getMajorVersion()
         VersionPart majorVersion4 = VersionPartLib.toVersionPart(4);
@@ -311,11 +358,16 @@ contract RegisterServiceTest is RegistryServiceTestBase {
             abi.encodeWithSelector(
                 IRegistry.InvalidServiceVersion.selector,
                 majorVersion4));
-        registryService.registerService(newService);
+        registryService.registerService(serviceWithNextVersion);
 
         // increase major version to 4 and retry (expected outcome: registration does not revert)
         registry.setMajorVersion(majorVersion4);
-        registryService.registerService(newService);
+        (
+            info,
+            data
+        ) = registryService.registerService(serviceWithNextVersion);
+
+        _assert_registered_contract(address(serviceWithNextVersion), info, data);
 
         vm.stopPrank();
     }
