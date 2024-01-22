@@ -18,7 +18,7 @@ import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
@@ -192,6 +192,15 @@ contract RegistryService is
         nftId = _registry.register(info);
     }
 
+    function registerStake(IRegistry.ObjectInfo memory info)
+        external
+        restricted 
+        returns(NftId nftId) 
+    {
+        _verifyObjectInfo(info, STAKE());
+
+        nftId = _registry.register(info);
+    }
 
     // From IService
     function getName() public pure override(IService, Service) returns(string memory) {
@@ -304,25 +313,28 @@ contract RegistryService is
         );
     }
 
-    // parent checks done in registry because of approve()
     function _verifyObjectInfo(
         IRegistry.ObjectInfo memory info,
-        ObjectType objectType
+        ObjectType expectedType
     )
         internal
         view
     {
-        if(info.objectAddress > address(0)) {
-            revert InvalidAddress(info.objectAddress);
+        // enforce instead of check
+        info.objectAddress = address(0);
+
+        if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
+            revert UnexpectedRegisterableType(expectedType, info.objectType);
         }
 
-        if(
-            getRegistry().isRegistered(info.initialOwner) ||
-            info.initialOwner == address(0)) {
-            // TODO non registered address can register object(e.g. POLICY()) and then transfer associated nft to registered contract
-            // what are motivations to do so?
-            // at least registered contract can not register objects by itself, SERVICE, 
-            revert InvalidInitialOwner(info.initialOwner); 
+        address owner = info.initialOwner;
+
+        if(owner == address(0)) {
+            revert RegisterableOwnerIsZero();
+        }
+
+        if(getRegistry().isRegistered(owner)) { 
+            revert RegisterableOwnerIsRegistered();
         }
 
         // can catch all 3 if check that initialOwner is not registered
