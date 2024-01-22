@@ -7,7 +7,7 @@ import {DistributorType} from "../types/DistributorType.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {Key32} from "../types/Key32.sol";
 import {NftId} from "../types/NftId.sol";
-import {ObjectType, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, TREASURY} from "../types/ObjectType.sol";
+import {ObjectType, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, TREASURY, BUNDLE} from "../types/ObjectType.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../types/Referral.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RiskId} from "../types/RiskId.sol";
@@ -15,6 +15,7 @@ import {UFixed, MathLib, UFixedLib} from "../types/UFixed.sol";
 import {Version} from "../types/Version.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
+import {IBundle} from "../instance/module/IBundle.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IInstance} from "./IInstance.sol";
 import {IKeyValueStore} from "../instance/base/IKeyValueStore.sol";
@@ -112,6 +113,17 @@ contract InstanceReader {
         bytes memory data = _store.getData(toTreasuryKey(productNftId));
         if (data.length > 0) {
             return abi.decode(data, (ITreasury.TreasuryInfo));
+        }
+    }
+    
+    function getBundleInfo(NftId bundleNftId)
+        public 
+        view 
+        returns (IBundle.BundleInfo memory info)
+    {
+        bytes memory data = _store.getData(toBundleKey(bundleNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (IBundle.BundleInfo));
         }
     }
 
@@ -257,6 +269,10 @@ contract InstanceReader {
 
     function toDistributionKey(NftId distributionNftId) public pure returns (Key32) { 
         return distributionNftId.toKey32(DISTRIBUTION());
+    }
+
+    function toBundleKey(NftId poolNftId) public pure returns (Key32) { 
+        return poolNftId.toKey32(BUNDLE());
     }
 
     function toPoolKey(NftId poolNftId) public pure returns (Key32) { 
