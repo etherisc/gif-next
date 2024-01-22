@@ -84,9 +84,11 @@ contract InstanceService is Service, IInstanceService {
 
         address poolServiceAddress = _registry.getServiceAddress("PoolService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(POOL_SERVICE_ROLE().toInt(), address(poolServiceAddress), 0);
-        bytes4[] memory instancePoolServiceSelectors = new bytes4[](2);
+        bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
         instancePoolServiceSelectors[1] = clonedInstance.updatePoolSetup.selector;
+        instancePoolServiceSelectors[2] = clonedInstance.createBundle.selector;
+        instancePoolServiceSelectors[3] = clonedInstance.updateBundle.selector;
         clonedAccessManager.setTargetFunctionRole(
             address(clonedInstance),
             instancePoolServiceSelectors, 

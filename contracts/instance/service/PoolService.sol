@@ -153,13 +153,13 @@ contract PoolService is
 
         // TODO add bundle to pool in instance
         
-        // collect capital
-        _processStakingByTreasury(
-            instanceReader,
-            zeroNftId(),
-            poolNftId,
-            bundleNftId,
-            stakingAmount);
+        // TODO collect capital
+        // _processStakingByTreasury(
+        //     instanceReader,
+        //     zeroNftId(),
+        //     poolNftId,
+        //     bundleNftId,
+        //     stakingAmount);
 
         // TODO add logging
     }

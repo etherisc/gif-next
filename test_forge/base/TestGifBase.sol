@@ -407,8 +407,9 @@ contract TestGifBase is Test {
         // grant POOL_REGISTRAR_ROLE to pool service
         // allow role POOL_REGISTRAR_ROLE to call registerPool on registry service
         accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(poolService), 0);
-        bytes4[] memory registryServiceRegisterPoolSelectors = new bytes4[](1);
+        bytes4[] memory registryServiceRegisterPoolSelectors = new bytes4[](2);
         registryServiceRegisterPoolSelectors[0] = registryService.registerPool.selector;
+        registryServiceRegisterPoolSelectors[1] = registryService.registerBundle.selector;
         accessManager.setTargetFunctionRole(
             address(registryService),
             registryServiceRegisterPoolSelectors, 
