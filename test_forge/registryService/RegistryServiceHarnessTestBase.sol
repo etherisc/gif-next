@@ -9,10 +9,11 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, toObjectType} from "../../contracts/types/ObjectType.sol";
 
+import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
+import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
+import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
-import {RegisterableMock} from "../mock/RegisterableMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
 
@@ -58,7 +59,7 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
     }
 
     function _assert_getAndVerifyContractInfo(
-        RegisterableMock registerable, 
+        IRegisterable registerable, 
         ObjectType expectedType, 
         address expectedOwner)
         internal
@@ -93,7 +94,7 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
         }
 
         if(expectRevert) {
-            registryServiceHarness.getAndVerifyContractInfo(
+            registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
                 expectedType,
                 expectedOwner);
@@ -101,7 +102,7 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
             ( 
                 IRegistry.ObjectInfo memory infoFromRegistryService,
                 bytes memory dataFromRegistryService
-            ) = registryServiceHarness.getAndVerifyContractInfo(
+            ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
                 expectedType,
                 expectedOwner);  

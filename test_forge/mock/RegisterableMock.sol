@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
+
 import {NftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType} from "../../contracts/types/ObjectType.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -47,9 +49,9 @@ contract SelfOwnedRegisterableMock is Registerable {
     }
 }
 
-contract RegisterableMockWithFakeAddress is Registerable {
+contract RegisterableMockWithRandomInvalidAddress is Registerable {
 
-    address public _fakeAddress;
+    address public _invalidAddress;
 
     constructor(
         address registryAddress,
@@ -57,10 +59,16 @@ contract RegisterableMockWithFakeAddress is Registerable {
         ObjectType objectType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory data,
-        address fakeAddress)
+        bytes memory data)
     {
-        _fakeAddress = fakeAddress;
+        FoundryRandom rng = new FoundryRandom();
+
+        address invalidAddress = address(uint160(rng.randomNumber(type(uint160).max)));
+        if(invalidAddress == address(this)) {
+            invalidAddress = address(uint160(invalidAddress) + 1);
+        }
+
+        _invalidAddress = invalidAddress;
 
         _initializeRegisterable(
             registryAddress,
@@ -82,7 +90,7 @@ contract RegisterableMockWithFakeAddress is Registerable {
             bytes memory data
         ) = super.getInitialInfo();
 
-        info.objectAddress = _fakeAddress;
+        info.objectAddress = _invalidAddress;
 
         return (info, data);
     }

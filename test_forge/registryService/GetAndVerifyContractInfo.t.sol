@@ -2,25 +2,22 @@
 pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {VersionLib, Version, VersionPart} from "../../contracts/types/Version.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {ObjectType, toObjectType, ObjectTypeLib} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../contracts/types/ObjectType.sol";
 
-import {IService} from "../../contracts/shared/IService.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
-import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceHarnessTestBase, toBool, eqObjectInfo} from "./RegistryServiceHarnessTestBase.sol";
 
 import {RegisterableMock,
         SelfOwnedRegisterableMock,
-        RegisterableMockWithFakeAddress} from "../mock/RegisterableMock.sol";
+        RegisterableMockWithRandomInvalidAddress} from "../mock/RegisterableMock.sol";
 
 
 contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
-    function test_withValidRegisterable() public
+    function test_withValidRegisterableHappyCase() public
     {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
         
@@ -36,7 +33,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ( 
             IRegistry.ObjectInfo memory infoFromRegistryService,
             bytes memory dataFromRegistryService 
-        ) = registryServiceHarness.getAndVerifyContractInfo(
+        ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
                 registerableType,
                 registerableOwner);
@@ -47,9 +44,9 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ) = registerable.getInitialInfo();
         
         assertTrue(eqObjectInfo(infoFromRegistryService, infoFromRegisterable), 
-            "Info returned buy registry service is different from info stored in registerable");
+            "Info returned by registry service is different from info stored in registerable");
         assertEq(dataFromRegistryService, dataFromRegisterable, 
-            "Data returned buy registry service is different from data stored in registerable");
+            "Data returned by registry service is different from data stored in registerable");
     } 
 
     function test_withRegisterableTypeDifferentFromExpectedType() public 
@@ -66,7 +63,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
-            registerableOwner,
+            registerableOwner, 
             ""
         );
 
@@ -75,30 +72,87 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             expectedType,
             registerableType));
 
-        registryServiceHarness.getAndVerifyContractInfo(
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
             expectedType,
             registerableOwner);
     }
 
-    function test_withInvalidRegisterableAddress() public 
+    function test_withZeroRegisterableType() public
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = zeroObjectType();
+        ObjectType expectedType = toObjectType(randomNumber(type(uint8).max));
 
-        RegisterableMockWithFakeAddress registerable = new RegisterableMockWithFakeAddress(
+        if(registerableType == expectedType) {
+            expectedType = toObjectType(expectedType.toInt() + 1);
+        }
+
+        RegisterableMock registerable = new RegisterableMock(
             address(registry),
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
-            registerableOwner,
-            "",
-            address(uint160(randomNumber(type(uint160).max))) // invalid address, assume collision probability is extremelly low 
+            registerableOwner, 
+            ""
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IRegistryService.UnexpectedRegisterableType.selector,
+            expectedType,
+            registerableType));
+
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
+            registerable,
+            expectedType,
+            registerableOwner);
+    }
+
+    function test_whenExpectedTypeIsZero() public
+    {
+        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType expectedType = zeroObjectType();
+
+        if(registerableType == expectedType) {
+            registerableType = toObjectType(registerableType.toInt() + 1);
+        } 
+
+        RegisterableMock registerable = new RegisterableMock(
+            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // parentNftId
+            registerableType,
+            toBool(randomNumber(1)), // isInterceptor
+            registerableOwner, 
+            ""
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IRegistryService.UnexpectedRegisterableType.selector,
+            expectedType,
+            registerableType));
+
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
+            registerable,
+            expectedType,
+            registerableOwner);       
+    }
+
+    function test_withInvalidRegisterableAddressHappyCase() public 
+    {
+        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+
+        RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
+            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // parentNftId
+            registerableType,
+            toBool(randomNumber(1)), // isInterceptor
+            registerableOwner, // initialOwner
+            ""
         );
 
         ( 
             IRegistry.ObjectInfo memory infoFromRegistryService,
             bytes memory dataFromRegistryService 
-        ) = registryServiceHarness.getAndVerifyContractInfo(
+        ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
                 registerableType,
                 registerableOwner);
@@ -111,9 +165,9 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         infoFromRegisterable.objectAddress = address(registerable);
         
         assertTrue(eqObjectInfo(infoFromRegistryService, infoFromRegisterable), 
-            "Info returned buy registry service is different from info stored in registerable");
+            "Info returned by registry service is different from info stored in registerable");
         assertEq(dataFromRegistryService, dataFromRegisterable, 
-            "Data returned buy registry service is different from data stored in registerable");
+            "Data returned by registry service is different from data stored in registerable");
     }
 
     function test_withRegisterableOwnerDifferentFromExpectedOwner() public
@@ -125,7 +179,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
-            registerableOwner,
+            registerableOwner, // initialOwner
             ""
         );
 
@@ -133,13 +187,13 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             IRegistryService.NotRegisterableOwner.selector,
             outsider));
 
-        registryServiceHarness.getAndVerifyContractInfo(
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
             registerableType,
-            outsider); 
+            outsider); // expectedOwner
     }
 
-    function test_withZeroExpectedOwner() public
+    function test_whenExpectedOwnerIsZero() public
     {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
 
@@ -148,7 +202,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
-            registerableOwner,
+            registerableOwner, // initialOwner
             ""
         );
 
@@ -156,10 +210,10 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             IRegistryService.NotRegisterableOwner.selector,
             address(0)));
 
-        registryServiceHarness.getAndVerifyContractInfo(
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
             registerableType,
-            address(0)); 
+            address(0)); // expectedOwner
     }
 
     function test_withZeroRegisterableOwner() public
@@ -171,7 +225,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
-            address(0),
+            address(0), // initialOwner
             ""
         );
 
@@ -179,7 +233,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             IRegistryService.NotRegisterableOwner.selector,
             registerableOwner));
 
-        registryServiceHarness.getAndVerifyContractInfo(
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
             registerableType,
             registerableOwner); 
@@ -194,17 +248,17 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
-            address(0),
+            address(0), // initialOwner
             ""
         );
 
         vm.expectRevert(abi.encodeWithSelector(
             IRegistryService.RegisterableOwnerIsZero.selector));
 
-        registryServiceHarness.getAndVerifyContractInfo(
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
             registerableType,
-            address(0)); 
+            address(0)); // expectedOwner
     }
 
     function test_withRegisteredRegisterableOwner() public
@@ -216,24 +270,24 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
-            address(registry),
+            address(registry), // initialOwner
             ""
         );
 
         vm.expectRevert(abi.encodeWithSelector(
             IRegistryService.RegisterableOwnerIsRegistered.selector));
 
-        registryServiceHarness.getAndVerifyContractInfo(
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
             registerableType,
-            address(registry));  
+            address(registry)); // expectedOwner 
     }
 
     function test_withSelfOwnedRegisterable() public
     {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
         
-        SelfOwnedRegisterableMock registerable = new SelfOwnedRegisterableMock(
+        SelfOwnedRegisterableMock selfOwnedRegisterable = new SelfOwnedRegisterableMock(
             address(registry),
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
@@ -244,9 +298,9 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         vm.expectRevert(abi.encodeWithSelector(
             IRegistryService.SelfRegistration.selector)); 
 
-        registryServiceHarness.getAndVerifyContractInfo(
-            registerable,
+        registryServiceHarness.exposed_getAndVerifyContractInfo(
+            selfOwnedRegisterable,
             registerableType,
-            address(registerable)); 
+            address(selfOwnedRegisterable)); // expectedOwner
     }
 }
