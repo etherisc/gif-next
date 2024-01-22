@@ -36,22 +36,6 @@ contract RegistryService is
 {
     using NftIdLib for NftId;
 
-    // TODO move errors to interface contract
-    error SelfRegistration();
-    error NotRegistryOwner();
-
-    error NotService();
-    error NotInstance();
-    error NotProduct();
-    error NotPool();
-    error NotDistribution();
-
-    error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
-    error NotRegisterableOwner(address expectedOwner);
-    error RegisterableOwnerIsZero();   
-    error RegisterableOwnerIsRegistered();
-    error InvalidInitialOwner(address initialOwner);
-    error InvalidAddress(address registerableAddress);
 
     // Initial value for constant variable has to be compile-time constant
     // TODO define types as constants?

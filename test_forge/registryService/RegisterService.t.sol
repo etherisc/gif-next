@@ -34,7 +34,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
     //     vm.prank(outsider);
 
-    //     vm.expectRevert(abi.encodeWithSelector(RegistryService.NotRegistryOwner.selector)); 
+    //     vm.expectRevert(abi.encodeWithSelector(IRegistryService.NotRegistryOwner.selector)); 
 
     //     registryService.registerService(service);        
     // }
@@ -60,7 +60,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         vm.prank(address(service));
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.NotRegisterableOwner.selector,
+            IRegistryService.NotRegisterableOwner.selector,
             address(service)));
 
         registryService.registerService(service);  
@@ -71,7 +71,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
         vm.prank(address(selfOwnedService));
 
-        vm.expectRevert(abi.encodeWithSelector(RegistryService.SelfRegistration.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryService.SelfRegistration.selector));
 
         registryService.registerService(selfOwnedService);  
     }
@@ -92,14 +92,14 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
     function test_withIERC165() public
     {
-        vm.expectRevert(abi.encodeWithSelector(RegistryService.NotService.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryService.NotService.selector));
 
         registryService.registerService(IService(erc165));
     }
 
     function test_withIRegisterable() public
     {
-        vm.expectRevert(abi.encodeWithSelector(RegistryService.NotService.selector));
+        vm.expectRevert(abi.encodeWithSelector(IRegistryService.NotService.selector));
 
         registryService.registerService(IService(address(registerableOwnedByRegistryOwner)));
     }
@@ -130,7 +130,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.UnexpectedRegisterableType.selector,
+            IRegistryService.UnexpectedRegisterableType.selector,
             SERVICE(),
             service._invalidType()));
 
@@ -168,7 +168,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         vm.prank(registryOwner);
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.NotRegisterableOwner.selector,
+            IRegistryService.NotRegisterableOwner.selector,
             registryOwner));
 
         registryService.registerService(service);  
@@ -185,7 +185,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         vm.prank(registryOwner);
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.NotRegisterableOwner.selector,
+            IRegistryService.NotRegisterableOwner.selector,
             registryOwner));
 
         registryService.registerService(service);  
@@ -202,7 +202,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
         vm.prank(address(registry));
 
         vm.expectRevert(abi.encodeWithSelector(
-            RegistryService.RegisterableOwnerIsRegistered.selector));
+            IRegistryService.RegisterableOwnerIsRegistered.selector));
 
         registryService.registerService(service);  
     }
