@@ -74,7 +74,7 @@ contract DistributionService is
         IInstance instance = distribution.getInstance();
         INftOwnable nftOwnable = INftOwnable(address(instance));
         
-        require(_instanceService.hasRole(componentOwner, DISTRIBUTION_OWNER_ROLE(), nftOwnable.getNftId()), "ERROR:DIS-001:NOT_DISTRIBUTION_OWNER");
+        require(_instanceService.hasRole(componentOwner, DISTRIBUTION_OWNER_ROLE(), nftOwnable.getNftId()), "ERROR:DIS-001:NOT_DISTRIBUTION_OWNER_ROLE");
         
         IRegistryService registryService = getRegistryService();
         (IRegistry.ObjectInfo memory distributionObjInfo, ) = registryService.registerDistribution(
