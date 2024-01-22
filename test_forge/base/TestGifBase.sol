@@ -403,6 +403,16 @@ contract TestGifBase is Test {
             address(registryService),
             registryServiceRegisterDistributionSelectors, 
             DISTRIBUTION_REGISTRAR_ROLE().toInt());
+
+        // grant POOL_REGISTRAR_ROLE to pool service
+        // allow role POOL_REGISTRAR_ROLE to call registerPool on registry service
+        accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(poolService), 0);
+        bytes4[] memory registryServiceRegisterPoolSelectors = new bytes4[](1);
+        registryServiceRegisterPoolSelectors[0] = registryService.registerPool.selector;
+        accessManager.setTargetFunctionRole(
+            address(registryService),
+            registryServiceRegisterPoolSelectors, 
+            POOL_REGISTRAR_ROLE().toInt());
     }
 
     function _deployMasterInstance() internal 

@@ -74,8 +74,8 @@ contract Pool is BaseComponent, IPoolComponent {
         _initialStakingFee = stakingFee;
         _initialPerformanceFee = performanceFee;
 
+        _poolService = _instance.getPoolService();
         // TODO: reactivate when services are available again
-        // _poolService = _instance.getPoolService();
         // _productService = _instance.getProductService();
 
         _registerInterface(type(IPoolComponent).interfaceId);

@@ -37,6 +37,7 @@ function POOL_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId
 function PRODUCT_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1400); }
 
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10000); }
+function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10100); }
 
 function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(11000); }
 
