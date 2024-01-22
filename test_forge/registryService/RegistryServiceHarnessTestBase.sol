@@ -113,4 +113,33 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
                 "Data read from registerable is different from data returned by registry service");
         }
     }
+
+    function _assert_verifyObjectInfo(
+        IRegistry.ObjectInfo memory info, 
+        ObjectType expectedType)
+        internal
+    {
+        //if(info.objectAddress > address(0)) {
+        //    vm.expectRevert(abi.encodeWithSelector(
+        //        IRegistryService.UnexpectedRegisterableAddress.selector,
+        //        address(0), 
+        //        info.objectAddress));
+        //} else 
+        if(info.objectType != expectedType) {
+            vm.expectRevert(abi.encodeWithSelector(
+                IRegistryService.UnexpectedRegisterableType.selector,
+                expectedType,
+                info.objectType));
+        } else if(info.initialOwner == address(0)) {
+            vm.expectRevert(abi.encodeWithSelector(
+                IRegistryService.RegisterableOwnerIsZero.selector));
+        } else if(registry.isRegistered(info.initialOwner)) { 
+            vm.expectRevert(abi.encodeWithSelector(
+                IRegistryService.RegisterableOwnerIsRegistered.selector));
+        }
+
+        registryServiceHarness.exposed_verifyObjectInfo(
+            info, 
+            expectedType);
+    }
 }
