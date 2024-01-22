@@ -8,8 +8,6 @@ import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-// import {IComponent, IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
-// import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
 import {IPoolComponent} from "../../contracts/components/IPoolComponent.sol";
 import {IProductComponent} from "../../contracts/components/IProductComponent.sol";
@@ -30,7 +28,6 @@ import {Service} from "../shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {Registry} from "./Registry.sol";
-import {ChainNft} from "./ChainNft.sol";
 
 contract RegistryService is
     AccessManagedUpgradeable,
@@ -95,17 +92,9 @@ contract RegistryService is
 
         info.nftId = _registry.register(info);
         service.linkToRegisteredNftId();
-        return (
-            info,
-            data
-        );
+        return (info, data);
     }
 
-    // If msg.sender is approved service: 
-    // 1) add owner arg (service MUST pass it's msg.sender as owner)
-    // 2) check service allowance 
-    // 3) comment self registrstion check
-    //function registerInstance(IRegisterable instance, address owner)
     function registerInstance(IRegisterable instance)
         external
         returns(
@@ -125,10 +114,7 @@ contract RegistryService is
         info.nftId = _registry.register(info);
         instance.linkToRegisteredNftId(); // asume safe
         
-        return (
-            info,
-            data            
-        );
+        return (info, data);
     }
 
     function registerProduct(IBaseComponent product, address owner)
@@ -149,16 +135,11 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
 
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
         info.nftId = _registry.register(info);
         // TODO unsafe, let component or its owner derive nftId latter, when state assumptions and modifications of GIF contracts are finished  
         product.linkToRegisteredNftId();
 
-        return (
-            info,
-            data
-        );  
+        return (info, data);  
     }
 
     function registerPool(IBaseComponent pool, address owner)
@@ -178,15 +159,10 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(pool, POOL(), owner);
 
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
         info.nftId = _registry.register(info);
         pool.linkToRegisteredNftId();
 
-        return (
-            info,
-            data
-        );  
+        return (info, data);  
     }
 
     function registerDistribution(IBaseComponent distribution, address owner)
@@ -206,15 +182,10 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
 
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
         info.nftId = _registry.register(info); 
         distribution.linkToRegisteredNftId();
 
-        return (
-            info,
-            data
-        );  
+        return (info, data);  
     }
 
     function registerPolicy(IRegistry.ObjectInfo memory info)
@@ -222,8 +193,6 @@ contract RegistryService is
         restricted 
         returns(NftId nftId) 
     {
-        NftId senderNftId = _registry.getNftId(msg.sender);
-
         _verifyObjectInfo(info, POLICY());
 
         nftId = _registry.register(info);
@@ -234,9 +203,6 @@ contract RegistryService is
         restricted 
         returns(NftId nftId) 
     {
-
-        NftId senderNftId = _registry.getNftId(msg.sender);
-
         _verifyObjectInfo(info, BUNDLE());
 
         nftId = _registry.register(info);
@@ -296,7 +262,6 @@ contract RegistryService is
         _registerInterface(type(IRegistryService).interfaceId);
     }
 
-    // parent check done in registry because of approve()
     function _getAndVerifyContractInfo(
         IRegisterable registerable,
         ObjectType expectedType, // assume can be valid only
