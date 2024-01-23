@@ -407,13 +407,22 @@ contract TestGifBase is Test {
         // grant POOL_REGISTRAR_ROLE to pool service
         // allow role POOL_REGISTRAR_ROLE to call registerPool on registry service
         accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(poolService), 0);
-        bytes4[] memory registryServiceRegisterPoolSelectors = new bytes4[](2);
+        bytes4[] memory registryServiceRegisterPoolSelectors = new bytes4[](1);
         registryServiceRegisterPoolSelectors[0] = registryService.registerPool.selector;
-        registryServiceRegisterPoolSelectors[1] = registryService.registerBundle.selector;
         accessManager.setTargetFunctionRole(
             address(registryService),
             registryServiceRegisterPoolSelectors, 
             POOL_REGISTRAR_ROLE().toInt());
+
+        // grant BUNDLE_REGISTRAR_ROLE to pool service
+        // allow role BUNDLE_REGISTRAR_ROLE to call registerBundle on registry service
+        accessManager.grantRole(BUNDLE_REGISTRAR_ROLE().toInt(), address(poolService), 0);
+        bytes4[] memory registryServiceRegisterBundleSelectors = new bytes4[](1);
+        registryServiceRegisterBundleSelectors[0] = registryService.registerBundle.selector;
+        accessManager.setTargetFunctionRole(
+            address(registryService),
+            registryServiceRegisterBundleSelectors, 
+            BUNDLE_REGISTRAR_ROLE().toInt());
     }
 
     function _deployMasterInstance() internal 
