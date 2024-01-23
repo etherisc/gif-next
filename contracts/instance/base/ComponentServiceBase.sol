@@ -80,7 +80,7 @@ abstract contract ComponentServiceBase is Service {
         }
 
         componentNftId = objInfo.nftId;
-        IInstance instance = _getInstanceFromComponentNft(componentNftId);
+        IInstance instance = _getInstance(objInfo);
         _finalizeComponentRegistration(componentNftId, initialObjData, instance);
     }
 
@@ -91,10 +91,9 @@ abstract contract ComponentServiceBase is Service {
         return compInitialInfo.objectType;
     }
     
-    function _getInstanceFromComponentNft(NftId componentNftId) internal view returns (IInstance) {
+    function _getInstance(IRegistry.ObjectInfo memory compObjInfo) internal view returns (IInstance) {
         IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory compInfo = registry.getObjectInfo(componentNftId);
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(compInfo.parentNftId);
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(compObjInfo.parentNftId);
         return IInstance(instanceInfo.objectAddress);
     }
 
