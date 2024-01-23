@@ -38,7 +38,6 @@ contract DistributionService is
     string public constant NAME = "DistributionService";
 
     address internal _registryAddress;
-    InstanceService internal _instanceService;
     
     function _initialize(
         address owner, 
@@ -51,11 +50,7 @@ contract DistributionService is
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        IRegistry registry = IRegistry(_registryAddress);
-        _instanceService = InstanceService(registry.getServiceAddress("InstanceService", getMajorVersion()));
-        // TODO while DistributionService is not deployed in DistributionServiceManager constructor
-        //      owner is DistributionServiceManager deployer
-        _initializeService(_registryAddress, owner);
+        _initializeService(_registryAddress, initialOwner);
 
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IDistributionService).interfaceId);
@@ -66,26 +61,12 @@ contract DistributionService is
         return NAME;
     }
 
-    function register(address distributionComponentAddress) 
-        external 
-        returns (NftId distributionNftId)
-    {
-        address componentOwner = msg.sender;
-        Distribution distribution = Distribution(distributionComponentAddress);
-        IInstance instance = distribution.getInstance();
-        INftOwnable nftOwnable = INftOwnable(address(instance));
-        
-        require(_instanceService.hasRole(componentOwner, DISTRIBUTION_OWNER_ROLE(), nftOwnable.getNftId()), "ERROR:DIS-001:NOT_DISTRIBUTION_OWNER");
-        
-        IRegistryService registryService = getRegistryService();
-        (IRegistry.ObjectInfo memory distributionObjInfo, ) = registryService.registerDistribution(
-            distribution,
-            componentOwner
+    function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {
+        ISetup.DistributionSetupInfo memory initialSetup = abi.decode(
+            initialObjData,
+            (ISetup.DistributionSetupInfo)
         );
-        distributionNftId = distributionObjInfo.nftId;
-
-        ISetup.DistributionSetupInfo memory initialSetup = distribution.getInitialSetupInfo();
-        instance.createDistributionSetup(distributionNftId, initialSetup);
+        instance.createDistributionSetup(componentNftId, initialSetup);
     }
 
     function setFees(

@@ -8,8 +8,6 @@ import {ISetup} from "../instance/module/ISetup.sol";
 
 interface IDistributionComponent {
 
-    function getInitialSetupInfo() external view returns (ISetup.DistributionSetupInfo memory setupInfo);
-
     function setFees(
         Fee memory distributionFee
     ) external;

@@ -148,6 +148,9 @@ function printAddresses(
     addresses += `distributionServiceManagerAddress: ${services.distributionServiceManagerAddress}\n`;
     addresses += `distributionServiceAddress: ${services.distributionServiceAddress}\n`;
     addresses += `distributionServiceNftId: ${services.distributionServiceNftId}\n`;
+    addresses += `poolServiceManagerAddress: ${services.poolServiceManagerAddress}\n`;
+    addresses += `poolServiceAddress: ${services.poolServiceAddress}\n`;
+    addresses += `poolServiceNftId: ${services.poolServiceNftId}\n`;
     addresses += `--------\n`;
 
     // addresses += `componentOwnerServiceAddress: ${services.componentOwnerServiceAddress}\n`;

@@ -2,10 +2,9 @@
 pragma solidity 0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
-
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -16,7 +15,8 @@ import {ComponentOwnerService} from "../../contracts/instance/service/ComponentO
 import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
 import {DistributionServiceManager} from "../../contracts/instance/service/DistributionServiceManager.sol";
 // import {ProductService} from "../../contracts/instance/service/ProductService.sol";
-// import {PoolService} from "../../contracts/instance/service/PoolService.sol";
+import {PoolService} from "../../contracts/instance/service/PoolService.sol";
+import {PoolServiceManager} from "../../contracts/instance/service/PoolServiceManager.sol";
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 
@@ -29,6 +29,7 @@ import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 // import {TestPool} from "../../contracts/test/TestPool.sol";
 // import {TestDistribution} from "../../contracts/test/TestDistribution.sol";
 import {Distribution} from "../../contracts/components/Distribution.sol";
+import {Pool} from "../../contracts/components/Pool.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
 
 // import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
@@ -82,7 +83,9 @@ contract TestGifBase is Test {
     DistributionService public distributionService;
     NftId public distributionServiceNftId;
     // ProductService public productService;
-    // PoolService public poolService;
+    PoolServiceManager public poolServiceManager;
+    PoolService public poolService;
+    NftId public poolServiceNftId;
 
     AccessManagerSimple masterInstanceAccessManager;
     Instance masterInstance;
@@ -98,8 +101,8 @@ contract TestGifBase is Test {
     // TestProduct public product;
     // TestPool public pool;
     // TestDistribution public distribution;
-    int public pool = 0;
     Distribution public distribution;
+    Pool public pool;
     int public product = 0;
     TokenHandler public tokenHandler;
 
@@ -355,6 +358,17 @@ contract TestGifBase is Test {
         console.log("distributionService nft id", distributionService.getNftId().toInt());
         // solhint-enable
 
+        // --- pool service ---------------------------------//
+        poolServiceManager = new PoolServiceManager(address(registry));
+        poolService = poolServiceManager.getPoolService();
+        poolServiceNftId = registry.getNftId(address(poolService));
+
+        // solhint-disable
+        console.log("poolService name", poolService.getName());
+        console.log("poolService deployed at", address(poolService));
+        console.log("poolService nft id", poolService.getNftId().toInt());
+        // solhint-enable
+
         // //--- component owner service ---------------------------------//
         // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
         // registryService.registerService(componentOwnerService);
@@ -382,19 +396,6 @@ contract TestGifBase is Test {
         // console.log("service nft id", productService.getNftId().toInt());
         // console.log("service allowance is set to POLICY");
         // /* solhint-enable */
-
-        // //--- pool service ---------------------------------//
-        
-        // poolService = new PoolService(registryAddress, registryNftId, registryOwner);
-        // registryService.registerService(poolService);
-        // accessManager.grantRole(BUNDLE_REGISTRAR_ROLE().toInt(), address(poolService), 0);
-
-        // /* solhint-disable */
-        // console.log("service name", poolService.NAME());
-        // console.log("service deployed at", address(poolService));
-        // console.log("service nft id", poolService.getNftId().toInt());
-        // console.log("service allowance is set to BUNDLE");
-        // /* solhint-enable */
     }
 
     function _configureServiceAuthorizations() internal 
@@ -408,6 +409,26 @@ contract TestGifBase is Test {
             address(registryService),
             registryServiceRegisterDistributionSelectors, 
             DISTRIBUTION_REGISTRAR_ROLE().toInt());
+
+        // grant POOL_REGISTRAR_ROLE to pool service
+        // allow role POOL_REGISTRAR_ROLE to call registerPool on registry service
+        accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(poolService), 0);
+        bytes4[] memory registryServiceRegisterPoolSelectors = new bytes4[](1);
+        registryServiceRegisterPoolSelectors[0] = registryService.registerPool.selector;
+        accessManager.setTargetFunctionRole(
+            address(registryService),
+            registryServiceRegisterPoolSelectors, 
+            POOL_REGISTRAR_ROLE().toInt());
+
+        // grant BUNDLE_REGISTRAR_ROLE to pool service
+        // allow role BUNDLE_REGISTRAR_ROLE to call registerBundle on registry service
+        accessManager.grantRole(BUNDLE_REGISTRAR_ROLE().toInt(), address(poolService), 0);
+        bytes4[] memory registryServiceRegisterBundleSelectors = new bytes4[](1);
+        registryServiceRegisterBundleSelectors[0] = registryService.registerBundle.selector;
+        accessManager.setTargetFunctionRole(
+            address(registryService),
+            registryServiceRegisterBundleSelectors, 
+            BUNDLE_REGISTRAR_ROLE().toInt());
     }
 
     function _deployMasterInstance() internal 
