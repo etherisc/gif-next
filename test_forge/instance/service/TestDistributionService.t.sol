@@ -6,6 +6,7 @@ import {TestGifBase} from "../../base/TestGifBase.sol";
 import {NftId, toNftId, NftIdLib} from "../../../contracts/types/NftId.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
 import {Distribution} from "../../../contracts/components/Distribution.sol";
+import {ComponentServiceBase} from "../../../contracts/instance/base/ComponentServiceBase.sol";
 import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
 import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
@@ -25,7 +26,7 @@ contract TestDistributionService is TestGifBase {
             distributionOwner
         );
 
-        vm.expectRevert("ERROR:CSB-001:INVALID_ROLE");
+        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.InvalidRole.selector, DISTRIBUTION_OWNER_ROLE(), distributionOwner));
         distributionService.register(address(distribution));
     }
 

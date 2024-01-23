@@ -16,14 +16,16 @@ import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 abstract contract ComponentServiceBase is Service {
 
-    error CallerIsNotComponentOwner();
+    error InvalidRole(RoleId expected, address caller);
 
     /// @dev modifier to check if caller has a role on the instance the component is registered in
     modifier onlyInstanceRole(RoleId role, address componentAddress) {
         address componentOwner = msg.sender;
         BaseComponent component = BaseComponent(componentAddress);
         INftOwnable nftOwnable = INftOwnable(address(component.getInstance()));
-        require(getInstanceService().hasRole(componentOwner, role, nftOwnable.getNftId()), "ERROR:CSB-001:INVALID_ROLE");
+        if(! getInstanceService().hasRole(componentOwner, role, nftOwnable.getNftId())) {
+            revert InvalidRole(role, componentOwner);
+        }
         _;
     }
 

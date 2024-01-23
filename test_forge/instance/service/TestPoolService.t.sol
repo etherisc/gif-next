@@ -10,6 +10,7 @@ import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
 import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
 import {UFixedLib} from "../../../contracts/types/UFixed.sol";
+import {ComponentServiceBase} from "../../../contracts/instance/base/ComponentServiceBase.sol";
 
 contract TestPoolService is TestGifBase {
     using NftIdLib for NftId;
@@ -29,7 +30,7 @@ contract TestPoolService is TestGifBase {
             poolOwner
         );
 
-        vm.expectRevert("ERROR:CSB-001:INVALID_ROLE");
+        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.InvalidRole.selector, POOL_OWNER_ROLE(), poolOwner));
         poolService.register(address(pool));
     }
 
