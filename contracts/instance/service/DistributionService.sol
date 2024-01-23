@@ -71,13 +71,16 @@ contract DistributionService is
         IInstance instance = distribution.getInstance();
         
         IRegistryService registryService = getRegistryService();
-        (IRegistry.ObjectInfo memory distributionObjInfo, ) = registryService.registerDistribution(
+        (IRegistry.ObjectInfo memory distributionObjInfo, bytes memory initialObjData ) = registryService.registerDistribution(
             distribution,
             componentOwner
         );
         distributionNftId = distributionObjInfo.nftId;
 
-        ISetup.DistributionSetupInfo memory initialSetup = distribution.getInitialSetupInfo();
+        ISetup.DistributionSetupInfo memory initialSetup = abi.decode(
+            initialObjData,
+            (ISetup.DistributionSetupInfo)
+        );
         instance.createDistributionSetup(distributionNftId, initialSetup);
     }
 

@@ -72,13 +72,16 @@ contract PoolService is
         IInstance instance = pool.getInstance();
         
         IRegistryService registryService = getRegistryService();
-        (IRegistry.ObjectInfo memory poolObjInfo, ) = registryService.registerPool(
+        (IRegistry.ObjectInfo memory poolObjInfo, bytes memory initialObjData ) = registryService.registerPool(
             pool,
             componentOwner
         );
         poolNftId = poolObjInfo.nftId;
 
-        ISetup.PoolSetupInfo memory initialSetup = pool.getInitialSetupInfo();
+        ISetup.PoolSetupInfo memory initialSetup = abi.decode(
+            initialObjData,
+            (ISetup.PoolSetupInfo)
+        );
         instance.createPoolSetup(poolNftId, initialSetup);
     }
 

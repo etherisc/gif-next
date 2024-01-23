@@ -168,18 +168,6 @@ contract Pool is BaseComponent, IPoolComponent {
         _poolService.setBundleFee(bundleNftId, fee);
     }
 
-    function getInitialSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
-        return ISetup.PoolSetupInfo(
-            _productNftId,
-            TokenHandler(address(_token)),
-            _collateralizationLevel,
-            _initialPoolFee,
-            _initialStakingFee,
-            _initialPerformanceFee,
-            _isVerifying,
-            _wallet
-        );
-    }
     function getSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
         InstanceReader reader = _instance.getInstanceReader();
         return reader.getPoolSetupInfo(getNftId());
@@ -197,13 +185,21 @@ contract Pool is BaseComponent, IPoolComponent {
     {
         (
             IRegistry.ObjectInfo memory info, 
-            bytes memory data
         ) = super.getInitialInfo();
 
         return (
             info,
             abi.encode(
-                getInitialSetupInfo()
+                ISetup.PoolSetupInfo(
+                    _productNftId,
+                    TokenHandler(address(_token)),
+                    _collateralizationLevel,
+                    _initialPoolFee,
+                    _initialStakingFee,
+                    _initialPerformanceFee,
+                    _isVerifying,
+                    _wallet
+                )
             )
         );
     }
