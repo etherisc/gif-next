@@ -5,46 +5,54 @@ import {console} from "../../../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "../../base/TestGifBase.sol";
 import {NftId, toNftId, NftIdLib} from "../../../contracts/types/NftId.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
-import {Distribution} from "../../../contracts/components/Distribution.sol";
+import {Pool} from "../../../contracts/components/Pool.sol";
 import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
 import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
 import {UFixedLib} from "../../../contracts/types/UFixed.sol";
 
-contract TestDistributionService is TestGifBase {
+contract TestPoolService is TestGifBase {
     using NftIdLib for NftId;
 
-    function test_DistributionService_register_missingDistributionOwnerRole() public {
-        vm.startPrank(distributionOwner);
-        distribution = new Distribution(
+    function test_PoolService_register_missingPoolOwnerRole() public {
+        vm.startPrank(poolOwner);
+        pool = new Pool(
             address(registry),
             instanceNftId,
             address(token),
             false,
+            false,
+            UFixedLib.toUFixed(1),
             FeeLib.zeroFee(),
-            distributionOwner
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            poolOwner
         );
 
-        vm.expectRevert("ERROR:DIS-001:NOT_DISTRIBUTION_OWNER_ROLE");
-        distributionService.register(address(distribution));
+        vm.expectRevert("ERROR:POS-001:NOT_POOL_OWNER_ROLE");
+        poolService.register(address(pool));
     }
 
-    function test_DistributionService_register() public {
+    function test_PoolService_register() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
-        vm.startPrank(distributionOwner);
-        distribution = new Distribution(
+        vm.startPrank(poolOwner);
+        pool = new Pool(
             address(registry),
             instanceNftId,
             address(token),
             false,
+            false,
+            UFixedLib.toUFixed(1),
             FeeLib.zeroFee(),
-            distributionOwner
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            poolOwner
         );
 
-        NftId nftId = distributionService.register(address(distribution));
+        NftId nftId = poolService.register(address(pool));
         assertFalse(nftId.eqz(), "nftId is zero");
     }
 
