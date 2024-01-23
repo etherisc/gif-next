@@ -17,7 +17,7 @@ import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
-import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -73,7 +73,6 @@ contract InstanceService is Service, IInstanceService {
 
     function _grantInitialAuthorizations(AccessManagerSimple clonedAccessManager, Instance clonedInstance) internal {
         address distributionServiceAddress = _registry.getServiceAddress("DistributionService", VersionLib.toVersion(3, 0, 0).toMajorPart());
-        
         clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), distributionServiceAddress, 0);
         bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](2);
         instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
@@ -82,6 +81,19 @@ contract InstanceService is Service, IInstanceService {
             address(clonedInstance),
             instanceDistributionServiceSelectors, 
             DISTRIBUTION_SERVICE_ROLE().toInt());
+
+        address poolServiceAddress = _registry.getServiceAddress("PoolService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        clonedAccessManager.grantRole(POOL_SERVICE_ROLE().toInt(), address(poolServiceAddress), 0);
+        bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
+        instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
+        instancePoolServiceSelectors[1] = clonedInstance.updatePoolSetup.selector;
+        instancePoolServiceSelectors[2] = clonedInstance.createBundle.selector;
+        instancePoolServiceSelectors[3] = clonedInstance.updateBundle.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            address(clonedInstance),
+            instancePoolServiceSelectors, 
+            POOL_SERVICE_ROLE().toInt());
+
     }
 
     function setAccessManagerMaster(address accessManagerMaster) external {

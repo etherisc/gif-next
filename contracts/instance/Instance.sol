@@ -26,6 +26,7 @@ import {Registerable} from "../shared/Registerable.sol";
 import {ComponentOwnerService} from "./service/ComponentOwnerService.sol";
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
+import {IPoolService} from "./service/IPoolService.sol";
 import {VersionPart} from "../types/Version.sol";
 
 contract Instance is
@@ -220,16 +221,16 @@ contract Instance is
     }
 
     //--- PoolSetup ------------------------------------------------------//
-    function createPoolSetup(NftId distributionNftId, ISetup.PoolSetupInfo memory setup) external restricted() {
-        create(_toNftKey32(distributionNftId, POOL()), abi.encode(setup));
+    function createPoolSetup(NftId poolNftId, ISetup.PoolSetupInfo memory setup) external restricted() {
+        create(_toNftKey32(poolNftId, POOL()), abi.encode(setup));
     }
 
-    function updatePoolSetup(NftId distributionNftId, ISetup.PoolSetupInfo memory setup, StateId newState) external restricted() {
-        update(_toNftKey32(distributionNftId, POOL()), abi.encode(setup), newState);
+    function updatePoolSetup(NftId poolNftId, ISetup.PoolSetupInfo memory setup, StateId newState) external restricted() {
+        update(_toNftKey32(poolNftId, POOL()), abi.encode(setup), newState);
     }
 
-    function updatePoolSetupState(NftId distributionNftId, StateId newState) external restricted() {
-        updateState(_toNftKey32(distributionNftId, POOL()), newState);
+    function updatePoolSetupState(NftId poolNftId, StateId newState) external restricted() {
+        updateState(_toNftKey32(poolNftId, POOL()), newState);
     }
 
     //--- DistributorType ---------------------------------------------------//
@@ -427,10 +428,9 @@ contract Instance is
     //     return ProductService(_registry.getServiceAddress("ProductService", VersionPart.wrap(3)));
     // }
 
-    // TODO reactivate when services are available
-    // function getPoolService() external view returns (IPoolService) {
-    //     return PoolService(_registry.getServiceAddress("PoolService", VersionPart.wrap(3)));
-    // }
+    function getPoolService() external view returns (IPoolService) {
+        return IPoolService(_registry.getServiceAddress("PoolService", VersionPart.wrap(3)));
+    }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
         require(address(_instanceReader) == address(0), "InstanceReader is set");

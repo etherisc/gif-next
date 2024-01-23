@@ -74,8 +74,8 @@ contract Pool is BaseComponent, IPoolComponent {
         _initialStakingFee = stakingFee;
         _initialPerformanceFee = performanceFee;
 
+        _poolService = _instance.getPoolService();
         // TODO: reactivate when services are available again
-        // _poolService = _instance.getPoolService();
         // _productService = _instance.getProductService();
 
         _registerInterface(type(IPoolComponent).interfaceId);
@@ -168,21 +168,19 @@ contract Pool is BaseComponent, IPoolComponent {
         _poolService.setBundleFee(bundleNftId, fee);
     }
 
+    function getInitialSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
+        return ISetup.PoolSetupInfo(
+            _productNftId,
+            TokenHandler(address(_token)),
+            _collateralizationLevel,
+            _initialPoolFee,
+            _initialStakingFee,
+            _initialPerformanceFee,
+            _isVerifying,
+            _wallet
+        );
+    }
     function getSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
-        // TODO fix this
-        if (getNftId().eq(zeroNftId())) {
-            return ISetup.PoolSetupInfo(
-                _productNftId,
-                TokenHandler(address(0)),
-                _collateralizationLevel,
-                _initialPoolFee,
-                _initialStakingFee,
-                _initialPerformanceFee,
-                _isVerifying,
-                _wallet
-            );
-        } 
-
         InstanceReader reader = _instance.getInstanceReader();
         return reader.getPoolSetupInfo(getNftId());
     }
@@ -205,16 +203,7 @@ contract Pool is BaseComponent, IPoolComponent {
         return (
             info,
             abi.encode(
-                ISetup.PoolSetupInfo(
-                    getProductNftId(),
-                    TokenHandler(address(0)),
-                    _collateralizationLevel,
-                    _initialPoolFee,
-                    _initialStakingFee,
-                    _initialPerformanceFee,
-                    _isVerifying,
-                    _wallet
-                )
+                getInitialSetupInfo()
             )
         );
     }
