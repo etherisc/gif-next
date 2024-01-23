@@ -1,5 +1,5 @@
 
-import { AddressLike, Signer, hexlify } from "ethers";
+import { AddressLike, Signer, hexlify, resolveAddress } from "ethers";
 import { AccessManager__factory, DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, IRegistryService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
@@ -87,9 +87,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     
     const poolServiceManager = poolServiceManagerBaseContract as PoolServiceManager;
     const poolServiceAddress = await poolServiceManager.getPoolService();
-    const logRegistrationInfoPs = getFieldFromTxRcptLogs(psmDplRcpt!, registry.registry.interface, "LogRegistration", "info");
-    const poolServiceNftId = (logRegistrationInfoPs as unknown[])[0];
     const poolService = PoolService__factory.connect(poolServiceAddress, owner);
+    // FIXME temporal solution while registration in PoolServiceManager constructor is not possible 
+    const rcptPs = await executeTx(async () => await registryService.registerService(poolServiceAddress));
+    const logRegistrationInfoPs = getFieldFromTxRcptLogs(rcptPs!, registry.registry.interface, "LogRegistration", "info");
+    const poolServiceNftId = (logRegistrationInfoPs as unknown[])[0];
     logger.info(`poolServiceManager deployed - poolServiceAddress: ${poolServiceAddress} poolServiceManagerAddress: ${poolServiceManagerAddress} nftId: ${poolServiceNftId}`);
 
     // const { address: productServiceAddress, contract: productServiceBaseContract } = await deployContract(

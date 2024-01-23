@@ -361,6 +361,7 @@ contract TestGifBase is Test {
         // --- pool service ---------------------------------//
         poolServiceManager = new PoolServiceManager(address(registry));
         poolService = poolServiceManager.getPoolService();
+        registryService.registerService(poolService);
         poolServiceNftId = registry.getNftId(address(poolService));
 
         // solhint-disable
