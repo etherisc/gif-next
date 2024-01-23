@@ -14,7 +14,7 @@ import {INftOwnable} from "../../shared/INftOwnable.sol";
 
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {POOL, BUNDLE} from "../../types/ObjectType.sol";
-import {POOL_OWNER_ROLE} from "../../types/RoleId.sol";
+import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
@@ -40,7 +40,6 @@ contract PoolService is
     string public constant NAME = "PoolService";
 
     address internal _registryAddress;
-    InstanceService internal _instanceService;
 
     function _initialize(
         address owner, 
@@ -52,9 +51,6 @@ contract PoolService is
     {
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
-
-        IRegistry registry = IRegistry(_registryAddress);
-        _instanceService = InstanceService(registry.getServiceAddress("InstanceService", getMajorVersion()));
 
         _initializeService(_registryAddress, initialOwner);
 
@@ -68,14 +64,12 @@ contract PoolService is
 
     function register(address poolComponentAddress) 
         external 
+        onlyInstanceRole(POOL_OWNER_ROLE(), poolComponentAddress)
         returns (NftId poolNftId)
     {
         address componentOwner = msg.sender;
         Pool pool = Pool(poolComponentAddress);
         IInstance instance = pool.getInstance();
-        INftOwnable nftOwnable = INftOwnable(address(instance));
-        
-        require(_instanceService.hasRole(componentOwner, POOL_OWNER_ROLE(), nftOwnable.getNftId()), "ERROR:POS-001:NOT_POOL_OWNER_ROLE");
         
         IRegistryService registryService = getRegistryService();
         (IRegistry.ObjectInfo memory poolObjInfo, ) = registryService.registerPool(

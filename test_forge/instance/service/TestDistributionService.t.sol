@@ -25,7 +25,7 @@ contract TestDistributionService is TestGifBase {
             distributionOwner
         );
 
-        vm.expectRevert("ERROR:DIS-001:NOT_DISTRIBUTION_OWNER_ROLE");
+        vm.expectRevert("ERROR:CSB-001:INVALID_ROLE");
         distributionService.register(address(distribution));
     }
 

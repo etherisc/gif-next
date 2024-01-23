@@ -29,7 +29,7 @@ contract TestPoolService is TestGifBase {
             poolOwner
         );
 
-        vm.expectRevert("ERROR:POS-001:NOT_POOL_OWNER_ROLE");
+        vm.expectRevert("ERROR:CSB-001:INVALID_ROLE");
         poolService.register(address(pool));
     }
 

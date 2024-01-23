@@ -38,7 +38,6 @@ contract DistributionService is
     string public constant NAME = "DistributionService";
 
     address internal _registryAddress;
-    InstanceService internal _instanceService;
     
     function _initialize(
         address owner, 
@@ -50,9 +49,6 @@ contract DistributionService is
     {
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
-
-        IRegistry registry = IRegistry(_registryAddress);
-        _instanceService = InstanceService(registry.getServiceAddress("InstanceService", getMajorVersion()));
 
         _initializeService(_registryAddress, initialOwner);
 
@@ -67,14 +63,12 @@ contract DistributionService is
 
     function register(address distributionComponentAddress) 
         external 
+        onlyInstanceRole(DISTRIBUTION_OWNER_ROLE(), distributionComponentAddress)
         returns (NftId distributionNftId)
     {
         address componentOwner = msg.sender;
         Distribution distribution = Distribution(distributionComponentAddress);
         IInstance instance = distribution.getInstance();
-        INftOwnable nftOwnable = INftOwnable(address(instance));
-        
-        require(_instanceService.hasRole(componentOwner, DISTRIBUTION_OWNER_ROLE(), nftOwnable.getNftId()), "ERROR:DIS-001:NOT_DISTRIBUTION_OWNER_ROLE");
         
         IRegistryService registryService = getRegistryService();
         (IRegistry.ObjectInfo memory distributionObjInfo, ) = registryService.registerDistribution(

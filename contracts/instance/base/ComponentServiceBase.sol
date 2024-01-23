@@ -6,13 +6,30 @@ import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {ObjectType, INSTANCE, PRODUCT, POOL} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {RoleId} from "../../types/RoleId.sol";
+import {BaseComponent} from "../../components/BaseComponent.sol";
 
+import {INftOwnable} from "../../shared/INftOwnable.sol";
 import {Service} from "../../shared/Service.sol";
+import {InstanceService} from "../InstanceService.sol";
 import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 abstract contract ComponentServiceBase is Service {
 
     error CallerIsNotComponentOwner();
+
+    /// @dev modifier to check if caller has a role on the instance the component is registered in
+    modifier onlyInstanceRole(RoleId role, address componentAddress) {
+        address componentOwner = msg.sender;
+        BaseComponent component = BaseComponent(componentAddress);
+        INftOwnable nftOwnable = INftOwnable(address(component.getInstance()));
+        require(getInstanceService().hasRole(componentOwner, role, nftOwnable.getNftId()), "ERROR:CSB-001:INVALID_ROLE");
+        _;
+    }
+
+    function getInstanceService() public view returns (InstanceService) {
+        return InstanceService(getRegistry().getServiceAddress("InstanceService", getMajorVersion()));
+    }
 
     function _getAndVerifyComponentInfoAndInstance(
         ObjectType objectType
