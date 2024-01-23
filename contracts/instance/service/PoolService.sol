@@ -107,7 +107,7 @@ contract PoolService is
 
         IBundle.BundleInfo  memory bundleInfo = IBundle.BundleInfo(
             poolNftId,
-            FeeLib.zeroFee(),
+            fee,
             filter,
             stakingAmount,
             0,
