@@ -53,8 +53,9 @@ contract DistributionService is
 
         IRegistry registry = IRegistry(_registryAddress);
         _instanceService = InstanceService(registry.getServiceAddress("InstanceService", getMajorVersion()));
-
-        _initializeService(_registryAddress, initialOwner);
+        // TODO while DistributionService is not deployed in DistributionServiceManager constructor
+        //      owner is DistributionServiceManager deployer
+        _initializeService(_registryAddress, owner);
 
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IDistributionService).interfaceId);

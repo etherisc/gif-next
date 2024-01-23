@@ -148,8 +148,9 @@ contract InstanceService is Service, IInstanceService {
 
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
-
-        _initializeService(_registryAddress, initialOwner);
+        // TODO while InstanceService is not deployed in InstanceServiceManager constructor
+        //      owner is InstanceServiceManager deployer
+        _initializeService(_registryAddress, owner);
         
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IInstanceService).interfaceId);

@@ -31,14 +31,15 @@ contract InstanceServiceManager is ProxyManager {
         Registry registry = Registry(registryAddress);
         address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
-
-        registryService.registerService(_instanceService);
+        // TODO this must have a role or own nft to register service
+        //registryService.registerService(_instanceService);
         // RegistryService registryService = _instanceService.getRegistryService();
 
+        // TODO no nft to link yet
         // link ownership of instance service manager ot nft owner of instance service
-        _linkToNftOwnable(
-            address(registryAddress),
-            address(_instanceService));
+        //_linkToNftOwnable(
+        //    address(registryAddress),
+        //    address(_instanceService));
 
         // implies that after this constructor call only upgrade functionality is available
         _isDeployed = true;
