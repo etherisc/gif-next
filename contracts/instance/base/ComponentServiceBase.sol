@@ -60,7 +60,6 @@ abstract contract ComponentServiceBase is Service {
     {
         address componentOwner = msg.sender;
         BaseComponent component = BaseComponent(componentAddress);
-        IInstance instance = component.getInstance();
         ObjectType objectType = _getObjectType(component);
         IRegistryService registryService = getRegistryService();
 
@@ -81,6 +80,7 @@ abstract contract ComponentServiceBase is Service {
         }
 
         componentNftId = objInfo.nftId;
+        IInstance instance = _getInstanceFromComponentNft(componentNftId);
         _finalizeComponentRegistration(componentNftId, initialObjData, instance);
     }
 
@@ -89,6 +89,13 @@ abstract contract ComponentServiceBase is Service {
     function _getObjectType(BaseComponent component) internal view returns (ObjectType) {
         (IRegistry.ObjectInfo memory compInitialInfo, )  = component.getInitialInfo();
         return compInitialInfo.objectType;
+    }
+    
+    function _getInstanceFromComponentNft(NftId componentNftId) internal view returns (IInstance) {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory compInfo = registry.getObjectInfo(componentNftId);
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(compInfo.parentNftId);
+        return IInstance(instanceInfo.objectAddress);
     }
 
     function _getAndVerifyComponentInfoAndInstance(
