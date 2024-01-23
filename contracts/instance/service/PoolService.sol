@@ -62,24 +62,12 @@ contract PoolService is
         return NAME;
     }
 
-    function register(address poolComponentAddress) 
-        external 
-        onlyInstanceRole(POOL_OWNER_ROLE(), poolComponentAddress)
-        returns (NftId poolNftId)
-    {
-        address componentOwner = msg.sender;
-        Pool pool = Pool(poolComponentAddress);
-        IInstance instance = pool.getInstance();
-        
-        IRegistryService registryService = getRegistryService();
-        (IRegistry.ObjectInfo memory poolObjInfo, ) = registryService.registerPool(
-            pool,
-            componentOwner
+    function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {
+        ISetup.PoolSetupInfo memory initialSetup = abi.decode(
+            initialObjData,
+            (ISetup.PoolSetupInfo)
         );
-        poolNftId = poolObjInfo.nftId;
-
-        ISetup.PoolSetupInfo memory initialSetup = pool.getInitialSetupInfo();
-        instance.createPoolSetup(poolNftId, initialSetup);
+        instance.createPoolSetup(componentNftId, initialSetup);
     }
 
     function setFees(

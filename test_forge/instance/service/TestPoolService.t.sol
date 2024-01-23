@@ -30,7 +30,7 @@ contract TestPoolService is TestGifBase {
             poolOwner
         );
 
-        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.InvalidRole.selector, POOL_OWNER_ROLE(), poolOwner));
+        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.ExpectedRoleMissing.selector, POOL_OWNER_ROLE(), poolOwner));
         poolService.register(address(pool));
     }
 

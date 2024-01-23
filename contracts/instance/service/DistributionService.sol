@@ -61,24 +61,12 @@ contract DistributionService is
         return NAME;
     }
 
-    function register(address distributionComponentAddress) 
-        external 
-        onlyInstanceRole(DISTRIBUTION_OWNER_ROLE(), distributionComponentAddress)
-        returns (NftId distributionNftId)
-    {
-        address componentOwner = msg.sender;
-        Distribution distribution = Distribution(distributionComponentAddress);
-        IInstance instance = distribution.getInstance();
-        
-        IRegistryService registryService = getRegistryService();
-        (IRegistry.ObjectInfo memory distributionObjInfo, ) = registryService.registerDistribution(
-            distribution,
-            componentOwner
+    function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {
+        ISetup.DistributionSetupInfo memory initialSetup = abi.decode(
+            initialObjData,
+            (ISetup.DistributionSetupInfo)
         );
-        distributionNftId = distributionObjInfo.nftId;
-
-        ISetup.DistributionSetupInfo memory initialSetup = distribution.getInitialSetupInfo();
-        instance.createDistributionSetup(distributionNftId, initialSetup);
+        instance.createDistributionSetup(componentNftId, initialSetup);
     }
 
     function setFees(

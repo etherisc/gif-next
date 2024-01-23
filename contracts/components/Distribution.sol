@@ -121,16 +121,6 @@ contract Distribution is
         return false;
     }
 
-    function getInitialSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
-        return ISetup.DistributionSetupInfo(
-            _productNftId,
-            TokenHandler(address(_token)),
-            _initialDistributionFee,
-            _isVerifying,
-            address(this)
-        );
-    }
-
     function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
         InstanceReader reader = _instance.getInstanceReader();
         return reader.getDistributionSetupInfo(getNftId());
@@ -152,14 +142,18 @@ contract Distribution is
     {
         (
             IRegistry.ObjectInfo memory info, 
-            bytes memory data
         ) = super.getInitialInfo();
 
         return (
             info,
             abi.encode(
-                _initialDistributionFee,
-                _isVerifying
+                ISetup.DistributionSetupInfo(
+                    _productNftId,
+                    TokenHandler(address(_token)),
+                    _initialDistributionFee,
+                    _isVerifying,
+                    address(this)
+                )
             )
         );
     }
