@@ -16,7 +16,9 @@ import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
 
 abstract contract ComponentServiceBase is Service {
 
-    error InvalidRole(RoleId expected, address caller);
+    error ExpectedRoleMissing(RoleId expected, address caller);
+    error ComponentTypeInvalid(ObjectType componentType);
+
     mapping (ObjectType => RoleId) internal _objectTypeToExpectedRole;
 
     /// @dev modifier to check if caller has a role on the instance the component is registered in
@@ -28,7 +30,7 @@ abstract contract ComponentServiceBase is Service {
         address componentOwner = msg.sender;
         INftOwnable nftOwnable = INftOwnable(address(component.getInstance()));
         if(! getInstanceService().hasRole(componentOwner, expectedRole, nftOwnable.getNftId())) {
-            revert InvalidRole(expectedRole, componentOwner);
+            revert ExpectedRoleMissing(expectedRole, componentOwner);
         }
         _;
     }
@@ -75,14 +77,14 @@ abstract contract ComponentServiceBase is Service {
         // } else if (objectType == ORACLE()) {
         //     (objInfo, initialObjData) = registryService.registerOracle(component, componentOwner);
         } else {
-            revert("ERROR_COMPONENT_TYPE_INVALID");
+            revert ComponentTypeInvalid(objectType);
         }
 
         componentNftId = objInfo.nftId;
-        finalizeComponentRegistration(componentNftId, initialObjData, instance);
+        _finalizeComponentRegistration(componentNftId, initialObjData, instance);
     }
 
-    function finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal virtual;
+    function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal virtual;
 
     function _getObjectType(BaseComponent component) internal view returns (ObjectType) {
         (IRegistry.ObjectInfo memory compInitialInfo, )  = component.getInitialInfo();

@@ -61,7 +61,7 @@ contract DistributionService is
         return NAME;
     }
 
-    function finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {
+    function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {
         ISetup.DistributionSetupInfo memory initialSetup = abi.decode(
             initialObjData,
             (ISetup.DistributionSetupInfo)
