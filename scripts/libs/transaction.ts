@@ -1,5 +1,4 @@
 import { Interface, TransactionReceipt, ethers } from "ethers";
-import { logger } from "../logger";
 
 /**
  * Extract a field from the logs of a transaction. 
@@ -22,7 +21,7 @@ export function getFieldFromLogs(logs: readonly ethers.Log[], abiInterface: Inte
             // destructuring assignment to fetch the value of the field `fieldName` from the object `p.args`
             const { [fieldName]: v } = parsedLog.args;
             value = v;
-            logger.debug(`${eventName}: ${value}`);
+            // logger.debug(`${eventName}: ${value}`);
         }
     });
 

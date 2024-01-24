@@ -30,6 +30,7 @@ contract Registry is
 {
     uint256 public constant GIF_MAJOR_VERSION_AT_DEPLOYMENT = 3;
     address public constant NFT_LOCK_ADDRESS = address(0x1);
+    uint256 public constant REGISTRY_TOKEN_SEQUENCE_ID = 2;
     uint256 public constant REGISTRY_SERVICE_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
 
@@ -38,17 +39,11 @@ contract Registry is
     mapping(NftId nftId => ObjectInfo info) internal _info;
     mapping(address object => NftId nftId) internal _nftIdByAddress;
 
-    mapping(NftId registrator => mapping(
-            ObjectType objectType => bool)) internal _isApproved;
-
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) internal _isValidContractCombination;
 
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) internal _isValidObjectCombination;
-
-    mapping(address token => mapping(
-            VersionPart majorVersion => bool isActive)) internal _tokenIsActive;
 
     mapping(NftId nftId => string name) internal _string;
     mapping(bytes32 serviceNameHash => mapping(
@@ -67,7 +62,6 @@ contract Registry is
     }
 
     modifier onlyRegistryService() {
-        
         if(msg.sender != _info[_serviceNftId].objectAddress) {
             revert NotRegistryService();
         }
@@ -181,38 +175,6 @@ contract Registry is
 
         emit LogRegistration(info);
     }
-
-    /// @dev token state is informative, registry have no clue about used tokens
-    // component owner is responsible for token selection and operations
-    // service MUST deny registration of component with inactive token 
-    function setTokenActive(address token, VersionPart majorVersion, bool active)
-        external
-        onlyOwner
-    {
-        // verify that token is registered
-        ObjectInfo memory info = _info[_nftIdByAddress[token]];
-        if (info.nftId.eqz()) {
-            revert TokenNotRegistered(token);
-        }
-
-        // verify provided address is a registered token
-        if (info.objectType != TOKEN()) {
-            revert NotToken(token);
-        }
-
-        // verify valid major version
-        // ensure major version increments is one
-        uint256 version = majorVersion.toInt();
-        uint256 versionNow = _majorVersion.toInt();
-        if (version < GIF_MAJOR_VERSION_AT_DEPLOYMENT || version > versionNow) {
-            revert TokenMajorVersionInvalid(majorVersion);
-        }
-
-        _tokenIsActive[token][majorVersion] = active;
-
-        emit LogTokenStateSet(token, majorVersion, active);
-    }
-
     /// @dev earliest GIF major version 
     function getMajorVersionMin() external view returns (VersionPart) {
         return VersionLib.toVersionPart(GIF_MAJOR_VERSION_AT_DEPLOYMENT);
@@ -233,7 +195,6 @@ contract Registry is
     function getMajorVersion() external view returns (VersionPart) { 
         return _majorVersion;
     }
-    
 
     function getObjectCount() external view override returns (uint256) {
         return _chainNft.totalSupply();
@@ -252,7 +213,6 @@ contract Registry is
     }
 
     function ownerOf(address contractAddress) public view returns (address) {
-        
         return _chainNft.ownerOf(_nftIdByAddress[contractAddress].toInt());
     }
 
@@ -261,7 +221,6 @@ contract Registry is
     }
 
     function getObjectInfo(address object) external view override returns (ObjectInfo memory) {
-        
         return _info[_nftIdByAddress[object]];
     }
 
@@ -271,10 +230,6 @@ contract Registry is
 
     function isRegistered(address object) external view override returns (bool) {
         return _nftIdByAddress[object].gtz();
-    }
-
-    function isTokenActive(address token, VersionPart majorVersion) external view returns (bool) {
-        return _tokenIsActive[token][majorVersion];
     }
 
     function getServiceName(NftId nftId) external view returns (string memory) {
@@ -378,7 +333,7 @@ contract Registry is
     function _registerRegistry(address registryOwner) 
         internal
     {
-        uint256 registryId = _chainNft.calculateTokenId(2);
+        uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
         NftId registryNftId = toNftId(registryId);
 
         NftId parentNftId;

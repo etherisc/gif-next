@@ -38,20 +38,19 @@ contract Distribution is
     constructor(
         address registry,
         NftId instanceNftId,
-        NftId productNftId,
         // TODO refactor into tokenNftId
         address token,
         bool verifying,
         Fee memory distributionFee,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, productNftId, token, DISTRIBUTION(), true, initialOwner)
+        BaseComponent(registry, instanceNftId, token, DISTRIBUTION(), true, initialOwner)
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 
+        _distributionService = _instance.getDistributionService();
         // TODO: reactivate when services are available again
-        // _distributionService = _instance.getDistributionService();
         // _productService = _instance.getProductService();
 
         _registerInterface(type(IDistributionComponent).interfaceId);
@@ -123,19 +122,10 @@ contract Distribution is
     }
 
     function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
-        if (getNftId().eq(zeroNftId())) {
-            return ISetup.DistributionSetupInfo(
-                _productNftId,
-                TokenHandler(address(0)),
-                _initialDistributionFee,
-                _isVerifying,
-                address(0)
-            );
-        } 
-
         InstanceReader reader = _instance.getInstanceReader();
         return reader.getDistributionSetupInfo(getNftId());
     }
+    
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying) {
@@ -152,14 +142,18 @@ contract Distribution is
     {
         (
             IRegistry.ObjectInfo memory info, 
-            bytes memory data
         ) = super.getInitialInfo();
 
         return (
             info,
             abi.encode(
-                _initialDistributionFee,
-                _isVerifying
+                ISetup.DistributionSetupInfo(
+                    _productNftId,
+                    TokenHandler(address(_token)),
+                    _initialDistributionFee,
+                    _isVerifying,
+                    address(this)
+                )
             )
         );
     }

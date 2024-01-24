@@ -1,89 +1,102 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
+
 import {NftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType} from "../../contracts/types/ObjectType.sol";
+import {ERC165} from "../../contracts/shared/ERC165.sol";
+import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {Registerable} from "../../contracts/shared/Registerable.sol";
 
-contract RegisterableMock is Registerable {
+
+contract RegisterableMock is ERC165, IRegisterable {
+
+    IRegistry.ObjectInfo internal _info;
 
     constructor(
-        address registryAddress,
+        NftId nftId,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory data) 
-        public
+        bytes memory data)
     {
-        _initializeRegisterable(
-            registryAddress,
-            parentNftId,
-            objectType,
-            isInterceptor,
-            initialOwner,
-            data);        
-    }
-}
-
-contract SelfOwnedRegisterableMock is Registerable {
-
-    constructor(
-        address registryAddress,
-        NftId parentNftId,
-        ObjectType objectType,
-        bool isInterceptor,
-        bytes memory data) 
-        public
-    {
-        _initializeRegisterable(
-            registryAddress,
+        _info = IRegistry.ObjectInfo(
+            nftId,
             parentNftId,
             objectType,
             isInterceptor,
             address(this),
-            data);        
+            initialOwner,
+            data
+        );
+
+        _initializeERC165();
+        _registerInterface(type(IRegisterable).interfaceId);       
     }
+
+    // from IRegisterable
+    function getInitialInfo() 
+        public 
+        view 
+        virtual 
+        returns (IRegistry.ObjectInfo memory, bytes memory data) 
+    {
+        return (_info, bytes(""));
+    }
+
+    // from INftOwnable
+    function linkToRegisteredNftId() external { /*do nothing*/ }
+
+    // from INftOwnable, DO NOT USE
+    function getRegistry() external view returns (IRegistry) { revert(); }
+    function getNftId() external view returns (NftId) { revert(); }
+    function getOwner() external view returns (address) { revert(); }
 }
 
-contract RegisterableMockWithFakeAddress is Registerable {
-
-    address public _fakeAddress;
+contract SelfOwnedRegisterableMock is RegisterableMock {
 
     constructor(
-        address registryAddress,
+        NftId nftId,
+        NftId parentNftId,
+        ObjectType objectType,
+        bool isInterceptor,
+        bytes memory data)
+        RegisterableMock(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(this),
+            data)
+    {}
+}
+
+contract RegisterableMockWithRandomInvalidAddress is RegisterableMock {
+
+    constructor(
+        NftId nftId,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory data,
-        address fakeAddress)
-    {
-        _fakeAddress = fakeAddress;
-
-        _initializeRegisterable(
-            registryAddress,
+        bytes memory data)
+        RegisterableMock(
+            nftId,
             parentNftId,
             objectType,
             isInterceptor,
             initialOwner,
-            data);   
-    }
-
-    function getInitialInfo() 
-        public 
-        view 
-        virtual override
-        returns (IRegistry.ObjectInfo memory, bytes memory) 
+            data) 
     {
-        (
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
-        ) = super.getInitialInfo();
+        FoundryRandom rng = new FoundryRandom();
 
-        info.objectAddress = _fakeAddress;
+        address invalidAddress = address(uint160(rng.randomNumber(type(uint160).max)));
+        if(invalidAddress == address(this)) {
+            invalidAddress = address(uint160(invalidAddress) + 1);
+        }
 
-        return (info, data);
+        _info.objectAddress = invalidAddress;
     }
 }

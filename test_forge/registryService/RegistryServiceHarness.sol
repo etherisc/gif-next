@@ -12,7 +12,7 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 
 contract RegistryServiceHarness is RegistryService {
 
-    function getAndVerifyContractInfo(
+    function exposed_getAndVerifyContractInfo(
         IRegisterable registerable,
         ObjectType expectedType, 
         address expectedOwner)
@@ -32,7 +32,7 @@ contract RegistryServiceHarness is RegistryService {
             expectedOwner);
     }
 
-    function verifyObjectInfo(
+    function exposed_verifyObjectInfo(
         IRegistry.ObjectInfo memory info,
         ObjectType objectType
     )

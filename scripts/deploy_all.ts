@@ -6,16 +6,17 @@ import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
 import { logger } from "./logger";
 import { InstanceAddresses, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
-import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
+import { ServiceAddresses, authorizeServices, deployAndRegisterServices } from "./libs/services";
 
 
 async function main() {
-    const { protocolOwner, masterInstanceOwner, instanceServiceOwner, instanceOwner } = await getNamedAccounts();
+    const { protocolOwner, masterInstanceOwner, instanceOwner } = await getNamedAccounts();
 
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
-    const services = await deployAndRegisterServices(instanceServiceOwner, registry, libraries);
+    const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
+    await authorizeServices(protocolOwner, libraries, registry, services);
     
     // // deploy instance contracts
     const masterInstance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry, services);
@@ -48,7 +49,7 @@ async function main() {
     await printBalance(
         ["protocolOwner", protocolOwner],
         ["masterInstanceOwner", masterInstanceOwner] , 
-        ["instanceServiceOwner", instanceServiceOwner],
+        // ["instanceServiceOwner", instanceServiceOwner],
         ["instanceOwner", instanceOwner],
         // ["productOwner", productOwner], 
         // ["distributionOwner", distributionOwner], 
@@ -139,10 +140,17 @@ function printAddresses(
     addresses += `registryServiceManagerAddress: ${registry.registryServiceManagerAddress}\n`;
     addresses += `registryNftId: ${registry.registryNftId}\n`;
     addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
+    addresses += `tokenRegistryAddress: ${registry.tokenRegistryAddress}\n`;
     addresses += `--------\n`;
     addresses += `instanceServiceManagerAddress: ${services.instanceServiceManagerAddress}\n`;
     addresses += `instanceServiceAddress: ${services.instanceServiceAddress}\n`;
     addresses += `instanceServiceNftId: ${services.instanceServiceNftId}\n`;
+    addresses += `distributionServiceManagerAddress: ${services.distributionServiceManagerAddress}\n`;
+    addresses += `distributionServiceAddress: ${services.distributionServiceAddress}\n`;
+    addresses += `distributionServiceNftId: ${services.distributionServiceNftId}\n`;
+    addresses += `poolServiceManagerAddress: ${services.poolServiceManagerAddress}\n`;
+    addresses += `poolServiceAddress: ${services.poolServiceAddress}\n`;
+    addresses += `poolServiceNftId: ${services.poolServiceNftId}\n`;
     addresses += `--------\n`;
 
     // addresses += `componentOwnerServiceAddress: ${services.componentOwnerServiceAddress}\n`;

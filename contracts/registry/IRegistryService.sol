@@ -13,6 +13,7 @@ import {IBaseComponent} from "../components/IBaseComponent.sol";
 interface IRegistryService is IService {
 
      error NotRegistryOwner();
+     error NotRegistryOwner();
 
      error NotService();
      error NotInstance();
@@ -49,7 +50,5 @@ interface IRegistryService is IService {
      function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 
      function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
-
-     function getFunctionConfigs() external pure returns(functionConfig[] memory config);
 }
 

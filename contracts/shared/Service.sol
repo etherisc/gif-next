@@ -36,6 +36,7 @@ abstract contract Service is
         address initialOwner
     )
         internal
+        virtual
         //onlyInitializing //TODO uncomment when "fully" upgradeable
     {
         // service must provide its name and version upon registration

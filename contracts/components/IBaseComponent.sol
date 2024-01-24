@@ -19,6 +19,7 @@ interface IBaseComponent is IRegisterable {
 
     function getInstance() external view returns (IInstance instance);
 
+    function setProductNftId(NftId productNftId) external;
     function getProductNftId() external view returns (NftId productNftId);
 
 }

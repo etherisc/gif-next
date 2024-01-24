@@ -80,10 +80,7 @@ contract RegistryService is
 
         info.nftId = _registry.register(info);
         service.linkToRegisteredNftId();
-        return (
-            info,
-            data
-        );
+        return (info, data);
     }
 
     function registerInstance(IRegisterable instance)
@@ -105,10 +102,7 @@ contract RegistryService is
         info.nftId = _registry.register(info);
         instance.linkToRegisteredNftId(); // asume safe
         
-        return (
-            info,
-            data            
-        );
+        return (info, data);
     }
 
     function registerProduct(IBaseComponent product, address owner)
@@ -133,10 +127,7 @@ contract RegistryService is
         // TODO unsafe, let component or its owner derive nftId latter, when state assumptions and modifications of GIF contracts are finished  
         product.linkToRegisteredNftId();
 
-        return (
-            info,
-            data
-        );  
+        return (info, data);  
     }
 
     function registerPool(IBaseComponent pool, address owner)
@@ -159,10 +150,7 @@ contract RegistryService is
         info.nftId = _registry.register(info);
         pool.linkToRegisteredNftId();
 
-        return (
-            info,
-            data
-        );  
+        return (info, data);  
     }
 
     function registerDistribution(IBaseComponent distribution, address owner)
@@ -185,10 +173,7 @@ contract RegistryService is
         info.nftId = _registry.register(info); 
         distribution.linkToRegisteredNftId();
 
-        return (
-            info,
-            data
-        );  
+        return (info, data);  
     }
 
     function registerPolicy(IRegistry.ObjectInfo memory info)
@@ -354,7 +339,6 @@ contract RegistryService is
         );
     }
 
-    // parent checks done in registry because of approve()
     function _verifyObjectInfo(
         IRegistry.ObjectInfo memory info,
         ObjectType expectedType
@@ -362,11 +346,8 @@ contract RegistryService is
         internal
         view
     {
-        // enforce instead of check?
-        //info.objectAddress = address(0);
-        if(info.objectAddress > address(0)) {
-            revert UnexpectedRegisterableAddress(address(0), info.objectAddress);
-        }
+        // enforce instead of check
+        info.objectAddress = address(0);
 
         if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
             revert UnexpectedRegisterableType(expectedType, info.objectType);

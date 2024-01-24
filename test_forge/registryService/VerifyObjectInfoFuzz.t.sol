@@ -5,39 +5,15 @@ import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, toObjectType, ObjectTypeLib} from "../../contracts/types/ObjectType.sol";
 
+import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {RegistryServiceHarnessTestBase} from "./RegistryServiceHarnessTestBase.sol";
-
-import {RegisterableMock,
-        RegisterableMockWithRandomInvalidAddress} from "../mock/RegisterableMock.sol";
+import {RegisterableMock} from "../mock/RegisterableMock.sol";
 
 
-contract GetAndVerifyContractInfo_Fuzz_Test is RegistryServiceHarnessTestBase {
+contract VerifyObjectInfo_Fuzz_Test is RegistryServiceHarnessTestBase {
 
-    function testFuzz_withValidRegisterableAddress(
+    function testFuzz_withValidObjectAddress(
         ObjectType expectedType,
-        address expectedOwner,
-        NftId nftId, 
-        NftId parentNftId,
-        ObjectType objectType,
-        bool isInterceptor,
-        address initialOwner,
-        bytes memory data) public 
-    {
-        RegisterableMock registerable = new RegisterableMock(
-            nftId,
-            parentNftId,
-            objectType,
-            isInterceptor, 
-            initialOwner,
-            data
-        );
-
-        _assert_getAndVerifyContractInfo(registerable, expectedType, expectedOwner);
-    }
-
-    function testFuzz_withInvalidRegisterableAddress(
-        ObjectType expectedType,
-        address expectedOwner, 
         NftId nftId,
         NftId parentNftId,
         ObjectType objectType,
@@ -45,15 +21,39 @@ contract GetAndVerifyContractInfo_Fuzz_Test is RegistryServiceHarnessTestBase {
         address initialOwner,
         bytes memory data) public 
     {
-        RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
-            nftId,
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId, 
             parentNftId,
             objectType,
             isInterceptor, 
+            address(0), // objectAddress
             initialOwner,
             data
         );
 
-        _assert_getAndVerifyContractInfo(registerable, expectedType, expectedOwner);
+        _assert_verifyObjectInfo(info, expectedType);
+    }
+
+    function testFuzz_withAllRandomArguments(
+        ObjectType expectedType,
+        NftId nftId,
+        NftId parentNftId,
+        ObjectType objectType,
+        bool isInterceptor,
+        address objectAddress,
+        address initialOwner,
+        bytes memory data) public 
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId, 
+            parentNftId,
+            objectType,
+            isInterceptor, 
+            objectAddress,
+            initialOwner,
+            data
+        );
+
+        _assert_verifyObjectInfo(info, expectedType);
     }
 }

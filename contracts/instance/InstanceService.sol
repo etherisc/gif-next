@@ -15,7 +15,9 @@ import {Service} from "../../contracts/shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
+import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
+import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -37,13 +39,17 @@ contract InstanceService is Service, IInstanceService {
             InstanceReader clonedInstanceReader
         )
     {
+        address instanceOwner = msg.sender;
         Registry registry = Registry(_registryAddress);
         NftId registryNftId = registry.getNftId(_registryAddress);
         address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
 
+        // initially set the authority of the access managar to this (being the instance service). 
+        // This will allow the instance service to bootstrap the authorizations of the instance
+        // and then transfer the ownership of the access manager to the instance owner once everything is setup
         clonedAccessManager = AccessManagerSimple(Clones.clone(_accessManagerMaster));
-        clonedAccessManager.initialize(msg.sender);
+        clonedAccessManager.initialize(address(this));
 
         clonedInstance = Instance(Clones.clone(_instanceMaster));
         clonedInstance.initialize(address(clonedAccessManager), _registryAddress, registryNftId, msg.sender);
@@ -53,7 +59,41 @@ contract InstanceService is Service, IInstanceService {
         clonedInstanceReader = InstanceReader(Clones.clone(address(_instanceReaderMaster)));
         clonedInstanceReader.initialize(_registryAddress, instanceNftId);
 
+        _grantInitialAuthorizations(clonedAccessManager, clonedInstance);
+
+        clonedInstance.setInstanceReader(clonedInstanceReader);
+        
+        // to complete setup switch instance ownership to the instance owner
+        // TODO: use a role less powerful than admin, maybe INSTANCE_ADMIN (does not exist yet)
+        clonedAccessManager.grantRole(ADMIN_ROLE().toInt(), instanceOwner, 0);
+        clonedAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(this));
+
         emit LogInstanceCloned(address(clonedAccessManager), address(clonedInstance), address(clonedInstanceReader), instanceNftId);
+    }
+
+    function _grantInitialAuthorizations(AccessManagerSimple clonedAccessManager, Instance clonedInstance) internal {
+        address distributionServiceAddress = _registry.getServiceAddress("DistributionService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), distributionServiceAddress, 0);
+        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](2);
+        instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
+        instanceDistributionServiceSelectors[1] = clonedInstance.updateDistributionSetup.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            address(clonedInstance),
+            instanceDistributionServiceSelectors, 
+            DISTRIBUTION_SERVICE_ROLE().toInt());
+
+        address poolServiceAddress = _registry.getServiceAddress("PoolService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        clonedAccessManager.grantRole(POOL_SERVICE_ROLE().toInt(), address(poolServiceAddress), 0);
+        bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
+        instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
+        instancePoolServiceSelectors[1] = clonedInstance.updatePoolSetup.selector;
+        instancePoolServiceSelectors[2] = clonedInstance.createBundle.selector;
+        instancePoolServiceSelectors[3] = clonedInstance.updateBundle.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            address(clonedInstance),
+            instancePoolServiceSelectors, 
+            POOL_SERVICE_ROLE().toInt());
+
     }
 
     function setAccessManagerMaster(address accessManagerMaster) external {
@@ -120,19 +160,24 @@ contract InstanceService is Service, IInstanceService {
 
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
-
-        // // TODO register instance in registry  
-        IRegistry registry = IRegistry(_registryAddress);
-        NftId registryNftId = registry.getNftId(_registryAddress);
-
-        _initializeService(_registryAddress, initialOwner);
+        // TODO while InstanceService is not deployed in InstanceServiceManager constructor
+        //      owner is InstanceServiceManager deployer
+        _initializeService(_registryAddress, owner);
         
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IInstanceService).interfaceId);
     }
 
-    function getInstance() external view returns (Instance) {
-        return Instance(address(this));
+    function hasRole(address account, RoleId role, NftId instanceNftId) external view returns (bool) {
+        IRegistry.ObjectInfo memory instanceObjectInfo = getRegistry().getObjectInfo(instanceNftId);
+        address instanceAddress = instanceObjectInfo.objectAddress;
+        Instance instance = Instance(instanceAddress);
+        AccessManagerSimple accessManager = AccessManagerSimple(instance.authority());
+        (bool isMember, uint32 executionDelay) = accessManager.hasRole(role.toInt(), account);
+        if (executionDelay > 0) {
+            return false;
+        } 
+        return isMember;
     }
 }
 
