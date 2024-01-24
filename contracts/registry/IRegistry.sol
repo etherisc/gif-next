@@ -13,30 +13,19 @@ interface IRegistry is IERC165 {
     event LogInitialMajorVersionSet(VersionPart majorVersion);
     event LogMajorVersionSet(VersionPart majorVersionMax);
     event LogRegistration(ObjectInfo info);
-    event LogTokenStateSet(address token, VersionPart majorVersion, bool active);
     event LogServiceNameRegistration(string serviceName, VersionPart majorVersion); 
 
-    // supported versions
+    // setMajorVersion()
+    error NotOwner(address account);
     error MajorVersionMaxIncreaseInvalid(VersionPart newMajorVersionMax, VersionPart existingMaxMajorVersion);
 
-    // token whitelisting
-    error TokenNotRegistered(address token);
-    error NotToken(address token);
-    error TokenMajorVersionInvalid(VersionPart majorVersion);
-
-    // register
+    // register()
     error NotRegistryService();
     error ZeroParentAddress();
+    error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
     error ContractAlreadyRegistered(address objectAddress);
     error InvalidServiceVersion(VersionPart majorVersion);
     error ServiceNameAlreadyRegistered(string name, VersionPart majorVersion);
-            
-    // approve
-    error NotOwner(address account);
-    error NotRegisteredContract(NftId registrarNftId);
-    error NotService(NftId registrarNftId);
-    error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
-
 
     struct ObjectInfo {
         NftId nftId;
@@ -52,8 +41,6 @@ interface IRegistry is IERC165 {
     function setMajorVersion(VersionPart newMajorVersionMax) external;
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
-
-    function setTokenActive(address token, VersionPart majorVersion, bool active) external;
 
     function getMajorVersionMin() external view returns (VersionPart);
 
@@ -78,8 +65,6 @@ interface IRegistry is IERC165 {
     function isRegistered(NftId nftId) external view returns (bool);
 
     function isRegistered(address contractAddress) external view returns (bool);
-
-    function isTokenActive(address token, VersionPart majorVersion) external view returns (bool);
 
     function getServiceName(NftId nftId) external view returns (string memory name);
 

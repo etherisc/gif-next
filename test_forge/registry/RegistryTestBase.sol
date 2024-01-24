@@ -317,8 +317,8 @@ contract RegistryTestBase is Test, FoundryRandom {
         _errorName[IRegistry.InvalidServiceVersion.selector] = "InvalidServiceVersion";
         _errorName[IRegistry.ServiceNameAlreadyRegistered.selector] = "ServiceNameAlreadyRegistered";
         _errorName[IRegistry.NotOwner.selector] = "NotOwner";
-        _errorName[IRegistry.NotRegisteredContract.selector] = "NotRegisteredContract";
-        _errorName[IRegistry.NotService.selector] = "NotService"; 
+        //_errorName[IRegistry.NotRegisteredContract.selector] = "NotRegisteredContract";
+        //_errorName[IRegistry.NotService.selector] = "NotService"; 
         _errorName[IRegistry.InvalidTypesCombination.selector] = "InvalidTypesCombination"; 
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }
@@ -420,53 +420,6 @@ contract RegistryTestBase is Test, FoundryRandom {
     {
         return string.concat("TestService #", Strings.toString(_servicesCount));   
     }
-
-    // TODO test constructor arguments
-    /*function _deployNonUpgradeableRegistry() internal
-    {
-        // solhint-disable-next-line
-        console.log("Deploying non upgradeable registry");
-
-        // ORIGINAL VERSION
-        bytes memory bytecode = abi.encodePacked(
-            type(Registry).creationCode, 
-            abi.encode(
-                registryOwner, 
-                VersionLib.toVersionPart(GIF_VERSION) // majorVersion
-            )
-        );
-        
-        address registryAddress;
-        assembly {
-            registryAddress := create(0, add(bytecode, 0x20), mload(bytecode))  
-
-            if iszero(extcodesize(registryAddress)) {
-                revert(0, 0)
-            }
-        }
-        // NEW VERSION
-        // RegistryService implementation = new RegistryService();
-        // RegistryServiceManager registryServiceManager = new RegistryServiceManager(address(implementation));
-        // RegistryService registryService = registryServiceManager.deployRegistryService();
-        // address registryAddress = address(registryService.getRegistry());
-        // END OF NEW VERSION
-
-        assertNotEq(registryAddress, address(0), "registry address is 0");
-        // solhint-disable-next-line
-        console.log("registry address %s", registryAddress);
-
-        registry = IRegistry(registryAddress);
-
-        chainNftAddress = address(registry.getChainNft());
-        chainNft = ChainNft(chainNftAddress);
-        
-        assertNotEq(chainNftAddress, address(0), "chain nft address is 0");
-        // solhint-disable-next-line
-        console.log("chain nft address %s\n", chainNftAddress);
-
-        assertEq(protocolNftId.toInt(), chainNft.PROTOCOL_NFT_ID(), "PROTOCOL_NFT_ID() returned unexpected value");
-        assertEq(globalRegistryNftId.toInt(), chainNft.GLOBAL_REGISTRY_ID(), "GLOBAL_REGISTRY_ID() returned unexpected value" );
-    }*/
 
     function _checkNonUpgradeableRegistryGetters() internal
     {
