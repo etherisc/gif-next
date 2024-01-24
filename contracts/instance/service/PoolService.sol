@@ -51,8 +51,9 @@ contract PoolService is
     {
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
-
-        _initializeService(_registryAddress, initialOwner);
+        // TODO while PoolService is not deployed in PoolServiceManager constructor
+        //      owner is PoolServiceManager deployer
+        _initializeService(_registryAddress, owner);
 
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IPoolService).interfaceId);

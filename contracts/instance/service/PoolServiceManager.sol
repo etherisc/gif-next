@@ -29,13 +29,14 @@ contract PoolServiceManager is ProxyManager {
         Registry registry = Registry(registryAddress);
         address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
+        // TODO this must have a role or own nft to register service
+        //registryService.registerService(_poolService);
         
-        registryService.registerService(_poolService);
-        
+        // TODO no nft to link yet
         // link ownership of instance service manager ot nft owner of instance service
-        _linkToNftOwnable(
-            address(registryAddress),
-            address(_poolService));
+        //_linkToNftOwnable(
+        //    address(registryAddress),
+        //    address(_poolService));
 
         // implies that after this constructor call only upgrade functionality is available
         _isDeployed = true;

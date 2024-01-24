@@ -331,9 +331,14 @@ contract TestGifBase is Test {
     function _deployServices() internal 
     {
         // --- instance service ---------------------------------//
+        // TODO manager can not use registryService.registerService() in constructor
+        // because it have no role / have no nft
         instanceServiceManager = new InstanceServiceManager(address(registry));
         instanceService = instanceServiceManager.getInstanceService();
+        // temporal solution, register in separate tx
+        registryService.registerService(instanceService);
         instanceServiceNftId = registry.getNftId(address(instanceService));
+
 
         // solhint-disable 
         console.log("instanceService name", instanceService.getName());
@@ -344,6 +349,7 @@ contract TestGifBase is Test {
         // --- distribution service ---------------------------------//
         distributionServiceManager = new DistributionServiceManager(address(registry));
         distributionService = distributionServiceManager.getDistributionService();
+        registryService.registerService(distributionService);
         distributionServiceNftId = registry.getNftId(address(distributionService));
 
         // solhint-disable 
@@ -355,6 +361,7 @@ contract TestGifBase is Test {
         // --- pool service ---------------------------------//
         poolServiceManager = new PoolServiceManager(address(registry));
         poolService = poolServiceManager.getPoolService();
+        registryService.registerService(poolService);
         poolServiceNftId = registry.getNftId(address(poolService));
 
         // solhint-disable

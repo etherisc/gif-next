@@ -9,10 +9,11 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, toObjectType} from "../../contracts/types/ObjectType.sol";
 
+import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
-import {RegisterableMock} from "../mock/RegisterableMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
 
@@ -58,7 +59,7 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
     }
 
     function _assert_getAndVerifyContractInfo(
-        RegisterableMock registerable, 
+        IRegisterable registerable, 
         ObjectType expectedType, 
         address expectedOwner)
         internal
@@ -72,28 +73,28 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
 
         if(info.objectType != expectedType) {
             vm.expectRevert(abi.encodeWithSelector(
-                RegistryService.UnexpectedRegisterableType.selector,
+                IRegistryService.UnexpectedRegisterableType.selector,
                 expectedType,
                 info.objectType));
             expectRevert = true;
         } else if(info.initialOwner != expectedOwner) { 
             vm.expectRevert(abi.encodeWithSelector(
-                RegistryService.NotRegisterableOwner.selector,
+                IRegistryService.NotRegisterableOwner.selector,
                 expectedOwner));
             expectRevert = true;
         } else if(info.initialOwner == address(registerable)) {
-            vm.expectRevert(abi.encodeWithSelector(RegistryService.SelfRegistration.selector));
+            vm.expectRevert(abi.encodeWithSelector(IRegistryService.SelfRegistration.selector));
             expectRevert = true;
         } else if(info.initialOwner == address(0)) {
-            vm.expectRevert(abi.encodeWithSelector(RegistryService.RegisterableOwnerIsZero.selector));
+            vm.expectRevert(abi.encodeWithSelector(IRegistryService.RegisterableOwnerIsZero.selector));
             expectRevert = true;
         }else if(registry.isRegistered(info.initialOwner)) { 
-            vm.expectRevert(abi.encodeWithSelector(RegistryService.RegisterableOwnerIsRegistered.selector));
+            vm.expectRevert(abi.encodeWithSelector(IRegistryService.RegisterableOwnerIsRegistered.selector));
             expectRevert = true;
         }
 
         if(expectRevert) {
-            registryServiceHarness.getAndVerifyContractInfo(
+            registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
                 expectedType,
                 expectedOwner);
@@ -101,7 +102,7 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
             ( 
                 IRegistry.ObjectInfo memory infoFromRegistryService,
                 bytes memory dataFromRegistryService
-            ) = registryServiceHarness.getAndVerifyContractInfo(
+            ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
                 expectedType,
                 expectedOwner);  
@@ -111,5 +112,34 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
             assertEq(data, dataFromRegistryService, 
                 "Data read from registerable is different from data returned by registry service");
         }
+    }
+
+    function _assert_verifyObjectInfo(
+        IRegistry.ObjectInfo memory info, 
+        ObjectType expectedType)
+        internal
+    {
+        //if(info.objectAddress > address(0)) {
+        //    vm.expectRevert(abi.encodeWithSelector(
+        //        IRegistryService.UnexpectedRegisterableAddress.selector,
+        //        address(0), 
+        //        info.objectAddress));
+        //} else 
+        if(info.objectType != expectedType) {
+            vm.expectRevert(abi.encodeWithSelector(
+                IRegistryService.UnexpectedRegisterableType.selector,
+                expectedType,
+                info.objectType));
+        } else if(info.initialOwner == address(0)) {
+            vm.expectRevert(abi.encodeWithSelector(
+                IRegistryService.RegisterableOwnerIsZero.selector));
+        } else if(registry.isRegistered(info.initialOwner)) { 
+            vm.expectRevert(abi.encodeWithSelector(
+                IRegistryService.RegisterableOwnerIsRegistered.selector));
+        }
+
+        registryServiceHarness.exposed_verifyObjectInfo(
+            info, 
+            expectedType);
     }
 }

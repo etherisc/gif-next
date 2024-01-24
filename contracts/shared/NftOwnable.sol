@@ -13,10 +13,7 @@ contract NftOwnable is INftOwnable {
 
     /// @dev enforces msg.sender is owner of nft (or initial owner of nft ownable)
     modifier onlyOwner() {
-        address owner = getOwner();
-
-        // owner == address(0) is eg uninitialized upgradable contract
-        if (owner != address(0) && msg.sender != owner) {
+        if (msg.sender != getOwner()) {
             revert ErrorNotOwner(msg.sender);
         }
         _;
@@ -77,6 +74,7 @@ contract NftOwnable is INftOwnable {
         internal
         virtual
     {
+        require(initialOwner > address(0), "NftOwnable: initial owner is 0");
         _initialOwner = initialOwner;
         _setRegistry(registryAddress);
     }

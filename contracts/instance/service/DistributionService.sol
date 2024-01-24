@@ -49,8 +49,9 @@ contract DistributionService is
     {
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
-
-        _initializeService(_registryAddress, initialOwner);
+        // TODO while DistributionService is not deployed in DistributionServiceManager constructor
+        //      owner is DistributionServiceManager deployer
+        _initializeService(_registryAddress, owner);
 
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IDistributionService).interfaceId);

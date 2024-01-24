@@ -8,8 +8,6 @@ import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-// import {IComponent, IComponentModule} from "../../contracts/instance/module/component/IComponent.sol";
-// import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
 import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
 import {IPoolComponent} from "../../contracts/components/IPoolComponent.sol";
 import {IProductComponent} from "../../contracts/components/IProductComponent.sol";
@@ -20,7 +18,7 @@ import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
@@ -30,7 +28,6 @@ import {Service} from "../shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {Registry} from "./Registry.sol";
-import {ChainNft} from "./ChainNft.sol";
 
 contract RegistryService is
     AccessManagedUpgradeable,
@@ -39,22 +36,6 @@ contract RegistryService is
 {
     using NftIdLib for NftId;
 
-    // TODO move errors to interface contract
-    error SelfRegistration();
-    error NotRegistryOwner();
-
-    error NotService();
-    error NotInstance();
-    error NotProduct();
-    error NotPool();
-    error NotDistribution();
-
-    error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
-    error NotRegisterableOwner(address expectedOwner);
-    error RegisterableOwnerIsZero();   
-    error RegisterableOwnerIsRegistered();
-    error InvalidInitialOwner(address initialOwner);
-    error InvalidAddress(address registerableAddress);
 
     // Initial value for constant variable has to be compile-time constant
     // TODO define types as constants?
@@ -74,9 +55,7 @@ contract RegistryService is
     // IMPORTANT: MUST NOT check owner before calling external contract
     function registerService(IService service)
         external
-        // TODO restrict access - registryService.registerService must use accessmanager for checking permissions as 
-        // services are not always owned by registry owner - actually only registry service is owned by registry owner
-
+        restricted
         returns(
             IRegistry.ObjectInfo memory info,
             bytes memory data
@@ -95,17 +74,9 @@ contract RegistryService is
 
         info.nftId = _registry.register(info);
         service.linkToRegisteredNftId();
-        return (
-            info,
-            data
-        );
+        return (info, data);
     }
 
-    // If msg.sender is approved service: 
-    // 1) add owner arg (service MUST pass it's msg.sender as owner)
-    // 2) check service allowance 
-    // 3) comment self registrstion check
-    //function registerInstance(IRegisterable instance, address owner)
     function registerInstance(IRegisterable instance)
         external
         returns(
@@ -125,10 +96,7 @@ contract RegistryService is
         info.nftId = _registry.register(info);
         instance.linkToRegisteredNftId(); // asume safe
         
-        return (
-            info,
-            data            
-        );
+        return (info, data);
     }
 
     function registerProduct(IBaseComponent product, address owner)
@@ -149,16 +117,11 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
 
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
         info.nftId = _registry.register(info);
         // TODO unsafe, let component or its owner derive nftId latter, when state assumptions and modifications of GIF contracts are finished  
         product.linkToRegisteredNftId();
 
-        return (
-            info,
-            data
-        );  
+        return (info, data);  
     }
 
     function registerPool(IBaseComponent pool, address owner)
@@ -178,15 +141,10 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(pool, POOL(), owner);
 
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
         info.nftId = _registry.register(info);
         pool.linkToRegisteredNftId();
 
-        return (
-            info,
-            data
-        );  
+        return (info, data);  
     }
 
     function registerDistribution(IBaseComponent distribution, address owner)
@@ -206,15 +164,10 @@ contract RegistryService is
             data
         ) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
 
-        NftId serviceNftId = _registry.getNftId(msg.sender);
-
         info.nftId = _registry.register(info); 
         distribution.linkToRegisteredNftId();
 
-        return (
-            info,
-            data
-        );  
+        return (info, data);  
     }
 
     function registerPolicy(IRegistry.ObjectInfo memory info)
@@ -222,8 +175,6 @@ contract RegistryService is
         restricted 
         returns(NftId nftId) 
     {
-        NftId senderNftId = _registry.getNftId(msg.sender);
-
         _verifyObjectInfo(info, POLICY());
 
         nftId = _registry.register(info);
@@ -234,14 +185,20 @@ contract RegistryService is
         restricted 
         returns(NftId nftId) 
     {
-
-        NftId senderNftId = _registry.getNftId(msg.sender);
-
         _verifyObjectInfo(info, BUNDLE());
 
         nftId = _registry.register(info);
     }
 
+    function registerStake(IRegistry.ObjectInfo memory info)
+        external
+        restricted 
+        returns(NftId nftId) 
+    {
+        _verifyObjectInfo(info, STAKE());
+
+        nftId = _registry.register(info);
+    }
 
     // From IService
     function getName() public pure override(IService, Service) returns(string memory) {
@@ -296,7 +253,6 @@ contract RegistryService is
         _registerInterface(type(IRegistryService).interfaceId);
     }
 
-    // parent check done in registry because of approve()
     function _getAndVerifyContractInfo(
         IRegisterable registerable,
         ObjectType expectedType, // assume can be valid only
@@ -355,25 +311,28 @@ contract RegistryService is
         );
     }
 
-    // parent checks done in registry because of approve()
     function _verifyObjectInfo(
         IRegistry.ObjectInfo memory info,
-        ObjectType objectType
+        ObjectType expectedType
     )
         internal
         view
     {
-        if(info.objectAddress > address(0)) {
-            revert InvalidAddress(info.objectAddress);
+        // enforce instead of check
+        info.objectAddress = address(0);
+
+        if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
+            revert UnexpectedRegisterableType(expectedType, info.objectType);
         }
 
-        if(
-            getRegistry().isRegistered(info.initialOwner) ||
-            info.initialOwner == address(0)) {
-            // TODO non registered address can register object(e.g. POLICY()) and then transfer associated nft to registered contract
-            // what are motivations to do so?
-            // at least registered contract can not register objects by itself, SERVICE, 
-            revert InvalidInitialOwner(info.initialOwner); 
+        address owner = info.initialOwner;
+
+        if(owner == address(0)) {
+            revert RegisterableOwnerIsZero();
+        }
+
+        if(getRegistry().isRegistered(owner)) { 
+            revert RegisterableOwnerIsRegistered();
         }
 
         // can catch all 3 if check that initialOwner is not registered
