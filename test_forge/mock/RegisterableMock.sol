@@ -5,61 +5,90 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {NftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType} from "../../contracts/types/ObjectType.sol";
+import {ERC165} from "../../contracts/shared/ERC165.sol";
+import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {Registerable} from "../../contracts/shared/Registerable.sol";
 
-contract RegisterableMock is Registerable {
 
-    constructor(
-        address registryAddress,
-        NftId parentNftId,
-        ObjectType objectType,
-        bool isInterceptor,
-        address initialOwner,
-        bytes memory data) 
-        public
-    {
-        _initializeRegisterable(
-            registryAddress,
-            parentNftId,
-            objectType,
-            isInterceptor,
-            initialOwner,
-            data);        
-    }
-}
+contract RegisterableMock is ERC165, IRegisterable {
 
-contract SelfOwnedRegisterableMock is Registerable {
+    IRegistry.ObjectInfo internal _info;
 
     constructor(
-        address registryAddress,
-        NftId parentNftId,
-        ObjectType objectType,
-        bool isInterceptor,
-        bytes memory data) 
-        public
-    {
-        _initializeRegisterable(
-            registryAddress,
-            parentNftId,
-            objectType,
-            isInterceptor,
-            address(this),
-            data);        
-    }
-}
-
-contract RegisterableMockWithRandomInvalidAddress is Registerable {
-
-    address public _invalidAddress;
-
-    constructor(
-        address registryAddress,
+        NftId nftId,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
         address initialOwner,
         bytes memory data)
+    {
+        _info = IRegistry.ObjectInfo(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(this),
+            initialOwner,
+            data
+        );
+
+        _initializeERC165();
+        _registerInterface(type(IRegisterable).interfaceId);       
+    }
+
+    // from IRegisterable
+    function getInitialInfo() 
+        public 
+        view 
+        virtual 
+        returns (IRegistry.ObjectInfo memory, bytes memory data) 
+    {
+        return (_info, bytes(""));
+    }
+
+    // from INftOwnable
+    function linkToRegisteredNftId() external { /*do nothing*/ }
+
+    // from INftOwnable, DO NOT USE
+    function getRegistry() external view returns (IRegistry) { revert(); }
+    function getNftId() external view returns (NftId) { revert(); }
+    function getOwner() external view returns (address) { revert(); }
+}
+
+contract SelfOwnedRegisterableMock is RegisterableMock {
+
+    constructor(
+        NftId nftId,
+        NftId parentNftId,
+        ObjectType objectType,
+        bool isInterceptor,
+        bytes memory data)
+        RegisterableMock(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            address(this),
+            data)
+    {}
+}
+
+contract RegisterableMockWithRandomInvalidAddress is RegisterableMock {
+
+    constructor(
+        NftId nftId,
+        NftId parentNftId,
+        ObjectType objectType,
+        bool isInterceptor,
+        address initialOwner,
+        bytes memory data)
+        RegisterableMock(
+            nftId,
+            parentNftId,
+            objectType,
+            isInterceptor,
+            initialOwner,
+            data) 
     {
         FoundryRandom rng = new FoundryRandom();
 
@@ -68,30 +97,6 @@ contract RegisterableMockWithRandomInvalidAddress is Registerable {
             invalidAddress = address(uint160(invalidAddress) + 1);
         }
 
-        _invalidAddress = invalidAddress;
-
-        _initializeRegisterable(
-            registryAddress,
-            parentNftId,
-            objectType,
-            isInterceptor,
-            initialOwner,
-            data);   
-    }
-
-    function getInitialInfo() 
-        public 
-        view 
-        virtual override
-        returns (IRegistry.ObjectInfo memory, bytes memory) 
-    {
-        (
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
-        ) = super.getInitialInfo();
-
-        info.objectAddress = _invalidAddress;
-
-        return (info, data);
+        _info.objectAddress = invalidAddress;
     }
 }

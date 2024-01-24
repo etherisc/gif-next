@@ -15,7 +15,8 @@ contract GetAndVerifyContractInfo_Fuzz_Test is RegistryServiceHarnessTestBase {
 
     function testFuzz_withValidRegisterableAddress(
         ObjectType expectedType,
-        address expectedOwner, 
+        address expectedOwner,
+        NftId nftId, 
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
@@ -23,7 +24,7 @@ contract GetAndVerifyContractInfo_Fuzz_Test is RegistryServiceHarnessTestBase {
         bytes memory data) public 
     {
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            nftId,
             parentNftId,
             objectType,
             isInterceptor, 
@@ -37,6 +38,7 @@ contract GetAndVerifyContractInfo_Fuzz_Test is RegistryServiceHarnessTestBase {
     function testFuzz_withInvalidRegisterableAddress(
         ObjectType expectedType,
         address expectedOwner, 
+        NftId nftId,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
@@ -44,7 +46,7 @@ contract GetAndVerifyContractInfo_Fuzz_Test is RegistryServiceHarnessTestBase {
         bytes memory data) public 
     {
         RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
-            address(registry),
+            nftId,
             parentNftId,
             objectType,
             isInterceptor, 

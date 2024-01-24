@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
+
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../contracts/types/ObjectType.sol";
@@ -22,7 +24,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
         
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -59,7 +61,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         }
 
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -88,7 +90,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         }
 
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -117,7 +119,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         } 
 
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -141,7 +143,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -175,7 +177,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -198,7 +200,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -221,7 +223,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -244,7 +246,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -266,7 +268,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
         
         RegisterableMock registerable = new RegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
@@ -288,7 +290,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
         
         SelfOwnedRegisterableMock selfOwnedRegisterable = new SelfOwnedRegisterableMock(
-            address(registry),
+            toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor

@@ -105,24 +105,13 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         _deployAndRegisterServices();
 
         registerableOwnedByRegistryOwner = new RegisterableMock(
-            address(registry), 
+            zeroNftId(), 
             registryNftId, 
             toObjectType(randomNumber(type(uint8).max)),
             toBool(randomNumber(1)),
             registryOwner, 
             ""
         );
-
-        // test admin role transfer - works
-        accessManager.grantRole(accessManager.ADMIN_ROLE(), outsider, 0);
-        accessManager.renounceRole(accessManager.ADMIN_ROLE(), registryOwner);
-
-        vm.stopPrank();
-
-        vm.startPrank(outsider);
-
-        accessManager.grantRole(accessManager.ADMIN_ROLE(), registryOwner, 0);
-        accessManager.renounceRole(accessManager.ADMIN_ROLE(), outsider);
 
         vm.stopPrank();
     }
@@ -236,7 +225,8 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
             bytes memory dataFromRegisterable
         ) = IRegisterable(registeredContract).getInitialInfo();
 
-        infoFromRegisterable.objectAddress = registeredContract;
+        infoFromRegisterable.nftId = infoFromRegistry.nftId; // initial value is random
+        infoFromRegisterable.objectAddress = registeredContract;// registry enforces objectAddress 
 
         assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegistryService), 
             "Info from registry is different from info in registry service");
