@@ -17,6 +17,8 @@ import {UFixedLib} from "../contracts/types/UFixed.sol";
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
 import {ReferralLib} from "../contracts/types/Referral.sol";
+import {APPLIED} from "../contracts/types/StateId.sol";
+import {POLICY} from "../contracts/types/ObjectType.sol";
 
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
@@ -134,6 +136,9 @@ contract TestProduct is TestGifBase {
         );
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         // assertEq(policyInfo.owner, customer, "customer not set");

@@ -275,6 +275,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         );
         
         instance.createPolicy(policyNftId, policyInfo);
+        instance.updatePolicyState(policyNftId, APPLIED());
 
         // TODO add logging
     }
