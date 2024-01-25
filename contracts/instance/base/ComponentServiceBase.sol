@@ -9,6 +9,7 @@ import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../types/RoleId.sol";
 
 import {BaseComponent} from "../../components/BaseComponent.sol";
+import {Product} from "../../components/Product.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 import {Service} from "../../shared/Service.sol";
 import {InstanceService} from "../InstanceService.sol";
@@ -80,8 +81,10 @@ abstract contract ComponentServiceBase is Service {
         }
 
         componentNftId = objInfo.nftId;
-        IInstance instance = _getInstance(objInfo);
-        _finalizeComponentRegistration(componentNftId, initialObjData, instance);
+        {
+            IInstance instance = _getInstance(objInfo);
+            _finalizeComponentRegistration(componentNftId, initialObjData, instance);
+        }
     }
 
     function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal virtual;

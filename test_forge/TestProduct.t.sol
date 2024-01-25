@@ -15,6 +15,7 @@ import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib} from "../contracts/types/RiskId.sol";
+import {ReferralLib} from "../contracts/types/Referral.sol";
 
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
@@ -45,6 +46,52 @@ contract TestProduct is TestGifBase {
 
         vm.stopPrank();
     }
+
+    function test_Product_calculatePremium() public {
+        _prepareProduct();  
+
+        vm.startPrank(distributionOwner);
+        Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        distribution.setFees(distributionFee);
+        vm.stopPrank();
+
+
+        vm.startPrank(poolOwner);
+        Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
+
+        Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        NftId bundleNftId = pool.createBundle(
+            bundleFee, 
+            10000, 
+            604800, 
+            ""
+        );
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zeroFee());
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        DummyProduct dproduct = DummyProduct(address(product));
+        dproduct.createRisk(riskId, data);
+
+        uint256 premium = product.calculatePremium(
+            1000,
+            riskId,
+            30,
+            "",
+            ReferralLib.zero(),
+            bundleNftId
+        );
+        assertEq(premium, 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
+
+        vm.stopPrank();
+    }
+
 
     function test_Product_createRisk() public {
         _prepareProduct();
@@ -107,6 +154,8 @@ contract TestProduct is TestGifBase {
         );
 
         productNftId = productService.register(address(product));
+        // TODO: this could probably be done within register and also set on pool and distribution on one shot
+        product.setProductNftId(productNftId);
         vm.stopPrank();
     }
 
