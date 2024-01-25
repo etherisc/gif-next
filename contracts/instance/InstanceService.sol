@@ -17,7 +17,7 @@ import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
-import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -94,6 +94,15 @@ contract InstanceService is Service, IInstanceService {
             instancePoolServiceSelectors, 
             POOL_SERVICE_ROLE().toInt());
 
+        address productServiceAddress = _registry.getServiceAddress("ProductService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE().toInt(), address(productServiceAddress), 0);
+        bytes4[] memory instanceProductServiceSelectors = new bytes4[](2);
+        instanceProductServiceSelectors[0] = clonedInstance.createProductSetup.selector;
+        instanceProductServiceSelectors[1] = clonedInstance.updateProductSetup.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            address(clonedInstance),
+            instanceProductServiceSelectors, 
+            PRODUCT_SERVICE_ROLE().toInt());
     }
 
     function setAccessManagerMaster(address accessManagerMaster) external {

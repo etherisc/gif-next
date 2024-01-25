@@ -52,8 +52,7 @@ contract Product is BaseComponent, IProductComponent {
         address initialOwner
     ) BaseComponent(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
-        // TODO: reactivate when services are available again
-        // _productService = _instance.getProductService();
+        _productService = _instance.getProductService();
         _pool = Pool(pool);
         _distribution = Distribution(distribution);
         _initialProductFee = productFee;
@@ -236,7 +235,7 @@ contract Product is BaseComponent, IProductComponent {
             IRegistry.ObjectInfo memory productInfo, 
             bytes memory data
         ) = super.getInitialInfo();
- 
+        
         // TODO read pool & distribution fees
         // 1) from pool -> the only option -> pool must be registered first?
         // 2) from instance -> all fees are set into instance at product registration which is ongoing here
@@ -249,7 +248,7 @@ contract Product is BaseComponent, IProductComponent {
             , 
             bytes memory poolData
         ) = _pool.getInitialInfo();
-
+        
         (
             ISetup.PoolSetupInfo memory poolSetupInfo
         )  = abi.decode(poolData, (ISetup.PoolSetupInfo));
