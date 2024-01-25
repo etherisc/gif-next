@@ -18,10 +18,8 @@ interface IInstance is IERC165 {
 
     function getComponentOwnerService() external view returns (IComponentOwnerService);
     function getDistributionService() external view returns (IDistributionService);
-    // function getProductService() external view returns (IProductService);
+    function getProductService() external view returns (IProductService);
     function getPoolService() external view returns (IPoolService);
-
-    function createProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup) external;
 
     function createDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup) external;
     function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external;
@@ -34,6 +32,10 @@ interface IInstance is IERC165 {
     function createBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle) external;
     function updateBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle, StateId newState) external;
     function updateBundleState(NftId bundleNftId, StateId newState) external;
+
+    function createProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup) external;
+    function updateProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup, StateId newState) external;
+    function updateProductSetupState(NftId productNftId, StateId newState) external;
 
     function getInstanceReader() external view returns (InstanceReader);
 }

@@ -50,8 +50,7 @@ contract Distribution is
         _initialDistributionFee = distributionFee;
 
         _distributionService = _instance.getDistributionService();
-        // TODO: reactivate when services are available again
-        // _productService = _instance.getProductService();
+        _productService = _instance.getProductService();
 
         _registerInterface(type(IDistributionComponent).interfaceId);
     }
