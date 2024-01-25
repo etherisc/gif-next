@@ -194,19 +194,31 @@ contract ProductService is ComponentServiceBase, IProductService {
             uint256 distributionFeeAmount
         )
     {
-        IInstance instance = product.getInstance();
-        // FIXME: this
-        // ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(product.getNftId());
-        // IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
-        // require(bundleInfo.poolNftId == treasuryInfo.poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
+        InstanceReader instanceReader;
+        {
+            IInstance instance = product.getInstance();
+            instanceReader = instance.getInstanceReader();
+        }
+        
+        NftId poolNftId = product.getPoolNftId();
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        require(bundleInfo.poolNftId == poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
 
-        // (productFeeAmount,) = FeeLib.calculateFee(treasuryInfo.productFee, netPremiumAmount);
-        // (poolFeeAmount,) = FeeLib.calculateFee(treasuryInfo.poolFee, netPremiumAmount);
-        // (bundleFeeAmount,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
-
-        // IRegistry.ObjectInfo memory distributionInfo = getRegistry().getObjectInfo(treasuryInfo.distributionNftId);
-        // IDistributionComponent distribution = IDistributionComponent(distributionInfo.objectAddress);
-        // distributionFeeAmount = distribution.calculateFeeAmount(referralId, netPremiumAmount);
+        {
+            ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(product.getProductNftId());
+            (productFeeAmount,) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
+        }
+        {
+            ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+            (poolFeeAmount,) = FeeLib.calculateFee(poolSetupInfo.poolFee, netPremiumAmount);
+        }
+        {
+            NftId distributionNftId = product.getDistributionNftId();
+            ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
+            (distributionFeeAmount,) = FeeLib.calculateFee(distributionSetupInfo.distributionFee, netPremiumAmount);
+        }
+        
+        (bundleFeeAmount,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
     }
 
 
