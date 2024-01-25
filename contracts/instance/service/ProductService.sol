@@ -97,7 +97,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         instance.updateProductSetup(productNftId, productSetupInfo, KEEP_STATE());
     }
 
-    // FIXME this
+    // FIXME: this
     function createRisk(
         RiskId riskId,
         bytes memory data
@@ -111,7 +111,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     //     );
     }
 
-    // FIXME this
+    // FIXME: this
     function setRiskInfo(
         RiskId riskId,
         IRisk.RiskInfo memory info
@@ -123,7 +123,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     //     );
     }
 
-    // FIXME this
+    // FIXME: this
     function updateRiskState(
         RiskId riskId,
         StateId state
@@ -201,7 +201,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         )
     {
         IInstance instance = product.getInstance();
-        // FIXME this
+        // FIXME: this
         // ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(product.getNftId());
         // IBundle.BundleInfo memory bundleInfo = instance.getBundleInfo(bundleNftId);
         // require(bundleInfo.poolNftId == treasuryInfo.poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
@@ -277,7 +277,7 @@ contract ProductService is ComponentServiceBase, IProductService {
             uint256 collateralAmount
         )
     {
-        // FIXME this
+        // FIXME: this
         // check match between policy and bundle (via pool)
         // treasuryInfo = instance.getTreasuryInfo(policyInfo.productNftId);
         // bundleNftId = policyInfo.bundleNftId;
@@ -303,7 +303,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         returns (IBundle.BundleInfo memory)
     {
         bundleInfo.lockedAmount += collateralAmount;
-        // FIXME this
+        // FIXME: this
         // instance.collateralizePolicy(bundleNftId, policyNftId, collateralAmount);
         return bundleInfo;
     }
@@ -353,7 +353,7 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         // check match between policy and calling product
         NftId productNftId = productInfo.nftId;
-        // FIXME this
+        // FIXME: this
         // IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
         // require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
         // require(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
@@ -438,7 +438,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
 
         // perform actual token transfers
-        // FIXME this
+        // FIXME: this
         // IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
         // ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(productInfo.nftId);
 
@@ -465,7 +465,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         // TODO add logging
     }
 
-    // FIXME this
+    // FIXME: this
     function activate(NftId policyNftId, Timestamp activateAt) external override {
         // check caller is registered product
         (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
@@ -500,7 +500,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         view
         returns (NftId poolNftid)
     {
-        // FIXME this
+        // FIXME: this
         // return instance.getTreasuryInfo(productNftId).poolNftId;
     }
 
@@ -517,7 +517,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
-            // FIXME this
+            // FIXME: this
             // TokenHandler tokenHandler = instance.getTokenHandler(productNftId);
             // address policyOwner = getRegistry().ownerOf(policyNftId);
             // address poolWallet = instance.getComponentWallet(treasuryInfo.poolNftId);
