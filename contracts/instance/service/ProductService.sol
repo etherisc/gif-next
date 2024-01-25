@@ -97,7 +97,6 @@ contract ProductService is ComponentServiceBase, IProductService {
         instance.updateProductSetup(productNftId, productSetupInfo, KEEP_STATE());
     }
 
-    // FIXME: this
     function createRisk(
         RiskId riskId,
         bytes memory data
