@@ -1,6 +1,6 @@
 
 import { AddressLike, Signer, hexlify, resolveAddress } from "ethers";
-import { AccessManager__factory, DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, IRegistryService__factory } from "../../typechain-types";
+import { AccessManager__factory, DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, IRegistryService__factory, ProductService, ProductServiceManager, ProductService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -13,8 +13,6 @@ export type ServiceAddresses = {
     instanceServiceAddress: AddressLike,
     instanceService: InstanceService,
     instanceServiceManagerAddress: AddressLike,
-    // componentOwnerServiceAddress: AddressLike,
-    // componentOwnerServiceNftId: string,
     distributionServiceAddress: AddressLike,
     distributionServiceNftId: string,
     distributionService: InstanceService,
@@ -23,12 +21,14 @@ export type ServiceAddresses = {
     poolServiceNftId: string,
     poolService: PoolService,
     poolServiceManagerAddress: AddressLike,
-    // productServiceAddress: AddressLike,
-    // productServiceNftId: string,
+    productServiceAddress: AddressLike,
+    productServiceNftId: string,
+    productService: ProductService,
+    productServiceManagerAddress: AddressLike,
 }
 
 export async function deployAndRegisterServices(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses): Promise<ServiceAddresses> {
-    const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, deploymentReceipt: ismDplRcpt } = await deployContract(
+    const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, } = await deployContract(
         "InstanceServiceManager",
         owner,
         [registry.registryAddress],
@@ -51,7 +51,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
 
 
-    const { address: distributionServiceManagerAddress, contract: distributionServiceManagerBaseContract, deploymentReceipt: dsmDplRcpt } = await deployContract(
+    const { address: distributionServiceManagerAddress, contract: distributionServiceManagerBaseContract, } = await deployContract(
         "DistributionServiceManager",
         owner,
         [registry.registryAddress],
@@ -72,7 +72,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const distributionServiceNftId = (logRegistrationInfoDs as unknown[])[0];
     logger.info(`distributionServiceManager deployed - distributionServiceAddress: ${distributionServiceAddress} distributionServiceManagerAddress: ${distributionServiceManagerAddress} nftId: ${distributionServiceNftId}`);
 
-    const { address: poolServiceManagerAddress, contract: poolServiceManagerBaseContract, deploymentReceipt: psmDplRcpt } = await deployContract(
+    const { address: poolServiceManagerAddress, contract: poolServiceManagerBaseContract, } = await deployContract(
         "PoolServiceManager",
         owner,
         [registry.registryAddress],
@@ -93,32 +93,29 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const poolServiceNftId = (logRegistrationInfoPs as unknown[])[0];
     logger.info(`poolServiceManager deployed - poolServiceAddress: ${poolServiceAddress} poolServiceManagerAddress: ${poolServiceManagerAddress} nftId: ${poolServiceNftId}`);
 
-    // const { address: productServiceAddress, contract: productServiceBaseContract } = await deployContract(
-    //     "ProductService",
-    //     owner,
-    //     [registry.registryAddress, registry.registryNftId],
-    //     { libraries: {
-    //             NftIdLib: libraries.nftIdLibAddress,
-    //             BlocknumberLib: libraries.blockNumberLibAddress, 
-    //             VersionLib: libraries.versionLibAddress, 
-    //             TimestampLib: libraries.timestampLibAddress,
-    //             UFixedMathLib: libraries.uFixedMathLibAddress,
-    //             FeeLib: libraries.feeLibAddress,
-    //         }});
-    // const productServiceNftId = await register(productServiceBaseContract as Registerable, productServiceAddress, "ProductService", registry, owner);
-    // logger.info(`productService registered - productServiceNftId: ${productServiceNftId}`);
+    const { address: productServiceManagerAddress, contract: productServiceManagerBaseContract, } = await deployContract(
+        "ProductServiceManager",
+        owner,
+        [registry.registryAddress],
+        { libraries: {
+                BlocknumberLib: libraries.blockNumberLibAddress, 
+                FeeLib: libraries.feeLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                UFixedLib: libraries.uFixedLibAddress,
+                VersionLib: libraries.versionLibAddress, 
+            }});
 
-    // const { address: poolServiceAddress, contract: PoolServiceBaseContract } = await deployContract(
-    //     "PoolService",
-    //     owner,
-    //     [registry.registryAddress, registry.registryNftId],
-    //     { libraries: { 
-    //         NftIdLib: libraries.nftIdLibAddress,
-    //         BlocknumberLib: libraries.blockNumberLibAddress,
-    //         VersionLib: libraries.versionLibAddress,
-    //     }});
-    // const poolServiceNftId = await register(PoolServiceBaseContract as Registerable, poolServiceAddress, "PoolService", registry, owner);
-    // logger.info(`poolService registered - poolServiceNftId: ${poolServiceNftId}`);
+    const productServiceManager = productServiceManagerBaseContract as ProductServiceManager;
+    const productServiceAddress = await productServiceManager.getProductService();
+    const productService = ProductService__factory.connect(productServiceAddress, owner);
+    // FIXME temporal solution while registration in ProductServiceManager constructor is not possible
+    const rcptPrd = await executeTx(async () => await registryService.registerService(productServiceAddress));
+    const logRegistrationInfoPrd = getFieldFromTxRcptLogs(rcptPrd!, registry.registry.interface, "LogRegistration", "info");
+    const productServiceNftId = (logRegistrationInfoPrd as unknown[])[0];
+    logger.info(`productServiceManager deployed - productServiceAddress: ${productServiceAddress} productServiceManagerAddress: ${productServiceManagerAddress} nftId: ${productServiceNftId}`);
+
 
     return {
         instanceServiceNftId: instanceServiceNfdId as string,
@@ -135,8 +132,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         poolServiceNftId: poolServiceNftId as string,
         poolService,
         poolServiceManagerAddress,
-        // productServiceAddress,
-        // productServiceNftId,
+        productServiceAddress,
+        productServiceNftId : productServiceNftId as string,
+        productService,
+        productServiceManagerAddress,
     };
 }
 
@@ -144,7 +143,7 @@ const DISTRIBUTION_REGISTRAR_ROLE = 1000;
 // const POLICY_REGISTRAR_ROLE = 1100;
 const BUNDLE_REGISTRAR_ROLE = 1200;
 const POOL_REGISTRAR_ROLE = 1300;
-// const PRODUCT_REGISTRAR_ROLE = 1400;
+const PRODUCT_REGISTRAR_ROLE = 1400;
 
 
 export async function authorizeServices(protocolOwner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses) {
@@ -182,6 +181,17 @@ export async function authorizeServices(protocolOwner: Signer, libraries: Librar
         registry.registryService,
         [fctSelector3],
         BUNDLE_REGISTRAR_ROLE,
+    );
+
+    // grant PRODUCT_REGISTRAR_ROLE to product service
+    // allow role PRODUCT_REGISTRAR_ROLE to call registerProduct on registry service
+    await registryAccessManager.grantRole(PRODUCT_REGISTRAR_ROLE, services.productServiceAddress, 0);
+    const fctSelector4 = registry.registryService.interface.getFunction("registerProduct").selector;
+    logger.debug(`setting function role for ${hexlify(fctSelector4)} to ${PRODUCT_REGISTRAR_ROLE}`);
+    await registryAccessManager.setTargetFunctionRole(
+        registry.registryService,
+        [fctSelector4],
+        PRODUCT_REGISTRAR_ROLE,
     );
 }
 
