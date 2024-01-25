@@ -13,6 +13,9 @@ import {IBundle} from "./module/IBundle.sol";
 import {ISetup} from "./module/ISetup.sol";
 import {NftId} from "../types/NftId.sol";
 import {StateId} from "../types/StateId.sol";
+import {RiskId} from "../types/RiskId.sol";
+import {IRisk} from "./module/IRisk.sol";
+
 
 interface IInstance is IERC165 {
 
@@ -36,6 +39,10 @@ interface IInstance is IERC165 {
     function createProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup) external;
     function updateProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup, StateId newState) external;
     function updateProductSetupState(NftId productNftId, StateId newState) external;
+
+    function createRisk(RiskId riskId, IRisk.RiskInfo memory risk) external;
+    function updateRisk(RiskId riskId, IRisk.RiskInfo memory risk, StateId newState) external;
+    function updateRiskState(RiskId riskId, StateId newState) external;
 
     function getInstanceReader() external view returns (InstanceReader);
 }

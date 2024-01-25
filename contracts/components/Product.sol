@@ -118,13 +118,13 @@ contract Product is BaseComponent, IProductComponent {
         );
     }
 
-    function _setRiskInfo(
+    function _updateRisk(
         RiskId id,
-        IRisk.RiskInfo memory info
+        bytes memory data
     ) internal {
-        _productService.setRiskInfo(
+        _productService.updateRisk(
             id,
-            info
+            data
         );
     }
 

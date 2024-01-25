@@ -96,9 +96,12 @@ contract InstanceService is Service, IInstanceService {
 
         address productServiceAddress = _registry.getServiceAddress("ProductService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE().toInt(), address(productServiceAddress), 0);
-        bytes4[] memory instanceProductServiceSelectors = new bytes4[](2);
+        bytes4[] memory instanceProductServiceSelectors = new bytes4[](5);
         instanceProductServiceSelectors[0] = clonedInstance.createProductSetup.selector;
         instanceProductServiceSelectors[1] = clonedInstance.updateProductSetup.selector;
+        instanceProductServiceSelectors[2] = clonedInstance.createRisk.selector;
+        instanceProductServiceSelectors[3] = clonedInstance.updateRisk.selector;
+        instanceProductServiceSelectors[4] = clonedInstance.updateRiskState.selector;
         clonedAccessManager.setTargetFunctionRole(
             address(clonedInstance),
             instanceProductServiceSelectors, 

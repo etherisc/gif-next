@@ -24,15 +24,15 @@ interface IProductService is IService {
     ) external;
 
 
-    function setRiskInfo(
+    function updateRisk(
         RiskId riskId,
-        IRisk.RiskInfo memory data
+        bytes memory data
     ) external;
 
 
     function updateRiskState(
         RiskId riskId,
-        StateId state
+        StateId newState
     ) external;
 
 

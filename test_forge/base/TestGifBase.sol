@@ -106,8 +106,11 @@ contract TestGifBase is Test {
     // TestPool public pool;
     // TestDistribution public distribution;
     Distribution public distribution;
+    NftId public distributionNftId;
     Pool public pool;
+    NftId public poolNftId;
     Product public product;
+    NftId public productNftId;
     TokenHandler public tokenHandler;
 
     address public registryAddress;
@@ -601,6 +604,41 @@ contract TestGifBase is Test {
         console.log("bundle fundet with", amount);
         // solhint-disable-next-line
         console.log("bundle nft id", bundleNftId.toInt());
+    }
+    
+    function _prepareDistributionAndPool() internal {
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        vm.stopPrank();
+
+        vm.startPrank(distributionOwner);
+        distribution = new Distribution(
+            address(registry),
+            instanceNftId,
+            address(token),
+            false,
+            FeeLib.zeroFee(),
+            distributionOwner
+        );
+        NftId distributionNftId = distributionService.register(address(distribution));
+        vm.stopPrank();
+
+        vm.startPrank(poolOwner);
+        pool = new Pool(
+            address(registry),
+            instanceNftId,
+            address(token),
+            false,
+            false,
+            UFixedLib.toUFixed(1),
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            poolOwner
+        );
+        NftId poolNftId = poolService.register(address(pool));
+        vm.stopPrank();
     }
 
 }

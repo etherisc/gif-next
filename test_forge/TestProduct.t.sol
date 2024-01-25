@@ -6,37 +6,22 @@ import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../contracts/types/RoleId.sol";
 import {Product} from "../contracts/components/Product.sol";
+import {DummyProduct} from "./components/DummyProduct.sol";
 import {Distribution} from "../contracts/components/Distribution.sol";
 import {Pool} from "../contracts/components/Pool.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
+import {IRisk} from "../contracts/instance/module/IRisk.sol";
+import {RiskId, RiskIdLib} from "../contracts/types/RiskId.sol";
 
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
 
-    function testProductSetFees() public {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
-        vm.stopPrank();
-
-        _prepareDistributionAndPool();
-
+    function test_Product_SetFees() public {
+        _prepareProduct();
         vm.startPrank(productOwner);
-        product = new Product(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            address(pool), // TODO probably needs real one
-            address(distribution), // TODO probably needs real one
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
-        );
-
-        NftId productNftId = productService.register(address(product));
 
         ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
         Fee memory productFee = productSetupInfo.productFee;
@@ -61,39 +46,70 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
     }
 
-    function _prepareDistributionAndPool() internal {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
-        vm.stopPrank();
+    function test_Product_createRisk() public {
+        _prepareProduct();
+        vm.startPrank(productOwner);
 
-        vm.startPrank(distributionOwner);
-        distribution = new Distribution(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            FeeLib.zeroFee(),
-            distributionOwner
-        );
-        NftId distributionNftId = distributionService.register(address(distribution));
-        vm.stopPrank();
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
 
-        vm.startPrank(poolOwner);
-        pool = new Pool(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            poolOwner
-        );
-        NftId poolNftId = poolService.register(address(pool));
+        DummyProduct dproduct = DummyProduct(address(product));
+        dproduct.createRisk(riskId, data);
+        IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
+
+        assertTrue(riskInfo.productNftId.eq(productNftId), "productNftId not set");
+        assertEq(riskInfo.data, data, "data not set");
+
         vm.stopPrank();
     }
+
+    function test_Product_updateRisk() public {
+        _prepareProduct();
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+
+        DummyProduct dproduct = DummyProduct(address(product));
+        dproduct.createRisk(riskId, data);
+        IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
+
+        assertTrue(riskInfo.productNftId.eq(productNftId), "productNftId not set");
+        assertEq(riskInfo.data, data, "data not set");
+
+        bytes memory newData = "new data";
+        dproduct.updateRisk(riskId, newData);
+
+        riskInfo = instanceReader.getRiskInfo(riskId);
+
+        assertTrue(riskInfo.productNftId.eq(productNftId), "productNftId not set");
+        assertEq(riskInfo.data, newData, "data not updated to new data");
+    }
+
+    function _prepareProduct() internal {
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
+        vm.stopPrank();
+
+        _prepareDistributionAndPool();
+
+        vm.startPrank(productOwner);
+        product = new DummyProduct(
+            address(registry),
+            instanceNftId,
+            address(token),
+            false,
+            address(pool), 
+            address(distribution),
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            productOwner
+        );
+
+        productNftId = productService.register(address(product));
+        vm.stopPrank();
+    }
+
+    
 
 }

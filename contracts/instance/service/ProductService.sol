@@ -102,37 +102,32 @@ contract ProductService is ComponentServiceBase, IProductService {
         RiskId riskId,
         bytes memory data
     ) external override {
-    //     (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-    //     NftId productNftId = productInfo.nftId;
-    //     instance.createRisk(
-    //         riskId,
-    //         productNftId,
-    //         data
-    //     );
+        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        NftId productNftId = productInfo.nftId;
+        IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo(productNftId, data);
+        instance.createRisk(
+            riskId,
+            riskInfo
+        );
     }
 
-    // FIXME: this
-    function setRiskInfo(
+    function updateRisk(
         RiskId riskId,
-        IRisk.RiskInfo memory info
+        bytes memory data
     ) external {
-    //     (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-    //     instance.setRiskInfo(
-    //         riskId,
-    //         info
-    //     );
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        InstanceReader instanceReader = instance.getInstanceReader();
+        IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
+        riskInfo.data = data;
+        instance.updateRisk(riskId, riskInfo, KEEP_STATE());
     }
 
-    // FIXME: this
     function updateRiskState(
         RiskId riskId,
         StateId state
     ) external {
-    //     (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-    //     instance.updateRiskState(
-    //         riskId,
-    //         state
-    //     );
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        instance.updateRiskState(riskId, state);
     }
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
