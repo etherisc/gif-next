@@ -28,7 +28,8 @@
 				//"NomicFoundation.hardhat-solidity", - currently got issues with foundry remappings
 				"JuanBlanco.solidity",
 				"esbenp.prettier-vscode",
-				"ryanluker.vscode-coverage-gutters"
+				"ryanluker.vscode-coverage-gutters",
+				"ms-vsliveshare.vsliveshare",
 			]
 		}
 	},
