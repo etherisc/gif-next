@@ -61,6 +61,9 @@ contract InstanceService is Service, IInstanceService {
 
         _grantInitialAuthorizations(clonedAccessManager, clonedInstance);
 
+        // TODO add cloning of bundle manager, policy manager, ...
+
+        // TODO amend setters with instance specific bundle manager, policy manager ...
         clonedInstance.setInstanceReader(clonedInstanceReader);
         
         // to complete setup switch instance ownership to the instance owner
