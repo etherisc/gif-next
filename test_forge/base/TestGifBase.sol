@@ -14,7 +14,8 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
 import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
 import {DistributionServiceManager} from "../../contracts/instance/service/DistributionServiceManager.sol";
-// import {ProductService} from "../../contracts/instance/service/ProductService.sol";
+import {ProductService} from "../../contracts/instance/service/ProductService.sol";
+import {ProductServiceManager} from "../../contracts/instance/service/ProductServiceManager.sol";
 import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 import {PoolServiceManager} from "../../contracts/instance/service/PoolServiceManager.sol";
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
@@ -30,6 +31,7 @@ import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 // import {TestDistribution} from "../../contracts/test/TestDistribution.sol";
 import {Distribution} from "../../contracts/components/Distribution.sol";
 import {Pool} from "../../contracts/components/Pool.sol";
+import {Product} from "../../contracts/components/Product.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
 
 // import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
@@ -82,7 +84,9 @@ contract TestGifBase is Test {
     DistributionServiceManager public distributionServiceManager;
     DistributionService public distributionService;
     NftId public distributionServiceNftId;
-    // ProductService public productService;
+    ProductServiceManager public productServiceManager;
+    ProductService public productService;
+    NftId public productServiceNftId;
     PoolServiceManager public poolServiceManager;
     PoolService public poolService;
     NftId public poolServiceNftId;
@@ -103,7 +107,7 @@ contract TestGifBase is Test {
     // TestDistribution public distribution;
     Distribution public distribution;
     Pool public pool;
-    int public product = 0;
+    Product public product;
     TokenHandler public tokenHandler;
 
     address public registryAddress;
@@ -370,6 +374,18 @@ contract TestGifBase is Test {
         console.log("poolService nft id", poolService.getNftId().toInt());
         // solhint-enable
 
+        // --- product service ---------------------------------//
+        productServiceManager = new ProductServiceManager(address(registry));
+        productService = productServiceManager.getProductService();
+        registryService.registerService(productService);
+        productServiceNftId = registry.getNftId(address(productService));
+
+        // solhint-disable
+        console.log("productService name", productService.getName());
+        console.log("productService deployed at", address(productService));
+        console.log("productService nft id", productService.getNftId().toInt());
+        // solhint-enable
+
         // //--- component owner service ---------------------------------//
         // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
         // registryService.registerService(componentOwnerService);
@@ -383,19 +399,6 @@ contract TestGifBase is Test {
         // console.log("service name", componentOwnerService.NAME());
         // console.log("service deployed at", address(componentOwnerService));
         // console.log("service nft id", componentOwnerService.getNftId().toInt());
-        // /* solhint-enable */
-
-        // //--- product service ---------------------------------//
-
-        // productService = new ProductService(registryAddress, registryNftId, registryOwner);
-        // registryService.registerService(productService);
-        // accessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(productService), 0);
-
-        // /* solhint-disable */
-        // console.log("service name", productService.NAME());
-        // console.log("service deployed at", address(productService));
-        // console.log("service nft id", productService.getNftId().toInt());
-        // console.log("service allowance is set to POLICY");
         // /* solhint-enable */
     }
 
@@ -430,6 +433,16 @@ contract TestGifBase is Test {
             address(registryService),
             registryServiceRegisterBundleSelectors, 
             BUNDLE_REGISTRAR_ROLE().toInt());
+
+        // grant PRODUCT_REGISTRAR_ROLE to product service
+        // allow role PRODUCT_REGISTRAR_ROLE to call registerProduct on registry service
+        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(productService), 0);
+        bytes4[] memory registryServiceRegisterProductSelectors = new bytes4[](1);
+        registryServiceRegisterProductSelectors[0] = registryService.registerProduct.selector;
+        accessManager.setTargetFunctionRole(
+            address(registryService),
+            registryServiceRegisterProductSelectors, 
+            PRODUCT_REGISTRAR_ROLE().toInt());
     }
 
     function _deployMasterInstance() internal 

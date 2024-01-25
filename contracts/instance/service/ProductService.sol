@@ -60,7 +60,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         address initialOwner = address(0);
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        _initializeService(_registryAddress, initialOwner);
+        _initializeService(_registryAddress, owner);
 
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IProductService).interfaceId);
@@ -72,12 +72,11 @@ contract ProductService is ComponentServiceBase, IProductService {
     }
 
     function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {
-        // FIXME this
-        // ISetup.PoolSetupInfo memory initialSetup = abi.decode(
-        //     initialObjData,
-        //     (ISetup.PoolSetupInfo)
-        // );
-        // instance.createPoolSetup(componentNftId, initialSetup);
+        ISetup.ProductSetupInfo memory initialSetup = abi.decode(
+            initialObjData,
+            (ISetup.ProductSetupInfo)
+        );
+        instance.createProductSetup(componentNftId, initialSetup);
     }
 
     function setFees(
