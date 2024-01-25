@@ -440,8 +440,9 @@ contract TestGifBase is Test {
         // grant PRODUCT_REGISTRAR_ROLE to product service
         // allow role PRODUCT_REGISTRAR_ROLE to call registerProduct on registry service
         accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(productService), 0);
-        bytes4[] memory registryServiceRegisterProductSelectors = new bytes4[](1);
+        bytes4[] memory registryServiceRegisterProductSelectors = new bytes4[](2);
         registryServiceRegisterProductSelectors[0] = registryService.registerProduct.selector;
+        registryServiceRegisterProductSelectors[1] = registryService.registerPolicy.selector;
         accessManager.setTargetFunctionRole(
             address(registryService),
             registryServiceRegisterProductSelectors, 

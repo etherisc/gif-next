@@ -7,6 +7,7 @@ import {IRisk} from "../../contracts/instance/module/IRisk.sol";
 import {StateId} from "../../contracts/types/StateId.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
+import {ReferralId} from "../../contracts/types/Referral.sol";
 
 contract DummyProduct is Product {
 
@@ -60,6 +61,26 @@ contract DummyProduct is Product {
         _updateRiskState(
             id,
             state
+        );
+    }
+    
+    function createApplication(
+        address applicationOwner,
+        RiskId riskId,
+        uint256 sumInsuredAmount,
+        uint256 lifetime,
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
+    ) public returns (NftId nftId) {
+        return _createApplication(
+            applicationOwner,
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
         );
     }
 

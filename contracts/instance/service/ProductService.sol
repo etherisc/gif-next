@@ -255,17 +255,26 @@ contract ProductService is ComponentServiceBase, IProductService {
             referralId
         );
 
-        // FIXME: this
-        // instance.createPolicyInfo(
-        //     policyNftId,
-        //     productInfo.nftId,
-        //     referralId,
-        //     riskId,
-        //     sumInsuredAmount,
-        //     premiumAmount,
-        //     lifetime,
-        //     bundleNftId
-        // );
+        IPolicy.PolicyInfo memory policyInfo = IPolicy.PolicyInfo(
+            productInfo.nftId,
+            bundleNftId,
+            referralId,
+            riskId,
+            sumInsuredAmount,
+            premiumAmount,
+            0,
+            lifetime,
+            applicationData,
+            "",
+            0,
+            0,
+            0,
+            zeroTimestamp(),
+            zeroTimestamp(),
+            zeroTimestamp()
+        );
+        
+        instance.createPolicy(policyNftId, policyInfo);
 
         // TODO add logging
     }

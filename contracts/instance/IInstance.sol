@@ -15,6 +15,7 @@ import {NftId} from "../types/NftId.sol";
 import {StateId} from "../types/StateId.sol";
 import {RiskId} from "../types/RiskId.sol";
 import {IRisk} from "./module/IRisk.sol";
+import {IPolicy} from "./module/IPolicy.sol";
 
 
 interface IInstance is IERC165 {
@@ -43,6 +44,10 @@ interface IInstance is IERC165 {
     function createRisk(RiskId riskId, IRisk.RiskInfo memory risk) external;
     function updateRisk(RiskId riskId, IRisk.RiskInfo memory risk, StateId newState) external;
     function updateRiskState(RiskId riskId, StateId newState) external;
+
+    function createPolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy) external;
+    function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
+    function updatePolicyState(NftId policyNftId, StateId newState) external;
 
     function getInstanceReader() external view returns (InstanceReader);
 }
