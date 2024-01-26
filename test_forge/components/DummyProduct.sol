@@ -8,6 +8,7 @@ import {StateId} from "../../contracts/types/StateId.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {ReferralId} from "../../contracts/types/Referral.sol";
+import {Timestamp} from "../../contracts/types/Timestamp.sol";
 
 contract DummyProduct is Product {
 
@@ -82,6 +83,14 @@ contract DummyProduct is Product {
             bundleNftId,
             referralId
         );
+    }
+
+    function underwrite(
+        NftId policyNftId,
+        bool requirePremiumPayment,
+        Timestamp activateAt
+    ) public {
+        _underwrite(policyNftId, requirePremiumPayment, activateAt);
     }
 
 }

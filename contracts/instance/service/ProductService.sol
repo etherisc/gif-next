@@ -282,30 +282,29 @@ contract ProductService is ComponentServiceBase, IProductService {
 
     function _getAndVerifyUnderwritingSetup(
         IInstance instance,
-        IPolicy.PolicyInfo memory policyInfo
+        InstanceReader instanceReader,
+        IPolicy.PolicyInfo memory policyInfo,
+        ISetup.ProductSetupInfo memory productSetupInfo
     )
         internal
         view
         returns (
-            ITreasury.TreasuryInfo memory treasuryInfo,
             NftId bundleNftId,
             IBundle.BundleInfo memory bundleInfo,
             uint256 collateralAmount
         )
     {
-        // FIXME: this
         // check match between policy and bundle (via pool)
-        // treasuryInfo = instance.getTreasuryInfo(policyInfo.productNftId);
-        // bundleNftId = policyInfo.bundleNftId;
-        // bundleInfo = instance.getBundleInfo(bundleNftId);
-        // require(bundleInfo.poolNftId == treasuryInfo.poolNftId, "POLICY_BUNDLE_MISMATCH");
+        bundleNftId = policyInfo.bundleNftId;
+        bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        require(bundleInfo.poolNftId == productSetupInfo.poolNftId, "POLICY_BUNDLE_MISMATCH");
 
-        // // calculate required collateral
-        // NftId poolNftId = treasuryInfo.poolNftId;
-        // ISetup.PoolSetupInfo memory poolInfo = instance.getPoolInfo(poolNftId);
+        // calculate required collateral
+        NftId poolNftId = productSetupInfo.poolNftId;
+        ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
 
-        // // obtain remaining return values
-        // collateralAmount = calculateRequiredCollateral(poolInfo.collateralizationLevel, policyInfo.sumInsuredAmount);
+        // obtain remaining return values
+        collateralAmount = calculateRequiredCollateral(poolInfo.collateralizationLevel, policyInfo.sumInsuredAmount);
     }
 
     function _lockCollateralInBundle(
@@ -325,7 +324,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     }
 
     function _underwriteByPool(
-        ITreasury.TreasuryInfo memory treasuryInfo,
+        NftId poolNftId,
         NftId policyNftId,
         IPolicy.PolicyInfo memory policyInfo,
         bytes memory bundleFilter,
@@ -333,7 +332,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     )
         internal
     {
-        address poolAddress = getRegistry().getObjectInfo(treasuryInfo.poolNftId).objectAddress;
+        address poolAddress = getRegistry().getObjectInfo(poolNftId).objectAddress;
         IPoolComponent pool = IPoolComponent(poolAddress);
         pool.underwrite(
             policyNftId, 
@@ -366,79 +365,76 @@ contract ProductService is ComponentServiceBase, IProductService {
             IRegistry.ObjectInfo memory productInfo, 
             IInstance instance
         ) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        InstanceReader instanceReader = instance.getInstanceReader();
 
         // check match between policy and calling product
         NftId productNftId = productInfo.nftId;
         // FIXME: this
-        // IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
-        // require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
-        // require(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
+        require(instanceReader.getPolicyState(policyNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
 
-        // ITreasury.TreasuryInfo memory treasuryInfo;
-        // NftId bundleNftId;
-        // IBundle.BundleInfo memory bundleInfo;
-        // uint256 collateralAmount;
+        NftId bundleNftId;
+        IBundle.BundleInfo memory bundleInfo;
+        uint256 collateralAmount;
+        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
 
-        // (
-        //     treasuryInfo,
-        //     bundleNftId,
-        //     bundleInfo,
-        //     collateralAmount
-        // ) = _getAndVerifyUnderwritingSetup(
-        //     instance,
-        //     policyInfo
-        // );
+        (
+            bundleNftId,
+            bundleInfo,
+            collateralAmount
+        ) = _getAndVerifyUnderwritingSetup(
+            instance,
+            instanceReader,
+            policyInfo,
+            productSetupInfo
+        );
 
-        // // lock bundle collateral
-        // bundleInfo = _lockCollateralInBundle(
-        //     instance,
-        //     bundleNftId,
-        //     bundleInfo,
-        //     policyNftId, 
-        //     collateralAmount);
+        // lock bundle collateral
+        bundleInfo = _lockCollateralInBundle(
+            instance,
+            bundleNftId,
+            bundleInfo,
+            policyNftId, 
+            collateralAmount);
+        
+        // optional activation of policy
+        if(activateAt > zeroTimestamp()) {
+            policyInfo.activatedAt = activateAt;
+            policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+        }
 
-        // // set policy state to underwritten
-        // instance.updatePolicyState(policyNftId, UNDERWRITTEN());
+        // optional collection of premium
+        if(requirePremiumPayment) {
+            uint256 netPremiumAmount = _processPremiumByTreasury(
+                instance, 
+                productInfo.nftId,
+                policyNftId, 
+                policyInfo.premiumAmount);
 
-        // // optional activation of policy
-        // if(activateAt > zeroTimestamp()) {
-        //     policyInfo.activatedAt = activateAt;
-        //     policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+            policyInfo.premiumPaidAmount += policyInfo.premiumAmount;
+            bundleInfo.balanceAmount += netPremiumAmount;
+        }
 
-        //     instance.updatePolicyState(policyNftId, ACTIVE());
-        // }
+        instance.updatePolicy(policyNftId, policyInfo, UNDERWRITTEN());
+        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
 
-        // // optional collection of premium
-        // if(requirePremiumPayment) {
-        //     uint256 netPremiumAmount = _processPremiumByTreasury(
-        //         instance, 
-        //         productInfo.nftId,
-        //         treasuryInfo, 
-        //         policyNftId, 
-        //         policyInfo.premiumAmount);
+        // involve pool if necessary
+        {
+            NftId poolNftId = bundleInfo.poolNftId;
+            ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
 
-        //     policyInfo.premiumPaidAmount += policyInfo.premiumAmount;
-        //     bundleInfo.balanceAmount += netPremiumAmount;
-        // }
-
-        // instance.setPolicyInfo(policyNftId, policyInfo);
-        // instance.setBundleInfo(bundleNftId, bundleInfo);
-
-        // // involve pool if necessary
-        // {
-        //     NftId poolNftId = treasuryInfo.poolNftId;
-        //     ISetup.PoolSetupInfo memory poolInfo = instance.getPoolInfo(poolNftId);
-
-        //     if(poolInfo.isVerifying) {
-        //         _underwriteByPool(
-        //             treasuryInfo,
-        //             policyNftId,
-        //             policyInfo,
-        //             bundleInfo.filter,
-        //             collateralAmount
-        //         );
-        //     }
-        // }
+            // FIXME: use poolInfo.isVerifying ???
+            if(poolInfo.isIntercepting) {
+                _underwriteByPool(
+                    poolNftId,
+                    policyNftId,
+                    policyInfo,
+                    bundleInfo.filter,
+                    collateralAmount
+                );
+            }
+        }
 
         // TODO add logging
     }
@@ -524,7 +520,6 @@ contract ProductService is ComponentServiceBase, IProductService {
     function _processPremiumByTreasury(
         IInstance instance,
         NftId productNftId,
-        ITreasury.TreasuryInfo memory treasuryInfo,
         NftId policyNftId,
         uint256 premiumAmount
     )

@@ -16,9 +16,10 @@ import {StateId} from "../types/StateId.sol";
 import {RiskId} from "../types/RiskId.sol";
 import {IRisk} from "./module/IRisk.sol";
 import {IPolicy} from "./module/IPolicy.sol";
+import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
 
-interface IInstance is IERC165 {
+interface IInstance is IERC165, IKeyValueStore {
 
     function getComponentOwnerService() external view returns (IComponentOwnerService);
     function getDistributionService() external view returns (IDistributionService);
