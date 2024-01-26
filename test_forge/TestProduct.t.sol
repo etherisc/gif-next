@@ -365,7 +365,6 @@ contract TestProduct is TestGifBase {
     }
 
     // TODO: add test with pool involved
-    // TODO: add test for underwrite with requirePremiumPayment == true
 
     function test_Product_createRisk() public {
         _prepareProduct();
