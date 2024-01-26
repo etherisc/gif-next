@@ -323,8 +323,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         returns (IBundle.BundleInfo memory)
     {
         bundleInfo.lockedAmount += collateralAmount;
-        // FIXME: track policy in bundle and how much is locked for it
-        // instance.collateralizePolicy(bundleNftId, policyNftId, collateralAmount);
+        // TODO: track policy associated to bundle in bundlemanager (tbd) and how much is locked for it
         return bundleInfo;
     }
 

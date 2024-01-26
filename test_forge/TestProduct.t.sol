@@ -277,8 +277,6 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
     }
 
-    // TODO: add test with pool involved
-
     function test_Product_createRisk() public {
         _prepareProduct();
         vm.startPrank(productOwner);
