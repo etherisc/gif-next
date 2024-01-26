@@ -13,6 +13,9 @@ import {UFixed} from "../../types/UFixed.sol";
 import {Fee} from "../../types/Fee.sol";
 
 interface IProductService is IService {
+
+    error ErrorIProductServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
+    
     function setFees(
         Fee memory productFee,
         Fee memory processingFee

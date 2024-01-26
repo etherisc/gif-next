@@ -25,6 +25,8 @@ contract Distribution is
     Fee internal _initialDistributionFee;
     bool internal _isVerifying;
 
+    TokenHandler internal _tokenHandler;
+
     IDistributionService private _distributionService;
     IProductService private _productService;
 
@@ -48,6 +50,8 @@ contract Distribution is
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
+
+        _tokenHandler = TokenHandler(token);
 
         _distributionService = _instance.getDistributionService();
         _productService = _instance.getProductService();
@@ -148,7 +152,7 @@ contract Distribution is
             abi.encode(
                 ISetup.DistributionSetupInfo(
                     _productNftId,
-                    TokenHandler(address(_token)),
+                    _tokenHandler,
                     _initialDistributionFee,
                     _isVerifying,
                     address(this)

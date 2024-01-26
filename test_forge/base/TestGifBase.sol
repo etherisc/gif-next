@@ -492,6 +492,7 @@ contract TestGifBase is Test {
         address usdcAddress = address(usdc);
 
         tokenRegistry.setActive(usdcAddress, registry.getMajorVersion(), true);
+        token = usdc;
 
         // solhint-disable-next-line
         console.log("token deployed at", usdcAddress);

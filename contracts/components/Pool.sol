@@ -32,6 +32,8 @@ contract Pool is BaseComponent, IPoolComponent {
     Fee internal _initialStakingFee;
     Fee internal _initialPerformanceFee;
 
+    TokenHandler internal _tokenHandler;
+
     // may be used to interact with instance by derived contracts
     IPoolService internal _poolService;
 
@@ -73,6 +75,8 @@ contract Pool is BaseComponent, IPoolComponent {
         _initialPoolFee = poolFee;
         _initialStakingFee = stakingFee;
         _initialPerformanceFee = performanceFee;
+
+        _tokenHandler = new TokenHandler(token);
 
         _poolService = _instance.getPoolService();
         _productService = _instance.getProductService();
@@ -191,7 +195,7 @@ contract Pool is BaseComponent, IPoolComponent {
             abi.encode(
                 ISetup.PoolSetupInfo(
                     _productNftId,
-                    TokenHandler(address(_token)),
+                    _tokenHandler,
                     _collateralizationLevel,
                     _initialPoolFee,
                     _initialStakingFee,

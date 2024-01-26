@@ -536,30 +536,30 @@ contract ProductService is ComponentServiceBase, IProductService {
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
-            // FIXME: this
-            // TokenHandler tokenHandler = instance.getTokenHandler(productNftId);
-            // address policyOwner = getRegistry().ownerOf(policyNftId);
-            // address poolWallet = instance.getComponentWallet(treasuryInfo.poolNftId);
-            // netPremiumAmount = premiumAmount;
-            // Fee memory productFee = treasuryInfo.productFee;
+            ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
+            TokenHandler tokenHandler = productSetupInfo.tokenHandler;
+            address policyOwner = getRegistry().ownerOf(policyNftId);
+            ISetup.PoolSetupInfo memory poolSetupInfo = instance.getInstanceReader().getPoolSetupInfo(productSetupInfo.poolNftId);
+            address poolWallet = poolSetupInfo.wallet;
+            netPremiumAmount = premiumAmount;
+            Fee memory productFee = productSetupInfo.productFee;
 
-            // if (FeeLib.feeIsZero(productFee)) {
-            //     tokenHandler.transfer(
-            //         policyOwner,
-            //         poolWallet,
-            //         premiumAmount
-            //     );
-            // } else {
-            //     (uint256 feeAmount, uint256 netAmount) = instance.calculateFeeAmount(
-            //         premiumAmount,
-            //         productFee
-            //     );
-
-            //     address productWallet = instance.getComponentWallet(productNftId);
-            //     tokenHandler.transfer(policyOwner, productWallet, feeAmount);
-            //     tokenHandler.transfer(policyOwner, poolWallet, netAmount);
-            //     netPremiumAmount = netAmount;
-            // }
+            if (FeeLib.feeIsZero(productFee)) {
+                tokenHandler.transfer(
+                    policyOwner,
+                    poolWallet,
+                    premiumAmount
+                );
+            } else {
+                (uint256 productFeeAmount, uint256 netAmount) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
+                address productWallet = productSetupInfo.wallet;
+                if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premiumAmount) {
+                    revert ErrorIProductServiceInsufficientAllowance(policyOwner, address(tokenHandler), premiumAmount);
+                }
+                tokenHandler.transfer(policyOwner, productWallet, productFeeAmount);
+                tokenHandler.transfer(policyOwner, poolWallet, netAmount);
+                netPremiumAmount = netAmount;
+            }
         }
 
         // TODO add logging

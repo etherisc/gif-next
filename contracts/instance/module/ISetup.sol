@@ -21,6 +21,7 @@ interface ISetup {
         Fee poolFee; // pool fee on net premium
         Fee stakingFee; // pool fee on staked capital from investor
         Fee performanceFee; // pool fee on profits from capital investors
+        address wallet;
     }
 
     struct DistributionSetupInfo {

@@ -36,6 +36,7 @@ contract Product is BaseComponent, IProductComponent {
     Distribution internal _distribution;
     Fee internal _initialProductFee;
     Fee internal _initialProcessingFee;
+    TokenHandler internal _tokenHandler;
 
     NftId internal _poolNftId;
     NftId internal _distributionNftId;
@@ -57,6 +58,8 @@ contract Product is BaseComponent, IProductComponent {
         _distribution = Distribution(distribution);
         _initialProductFee = productFee;
         _initialProcessingFee = processingFee;  
+
+        _tokenHandler = new TokenHandler(token);
 
         _poolNftId = getRegistry().getNftId(address(_pool));
         _distributionNftId = getRegistry().getNftId(address(_distribution));
@@ -268,7 +271,7 @@ contract Product is BaseComponent, IProductComponent {
             abi.encode(
                 ISetup.ProductSetupInfo(
                     _token,
-                    TokenHandler(address(_token)),
+                    _tokenHandler,
                     _distributionNftId,
                     _poolNftId,
                     distributionSetupInfo.distributionFee, 
@@ -276,7 +279,8 @@ contract Product is BaseComponent, IProductComponent {
                     _initialProcessingFee,
                     poolSetupInfo.poolFee, 
                     poolSetupInfo.stakingFee, 
-                    poolSetupInfo.performanceFee 
+                    poolSetupInfo.performanceFee,
+                    _wallet
                 )
             )
         );
