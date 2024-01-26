@@ -456,36 +456,32 @@ contract ProductService is ComponentServiceBase, IProductService {
     function collectPremium(NftId policyNftId, Timestamp activateAt) external override {
         // check caller is registered product
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        InstanceReader instanceReader = instance.getInstanceReader();
 
-        // perform actual token transfers
-        // FIXME: this
-        // IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
-        // ITreasury.TreasuryInfo memory treasuryInfo = instance.getTreasuryInfo(productInfo.nftId);
+        // TODO: check if not paid
+        // TODO: transfer premium 
+        // TODO: optionally activate
 
+        // // perform actual token transfers (this code is probably not complete)
+        // IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        
         // uint256 premiumAmount = policyInfo.premiumAmount;
-        // _processPremiumByTreasury(instance, productInfo.nftId, treasuryInfo, policyNftId, premiumAmount);
+        // _processPremiumByTreasury(instance, productInfo.nftId, policyNftId, premiumAmount);
 
         // // policy level book keeping for premium paid
         // policyInfo.premiumPaidAmount += premiumAmount;
 
+        // instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+
         // // optional activation of policy
         // if(activateAt > zeroTimestamp()) {
-        //     require(
-        //         policyInfo.activatedAt.eqz(),
-        //         "ERROR:PRS-030:ALREADY_ACTIVATED");
-
-        //     policyInfo.activatedAt = activateAt;
-        //     policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
-
-        //     instance.updatePolicyState(policyNftId, ACTIVE());
+        //     activate(policyNftId, activateAt);
         // }
-
-        // instance.setPolicyInfo(policyNftId, policyInfo);
 
         // TODO add logging
     }
 
-    function activate(NftId policyNftId, Timestamp activateAt) external override {
+    function activate(NftId policyNftId, Timestamp activateAt) public override {
         // check caller is registered product
         (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
