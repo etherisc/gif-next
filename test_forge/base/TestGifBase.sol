@@ -184,7 +184,6 @@ contract TestGifBase is Test {
         _createInstance();
         vm.stopPrank();
 
-        // TODO: reactivate when services are working again
         // // deploy pool
         // bool poolIsInterceptor = false;
         // vm.startPrank(poolOwner);
@@ -499,17 +498,16 @@ contract TestGifBase is Test {
     }
 
 
-    function _deployPool(
-        bool isInterceptor,
-        bool isVerifying,
-        UFixed collateralizationLevel
-    )
-        internal
-    {
-        Fee memory stakingFee = FeeLib.zeroFee();
-        Fee memory performanceFee = FeeLib.zeroFee();
+    // function _deployPool(
+    //     bool isInterceptor,
+    //     bool isVerifying,
+    //     UFixed collateralizationLevel
+    // )
+    //     internal
+    // {
+        // Fee memory stakingFee = FeeLib.zeroFee();
+        // Fee memory performanceFee = FeeLib.zeroFee();
 
-        // TODO reactivate
         // pool = new TestPool(
         //     address(registry), 
         //     instance.getNftId(), 
@@ -530,16 +528,15 @@ contract TestGifBase is Test {
         // console.log("pool deployed at", address(pool));
         // // solhint-disable-next-line
         // console.log("pool nftId", nftId, "state", state);
-    }
+    // }
 
 
-    function _deployDistribution(
-        bool isVerifying
-    )
-        internal
-    {
-        Fee memory distributionFee = FeeLib.percentageFee(15);
-        // TODO: reactivate
+    // function _deployDistribution(
+    //     bool isVerifying
+    // )
+    //     internal
+    // {
+        // Fee memory distributionFee = FeeLib.percentageFee(15);
         // distribution = new TestDistribution(
         //     address(registry), 
         //     instance.getNftId(), 
@@ -556,13 +553,12 @@ contract TestGifBase is Test {
         // console.log("distribution deployed at", address(pool));
         // // solhint-disable-next-line
         // console.log("distribution nftId", nftId, "state", state);
-    }
+    // }
 
 
-    function _deployProduct() internal {
-        Fee memory processingFee = FeeLib.zeroFee();
+    // function _deployProduct() internal {
+        // Fee memory processingFee = FeeLib.zeroFee();
 
-        // TODO: reactivate
         // product = new TestProduct(
         //     address(registry), 
         //     instance.getNftId(), 
@@ -586,27 +582,26 @@ contract TestGifBase is Test {
         // console.log("product nftId", nftId, "state", state);
         // // solhint-disable-next-line
         // console.log("product token handler deployed at", address(tokenHandler));
-    }
+    // }
 
-    function _createBundle(
-        Fee memory fee,
-        uint256 amount,
-        uint256 lifetime
-    ) 
-        internal
-    {
-        // TODO: reactivate
+    // function _createBundle(
+    //     Fee memory fee,
+    //     uint256 amount,
+    //     uint256 lifetime
+    // ) 
+    //     internal
+    // {
         // bundleNftId = pool.createBundle(
         //     fee,
         //     amount,
         //     lifetime,
         //     "");
 
-        // solhint-disable-next-line
-        console.log("bundle fundet with", amount);
-        // solhint-disable-next-line
-        console.log("bundle nft id", bundleNftId.toInt());
-    }
+    //     // solhint-disable-next-line
+    //     console.log("bundle fundet with", amount);
+    //     // solhint-disable-next-line
+    //     console.log("bundle nft id", bundleNftId.toInt());
+    // }
     
     function _prepareDistributionAndPool() internal {
         vm.startPrank(instanceOwner);
