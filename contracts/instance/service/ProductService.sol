@@ -519,8 +519,9 @@ contract ProductService is ComponentServiceBase, IProductService {
         view
         returns (NftId poolNftid)
     {
-        // FIXME: this
-        // return instance.getTreasuryInfo(productNftId).poolNftId;
+        InstanceReader instanceReader = instance.getInstanceReader();
+        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+        return productSetupInfo.poolNftId;
     }
 
 
