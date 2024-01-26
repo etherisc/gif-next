@@ -232,6 +232,10 @@ contract Registry is
         return _nftIdByAddress[object].gtz();
     }
 
+    function isRegisteredService(address object) external view override returns (bool) {
+        return _nftIdByAddress[object].gtz() && _info[_nftIdByAddress[object]].objectType == SERVICE();
+    }
+
     function getServiceName(NftId nftId) external view returns (string memory) {
         return _string[nftId];
     }

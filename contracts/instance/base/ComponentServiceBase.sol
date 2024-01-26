@@ -36,6 +36,13 @@ abstract contract ComponentServiceBase is Service {
         _;
     }
 
+    /// @dev modifier to check if caller is a registered service
+    modifier onlyService() {
+        address caller = msg.sender;
+        require(getRegistry().isRegisteredService(caller), "ERROR_NOT_SERVICE");
+        _;
+    }
+
     function _initializeService(
         address registry, 
         address initialOwner

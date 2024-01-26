@@ -167,11 +167,14 @@ contract PoolService is
         instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
-    function updateBundle(NftId instanceNftId, NftId bundleNftId, IBundle.BundleInfo memory bundleInfo, StateId state) external {
+    function updateBundle(NftId instanceNftId, NftId bundleNftId, IBundle.BundleInfo memory bundleInfo, StateId state) 
+        external
+        onlyService
+    {
         IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
         IInstance instance = IInstance(instanceInfo.objectAddress);
         instance.updateBundle(bundleNftId, bundleInfo, state);
-    }
+    } 
 
     function _processStakingByTreasury(
         InstanceReader instanceReader,
