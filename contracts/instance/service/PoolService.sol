@@ -17,7 +17,7 @@ import {POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
-import {KEEP_STATE} from "../../types/StateId.sol";
+import {KEEP_STATE, StateId} from "../../types/StateId.sol";
 import {zeroTimestamp} from "../../types/Timestamp.sol";
 
 import {IService} from "../../shared/IService.sol";
@@ -27,7 +27,6 @@ import {IPoolService} from "./IPoolService.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
-
 
 string constant POOL_SERVICE_NAME = "PoolService";
 
@@ -136,13 +135,11 @@ contract PoolService is
 
         // TODO add bundle to pool in instance
         
-        // TODO collect capital
-        // _processStakingByTreasury(
-        //     instanceReader,
-        //     zeroNftId(),
-        //     poolNftId,
-        //     bundleNftId,
-        //     stakingAmount);
+        _processStakingByTreasury(
+            instanceReader,
+            poolNftId,
+            bundleNftId,
+            stakingAmount);
 
         // TODO add logging
     }
@@ -167,11 +164,17 @@ contract PoolService is
         instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
-
+    function updateBundle(NftId instanceNftId, NftId bundleNftId, IBundle.BundleInfo memory bundleInfo, StateId state) 
+        external
+        onlyService
+    {
+        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
+        IInstance instance = IInstance(instanceInfo.objectAddress);
+        instance.updateBundle(bundleNftId, bundleInfo, state);
+    } 
 
     function _processStakingByTreasury(
         InstanceReader instanceReader,
-        NftId productNftId,
         NftId poolNftId,
         NftId bundleNftId,
         uint256 stakingAmount
@@ -180,15 +183,22 @@ contract PoolService is
     {
         // process token transfer(s)
         if(stakingAmount > 0) {
-            TokenHandler tokenHandler = TokenHandler(instanceReader.getTokenHandler(productNftId));
-            address bundleOwner = getRegistry().ownerOf(bundleNftId);
             ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
-            
+            TokenHandler tokenHandler = poolInfo.tokenHandler;
+            address bundleOwner = getRegistry().ownerOf(bundleNftId);
+            Fee memory stakingFee = poolInfo.stakingFee;
+
             tokenHandler.transfer(
                 bundleOwner,
                 poolInfo.wallet,
                 stakingAmount
             );
+
+
+            if (! FeeLib.feeIsZero(stakingFee)) {
+                (uint256 stakingFeeAmount, uint256 netAmount) = FeeLib.calculateFee(stakingFee, stakingAmount);
+                // TODO: track staking fees in pool's state (issue #177)
+            }
         }
     }
 }

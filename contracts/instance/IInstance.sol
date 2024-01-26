@@ -13,15 +13,18 @@ import {IBundle} from "./module/IBundle.sol";
 import {ISetup} from "./module/ISetup.sol";
 import {NftId} from "../types/NftId.sol";
 import {StateId} from "../types/StateId.sol";
+import {RiskId} from "../types/RiskId.sol";
+import {IRisk} from "./module/IRisk.sol";
+import {IPolicy} from "./module/IPolicy.sol";
+import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
-interface IInstance is IERC165 {
+
+interface IInstance is IERC165, IKeyValueStore {
 
     function getComponentOwnerService() external view returns (IComponentOwnerService);
     function getDistributionService() external view returns (IDistributionService);
-    // function getProductService() external view returns (IProductService);
+    function getProductService() external view returns (IProductService);
     function getPoolService() external view returns (IPoolService);
-
-    function createProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup) external;
 
     function createDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup) external;
     function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external;
@@ -34,6 +37,18 @@ interface IInstance is IERC165 {
     function createBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle) external;
     function updateBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle, StateId newState) external;
     function updateBundleState(NftId bundleNftId, StateId newState) external;
+
+    function createProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup) external;
+    function updateProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup, StateId newState) external;
+    function updateProductSetupState(NftId productNftId, StateId newState) external;
+
+    function createRisk(RiskId riskId, IRisk.RiskInfo memory risk) external;
+    function updateRisk(RiskId riskId, IRisk.RiskInfo memory risk, StateId newState) external;
+    function updateRiskState(RiskId riskId, StateId newState) external;
+
+    function createPolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy) external;
+    function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
+    function updatePolicyState(NftId policyNftId, StateId newState) external;
 
     function getInstanceReader() external view returns (InstanceReader);
 }

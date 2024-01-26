@@ -27,6 +27,7 @@ import {ComponentOwnerService} from "./service/ComponentOwnerService.sol";
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
+import {IProductService} from "./service/IProductService.sol";
 import {VersionPart} from "../types/Version.sol";
 
 contract Instance is
@@ -423,10 +424,9 @@ contract Instance is
         return IDistributionService(_registry.getServiceAddress("DistributionService", VersionPart.wrap(3)));
     }
 
-    // TODO reactivate when services are available
-    // function getProductService() external view returns (IProductService) {
-    //     return ProductService(_registry.getServiceAddress("ProductService", VersionPart.wrap(3)));
-    // }
+    function getProductService() external view returns (IProductService) {
+        return IProductService(_registry.getServiceAddress("ProductService", VersionPart.wrap(3)));
+    }
 
     function getPoolService() external view returns (IPoolService) {
         return IPoolService(_registry.getServiceAddress("PoolService", VersionPart.wrap(3)));

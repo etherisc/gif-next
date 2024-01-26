@@ -24,6 +24,7 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {Pool} from "../components/Pool.sol";
+import {Distribution} from "../components/Distribution.sol";
 
 import {zeroNftId} from "../types/NftId.sol";
 
@@ -32,9 +33,10 @@ contract Product is BaseComponent, IProductComponent {
 
     IProductService internal _productService;
     Pool internal _pool;
-    address internal _distribution;
+    Distribution internal _distribution;
     Fee internal _initialProductFee;
     Fee internal _initialProcessingFee;
+    TokenHandler internal _tokenHandler;
 
     NftId internal _poolNftId;
     NftId internal _distributionNftId;
@@ -51,15 +53,16 @@ contract Product is BaseComponent, IProductComponent {
         address initialOwner
     ) BaseComponent(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
-        // TODO: reactivate when services are available again
-        // _productService = _instance.getProductService();
+        _productService = _instance.getProductService();
         _pool = Pool(pool);
-        _distribution = distribution;
+        _distribution = Distribution(distribution);
         _initialProductFee = productFee;
         _initialProcessingFee = processingFee;  
 
+        _tokenHandler = new TokenHandler(token);
+
         _poolNftId = getRegistry().getNftId(address(_pool));
-        _distributionNftId = getRegistry().getNftId(_distribution);
+        _distributionNftId = getRegistry().getNftId(address(_distribution));
 
         _registerInterface(type(IProductComponent).interfaceId);  
     }
@@ -118,13 +121,13 @@ contract Product is BaseComponent, IProductComponent {
         );
     }
 
-    function _setRiskInfo(
+    function _updateRisk(
         RiskId id,
-        IRisk.RiskInfo memory info
+        bytes memory data
     ) internal {
-        _productService.setRiskInfo(
+        _productService.updateRisk(
             id,
-            info
+            data
         );
     }
 
@@ -202,7 +205,7 @@ contract Product is BaseComponent, IProductComponent {
     }
 
     function getDistributionNftId() external view override returns (NftId distributionNftId) {
-        return getRegistry().getNftId(_distribution);
+        return getRegistry().getNftId(address(_distribution));
     }
 
     // from product component
@@ -218,28 +221,12 @@ contract Product is BaseComponent, IProductComponent {
     }
 
     function getSetupInfo() public view returns (ISetup.ProductSetupInfo memory setupInfo) {
-        if (getNftId().eq(zeroNftId())) {
-            return ISetup.ProductSetupInfo(
-                _token,
-                TokenHandler(address(0)),
-                _distributionNftId,
-                _poolNftId,
-                FeeLib.zeroFee(), //_instance.getDistributionFee(_distributionNftId)
-                _initialProductFee,
-                _initialProcessingFee,
-                FeeLib.zeroFee(), //_instance.getPoolFee(_poolNftId)
-                FeeLib.zeroFee(), //_instance.getStakingFee(_poolNftId)
-                FeeLib.zeroFee() //_instance.getPerformanceFee(_poolNftId)
-            );
-        } 
-
         InstanceReader reader = _instance.getInstanceReader();
         return reader.getProductSetupInfo(getNftId());
     }
 
     // from IRegisterable
 
-    // TODO used only once, occupies space
     function getInitialInfo() 
         public
         view 
@@ -251,7 +238,7 @@ contract Product is BaseComponent, IProductComponent {
             IRegistry.ObjectInfo memory productInfo, 
             bytes memory data
         ) = super.getInitialInfo();
- 
+        
         // TODO read pool & distribution fees
         // 1) from pool -> the only option -> pool must be registered first?
         // 2) from instance -> all fees are set into instance at product registration which is ongoing here
@@ -261,35 +248,40 @@ contract Product is BaseComponent, IProductComponent {
         
         // from PoolComponent
         (
-            IRegistry.ObjectInfo memory poolInfo, 
+            , 
             bytes memory poolData
         ) = _pool.getInitialInfo();
+        
+        (
+            ISetup.PoolSetupInfo memory poolSetupInfo
+        )  = abi.decode(poolData, (ISetup.PoolSetupInfo));
+
+        // from DistributionComponent
+        (
+            , 
+            bytes memory distributionData
+        ) = _distribution.getInitialInfo();
 
         (
-            /*IPool.PoolInfo memory info*/,
-            /*address wallet*/,
-            /*IERC20Metadata token*/,
-            Fee memory initialPoolFee,
-            Fee memory initialStakingFee,
-            Fee memory initialPerformanceFee
-        )  = abi.decode(poolData, (ISetup.PoolSetupInfo, address, IERC20Metadata, Fee, Fee, Fee));
-
-        // TODO from DistributionComponent
+            ISetup.DistributionSetupInfo memory distributionSetupInfo
+        )  = abi.decode(distributionData, (ISetup.DistributionSetupInfo));
 
         return (
             productInfo,
             abi.encode(
                 ISetup.ProductSetupInfo(
                     _token,
-                    TokenHandler(address(0)),
+                    _tokenHandler,
                     _distributionNftId,
                     _poolNftId,
-                    FeeLib.zeroFee(), //_instance.getDistributionFee(_distributionNftId)
+                    distributionSetupInfo.distributionFee, 
                     _initialProductFee,
                     _initialProcessingFee,
-                    initialPoolFee,
-                    initialStakingFee,
-                    initialPerformanceFee
+                    poolSetupInfo.poolFee, 
+                    poolSetupInfo.stakingFee, 
+                    poolSetupInfo.performanceFee,
+                    false,
+                    _wallet
                 )
             )
         );

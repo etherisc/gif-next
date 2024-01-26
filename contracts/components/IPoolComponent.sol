@@ -55,7 +55,7 @@ interface IPoolComponent {
         view
         returns (bool isMatching);
 
-    function isVerifying() external view returns (bool verifying);
+    function isConfirmingApplication() external view returns (bool isConfirmingApplication);
 
     function getCollateralizationLevel() external view returns (UFixed collateralizationLevel);
 
