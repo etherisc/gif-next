@@ -623,7 +623,7 @@ contract TestGifBase is Test {
             FeeLib.zeroFee(),
             distributionOwner
         );
-        NftId distributionNftId = distributionService.register(address(distribution));
+        distributionNftId = distributionService.register(address(distribution));
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
@@ -639,7 +639,7 @@ contract TestGifBase is Test {
             FeeLib.zeroFee(),
             poolOwner
         );
-        NftId poolNftId = poolService.register(address(pool));
+        poolNftId = poolService.register(address(pool));
         vm.stopPrank();
     }
 

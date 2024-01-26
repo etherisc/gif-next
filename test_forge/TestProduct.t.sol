@@ -55,25 +55,6 @@ contract TestProduct is TestGifBase {
     function test_Product_calculatePremium() public {
         _prepareProduct();  
 
-        vm.startPrank(distributionOwner);
-        Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        distribution.setFees(distributionFee);
-        vm.stopPrank();
-
-
-        vm.startPrank(poolOwner);
-        Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
-
-        Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        NftId bundleNftId = pool.createBundle(
-            bundleFee, 
-            10000, 
-            604800, 
-            ""
-        );
-        vm.stopPrank();
-
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
@@ -98,24 +79,7 @@ contract TestProduct is TestGifBase {
     function test_Product_createApplication() public {
         _prepareProduct();  
 
-        vm.startPrank(distributionOwner);
-        Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        distribution.setFees(distributionFee);
-        vm.stopPrank();
-
-
-        vm.startPrank(poolOwner);
-        Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
-
-        Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        NftId bundleNftId = pool.createBundle(
-            bundleFee, 
-            10000, 
-            604800, 
-            ""
-        );
-        vm.stopPrank();
+        
 
         vm.startPrank(productOwner);
 
@@ -154,24 +118,7 @@ contract TestProduct is TestGifBase {
         // GIVEN
         _prepareProduct();  
 
-        vm.startPrank(distributionOwner);
-        Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        distribution.setFees(distributionFee);
-        vm.stopPrank();
-
-
-        vm.startPrank(poolOwner);
-        Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
-
-        Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        NftId bundleNftId = pool.createBundle(
-            bundleFee, 
-            10000, 
-            604800, 
-            ""
-        );
-        vm.stopPrank();
+        
 
         vm.startPrank(productOwner);
 
@@ -220,24 +167,7 @@ contract TestProduct is TestGifBase {
 
         _prepareProduct();  
 
-        vm.startPrank(distributionOwner);
-        Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        distribution.setFees(distributionFee);
-        vm.stopPrank();
-
-
-        vm.startPrank(poolOwner);
-        Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
-
-        Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        NftId bundleNftId = pool.createBundle(
-            bundleFee, 
-            10000, 
-            604800, 
-            ""
-        );
-        vm.stopPrank();
+        
 
         vm.startPrank(productOwner);
 
@@ -290,31 +220,14 @@ contract TestProduct is TestGifBase {
 
         assertEq(token.balanceOf(address(product)), 10, "product balance not 10");
         assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
-        assertEq(token.balanceOf(address(pool)), 130, "pool balance not 130");
+        assertEq(token.balanceOf(address(pool)), 10130, "pool balance not 130");
     }
 
     function test_Product_activate() public {
         // GIVEN
         _prepareProduct();  
 
-        vm.startPrank(distributionOwner);
-        Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        distribution.setFees(distributionFee);
-        vm.stopPrank();
-
-
-        vm.startPrank(poolOwner);
-        Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
-
-        Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        NftId bundleNftId = pool.createBundle(
-            bundleFee, 
-            10000, 
-            604800, 
-            ""
-        );
-        vm.stopPrank();
+        
 
         vm.startPrank(productOwner);
 
@@ -431,6 +344,34 @@ contract TestProduct is TestGifBase {
         productNftId = productService.register(address(product));
         // TODO: this could probably be done within register and also set on pool and distribution on one shot
         product.setProductNftId(productNftId);
+        vm.stopPrank();
+
+        vm.startPrank(distributionOwner);
+        Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        distribution.setFees(distributionFee);
+        vm.stopPrank();
+
+
+        vm.startPrank(poolOwner);
+        Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
+        vm.stopPrank();
+
+        vm.startPrank(registryOwner);
+        token.transfer(investor, 10000);
+        vm.stopPrank();
+
+        vm.startPrank(investor);
+        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+        token.approve(address(poolSetupInfo.tokenHandler), 10000);
+
+        Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        bundleNftId = pool.createBundle(
+            bundleFee, 
+            10000, 
+            604800, 
+            ""
+        );
         vm.stopPrank();
     }
 

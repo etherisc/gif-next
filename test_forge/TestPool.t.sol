@@ -69,6 +69,8 @@ contract TestPool is TestGifBase {
     }
 
     function test_Pool_createBundle() public {
+        _fundInvestor();
+
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
@@ -89,6 +91,12 @@ contract TestPool is TestGifBase {
         );
 
         NftId poolNftId = poolService.register(address(pool));
+        vm.stopPrank();
+
+        vm.startPrank(investor);
+
+        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+        token.approve(address(poolSetupInfo.tokenHandler), 10000);
 
         NftId bundleNftId = pool.createBundle(
             FeeLib.zeroFee(), 
@@ -98,9 +106,14 @@ contract TestPool is TestGifBase {
         );
 
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        assertEq(token.balanceOf(poolOwner), 0, "pool owner balance not 0");
+        assertEq(token.balanceOf(poolSetupInfo.wallet), 10000, "pool wallet balance not 10000");
     }
 
     function test_Pool_setBundleFee() public {
+        _fundInvestor();
+
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
@@ -121,6 +134,12 @@ contract TestPool is TestGifBase {
         );
 
         NftId poolNftId = poolService.register(address(pool));
+
+        vm.stopPrank();
+        vm.startPrank(investor);
+
+        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+        token.approve(address(poolSetupInfo.tokenHandler), 10000);
 
         NftId bundleNftId = pool.createBundle(
             FeeLib.zeroFee(), 
@@ -137,6 +156,12 @@ contract TestPool is TestGifBase {
         assertEq(bundleFee.fractionalFee.toInt(), 111, "bundle fee not 111");
         assertEq(bundleFee.fixedFee, 222, "bundle fee not 222");
 
+        vm.stopPrank();
+    }
+
+    function _fundInvestor() internal {
+        vm.startPrank(registryOwner);
+        token.transfer(investor, 10000);
         vm.stopPrank();
     }
 

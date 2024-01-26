@@ -8,6 +8,8 @@ import {IService} from "../../shared/IService.sol";
 import {IBundle} from "../module/IBundle.sol";
 
 interface IPoolService is IService {
+    error ErrorIPoolServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
+
     function setFees(
         Fee memory poolFee,
         Fee memory stakingFee,
