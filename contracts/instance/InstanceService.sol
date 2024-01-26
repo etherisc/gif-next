@@ -105,7 +105,6 @@ contract InstanceService is Service, IInstanceService {
         instanceProductServiceSelectors[5] = clonedInstance.createPolicy.selector;
         instanceProductServiceSelectors[6] = clonedInstance.updatePolicy.selector;
         instanceProductServiceSelectors[7] = clonedInstance.updatePolicyState.selector;
-        instanceProductServiceSelectors[8] = clonedInstance.updateBundle.selector;
         clonedAccessManager.setTargetFunctionRole(
             address(clonedInstance),
             instanceProductServiceSelectors, 

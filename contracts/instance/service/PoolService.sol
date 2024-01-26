@@ -17,7 +17,7 @@ import {POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
-import {KEEP_STATE} from "../../types/StateId.sol";
+import {KEEP_STATE, StateId} from "../../types/StateId.sol";
 import {zeroTimestamp} from "../../types/Timestamp.sol";
 
 import {IService} from "../../shared/IService.sol";
@@ -167,7 +167,11 @@ contract PoolService is
         instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
-
+    function updateBundle(NftId instanceNftId, NftId bundleNftId, IBundle.BundleInfo memory bundleInfo, StateId state) external {
+        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
+        IInstance instance = IInstance(instanceInfo.objectAddress);
+        instance.updateBundle(bundleNftId, bundleInfo, state);
+    }
 
     function _processStakingByTreasury(
         InstanceReader instanceReader,

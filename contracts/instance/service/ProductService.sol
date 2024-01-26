@@ -36,6 +36,8 @@ import {Service} from "../../shared/Service.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IProductService} from "./IProductService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
+import {IPoolService} from "./PoolService.sol";
+import {POOL_SERVICE_NAME} from "./PoolService.sol";
 
 string constant PRODUCT_SERVICE_NAME = "ProductService";
 
@@ -46,6 +48,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     string public constant NAME = "ProductService";
 
     address internal _registryAddress;
+    IPoolService internal _poolService;
 
     event LogProductServiceSender(address sender);
 
@@ -61,6 +64,8 @@ contract ProductService is ComponentServiceBase, IProductService {
         (_registryAddress, initialOwner) = abi.decode(data, (address, address));
 
         _initializeService(_registryAddress, owner);
+
+        _poolService = IPoolService(_registry.getServiceAddress(POOL_SERVICE_NAME, getMajorVersion()));
 
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IProductService).interfaceId);
@@ -417,7 +422,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         }
 
         instance.updatePolicy(policyNftId, policyInfo, UNDERWRITTEN());
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        _poolService.updateBundle(productInfo.parentNftId, bundleNftId, bundleInfo, KEEP_STATE());
 
         // involve pool if necessary
         {
