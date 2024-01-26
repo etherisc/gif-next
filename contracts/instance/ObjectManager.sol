@@ -54,8 +54,11 @@ contract ObjectManager is
     }
 
     function _add(NftId componentNftId, NftId objectNftId) internal {
-        LibNftIdSet.add(_allObjects[componentNftId], objectNftId);
-        LibNftIdSet.add(_activeObjects[componentNftId], objectNftId);
+        LibNftIdSet.Set storage allSet = _allObjects[componentNftId];
+        LibNftIdSet.Set storage activeSet = _activeObjects[componentNftId];
+
+        LibNftIdSet.add(allSet, objectNftId);
+        LibNftIdSet.add(activeSet, objectNftId);
     }
 
     function _activate(NftId componentNftId, NftId objectNftId) internal {

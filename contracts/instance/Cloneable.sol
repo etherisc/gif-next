@@ -11,17 +11,13 @@ abstract contract Cloneable is
 {
     event CloneableInitialized(address authority, address registry);
 
-    error CloneableAlreadyInitialized();
-    error CloneableAuthorityZero();
     error CloneableRegistryInvalid(address registry);
 
     IRegistry internal _registry;
 
-    bool private _initialized;
-
     constructor() {
-        _initialized = true;
-        __AccessManaged_init(address(0));
+        _disableInitializers();
+        _registry = IRegistry(address(0));
     }
 
     /// @dev call to initialize MUST be made in the same transaction as cloning of the contract
@@ -30,24 +26,13 @@ abstract contract Cloneable is
         address registry
     )
         public 
+        initializer
     {
-        // check/handle initialization
-        if (_initialized) {
-            revert CloneableAlreadyInitialized();
-        }
-
-        _initialized = true;
-
         // check/handle access managed
-        if (authority == address(0)) {
-            revert CloneableAuthorityZero();
-        }
-
         __AccessManaged_init(authority);
 
         // check/handle registry
-        IERC165 registryCandidate = IERC165(registry);
-        if (!registryCandidate.supportsInterface(type(IRegistry).interfaceId)) {
+        if (registry.code.length == 0) {
             revert CloneableRegistryInvalid(registry);
         }
 
