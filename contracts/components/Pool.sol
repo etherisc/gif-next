@@ -25,7 +25,7 @@ import {Registerable} from "../shared/Registerable.sol";
 contract Pool is BaseComponent, IPoolComponent {
     using NftIdLib for NftId;
 
-    bool internal _isVerifying;
+    bool internal _isConfirmingApplication;
     UFixed internal _collateralizationLevel;
 
     Fee internal _initialPoolFee;
@@ -60,7 +60,7 @@ contract Pool is BaseComponent, IPoolComponent {
         // TODO refactor into tokenNftId
         address token,
         bool isInterceptor,
-        bool verifying,
+        bool isConfirmingApplication,
         UFixed collateralizationLevel,
         Fee memory poolFee,
         Fee memory stakingFee,
@@ -69,7 +69,7 @@ contract Pool is BaseComponent, IPoolComponent {
     )
         BaseComponent(registry, instanceNftId, token, POOL(), isInterceptor, initialOwner)
     {
-        _isVerifying = verifying;
+        _isConfirmingApplication = isConfirmingApplication;
         // TODO add validation
         _collateralizationLevel = collateralizationLevel;
         _initialPoolFee = poolFee;
@@ -140,8 +140,8 @@ contract Pool is BaseComponent, IPoolComponent {
     }
 
 
-    function isVerifying() external view override returns (bool verifying) {
-        return _isVerifying;
+    function isConfirmingApplication() external view override returns (bool isConfirmingApplication) {
+        return _isConfirmingApplication;
     }
 
     function getCollateralizationLevel() external view override returns (UFixed collateralizationLevel) {
@@ -200,7 +200,8 @@ contract Pool is BaseComponent, IPoolComponent {
                     _initialPoolFee,
                     _initialStakingFee,
                     _initialPerformanceFee,
-                    _isVerifying,
+                    false,
+                    _isConfirmingApplication,
                     _wallet
                 )
             )

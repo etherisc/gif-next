@@ -21,6 +21,7 @@ interface ISetup {
         Fee poolFee; // pool fee on net premium
         Fee stakingFee; // pool fee on staked capital from investor
         Fee performanceFee; // pool fee on profits from capital investors
+        bool isIntercepting; // intercepts nft transfers (for products)
         address wallet;
     }
 
@@ -40,6 +41,7 @@ interface ISetup {
         Fee stakingFee; // pool fee on staked capital from investor
         Fee performanceFee; // pool fee on profits from capital investors
         bool isIntercepting; // intercepts nft transfers (for bundles)
+        bool isConfirmingApplication; // confirms applications before they are underwritten
         address wallet;
     }
 }

@@ -323,7 +323,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         returns (IBundle.BundleInfo memory)
     {
         bundleInfo.lockedAmount += collateralAmount;
-        // FIXME: this
+        // FIXME: track policy in bundle and how much is locked for it
         // instance.collateralizePolicy(bundleNftId, policyNftId, collateralAmount);
         return bundleInfo;
     }
@@ -432,8 +432,7 @@ contract ProductService is ComponentServiceBase, IProductService {
             NftId poolNftId = bundleInfo.poolNftId;
             ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
 
-            // FIXME: use poolInfo.isVerifying ???
-            if(poolInfo.isIntercepting) {
+            if(poolInfo.isConfirmingApplication) {
                 _underwriteByPool(
                     poolNftId,
                     policyNftId,

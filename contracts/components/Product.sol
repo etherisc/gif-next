@@ -280,6 +280,7 @@ contract Product is BaseComponent, IProductComponent {
                     poolSetupInfo.poolFee, 
                     poolSetupInfo.stakingFee, 
                     poolSetupInfo.performanceFee,
+                    false,
                     _wallet
                 )
             )
