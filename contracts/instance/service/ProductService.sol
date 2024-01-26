@@ -374,7 +374,6 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         // check match between policy and calling product
         NftId productNftId = productInfo.nftId;
-        // FIXME: this
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
         require(instanceReader.getPolicyState(policyNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
@@ -382,18 +381,20 @@ contract ProductService is ComponentServiceBase, IProductService {
         NftId bundleNftId;
         IBundle.BundleInfo memory bundleInfo;
         uint256 collateralAmount;
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+        {
+            ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
 
-        (
-            bundleNftId,
-            bundleInfo,
-            collateralAmount
-        ) = _getAndVerifyUnderwritingSetup(
-            instance,
-            instanceReader,
-            policyInfo,
-            productSetupInfo
-        );
+            (
+                bundleNftId,
+                bundleInfo,
+                collateralAmount
+            ) = _getAndVerifyUnderwritingSetup(
+                instance,
+                instanceReader,
+                policyInfo,
+                productSetupInfo
+            );
+        }
 
         // lock bundle collateral
         bundleInfo = _lockCollateralInBundle(
@@ -402,9 +403,11 @@ contract ProductService is ComponentServiceBase, IProductService {
             bundleInfo,
             policyNftId, 
             collateralAmount);
+        StateId newPolicyState = UNDERWRITTEN();
         
         // optional activation of policy
         if(activateAt > zeroTimestamp()) {
+            newPolicyState = ACTIVE();
             policyInfo.activatedAt = activateAt;
             policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
         }
@@ -421,7 +424,7 @@ contract ProductService is ComponentServiceBase, IProductService {
             bundleInfo.balanceAmount += netPremiumAmount;
         }
 
-        instance.updatePolicy(policyNftId, policyInfo, UNDERWRITTEN());
+        instance.updatePolicy(policyNftId, policyInfo, newPolicyState);
         _poolService.updateBundle(productInfo.parentNftId, bundleNftId, bundleInfo, KEEP_STATE());
 
         // involve pool if necessary
@@ -482,22 +485,21 @@ contract ProductService is ComponentServiceBase, IProductService {
         // TODO add logging
     }
 
-    // FIXME: this
     function activate(NftId policyNftId, Timestamp activateAt) external override {
         // check caller is registered product
         (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        InstanceReader instanceReader = instance.getInstanceReader();
 
-        // IPolicy.PolicyInfo memory policyInfo = instance.getPolicyInfo(policyNftId);
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
 
-        // require(
-        //     policyInfo.activatedAt.eqz(),
-        //     "ERROR:PRS-020:ALREADY_ACTIVATED");
+        require(
+            policyInfo.activatedAt.eqz(),
+            "ERROR:PRS-020:ALREADY_ACTIVATED");
 
-        // policyInfo.activatedAt = activateAt;
-        // policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+        policyInfo.activatedAt = activateAt;
+        policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-        // instance.setPolicyInfo(policyNftId, policyInfo);
-        // instance.updatePolicyState(policyNftId, ACTIVE());
+        instance.updatePolicy(policyNftId, policyInfo, ACTIVE());
 
         // TODO add logging
     }

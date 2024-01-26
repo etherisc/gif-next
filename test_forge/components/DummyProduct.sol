@@ -93,4 +93,11 @@ contract DummyProduct is Product {
         _underwrite(policyNftId, requirePremiumPayment, activateAt);
     }
 
+    function activate(
+        NftId policyNftId,
+        Timestamp activateAt
+    ) public {
+        _activate(policyNftId, activateAt);
+    }
+
 }

@@ -15,11 +15,11 @@ import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
-import {TimestampLib} from "../contracts/types/Timestamp.sol";
+import {TimestampLib, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
 import {ReferralLib} from "../contracts/types/Referral.sol";
-import {APPLIED, UNDERWRITTEN} from "../contracts/types/StateId.sol";
+import {APPLIED, ACTIVE, UNDERWRITTEN} from "../contracts/types/StateId.sol";
 import {POLICY} from "../contracts/types/ObjectType.sol";
 
 contract TestProduct is TestGifBase {
@@ -201,12 +201,83 @@ contract TestProduct is TestGifBase {
         dproduct.underwrite(policyNftId, false, TimestampLib.blockTimestamp()); 
 
         // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
+
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
+        assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
+        assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
+    }
+
+    function test_Product_activate() public {
+        // GIVEN
+        _prepareProduct();  
+
+        vm.startPrank(distributionOwner);
+        Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        distribution.setFees(distributionFee);
+        vm.stopPrank();
+
+
+        vm.startPrank(poolOwner);
+        Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
+
+        Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        NftId bundleNftId = pool.createBundle(
+            bundleFee, 
+            10000, 
+            604800, 
+            ""
+        );
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zeroFee());
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        DummyProduct dproduct = DummyProduct(address(product));
+        dproduct.createRisk(riskId, data);
+
+        NftId policyNftId = dproduct.createApplication(
+            customer,
+            riskId,
+            1000,
+            30,
+            "",
+            bundleNftId,
+            ReferralLib.zero()
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+
+        // WHEN
+        dproduct.underwrite(policyNftId, false, zeroTimestamp()); 
+
+        // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId) == UNDERWRITTEN(), "policy state not UNDERWRITTEN");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertTrue(policyInfo.activatedAt.eqz(), "activatedAt set");
+        assertTrue(policyInfo.expiredAt.eqz(), "expiredAt set");
+        
+        // another WHEN
+        dproduct.activate(policyNftId, TimestampLib.blockTimestamp());
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
+
+        // and THEN
+        policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
