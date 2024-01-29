@@ -140,4 +140,12 @@ contract BundleManager is
     function getActiveBundleNftId(NftId poolNftId, uint256 idx) external view returns(NftId bundleNftId) {
         return _getActiveObject(poolNftId, idx);
     }
+
+    function activePolicies(NftId bundleNftId) external view returns(uint256) {
+        return LibNftIdSet.size(_activePolicies[bundleNftId]);
+    }
+
+    function getActivePolicy(NftId bundleNftId, uint256 idx) external view returns(NftId policyNftId) {
+        return LibNftIdSet.getElementAt(_activePolicies[bundleNftId], idx);
+    }
 }
