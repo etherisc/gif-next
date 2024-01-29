@@ -51,7 +51,7 @@ hh docgen
 The resulting markdown files are written to `docs`
 
 
-### Deployment 
+### Full protocol deployment 
 
 Install the dependencies before running the script below for the first time.
 
@@ -80,6 +80,25 @@ Environment variables:
 - `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
 - `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
 - `ETHERSCAN_API_KEY` `POLYGONSCAN_API_KEY` the api key for etherscan/polygonscan (required for mumbai and mainnet)
+
+### Create a new instance
+
+Requires previous step to be completed. 
+
+```bash
+# set appropriate values vor env variables (see below)
+
+hh run --network <networkname> scripts/new_instance.ts
+```
+
+Currently an HD wallet is expected to be used for the deployment. The mnemonic of the wallet needs to be provided via the `WALLET_MNEMONIC` environment variable. 
+The instance owner will be the 11th address of the wallet.
+
+Environment variables:
+
+- `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
+- `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
+- `REGISTRY_ADDRESS` the address of the registry that is already deployed and configured and has a valid master instance
 
 
 ### Console
