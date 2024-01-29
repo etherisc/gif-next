@@ -7,6 +7,7 @@ import {IInstance} from "../../instance/IInstance.sol";
 import {IBundle} from "../../instance/module/IBundle.sol";
 import {TokenHandler} from "../../instance/module/ITreasury.sol";
 import {ISetup} from "../module/ISetup.sol";
+import {IPolicy} from "../module/IPolicy.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
@@ -18,7 +19,7 @@ import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 import {KEEP_STATE, StateId} from "../../types/StateId.sol";
-import {zeroTimestamp} from "../../types/Timestamp.sol";
+import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
@@ -209,8 +210,50 @@ contract PoolService is
 
         instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
         
+        linkPolicy(instance, policyNftId);
+    }
+
+    /// @dev links policy to bundle
+    function linkPolicy(IInstance instance, NftId policyNftId) 
+        internal
+        onlyService 
+    {
+        InstanceReader instanceReader = instance.getInstanceReader();
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+
+        // ensure policy has not yet been activated
+        if (policyInfo.activatedAt.gtz()) {
+            revert BundleManager.ErrorBundleManagerErrorPolicyAlreadyActivated(policyNftId);
+        }
+        
         BundleManager bundleManager = instance.getBundleManager();
         bundleManager.linkPolicy(policyNftId);
+    }
+
+        /// @dev unlinks policy from bundle
+    function unlinkPolicy(IInstance instance, NftId policyNftId) 
+        internal
+        onlyService 
+    {
+        InstanceReader instanceReader = instance.getInstanceReader();
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+
+        // ensure policy has no open claims
+        if (policyInfo.openClaimsCount > 0) {
+            revert BundleManager.ErrorBundleManagerPolicyWithOpenClaims(
+                policyNftId, 
+                policyInfo.openClaimsCount);
+        }
+
+        // ensure policy is closeable
+        if (policyInfo.expiredAt < TimestampLib.blockTimestamp()
+            || policyInfo.payoutAmount < policyInfo.sumInsuredAmount)
+        {
+            revert BundleManager.ErrorBundleManagerPolicyNotCloseable(policyNftId);
+        }
+        
+        BundleManager bundleManager = instance.getBundleManager();
+        bundleManager.unlinkPolicy(policyNftId);
     }
 
     function _processStakingByTreasury(

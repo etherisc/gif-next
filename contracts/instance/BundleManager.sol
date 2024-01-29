@@ -39,17 +39,8 @@ contract BundleManager is
     /// @dev links a policy with its bundle
     // to link a policy it MUST NOT yet have been activated
     // the bundle MUST be unlocked (active) for linking (underwriting) and registered with this instance
-    // TODO decide what is checked here (non upgradeable) and what is checked in the service (upgradeable)
     function linkPolicy(NftId policyNftId) external restricted() {
-        IPolicy.PolicyInfo memory policyInfo = _instanceReader.getPolicyInfo(policyNftId);
-
-        // ensure policy has not yet been activated
-        if (policyInfo.activatedAt.gtz()) {
-            revert ErrorBundleManagerErrorPolicyAlreadyActivated(policyNftId);
-        }
-
-        NftId bundleNftId = policyInfo.bundleNftId;
-        // TODO decide to use instance reader or registry
+        NftId bundleNftId = _instanceReader.getPolicyInfo(policyNftId).bundleNftId;
         // decision will likely depend on the decision what to check here and what in the service
         NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
 
@@ -67,26 +58,10 @@ contract BundleManager is
     // to unlink a policy it must closable, ie. meet one of the following criterias
     // - the policy MUST be past its expiry period and it MUST NOT have any open claims
     // - the policy's payoutAmount MUST be equal to its sumInsuredAmount and MUST NOT have any open claims
-    // TODO decide what is checked here (non upgradeable) and what is checked in the service (upgradeable)
     function unlinkPolicy(NftId policyNftId) external restricted() {
         IPolicy.PolicyInfo memory policyInfo = _instanceReader.getPolicyInfo(policyNftId);
 
-        // ensure policy has no open claims
-        if (policyInfo.openClaimsCount > 0) {
-            revert ErrorBundleManagerPolicyWithOpenClaims(
-                policyNftId, 
-                policyInfo.openClaimsCount);
-        }
-
-        // ensure policy is closeable
-        if (policyInfo.expiredAt < TimestampLib.blockTimestamp()
-            || policyInfo.payoutAmount < policyInfo.sumInsuredAmount)
-        {
-            revert ErrorBundleManagerPolicyNotCloseable(policyNftId);
-        }
-
         NftId bundleNftId = policyInfo.bundleNftId;
-        // TODO decide to use instance reader or registry
         // decision will likely depend on the decision what to check here and what in the service
         NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
 
