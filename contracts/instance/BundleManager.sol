@@ -40,7 +40,7 @@ contract BundleManager is
     // to link a policy it MUST NOT yet have been activated
     // the bundle MUST be unlocked (active) for linking (underwriting) and registered with this instance
     // TODO decide what is checked here (non upgradeable) and what is checked in the service (upgradeable)
-    function linkPolicy(NftId policyNftId) external {
+    function linkPolicy(NftId policyNftId) external restricted() {
         IPolicy.PolicyInfo memory policyInfo = _instanceReader.getPolicyInfo(policyNftId);
 
         // ensure policy has not yet been activated
@@ -68,7 +68,7 @@ contract BundleManager is
     // - the policy MUST be past its expiry period and it MUST NOT have any open claims
     // - the policy's payoutAmount MUST be equal to its sumInsuredAmount and MUST NOT have any open claims
     // TODO decide what is checked here (non upgradeable) and what is checked in the service (upgradeable)
-    function unlinkPolicy(NftId policyNftId) external {
+    function unlinkPolicy(NftId policyNftId) external restricted() {
         IPolicy.PolicyInfo memory policyInfo = _instanceReader.getPolicyInfo(policyNftId);
 
         // ensure policy has no open claims
@@ -102,7 +102,7 @@ contract BundleManager is
 
     /// @dev add a new bundle to a riskpool registerd with this instance
     // the corresponding pool is fetched via instance reader
-    function add(NftId bundleNftId) external {
+    function add(NftId bundleNftId) external restricted() {
         NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
 
         // ensure pool is registered with instance
@@ -115,13 +115,13 @@ contract BundleManager is
     }
 
     /// @dev unlocked (active) bundles are available to underwrite new policies
-    function unlock(NftId poolNftId , NftId bundleNftId) external {
+    function unlock(NftId poolNftId , NftId bundleNftId) external restricted() {
         _activate(poolNftId, bundleNftId);
         emit LogBundleManagerBundleUnlocked(poolNftId, bundleNftId);
     }
 
     /// @dev locked (deactivated) bundles may not underwrite any new policies
-    function lock(NftId poolNftId , NftId bundleNftId) external {
+    function lock(NftId poolNftId , NftId bundleNftId) external restricted() {
         _deactivate(poolNftId, bundleNftId);
         emit LogBundleManagerBundleLocked(poolNftId, bundleNftId);
     }

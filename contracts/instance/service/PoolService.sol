@@ -22,6 +22,7 @@ import {zeroTimestamp} from "../../types/Timestamp.sol";
 
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
+import {BundleManager} from "../BundleManager.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
@@ -133,7 +134,8 @@ contract PoolService is
         // create bundle info in instance
         instance.createBundle(bundleNftId, bundleInfo);
 
-        // TODO add bundle to pool in instance
+        BundleManager bundleManager = instance.getBundleManager();
+        bundleManager.add(bundleNftId);
         
         _processStakingByTreasury(
             instanceReader,
