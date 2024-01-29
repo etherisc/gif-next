@@ -15,12 +15,13 @@ import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
-import {TimestampLib, zeroTimestamp} from "../contracts/types/Timestamp.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
 import {ReferralLib} from "../contracts/types/Referral.sol";
 import {APPLIED, ACTIVE, UNDERWRITTEN} from "../contracts/types/StateId.sol";
 import {POLICY} from "../contracts/types/ObjectType.sol";
+import {BundleManager} from "../contracts/instance/BundleManager.sol";
 
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
@@ -229,6 +230,55 @@ contract TestProduct is TestGifBase {
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
+    }
+
+    function test_Product_underwrite_reverts_on_locked_bundle() public {
+        // GIVEN
+        _prepareProduct();  
+
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zeroFee());
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        MockProduct dproduct = MockProduct(address(product));
+        dproduct.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+        NftId policyNftId = dproduct.createApplication(
+            customer,
+            riskId,
+            1000,
+            30,
+            "",
+            bundleNftId,
+            ReferralLib.zero()
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        vm.stopPrank();
+
+        assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        vm.startPrank(investor);
+        pool.lockBundle(bundleNftId);
+
+        Timestamp now = TimestampLib.blockTimestamp();
+
+        // THEN - WHEN - try underwrite on locked bundle
+        vm.expectRevert();
+        dproduct.underwrite(policyNftId, false, now); 
+
+        // WHEN - unlock bundle and try underwrite again
+        pool.unlockBundle(bundleNftId);
+        dproduct.underwrite(policyNftId, false, now);
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
     }
 
     function test_Product_activate() public {

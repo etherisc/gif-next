@@ -171,6 +171,26 @@ contract Pool is BaseComponent, IPoolComponent {
         _poolService.setBundleFee(bundleNftId, fee);
     }
 
+    function lockBundle(
+        NftId bundleNftId
+    )
+        external
+        override
+        // TODO add onlyBundleOwner
+    {
+        _poolService.lockBundle(bundleNftId);
+    }
+
+    function unlockBundle(
+        NftId bundleNftId
+    )
+        external
+        override
+        // TODO add onlyBundleOwner
+    {
+        _poolService.unlockBundle(bundleNftId);
+    }
+
     function getSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
         InstanceReader reader = _instance.getInstanceReader();
         return reader.getPoolSetupInfo(getNftId());

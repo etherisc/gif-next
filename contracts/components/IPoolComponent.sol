@@ -43,6 +43,10 @@ interface IPoolComponent {
         uint256 collateralizationAmount
     ) external;
 
+    function lockBundle(NftId bundleNftId) external;
+
+    function unlockBundle(NftId bundleNftId) external;
+
     /**
      * @dev returns true iff the policy application data in policyData matches
      * with the bundle filter criteria encoded in bundleFilter. 

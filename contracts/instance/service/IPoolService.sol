@@ -43,9 +43,9 @@ interface IPoolService is IService {
 
     // function defundBundle(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
-    // function lockBundle(NftId bundleNftId) external;
+    function lockBundle(NftId bundleNftId) external;
 
-    // function unlockBundle(NftId bundleNftId) external;
+    function unlockBundle(NftId bundleNftId) external;
 
     // function closeBundle(NftId bundleNftId) external;
 }

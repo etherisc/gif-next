@@ -175,6 +175,22 @@ contract PoolService is
         instance.updateBundle(bundleNftId, bundleInfo, state);
     } 
 
+    function lockBundle(NftId bundleNftId) 
+        external
+    {
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        BundleManager bundleManager = instance.getBundleManager();
+        bundleManager.lock(bundleNftId);
+    }
+
+    function unlockBundle(NftId bundleNftId) 
+        external
+    {
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        BundleManager bundleManager = instance.getBundleManager();
+        bundleManager.unlock(bundleNftId);
+    }
+
     function underwritePolicy(IInstance instance,
         NftId policyNftId, 
         NftId bundleNftId, 
