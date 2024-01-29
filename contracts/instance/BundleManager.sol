@@ -32,7 +32,8 @@ contract BundleManager is
 
     mapping(NftId bundleNftId => LibNftIdSet.Set policies) internal _activePolicies;
 
-    constructor() ObjectManager() { }
+    constructor() ObjectManager() {
+    }
 
 
     /// @dev links a policy with its bundle

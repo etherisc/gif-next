@@ -15,6 +15,7 @@ import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
 import {KeyValueStore} from "./base/KeyValueStore.sol";
 import {IInstance} from "./IInstance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
+import {BundleManager} from "./BundleManager.sol";
 import {NftId} from "../types/NftId.sol";
 import {NumberId} from "../types/NumberId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET} from "../types/ObjectType.sol";
@@ -54,6 +55,7 @@ contract Instance is
 
     AccessManagerSimple internal _accessManager;
     InstanceReader internal _instanceReader;
+    BundleManager internal _bundleManager;
 
     constructor(address accessManagerAddress, address registryAddress, NftId registryNftId)
     {
@@ -439,5 +441,14 @@ contract Instance is
 
     function getInstanceReader() external view returns (InstanceReader) {
         return _instanceReader;
+    }
+    
+    function setBundleManager(BundleManager bundleManager) external restricted() {
+        require(address(_bundleManager) == address(0), "BundleManager is set");
+        _bundleManager = bundleManager;
+    }
+
+    function getBundleManager() external view returns (BundleManager) {
+        return _bundleManager;
     }
 }

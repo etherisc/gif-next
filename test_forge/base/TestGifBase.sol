@@ -20,6 +20,7 @@ import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 import {PoolServiceManager} from "../../contracts/instance/service/PoolServiceManager.sol";
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
+import {BundleManager} from "../../contracts/instance/BundleManager.sol";
 
 import {AccessManagerSimple} from "../../contracts/instance/AccessManagerSimple.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
@@ -92,11 +93,13 @@ contract TestGifBase is Test {
     NftId public poolServiceNftId;
 
     AccessManagerSimple masterInstanceAccessManager;
+    BundleManager masterBundleManager;
     Instance masterInstance;
     NftId masterInstanceNftId;
     InstanceReader masterInstanceReader;
 
     AccessManagerSimple instanceAccessManager;
+    BundleManager instanceBundleManager;
     Instance public instance;
     NftId public instanceNftId;
     InstanceReader public instanceReader;
@@ -451,10 +454,16 @@ contract TestGifBase is Test {
     function _deployMasterInstance() internal 
     {
         masterInstanceAccessManager = new AccessManagerSimple(masterInstanceOwner);
+        
         masterInstance = new Instance(address(masterInstanceAccessManager), address(registry), registryNftId);
         ( IRegistry.ObjectInfo memory masterInstanceObjectInfo, ) = registryService.registerInstance(masterInstance);
         masterInstanceNftId = masterInstanceObjectInfo.nftId;
+        
         masterInstanceReader = new InstanceReader(address(registry), masterInstanceNftId);
+        
+        masterBundleManager = new BundleManager();
+        masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), masterInstanceNftId);
+        masterInstance.setBundleManager(masterBundleManager);
         
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
@@ -464,6 +473,7 @@ contract TestGifBase is Test {
         instanceService.setAccessManagerMaster(address(masterInstanceAccessManager));
         instanceService.setInstanceMaster(address(masterInstance));
         instanceService.setInstanceReaderMaster(address(masterInstanceReader));
+        instanceService.setBundleManagerMaster(address(masterBundleManager));
     }
 
 
@@ -472,7 +482,8 @@ contract TestGifBase is Test {
             instanceAccessManager, 
             instance,
             instanceNftId,
-            instanceReader
+            instanceReader,
+            instanceBundleManager
         ) = instanceService.createInstanceClone();
 
         

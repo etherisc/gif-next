@@ -16,7 +16,6 @@ abstract contract Cloneable is
     IRegistry internal _registry;
 
     constructor() {
-        _disableInitializers();
         _registry = IRegistry(address(0));
     }
 

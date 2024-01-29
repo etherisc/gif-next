@@ -8,6 +8,7 @@ import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
+import {BundleManager} from "./BundleManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {Registry} from "../registry/Registry.sol";
 import {RegistryService} from "../registry/RegistryService.sol";
@@ -25,6 +26,7 @@ contract InstanceService is Service, IInstanceService {
     address internal _accessManagerMaster;
     address internal _instanceMaster;
     address internal _instanceReaderMaster;
+    address internal _instanceBundleManagerMaster;
 
     // TODO update to real hash when instance is stable
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
@@ -36,7 +38,8 @@ contract InstanceService is Service, IInstanceService {
             AccessManagerSimple clonedAccessManager, 
             Instance clonedInstance,
             NftId instanceNftId,
-            InstanceReader clonedInstanceReader
+            InstanceReader clonedInstanceReader,
+            BundleManager clonedBundleManager
         )
     {
         address instanceOwner = msg.sender;
@@ -61,10 +64,12 @@ contract InstanceService is Service, IInstanceService {
 
         _grantInitialAuthorizations(clonedAccessManager, clonedInstance);
 
-        // TODO add cloning of bundle manager, policy manager, ...
+        clonedBundleManager = BundleManager(Clones.clone(_instanceBundleManagerMaster));
+        clonedBundleManager.initialize(address(clonedAccessManager), _registryAddress, instanceNftId);
 
-        // TODO amend setters with instance specific bundle manager, policy manager ...
+        // TODO amend setters with instance specific , policy manager ...
         clonedInstance.setInstanceReader(clonedInstanceReader);
+        clonedInstance.setBundleManager(clonedBundleManager);
         
         // to complete setup switch instance ownership to the instance owner
         // TODO: use a role less powerful than admin, maybe INSTANCE_ADMIN (does not exist yet)
@@ -135,6 +140,13 @@ contract InstanceService is Service, IInstanceService {
         _instanceReaderMaster = instanceReaderMaster;
     }
 
+    function setBundleManagerMaster(address bundleManagerMaster) external {
+        require(
+            _instanceBundleManagerMaster == address(0),
+            "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
+        _instanceBundleManagerMaster = bundleManagerMaster;
+    }
+
     function getInstanceReaderMaster() external view returns (address) {
         return _instanceReaderMaster;
     }
@@ -145,6 +157,10 @@ contract InstanceService is Service, IInstanceService {
 
     function getAccessManagerMaster() external view returns (address) {
         return _accessManagerMaster;
+    }
+
+    function getBundleManagerMaster() external view returns (address) {
+        return _instanceBundleManagerMaster;
     }
 
     // From IService
