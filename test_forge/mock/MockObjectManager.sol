@@ -19,7 +19,7 @@ contract MockObjectManager is ObjectManager {
     }
 
     function objects(NftId componentNftId) external view returns (uint256) {
-        return _objs(componentNftId);
+        return _objects(componentNftId);
     }
 
     function contains(NftId componentNftId, NftId objectNftId) external view returns (bool) {

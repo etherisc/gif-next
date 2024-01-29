@@ -126,7 +126,7 @@ contract BundleManager is
     }
 
     function bundles(NftId poolNftId) external view returns(uint256) {
-        return _objs(poolNftId);
+        return _objects(poolNftId);
     }
 
     function getBundleNftId(NftId poolNftId, uint256 idx) external view returns(NftId bundleNftId) {

@@ -69,7 +69,7 @@ contract ObjectManager is
         LibNftIdSet.remove(_activeObjects[componentNftId], objectNftId);
     }
 
-    function _objs(NftId componentNftId) internal view returns (uint256) {
+    function _objects(NftId componentNftId) internal view returns (uint256) {
         return LibNftIdSet.size(_allObjects[componentNftId]);
     }
 
