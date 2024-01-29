@@ -11,7 +11,7 @@ import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
 import {UFixedLib} from "../../../contracts/types/UFixed.sol";
 import {ComponentServiceBase} from "../../../contracts/instance/base/ComponentServiceBase.sol";
-import {DummyProduct} from "../../components/DummyProduct.sol";
+import {MockProduct} from "../../mock/MockProduct.sol";
 
 contract TestProductService is TestGifBase {
     using NftIdLib for NftId;
@@ -20,7 +20,7 @@ contract TestProductService is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        product = new DummyProduct(
+        product = new MockProduct(
             address(registry),
             instanceNftId,
             address(token),
@@ -44,7 +44,7 @@ contract TestProductService is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        product = new DummyProduct(
+        product = new MockProduct(
             address(registry),
             instanceNftId,
             address(token),

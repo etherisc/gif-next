@@ -6,7 +6,7 @@ import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../contracts/types/RoleId.sol";
 import {Product} from "../contracts/components/Product.sol";
-import {DummyProduct} from "./components/DummyProduct.sol";
+import {MockProduct} from "./mock/MockProduct.sol";
 import {Distribution} from "../contracts/components/Distribution.sol";
 import {Pool} from "../contracts/components/Pool.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
@@ -62,7 +62,7 @@ contract TestProduct is TestGifBase {
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        DummyProduct dproduct = DummyProduct(address(product));
+        MockProduct dproduct = MockProduct(address(product));
         dproduct.createRisk(riskId, data);
 
         uint256 premium = product.calculatePremium(
@@ -88,7 +88,7 @@ contract TestProduct is TestGifBase {
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        DummyProduct dproduct = DummyProduct(address(product));
+        MockProduct dproduct = MockProduct(address(product));
         dproduct.createRisk(riskId, data);
 
         NftId policyNftId = dproduct.createApplication(
@@ -127,7 +127,7 @@ contract TestProduct is TestGifBase {
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        DummyProduct dproduct = DummyProduct(address(product));
+        MockProduct dproduct = MockProduct(address(product));
         dproduct.createRisk(riskId, data);
 
         NftId policyNftId = dproduct.createApplication(
@@ -176,7 +176,7 @@ contract TestProduct is TestGifBase {
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        DummyProduct dproduct = DummyProduct(address(product));
+        MockProduct dproduct = MockProduct(address(product));
         dproduct.createRisk(riskId, data);
 
         vm.stopPrank();
@@ -236,7 +236,7 @@ contract TestProduct is TestGifBase {
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        DummyProduct dproduct = DummyProduct(address(product));
+        MockProduct dproduct = MockProduct(address(product));
         dproduct.createRisk(riskId, data);
 
         NftId policyNftId = dproduct.createApplication(
@@ -284,7 +284,7 @@ contract TestProduct is TestGifBase {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
 
-        DummyProduct dproduct = DummyProduct(address(product));
+        MockProduct dproduct = MockProduct(address(product));
         dproduct.createRisk(riskId, data);
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
 
@@ -301,7 +301,7 @@ contract TestProduct is TestGifBase {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
 
-        DummyProduct dproduct = DummyProduct(address(product));
+        MockProduct dproduct = MockProduct(address(product));
         dproduct.createRisk(riskId, data);
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
 
@@ -327,7 +327,7 @@ contract TestProduct is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        product = new DummyProduct(
+        product = new MockProduct(
             address(registry),
             instanceNftId,
             address(token),
