@@ -10,7 +10,6 @@ import { ServiceAddresses, authorizeServices, deployAndRegisterServices } from "
 
 
 async function main() {
-    logger.info("deploying new GIF instance...");
     const { protocolOwner, masterInstanceOwner, instanceOwner } = await getNamedAccounts();
 
     // deploy protocol contracts
@@ -56,7 +55,6 @@ async function main() {
         // ["distributionOwner", distributionOwner], 
         // ["poolOwner", poolOwner]
         );
-    logger.info("GIF instance deployed successfully");
 }
 
 /**
