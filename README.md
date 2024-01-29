@@ -419,3 +419,46 @@ Distribution Service
 - registered via registry service by registry owner
 - registers distribution components for registered products via registry service by distribution owner (distribution owner role is permissend by the product's instance)
 - registers distributors for registered distribution components via registry service
+
+## Contract Organisation
+
+now 
+
+contracts
+  components
+  instance
+  registry
+  shared
+  types
+
+
+contracts
+  component
+    pool
+      Pool.sol
+      PoolService.sol
+    oracle
+    distribution
+    product
+      Product.sol
+      ProductService.sol
+    Component.sol
+    ComponentService.sol
+  instance
+    Instance.sol
+    InstanceAccessManager.sol
+    InstanceReader.sol
+    InstanceService.sol
+    InstanceServiceManager.sol
+  registry
+    ChainNft.sol
+    Registry.sol
+    RegistryService.sol
+    RegistryServiceManager.sol
+  shared
+    Registerable.sol
+    RegisterableUpgradable.sol
+  type
+    NftId.sol
+    ObjectType.sol
+

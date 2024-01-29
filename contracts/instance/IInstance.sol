@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
+import {BundleManager} from "./BundleManager.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
@@ -51,4 +52,5 @@ interface IInstance is IERC165, IKeyValueStore {
     function updatePolicyState(NftId policyNftId, StateId newState) external;
 
     function getInstanceReader() external view returns (InstanceReader);
+    function getBundleManager() external view returns (BundleManager);
 }

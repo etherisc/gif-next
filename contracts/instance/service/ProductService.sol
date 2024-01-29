@@ -380,9 +380,11 @@ contract ProductService is ComponentServiceBase, IProductService {
         NftId bundleNftId;
         IBundle.BundleInfo memory bundleInfo;
         uint256 collateralAmount;
+        uint256 netPremiumAmount = 0; // > 0 if immediate premium payment 
         {
             ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-
+            IBundle.BundleInfo memory bundleInfo;
+            
             (
                 bundleNftId,
                 bundleInfo,
@@ -395,6 +397,15 @@ contract ProductService is ComponentServiceBase, IProductService {
             );
         }
 
+
+        // lock bundle collateral
+        bundleInfo = _lockCollateralInBundle(
+            instance,
+            bundleNftId,
+            bundleInfo,
+            policyNftId, 
+            collateralAmount);
+        
         // lock bundle collateral
         bundleInfo = _lockCollateralInBundle(
             instance,
@@ -413,27 +424,25 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         // optional collection of premium
         if(requirePremiumPayment) {
-            uint256 netPremiumAmount = _processPremiumByTreasury(
+            netPremiumAmount = _processPremiumByTreasury(
                 instance, 
                 productInfo.nftId,
                 policyNftId, 
                 policyInfo.premiumAmount);
 
             policyInfo.premiumPaidAmount += policyInfo.premiumAmount;
-            bundleInfo.balanceAmount += netPremiumAmount;
         }
 
+        _poolService.underwritePolicy(instance, policyNftId, bundleNftId, collateralAmount, netPremiumAmount);
         instance.updatePolicy(policyNftId, policyInfo, newPolicyState);
-        _poolService.updateBundle(productInfo.parentNftId, bundleNftId, bundleInfo, KEEP_STATE());
 
         // involve pool if necessary
         {
-            NftId poolNftId = bundleInfo.poolNftId;
-            ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
+            ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(bundleInfo.poolNftId);
 
             if(poolInfo.isConfirmingApplication) {
                 _underwriteByPool(
-                    poolNftId,
+                    bundleInfo.poolNftId,
                     policyNftId,
                     policyInfo,
                     bundleInfo.filter,

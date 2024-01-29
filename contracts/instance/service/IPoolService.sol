@@ -6,6 +6,7 @@ import {Fee} from "../../types/Fee.sol";
 import {StateId} from "../../types/StateId.sol";
 import {IService} from "../../shared/IService.sol";
 import {IBundle} from "../module/IBundle.sol";
+import {IInstance} from "../../instance/IInstance.sol";
 
 interface IPoolService is IService {
     error ErrorIPoolServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
@@ -31,13 +32,20 @@ interface IPoolService is IService {
 
     function updateBundle(NftId instanceNftId, NftId bundleNftId, IBundle.BundleInfo memory bundleInfo, StateId state) external;
 
+    function underwritePolicy(IInstance instanceNftId,
+        NftId policyNftId, 
+        NftId bundleNftId, 
+        uint256 collateralAmount,
+        uint256 netPremium
+    ) external;
+
     // function fundBundle(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
     // function defundBundle(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
-    // function lockBundle(NftId bundleNftId) external;
+    function lockBundle(NftId bundleNftId) external;
 
-    // function unlockBundle(NftId bundleNftId) external;
+    function unlockBundle(NftId bundleNftId) external;
 
     // function closeBundle(NftId bundleNftId) external;
 }

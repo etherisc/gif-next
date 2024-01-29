@@ -10,7 +10,7 @@ import {NftId} from "../../contracts/types/NftId.sol";
 import {ReferralId} from "../../contracts/types/Referral.sol";
 import {Timestamp} from "../../contracts/types/Timestamp.sol";
 
-contract DummyProduct is Product {
+contract MockProduct is Product {
 
     constructor(
         address registry,

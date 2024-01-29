@@ -1,5 +1,5 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { IRegistryService__factory, InstanceService__factory } from "../../typechain-types";
+import { BundleManager, IRegistryService__factory, Instance, InstanceService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -23,7 +23,7 @@ export async function deployAndRegisterMasterInstance(
         owner,
         [await resolveAddress(owner)]);
 
-    const { address: instanceAddress } = await deployContract(
+    const { address: instanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",
         owner,
         [accessManagerAddress, registry.registryAddress, registry.registryNftId],
@@ -38,6 +38,7 @@ export async function deployAndRegisterMasterInstance(
             }
         }
     );
+    const instance = masterInstanceBaseContract as Instance;
 
     // FIXME register instance in registry
     logger.debug(`registering instance ${instanceAddress} in registry ...`);
@@ -68,10 +69,27 @@ export async function deployAndRegisterMasterInstance(
         }
     );
 
+    const {address: bundleManagerAddress, contract: bundleManagerBaseContrat} = await deployContract(
+        "BundleManager",
+        owner,
+        [],
+        { 
+            libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                LibNftIdSet: libraries.libNftIdSetAddress,
+            }
+        }
+    );
+    const bundleManager = bundleManagerBaseContrat as BundleManager;
+    await executeTx(() => bundleManager["initialize(address,address,uint96)"](accessManagerAddress, registry.registryAddress, BigInt(masterInstanceNfdId as string)));
+
+    await executeTx(() => instance.setBundleManager(bundleManagerAddress));
+
     logger.debug(`setting master addresses into instance service`);
     await executeTx(() => services.instanceService.setAccessManagerMaster(accessManagerAddress));
     await executeTx(() => services.instanceService.setInstanceMaster(instanceAddress));
     await executeTx(() => services.instanceService.setInstanceReaderMaster(instanceReaderAddress));
+    await executeTx(() => services.instanceService.setBundleManagerMaster(bundleManagerAddress));
     logger.info(`master addresses set`);
     
     return {
