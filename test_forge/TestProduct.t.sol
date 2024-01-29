@@ -152,11 +152,15 @@ contract TestProduct is TestGifBase {
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
+        assertEq(bundleInfo.balanceAmount, 10000, "lockedAmount not 1000");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
+
+        assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
+        assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
     function test_Product_underwriteWithPayment() public {
@@ -212,7 +216,8 @@ contract TestProduct is TestGifBase {
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
-
+        assertEq(bundleInfo.balanceAmount, 10000 + 130, "lockedAmount not 1000");
+        
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
@@ -221,6 +226,9 @@ contract TestProduct is TestGifBase {
         assertEq(token.balanceOf(address(product)), 10, "product balance not 10");
         assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
         assertEq(token.balanceOf(address(pool)), 10130, "pool balance not 130");
+
+        assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
+        assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
     function test_Product_activate() public {

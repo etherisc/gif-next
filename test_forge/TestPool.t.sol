@@ -115,6 +115,8 @@ contract TestPool is TestGifBase {
 
         assertEq(instanceBundleManager.bundles(poolNftId), 1, "expected only 1 bundle");
         assertTrue(instanceBundleManager.getBundleNftId(poolNftId, 0).eq(bundleNftId), "bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleManager.activeBundles(poolNftId), 1, "expected one active bundle");
+        assertTrue(instanceBundleManager.getActiveBundleNftId(poolNftId, 0).eq(bundleNftId), "active bundle nft id in bundle manager not equal to bundle nft id");
     }
 
     function test_Pool_setBundleFee() public {

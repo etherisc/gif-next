@@ -175,6 +175,28 @@ contract PoolService is
         instance.updateBundle(bundleNftId, bundleInfo, state);
     } 
 
+    function underwritePolicy(IInstance instance,
+        NftId policyNftId, 
+        NftId bundleNftId, 
+        uint256 collateralAmount,
+        uint256 netPremiumAmount
+    ) 
+        external
+        onlyService 
+    {
+        InstanceReader instanceReader = instance.getInstanceReader();
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+
+        // lock collateral
+        bundleInfo.lockedAmount += collateralAmount;
+        bundleInfo.balanceAmount += netPremiumAmount;
+
+        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        
+        BundleManager bundleManager = instance.getBundleManager();
+        bundleManager.linkPolicy(policyNftId);
+    }
+
     function _processStakingByTreasury(
         InstanceReader instanceReader,
         NftId poolNftId,
