@@ -77,7 +77,6 @@ export async function deployAndRegisterMasterInstance(
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
                 LibNftIdSet: libraries.libNftIdSetAddress,
-                TimestampLib: libraries.timestampLibAddress,
             }
         }
     );
