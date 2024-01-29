@@ -115,13 +115,15 @@ contract BundleManager is
     }
 
     /// @dev unlocked (active) bundles are available to underwrite new policies
-    function unlock(NftId poolNftId , NftId bundleNftId) external restricted() {
+    function unlock(NftId bundleNftId) external restricted() {
+        NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
         _activate(poolNftId, bundleNftId);
         emit LogBundleManagerBundleUnlocked(poolNftId, bundleNftId);
     }
 
     /// @dev locked (deactivated) bundles may not underwrite any new policies
-    function lock(NftId poolNftId , NftId bundleNftId) external restricted() {
+    function lock(NftId bundleNftId) external restricted() {
+        NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
         _deactivate(poolNftId, bundleNftId);
         emit LogBundleManagerBundleLocked(poolNftId, bundleNftId);
     }
