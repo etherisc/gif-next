@@ -102,6 +102,36 @@ contract TestDistribution is TestGifBase {
         assertEq(token.balanceOf(externallyOwnedWallet), 100000, "exeternally owned wallet balance not 100000");
     }
 
+    function test_BaseComponent_setWallet_to_component_with_balance() public {
+        // GIVEN        
+        _prepareDistribution();
+
+        address externallyOwnedWallet = makeAddr("externallyOwnedWallet");
+        distribution.setWallet(externallyOwnedWallet);
+        assertEq(distribution.getWallet(), externallyOwnedWallet, "wallet not externallyOwnedWallet");
+        
+        // put some tokens in the externally owned wallet
+        vm.stopPrank();
+        vm.startPrank(registryOwner);
+        token.transfer(address(externallyOwnedWallet), 100000);
+        vm.stopPrank();
+
+        // allowance from externally owned wallet to distribution component
+        vm.startPrank(externallyOwnedWallet);
+        token.approve(address(distribution), 100000);
+        vm.stopPrank();
+
+        vm.startPrank(distributionOwner);
+        
+        // WHEN
+        distribution.setWallet(address(distribution));
+
+        // THEN
+        assertEq(distribution.getWallet(), address(distribution), "wallet not changed to distribution component");
+        assertEq(token.balanceOf(address(distribution)), 100000, "balance of distribution component not 100000");
+        assertEq(token.balanceOf(externallyOwnedWallet), 0, "exeternally owned wallet balance not 0");
+    }
+
     function _prepareDistribution() internal {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);

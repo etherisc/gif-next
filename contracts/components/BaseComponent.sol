@@ -69,10 +69,15 @@ abstract contract BaseComponent is
         return _wallet;
     }
 
+    /// @dev Sets the wallet address for the component. if the current wallet 
+    /// has tokens, these will be transferred. 
+    /// if the new wallet address is externally owned, an approval from the 
+    /// owner of the external wallet for the component to move all tokens must exist. 
     function setWallet(address newWallet) external override onlyOwner {
         address currentWallet = _wallet;
         uint256 currentBalance = _token.balanceOf(currentWallet);
 
+        // checks
         if (newWallet == currentWallet) {
             revert ErrorBaseComponentWalletAddressIsSameAsCurrent(newWallet);
         }
@@ -89,12 +94,17 @@ abstract contract BaseComponent is
             }
         }
 
+        // effects
         _wallet = newWallet;
         emit LogBaseComponentWalletAddressChanged(newWallet);
 
+        // interactions
         if (currentBalance > 0) {
             // transfer tokens from current wallet to new wallet
-            _token.approve(address(this), currentBalance);
+            if (currentWallet == address(this)) {
+                _token.approve(address(this), currentBalance);
+            }
+            
             SafeERC20.safeTransferFrom(_token, currentWallet, newWallet, currentBalance);
             emit LogBaseComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
         }
