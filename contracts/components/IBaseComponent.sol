@@ -8,6 +8,11 @@ import {IInstance} from "../instance/IInstance.sol";
 import {NftId} from "../types/NftId.sol";
 
 interface IBaseComponent is IRegisterable {
+    error ErrorBaseComponentWalletAddressIsSameAsCurrent(address newWallet);
+    error ErrorBaseComponentWalletAllowanceTooSmall(address oldWallet, address newWallet, uint256 allowance, uint256 balance);
+
+    event LogBaseComponentWalletAddressChanged(address newWallet);
+    event LogBaseComponentWalletTokensTransferred(address from, address to, uint256 amount);
 
     function lock() external;
 
@@ -15,6 +20,7 @@ interface IBaseComponent is IRegisterable {
 
     function getToken() external view returns (IERC20Metadata token);
 
+    function setWallet(address walletAddress) external;
     function getWallet() external view returns (address walletAddress);
 
     function getInstance() external view returns (IInstance instance);
