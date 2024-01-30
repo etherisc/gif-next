@@ -2,8 +2,9 @@
 pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 
-import {AccessManagerSimple} from "./AccessManagerSimple.sol";
+import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
@@ -35,7 +36,7 @@ contract InstanceService is Service, IInstanceService {
     function createInstanceClone()
         external 
         returns (
-            AccessManagerSimple clonedAccessManager, 
+            AccessManagerUpgradeableInitializeable clonedAccessManager, 
             Instance clonedInstance,
             NftId clonedInstanceNftId,
             InstanceReader clonedInstanceReader,
@@ -51,8 +52,8 @@ contract InstanceService is Service, IInstanceService {
         // initially set the authority of the access managar to this (being the instance service). 
         // This will allow the instance service to bootstrap the authorizations of the instance
         // and then transfer the ownership of the access manager to the instance owner once everything is setup
-        clonedAccessManager = AccessManagerSimple(Clones.clone(_accessManagerMaster));
-        clonedAccessManager.initialize(address(this));
+        clonedAccessManager = AccessManagerUpgradeableInitializeable(Clones.clone(_accessManagerMaster));
+        clonedAccessManager.__AccessManagerUpgradeableInitializeable_init(address(this));
 
         clonedInstance = Instance(Clones.clone(_instanceMaster));
         clonedInstance.initialize(address(clonedAccessManager), _registryAddress, registryNftId, msg.sender);
@@ -79,7 +80,7 @@ contract InstanceService is Service, IInstanceService {
         emit LogInstanceCloned(address(clonedAccessManager), address(clonedInstance), address(clonedInstanceReader), clonedInstanceNftId);
     }
 
-    function _grantInitialAuthorizations(AccessManagerSimple clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
+    function _grantInitialAuthorizations(AccessManagerUpgradeable clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
         // configure authorization for distribution service on instance
         address distributionServiceAddress = _registry.getServiceAddress("DistributionService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), distributionServiceAddress, 0);
@@ -221,7 +222,7 @@ contract InstanceService is Service, IInstanceService {
         IRegistry.ObjectInfo memory instanceObjectInfo = getRegistry().getObjectInfo(instanceNftId);
         address instanceAddress = instanceObjectInfo.objectAddress;
         Instance instance = Instance(instanceAddress);
-        AccessManagerSimple accessManager = AccessManagerSimple(instance.authority());
+        AccessManagerUpgradeable accessManager = AccessManagerUpgradeable(instance.authority());
         (bool isMember, uint32 executionDelay) = accessManager.hasRole(role.toInt(), account);
         if (executionDelay > 0) {
             return false;

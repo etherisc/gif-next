@@ -3,9 +3,10 @@ pragma solidity ^0.8.20;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
+// import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 
-import {AccessManagedSimple} from "./AccessManagedSimple.sol";
-import {AccessManagerSimple} from "./AccessManagerSimple.sol";
+import {AccessManagedUpgradeableInitializeable} from "./AccessManagedUpgradeableInitializeable.sol";
 import {IAccess} from "./module/IAccess.sol";
 import {IBundle} from "./module/IBundle.sol";
 import {IPolicy} from "./module/IPolicy.sol";
@@ -30,13 +31,12 @@ import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {VersionPart} from "../types/Version.sol";
+import {InstanceBase} from "./InstanceBase.sol";
 
 contract Instance is
-    AccessManagedSimple,
-    KeyValueStore,
+    AccessManagedUpgradeableInitializeable,
     IInstance,
-    ERC165,
-    Registerable
+    InstanceBase
 {
 
     uint64 public constant ADMIN_ROLE = type(uint64).min;
@@ -53,7 +53,7 @@ contract Instance is
 
     mapping(ShortString name => address target) internal _target;
 
-    AccessManagerSimple internal _accessManager;
+    AccessManagerUpgradeable internal _accessManager;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
 
@@ -65,9 +65,9 @@ contract Instance is
     function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) public {
         require(!_initialized, "Contract instance has already been initialized");
 
-        initializeAccessManagedSimple(accessManagerAddress);
+        __AccessManagedUpgradeableInitializeable_init(accessManagerAddress);
                 
-        _accessManager = AccessManagerSimple(accessManagerAddress);
+        _accessManager = AccessManagerUpgradeable(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
         _createRole(RoleIdLib.toRoleId(PUBLIC_ROLE), "PublicRole", false, false);
 
