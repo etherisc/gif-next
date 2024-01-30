@@ -15,6 +15,55 @@ contract TestDistribution is TestGifBase {
     using NftIdLib for NftId;
 
     function testSetFees() public {
+        // GIVEN
+        _prepareDistribution();
+
+        ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
+        Fee memory distributionFee = distributionSetupInfo.distributionFee;
+        assertEq(distributionFee.fractionalFee.toInt(), 0, "distribution fee not 0");
+        assertEq(distributionFee.fixedFee, 0, "distribution fee not 0");
+        
+        Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
+
+        // WHEN
+        distribution.setFees(newDistributionFee);
+
+        // THEN
+        distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
+        distributionFee = distributionSetupInfo.distributionFee;
+        assertEq(distributionFee.fractionalFee.toInt(), 123, "distribution fee not 123");
+        assertEq(distributionFee.fixedFee, 456, "distribution fee not 456");
+    }
+
+    function test_BaseComponent_setWalletToExternallyOwned() public {
+        // GIVEN
+        _prepareDistribution();
+
+        address externallyOwnerWallet = makeAddr("externallyOwnerWallet");
+
+        // WHEN
+        distribution.setWallet(externallyOwnerWallet);
+
+        // THEN
+        assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not changed to externallyOwnerWallet");
+    }
+
+    function test_BaseComponent_setWalletToContract() public {
+        // GIVEN
+        _prepareDistribution();
+
+        address externallyOwnerWallet = makeAddr("externallyOwnerWallet");
+        distribution.setWallet(externallyOwnerWallet);
+        assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not externallyOwnerWallet");
+
+        // WHEN
+        distribution.setWallet(address(distribution));
+
+        // THEN
+        assertEq(distribution.getWallet(), address(distribution), "wallet not changed to distribution component");
+    }
+
+    function _prepareDistribution() internal {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
         vm.stopPrank();
@@ -29,22 +78,7 @@ contract TestDistribution is TestGifBase {
             distributionOwner
         );
 
-        NftId distributionNftId = distributionService.register(address(distribution));
-
-        ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
-        Fee memory distributionFee = distributionSetupInfo.distributionFee;
-        assertEq(distributionFee.fractionalFee.toInt(), 0, "distribution fee not 0");
-        assertEq(distributionFee.fixedFee, 0, "distribution fee not 0");
-        
-        Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
-        distribution.setFees(newDistributionFee);
-
-        distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
-        distributionFee = distributionSetupInfo.distributionFee;
-        assertEq(distributionFee.fractionalFee.toInt(), 123, "distribution fee not 123");
-        assertEq(distributionFee.fixedFee, 456, "distribution fee not 456");
-
-        vm.stopPrank();
+        distributionNftId = distributionService.register(address(distribution));
     }
 
 }

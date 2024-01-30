@@ -9,6 +9,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 abstract contract BaseComponent is
     Registerable,
@@ -66,6 +67,36 @@ abstract contract BaseComponent is
         returns (address walletAddress)
     {
         return _wallet;
+    }
+
+    function setWallet(address newWallet) external override onlyOwner {
+        address currentWallet = _wallet;
+        uint256 currentBalance = _token.balanceOf(currentWallet);
+
+        if (newWallet == currentWallet) {
+            revert ErrorBaseComponentWalletAddressIsSameAsCurrent(newWallet);
+        }
+
+        if (currentBalance > 0) {
+            if (currentWallet == address(this)) {
+                // move tokens from component smart contract to external wallet
+            } else {
+                // move tokens from external wallet to component smart contract or another external wallet
+                uint256 allowance = _token.allowance(currentWallet, address(this));
+                if (allowance < currentBalance) {
+                    revert ErrorBaseComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
+                }
+            }
+        }
+
+        _wallet = newWallet;
+        emit LogBaseComponentWalletAddressChanged(newWallet);
+
+        if (currentBalance > 0) {
+            // transfer tokens from current wallet to new wallet
+            SafeERC20.safeTransferFrom(_token, currentWallet, newWallet, currentBalance);
+            emit LogBaseComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
+        }
     }
 
     function getToken() public view override returns (IERC20Metadata token) {
