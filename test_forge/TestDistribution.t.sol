@@ -132,6 +132,38 @@ contract TestDistribution is TestGifBase {
         assertEq(token.balanceOf(externallyOwnedWallet), 0, "exeternally owned wallet balance not 0");
     }
 
+    function test_BaseComponent_setWallet_to_another_externally_owned_with_balance() public {
+        // GIVEN        
+        _prepareDistribution();
+
+        address externallyOwnedWallet = makeAddr("externallyOwnedWallet");
+        address externallyOwnedWallet2 = makeAddr("externallyOwnedWallet2");
+        distribution.setWallet(externallyOwnedWallet);
+        assertEq(distribution.getWallet(), externallyOwnedWallet, "wallet not externallyOwnedWallet");
+        
+        // put some tokens in the externally owned wallet
+        vm.stopPrank();
+        vm.startPrank(registryOwner);
+        token.transfer(address(externallyOwnedWallet), 100000);
+        vm.stopPrank();
+
+        // allowance from externally owned wallet to distribution component
+        vm.startPrank(externallyOwnedWallet);
+        token.approve(address(distribution), 100000);
+        vm.stopPrank();
+
+        vm.startPrank(distributionOwner);
+        
+        // WHEN 
+        distribution.setWallet(externallyOwnedWallet2);
+
+        // THEN
+        assertEq(distribution.getWallet(), externallyOwnedWallet2, "wallet not changed to distribution component");
+        assertEq(token.balanceOf(address(distribution)), 0, "balance of distribution component not 100000");
+        assertEq(token.balanceOf(externallyOwnedWallet), 0, "exeternally owned wallet balance not 0");
+        assertEq(token.balanceOf(externallyOwnedWallet2), 100000, "exeternally owned wallet 2 balance not 100000");
+    }
+
     function _prepareDistribution() internal {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
