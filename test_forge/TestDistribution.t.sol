@@ -6,6 +6,7 @@ import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../contracts/types/RoleId.sol";
 import {Distribution} from "../contracts/components/Distribution.sol";
+import {IBaseComponent} from "../contracts/components/IBaseComponent.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
@@ -61,6 +62,21 @@ contract TestDistribution is TestGifBase {
 
         // THEN
         assertEq(distribution.getWallet(), address(distribution), "wallet not changed to distribution component");
+    }
+
+    function test_BaseComponent_setWallet_same_address() public {
+        // GIVEN
+        _prepareDistribution();
+
+        address externallyOwnerWallet = makeAddr("externallyOwnerWallet");
+        distribution.setWallet(externallyOwnerWallet);
+        assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not externallyOwnerWallet");
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(IBaseComponent.ErrorBaseComponentWalletAddressIsSameAsCurrent.selector, externallyOwnerWallet));
+
+        // WHEN
+        distribution.setWallet(externallyOwnerWallet);
     }
 
     function test_BaseComponent_setWallet_to_another_extowned() public {
@@ -130,6 +146,29 @@ contract TestDistribution is TestGifBase {
         assertEq(distribution.getWallet(), address(distribution), "wallet not changed to distribution component");
         assertEq(token.balanceOf(address(distribution)), 100000, "balance of distribution component not 100000");
         assertEq(token.balanceOf(externallyOwnedWallet), 0, "exeternally owned wallet balance not 0");
+    }
+
+    function test_BaseComponent_setWallet_to_component_without_allowance() public {
+        // GIVEN        
+        _prepareDistribution();
+
+        address externallyOwnedWallet = makeAddr("externallyOwnedWallet");
+        distribution.setWallet(externallyOwnedWallet);
+        assertEq(distribution.getWallet(), externallyOwnedWallet, "wallet not externallyOwnedWallet");
+        
+        // put some tokens in the externally owned wallet
+        vm.stopPrank();
+        vm.startPrank(registryOwner);
+        token.transfer(address(externallyOwnedWallet), 100000);
+        vm.stopPrank();
+
+        vm.startPrank(distributionOwner);
+        
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(IBaseComponent.ErrorBaseComponentWalletAllowanceTooSmall.selector, externallyOwnedWallet, address(distribution), 0, 100000));
+
+        // WHEN
+        distribution.setWallet(address(distribution));
     }
 
     function test_BaseComponent_setWallet_to_another_externally_owned_with_balance() public {
