@@ -52,10 +52,12 @@ abstract contract BaseComponent is
     }
 
     // from component contract
+    // TODO consider to remove/replace with access manager contract locking
     function lock() external onlyOwner override {
         _componentOwnerService.lock(this);
     }
 
+    // TODO consider to remove/replace with access manager contract locking
     function unlock() external onlyOwner override {
         _componentOwnerService.unlock(this);
     }
@@ -69,8 +71,8 @@ abstract contract BaseComponent is
         return _wallet;
     }
 
-    /// @dev Sets the wallet address for the component. if the current wallet 
-    /// has tokens, these will be transferred. 
+    /// @dev Sets the wallet address for the component. 
+    /// if the current wallet has tokens, these will be transferred. 
     /// if the new wallet address is externally owned, an approval from the 
     /// owner of the external wallet for the component to move all tokens must exist. 
     function setWallet(address newWallet) external override onlyOwner {
@@ -102,6 +104,7 @@ abstract contract BaseComponent is
         if (currentBalance > 0) {
             // transfer tokens from current wallet to new wallet
             if (currentWallet == address(this)) {
+                // transferFrom requires self allowance too
                 _token.approve(address(this), currentBalance);
             }
             
