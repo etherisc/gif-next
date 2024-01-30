@@ -1,18 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
-import {Registerable} from "../shared/Registerable.sol";
-
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IInstance} from "../instance/IInstance.sol";
-
-import {IInstance} from "../instance/IInstance.sol";
-import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
+import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
+import {Registerable} from "../shared/Registerable.sol";
 
 abstract contract BaseComponent is
     Registerable,
