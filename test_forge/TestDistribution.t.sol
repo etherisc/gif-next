@@ -35,7 +35,7 @@ contract TestDistribution is TestGifBase {
         assertEq(distributionFee.fixedFee, 456, "distribution fee not 456");
     }
 
-    function test_BaseComponent_setWalletToExternallyOwned() public {
+    function test_BaseComponent_setWallet_to_extowned() public {
         // GIVEN
         _prepareDistribution();
 
@@ -48,7 +48,7 @@ contract TestDistribution is TestGifBase {
         assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not changed to externallyOwnerWallet");
     }
 
-    function test_BaseComponent_setWalletToContract() public {
+    function test_BaseComponent_setWallet_to_component() public {
         // GIVEN
         _prepareDistribution();
 
@@ -61,6 +61,45 @@ contract TestDistribution is TestGifBase {
 
         // THEN
         assertEq(distribution.getWallet(), address(distribution), "wallet not changed to distribution component");
+    }
+
+    function test_BaseComponent_setWallet_to_another_extowned() public {
+        // GIVEN
+        _prepareDistribution();
+
+        address externallyOwnerWallet = makeAddr("externallyOwnerWallet");
+        distribution.setWallet(externallyOwnerWallet);
+        assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not externallyOwnerWallet");
+
+        address externallyOwnedWallet2 = makeAddr("externallyOwnerWallet2");
+
+        // WHEN
+        distribution.setWallet(externallyOwnedWallet2);
+
+        // THEN
+        assertEq(distribution.getWallet(), externallyOwnedWallet2, "wallet not changed to other externally owned wallet");
+    }
+    
+    function test_BaseComponent_setWallet_to_externally_owned_with_balance() public {
+        // GIVEN        
+        _prepareDistribution();
+
+        address externallyOwnedWallet = makeAddr("externallyOwnedWallet");
+        
+        // put some tokens in the distribution component
+        vm.stopPrank();
+        vm.startPrank(registryOwner);
+        token.transfer(address(distribution), 100000);
+        vm.stopPrank();
+        vm.startPrank(distributionOwner);
+
+        // WHEN
+        distribution.setWallet(externallyOwnedWallet);
+
+        // THEN
+        assertEq(distribution.getWallet(), externallyOwnedWallet, "wallet not changed to externally owned wallet");
+        assertEq(token.balanceOf(address(distribution)), 0, "balance of distribution component not 0");
+        assertEq(token.balanceOf(externallyOwnedWallet), 100000, "exeternally owned wallet balance not 100000");
     }
 
     function _prepareDistribution() internal {

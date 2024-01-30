@@ -94,6 +94,7 @@ abstract contract BaseComponent is
 
         if (currentBalance > 0) {
             // transfer tokens from current wallet to new wallet
+            _token.approve(address(this), currentBalance);
             SafeERC20.safeTransferFrom(_token, currentWallet, newWallet, currentBalance);
             emit LogBaseComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
         }
