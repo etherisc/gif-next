@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.20;
 
+import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -22,7 +23,7 @@ import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
 
-import {AccessManagerSimple} from "../../contracts/instance/AccessManagerSimple.sol";
+import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
@@ -92,13 +93,13 @@ contract TestGifBase is Test {
     PoolService public poolService;
     NftId public poolServiceNftId;
 
-    AccessManagerSimple masterInstanceAccessManager;
+    AccessManagerUpgradeableInitializeable masterInstanceAccessManager;
     BundleManager masterBundleManager;
     Instance masterInstance;
     NftId masterInstanceNftId;
     InstanceReader masterInstanceReader;
 
-    AccessManagerSimple instanceAccessManager;
+    AccessManagerUpgradeableInitializeable instanceAccessManager;
     BundleManager instanceBundleManager;
     Instance public instance;
     NftId public instanceNftId;
@@ -453,9 +454,11 @@ contract TestGifBase is Test {
 
     function _deployMasterInstance() internal 
     {
-        masterInstanceAccessManager = new AccessManagerSimple(masterInstanceOwner);
+        masterInstanceAccessManager = new AccessManagerUpgradeableInitializeable();
+        masterInstanceAccessManager.__AccessManagerUpgradeableInitializeable_init(masterInstanceOwner);
         
-        masterInstance = new Instance(address(masterInstanceAccessManager), address(registry), registryNftId);
+        masterInstance = new Instance();
+        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, masterInstanceOwner);
         ( IRegistry.ObjectInfo memory masterInstanceObjectInfo, ) = registryService.registerInstance(masterInstance);
         masterInstanceNftId = masterInstanceObjectInfo.nftId;
         

@@ -1,5 +1,5 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { BundleManager, IRegistryService__factory, IRegistry__factory, Instance, InstanceService__factory } from "../../typechain-types";
+import { AccessManagerUpgradeableInitializeable, BundleManager, IRegistryService__factory, IRegistry__factory, Instance, InstanceService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -18,15 +18,18 @@ export async function deployAndRegisterMasterInstance(
     registry: RegistryAddresses,
     services: ServiceAddresses,
 ): Promise<InstanceAddresses> {
-    const { address: accessManagerAddress } = await deployContract(
-        "AccessManagerSimple",
+    const { address: accessManagerAddress, contract: accessManagerBaseContract } = await deployContract(
+        "AccessManagerUpgradeableInitializeable",
         owner,
-        [await resolveAddress(owner)]);
+        []);
+
+    const accessManager = accessManagerBaseContract as AccessManagerUpgradeableInitializeable;
+    await executeTx(() => accessManager.__AccessManagerUpgradeableInitializeable_init(resolveAddress(owner)));
 
     const { address: instanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",
         owner,
-        [accessManagerAddress, registry.registryAddress, registry.registryNftId],
+        undefined,
         { 
             libraries: {
                 Key32Lib: libraries.key32LibAddress,
@@ -39,6 +42,7 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const instance = masterInstanceBaseContract as Instance;
+    await executeTx(() => instance.initialize(accessManagerAddress, registry.registryAddress, registry.registryNftId, owner.getAddress()));
 
     // FIXME register instance in registry
     logger.debug(`registering instance ${instanceAddress} in registry ...`);
@@ -131,34 +135,3 @@ export async function cloneInstanceFromRegistry(registryAddress: AddressLike, in
     } as InstanceAddresses;
 }
 
-
-// export enum Role { POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, PRODUCT_OWNER_ROLE }
-
-// export async function grantRole(instanceOwner: Signer, libraries: LibraryAddresses, instance: InstanceAddresses, role: Role, beneficiary: AddressLike): Promise<void> {
-//     const beneficiaryAddress = await resolveAddress(beneficiary);
-//     logger.debug(`granting role ${Role[role]} to ${beneficiaryAddress}`);
-
-//     const instanceAsInstanceOwner = Instance__factory.connect(instance.instanceAddress.toString(), instanceOwner);
-//     const roleIdLib = RoleIdLib__factory.connect(libraries.roleIdLibAddress.toString(), instanceOwner);
-    
-//     let roleValue: string;
-//     if (role === Role.POOL_OWNER_ROLE) {
-//         roleValue = await roleIdLib.toRoleId("PoolOwnerRole");
-//     } else if (role === Role.DISTRIBUTION_OWNER_ROLE) {
-//         roleValue = await roleIdLib.toRoleId("DistributionOwnerRole");
-//     } else if (role === Role.PRODUCT_OWNER_ROLE) {
-//         roleValue = await roleIdLib.toRoleId("ProductOwnerRole");
-//     } else {
-//         throw new Error("unknown role");
-//     }
-
-//     const hasRole = await instanceAsInstanceOwner.hasRole(roleValue, beneficiaryAddress);
-    
-//     if (hasRole) {
-//         logger.debug(`Role ${roleValue} already granted to ${beneficiaryAddress}`);
-//         return;
-//     }
-
-//     await executeTx(async () => await instanceAsInstanceOwner.grantRole(roleValue, beneficiaryAddress));
-//     logger.info(`Granted role ${roleValue} to ${beneficiaryAddress}`);
-// }
