@@ -12,7 +12,7 @@ import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
-import {DISTRIBUTION} from "../../types/ObjectType.sol";
+import {ObjectType, DISTRIBUTION} from "../../types/ObjectType.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
@@ -27,15 +27,12 @@ import {InstanceService} from "../InstanceService.sol";
 import {Instance} from "../Instance.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 
-string constant DISTRIBUTION_SERVICE_NAME = "DistributionService";
 
 contract DistributionService is
     ComponentServiceBase,
     IDistributionService
 {
     using NftIdLib for NftId;
-
-    string public constant NAME = "DistributionService";
 
     address internal _registryAddress;
     
@@ -57,9 +54,8 @@ contract DistributionService is
         _registerInterface(type(IDistributionService).interfaceId);
     }
 
-
-    function getName() public pure override(IService, Service) returns(string memory name) {
-        return NAME;
+    function getType() public pure override(Service, IService) returns(ObjectType) {
+        return DISTRIBUTION();
     }
 
     function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {

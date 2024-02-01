@@ -7,15 +7,13 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {Version, VersionPart, VersionLib, VersionPartLib} from "../types/Version.sol";
+import {ObjectType, SERVICE} from "../types/ObjectType.sol";
 import {NftOwnable} from "../shared/NftOwnable.sol";
 
 /// @title contract to register token per GIF major release.
 contract TokenRegistry is
     NftOwnable
 {
-
-    string public constant REGISTRY_SERVICE_NAME = "RegistryService";
-
     event LogRegistered(address token, string symbol, uint256 decimals);
     event LogTokenStateSet(address token, VersionPart majorVersion, bool active);
 
@@ -39,7 +37,7 @@ contract TokenRegistry is
         onlyOwner
     {
         IRegistry registry = IRegistry(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress(REGISTRY_SERVICE_NAME, registry.getMajorVersion());
+        address registryServiceAddress = registry.getServiceAddress(SERVICE(), registry.getMajorVersion());
 
         _linkToNftOwnable(registryAddress, registryServiceAddress);
     }
@@ -80,7 +78,7 @@ contract TokenRegistry is
         return _registered[token];
     }
 
-     function isActive(address token, VersionPart majorVersion) external view returns (bool) {
+    function isActive(address token, VersionPart majorVersion) external view returns (bool) {
         return _active[token][majorVersion];
     }
 

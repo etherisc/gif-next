@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
-import {ObjectType, INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE} from "../../types/ObjectType.sol";
+import {ObjectType, SERVICE, INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../types/RoleId.sol";
 
@@ -50,7 +50,7 @@ abstract contract ComponentServiceBase is Service {
     }
 
     function getInstanceService() public view returns (InstanceService) {
-        return InstanceService(getRegistry().getServiceAddress("InstanceService", getMajorVersion()));
+        return InstanceService(getRegistry().getServiceAddress(INSTANCE(), getMajorVersion()));
     }
 
     function register(address componentAddress) 
@@ -118,7 +118,7 @@ abstract contract ComponentServiceBase is Service {
     }
 
     function getRegistryService() public view virtual returns (IRegistryService) {
-        address service = getRegistry().getServiceAddress("RegistryService", getMajorVersion());
+        address service = getRegistry().getServiceAddress(SERVICE(), getMajorVersion());
         return IRegistryService(service);
     }
 }

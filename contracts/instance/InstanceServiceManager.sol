@@ -8,6 +8,7 @@ import {InstanceService} from "./InstanceService.sol";
 import {Registry} from "../registry/Registry.sol";
 import {RegistryService} from "../registry/RegistryService.sol";
 import {VersionLib} from "../types/Version.sol";
+import {SERVICE} from "../types/ObjectType.sol";
 
 contract InstanceServiceManager is ProxyManager {
 
@@ -29,7 +30,7 @@ contract InstanceServiceManager is ProxyManager {
         _instanceService = InstanceService(address(versionable));
 
         Registry registry = Registry(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address registryServiceAddress = registry.getServiceAddress(SERVICE(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
         // TODO this must have a role or own nft to register service
         //registryService.registerService(_instanceService);

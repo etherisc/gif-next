@@ -36,12 +36,6 @@ contract RegistryService is
 {
     using NftIdLib for NftId;
 
-
-    // Initial value for constant variable has to be compile-time constant
-    // TODO define types as constants?
-    //ObjectType public constant SERVICE_TYPE = REGISTRY(); 
-    string public constant NAME = "RegistryService";
-
     // TODO update to real hash when registry is stable
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 
@@ -201,13 +195,9 @@ contract RegistryService is
     }
 
     // From IService
-    function getName() public pure override(IService, Service) returns(string memory) {
-        return NAME;
+    function getType() public pure override(IService, Service) returns(ObjectType serviceType) {
+        return SERVICE(); 
     }
-    //function getType() public pure override(IService, ServiceBase) returns(ObjectType serviceType) {
-    //    return SERVICE_TYPE;
-    //}
-
 
     // from Versionable
 
@@ -256,7 +246,7 @@ contract RegistryService is
     function _getAndVerifyContractInfo(
         IRegisterable registerable,
         ObjectType expectedType, // assume can be valid only
-        address expectedOwner // assume can be 0
+        address expectedOwner // assume can be 0 when given by other service
     )
         internal
         view
@@ -305,10 +295,7 @@ contract RegistryService is
             revert InvalidParent(parentNftId);
         }*/
 
-        return(
-            info,
-            data
-        );
+        return(info, data);
     }
 
     function _verifyObjectInfo(

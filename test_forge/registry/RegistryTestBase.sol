@@ -63,8 +63,7 @@ contract RegistryTestBase is Test, FoundryRandom {
 
     // keep indentical to IRegistry events
     event LogRegistration(IRegistry.ObjectInfo info);
-
-    event LogServiceNameRegistration(string serviceName, VersionPart majorVersion);
+    event LogServiceRegistration(ObjectType serviceType, VersionPart majorVersion);
 
     address public constant NFT_LOCK_ADDRESS = address(0x1); // SERVICE and TOKEN nfts are minted for
     bytes32 public constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;
@@ -122,7 +121,7 @@ contract RegistryTestBase is Test, FoundryRandom {
         address address_;
     }
 
-    mapping(bytes32 serviceNameHash => mapping(
+    mapping(ObjectType => mapping(
             VersionPart majorVersion => ServiceInfo info)) public _service;
 
     uint public _servicesCount;
@@ -228,9 +227,8 @@ contract RegistryTestBase is Test, FoundryRandom {
         _nftIdByAddress[address(registry)] = registryNftId;
         _nftIdByAddress[address(registryService)] = registryServiceNftId;
 
-        bytes32 serviceNameHash = keccak256(abi.encode("RegistryService"));
-        _service[serviceNameHash][VersionLib.toVersionPart(GIF_VERSION)].nftId = registryServiceNftId;
-        _service[serviceNameHash][VersionLib.toVersionPart(GIF_VERSION)].address_ = address(registryService);
+        _service[SERVICE()][VersionLib.toVersionPart(GIF_VERSION)].nftId = registryServiceNftId;
+        _service[SERVICE()][VersionLib.toVersionPart(GIF_VERSION)].address_ = address(registryService);
 
         _servicesCount = 1;
 
@@ -315,10 +313,8 @@ contract RegistryTestBase is Test, FoundryRandom {
         _errorName[IRegistry.ZeroParentAddress.selector] = "ZeroParentAddress"; 
         _errorName[IRegistry.ContractAlreadyRegistered.selector] = "ContractAlreadyRegistered";
         _errorName[IRegistry.InvalidServiceVersion.selector] = "InvalidServiceVersion";
-        _errorName[IRegistry.ServiceNameAlreadyRegistered.selector] = "ServiceNameAlreadyRegistered";
+        _errorName[IRegistry.ServiceAlreadyRegistered.selector] = "ServiceAlreadyRegistered";
         _errorName[IRegistry.NotOwner.selector] = "NotOwner";
-        //_errorName[IRegistry.NotRegisteredContract.selector] = "NotRegisteredContract";
-        //_errorName[IRegistry.NotService.selector] = "NotService"; 
         _errorName[IRegistry.InvalidTypesCombination.selector] = "InvalidTypesCombination"; 
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }
@@ -348,14 +344,13 @@ contract RegistryTestBase is Test, FoundryRandom {
             _servicesCount++;
 
             (
-                string memory serviceName,
+                ObjectType serviceType,
                 VersionPart majorVersion
             ) = _decodeServiceParameters(info.data);
 
-            bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-            assert(_service[serviceNameHash][majorVersion].nftId == zeroNftId());
-            _service[serviceNameHash][majorVersion].nftId = nftId;
-            _service[serviceNameHash][majorVersion].address_ = info.objectAddress;
+            assert(_service[serviceType][majorVersion].nftId.eqz());
+            _service[serviceType][majorVersion].nftId = nftId;
+            _service[serviceType][majorVersion].address_ = info.objectAddress;
         }
     }
 
@@ -397,14 +392,14 @@ contract RegistryTestBase is Test, FoundryRandom {
         // solhint-enable
     }
 
-    function _decodeServiceParameters(bytes memory data) internal pure returns(string memory serviceName, VersionPart majorVersion)
+    function _decodeServiceParameters(bytes memory data) internal pure returns(ObjectType serviceType, VersionPart majorVersion)
     {
         // solhint-disable no-console
         //console.log("Decoding service parameters");
         (
-            serviceName,
+            serviceType,
             majorVersion
-        ) = abi.decode(data, (string, VersionPart));
+        ) = abi.decode(data, (ObjectType, VersionPart));
         // no try/catch support for abi.decode
         //    try _decodeServiceParameters(info) returns(string memory name, VersionPart majorVersion) {
         //        console.log("  serviceName: %s", name);   
@@ -528,35 +523,33 @@ contract RegistryTestBase is Test, FoundryRandom {
 
         if(expectedInfo.objectType == SERVICE())
         {
-            string memory serviceName;
+            ObjectType serviceType;
             VersionPart majorVersion;
             
             if(nftId == registryServiceNftId) 
             {// special case: registry service is registered during deployment -> data is empty
-                serviceName = "RegistryService";
+                serviceType = REGISTRY();
                 majorVersion = VersionLib.toVersionPart(GIF_VERSION);
             }
             else
             {
                 (
-                    serviceName,
+                    serviceType,
                     majorVersion
                 ) = _decodeServiceParameters(expectedInfo.data);
             }
 
-            bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-
-            assertEq(_service[serviceNameHash][majorVersion].nftId.toInt() , nftId.toInt() , "Test error: _info[] inconsictent with _service[][] #1");
-            assertEq(_service[serviceNameHash][majorVersion].address_ , expectedInfo.objectAddress , "Test error: _info[] inconsictent with _service[][] #2");
             // TODO add case with multiple major versions -> parametrize service major version
-            assertEq(registry.getServiceName(nftId) , serviceName , "getServiceName(nftId) returned unexpected value");
-            assertEq(registry.getServiceAddress(serviceName, majorVersion) , expectedInfo.objectAddress, "getServiceAddress(name, versionPart) returned unexpected value");  
+            assertEq(_service[serviceType][majorVersion].nftId.toInt() , nftId.toInt() , "Test error: _info[] inconsictent with _service[][] #1");
+            assertEq(_service[serviceType][majorVersion].address_ , expectedInfo.objectAddress , "Test error: _info[] inconsictent with _service[][] #2");
+            //assertEq(registry.getServiceName(nftId) , serviceName , "getServiceName(nftId) returned unexpected value");
+            assertEq(registry.getServiceAddress(serviceType, majorVersion) , expectedInfo.objectAddress, "getServiceAddress(type, versionPart) returned unexpected value");  
         }
     }
 
     function _assert_register(IRegistry.ObjectInfo memory info, bool expectRevert, bytes memory revertMsg) internal returns (NftId nftId)
     {   
-        string memory name;
+        ObjectType serviceType;
         VersionPart majorVersion;
 
         // solhint-disable no-console
@@ -564,10 +557,10 @@ contract RegistryTestBase is Test, FoundryRandom {
         //_logObjectInfo(info);
         if(info.objectType == SERVICE()) {
             (
-                name,
+                serviceType,
                 majorVersion
             ) = _decodeServiceParameters(info.data);
-            //console.log("  serviceName: %s", name);   
+            //console.log("  serviceType: %s", serviceType.toInt());   
             //console.log(" majorVersion: %s", majorVersion.toInt());  
         } 
         /*console.log("-------------");  
@@ -586,7 +579,7 @@ contract RegistryTestBase is Test, FoundryRandom {
         {
             if(info.objectType == SERVICE()) {
                 vm.expectEmit();
-                emit LogServiceNameRegistration(name, majorVersion);
+                emit LogServiceRegistration(serviceType, majorVersion);
             }
             vm.expectEmit();
             emit LogRegistration(IRegistry.ObjectInfo( 
@@ -666,23 +659,22 @@ contract RegistryTestBase is Test, FoundryRandom {
             else if(info.objectType == SERVICE()) 
             {// service checks
                 (
-                    string memory serviceName,
+                    ObjectType serviceType,
                     VersionPart majorVersion
                 ) = _decodeServiceParameters(info.data);
-                bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
 
                 if(
                     majorVersion.toInt() < GIF_VERSION ||
                     (majorVersion.toInt() > GIF_VERSION &&
-                    _service[serviceNameHash][VersionLib.toVersionPart(majorVersion.toInt() - 1)].address_ == address(0) )
+                    _service[serviceType][VersionLib.toVersionPart(majorVersion.toInt() - 1)].address_ == address(0) )
                 )
                 {// major version >= GIF_VERSION and must increase by 1
                     expectedRevertMsg = abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, majorVersion);
                     expectRevert = true;
                 }
-                else if(_service[serviceNameHash][majorVersion].address_ != address(0))
+                else if(_service[serviceType][majorVersion].address_ != address(0))
                 {
-                    expectedRevertMsg = abi.encodeWithSelector(IRegistry.ServiceNameAlreadyRegistered.selector, serviceName, majorVersion);
+                    expectedRevertMsg = abi.encodeWithSelector(IRegistry.ServiceAlreadyRegistered.selector, serviceType, majorVersion);
                     expectRevert = true;
                 }
             }

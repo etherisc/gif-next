@@ -5,7 +5,7 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {NftId} from "../../contracts/types/NftId.sol";
 import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
-import {ObjectType, toObjectType, SERVICE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, toObjectType, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/types/ObjectType.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {RegisterableMock} from "./RegisterableMock.sol";
 
@@ -20,13 +20,13 @@ contract ServiceMock is RegisterableMock, IService {
             initialOwner,
             "")
     {
-        _info.data = abi.encode(getName(), getMajorVersion());
+        _info.data = abi.encode(getType(), getMajorVersion());
         _registerInterface(type(IService).interfaceId);
     }
 
     // from IService
-    function getName() public pure virtual override returns(string memory name) {
-        return "ServiceMock";
+    function getType() public pure virtual returns(ObjectType) {
+        return PRODUCT();
     }
 
     function getMajorVersion() public view virtual override returns(VersionPart majorVersion) {
@@ -63,8 +63,8 @@ contract SelfOwnedServiceMock is ServiceMock {
             address(this))
     {}
 
-    function getName() public pure override returns(string memory name) {
-        return "SelfOwnedServiceMock";
+    function getType() public pure override returns(ObjectType) {
+        return DISTRIBUTION();
     }
 }
 
@@ -90,8 +90,8 @@ contract ServiceMockWithRandomInvalidType is ServiceMock {
         _invalidType = invalidType;
     }
 
-    function getName() public pure override returns(string memory name) {
-        return "ServiceMockWithRandomInvalidType";
+    function getType() public pure override returns(ObjectType) {
+        return ORACLE();
     }
 }
 
@@ -117,9 +117,10 @@ contract ServiceMockWithRandomInvalidAddress is ServiceMock {
         _invalidAddress = invalidAddress;
     }
 
-    function getName() public pure override returns(string memory name) {
-        return "ServiceMockWithRandomInvalidAddress";
+    function getType() public pure override returns(ObjectType) {
+        return POOL();
     }
+
 }
 
 contract ServiceMockOldVersion is ServiceMock {
@@ -132,8 +133,8 @@ contract ServiceMockOldVersion is ServiceMock {
             initialOwner)
     {}
 
-    function getName() public pure override returns(string memory name) {
-        return "ServiceMock"; // same name as ServiceMock
+    function getType() public pure override returns(ObjectType) {
+        return PRODUCT(); // same as ServiceMock
     }
 
     function getVersion() public pure override returns(Version)
@@ -152,8 +153,8 @@ contract ServiceMockNewVersion is ServiceMock {
             initialOwner)
     {}
 
-    function getName() public pure override returns(string memory name) {
-        return "ServiceMock";// same name as ServiceMock
+    function getType() public pure override returns(ObjectType) {
+        return PRODUCT(); // same as ServiceMock
     }
 
     function getVersion() public pure override returns(Version)

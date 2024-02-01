@@ -13,7 +13,7 @@ import {Versionable} from "../../shared/Versionable.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {POOL, BUNDLE} from "../../types/ObjectType.sol";
+import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
@@ -37,8 +37,6 @@ contract PoolService is
 {
     using NftIdLib for NftId;
 
-    string public constant NAME = "PoolService";
-
     address internal _registryAddress;
 
     function _initialize(
@@ -59,8 +57,8 @@ contract PoolService is
         _registerInterface(type(IPoolService).interfaceId);
     }
 
-    function getName() public pure override(Service, IService) returns(string memory name) {
-        return NAME;
+    function getType() public pure override(Service, IService) returns(ObjectType) {
+        return POOL();
     }
 
     function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {

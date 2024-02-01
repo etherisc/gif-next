@@ -13,7 +13,7 @@ interface IRegistry is IERC165 {
     event LogInitialMajorVersionSet(VersionPart majorVersion);
     event LogMajorVersionSet(VersionPart majorVersionMax);
     event LogRegistration(ObjectInfo info);
-    event LogServiceNameRegistration(string serviceName, VersionPart majorVersion); 
+    event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceType); 
 
     // setMajorVersion()
     error NotOwner(address account);
@@ -25,7 +25,7 @@ interface IRegistry is IERC165 {
     error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
     error ContractAlreadyRegistered(address objectAddress);
     error InvalidServiceVersion(VersionPart majorVersion);
-    error ServiceNameAlreadyRegistered(string name, VersionPart majorVersion);
+    error ServiceAlreadyRegistered(ObjectType serviceType, VersionPart majorVersion);
 
     struct ObjectInfo {
         NftId nftId;
@@ -66,11 +66,9 @@ interface IRegistry is IERC165 {
 
     function isRegistered(address contractAddress) external view returns (bool);
 
-    function getServiceName(NftId nftId) external view returns (string memory name);
-
     function getServiceAddress(
-        string memory serviceName, 
-        VersionPart majorVersion
+        ObjectType serviceType, 
+        VersionPart releaseVersion
     ) external view returns (address serviceAddress);
 
     function getChainNft() external view returns (ChainNft);

@@ -18,6 +18,7 @@ import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
 import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ObjectType, INSTANCE, SERVICE, POOL, DISTRIBUTION} from "../types/ObjectType.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -28,7 +29,6 @@ contract InstanceService is Service, IInstanceService {
 
     // TODO update to real hash when instance is stable
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
-    string public constant NAME = "InstanceService";
 
     function createInstanceClone()
         external 
@@ -42,7 +42,7 @@ contract InstanceService is Service, IInstanceService {
         address instanceOwner = msg.sender;
         Registry registry = Registry(_registryAddress);
         NftId registryNftId = registry.getNftId(_registryAddress);
-        address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address registryServiceAddress = registry.getServiceAddress(SERVICE(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
 
         // initially set the authority of the access managar to this (being the instance service). 
@@ -72,7 +72,7 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function _grantInitialAuthorizations(AccessManagerSimple clonedAccessManager, Instance clonedInstance) internal {
-        address distributionServiceAddress = _registry.getServiceAddress("DistributionService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address distributionServiceAddress = _registry.getServiceAddress(DISTRIBUTION(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), distributionServiceAddress, 0);
         bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](2);
         instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
@@ -82,7 +82,7 @@ contract InstanceService is Service, IInstanceService {
             instanceDistributionServiceSelectors, 
             DISTRIBUTION_SERVICE_ROLE().toInt());
 
-        address poolServiceAddress = _registry.getServiceAddress("PoolService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address poolServiceAddress = _registry.getServiceAddress(POOL(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(POOL_SERVICE_ROLE().toInt(), address(poolServiceAddress), 0);
         bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
@@ -130,8 +130,8 @@ contract InstanceService is Service, IInstanceService {
     }
 
     // From IService
-    function getName() public pure override(IService, Service) returns(string memory) {
-        return NAME;
+    function getType() public pure override(Service, IService) returns(ObjectType) {
+        return INSTANCE();
     }
     
     /// @dev top level initializer

@@ -17,7 +17,7 @@ import {IInstance} from "./IInstance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {NftId} from "../types/NftId.sol";
 import {NumberId} from "../types/NumberId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET} from "../types/ObjectType.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT} from "../types/ObjectType.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {StateId, ACTIVE} from "../types/StateId.sol";
@@ -416,11 +416,11 @@ contract Instance is
     }
 
     function getComponentOwnerService() external view returns (IComponentOwnerService) {
-        return ComponentOwnerService(_registry.getServiceAddress("ComponentOwnerService", VersionPart.wrap(3)));
+        return ComponentOwnerService(_registry.getServiceAddress(COMPONENT(), VersionPart.wrap(3)));
     }
 
     function getDistributionService() external view returns (IDistributionService) {
-        return IDistributionService(_registry.getServiceAddress("DistributionService", VersionPart.wrap(3)));
+        return IDistributionService(_registry.getServiceAddress(DISTRIBUTION(), VersionPart.wrap(3)));
     }
 
     // TODO reactivate when services are available
@@ -429,7 +429,7 @@ contract Instance is
     // }
 
     function getPoolService() external view returns (IPoolService) {
-        return IPoolService(_registry.getServiceAddress("PoolService", VersionPart.wrap(3)));
+        return IPoolService(_registry.getServiceAddress(POOL(), VersionPart.wrap(3)));
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
