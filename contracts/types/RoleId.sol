@@ -41,6 +41,10 @@ function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1
 
 function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(11000); }
 
+function REGISTRY_SERVICE_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
+function REGISTRY_SERVICE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 
+function RELEASE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1700); } 
+
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {
     return RoleId.unwrap(a) == RoleId.unwrap(b);
