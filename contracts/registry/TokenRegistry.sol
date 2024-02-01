@@ -37,7 +37,8 @@ contract TokenRegistry is
         onlyOwner
     {
         IRegistry registry = IRegistry(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress(SERVICE(), registry.getMajorVersion());
+        // TODO use _latest instead of next version -> _latest is 0 before first release activation
+        address registryServiceAddress = registry.getServiceAddress(SERVICE(), registry.getMajorVersionMax());
 
         _linkToNftOwnable(registryAddress, registryServiceAddress);
     }
