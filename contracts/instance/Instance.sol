@@ -3,10 +3,10 @@ pragma solidity ^0.8.20;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
-// import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 
-import {AccessManagedUpgradeableInitializeable} from "./AccessManagedUpgradeableInitializeable.sol";
 import {IAccess} from "./module/IAccess.sol";
 import {IBundle} from "./module/IBundle.sol";
 import {IPolicy} from "./module/IPolicy.sol";
@@ -34,8 +34,9 @@ import {VersionPart} from "../types/Version.sol";
 import {InstanceBase} from "./InstanceBase.sol";
 
 contract Instance is
-    AccessManagedUpgradeableInitializeable,
+    AccessManagedUpgradeable,
     IInstance,
+    // Initializable,
     InstanceBase
 {
 
@@ -62,10 +63,13 @@ contract Instance is
         initialize(accessManagerAddress, registryAddress, registryNftId, msg.sender);
     }
 
-    function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) public {
+    function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) 
+        public 
+        initializer
+    {
         require(!_initialized, "Contract instance has already been initialized");
 
-        __AccessManagedUpgradeableInitializeable_init(accessManagerAddress);
+        __AccessManaged_init(accessManagerAddress);
                 
         _accessManager = AccessManagerUpgradeable(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
