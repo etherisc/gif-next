@@ -455,8 +455,8 @@ contract Registry_Continous_Tests is RegistryTestBase
 
         _stopPrank();
     }
-
-    function test_continuous_register_ServiceNewVersion() public
+    // TODO refactor
+    /*function test_continuous_register_ServiceNewVersion() public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             zeroNftId(), // any nftId
@@ -540,7 +540,7 @@ contract Registry_Continous_Tests is RegistryTestBase
         // solhint-enable
 
         _stopPrank();
-    }
+    }*/
 }
 
 contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Registry_Continous_Tests

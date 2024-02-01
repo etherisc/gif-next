@@ -465,7 +465,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
 
         info.objectAddress = serviceAddress_2;
 
-        _assert_register(info, true, abi.encodeWithSelector(IRegistry.ServiceNameAlreadyRegistered.selector, serviceName, VersionLib.toVersionPart(GIF_VERSION)));
+        _assert_register(info, true, abi.encodeWithSelector(IRegistry.ServiceAlreadyRegistered.selector, serviceName, VersionLib.toVersionPart(GIF_VERSION)));
 
         // TODO remove or refactor registration attempts for invalid versions
         // info.data = abi.encode(serviceName, VersionLib.toVersionPart(255));
