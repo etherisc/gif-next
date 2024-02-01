@@ -58,11 +58,6 @@ contract Instance is
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
 
-    constructor(address accessManagerAddress, address registryAddress, NftId registryNftId)
-    {
-        initialize(accessManagerAddress, registryAddress, registryNftId, msg.sender);
-    }
-
     function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) 
         public 
         initializer

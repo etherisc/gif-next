@@ -29,7 +29,7 @@ export async function deployAndRegisterMasterInstance(
     const { address: instanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",
         owner,
-        [accessManagerAddress, registry.registryAddress, registry.registryNftId],
+        undefined,
         { 
             libraries: {
                 Key32Lib: libraries.key32LibAddress,
@@ -42,6 +42,7 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const instance = masterInstanceBaseContract as Instance;
+    await executeTx(() => instance.initialize(accessManagerAddress, registry.registryAddress, registry.registryNftId, owner.getAddress()));
 
     // FIXME register instance in registry
     logger.debug(`registering instance ${instanceAddress} in registry ...`);

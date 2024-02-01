@@ -457,7 +457,8 @@ contract TestGifBase is Test {
         masterInstanceAccessManager = new AccessManagerUpgradeableInitializeable();
         masterInstanceAccessManager.__AccessManagerUpgradeableInitializeable_init(masterInstanceOwner);
         
-        masterInstance = new Instance(address(masterInstanceAccessManager), address(registry), registryNftId);
+        masterInstance = new Instance();
+        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, masterInstanceOwner);
         ( IRegistry.ObjectInfo memory masterInstanceObjectInfo, ) = registryService.registerInstance(masterInstance);
         masterInstanceNftId = masterInstanceObjectInfo.nftId;
         
