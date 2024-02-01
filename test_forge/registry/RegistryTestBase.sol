@@ -22,6 +22,8 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
+import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
+import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 
@@ -73,6 +75,8 @@ contract RegistryTestBase is Test, FoundryRandom {
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
 
+    RegistryServiceAccessManager accessManager;
+    RegistryServiceReleaseManager releaseManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
     Registry public registry;
@@ -130,8 +134,9 @@ contract RegistryTestBase is Test, FoundryRandom {
     {
         _startPrank(registryOwner);
 
-        AccessManager accessManager = new AccessManager(registryOwner);
-        registryServiceManager = new RegistryServiceManager(address(accessManager));
+        accessManager = new RegistryServiceAccessManager(registryOwner);
+        releaseManager = new RegistryServiceReleaseManager(accessManager);
+        registryServiceManager = releaseManager.getProxyManager();
 
         registryService = registryServiceManager.getRegistryService();
         registry = Registry(address((registryServiceManager.getRegistry())));

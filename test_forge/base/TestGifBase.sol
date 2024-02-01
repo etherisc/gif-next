@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+//import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
@@ -40,14 +40,7 @@ import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {
     PRODUCT_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
-    DISTRIBUTION_OWNER_ROLE, 
-    PRODUCT_REGISTRAR_ROLE, 
-    POOL_REGISTRAR_ROLE, 
-    DISTRIBUTION_REGISTRAR_ROLE, 
-    POLICY_REGISTRAR_ROLE,
-    DISTRIBUTION_SERVICE_ROLE,
-    INSTANCE_SERVICE_ROLE,
-    BUNDLE_REGISTRAR_ROLE} from "../../contracts/types/RoleId.sol";
+    DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 import {UFixed, UFixedLib} from "../../contracts/types/UFixed.sol";
 import {Version} from "../../contracts/types/Version.sol";
 
@@ -56,6 +49,9 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
+import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
+import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
+
 
 // solhint-disable-next-line max-states-count
 contract TestGifBase is Test {
@@ -66,8 +62,9 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
+    RegistryServiceAccessManager registryServiceAccessManager;
+    RegistryServiceReleaseManager public registryServiceReleaseManager;
     RegistryServiceManager public registryServiceManager;
-    AccessManager accessManager;
     RegistryService public registryService;
     Registry public registry;
     ChainNft public chainNft;
@@ -159,16 +156,15 @@ contract TestGifBase is Test {
         // deploy registry, nft, services and token
         vm.startPrank(registryOwner);
         _deployRegistryServiceAndRegistry();
-        _configureAccessManagerRoles();
-        _deployServices();
-        _configureServiceAuthorizations();
+        _deployAndRegisterServices();
         vm.stopPrank();
 
         vm.startPrank(masterInstanceOwner);
         _deployMasterInstance();
         vm.stopPrank();
 
-        vm.startPrank(registryOwner);
+        // token registry linked to registry service which owned by release manager
+        vm.startPrank(address(registryServiceReleaseManager)); 
         _deployToken();
         vm.stopPrank();
 
@@ -254,20 +250,25 @@ contract TestGifBase is Test {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        accessManager = new AccessManager(registryOwner);
-        registryServiceManager = new RegistryServiceManager(address(accessManager));
+        registryServiceAccessManager = new RegistryServiceAccessManager(registryOwner);
+
+        registryServiceReleaseManager = new RegistryServiceReleaseManager(registryServiceAccessManager);
+        registryServiceManager = registryServiceReleaseManager.getProxyManager();
         registryService = registryServiceManager.getRegistryService();
 
         IRegistry registry_ = registryService.getRegistry();
         registryAddress = address(registry_);
         registry = Registry(registryAddress);
         registryNftId = registry.getNftId(address(registry));
+
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);
 
         tokenRegistry = new TokenRegistry();
         tokenRegistry.linkToNftOwnable(registryAddress);
 
+        registryServiceAccessManager.initialize(address(registryServiceReleaseManager), address(tokenRegistry));
+        
         /* solhint-disable */
         console.log("registry deployed at", address(registry));
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
@@ -275,73 +276,41 @@ contract TestGifBase is Test {
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
 
         console.log("registry owner", address(registryOwner));
-        console.log("registry service manager", address(registryServiceManager));
-        console.log("registry service manager nft", registryServiceManager.getNftId().toInt());
-        console.log("registry service manager owner", registryServiceManager.getOwner());
+        console.log("registry service access manager", address(registryServiceAccessManager));
+        console.log("registry service access manager authority", registryServiceAccessManager.authority());
+        console.log("registry service release manager", address(registryServiceReleaseManager));
+        console.log("registry service release manager authority", registryServiceReleaseManager.authority());
+        console.log("registry service proxy manager", address(registryServiceManager));
+        console.log("registry service proxy manager linked to nft", registryServiceManager.getNftId().toInt());
+        console.log("registry service proxy manager owner", registryServiceManager.getOwner());
         console.log("registry service", address(registryService));
         console.log("registry service nft", registryService.getNftId().toInt());
+        console.log("registry service authority", registryService.authority());
         console.log("registry service owner", registryService.getOwner());
         console.log("registry", address(registry));
         console.log("registry nft", registry.getNftId(address(registry)).toInt());
         console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
         console.log("registry owner (opt 2)", registry.getOwner());
         console.log("token registry", address(tokenRegistry));
+        console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
+        console.log("token registry linked owner", tokenRegistry.getOwner());        
         /* solhint-enable */
     }
 
-    function _configureAccessManagerRoles() internal
-    {
-        bytes4[] memory functionSelector = new bytes4[](1);
-        functionSelector[0] = RegistryService.registerProduct.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            PRODUCT_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerPool.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            POOL_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerDistribution.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            DISTRIBUTION_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerPolicy.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            POLICY_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerBundle.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            BUNDLE_REGISTRAR_ROLE().toInt());
-    }
-
-    function _deployServices() internal 
+    function _deployAndRegisterServices() internal 
     {
         // --- instance service ---------------------------------//
-        // TODO manager can not use registryService.registerService() in constructor
+        // TODO manager can not use registryServiceReleaseManager.registerService() in constructor
         // because it have no role / have no nft
         instanceServiceManager = new InstanceServiceManager(address(registry));
         instanceService = instanceServiceManager.getInstanceService();
         // temporal solution, register in separate tx
-        registryService.registerService(instanceService);
+        registryServiceReleaseManager.registerService(instanceService);
         instanceServiceNftId = registry.getNftId(address(instanceService));
 
 
         // solhint-disable 
-        console.log("instanceService name", instanceService.getName());
+        console.log("instanceService type", instanceService.getType().toInt());
         console.log("instanceService deployed at", address(instanceService));
         console.log("instanceService nft id", instanceService.getNftId().toInt());
         // solhint-enable 
@@ -349,11 +318,11 @@ contract TestGifBase is Test {
         // --- distribution service ---------------------------------//
         distributionServiceManager = new DistributionServiceManager(address(registry));
         distributionService = distributionServiceManager.getDistributionService();
-        registryService.registerService(distributionService);
+        registryServiceReleaseManager.registerService(distributionService);
         distributionServiceNftId = registry.getNftId(address(distributionService));
 
         // solhint-disable 
-        console.log("distributionService name", distributionService.getName());
+        console.log("distributionService type", distributionService.getType().toInt());
         console.log("distributionService deployed at", address(distributionService));
         console.log("distributionService nft id", distributionService.getNftId().toInt());
         // solhint-enable
@@ -361,23 +330,23 @@ contract TestGifBase is Test {
         // --- pool service ---------------------------------//
         poolServiceManager = new PoolServiceManager(address(registry));
         poolService = poolServiceManager.getPoolService();
-        registryService.registerService(poolService);
+        registryServiceReleaseManager.registerService(poolService);
         poolServiceNftId = registry.getNftId(address(poolService));
 
         // solhint-disable
-        console.log("poolService name", poolService.getName());
+        console.log("poolService type", poolService.getType().toInt());
         console.log("poolService deployed at", address(poolService));
         console.log("poolService nft id", poolService.getNftId().toInt());
         // solhint-enable
 
         // //--- component owner service ---------------------------------//
         // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
-        // registryService.registerService(componentOwnerService);
+        // registryServiceReleaseManager.registerService(componentOwnerService);
         // assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
 
-        // accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        // accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        // accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // registryServiceAccessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // registryServiceAccessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // registryServiceAccessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
 
         // /* solhint-disable */
         // console.log("service name", componentOwnerService.NAME());
@@ -388,8 +357,8 @@ contract TestGifBase is Test {
         // //--- product service ---------------------------------//
 
         // productService = new ProductService(registryAddress, registryNftId, registryOwner);
-        // registryService.registerService(productService);
-        // accessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(productService), 0);
+        // registryServiceReleaseManager.registerService(productService);
+        // registryServiceAccessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(productService), 0);
 
         // /* solhint-disable */
         // console.log("service name", productService.NAME());
@@ -397,39 +366,9 @@ contract TestGifBase is Test {
         // console.log("service nft id", productService.getNftId().toInt());
         // console.log("service allowance is set to POLICY");
         // /* solhint-enable */
-    }
 
-    function _configureServiceAuthorizations() internal 
-    {
-        // grant DISTRIBUTION_REGISTRAR_ROLE to distribution service
-        // allow role DISTRIBUTION_REGISTRAR_ROLE to call registerDistribution on registry service
-        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(distributionService), 0);
-        bytes4[] memory registryServiceRegisterDistributionSelectors = new bytes4[](1);
-        registryServiceRegisterDistributionSelectors[0] = registryService.registerDistribution.selector;
-        accessManager.setTargetFunctionRole(
-            address(registryService),
-            registryServiceRegisterDistributionSelectors, 
-            DISTRIBUTION_REGISTRAR_ROLE().toInt());
-
-        // grant POOL_REGISTRAR_ROLE to pool service
-        // allow role POOL_REGISTRAR_ROLE to call registerPool on registry service
-        accessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(poolService), 0);
-        bytes4[] memory registryServiceRegisterPoolSelectors = new bytes4[](1);
-        registryServiceRegisterPoolSelectors[0] = registryService.registerPool.selector;
-        accessManager.setTargetFunctionRole(
-            address(registryService),
-            registryServiceRegisterPoolSelectors, 
-            POOL_REGISTRAR_ROLE().toInt());
-
-        // grant BUNDLE_REGISTRAR_ROLE to pool service
-        // allow role BUNDLE_REGISTRAR_ROLE to call registerBundle on registry service
-        accessManager.grantRole(BUNDLE_REGISTRAR_ROLE().toInt(), address(poolService), 0);
-        bytes4[] memory registryServiceRegisterBundleSelectors = new bytes4[](1);
-        registryServiceRegisterBundleSelectors[0] = registryService.registerBundle.selector;
-        accessManager.setTargetFunctionRole(
-            address(registryService),
-            registryServiceRegisterBundleSelectors, 
-            BUNDLE_REGISTRAR_ROLE().toInt());
+        // activate initial release
+        registryServiceReleaseManager.activateNextRelease();
     }
 
     function _deployMasterInstance() internal 

@@ -18,6 +18,8 @@ import {PRODUCT_REGISTRAR_ROLE,
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 
+import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
+import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -79,8 +81,9 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
     address public outsider = makeAddr("outsider");
     address public EOA = makeAddr("EOA");
 
+    RegistryServiceAccessManager accessManager;
+    RegistryServiceReleaseManager releaseManager;
     RegistryServiceManager public registryServiceManager;
-    AccessManager accessManager;
     RegistryService public registryService;
     IRegistry public registry;
 
@@ -100,8 +103,6 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
         _deployRegistryServiceAndRegistry();
 
-        _configureRegistryServiceRoles();
-
         _deployAndRegisterServices();
 
         registerableOwnedByRegistryOwner = new RegisterableMock(
@@ -118,52 +119,14 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        accessManager = new AccessManager(registryOwner);
-        registryServiceManager = new RegistryServiceManager(address(accessManager));
+        accessManager = new RegistryServiceAccessManager(registryOwner);
+        releaseManager = new RegistryServiceReleaseManager(accessManager);
+        registryServiceManager = releaseManager.getProxyManager();
         registryService = registryServiceManager.getRegistryService();
         registry = registryServiceManager.getRegistry();
 
         registryServiceNftId = registry.getNftId(address(registryService));
         registryNftId = registry.getNftId(address(registry));
-    }
-
-    function _configureRegistryServiceRoles() internal
-    {
-        bytes4[] memory functionSelector = new bytes4[](1);
-        functionSelector[0] = RegistryService.registerProduct.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            PRODUCT_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerPool.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            POOL_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerDistribution.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            DISTRIBUTION_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerPolicy.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            POLICY_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerBundle.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            BUNDLE_REGISTRAR_ROLE().toInt());
     }
 
     function _deployAndRegisterServices() internal
@@ -189,14 +152,14 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
             registryOwner  
         );*/
 
-        registryService.registerService(componentOwnerService);
+        releaseManager.registerService(componentOwnerService);
         //registryService.registerService(productService);
         //registryService.registerService(poolService);
         //registryService.registerService(distributionService);
 
-        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        accessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        //accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        //accessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        //accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
         //accessManager.grantRole(POLICY_REGISTRAR_ROLE(), address(productService), 0);
         //accessManager.grantRole(BUNDLE_REGISTRAR_ROLE(), address(poolService), 0);
     }

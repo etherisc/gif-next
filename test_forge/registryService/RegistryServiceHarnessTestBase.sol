@@ -51,7 +51,8 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
     {
         vm.startPrank(registryOwner);
         AccessManager accessManager = new AccessManager(registryOwner);
-        registryServiceManager = new RegistryServiceManagerMock(address(accessManager));
+        address fakeReleaseManager = address(0x2);
+        registryServiceManager = new RegistryServiceManagerMock(address(accessManager), fakeReleaseManager);
         vm.stopPrank();
 
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManager.getRegistryService()));
