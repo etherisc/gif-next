@@ -17,19 +17,19 @@ contract RegistryServiceManager is
 {
     bytes32 constant public ACCESS_MANAGER_CREATION_CODE_HASH = 0x0;
 
-    AccessManager private _accessManager;
-    RegistryService private _registryService; 
-    TokenRegistry private _tokenRegistry;
+    RegistryService private immutable _registryService; 
 
     /// @dev initializes proxy manager with registry service implementation and deploys registry
     constructor(
-        address accessManager
-    )
+        address initialAuthority, // used by implementation 
+        address releaseManager) // used by registry
         ProxyManager()
     {
-        _accessManager = AccessManager(accessManager);
-
-        bytes memory initializationData = abi.encode(accessManager, type(Registry).creationCode);
+        // implementation's initializer func `data` argument
+        bytes memory initializationData = abi.encode(
+            initialAuthority,
+            releaseManager,
+            type(Registry).creationCode); 
 
         IVersionable versionable = deploy(
             address(new RegistryService()), 
@@ -41,26 +41,9 @@ contract RegistryServiceManager is
         _linkToNftOwnable(
             address(_registryService.getRegistry()),
             address(_registryService));
-
-        // deploy token registry
-
-        // _tokenRegistry = new TokenRegistry(
-        //     address(_registryService.getRegistry()),
-        //     address(_registryService));
-
-        // implies that after this constructor call only upgrade functionality is available
-        _isDeployed = true;
     }
 
     //--- view functions ----------------------------------------------------//
-
-    function getAccessManager()
-        external
-        view
-        returns (AccessManager)
-    {
-        return _accessManager;
-    }
 
     function getRegistryService()
         external
@@ -68,13 +51,5 @@ contract RegistryServiceManager is
         returns (RegistryService registryService)
     {
         return _registryService;
-    }
-
-    function getTokenRegistry()
-        external
-        view
-        returns (TokenRegistry)
-    {
-        return _tokenRegistry;
     }
 }
