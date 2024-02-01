@@ -189,6 +189,10 @@ contract Registry is
         return _nftIdByAddress[object].gtz();
     }
 
+    function isRegisteredService(address object) external view override returns (bool) {
+        return _nftIdByAddress[object].gtz() && _info[_nftIdByAddress[object]].objectType == SERVICE();
+    }
+
     // special case to retrive a gif service
     function getServiceAddress(
         ObjectType serviceType, 

@@ -13,6 +13,7 @@ import {Registerable} from "../shared/Registerable.sol";
 import {RiskId} from "../types/RiskId.sol";
 import {UFixed, MathLib, UFixedLib} from "../types/UFixed.sol";
 import {Version} from "../types/Version.sol";
+import {StateId} from "../types/StateId.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
@@ -79,6 +80,14 @@ contract InstanceReader {
         if (data.length > 0) {
             return abi.decode(data, (IPolicy.PolicyInfo));
         }
+    }
+
+    function getPolicyState(NftId policyNftId)
+        public
+        view
+        returns (StateId state)
+    {
+        return _instance.getState(toPolicyKey(policyNftId));
     }
 
     function getRiskInfo(RiskId riskId)

@@ -1,18 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
-import {Registerable} from "../shared/Registerable.sol";
-
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IInstance} from "../instance/IInstance.sol";
-
-import {IInstance} from "../instance/IInstance.sol";
-import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
 import {IBaseComponent} from "./IBaseComponent.sol";
+import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
+import {Registerable} from "../shared/Registerable.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 abstract contract BaseComponent is
     Registerable,
@@ -55,10 +52,12 @@ abstract contract BaseComponent is
     }
 
     // from component contract
+    // TODO consider to remove/replace with access manager contract locking
     function lock() external onlyOwner override {
         _componentOwnerService.lock(this);
     }
 
+    // TODO consider to remove/replace with access manager contract locking
     function unlock() external onlyOwner override {
         _componentOwnerService.unlock(this);
     }
@@ -70,6 +69,48 @@ abstract contract BaseComponent is
         returns (address walletAddress)
     {
         return _wallet;
+    }
+
+    /// @dev Sets the wallet address for the component. 
+    /// if the current wallet has tokens, these will be transferred. 
+    /// if the new wallet address is externally owned, an approval from the 
+    /// owner of the external wallet for the component to move all tokens must exist. 
+    function setWallet(address newWallet) external override onlyOwner {
+        address currentWallet = _wallet;
+        uint256 currentBalance = _token.balanceOf(currentWallet);
+
+        // checks
+        if (newWallet == currentWallet) {
+            revert ErrorBaseComponentWalletAddressIsSameAsCurrent(newWallet);
+        }
+
+        if (currentBalance > 0) {
+            if (currentWallet == address(this)) {
+                // move tokens from component smart contract to external wallet
+            } else {
+                // move tokens from external wallet to component smart contract or another external wallet
+                uint256 allowance = _token.allowance(currentWallet, address(this));
+                if (allowance < currentBalance) {
+                    revert ErrorBaseComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
+                }
+            }
+        }
+
+        // effects
+        _wallet = newWallet;
+        emit LogBaseComponentWalletAddressChanged(newWallet);
+
+        // interactions
+        if (currentBalance > 0) {
+            // transfer tokens from current wallet to new wallet
+            if (currentWallet == address(this)) {
+                // transferFrom requires self allowance too
+                _token.approve(address(this), currentBalance);
+            }
+            
+            SafeERC20.safeTransferFrom(_token, currentWallet, newWallet, currentBalance);
+            emit LogBaseComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
+        }
     }
 
     function getToken() public view override returns (IERC20Metadata token) {

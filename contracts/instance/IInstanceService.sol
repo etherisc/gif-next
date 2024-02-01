@@ -10,9 +10,10 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IBaseComponent} from "../components/IBaseComponent.sol";
 
-import {AccessManagerSimple} from "./AccessManagerSimple.sol";
+import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 import {Instance} from "./Instance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
+import {BundleManager} from "./BundleManager.sol";
 
 interface IInstanceService is IService {
 
@@ -21,10 +22,11 @@ interface IInstanceService is IService {
     function createInstanceClone()
         external 
         returns (
-            AccessManagerSimple clonedAccessManager, 
+            AccessManagerUpgradeableInitializeable clonedAccessManager, 
             Instance clonedInstance,
             NftId instanceNftId,
-            InstanceReader clonedInstanceReader
+            InstanceReader clonedInstanceReader,
+            BundleManager clonedBundleManager
         );
 }
 

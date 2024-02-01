@@ -10,6 +10,7 @@ import { ServiceAddresses, authorizeServices, deployAndRegisterServices } from "
 
 
 async function main() {
+    logger.info("deploying new GIF instance...");
     const { protocolOwner, masterInstanceOwner, instanceOwner } = await getNamedAccounts();
 
     // deploy protocol contracts
@@ -55,6 +56,7 @@ async function main() {
         // ["distributionOwner", distributionOwner], 
         // ["poolOwner", poolOwner]
         );
+    logger.info("GIF instance deployed successfully");
 }
 
 /**
@@ -151,17 +153,10 @@ function printAddresses(
     addresses += `poolServiceManagerAddress: ${services.poolServiceManagerAddress}\n`;
     addresses += `poolServiceAddress: ${services.poolServiceAddress}\n`;
     addresses += `poolServiceNftId: ${services.poolServiceNftId}\n`;
+    addresses += `productServiceManagerAddress: ${services.productServiceManagerAddress}\n`;
+    addresses += `productServiceAddress: ${services.productServiceAddress}\n`;
+    addresses += `productServiceNftId: ${services.productServiceNftId}\n`;
     addresses += `--------\n`;
-
-    // addresses += `componentOwnerServiceAddress: ${services.componentOwnerServiceAddress}\n`;
-    // addresses += `componentOwnerServiceNftId: ${services.componentOwnerServiceNftId}\n`;
-    // addresses += `productServiceAddress: ${services.productServiceAddress}\n`;
-    // addresses += `productServiceNftId: ${services.productServiceNftId}\n`;
-    // addresses += `poolServiceAddress: ${services.poolServiceAddress}\n`;
-    // addresses += `poolServiceNftId: ${services.poolServiceNftId}\n`;
-    // addresses += `distributionServiceAddress: ${services.distributionServiceAddress}\n`;
-    // addresses += `distributionServiceNftId: ${services.distributionServiceNftId}\n`;
-    // addresses += `--------\n`;
     addresses += `masterInstanceAddress: ${masterInstance.instanceAddress}\n`;
     addresses += `masterInstanceNftId: ${masterInstance.instanceNftId}\n`;
     addresses += `--------\n`;

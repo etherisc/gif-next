@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
+import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 
-import {AccessManagedSimple} from "./AccessManagedSimple.sol";
-import {AccessManagerSimple} from "./AccessManagerSimple.sol";
 import {IBundle} from "./module/IBundle.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
@@ -21,7 +21,7 @@ import {StateId, ACTIVE} from "../types/StateId.sol";
 import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
 
 contract InstanceAccessManager is
-    AccessManagedSimple
+    AccessManagedUpgradeable
 {
     string public constant ADMIN_ROLE_NAME = "AdminRole";
     string public constant PUBLIC_ROLE_NAME = "PublicRole";
@@ -76,12 +76,12 @@ contract InstanceAccessManager is
     mapping(ShortString name => address target) internal _targetForName;
     address [] internal _targets;
 
-    AccessManagerSimple internal _accessManager;
+    AccessManagerUpgradeable internal _accessManager;
 
     constructor(address accessManager)
     {
-        _accessManager = AccessManagerSimple(accessManager);
-        initializeAccessManagedSimple(accessManager);
+        _accessManager = AccessManagerUpgradeable(accessManager);
+        __AccessManaged_init(accessManager);
 
         _createRole(RoleIdLib.toRoleId(_accessManager.ADMIN_ROLE()), ADMIN_ROLE_NAME, false, false);
         _createRole(RoleIdLib.toRoleId(_accessManager.PUBLIC_ROLE()), PUBLIC_ROLE_NAME, false, false);

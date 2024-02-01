@@ -69,6 +69,9 @@ contract TestPool is TestGifBase {
     }
 
     function test_Pool_createBundle() public {
+        // GIVEN
+        _fundInvestor();
+
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
@@ -88,19 +91,37 @@ contract TestPool is TestGifBase {
             poolOwner
         );
 
-        NftId poolNftId = poolService.register(address(pool));
+        poolNftId = poolService.register(address(pool));
+        vm.stopPrank();
 
-        NftId bundleNftId = pool.createBundle(
+        vm.startPrank(investor);
+
+        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+        token.approve(address(poolSetupInfo.tokenHandler), 10000);
+
+        // WHEN
+        bundleNftId = pool.createBundle(
             FeeLib.zeroFee(), 
             10000, 
             604800, 
             ""
         );
 
+        // THEN
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        assertEq(token.balanceOf(poolOwner), 0, "pool owner balance not 0");
+        assertEq(token.balanceOf(poolSetupInfo.wallet), 10000, "pool wallet balance not 10000");
+
+        assertEq(instanceBundleManager.bundles(poolNftId), 1, "expected only 1 bundle");
+        assertTrue(instanceBundleManager.getBundleNftId(poolNftId, 0).eq(bundleNftId), "bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleManager.activeBundles(poolNftId), 1, "expected one active bundle");
+        assertTrue(instanceBundleManager.getActiveBundleNftId(poolNftId, 0).eq(bundleNftId), "active bundle nft id in bundle manager not equal to bundle nft id");
     }
 
     function test_Pool_setBundleFee() public {
+        _fundInvestor();
+
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
@@ -121,6 +142,12 @@ contract TestPool is TestGifBase {
         );
 
         NftId poolNftId = poolService.register(address(pool));
+
+        vm.stopPrank();
+        vm.startPrank(investor);
+
+        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+        token.approve(address(poolSetupInfo.tokenHandler), 10000);
 
         NftId bundleNftId = pool.createBundle(
             FeeLib.zeroFee(), 
@@ -137,6 +164,12 @@ contract TestPool is TestGifBase {
         assertEq(bundleFee.fractionalFee.toInt(), 111, "bundle fee not 111");
         assertEq(bundleFee.fixedFee, 222, "bundle fee not 222");
 
+        vm.stopPrank();
+    }
+
+    function _fundInvestor() internal {
+        vm.startPrank(registryOwner);
+        token.transfer(investor, 10000);
         vm.stopPrank();
     }
 
