@@ -434,6 +434,7 @@ contract Instance is
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
+        // TODO: reader is for correct instance
         require(address(_instanceReader) == address(0), "InstanceReader is set");
         _instanceReader = instanceReader;
     }
@@ -443,6 +444,7 @@ contract Instance is
     }
     
     function setBundleManager(BundleManager bundleManager) external restricted() {
+        // TODO: reader is for correct instance
         require(address(_bundleManager) == address(0), "BundleManager is set");
         _bundleManager = bundleManager;
     }

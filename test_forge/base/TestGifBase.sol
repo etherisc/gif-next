@@ -454,6 +454,7 @@ contract TestGifBase is Test {
 
     function _deployMasterInstance() internal 
     {
+        // TODO: master instance is owned by 0x1
         masterInstanceAccessManager = new AccessManagerUpgradeableInitializeable();
         masterInstanceAccessManager.__AccessManagerUpgradeableInitializeable_init(masterInstanceOwner);
         

@@ -143,20 +143,26 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function setInstanceMaster(address instanceMaster) external {
+        // TODO: ensure instance has correct access manager
         require(
             _instanceMaster == address(0),
             "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
         _instanceMaster = instanceMaster;
     }
 
-    function setInstanceReaderMaster(address instanceReaderMaster) external {
-        require(
-            _instanceReaderMaster == address(0),
-            "ERROR:CRD-003:INSTANCE_READER_MASTER_ALREADY_SET");
+    function setInstanceReaderMaster(address instanceReaderMaster) external onlyOwner {
+        // TODO: ensure instance reader points to master instance
+        // TODO: add a test for this
         _instanceReaderMaster = instanceReaderMaster;
     }
 
+    function upgradeInstanceReader(NftId instanceNftId) external {
+        // TODO: ensure this is done by instance owner
+        // TODO: upgrade instance reader of this instance to latest (set above here)
+    }
+
     function setBundleManagerMaster(address bundleManagerMaster) external {
+        // TODO: ensure bundle manager points to master instance
         require(
             _instanceBundleManagerMaster == address(0),
             "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
