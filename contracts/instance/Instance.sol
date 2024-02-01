@@ -426,7 +426,7 @@ contract Instance is
     }
 
     function getProductService() external view returns (IProductService) {
-        return IProductService(_registry.getServiceAddress("ProductService", VersionPart.wrap(3)));
+        return IProductService(_registry.getServiceAddress(PRODUCT(), VersionPart.wrap(3)));
     }
 
     function getPoolService() external view returns (IPoolService) {

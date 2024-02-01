@@ -19,8 +19,8 @@ import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
-import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE} from "../types/RoleId.sol";
-import {ObjectType, INSTANCE, SERVICE, POOL, DISTRIBUTION} from "../types/ObjectType.sol";
+import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ObjectType, INSTANCE, SERVICE, PRODUCT, POOL, DISTRIBUTION} from "../types/ObjectType.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -118,7 +118,7 @@ contract InstanceService is Service, IInstanceService {
             POOL_SERVICE_ROLE().toInt());
 
         // configure authorization for product service on instance
-        address productServiceAddress = _registry.getServiceAddress("ProductService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address productServiceAddress = _registry.getServiceAddress(PRODUCT(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE().toInt(), address(productServiceAddress), 0);
         bytes4[] memory instanceProductServiceSelectors = new bytes4[](9);
         instanceProductServiceSelectors[0] = clonedInstance.createProductSetup.selector;

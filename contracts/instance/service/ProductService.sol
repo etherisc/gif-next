@@ -22,7 +22,7 @@ import {Versionable} from "../../shared/Versionable.sol";
 import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
-import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol";
+import {ObjectType, PRODUCT, POOL, POLICY} from "../../types/ObjectType.sol";
 import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
@@ -37,15 +37,10 @@ import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IProductService} from "./IProductService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
 import {IPoolService} from "./PoolService.sol";
-import {POOL_SERVICE_NAME} from "./PoolService.sol";
-
-string constant PRODUCT_SERVICE_NAME = "ProductService";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
 contract ProductService is ComponentServiceBase, IProductService {
     using NftIdLib for NftId;
-
-    string public constant NAME = "ProductService";
 
     address internal _registryAddress;
     IPoolService internal _poolService;
@@ -65,15 +60,15 @@ contract ProductService is ComponentServiceBase, IProductService {
 
         _initializeService(_registryAddress, owner);
 
-        _poolService = IPoolService(_registry.getServiceAddress(POOL_SERVICE_NAME, getMajorVersion()));
+        _poolService = IPoolService(_registry.getServiceAddress(POOL(), getMajorVersion()));
 
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IProductService).interfaceId);
     }
 
 
-    function getName() public pure override(IService, Service) returns(string memory name) {
-        return NAME;
+    function getType() public pure override(IService, Service) returns(ObjectType) {
+        return PRODUCT();
     }
 
     function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {

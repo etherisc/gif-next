@@ -352,11 +352,11 @@ contract TestGifBase is Test {
         // --- product service ---------------------------------//
         productServiceManager = new ProductServiceManager(address(registry));
         productService = productServiceManager.getProductService();
-        registryService.registerService(productService);
+        registryServiceReleaseManager.registerService(productService);
         productServiceNftId = registry.getNftId(address(productService));
 
         // solhint-disable
-        console.log("productService name", productService.getName());
+        console.log("productService type", productService.getType().toInt());
         console.log("productService deployed at", address(productService));
         console.log("productService nft id", productService.getNftId().toInt());
         // solhint-enable
