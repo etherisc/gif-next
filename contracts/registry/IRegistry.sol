@@ -38,9 +38,11 @@ interface IRegistry is IERC165 {
     }// TODO delete nftId and initialOwner(if not used) from struct
     // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
 
-    function setMajorVersion(VersionPart newMajorVersionMax) external;
+    function registerService(ObjectInfo memory service) external returns(NftId nftId);
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
+
+    function setServiceState(VersionPart version, ObjectType serviceType, bool state) external;
 
     function getMajorVersionMin() external view returns (VersionPart);
 
