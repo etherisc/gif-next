@@ -16,6 +16,7 @@ import {IDistributionComponent} from "../../contracts/components/IDistributionCo
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
+import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
@@ -41,35 +42,6 @@ contract RegistryService is
 
     address public constant NFT_LOCK_ADDRESS = address(0x1);
 
-    /// @dev 
-    //  msg.sender - ONLY registry owner
-    //      CAN NOT register itself
-    //      CAN register ONLY valid object-parent types combinations for SERVICE
-    //      CAN register ONLY IRegisterable address he owns
-    // IMPORTANT: MUST NOT check owner before calling external contract
-    function registerService(IService service)
-        external
-        restricted
-        returns(
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
-        ) 
-    {
-
-        // CAN revert if no ERC165 support -> will revert with empty message 
-        if(!service.supportsInterface(type(IService).interfaceId)) {
-            revert NotService();
-        }
-
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
-
-        info.nftId = _registry.register(info);
-        service.linkToRegisteredNftId();
-        return (info, data);
-    }
 
     function registerInstance(IRegisterable instance)
         external
@@ -202,10 +174,6 @@ contract RegistryService is
     // from Versionable
 
     /// @dev top level initializer
-    // 1) registry is non upgradeable -> don't need a proxy and uses constructor !
-    // 2) deploy registry service first -> from its initialization func it is easier to deploy registry then vice versa
-    // 3) deploy registry -> pass registry service address as constructor argument
-    // registry is getting instantiated and locked to registry service address forever
     function _initialize(
         address owner, 
         bytes memory data
@@ -216,13 +184,15 @@ contract RegistryService is
     {
         (
             address initialAuthority,
+            address releaseManager,
             bytes memory registryByteCodeWithInitCode
-        ) = abi.decode(data, (address, bytes));
+        ) = abi.decode(data, (address, address, bytes));
 
         __AccessManaged_init(initialAuthority);
 
         bytes memory encodedConstructorArguments = abi.encode(
             owner,
+            releaseManager,
             getMajorVersion());
 
         bytes memory registryCreationCode = ContractDeployerLib.getCreationCode(
@@ -242,6 +212,51 @@ contract RegistryService is
         linkToRegisteredNftId(); 
         _registerInterface(type(IRegistryService).interfaceId);
     }
+
+    // from IRegisterable
+
+    function getInitialInfo() 
+        public 
+        view
+        override(IRegisterable, Registerable)
+        returns (IRegistry.ObjectInfo memory info, bytes memory data)
+    {
+        (info , data) = super.getInitialInfo();
+
+        FunctionConfig[] memory config = new FunctionConfig[](3);
+
+        config[0].serviceType = INSTANCE();
+        config[0].selector = new bytes4[](1);
+        config[0].selector[0] = RegistryService.registerInstance.selector;
+
+        config[1].serviceType = POOL();
+        config[1].selector = new bytes4[](1);
+        config[1].selector[0] = RegistryService.registerPool.selector;
+
+        config[2].serviceType = DISTRIBUTION();
+        config[2].selector = new bytes4[](1);
+        config[2].selector[0] = RegistryService.registerDistribution.selector;
+
+        /*config[3].serviceType = PRODUCT();
+        config[3].selector = new bytes4[](1);
+        config[3].selector[0] = RegistryService.registerProduct.selector;
+
+        config[4].serviceType = POLICY();
+        config[4].selector = new bytes4[](1);
+        config[4].selector[0] = RegistryService.registerPolicy.selector;
+
+        config[5].serviceType = BUNDLE();
+        config[5].selector = new bytes4[](1);
+        config[5].selector[0] = RegistryService.registerBundle.selector;
+
+        config[6].serviceType = STAKE();
+        config[6].selector = new bytes4[](1);
+        config[6].selector[0] = RegistryService.registerStake.selector;*/
+
+        data = abi.encode(config);
+    }
+
+    // Internal
 
     function _getAndVerifyContractInfo(
         IRegisterable registerable,

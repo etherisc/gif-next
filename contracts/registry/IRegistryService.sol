@@ -28,9 +28,13 @@ interface IRegistryService is IService {
      error InvalidInitialOwner(address initialOwner);
      error InvalidAddress(address registerableAddress);
 
+     struct FunctionConfig
+     {
+          ObjectType serviceType;
+          bytes4[] selector;
+     }
 
-     function registerService(IService service)  external returns(IRegistry.ObjectInfo memory info, bytes memory data);
-
+     // TODO used by service -> add owner arg 
      function registerInstance(IRegisterable instance)
           external returns(IRegistry.ObjectInfo memory info, bytes memory data); 
 
@@ -43,7 +47,7 @@ interface IRegistryService is IService {
      function registerDistribution(IBaseComponent distribution, address owner)
           external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
-     function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId); // -> easy to upgrade
+     function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 
      function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
 }
