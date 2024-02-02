@@ -94,10 +94,7 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(() => accessManager.revokeRole(0, resolveAddress(owner)));
 
     logger.debug(`setting master addresses into instance service`);
-    await executeTx(() => services.instanceService.setAccessManagerMaster(accessManagerAddress));
-    await executeTx(() => services.instanceService.setInstanceMaster(instanceAddress));
-    await executeTx(() => services.instanceService.setInstanceReaderMaster(instanceReaderAddress));
-    await executeTx(() => services.instanceService.setBundleManagerMaster(bundleManagerAddress));
+    await executeTx(() => services.instanceService.setMasterInstance(accessManagerAddress, instanceAddress, instanceReaderAddress, bundleManagerAddress));
     logger.info(`master addresses set`);
     
     return {

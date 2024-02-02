@@ -474,10 +474,7 @@ contract TestGifBase is Test {
         console.log("master instance nft id", masterInstanceNftId.toInt());
         // solhint-enable
 
-        instanceService.setAccessManagerMaster(address(masterInstanceAccessManager));
-        instanceService.setInstanceMaster(address(masterInstance));
-        instanceService.setInstanceReaderMaster(address(masterInstanceReader));
-        instanceService.setBundleManagerMaster(address(masterBundleManager));
+        instanceService.setMasterInstance(address(masterInstanceAccessManager), address(masterInstance), address(masterInstanceReader), address(masterBundleManager));
     }
 
 
