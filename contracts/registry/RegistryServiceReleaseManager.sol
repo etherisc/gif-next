@@ -24,6 +24,28 @@ import {RegistryServiceAccessManager} from "./RegistryServiceAccessManager.sol";
 
 contract RegistryServiceReleaseManager is AccessManaged
 {
+    // registerService
+    error ServiceTypeNotInRelease(IService service, ObjectType serviceType);
+
+    // activateNextRelease
+    error ReleaseRegistrationIsNotFinished();
+
+    // _getAndVerifyContractInfo
+    error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
+    error NotRegisterableOwner(address expectedOwner);
+    error SelfRegistration();
+    error RegisterableOwnerIsRegistered();
+
+    // _verifyServiceInfo
+    error UnexpectedServiceVersion(VersionPart expected, VersionPart found);
+    error UnexpectedServiceType(ObjectType expected, ObjectType found);
+    
+    // _verifyAndStoreConfig
+    error ConfigServiceTypeInvalid();
+    error ConfigSelectorMissing(); 
+    error ConfigSelectorZero(); 
+    error ConfigSelectorAlreadyExists(VersionPart serviceVersion, ObjectType serviceType);
+
     struct ReleaseInfo {
         ObjectType[] types; // service types of release
         uint awaitingRegistration;// "services left to register" counter 
@@ -127,7 +149,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         bytes4[] memory selector = _config[nextVersion][serviceType].selector;
 
         // service type is in release
-        if(selector.length == 0) { revert(); }
+        if(selector.length == 0) { revert ServiceTypeNotInRelease(service, serviceType); }
 
         // service of this type is not registered yet -> redundant -> checked by registry
         //if(roleId > 0) { revert(); }
@@ -146,7 +168,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         RoleId roleId = _accessManager.setAndGrantUniqueRole(
             address(service), 
             registryService, 
-            _config[nextVersion][serviceType].selector);
+            selector);
 
         _config[nextVersion][serviceType].roleId = roleId;
 
@@ -163,7 +185,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         
         // release fully deployed
         if(release.awaitingRegistration > 0) {
-            revert();
+            revert ReleaseRegistrationIsNotFinished();
         }
 
         //setTargetClosed(newRegistryService, false);
@@ -244,17 +266,17 @@ contract RegistryServiceReleaseManager is AccessManaged
         info.isInterceptor = false; // service is never interceptor, at least now
 
         if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
-            revert();// UnexpectedRegisterableType(expectedType, info.objectType);
+            revert UnexpectedRegisterableType(expectedType, info.objectType);
         }
 
         address owner = info.initialOwner;
 
         if(owner != expectedOwner) { // registerable owner protection
-            revert();// NotRegisterableOwner(expectedOwner);
+            revert NotRegisterableOwner(expectedOwner); 
         }
 
         if(owner == address(service)) {
-            revert();// SelfRegistration();
+            revert SelfRegistration();
         }
 
         /*if(owner == address(0)) { // never 0
@@ -262,7 +284,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         }*/
         
         if(_registry.isRegistered(owner)) { 
-            revert();// RegisterableOwnerIsRegistered();
+            revert RegisterableOwnerIsRegistered(); 
         }
 
         /*NftId parentNftId = info.parentNftId;
@@ -290,12 +312,12 @@ contract RegistryServiceReleaseManager is AccessManaged
         ) = abi.decode(info.data, (ObjectType, VersionPart));
 
         if(serviceVersion != expectedVersion) {
-            revert();
+            revert UnexpectedServiceVersion(expectedVersion, serviceVersion);
         }
 
         if(expectedType != zeroObjectType()) { 
             if(serviceType != expectedType) {
-                revert();
+                revert UnexpectedServiceType(expectedType, serviceType);
             }
         }
 
@@ -313,18 +335,18 @@ contract RegistryServiceReleaseManager is AccessManaged
             bytes4[] memory selector = config[idx].selector;
 
             // not "registry service" type
-            if(serviceType == SERVICE()) { revert(); }
+            if(serviceType == SERVICE()) { revert ConfigServiceTypeInvalid(); } 
 
             // at least one selector exists
-            if(selector.length == 0) { revert(); }
+            if(selector.length == 0) { revert ConfigSelectorMissing(); }
 
             // no zero selectors
             for(uint jdx = 0; jdx < selector.length; jdx++) {
-                if(selector[jdx] == 0) { revert(); }
+                if(selector[jdx] == 0) { revert ConfigSelectorZero(); }
             }
 
             // no overwrite
-            if(_config[nextVersion][serviceType].selector.length > 0) { revert(); }
+            if(_config[nextVersion][serviceType].selector.length > 0) { revert ConfigSelectorAlreadyExists(nextVersion, serviceType); }
             
             _config[nextVersion][serviceType].selector = selector;
             _release[nextVersion].types.push(serviceType);
