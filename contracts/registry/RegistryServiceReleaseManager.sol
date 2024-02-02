@@ -171,7 +171,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         _latest = nextVersion;
 
         bool active = true;
-        _registry.setServiceState(nextVersion, SERVICE(), active);
+        _registry.setServiceActive(nextVersion, SERVICE(), active);
     }
 
     //--- view functions ----------------------------------------------------//

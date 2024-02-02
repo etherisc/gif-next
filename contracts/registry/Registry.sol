@@ -121,7 +121,7 @@ contract Registry is
     }
 
     // assume release manager keeps versioning right and activates only when release is ready to use
-    function setServiceState(VersionPart version, ObjectType serviceType, bool state)
+    function setServiceActive(VersionPart version, ObjectType serviceType, bool state)
         external
         onlyReleaseManager
     {

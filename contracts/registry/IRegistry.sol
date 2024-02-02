@@ -42,7 +42,7 @@ interface IRegistry is IERC165 {
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
 
-    function setServiceState(VersionPart version, ObjectType serviceType, bool state) external;
+    function setServiceActive(VersionPart version, ObjectType serviceType, bool state) external;
 
     function getMajorVersionMin() external view returns (VersionPart);
 
