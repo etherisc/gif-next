@@ -223,7 +223,7 @@ contract RegistryService is
     {
         (info , data) = super.getInitialInfo();
 
-        FunctionConfig[] memory config = new FunctionConfig[](3);
+        FunctionConfig[] memory config = new FunctionConfig[](4);
 
         config[0].serviceType = INSTANCE();
         config[0].selector = new bytes4[](1);
@@ -237,11 +237,11 @@ contract RegistryService is
         config[2].selector = new bytes4[](1);
         config[2].selector[0] = RegistryService.registerDistribution.selector;
 
-        /*config[3].serviceType = PRODUCT();
+        config[3].serviceType = PRODUCT();
         config[3].selector = new bytes4[](1);
         config[3].selector[0] = RegistryService.registerProduct.selector;
 
-        config[4].serviceType = POLICY();
+        /*config[4].serviceType = POLICY();
         config[4].selector = new bytes4[](1);
         config[4].selector[0] = RegistryService.registerPolicy.selector;
 
