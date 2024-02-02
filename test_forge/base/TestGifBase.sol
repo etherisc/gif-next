@@ -123,8 +123,8 @@ contract TestGifBase is Test {
     NftId public bundleNftId;
     uint256 public initialCapitalAmount;
 
+    address constant public MASTER_INSTANCE_OWNER = address(0x1);
     address public registryOwner = makeAddr("registryOwner");
-    address public masterInstanceOwner = address(0x1);
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
     address public poolOwner = makeAddr("poolOwner");
@@ -452,12 +452,11 @@ contract TestGifBase is Test {
 
     function _deployMasterInstance() internal 
     {
-        // TODO: master instance is owned by 0x1
         masterInstanceAccessManager = new AccessManagerUpgradeableInitializeable();
         masterInstanceAccessManager.__AccessManagerUpgradeableInitializeable_init(registryOwner);
         
         masterInstance = new Instance();
-        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, masterInstanceOwner);
+        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, MASTER_INSTANCE_OWNER);
         ( IRegistry.ObjectInfo memory masterInstanceObjectInfo, ) = registryService.registerInstance(masterInstance);
         masterInstanceNftId = masterInstanceObjectInfo.nftId;
         
