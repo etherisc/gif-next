@@ -80,7 +80,7 @@ contract RegistryServiceReleaseManager is AccessManaged
 
         address owner = msg.sender;
         _proxyManager = new RegistryServiceManager(
-            owner,
+            accessManager.authority(),
             address(this)
             /*initialAuthority, 
             type(Registry).creationCode, 
