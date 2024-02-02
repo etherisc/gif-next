@@ -127,7 +127,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         bytes4[] memory selector = _config[nextVersion][serviceType].selector;
 
         // service type is in release
-        if(selector[0] == bytes4(0)) { revert(); }
+        if(selector.length == 0) { revert(); }
 
         // service of this type is not registered yet -> redundant -> checked by registry
         //if(roleId > 0) { revert(); }
