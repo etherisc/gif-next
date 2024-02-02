@@ -223,7 +223,7 @@ contract RegistryService is
     {
         (info , data) = super.getInitialInfo();
 
-        FunctionConfig[] memory config = new FunctionConfig[](4);
+        FunctionConfig[] memory config = new FunctionConfig[](7);
 
         config[0].serviceType = INSTANCE();
         config[0].selector = new bytes4[](1);
