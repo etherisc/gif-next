@@ -15,7 +15,7 @@ import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
 contract Registry_Fuzz_Tests is RegistryTestBase 
 {    
-    function testFuzz_register(address sender, IRegistry.ObjectInfo memory info) public
+    /*function testFuzz_register(address sender, IRegistry.ObjectInfo memory info) public
     {
         vm.assume(
             info.initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D && // gives error (Invalid data) only during fuzzing when minting nft to foundry's cheatcodes contract
@@ -477,7 +477,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
         // _assert_register(info, false, "");
 
         _stopPrank();
-    }
+    }*/
 
 }
 

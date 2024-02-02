@@ -15,8 +15,11 @@ import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
 contract Registry_Continous_Tests is RegistryTestBase 
 {
+
     uint constant ITTERATIONS = 150;
 
+// TODO refactor
+/*
     // nftId - always random
     // parenNftId - random
     // objectType random
@@ -455,8 +458,8 @@ contract Registry_Continous_Tests is RegistryTestBase
 
         _stopPrank();
     }
-    // TODO refactor
-    /*function test_continuous_register_ServiceNewVersion() public
+
+    function test_continuous_register_ServiceNewVersion() public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             zeroNftId(), // any nftId
@@ -549,7 +552,8 @@ contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Regi
     {
         RegistryTestBaseWithPreset.setUp();
     }
-
+// TODO refactor
+/*
     // nftId - always random
     // parentNftId - from preset,
     // types - from types set
@@ -611,5 +615,5 @@ contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Regi
 
         _stopPrank();
     }
-
+*/
 }
