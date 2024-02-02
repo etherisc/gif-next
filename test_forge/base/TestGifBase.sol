@@ -174,9 +174,13 @@ contract TestGifBase is Test {
         _deployMasterInstance();
         vm.stopPrank();
 
+        vm.startPrank(address(registryOwner)); 
+        _deployToken();
+        vm.stopPrank();
+
         // token registry linked to registry service which owned by release manager
         vm.startPrank(address(registryServiceReleaseManager)); 
-        _deployToken();
+        _activateToken();
         vm.stopPrank();
 
         // deploy instance
@@ -444,12 +448,15 @@ contract TestGifBase is Test {
     function _deployToken() internal {
         USDC usdc  = new USDC();
         address usdcAddress = address(usdc);
-
-        tokenRegistry.setActive(usdcAddress, registry.getMajorVersion(), true);
         token = usdc;
 
         // solhint-disable-next-line
         console.log("token deployed at", usdcAddress);
+    }
+
+    function _activateToken() internal {
+        tokenRegistry.setActive(address(token), registry.getMajorVersion(), true);
+        
     }
 
 
