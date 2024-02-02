@@ -1,4 +1,4 @@
-import { AddressLike, Signer, resolveAddress } from "ethers";
+import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
 import { AccessManagerUpgradeableInitializeable, BundleManager, IRegistryService__factory, IRegistry__factory, Instance, InstanceService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
@@ -12,6 +12,8 @@ export type InstanceAddresses = {
     instanceNftId: string,
 }
 
+export const MASTER_INSTANCE_OWNER = ethers.getAddress("0x0000000000000000000000000000000000000001");
+    
 export async function deployAndRegisterMasterInstance(
     owner: Signer, 
     libraries: LibraryAddresses,
@@ -42,7 +44,7 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const instance = masterInstanceBaseContract as Instance;
-    await executeTx(() => instance.initialize(accessManagerAddress, registry.registryAddress, registry.registryNftId, owner.getAddress()));
+    await executeTx(() => instance.initialize(accessManagerAddress, registry.registryAddress, registry.registryNftId, MASTER_INSTANCE_OWNER));
 
     // FIXME register instance in registry
     logger.debug(`registering instance ${instanceAddress} in registry ...`);
@@ -88,6 +90,8 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(() => bundleManager["initialize(address,address,uint96)"](accessManagerAddress, registry.registryAddress, BigInt(masterInstanceNfdId as string)));
 
     await executeTx(() => instance.setBundleManager(bundleManagerAddress));
+    // revoke admin role for protocol owner
+    await executeTx(() => accessManager.revokeRole(0, resolveAddress(owner)));
 
     logger.debug(`setting master addresses into instance service`);
     await executeTx(() => services.instanceService.setAccessManagerMaster(accessManagerAddress));

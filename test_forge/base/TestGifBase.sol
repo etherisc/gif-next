@@ -42,6 +42,7 @@ import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/types/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {
+    ADMIN_ROLE,
     PRODUCT_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
     DISTRIBUTION_OWNER_ROLE, 
@@ -123,7 +124,7 @@ contract TestGifBase is Test {
     uint256 public initialCapitalAmount;
 
     address public registryOwner = makeAddr("registryOwner");
-    address public masterInstanceOwner = makeAddr("masterInstanceOwner");
+    address public masterInstanceOwner = address(0x1);
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
     address public poolOwner = makeAddr("poolOwner");
@@ -173,9 +174,6 @@ contract TestGifBase is Test {
         _configureAccessManagerRoles();
         _deployServices();
         _configureServiceAuthorizations();
-        vm.stopPrank();
-
-        vm.startPrank(masterInstanceOwner);
         _deployMasterInstance();
         vm.stopPrank();
 
@@ -456,7 +454,7 @@ contract TestGifBase is Test {
     {
         // TODO: master instance is owned by 0x1
         masterInstanceAccessManager = new AccessManagerUpgradeableInitializeable();
-        masterInstanceAccessManager.__AccessManagerUpgradeableInitializeable_init(masterInstanceOwner);
+        masterInstanceAccessManager.__AccessManagerUpgradeableInitializeable_init(registryOwner);
         
         masterInstance = new Instance();
         masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, masterInstanceOwner);
@@ -468,6 +466,9 @@ contract TestGifBase is Test {
         masterBundleManager = new BundleManager();
         masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), masterInstanceNftId);
         masterInstance.setBundleManager(masterBundleManager);
+
+        // revoke ADMIN_ROLE from registryOwner. token is already owned by 0x1
+        masterInstanceAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(registryOwner));
         
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
