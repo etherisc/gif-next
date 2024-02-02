@@ -135,32 +135,33 @@ contract InstanceService is Service, IInstanceService {
             PRODUCT_SERVICE_ROLE().toInt());
     }
 
-    function setAccessManagerMaster(address accessManagerMaster) external {
-        require(
-            _accessManagerMaster == address(0),
-            "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
-        _accessManagerMaster = accessManagerMaster;
+    function setMasterInstance(address accessManagerAddress, address instanceAddress, address instanceReaderAddress, address bundleManagerAddress) external onlyOwner {
+        require( _accessManagerMaster == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
+        require( _instanceMaster == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
+        require( _instanceBundleManagerMaster == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
+
+        require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
+        require (instanceAddress != address(0), "ERROR:CRD-006:INSTANCE_ZERO");
+        require (instanceReaderAddress != address(0), "ERROR:CRD-007:INSTANCE_READER_ZERO");
+        require (bundleManagerAddress != address(0), "ERROR:CRD-008:BUNDLE_MANAGER_ZERO");
+
+        Instance instance = Instance(instanceAddress);
+        InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
+        BundleManager bundleManager = BundleManager(bundleManagerAddress);
+
+        require(instance.authority() == accessManagerAddress, "ERROR:CRD-009:INSTANCE_AUTHORITY_MISMATCH");
+        require(instanceReader.getInstanceNftId() == instance.getNftId(), "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
+        require(bundleManager.getInstanceNftId() == instance.getNftId(), "ERROR:CRD-011:BUNDLE_MANAGER_INSTANCE_MISMATCH");
+
+        _accessManagerMaster = accessManagerAddress;
+        _instanceMaster = instanceAddress;
+        _instanceReaderMaster = instanceReaderAddress;
+        _instanceBundleManagerMaster = bundleManagerAddress;
     }
 
-    function setInstanceMaster(address instanceMaster) external {
-        require(
-            _instanceMaster == address(0),
-            "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
-        _instanceMaster = instanceMaster;
-    }
-
-    function setInstanceReaderMaster(address instanceReaderMaster) external {
-        require(
-            _instanceReaderMaster == address(0),
-            "ERROR:CRD-003:INSTANCE_READER_MASTER_ALREADY_SET");
-        _instanceReaderMaster = instanceReaderMaster;
-    }
-
-    function setBundleManagerMaster(address bundleManagerMaster) external {
-        require(
-            _instanceBundleManagerMaster == address(0),
-            "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
-        _instanceBundleManagerMaster = bundleManagerMaster;
+    function upgradeInstanceReader(NftId instanceNftId) external {
+        // TODO: ensure this is done by instance owner
+        // TODO: upgrade instance reader of this instance to latest (set above here)
     }
 
     function getInstanceReaderMaster() external view returns (address) {
