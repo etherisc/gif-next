@@ -241,7 +241,7 @@ contract RegistryService is
         config[3].selector = new bytes4[](1);
         config[3].selector[0] = RegistryService.registerProduct.selector;
 
-        /*config[4].serviceType = POLICY();
+        config[4].serviceType = POLICY();
         config[4].selector = new bytes4[](1);
         config[4].selector[0] = RegistryService.registerPolicy.selector;
 
@@ -251,7 +251,7 @@ contract RegistryService is
 
         config[6].serviceType = STAKE();
         config[6].selector = new bytes4[](1);
-        config[6].selector[0] = RegistryService.registerStake.selector;*/
+        config[6].selector[0] = RegistryService.registerStake.selector;
 
         data = abi.encode(config);
     }
