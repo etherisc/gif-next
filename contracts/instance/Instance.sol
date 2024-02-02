@@ -434,8 +434,8 @@ contract Instance is
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        // TODO: reader is for correct instance
         require(address(_instanceReader) == address(0), "InstanceReader is set");
+        require(instanceReader.getInstanceNftId() == getNftId(), "NFT ID of InstanceReader does not match");
         _instanceReader = instanceReader;
     }
 
@@ -444,8 +444,8 @@ contract Instance is
     }
     
     function setBundleManager(BundleManager bundleManager) external restricted() {
-        // TODO: reader is for correct instance
         require(address(_bundleManager) == address(0), "BundleManager is set");
+        require(bundleManager.getInstanceNftId() == getNftId(), "NFT ID of BundleManager does not match");
         _bundleManager = bundleManager;
     }
 
