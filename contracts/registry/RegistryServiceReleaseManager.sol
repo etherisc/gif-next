@@ -203,29 +203,10 @@ contract RegistryServiceReleaseManager is AccessManaged
         return _proxyManager;
     }
 
-    /*function getAccessManager()
-        external
-        view
-        returns (AccessManager)
+    function getReleaseInfo(VersionPart releaseVersion) external view returns(ReleaseInfo memory)
     {
-        return _accessManager;
+        return _release[releaseVersion];
     }
-
-    function getRegistryService()
-        external
-        view
-        returns (RegistryService registryService)
-    {
-        return _registryService;
-    }
-
-    function getTokenRegistry()
-        external
-        view
-        returns (TokenRegistry)
-    {
-        return _tokenRegistry;
-    }*/
 
     function getNextVersion() public view returns(VersionPart) 
     {
