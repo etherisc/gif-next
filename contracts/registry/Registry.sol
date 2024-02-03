@@ -57,14 +57,14 @@ contract Registry is
 
     modifier onlyRegistryService() {
         if(!_isActive[msg.sender]) {
-            revert NotRegistryService(); // TODO notActiveRegistryService();
+            revert CallerNotRegistryService();
         }
         _;
     }
 
     modifier onlyReleaseManager() {
         if(msg.sender != address(_releaseManager)) {
-            revert();
+            revert CallerNotReleaseManager();
         }
         _;
     }
@@ -90,7 +90,6 @@ contract Registry is
         _registerInterface(type(IRegistry).interfaceId);
     }
 
-
     function registerService(ObjectInfo memory info)
         external
         onlyReleaseManager
@@ -114,7 +113,7 @@ contract Registry is
     {
         // no service registrations
         if(info.objectType == SERVICE()) {
-            revert();
+            revert ServiceRegistration();
         }
 
         nftId = _register(info);
@@ -288,7 +287,7 @@ contract Registry is
             }
         }
 
-        emit LogRegistration(info);
+        emit LogRegistration(nftId, parentNftId, objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
     }
 
     /// @dev obtain interceptor address for this nft if applicable, address(0) otherwise

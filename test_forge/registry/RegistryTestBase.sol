@@ -314,12 +314,13 @@ contract RegistryTestBase is Test, FoundryRandom {
         _addressName[address(registry)] = "Registry";
         _addressName[address(registryService)] = "registryService";
         
-        _errorName[IRegistry.NotRegistryService.selector] = "NotRegistryService"; 
+        _errorName[IRegistry.CallerNotRegistryService.selector] = "CallerNotRegistryService"; 
+        _errorName[IRegistry.CallerNotReleaseManager.selector] = "CallerNotReleaseManager"; 
+        _errorName[IRegistry.ServiceRegistration.selector] = "ServiceRegistration";
         _errorName[IRegistry.ZeroParentAddress.selector] = "ZeroParentAddress"; 
         _errorName[IRegistry.ContractAlreadyRegistered.selector] = "ContractAlreadyRegistered";
         _errorName[IRegistry.InvalidServiceVersion.selector] = "InvalidServiceVersion";
         _errorName[IRegistry.ServiceAlreadyRegistered.selector] = "ServiceAlreadyRegistered";
-        _errorName[IRegistry.NotOwner.selector] = "NotOwner";
         _errorName[IRegistry.InvalidTypesCombination.selector] = "InvalidTypesCombination"; 
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }
@@ -629,7 +630,7 @@ contract RegistryTestBase is Test, FoundryRandom {
 
         if(_sender != address(registryService)) 
         {// auth check
-            expectedRevertMsg = abi.encodeWithSelector(IRegistry.NotRegistryService.selector);
+            expectedRevertMsg = abi.encodeWithSelector(IRegistry.CallerNotRegistryService.selector);
             expectRevert = true;
         }
         else if(parentAddress == address(0)) 

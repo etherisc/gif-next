@@ -12,15 +12,18 @@ interface IRegistry is IERC165 {
 
     event LogInitialMajorVersionSet(VersionPart majorVersion);
     event LogMajorVersionSet(VersionPart majorVersionMax);
-    event LogRegistration(ObjectInfo info);
+    event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
     event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceType); 
 
-    // setMajorVersion()
-    error NotOwner(address account);
-    error MajorVersionMaxIncreaseInvalid(VersionPart newMajorVersionMax, VersionPart existingMaxMajorVersion);
 
     // register()
-    error NotRegistryService();
+    error CallerNotRegistryService();
+    error ServiceRegistration();
+
+    // registerService()
+    error CallerNotReleaseManager();
+
+    // _register()
     error ZeroParentAddress();
     error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
     error ContractAlreadyRegistered(address objectAddress);
@@ -38,7 +41,7 @@ interface IRegistry is IERC165 {
     }// TODO delete nftId and initialOwner(if not used) from struct
     // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
 
-    function registerService(ObjectInfo memory service) external returns(NftId nftId);
+    function registerService(ObjectInfo memory serviceInfo) external returns(NftId nftId);
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
 

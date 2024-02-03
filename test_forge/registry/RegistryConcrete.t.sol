@@ -150,8 +150,7 @@ contract Registry_Concrete_Tests is RegistryTestBase {
             info.objectAddress = address(uint160(info.objectAddress) + 1);
         }
 
-        bytes memory reason_NotRegistryService = abi.encodeWithSelector(IRegistry.NotRegistryService.selector);
-        bytes memory reason_NotOwner = abi.encodeWithSelector(IRegistry.NotOwner.selector);
+        bytes memory reason_NotRegistryService = abi.encodeWithSelector(IRegistry.CallerNotRegistryService.selector);
 
         // outsider can not register and approve 
         _startPrank(outsider);
