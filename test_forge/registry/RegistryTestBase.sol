@@ -11,7 +11,7 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {blockBlocknumber} from "../../contracts/types/Blocknumber.sol";
-import {VersionLib, Version, VersionPart} from "../../contracts/types/Version.sol";
+import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
@@ -135,17 +135,33 @@ contract RegistryTestBase is Test, FoundryRandom {
         _startPrank(registryOwner);
 
         accessManager = new RegistryServiceAccessManager(registryOwner);
-        releaseManager = new RegistryServiceReleaseManager(accessManager);
-        registryServiceManager = releaseManager.getProxyManager();
 
-        registryService = registryServiceManager.getRegistryService();
-        registry = Registry(address((registryServiceManager.getRegistry())));
+        releaseManager = new RegistryServiceReleaseManager(
+            accessManager,
+            VersionPartLib.toVersionPart(3));
+
+        address registryAddress = address(releaseManager.getRegistry());
+        registry = Registry(registryAddress);
+        registryNftId = registry.getNftId(address(registry));
 
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);
 
+        registryServiceManager = new RegistryServiceManager(
+            accessManager.authority(),
+            registryAddress
+        );        
+        
+        registryService = registryServiceManager.getRegistryService();
+        
         tokenRegistry = new TokenRegistry();
-        tokenRegistry.linkToNftOwnable(address(registry));
+
+        accessManager.initialize(address(releaseManager), address(tokenRegistry));
+
+        NftId nftId = releaseManager.createNextRelease(registryService);
+
+        registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service nft
+        tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service nft
 
         _stopPrank();
 
@@ -663,8 +679,8 @@ contract RegistryTestBase is Test, FoundryRandom {
                 expectRevert = true;
             }
             else if(info.objectType == SERVICE()) 
-            {// service checks
-                (
+            {// TODO move service checks to release manager
+                /*(
                     ObjectType serviceType,
                     VersionPart majorVersion
                 ) = _decodeServiceParameters(info.data);
@@ -682,7 +698,7 @@ contract RegistryTestBase is Test, FoundryRandom {
                 {
                     expectedRevertMsg = abi.encodeWithSelector(IRegistry.ServiceAlreadyRegistered.selector, serviceType, majorVersion);
                     expectRevert = true;
-                }
+                }*/
             }
         }
         else if(_isValidObjectTypesCombo[info.objectType][parentType] == false) 

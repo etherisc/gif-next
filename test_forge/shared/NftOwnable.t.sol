@@ -7,6 +7,7 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
+import {VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
@@ -27,13 +28,29 @@ contract NftOwnableTest is Test {
     function setUp() public {
 
         vm.startPrank(registryOwner);
-        RegistryServiceAccessManager accessManager = new RegistryServiceAccessManager(registryOwner);
-        RegistryServiceReleaseManager releaseManager = new RegistryServiceReleaseManager(accessManager);
-        RegistryServiceManager registryServiceManager = releaseManager.getProxyManager();
-        vm.stopPrank();
 
+        RegistryServiceAccessManager accessManager = new RegistryServiceAccessManager(registryOwner);
+
+        RegistryServiceReleaseManager releaseManager = new RegistryServiceReleaseManager(
+            accessManager,
+            VersionPartLib.toVersionPart(3));
+
+        registry = IRegistry(releaseManager.getRegistry());
+
+        RegistryServiceManager registryServiceManager = new RegistryServiceManager(
+            accessManager.authority(),
+            address(registry)
+        );        
+        
         registryService = registryServiceManager.getRegistryService();
-        registry = registryServiceManager.getRegistry();
+
+        accessManager.initialize(address(releaseManager), address(0x1));
+
+        releaseManager.createNextRelease(registryService);
+
+        registryServiceManager.linkToNftOwnable(address(registry));// links to registry service
+
+        vm.stopPrank();
 
         vm.prank(mockOwner);
         mock = new NftOwnableMock();
@@ -175,7 +192,7 @@ contract NftOwnableTest is Test {
                 INftOwnable.ErrorAlreadyLinked.selector,
                 registryAddress,
                 mockNftId));
-        vm.prank(address(0x1));
-        mock.linkToNftOwnable(address(registry), address(1));
+        vm.prank(address(mockOwner));
+        mock.linkToNftOwnable(address(registry), address(registry));
     }
 }

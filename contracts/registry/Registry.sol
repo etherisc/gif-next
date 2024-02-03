@@ -69,7 +69,7 @@ contract Registry is
         _;
     }
 
-    constructor(address registryOwner, address releaseManager, VersionPart initialVersion)
+    constructor(address releaseManager, VersionPart initialVersion)
     {
         require(releaseManager > address(0), "Registry: release manager is 0");
         require(initialVersion.toInt() > 0, "Registry: initial version is 0");
@@ -82,7 +82,6 @@ contract Registry is
         // initial registry setup
         _registerProtocol();
         _registerRegistry();
-        _registerRegistryService(registryOwner, initialVersion);
 
         // set object parent relations
         _setupValidObjectParentCombinations();
@@ -390,29 +389,6 @@ contract Registry is
         });
 
         _chainNft.mint(NFT_LOCK_ADDRESS, globalRegistryId);
-    }
-
-    function _registerRegistryService(address registryOwner, VersionPart initialVersion)
-        internal
-    {
-        uint256 serviceId = _chainNft.calculateTokenId(REGISTRY_SERVICE_TOKEN_SEQUENCE_ID);
-        NftId serviceNftId = toNftId(serviceId);        
-
-        _info[serviceNftId] = ObjectInfo({
-            nftId: serviceNftId,
-            parentNftId: _registryNftId,
-            objectType: SERVICE(),
-            isInterceptor: false,
-            objectAddress: msg.sender, // service deploys registry
-            initialOwner: registryOwner,
-            data: abi.encode(SERVICE(), initialVersion) // TODO this parameters can change with upgrade -> registry must keep only constants
-        });
-
-        _nftIdByAddress[msg.sender] = serviceNftId;
-
-        _service[initialVersion][SERVICE()] = msg.sender; // -> serviceNftId;
-
-        _chainNft.mint(registryOwner, serviceId);
     }
 
     /// @dev defines which object - parent types relations are allowed to register

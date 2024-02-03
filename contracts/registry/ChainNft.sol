@@ -59,7 +59,7 @@ contract ChainNft is ERC721Enumerable {
         }
 
         _chainIdMultiplier = 10 ** _chainIdDigits;
-        _idNext = 4;
+        _idNext = 3;
     }
 
     /**

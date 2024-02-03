@@ -8,11 +8,15 @@ import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
 import {ObjectType, toObjectType} from "../../contracts/types/ObjectType.sol";
+import {VersionPartLib} from "../../contracts/types/Version.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
+import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
 import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
@@ -50,13 +54,21 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
     function setUp() public virtual
     {
         vm.startPrank(registryOwner);
-        AccessManager accessManager = new AccessManager(registryOwner);
-        address fakeReleaseManager = address(0x2);
-        registryServiceManager = new RegistryServiceManagerMock(address(accessManager), fakeReleaseManager);
+
+        RegistryServiceAccessManager accessManager = new RegistryServiceAccessManager(registryOwner);
+
+        RegistryServiceReleaseManager releaseManager = new RegistryServiceReleaseManager(
+            accessManager,
+            VersionPartLib.toVersionPart(3));
+
+        registry = IRegistry(releaseManager.getRegistry());
+
+        registryServiceManager = new RegistryServiceManagerMock(
+            address(accessManager), 
+            address(registry));
         vm.stopPrank();
 
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManager.getRegistryService()));
-        registry = registryServiceManager.getRegistry();
     }
 
     function _assert_getAndVerifyContractInfo(

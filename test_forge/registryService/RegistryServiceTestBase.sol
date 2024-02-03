@@ -7,6 +7,7 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
+import {VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
 import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, TOKEN} from "../../contracts/types/ObjectType.sol";
@@ -120,13 +121,29 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
     function _deployRegistryServiceAndRegistry() internal
     {
         accessManager = new RegistryServiceAccessManager(registryOwner);
-        releaseManager = new RegistryServiceReleaseManager(accessManager);
-        registryServiceManager = releaseManager.getProxyManager();
+
+        releaseManager = new RegistryServiceReleaseManager(
+            accessManager,
+            VersionPartLib.toVersionPart(3));
+
+        registry = IRegistry(releaseManager.getRegistry());
+        registryNftId = registry.getNftId(address(registry));
+
+        registryServiceManager = new RegistryServiceManager(
+            accessManager.authority(),
+            address(registry)
+        );        
+        
         registryService = registryServiceManager.getRegistryService();
-        registry = registryServiceManager.getRegistry();
+
+        address tokenRegistry;
+        accessManager.initialize(address(releaseManager), tokenRegistry);
+
+        releaseManager.createNextRelease(registryService);
 
         registryServiceNftId = registry.getNftId(address(registryService));
-        registryNftId = registry.getNftId(address(registry));
+
+        registryServiceManager.linkToNftOwnable(address(registry));// links to registry service
     }
 
     function _deployAndRegisterServices() internal
@@ -136,32 +153,8 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
             registryNftId, 
             registryOwner            
         );
-        /*productService = new ProductService(
-            address(registry), 
-            registryNftId, 
-            registryOwner  
-        );
-        IService poolService = new PoolService(
-            address(registry), 
-            registryNftId, 
-            registryOwner  
-        );
-        IService distributionService = new DistributionService(
-            address(registry), 
-            registryNftId, 
-            registryOwner  
-        );*/
 
         releaseManager.registerService(componentOwnerService);
-        //registryService.registerService(productService);
-        //registryService.registerService(poolService);
-        //registryService.registerService(distributionService);
-
-        //accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        //accessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        //accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        //accessManager.grantRole(POLICY_REGISTRAR_ROLE(), address(productService), 0);
-        //accessManager.grantRole(BUNDLE_REGISTRAR_ROLE(), address(poolService), 0);
     }
 
     function _assert_registered_token(address token, NftId nftIdFromRegistryService) internal

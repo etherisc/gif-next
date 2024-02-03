@@ -35,7 +35,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
     function setUp() public virtual override {
         super.setUp();
     
-        vm.prank(address(releaseManager));
+        vm.prank(address(registryOwner));
         tokenRegistry.setActive(address(usdc), majorVersion3, blacklist);
     }
 
@@ -86,7 +86,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
             abi.encodeWithSelector(TokenRegistry.NotToken.selector,
                 address(registryService)));
 
-        vm.prank(address(releaseManager));
+        vm.prank(address(registryOwner));
         tokenRegistry.setActive(address(registryService), majorVersion3, whitelist);
     }
 
@@ -95,7 +95,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
             abi.encodeWithSelector(TokenRegistry.NotContract.selector,
                 address(outsider)));
 
-        vm.prank(address(releaseManager));
+        vm.prank(address(registryOwner));
         tokenRegistry.setActive(outsider, majorVersion3, whitelist);
     }
 /* TODO refactor
@@ -145,12 +145,12 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
 */
     function test_registryTokenBlacklistHappyCase() public {
 
-        vm.prank(address(releaseManager));
+        vm.prank(address(registryOwner));
         tokenRegistry.setActive(address(usdc), majorVersion3, whitelist);
 
         assertTrue(tokenRegistry.isActive(address(usdc), majorVersion3), "usdc not whitelisted in version 3");
 
-        vm.prank(address(releaseManager));
+        vm.prank(address(registryOwner));
         tokenRegistry.setActive(address(usdc), majorVersion3, blacklist);
 
         assertFalse(tokenRegistry.isActive(address(usdc), majorVersion3), "usdc not blacklisted in version 3");

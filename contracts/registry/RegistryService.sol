@@ -184,32 +184,13 @@ contract RegistryService is
     {
         (
             address initialAuthority,
-            address releaseManager,
-            bytes memory registryByteCodeWithInitCode
-        ) = abi.decode(data, (address, address, bytes));
+            address registry
+        ) = abi.decode(data, (address, address));
 
         __AccessManaged_init(initialAuthority);
 
-        bytes memory encodedConstructorArguments = abi.encode(
-            owner,
-            releaseManager,
-            getMajorVersion());
-
-        bytes memory registryCreationCode = ContractDeployerLib.getCreationCode(
-            registryByteCodeWithInitCode,
-            encodedConstructorArguments);
-
-        IRegistry registry = IRegistry(ContractDeployerLib.deploy(
-            registryCreationCode,
-            REGISTRY_CREATION_CODE_HASH));
-
-        NftId registryNftId = registry.getNftId(address(registry));
-
         _initializeService(address(registry), owner);
 
-        // TODO why do registry service proxy need to keep its nftId??? -> no registryServiceNftId checks in implementation
-        // if they are -> use registry address to obtain owner of registry service nft (works the same with any registerable and(or) implementation)
-        linkToRegisteredNftId(); 
         _registerInterface(type(IRegistryService).interfaceId);
     }
 

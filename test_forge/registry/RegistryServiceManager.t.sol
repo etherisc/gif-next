@@ -11,13 +11,14 @@ import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {NftId, toNftId} from "../../contracts/types/NftId.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
+import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
 import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceUpgradeMock} from "../mock/RegistryServiceUpgradeMock.sol";
-import {Version, VersionLib} from "../../contracts/types/Version.sol";
+import {Version, VersionLib, VersionPartLib } from "../../contracts/types/Version.sol";
 
 contract RegistryServiceManagerTest is Test {
 
@@ -37,15 +38,32 @@ contract RegistryServiceManagerTest is Test {
 
         vm.startPrank(registryOwner);
         accessManager = new RegistryServiceAccessManager(registryOwner);
-        releaseManager = new RegistryServiceReleaseManager(accessManager);
-        registryServiceManager = releaseManager.getProxyManager();
-        vm.stopPrank();
 
-        registryService = registryServiceManager.getRegistryService();
-        registry = registryServiceManager.getRegistry();
+        releaseManager = new RegistryServiceReleaseManager(
+            accessManager,
+            VersionPartLib.toVersionPart(3));
+
+        address registryAddress = address(releaseManager.getRegistry());
+        registry = Registry(registryAddress);
 
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);
+
+        registryServiceManager = new RegistryServiceManager(
+            accessManager.authority(),
+            registryAddress
+        );        
+        
+        registryService = registryServiceManager.getRegistryService();
+        
+        address tokenRegistry;
+        accessManager.initialize(address(releaseManager), tokenRegistry);
+
+        releaseManager.createNextRelease(registryService);
+
+        registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
+
+        vm.stopPrank();
     }
 
     function test_deployedRegistryAndRegistryService() public {
@@ -87,8 +105,8 @@ contract RegistryServiceManagerTest is Test {
         assertEq(registryService.getNftId().toInt(), registry.getNftId(address(registryService)).toInt(), "registry service nft id mismatch");
         
         // check ownership
-        assertEq(registryServiceManager.getOwner(), address(releaseManager), "service manager owner not registry owner");
-        assertEq(registryService.getOwner(), address(releaseManager), "registry owner not owner of registry");
+        assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
+        assertEq(registryService.getOwner(), address(registryOwner), "registry owner not owner of registry");
         assertEq(registry.getOwner(), address(0x1), "registry owner not owner of registry");
         assertEq(registry.getOwner(), registry.ownerOf(address(registry)), "non matching registry owners");
 
@@ -102,7 +120,7 @@ contract RegistryServiceManagerTest is Test {
         bytes memory emptyInitializationData;
 
         // check ownership
-        assertEq(registryServiceManager.getOwner(), address(releaseManager), "service manager owner not registry owner");
+        assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
 
         // attempt to redeploy with non-owner account
         vm.expectRevert(
@@ -118,7 +136,7 @@ contract RegistryServiceManagerTest is Test {
         vm.expectRevert(
             abi.encodeWithSelector(
                 ProxyManager.ErrorAlreadyDeployed.selector));
-        vm.prank(address(releaseManager));
+        vm.prank(registryOwner);
         registryServiceManager.deploy(
             mockImplementation,
             emptyInitializationData);
@@ -129,9 +147,9 @@ contract RegistryServiceManagerTest is Test {
         bytes memory emptyUpgradeData;
 
         // check ownership
-        assertEq(registryServiceManager.getOwner(), address(releaseManager), "service manager owner not registry owner");
+        assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
 
-        // attempt to redeploy with non-owner account
+        // attempt to upgrade with non-owner account
         vm.expectRevert(
             abi.encodeWithSelector(
                 INftOwnable.ErrorNotOwner.selector,
@@ -144,8 +162,8 @@ contract RegistryServiceManagerTest is Test {
         assertEq(registryService.getVersion().toInt(), VersionLib.toVersion(3, 0, 0).toInt(), "unexpected registry service before upgrad");
         assertEq(registryService.getVersionCount(), 1, "version count not 1 before upgrade");
 
-        // attempt to redeploy with owner account
-        vm.prank(address(releaseManager));
+        // attempt to upgrade with owner account
+        vm.prank(registryOwner);
         registryServiceManager.upgrade(
             upgradeMockImplementation,
             emptyUpgradeData);

@@ -22,14 +22,13 @@ contract RegistryServiceManager is
     /// @dev initializes proxy manager with registry service implementation and deploys registry
     constructor(
         address initialAuthority, // used by implementation 
-        address releaseManager) // used by registry
+        address registry) // used by implementation 
         ProxyManager()
     {
         // implementation's initializer func `data` argument
         bytes memory initializationData = abi.encode(
             initialAuthority,
-            releaseManager,
-            type(Registry).creationCode); 
+            registry); 
 
         IVersionable versionable = deploy(
             address(new RegistryService()), 
@@ -37,10 +36,16 @@ contract RegistryServiceManager is
 
         _registryService = RegistryService(address(versionable));
 
-        // link ownership of registry service manager ot nft owner of registry service
-        _linkToNftOwnable(
-            address(_registryService.getRegistry()),
-            address(_registryService));
+    }
+
+    // from IRegisterable
+
+    // IMPORTANT: registry here and in constructor MUST be the same
+    function linkToNftOwnable(address registry)
+        public
+        onlyOwner
+    {
+        _linkToNftOwnable(registry, address(_registryService));
     }
 
     //--- view functions ----------------------------------------------------//

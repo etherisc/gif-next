@@ -7,6 +7,8 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
+import {VersionPartLib} from "../../contracts/types/Version.sol";
+
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -266,22 +268,33 @@ contract TestGifBase is Test {
     {
         registryServiceAccessManager = new RegistryServiceAccessManager(registryOwner);
 
-        registryServiceReleaseManager = new RegistryServiceReleaseManager(registryServiceAccessManager);
-        registryServiceManager = registryServiceReleaseManager.getProxyManager();
-        registryService = registryServiceManager.getRegistryService();
+        registryServiceReleaseManager = new RegistryServiceReleaseManager(
+            registryServiceAccessManager,
+            VersionPartLib.toVersionPart(3));
 
-        IRegistry registry_ = registryService.getRegistry();
-        registryAddress = address(registry_);
+        registryAddress = address(registryServiceReleaseManager.getRegistry());
         registry = Registry(registryAddress);
-        registryNftId = registry.getNftId(address(registry));
+        registryNftId = registry.getNftId(address(registry)); 
 
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);
 
         tokenRegistry = new TokenRegistry();
-        tokenRegistry.linkToNftOwnable(registryAddress);
 
         registryServiceAccessManager.initialize(address(registryServiceReleaseManager), address(tokenRegistry));
+
+        registryServiceManager = new RegistryServiceManager(
+            registryServiceAccessManager.authority(),
+            registryAddress
+        );        
+        
+        registryService = registryServiceManager.getRegistryService();
+
+        registryServiceReleaseManager.createNextRelease(registryService);
+
+        registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
+        tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service
+
         
         /* solhint-disable */
         console.log("registry deployed at", address(registry));

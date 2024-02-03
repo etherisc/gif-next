@@ -58,50 +58,26 @@ contract RegistryServiceReleaseManager is AccessManaged
     }
 
     RegistryServiceAccessManager private immutable _accessManager;
-    // TODO keep mapping of all proxy managers
-    RegistryServiceManager private immutable _proxyManager;
     IRegistry private immutable _registry;
 
     VersionPart _latest;// latest active version
-    VersionPart _initial;// first active version
+    VersionPart immutable _initial;// first active version
 
     mapping(VersionPart version => ReleaseInfo info) _release;
 
     mapping(VersionPart version => mapping(ObjectType serviceType => ConfigInfo)) _config;
 
-    // TODO parametrize initial implementations?
     constructor(
-        RegistryServiceAccessManager accessManager/*,
-        bytes memory registryByteCodeWithInitCode,
-        bytes memory registryServiceByetCodeWithInitCode*/)
+        RegistryServiceAccessManager accessManager, 
+        VersionPart initialVersion)
         AccessManaged(accessManager.authority())
     {
         _accessManager = accessManager;
 
-        address owner = msg.sender;
-        _proxyManager = new RegistryServiceManager(
-            accessManager.authority(),
-            address(this)
-            /*initialAuthority, 
-            type(Registry).creationCode, 
-            type(RegistryService).creationCode*/
-        );
-
-        IRegistryService registryService = _proxyManager.getRegistryService();
-        _registry = registryService.getRegistry();
-
-        // get initial release version
-        VersionPart initialVersion = registryService.getMajorVersion();
-        //require(initialVersion.toInt() > 0, "Release manager: initial version 0");
         _initial = initialVersion;
         //_latest = zeroVersionPart();// 0 - no activated releases yet
-        
-        // create initial release
-        //IRegistryService.FunctionConfig[] memory config = registryService.getConfig();
-        (, bytes memory data) = registryService.getInitialInfo();
-        IRegistryService.FunctionConfig[] memory config = abi.decode(data, (IRegistryService.FunctionConfig[]));
 
-        _verifyAndStoreConfig(address(registryService), config);
+        _registry = new Registry(address(this), initialVersion);
     }
 
     function createNextRelease(IService registryService)
@@ -121,7 +97,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         _verifyServiceInfo(info, nextVersion, SERVICE());
 
         IRegistryService.FunctionConfig[] memory config = abi.decode(data, (IRegistryService.FunctionConfig[]));
-        _verifyAndStoreConfig(address(registryService), config);
+        _verifyAndStoreConfig(config);
 
         // close registry service
         // redundant -> only activateNextRelease() will make registry accessible
@@ -198,9 +174,9 @@ contract RegistryServiceReleaseManager is AccessManaged
 
     //--- view functions ----------------------------------------------------//
 
-    function getProxyManager() external view returns(RegistryServiceManager)
+    function getRegistry() external view returns(address)
     {
-        return _proxyManager;
+        return (address(_registry));
     }
 
     function getReleaseInfo(VersionPart releaseVersion) external view returns(ReleaseInfo memory)
@@ -217,11 +193,11 @@ contract RegistryServiceReleaseManager is AccessManaged
             VersionPartLib.toVersionPart(latest + 1);
     }
 
-    function getLatestVersion() public view returns(VersionPart) {
+    function getLatestVersion() external view returns(VersionPart) {
         return _latest;
     }
 
-    function getInitialVersion() public view returns(VersionPart) {
+    function getInitialVersion() external view returns(VersionPart) {
         return _initial;
     }
 
@@ -305,7 +281,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         return serviceType;
     }
 
-    function _verifyAndStoreConfig(address registryService, IRegistryService.FunctionConfig[] memory config)
+    function _verifyAndStoreConfig(IRegistryService.FunctionConfig[] memory config)
         internal
     {
         VersionPart nextVersion = getNextVersion();
