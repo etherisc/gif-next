@@ -17,9 +17,8 @@ async function main() {
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
     const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
-    await authorizeServices(protocolOwner, libraries, registry, services);
     
-    // // deploy instance contracts
+    // deploy instance contracts
     const masterInstance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry, services);
     const clonedInstance = await cloneInstance(masterInstance, libraries, registry, services, instanceOwner);
 
@@ -137,12 +136,15 @@ function printAddresses(
     addresses += `riskIdLibAddress: ${libraries.riskIdLibAddress}\n`;
     addresses += `contractDeployerLibAddress: ${libraries.contractDeployerLibAddress}\n`;
     addresses += `--------\n`;
+    addresses += `registryServiceAccessManagerAddress: ${registry.registryServiceAccessManagerAddress}\n`;
+    addresses += `registryServiceReleaseManagerAddress: ${registry.registryServiceReleaseManagerAddress}\n`;
     addresses += `registryAddress: ${registry.registryAddress}\n`;
-    addresses += `registryServiceAddress: ${registry.registryServiceAddress}\n`;
-    addresses += `registryServiceManagerAddress: ${registry.registryServiceManagerAddress}\n`;
     addresses += `registryNftId: ${registry.registryNftId}\n`;
     addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
     addresses += `tokenRegistryAddress: ${registry.tokenRegistryAddress}\n`;
+    addresses += `registryServiceManagerAddress: ${registry.registryServiceManagerAddress}\n`;
+    addresses += `registryServiceAddress: ${registry.registryServiceAddress}\n`;
+    addresses += `registryServiceNftId: ${registry.registryServiceNftId}\n`;
     addresses += `--------\n`;
     addresses += `instanceServiceManagerAddress: ${services.instanceServiceManagerAddress}\n`;
     addresses += `instanceServiceAddress: ${services.instanceServiceAddress}\n`;
