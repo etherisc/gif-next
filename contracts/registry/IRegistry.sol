@@ -10,8 +10,6 @@ import {VersionPart} from "../types/Version.sol";
 
 interface IRegistry is IERC165 {
 
-    event LogInitialMajorVersionSet(VersionPart majorVersion);
-    event LogMajorVersionSet(VersionPart majorVersionMax);
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
     event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceType); 
 
