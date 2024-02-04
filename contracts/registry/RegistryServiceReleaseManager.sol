@@ -24,6 +24,9 @@ import {RegistryServiceAccessManager} from "./RegistryServiceAccessManager.sol";
 
 contract RegistryServiceReleaseManager is AccessManaged
 {
+    event LogReleaseCreation(VersionPart version, address serviceAddress); 
+    event LogReleaseActivation(VersionPart version);
+
     // registerService
     error ServiceTypeNotInRelease(IService service, ObjectType serviceType);
 
@@ -96,14 +99,18 @@ contract RegistryServiceReleaseManager is AccessManaged
         VersionPart nextVersion = getNextVersion();
         _verifyServiceInfo(info, nextVersion, SERVICE());
 
-        IRegistryService.FunctionConfig[] memory config = abi.decode(data, (IRegistryService.FunctionConfig[]));
-        _verifyAndStoreConfig(config);
+        _verifyAndStoreConfig(data);
 
         // close registry service
         // redundant -> only activateNextRelease() will make registry accessible
         //setTargetClosed(newRegistryService, true);
 
         nftId = _registry.registerService(info);
+
+        // external call
+        registryService.linkToRegisteredNftId();
+
+        emit LogReleaseCreation(nextVersion, address(registryService));
     }
 
     function registerService(IService service) 
@@ -149,6 +156,9 @@ contract RegistryServiceReleaseManager is AccessManaged
         _config[nextVersion][serviceType].roleId = roleId;
 
         nftId = _registry.registerService(info);
+
+        // external call
+        service.linkToRegisteredNftId();
     }
 
     // TODO activate during last service registration
@@ -170,6 +180,8 @@ contract RegistryServiceReleaseManager is AccessManaged
 
         bool active = true;
         _registry.setServiceActive(nextVersion, SERVICE(), active);
+        
+        emit LogReleaseActivation(nextVersion);
     }
 
     //--- view functions ----------------------------------------------------//
@@ -281,11 +293,12 @@ contract RegistryServiceReleaseManager is AccessManaged
         return serviceType;
     }
 
-    function _verifyAndStoreConfig(IRegistryService.FunctionConfig[] memory config)
+    function _verifyAndStoreConfig(bytes memory configBytes)
         internal
     {
         VersionPart nextVersion = getNextVersion();
-
+        IRegistryService.FunctionConfig[] memory config = abi.decode(configBytes, (IRegistryService.FunctionConfig[]));
+        // always in release
         _release[nextVersion].types.push(SERVICE());
 
         for(uint idx = 0; idx < config.length; idx++)
@@ -305,7 +318,9 @@ contract RegistryServiceReleaseManager is AccessManaged
             }
 
             // no overwrite
-            if(_config[nextVersion][serviceType].selector.length > 0) { revert ConfigSelectorAlreadyExists(nextVersion, serviceType); }
+            if(_config[nextVersion][serviceType].selector.length > 0) {
+                revert ConfigSelectorAlreadyExists(nextVersion, serviceType); 
+            }
             
             _config[nextVersion][serviceType].selector = selector;
             _release[nextVersion].types.push(serviceType);
