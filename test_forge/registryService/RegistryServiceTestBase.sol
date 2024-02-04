@@ -11,11 +11,6 @@ import {VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
 import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, TOKEN} from "../../contracts/types/ObjectType.sol";
-import {PRODUCT_REGISTRAR_ROLE,
-        POOL_REGISTRAR_ROLE, 
-        DISTRIBUTION_REGISTRAR_ROLE, 
-        POLICY_REGISTRAR_ROLE, 
-        BUNDLE_REGISTRAR_ROLE} from "../../contracts/types/RoleId.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 

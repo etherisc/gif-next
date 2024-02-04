@@ -30,11 +30,6 @@ function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2
 function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(300); }
 function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(400); }
 
-function DISTRIBUTION_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1000); }
-function POLICY_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1100); }
-function BUNDLE_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1200); }
-function POOL_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1300); }
-function PRODUCT_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1400); }
 
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10000); }
 function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10100); }
