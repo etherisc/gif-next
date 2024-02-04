@@ -286,6 +286,8 @@ contract RegistryServiceReleaseManager is AccessManaged
     {
         VersionPart nextVersion = getNextVersion();
 
+        _release[nextVersion].types.push(SERVICE());
+
         for(uint idx = 0; idx < config.length; idx++)
         {
             ObjectType serviceType = config[idx].serviceType;
