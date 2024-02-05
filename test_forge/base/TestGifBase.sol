@@ -400,18 +400,6 @@ contract TestGifBase is Test {
         console.log("productService nft id", productService.getNftId().toInt());
         // solhint-enable
 
-        // --- policy service ---------------------------------//
-        policyServiceManager = new PolicyServiceManager(address(registry));
-        policyService = policyServiceManager.getPolicyService();
-        registryService.registerService(policyService);
-        policyServiceNftId = registry.getNftId(address(policyService));
-
-        // solhint-disable
-        console.log("policyService name", policyService.getName());
-        console.log("policyService deployed at", address(policyService));
-        console.log("policyService nft id", policyService.getNftId().toInt());
-        // solhint-enable
-
         // --- bundle service ---------------------------------//
         bundleServiceManager = new BundleServiceManager(address(registry));
         bundleService = bundleServiceManager.getBundleService();
@@ -422,6 +410,19 @@ contract TestGifBase is Test {
         console.log("bundleService name", bundleService.getName());
         console.log("bundleService deployed at", address(bundleService));
         console.log("bundleService nft id", bundleService.getNftId().toInt());
+        // solhint-enable
+
+        // MUST follow bundle service registration 
+        // --- policy service ---------------------------------//
+        policyServiceManager = new PolicyServiceManager(address(registry));
+        policyService = policyServiceManager.getPolicyService();
+        registryService.registerService(policyService);
+        policyServiceNftId = registry.getNftId(address(policyService));
+
+        // solhint-disable
+        console.log("policyService name", policyService.getName());
+        console.log("policyService deployed at", address(policyService));
+        console.log("policyService nft id", policyService.getNftId().toInt());
         // solhint-enable
 
         // //--- component owner service ---------------------------------//
