@@ -159,6 +159,17 @@ contract InstanceService is Service, IInstanceService {
         _instanceBundleManagerMaster = bundleManagerAddress;
     }
 
+    function setMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
+        require(_instanceReaderMaster != address(0), "ERROR:CRD-003:INSTANCE_READER_MASTER_NOT_SET");
+        require (instanceReaderAddress != address(0), "ERROR:CRD-012:INSTANCE_READER_ZERO");
+        require(instanceReaderAddress != _instanceReaderMaster, "ERROR:CRD-014:INSTANCE_READER_MASTER_SAME_AS_NEW");
+
+        InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
+        require(instanceReader.getInstanceNftId() == Instance(_instanceMaster).getNftId(), "ERROR:CRD-015:INSTANCE_READER_INSTANCE_MISMATCH");
+
+        _instanceReaderMaster = instanceReaderAddress;
+    }
+
     function upgradeInstanceReader(NftId instanceNftId) external {
         // TODO: ensure this is done by instance owner
         // TODO: upgrade instance reader of this instance to latest (set above here)

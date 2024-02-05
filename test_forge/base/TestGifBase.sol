@@ -461,6 +461,7 @@ contract TestGifBase is Test {
         masterInstanceNftId = masterInstanceObjectInfo.nftId;
         
         masterInstanceReader = new InstanceReader(address(registry), masterInstanceNftId);
+        masterInstance.setInstanceReader(masterInstanceReader);
         
         masterBundleManager = new BundleManager();
         masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), masterInstanceNftId);
