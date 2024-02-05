@@ -156,6 +156,12 @@ function printAddresses(
     addresses += `productServiceManagerAddress: ${services.productServiceManagerAddress}\n`;
     addresses += `productServiceAddress: ${services.productServiceAddress}\n`;
     addresses += `productServiceNftId: ${services.productServiceNftId}\n`;
+    addresses += `policyServiceManagerAddress: ${services.policyServiceManagerAddress}\n`;
+    addresses += `policyServiceAddress: ${services.policyServiceAddress}\n`;
+    addresses += `policyServiceNftId: ${services.policyServiceNftId}\n`;
+    addresses += `bundleServiceManagerAddress: ${services.bundleServiceManagerAddress}\n`;
+    addresses += `bundleServiceAddress: ${services.bundleServiceAddress}\n`;
+    addresses += `bundleServiceNftId: ${services.bundleServiceNftId}\n`;
     addresses += `--------\n`;
     addresses += `masterInstanceAddress: ${masterInstance.instanceAddress}\n`;
     addresses += `masterInstanceNftId: ${masterInstance.instanceNftId}\n`;

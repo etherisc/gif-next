@@ -6,6 +6,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IRisk} from "../instance/module/IRisk.sol";
 import {ITreasury} from "../instance/module/ITreasury.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
+import {IPolicyService} from "../instance/service/IPolicyService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
@@ -32,6 +33,7 @@ contract Product is BaseComponent, IProductComponent {
     using NftIdLib for NftId;
 
     IProductService internal _productService;
+    IPolicyService internal _policyService;
     Pool internal _pool;
     Distribution internal _distribution;
     Fee internal _initialProductFee;
@@ -54,6 +56,7 @@ contract Product is BaseComponent, IProductComponent {
     ) BaseComponent(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
         _productService = _instance.getProductService();
+        _policyService = _instance.getPolicyService(); 
         _pool = Pool(pool);
         _distribution = Distribution(distribution);
         _initialProductFee = productFee;
@@ -81,7 +84,7 @@ contract Product is BaseComponent, IProductComponent {
         override 
         returns (uint256 premiumAmount)
     {
-        (premiumAmount,,,,) = _productService.calculatePremium(
+        (premiumAmount,,,,) = _policyService.calculatePremium(
             riskId,
             sumInsuredAmount,
             lifetime,
@@ -154,7 +157,7 @@ contract Product is BaseComponent, IProductComponent {
         NftId bundleNftId,
         ReferralId referralId
     ) internal returns (NftId nftId) {
-        nftId = _productService.createApplication(
+        nftId = _policyService.createApplication(
             applicationOwner,
             riskId,
             sumInsuredAmount,
@@ -172,7 +175,7 @@ contract Product is BaseComponent, IProductComponent {
     )
         internal
     {
-        _productService.underwrite(
+        _policyService.underwrite(
             policyNftId, 
             requirePremiumPayment, 
             activateAt);
@@ -184,7 +187,7 @@ contract Product is BaseComponent, IProductComponent {
     )
         internal
     {
-        _productService.collectPremium(
+        _policyService.collectPremium(
             policyNftId, 
             activateAt);
     }
@@ -195,7 +198,7 @@ contract Product is BaseComponent, IProductComponent {
     )
         internal
     {
-        _productService.activate(
+        _policyService.activate(
             policyNftId, 
             activateAt);
     }
