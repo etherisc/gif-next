@@ -5,25 +5,21 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 
 import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
-import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {Registry} from "../registry/Registry.sol";
 import {RegistryService} from "../registry/RegistryService.sol";
 import {Service} from "../../contracts/shared/Service.sol";
 import {IService} from "../shared/IService.sol";
-import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
+import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
 import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
-    address internal _registryAddress;
     address internal _masterInstanceAccessManager;
     address internal _masterInstance;
     address internal _masterInstanceReader;
@@ -44,8 +40,9 @@ contract InstanceService is Service, IInstanceService {
         )
     {
         address instanceOwner = msg.sender;
-        Registry registry = Registry(_registryAddress);
-        NftId registryNftId = registry.getNftId(_registryAddress);
+        IRegistry registry = getRegistry();
+        address registryAddress = address(registry);
+        NftId registryNftId = registry.getNftId(registryAddress);
         address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
 
@@ -56,16 +53,16 @@ contract InstanceService is Service, IInstanceService {
         clonedAccessManager.__AccessManagerUpgradeableInitializeable_init(address(this));
 
         clonedInstance = Instance(Clones.clone(_masterInstance));
-        clonedInstance.initialize(address(clonedAccessManager), _registryAddress, registryNftId, msg.sender);
+        clonedInstance.initialize(address(clonedAccessManager), registryAddress, registryNftId, msg.sender);
         ( IRegistry.ObjectInfo memory info, ) = registryService.registerInstance(clonedInstance);
         clonedInstanceNftId = info.nftId;
         
         clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-        clonedInstanceReader.initialize(_registryAddress, clonedInstanceNftId);
+        clonedInstanceReader.initialize(registryAddress, clonedInstanceNftId);
         clonedInstance.setInstanceReader(clonedInstanceReader);
 
         clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
-        clonedBundleManager.initialize(address(clonedAccessManager), _registryAddress, clonedInstanceNftId);
+        clonedBundleManager.initialize(address(clonedAccessManager), registryAddress, clonedInstanceNftId);
         clonedInstance.setBundleManager(clonedBundleManager);
 
         // TODO amend setters with instance specific , policy manager ...
@@ -82,7 +79,8 @@ contract InstanceService is Service, IInstanceService {
 
     function _grantInitialAuthorizations(AccessManagerUpgradeable clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
         // configure authorization for distribution service on instance
-        address distributionServiceAddress = _registry.getServiceAddress("DistributionService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        IRegistry registry = getRegistry();
+        address distributionServiceAddress = registry.getServiceAddress("DistributionService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), distributionServiceAddress, 0);
         bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](2);
         instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
@@ -93,7 +91,7 @@ contract InstanceService is Service, IInstanceService {
             DISTRIBUTION_SERVICE_ROLE().toInt());
 
         // configure authorization for pool service on instance
-        address poolServiceAddress = _registry.getServiceAddress("PoolService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address poolServiceAddress = registry.getServiceAddress("PoolService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(POOL_SERVICE_ROLE().toInt(), address(poolServiceAddress), 0);
         bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
@@ -118,7 +116,7 @@ contract InstanceService is Service, IInstanceService {
             POOL_SERVICE_ROLE().toInt());
 
         // configure authorization for product service on instance
-        address productServiceAddress = _registry.getServiceAddress("ProductService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address productServiceAddress = registry.getServiceAddress("ProductService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE().toInt(), address(productServiceAddress), 0);
         bytes4[] memory instanceProductServiceSelectors = new bytes4[](9);
         instanceProductServiceSelectors[0] = clonedInstance.createProductSetup.selector;
@@ -135,7 +133,7 @@ contract InstanceService is Service, IInstanceService {
             PRODUCT_SERVICE_ROLE().toInt());
 
         // configure authorization for instance service on instance
-        address instanceServiceAddress = _registry.getServiceAddress("InstanceService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address instanceServiceAddress = registry.getServiceAddress("InstanceService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE().toInt(), instanceServiceAddress, 0);
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
         instanceInstanceServiceSelectors[0] = clonedInstance.setInstanceReader.selector;
@@ -146,9 +144,9 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function setMasterInstance(address accessManagerAddress, address instanceAddress, address instanceReaderAddress, address bundleManagerAddress) external onlyOwner {
-        require( _masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
-        require( _masterInstance == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
-        require( _masterInstanceBundleManager == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
+        require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
+        require(_masterInstance == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
+        require(_masterInstanceBundleManager == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
 
         require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
         require (instanceAddress != address(0), "ERROR:CRD-006:INSTANCE_ZERO");
@@ -181,7 +179,8 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function upgradeInstanceReader(NftId instanceNftId) external {
-        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
         address owner = instance.getOwner();
 
@@ -190,7 +189,7 @@ contract InstanceService is Service, IInstanceService {
         }
         
         InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-        upgradedInstanceReaderClone.initialize(_registryAddress, instanceNftId);
+        upgradedInstanceReaderClone.initialize(address(registry), instanceNftId);
         instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
@@ -228,22 +227,12 @@ contract InstanceService is Service, IInstanceService {
         initializer
         virtual override
     {
-        // bytes memory encodedConstructorArguments = abi.encode(
-        //     _registryAddress);
-
-        // bytes memory instanceCreationCode = ContractDeployerLib.getCreationCode(
-        //     instanceByteCodeWithInitCode,
-        //     encodedConstructorArguments);
-
-        // address instanceAddress = ContractDeployerLib.deploy(
-        //     instanceCreationCode,
-        //     INSTANCE_CREATION_CODE_HASH);
-
         address initialOwner = address(0);
-        (_registryAddress, initialOwner) = abi.decode(data, (address, address));
+        address registryAddress = address(0);
+        (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while InstanceService is not deployed in InstanceServiceManager constructor
         //      owner is InstanceServiceManager deployer
-        _initializeService(_registryAddress, owner);
+        _initializeService(registryAddress, owner);
         
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IInstanceService).interfaceId);
