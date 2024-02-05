@@ -26,7 +26,7 @@ import {BundleManager} from "../contracts/instance/BundleManager.sol";
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
 
-    function test_SetFees() public {
+    function test_Product_SetFees() public {
         _prepareProduct();
         vm.startPrank(productOwner);
 
@@ -53,7 +53,7 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
     }
 
-    function test_calculatePremium() public {
+    function test_Product_calculatePremium() public {
         _prepareProduct();  
 
         vm.startPrank(productOwner);
@@ -77,7 +77,7 @@ contract TestProduct is TestGifBase {
         assertEq(premium, 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
     }
 
-    function test_createApplication() public {
+    function test_Product_createApplication() public {
         _prepareProduct();  
 
         
@@ -115,7 +115,7 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
     }
 
-    function test_underwrite() public {
+    function test_Product_underwrite() public {
         // GIVEN
         _prepareProduct();  
 
@@ -164,7 +164,7 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
-    function test_underwriteWithPayment() public {
+    function test_Product_underwriteWithPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
