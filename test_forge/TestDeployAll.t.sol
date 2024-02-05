@@ -10,7 +10,7 @@ contract TestDeployAll is TestGifBase {
     using NftIdLib for NftId;
 
     function testDeployAllOverview() public {
-        assertEq(registry.getObjectCount(), 10, "invalid object count for base setup");
+        assertEq(registry.getObjectCount(), 11, "invalid object count for base setup");
         
         // validate instance service
         assertTrue(registry.getNftId(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");
@@ -23,6 +23,10 @@ contract TestDeployAll is TestGifBase {
         // validate pool service
         assertTrue(registry.getNftId(address(poolService)).eq(poolServiceNftId), "pool service nft does not match");
         assertTrue(address(poolServiceManager) != address(0), "pool service manager is zero address");
+
+        // validate policy service
+        assertTrue(registry.getNftId(address(policyService)).eq(policyServiceNftId), "pool service nft does not match");
+        assertTrue(address(policyServiceManager) != address(0), "pool service manager is zero address");
 
         // validate master instance
         assertTrue(registry.getNftId(address(masterInstance)).eq(masterInstanceNftId), "master instance nft does not match");

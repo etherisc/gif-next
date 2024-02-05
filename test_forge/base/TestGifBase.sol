@@ -19,6 +19,8 @@ import {ProductService} from "../../contracts/instance/service/ProductService.so
 import {ProductServiceManager} from "../../contracts/instance/service/ProductServiceManager.sol";
 import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 import {PoolServiceManager} from "../../contracts/instance/service/PoolServiceManager.sol";
+import {PolicyService} from "../../contracts/instance/service/PolicyService.sol";
+import {PolicyServiceManager} from "../../contracts/instance/service/PolicyServiceManager.sol";
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
@@ -93,6 +95,9 @@ contract TestGifBase is Test {
     PoolServiceManager public poolServiceManager;
     PoolService public poolService;
     NftId public poolServiceNftId;
+    PolicyServiceManager public policyServiceManager;
+    PolicyService public policyService;
+    NftId public policyServiceNftId;
 
     AccessManagerUpgradeableInitializeable masterInstanceAccessManager;
     BundleManager masterBundleManager;
@@ -390,6 +395,18 @@ contract TestGifBase is Test {
         console.log("productService nft id", productService.getNftId().toInt());
         // solhint-enable
 
+        // --- policy service ---------------------------------//
+        policyServiceManager = new PolicyServiceManager(address(registry));
+        policyService = policyServiceManager.getPolicyService();
+        registryService.registerService(policyService);
+        policyServiceNftId = registry.getNftId(address(policyService));
+
+        // solhint-disable
+        console.log("policyService name", policyService.getName());
+        console.log("policyService deployed at", address(policyService));
+        console.log("policyService nft id", policyService.getNftId().toInt());
+        // solhint-enable
+
         // //--- component owner service ---------------------------------//
         // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
         // registryService.registerService(componentOwnerService);
@@ -441,13 +458,22 @@ contract TestGifBase is Test {
         // grant PRODUCT_REGISTRAR_ROLE to product service
         // allow role PRODUCT_REGISTRAR_ROLE to call registerProduct on registry service
         accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(productService), 0);
-        bytes4[] memory registryServiceRegisterProductSelectors = new bytes4[](2);
-        registryServiceRegisterProductSelectors[0] = registryService.registerProduct.selector;
-        registryServiceRegisterProductSelectors[1] = registryService.registerPolicy.selector;
+        bytes4[] memory registryServiceRegisterProductSelector = new bytes4[](1);
+        registryServiceRegisterProductSelector[0] = registryService.registerProduct.selector;
         accessManager.setTargetFunctionRole(
             address(registryService),
-            registryServiceRegisterProductSelectors, 
+            registryServiceRegisterProductSelector, 
             PRODUCT_REGISTRAR_ROLE().toInt());
+
+        // grant POLICY_REGISTRAR_ROLE to policy service
+        // allow role POLICY_REGISTRAR_ROLE to call registerPolicy on registry service
+        accessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(policyService), 0);
+        bytes4[] memory registryServiceRegisterPolicySelector = new bytes4[](1);
+        registryServiceRegisterPolicySelector[0] = registryService.registerPolicy.selector;
+        accessManager.setTargetFunctionRole(
+            address(registryService),
+            registryServiceRegisterPolicySelector, 
+            POLICY_REGISTRAR_ROLE().toInt());
     }
 
     function _deployMasterInstance() internal 
