@@ -197,10 +197,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 }
 
 const DISTRIBUTION_REGISTRAR_ROLE = 1000;
+const POLICY_REGISTRAR_ROLE = 1100;
 const BUNDLE_REGISTRAR_ROLE = 1200;
 const POOL_REGISTRAR_ROLE = 1300;
 const PRODUCT_REGISTRAR_ROLE = 1400;
-const POLICY_REGISTRAR_ROLE = 1100;
 
 
 export async function authorizeServices(protocolOwner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses) {
