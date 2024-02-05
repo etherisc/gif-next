@@ -157,7 +157,7 @@ function printAddresses(
     addresses += `productServiceAddress: ${services.productServiceAddress}\n`;
     addresses += `productServiceNftId: ${services.productServiceNftId}\n`;
     addresses += `policyServiceManagerAddress: ${services.policyServiceManagerAddress}\n`;
-    addresses += `policytServiceAddress: ${services.policyServiceAddress}\n`;
+    addresses += `policyServiceAddress: ${services.policyServiceAddress}\n`;
     addresses += `policyServiceNftId: ${services.policyServiceNftId}\n`;
     addresses += `bundleServiceManagerAddress: ${services.bundleServiceManagerAddress}\n`;
     addresses += `bundleServiceAddress: ${services.bundleServiceAddress}\n`;
