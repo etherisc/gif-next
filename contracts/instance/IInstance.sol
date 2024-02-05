@@ -10,6 +10,7 @@ import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
+import {IPolicyService} from "./service/IPolicyService.sol";
 import {IBundle} from "./module/IBundle.sol";
 import {ISetup} from "./module/ISetup.sol";
 import {NftId} from "../types/NftId.sol";
@@ -26,6 +27,7 @@ interface IInstance is IERC165, IKeyValueStore {
     function getDistributionService() external view returns (IDistributionService);
     function getProductService() external view returns (IProductService);
     function getPoolService() external view returns (IPoolService);
+    function getPolicyService() external view returns (IPolicyService);
 
     function createDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup) external;
     function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external;

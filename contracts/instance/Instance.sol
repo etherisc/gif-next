@@ -30,6 +30,7 @@ import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
+import {IPolicyService} from "./service/IPolicyService.sol";
 import {VersionPart} from "../types/Version.sol";
 import {InstanceBase} from "./InstanceBase.sol";
 
@@ -431,6 +432,10 @@ contract Instance is
 
     function getPoolService() external view returns (IPoolService) {
         return IPoolService(_registry.getServiceAddress("PoolService", VersionPart.wrap(3)));
+    }
+
+    function getPolicyService() external view returns (IPolicyService) {
+        return IPolicyService(_registry.getServiceAddress("PolicyService", VersionPart.wrap(3)));
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {

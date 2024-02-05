@@ -29,6 +29,7 @@ import {IPoolService} from "./IPoolService.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
+import {IBaseComponent} from "../../components/IBaseComponent.sol";
 
 string constant POOL_SERVICE_NAME = "PoolService";
 
@@ -50,13 +51,13 @@ contract PoolService is
         initializer
         virtual override
     {
-        address initialOwner = address(0);
-        (_registryAddress, initialOwner) = abi.decode(data, (address, address));
+        address registryAddress;
+        address initialOwner;
+        (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while PoolService is not deployed in PoolServiceManager constructor
         //      owner is PoolServiceManager deployer
-        _initializeService(_registryAddress, owner);
+        _initializeService(registryAddress, owner);
 
-        _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IPoolService).interfaceId);
     }
 
@@ -64,12 +65,41 @@ contract PoolService is
         return NAME;
     }
 
-    function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {
-        ISetup.PoolSetupInfo memory initialSetup = abi.decode(
-            initialObjData,
+    function register(address poolAddress) 
+        external
+        returns(NftId poolNftId)
+    {
+        address poolOwner = msg.sender;
+        IBaseComponent pool = IBaseComponent(poolAddress);
+
+        IRegistry.ObjectInfo memory info;
+        bytes memory data;
+        (info, data) = getRegistryService().registerPool(pool, poolOwner);
+
+        IInstance instance = _getInstance(info);
+        // check role here 
+        bool hasRole = getInstanceService().hasRole(
+            poolOwner, 
+            POOL_OWNER_ROLE(), 
+            address(instance));
+
+        if(!hasRole) {
+            revert ExpectedRoleMissing(POOL_OWNER_ROLE(), poolOwner);
+        }
+
+        poolNftId = info.nftId;
+        ISetup.PoolSetupInfo memory initialSetup = _decodeAndVerifyPoolSetup(data);
+        instance.createPoolSetup(poolNftId, initialSetup);
+    }
+
+    function _decodeAndVerifyPoolSetup(bytes memory data) internal returns(ISetup.PoolSetupInfo memory setup)
+    {
+        setup = abi.decode(
+            data,
             (ISetup.PoolSetupInfo)
         );
-        instance.createPoolSetup(componentNftId, initialSetup);
+
+        // TODO add checks if applicable 
     }
 
     function setFees(

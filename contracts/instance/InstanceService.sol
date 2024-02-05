@@ -16,7 +16,7 @@ import {IService} from "../shared/IService.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
-import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -118,19 +118,28 @@ contract InstanceService is Service, IInstanceService {
         // configure authorization for product service on instance
         address productServiceAddress = registry.getServiceAddress("ProductService", VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE().toInt(), address(productServiceAddress), 0);
-        bytes4[] memory instanceProductServiceSelectors = new bytes4[](9);
+        bytes4[] memory instanceProductServiceSelectors = new bytes4[](5);
         instanceProductServiceSelectors[0] = clonedInstance.createProductSetup.selector;
         instanceProductServiceSelectors[1] = clonedInstance.updateProductSetup.selector;
         instanceProductServiceSelectors[2] = clonedInstance.createRisk.selector;
         instanceProductServiceSelectors[3] = clonedInstance.updateRisk.selector;
         instanceProductServiceSelectors[4] = clonedInstance.updateRiskState.selector;
-        instanceProductServiceSelectors[5] = clonedInstance.createPolicy.selector;
-        instanceProductServiceSelectors[6] = clonedInstance.updatePolicy.selector;
-        instanceProductServiceSelectors[7] = clonedInstance.updatePolicyState.selector;
         clonedAccessManager.setTargetFunctionRole(
             address(clonedInstance),
             instanceProductServiceSelectors, 
             PRODUCT_SERVICE_ROLE().toInt());
+
+        // configure authorization for policy service on instance
+        address policyServiceAddress = _registry.getServiceAddress("PolicyService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        clonedAccessManager.grantRole(POLICY_SERVICE_ROLE().toInt(), address(policyServiceAddress), 0);
+        bytes4[] memory instancePolicyServiceSelectors = new bytes4[](3);
+        instancePolicyServiceSelectors[0] = clonedInstance.createPolicy.selector;
+        instancePolicyServiceSelectors[1] = clonedInstance.updatePolicy.selector;
+        instancePolicyServiceSelectors[2] = clonedInstance.updatePolicyState.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            address(clonedInstance),
+            instancePolicyServiceSelectors, 
+            POLICY_SERVICE_ROLE().toInt());
 
         // configure authorization for instance service on instance
         address instanceServiceAddress = registry.getServiceAddress("InstanceService", VersionLib.toVersion(3, 0, 0).toMajorPart());
@@ -237,10 +246,19 @@ contract InstanceService is Service, IInstanceService {
         _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IInstanceService).interfaceId);
     }
-
-    function hasRole(address account, RoleId role, NftId instanceNftId) external view returns (bool) {
+    // TODO use instanceAddress instead of nft
+    /*function hasRole(address account, RoleId role, NftId instanceNftId) external view returns (bool) {
         IRegistry.ObjectInfo memory instanceObjectInfo = getRegistry().getObjectInfo(instanceNftId);
         address instanceAddress = instanceObjectInfo.objectAddress;
+        Instance instance = Instance(instanceAddress);
+        AccessManagerUpgradeable accessManager = AccessManagerUpgradeable(instance.authority());
+        (bool isMember, uint32 executionDelay) = accessManager.hasRole(role.toInt(), account);
+        if (executionDelay > 0) {
+            return false;
+        } 
+        return isMember;
+    }*/
+    function hasRole(address account, RoleId role, address instanceAddress) external view returns (bool) {
         Instance instance = Instance(instanceAddress);
         AccessManagerUpgradeable accessManager = AccessManagerUpgradeable(instance.authority());
         (bool isMember, uint32 executionDelay) = accessManager.hasRole(role.toInt(), account);
