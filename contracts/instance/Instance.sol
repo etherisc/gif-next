@@ -31,6 +31,7 @@ import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPolicyService} from "./service/IPolicyService.sol";
+import {IBundleService} from "./service/IBundleService.sol";
 import {VersionPart} from "../types/Version.sol";
 import {InstanceBase} from "./InstanceBase.sol";
 
@@ -436,6 +437,10 @@ contract Instance is
 
     function getPolicyService() external view returns (IPolicyService) {
         return IPolicyService(_registry.getServiceAddress("PolicyService", VersionPart.wrap(3)));
+    }
+
+    function getBundleService() external view returns (IBundleService) {
+        return IBundleService(_registry.getServiceAddress("BundleService", VersionPart.wrap(3)));
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {

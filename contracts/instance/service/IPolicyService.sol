@@ -13,8 +13,8 @@ import {UFixed} from "../../types/UFixed.sol";
 import {Fee} from "../../types/Fee.sol";
 
 interface IPolicyService is IService {
-
-    error ErrorIProductServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
+    
+    error ErrorIPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     
     function calculatePremium(
         RiskId riskId,

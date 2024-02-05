@@ -16,7 +16,7 @@ import {IService} from "../shared/IService.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
-import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -96,23 +96,9 @@ contract InstanceService is Service, IInstanceService {
         bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
         instancePoolServiceSelectors[1] = clonedInstance.updatePoolSetup.selector;
-        instancePoolServiceSelectors[2] = clonedInstance.createBundle.selector;
-        instancePoolServiceSelectors[3] = clonedInstance.updateBundle.selector;
         clonedAccessManager.setTargetFunctionRole(
             address(clonedInstance),
             instancePoolServiceSelectors, 
-            POOL_SERVICE_ROLE().toInt());
-        
-        // configure authorization for pool service on bundle manager
-        bytes4[] memory bundleManagerPoolServiceSelectors = new bytes4[](5);
-        bundleManagerPoolServiceSelectors[0] = clonedBundleManager.linkPolicy.selector;
-        bundleManagerPoolServiceSelectors[1] = clonedBundleManager.unlinkPolicy.selector;
-        bundleManagerPoolServiceSelectors[2] = clonedBundleManager.add.selector;
-        bundleManagerPoolServiceSelectors[3] = clonedBundleManager.lock.selector;
-        bundleManagerPoolServiceSelectors[4] = clonedBundleManager.unlock.selector;
-        clonedAccessManager.setTargetFunctionRole(
-            address(clonedBundleManager),
-            bundleManagerPoolServiceSelectors, 
             POOL_SERVICE_ROLE().toInt());
 
         // configure authorization for product service on instance
@@ -140,6 +126,29 @@ contract InstanceService is Service, IInstanceService {
             address(clonedInstance),
             instancePolicyServiceSelectors, 
             POLICY_SERVICE_ROLE().toInt());
+
+        // configure authorization for bundle service on instance
+        address bundleServiceAddress = _registry.getServiceAddress("BundleService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        clonedAccessManager.grantRole(BUNDLE_SERVICE_ROLE().toInt(), address(bundleServiceAddress), 0);
+        bytes4[] memory instanceBundleServiceSelectors = new bytes4[](2);
+        instanceBundleServiceSelectors[0] = clonedInstance.createBundle.selector;
+        instanceBundleServiceSelectors[1] = clonedInstance.updateBundle.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            address(clonedInstance),
+            instanceBundleServiceSelectors, 
+            BUNDLE_SERVICE_ROLE().toInt());
+
+        // configure authorization for bundle service on bundle manager
+        bytes4[] memory bundleManagerBundleServiceSelectors = new bytes4[](5);
+        bundleManagerBundleServiceSelectors[0] = clonedBundleManager.linkPolicy.selector;
+        bundleManagerBundleServiceSelectors[1] = clonedBundleManager.unlinkPolicy.selector;
+        bundleManagerBundleServiceSelectors[2] = clonedBundleManager.add.selector;
+        bundleManagerBundleServiceSelectors[3] = clonedBundleManager.lock.selector;
+        bundleManagerBundleServiceSelectors[4] = clonedBundleManager.unlock.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            address(clonedBundleManager),
+            bundleManagerBundleServiceSelectors, 
+            BUNDLE_SERVICE_ROLE().toInt());
 
         // configure authorization for instance service on instance
         address instanceServiceAddress = registry.getServiceAddress("InstanceService", VersionLib.toVersion(3, 0, 0).toMajorPart());

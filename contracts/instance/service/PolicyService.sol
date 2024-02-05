@@ -38,10 +38,12 @@ import {Service} from "../../shared/Service.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
-import {IPoolService} from "./PoolService.sol";
+import {IPoolService} from "./IPoolService.sol";
+import {IBundleService} from "./IBundleService.sol";
 import {POOL_SERVICE_NAME} from "./PoolService.sol";
+import {BUNDLE_SERVICE_NAME} from "./BundleService.sol";
 
-string constant PRODUCT_SERVICE_NAME = "ProductService";
+string constant POLICY_SERVICE_NAME = "PolicyService";
 
 contract PolicyService is ComponentServiceBase, IPolicyService {
     using NftIdLib for NftId;
@@ -49,6 +51,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
     string public constant NAME = "PolicyService";
 
     IPoolService internal _poolService;
+    IBundleService internal _bundleService;
 
     event LogProductServiceSender(address sender);
 
@@ -67,6 +70,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
         _initializeService(registryAddress, owner);
 
         _poolService = IPoolService(_registry.getServiceAddress(POOL_SERVICE_NAME, getMajorVersion()));
+        _bundleService = IBundleService(_registry.getServiceAddress(BUNDLE_SERVICE_NAME, getMajorVersion()));
 
         _registerInterface(type(IPolicyService).interfaceId);
     }
@@ -339,15 +343,6 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
                 productSetupInfo
             );
         }
-
-
-        // lock bundle collateral
-        bundleInfo = _lockCollateralInBundle(
-            instance,
-            bundleNftId,
-            bundleInfo,
-            policyNftId, 
-            collateralAmount);
         
         // lock bundle collateral
         bundleInfo = _lockCollateralInBundle(
@@ -376,7 +371,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
             policyInfo.premiumPaidAmount += policyInfo.premiumAmount;
         }
 
-        _poolService.underwritePolicy(instance, policyNftId, bundleNftId, collateralAmount, netPremiumAmount);
+        _bundleService.underwritePolicy(instance, policyNftId, bundleNftId, collateralAmount, netPremiumAmount);
         instance.updatePolicy(policyNftId, policyInfo, newPolicyState);
 
         // involve pool if necessary
@@ -500,7 +495,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
                 (uint256 productFeeAmount, uint256 netAmount) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
                 address productWallet = productSetupInfo.wallet;
                 if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premiumAmount) {
-                    revert ErrorIProductServiceInsufficientAllowance(policyOwner, address(tokenHandler), premiumAmount);
+                    revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premiumAmount);
                 }
                 tokenHandler.transfer(policyOwner, productWallet, productFeeAmount);
                 tokenHandler.transfer(policyOwner, poolWallet, netAmount);
