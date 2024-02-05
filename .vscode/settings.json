@@ -15,6 +15,7 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode",
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "todo-tree.tree.scanMode": "workspace only",
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#f18500",
         "activityBar.background": "#f18500",
@@ -34,5 +35,4 @@
         "titleBar.inactiveBackground": "#be690099",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
-    "todo-tree.tree.scanMode": "workspace only",
 }

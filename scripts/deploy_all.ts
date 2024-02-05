@@ -5,7 +5,7 @@ import { getNamedAccounts, printBalance, validateNftOwnerhip } from "./libs/acco
 import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
 import { logger } from "./logger";
-import { InstanceAddresses, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
+import { InstanceAddresses, MASTER_INSTANCE_OWNER, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
 import { ServiceAddresses, authorizeServices, deployAndRegisterServices } from "./libs/services";
 
 
@@ -18,8 +18,8 @@ async function main() {
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
     const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
     
-    // deploy instance contracts
-    const masterInstance = await deployAndRegisterMasterInstance(masterInstanceOwner, libraries, registry, services);
+    // // deploy instance contracts
+    const masterInstance = await deployAndRegisterMasterInstance(protocolOwner, libraries, registry, services);
     const clonedInstance = await cloneInstance(masterInstance, libraries, registry, services, instanceOwner);
 
     // await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
@@ -100,7 +100,7 @@ async function verifyOwnership(
     if (BigInt(masterInstance.instanceNftId) !== masterInstanceNftIdFromReg) {
         throw new Error(`instance masterInstanceNftId (${masterInstance.instanceNftId}) mismatch: ${masterInstanceNftIdFromReg}`);
     }
-    await validateNftOwnerhip(registry.chainNftAddress, masterInstance.instanceNftId, masterInstanceOwner);
+    await validateNftOwnerhip(registry.chainNftAddress, masterInstance.instanceNftId, MASTER_INSTANCE_OWNER);
     
     // await validateNftOwnerhip(registry.chainNftAddress, instance.instanceNftId, instanceOwner);
     

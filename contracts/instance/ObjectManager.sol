@@ -21,6 +21,7 @@ contract ObjectManager is
 
     mapping(NftId compnentNftId => LibNftIdSet.Set objects) internal _activeObjects;
     mapping(NftId compnentNftId => LibNftIdSet.Set objects) internal _allObjects;
+    NftId internal _instanceNftId;
     InstanceReader internal _instanceReader;
 
     constructor() Cloneable() {
@@ -45,12 +46,17 @@ contract ObjectManager is
 
         IInstance instance = IInstance(instanceInfo.objectAddress);
         _instanceReader = instance.getInstanceReader();
-
+        _instanceNftId = instanceNftId;
+        
         emit LogObjectManagerInitialized(instanceNftId, address(_instanceReader));
     }
 
     function getInstanceReader() external view returns (InstanceReader) {
         return _instanceReader;
+    }
+
+    function getInstanceNftId() external view returns (NftId) {
+        return _instanceNftId;
     }
 
     function _add(NftId componentNftId, NftId objectNftId) internal {

@@ -17,6 +17,8 @@ import {BundleManager} from "./BundleManager.sol";
 
 interface IInstanceService is IService {
 
+    error ErrorInstanceServiceRequestUnauhorized(address caller);
+
     event LogInstanceCloned(address clonedAccessManagerAddress, address clonedInstanceAddress, address clonedInstanceReaderAddress, NftId clonedInstanceNftId);
 
     function createInstanceClone()
