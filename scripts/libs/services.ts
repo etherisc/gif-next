@@ -1,6 +1,6 @@
 
 import { AddressLike, Signer, hexlify, resolveAddress } from "ethers";
-import { AccessManager__factory, DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, IRegistryService__factory, ProductService, ProductServiceManager, ProductService__factory, PolicyService, PolicyServiceManager, PolicyService__factory} from "../../typechain-types";
+import { AccessManager__factory, DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, IRegistryService__factory, ProductService, ProductServiceManager, ProductService__factory, PolicyService, PolicyServiceManager, PolicyService__factory, BundleService, BundleServiceManager, Bundleservice__factory} from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -29,6 +29,10 @@ export type ServiceAddresses = {
     policyServiceNftId : string,
     policyService: PolicyService,
     policyServiceManagerAddress: AddressLike
+    bundleServiceAddress: AddressLike,
+    bundleServiceNftId : string,
+    bundleService: BundleService,
+    bundleServiceManagerAddress: AddressLike
 }
 
 export async function deployAndRegisterServices(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses): Promise<ServiceAddresses> {
@@ -81,8 +85,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress],
         { libraries: {
-                BlocknumberLib: libraries.blockNumberLibAddress, 
-                FeeLib: libraries.feeLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -141,6 +144,27 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const policyServiceNftId = (logRegistrationInfoPol as unknown[])[0];
     logger.info(`policyServiceManager deployed - policyServiceAddress: ${policyServiceAddress} policyServiceManagerAddress: ${policyServiceManagerAddress} nftId: ${policyServiceNftId}`);
 
+    const { address: bundleServiceManagerAddress, contract: bundleServiceManagerBaseContract, } = await deployContract(
+        "BundleServiceManager",
+        owner,
+        [registry.registryAddress],
+        { libraries: {
+                BlocknumberLib: libraries.blockNumberLibAddress, 
+                FeeLib: libraries.feeLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress, 
+            }});
+
+    const bundleServiceManager = bundleServiceManagerBaseContract as PolicyServiceManager;
+    const bundleServiceAddress = await bundleServiceManager.getBundleService();
+    const bundleService = PolicyService__factory.connect(bundleServiceAddress, owner);
+    // FIXME temporal solution while registration in ProductServiceManager constructor is not possible
+    const rcptBdl = await executeTx(async () => await registryService.registerService(bundleServiceAddress));
+    const logRegistrationInfoBdl = getFieldFromTxRcptLogs(rcptBdl!, registry.registry.interface, "LogRegistration", "info");
+    const bundleServiceNftId = (logRegistrationInfoBdl as unknown[])[0];
+    logger.info(`bundleServiceManager deployed - bundleServiceAddress: ${bundleServiceAddress} bundleServiceManagerAddress: ${bundleServiceManagerAddress} nftId: ${bundleServiceNftId}`);
+
     return {
         instanceServiceNftId: instanceServiceNfdId as string,
         instanceServiceAddress: instanceServiceAddress,
@@ -164,6 +188,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         policyServiceNftId : policyServiceNftId as string,
         policyService,
         policyServiceManagerAddress,
+
+        bundleServiceAddress,
+        bundleServiceNftId : bundleServiceNftId as string,
+        bundleService,
+        bundleServiceManagerAddress,
     };
 }
 
