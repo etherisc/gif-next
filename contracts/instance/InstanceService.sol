@@ -133,6 +133,16 @@ contract InstanceService is Service, IInstanceService {
             address(clonedInstance),
             instanceProductServiceSelectors, 
             PRODUCT_SERVICE_ROLE().toInt());
+
+        // configure authorization for instance service on instance
+        address instanceServiceAddress = _registry.getServiceAddress("InstanceService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE().toInt(), instanceServiceAddress, 0);
+        bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
+        instanceInstanceServiceSelectors[0] = clonedInstance.setInstanceReader.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            address(clonedInstance),
+            instanceInstanceServiceSelectors, 
+            INSTANCE_SERVICE_ROLE().toInt());
     }
 
     function setMasterInstance(address accessManagerAddress, address instanceAddress, address instanceReaderAddress, address bundleManagerAddress) external onlyOwner {
@@ -171,8 +181,17 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function upgradeInstanceReader(NftId instanceNftId) external {
-        // TODO: ensure this is done by instance owner
-        // TODO: upgrade instance reader of this instance to latest (set above here)
+        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        address owner = instance.getOwner();
+
+        if (msg.sender != owner) {
+            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
+        }
+        
+        InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_instanceReaderMaster)));
+        upgradedInstanceReaderClone.initialize(_registryAddress, instanceNftId);
+        instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
     function getInstanceReaderMaster() external view returns (address) {
