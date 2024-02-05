@@ -34,6 +34,8 @@ function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10000); }
 function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10100); }
 function PRODUCT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10200); }
+function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10300); }
+function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10400); }
 
 function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(11000); }
 

@@ -21,6 +21,10 @@ import {ProductService} from "../../contracts/instance/service/ProductService.so
 import {ProductServiceManager} from "../../contracts/instance/service/ProductServiceManager.sol";
 import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 import {PoolServiceManager} from "../../contracts/instance/service/PoolServiceManager.sol";
+import {PolicyService} from "../../contracts/instance/service/PolicyService.sol";
+import {PolicyServiceManager} from "../../contracts/instance/service/PolicyServiceManager.sol";
+import {BundleService} from "../../contracts/instance/service/BundleService.sol";
+import {BundleServiceManager} from "../../contracts/instance/service/BundleServiceManager.sol";
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
@@ -92,6 +96,12 @@ contract TestGifBase is Test {
     PoolServiceManager public poolServiceManager;
     PoolService public poolService;
     NftId public poolServiceNftId;
+    PolicyServiceManager public policyServiceManager;
+    PolicyService public policyService;
+    NftId public policyServiceNftId;
+    BundleServiceManager public bundleServiceManager;
+    BundleService public bundleService;
+    NftId public bundleServiceNftId;
 
     AccessManagerUpgradeableInitializeable masterInstanceAccessManager;
     BundleManager masterBundleManager;
@@ -372,6 +382,31 @@ contract TestGifBase is Test {
         console.log("productService type", productService.getType().toInt());
         console.log("productService deployed at", address(productService));
         console.log("productService nft id", productService.getNftId().toInt());
+        // solhint-enable
+
+        // --- bundle service ---------------------------------//
+        bundleServiceManager = new BundleServiceManager(address(registry));
+        bundleService = bundleServiceManager.getBundleService();
+        registryService.registerService(bundleService);
+        bundleServiceNftId = registry.getNftId(address(bundleService));
+
+        // solhint-disable
+        console.log("bundleService name", bundleService.getName());
+        console.log("bundleService deployed at", address(bundleService));
+        console.log("bundleService nft id", bundleService.getNftId().toInt());
+        // solhint-enable
+
+        // MUST follow bundle service registration 
+        // --- policy service ---------------------------------//
+        policyServiceManager = new PolicyServiceManager(address(registry));
+        policyService = policyServiceManager.getPolicyService();
+        registryService.registerService(policyService);
+        policyServiceNftId = registry.getNftId(address(policyService));
+
+        // solhint-disable
+        console.log("policyService name", policyService.getName());
+        console.log("policyService deployed at", address(policyService));
+        console.log("policyService nft id", policyService.getNftId().toInt());
         // solhint-enable
 
         // //--- component owner service ---------------------------------//

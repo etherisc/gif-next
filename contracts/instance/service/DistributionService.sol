@@ -26,6 +26,7 @@ import {Distribution} from "../../components/Distribution.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {Instance} from "../Instance.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
+import {IBaseComponent} from "../../components/IBaseComponent.sol";
 
 
 contract DistributionService is
@@ -44,13 +45,13 @@ contract DistributionService is
         initializer
         virtual override
     {
-        address initialOwner = address(0);
-        (_registryAddress, initialOwner) = abi.decode(data, (address, address));
+        address initialOwner;
+        address registryAddress;
+        (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while DistributionService is not deployed in DistributionServiceManager constructor
         //      owner is DistributionServiceManager deployer
-        _initializeService(_registryAddress, owner);
+        _initializeService(registryAddress, owner);
 
-        _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IDistributionService).interfaceId);
     }
 
@@ -58,12 +59,41 @@ contract DistributionService is
         return DISTRIBUTION();
     }
 
-    function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal override {
-        ISetup.DistributionSetupInfo memory initialSetup = abi.decode(
-            initialObjData,
+    function register(address distributionAddress) 
+        external
+        returns(NftId distributionNftId)
+    {
+        address distributionOwner = msg.sender;
+        IBaseComponent distribution = IBaseComponent(distributionAddress);
+
+        IRegistry.ObjectInfo memory info;
+        bytes memory data;
+        (info, data) = getRegistryService().registerDistribution(distribution, distributionOwner);
+
+        IInstance instance = _getInstance(info);
+
+        bool hasRole = getInstanceService().hasRole(
+            distributionOwner, 
+            DISTRIBUTION_OWNER_ROLE(), 
+            address(instance));
+
+        if(!hasRole) {
+            revert ExpectedRoleMissing(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        }
+
+        distributionNftId = info.nftId;
+        ISetup.DistributionSetupInfo memory initialSetup = _decodeAndVerifyDistributionSetup(data);
+        instance.createDistributionSetup(distributionNftId, initialSetup);
+    }
+
+    function _decodeAndVerifyDistributionSetup(bytes memory data) internal returns(ISetup.DistributionSetupInfo memory setup)
+    {
+        setup = abi.decode(
+            data,
             (ISetup.DistributionSetupInfo)
         );
-        instance.createDistributionSetup(componentNftId, initialSetup);
+
+        // TODO add checks if applicable 
     }
 
     function setFees(
