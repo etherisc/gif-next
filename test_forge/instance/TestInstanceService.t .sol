@@ -19,7 +19,7 @@ contract TestInstanceService is TestGifBase {
         instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
 
         // THEN
-        assertEq(address(newMasterInstanceReader), instanceService.getInstanceReaderMaster(), "master instance reader not set");
+        assertEq(address(newMasterInstanceReader), instanceService.getMasterInstanceReader(), "master instance reader not set");
     }
 
     function test_setMasterInstanceReader_not_master_instance() public {

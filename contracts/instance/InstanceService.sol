@@ -24,10 +24,10 @@ import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVI
 contract InstanceService is Service, IInstanceService {
 
     address internal _registryAddress;
-    address internal _accessManagerMaster;
-    address internal _instanceMaster;
-    address internal _instanceReaderMaster;
-    address internal _instanceBundleManagerMaster;
+    address internal _masterInstanceAccessManager;
+    address internal _masterInstance;
+    address internal _masterInstanceReader;
+    address internal _masterInstanceBundleManager;
 
     // TODO update to real hash when instance is stable
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
@@ -52,19 +52,19 @@ contract InstanceService is Service, IInstanceService {
         // initially set the authority of the access managar to this (being the instance service). 
         // This will allow the instance service to bootstrap the authorizations of the instance
         // and then transfer the ownership of the access manager to the instance owner once everything is setup
-        clonedAccessManager = AccessManagerUpgradeableInitializeable(Clones.clone(_accessManagerMaster));
+        clonedAccessManager = AccessManagerUpgradeableInitializeable(Clones.clone(_masterInstanceAccessManager));
         clonedAccessManager.__AccessManagerUpgradeableInitializeable_init(address(this));
 
-        clonedInstance = Instance(Clones.clone(_instanceMaster));
+        clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(address(clonedAccessManager), _registryAddress, registryNftId, msg.sender);
         ( IRegistry.ObjectInfo memory info, ) = registryService.registerInstance(clonedInstance);
         clonedInstanceNftId = info.nftId;
         
-        clonedInstanceReader = InstanceReader(Clones.clone(address(_instanceReaderMaster)));
+        clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
         clonedInstanceReader.initialize(_registryAddress, clonedInstanceNftId);
         clonedInstance.setInstanceReader(clonedInstanceReader);
 
-        clonedBundleManager = BundleManager(Clones.clone(_instanceBundleManagerMaster));
+        clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
         clonedBundleManager.initialize(address(clonedAccessManager), _registryAddress, clonedInstanceNftId);
         clonedInstance.setBundleManager(clonedBundleManager);
 
@@ -146,9 +146,9 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function setMasterInstance(address accessManagerAddress, address instanceAddress, address instanceReaderAddress, address bundleManagerAddress) external onlyOwner {
-        require( _accessManagerMaster == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
-        require( _instanceMaster == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
-        require( _instanceBundleManagerMaster == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
+        require( _masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
+        require( _masterInstance == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
+        require( _masterInstanceBundleManager == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
 
         require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
         require (instanceAddress != address(0), "ERROR:CRD-006:INSTANCE_ZERO");
@@ -163,21 +163,21 @@ contract InstanceService is Service, IInstanceService {
         require(instanceReader.getInstanceNftId() == instance.getNftId(), "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
         require(bundleManager.getInstanceNftId() == instance.getNftId(), "ERROR:CRD-011:BUNDLE_MANAGER_INSTANCE_MISMATCH");
 
-        _accessManagerMaster = accessManagerAddress;
-        _instanceMaster = instanceAddress;
-        _instanceReaderMaster = instanceReaderAddress;
-        _instanceBundleManagerMaster = bundleManagerAddress;
+        _masterInstanceAccessManager = accessManagerAddress;
+        _masterInstance = instanceAddress;
+        _masterInstanceReader = instanceReaderAddress;
+        _masterInstanceBundleManager = bundleManagerAddress;
     }
 
     function setMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
-        require(_instanceReaderMaster != address(0), "ERROR:CRD-003:INSTANCE_READER_MASTER_NOT_SET");
+        require(_masterInstanceReader != address(0), "ERROR:CRD-003:INSTANCE_READER_MASTER_NOT_SET");
         require (instanceReaderAddress != address(0), "ERROR:CRD-012:INSTANCE_READER_ZERO");
-        require(instanceReaderAddress != _instanceReaderMaster, "ERROR:CRD-014:INSTANCE_READER_MASTER_SAME_AS_NEW");
+        require(instanceReaderAddress != _masterInstanceReader, "ERROR:CRD-014:INSTANCE_READER_MASTER_SAME_AS_NEW");
 
         InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
-        require(instanceReader.getInstanceNftId() == Instance(_instanceMaster).getNftId(), "ERROR:CRD-015:INSTANCE_READER_INSTANCE_MISMATCH");
+        require(instanceReader.getInstanceNftId() == Instance(_masterInstance).getNftId(), "ERROR:CRD-015:INSTANCE_READER_INSTANCE_MISMATCH");
 
-        _instanceReaderMaster = instanceReaderAddress;
+        _masterInstanceReader = instanceReaderAddress;
     }
 
     function upgradeInstanceReader(NftId instanceNftId) external {
@@ -189,25 +189,25 @@ contract InstanceService is Service, IInstanceService {
             revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
         }
         
-        InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_instanceReaderMaster)));
+        InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_masterInstanceReader)));
         upgradedInstanceReaderClone.initialize(_registryAddress, instanceNftId);
         instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
-    function getInstanceReaderMaster() external view returns (address) {
-        return _instanceReaderMaster;
+    function getMasterInstanceReader() external view returns (address) {
+        return _masterInstanceReader;
     }
 
-    function getInstanceMaster() external view returns (address) {
-        return _instanceMaster;
+    function getMasterInstance() external view returns (address) {
+        return _masterInstance;
     }
 
-    function getAccessManagerMaster() external view returns (address) {
-        return _accessManagerMaster;
+    function getMasterInstanceAccessManager() external view returns (address) {
+        return _masterInstanceAccessManager;
     }
 
-    function getBundleManagerMaster() external view returns (address) {
-        return _instanceBundleManagerMaster;
+    function getMasterInstanceBundleManager() external view returns (address) {
+        return _masterInstanceBundleManager;
     }
 
     // From IService
