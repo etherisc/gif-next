@@ -434,7 +434,6 @@ contract Instance is
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        require(address(_instanceReader) == address(0), "InstanceReader is set");
         require(instanceReader.getInstanceNftId() == getNftId(), "NFT ID of InstanceReader does not match");
         _instanceReader = instanceReader;
     }
