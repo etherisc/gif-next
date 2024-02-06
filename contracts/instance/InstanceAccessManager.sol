@@ -51,7 +51,6 @@ contract InstanceAccessManager is
     }
 
     function createDefaultGifRoles() public restricted() {
-        // DISTRIBUTION_OWNER_ROLE
         _createRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", false, true);
         _createRole(POOL_OWNER_ROLE(), "PoolOwnerRole", false, true);
         _createRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", false, true);

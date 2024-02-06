@@ -46,9 +46,7 @@ export async function deployAndRegisterMasterInstance(
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
-                RoleIdLib: libraries.roleIdLibAddress,
                 StateIdLib: libraries.stateIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
             }
         }
     );
