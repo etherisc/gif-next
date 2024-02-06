@@ -46,6 +46,7 @@ export async function deployAndRegisterMasterInstance(
                 RiskIdLib: libraries.riskIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 StateIdLib: libraries.stateIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
             }
         }
     );
