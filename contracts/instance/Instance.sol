@@ -100,11 +100,11 @@ contract Instance is
         Key32 roleKey = toRoleKey32(roleId);
 
         if (!exists(roleKey)) {
-            revert IAccess.ErrorGrantNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessGrantNonexstentRole(roleId);
         }
 
         if (getState(roleKey) != ACTIVE()) {
-            revert IAccess.ErrorRoleIdNotActive(roleId);
+            revert IAccess.ErrorIAccessRoleIdNotActive(roleId);
         }
 
         if (!EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -120,7 +120,7 @@ contract Instance is
         Key32 roleKey = toRoleKey32(roleId);
 
         if (!exists(roleKey)) {
-            revert IAccess.ErrorRevokeNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRevokeNonexstentRole(roleId);
         }
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -139,7 +139,7 @@ contract Instance is
         Key32 roleKey = toRoleKey32(roleId);
 
         if (!exists(roleKey)) {
-            revert IAccess.ErrorRenounceNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRenounceNonexstentRole(roleId);
         }
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -372,23 +372,23 @@ contract Instance is
         // check role id
         uint64 roleIdInt = RoleId.unwrap(roleId);
         if(roleIdInt == ADMIN_ROLE || roleIdInt == PUBLIC_ROLE) {
-            revert IAccess.ErrorRoleIdInvalid(roleId); 
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId); 
         }
 
         if (roleIsCustom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
-            revert IAccess.ErrorRoleIdTooSmall(roleId); 
+            revert IAccess.ErrorIAccessRoleIdTooSmall(roleId); 
         } else if (roleIsCustom && roleIdInt >= CUSTOM_ROLE_ID_MIN) {
-            revert IAccess.ErrorRoleIdTooBig(roleId); 
+            revert IAccess.ErrorIAccessRoleIdTooBig(roleId); 
         }
 
         // role name checks
         ShortString nameShort = ShortStrings.toShortString(name);
         if (ShortStrings.byteLength(nameShort) == 0) {
-            revert IAccess.ErrorRoleNameEmpty(roleId);
+            revert IAccess.ErrorIAccessRoleNameEmpty(roleId);
         }
 
         if (_role[nameShort] != RoleIdLib.zero() && _role[nameShort] != roleId) {
-            revert IAccess.ErrorRoleNameNotUnique(_role[nameShort], nameShort);
+            revert IAccess.ErrorIAccessRoleNameNotUnique(_role[nameShort], nameShort);
         }
     }
 

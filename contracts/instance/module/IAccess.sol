@@ -25,22 +25,24 @@ interface IAccess {
         Timestamp updatedAt;
     }
 
-    error ErrorTargetAddressZero();
-    error ErrorTargetAlreadyExists(address target, ShortString name);
-    error ErrorTargetDoesNotExist(string targetName);
-    error ErrorTargetNameEmpty(address target);
-    error ErrorTargetNameExists(address target, address existingTarget, ShortString name);
+    error ErrorIAccessRoleIdInvalid(RoleId roleId);
+    error ErrorIAccessRoleIdTooBig(RoleId roleId);
+    error ErrorIAccessRoleIdTooSmall(RoleId roleId);
+    error ErrorIAccessRoleIdAlreadyExists(RoleId roleId, ShortString name);
+    error ErrorIAccessRoleIdNotActive(RoleId roleId);
+    error ErrorIAccessRoleNameEmpty(RoleId roleId);
+    error ErrorIAccessRoleNameNotUnique(RoleId roleId, ShortString name);
+    error ErrorIAccessRoleInvalidUpdate(RoleId roleId, bool isCustom);
+    error ErrorIAccessRoleIsCustomIsImmutable(RoleId roleId, bool isCustom, bool isCustomExisting);
+    error ErrorIAccessSetLockedForNonexstentRole(RoleId roleId);
+    error ErrorIAccessGrantNonexstentRole(RoleId roleId);
+    error ErrorIAccessRevokeNonexstentRole(RoleId roleId); 
+    error ErrorIAccessRenounceNonexstentRole(RoleId roleId);
 
-    error ErrorRoleIdInvalid(RoleId roleId);
-    error ErrorRoleIdTooBig(RoleId roleId);
-    error ErrorRoleIdTooSmall(RoleId roleId);
-    error ErrorRoleIdAlreadyExists(RoleId roleId, ShortString name);
-    error ErrorRoleIdNotActive(RoleId roleId);
-    error ErrorRoleNameEmpty(RoleId roleId);
-    error ErrorRoleNameNotUnique(RoleId roleId, ShortString name);
-    error ErrorRoleInvalidUpdate(RoleId roleId, bool isCustom);
-    error ErrorGrantNonexstentRole(RoleId roleId);
-    error ErrorRevokeNonexstentRole(RoleId roleId);
-    error ErrorRenounceNonexstentRole(RoleId roleId);
+    error ErrorIAccessTargetAddressZero();
+    error ErrorIAccessTargetAlreadyExists(address target, ShortString name);
+    error ErrorIAccessTargetNameEmpty(address target);
+    error ErrorIAccessTargetNameExists(address target, address existingTarget, ShortString name);
+    error ErrorIAccessSetLockedForNonexstentTarget(address target);
 
 }

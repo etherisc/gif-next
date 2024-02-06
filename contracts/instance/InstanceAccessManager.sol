@@ -21,26 +21,6 @@ contract InstanceAccessManager is
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000;
     uint32 public constant EXECUTION_DELAY = 0;
 
-    error ErrorRoleIdInvalid(RoleId roleId);
-    error ErrorRoleIdTooBig(RoleId roleId);
-    error ErrorRoleIdTooSmall(RoleId roleId);
-    error ErrorRoleIdAlreadyExists(RoleId roleId, ShortString name);
-    error ErrorRoleIdNotActive(RoleId roleId);
-    error ErrorRoleNameEmpty(RoleId roleId);
-    error ErrorRoleNameNotUnique(RoleId roleId, ShortString name);
-    error ErrorRoleInvalidUpdate(RoleId roleId, bool isCustom);
-    error ErrorRoleIsCustomIsImmutable(RoleId roleId, bool isCustom, bool isCustomExisting);
-    error ErrorSetLockedForNonexstentRole(RoleId roleId);
-    error ErrorGrantNonexstentRole(RoleId roleId);
-    error ErrorRevokeNonexstentRole(RoleId roleId); 
-    error ErrorRenounceNonexstentRole(RoleId roleId);
-
-    error ErrorTargetAddressZero();
-    error ErrorTargetAlreadyExists(address target, ShortString name);
-    error ErrorTargetNameEmpty(address target);
-    error ErrorTargetNameExists(address target, address existingTarget, ShortString name);
-    error ErrorSetLockedForNonexstentTarget(address target);
-
     // role specific state
     mapping(RoleId roleId => IAccess.RoleInfo info) internal _role;
     mapping(RoleId roleId => EnumerableSet.AddressSet roleMembers) internal _roleMembers; 
@@ -96,7 +76,7 @@ contract InstanceAccessManager is
 
     function setRoleLocked(RoleId roleId, bool locked) external restricted() {
         if (!roleExists(roleId)) {
-            revert ErrorSetLockedForNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessSetLockedForNonexstentRole(roleId);
         }
 
         _role[roleId].isLocked = locked;
@@ -109,11 +89,11 @@ contract InstanceAccessManager is
 
     function grantRole(RoleId roleId, address member) external restricted() returns (bool granted) {
         if (!roleExists(roleId)) {
-            revert ErrorGrantNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessGrantNonexstentRole(roleId);
         }
 
         if (_role[roleId].isLocked) {
-            revert ErrorRoleIdNotActive(roleId);
+            revert IAccess.ErrorIAccessRoleIdNotActive(roleId);
         }
 
         if (!EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -127,7 +107,7 @@ contract InstanceAccessManager is
 
     function revokeRole(RoleId roleId, address member) external restricted() returns (bool revoked) {
         if (!roleExists(roleId)) {
-            revert ErrorRevokeNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRevokeNonexstentRole(roleId);
         }
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -145,7 +125,7 @@ contract InstanceAccessManager is
         address member = msg.sender;
 
         if (!roleExists(roleId)) {
-            revert ErrorRenounceNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRenounceNonexstentRole(roleId);
         }
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -195,7 +175,7 @@ contract InstanceAccessManager is
         address target = _targetForName[ShortStrings.toShortString(targetName)];
         
         if (target == address(0)) {
-            revert ErrorSetLockedForNonexstentTarget(target);
+            revert IAccess.ErrorIAccessSetLockedForNonexstentTarget(target);
         }
 
         _target[target].isLocked = locked;
@@ -237,30 +217,30 @@ contract InstanceAccessManager is
         // check role id
         uint64 roleIdInt = RoleId.unwrap(roleId);
         if(roleIdInt == _accessManager.ADMIN_ROLE() || roleIdInt == _accessManager.PUBLIC_ROLE()) {
-            revert ErrorRoleIdInvalid(roleId); 
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId); 
         }
 
         // prevent changing isCustom for existing roles
         existingRole = _role[roleId];
 
         if (existingRole.createdAt.gtz() && isCustom != existingRole.isCustom) {
-            revert ErrorRoleIsCustomIsImmutable(roleId, isCustom, existingRole.isCustom); 
+            revert IAccess.ErrorIAccessRoleIsCustomIsImmutable(roleId, isCustom, existingRole.isCustom); 
         }
 
         if (isCustom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
-            revert ErrorRoleIdTooSmall(roleId); 
+            revert IAccess.ErrorIAccessRoleIdTooSmall(roleId); 
         } else if (!isCustom && roleIdInt >= CUSTOM_ROLE_ID_MIN) {
-            revert ErrorRoleIdTooBig(roleId); 
+            revert IAccess.ErrorIAccessRoleIdTooBig(roleId); 
         }
 
         // role name checks
         ShortString nameShort = ShortStrings.toShortString(name);
         if (ShortStrings.byteLength(nameShort) == 0) {
-            revert ErrorRoleNameEmpty(roleId);
+            revert IAccess.ErrorIAccessRoleNameEmpty(roleId);
         }
 
         if (_roleForName[nameShort] != RoleIdLib.zero() && _roleForName[nameShort] != roleId) {
-            revert ErrorRoleNameNotUnique(_roleForName[nameShort], nameShort);
+            revert IAccess.ErrorIAccessRoleNameNotUnique(_roleForName[nameShort], nameShort);
         }
     }
 
