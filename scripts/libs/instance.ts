@@ -1,5 +1,5 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { AccessManagerUpgradeableInitializeable, BundleManager, IRegistryService__factory, IRegistry__factory, Instance, InstanceService__factory } from "../../typechain-types";
+import { BundleManager, IRegistryService__factory, IRegistry__factory, Instance, InstanceAccessManager, InstanceService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -21,12 +21,18 @@ export async function deployAndRegisterMasterInstance(
     services: ServiceAddresses,
 ): Promise<InstanceAddresses> {
     const { address: accessManagerAddress, contract: accessManagerBaseContract } = await deployContract(
-        "AccessManagerUpgradeableInitializeable",
+        "InstanceAccessManager",
         owner,
-        []);
+        [],
+        {
+            libraries: {
+                RoleIdLib: libraries.roleIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+            }
+        });
 
-    const accessManager = accessManagerBaseContract as AccessManagerUpgradeableInitializeable;
-    await executeTx(() => accessManager.__AccessManagerUpgradeableInitializeable_init(resolveAddress(owner)));
+    const accessManager = accessManagerBaseContract as InstanceAccessManager;
+    await executeTx(() => accessManager.__InstanceAccessManager_initialize(resolveAddress(owner)));
 
     const { address: instanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",
@@ -122,7 +128,7 @@ export async function cloneInstanceFromRegistry(registryAddress: AddressLike, in
     const registry = IRegistry__factory.connect(await resolveAddress(registryAddress), instanceOwner);
     const instanceServiceAddress = await registry.getServiceAddress("InstanceService", "3");
     const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(instanceServiceAddress), instanceOwner);
-    const masterInstanceAddress = await instanceServiceAsClonedInstanceOwner.getInstanceMaster();
+    const masterInstanceAddress = await instanceServiceAsClonedInstanceOwner.getMasterInstance();
     logger.debug(`cloning instance ${masterInstanceAddress} ...`);
     const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAddress");
