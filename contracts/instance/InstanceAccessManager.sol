@@ -4,25 +4,16 @@ pragma solidity ^0.8.20;
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
-import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 
-import {IBundle} from "./module/IBundle.sol";
-import {IPolicy} from "./module/IPolicy.sol";
-import {IRisk} from "./module/IRisk.sol";
-import {ISetup} from "./module/ISetup.sol";
-import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
-import {KeyValueStore} from "./base/KeyValueStore.sol";
-import {NftId} from "../types/NftId.sol";
-import {NumberId} from "../types/NumberId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, POLICY, POOL, ROLE, PRODUCT, TARGET} from "../types/ObjectType.sol";
-import {RiskId, RiskIdLib} from "../types/RiskId.sol";
-import {RoleId, RoleIdLib} from "../types/RoleId.sol";
-import {StateId, ACTIVE} from "../types/StateId.sol";
+import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
+import {RoleId, RoleIdLib, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_SERVICE_ROLE } from "../types/RoleId.sol";
 import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
 
 contract InstanceAccessManager is
     AccessManagedUpgradeable
 {
+    using RoleIdLib for RoleId;
+
     string public constant ADMIN_ROLE_NAME = "AdminRole";
     string public constant PUBLIC_ROLE_NAME = "PublicRole";
 
@@ -56,7 +47,7 @@ contract InstanceAccessManager is
     error ErrorRoleIsCustomIsImmutable(RoleId roleId, bool isCustom, bool isCustomExisting);
     error ErrorSetLockedForNonexstentRole(RoleId roleId);
     error ErrorGrantNonexstentRole(RoleId roleId);
-    error ErrorRevokeNonexstentRole(RoleId roleId);
+    error ErrorRevokeNonexstentRole(RoleId roleId); 
     error ErrorRenounceNonexstentRole(RoleId roleId);
 
     error ErrorTargetAddressZero();
@@ -76,15 +67,36 @@ contract InstanceAccessManager is
     mapping(ShortString name => address target) internal _targetForName;
     address [] internal _targets;
 
-    AccessManagerUpgradeable internal _accessManager;
+    AccessManagerUpgradeableInitializeable internal _accessManager;
 
-    constructor(address accessManager)
+    function __InstanceAccessManager_initialize(address initialAdmin) external initializer
     {
-        _accessManager = AccessManagerUpgradeable(accessManager);
-        __AccessManaged_init(accessManager);
+        // if size of the contract gets too large, this can be externalized which will reduce the contract size considerably
+        _accessManager = new AccessManagerUpgradeableInitializeable();
+        // this service required adin rights to access manager to be able to grant/revoke roles
+        _accessManager.__AccessManagerUpgradeableInitializeable_init(address(this));
+        _accessManager.grantRole(_accessManager.ADMIN_ROLE(), initialAdmin, 0);
+
+        __AccessManaged_init(address(_accessManager));
 
         _createRole(RoleIdLib.toRoleId(_accessManager.ADMIN_ROLE()), ADMIN_ROLE_NAME, false, false);
         _createRole(RoleIdLib.toRoleId(_accessManager.PUBLIC_ROLE()), PUBLIC_ROLE_NAME, false, false);
+
+        createDefaultGifRoles();
+    }
+
+    function createDefaultGifRoles() public restricted() {
+        // DISTRIBUTION_OWNER_ROLE
+        _createRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", false, true);
+        _createRole(POOL_OWNER_ROLE(), "PoolOwnerRole", false, true);
+        _createRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", false, true);
+
+        _createRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole", false, true);
+        _createRole(POOL_SERVICE_ROLE(), "PoolServiceRole", false, true);
+        _createRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole", false, true);
+        _createRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole", false, true);
+        _createRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole", false, true);
+        _createRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole", false, true);
     }
 
     //--- Role ------------------------------------------------------//
@@ -283,6 +295,45 @@ contract InstanceAccessManager is
     }
 
     function _validateTargetParameters(address target, string memory name, bool isCustom) internal view {
+        // TODO: implement
+    }
 
+    function setTargetFunctionRole(
+        address target,
+        bytes4[] calldata selectors,
+        uint64 roleId
+    ) public virtual restricted() {
+        _accessManager.setTargetFunctionRole(target, selectors, roleId);
+    }
+
+    function setTargetFunctionRole(
+        string memory targetName,
+        bytes4[] calldata selectors,
+        RoleId roleId
+    ) public virtual restricted() {
+        address target = _targetForName[ShortStrings.toShortString(targetName)];
+        uint64 roleIdInt = RoleId.unwrap(roleId);
+        _accessManager.setTargetFunctionRole(target, selectors, roleIdInt);
+    }
+
+    function getAccessManager() public restricted() returns (AccessManagerUpgradeableInitializeable) {
+        return _accessManager;
+    }
+
+    function setTargetClosed(address target, bool closed) public restricted() {
+        _accessManager.setTargetClosed(target, closed);
+    }
+
+    function setTargetClosed(string memory targetName, bool closed) public restricted() {
+        address target = _targetForName[ShortStrings.toShortString(targetName)];
+        _accessManager.setTargetClosed(target, closed);
+    }
+
+    function canCall(
+        address caller,
+        address target,
+        bytes4 selector
+    ) public view virtual returns (bool immediate, uint32 delay) {
+        return _accessManager.canCall(caller, target, selector);
     }
 }

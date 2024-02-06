@@ -36,13 +36,13 @@ function BUNDLE_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRole
 function POOL_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1300); }
 function PRODUCT_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1400); }
 
-function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10000); }
-function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10100); }
-function PRODUCT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10200); }
-function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10300); }
-function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10400); }
+function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
+function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
+function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2200); }
+function PRODUCT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2300); }
+function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2400); }
+function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
 
-function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(11000); }
 
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {

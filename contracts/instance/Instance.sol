@@ -5,7 +5,6 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
-import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 
 import {IAccess} from "./module/IAccess.sol";
 import {IBundle} from "./module/IBundle.sol";
@@ -16,6 +15,7 @@ import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
 import {KeyValueStore} from "./base/KeyValueStore.sol";
 import {IInstance} from "./IInstance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
+import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {NftId} from "../types/NftId.sol";
 import {NumberId} from "../types/NumberId.sol";
@@ -56,7 +56,7 @@ contract Instance is
 
     mapping(ShortString name => address target) internal _target;
 
-    AccessManagerUpgradeable internal _accessManager;
+    InstanceAccessManager internal _accessManager;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
 
@@ -68,7 +68,7 @@ contract Instance is
 
         __AccessManaged_init(accessManagerAddress);
                 
-        _accessManager = AccessManagerUpgradeable(accessManagerAddress);
+        _accessManager = InstanceAccessManager(accessManagerAddress);
         _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
         _createRole(RoleIdLib.toRoleId(PUBLIC_ROLE), "PublicRole", false, false);
 
@@ -109,7 +109,7 @@ contract Instance is
         }
 
         if (!EnumerableSet.contains(_roleMembers[roleId], member)) {
-            _accessManager.grantRole(roleId.toInt(), member, EXECUTION_DELAY);
+            _accessManager.grantRole(roleId, member);
             EnumerableSet.add(_roleMembers[roleId], member);
             return true;
         }
@@ -125,7 +125,7 @@ contract Instance is
         }
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
-            _accessManager.revokeRole(roleId.toInt(), member);
+            _accessManager.revokeRole(roleId, member);
             EnumerableSet.remove(_roleMembers[roleId], member);
             return true;
         }
@@ -144,7 +144,7 @@ contract Instance is
         }
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
-            _accessManager.renounceRole(roleId.toInt(), member);
+            _accessManager.revokeRole(roleId, member);
             EnumerableSet.remove(_roleMembers[roleId], member);
             return true;
         }
@@ -441,6 +441,10 @@ contract Instance is
 
     function getBundleService() external view returns (IBundleService) {
         return IBundleService(_registry.getServiceAddress("BundleService", VersionPart.wrap(3)));
+    }
+
+    function getInstanceAccessManager() external view returns (InstanceAccessManager) {
+        return _accessManager;
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
