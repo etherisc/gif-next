@@ -51,10 +51,6 @@ contract Instance is
 
     bool private _initialized;
 
-    mapping(ShortString name => RoleId roleId) internal _role;
-    mapping(RoleId roleId => EnumerableSet.AddressSet roleMembers) internal _roleMembers; 
-    RoleId [] internal _roles;
-
     InstanceAccessManager internal _accessManager;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
@@ -68,128 +64,11 @@ contract Instance is
         __AccessManaged_init(accessManagerAddress);
                 
         _accessManager = InstanceAccessManager(accessManagerAddress);
-        _createRole(RoleIdLib.toRoleId(ADMIN_ROLE), "AdminRole", false, false);
-        _createRole(RoleIdLib.toRoleId(PUBLIC_ROLE), "PublicRole", false, false);
-
+        
         _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
 
         _registerInterface(type(IInstance).interfaceId);    
         _initialized = true;
-    }
-
-    //--- Role ------------------------------------------------------//
-    function createStandardRole(RoleId roleId, string memory name) external restricted() {
-        _createRole(roleId, name, false, true);
-    }
-
-    function createCustomRole(RoleId roleId, string memory name) external restricted() {
-        _createRole(roleId, name, true, true);
-    }
-
-    function updateRole(RoleId roleId, string memory name, StateId newState) external restricted() {
-        (bool isCustom,) = _validateRoleParameters(roleId, name, false);
-        IAccess.RoleInfo memory role = _toRole(roleId, name, isCustom);
-        update(toRoleKey32(roleId), abi.encode(role), newState);
-    }
-
-    function updateRoleState(RoleId roleId, StateId newState) external restricted() {
-        updateState(toRoleKey32(roleId), newState);
-    }
-
-    function grantRole(RoleId roleId, address member) external restricted() returns (bool granted) {
-        Key32 roleKey = toRoleKey32(roleId);
-
-        if (!exists(roleKey)) {
-            revert IAccess.ErrorIAccessGrantNonexstentRole(roleId);
-        }
-
-        if (getState(roleKey) != ACTIVE()) {
-            revert IAccess.ErrorIAccessRoleIdNotActive(roleId);
-        }
-
-        if (!EnumerableSet.contains(_roleMembers[roleId], member)) {
-            _accessManager.grantRole(roleId, member);
-            EnumerableSet.add(_roleMembers[roleId], member);
-            return true;
-        }
-
-        return false;
-    }
-
-    function revokeRole(RoleId roleId, address member) external restricted() returns (bool revoked) {
-        Key32 roleKey = toRoleKey32(roleId);
-
-        if (!exists(roleKey)) {
-            revert IAccess.ErrorIAccessRevokeNonexstentRole(roleId);
-        }
-
-        if (EnumerableSet.contains(_roleMembers[roleId], member)) {
-            _accessManager.revokeRole(roleId, member);
-            EnumerableSet.remove(_roleMembers[roleId], member);
-            return true;
-        }
-
-        return false;
-    }
-
-    /// @dev not restricted function by intention
-    /// the restriction to role members is already enforced by the call to the access manger
-    function renounceRole(RoleId roleId) external returns (bool revoked) {
-        address member = msg.sender;
-        Key32 roleKey = toRoleKey32(roleId);
-
-        if (!exists(roleKey)) {
-            revert IAccess.ErrorIAccessRenounceNonexstentRole(roleId);
-        }
-
-        if (EnumerableSet.contains(_roleMembers[roleId], member)) {
-            _accessManager.revokeRole(roleId, member);
-            EnumerableSet.remove(_roleMembers[roleId], member);
-            return true;
-        }
-
-        return false;
-    }
-
-    function roles() external view returns (uint256 numberOfRoles) {
-        return _roles.length;
-    }
-
-    function getRoleId(uint256 idx) external view returns (RoleId roleId) {
-        return _roles[idx];
-    }
-
-    function getRole(RoleId roleId) external view returns (IAccess.RoleInfo memory role) {
-        return abi.decode(getData(roleId.toKey32()), (IAccess.RoleInfo));
-    }
-
-    function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers) {
-        return EnumerableSet.length(_roleMembers[roleId]);
-    }
-
-    function getRoleMember(RoleId roleId, uint256 idx) external view returns (address roleMember) {
-        return EnumerableSet.at(_roleMembers[roleId], idx);
-    }
-
-    function _createRole(RoleId roleId, string memory name, bool isCustom, bool validateParameters) internal {
-        if (validateParameters) {
-            _validateRoleParameters(roleId, name, isCustom);
-        }
-
-        IAccess.RoleInfo memory role = _toRole(roleId, name, isCustom);
-        _role[role.name] = roleId;
-        _roles.push(roleId);
-
-        create(toRoleKey32(roleId), abi.encode(role));
-    }
-
-    //--- Target ------------------------------------------------------//
-    function createTarget(address target, string memory targetName) external restricted() {
-        _accessManager.createTarget(target, targetName);
-    }
-
-    function setTargetLocked(string memory targetName, bool closed) external restricted() {
-        _accessManager.setTargetLocked(targetName, closed);
     }
 
     //--- ProductSetup ------------------------------------------------------//
@@ -336,74 +215,6 @@ contract Instance is
     }
 
     //--- internal view/pure functions --------------------------------------//
-    function _toRole(RoleId roleId, string memory name, bool isCustom)
-        internal
-        view
-        returns (IAccess.RoleInfo memory role)
-    {
-        return IAccess.RoleInfo(
-            ShortStrings.toShortString(name), 
-            isCustom,
-            false,
-            TimestampLib.blockTimestamp(),
-            TimestampLib.blockTimestamp());
-    }
-
-    function _validateRoleParameters(
-        RoleId roleId, 
-        string memory name, 
-        bool isCustom
-    )
-        internal
-        view 
-        returns (
-            bool roleExists,
-            bool roleIsCustom
-        )
-    {
-        Key32 roleKey = toRoleKey32(roleId);
-        roleExists = exists(roleKey);
-        if (roleExists) {
-            roleIsCustom = abi.decode(getData(roleKey), (IAccess.RoleInfo)).isCustom;
-        } else {
-            roleIsCustom = isCustom;
-        }
-
-        // check role id
-        uint64 roleIdInt = RoleId.unwrap(roleId);
-        if(roleIdInt == ADMIN_ROLE || roleIdInt == PUBLIC_ROLE) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId); 
-        }
-
-        if (roleIsCustom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
-            revert IAccess.ErrorIAccessRoleIdTooSmall(roleId); 
-        } else if (roleIsCustom && roleIdInt >= CUSTOM_ROLE_ID_MIN) {
-            revert IAccess.ErrorIAccessRoleIdTooBig(roleId); 
-        }
-
-        // role name checks
-        ShortString nameShort = ShortStrings.toShortString(name);
-        if (ShortStrings.byteLength(nameShort) == 0) {
-            revert IAccess.ErrorIAccessRoleNameEmpty(roleId);
-        }
-
-        if (_role[nameShort] != RoleIdLib.zero() && _role[nameShort] != roleId) {
-            revert IAccess.ErrorIAccessRoleNameNotUnique(_role[nameShort], nameShort);
-        }
-    }
-
-    function _validateTargetParameters(address target, IAccess.TargetInfo memory targetInfo) internal view {
-
-    }
-
-    function toRoleKey32(RoleId roleId) public pure returns (Key32) {
-        return roleId.toKey32();
-    }
-
-    function toTargetKey32(address target) public pure returns (Key32) {
-        return Key32Lib.toKey32(TARGET(), KeyId.wrap(bytes20(target)));
-    }
-
     function _toNftKey32(NftId nftId, ObjectType objectType) internal pure returns (Key32) {
         return nftId.toKey32(objectType);
     }
