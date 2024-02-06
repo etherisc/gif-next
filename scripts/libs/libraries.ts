@@ -1,5 +1,6 @@
 import { AddressLike, Signer } from "ethers";
 import { deployContract } from "./deployment";
+import { logger } from "../logger";
 
 export type LibraryAddresses = {
     nftIdLibAddress: AddressLike;
@@ -24,6 +25,7 @@ export type LibraryAddresses = {
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
 
 export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> {
+    logger.info("======== Starting deployment of libraries ========");
     const { address: key32LibAddress } = await deployContract(
         "Key32Lib",
         owner);
@@ -151,7 +153,8 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
                 Key32Lib: key32LibAddress,
             }
         });
-
+    
+    logger.info("======== Finished deployment of libraries ========");
         
     return {
         nftIdLibAddress,

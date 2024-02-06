@@ -20,6 +20,8 @@ export async function deployAndRegisterMasterInstance(
     registry: RegistryAddresses,
     services: ServiceAddresses,
 ): Promise<InstanceAddresses> {
+    logger.info("======== Starting deployment of master instance ========");
+
     const { address: accessManagerAddress, contract: accessManagerBaseContract } = await deployContract(
         "InstanceAccessManager",
         owner,
@@ -104,6 +106,8 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(() => services.instanceService.setMasterInstance(accessManagerAddress, instanceAddress, instanceReaderAddress, bundleManagerAddress));
     logger.info(`master addresses set`);
     
+    logger.info("======== Finished deployment of master instance ========");
+
     return {
         instanceAddress: instanceAddress,
         instanceNftId: masterInstanceNfdId,
@@ -111,6 +115,8 @@ export async function deployAndRegisterMasterInstance(
 }
 
 export async function cloneInstance(masterInstance: InstanceAddresses, libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses, instanceOwner: Signer): Promise<InstanceAddresses> {
+    logger.info("======== Starting cloning of instance ========");
+
     const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(services.instanceServiceAddress), instanceOwner);
     logger.debug(`cloning instance ${masterInstance.instanceAddress} ...`);
     const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
@@ -118,6 +124,8 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
     const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceNftId");
     
     logger.info(`instance cloned - clonedInstanceNftId: ${clonedInstanceNftId}`);
+
+    logger.info("======== Finished cloning of instance ========");
     
     return {
         instanceAddress: clonedInstanceAddress,
