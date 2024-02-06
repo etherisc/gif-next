@@ -7,7 +7,8 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {RoleId, RoleIdLib, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_SERVICE_ROLE } from "../types/RoleId.sol";
-import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
+import {TimestampLib} from "../types/Timestamp.sol";
+import {IAccess} from "./module/IAccess.sol";
 
 contract InstanceAccessManager is
     AccessManagedUpgradeable
@@ -19,22 +20,6 @@ contract InstanceAccessManager is
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000;
     uint32 public constant EXECUTION_DELAY = 0;
-
-    struct RoleInfo {
-        ShortString name;
-        bool isCustom;
-        bool isLocked;
-        Timestamp createdAt;
-        Timestamp updatedAt;
-    }
-
-    struct TargetInfo {
-        ShortString name;
-        bool isCustom;
-        bool isLocked;
-        Timestamp createdAt;
-        Timestamp updatedAt;
-    }
 
     error ErrorRoleIdInvalid(RoleId roleId);
     error ErrorRoleIdTooBig(RoleId roleId);
@@ -57,13 +42,13 @@ contract InstanceAccessManager is
     error ErrorSetLockedForNonexstentTarget(address target);
 
     // role specific state
-    mapping(RoleId roleId => RoleInfo info) internal _role;
+    mapping(RoleId roleId => IAccess.RoleInfo info) internal _role;
     mapping(RoleId roleId => EnumerableSet.AddressSet roleMembers) internal _roleMembers; 
     mapping(ShortString name => RoleId roleId) internal _roleForName;
     RoleId [] internal _roles;
 
     // target specific state
-    mapping(address target => TargetInfo info) internal _target;
+    mapping(address target => IAccess.TargetInfo info) internal _target;
     mapping(ShortString name => address target) internal _targetForName;
     address [] internal _targets;
 
@@ -185,7 +170,7 @@ contract InstanceAccessManager is
         return _roleForName[ShortStrings.toShortString(name)];
     }
 
-    function getRole(RoleId roleId) external view returns (RoleInfo memory role) {
+    function getRole(RoleId roleId) external view returns (IAccess.RoleInfo memory role) {
         return _role[roleId];
     }
 
@@ -206,8 +191,10 @@ contract InstanceAccessManager is
         _createTarget(target, name, true, true);
     }
 
-    function setTargetLocked(address target, bool locked) external restricted() {
-        if (!targetExists(target)) {
+    function setTargetLocked(string memory targetName, bool locked) external restricted() {
+        address target = _targetForName[ShortStrings.toShortString(targetName)];
+        
+        if (target == address(0)) {
             revert ErrorSetLockedForNonexstentTarget(target);
         }
 
@@ -226,7 +213,7 @@ contract InstanceAccessManager is
             _validateRoleParameters(roleId, name, isCustom);
         }
 
-        RoleInfo memory role = RoleInfo(
+        IAccess.RoleInfo memory role = IAccess.RoleInfo(
             ShortStrings.toShortString(name), 
             isCustom,
             false, // role un-locked,
@@ -245,7 +232,7 @@ contract InstanceAccessManager is
     )
         internal
         view 
-        returns (RoleInfo memory existingRole)
+        returns (IAccess.RoleInfo memory existingRole)
     {
         // check role id
         uint64 roleIdInt = RoleId.unwrap(roleId);
@@ -282,7 +269,7 @@ contract InstanceAccessManager is
             _validateTargetParameters(target, name, isCustom);
         }
 
-        TargetInfo memory info = TargetInfo(
+        IAccess.TargetInfo memory info = IAccess.TargetInfo(
             ShortStrings.toShortString(name), 
             isCustom,
             _accessManager.isTargetClosed(target), // sync with state in access manager
@@ -318,10 +305,6 @@ contract InstanceAccessManager is
 
     function getAccessManager() public restricted() returns (AccessManagerUpgradeableInitializeable) {
         return _accessManager;
-    }
-
-    function setTargetClosed(address target, bool closed) public restricted() {
-        _accessManager.setTargetClosed(target, closed);
     }
 
     function setTargetClosed(string memory targetName, bool closed) public restricted() {

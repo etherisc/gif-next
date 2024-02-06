@@ -23,6 +23,7 @@ import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT,
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {StateId, ACTIVE} from "../types/StateId.sol";
+import {TimestampLib} from "../types/Timestamp.sol";
 import {ERC165} from "../shared/ERC165.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {ComponentOwnerService} from "./service/ComponentOwnerService.sol";
@@ -53,8 +54,6 @@ contract Instance is
     mapping(ShortString name => RoleId roleId) internal _role;
     mapping(RoleId roleId => EnumerableSet.AddressSet roleMembers) internal _roleMembers; 
     RoleId [] internal _roles;
-
-    mapping(ShortString name => address target) internal _target;
 
     InstanceAccessManager internal _accessManager;
     InstanceReader internal _instanceReader;
@@ -185,17 +184,12 @@ contract Instance is
     }
 
     //--- Target ------------------------------------------------------//
-    function createTarget(address target, IAccess.TargetInfo memory targetInfo) external restricted() {
-        _validateTargetParameters(target, targetInfo);
-        create(toTargetKey32(target), abi.encode(targetInfo));
+    function createTarget(address target, string memory targetName) external restricted() {
+        _accessManager.createTarget(target, targetName);
     }
 
-    function setTargetClosed(address target, bool closed) external restricted() {
-        if (!exists(toTargetKey32(target))) {
-            revert IAccess.ErrorTargetDoesNotExist(target);
-        }
-
-        _accessManager.setTargetClosed(target, closed);
+    function setTargetLocked(string memory targetName, bool closed) external restricted() {
+        _accessManager.setTargetLocked(targetName, closed);
     }
 
     //--- ProductSetup ------------------------------------------------------//
@@ -344,12 +338,15 @@ contract Instance is
     //--- internal view/pure functions --------------------------------------//
     function _toRole(RoleId roleId, string memory name, bool isCustom)
         internal
-        pure
+        view
         returns (IAccess.RoleInfo memory role)
     {
         return IAccess.RoleInfo(
             ShortStrings.toShortString(name), 
-            isCustom);
+            isCustom,
+            false,
+            TimestampLib.blockTimestamp(),
+            TimestampLib.blockTimestamp());
     }
 
     function _validateRoleParameters(

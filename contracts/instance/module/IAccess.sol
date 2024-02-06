@@ -5,21 +5,29 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 import {RoleId} from "../../types/RoleId.sol";
+import {Timestamp} from "../../types/Timestamp.sol";
 
 interface IAccess {
+
     struct RoleInfo {
         ShortString name;
         bool isCustom;
+        bool isLocked;
+        Timestamp createdAt;
+        Timestamp updatedAt;
     }
 
     struct TargetInfo {
         ShortString name;
         bool isCustom;
+        bool isLocked;
+        Timestamp createdAt;
+        Timestamp updatedAt;
     }
 
     error ErrorTargetAddressZero();
     error ErrorTargetAlreadyExists(address target, ShortString name);
-    error ErrorTargetDoesNotExist(address target);
+    error ErrorTargetDoesNotExist(string targetName);
     error ErrorTargetNameEmpty(address target);
     error ErrorTargetNameExists(address target, address existingTarget, ShortString name);
 
