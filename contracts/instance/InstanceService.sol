@@ -17,7 +17,7 @@ import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
 import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
-import {ObjectType, INSTANCE, SERVICE, PRODUCT, POOL, DISTRIBUTION} from "../types/ObjectType.sol";
+import {ObjectType, INSTANCE, SERVICE, PRODUCT, POOL, DISTRIBUTION, POLICY, BUNDLE} from "../types/ObjectType.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -102,7 +102,7 @@ contract InstanceService is Service, IInstanceService {
 
     function _grantPoolServiceAuthorizations(AccessManagerUpgradeable clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for pool service on instance
-        address poolServiceAddress = registry.getServiceAddress(POOL(), VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address poolServiceAddress = _registry.getServiceAddress(POOL(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(POOL_SERVICE_ROLE().toInt(), address(poolServiceAddress), 0);
         bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
@@ -115,7 +115,7 @@ contract InstanceService is Service, IInstanceService {
 
     function _grantProductServiceAuthorizations(AccessManagerUpgradeable clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for product service on instance
-        address productServiceAddress = registry.getServiceAddress(PRODUCT(), VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address productServiceAddress = _registry.getServiceAddress(PRODUCT(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE().toInt(), address(productServiceAddress), 0);
         bytes4[] memory instanceProductServiceSelectors = new bytes4[](5);
         instanceProductServiceSelectors[0] = clonedInstance.createProductSetup.selector;
@@ -131,7 +131,7 @@ contract InstanceService is Service, IInstanceService {
 
     function _grantPolicyServiceAuthorizations(AccessManagerUpgradeable clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for policy service on instance
-        address policyServiceAddress = _registry.getServiceAddress("PolicyService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address policyServiceAddress = _registry.getServiceAddress(POLICY(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(POLICY_SERVICE_ROLE().toInt(), address(policyServiceAddress), 0);
         bytes4[] memory instancePolicyServiceSelectors = new bytes4[](3);
         instancePolicyServiceSelectors[0] = clonedInstance.createPolicy.selector;
@@ -145,7 +145,7 @@ contract InstanceService is Service, IInstanceService {
 
     function _grantBundleServiceAuthorizations(AccessManagerUpgradeable clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
         // configure authorization for bundle service on instance
-        address bundleServiceAddress = _registry.getServiceAddress("BundleService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address bundleServiceAddress = _registry.getServiceAddress(BUNDLE(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(BUNDLE_SERVICE_ROLE().toInt(), address(bundleServiceAddress), 0);
         bytes4[] memory instanceBundleServiceSelectors = new bytes4[](2);
         instanceBundleServiceSelectors[0] = clonedInstance.createBundle.selector;
@@ -170,7 +170,7 @@ contract InstanceService is Service, IInstanceService {
 
     function _grantInstanceServiceAuthorizations(AccessManagerUpgradeable clonedAccessManager, Instance clonedInstance) internal {
 // configure authorization for instance service on instance
-        address instanceServiceAddress = _registry.getServiceAddress("InstanceService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address instanceServiceAddress = _registry.getServiceAddress(INSTANCE(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE().toInt(), instanceServiceAddress, 0);
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
         instanceInstanceServiceSelectors[0] = clonedInstance.setInstanceReader.selector;

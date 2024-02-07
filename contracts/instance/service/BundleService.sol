@@ -14,7 +14,7 @@ import {Versionable} from "../../shared/Versionable.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {POOL, BUNDLE} from "../../types/ObjectType.sol";
+import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
@@ -61,8 +61,8 @@ contract BundleService is
         _registerInterface(type(IBundleService).interfaceId);
     }
 
-    function getName() public pure override(Service, IService) returns(string memory name) {
-        return NAME;
+    function getDomain() public pure override(Service, IService) returns(ObjectType) {
+        return BUNDLE();
     }
 
     function createBundle(

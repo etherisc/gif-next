@@ -23,7 +23,7 @@ import {Versionable} from "../../shared/Versionable.sol";
 import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
-import {ObjectType, INSTANCE, PRODUCT, POLICY} from "../../types/ObjectType.sol";
+import {ObjectType, INSTANCE, PRODUCT, POOL, POLICY, BUNDLE} from "../../types/ObjectType.sol";
 import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
@@ -40,15 +40,10 @@ import {IPolicyService} from "./IPolicyService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IBundleService} from "./IBundleService.sol";
-import {POOL_SERVICE_NAME} from "./PoolService.sol";
-import {BUNDLE_SERVICE_NAME} from "./BundleService.sol";
 
-string constant POLICY_SERVICE_NAME = "PolicyService";
 
 contract PolicyService is ComponentServiceBase, IPolicyService {
     using NftIdLib for NftId;
-
-    string public constant NAME = "PolicyService";
 
     IPoolService internal _poolService;
     IBundleService internal _bundleService;
@@ -69,15 +64,15 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
 
         _initializeService(registryAddress, owner);
 
-        _poolService = IPoolService(_registry.getServiceAddress(POOL_SERVICE_NAME, getMajorVersion()));
-        _bundleService = IBundleService(_registry.getServiceAddress(BUNDLE_SERVICE_NAME, getMajorVersion()));
+        _poolService = IPoolService(_registry.getServiceAddress(POOL(), getMajorVersion()));
+        _bundleService = IBundleService(_registry.getServiceAddress(BUNDLE(), getMajorVersion()));
 
         _registerInterface(type(IPolicyService).interfaceId);
     }
 
 
-    function getName() public pure override(IService, Service) returns(string memory name) {
-        return NAME;
+    function getDomain() public pure override(IService, Service) returns(ObjectType) {
+        return POLICY();
     }
 
 

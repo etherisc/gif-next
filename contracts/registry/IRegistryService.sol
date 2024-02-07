@@ -30,7 +30,7 @@ interface IRegistryService is IService {
 
      struct FunctionConfig
      {
-          ObjectType serviceType;
+          ObjectType serviceDomain;
           bytes4[] selector;
      }
 

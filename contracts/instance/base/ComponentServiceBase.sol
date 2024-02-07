@@ -31,7 +31,7 @@ abstract contract ComponentServiceBase is Service {
     // view functions
 
     function getRegistryService() public view virtual returns (IRegistryService) {
-        address service = getRegistry().getServiceAddress("RegistryService", getMajorVersion());
+        address service = getRegistry().getServiceAddress(SERVICE(), getMajorVersion());
         return IRegistryService(service);
     }
 
@@ -68,10 +68,5 @@ abstract contract ComponentServiceBase is Service {
 
         address instanceAddress = registry.getObjectInfo(info.parentNftId).objectAddress;
         instance = IInstance(instanceAddress);
-    }
-
-    function getRegistryService() public view virtual returns (IRegistryService) {
-        address service = getRegistry().getServiceAddress(SERVICE(), getMajorVersion());
-        return IRegistryService(service);
     }
 }

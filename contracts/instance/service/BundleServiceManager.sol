@@ -7,6 +7,7 @@ import {BundleService} from "./BundleService.sol";
 import {Registry} from "../../registry/Registry.sol";
 import {RegistryService} from "../../registry/RegistryService.sol";
 import {VersionLib} from "../../types/Version.sol";
+import {ObjectType, SERVICE} from "../../types/ObjectType.sol";
 
 contract BundleServiceManager is ProxyManager {
 
@@ -27,7 +28,7 @@ contract BundleServiceManager is ProxyManager {
         _bundleService = BundleService(address(versionable));
 
         Registry registry = Registry(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
+        address registryServiceAddress = registry.getServiceAddress(SERVICE(), VersionLib.toVersion(3, 0, 0).toMajorPart());
         RegistryService registryService = RegistryService(registryServiceAddress);
         // TODO this must have a role or own nft to register service
         //registryService.registerService(_poolService);

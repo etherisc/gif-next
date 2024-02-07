@@ -436,11 +436,11 @@ contract Instance is
     }
 
     function getPolicyService() external view returns (IPolicyService) {
-        return IPolicyService(_registry.getServiceAddress("PolicyService", VersionPart.wrap(3)));
+        return IPolicyService(_registry.getServiceAddress(POLICY(), VersionPart.wrap(3)));
     }
 
     function getBundleService() external view returns (IBundleService) {
-        return IBundleService(_registry.getServiceAddress("BundleService", VersionPart.wrap(3)));
+        return IBundleService(_registry.getServiceAddress(BUNDLE(), VersionPart.wrap(3)));
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
