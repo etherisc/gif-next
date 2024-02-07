@@ -183,7 +183,7 @@ contract TestGifBase is Test {
         _deployAndRegisterServices();
         vm.stopPrank();
 
-        vm.startPrank(masterInstanceOwner);
+        vm.startPrank(registryOwner);
         _deployMasterInstance();
         vm.stopPrank();
 
@@ -343,7 +343,7 @@ contract TestGifBase is Test {
 
 
         // solhint-disable 
-        console.log("instanceService type", instanceService.getType().toInt());
+        console.log("instanceService domain", instanceService.getDomain().toInt());
         console.log("instanceService deployed at", address(instanceService));
         console.log("instanceService nft id", instanceService.getNftId().toInt());
         // solhint-enable 
@@ -355,7 +355,7 @@ contract TestGifBase is Test {
         distributionServiceNftId = registry.getNftId(address(distributionService));
 
         // solhint-disable 
-        console.log("distributionService type", distributionService.getType().toInt());
+        console.log("distributionService domain", distributionService.getDomain().toInt());
         console.log("distributionService deployed at", address(distributionService));
         console.log("distributionService nft id", distributionService.getNftId().toInt());
         // solhint-enable
@@ -367,7 +367,7 @@ contract TestGifBase is Test {
         poolServiceNftId = registry.getNftId(address(poolService));
 
         // solhint-disable
-        console.log("poolService type", poolService.getType().toInt());
+        console.log("poolService domain", poolService.getDomain().toInt());
         console.log("poolService deployed at", address(poolService));
         console.log("poolService nft id", poolService.getNftId().toInt());
         // solhint-enable
@@ -379,7 +379,7 @@ contract TestGifBase is Test {
         productServiceNftId = registry.getNftId(address(productService));
 
         // solhint-disable
-        console.log("productService type", productService.getType().toInt());
+        console.log("productService domain", productService.getDomain().toInt());
         console.log("productService deployed at", address(productService));
         console.log("productService nft id", productService.getNftId().toInt());
         // solhint-enable
@@ -387,11 +387,11 @@ contract TestGifBase is Test {
         // --- bundle service ---------------------------------//
         bundleServiceManager = new BundleServiceManager(address(registry));
         bundleService = bundleServiceManager.getBundleService();
-        registryService.registerService(bundleService);
+        registryServiceReleaseManager.registerService(bundleService);
         bundleServiceNftId = registry.getNftId(address(bundleService));
 
         // solhint-disable
-        console.log("bundleService name", bundleService.getName());
+        console.log("bundleService domain", bundleService.getDomain().toInt());
         console.log("bundleService deployed at", address(bundleService));
         console.log("bundleService nft id", bundleService.getNftId().toInt());
         // solhint-enable
@@ -400,11 +400,11 @@ contract TestGifBase is Test {
         // --- policy service ---------------------------------//
         policyServiceManager = new PolicyServiceManager(address(registry));
         policyService = policyServiceManager.getPolicyService();
-        registryService.registerService(policyService);
+        registryServiceReleaseManager.registerService(policyService);
         policyServiceNftId = registry.getNftId(address(policyService));
 
         // solhint-disable
-        console.log("policyService name", policyService.getName());
+        console.log("policyService domain", policyService.getDomain().toInt());
         console.log("policyService deployed at", address(policyService));
         console.log("policyService nft id", policyService.getNftId().toInt());
         // solhint-enable
@@ -437,8 +437,8 @@ contract TestGifBase is Test {
         // console.log("service allowance is set to POLICY");
         // /* solhint-enable */
 
-        // activate initial release
-        registryServiceReleaseManager.activateNextRelease();
+        // activate initial release -> activated upon last service registration
+        //registryServiceReleaseManager.activateNextRelease();
     }
 
     function _deployMasterInstance() internal 

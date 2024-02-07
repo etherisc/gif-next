@@ -184,7 +184,7 @@ contract NftOwnableTest is Test {
 
         // NFT_LOCK_ADDRESS becomes owner of mock
         vm.prank(mockOwner);
-        mock.linkToNftOwnable(address(registry), address(registry));
+        mock.linkToNftOwnable(address(registry), address(registryService));
         NftId mockNftId = mock.getNftId();
 
         vm.expectRevert(
@@ -192,7 +192,7 @@ contract NftOwnableTest is Test {
                 INftOwnable.ErrorAlreadyLinked.selector,
                 registryAddress,
                 mockNftId));
-        vm.prank(address(mockOwner));
-        mock.linkToNftOwnable(address(registry), address(registry));
+        vm.prank(registryOwner);
+        mock.linkToNftOwnable(address(registry), address(registryService));
     }
 }
