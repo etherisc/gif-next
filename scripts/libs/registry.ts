@@ -82,11 +82,13 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     await registryServiceAccessManager.initialize(registryServiceReleaseManager, tokenRegistry);
 
+    const initialAuthority = await registryServiceAccessManager.authority();
+
     const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
         "RegistryServiceManager",
         owner,
         [
-            registryServiceAccessManager,
+            initialAuthority,
             registry
         ],
         {

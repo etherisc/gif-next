@@ -28,7 +28,12 @@ contract RegistryServiceReleaseManager is AccessManaged
     event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceDomain); 
     event LogReleaseActivation(VersionPart version);
 
+    // createNextRelease
+    error NotRegistryService();
+    error UnexpectedServiceAuthority(address expected, address found);
+
     // registerService
+    error NotService();
     error ServiceNotInRelease(IService service, ObjectType serviceDomain);
     error ServiceAlreadyRegistered(address service);
 
@@ -92,13 +97,20 @@ contract RegistryServiceReleaseManager is AccessManaged
     }
 
     // TODO deploy proxy and initialize with given implementation instead of using given proxy?
-    function createNextRelease(IService registryService)
+    function createNextRelease(IRegistryService registryService)
         external
         restricted // GIF_ADMIN_ROLE
         returns(NftId nftId)
     {
-        // check interface
-        // check authority
+        if(!registryService.supportsInterface(type(IRegistryService).interfaceId)) {
+            revert NotRegistryService();
+        }
+
+        if(registryService.authority() != _accessManager.authority()) {
+            revert UnexpectedServiceAuthority(
+                _accessManager.authority(), 
+                registryService.authority()); 
+        }
 
         (
             IRegistry.ObjectInfo memory info, 
@@ -127,8 +139,9 @@ contract RegistryServiceReleaseManager is AccessManaged
         restricted // GIF_MANAGER_ROLE
         returns(NftId nftId)
     {
-        // check interface
-        // check authority
+        if(!service.supportsInterface(type(IService).interfaceId)) {
+            revert NotService();
+        }
 
         (
             IRegistry.ObjectInfo memory info, 
