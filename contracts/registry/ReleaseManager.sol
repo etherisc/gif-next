@@ -9,7 +9,6 @@ import {RoleId} from "../types/RoleId.sol";
 import {ObjectType, zeroObjectType, SERVICE} from "../types/ObjectType.sol";
 import {VersionPart, VersionPartLib} from "../types/Version.sol";
 
-import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {IService} from "../shared/IService.sol";
 import {ProxyManager} from "../shared/ProxyManager.sol";
@@ -19,10 +18,10 @@ import {Registry} from "./Registry.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {RegistryService} from "./RegistryService.sol";
 import {RegistryServiceManager} from "./RegistryServiceManager.sol";
-import {RegistryServiceAccessManager} from "./RegistryServiceAccessManager.sol";
+import {RegistryAccessManager} from "./RegistryAccessManager.sol";
 
 
-contract RegistryServiceReleaseManager is AccessManaged
+contract ReleaseManager is AccessManaged
 {
     event LogReleaseCreation(VersionPart version, IService registryService); 
     event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceDomain); 
@@ -68,7 +67,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         RoleId roleId; // roleId granted to service
     }
 
-    RegistryServiceAccessManager private immutable _accessManager;
+    RegistryAccessManager private immutable _accessManager;
     IRegistry private immutable _registry;
 
     VersionPart _latest;// latest active version
@@ -85,7 +84,7 @@ contract RegistryServiceReleaseManager is AccessManaged
     mapping(address => bool) _isActiveRegistryService;
 
     constructor(
-        RegistryServiceAccessManager accessManager, 
+        RegistryAccessManager accessManager, 
         VersionPart initialVersion)
         AccessManaged(accessManager.authority())
     {

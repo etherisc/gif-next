@@ -14,7 +14,7 @@ import {Registry} from "./Registry.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
-import {RegistryServiceReleaseManager} from "./RegistryServiceReleaseManager.sol";
+import {ReleaseManager} from "./ReleaseManager.sol";
 
 /*
     3 types of roles: 
@@ -35,7 +35,7 @@ import {RegistryServiceReleaseManager} from "./RegistryServiceReleaseManager.sol
 
 */
 
-contract RegistryServiceAccessManager is AccessManaged
+contract RegistryAccessManager is AccessManaged
 {
     uint64 public constant CUSTOM_ROLE_ID_MIN = 1000000;
     
@@ -146,7 +146,7 @@ contract RegistryServiceAccessManager is AccessManaged
     {
         bytes4[] memory functionSelector = new bytes4[](1);
 
-        functionSelector[0] = RegistryServiceAccessManager.initialize.selector;
+        functionSelector[0] = RegistryAccessManager.initialize.selector;
         _setTargetFunctionRole(address(this), functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
     }
 
@@ -161,10 +161,10 @@ contract RegistryServiceAccessManager is AccessManaged
 
         // REGISTRY_SERVICE_ADMIN_ROLE for TokenRegistry
 
-        // REGISTRY_SERVICE_ADMIN_ROLE for RegistryServiceReleaseManager
-        functionSelector[0] = RegistryServiceReleaseManager.createNextRelease.selector;
+        // REGISTRY_SERVICE_ADMIN_ROLE for ReleaseManager
+        functionSelector[0] = ReleaseManager.createNextRelease.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
-        //functionSelector[0] = RegistryServiceReleaseManager.activateNextRelease.selector;
+        //functionSelector[0] = ReleaseManager.activateNextRelease.selector;
         //_setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
     }
     
@@ -176,8 +176,8 @@ contract RegistryServiceAccessManager is AccessManaged
         functionSelector[0] = TokenRegistry.setActive.selector;
         _setTargetFunctionRole(address(_tokenRegistry), functionSelector, REGISTRY_SERVICE_MANAGER_ROLE());
 
-        // REGISTRY_SERVICE_MANAGER_ROLE for RegistryServiceReleaseManager
-        functionSelector[0] = RegistryServiceReleaseManager.registerService.selector;
+        // REGISTRY_SERVICE_MANAGER_ROLE for ReleaseManager
+        functionSelector[0] = ReleaseManager.registerService.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_MANAGER_ROLE());
 
         // set REGISTRY_SERVICE_ADMIN_ROLE as admin for REGISTRY_SERVICE_MANAGER_ROLE
@@ -188,7 +188,7 @@ contract RegistryServiceAccessManager is AccessManaged
     {
         bytes4[] memory functionSelector = new bytes4[](1);
 
-        functionSelector[0] = RegistryServiceAccessManager.setAndGrantUniqueRole.selector;
+        functionSelector[0] = RegistryAccessManager.setAndGrantUniqueRole.selector;
         _setTargetFunctionRole(address(this), functionSelector, RELEASE_MANAGER_ROLE());
     }
 

@@ -13,8 +13,8 @@ import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
-import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
+import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
+import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceUpgradeMock} from "../mock/RegistryServiceUpgradeMock.sol";
@@ -25,8 +25,8 @@ contract RegistryServiceManagerTest is Test {
     address public registryOwner = makeAddr("registryOwner");
     address public registryOwnerNew = makeAddr("registryOwnerNew");
 
-    RegistryServiceAccessManager public accessManager;
-    RegistryServiceReleaseManager public releaseManager;
+    RegistryAccessManager public accessManager;
+    ReleaseManager public releaseManager;
 
     // ProxyManager public proxyManager;
     RegistryServiceManager public registryServiceManager;
@@ -37,9 +37,9 @@ contract RegistryServiceManagerTest is Test {
     function setUp() public {
 
         vm.startPrank(registryOwner);
-        accessManager = new RegistryServiceAccessManager(registryOwner);
+        accessManager = new RegistryAccessManager(registryOwner);
 
-        releaseManager = new RegistryServiceReleaseManager(
+        releaseManager = new ReleaseManager(
             accessManager,
             VersionPartLib.toVersionPart(3));
 

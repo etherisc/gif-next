@@ -14,8 +14,8 @@ import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, TOKEN} from "..
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 
-import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
-import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
+import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -77,8 +77,8 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
     address public outsider = makeAddr("outsider");
     address public EOA = makeAddr("EOA");
 
-    RegistryServiceAccessManager accessManager;
-    RegistryServiceReleaseManager releaseManager;
+    RegistryAccessManager accessManager;
+    ReleaseManager releaseManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
     IRegistry public registry;
@@ -115,9 +115,9 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        accessManager = new RegistryServiceAccessManager(registryOwner);
+        accessManager = new RegistryAccessManager(registryOwner);
 
-        releaseManager = new RegistryServiceReleaseManager(
+        releaseManager = new ReleaseManager(
             accessManager,
             VersionPartLib.toVersionPart(3));
 

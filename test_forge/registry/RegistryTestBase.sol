@@ -22,8 +22,8 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
-import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
+import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
+import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 
@@ -75,8 +75,8 @@ contract RegistryTestBase is Test, FoundryRandom {
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
 
-    RegistryServiceAccessManager accessManager;
-    RegistryServiceReleaseManager releaseManager;
+    RegistryAccessManager accessManager;
+    ReleaseManager releaseManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
     Registry public registry;
@@ -134,9 +134,9 @@ contract RegistryTestBase is Test, FoundryRandom {
     {
         _startPrank(registryOwner);
 
-        accessManager = new RegistryServiceAccessManager(registryOwner);
+        accessManager = new RegistryAccessManager(registryOwner);
 
-        releaseManager = new RegistryServiceReleaseManager(
+        releaseManager = new ReleaseManager(
             accessManager,
             VersionPartLib.toVersionPart(3));
 

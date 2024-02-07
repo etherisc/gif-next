@@ -15,8 +15,8 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
-import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
-import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
+import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
@@ -55,9 +55,9 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
     {
         vm.startPrank(registryOwner);
 
-        RegistryServiceAccessManager accessManager = new RegistryServiceAccessManager(registryOwner);
+        RegistryAccessManager accessManager = new RegistryAccessManager(registryOwner);
 
-        RegistryServiceReleaseManager releaseManager = new RegistryServiceReleaseManager(
+        ReleaseManager releaseManager = new ReleaseManager(
             accessManager,
             VersionPartLib.toVersionPart(3));
 

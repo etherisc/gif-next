@@ -60,8 +60,8 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
-import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
+import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 
 
 // solhint-disable-next-line max-states-count
@@ -73,8 +73,8 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    RegistryServiceAccessManager registryServiceAccessManager;
-    RegistryServiceReleaseManager public registryServiceReleaseManager;
+    RegistryAccessManager registryAccessManagerAddress;
+    ReleaseManager public releaseManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
     Registry public registry;
@@ -272,13 +272,13 @@ contract TestGifBase is Test {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        registryServiceAccessManager = new RegistryServiceAccessManager(registryOwner);
+        registryAccessManagerAddress = new RegistryAccessManager(registryOwner);
 
-        registryServiceReleaseManager = new RegistryServiceReleaseManager(
-            registryServiceAccessManager,
+        releaseManager = new ReleaseManager(
+            registryAccessManagerAddress,
             VersionPartLib.toVersionPart(3));
 
-        registryAddress = address(registryServiceReleaseManager.getRegistry());
+        registryAddress = address(releaseManager.getRegistry());
         registry = Registry(registryAddress);
         registryNftId = registry.getNftId(address(registry)); 
 
@@ -287,16 +287,16 @@ contract TestGifBase is Test {
 
         tokenRegistry = new TokenRegistry();
 
-        registryServiceAccessManager.initialize(address(registryServiceReleaseManager), address(tokenRegistry));
+        registryAccessManagerAddress.initialize(address(releaseManager), address(tokenRegistry));
 
         registryServiceManager = new RegistryServiceManager(
-            registryServiceAccessManager.authority(),
+            registryAccessManagerAddress.authority(),
             registryAddress
         );        
         
         registryService = registryServiceManager.getRegistryService();
 
-        registryServiceReleaseManager.createNextRelease(registryService);
+        releaseManager.createNextRelease(registryService);
 
         registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
         tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service
@@ -309,10 +309,10 @@ contract TestGifBase is Test {
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
 
         console.log("registry owner", address(registryOwner));
-        console.log("registry service access manager", address(registryServiceAccessManager));
-        console.log("registry service access manager authority", registryServiceAccessManager.authority());
-        console.log("registry service release manager", address(registryServiceReleaseManager));
-        console.log("registry service release manager authority", registryServiceReleaseManager.authority());
+        console.log("registry service access manager", address(registryAccessManagerAddress));
+        console.log("registry service access manager authority", registryAccessManagerAddress.authority());
+        console.log("registry service release manager", address(releaseManager));
+        console.log("registry service release manager authority", releaseManager.authority());
         console.log("registry service proxy manager", address(registryServiceManager));
         console.log("registry service proxy manager linked to nft", registryServiceManager.getNftId().toInt());
         console.log("registry service proxy manager owner", registryServiceManager.getOwner());
@@ -333,12 +333,12 @@ contract TestGifBase is Test {
     function _deployAndRegisterServices() internal 
     {
         // --- instance service ---------------------------------//
-        // TODO manager can not use registryServiceReleaseManager.registerService() in constructor
+        // TODO manager can not use releaseManager.registerService() in constructor
         // because it have no role / have no nft
         instanceServiceManager = new InstanceServiceManager(address(registry));
         instanceService = instanceServiceManager.getInstanceService();
         // temporal solution, register in separate tx
-        registryServiceReleaseManager.registerService(instanceService);
+        releaseManager.registerService(instanceService);
         instanceServiceNftId = registry.getNftId(address(instanceService));
 
 
@@ -351,7 +351,7 @@ contract TestGifBase is Test {
         // --- distribution service ---------------------------------//
         distributionServiceManager = new DistributionServiceManager(address(registry));
         distributionService = distributionServiceManager.getDistributionService();
-        registryServiceReleaseManager.registerService(distributionService);
+        releaseManager.registerService(distributionService);
         distributionServiceNftId = registry.getNftId(address(distributionService));
 
         // solhint-disable 
@@ -363,7 +363,7 @@ contract TestGifBase is Test {
         // --- pool service ---------------------------------//
         poolServiceManager = new PoolServiceManager(address(registry));
         poolService = poolServiceManager.getPoolService();
-        registryServiceReleaseManager.registerService(poolService);
+        releaseManager.registerService(poolService);
         poolServiceNftId = registry.getNftId(address(poolService));
 
         // solhint-disable
@@ -375,7 +375,7 @@ contract TestGifBase is Test {
         // --- product service ---------------------------------//
         productServiceManager = new ProductServiceManager(address(registry));
         productService = productServiceManager.getProductService();
-        registryServiceReleaseManager.registerService(productService);
+        releaseManager.registerService(productService);
         productServiceNftId = registry.getNftId(address(productService));
 
         // solhint-disable
@@ -387,7 +387,7 @@ contract TestGifBase is Test {
         // --- bundle service ---------------------------------//
         bundleServiceManager = new BundleServiceManager(address(registry));
         bundleService = bundleServiceManager.getBundleService();
-        registryServiceReleaseManager.registerService(bundleService);
+        releaseManager.registerService(bundleService);
         bundleServiceNftId = registry.getNftId(address(bundleService));
 
         // solhint-disable
@@ -400,7 +400,7 @@ contract TestGifBase is Test {
         // --- policy service ---------------------------------//
         policyServiceManager = new PolicyServiceManager(address(registry));
         policyService = policyServiceManager.getPolicyService();
-        registryServiceReleaseManager.registerService(policyService);
+        releaseManager.registerService(policyService);
         policyServiceNftId = registry.getNftId(address(policyService));
 
         // solhint-disable
@@ -411,12 +411,12 @@ contract TestGifBase is Test {
 
         // //--- component owner service ---------------------------------//
         // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
-        // registryServiceReleaseManager.registerService(componentOwnerService);
+        // releaseManager.registerService(componentOwnerService);
         // assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
 
-        // registryServiceAccessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        // registryServiceAccessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        // registryServiceAccessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // registryAccessManagerAddress.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // registryAccessManagerAddress.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // registryAccessManagerAddress.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
 
         // /* solhint-disable */
         // console.log("service name", componentOwnerService.NAME());
@@ -427,8 +427,8 @@ contract TestGifBase is Test {
         // //--- product service ---------------------------------//
 
         // productService = new ProductService(registryAddress, registryNftId, registryOwner);
-        // registryServiceReleaseManager.registerService(productService);
-        // registryServiceAccessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(productService), 0);
+        // releaseManager.registerService(productService);
+        // registryAccessManagerAddress.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(productService), 0);
 
         // /* solhint-disable */
         // console.log("service name", productService.NAME());
@@ -438,7 +438,7 @@ contract TestGifBase is Test {
         // /* solhint-enable */
 
         // activate initial release -> activated upon last service registration
-        //registryServiceReleaseManager.activateNextRelease();
+        //releaseManager.activateNextRelease();
     }
 
     function _deployMasterInstance() internal 

@@ -10,8 +10,8 @@ import {NftId} from "../../contracts/types/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {RegistryServiceReleaseManager} from "../../contracts/registry/RegistryServiceReleaseManager.sol";
-import {RegistryServiceAccessManager} from "../../contracts/registry/RegistryServiceAccessManager.sol";
+import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
+import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {DIP} from "../mock/Dip.sol";
 import {NftOwnableMock} from "../mock/NftOwnableMock.sol";
 
@@ -29,9 +29,9 @@ contract NftOwnableTest is Test {
 
         vm.startPrank(registryOwner);
 
-        RegistryServiceAccessManager accessManager = new RegistryServiceAccessManager(registryOwner);
+        RegistryAccessManager accessManager = new RegistryAccessManager(registryOwner);
 
-        RegistryServiceReleaseManager releaseManager = new RegistryServiceReleaseManager(
+        ReleaseManager releaseManager = new ReleaseManager(
             accessManager,
             VersionPartLib.toVersionPart(3));
 

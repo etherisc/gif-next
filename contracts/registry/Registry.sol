@@ -14,7 +14,7 @@ import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {ITransferInterceptor} from "./ITransferInterceptor.sol";
-import {RegistryServiceReleaseManager} from "./RegistryServiceReleaseManager.sol";
+import {ReleaseManager} from "./ReleaseManager.sol";
 
 // IMPORTANT (OPTION 1)
 // Each NFT minted by registry is accosiated with:
@@ -48,7 +48,7 @@ contract Registry is
     NftId internal _registryNftId;
     ChainNft internal _chainNft;
 
-    RegistryServiceReleaseManager internal _releaseManager;
+    ReleaseManager internal _releaseManager;
 
     modifier onlyRegistryService() {
         if(!_releaseManager.isActiveRegistryService(msg.sender)) {
@@ -69,7 +69,7 @@ contract Registry is
         require(releaseManager > address(0), "Registry: release manager is 0");
         require(initialVersion.toInt() > 0, "Registry: initial version is 0");
 
-        _releaseManager = RegistryServiceReleaseManager(releaseManager);
+        _releaseManager = ReleaseManager(releaseManager);
 
         // deploy NFT 
         _chainNft = new ChainNft(address(this));// adds 10kb to deployment size

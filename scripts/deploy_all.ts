@@ -136,8 +136,8 @@ function printAddresses(
     addresses += `riskIdLibAddress: ${libraries.riskIdLibAddress}\n`;
     addresses += `contractDeployerLibAddress: ${libraries.contractDeployerLibAddress}\n`;
     addresses += `--------\n`;
-    addresses += `registryServiceAccessManagerAddress: ${registry.registryServiceAccessManagerAddress}\n`;
-    addresses += `registryServiceReleaseManagerAddress: ${registry.registryServiceReleaseManagerAddress}\n`;
+    addresses += `registryAccessManagerAddress: ${registry.registryAccessManagerAddress}\n`;
+    addresses += `releaseManagerAddress: ${registry.releaseManagerAddress}\n`;
     addresses += `registryAddress: ${registry.registryAddress}\n`;
     addresses += `registryNftId: ${registry.registryNftId}\n`;
     addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
