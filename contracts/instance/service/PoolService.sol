@@ -59,7 +59,7 @@ contract PoolService is
         _registerInterface(type(IPoolService).interfaceId);
     }
 
-    function getType() public pure override(Service, IService) returns(ObjectType) {
+    function getDomain() public pure override(Service, IService) returns(ObjectType) {
         return POOL();
     }
 

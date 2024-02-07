@@ -11,6 +11,6 @@ interface IService is
     IRegisterable,
     IVersionable
 {
-    function getType() external pure returns(ObjectType serviceType);
+    function getDomain() external pure returns(ObjectType serviceDomain);
     function getMajorVersion() external view returns(VersionPart majorVersion);
 }

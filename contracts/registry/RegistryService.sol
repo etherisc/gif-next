@@ -54,10 +54,7 @@ contract RegistryService is
             revert NotInstance();
         }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);
+        (info, data) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);
 
         info.nftId = _registry.register(info);
         instance.linkToRegisteredNftId(); // asume safe
@@ -78,10 +75,7 @@ contract RegistryService is
             revert NotProduct();
         }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
+        (info, data) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
 
         info.nftId = _registry.register(info);
         // TODO unsafe, let component or its owner derive nftId latter, when state assumptions and modifications of GIF contracts are finished  
@@ -102,10 +96,7 @@ contract RegistryService is
             revert NotPool();
         }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(pool, POOL(), owner);
+        (info, data) = _getAndVerifyContractInfo(pool, POOL(), owner);
 
         info.nftId = _registry.register(info);
         pool.linkToRegisteredNftId();
@@ -125,10 +116,7 @@ contract RegistryService is
             revert NotDistribution();
         }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
+        (info, data) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
 
         info.nftId = _registry.register(info); 
         distribution.linkToRegisteredNftId();
@@ -167,7 +155,7 @@ contract RegistryService is
     }
 
     // From IService
-    function getType() public pure override(IService, Service) returns(ObjectType serviceType) {
+    function getDomain() public pure override(IService, Service) returns(ObjectType serviceDomain) {
         return SERVICE(); 
     }
 
@@ -204,35 +192,36 @@ contract RegistryService is
     {
         (info , data) = super.getInitialInfo();
 
-        FunctionConfig[] memory config = new FunctionConfig[](7);
+        FunctionConfig[] memory config = new FunctionConfig[](4);
 
-        config[0].serviceType = INSTANCE();
+        // registerInstance() have no restriction
+        config[0].serviceDomain = INSTANCE();
         config[0].selector = new bytes4[](1);
         config[0].selector[0] = RegistryService.registerInstance.selector;
 
-        config[1].serviceType = POOL();
+        config[1].serviceDomain = POOL();
         config[1].selector = new bytes4[](1);
         config[1].selector[0] = RegistryService.registerPool.selector;
 
-        config[2].serviceType = DISTRIBUTION();
+        config[2].serviceDomain = DISTRIBUTION();
         config[2].selector = new bytes4[](1);
         config[2].selector[0] = RegistryService.registerDistribution.selector;
 
-        config[3].serviceType = PRODUCT();
+        config[3].serviceDomain = PRODUCT();
         config[3].selector = new bytes4[](1);
         config[3].selector[0] = RegistryService.registerProduct.selector;
 
-        config[4].serviceType = POLICY();
+        /*config[4].serviceDomain = POLICY();
         config[4].selector = new bytes4[](1);
         config[4].selector[0] = RegistryService.registerPolicy.selector;
 
-        config[5].serviceType = BUNDLE();
+        config[5].serviceDomain = BUNDLE();
         config[5].selector = new bytes4[](1);
         config[5].selector[0] = RegistryService.registerBundle.selector;
 
-        config[6].serviceType = STAKE();
+        config[6].serviceDomain = STAKE();
         config[6].selector = new bytes4[](1);
-        config[6].selector[0] = RegistryService.registerStake.selector;
+        config[6].selector[0] = RegistryService.registerStake.selector;*/
 
         data = abi.encode(config);
     }

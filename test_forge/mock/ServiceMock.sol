@@ -20,12 +20,12 @@ contract ServiceMock is RegisterableMock, IService {
             initialOwner,
             "")
     {
-        _info.data = abi.encode(getType(), getMajorVersion());
+        _info.data = abi.encode(getDomain(), getMajorVersion());
         _registerInterface(type(IService).interfaceId);
     }
 
     // from IService
-    function getType() public pure virtual returns(ObjectType) {
+    function getDomain() public pure virtual returns(ObjectType) {
         return PRODUCT();
     }
 
@@ -63,7 +63,7 @@ contract SelfOwnedServiceMock is ServiceMock {
             address(this))
     {}
 
-    function getType() public pure override returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return DISTRIBUTION();
     }
 }
@@ -90,7 +90,7 @@ contract ServiceMockWithRandomInvalidType is ServiceMock {
         _invalidType = invalidType;
     }
 
-    function getType() public pure override returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return ORACLE();
     }
 }
@@ -117,7 +117,7 @@ contract ServiceMockWithRandomInvalidAddress is ServiceMock {
         _invalidAddress = invalidAddress;
     }
 
-    function getType() public pure override returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return POOL();
     }
 
@@ -133,7 +133,7 @@ contract ServiceMockOldVersion is ServiceMock {
             initialOwner)
     {}
 
-    function getType() public pure override returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return PRODUCT(); // same as ServiceMock
     }
 
@@ -153,7 +153,7 @@ contract ServiceMockNewVersion is ServiceMock {
             initialOwner)
     {}
 
-    function getType() public pure override returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return PRODUCT(); // same as ServiceMock
     }
 

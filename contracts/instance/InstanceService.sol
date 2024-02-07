@@ -247,7 +247,7 @@ contract InstanceService is Service, IInstanceService {
     }
 
     // From IService
-    function getType() public pure override(Service, IService) returns(ObjectType) {
+    function getDomain() public pure override(Service, IService) returns(ObjectType) {
         return INSTANCE();
     }
     

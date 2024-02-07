@@ -45,18 +45,13 @@ contract Registry is
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) internal _isValidObjectCombination;
 
-    mapping(VersionPart majorVersion => mapping(
-            ObjectType serviceType=> address service)) internal _service;
-
-    mapping(address registryService => bool) internal _isActive;
-
     NftId internal _registryNftId;
     ChainNft internal _chainNft;
 
     RegistryServiceReleaseManager internal _releaseManager;
 
     modifier onlyRegistryService() {
-        if(!_isActive[msg.sender]) {
+        if(!_releaseManager.isActiveRegistryService(msg.sender)) {
             revert CallerNotRegistryService();
         }
         _;
@@ -94,14 +89,12 @@ contract Registry is
         onlyReleaseManager
         returns(NftId nftId)
     {
-        // only service registrations
-        // implies info.objectAddress > 0 -> depends on types combos definitions
-        // redundant -> release manager registers only services
-        /*if(info.objectType != SERVICE()) {
+        /* must be guaranteed by release manager
+        if(info.objectType != SERVICE()) {
             revert();
-        }*/
-
-        _registerService(info);// info.nftId is invalid here
+        }
+        info.initialOwner = NFT_LOCK_ADDRESS <- if services are access managed
+        */
         nftId = _register(info);
     }
 
@@ -118,18 +111,6 @@ contract Registry is
         nftId = _register(info);
     }
 
-    // assume release manager keeps versioning right and activates only when release is ready to use
-    function setServiceActive(VersionPart version, ObjectType serviceType, bool state)
-        external
-        onlyReleaseManager
-    {
-        address serviceAddress = _service[version][SERVICE()];//[serviceType];
-        if(serviceAddress == address(0)) {
-            revert();
-        }
-
-        _isActive[serviceAddress] = state;
-    }
     /// @dev earliest GIF major version 
     function getMajorVersionMin() external view returns (VersionPart) {
         return _releaseManager.getInitialVersion();
@@ -191,13 +172,12 @@ contract Registry is
         return _nftIdByAddress[object].gtz() && _info[_nftIdByAddress[object]].objectType == SERVICE();
     }
 
-    // special case to retrive a gif service
     function getServiceAddress(
         ObjectType serviceType, 
         VersionPart releaseVersion
     ) external view returns (address)
     {
-        return _service[releaseVersion][serviceType];
+        return _releaseManager.getService(releaseVersion, serviceType);
     }
 
     function getChainNft() external view override returns (ChainNft) {
@@ -209,24 +189,6 @@ contract Registry is
     }
 
     // Internals
-
-    // TODO service registration means its approval for some type?
-    function _registerService(ObjectInfo memory info)
-        internal
-    {
-        (
-            ObjectType serviceType, // corresponds to unique serviceRole
-            VersionPart majorVersion
-        ) = abi.decode(info.data, (ObjectType, VersionPart));
-
-        if(_service[majorVersion][serviceType] > address(0)) {
-            revert ServiceAlreadyRegistered(serviceType, majorVersion);
-        }
-
-        _service[majorVersion][serviceType] = info.objectAddress;
-
-        emit LogServiceRegistration(majorVersion, serviceType); 
-    }
 
     /// @dev registry protects only against tampering existing records, registering with invalid types pairs and 0 parent address
     // TODO registration of precompile addresses

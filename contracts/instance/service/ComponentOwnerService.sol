@@ -66,7 +66,7 @@ contract ComponentOwnerService is
         _registerInterface(type(IComponentOwnerService).interfaceId);
     }
 
-    function getType() public pure override(Service, IService) returns(ObjectType) {
+    function getDomain() public pure override(Service, IService) returns(ObjectType) {
         return COMPONENT();
     }
 

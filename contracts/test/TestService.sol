@@ -19,7 +19,7 @@ contract TestService is Service {
         _initializeService(registry, initialOwner);
     }
 
-    function getType() public pure override returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return PRODUCT();
     }
 }

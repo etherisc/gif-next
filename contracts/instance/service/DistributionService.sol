@@ -55,7 +55,7 @@ contract DistributionService is
         _registerInterface(type(IDistributionService).interfaceId);
     }
 
-    function getType() public pure override(Service, IService) returns(ObjectType) {
+    function getDomain() public pure override(Service, IService) returns(ObjectType) {
         return DISTRIBUTION();
     }
 

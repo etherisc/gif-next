@@ -24,14 +24,17 @@ import {RegistryServiceAccessManager} from "./RegistryServiceAccessManager.sol";
 
 contract RegistryServiceReleaseManager is AccessManaged
 {
-    event LogReleaseCreation(VersionPart version, address serviceAddress); 
+    event LogReleaseCreation(VersionPart version, IService registryService); 
+    event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceDomain); 
     event LogReleaseActivation(VersionPart version);
 
     // registerService
-    error ServiceTypeNotInRelease(IService service, ObjectType serviceType);
+    error ServiceNotInRelease(IService service, ObjectType serviceDomain);
+    error ServiceAlreadyRegistered(address service);
 
     // activateNextRelease
-    error ReleaseRegistrationIsNotFinished();
+    //error ReleaseNotCreated();
+    //error ReleaseRegistrationNotFinished();
 
     // _getAndVerifyContractInfo
     error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
@@ -41,23 +44,23 @@ contract RegistryServiceReleaseManager is AccessManaged
 
     // _verifyServiceInfo
     error UnexpectedServiceVersion(VersionPart expected, VersionPart found);
-    error UnexpectedServiceType(ObjectType expected, ObjectType found);
+    error UnexpectedServiceDomain(ObjectType expected, ObjectType found);
     
     // _verifyAndStoreConfig
+    error ConfigMissing();
     error ConfigServiceTypeInvalid();
     error ConfigSelectorMissing(); 
     error ConfigSelectorZero(); 
-    error ConfigSelectorAlreadyExists(VersionPart serviceVersion, ObjectType serviceType);
+    error ConfigSelectorAlreadyExists(VersionPart serviceVersion, ObjectType serviceDomain);
 
     struct ReleaseInfo {
-        ObjectType[] types; // service types of release
-        uint awaitingRegistration;// "services left to register" counter 
+        ObjectType[] types; // service types in release
     }
 
     // unique role for some service function
     struct ConfigInfo {
-        bytes4[] selector;
-        RoleId roleId; 
+        bytes4[] selector; // selector used by service
+        RoleId roleId; // roleId granted to service
     }
 
     RegistryServiceAccessManager private immutable _accessManager;
@@ -68,7 +71,13 @@ contract RegistryServiceReleaseManager is AccessManaged
 
     mapping(VersionPart version => ReleaseInfo info) _release;
 
-    mapping(VersionPart version => mapping(ObjectType serviceType => ConfigInfo)) _config;
+    mapping(VersionPart version => mapping(ObjectType serviceDomain => ConfigInfo)) _config;
+
+    mapping(VersionPart version => mapping(ObjectType serviceDomain => address)) _service;
+
+    uint _awaitingRegistration; // "services left to register" counter
+
+    mapping(address => bool) _isActiveRegistryService;
 
     constructor(
         RegistryServiceAccessManager accessManager, 
@@ -78,11 +87,11 @@ contract RegistryServiceReleaseManager is AccessManaged
         _accessManager = accessManager;
 
         _initial = initialVersion;
-        //_latest = zeroVersionPart();// 0 - no activated releases yet
 
         _registry = new Registry(address(this), initialVersion);
     }
 
+    // TODO deploy proxy and initialize with given implementation instead of using given proxy?
     function createNextRelease(IService registryService)
         external
         restricted // GIF_ADMIN_ROLE
@@ -101,16 +110,16 @@ contract RegistryServiceReleaseManager is AccessManaged
 
         _verifyAndStoreConfig(data);
 
-        // close registry service
-        // redundant -> only activateNextRelease() will make registry accessible
         //setTargetClosed(newRegistryService, true);
 
+        _registerService(address(registryService), nextVersion, SERVICE());
+        
         nftId = _registry.registerService(info);
 
         // external call
         registryService.linkToRegisteredNftId();
 
-        emit LogReleaseCreation(nextVersion, address(registryService));
+        emit LogReleaseCreation(nextVersion, registryService); 
     }
 
     function registerService(IService service) 
@@ -127,24 +136,14 @@ contract RegistryServiceReleaseManager is AccessManaged
         ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
 
         VersionPart nextVersion = getNextVersion();
-        ObjectType serviceType = _verifyServiceInfo(info, nextVersion, zeroObjectType());
+        ObjectType serviceDomain = _verifyServiceInfo(info, nextVersion, zeroObjectType());
 
-        bytes4[] memory selector = _config[nextVersion][serviceType].selector;
+        bytes4[] memory selector = _config[nextVersion][serviceDomain].selector;
 
         // service type is in release
-        if(selector.length == 0) { revert ServiceTypeNotInRelease(service, serviceType); }
-
-        // service of this type is not registered yet -> redundant -> checked by registry
-        //if(roleId > 0) { revert(); }
-
-        // release registration is ongoing
-        // redundant? -> if in release and not yet registered -> guarantees awaitingRegistration > 0?
-        /*if(_release[nextVersion].awaitingRegistration == 0) {
-            revert ();
-        }*/
-
-        // never underflows
-        _release[nextVersion].awaitingRegistration--;
+        if(selector.length == 0) {
+            revert ServiceNotInRelease(service, serviceDomain); 
+        }
 
         // setup and grant unique role
         address registryService = _registry.getServiceAddress(SERVICE(), nextVersion);
@@ -153,42 +152,65 @@ contract RegistryServiceReleaseManager is AccessManaged
             registryService, 
             selector);
 
-        _config[nextVersion][serviceType].roleId = roleId;
+        _config[nextVersion][serviceDomain].roleId = roleId;
+        _awaitingRegistration--;
+
+        // activate release
+        if(_awaitingRegistration == 0) {
+            _latest = nextVersion;
+            _isActiveRegistryService[registryService] = true;  
+
+            emit LogReleaseActivation(nextVersion);
+        }
+
+        _registerService(address(service), nextVersion, serviceDomain);
 
         nftId = _registry.registerService(info);
 
         // external call
-        service.linkToRegisteredNftId();
+        service.linkToRegisteredNftId(); 
     }
 
-    // TODO activate during last service registration
-    function activateNextRelease() 
+    /*function activateNextRelease() 
         external 
         restricted // GIF_ADMIN_ROLE
     {
         VersionPart nextVersion = getNextVersion();
-        ReleaseInfo memory release = _release[nextVersion];
-        
+        address service = _service[nextVersion][SERVICE()];
+
+        // release was created
+        if(service == address(0)) {
+            revert ReleaseNotCreated();
+        }
+
         // release fully deployed
-        if(release.awaitingRegistration > 0) {
-            revert ReleaseRegistrationIsNotFinished();
+        if(_awaitingRegistration > 0) {
+            revert ReleaseRegistrationNotFinished();
         }
 
         //setTargetClosed(newRegistryService, false);
 
         _latest = nextVersion;
+        _isActiveRegistryService[service] = true;
 
-        bool active = true;
-        _registry.setServiceActive(nextVersion, SERVICE(), active);
-        
-        emit LogReleaseActivation(nextVersion);
-    }
+        LogReleaseActivation(nextVersion);
+    }*/
 
     //--- view functions ----------------------------------------------------//
+
+    function isActiveRegistryService(address service) external view returns(bool)
+    {
+        return _isActiveRegistryService[service];
+    }
 
     function getRegistry() external view returns(address)
     {
         return (address(_registry));
+    }
+
+    function getService(VersionPart serviceVersion, ObjectType serviceDomain) external view returns(address)
+    {
+        return _service[serviceVersion][serviceDomain];
     }
 
     function getReleaseInfo(VersionPart releaseVersion) external view returns(ReleaseInfo memory)
@@ -215,6 +237,18 @@ contract RegistryServiceReleaseManager is AccessManaged
 
     //--- private functions ----------------------------------------------------//
 
+    function _registerService(address service, VersionPart version, ObjectType serviceDomain) 
+        internal
+    {
+        if(_service[version][serviceDomain] > address(0)) {
+            revert ServiceAlreadyRegistered(service);
+        }
+
+        _service[version][serviceDomain] = service;
+
+        emit LogServiceRegistration(version, serviceDomain);
+    }
+
     function _getAndVerifyContractInfo(
         IService service,
         ObjectType expectedType,
@@ -227,10 +261,7 @@ contract RegistryServiceReleaseManager is AccessManaged
             bytes memory data
         )
     {
-        (
-            info, 
-            data
-        ) = service.getInitialInfo();
+        (info, data) = service.getInitialInfo();
         info.objectAddress = address(service);
         info.isInterceptor = false; // service is never interceptor, at least now
 
@@ -276,7 +307,7 @@ contract RegistryServiceReleaseManager is AccessManaged
         returns(ObjectType)
     {
         (
-            ObjectType serviceType,
+            ObjectType serviceDomain,
             VersionPart serviceVersion
         ) = abi.decode(info.data, (ObjectType, VersionPart));
 
@@ -285,12 +316,12 @@ contract RegistryServiceReleaseManager is AccessManaged
         }
 
         if(expectedType != zeroObjectType()) { 
-            if(serviceType != expectedType) {
-                revert UnexpectedServiceType(expectedType, serviceType);
+            if(serviceDomain != expectedType) {
+                revert UnexpectedServiceDomain(expectedType, serviceDomain);
             }
         }
 
-        return serviceType;
+        return serviceDomain;
     }
 
     function _verifyAndStoreConfig(bytes memory configBytes)
@@ -298,16 +329,20 @@ contract RegistryServiceReleaseManager is AccessManaged
     {
         VersionPart nextVersion = getNextVersion();
         IRegistryService.FunctionConfig[] memory config = abi.decode(configBytes, (IRegistryService.FunctionConfig[]));
+
+        if(config.length == 0) {
+            revert ConfigMissing();
+        }
         // always in release
         _release[nextVersion].types.push(SERVICE());
 
         for(uint idx = 0; idx < config.length; idx++)
         {
-            ObjectType serviceType = config[idx].serviceType;
+            ObjectType serviceDomain = config[idx].serviceDomain;
             bytes4[] memory selector = config[idx].selector;
 
             // not "registry service" type
-            if(serviceType == SERVICE()) { revert ConfigServiceTypeInvalid(); } 
+            if(serviceDomain == SERVICE()) { revert ConfigServiceTypeInvalid(); } 
 
             // at least one selector exists
             if(selector.length == 0) { revert ConfigSelectorMissing(); }
@@ -318,14 +353,14 @@ contract RegistryServiceReleaseManager is AccessManaged
             }
 
             // no overwrite
-            if(_config[nextVersion][serviceType].selector.length > 0) {
-                revert ConfigSelectorAlreadyExists(nextVersion, serviceType); 
+            if(_config[nextVersion][serviceDomain].selector.length > 0) { 
+                revert ConfigSelectorAlreadyExists(nextVersion, serviceDomain); 
             }
             
-            _config[nextVersion][serviceType].selector = selector;
-            _release[nextVersion].types.push(serviceType);
+            _config[nextVersion][serviceDomain].selector = selector;
+            _release[nextVersion].types.push(serviceDomain);
         }
 
-        _release[nextVersion].awaitingRegistration = config.length;
+        _awaitingRegistration = config.length;
     }
 }

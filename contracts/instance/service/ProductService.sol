@@ -68,7 +68,7 @@ contract ProductService is ComponentServiceBase, IProductService {
     }
 
 
-    function getType() public pure override(IService, Service) returns(ObjectType) {
+    function getDomain() public pure override(IService, Service) returns(ObjectType) {
         return PRODUCT();
     }
 

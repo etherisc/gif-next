@@ -18,7 +18,7 @@ abstract contract Service is
     RegisterableUpgradable,
     IService
 {
-    function getType() public pure virtual override returns(ObjectType);
+    function getDomain() public pure virtual override returns(ObjectType);
 
     function getMajorVersion() public view virtual override returns(VersionPart majorVersion) {
         return getVersion().toMajorPart(); 
@@ -43,7 +43,7 @@ abstract contract Service is
         //onlyInitializing //TODO uncomment when "fully" upgradeable
     {
         // service must provide its name and version upon registration
-        bytes memory data = abi.encode(getType(), getMajorVersion());
+        bytes memory data = abi.encode(getDomain(), getMajorVersion());
         NftId registryNftId = _getRegistryNftId(registry); 
         bool isInterceptor = false;
 

@@ -12,7 +12,7 @@ import {RoleId, RoleIdLib,
 
 import {Registry} from "./Registry.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
-import {IRegistryService} from "./RegistryService.sol";
+import {IRegistryService} from "./IRegistryService.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {RegistryServiceReleaseManager} from "./RegistryServiceReleaseManager.sol";
 
@@ -164,8 +164,8 @@ contract RegistryServiceAccessManager is AccessManaged
         // REGISTRY_SERVICE_ADMIN_ROLE for RegistryServiceReleaseManager
         functionSelector[0] = RegistryServiceReleaseManager.createNextRelease.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
-        functionSelector[0] = RegistryServiceReleaseManager.activateNextRelease.selector;
-        _setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
+        //functionSelector[0] = RegistryServiceReleaseManager.activateNextRelease.selector;
+        //_setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
     }
     
     function _configureManagerRole() private 

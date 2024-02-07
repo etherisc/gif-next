@@ -335,8 +335,6 @@ contract RegistryTestBase is Test, FoundryRandom {
         _errorName[IRegistry.ServiceRegistration.selector] = "ServiceRegistration";
         _errorName[IRegistry.ZeroParentAddress.selector] = "ZeroParentAddress"; 
         _errorName[IRegistry.ContractAlreadyRegistered.selector] = "ContractAlreadyRegistered";
-        _errorName[IRegistry.InvalidServiceVersion.selector] = "InvalidServiceVersion";
-        _errorName[IRegistry.ServiceAlreadyRegistered.selector] = "ServiceAlreadyRegistered";
         _errorName[IRegistry.InvalidTypesCombination.selector] = "InvalidTypesCombination"; 
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }

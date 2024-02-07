@@ -11,7 +11,6 @@ import {VersionPart} from "../types/Version.sol";
 interface IRegistry is IERC165 {
 
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
-    event LogServiceRegistration(VersionPart majorVersion, ObjectType serviceType); 
 
 
     // register()
@@ -25,8 +24,6 @@ interface IRegistry is IERC165 {
     error ZeroParentAddress();
     error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
     error ContractAlreadyRegistered(address objectAddress);
-    error InvalidServiceVersion(VersionPart majorVersion);
-    error ServiceAlreadyRegistered(ObjectType serviceType, VersionPart majorVersion);
 
     struct ObjectInfo {
         NftId nftId;
@@ -42,8 +39,6 @@ interface IRegistry is IERC165 {
     function registerService(ObjectInfo memory serviceInfo) external returns(NftId nftId);
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
-
-    function setServiceActive(VersionPart version, ObjectType serviceType, bool state) external;
 
     function getMajorVersionMin() external view returns (VersionPart);
 
