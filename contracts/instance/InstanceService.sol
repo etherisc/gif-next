@@ -285,22 +285,6 @@ contract InstanceService is Service, IInstanceService {
         _registerInterface(type(IInstanceService).interfaceId);
     }
 
-    function createRole(RoleId role, string memory name, NftId instanceNftId) external override onlyInstanceOwner(instanceNftId) {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
-        accessManager.createRole(role, name);
-    }
-
-    function grantRole(RoleId role, address member, NftId instanceNftId) external override onlyInstanceOwner(instanceNftId) {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
-        accessManager.grantRole(role, member);
-    }
-
     function hasRole(address account, RoleId role, address instanceAddress) public view returns (bool) {
         Instance instance = Instance(instanceAddress);
         InstanceAccessManager accessManager = instance.getInstanceAccessManager();

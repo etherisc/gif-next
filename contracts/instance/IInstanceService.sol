@@ -32,10 +32,6 @@ interface IInstanceService is IService {
             BundleManager clonedBundleManager
         );
 
-    function createRole(RoleId role, string memory name, NftId instanceNftId) external;
-
-    function grantRole(RoleId role, address member, NftId instanceNftId) external;
-
     function hasRole(address account, RoleId role, address instanceAddress) external returns (bool);
 
 }

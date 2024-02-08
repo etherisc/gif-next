@@ -6,6 +6,7 @@ import {IComponentOwnerService} from "../instance/service/IComponentOwnerService
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IInstance} from "../instance/IInstance.sol";
+import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
@@ -27,11 +28,12 @@ abstract contract BaseComponent is
     address internal _wallet;
     IERC20Metadata internal _token;
     IInstance internal _instance;
+    InstanceAccessManager internal _instanceAccessManager;
     NftId internal _productNftId;
 
     modifier onlyInstanceRole(uint64 roleIdNum) {
         RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
-        if( !_instanceService.hasRole(msg.sender, roleId, address(_instance))) {
+        if( !_instanceAccessManager.hasRole(roleId, msg.sender)) {
             revert ErrorBaseComponentUnauthorized(msg.sender, roleIdNum);
         }
         _;
@@ -51,6 +53,7 @@ abstract contract BaseComponent is
 
         IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
         _instance = IInstance(instanceInfo.objectAddress);
+        _instanceAccessManager = _instance.getInstanceAccessManager();
         require(
             _instance.supportsInterface(type(IInstance).interfaceId),
             ""
