@@ -16,7 +16,7 @@ import {IService} from "../shared/IService.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
-import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -81,7 +81,6 @@ contract InstanceService is Service, IInstanceService {
 
         // to complete setup switch instance ownership to the instance owner
         // TODO: use a role less powerful than admin, maybe INSTANCE_ADMIN (does not exist yet)
-        clonedAccessManager.grantRole(INSTANCE_OWNER_ROLE(), instanceOwner);
         clonedAccessManager.grantRole(ADMIN_ROLE(), instanceOwner);
         clonedAccessManager.revokeRole(ADMIN_ROLE(), address(this));
 

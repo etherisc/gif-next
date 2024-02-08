@@ -24,8 +24,6 @@ function PRODUCT_OWNER_ROLE_NAME() pure returns (string memory) { return "Produc
 
 function ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(0); }
 
-// TODO correct numbers (maybe they are already defined in RegistryService)
-function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(99); }
 function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(100); }
 function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(200); }
 function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(300); }
