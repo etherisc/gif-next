@@ -3,8 +3,12 @@ pragma solidity 0.8.20;
 
 import {console} from "../../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "../base/TestGifBase.sol";
+import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {IInstanceService} from "../../contracts/instance/IInstanceService.sol";
+import {PRODUCT_OWNER_ROLE, RoleIdLib} from "../../contracts/types/RoleId.sol";
+import {MockProduct, SPECIAL_ROLE_INT} from "../mock/MockProduct.sol";
+import {FeeLib} from "../../contracts/types/Fee.sol";
 
 contract TestInstanceService is TestGifBase {
 
@@ -76,4 +80,69 @@ contract TestInstanceService is TestGifBase {
         instanceService.upgradeInstanceReader(instanceNftId);
     }
 
+    function test_InstanceService_hasRole_unauthorized() public {
+        // GIVEN
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        vm.stopPrank();
+
+        _prepareDistributionAndPool();
+
+        vm.startPrank(productOwner);
+        product = new MockProduct(
+            address(registry),
+            instanceNftId,
+            address(token),
+            false,
+            address(pool), 
+            address(distribution),
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            productOwner
+        );
+        vm.stopPrank();
+
+        vm.startPrank(outsider);
+
+        // THEN - missing role
+        vm.expectRevert(abi.encodeWithSelector(IBaseComponent.ErrorBaseComponentUnauthorized.selector, outsider, 11111));
+
+        // WHEN
+        MockProduct dproduct = MockProduct(address(product));
+        dproduct.doSomethingSpecial();
+
+    }
+
+    function test_InstanceService_hasRole_customRole() public {
+        // GIVEN
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        instanceService.createRole(RoleIdLib.toRoleId(SPECIAL_ROLE_INT), "SpecialRole", instanceNftId);
+        instanceService.grantRole(RoleIdLib.toRoleId(SPECIAL_ROLE_INT), outsider, instanceNftId);
+        vm.stopPrank();
+
+        _prepareDistributionAndPool();
+
+        vm.startPrank(productOwner);
+        product = new MockProduct(
+            address(registry),
+            instanceNftId,
+            address(token),
+            false,
+            address(pool), 
+            address(distribution),
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            productOwner
+        );
+        vm.stopPrank();
+
+        vm.startPrank(outsider);
+
+        // WHEN
+        MockProduct dproduct = MockProduct(address(product));
+        dproduct.doSomethingSpecial();
+
+        // THEN above call was authorized
+    }
 }

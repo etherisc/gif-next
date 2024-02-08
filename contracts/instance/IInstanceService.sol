@@ -18,6 +18,7 @@ import {BundleManager} from "./BundleManager.sol";
 interface IInstanceService is IService {
 
     error ErrorInstanceServiceRequestUnauhorized(address caller);
+    error ErrorInstanceServiceNotInstanceOwner(address caller, NftId instanceNftId);
 
     event LogInstanceCloned(address clonedAccessManagerAddress, address clonedInstanceAddress, address clonedInstanceReaderAddress, NftId clonedInstanceNftId);
 
@@ -30,5 +31,12 @@ interface IInstanceService is IService {
             InstanceReader clonedInstanceReader,
             BundleManager clonedBundleManager
         );
+
+    function createRole(RoleId role, string memory name, NftId instanceNftId) external;
+
+    function grantRole(RoleId role, address member, NftId instanceNftId) external;
+
+    function hasRole(address account, RoleId role, address instanceAddress) external returns (bool);
+
 }
 

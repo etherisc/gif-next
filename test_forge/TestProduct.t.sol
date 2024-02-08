@@ -426,6 +426,4 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
     }
 
-    
-
 }

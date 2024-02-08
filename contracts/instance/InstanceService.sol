@@ -10,12 +10,13 @@ import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {RegistryService} from "../registry/RegistryService.sol";
+import {ChainNft} from "../registry/ChainNft.sol";
 import {Service} from "../../contracts/shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {VersionLib} from "../types/Version.sol";
-import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -27,6 +28,16 @@ contract InstanceService is Service, IInstanceService {
     // TODO update to real hash when instance is stable
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
     string public constant NAME = "InstanceService";
+
+    modifier onlyInstanceOwner(NftId instanceNftId) {
+        IRegistry registry = getRegistry();
+        ChainNft chainNft = registry.getChainNft();
+        
+        if( msg.sender != chainNft.ownerOf(instanceNftId.toInt())) {
+            revert ErrorInstanceServiceNotInstanceOwner(msg.sender, instanceNftId);
+        }
+        _;
+    }
 
     function createInstanceClone()
         external 
@@ -70,6 +81,7 @@ contract InstanceService is Service, IInstanceService {
 
         // to complete setup switch instance ownership to the instance owner
         // TODO: use a role less powerful than admin, maybe INSTANCE_ADMIN (does not exist yet)
+        clonedAccessManager.grantRole(INSTANCE_OWNER_ROLE(), instanceOwner);
         clonedAccessManager.grantRole(ADMIN_ROLE(), instanceOwner);
         clonedAccessManager.revokeRole(ADMIN_ROLE(), address(this));
 
@@ -274,7 +286,23 @@ contract InstanceService is Service, IInstanceService {
         _registerInterface(type(IInstanceService).interfaceId);
     }
 
-    function hasRole(address account, RoleId role, address instanceAddress) external view returns (bool) {
+    function createRole(RoleId role, string memory name, NftId instanceNftId) external override onlyInstanceOwner(instanceNftId) {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        accessManager.createRole(role, name);
+    }
+
+    function grantRole(RoleId role, address member, NftId instanceNftId) external override onlyInstanceOwner(instanceNftId) {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        accessManager.grantRole(role, member);
+    }
+
+    function hasRole(address account, RoleId role, address instanceAddress) public view returns (bool) {
         Instance instance = Instance(instanceAddress);
         InstanceAccessManager accessManager = instance.getInstanceAccessManager();
         return accessManager.hasRole(role, account);

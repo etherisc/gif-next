@@ -3,12 +3,15 @@ pragma solidity ^0.8.20;
 
 import {IBaseComponent} from "./IBaseComponent.sol";
 import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
+import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
+import {VersionLib} from "../types/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
+import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 abstract contract BaseComponent is
@@ -18,12 +21,21 @@ abstract contract BaseComponent is
     using NftIdLib for NftId;
 
     IComponentOwnerService internal _componentOwnerService;
+    IInstanceService internal _instanceService;
 
     address internal _deployer;
     address internal _wallet;
     IERC20Metadata internal _token;
     IInstance internal _instance;
     NftId internal _productNftId;
+
+    modifier onlyInstanceRole(uint64 roleIdNum) {
+        RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
+        if( !_instanceService.hasRole(msg.sender, roleId, address(_instance))) {
+            revert ErrorBaseComponentUnauthorized(msg.sender, roleIdNum);
+        }
+        _;
+    }
 
     constructor(
         address registry,
@@ -45,6 +57,7 @@ abstract contract BaseComponent is
         );
 
         _componentOwnerService = _instance.getComponentOwnerService();
+        _instanceService = IInstanceService(getRegistry().getServiceAddress("InstanceService", VersionLib.toVersion(3, 0, 0).toMajorPart()));
         _wallet = address(this);
         _token = IERC20Metadata(token);
 
