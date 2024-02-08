@@ -77,7 +77,6 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function _grantInitialAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
-        clonedAccessManager.createDefaultGifRoles();
         _grantRegistryServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantPoolServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantProductServiceAuthorizations(clonedAccessManager, clonedInstance);

@@ -64,8 +64,7 @@ contract InstanceAccessManager is
     }
 
     //--- Role ------------------------------------------------------//
-
-    function createDefaultRole(RoleId roleId, string memory name) external restricted() {
+    function createGifRole(RoleId roleId, string memory name) external restricted() {
         _createRole(roleId, name, false, true);
     }
 
@@ -166,6 +165,10 @@ contract InstanceAccessManager is
     }
 
     //--- Target ------------------------------------------------------//
+    function createGifTarget(address target, string memory name) external restricted() {
+        _createTarget(target, name, false, true);
+    }
+
     function createTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, true, true);
     }
