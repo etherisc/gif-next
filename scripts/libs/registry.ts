@@ -24,6 +24,8 @@ export type RegistryAddresses = {
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
+    logger.info("======== Starting deployment of registry ========");
+
     const { address: accessManagerAddress } = await deployContract(
         "AccessManager",
         owner,
@@ -95,6 +97,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     } as RegistryAddresses;
 
     await verifyRegistryComponents(regAdr, owner)
+
+    logger.info("======== Finished deployment of registry ========");
 
     return regAdr;
 }

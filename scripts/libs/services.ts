@@ -1,11 +1,11 @@
 
 import { AddressLike, Signer, hexlify, resolveAddress } from "ethers";
-import { AccessManager__factory, DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, IRegistryService__factory, ProductService, ProductServiceManager, ProductService__factory, PolicyService, PolicyServiceManager, PolicyService__factory, BundleService, BundleServiceManager, Bundleservice__factory} from "../../typechain-types";
+import { AccessManager__factory, BundleService, BundleServiceManager, DistributionServiceManager, IRegistryService__factory, InstanceService, InstanceServiceManager, InstanceService__factory, PolicyService, PolicyServiceManager, PolicyService__factory, PoolService, PoolServiceManager, PoolService__factory, ProductService, ProductServiceManager, ProductService__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
-import { getFieldFromTxRcptLogs, executeTx } from "./transaction";
+import { executeTx, getFieldFromTxRcptLogs } from "./transaction";
 // import IRegistry abi
 
 export type ServiceAddresses = {
@@ -36,6 +36,8 @@ export type ServiceAddresses = {
 }
 
 export async function deployAndRegisterServices(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses): Promise<ServiceAddresses> {
+    logger.info("======== Starting deployment of services ========");
+
     const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, } = await deployContract(
         "InstanceServiceManager",
         owner,
@@ -156,7 +158,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 VersionLib: libraries.versionLibAddress, 
             }});
 
-    const bundleServiceManager = bundleServiceManagerBaseContract as PolicyServiceManager;
+    const bundleServiceManager = bundleServiceManagerBaseContract as BundleServiceManager;
     const bundleServiceAddress = await bundleServiceManager.getBundleService();
     const bundleService = PolicyService__factory.connect(bundleServiceAddress, owner);
     // FIXME temporal solution while registration in ProductServiceManager constructor is not possible
@@ -164,6 +166,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const logRegistrationInfoBdl = getFieldFromTxRcptLogs(rcptBdl!, registry.registry.interface, "LogRegistration", "info");
     const bundleServiceNftId = (logRegistrationInfoBdl as unknown[])[0];
     logger.info(`bundleServiceManager deployed - bundleServiceAddress: ${bundleServiceAddress} bundleServiceManagerAddress: ${bundleServiceManagerAddress} nftId: ${bundleServiceNftId}`);
+
+    logger.info("======== Finished deployment of services ========");
 
     return {
         instanceServiceNftId: instanceServiceNfdId as string,
@@ -204,6 +208,8 @@ const PRODUCT_REGISTRAR_ROLE = 1400;
 
 
 export async function authorizeServices(protocolOwner: Signer, libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses) {
+    logger.info("======== Starting authorization of services ========");
+
     const registryAccessManagerAddress = await registry.registryServiceManager.getAccessManager();
     const registryAccessManager = AccessManager__factory.connect(registryAccessManagerAddress, protocolOwner);
 
@@ -261,5 +267,7 @@ export async function authorizeServices(protocolOwner: Signer, libraries: Librar
         [fctSelector5],
         POLICY_REGISTRAR_ROLE,
     );
+
+    logger.info("======== Finished authorization of services ========");
 }
 

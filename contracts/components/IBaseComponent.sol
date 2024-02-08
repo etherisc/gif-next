@@ -10,6 +10,7 @@ import {NftId} from "../types/NftId.sol";
 interface IBaseComponent is IRegisterable {
     error ErrorBaseComponentWalletAddressIsSameAsCurrent(address newWallet);
     error ErrorBaseComponentWalletAllowanceTooSmall(address oldWallet, address newWallet, uint256 allowance, uint256 balance);
+    error ErrorBaseComponentUnauthorized(address caller, uint64 requiredRoleIdNum);
 
     event LogBaseComponentWalletAddressChanged(address newWallet);
     event LogBaseComponentWalletTokensTransferred(address from, address to, uint256 amount);
