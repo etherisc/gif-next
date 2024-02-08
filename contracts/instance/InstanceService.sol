@@ -89,7 +89,7 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function _grantInitialAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
-        _grantRegistryServiceAuthorizations(clonedAccessManager, clonedInstance);
+        _grantDistributionServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantPoolServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantProductServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantPolicyServiceAuthorizations(clonedAccessManager, clonedInstance);    
@@ -97,7 +97,7 @@ contract InstanceService is Service, IInstanceService {
         _grantInstanceServiceAuthorizations(clonedAccessManager, clonedInstance);
     }
 
-    function _grantRegistryServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
+    function _grantDistributionServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for distribution service on instance
         IRegistry registry = getRegistry();
         address distributionServiceAddress = _registry.getServiceAddress("DistributionService", VersionLib.toVersion(3, 0, 0).toMajorPart());
