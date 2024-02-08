@@ -4,15 +4,11 @@ pragma solidity ^0.8.20;
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
-import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
 import {RoleId, RoleIdLib,
         REGISTRY_SERVICE_MANAGER_ROLE,
         REGISTRY_SERVICE_ADMIN_ROLE,
         RELEASE_MANAGER_ROLE} from "../types/RoleId.sol";
 
-import {Registry} from "./Registry.sol";
-import {IVersionable} from "../shared/IVersionable.sol";
-import {IRegistryService} from "./IRegistryService.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
 
@@ -37,9 +33,12 @@ import {ReleaseManager} from "./ReleaseManager.sol";
 
 contract RegistryAccessManager is AccessManaged
 {
-    uint64 public constant CUSTOM_ROLE_ID_MIN = 1000000;
+    error NotInitialized();
+    error AlreadyInitialized();
+
+    uint64 public constant UNIQUE_ROLE_ID_MIN = 1000000;
     
-    AccessManager private _accessManager;
+    AccessManager private immutable _accessManager;
     address private _releaseManager;
     address private _tokenRegistry;
 
@@ -48,15 +47,15 @@ contract RegistryAccessManager is AccessManaged
 
     modifier onlyOnce() {
         if(_isInitialized) {
-            revert();
-        }
+            revert AlreadyInitialized();
+        } 
         _;
         _isInitialized = true;
     }
 
     modifier onlyInitialized() {
         if(!_isInitialized) {
-            revert();
+            revert NotInitialized();
         }
         _;
     }
@@ -67,7 +66,7 @@ contract RegistryAccessManager is AccessManaged
         _accessManager = new AccessManager(address(this));
         setAuthority(address(_accessManager));
 
-        _idNext = CUSTOM_ROLE_ID_MIN;
+        _idNext = UNIQUE_ROLE_ID_MIN;
 
         _configureAdminRoleInitial();
 
@@ -76,16 +75,13 @@ contract RegistryAccessManager is AccessManaged
         _grantRole(REGISTRY_SERVICE_MANAGER_ROLE(), manager, 0);
     }
 
-    // TODO need release manager authorization to configure roles for service functions and to grant those roles
     function initialize(address releaseManager, address tokenRegistry)
         external 
         restricted // GIF_ADMIN_ROLE
         onlyOnce
     {
-        if(
-            _releaseManager > address(0) ||
-            _tokenRegistry > address(0))
-        { revert(); }
+        require(ReleaseManager(releaseManager).authority() == address(_accessManager));
+        //require(tokenRegistry.authority() == address(_accessManager));
 
         _releaseManager = releaseManager;
         _tokenRegistry = tokenRegistry;
@@ -108,13 +104,14 @@ contract RegistryAccessManager is AccessManaged
         onlyInitialized
         returns(RoleId)
     {
+        // TODO questionable check...
         // target is not part of `runtime`
-        if(
-            target == address(this) ||
-            target == address(_accessManager) || 
-            target == _releaseManager || 
-            target == _tokenRegistry)
-        { revert(); }
+        //if(
+        //    target == address(this) ||
+        //    target == address(_accessManager) || 
+        //    target == _releaseManager || 
+        //    target == _tokenRegistry)
+        //{ return TargetInvalid(); }
 
         RoleId roleId = _getNextRoleId();
 
@@ -154,14 +151,14 @@ contract RegistryAccessManager is AccessManaged
     {
         bytes4[] memory functionSelector = new bytes4[](1);
 
-        // REGISTRY_SERVICE_ADMIN_ROLE for RegistryServiceProxyManager
+        // for RegistryServiceProxyManager
         // TODO upgrading with releaseManager.upgrade()->proxy.upgrade()???
         //functionSelector[0] = RegistryServiceManager.upgrade.selector;
         //_setTargetFunctionRole(address(this), functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
 
-        // REGISTRY_SERVICE_ADMIN_ROLE for TokenRegistry
+        // for TokenRegistry
 
-        // REGISTRY_SERVICE_ADMIN_ROLE for ReleaseManager
+        // for ReleaseManager
         functionSelector[0] = ReleaseManager.createNextRelease.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
         //functionSelector[0] = ReleaseManager.activateNextRelease.selector;
@@ -172,15 +169,15 @@ contract RegistryAccessManager is AccessManaged
     {
         bytes4[] memory functionSelector = new bytes4[](1);
 
-        // REGISTRY_SERVICE_MANAGER_ROLE for TokenRegistry
+        // for TokenRegistry
         functionSelector[0] = TokenRegistry.setActive.selector;
         _setTargetFunctionRole(address(_tokenRegistry), functionSelector, REGISTRY_SERVICE_MANAGER_ROLE());
 
-        // REGISTRY_SERVICE_MANAGER_ROLE for ReleaseManager
+        // for ReleaseManager
         functionSelector[0] = ReleaseManager.registerService.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_MANAGER_ROLE());
 
-        // set REGISTRY_SERVICE_ADMIN_ROLE as admin for REGISTRY_SERVICE_MANAGER_ROLE
+        // set admin
         _setRoleAdmin(REGISTRY_SERVICE_MANAGER_ROLE(), REGISTRY_SERVICE_ADMIN_ROLE());
     }
 

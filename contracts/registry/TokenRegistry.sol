@@ -6,8 +6,8 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "./IRegistry.sol";
-import {Version, VersionPart, VersionLib, VersionPartLib} from "../types/Version.sol";
-import {ObjectType, SERVICE} from "../types/ObjectType.sol";
+import {VersionPart} from "../types/Version.sol";
+import {SERVICE} from "../types/ObjectType.sol";
 import {NftOwnable} from "../shared/NftOwnable.sol";
 
 /// @title contract to register token per GIF major release.
@@ -37,7 +37,7 @@ contract TokenRegistry is
         onlyOwner
     {
         IRegistry registry = IRegistry(registryAddress);
-        // TODO use _latest instead of next version -> _latest is 0 before first release activation
+        // TODO use _latest instead of `next version` -> but _latest is 0 before first release activation
         address registryServiceAddress = registry.getServiceAddress(SERVICE(), registry.getMajorVersionMax());
 
         _linkToNftOwnable(registryAddress, registryServiceAddress);

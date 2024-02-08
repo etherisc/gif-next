@@ -52,7 +52,7 @@ contract ReleaseManager is AccessManaged
     
     // _verifyAndStoreConfig
     error ConfigMissing();
-    error ConfigServiceTypeInvalid();
+    error ConfigServiceDomainInvalid();
     error ConfigSelectorMissing(); 
     error ConfigSelectorZero(); 
     error ConfigSelectorAlreadyExists(VersionPart serviceVersion, ObjectType serviceDomain);
@@ -81,13 +81,16 @@ contract ReleaseManager is AccessManaged
 
     uint _awaitingRegistration; // "services left to register" counter
 
-    mapping(address => bool) _isActiveRegistryService;
+    mapping(address registryService => bool isActive) _active;
 
     constructor(
         RegistryAccessManager accessManager, 
         VersionPart initialVersion)
         AccessManaged(accessManager.authority())
     {
+        require(address(accessManager) > address(0));
+        require(initialVersion.toInt() > 0);
+
         _accessManager = accessManager;
 
         _initial = initialVersion;
@@ -96,6 +99,7 @@ contract ReleaseManager is AccessManaged
     }
 
     // TODO deploy proxy and initialize with given implementation instead of using given proxy?
+    // IMPORTANT: MUST never be possible to create with access/release manager, token registry
     function createNextRelease(IRegistryService registryService)
         external
         restricted // GIF_ADMIN_ROLE
@@ -104,10 +108,10 @@ contract ReleaseManager is AccessManaged
         if(!registryService.supportsInterface(type(IRegistryService).interfaceId)) {
             revert NotRegistryService();
         }
-
-        if(registryService.authority() != _accessManager.authority()) {
+        // TODO unreliable! MUST guarantee the same authority -> how?
+        if(registryService.authority() != authority()) {
             revert UnexpectedServiceAuthority(
-                _accessManager.authority(), 
+                authority(), 
                 registryService.authority()); 
         }
 
@@ -158,7 +162,7 @@ contract ReleaseManager is AccessManaged
         }
 
         // setup and grant unique role
-        address registryService = _registry.getServiceAddress(SERVICE(), nextVersion);
+        address registryService = getService(nextVersion, SERVICE());
         RoleId roleId = _accessManager.setAndGrantUniqueRole(
             address(service), 
             registryService, 
@@ -170,7 +174,7 @@ contract ReleaseManager is AccessManaged
         // activate release
         if(_awaitingRegistration == 0) {
             _latest = nextVersion;
-            _isActiveRegistryService[registryService] = true;  
+            _active[registryService] = true;  
 
             emit LogReleaseActivation(nextVersion);
         }
@@ -203,7 +207,7 @@ contract ReleaseManager is AccessManaged
         //setTargetClosed(newRegistryService, false);
 
         _latest = nextVersion;
-        _isActiveRegistryService[service] = true;
+        _active[service] = true;
 
         LogReleaseActivation(nextVersion);
     }*/
@@ -212,7 +216,7 @@ contract ReleaseManager is AccessManaged
 
     function isActiveRegistryService(address service) external view returns(bool)
     {
-        return _isActiveRegistryService[service];
+        return _active[service];
     }
 
     function getRegistry() external view returns(address)
@@ -220,7 +224,7 @@ contract ReleaseManager is AccessManaged
         return (address(_registry));
     }
 
-    function getService(VersionPart serviceVersion, ObjectType serviceDomain) external view returns(address)
+    function getService(VersionPart serviceVersion, ObjectType serviceDomain) public view returns(address)
     {
         return _service[serviceVersion][serviceDomain];
     }
@@ -264,7 +268,7 @@ contract ReleaseManager is AccessManaged
     function _getAndVerifyContractInfo(
         IService service,
         ObjectType expectedType,
-        address expectedOwner // assume alway valid, can not be 0
+        address expectedOwner // assume always valid, can not be 0
     )
         internal
         view
@@ -354,7 +358,7 @@ contract ReleaseManager is AccessManaged
             bytes4[] memory selector = config[idx].selector;
 
             // not "registry service" type
-            if(serviceDomain == SERVICE()) { revert ConfigServiceTypeInvalid(); } 
+            if(serviceDomain == SERVICE()) { revert ConfigServiceDomainInvalid(); } 
 
             // at least one selector exists
             if(selector.length == 0) { revert ConfigSelectorMissing(); }

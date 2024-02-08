@@ -17,7 +17,7 @@ contract RegistryServiceManager is
 {
     bytes32 constant public ACCESS_MANAGER_CREATION_CODE_HASH = 0x0;
 
-    RegistryService private immutable _registryService; 
+    RegistryService private immutable _registryService;
 
     /// @dev initializes proxy manager with registry service implementation and deploys registry
     constructor(
@@ -25,6 +25,9 @@ contract RegistryServiceManager is
         address registry) // used by implementation 
         ProxyManager()
     {
+        require(initialAuthority > address(0));
+        require(registry > address(0));
+        
         // implementation's initializer func `data` argument
         bytes memory initializationData = abi.encode(
             initialAuthority,
@@ -35,7 +38,6 @@ contract RegistryServiceManager is
             initializationData);
 
         _registryService = RegistryService(address(versionable));
-
     }
 
     // from IRegisterable
