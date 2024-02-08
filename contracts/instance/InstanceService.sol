@@ -88,6 +88,7 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function _grantInitialAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
+        _createGifTargets(clonedAccessManager, clonedInstance, clonedBundleManager);
         _grantDistributionServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantPoolServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantProductServiceAuthorizations(clonedAccessManager, clonedInstance);
@@ -95,6 +96,11 @@ contract InstanceService is Service, IInstanceService {
         _grantBundleServiceAuthorizations(clonedAccessManager, clonedInstance, clonedBundleManager);
         _grantInstanceServiceAuthorizations(clonedAccessManager, clonedInstance);
     }
+
+    function _createGifTargets(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
+        clonedAccessManager.createGifTarget(address(clonedInstance), "Instance");
+        clonedAccessManager.createGifTarget(address(clonedBundleManager), "BundleManager");
+    }   
 
     function _grantDistributionServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for distribution service on instance
@@ -105,9 +111,9 @@ contract InstanceService is Service, IInstanceService {
         instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
         instanceDistributionServiceSelectors[1] = clonedInstance.updateDistributionSetup.selector;
         clonedAccessManager.setTargetFunctionRole(
-            address(clonedInstance),
+            "Instance",
             instanceDistributionServiceSelectors, 
-            DISTRIBUTION_SERVICE_ROLE().toInt());
+            DISTRIBUTION_SERVICE_ROLE());
     }
 
     function _grantPoolServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
@@ -118,9 +124,9 @@ contract InstanceService is Service, IInstanceService {
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
         instancePoolServiceSelectors[1] = clonedInstance.updatePoolSetup.selector;
         clonedAccessManager.setTargetFunctionRole(
-            address(clonedInstance),
+            "Instance",
             instancePoolServiceSelectors, 
-            POOL_SERVICE_ROLE().toInt());
+            POOL_SERVICE_ROLE());
     }
 
     function _grantProductServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
@@ -134,9 +140,9 @@ contract InstanceService is Service, IInstanceService {
         instanceProductServiceSelectors[3] = clonedInstance.updateRisk.selector;
         instanceProductServiceSelectors[4] = clonedInstance.updateRiskState.selector;
         clonedAccessManager.setTargetFunctionRole(
-            address(clonedInstance),
+            "Instance",
             instanceProductServiceSelectors, 
-            PRODUCT_SERVICE_ROLE().toInt());
+            PRODUCT_SERVICE_ROLE());
     }
 
     function _grantPolicyServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
@@ -148,9 +154,9 @@ contract InstanceService is Service, IInstanceService {
         instancePolicyServiceSelectors[1] = clonedInstance.updatePolicy.selector;
         instancePolicyServiceSelectors[2] = clonedInstance.updatePolicyState.selector;
         clonedAccessManager.setTargetFunctionRole(
-            address(clonedInstance),
+            "Instance",
             instancePolicyServiceSelectors, 
-            POLICY_SERVICE_ROLE().toInt());
+            POLICY_SERVICE_ROLE());
     }
 
     function _grantBundleServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
@@ -161,9 +167,9 @@ contract InstanceService is Service, IInstanceService {
         instanceBundleServiceSelectors[0] = clonedInstance.createBundle.selector;
         instanceBundleServiceSelectors[1] = clonedInstance.updateBundle.selector;
         clonedAccessManager.setTargetFunctionRole(
-            address(clonedInstance),
+            "Instance",
             instanceBundleServiceSelectors, 
-            BUNDLE_SERVICE_ROLE().toInt());
+            BUNDLE_SERVICE_ROLE());
 
         // configure authorization for bundle service on bundle manager
         bytes4[] memory bundleManagerBundleServiceSelectors = new bytes4[](5);
@@ -173,9 +179,9 @@ contract InstanceService is Service, IInstanceService {
         bundleManagerBundleServiceSelectors[3] = clonedBundleManager.lock.selector;
         bundleManagerBundleServiceSelectors[4] = clonedBundleManager.unlock.selector;
         clonedAccessManager.setTargetFunctionRole(
-            address(clonedBundleManager),
+            "BundleManager",
             bundleManagerBundleServiceSelectors, 
-            BUNDLE_SERVICE_ROLE().toInt());
+            BUNDLE_SERVICE_ROLE());
     }
 
     function _grantInstanceServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
@@ -185,9 +191,9 @@ contract InstanceService is Service, IInstanceService {
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
         instanceInstanceServiceSelectors[0] = clonedInstance.setInstanceReader.selector;
         clonedAccessManager.setTargetFunctionRole(
-            address(clonedInstance),
+            "Instance",
             instanceInstanceServiceSelectors, 
-            INSTANCE_SERVICE_ROLE().toInt());
+            INSTANCE_SERVICE_ROLE());
     }
 
     function setMasterInstance(address accessManagerAddress, address instanceAddress, address instanceReaderAddress, address bundleManagerAddress) external onlyOwner {

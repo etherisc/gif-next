@@ -11,7 +11,7 @@ contract TestInstanceAccessManager is TestGifBase {
 
     uint256 public constant INITIAL_BALANCE = 100000;
 
-    function test_InstanceService_hasRole_unauthorized() public {
+    function test_InstanceAccessManager_hasRole_unauthorized() public {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
@@ -44,7 +44,7 @@ contract TestInstanceAccessManager is TestGifBase {
 
     }
 
-    function test_InstanceService_hasRole_customRole() public {
+    function test_InstanceAccessManager_hasRole_customRole() public {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
