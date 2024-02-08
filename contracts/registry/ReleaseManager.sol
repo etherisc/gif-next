@@ -95,7 +95,7 @@ contract ReleaseManager is AccessManaged
 
         _initial = initialVersion;
 
-        _registry = new Registry(address(this), initialVersion);
+        _registry = new Registry();
     }
 
     // TODO deploy proxy and initialize with given implementation instead of using given proxy?

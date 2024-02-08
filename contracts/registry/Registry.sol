@@ -16,13 +16,13 @@ import {IRegistryService} from "./IRegistryService.sol";
 import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
 
-// IMPORTANT (OPTION 1)
+// IMPORTANT
 // Each NFT minted by registry is accosiated with:
 // 1) NFT owner
 // 2) registred contract OR object stored in registered (parent) contract
 // Four registration flows:
-// 1) IService address by release manager (SERVICE of type SERVICE aka registry service)
-// 2) IService address by release manager (SERVICE of type !SERVICE aka regular service)
+// 1) IService address by release manager (SERVICE of domain SERVICE aka registry service aka release creation)
+// 2) IService address by release manager (SERVICE of domain !SERVICE aka regular service)
 // 3) IRegisterable address by regular service (INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE)
 // 4) state object by regular service (POLICY, BUNDLE, STAKE)
 
@@ -30,10 +30,8 @@ contract Registry is
     ERC165,
     IRegistry
 {
-    uint256 public constant GIF_MAJOR_VERSION_AT_DEPLOYMENT = 3;
     address public constant NFT_LOCK_ADDRESS = address(0x1);
     uint256 public constant REGISTRY_TOKEN_SEQUENCE_ID = 2;
-    uint256 public constant REGISTRY_SERVICE_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
 
     mapping(NftId nftId => ObjectInfo info) internal _info;
@@ -64,12 +62,9 @@ contract Registry is
         _;
     }
 
-    constructor(address releaseManager, VersionPart initialVersion)
+    constructor()
     {
-        require(releaseManager > address(0), "Registry: release manager is 0");
-        require(initialVersion.toInt() > 0, "Registry: initial version is 0");
-
-        _releaseManager = ReleaseManager(releaseManager);
+        _releaseManager = ReleaseManager(msg.sender);
 
         // deploy NFT 
         _chainNft = new ChainNft(address(this));// adds 10kb to deployment size
