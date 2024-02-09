@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
-import {ObjectType, SERVICE, INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE} from "../../types/ObjectType.sol";
+import {ObjectType, REGISTRY, INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE} from "../../types/ObjectType.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../types/RoleId.sol";
 
@@ -31,19 +31,19 @@ abstract contract ComponentServiceBase is Service {
     // view functions
 
     function getRegistryService() public view virtual returns (IRegistryService) {
-        address service = getRegistry().getServiceAddress(SERVICE(), getMajorVersion());
+        address service = getRegistry().getServiceAddress(REGISTRY(), getMajorVersion());
         return IRegistryService(service);
     }
 
     function getInstanceService() public view returns (InstanceService) {
-        return InstanceService(getRegistry().getServiceAddress(INSTANCE(), getMajorVersion()));
+        address service = getRegistry().getServiceAddress(INSTANCE(), getMajorVersion());
+        return InstanceService(service);
     }
 
     // internal view functions
 
-    function _getInstance(IRegistry.ObjectInfo memory compObjInfo) internal view returns (IInstance) {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(compObjInfo.parentNftId);
+    function _getInstance(NftId instanceNftId) internal view returns (IInstance) {
+        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
         return IInstance(instanceInfo.objectAddress);
     }
 

@@ -6,7 +6,7 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 
 import {NftId} from "../types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
-import {ObjectType, zeroObjectType, SERVICE} from "../types/ObjectType.sol";
+import {ObjectType, zeroObjectType, REGISTRY, SERVICE} from "../types/ObjectType.sol";
 import {VersionPart, VersionPartLib} from "../types/Version.sol";
 
 import {IVersionable} from "../shared/IVersionable.sol";
@@ -121,13 +121,14 @@ contract ReleaseManager is AccessManaged
         ) = _getAndVerifyContractInfo(registryService, SERVICE(), msg.sender);
 
         VersionPart nextVersion = getNextVersion();
-        _verifyServiceInfo(info, nextVersion, SERVICE());
+        ObjectType serviceDomain = REGISTRY();
+        _verifyServiceInfo(info, nextVersion, serviceDomain);
 
         _verifyAndStoreConfig(data);
 
         //setTargetClosed(newRegistryService, true);
 
-        _registerService(address(registryService), nextVersion, SERVICE());
+        _registerService(address(registryService), nextVersion, serviceDomain);
         
         nftId = _registry.registerService(info);
 
@@ -137,6 +138,8 @@ contract ReleaseManager is AccessManaged
         emit LogReleaseCreation(nextVersion, registryService); 
     }
 
+    // TODO adding service to release -> synchronized with proxy upgrades
+    // TODO removing service from release? -> set _active to false forever, but keep all other records?
     function registerService(IService service) 
         external
         restricted // GIF_MANAGER_ROLE
@@ -162,7 +165,7 @@ contract ReleaseManager is AccessManaged
         }
 
         // setup and grant unique role
-        address registryService = getService(nextVersion, SERVICE());
+        address registryService = getService(nextVersion, REGISTRY());
         RoleId roleId = _accessManager.setAndGrantUniqueRole(
             address(service), 
             registryService, 
@@ -192,7 +195,7 @@ contract ReleaseManager is AccessManaged
         restricted // GIF_ADMIN_ROLE
     {
         VersionPart nextVersion = getNextVersion();
-        address service = _service[nextVersion][SERVICE()];
+        address service = _service[nextVersion][REGISTRY()];
 
         // release was created
         if(service == address(0)) {
@@ -350,7 +353,7 @@ contract ReleaseManager is AccessManaged
             revert ConfigMissing();
         }
         // always in release
-        _release[nextVersion].types.push(SERVICE());
+        _release[nextVersion].types.push(REGISTRY());
 
         for(uint idx = 0; idx < config.length; idx++)
         {
@@ -358,7 +361,7 @@ contract ReleaseManager is AccessManaged
             bytes4[] memory selector = config[idx].selector;
 
             // not "registry service" type
-            if(serviceDomain == SERVICE()) { revert ConfigServiceDomainInvalid(); } 
+            if(serviceDomain == REGISTRY()) { revert ConfigServiceDomainInvalid(); } 
 
             // at least one selector exists
             if(selector.length == 0) { revert ConfigSelectorMissing(); }

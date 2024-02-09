@@ -7,8 +7,7 @@ import {ProxyManager} from "../shared/ProxyManager.sol";
 import {InstanceService} from "./InstanceService.sol";
 import {Registry} from "../registry/Registry.sol";
 import {RegistryService} from "../registry/RegistryService.sol";
-import {VersionLib} from "../types/Version.sol";
-import {SERVICE} from "../types/ObjectType.sol";
+import {REGISTRY} from "../types/ObjectType.sol";
 
 contract InstanceServiceManager is ProxyManager {
 
@@ -29,10 +28,10 @@ contract InstanceServiceManager is ProxyManager {
 
         _instanceService = InstanceService(address(versionable));
 
-        Registry registry = Registry(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress(SERVICE(), VersionLib.toVersion(3, 0, 0).toMajorPart());
-        RegistryService registryService = RegistryService(registryServiceAddress);
-        // TODO this must have a role or own nft to register service
+        // TODO `this` must have a role or own nft to register service
+        //Registry registry = Registry(registryAddress);
+        //address registryServiceAddress = registry.getServiceAddress(REGISTRY(), _instanceService.getMajorVersion());
+        //RegistryService registryService = RegistryService(registryServiceAddress);
         //registryService.registerService(_instanceService);
         // RegistryService registryService = _instanceService.getRegistryService();
 
@@ -41,9 +40,6 @@ contract InstanceServiceManager is ProxyManager {
         //_linkToNftOwnable(
         //    address(registryAddress),
         //    address(_instanceService));
-
-        // implies that after this constructor call only upgrade functionality is available
-        _isDeployed = true;
     }
 
     //--- view functions ----------------------------------------------------//

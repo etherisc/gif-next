@@ -70,7 +70,7 @@ contract DistributionService is
         bytes memory data;
         (info, data) = getRegistryService().registerDistribution(distribution, distributionOwner);
 
-        IInstance instance = _getInstance(info);
+        IInstance instance = _getInstance(info.parentNftId);
 
         bool hasRole = getInstanceService().hasRole(
             distributionOwner, 

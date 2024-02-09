@@ -156,7 +156,7 @@ contract RegistryService is
 
     // From IService
     function getDomain() public pure override(IService, Service) returns(ObjectType serviceDomain) {
-        return SERVICE(); 
+        return REGISTRY(); 
     }
 
     // from Versionable

@@ -83,7 +83,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         bytes memory data;
         (info, data) = getRegistryService().registerProduct(product, productOwner);
 
-        IInstance instance = _getInstance(info);
+        IInstance instance = _getInstance(info.parentNftId);
         bool hasRole = getInstanceService().hasRole(
             productOwner, 
             PRODUCT_OWNER_ROLE(), 

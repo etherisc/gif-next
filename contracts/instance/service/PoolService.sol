@@ -74,7 +74,7 @@ contract PoolService is
         bytes memory data;
         (info, data) = getRegistryService().registerPool(pool, poolOwner);
 
-        IInstance instance = _getInstance(info);
+        IInstance instance = _getInstance(info.parentNftId);
 
         bool hasRole = getInstanceService().hasRole(
             poolOwner, 
