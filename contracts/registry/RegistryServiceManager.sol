@@ -25,8 +25,8 @@ contract RegistryServiceManager is
         address registry) // used by implementation 
         ProxyManager()
     {
-        require(initialAuthority > address(0));
-        require(registry > address(0));
+        require(initialAuthority > address(0), "RegistryServiceManager: initial authority is 0");
+        require(registry > address(0), "RegistryServiceManager: registry is 0");
         
         // implementation's initializer func `data` argument
         bytes memory initializationData = abi.encode(

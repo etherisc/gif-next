@@ -88,8 +88,7 @@ contract ReleaseManager is AccessManaged
         VersionPart initialVersion)
         AccessManaged(accessManager.authority())
     {
-        require(address(accessManager) > address(0));
-        require(initialVersion.toInt() > 0);
+        require(initialVersion.toInt() > 0, "ReleaseManager: initial version is 0");
 
         _accessManager = accessManager;
 

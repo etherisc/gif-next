@@ -80,7 +80,10 @@ contract RegistryAccessManager is AccessManaged
         restricted // GIF_ADMIN_ROLE
         onlyOnce
     {
-        require(ReleaseManager(releaseManager).authority() == address(_accessManager));
+        require(
+            ReleaseManager(releaseManager).authority() == address(_accessManager),
+            "RegistryAccessManager: release manager authority is invalid");
+        require(tokenRegistry > address(0), "RegistryAccessManager: token registry is 0");
         //require(tokenRegistry.authority() == address(_accessManager));
 
         _releaseManager = releaseManager;
