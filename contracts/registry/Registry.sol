@@ -2,18 +2,14 @@
 pragma solidity ^0.8.20;
 
 
-import {NftId, toNftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
-import {Version, VersionPart, VersionLib, VersionPartLib} from "../types/Version.sol";
+import {NftId, toNftId, zeroNftId} from "../types/NftId.sol";
+import {VersionPart} from "../types/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
 
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IService} from "../shared/IService.sol";
 import {ERC165} from "../shared/ERC165.sol";
 
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
-import {IRegistryService} from "./IRegistryService.sol";
-import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
 
 // IMPORTANT
@@ -36,6 +32,8 @@ contract Registry is
 
     mapping(NftId nftId => ObjectInfo info) internal _info;
     mapping(address object => NftId nftId) internal _nftIdByAddress;
+
+    mapping(VersionPart version => mapping(ObjectType serviceDomain => address)) _service;
 
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) internal _isValidContractCombination;
@@ -79,7 +77,11 @@ contract Registry is
         _registerInterface(type(IRegistry).interfaceId);
     }
 
-    function registerService(ObjectInfo memory info)
+    function registerService(
+        ObjectInfo memory info, 
+        VersionPart version, 
+        ObjectType domain
+    )
         external
         onlyReleaseManager
         returns(NftId nftId)
@@ -90,7 +92,16 @@ contract Registry is
         }
         info.initialOwner = NFT_LOCK_ADDRESS <- if services are access managed
         */
+
+        if(_service[version][domain] > address(0)) {
+            revert ServiceAlreadyRegistered(info.objectAddress);
+        }
+
+        _service[version][domain] = info.objectAddress; // nftId;
+
         nftId = _register(info);
+
+        emit LogServiceRegistration(version, domain);
     }
 
     function register(ObjectInfo memory info)
@@ -125,6 +136,11 @@ contract Registry is
     /// @dev latest active GIF release version 
     function getMajorVersion() external view returns (VersionPart) { 
         return _releaseManager.getLatestVersion();
+    }
+
+    function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory)
+    {
+        return _releaseManager.getReleaseInfo(version);
     }
 
     function getObjectCount() external view override returns (uint256) {
@@ -168,11 +184,11 @@ contract Registry is
     }
 
     function getServiceAddress(
-        ObjectType serviceType, 
+        ObjectType serviceDomain, 
         VersionPart releaseVersion
     ) external view returns (address)
     {
-        return _releaseManager.getService(releaseVersion, serviceType);
+        return _service[releaseVersion][serviceDomain];
     }
 
     function getChainNft() external view override returns (ChainNft) {

@@ -11,7 +11,7 @@ import {VersionPart} from "../types/Version.sol";
 interface IRegistry is IERC165 {
 
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
-
+    event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
     // register()
     error CallerNotRegistryService();
@@ -19,6 +19,7 @@ interface IRegistry is IERC165 {
 
     // registerService()
     error CallerNotReleaseManager();
+    error ServiceAlreadyRegistered(address service);
 
     // _register()
     error ZeroParentAddress();
@@ -36,7 +37,15 @@ interface IRegistry is IERC165 {
     }// TODO delete nftId and initialOwner(if not used) from struct
     // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
 
-    function registerService(ObjectInfo memory serviceInfo) external returns(NftId nftId);
+    struct ReleaseInfo {
+        ObjectType[] domains;
+    }
+
+    function registerService(
+        ObjectInfo memory serviceInfo, 
+        VersionPart serviceVersion, 
+        ObjectType serviceDomain
+    ) external returns(NftId nftId);
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
 
@@ -45,6 +54,8 @@ interface IRegistry is IERC165 {
     function getMajorVersionMax() external view returns (VersionPart);
 
     function getMajorVersion() external view returns (VersionPart);
+
+    function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory);
 
     function getObjectCount() external view returns (uint256);
 
@@ -67,7 +78,7 @@ interface IRegistry is IERC165 {
     function isRegisteredService(address contractAddress) external view returns (bool);
 
     function getServiceAddress(
-        ObjectType serviceType, 
+        ObjectType serviceDomain, 
         VersionPart releaseVersion
     ) external view returns (address serviceAddress);
 

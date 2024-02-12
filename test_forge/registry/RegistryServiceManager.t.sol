@@ -16,6 +16,7 @@ import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceMa
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceUpgradeMock} from "../mock/RegistryServiceUpgradeMock.sol";
 import {Version, VersionLib, VersionPartLib } from "../../contracts/types/Version.sol";
@@ -56,8 +57,8 @@ contract RegistryServiceManagerTest is Test {
         
         registryService = registryServiceManager.getRegistryService();
         
-        address tokenRegistry;
-        accessManager.initialize(address(releaseManager), tokenRegistry);
+        TokenRegistry tokenRegistry = new TokenRegistry();
+        accessManager.initialize(address(releaseManager), address(tokenRegistry));
 
         releaseManager.createNextRelease(registryService);
 
