@@ -16,8 +16,8 @@ import {Service} from "../../contracts/shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
-import {ADMIN_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
-import {ObjectType, REGISTRY, INSTANCE, PRODUCT, POOL, DISTRIBUTION, POLICY, BUNDLE} from "../types/ObjectType.sol";
+import {VersionLib} from "../types/Version.sol";
+import {ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -97,6 +97,7 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function _grantInitialAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
+        _createGifRoles(clonedAccessManager);
         _createGifTargets(clonedAccessManager, clonedInstance, clonedBundleManager);
         _grantDistributionServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantPoolServiceAuthorizations(clonedAccessManager, clonedInstance);
@@ -104,6 +105,19 @@ contract InstanceService is Service, IInstanceService {
         _grantPolicyServiceAuthorizations(clonedAccessManager, clonedInstance);    
         _grantBundleServiceAuthorizations(clonedAccessManager, clonedInstance, clonedBundleManager);
         _grantInstanceServiceAuthorizations(clonedAccessManager, clonedInstance);
+    }
+
+    function _createGifRoles(InstanceAccessManager clonedAccessManager) internal {
+        clonedAccessManager.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole");
+        clonedAccessManager.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole");
+        clonedAccessManager.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole");
+
+        clonedAccessManager.createGifRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
+        clonedAccessManager.createGifRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
+        clonedAccessManager.createGifRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole");
+        clonedAccessManager.createGifRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole");
+        clonedAccessManager.createGifRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole");
+        clonedAccessManager.createGifRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
     }
 
     function _createGifTargets(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
