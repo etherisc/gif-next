@@ -15,6 +15,8 @@ interface IBaseComponent is IRegisterable {
     event LogBaseComponentWalletAddressChanged(address newWallet);
     event LogBaseComponentWalletTokensTransferred(address from, address to, uint256 amount);
 
+    function getName() external pure virtual returns (string memory name);
+
     function lock() external;
 
     function unlock() external;

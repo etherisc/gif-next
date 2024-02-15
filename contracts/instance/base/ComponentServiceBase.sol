@@ -47,6 +47,12 @@ abstract contract ComponentServiceBase is Service {
         return IInstance(instanceInfo.objectAddress);
     }
 
+    function _getInstanceNftId(IRegistry.ObjectInfo memory compObjInfo) internal view returns (NftId) {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(compObjInfo.parentNftId);
+        return instanceInfo.nftId;
+    }
+
     function _getAndVerifyComponentInfoAndInstance(
         //address component,
         ObjectType expectedType

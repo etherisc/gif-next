@@ -39,6 +39,14 @@ contract InstanceService is Service, IInstanceService {
         _;
     }
 
+    modifier onlyRegisteredService() {
+        address caller = msg.sender;
+        if (! getRegistry().isRegisteredService(caller)) {
+            revert ErrorInstanceServiceRequestUnauhorized(caller);
+        }
+        _;
+    }
+
     function createInstanceClone()
         external 
         returns (
@@ -295,6 +303,14 @@ contract InstanceService is Service, IInstanceService {
         Instance instance = Instance(instanceAddress);
         InstanceAccessManager accessManager = instance.getInstanceAccessManager();
         return accessManager.hasRole(role, account);
+    }
+
+    function createTarget(NftId instanceNftId, address targetAddress, string memory targetName) external onlyRegisteredService {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        accessManager.createTarget(targetAddress, targetName);
     }
 }
 
