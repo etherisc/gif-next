@@ -298,7 +298,14 @@ contract InstanceAccessManager is
 
     function setTargetClosed(string memory targetName, bool closed) public restricted() {
         address target = _targetForName[ShortStrings.toShortString(targetName)];
+        if (target == address(0)) {
+            revert IAccess.ErrorIAccessTargetAddressZero();
+        }
         _accessManager.setTargetClosed(target, closed);
+    }
+
+    function isTargetLocked(address target) public view returns (bool locked) {
+        return _accessManager.isTargetClosed(target);
     }
 
     function canCall(

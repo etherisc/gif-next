@@ -70,14 +70,14 @@ abstract contract BaseComponent is
     function getName() public pure virtual returns (string memory name);
 
     // from component contract
-    // TODO consider to remove/replace with access manager contract locking
+    // TODO only owner and instance owner 
     function lock() external onlyOwner override {
-        _componentOwnerService.lock(this);
+        _instanceService.setTargetLocked(getName(), true);
     }
-
-    // TODO consider to remove/replace with access manager contract locking
+    
+    // TODO only owner and instance owner 
     function unlock() external onlyOwner override {
-        _componentOwnerService.unlock(this);
+        _instanceService.setTargetLocked(getName(), false);
     }
 
     function getWallet()

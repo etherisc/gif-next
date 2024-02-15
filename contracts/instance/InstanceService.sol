@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 import {Instance} from "./Instance.sol";
+import {IInstance} from "./IInstance.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
@@ -312,5 +313,24 @@ contract InstanceService is Service, IInstanceService {
         InstanceAccessManager accessManager = instance.getInstanceAccessManager();
         accessManager.createTarget(targetAddress, targetName);
     }
+
+    function setTargetLocked(string memory targetName, bool locked) external {
+        address componentAddress = msg.sender;
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
+        if (componentInfo.nftId.eqz()) {
+            revert ErrorInstanceServiceComponentNotRegistered(componentAddress);
+        }
+
+        // TODO validate component type
+
+
+        address instanceAddress = registry.getObjectInfo(componentInfo.parentNftId).objectAddress;
+        IInstance instance = IInstance(instanceAddress);
+
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        accessManager.setTargetClosed(targetName, locked);
+    }
+    
 }
 
