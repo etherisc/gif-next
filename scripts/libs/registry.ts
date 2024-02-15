@@ -55,7 +55,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         ], 
         {
             libraries: {
-                Timestamp: libraries.timestampLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress

@@ -1,6 +1,6 @@
 
 import { AddressLike, Signer, hexlify, resolveAddress } from "ethers";
-import { ReleaseManager__factory, DistributionService, DistributionServiceManager, DistributionService__factory, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, IRegistryService__factory, ProductService, ProductServiceManager, ProductService__factory, PolicyService, PolicyServiceManager, PolicyService__factory, BundleService, BundleServiceManager, Bundleservice__factory} from "../../typechain-types";
+import { ReleaseManager__factory, DistributionService, DistributionServiceManager, DistributionService__factory, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, IRegistryService__factory, ProductService, ProductServiceManager, ProductService__factory, PolicyService, PolicyServiceManager, PolicyService__factory, BundleService, BundleServiceManager, BundleService__factory} from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
