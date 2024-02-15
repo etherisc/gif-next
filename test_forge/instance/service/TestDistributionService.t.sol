@@ -1,23 +1,19 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {console} from "../../../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "../../base/TestGifBase.sol";
-import {NftId, toNftId, NftIdLib} from "../../../contracts/types/NftId.sol";
-import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
-import {Distribution} from "../../../contracts/components/Distribution.sol";
+import {NftId, NftIdLib} from "../../../contracts/types/NftId.sol";
+import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
 import {ComponentServiceBase} from "../../../contracts/instance/base/ComponentServiceBase.sol";
-import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
-import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
-import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
-import {UFixedLib} from "../../../contracts/types/UFixed.sol";
+import {FeeLib} from "../../../contracts/types/Fee.sol";
+import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 
 contract TestDistributionService is TestGifBase {
     using NftIdLib for NftId;
 
     function test_DistributionService_register_missingDistributionOwnerRole() public {
         vm.startPrank(distributionOwner);
-        distribution = new Distribution(
+        distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
             address(token),
@@ -36,7 +32,7 @@ contract TestDistributionService is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
-        distribution = new Distribution(
+        distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
             address(token),

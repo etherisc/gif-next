@@ -29,7 +29,7 @@ import {Distribution} from "../components/Distribution.sol";
 
 import {zeroNftId} from "../types/NftId.sol";
 
-contract Product is BaseComponent, IProductComponent {
+abstract contract Product is BaseComponent, IProductComponent {
     using NftIdLib for NftId;
 
     IProductService internal _productService;

@@ -9,6 +9,7 @@ import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
+import {SimplePool} from "./mock/SimplePool.sol";
 
 contract TestPool is TestGifBase {
     using NftIdLib for NftId;
@@ -20,7 +21,7 @@ contract TestPool is TestGifBase {
 
         vm.startPrank(poolOwner);
 
-        pool = new Pool(
+        pool = new SimplePool(
             address(registry),
             instanceNftId,
             address(token),
@@ -76,7 +77,7 @@ contract TestPool is TestGifBase {
 
         vm.startPrank(poolOwner);
 
-        pool = new Pool(
+        pool = new SimplePool(
             address(registry),
             instanceNftId,
             address(token),
@@ -126,7 +127,7 @@ contract TestPool is TestGifBase {
 
         vm.startPrank(poolOwner);
 
-        pool = new Pool(
+        pool = new SimplePool(
             address(registry),
             instanceNftId,
             address(token),

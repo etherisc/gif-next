@@ -67,6 +67,8 @@ abstract contract BaseComponent is
         _registerInterface(type(IBaseComponent).interfaceId);
     }
 
+    function getName() public pure virtual returns (string memory name);
+
     // from component contract
     // TODO consider to remove/replace with access manager contract locking
     function lock() external onlyOwner override {

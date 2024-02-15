@@ -23,7 +23,7 @@ import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
 
-contract Pool is BaseComponent, IPoolComponent {
+abstract contract Pool is BaseComponent, IPoolComponent {
     using NftIdLib for NftId;
 
     bool internal _isConfirmingApplication;

@@ -4,11 +4,11 @@ pragma solidity 0.8.20;
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/types/RoleId.sol";
-import {Distribution} from "../contracts/components/Distribution.sol";
 import {IBaseComponent} from "../contracts/components/IBaseComponent.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
+import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
 
 contract TestDistribution is TestGifBase {
     using NftIdLib for NftId;
@@ -215,7 +215,7 @@ contract TestDistribution is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
-        distribution = new Distribution(
+        distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
             address(token),

@@ -68,5 +68,7 @@ abstract contract ComponentServiceBase is Service {
 
         address instanceAddress = registry.getObjectInfo(info.parentNftId).objectAddress;
         instance = IInstance(instanceAddress);
+
+        // FIXME: check component (target) not locked/closed
     }
 }

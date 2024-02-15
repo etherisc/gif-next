@@ -251,6 +251,13 @@ contract InstanceAccessManager is
             _validateTargetParameters(target, name, isCustom);
         }
 
+        if (_target[target].createdAt.gtz()) {
+            revert IAccess.ErrorIAccessTargetAlreadyExists(target, _target[target].name);
+        }
+        if (_targetForName[ShortStrings.toShortString(name)] != address(0)) {
+            revert IAccess.ErrorIAccessTargetNameExists(target, _targetForName[ShortStrings.toShortString(name)], ShortStrings.toShortString(name));
+        }
+
         IAccess.TargetInfo memory info = IAccess.TargetInfo(
             ShortStrings.toShortString(name), 
             isCustom,

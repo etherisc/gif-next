@@ -84,6 +84,8 @@ contract DistributionService is
         distributionNftId = info.nftId;
         ISetup.DistributionSetupInfo memory initialSetup = _decodeAndVerifyDistributionSetup(data);
         instance.createDistributionSetup(distributionNftId, initialSetup);
+
+        // FIXME: create component target
     }
 
     function _decodeAndVerifyDistributionSetup(bytes memory data) internal returns(ISetup.DistributionSetupInfo memory setup)

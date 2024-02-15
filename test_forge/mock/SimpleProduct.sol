@@ -13,7 +13,7 @@ import {RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
-contract MockProduct is Product {
+contract SimpleProduct is Product {
 
     constructor(
         address registry,
@@ -36,6 +36,10 @@ contract MockProduct is Product {
         processingFee,
         initialOwner
     ) {
+    }
+
+    function getName() public pure override returns (string memory) {
+        return "SimpleProduct";
     }
 
     function createRisk(

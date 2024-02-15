@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import {TestGifBase} from "../base/TestGifBase.sol";
 import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
 import {PRODUCT_OWNER_ROLE, RoleIdLib} from "../../contracts/types/RoleId.sol";
-import {MockProduct, SPECIAL_ROLE_INT} from "../mock/MockProduct.sol";
+import {SimpleProduct, SPECIAL_ROLE_INT} from "../mock/SimpleProduct.sol";
 import {FeeLib} from "../../contracts/types/Fee.sol";
 
 contract TestInstanceAccessManager is TestGifBase {
@@ -20,7 +20,7 @@ contract TestInstanceAccessManager is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        product = new MockProduct(
+        product = new SimpleProduct(
             address(registry),
             instanceNftId,
             address(token),
@@ -39,7 +39,7 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.expectRevert(abi.encodeWithSelector(IBaseComponent.ErrorBaseComponentUnauthorized.selector, outsider, 11111));
 
         // WHEN
-        MockProduct dproduct = MockProduct(address(product));
+        SimpleProduct dproduct = SimpleProduct(address(product));
         dproduct.doSomethingSpecial();
 
     }
@@ -55,7 +55,7 @@ contract TestInstanceAccessManager is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        product = new MockProduct(
+        product = new SimpleProduct(
             address(registry),
             instanceNftId,
             address(token),
@@ -71,7 +71,7 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.startPrank(outsider);
 
         // WHEN
-        MockProduct dproduct = MockProduct(address(product));
+        SimpleProduct dproduct = SimpleProduct(address(product));
         dproduct.doSomethingSpecial();
 
         // THEN above call was authorized
