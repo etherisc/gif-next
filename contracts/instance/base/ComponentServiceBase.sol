@@ -5,7 +5,7 @@ import {IRegistry} from "../../registry/IRegistry.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IAccess} from "../module/IAccess.sol";
-import {ObjectType} from "../../types/ObjectType.sol";
+import {ObjectType, INSTANCE, REGISTRY} from "../../types/ObjectType.sol";
 import {NftId} from "../../types/NftId.sol";
 import {RoleId} from "../../types/RoleId.sol";
 
