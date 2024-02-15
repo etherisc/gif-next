@@ -16,6 +16,7 @@ import {IDistributionComponent} from "../../contracts/components/IDistributionCo
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
+import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
 import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
@@ -36,46 +37,11 @@ contract RegistryService is
 {
     using NftIdLib for NftId;
 
-
-    // Initial value for constant variable has to be compile-time constant
-    // TODO define types as constants?
-    //ObjectType public constant SERVICE_TYPE = REGISTRY(); 
-    string public constant NAME = "RegistryService";
-
     // TODO update to real hash when registry is stable
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 
     address public constant NFT_LOCK_ADDRESS = address(0x1);
 
-    /// @dev 
-    //  msg.sender - ONLY registry owner
-    //      CAN NOT register itself
-    //      CAN register ONLY valid object-parent types combinations for SERVICE
-    //      CAN register ONLY IRegisterable address he owns
-    // IMPORTANT: MUST NOT check owner before calling external contract
-    function registerService(IService service)
-        external
-        restricted
-        returns(
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
-        ) 
-    {
-
-        // CAN revert if no ERC165 support -> will revert with empty message 
-        if(!service.supportsInterface(type(IService).interfaceId)) {
-            revert NotService();
-        }
-
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
-
-        info.nftId = _registry.register(info);
-        service.linkToRegisteredNftId();
-        return (info, data);
-    }
 
     function registerInstance(IRegisterable instance)
         external
@@ -88,10 +54,7 @@ contract RegistryService is
             revert NotInstance();
         }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);
+        (info, data) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);
 
         info.nftId = _registry.register(info);
         instance.linkToRegisteredNftId(); // asume safe
@@ -112,10 +75,7 @@ contract RegistryService is
             revert NotProduct();
         }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
+        (info, data) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
 
         info.nftId = _registry.register(info);
         // TODO unsafe, let component or its owner derive nftId latter, when state assumptions and modifications of GIF contracts are finished  
@@ -136,10 +96,7 @@ contract RegistryService is
             revert NotPool();
         }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(pool, POOL(), owner);
+        (info, data) = _getAndVerifyContractInfo(pool, POOL(), owner);
 
         info.nftId = _registry.register(info);
         pool.linkToRegisteredNftId();
@@ -159,10 +116,7 @@ contract RegistryService is
             revert NotDistribution();
         }
 
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
+        (info, data) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
 
         info.nftId = _registry.register(info); 
         distribution.linkToRegisteredNftId();
@@ -201,21 +155,13 @@ contract RegistryService is
     }
 
     // From IService
-    function getName() public pure override(IService, Service) returns(string memory) {
-        return NAME;
+    function getDomain() public pure override(IService, Service) returns(ObjectType serviceDomain) {
+        return REGISTRY(); 
     }
-    //function getType() public pure override(IService, ServiceBase) returns(ObjectType serviceType) {
-    //    return SERVICE_TYPE;
-    //}
-
 
     // from Versionable
 
     /// @dev top level initializer
-    // 1) registry is non upgradeable -> don't need a proxy and uses constructor !
-    // 2) deploy registry service first -> from its initialization func it is easier to deploy registry then vice versa
-    // 3) deploy registry -> pass registry service address as constructor argument
-    // registry is getting instantiated and locked to registry service address forever
     function _initialize(
         address owner, 
         bytes memory data
@@ -226,37 +172,59 @@ contract RegistryService is
     {
         (
             address initialAuthority,
-            bytes memory registryByteCodeWithInitCode
-        ) = abi.decode(data, (address, bytes));
+            address registry
+        ) = abi.decode(data, (address, address));
 
         __AccessManaged_init(initialAuthority);
 
-        bytes memory encodedConstructorArguments = abi.encode(
-            owner,
-            getMajorVersion());
-
-        bytes memory registryCreationCode = ContractDeployerLib.getCreationCode(
-            registryByteCodeWithInitCode,
-            encodedConstructorArguments);
-
-        IRegistry registry = IRegistry(ContractDeployerLib.deploy(
-            registryCreationCode,
-            REGISTRY_CREATION_CODE_HASH));
-
-        NftId registryNftId = registry.getNftId(address(registry));
-
         _initializeService(address(registry), owner);
 
-        // TODO why do registry service proxy need to keep its nftId??? -> no registryServiceNftId checks in implementation
-        // if they are -> use registry address to obtain owner of registry service nft (works the same with any registerable and(or) implementation)
-        linkToRegisteredNftId(); 
         _registerInterface(type(IRegistryService).interfaceId);
     }
+
+    // from IRegisterable
+
+    function getInitialInfo() 
+        public 
+        view
+        override(IRegisterable, Registerable)
+        returns (IRegistry.ObjectInfo memory info, bytes memory data)
+    {
+        (info , data) = super.getInitialInfo();
+
+        FunctionConfig[] memory config = new FunctionConfig[](6);
+
+        // registerInstance() have no restriction
+        config[0].serviceDomain = INSTANCE();
+        config[0].selector = RegistryService.registerInstance.selector;
+
+        config[1].serviceDomain = POOL();
+        config[1].selector = RegistryService.registerPool.selector;
+
+        config[2].serviceDomain = DISTRIBUTION();
+        config[2].selector = RegistryService.registerDistribution.selector;
+
+        config[3].serviceDomain = PRODUCT();
+        config[3].selector = RegistryService.registerProduct.selector;
+
+        config[4].serviceDomain = POLICY();
+        config[4].selector = RegistryService.registerPolicy.selector;
+
+        config[5].serviceDomain = BUNDLE();
+        config[5].selector = RegistryService.registerBundle.selector;
+
+        /*config[6].serviceDomain = STAKE();
+        config[6].selector = RegistryService.registerStake.selector;*/
+
+        data = abi.encode(config);
+    }
+
+    // Internal
 
     function _getAndVerifyContractInfo(
         IRegisterable registerable,
         ObjectType expectedType, // assume can be valid only
-        address expectedOwner // assume can be 0
+        address expectedOwner // assume can be 0 when given by other service
     )
         internal
         view
@@ -305,10 +273,7 @@ contract RegistryService is
             revert InvalidParent(parentNftId);
         }*/
 
-        return(
-            info,
-            data
-        );
+        return(info, data);
     }
 
     function _verifyObjectInfo(

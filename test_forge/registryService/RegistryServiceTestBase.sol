@@ -7,17 +7,15 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
+import {VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
 import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, TOKEN} from "../../contracts/types/ObjectType.sol";
-import {PRODUCT_REGISTRAR_ROLE,
-        POOL_REGISTRAR_ROLE, 
-        DISTRIBUTION_REGISTRAR_ROLE, 
-        POLICY_REGISTRAR_ROLE, 
-        BUNDLE_REGISTRAR_ROLE} from "../../contracts/types/RoleId.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 
+import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -79,8 +77,9 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
     address public outsider = makeAddr("outsider");
     address public EOA = makeAddr("EOA");
 
+    RegistryAccessManager accessManager;
+    ReleaseManager releaseManager;
     RegistryServiceManager public registryServiceManager;
-    AccessManager accessManager;
     RegistryService public registryService;
     IRegistry public registry;
 
@@ -100,8 +99,6 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
         _deployRegistryServiceAndRegistry();
 
-        _configureRegistryServiceRoles();
-
         _deployAndRegisterServices();
 
         registerableOwnedByRegistryOwner = new RegisterableMock(
@@ -118,52 +115,30 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        accessManager = new AccessManager(registryOwner);
-        registryServiceManager = new RegistryServiceManager(address(accessManager));
+        accessManager = new RegistryAccessManager(registryOwner);
+
+        releaseManager = new ReleaseManager(
+            accessManager,
+            VersionPartLib.toVersionPart(3));
+
+        registry = IRegistry(releaseManager.getRegistry());
+        registryNftId = registry.getNftId(address(registry));
+
+        registryServiceManager = new RegistryServiceManager(
+            accessManager.authority(),
+            address(registry)
+        );        
+        
         registryService = registryServiceManager.getRegistryService();
-        registry = registryServiceManager.getRegistry();
+
+        address tokenRegistry;
+        accessManager.initialize(address(releaseManager), tokenRegistry);
+
+        releaseManager.createNextRelease(registryService);
 
         registryServiceNftId = registry.getNftId(address(registryService));
-        registryNftId = registry.getNftId(address(registry));
-    }
 
-    function _configureRegistryServiceRoles() internal
-    {
-        bytes4[] memory functionSelector = new bytes4[](1);
-        functionSelector[0] = RegistryService.registerProduct.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            PRODUCT_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerPool.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            POOL_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerDistribution.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            DISTRIBUTION_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerPolicy.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            POLICY_REGISTRAR_ROLE().toInt());
-
-        functionSelector[0] = RegistryService.registerBundle.selector;
-
-        accessManager.setTargetFunctionRole(
-            address(registryService), 
-            functionSelector, 
-            BUNDLE_REGISTRAR_ROLE().toInt());
+        registryServiceManager.linkToNftOwnable(address(registry));// links to registry service
     }
 
     function _deployAndRegisterServices() internal
@@ -173,32 +148,8 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
             registryNftId, 
             registryOwner            
         );
-        /*productService = new ProductService(
-            address(registry), 
-            registryNftId, 
-            registryOwner  
-        );
-        IService poolService = new PoolService(
-            address(registry), 
-            registryNftId, 
-            registryOwner  
-        );
-        IService distributionService = new DistributionService(
-            address(registry), 
-            registryNftId, 
-            registryOwner  
-        );*/
 
-        registryService.registerService(componentOwnerService);
-        //registryService.registerService(productService);
-        //registryService.registerService(poolService);
-        //registryService.registerService(distributionService);
-
-        accessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        accessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        accessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        //accessManager.grantRole(POLICY_REGISTRAR_ROLE(), address(productService), 0);
-        //accessManager.grantRole(BUNDLE_REGISTRAR_ROLE(), address(poolService), 0);
+        releaseManager.registerService(componentOwnerService);
     }
 
     function _assert_registered_token(address token, NftId nftIdFromRegistryService) internal

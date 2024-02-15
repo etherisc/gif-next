@@ -29,11 +29,6 @@ function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2
 function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(300); }
 function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(400); }
 
-function DISTRIBUTION_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1000); }
-function POLICY_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1100); }
-function BUNDLE_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1200); }
-function POOL_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1300); }
-function PRODUCT_REGISTRAR_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1400); }
 
 function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
@@ -42,6 +37,10 @@ function PRODUCT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleI
 function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2400); }
 function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
 
+
+function REGISTRY_SERVICE_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
+function REGISTRY_SERVICE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 
+function RELEASE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1700); } 
 
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {

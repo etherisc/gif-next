@@ -9,7 +9,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
-import {ObjectType} from "../types/ObjectType.sol";
+import {ObjectType, INSTANCE} from "../types/ObjectType.sol";
 import {VersionLib} from "../types/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
@@ -60,7 +60,7 @@ abstract contract BaseComponent is
         );
 
         _componentOwnerService = _instance.getComponentOwnerService();
-        _instanceService = IInstanceService(getRegistry().getServiceAddress("InstanceService", VersionLib.toVersion(3, 0, 0).toMajorPart()));
+        _instanceService = IInstanceService(getRegistry().getServiceAddress(INSTANCE(), VersionLib.toVersion(3, 0, 0).toMajorPart()));
         _wallet = address(this);
         _token = IERC20Metadata(token);
 

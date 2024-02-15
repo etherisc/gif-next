@@ -1,21 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IRegistry} from "../registry/IRegistry.sol";
+import {ObjectType, SERVICE} from "../types/ObjectType.sol";
+import {NftId, zeroNftId} from "../types/NftId.sol";
+import {Version, VersionPart, VersionLib} from "../types/Version.sol";
+
+import {Versionable} from "./Versionable.sol";
 import {IService} from "./IService.sol";
 import {IVersionable} from "./IVersionable.sol";
-import {NftId, zeroNftId} from "../types/NftId.sol";
 import {RegisterableUpgradable} from "./RegisterableUpgradable.sol";
-import {SERVICE} from "../types/ObjectType.sol";
-import {Version, VersionPart, VersionLib} from "../types/Version.sol";
-import {Versionable} from "./Versionable.sol";
+
+import {IRegistry} from "../registry/IRegistry.sol";
+
 
 /// @dev service base contract
 abstract contract Service is 
     RegisterableUpgradable,
     IService
 {
-    function getName() public pure virtual override returns(string memory name);
+    function getDomain() public pure virtual override returns(ObjectType);
 
     function getMajorVersion() public view virtual override returns(VersionPart majorVersion) {
         return getVersion().toMajorPart(); 
@@ -40,7 +43,7 @@ abstract contract Service is
         //onlyInitializing //TODO uncomment when "fully" upgradeable
     {
         // service must provide its name and version upon registration
-        bytes memory data = abi.encode(getName(), getMajorVersion());
+        bytes memory data = abi.encode(getDomain(), getMajorVersion());
         NftId registryNftId = _getRegistryNftId(registry); 
         bool isInterceptor = false;
 

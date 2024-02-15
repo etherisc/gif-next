@@ -38,6 +38,7 @@ contract ProxyManager is
         returns (IVersionable versionable)
     {
         if (_isDeployed) { revert ErrorAlreadyDeployed(); }
+        _isDeployed = true;
 
         address currentProxyOwner = getOwner(); // used by implementation
         address initialProxyAdminOwner = address(this); // used by proxy
@@ -49,7 +50,6 @@ contract ProxyManager is
             data
         );
 
-        _isDeployed = true;
         versionable = IVersionable(address(_proxy));
 
         emit LogProxyDeployed(address(_proxy), initialImplementation);

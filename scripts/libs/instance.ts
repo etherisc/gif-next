@@ -58,9 +58,9 @@ export async function deployAndRegisterMasterInstance(
     const registryServiceAsInstanceOwner = IRegistryService__factory.connect(await resolveAddress(registry.registryServiceAddress), owner);
     const rcpt = await executeTx(async () => await registryServiceAsInstanceOwner.registerInstance(instanceAddress));
     // this extracts the ObjectInfo struct from the LogRegistration event
-    const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "info");
+    const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
     // nftId is the first field of the ObjectInfo struct
-    const masterInstanceNfdId = (logRegistrationInfo as unknown[])[0];
+    const masterInstanceNfdId = (logRegistrationInfo as unknown);
     
     logger.info(`instance registered - masterInstanceNftId: ${masterInstanceNfdId}`);
     // const instanceNftId = 21101;

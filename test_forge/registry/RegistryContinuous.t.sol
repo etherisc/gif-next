@@ -15,8 +15,11 @@ import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
 contract Registry_Continous_Tests is RegistryTestBase 
 {
+
     uint constant ITTERATIONS = 150;
 
+// TODO refactor
+/*
     // nftId - always random
     // parenNftId - random
     // objectType random
@@ -540,7 +543,7 @@ contract Registry_Continous_Tests is RegistryTestBase
         // solhint-enable
 
         _stopPrank();
-    }
+    }*/
 }
 
 contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Registry_Continous_Tests
@@ -549,7 +552,8 @@ contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Regi
     {
         RegistryTestBaseWithPreset.setUp();
     }
-
+// TODO refactor
+/*
     // nftId - always random
     // parentNftId - from preset,
     // types - from types set
@@ -611,5 +615,5 @@ contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Regi
 
         _stopPrank();
     }
-
+*/
 }

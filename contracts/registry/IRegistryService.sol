@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+
 import {NftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 import {RoleId} from "../types/RoleId.sol";
@@ -10,8 +12,10 @@ import {IRegistry} from "./IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IBaseComponent} from "../components/IBaseComponent.sol";
 
-interface IRegistryService is IService {
-
+interface IRegistryService is 
+     IService, 
+     IAccessManaged 
+{
      error SelfRegistration();
      error NotRegistryOwner();
 
@@ -28,9 +32,13 @@ interface IRegistryService is IService {
      error InvalidInitialOwner(address initialOwner);
      error InvalidAddress(address registerableAddress);
 
+     struct FunctionConfig
+     {
+          ObjectType serviceDomain;
+          bytes4 selector;
+     }
 
-     function registerService(IService service)  external returns(IRegistry.ObjectInfo memory info, bytes memory data);
-
+     // TODO used by service -> add owner arg 
      function registerInstance(IRegisterable instance)
           external returns(IRegistry.ObjectInfo memory info, bytes memory data); 
 
@@ -43,7 +51,7 @@ interface IRegistryService is IService {
      function registerDistribution(IBaseComponent distribution, address owner)
           external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
-     function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId); // -> easy to upgrade
+     function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 
      function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
 }

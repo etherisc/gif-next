@@ -7,25 +7,25 @@ import {ChainNft} from "./ChainNft.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 import {VersionPart} from "../types/Version.sol";
+import {Timestamp} from "../types/Timestamp.sol";
 
 interface IRegistry is IERC165 {
 
-    event LogInitialMajorVersionSet(VersionPart majorVersion);
-    event LogMajorVersionSet(VersionPart majorVersionMax);
-    event LogRegistration(ObjectInfo info);
-    event LogServiceNameRegistration(string serviceName, VersionPart majorVersion); 
-
-    // setMajorVersion()
-    error NotOwner(address account);
-    error MajorVersionMaxIncreaseInvalid(VersionPart newMajorVersionMax, VersionPart existingMaxMajorVersion);
+    event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
+    event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
     // register()
-    error NotRegistryService();
+    error CallerNotRegistryService();
+    error ServiceRegistration();
+
+    // registerService()
+    error CallerNotReleaseManager();
+    error ServiceAlreadyRegistered(address service);
+
+    // _register()
     error ZeroParentAddress();
     error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
     error ContractAlreadyRegistered(address objectAddress);
-    error InvalidServiceVersion(VersionPart majorVersion);
-    error ServiceNameAlreadyRegistered(string name, VersionPart majorVersion);
 
     struct ObjectInfo {
         NftId nftId;
@@ -38,7 +38,17 @@ interface IRegistry is IERC165 {
     }// TODO delete nftId and initialOwner(if not used) from struct
     // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
 
-    function setMajorVersion(VersionPart newMajorVersionMax) external;
+    struct ReleaseInfo {
+        ObjectType[] domains;
+        Timestamp createdAt;
+        //Timestamp updatedAt;
+    }
+
+    function registerService(
+        ObjectInfo memory serviceInfo, 
+        VersionPart serviceVersion, 
+        ObjectType serviceDomain
+    ) external returns(NftId nftId);
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
 
@@ -47,6 +57,8 @@ interface IRegistry is IERC165 {
     function getMajorVersionMax() external view returns (VersionPart);
 
     function getMajorVersion() external view returns (VersionPart);
+
+    function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory);
 
     function getObjectCount() external view returns (uint256);
 
@@ -68,11 +80,9 @@ interface IRegistry is IERC165 {
 
     function isRegisteredService(address contractAddress) external view returns (bool);
 
-    function getServiceName(NftId nftId) external view returns (string memory name);
-
     function getServiceAddress(
-        string memory serviceName, 
-        VersionPart majorVersion
+        ObjectType serviceDomain, 
+        VersionPart releaseVersion
     ) external view returns (address serviceAddress);
 
     function getChainNft() external view returns (ChainNft);

@@ -1,59 +1,69 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryService, RegistryServiceManager, RegistryService__factory, Registry__factory, TokenRegistry } from "../../typechain-types";
+import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryService, RegistryServiceManager, RegistryAccessManager, ReleaseManager, RegistryService__factory, Registry__factory, TokenRegistry } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, verifyContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
+import { getFieldFromTxRcptLogs, executeTx } from "./transaction";
 
 
 export type RegistryAddresses = {
-    registryServiceManagerAddress: AddressLike;
-    registryServiceManager: RegistryServiceManager;
+
+    registryAccessManagerAddress : AddressLike;
+    registryAccessManager: RegistryAccessManager;
+
+    releaseManagerAddress : AddressLike;
+    releaseManager: ReleaseManager;
 
     registryAddress: AddressLike; 
     registry: Registry;
     registryNftId: bigint;
-
-    registryServiceAddress: AddressLike;
-    registryService: RegistryService;
 
     chainNftAddress: AddressLike;
     chainNft: ChainNft;
 
     tokenRegistryAddress: AddressLike;
     tokenRegistry: TokenRegistry;
+
+    registryServiceManagerAddress: AddressLike;
+    registryServiceManager: RegistryServiceManager;
+
+    registryServiceAddress: AddressLike;
+    registryService: RegistryService;
+    registryServiceNftId: bigint;
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
     logger.info("======== Starting deployment of registry ========");
-
-    const { address: accessManagerAddress } = await deployContract(
-        "AccessManager",
-        owner,
-        [owner],
-        {
-        });
-
-    const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
-        "RegistryServiceManager",
-        owner,
-        [accessManagerAddress],
+    
+    const { address: registryAccessManagerAddress, contract: registryAccessManagerBaseContract } = await deployContract(
+        "RegistryAccessManager",
+        owner, // GIF_ADMIN_ROLE
+        [owner], // GIF_MANAGER_ROLE
         {
             libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress,
-                VersionLib: libraries.versionLibAddress,
-                VersionPartLib: libraries.versionPartLibAddress,
-                ContractDeployerLib: libraries.contractDeployerLibAddress,
-                BlocknumberLib: libraries.blockNumberLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
             }
         });
-    const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
+    const registryAccessManager = registryAccessManagerBaseContract as RegistryAccessManager;
 
-    const registryServiceAddress = await registryServiceManager.getRegistryService();
-    const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
+    const { address: releaseManagerAddress, contract: releaseManagerBaseContract } = await deployContract(
+        "ReleaseManager",
+        owner,
+        [
+            registryAccessManager,
+            3//initialVersion
+        ], 
+        {
+            libraries: {
+                TimestampLib: libraries.timestampLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress
+            }
+        });
+    const releaseManager = releaseManagerBaseContract as ReleaseManager;
 
-    const registryAddress = await registryService.getRegistry();
+    const registryAddress = await releaseManager.getRegistry();
     const registry = Registry__factory.connect(registryAddress, owner);
     const registryNftId = await registry["getNftId(address)"](registryAddress);
 
@@ -71,29 +81,70 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             }
         });
     const tokenRegistry = tokenRegistryBaseContract as TokenRegistry;
-    await tokenRegistry.linkToNftOwnable(registryAddress, );
 
-    logger.info(`RegistryService deployed at ${registryServiceAddress}`);
+    await registryAccessManager.initialize(releaseManager, tokenRegistry);
+
+    const initialAuthority = await registryAccessManager.authority();
+
+    const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
+        "RegistryServiceManager",
+        owner,
+        [
+            initialAuthority,
+            registry
+        ],
+        {
+            libraries: {
+                BlocknumberLib: libraries.blockNumberLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress
+            }
+        });
+    const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
+
+    const registryServiceAddress = await registryServiceManager.getRegistryService();
+    const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
+
+    //await releaseManager.createNextRelease(registryService);
+    const rcptCre = await executeTx(async () => await releaseManager.createNextRelease(registryService));
+    const logReleaseCreationInfo = getFieldFromTxRcptLogs(rcptCre!, registry.interface, "LogRegistration", "nftId");
+    const registryServiceNftId = (logReleaseCreationInfo as unknown);
+
+    await registryServiceManager.linkToNftOwnable(registryAddress);
+    await tokenRegistry.linkToNftOwnable(registryAddress);
+
+    logger.info(`RegistryAccessManager deployed at ${registryAccessManager}`);
+    logger.info(`ReleaseManager deployed at ${releaseManager}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);
     logger.info(`TokenRegistry deployed at ${tokenRegistryAddress}`);
+    logger.info(`RegistryServiceManager deployed at ${registryServiceManager}`);
+    logger.info(`RegistryService deployed at ${registryServiceAddress}`);
 
     const regAdr = {
-        registryServiceManagerAddress,
-        registryServiceManager,
-        
+        registryAccessManagerAddress,
+        registryAccessManager,
+    
+        releaseManagerAddress,
+        releaseManager,
+    
         registryAddress,
         registry,
         registryNftId,
-
-        registryServiceAddress,
-        registryService,
-
+    
         chainNftAddress,
         chainNft,
-
+    
         tokenRegistryAddress,
         tokenRegistry,
+    
+        registryServiceManagerAddress,
+        registryServiceManager,
+    
+        registryServiceAddress,
+        registryService,
+        registryServiceNftId
     } as RegistryAddresses;
 
     await verifyRegistryComponents(regAdr, owner)

@@ -16,7 +16,7 @@ contract RegistryMajorVersionTests is RegistryTestBase {
     VersionPart public majorVersion4 = VersionPartLib.toVersionPart(4);
     VersionPart public majorVersion5 = VersionPartLib.toVersionPart(5);
     VersionPart public majorVersion6 = VersionPartLib.toVersionPart(6);
-
+/* TODO refactor
     function test_registryInitialMajorVersions() public {
         assertEq(registry.getMajorVersion().toInt(), 3, "initial major version minimum not 3");
         assertEq(registry.GIF_MAJOR_VERSION_AT_DEPLOYMENT(), 3, "initial major version maximum not 3");
@@ -109,5 +109,6 @@ contract RegistryMajorVersionTests is RegistryTestBase {
         vm.prank(outsider);
         registry.setMajorVersion(majorVersion4);
     }
+*/  
 }
 

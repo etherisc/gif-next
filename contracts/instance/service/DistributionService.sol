@@ -12,7 +12,7 @@ import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
-import {DISTRIBUTION} from "../../types/ObjectType.sol";
+import {ObjectType, DISTRIBUTION} from "../../types/ObjectType.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
@@ -28,15 +28,12 @@ import {Instance} from "../Instance.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 import {IBaseComponent} from "../../components/IBaseComponent.sol";
 
-string constant DISTRIBUTION_SERVICE_NAME = "DistributionService";
 
 contract DistributionService is
     ComponentServiceBase,
     IDistributionService
 {
     using NftIdLib for NftId;
-
-    string public constant NAME = "DistributionService";
 
     address internal _registryAddress;
     
@@ -58,9 +55,8 @@ contract DistributionService is
         _registerInterface(type(IDistributionService).interfaceId);
     }
 
-
-    function getName() public pure override(IService, Service) returns(string memory name) {
-        return NAME;
+    function getDomain() public pure override(Service, IService) returns(ObjectType) {
+        return DISTRIBUTION();
     }
 
     function register(address distributionAddress) 
@@ -74,7 +70,7 @@ contract DistributionService is
         bytes memory data;
         (info, data) = getRegistryService().registerDistribution(distribution, distributionOwner);
 
-        IInstance instance = _getInstance(info);
+        IInstance instance = _getInstance(info.parentNftId);
 
         bool hasRole = getInstanceService().hasRole(
             distributionOwner, 

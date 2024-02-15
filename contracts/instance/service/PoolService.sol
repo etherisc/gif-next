@@ -14,7 +14,7 @@ import {Versionable} from "../../shared/Versionable.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {POOL, BUNDLE} from "../../types/ObjectType.sol";
+import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
@@ -39,8 +39,6 @@ contract PoolService is
 {
     using NftIdLib for NftId;
 
-    string public constant NAME = "PoolService";
-
     address internal _registryAddress;
 
     function _initialize(
@@ -61,8 +59,8 @@ contract PoolService is
         _registerInterface(type(IPoolService).interfaceId);
     }
 
-    function getName() public pure override(Service, IService) returns(string memory name) {
-        return NAME;
+    function getDomain() public pure override(Service, IService) returns(ObjectType) {
+        return POOL();
     }
 
     function register(address poolAddress) 
@@ -76,7 +74,7 @@ contract PoolService is
         bytes memory data;
         (info, data) = getRegistryService().registerPool(pool, poolOwner);
 
-        IInstance instance = _getInstance(info);
+        IInstance instance = _getInstance(info.parentNftId);
 
         bool hasRole = getInstanceService().hasRole(
             poolOwner, 

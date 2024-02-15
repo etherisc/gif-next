@@ -180,7 +180,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             objectType: objectType,
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0),
-            initialOwner: address(registryServiceHarness),
+            initialOwner: address(registry), // any registered address
             data: ""
         });
 

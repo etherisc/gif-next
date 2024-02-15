@@ -167,7 +167,7 @@ contract ChainNftTest is Test {
         vm.prank(registry);
         uint256 tokenId = chainNft.mint(outsider, address(interceptor), uri);
 
-        assertEq(tokenId, 43133705, "unexpected token id");
+        assertEq(tokenId, 33133705, "unexpected token id");
         assertEq(chainNft.totalMinted(), 1, "minted != 1 after mint");
         assertTrue(chainNft.exists(tokenId), "token does not exists");
         assertEq(chainNft.balanceOf(outsider), 1, "unexpected nft balance for outsider");
@@ -184,11 +184,11 @@ contract ChainNftTest is Test {
 
         vm.prank(registry);
         uint256 tokenId1 = chainNft.mint(outsider, address(0), "");
-        assertEq(tokenId1, 43133705, "unexpected token 1 id");
+        assertEq(tokenId1, 33133705, "unexpected token 1 id");
 
         vm.prank(registry);
         uint256 tokenId2 = chainNft.mint(outsider, address(0), "");
-        assertEq(tokenId2, 53133705, "unexpected token 2 id");
+        assertEq(tokenId2, 43133705, "unexpected token 2 id");
 
         assertEq(chainNft.totalMinted(), 2, "minted != 1 after mint");
         assertTrue(chainNft.exists(tokenId1), "token 1 does not exists");
@@ -204,7 +204,7 @@ contract ChainNftTest is Test {
         vm.prank(registry);
         uint256 tokenId = chainNft.mint(outsider, address(interceptor), "");
 
-        assertEq(tokenId, 43133705, "unexpected token id");
+        assertEq(tokenId, 33133705, "unexpected token id");
         assertEq(chainNft.totalMinted(), 1, "minted != 1 after mint");
         assertTrue(chainNft.exists(tokenId), "token does not exists");
         assertEq(chainNft.balanceOf(outsider), 1, "unexpected nft balance for outsider");

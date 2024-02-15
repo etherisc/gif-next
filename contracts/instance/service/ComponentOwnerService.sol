@@ -16,7 +16,7 @@ import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../types/RoleId.sol";
-import {ObjectType, TOKEN, COMPONENT, PRODUCT, ORACLE, POOL, DISTRIBUTION} from "../../types/ObjectType.sol";
+import {ObjectType, REGISTRY, TOKEN, COMPONENT, PRODUCT, ORACLE, POOL, DISTRIBUTION} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../types/StateId.sol";
 import {Key32} from "../../types/Key32.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
@@ -50,8 +50,6 @@ contract ComponentOwnerService is
 
     error CollateralizationLevelIsZero();
 
-    string public constant NAME = "ComponentOwnerService";
-
     modifier onlyRegisteredComponent(IBaseComponent component) {
         NftId nftId = getRegistry().getNftId(address(component));
         require(nftId.gtz(), "ERROR:COS-001:COMPONENT_UNKNOWN");
@@ -68,8 +66,8 @@ contract ComponentOwnerService is
         _registerInterface(type(IComponentOwnerService).interfaceId);
     }
 
-    function getName() public pure override(IService, Service) returns(string memory name) {
-        return NAME;
+    function getDomain() public pure override(Service, IService) returns(ObjectType) {
+        return COMPONENT();
     }
 
     function getRoleForType(
@@ -90,7 +88,7 @@ contract ComponentOwnerService is
     }
 
     function getRegistryService() public view virtual returns (IRegistryService) {
-        address service = getRegistry().getServiceAddress("RegistryService", getMajorVersion());
+        address service = getRegistry().getServiceAddress(REGISTRY(), getMajorVersion());
         return IRegistryService(service);
     }
 

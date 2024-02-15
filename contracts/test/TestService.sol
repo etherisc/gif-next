@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {ObjectType, PRODUCT} from "../../contracts/types/ObjectType.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {Version, VersionLib} from "../../contracts/types/Version.sol";
 import {Service} from "../../contracts/shared/Service.sol";
@@ -18,7 +19,7 @@ contract TestService is Service {
         _initializeService(registry, initialOwner);
     }
 
-    function getName() public pure override returns(string memory name) {
-        return NAME;
+    function getDomain() public pure override returns(ObjectType) {
+        return PRODUCT();
     }
 }

@@ -6,7 +6,7 @@ import {ProxyManager} from "../../shared/ProxyManager.sol";
 import {DistributionService} from "./DistributionService.sol";
 import {Registry} from "../../registry/Registry.sol";
 import {RegistryService} from "../../registry/RegistryService.sol";
-import {VersionLib} from "../../types/Version.sol";
+import {REGISTRY} from "../../types/ObjectType.sol";
 
 contract DistributionServiceManager is ProxyManager {
 
@@ -25,11 +25,11 @@ contract DistributionServiceManager is ProxyManager {
             data);
 
         _distributionService = DistributionService(address(versionable));
-
-        Registry registry = Registry(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
-        RegistryService registryService = RegistryService(registryServiceAddress);
-        // TODO this must have a role or own nft to register service
+        
+        // TODO `thi` must have a role or own nft to register service
+        //Registry registry = Registry(registryAddress);
+        //address registryServiceAddress = registry.getServiceAddress(REGISTRY(), _distributionService.getMajorVersion());
+        //RegistryService registryService = RegistryService(registryServiceAddress);
         //registryService.registerService(_distributionService);
         
         // TODO no nft to link yet
@@ -37,9 +37,6 @@ contract DistributionServiceManager is ProxyManager {
         //_linkToNftOwnable(
         //    address(registryAddress),
         //    address(_distributionService));
-
-        // implies that after this constructor call only upgrade functionality is available
-        _isDeployed = true;
     }
 
     //--- view functions ----------------------------------------------------//

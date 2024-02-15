@@ -1,43 +1,39 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IService} from "../shared/IService.sol";
 
-import {ChainNft} from "./ChainNft.sol";
-import {IRegistry} from "./IRegistry.sol";
-import {NftId, toNftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
-import {Version, VersionPart, VersionLib, VersionPartLib} from "../types/Version.sol";
+import {NftId, toNftId, zeroNftId} from "../types/NftId.sol";
+import {VersionPart} from "../types/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
-import {ITransferInterceptor} from "./ITransferInterceptor.sol";
 
 import {ERC165} from "../shared/ERC165.sol";
 
+import {ChainNft} from "./ChainNft.sol";
+import {IRegistry} from "./IRegistry.sol";
+import {ReleaseManager} from "./ReleaseManager.sol";
 
 // IMPORTANT
 // Each NFT minted by registry is accosiated with:
 // 1) NFT owner
 // 2) registred contract OR object stored in registered (parent) contract
 // Four registration flows:
-// 1) non IRegisterable address by registryOwner (TOKEN)
-// 2) IRegisterable address by registryOwner (SERVICE)
-// 3) IRegisterable address by approved service (INSTANCE, COMPONENT)
-// 4) state object by approved service (POLICY, BUNDLE, STAKE)
+// 1) IService address by release manager (SERVICE of domain SERVICE aka registry service aka release creation)
+// 2) IService address by release manager (SERVICE of domain !SERVICE aka regular service)
+// 3) IRegisterable address by regular service (INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE)
+// 4) state object by regular service (POLICY, BUNDLE, STAKE)
 
 contract Registry is
     ERC165,
     IRegistry
 {
-    uint256 public constant GIF_MAJOR_VERSION_AT_DEPLOYMENT = 3;
     address public constant NFT_LOCK_ADDRESS = address(0x1);
     uint256 public constant REGISTRY_TOKEN_SEQUENCE_ID = 2;
-    uint256 public constant REGISTRY_SERVICE_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
-
-    VersionPart internal _majorVersion;
 
     mapping(NftId nftId => ObjectInfo info) internal _info;
     mapping(address object => NftId nftId) internal _nftIdByAddress;
+
+    mapping(VersionPart version => mapping(ObjectType serviceDomain => address)) _service;
 
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) internal _isValidContractCombination;
@@ -45,44 +41,35 @@ contract Registry is
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) internal _isValidObjectCombination;
 
-    mapping(NftId nftId => string name) internal _string;
-    mapping(bytes32 serviceNameHash => mapping(
-            VersionPart majorVersion => address service)) internal _service;
-
     NftId internal _registryNftId;
-    NftId internal _serviceNftId; // set in stone upon registry creation
     ChainNft internal _chainNft;
 
-
-    modifier onlyOwner() {
-        if(msg.sender != getOwner()) {
-            revert NotOwner(msg.sender);
-        }
-        _;
-    }
+    ReleaseManager internal _releaseManager;
 
     modifier onlyRegistryService() {
-        if(msg.sender != _info[_serviceNftId].objectAddress) {
-            revert NotRegistryService();
+        if(!_releaseManager.isActiveRegistryService(msg.sender)) {
+            revert CallerNotRegistryService();
         }
         _;
     }
 
-    constructor(address registryOwner, VersionPart majorVersion)
-    {
-        require(registryOwner > address(0), "Registry: registry owner is 0");
+    modifier onlyReleaseManager() {
+        if(msg.sender != address(_releaseManager)) {
+            revert CallerNotReleaseManager();
+        }
+        _;
+    }
 
-        // major version at constructor time
-        _majorVersion = VersionLib.toVersionPart(GIF_MAJOR_VERSION_AT_DEPLOYMENT);
-        emit LogInitialMajorVersionSet(_majorVersion);
+    constructor()
+    {
+        _releaseManager = ReleaseManager(msg.sender);
 
         // deploy NFT 
         _chainNft = new ChainNft(address(this));// adds 10kb to deployment size
 
         // initial registry setup
         _registerProtocol();
-        _registerRegistry(registryOwner);
-        _registerRegistryService(registryOwner);
+        _registerRegistry();
 
         // set object parent relations
         _setupValidObjectParentCombinations();
@@ -90,94 +77,49 @@ contract Registry is
         _registerInterface(type(IRegistry).interfaceId);
     }
 
-    // from IRegistry
-
-    /// @dev latest GIF release version 
-    function setMajorVersion(VersionPart newMajorVersion)
+    function registerService(
+        ObjectInfo memory info, 
+        VersionPart version, 
+        ObjectType domain
+    )
         external
-        onlyOwner
+        onlyReleaseManager
+        returns(NftId nftId)
     {
-        // ensure major version increments is one
-        uint256 oldMax = _majorVersion.toInt();
-        uint256 newMax = newMajorVersion.toInt();
-        if (newMax <= oldMax || newMax - oldMax != 1) {
-            revert MajorVersionMaxIncreaseInvalid(newMajorVersion, _majorVersion);
+        /* must be guaranteed by release manager
+        if(info.objectType != SERVICE()) {
+            revert();
+        }
+        info.initialOwner = NFT_LOCK_ADDRESS <- if services are access managed
+        */
+
+        if(_service[version][domain] > address(0)) {
+            revert ServiceAlreadyRegistered(info.objectAddress);
         }
 
-        _majorVersion = newMajorVersion;
-        emit LogMajorVersionSet(_majorVersion);
+        _service[version][domain] = info.objectAddress; // nftId;
+
+        nftId = _register(info);
+
+        emit LogServiceRegistration(version, domain);
     }
 
-    /// @dev registry protects only against tampering existing records, registering with invalid types pairs and 0 parent address
-    // TODO service registration means its approval for some type?
-    // TODO registration of precompile addresses
     function register(ObjectInfo memory info)
         external
         onlyRegistryService
         returns(NftId nftId)
     {
-        ObjectType objectType = info.objectType;
-        NftId parentNftId = info.parentNftId;
-        ObjectInfo memory parentInfo = _info[parentNftId];
-        ObjectType parentType = parentInfo.objectType; // see function header
-        address parentAddress = parentInfo.objectAddress;
-
-        // parent is contract -> need to check? -> check before minting
-        // special case: global registry nft as parent when not on mainnet -> global registry address is 0
-        // special case: when parentNftId == _chainNft.mint(), check for zero parent address before mint
-        // special case: when parentNftId == _chainNft.mint() && objectAddress == initialOwner
-        if(parentAddress == address(0)) {
-            revert ZeroParentAddress();
+        // no service registrations
+        if(info.objectType == SERVICE()) {
+            revert ServiceRegistration();
         }
 
-        address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
-
-        // TODO does external call
-        uint256 mintedTokenId = _chainNft.mint(
-            info.initialOwner,
-            interceptor,
-            EMPTY_URI);
-        nftId = toNftId(mintedTokenId);
-
-        // TODO move nftId out of info struct
-        // getters by nftId -> return struct without nftId
-        // getters by address -> return nftId AND struct
-        info.nftId = nftId;
-        _info[nftId] = info;
-
-        if(info.objectAddress > address(0)) 
-        {
-            // TODO if need to add types latter -> at least call this check from registry service
-            // parent is registered + object-parent types are valid
-            if(_isValidContractCombination[objectType][parentType] == false) {
-                revert InvalidTypesCombination(objectType, parentType);
-            }
-
-            address contractAddress = info.objectAddress;
-
-            if(_nftIdByAddress[contractAddress].gtz()) { 
-                revert ContractAlreadyRegistered(contractAddress);
-            }
-
-            _nftIdByAddress[contractAddress] = nftId;
-
-            // special case
-            if(objectType == SERVICE()) {
-                _registerService(info);
-            }
-        }
-        else
-        {
-            if(_isValidObjectCombination[objectType][parentType] == false) {
-                revert InvalidTypesCombination(objectType, parentType);
-            }
-        }
-
-        emit LogRegistration(info);
+        nftId = _register(info);
     }
+
     /// @dev earliest GIF major version 
     function getMajorVersionMin() external view returns (VersionPart) {
-        return VersionLib.toVersionPart(GIF_MAJOR_VERSION_AT_DEPLOYMENT);
+        return _releaseManager.getInitialVersion();
     }
 
     // TODO make distinction between active an not yet active version
@@ -188,12 +130,17 @@ contract Registry is
     // in the process of being set up while the latest active version is 1 major release smaller
     /// @dev latest GIF major version (might not yet be active)
     function getMajorVersionMax() external view returns (VersionPart) {
-        return _majorVersion;
+        return _releaseManager.getNextVersion();
     }
 
     /// @dev latest active GIF release version 
     function getMajorVersion() external view returns (VersionPart) { 
-        return _majorVersion;
+        return _releaseManager.getLatestVersion();
+    }
+
+    function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory)
+    {
+        return _releaseManager.getReleaseInfo(version);
     }
 
     function getObjectCount() external view override returns (uint256) {
@@ -236,18 +183,12 @@ contract Registry is
         return _nftIdByAddress[object].gtz() && _info[_nftIdByAddress[object]].objectType == SERVICE();
     }
 
-    function getServiceName(NftId nftId) external view returns (string memory) {
-        return _string[nftId];
-    }
-
-    // special case to retrive a gif service
     function getServiceAddress(
-        string memory serviceName, 
-        VersionPart majorVersion
+        ObjectType serviceDomain, 
+        VersionPart releaseVersion
     ) external view returns (address)
     {
-        bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-        return _service[serviceNameHash][majorVersion];
+        return _service[releaseVersion][serviceDomain];
     }
 
     function getChainNft() external view override returns (ChainNft) {
@@ -260,28 +201,65 @@ contract Registry is
 
     // Internals
 
-    function _registerService(ObjectInfo memory info)
+    /// @dev registry protects only against tampering existing records, registering with invalid types pairs and 0 parent address
+    // TODO registration of precompile addresses
+    function _register(ObjectInfo memory info)
         internal
+        returns(NftId nftId)
     {
-        (
-            string memory serviceName,
-            VersionPart majorVersion
-        ) = abi.decode(info.data, (string, VersionPart));
-        bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
+        ObjectType objectType = info.objectType;
+        NftId parentNftId = info.parentNftId;
+        ObjectInfo memory parentInfo = _info[parentNftId];
+        ObjectType parentType = parentInfo.objectType; // see function header
+        address parentAddress = parentInfo.objectAddress;
 
-        // ensures consistency of service.getVersion() and majorVersion here
-        if(majorVersion != _majorVersion) {
-            revert InvalidServiceVersion(majorVersion);
+        // parent is contract -> need to check? -> check before minting
+        // special case: global registry nft as parent when not on mainnet -> global registry address is 0
+        // special case: when parentNftId == _chainNft.mint(), check for zero parent address before mint
+        // special case: when parentNftId == _chainNft.mint() && objectAddress == initialOwner
+        if(parentAddress == address(0)) {
+            revert ZeroParentAddress();
         }
-        
-        if(_service[serviceNameHash][majorVersion] != address(0)) {
-            revert ServiceNameAlreadyRegistered(serviceName, majorVersion);
+
+        address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
+
+        // TODO does external call
+        // compute next nftId, do all checks and stores, mint() at most end...
+        uint256 mintedTokenId = _chainNft.mint(
+            info.initialOwner,
+            interceptor,
+            EMPTY_URI);
+        nftId = toNftId(mintedTokenId);
+
+        // TODO move nftId out of info struct
+        // getters by nftId -> return struct without nftId
+        // getters by address -> return nftId AND struct
+        info.nftId = nftId;
+        _info[nftId] = info;
+
+        if(info.objectAddress > address(0)) 
+        {
+            // parent is registered + object-parent types are valid
+            if(_isValidContractCombination[objectType][parentType] == false) {
+                revert InvalidTypesCombination(objectType, parentType);
+            }
+
+            address contractAddress = info.objectAddress;
+
+            if(_nftIdByAddress[contractAddress].gtz()) { 
+                revert ContractAlreadyRegistered(contractAddress);
+            }
+
+            _nftIdByAddress[contractAddress] = nftId;
+        }
+        else
+        {
+            if(_isValidObjectCombination[objectType][parentType] == false) {
+                revert InvalidTypesCombination(objectType, parentType);
+            }
         }
 
-        _string[info.nftId] = serviceName;
-        _service[serviceNameHash][majorVersion] = info.objectAddress;
-
-        emit LogServiceNameRegistration(serviceName, majorVersion); 
+        emit LogRegistration(nftId, parentNftId, objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
     }
 
     /// @dev obtain interceptor address for this nft if applicable, address(0) otherwise
@@ -314,32 +292,31 @@ contract Registry is
 
     /// @dev protocol registration used to anchor the dip ecosystem relations
     function _registerProtocol() 
-        internal
+        private
     {
         uint256 protocolId = _chainNft.PROTOCOL_NFT_ID();
         NftId protocolNftId = toNftId(protocolId);
 
-        _chainNft.mint(NFT_LOCK_ADDRESS, protocolId);
+        _info[protocolNftId] = ObjectInfo({
+            nftId: protocolNftId,
+            parentNftId: zeroNftId(),
+            objectType: PROTOCOL(),
+            isInterceptor: false, 
+            objectAddress: address(0),
+            initialOwner: NFT_LOCK_ADDRESS,
+            data: ""
+        });
 
-        _info[protocolNftId] = ObjectInfo(
-            protocolNftId,
-            zeroNftId(), // parent
-            PROTOCOL(),
-            false, // isInterceptor
-            address(0), // objectAddress
-            NFT_LOCK_ADDRESS,// initialOwner
-            ""
-        );
+        _chainNft.mint(NFT_LOCK_ADDRESS, protocolId);
     }
 
     /// @dev registry registration
     /// might also register the global registry when not on mainnet
-    function _registerRegistry(address registryOwner) 
-        internal
+    function _registerRegistry() 
+        private
     {
         uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
         NftId registryNftId = toNftId(registryId);
-
         NftId parentNftId;
 
         if(registryId != _chainNft.GLOBAL_REGISTRY_ID()) 
@@ -352,68 +329,39 @@ contract Registry is
             parentNftId = toNftId(_chainNft.PROTOCOL_NFT_ID());
         }
 
-        _chainNft.mint(registryOwner, registryId);
-
-        _info[registryNftId] = ObjectInfo(
-            registryNftId,
-            parentNftId,
-            REGISTRY(),
-            false, // isInterceptor
-            address(this), 
-            registryOwner,
-            "" 
-        );
+        _info[registryNftId] = ObjectInfo({
+            nftId: registryNftId,
+            parentNftId: parentNftId,
+            objectType: REGISTRY(),
+            isInterceptor: false,
+            objectAddress: address(this), 
+            initialOwner: NFT_LOCK_ADDRESS,
+            data: "" 
+        });
         _nftIdByAddress[address(this)] = registryNftId;
         _registryNftId = registryNftId;
-    }
 
+        _chainNft.mint(NFT_LOCK_ADDRESS, registryId);
+    }
 
     /// @dev global registry registration for non mainnet registries
     function _registerGlobalRegistry() 
-        internal
+        private
     {
         uint256 globalRegistryId = _chainNft.GLOBAL_REGISTRY_ID();
-
-        _chainNft.mint(NFT_LOCK_ADDRESS, globalRegistryId);
-
         NftId globalRegistryNftId = toNftId(globalRegistryId);
 
-        _info[globalRegistryNftId] = ObjectInfo(
-            globalRegistryNftId,
-            toNftId(_chainNft.PROTOCOL_NFT_ID()), // parent
-            REGISTRY(),
-            false, // isInterceptor
-            address(0), // objectAddress
-            NFT_LOCK_ADDRESS, // initialOwner
-            "" // data
-        );
-    }
+        _info[globalRegistryNftId] = ObjectInfo({
+            nftId: globalRegistryNftId,
+            parentNftId: toNftId(_chainNft.PROTOCOL_NFT_ID()),
+            objectType: REGISTRY(),
+            isInterceptor: false,
+            objectAddress: address(0),
+            initialOwner: NFT_LOCK_ADDRESS,
+            data: ""
+        });
 
-    function _registerRegistryService(address registryOwner)
-        internal
-    {
-        uint256 serviceId = _chainNft.calculateTokenId(REGISTRY_SERVICE_TOKEN_SEQUENCE_ID);
-        NftId serviceNftId = toNftId(serviceId);        
-
-        _chainNft.mint(registryOwner, serviceId);
-
-        _info[serviceNftId] = ObjectInfo(
-            serviceNftId,
-            _registryNftId,
-            SERVICE(),
-            false, // isInterceptor
-            msg.sender, // service deploys registry
-            registryOwner, // initialOwner,
-            "" 
-        );
-
-        _nftIdByAddress[msg.sender] = serviceNftId;
-
-        string memory serviceName = "RegistryService";
-        bytes32 serviceNameHash = keccak256(abi.encode(serviceName));
-        _service[serviceNameHash][VersionLib.toVersionPart(GIF_MAJOR_VERSION_AT_DEPLOYMENT)] = msg.sender;
-        _string[serviceNftId] = serviceName;
-        _serviceNftId = serviceNftId;
+        _chainNft.mint(NFT_LOCK_ADDRESS, globalRegistryId);
     }
 
     /// @dev defines which object - parent types relations are allowed to register
@@ -423,7 +371,7 @@ contract Registry is
     // 3) DO NOT use REGISTRY as object type
     // 2) DO NOT use PROTOCOL and "zeroObjectType"
     function _setupValidObjectParentCombinations() 
-        internal 
+        private 
     {
         // registry as parent, ONLY registry owner
         _isValidContractCombination[TOKEN()][REGISTRY()] = true;
