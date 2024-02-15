@@ -97,7 +97,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         ISetup.ProductSetupInfo memory initialSetup = _decodeAndVerifyProductSetup(data);
         instance.createProductSetup(productNftId, initialSetup);
 
-        // FIXME: create component target
+        getInstanceService().createTarget(_getInstanceNftId(info), productAddress, product.getName());
     }
 
     function _decodeAndVerifyProductSetup(bytes memory data) internal returns(ISetup.ProductSetupInfo memory setup)

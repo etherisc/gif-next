@@ -115,4 +115,12 @@ contract SimpleProduct is Product {
         return true;
     }
 
+    function doWhenNotLocked() 
+        public 
+        isNotLocked
+        returns (bool) 
+    {
+        return true;
+    }
+
 }

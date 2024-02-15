@@ -89,7 +89,7 @@ contract PoolService is
         ISetup.PoolSetupInfo memory initialSetup = _decodeAndVerifyPoolSetup(data);
         instance.createPoolSetup(poolNftId, initialSetup);
 
-        // FIXME: create component target
+        getInstanceService().createTarget(_getInstanceNftId(info), poolAddress, pool.getName());
     }
 
     function _decodeAndVerifyPoolSetup(bytes memory data) internal returns(ISetup.PoolSetupInfo memory setup)
