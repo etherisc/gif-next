@@ -1,15 +1,10 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {console} from "../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "./base/TestGifBase.sol";
-import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
-import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../contracts/types/RoleId.sol";
-import {Product} from "../contracts/components/Product.sol";
+import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
+import {PRODUCT_OWNER_ROLE} from "../contracts/types/RoleId.sol";
 import {MockProduct} from "./mock/MockProduct.sol";
-import {Distribution} from "../contracts/components/Distribution.sol";
-import {Pool} from "../contracts/components/Pool.sol";
-import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
@@ -21,7 +16,6 @@ import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
 import {ReferralLib} from "../contracts/types/Referral.sol";
 import {APPLIED, ACTIVE, UNDERWRITTEN} from "../contracts/types/StateId.sol";
 import {POLICY} from "../contracts/types/ObjectType.sol";
-import {BundleManager} from "../contracts/instance/BundleManager.sol";
 
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
@@ -232,7 +226,7 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
-    function test_Product_underwrite_reverts_on_locked_bundle() public {
+    function test_underwrite_reverts_on_locked_bundle() public {
         // GIVEN
         _prepareProduct();  
 
@@ -281,7 +275,7 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
     }
 
-    function test_Product_activate() public {
+    function test_activate() public {
         // GIVEN
         _prepareProduct();  
 
@@ -335,7 +329,7 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
     }
 
-    function test_Product_createRisk() public {
+    function test_createRisk() public {
         _prepareProduct();
         vm.startPrank(productOwner);
 
@@ -352,7 +346,7 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
     }
 
-    function test_Product_updateRisk() public {
+    function test_updateRisk() public {
         _prepareProduct();
         vm.startPrank(productOwner);
 
@@ -379,7 +373,7 @@ contract TestProduct is TestGifBase {
 
     function _prepareProduct() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
+        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();
 
         _prepareDistributionAndPool();
@@ -431,7 +425,5 @@ contract TestProduct is TestGifBase {
         );
         vm.stopPrank();
     }
-
-    
 
 }

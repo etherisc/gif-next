@@ -20,21 +20,6 @@ abstract contract ComponentServiceBase is Service {
     error ExpectedRoleMissing(RoleId expected, address caller);
     error ComponentTypeInvalid(ObjectType componentType);
 
-    mapping (ObjectType => RoleId) internal _objectTypeToExpectedRole;
-
-    /// @dev modifier to check if caller has a role on the instance the component is registered in
-    modifier onlyComponentOwnerRole(address componentAddress) {
-        BaseComponent component = BaseComponent(componentAddress);
-        ObjectType objectType = _getObjectType(component);
-        RoleId expectedRole = _objectTypeToExpectedRole[objectType];
-
-        address componentOwner = msg.sender;
-        INftOwnable nftOwnable = INftOwnable(address(component.getInstance()));
-        if(! getInstanceService().hasRole(componentOwner, expectedRole, nftOwnable.getNftId())) {
-            revert ExpectedRoleMissing(expectedRole, componentOwner);
-        }
-        _;
-    }
 
     /// @dev modifier to check if caller is a registered service
     modifier onlyService() {
@@ -43,64 +28,19 @@ abstract contract ComponentServiceBase is Service {
         _;
     }
 
-    function _initializeService(
-        address registry, 
-        address initialOwner
-    )
-        internal
-        override
-    {
-        super._initializeService(registry, initialOwner);
-        _objectTypeToExpectedRole[PRODUCT()] = PRODUCT_OWNER_ROLE();
-        _objectTypeToExpectedRole[POOL()] = POOL_OWNER_ROLE();
-        _objectTypeToExpectedRole[DISTRIBUTION()] = DISTRIBUTION_OWNER_ROLE();
-        _objectTypeToExpectedRole[ORACLE()] = ORACLE_OWNER_ROLE();
+    // view functions
+
+    function getRegistryService() public view virtual returns (IRegistryService) {
+        address service = getRegistry().getServiceAddress("RegistryService", getMajorVersion());
+        return IRegistryService(service);
     }
 
     function getInstanceService() public view returns (InstanceService) {
         return InstanceService(getRegistry().getServiceAddress("InstanceService", getMajorVersion()));
     }
 
-    function register(address componentAddress) 
-        external 
-        onlyComponentOwnerRole(componentAddress)
-        returns (NftId componentNftId)
-    {
-        address componentOwner = msg.sender;
-        BaseComponent component = BaseComponent(componentAddress);
-        ObjectType objectType = _getObjectType(component);
-        IRegistryService registryService = getRegistryService();
+    // internal view functions
 
-        IRegistry.ObjectInfo memory objInfo;
-        bytes memory initialObjData;
-
-        if (objectType == DISTRIBUTION()) {
-            (objInfo, initialObjData) = registryService.registerDistribution(component, componentOwner);
-        } else if (objectType == PRODUCT()) {
-            (objInfo, initialObjData) = registryService.registerProduct(component, componentOwner);
-        } else if (objectType == POOL()) {
-            (objInfo, initialObjData) = registryService.registerPool(component, componentOwner);
-        // TODO: implement this for oracle - currently missing in registry
-        // } else if (objectType == ORACLE()) {
-        //     (objInfo, initialObjData) = registryService.registerOracle(component, componentOwner);
-        } else {
-            revert ComponentTypeInvalid(objectType);
-        }
-
-        componentNftId = objInfo.nftId;
-        {
-            IInstance instance = _getInstance(objInfo);
-            _finalizeComponentRegistration(componentNftId, initialObjData, instance);
-        }
-    }
-
-    function _finalizeComponentRegistration(NftId componentNftId, bytes memory initialObjData, IInstance instance) internal virtual;
-
-    function _getObjectType(BaseComponent component) internal view returns (ObjectType) {
-        (IRegistry.ObjectInfo memory compInitialInfo, )  = component.getInitialInfo();
-        return compInitialInfo.objectType;
-    }
-    
     function _getInstance(IRegistry.ObjectInfo memory compObjInfo) internal view returns (IInstance) {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(compObjInfo.parentNftId);
@@ -108,7 +48,8 @@ abstract contract ComponentServiceBase is Service {
     }
 
     function _getAndVerifyComponentInfoAndInstance(
-        ObjectType objectType
+        //address component,
+        ObjectType expectedType
     )
         internal
         view
@@ -117,18 +58,15 @@ abstract contract ComponentServiceBase is Service {
             IInstance instance
         )
     {
-        NftId componentNftId = _registry.getNftId(msg.sender);
-        require(componentNftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
+        IRegistry registry = getRegistry();
+        //TODO redundant check -> just check type
+        //NftId componentNftId = registry.getNftId(component); 
+        //require(componentNftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
 
-        info = getRegistry().getObjectInfo(componentNftId);
-        require(info.objectType == objectType, "OBJECT_TYPE_INVALID");
+        info = registry.getObjectInfo(msg.sender);
+        require(info.objectType == expectedType, "OBJECT_TYPE_INVALID");
 
-        address instanceAddress = getRegistry().getObjectInfo(info.parentNftId).objectAddress;
+        address instanceAddress = registry.getObjectInfo(info.parentNftId).objectAddress;
         instance = IInstance(instanceAddress);
-    }
-
-    function getRegistryService() public view virtual returns (IRegistryService) {
-        address service = getRegistry().getServiceAddress("RegistryService", getMajorVersion());
-        return IRegistryService(service);
     }
 }

@@ -4,92 +4,67 @@ pragma solidity ^0.8.20;
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
-import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 
-import {IBundle} from "./module/IBundle.sol";
-import {IPolicy} from "./module/IPolicy.sol";
-import {IRisk} from "./module/IRisk.sol";
-import {ISetup} from "./module/ISetup.sol";
-import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
-import {KeyValueStore} from "./base/KeyValueStore.sol";
-import {NftId} from "../types/NftId.sol";
-import {NumberId} from "../types/NumberId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, POLICY, POOL, ROLE, PRODUCT, TARGET} from "../types/ObjectType.sol";
-import {RiskId, RiskIdLib} from "../types/RiskId.sol";
-import {RoleId, RoleIdLib} from "../types/RoleId.sol";
-import {StateId, ACTIVE} from "../types/StateId.sol";
-import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
+import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
+import {RoleId, RoleIdLib, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_SERVICE_ROLE } from "../types/RoleId.sol";
+import {TimestampLib} from "../types/Timestamp.sol";
+import {IAccess} from "./module/IAccess.sol";
 
 contract InstanceAccessManager is
     AccessManagedUpgradeable
 {
+    using RoleIdLib for RoleId;
+
     string public constant ADMIN_ROLE_NAME = "AdminRole";
     string public constant PUBLIC_ROLE_NAME = "PublicRole";
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000;
     uint32 public constant EXECUTION_DELAY = 0;
 
-    struct RoleInfo {
-        ShortString name;
-        bool isCustom;
-        bool isLocked;
-        Timestamp createdAt;
-        Timestamp updatedAt;
-    }
-
-    struct TargetInfo {
-        ShortString name;
-        bool isCustom;
-        bool isLocked;
-        Timestamp createdAt;
-        Timestamp updatedAt;
-    }
-
-    error ErrorRoleIdInvalid(RoleId roleId);
-    error ErrorRoleIdTooBig(RoleId roleId);
-    error ErrorRoleIdTooSmall(RoleId roleId);
-    error ErrorRoleIdAlreadyExists(RoleId roleId, ShortString name);
-    error ErrorRoleIdNotActive(RoleId roleId);
-    error ErrorRoleNameEmpty(RoleId roleId);
-    error ErrorRoleNameNotUnique(RoleId roleId, ShortString name);
-    error ErrorRoleInvalidUpdate(RoleId roleId, bool isCustom);
-    error ErrorRoleIsCustomIsImmutable(RoleId roleId, bool isCustom, bool isCustomExisting);
-    error ErrorSetLockedForNonexstentRole(RoleId roleId);
-    error ErrorGrantNonexstentRole(RoleId roleId);
-    error ErrorRevokeNonexstentRole(RoleId roleId);
-    error ErrorRenounceNonexstentRole(RoleId roleId);
-
-    error ErrorTargetAddressZero();
-    error ErrorTargetAlreadyExists(address target, ShortString name);
-    error ErrorTargetNameEmpty(address target);
-    error ErrorTargetNameExists(address target, address existingTarget, ShortString name);
-    error ErrorSetLockedForNonexstentTarget(address target);
-
     // role specific state
-    mapping(RoleId roleId => RoleInfo info) internal _role;
+    mapping(RoleId roleId => IAccess.RoleInfo info) internal _role;
     mapping(RoleId roleId => EnumerableSet.AddressSet roleMembers) internal _roleMembers; 
     mapping(ShortString name => RoleId roleId) internal _roleForName;
     RoleId [] internal _roles;
 
     // target specific state
-    mapping(address target => TargetInfo info) internal _target;
+    mapping(address target => IAccess.TargetInfo info) internal _target;
     mapping(ShortString name => address target) internal _targetForName;
     address [] internal _targets;
 
-    AccessManagerUpgradeable internal _accessManager;
+    AccessManagerUpgradeableInitializeable internal _accessManager;
 
-    constructor(address accessManager)
+    function __InstanceAccessManager_initialize(address initialAdmin) external initializer
     {
-        _accessManager = AccessManagerUpgradeable(accessManager);
-        __AccessManaged_init(accessManager);
+        // if size of the contract gets too large, this can be externalized which will reduce the contract size considerably
+        _accessManager = new AccessManagerUpgradeableInitializeable();
+        // this service required adin rights to access manager to be able to grant/revoke roles
+        _accessManager.__AccessManagerUpgradeableInitializeable_init(address(this));
+        _accessManager.grantRole(_accessManager.ADMIN_ROLE(), initialAdmin, 0);
+
+        __AccessManaged_init(address(_accessManager));
 
         _createRole(RoleIdLib.toRoleId(_accessManager.ADMIN_ROLE()), ADMIN_ROLE_NAME, false, false);
         _createRole(RoleIdLib.toRoleId(_accessManager.PUBLIC_ROLE()), PUBLIC_ROLE_NAME, false, false);
+
+        createDefaultGifRoles();
+    }
+
+    function createDefaultGifRoles() public restricted() {
+        _createRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", false, true);
+        _createRole(POOL_OWNER_ROLE(), "PoolOwnerRole", false, true);
+        _createRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", false, true);
+
+        _createRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole", false, true);
+        _createRole(POOL_SERVICE_ROLE(), "PoolServiceRole", false, true);
+        _createRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole", false, true);
+        _createRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole", false, true);
+        _createRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole", false, true);
+        _createRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole", false, true);
     }
 
     //--- Role ------------------------------------------------------//
-
-    function createDefaultRole(RoleId roleId, string memory name) external restricted() {
+    function createGifRole(RoleId roleId, string memory name) external restricted() {
         _createRole(roleId, name, false, true);
     }
 
@@ -99,7 +74,7 @@ contract InstanceAccessManager is
 
     function setRoleLocked(RoleId roleId, bool locked) external restricted() {
         if (!roleExists(roleId)) {
-            revert ErrorSetLockedForNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessSetLockedForNonexstentRole(roleId);
         }
 
         _role[roleId].isLocked = locked;
@@ -112,11 +87,11 @@ contract InstanceAccessManager is
 
     function grantRole(RoleId roleId, address member) external restricted() returns (bool granted) {
         if (!roleExists(roleId)) {
-            revert ErrorGrantNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessGrantNonexstentRole(roleId);
         }
 
         if (_role[roleId].isLocked) {
-            revert ErrorRoleIdNotActive(roleId);
+            revert IAccess.ErrorIAccessRoleIdNotActive(roleId);
         }
 
         if (!EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -130,7 +105,7 @@ contract InstanceAccessManager is
 
     function revokeRole(RoleId roleId, address member) external restricted() returns (bool revoked) {
         if (!roleExists(roleId)) {
-            revert ErrorRevokeNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRevokeNonexstentRole(roleId);
         }
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -148,7 +123,7 @@ contract InstanceAccessManager is
         address member = msg.sender;
 
         if (!roleExists(roleId)) {
-            revert ErrorRenounceNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRenounceNonexstentRole(roleId);
         }
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -173,7 +148,7 @@ contract InstanceAccessManager is
         return _roleForName[ShortStrings.toShortString(name)];
     }
 
-    function getRole(RoleId roleId) external view returns (RoleInfo memory role) {
+    function getRole(RoleId roleId) external view returns (IAccess.RoleInfo memory role) {
         return _role[roleId];
     }
 
@@ -190,13 +165,19 @@ contract InstanceAccessManager is
     }
 
     //--- Target ------------------------------------------------------//
+    function createGifTarget(address target, string memory name) external restricted() {
+        _createTarget(target, name, false, true);
+    }
+
     function createTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, true, true);
     }
 
-    function setTargetLocked(address target, bool locked) external restricted() {
-        if (!targetExists(target)) {
-            revert ErrorSetLockedForNonexstentTarget(target);
+    function setTargetLocked(string memory targetName, bool locked) external restricted() {
+        address target = _targetForName[ShortStrings.toShortString(targetName)];
+        
+        if (target == address(0)) {
+            revert IAccess.ErrorIAccessSetLockedForNonexstentTarget(target);
         }
 
         _target[target].isLocked = locked;
@@ -214,7 +195,7 @@ contract InstanceAccessManager is
             _validateRoleParameters(roleId, name, isCustom);
         }
 
-        RoleInfo memory role = RoleInfo(
+        IAccess.RoleInfo memory role = IAccess.RoleInfo(
             ShortStrings.toShortString(name), 
             isCustom,
             false, // role un-locked,
@@ -233,35 +214,35 @@ contract InstanceAccessManager is
     )
         internal
         view 
-        returns (RoleInfo memory existingRole)
+        returns (IAccess.RoleInfo memory existingRole)
     {
         // check role id
         uint64 roleIdInt = RoleId.unwrap(roleId);
         if(roleIdInt == _accessManager.ADMIN_ROLE() || roleIdInt == _accessManager.PUBLIC_ROLE()) {
-            revert ErrorRoleIdInvalid(roleId); 
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId); 
         }
 
         // prevent changing isCustom for existing roles
         existingRole = _role[roleId];
 
         if (existingRole.createdAt.gtz() && isCustom != existingRole.isCustom) {
-            revert ErrorRoleIsCustomIsImmutable(roleId, isCustom, existingRole.isCustom); 
+            revert IAccess.ErrorIAccessRoleIsCustomIsImmutable(roleId, isCustom, existingRole.isCustom); 
         }
 
         if (isCustom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
-            revert ErrorRoleIdTooSmall(roleId); 
+            revert IAccess.ErrorIAccessRoleIdTooSmall(roleId); 
         } else if (!isCustom && roleIdInt >= CUSTOM_ROLE_ID_MIN) {
-            revert ErrorRoleIdTooBig(roleId); 
+            revert IAccess.ErrorIAccessRoleIdTooBig(roleId); 
         }
 
         // role name checks
         ShortString nameShort = ShortStrings.toShortString(name);
         if (ShortStrings.byteLength(nameShort) == 0) {
-            revert ErrorRoleNameEmpty(roleId);
+            revert IAccess.ErrorIAccessRoleNameEmpty(roleId);
         }
 
         if (_roleForName[nameShort] != RoleIdLib.zero() && _roleForName[nameShort] != roleId) {
-            revert ErrorRoleNameNotUnique(_roleForName[nameShort], nameShort);
+            revert IAccess.ErrorIAccessRoleNameNotUnique(_roleForName[nameShort], nameShort);
         }
     }
 
@@ -270,7 +251,7 @@ contract InstanceAccessManager is
             _validateTargetParameters(target, name, isCustom);
         }
 
-        TargetInfo memory info = TargetInfo(
+        IAccess.TargetInfo memory info = IAccess.TargetInfo(
             ShortStrings.toShortString(name), 
             isCustom,
             _accessManager.isTargetClosed(target), // sync with state in access manager
@@ -283,6 +264,41 @@ contract InstanceAccessManager is
     }
 
     function _validateTargetParameters(address target, string memory name, bool isCustom) internal view {
+        // TODO: implement
+    }
 
+    function setTargetFunctionRole(
+        address target,
+        bytes4[] calldata selectors,
+        uint64 roleId
+    ) public virtual restricted() {
+        _accessManager.setTargetFunctionRole(target, selectors, roleId);
+    }
+
+    function setTargetFunctionRole(
+        string memory targetName,
+        bytes4[] calldata selectors,
+        RoleId roleId
+    ) public virtual restricted() {
+        address target = _targetForName[ShortStrings.toShortString(targetName)];
+        uint64 roleIdInt = RoleId.unwrap(roleId);
+        _accessManager.setTargetFunctionRole(target, selectors, roleIdInt);
+    }
+
+    function getAccessManager() public restricted() returns (AccessManagerUpgradeableInitializeable) {
+        return _accessManager;
+    }
+
+    function setTargetClosed(string memory targetName, bool closed) public restricted() {
+        address target = _targetForName[ShortStrings.toShortString(targetName)];
+        _accessManager.setTargetClosed(target, closed);
+    }
+
+    function canCall(
+        address caller,
+        address target,
+        bytes4 selector
+    ) public view virtual returns (bool immediate, uint32 delay) {
+        return _accessManager.canCall(caller, target, selector);
     }
 }

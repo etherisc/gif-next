@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {ObjectType, POOL} from "../types/ObjectType.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
+import {IBundleService} from "../instance/service/IBundleService.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
@@ -39,6 +40,8 @@ contract Pool is BaseComponent, IPoolComponent {
 
     // only relevant to protect callback functions for "active" pools
     IProductService private _productService;
+
+    IBundleService private _bundleService;
 
     modifier onlyPoolService() {
         require(
@@ -80,6 +83,7 @@ contract Pool is BaseComponent, IPoolComponent {
 
         _poolService = _instance.getPoolService();
         _productService = _instance.getProductService();
+        _bundleService = _instance.getBundleService();
 
         _registerInterface(type(IPoolComponent).interfaceId);
     }
@@ -95,7 +99,7 @@ contract Pool is BaseComponent, IPoolComponent {
         returns(NftId bundleNftId)
     {
         address owner = msg.sender;
-        bundleNftId = _poolService.createBundle(
+        bundleNftId = _bundleService.createBundle(
             owner,
             fee,
             initialAmount,
@@ -168,7 +172,7 @@ contract Pool is BaseComponent, IPoolComponent {
         override
         // TODO add onlyBundleOwner
     {
-        _poolService.setBundleFee(bundleNftId, fee);
+        _bundleService.setBundleFee(bundleNftId, fee);
     }
 
     function lockBundle(
@@ -178,7 +182,7 @@ contract Pool is BaseComponent, IPoolComponent {
         override
         // TODO add onlyBundleOwner
     {
-        _poolService.lockBundle(bundleNftId);
+        _bundleService.lockBundle(bundleNftId);
     }
 
     function unlockBundle(
@@ -188,7 +192,7 @@ contract Pool is BaseComponent, IPoolComponent {
         override
         // TODO add onlyBundleOwner
     {
-        _poolService.unlockBundle(bundleNftId);
+        _bundleService.unlockBundle(bundleNftId);
     }
 
     function getSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
@@ -256,7 +260,7 @@ contract Pool is BaseComponent, IPoolComponent {
         internal
         returns(NftId bundleNftId)
     {
-        bundleNftId = _poolService.createBundle(
+        bundleNftId = _bundleService.createBundle(
             bundleOwner,
             fee,
             amount,

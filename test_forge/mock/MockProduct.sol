@@ -9,6 +9,9 @@ import {Fee} from "../../contracts/types/Fee.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {ReferralId} from "../../contracts/types/Referral.sol";
 import {Timestamp} from "../../contracts/types/Timestamp.sol";
+import {RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
+
+uint64 constant SPECIAL_ROLE_INT = 11111;
 
 contract MockProduct is Product {
 
@@ -98,6 +101,14 @@ contract MockProduct is Product {
         Timestamp activateAt
     ) public {
         _activate(policyNftId, activateAt);
+    }
+
+    function doSomethingSpecial() 
+        public 
+        onlyInstanceRole(SPECIAL_ROLE_INT)
+        returns (bool) 
+    {
+        return true;
     }
 
 }
