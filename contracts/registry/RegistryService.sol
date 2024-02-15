@@ -196,32 +196,25 @@ contract RegistryService is
 
         // registerInstance() have no restriction
         config[0].serviceDomain = INSTANCE();
-        config[0].selector = new bytes4[](1);
-        config[0].selector[0] = RegistryService.registerInstance.selector;
+        config[0].selector = RegistryService.registerInstance.selector;
 
         config[1].serviceDomain = POOL();
-        config[1].selector = new bytes4[](1);
-        config[1].selector[0] = RegistryService.registerPool.selector;
+        config[1].selector = RegistryService.registerPool.selector;
 
         config[2].serviceDomain = DISTRIBUTION();
-        config[2].selector = new bytes4[](1);
-        config[2].selector[0] = RegistryService.registerDistribution.selector;
+        config[2].selector = RegistryService.registerDistribution.selector;
 
         config[3].serviceDomain = PRODUCT();
-        config[3].selector = new bytes4[](1);
-        config[3].selector[0] = RegistryService.registerProduct.selector;
+        config[3].selector = RegistryService.registerProduct.selector;
 
         config[4].serviceDomain = POLICY();
-        config[4].selector = new bytes4[](1);
-        config[4].selector[0] = RegistryService.registerPolicy.selector;
+        config[4].selector = RegistryService.registerPolicy.selector;
 
         config[5].serviceDomain = BUNDLE();
-        config[5].selector = new bytes4[](1);
-        config[5].selector[0] = RegistryService.registerBundle.selector;
+        config[5].selector = RegistryService.registerBundle.selector;
 
         /*config[6].serviceDomain = STAKE();
-        config[6].selector = new bytes4[](1);
-        config[6].selector[0] = RegistryService.registerStake.selector;*/
+        config[6].selector = RegistryService.registerStake.selector;*/
 
         data = abi.encode(config);
     }

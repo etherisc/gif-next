@@ -7,6 +7,7 @@ import {ChainNft} from "./ChainNft.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 import {VersionPart} from "../types/Version.sol";
+import {Timestamp} from "../types/Timestamp.sol";
 
 interface IRegistry is IERC165 {
 
@@ -39,6 +40,8 @@ interface IRegistry is IERC165 {
 
     struct ReleaseInfo {
         ObjectType[] domains;
+        Timestamp createdAt;
+        //Timestamp updatedAt;
     }
 
     function registerService(

@@ -5,8 +5,9 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 
 import {NftId} from "../types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
-import {ObjectType, zeroObjectType, REGISTRY, SERVICE} from "../types/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE} from "../types/ObjectType.sol";
 import {VersionPart, VersionPartLib} from "../types/Version.sol";
+import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
 
 import {IService} from "../shared/IService.sol";
 
@@ -18,6 +19,8 @@ import {RegistryAccessManager} from "./RegistryAccessManager.sol";
 
 contract ReleaseManager is AccessManaged
 {
+    using ObjectTypeLib for ObjectType;
+
     event LogReleaseCreation(VersionPart version, IService registryService); 
     event LogReleaseActivation(VersionPart version);
 
@@ -35,7 +38,7 @@ contract ReleaseManager is AccessManaged
 
     // _getAndVerifyContractInfo
     error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
-    error NotRegisterableOwner(address expectedOwner);
+    error NotRegisterableOwner(address notOwner);
     error SelfRegistration();
     error RegisterableOwnerIsRegistered();
 
@@ -45,16 +48,10 @@ contract ReleaseManager is AccessManaged
     
     // _verifyAndStoreConfig
     error ConfigMissing();
-    error ConfigServiceDomainInvalid();
-    error ConfigSelectorMissing(); 
-    error ConfigSelectorZero(); 
-    error ConfigSelectorAlreadyExists(VersionPart serviceVersion, ObjectType serviceDomain);
+    error ConfigServiceDomainInvalid(uint configArrayIndex, ObjectType domain);
+    error ConfigSelectorZero(uint configArrayIndex);
+    error SelectorAlreadyExists(VersionPart releaseVersion, ObjectType serviceDomain);
 
-    // unique role for some service function
-    struct ConfigInfo {
-        bytes4[] selector; // selector used by service
-        RoleId roleId; // roleId granted to service
-    }
 
     RegistryAccessManager private immutable _accessManager;
     IRegistry private immutable _registry;
@@ -64,7 +61,7 @@ contract ReleaseManager is AccessManaged
 
     mapping(VersionPart version => IRegistry.ReleaseInfo info) _release;
 
-    mapping(VersionPart version => mapping(ObjectType serviceDomain => ConfigInfo)) _config;
+    mapping(VersionPart version => mapping(ObjectType serviceDomain => bytes4)) _selector; // registry service function selector assigned to domain 
 
     uint _awaitingRegistration; // "services left to register" counter
 
@@ -110,9 +107,9 @@ contract ReleaseManager is AccessManaged
         ObjectType domain = REGISTRY();
         _verifyServiceInfo(info, version, domain);
 
-        _verifyAndStoreConfig(data);
+        _createRelease(data);
 
-        //setTargetClosed(newRegistryService, true);
+        //setTargetClosed(service, true);
         
         nftId = _registry.registerService(info, version, domain);
 
@@ -122,7 +119,7 @@ contract ReleaseManager is AccessManaged
         emit LogReleaseCreation(version, service); 
     }
 
-    // TODO adding service to release -> synchronized with proxy upgrades
+    // TODO adding service to release -> synchronized with proxy upgrades or simple addServiceToRelease(service, version, selector)?
     // TODO removing service from release? -> set _active to false forever, but keep all other records?
     function registerService(IService service) 
         external
@@ -141,21 +138,21 @@ contract ReleaseManager is AccessManaged
         VersionPart version = getNextVersion();
         ObjectType domain = _verifyServiceInfo(info, version, zeroObjectType());
 
-        bytes4[] memory selector = _config[version][domain].selector;
+        bytes4[] memory selector = new bytes4[](1);
+        selector[0] = _selector[version][domain];
 
         // service type is in release
-        if(selector.length == 0) {
+        if(selector[0] == 0) {
             revert ServiceNotInRelease(service, domain);
         }
 
         // setup and grant unique role
         address registryService = _registry.getServiceAddress(REGISTRY(), version);
-        RoleId roleId = _accessManager.setAndGrantUniqueRole(
+        _accessManager.setAndGrantUniqueRole(
             address(service), 
             registryService, 
             selector);
 
-        _config[version][domain].roleId = roleId;
         _awaitingRegistration--;
 
         // activate release
@@ -189,7 +186,7 @@ contract ReleaseManager is AccessManaged
             revert ReleaseRegistrationNotFinished();
         }
 
-        //setTargetClosed(newRegistryService, false);
+        //setTargetClosed(service, false);
 
         _latest = version;
         _active[service] = true;
@@ -299,7 +296,7 @@ contract ReleaseManager is AccessManaged
             revert UnexpectedServiceVersion(expectedVersion, version);
         }
 
-        if(expectedDomain != zeroObjectType()) { 
+        if(expectedDomain.gtz()) { 
             if(domain != expectedDomain) {
                 revert UnexpectedServiceDomain(expectedDomain, domain);
             }
@@ -308,7 +305,8 @@ contract ReleaseManager is AccessManaged
         return domain;
     }
 
-    function _verifyAndStoreConfig(bytes memory configBytes)
+    // TODO check if registry supports types specified in the config array
+    function _createRelease(bytes memory configBytes)
         internal
     {
         VersionPart version = getNextVersion();
@@ -322,27 +320,28 @@ contract ReleaseManager is AccessManaged
         for(uint idx = 0; idx < config.length; idx++)
         {
             ObjectType domain = config[idx].serviceDomain;
-            bytes4[] memory selector = config[idx].selector;
+            bytes4 selector = config[idx].selector;
 
-            // not "registry service" domain
-            if(domain == REGISTRY()) { revert ConfigServiceDomainInvalid(); } 
+            // not "registry service" / zero domain
+            if(
+                domain == REGISTRY() ||
+                domain.eqz()
+            ) { revert ConfigServiceDomainInvalid(idx, domain); } 
 
-            // at least one selector exists
-            if(selector.length == 0) { revert ConfigSelectorMissing(); }
-
-            // no zero selectors
-            for(uint jdx = 0; jdx < selector.length; jdx++) {
-                if(selector[jdx] == 0) { revert ConfigSelectorZero(); }
-            }
+            // selector not zero
+            if(selector == 0) { revert ConfigSelectorZero(idx); }
 
             // no overwrite
-            if(_config[version][domain].selector.length > 0) {
-                revert ConfigSelectorAlreadyExists(version, domain); 
+            if(_selector[version][domain] > 0) {
+                revert SelectorAlreadyExists(version, domain); 
             }
             
-            _config[version][domain].selector = selector;
+            _selector[version][domain] = selector;
             _release[version].domains.push(domain);
         }
+        // TODO set when activated?
+        _release[version].createdAt = TimestampLib.blockTimestamp();
+        //_release[version].updatedAt = TimestampLib.blockTimestamp();
 
         _awaitingRegistration = config.length;
     }
