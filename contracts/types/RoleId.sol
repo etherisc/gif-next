@@ -24,20 +24,19 @@ function PRODUCT_OWNER_ROLE_NAME() pure returns (string memory) { return "Produc
 
 function ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(0); }
 
-// TODO correct numbers (maybe they are already defined in RegistryService)
 function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(100); }
 function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(200); }
 function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(300); }
 function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(400); }
 
 
-function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10000); }
-function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10100); }
-function PRODUCT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10200); }
-function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10300); }
-function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10400); }
+function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
+function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
+function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2200); }
+function PRODUCT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2300); }
+function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2400); }
+function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
 
-function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(11000); }
 
 function REGISTRY_SERVICE_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
 function REGISTRY_SERVICE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 

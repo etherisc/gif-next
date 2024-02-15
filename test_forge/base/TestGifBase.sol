@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.20;
 
-import {AccessManagerUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagerUpgradeable.sol";
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
@@ -29,7 +28,7 @@ import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
+import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
@@ -103,13 +102,13 @@ contract TestGifBase is Test {
     BundleService public bundleService;
     NftId public bundleServiceNftId;
 
-    AccessManagerUpgradeableInitializeable masterInstanceAccessManager;
+    InstanceAccessManager masterInstanceAccessManager;
     BundleManager masterBundleManager;
     Instance masterInstance;
     NftId masterInstanceNftId;
     InstanceReader masterInstanceReader;
 
-    AccessManagerUpgradeableInitializeable instanceAccessManager;
+    InstanceAccessManager instanceAccessManager;
     BundleManager instanceBundleManager;
     Instance public instance;
     NftId public instanceNftId;
@@ -443,8 +442,8 @@ contract TestGifBase is Test {
 
     function _deployMasterInstance() internal 
     {
-        masterInstanceAccessManager = new AccessManagerUpgradeableInitializeable();
-        masterInstanceAccessManager.__AccessManagerUpgradeableInitializeable_init(registryOwner);
+        masterInstanceAccessManager = new InstanceAccessManager();
+        masterInstanceAccessManager.__InstanceAccessManager_initialize(registryOwner);
         
         masterInstance = new Instance();
         masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, MASTER_INSTANCE_OWNER);
@@ -459,7 +458,7 @@ contract TestGifBase is Test {
         masterInstance.setBundleManager(masterBundleManager);
 
         // revoke ADMIN_ROLE from registryOwner. token is already owned by 0x1
-        masterInstanceAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(registryOwner));
+        masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(registryOwner));
         
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
@@ -609,8 +608,8 @@ contract TestGifBase is Test {
     
     function _prepareDistributionAndPool() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);

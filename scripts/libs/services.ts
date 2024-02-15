@@ -1,11 +1,11 @@
 
-import { AddressLike, Signer, resolveAddress } from "ethers";
-import { DistributionServiceManager, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, ReleaseManager__factory, ProductService, ProductServiceManager, ProductService__factory, PolicyService, PolicyServiceManager, PolicyService__factory, BundleService, BundleServiceManager, BundleService__factory} from "../../typechain-types";
+import { AddressLike, Signer, hexlify, resolveAddress } from "ethers";
+import { ReleaseManager__factory, DistributionService, DistributionServiceManager, DistributionService__factory, InstanceService, InstanceServiceManager, InstanceService__factory, PoolService, PoolServiceManager, PoolService__factory, IRegistryService__factory, ProductService, ProductServiceManager, ProductService__factory, PolicyService, PolicyServiceManager, PolicyService__factory, BundleService, BundleServiceManager, Bundleservice__factory} from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
-import { getFieldFromTxRcptLogs, executeTx } from "./transaction";
+import { executeTx, getFieldFromTxRcptLogs } from "./transaction";
 // import IRegistry abi
 
 export type ServiceAddresses = {
@@ -13,9 +13,9 @@ export type ServiceAddresses = {
     instanceServiceAddress: AddressLike,
     instanceService: InstanceService,
     instanceServiceManagerAddress: AddressLike,
-    distributionServiceAddress: AddressLike,
     distributionServiceNftId: string,
-    distributionService: InstanceService,
+    distributionServiceAddress: AddressLike,
+    distributionService: DistributionService,
     distributionServiceManagerAddress: AddressLike,
     poolServiceAddress: AddressLike,
     poolServiceNftId: string,
@@ -36,6 +36,8 @@ export type ServiceAddresses = {
 }
 
 export async function deployAndRegisterServices(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses): Promise<ServiceAddresses> {
+    logger.info("======== Starting deployment of services ========");
+
     const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, } = await deployContract(
         "InstanceServiceManager",
         owner,
@@ -73,7 +75,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     
     const distributionServiceManager = distributionServiceManagerBaseContract as DistributionServiceManager;
     const distributionServiceAddress = await distributionServiceManager.getDistributionService();
-    const distributionService = InstanceService__factory.connect(distributionServiceAddress, owner);
+    const distributionService = DistributionService__factory.connect(distributionServiceAddress, owner);
     // FIXME temporal solution while registration in DistributionServiceManager constructor is not possible 
     const rcptDs = await executeTx(async () => await releaseManager.registerService(distributionServiceAddress));
     const logRegistrationInfoDs = getFieldFromTxRcptLogs(rcptDs!, registry.registry.interface, "LogRegistration", "nftId");
@@ -164,6 +166,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const logRegistrationInfoBdl = getFieldFromTxRcptLogs(rcptBdl!, registry.registry.interface, "LogRegistration", "nftId");
     const bundleServiceNftId = (logRegistrationInfoBdl as unknown[])[0];
     logger.info(`bundleServiceManager deployed - bundleServiceAddress: ${bundleServiceAddress} bundleServiceManagerAddress: ${bundleServiceManagerAddress} nftId: ${bundleServiceNftId}`);
+
+    logger.info("======== Finished deployment of services ========");
 
     return {
         instanceServiceNftId: instanceServiceNfdId as string,

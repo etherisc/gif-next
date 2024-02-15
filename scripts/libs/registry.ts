@@ -33,7 +33,8 @@ export type RegistryAddresses = {
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
-
+    logger.info("======== Starting deployment of registry ========");
+    
     const { address: registryAccessManagerAddress, contract: registryAccessManagerBaseContract } = await deployContract(
         "RegistryAccessManager",
         owner, // GIF_ADMIN_ROLE
@@ -54,6 +55,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         ], 
         {
             libraries: {
+                Timestamp: libraries.timestampLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress
@@ -146,6 +148,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     } as RegistryAddresses;
 
     await verifyRegistryComponents(regAdr, owner)
+
+    logger.info("======== Finished deployment of registry ========");
 
     return regAdr;
 }
