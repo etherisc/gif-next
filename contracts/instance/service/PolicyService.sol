@@ -20,11 +20,11 @@ import {TokenHandler} from "../../shared/TokenHandler.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
-import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {ObjectType, INSTANCE, PRODUCT, POOL, POLICY, BUNDLE} from "../../types/ObjectType.sol";
-import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
+import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE, CLOSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {ReferralId} from "../../types/Referral.sol";
@@ -44,6 +44,7 @@ import {IBundleService} from "./IBundleService.sol";
 
 contract PolicyService is ComponentServiceBase, IPolicyService {
     using NftIdLib for NftId;
+    using TimestampLib for Timestamp;
 
     IPoolService internal _poolService;
     IBundleService internal _bundleService;
@@ -81,7 +82,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
         (productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
-    // TODO no access restrictions
+    // TODO: no access restrictions
     function calculatePremium(
         RiskId riskId,
         uint256 sumInsuredAmount,
@@ -179,7 +180,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
         ReferralId referralId
     ) external override returns (NftId policyNftId) {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        // TODO add validations (see create bundle in pool service)
+        // TODO: add validations (see create bundle in pool service)
 
         policyNftId = getRegistryService().registerPolicy(
             IRegistry.ObjectInfo(
@@ -224,7 +225,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
         instance.createPolicy(policyNftId, policyInfo);
         instance.updatePolicyState(policyNftId, APPLIED());
 
-        // TODO add logging
+        // TODO: add logging
     }
 
     function _getAndVerifyUnderwritingSetup(
@@ -384,7 +385,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
             }
         }
 
-        // TODO add logging
+        // TODO: add logging
     }
 
     function calculateRequiredCollateral(UFixed collateralizationLevel, uint256 sumInsuredAmount) public pure override returns(uint256 collateralAmount) {
@@ -397,28 +398,30 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
         // check caller is registered product
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
 
-        // TODO: check if not paid
-        // TODO: transfer premium 
-        // TODO: optionally activate
+        if (policyInfo.premiumPaidAmount == policyInfo.premiumAmount) {
+            revert ErrorIPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
+        }
 
-        // // perform actual token transfers (this code is probably not complete)
-        // IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        
-        // uint256 premiumAmount = policyInfo.premiumAmount;
-        // _processPremiumByTreasury(instance, productInfo.nftId, policyNftId, premiumAmount);
+        uint256 unpaidPremiumAmount = policyInfo.premiumAmount - policyInfo.premiumPaidAmount;
 
-        // // policy level book keeping for premium paid
-        // policyInfo.premiumPaidAmount += premiumAmount;
+        uint256 netPremiumAmount = _processPremiumByTreasury(
+                instance, 
+                productInfo.nftId,
+                policyNftId, 
+                unpaidPremiumAmount);
 
-        // instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        policyInfo.premiumPaidAmount += unpaidPremiumAmount;
 
-        // // optional activation of policy
-        // if(activateAt > zeroTimestamp()) {
-        //     activate(policyNftId, activateAt);
-        // }
+        _bundleService.increaseBalance(instance, policyInfo.bundleNftId, netPremiumAmount);
+        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
-        // TODO add logging
+        if(activateAt.gtz() && policyInfo.activatedAt.eqz()) {
+            activate(policyNftId, activateAt);
+        }
+
+        // TODO: add logging
     }
 
     function activate(NftId policyNftId, Timestamp activateAt) public override {
@@ -437,14 +440,47 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
 
         instance.updatePolicy(policyNftId, policyInfo, ACTIVE());
 
-        // TODO add logging
+        // TODO: add logging
     }
 
     function close(
         NftId policyNftId
     ) external override // solhint-disable-next-line no-empty-blocks
     {
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        InstanceReader instanceReader = instance.getInstanceReader();
 
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+
+        if (policyInfo.activatedAt.eqz()) {
+            revert ErrorIPolicyServicePolicyNotActivated(policyNftId);
+        }
+
+        StateId state = instanceReader.getPolicyState(policyNftId);
+        if (state != ACTIVE()) {
+            revert ErrorIPolicyServicePolicyNotActive(policyNftId, state);
+        }
+
+        if (policyInfo.closedAt.gtz()) {
+            revert ErrorIPolicyServicePolicyAlreadyClosed(policyNftId);
+        }
+
+        if (policyInfo.premiumAmount != policyInfo.premiumPaidAmount) {
+            revert ErrorIPolicyServicePremiumNotFullyPaid(policyNftId, policyInfo.premiumAmount, policyInfo.premiumPaidAmount);
+        }
+
+        if (policyInfo.openClaimsCount > 0) {
+            revert ErrorIPolicyServiceOpenClaims(policyNftId, policyInfo.openClaimsCount);
+        }
+
+        if (TimestampLib.blockTimestamp().lte(policyInfo.expiredAt) && (policyInfo.payoutAmount < policyInfo.sumInsuredAmount)) {
+            revert ErrorIPolicyServicePolicyHasNotExpired(policyNftId, policyInfo.expiredAt);
+        }
+
+        policyInfo.closedAt = TimestampLib.blockTimestamp();
+
+        _bundleService.closePolicy(instance, policyNftId, policyInfo.bundleNftId, policyInfo.sumInsuredAmount);
+        instance.updatePolicy(policyNftId, policyInfo, CLOSED());
     }
 
     function _getPoolNftId(
@@ -498,6 +534,6 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
             }
         }
 
-        // TODO add logging
+        // TODO: add logging
     }
 }

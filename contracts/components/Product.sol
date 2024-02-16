@@ -203,6 +203,14 @@ abstract contract Product is BaseComponent, IProductComponent {
             activateAt);
     }
 
+    function _close(
+        NftId policyNftId
+    )
+        internal
+    {
+        _policyService.close(policyNftId);
+    }
+
     function getPoolNftId() external view override returns (NftId poolNftId) {
         return getRegistry().getNftId(address(_pool));
     }

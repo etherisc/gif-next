@@ -26,12 +26,11 @@ interface IBundleService is IService {
 
     function updateBundle(NftId instanceNftId, NftId bundleNftId, IBundle.BundleInfo memory bundleInfo, StateId state) external;
 
-    function underwritePolicy(IInstance instanceNftId,
-        NftId policyNftId, 
-        NftId bundleNftId, 
-        uint256 collateralAmount,
-        uint256 netPremium
-    ) external;
+    function underwritePolicy(IInstance instanceNftId, NftId policyNftId, NftId bundleNftId, uint256 collateralAmount, uint256 netPremium) external;
+
+    function increaseBalance(IInstance instance, NftId bundleNftId,  uint256 amount) external;
+
+    function closePolicy(IInstance instance, NftId policyNftId, NftId bundleNftId, uint256 collateralAmount) external;
 
     // function fundBundle(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
