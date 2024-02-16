@@ -4,11 +4,12 @@ pragma solidity 0.8.20;
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/types/RoleId.sol";
-import {Distribution} from "../contracts/components/Distribution.sol";
 import {IBaseComponent} from "../contracts/components/IBaseComponent.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
+import {IAccess} from "../contracts/instance/module/IAccess.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
+import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
 
 contract TestDistribution is TestGifBase {
     using NftIdLib for NftId;
@@ -209,13 +210,39 @@ contract TestDistribution is TestGifBase {
         assertEq(token.balanceOf(externallyOwnedWallet2), INITIAL_BALANCE, "exeternally owned wallet 2 balance not 100000");
     }
 
+    function test_BaseComponent_lock() public {
+        // GIVEN
+        _prepareDistribution();
+        Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
+
+        // WHEN
+        distribution.lock();
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(IAccess.ErrorIAccessTargetLocked.selector, address(distribution)));
+        distribution.setFees(newDistributionFee);
+    }
+
+    function test_BaseComponent_unlock() public {
+        // GIVEN
+        _prepareDistribution();
+        distribution.lock();
+        
+        // WHEN
+        distribution.unlock();
+
+        // THEN
+        Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
+        distribution.setFees(newDistributionFee);
+    }
+
     function _prepareDistribution() internal {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
-        distribution = new Distribution(
+        distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
             address(token),

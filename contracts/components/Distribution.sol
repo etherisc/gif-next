@@ -16,7 +16,7 @@ import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 
-contract Distribution is
+abstract contract Distribution is
     BaseComponent,
     IDistributionComponent
 {

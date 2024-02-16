@@ -44,5 +44,5 @@ interface IAccess {
     error ErrorIAccessTargetNameEmpty(address target);
     error ErrorIAccessTargetNameExists(address target, address existingTarget, ShortString name);
     error ErrorIAccessSetLockedForNonexstentTarget(address target);
-
+    error ErrorIAccessTargetLocked(address target);
 }

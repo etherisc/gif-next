@@ -6,7 +6,7 @@ import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStri
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
-import {RoleId, RoleIdLib, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_SERVICE_ROLE } from "../types/RoleId.sol";
+import {RoleId, RoleIdLib } from "../types/RoleId.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
 import {IAccess} from "./module/IAccess.sol";
 
@@ -46,21 +46,6 @@ contract InstanceAccessManager is
 
         _createRole(RoleIdLib.toRoleId(_accessManager.ADMIN_ROLE()), ADMIN_ROLE_NAME, false, false);
         _createRole(RoleIdLib.toRoleId(_accessManager.PUBLIC_ROLE()), PUBLIC_ROLE_NAME, false, false);
-
-        createDefaultGifRoles();
-    }
-
-    function createDefaultGifRoles() public restricted() {
-        _createRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", false, true);
-        _createRole(POOL_OWNER_ROLE(), "PoolOwnerRole", false, true);
-        _createRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", false, true);
-
-        _createRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole", false, true);
-        _createRole(POOL_SERVICE_ROLE(), "PoolServiceRole", false, true);
-        _createRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole", false, true);
-        _createRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole", false, true);
-        _createRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole", false, true);
-        _createRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole", false, true);
     }
 
     //--- Role ------------------------------------------------------//
@@ -251,6 +236,13 @@ contract InstanceAccessManager is
             _validateTargetParameters(target, name, isCustom);
         }
 
+        if (_target[target].createdAt.gtz()) {
+            revert IAccess.ErrorIAccessTargetAlreadyExists(target, _target[target].name);
+        }
+        if (_targetForName[ShortStrings.toShortString(name)] != address(0)) {
+            revert IAccess.ErrorIAccessTargetNameExists(target, _targetForName[ShortStrings.toShortString(name)], ShortStrings.toShortString(name));
+        }
+
         IAccess.TargetInfo memory info = IAccess.TargetInfo(
             ShortStrings.toShortString(name), 
             isCustom,
@@ -291,7 +283,14 @@ contract InstanceAccessManager is
 
     function setTargetClosed(string memory targetName, bool closed) public restricted() {
         address target = _targetForName[ShortStrings.toShortString(targetName)];
+        if (target == address(0)) {
+            revert IAccess.ErrorIAccessTargetAddressZero();
+        }
         _accessManager.setTargetClosed(target, closed);
+    }
+
+    function isTargetLocked(address target) public view returns (bool locked) {
+        return _accessManager.isTargetClosed(target);
     }
 
     function canCall(

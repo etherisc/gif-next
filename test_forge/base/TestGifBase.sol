@@ -40,6 +40,8 @@ import {Distribution} from "../../contracts/components/Distribution.sol";
 import {Pool} from "../../contracts/components/Pool.sol";
 import {Product} from "../../contracts/components/Product.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
+import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
+import {SimplePool} from "../mock/SimplePool.sol";
 
 // import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 // import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
@@ -613,7 +615,7 @@ contract TestGifBase is Test {
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
-        distribution = new Distribution(
+        distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
             address(token),
@@ -625,7 +627,7 @@ contract TestGifBase is Test {
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
-        pool = new Pool(
+        pool = new SimplePool(
             address(registry),
             instanceNftId,
             address(token),

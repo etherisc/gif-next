@@ -19,7 +19,8 @@ interface IInstanceService is IService {
 
     error ErrorInstanceServiceRequestUnauhorized(address caller);
     error ErrorInstanceServiceNotInstanceOwner(address caller, NftId instanceNftId);
-
+    error ErrorInstanceServiceComponentNotRegistered(address componentAddress);
+    
     event LogInstanceCloned(address clonedAccessManagerAddress, address clonedInstanceAddress, address clonedInstanceReaderAddress, NftId clonedInstanceNftId);
 
     function createInstanceClone()
@@ -33,6 +34,7 @@ interface IInstanceService is IService {
         );
 
     function hasRole(address account, RoleId role, address instanceAddress) external returns (bool);
+    function setTargetLocked(string memory targetName, bool locked) external;
 
 }
 

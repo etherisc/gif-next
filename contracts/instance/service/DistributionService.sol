@@ -2,11 +2,10 @@
 pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
-import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
+import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {ISetup} from "../../instance/module/ISetup.sol";
-import {ITreasury} from "../../instance/module/ITreasury.sol";
 
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
@@ -21,11 +20,8 @@ import {Versionable} from "../../shared/Versionable.sol";
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
-import {IDistributionService} from "./IDistributionService.sol";
-import {Distribution} from "../../components/Distribution.sol";
 import {InstanceService} from "../InstanceService.sol";
-import {Instance} from "../Instance.sol";
-import {INftOwnable} from "../../shared/INftOwnable.sol";
+import {IDistributionService} from "./IDistributionService.sol";
 import {IBaseComponent} from "../../components/IBaseComponent.sol";
 
 
@@ -71,8 +67,9 @@ contract DistributionService is
         (info, data) = getRegistryService().registerDistribution(distribution, distributionOwner);
 
         IInstance instance = _getInstance(info.parentNftId);
+        InstanceService instanceService = getInstanceService();
 
-        bool hasRole = getInstanceService().hasRole(
+        bool hasRole = instanceService.hasRole(
             distributionOwner, 
             DISTRIBUTION_OWNER_ROLE(), 
             address(instance));
@@ -84,6 +81,8 @@ contract DistributionService is
         distributionNftId = info.nftId;
         ISetup.DistributionSetupInfo memory initialSetup = _decodeAndVerifyDistributionSetup(data);
         instance.createDistributionSetup(distributionNftId, initialSetup);
+
+        instanceService.createTarget(_getInstanceNftId(info), distributionAddress, distribution.getName());
     }
 
     function _decodeAndVerifyDistributionSetup(bytes memory data) internal returns(ISetup.DistributionSetupInfo memory setup)

@@ -4,19 +4,18 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
-import {ObjectType, REGISTRY, INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE} from "../../types/ObjectType.sol";
-import {NftId, NftIdLib} from "../../types/NftId.sol";
-import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../types/RoleId.sol";
+import {IAccess} from "../module/IAccess.sol";
+import {ObjectType, INSTANCE, REGISTRY} from "../../types/ObjectType.sol";
+import {NftId} from "../../types/NftId.sol";
+import {RoleId} from "../../types/RoleId.sol";
 
-import {BaseComponent} from "../../components/BaseComponent.sol";
-import {Product} from "../../components/Product.sol";
-import {INftOwnable} from "../../shared/INftOwnable.sol";
 import {Service} from "../../shared/Service.sol";
 import {InstanceService} from "../InstanceService.sol";
-import {Version, VersionPart, VersionLib} from "../../types/Version.sol";
+import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 
 abstract contract ComponentServiceBase is Service {
 
+    error ErrorComponentServiceBaseComponentLocked(address componentAddress);
     error ExpectedRoleMissing(RoleId expected, address caller);
     error ComponentTypeInvalid(ObjectType componentType);
 
@@ -47,6 +46,12 @@ abstract contract ComponentServiceBase is Service {
         return IInstance(instanceInfo.objectAddress);
     }
 
+    function _getInstanceNftId(IRegistry.ObjectInfo memory compObjInfo) internal view returns (NftId) {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(compObjInfo.parentNftId);
+        return instanceInfo.nftId;
+    }
+
     function _getAndVerifyComponentInfoAndInstance(
         //address component,
         ObjectType expectedType
@@ -68,5 +73,10 @@ abstract contract ComponentServiceBase is Service {
 
         address instanceAddress = registry.getObjectInfo(info.parentNftId).objectAddress;
         instance = IInstance(instanceAddress);
+
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        if (accessManager.isTargetLocked(info.objectAddress)) {
+            revert IAccess.ErrorIAccessTargetLocked(info.objectAddress);
+        }
     }
 }

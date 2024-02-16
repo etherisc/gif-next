@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {IBaseComponent} from "./IBaseComponent.sol";
 import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -13,7 +15,7 @@ import {ObjectType, INSTANCE} from "../types/ObjectType.sol";
 import {VersionLib} from "../types/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
-import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import {IAccess} from "../instance/module/IAccess.sol";
 
 abstract contract BaseComponent is
     Registerable,
@@ -35,6 +37,13 @@ abstract contract BaseComponent is
         RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
         if( !_instanceAccessManager.hasRole(roleId, msg.sender)) {
             revert ErrorBaseComponentUnauthorized(msg.sender, roleIdNum);
+        }
+        _;
+    }
+
+    modifier isNotLocked() {
+        if (_instanceAccessManager.isTargetLocked(address(this))) {
+            revert IAccess.ErrorIAccessTargetLocked(address(this));
         }
         _;
     }
@@ -67,15 +76,17 @@ abstract contract BaseComponent is
         _registerInterface(type(IBaseComponent).interfaceId);
     }
 
-    // from component contract
-    // TODO consider to remove/replace with access manager contract locking
-    function lock() external onlyOwner override {
-        _componentOwnerService.lock(this);
-    }
+    function getName() public pure virtual returns (string memory name);
 
-    // TODO consider to remove/replace with access manager contract locking
+    // from component contract
+    // TODO only owner and instance owner 
+    function lock() external onlyOwner override {
+        _instanceService.setTargetLocked(getName(), true);
+    }
+    
+    // TODO only owner and instance owner 
     function unlock() external onlyOwner override {
-        _componentOwnerService.unlock(this);
+        _instanceService.setTargetLocked(getName(), false);
     }
 
     function getWallet()
