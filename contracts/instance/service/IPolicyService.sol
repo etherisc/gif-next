@@ -16,6 +16,12 @@ interface IPolicyService is IService {
     
     error ErrorIPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     error ErrorIPolicyServicePremiumAlreadyPaid(NftId policyNftId, uint256 premiumPaidAmount);
+    error ErrorIPolicyServicePolicyNotActivated(NftId policyNftId);
+    error ErrorIPolicyServicePolicyAlreadyClosed(NftId policyNftId);
+    error ErrorIPolicyServicePolicyNotActive(NftId policyNftId, StateId state);
+    error ErrorIPolicyServicePremiumNotFullyPaid(NftId policyNftId, uint256 premiumAmount, uint256 premiumPaidAmount);
+    error ErrorIPolicyServiceOpenClaims(NftId policyNftId, uint16 openClaimsCount);
+    error ErrorIPolicyServicePolicyHasNotExpired(NftId policyNftId, Timestamp expiredAt);
     
     function calculatePremium(
         RiskId riskId,
