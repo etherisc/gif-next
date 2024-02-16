@@ -100,11 +100,17 @@ contract TestInstanceAccessManager is TestGifBase {
         productService.register(address(product));
         product.lock();
 
-        // THEN - missing role
+        // THEN - expect locked
         vm.expectRevert(abi.encodeWithSelector(IAccess.ErrorIAccessTargetLocked.selector, address(product)));
 
         // WHEN
         SimpleProduct dproduct = SimpleProduct(address(product));
+        dproduct.doWhenNotLocked();
+
+        // WHEN - unlock
+        product.unlock();
+
+        // THEN - expect function to be called
         dproduct.doWhenNotLocked();
     }
 }
