@@ -473,11 +473,13 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
             revert ErrorIPolicyServiceOpenClaims(policyNftId, policyInfo.openClaimsCount);
         }
 
-        if (policyInfo.expiredAt.lt(TimestampLib.blockTimestamp()) && policyInfo.payoutAmount < policyInfo.sumInsuredAmount) {
+        if (TimestampLib.blockTimestamp().lte(policyInfo.expiredAt) && (policyInfo.payoutAmount < policyInfo.sumInsuredAmount)) {
             revert ErrorIPolicyServicePolicyHasNotExpired(policyNftId, policyInfo.expiredAt);
         }
 
         policyInfo.closedAt = TimestampLib.blockTimestamp();
+
+        _bundleService.closePolicy(instance, policyNftId, policyInfo.bundleNftId, policyInfo.sumInsuredAmount);
         instance.updatePolicy(policyNftId, policyInfo, CLOSED());
     }
 

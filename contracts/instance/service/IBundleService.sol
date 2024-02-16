@@ -30,6 +30,8 @@ interface IBundleService is IService {
 
     function increaseBalance(IInstance instance, NftId bundleNftId,  uint256 amount) external;
 
+    function closePolicy(IInstance instance, NftId policyNftId, NftId bundleNftId, uint256 collateralAmount) external;
+
     // function fundBundle(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
     // function defundBundle(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);

@@ -201,6 +201,25 @@ contract BundleService is
         instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
+    function closePolicy(IInstance instance,
+        NftId policyNftId, 
+        NftId bundleNftId, 
+        uint256 collateralAmount
+    ) 
+        external
+        onlyService 
+    {
+        InstanceReader instanceReader = instance.getInstanceReader();
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+
+        // lock collateral
+        bundleInfo.lockedAmount -= collateralAmount;
+
+        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        
+        unlinkPolicy(instance, policyNftId);
+    }
+
     /// @dev links policy to bundle
     function linkPolicy(IInstance instance, NftId policyNftId) 
         internal
@@ -234,8 +253,8 @@ contract BundleService is
         }
 
         // ensure policy is closeable
-        if (policyInfo.expiredAt < TimestampLib.blockTimestamp()
-            || policyInfo.payoutAmount < policyInfo.sumInsuredAmount)
+        if ( TimestampLib.blockTimestamp() < policyInfo.expiredAt
+            && policyInfo.payoutAmount < policyInfo.sumInsuredAmount)
         {
             revert BundleManager.ErrorBundleManagerPolicyNotCloseable(policyNftId);
         }

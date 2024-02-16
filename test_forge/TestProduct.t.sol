@@ -14,7 +14,7 @@ import {Timestamp, TimestampLib, zeroTimestamp} from "../contracts/types/Timesta
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
 import {ReferralLib} from "../contracts/types/Referral.sol";
-import {APPLIED, ACTIVE, UNDERWRITTEN} from "../contracts/types/StateId.sol";
+import {APPLIED, ACTIVE, UNDERWRITTEN, CLOSED} from "../contracts/types/StateId.sol";
 import {POLICY} from "../contracts/types/ObjectType.sol";
 
 contract TestProduct is TestGifBase {
@@ -393,6 +393,67 @@ contract TestProduct is TestGifBase {
         assertEq(token.balanceOf(address(product)), 10, "product balance not 10");
         assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
         assertEq(token.balanceOf(address(pool)), 10130, "pool balance not 130");
+    }
+
+    function test_Product_close() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProduct();  
+
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zeroFee());
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        SimpleProduct dproduct = SimpleProduct(address(product));
+        dproduct.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        // revert("checkApprove");
+
+        NftId policyNftId = dproduct.createApplication(
+            customer,
+            riskId,
+            1000,
+            30,
+            "",
+            bundleNftId,
+            ReferralLib.zero()
+        );
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+        dproduct.underwrite(policyNftId, true, TimestampLib.blockTimestamp()); 
+
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+
+        // WHEN
+        vm.warp(100); // warp 100 seconds
+        dproduct.close(policyNftId);
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == CLOSED(), "policy state not CLOSE");
+
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        assertEq(bundleInfo.lockedAmount, 0, "lockedAmount not 1000");
+        assertEq(bundleInfo.balanceAmount, 10000 + 130, "balanceAmount not 10130");
+        
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertTrue(policyInfo.closedAt.gtz(), "expiredAt not set");
+        
+        assertEq(token.balanceOf(address(pool)), 10130, "pool balance not 130");
+
+        assertEq(instanceBundleManager.activePolicies(bundleNftId), 0, "expected no active policy");
     }
 
     function test_createRisk() public {

@@ -114,6 +114,12 @@ contract SimpleProduct is Product {
         _activate(policyNftId, activateAt);
     }
 
+    function close(
+        NftId policyNftId
+    ) public {
+        _close(policyNftId);
+    }
+
     function doSomethingSpecial() 
         public 
         onlyInstanceRole(SPECIAL_ROLE_INT)
