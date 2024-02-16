@@ -100,6 +100,13 @@ contract SimpleProduct is Product {
         _underwrite(policyNftId, requirePremiumPayment, activateAt);
     }
 
+    function collectPremium(
+        NftId policyNftId,
+        Timestamp activateAt
+    ) public {
+        _collectPremium(policyNftId, activateAt);
+    }
+
     function activate(
         NftId policyNftId,
         Timestamp activateAt

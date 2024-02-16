@@ -81,7 +81,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
         (productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
-    // TODO no access restrictions
+    // TODO: no access restrictions
     function calculatePremium(
         RiskId riskId,
         uint256 sumInsuredAmount,
@@ -179,7 +179,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
         ReferralId referralId
     ) external override returns (NftId policyNftId) {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        // TODO add validations (see create bundle in pool service)
+        // TODO: add validations (see create bundle in pool service)
 
         policyNftId = getRegistryService().registerPolicy(
             IRegistry.ObjectInfo(
@@ -224,7 +224,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
         instance.createPolicy(policyNftId, policyInfo);
         instance.updatePolicyState(policyNftId, APPLIED());
 
-        // TODO add logging
+        // TODO: add logging
     }
 
     function _getAndVerifyUnderwritingSetup(
@@ -384,7 +384,7 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
             }
         }
 
-        // TODO add logging
+        // TODO: add logging
     }
 
     function calculateRequiredCollateral(UFixed collateralizationLevel, uint256 sumInsuredAmount) public pure override returns(uint256 collateralAmount) {
@@ -397,28 +397,30 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
         // check caller is registered product
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
 
-        // TODO: check if not paid
-        // TODO: transfer premium 
-        // TODO: optionally activate
+        if (policyInfo.premiumPaidAmount == policyInfo.premiumAmount) {
+            revert ErrorIPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
+        }
 
-        // // perform actual token transfers (this code is probably not complete)
-        // IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        
-        // uint256 premiumAmount = policyInfo.premiumAmount;
-        // _processPremiumByTreasury(instance, productInfo.nftId, policyNftId, premiumAmount);
+        uint256 unpaidPremiumAmount = policyInfo.premiumAmount - policyInfo.premiumPaidAmount;
 
-        // // policy level book keeping for premium paid
-        // policyInfo.premiumPaidAmount += premiumAmount;
+        uint256 netPremiumAmount = _processPremiumByTreasury(
+                instance, 
+                productInfo.nftId,
+                policyNftId, 
+                unpaidPremiumAmount);
 
-        // instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        policyInfo.premiumPaidAmount += unpaidPremiumAmount;
 
-        // // optional activation of policy
-        // if(activateAt > zeroTimestamp()) {
-        //     activate(policyNftId, activateAt);
-        // }
+        _bundleService.increaseBalance(instance, policyInfo.bundleNftId, netPremiumAmount);
+        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
-        // TODO add logging
+        if(activateAt.gtz() && policyInfo.activatedAt.eqz()) {
+            activate(policyNftId, activateAt);
+        }
+
+        // TODO: add logging
     }
 
     function activate(NftId policyNftId, Timestamp activateAt) public override {
@@ -437,14 +439,14 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
 
         instance.updatePolicy(policyNftId, policyInfo, ACTIVE());
 
-        // TODO add logging
+        // TODO: add logging
     }
 
     function close(
         NftId policyNftId
     ) external override // solhint-disable-next-line no-empty-blocks
     {
-
+        // TODO: implement
     }
 
     function _getPoolNftId(
@@ -498,6 +500,6 @@ contract PolicyService is ComponentServiceBase, IPolicyService {
             }
         }
 
-        // TODO add logging
+        // TODO: add logging
     }
 }

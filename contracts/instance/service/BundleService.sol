@@ -186,6 +186,21 @@ contract BundleService is
         linkPolicy(instance, policyNftId);
     }
 
+    function increaseBalance(IInstance instance,
+        NftId bundleNftId, 
+        uint256 amount
+    ) 
+        external
+        onlyService 
+    {
+        InstanceReader instanceReader = instance.getInstanceReader();
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+
+        bundleInfo.balanceAmount += amount;
+
+        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+    }
+
     /// @dev links policy to bundle
     function linkPolicy(IInstance instance, NftId policyNftId) 
         internal
