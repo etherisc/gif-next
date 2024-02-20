@@ -83,6 +83,8 @@ contract DistributionService is
         instance.createDistributionSetup(distributionNftId, initialSetup);
 
         instanceService.createTarget(_getInstanceNftId(info), distributionAddress, distribution.getName());
+
+        distribution.linkToRegisteredNftId();
     }
 
     function _decodeAndVerifyDistributionSetup(bytes memory data) internal returns(ISetup.DistributionSetupInfo memory setup)

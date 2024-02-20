@@ -90,6 +90,8 @@ contract PoolService is
         instance.createPoolSetup(poolNftId, initialSetup);
 
         getInstanceService().createTarget(_getInstanceNftId(info), poolAddress, pool.getName());
+
+        pool.linkToRegisteredNftId();
     }
 
     function _decodeAndVerifyPoolSetup(bytes memory data) internal returns(ISetup.PoolSetupInfo memory setup)

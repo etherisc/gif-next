@@ -98,6 +98,8 @@ contract ProductService is ComponentServiceBase, IProductService {
         instance.createProductSetup(productNftId, initialSetup);
 
         getInstanceService().createTarget(_getInstanceNftId(info), productAddress, product.getName());
+
+        product.linkToRegisteredNftId();
     }
 
     function _decodeAndVerifyProductSetup(bytes memory data) internal returns(ISetup.ProductSetupInfo memory setup)
