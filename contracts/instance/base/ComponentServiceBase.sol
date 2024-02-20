@@ -68,7 +68,7 @@ abstract contract ComponentServiceBase is Service {
         address instanceAddress = registry.getObjectInfo(info.parentNftId).objectAddress;
         instance = IInstance(instanceAddress);
 
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
         if (accessManager.isTargetLocked(info.objectAddress)) {
             revert IAccess.ErrorIAccessTargetLocked(info.objectAddress);
         }

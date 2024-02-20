@@ -264,8 +264,8 @@ abstract contract Product is BaseComponent, IProductComponent {
         ) = _pool.getInitialInfo();
         
         (
-            ISetup.PoolSetupInfo memory poolSetupInfo
-        )  = abi.decode(poolData, (ISetup.PoolSetupInfo));
+            , ISetup.PoolSetupInfo memory poolSetupInfo
+        )  = abi.decode(poolData, (string, ISetup.PoolSetupInfo));
 
         // from DistributionComponent
         (
@@ -274,8 +274,8 @@ abstract contract Product is BaseComponent, IProductComponent {
         ) = _distribution.getInitialInfo();
 
         (
-            ISetup.DistributionSetupInfo memory distributionSetupInfo
-        )  = abi.decode(distributionData, (ISetup.DistributionSetupInfo));
+            , ISetup.DistributionSetupInfo memory distributionSetupInfo
+        )  = abi.decode(distributionData, (string, ISetup.DistributionSetupInfo));
 
         return (
             productInfo,
