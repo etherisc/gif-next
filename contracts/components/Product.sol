@@ -280,6 +280,7 @@ abstract contract Product is BaseComponent, IProductComponent {
         return (
             productInfo,
             abi.encode(
+                getName(),
                 ISetup.ProductSetupInfo(
                     _token,
                     _tokenHandler,

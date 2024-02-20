@@ -83,7 +83,8 @@ contract ProductService is ComponentServiceBase, IProductService {
         bytes memory data;
         (info, data) = getRegistryService().registerProduct(product, productOwner);
 
-        IInstance instance = _getInstance(info.parentNftId);
+        NftId instanceNftId = info.parentNftId;
+        IInstance instance = _getInstance(instanceNftId);
         bool hasRole = getInstanceService().hasRole(
             productOwner, 
             PRODUCT_OWNER_ROLE(), 
@@ -94,22 +95,62 @@ contract ProductService is ComponentServiceBase, IProductService {
         }
 
         productNftId = info.nftId;
-        ISetup.ProductSetupInfo memory initialSetup = _decodeAndVerifyProductSetup(data);
+        string memory productName;
+        ISetup.ProductSetupInfo memory initialSetup;
+        (productName, initialSetup) = _decodeAndVerifyProductData(data);
+
         instance.createProductSetup(productNftId, initialSetup);
 
-        getInstanceService().createTarget(_getInstanceNftId(info), productAddress, product.getName());
+        getInstanceService().createTarget(instanceNftId, productAddress, productName);
 
         product.linkToRegisteredNftId();
     }
 
-    function _decodeAndVerifyProductSetup(bytes memory data) internal returns(ISetup.ProductSetupInfo memory setup)
+    function _decodeAndVerifyProductData(bytes memory data) 
+        internal 
+        returns(string memory name, ISetup.ProductSetupInfo memory setup)
     {
-        setup = abi.decode(
+        (name, setup) = abi.decode(
             data,
-            (ISetup.ProductSetupInfo)
+            (string, ISetup.ProductSetupInfo)
         );
 
-        // TODO add checks if applicable 
+        // TODO add checks
+        // if(wallet == address(0)) {
+        //     revert WalletIsZero();
+        // }
+
+        // IRegistry.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(info.token));
+
+        // if(tokenInfo.objectType != TOKEN()) {
+        //     revert InvalidToken();
+        // } 
+
+        // IRegistry.ObjectInfo memory poolInfo = _registry.getObjectInfo(info.poolNftId);
+
+        // if(poolInfo.objectType != POOL()) {
+        //     revert InvalidPool();
+        // }
+
+        // if(poolInfo.parentNftId != instanceNftId) {
+        //     revert InvalidPoolsInstance();
+        // }
+        // // TODO pool have the same token
+        // //ITreasury.PoolSetup memory poolSetup = instance.getPoolSetup(info.poolNftId);
+        // //require(tokenInfo.objectAddress == address(poolSetup.token), "ERROR:COS-018:PRODUCT_POOL_TOKEN_MISMATCH");
+        // // TODO pool is not linked
+
+        // IRegistry.ObjectInfo memory distributionInfo = _registry.getObjectInfo(info.distributionNftId);
+
+        // if(distributionInfo.objectType != DISTRIBUTION()) {
+        //     revert  InvalidDistribution();
+        // } 
+
+        // if(distributionInfo.parentNftId != instanceNftId) {
+        //     revert InvalidDistributionsInstance();
+        // }
+        // // TODO distribution have the same token
+        // // TODO distribution is not linked
     }
 
     function setFees(

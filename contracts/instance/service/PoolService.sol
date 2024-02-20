@@ -74,8 +74,8 @@ contract PoolService is
         bytes memory data;
         (info, data) = getRegistryService().registerPool(pool, poolOwner);
 
-        IInstance instance = _getInstance(info.parentNftId);
-
+        NftId instanceNftId = info.parentNftId;
+        IInstance instance = _getInstance(instanceNftId);
         bool hasRole = getInstanceService().hasRole(
             poolOwner, 
             POOL_OWNER_ROLE(), 
@@ -86,22 +86,41 @@ contract PoolService is
         }
 
         poolNftId = info.nftId;
-        ISetup.PoolSetupInfo memory initialSetup = _decodeAndVerifyPoolSetup(data);
+        string memory poolName;
+        ISetup.PoolSetupInfo memory initialSetup;
+        (poolName, initialSetup) = _decodeAndVerifyPoolData(data);
         instance.createPoolSetup(poolNftId, initialSetup);
 
-        getInstanceService().createTarget(_getInstanceNftId(info), poolAddress, pool.getName());
+        getInstanceService().createTarget(instanceNftId, poolAddress, poolName);
 
         pool.linkToRegisteredNftId();
     }
 
-    function _decodeAndVerifyPoolSetup(bytes memory data) internal returns(ISetup.PoolSetupInfo memory setup)
+    function _decodeAndVerifyPoolData(bytes memory data) 
+        internal 
+        returns(string memory name, ISetup.PoolSetupInfo memory setup)
     {
-        setup = abi.decode(
+        (name, setup) = abi.decode(
             data,
-            (ISetup.PoolSetupInfo)
+            (string, ISetup.PoolSetupInfo)
         );
 
-        // TODO add checks if applicable 
+        // TODO add checks
+        /*IRegistry _registry = getRegistry();
+
+        if(wallet == address(0)) {
+            revert WalletIsZero();
+        }
+
+        ObjectType tokenType = _registry.getObjectInfo(address(token)).objectType;
+
+        if(tokenType != TOKEN()) {
+            revert InvalidToken();
+        } 
+
+        if(UFixedLib.eqz(info.collateralizationLevel)) { 
+            revert CollateralizationLevelIsZero();
+        }*/
     }
 
     function setFees(
