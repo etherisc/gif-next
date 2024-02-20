@@ -292,10 +292,6 @@ contract InstanceService is Service, IInstanceService {
     }
     
     /// @dev top level initializer
-    // 1) registry is non upgradeable -> don't need a proxy and uses constructor !
-    // 2) deploy registry service first -> from its initialization func it is easier to deploy registry then vice versa
-    // 3) deploy registry -> pass registry service address as constructor argument
-    // registry is getting instantiated and locked to registry service address forever
     function _initialize(
         address owner, 
         bytes memory data
@@ -304,14 +300,13 @@ contract InstanceService is Service, IInstanceService {
         initializer
         virtual override
     {
-        address initialOwner = address(0);
-        address registryAddress = address(0);
+        address initialOwner;
+        address registryAddress;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while InstanceService is not deployed in InstanceServiceManager constructor
         //      owner is InstanceServiceManager deployer
         _initializeService(registryAddress, owner);
         
-        _registerInterface(type(IService).interfaceId);
         _registerInterface(type(IInstanceService).interfaceId);
     }
 

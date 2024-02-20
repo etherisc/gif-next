@@ -78,8 +78,6 @@ contract RegistryService is
         (info, data) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
 
         info.nftId = _registry.register(info);
-        // TODO unsafe, let component or its owner derive nftId latter, when state assumptions and modifications of GIF contracts are finished  
-        product.linkToRegisteredNftId();
 
         return (info, data);  
     }
@@ -99,7 +97,6 @@ contract RegistryService is
         (info, data) = _getAndVerifyContractInfo(pool, POOL(), owner);
 
         info.nftId = _registry.register(info);
-        pool.linkToRegisteredNftId();
 
         return (info, data);  
     }
@@ -118,8 +115,7 @@ contract RegistryService is
 
         (info, data) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
 
-        info.nftId = _registry.register(info); 
-        distribution.linkToRegisteredNftId();
+        info.nftId = _registry.register(info);
 
         return (info, data);  
     }
