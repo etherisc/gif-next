@@ -150,6 +150,7 @@ abstract contract Distribution is
         return (
             info,
             abi.encode(
+                getName(),
                 ISetup.DistributionSetupInfo(
                     _productNftId,
                     _tokenHandler,

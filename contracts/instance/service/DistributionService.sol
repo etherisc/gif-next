@@ -66,7 +66,8 @@ contract DistributionService is
         bytes memory data;
         (info, data) = getRegistryService().registerDistribution(distribution, distributionOwner);
 
-        IInstance instance = _getInstance(info.parentNftId);
+        NftId instanceNftId = info.parentNftId;
+        IInstance instance = _getInstance(instanceNftId);
         InstanceService instanceService = getInstanceService();
 
         bool hasRole = instanceService.hasRole(
@@ -79,19 +80,23 @@ contract DistributionService is
         }
 
         distributionNftId = info.nftId;
-        ISetup.DistributionSetupInfo memory initialSetup = _decodeAndVerifyDistributionSetup(data);
+        string memory distributionName;
+        ISetup.DistributionSetupInfo memory initialSetup;
+        (distributionName, initialSetup) = _decodeAndVerifyDistributionData(data);
         instance.createDistributionSetup(distributionNftId, initialSetup);
 
-        instanceService.createTarget(_getInstanceNftId(info), distributionAddress, distribution.getName());
+        instanceService.createTarget(instanceNftId, distributionAddress, distributionName);
 
         distribution.linkToRegisteredNftId();
     }
 
-    function _decodeAndVerifyDistributionSetup(bytes memory data) internal returns(ISetup.DistributionSetupInfo memory setup)
+    function _decodeAndVerifyDistributionData(bytes memory data)
+        internal 
+        returns(string memory name, ISetup.DistributionSetupInfo memory setup)
     {
-        setup = abi.decode(
+        (name, setup) = abi.decode(
             data,
-            (ISetup.DistributionSetupInfo)
+            (string, ISetup.DistributionSetupInfo)
         );
 
         // TODO add checks if applicable 

@@ -217,6 +217,7 @@ abstract contract Pool is BaseComponent, IPoolComponent {
         return (
             info,
             abi.encode(
+                getName(),
                 ISetup.PoolSetupInfo(
                     _productNftId,
                     _tokenHandler,
