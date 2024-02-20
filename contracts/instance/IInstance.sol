@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceReader} from "./InstanceReader.sol";
@@ -23,7 +24,7 @@ import {IPolicy} from "./module/IPolicy.sol";
 import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
 
-interface IInstance is IERC165, IKeyValueStore {
+interface IInstance is IERC165, IKeyValueStore, IAccessManaged {
 
     function getComponentOwnerService() external view returns (IComponentOwnerService);
     function getDistributionService() external view returns (IDistributionService);
@@ -56,7 +57,6 @@ interface IInstance is IERC165, IKeyValueStore {
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
     function updatePolicyState(NftId policyNftId, StateId newState) external;
 
-    function getInstanceAccessManager() external view returns (InstanceAccessManager);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleManager() external view returns (BundleManager);
 }

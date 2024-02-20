@@ -311,7 +311,7 @@ contract InstanceService is Service, IInstanceService {
 
     function hasRole(address account, RoleId role, address instanceAddress) public view returns (bool) {
         Instance instance = Instance(instanceAddress);
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
         return accessManager.hasRole(role, account);
     }
 
@@ -319,7 +319,7 @@ contract InstanceService is Service, IInstanceService {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
         accessManager.createTarget(targetAddress, targetName);
     }
 
@@ -337,7 +337,7 @@ contract InstanceService is Service, IInstanceService {
         address instanceAddress = registry.getObjectInfo(componentInfo.parentNftId).objectAddress;
         IInstance instance = IInstance(instanceAddress);
 
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
         accessManager.setTargetClosed(targetName, locked);
     }
     

@@ -251,10 +251,6 @@ contract Instance is
         return IBundleService(_registry.getServiceAddress(BUNDLE(), VersionPart.wrap(3)));
     }
 
-    function getInstanceAccessManager() external view returns (InstanceAccessManager) {
-        return _accessManager;
-    }
-
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
         require(instanceReader.getInstanceNftId() == getNftId(), "NFT ID of InstanceReader does not match");
         _instanceReader = instanceReader;

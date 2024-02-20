@@ -30,19 +30,20 @@ abstract contract BaseComponent is
     address internal _wallet;
     IERC20Metadata internal _token;
     IInstance internal _instance;
-    InstanceAccessManager internal _instanceAccessManager;
     NftId internal _productNftId;
 
     modifier onlyInstanceRole(uint64 roleIdNum) {
         RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
-        if( !_instanceAccessManager.hasRole(roleId, msg.sender)) {
+        InstanceAccessManager accessManager = InstanceAccessManager(_instance.authority());
+        if( !accessManager.hasRole(roleId, msg.sender)) {
             revert ErrorBaseComponentUnauthorized(msg.sender, roleIdNum);
         }
         _;
     }
 
     modifier isNotLocked() {
-        if (_instanceAccessManager.isTargetLocked(address(this))) {
+        InstanceAccessManager accessManager = InstanceAccessManager(_instance.authority());
+        if (accessManager.isTargetLocked(address(this))) {
             revert IAccess.ErrorIAccessTargetLocked(address(this));
         }
         _;
@@ -62,7 +63,6 @@ abstract contract BaseComponent is
 
         IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
         _instance = IInstance(instanceInfo.objectAddress);
-        _instanceAccessManager = _instance.getInstanceAccessManager();
         require(
             _instance.supportsInterface(type(IInstance).interfaceId),
             ""
