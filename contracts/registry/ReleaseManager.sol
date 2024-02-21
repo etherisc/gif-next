@@ -30,7 +30,6 @@ contract ReleaseManager is AccessManaged
 
     // registerService
     error NotService();
-    error ServiceNotInRelease(IService service, ObjectType serviceDomain);
 
     // activateNextRelease
     //error ReleaseNotCreated();
@@ -92,10 +91,11 @@ contract ReleaseManager is AccessManaged
             revert NotRegistryService();
         }
         // TODO unreliable! MUST guarantee the same authority -> how?
-        if(service.authority() != authority()) {
+        address serviceAuthority = service.authority();
+        if(serviceAuthority != authority()) {
             revert UnexpectedServiceAuthority(
                 authority(), 
-                service.authority()); 
+                serviceAuthority); 
         }
 
         (
@@ -136,22 +136,19 @@ contract ReleaseManager is AccessManaged
         ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
 
         VersionPart version = getNextVersion();
-        ObjectType domain = _verifyServiceInfo(info, version, zeroObjectType());
+        ObjectType domain = _release[version].domains[_awaitingRegistration];// reversed registration order of services specified in RegistryService config
+        _verifyServiceInfo(info, version, domain);
 
+        // setup and grant unique role if service does registrations
+        address registryService = _registry.getServiceAddress(REGISTRY(), version);
         bytes4[] memory selector = new bytes4[](1);
         selector[0] = _selector[version][domain];
-
-        // service type is in release
-        if(selector[0] == 0) {
-            revert ServiceNotInRelease(service, domain);
+        if(selector[0] != 0) {
+            _accessManager.setAndGrantUniqueRole(
+                address(service), 
+                registryService, 
+                selector);
         }
-
-        // setup and grant unique role
-        address registryService = _registry.getServiceAddress(REGISTRY(), version);
-        _accessManager.setAndGrantUniqueRole(
-            address(service), 
-            registryService, 
-            selector);
 
         _awaitingRegistration--;
 
@@ -327,9 +324,6 @@ contract ReleaseManager is AccessManaged
                 domain == REGISTRY() ||
                 domain.eqz()
             ) { revert ConfigServiceDomainInvalid(idx, domain); } 
-
-            // selector not zero
-            if(selector == 0) { revert ConfigSelectorZero(idx); }
 
             // no overwrite
             if(_selector[version][domain] > 0) {

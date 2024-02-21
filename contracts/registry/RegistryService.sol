@@ -190,27 +190,28 @@ contract RegistryService is
 
         FunctionConfig[] memory config = new FunctionConfig[](6);
 
+        // order of service registrations MUST be reverse to this array 
+        /*config[-1].serviceDomain = STAKE();
+        config[-1].selector = RegistryService.registerStake.selector;*/
+
+        config[0].serviceDomain = POLICY();
+        config[0].selector = RegistryService.registerPolicy.selector;
+
+        config[1].serviceDomain = BUNDLE();
+        config[1].selector = RegistryService.registerBundle.selector;
+
+        config[2].serviceDomain = PRODUCT();
+        config[2].selector = RegistryService.registerProduct.selector;
+
+        config[3].serviceDomain = POOL();
+        config[3].selector = RegistryService.registerPool.selector;
+
+        config[4].serviceDomain = DISTRIBUTION();
+        config[4].selector = RegistryService.registerDistribution.selector;
+
         // registerInstance() have no restriction
-        config[0].serviceDomain = INSTANCE();
-        config[0].selector = RegistryService.registerInstance.selector;
-
-        config[1].serviceDomain = POOL();
-        config[1].selector = RegistryService.registerPool.selector;
-
-        config[2].serviceDomain = DISTRIBUTION();
-        config[2].selector = RegistryService.registerDistribution.selector;
-
-        config[3].serviceDomain = PRODUCT();
-        config[3].selector = RegistryService.registerProduct.selector;
-
-        config[4].serviceDomain = POLICY();
-        config[4].selector = RegistryService.registerPolicy.selector;
-
-        config[5].serviceDomain = BUNDLE();
-        config[5].selector = RegistryService.registerBundle.selector;
-
-        /*config[6].serviceDomain = STAKE();
-        config[6].selector = RegistryService.registerStake.selector;*/
+        config[5].serviceDomain = INSTANCE();
+        config[5].selector = RegistryService.registerInstance.selector;
 
         data = abi.encode(config);
     }
