@@ -38,7 +38,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: registryAccessManagerAddress, contract: registryAccessManagerBaseContract } = await deployContract(
         "RegistryAccessManager",
         owner, // GIF_ADMIN_ROLE
-        [owner], // GIF_MANAGER_ROLE
+        [owner, owner], // GIF_MANAGER_ROLE
         {
             libraries: {
                 RoleIdLib: libraries.roleIdLibAddress,
