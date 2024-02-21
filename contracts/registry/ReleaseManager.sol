@@ -69,7 +69,8 @@ contract ReleaseManager is AccessManaged
 
     constructor(
         RegistryAccessManager accessManager, 
-        VersionPart initialVersion)
+        VersionPart initialVersion
+    )
         AccessManaged(accessManager.authority())
     {
         require(initialVersion.toInt() > 0, "ReleaseManager: initial version is 0");

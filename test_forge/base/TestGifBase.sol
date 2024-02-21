@@ -63,6 +63,7 @@ import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
+import {RegistryDeployer} from "../../contracts/registry/RegistryDeployer.sol";
 
 
 // solhint-disable-next-line max-states-count
@@ -74,7 +75,7 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    RegistryAccessManager registryAccessManagerAddress;
+    RegistryAccessManager registryAccessManager;
     ReleaseManager public releaseManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
@@ -271,29 +272,48 @@ contract TestGifBase is Test {
         console.log(message, gasDelta);
     }
 
+    // TODO simplify/streamline currently very hard to read and understand)
+    // sequence of commands actually matters without being obvious why
     function _deployRegistryServiceAndRegistry() internal
     {
-        registryAccessManagerAddress = new RegistryAccessManager(registryOwner);
+        // registryAccessManager = new RegistryAccessManager(registryOwner);
 
-        releaseManager = new ReleaseManager(
-            registryAccessManagerAddress,
-            VersionPartLib.toVersionPart(3));
+        // releaseManager = new ReleaseManager(
+        //     registryAccessManager,
+        //     VersionPartLib.toVersionPart(3));
 
-        registryAddress = address(releaseManager.getRegistry());
-        registry = Registry(registryAddress);
+        // tokenRegistry = new TokenRegistry();
+
+        // registryAccessManager.initialize(address(releaseManager), address(tokenRegistry));
+
+        // registryAddress = releaseManager.getRegistry();
+        // registry = Registry(registryAddress);
+        // registryNftId = registry.getNftId(registryAddress); 
+        // chainNft = registry.getChainNft();
+
+        // solhint-disable-next-line
+        console.log("debug 1");
+
+        RegistryDeployer registryDeployer = new RegistryDeployer(registryOwner);
+
+        // solhint-disable-next-line
+        console.log("debug 2");
+
+        registryAccessManager = registryDeployer.getRegistryAccessManager();
+        releaseManager = registryDeployer.getReleaseManager();
+        tokenRegistry = registryDeployer.getTokenRegistry();
+        registry = registryDeployer.getRegistry();
+        chainNft = registry.getChainNft();
+        registryAddress = address(registry);
         registryNftId = registry.getNftId(address(registry)); 
 
-        address chainNftAddress = address(registry.getChainNft());
-        chainNft = ChainNft(chainNftAddress);
-
-        tokenRegistry = new TokenRegistry();
-
-        registryAccessManagerAddress.initialize(address(releaseManager), address(tokenRegistry));
-
         registryServiceManager = new RegistryServiceManager(
-            registryAccessManagerAddress.authority(),
+            registryAccessManager.authority(),
             registryAddress
         );        
+
+        // solhint-disable-next-line
+        console.log("debug 3");
         
         registryService = registryServiceManager.getRegistryService();
 
@@ -302,7 +322,6 @@ contract TestGifBase is Test {
         registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
         tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service
 
-        
         /* solhint-disable */
         console.log("registry deployed at", address(registry));
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
@@ -310,8 +329,8 @@ contract TestGifBase is Test {
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
 
         console.log("registry owner", address(registryOwner));
-        console.log("registry service access manager", address(registryAccessManagerAddress));
-        console.log("registry service access manager authority", registryAccessManagerAddress.authority());
+        console.log("registry service access manager", address(registryAccessManager));
+        console.log("registry service access manager authority", registryAccessManager.authority());
         console.log("registry service release manager", address(releaseManager));
         console.log("registry service release manager authority", releaseManager.authority());
         console.log("registry service proxy manager", address(registryServiceManager));
@@ -398,6 +417,7 @@ contract TestGifBase is Test {
         // solhint-enable
 
         // MUST follow bundle service registration 
+        // TODO matt understand why order of service registration matters
         // --- policy service ---------------------------------//
         policyServiceManager = new PolicyServiceManager(address(registry));
         policyService = policyServiceManager.getPolicyService();
@@ -415,9 +435,9 @@ contract TestGifBase is Test {
         // releaseManager.registerService(componentOwnerService);
         // assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
 
-        // registryAccessManagerAddress.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        // registryAccessManagerAddress.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        // registryAccessManagerAddress.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // registryAccessManager.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // registryAccessManager.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
+        // registryAccessManager.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
 
         // /* solhint-disable */
         // console.log("service name", componentOwnerService.NAME());
@@ -429,7 +449,7 @@ contract TestGifBase is Test {
 
         // productService = new ProductService(registryAddress, registryNftId, registryOwner);
         // releaseManager.registerService(productService);
-        // registryAccessManagerAddress.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(productService), 0);
+        // registryAccessManager.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(productService), 0);
 
         // /* solhint-disable */
         // console.log("service name", productService.NAME());
@@ -467,6 +487,8 @@ contract TestGifBase is Test {
         console.log("master instance nft id", masterInstanceNftId.toInt());
         // solhint-enable
 
+        // TODO instance should provide links to dependent contracts
+        // would then not need to provide all these contract addresses
         instanceService.setMasterInstance(address(masterInstanceAccessManager), address(masterInstance), address(masterInstanceReader), address(masterBundleManager));
     }
 

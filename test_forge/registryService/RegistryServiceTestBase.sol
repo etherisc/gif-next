@@ -115,7 +115,9 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        accessManager = new RegistryAccessManager(registryOwner);
+        address admin = registryOwner;
+        address manager = registryOwner;
+        accessManager = new RegistryAccessManager(admin, manager);
 
         releaseManager = new ReleaseManager(
             accessManager,

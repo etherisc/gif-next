@@ -23,6 +23,16 @@ contract NftOwnable is INftOwnable {
         _initialOwner = msg.sender;
     }
 
+    function setInitialOwner(address initialOwner) public
+        onlyOwner()
+    {
+        if (_nftId.gtz()) {
+            revert ErrorAlreadyLinked(address(_registry), _nftId);
+        }
+
+        _initialOwner = initialOwner;
+    }
+
     /// @dev links this contract to nft after registration
     // needs to be done once per registered contract and 
     // reduces registry calls to check ownership
