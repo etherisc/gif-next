@@ -22,14 +22,8 @@ contract RegistryDeployer
     
     event LogConsole(string message);
 
-<<<<<<< HEAD
     // TODO 1) provide registry service manager as parameter
     // TODO 2) configure registry service manager and complete deployment
-=======
-    // TODO 1) check if this does deploy outside forge test
-    // TODO 2) provide registry service manager as parameter
-    // TODO 3) configure registry service manager and complete deployment
->>>>>>> 221cee2 (add initial RegistryDeployer contract)
     constructor(address registryOwner) {
         emit LogConsole("debug 1.1");
 
