@@ -329,8 +329,8 @@ contract TestGifBase is Test {
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
 
         console.log("registry owner", address(registryOwner));
-        console.log("registry access manager", address(registryAccessManagerAddress));
-        console.log("registry access manager authority", registryAccessManagerAddress.authority());
+        console.log("registry access manager", address(registryAccessManager));
+        console.log("registry access manager authority", registryAccessManager.authority());
         console.log("release manager", address(releaseManager));
         console.log("release manager authority", releaseManager.authority());
         console.log("registry service proxy manager", address(registryServiceManager));
