@@ -65,8 +65,8 @@ contract TestProduct is TestGifBase {
             riskId,
             30,
             "",
-            ReferralLib.zero(),
-            bundleNftId
+            bundleNftId,
+            ReferralLib.zero()
         );
         assertEq(premium, 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
     }

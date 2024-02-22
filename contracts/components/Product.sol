@@ -76,8 +76,8 @@ abstract contract Product is BaseComponent, IProductComponent {
         RiskId riskId,
         uint256 lifetime,
         bytes memory applicationData,
-        ReferralId referralId,
-        NftId bundleNftId
+        NftId bundleNftId,
+        ReferralId referralId
     )
         external 
         view 
