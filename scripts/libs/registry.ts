@@ -106,13 +106,15 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
 
-    //await releaseManager.createNextRelease(registryService);
-    const rcptCre = await executeTx(async () => await releaseManager.createNextRelease(registryService));
-    const logReleaseCreationInfo = getFieldFromTxRcptLogs(rcptCre!, registry.interface, "LogRegistration", "nftId");
+    await releaseManager.createNextRelease();
+
+    const rcptReg = await executeTx(async () => await releaseManager.registerRegistryService(registryService));
+    const logReleaseCreationInfo = getFieldFromTxRcptLogs(rcptReg!, registry.interface, "LogRegistration", "nftId");
+
     const registryServiceNftId = (logReleaseCreationInfo as unknown);
 
-    await registryServiceManager.linkToNftOwnable(registryAddress);
-    await tokenRegistry.linkToNftOwnable(registryAddress);
+    //await registryServiceManager.linkToNftOwnable(registryAddress);
+    //await tokenRegistry.linkToNftOwnable(registryAddress);
 
     logger.info(`RegistryAccessManager deployed at ${registryAccessManager}`);
     logger.info(`ReleaseManager deployed at ${releaseManager}`);

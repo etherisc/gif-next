@@ -167,6 +167,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const policyServiceNftId = (logRegistrationInfoPol as unknown[])[0];
     logger.info(`policyServiceManager deployed - policyServiceAddress: ${policyServiceAddress} policyServiceManagerAddress: ${policyServiceManagerAddress} nftId: ${policyServiceNftId}`);
 
+    // activate first release
+    await releaseManager.activateNextRelease();
+
+    // Now can link to "first" latest version
+    await registry.registryServiceManager.linkToNftOwnable(registry.registryAddress);
+    await registry.tokenRegistry.linkToNftOwnable(registry.registryAddress);
+
     logger.info("======== Finished deployment of services ========");
 
     return {
