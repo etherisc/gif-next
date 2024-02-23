@@ -21,7 +21,7 @@ contract ReleaseManager is AccessManaged
 {
     using ObjectTypeLib for ObjectType;
 
-    event LogReleaseCreation(VersionPart version, IService registryService); 
+    event LogReleaseCreation(VersionPart version); 
     event LogReleaseActivation(VersionPart version);
 
     // createNextRelease
@@ -93,6 +93,8 @@ contract ReleaseManager is AccessManaged
         VersionPartLib.toVersionPart(_next.toInt() + 1);
         // disallow registration of regular services for next version while registry service is not registered 
         _awaitingRegistration = 0;
+
+        emit LogReleaseCreation(_next); 
     }
 
     function activateNextRelease() 
@@ -158,8 +160,6 @@ contract ReleaseManager is AccessManaged
 
         // external call
         service.linkToRegisteredNftId();
-
-        emit LogReleaseCreation(version, service); 
     }
 
     // TODO adding service to release -> synchronized with proxy upgrades or simple addServiceToRelease(service, version, selector)?
