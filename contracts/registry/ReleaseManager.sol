@@ -32,8 +32,8 @@ contract ReleaseManager is AccessManaged
     error NotService();
 
     // activateNextRelease
-    //error ReleaseNotCreated();
-    //error ReleaseRegistrationNotFinished();
+    error ReleaseNotCreated();
+    error ReleaseRegistrationNotFinished();
 
     // _getAndVerifyContractInfo
     error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
@@ -55,8 +55,9 @@ contract ReleaseManager is AccessManaged
     RegistryAccessManager private immutable _accessManager;
     IRegistry private immutable _registry;
 
+    VersionPart immutable _initial;// first active version    
     VersionPart _latest;// latest active version
-    VersionPart immutable _initial;// first active version
+    VersionPart _next;// version to create and activate 
 
     mapping(VersionPart version => IRegistry.ReleaseInfo info) _release;
 
@@ -65,6 +66,8 @@ contract ReleaseManager is AccessManaged
     uint _awaitingRegistration; // "services left to register" counter
 
     mapping(address registryService => bool isActive) _active;
+
+    mapping(VersionPart version => bool isValid) _valid; // TODO refactor to use _active only
 
     constructor(
         RegistryAccessManager accessManager, 
@@ -76,15 +79,55 @@ contract ReleaseManager is AccessManaged
         _accessManager = accessManager;
 
         _initial = initialVersion;
+        _next = initialVersion;
 
         _registry = new Registry();
     }
 
-    // TODO deploy proxy and initialize with given implementation instead of using given proxy?
-    // IMPORTANT: MUST never be possible to create with access/release manager, token registry
-    function createNextRelease(IRegistryService service)
+    /// @dev skips previous release if was not activated
+    function createNextRelease()
         external
         restricted // GIF_ADMIN_ROLE
+    {
+        // allow to register new registry service for next version
+        VersionPartLib.toVersionPart(_next.toInt() + 1);
+        // disallow registration of regular services for next version while registry service is not registered 
+        _awaitingRegistration = 0;
+    }
+
+    function activateNextRelease() 
+        external 
+        restricted // GIF_ADMIN_ROLE
+    {
+        VersionPart version = _next;
+        address service = _registry.getServiceAddress(REGISTRY(), version);
+
+        // release was created
+        if(service == address(0)) {
+            revert ReleaseNotCreated();
+        }
+
+        // release fully deployed
+        if(_awaitingRegistration > 0) {
+            revert ReleaseRegistrationNotFinished();
+        }
+
+        //setTargetClosed(service, false);
+
+        _latest = version;
+
+        _active[service] = true;
+        _valid[version] = true;
+
+        emit LogReleaseActivation(version);
+    }
+
+    // TODO deploy proxy and initialize with given implementation instead of using given proxy?
+    // IMPORTANT: MUST never be possible to create with access/release manager, token registry
+    // callable once per release after release creation, can not register regular services while registry service is not registered
+    function registerRegistryService(IRegistryService service)
+        external
+        restricted // GIF_MANAGER_ROLE
         returns(NftId nftId)
     {
         if(!service.supportsInterface(type(IRegistryService).interfaceId)) {
@@ -103,7 +146,7 @@ contract ReleaseManager is AccessManaged
             bytes memory data
         ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
 
-        VersionPart version = getNextVersion();
+        VersionPart version = _next;
         ObjectType domain = REGISTRY();
         _verifyServiceInfo(info, version, domain);
 
@@ -135,30 +178,22 @@ contract ReleaseManager is AccessManaged
             //bytes memory data
         ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
 
-        VersionPart version = getNextVersion();
+        VersionPart version = _next;
         ObjectType domain = _release[version].domains[_awaitingRegistration];// reversed registration order of services specified in RegistryService config
         _verifyServiceInfo(info, version, domain);
 
         // setup and grant unique role if service does registrations
-        address registryService = _registry.getServiceAddress(REGISTRY(), version);
         bytes4[] memory selector = new bytes4[](1);
         selector[0] = _selector[version][domain];
+        address registryService = _registry.getServiceAddress(REGISTRY(), version);
         if(selector[0] != 0) {
             _accessManager.setAndGrantUniqueRole(
                 address(service), 
                 registryService, 
                 selector);
         }
-
+        
         _awaitingRegistration--;
-
-        // activate release
-        if(_awaitingRegistration == 0) {
-            _latest = version;
-            _active[registryService] = true;  
-
-            emit LogReleaseActivation(version);
-        }
 
         nftId = _registry.registerService(info, version, domain);
 
@@ -166,36 +201,16 @@ contract ReleaseManager is AccessManaged
         service.linkToRegisteredNftId(); 
     }
 
-    /*function activateNextRelease() 
-        external 
-        restricted // GIF_ADMIN_ROLE
-    {
-        VersionPart version = getNextVersion();
-        address service = _registry.getServiceAddress(REGISTRY(), version);
-
-        // release was created
-        if(service == address(0)) {
-            revert ReleaseNotCreated();
-        }
-
-        // release fully deployed
-        if(_awaitingRegistration > 0) {
-            revert ReleaseRegistrationNotFinished();
-        }
-
-        //setTargetClosed(service, false);
-
-        _latest = version;
-        _active[service] = true;
-
-        LogReleaseActivation(version);
-    }*/
-
     //--- view functions ----------------------------------------------------//
 
     function isActiveRegistryService(address service) external view returns(bool)
     {
         return _active[service];
+    }
+
+    function isValidRelease(VersionPart version) external view returns(bool)
+    {
+        return _valid[version];
     }
 
     function getRegistry() external view returns(address)
@@ -210,11 +225,7 @@ contract ReleaseManager is AccessManaged
 
     function getNextVersion() public view returns(VersionPart) 
     {
-        uint256 latest = _latest.toInt();
-
-        return latest == 0 ?
-            _initial : // no active releases yet
-            VersionPartLib.toVersionPart(latest + 1);
+        return _next;
     }
 
     function getLatestVersion() external view returns(VersionPart) {
@@ -293,10 +304,8 @@ contract ReleaseManager is AccessManaged
             revert UnexpectedServiceVersion(expectedVersion, version);
         }
 
-        if(expectedDomain.gtz()) { 
-            if(domain != expectedDomain) {
-                revert UnexpectedServiceDomain(expectedDomain, domain);
-            }
+        if(domain != expectedDomain) {
+            revert UnexpectedServiceDomain(expectedDomain, domain);
         }
 
         return domain;
@@ -306,7 +315,7 @@ contract ReleaseManager is AccessManaged
     function _createRelease(bytes memory configBytes)
         internal
     {
-        VersionPart version = getNextVersion();
+        VersionPart version = _next;
         IRegistryService.FunctionConfig[] memory config = abi.decode(configBytes, (IRegistryService.FunctionConfig[]));
 
         if(config.length == 0) {
@@ -325,6 +334,7 @@ contract ReleaseManager is AccessManaged
                 domain.eqz()
             ) { revert ConfigServiceDomainInvalid(idx, domain); } 
 
+            // TODO can be zero -> e.g. duplicate domain, first with zero selector, second with non zero selector -> need to check _release[version].domains.contains(domain) instead
             // no overwrite
             if(_selector[version][domain] > 0) {
                 revert SelectorAlreadyExists(version, domain); 
