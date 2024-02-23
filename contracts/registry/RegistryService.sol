@@ -183,7 +183,7 @@ contract RegistryService is
     function getInitialInfo() 
         public 
         view
-        override(IRegisterable, Registerable)
+        virtual override(IRegisterable, Registerable)
         returns (IRegistry.ObjectInfo memory info, bytes memory data)
     {
         (info , data) = super.getInitialInfo();

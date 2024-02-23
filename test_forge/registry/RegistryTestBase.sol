@@ -17,6 +17,8 @@ import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/types/ObjectType.sol";
 
+import {IService} from "../../contracts/shared/IService.sol";
+
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -25,6 +27,10 @@ import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceMa
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
+import {DistributionServiceManager} from "../../contracts/instance/service/DistributionServiceManager.sol";
+
+import {RegistryServiceManagerMockWithConfig} from "../mock/RegistryServiceManagerMock.sol";
+
 
 
 // Helper functions to test IRegistry.ObjectInfo structs 
@@ -146,22 +152,31 @@ contract RegistryTestBase is Test, FoundryRandom {
 
         address chainNftAddress = address(registry.getChainNft());
         chainNft = ChainNft(chainNftAddress);
-
-        registryServiceManager = new RegistryServiceManager(
-            accessManager.authority(),
-            registryAddress
-        );        
-        
-        registryService = registryServiceManager.getRegistryService();
         
         tokenRegistry = new TokenRegistry();
 
         accessManager.initialize(address(releaseManager), address(tokenRegistry));
 
-        NftId nftId = releaseManager.createNextRelease(registryService);
+        releaseManager.createNextRelease();
+
+        registryServiceManager = new RegistryServiceManagerMockWithConfig(
+            accessManager.authority(),
+            address(registry)
+        );        
+        
+        registryService = registryServiceManager.getRegistryService();
+
+        releaseManager.registerRegistryService(registryService);
+
+        // required in order to activate release
+        DistributionServiceManager distributionServiceManager = new DistributionServiceManager(address(registry));
+        IService distributionService = distributionServiceManager.getDistributionService();
+        releaseManager.registerService(distributionService);
+
+        releaseManager.activateNextRelease();
 
         registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service nft
-        tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service nft
+        tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service nft*/
 
         _stopPrank();
 

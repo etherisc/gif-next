@@ -134,7 +134,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         address tokenRegistry;
         accessManager.initialize(address(releaseManager), tokenRegistry);
 
-        releaseManager.createNextRelease(registryService);
+        releaseManager.createNextRelease();
 
         registryServiceNftId = registry.getNftId(address(registryService));
 
