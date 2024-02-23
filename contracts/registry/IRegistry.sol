@@ -52,11 +52,13 @@ interface IRegistry is IERC165 {
 
     function register(ObjectInfo memory info) external returns (NftId nftId);
 
-    function getMajorVersionMin() external view returns (VersionPart);
+    function registerWithCustomType(ObjectInfo memory info) external returns (NftId nftId);
 
-    function getMajorVersionMax() external view returns (VersionPart);
+    function getInitialVersion() external view returns (VersionPart);
 
-    function getMajorVersion() external view returns (VersionPart);
+    function getNextVersion() external view returns (VersionPart);
+
+    function getLatestVersion() external view returns (VersionPart);
 
     function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory);
 
@@ -79,6 +81,8 @@ interface IRegistry is IERC165 {
     function isRegistered(address contractAddress) external view returns (bool);
 
     function isRegisteredService(address contractAddress) external view returns (bool);
+
+    function isValidRelease(VersionPart version) external view returns (bool);
 
     function getServiceAddress(
         ObjectType serviceDomain, 

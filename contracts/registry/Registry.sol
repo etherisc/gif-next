@@ -30,21 +30,23 @@ contract Registry is
     uint256 public constant REGISTRY_TOKEN_SEQUENCE_ID = 2;
     string public constant EMPTY_URI = "";
 
-    mapping(NftId nftId => ObjectInfo info) internal _info;
-    mapping(address object => NftId nftId) internal _nftIdByAddress;
+    mapping(NftId nftId => ObjectInfo info) private _info;
+    mapping(address object => NftId nftId) private _nftIdByAddress;
 
-    mapping(VersionPart version => mapping(ObjectType serviceDomain => address)) _service;
+    mapping(VersionPart version => mapping(ObjectType serviceDomain => address)) private _service;
+
+    mapping(ObjectType objectType => bool) private _coreTypes;
 
     mapping(ObjectType objectType => mapping(
-            ObjectType parentType => bool)) internal _isValidContractCombination;
+            ObjectType parentType => bool)) private _coreContractCombinations;
 
     mapping(ObjectType objectType => mapping(
-            ObjectType parentType => bool)) internal _isValidObjectCombination;
+            ObjectType parentType => bool)) private _coreObjectCombinations;
 
-    NftId internal _registryNftId;
-    ChainNft internal _chainNft;
+    NftId private _registryNftId;
+    ChainNft private _chainNft;
 
-    ReleaseManager internal _releaseManager;
+    ReleaseManager private _releaseManager;
 
     modifier onlyRegistryService() {
         if(!_releaseManager.isActiveRegistryService(msg.sender)) {
@@ -65,14 +67,14 @@ contract Registry is
         _releaseManager = ReleaseManager(msg.sender);
 
         // deploy NFT 
-        _chainNft = new ChainNft(address(this));// adds 10kb to deployment size
+        _chainNft = new ChainNft(address(this));
 
         // initial registry setup
         _registerProtocol();
         _registerRegistry();
 
-        // set object parent relations
-        _setupValidObjectParentCombinations();
+        // set object types and object parent relations
+        _setupValidCoreTypesAndCombinations();
 
         _registerInterface(type(IRegistry).interfaceId);
     }
@@ -90,7 +92,10 @@ contract Registry is
         if(info.objectType != SERVICE()) {
             revert();
         }
-        info.initialOwner = NFT_LOCK_ADDRESS <- if services are access managed
+        if(info.parentType != REGISTRY()) {
+            revert();
+        }        
+        info.initialOwner == NFT_LOCK_ADDRESS <- if services are access managed
         */
 
         if(_service[version][domain] > address(0)) {
@@ -109,16 +114,57 @@ contract Registry is
         onlyRegistryService
         returns(NftId nftId)
     {
+        ObjectType objectType = info.objectType;
+        ObjectType parentType = _info[info.parentNftId].objectType;
+
         // no service registrations
-        if(info.objectType == SERVICE()) {
+        if(objectType == SERVICE()) {
             revert ServiceRegistration();
+        }
+
+        // only valid core types combinations
+        if(info.objectAddress == address(0)) 
+        {
+            if(_coreObjectCombinations[objectType][parentType] == false) {
+                revert InvalidTypesCombination(objectType, parentType);
+            }
+        }
+        else
+        {
+            if(_coreContractCombinations[objectType][parentType] == false) {
+                revert InvalidTypesCombination(objectType, parentType);
+            }
         }
 
         nftId = _register(info);
     }
 
+    function registerWithCustomType(ObjectInfo memory info)
+        external
+        onlyRegistryService
+        returns(NftId nftId)
+    {
+        ObjectType objectType = info.objectType;
+        ObjectType parentType = _info[info.parentNftId].objectType;
+
+        if(_coreTypes[objectType]) {
+            //revert CoreTypeRegistration(objectType);
+        }
+
+        if(
+            parentType == REGISTRY() ||
+            parentType == SERVICE() ||
+            parentType == INSTANCE()
+        ) {
+            //revert InvalidParentType(parentType);
+        }
+
+        _register(info);
+    }
+
+
     /// @dev earliest GIF major version 
-    function getMajorVersionMin() external view returns (VersionPart) {
+    function getInitialVersion() external view returns (VersionPart) {
         return _releaseManager.getInitialVersion();
     }
 
@@ -129,17 +175,16 @@ contract Registry is
     // in this case we might want to have a period where the latest version is
     // in the process of being set up while the latest active version is 1 major release smaller
     /// @dev latest GIF major version (might not yet be active)
-    function getMajorVersionMax() external view returns (VersionPart) {
+    function getNextVersion() external view returns (VersionPart) {
         return _releaseManager.getNextVersion();
     }
 
     /// @dev latest active GIF release version 
-    function getMajorVersion() external view returns (VersionPart) { 
+    function getLatestVersion() external view returns (VersionPart) { 
         return _releaseManager.getLatestVersion();
     }
 
-    function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory)
-    {
+    function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory) {
         return _releaseManager.getReleaseInfo(version);
     }
 
@@ -180,15 +225,23 @@ contract Registry is
     }
 
     function isRegisteredService(address object) external view override returns (bool) {
-        return _nftIdByAddress[object].gtz() && _info[_nftIdByAddress[object]].objectType == SERVICE();
+        return _info[_nftIdByAddress[object]].objectType == SERVICE();
+    }
+
+    function isValidRelease(VersionPart version) external view returns (bool)
+    {
+        return _releaseManager.isValidRelease(version);
     }
 
     function getServiceAddress(
         ObjectType serviceDomain, 
         VersionPart releaseVersion
-    ) external view returns (address)
+    ) external view returns (address service)
     {
-        return _service[releaseVersion][serviceDomain];
+        // TODO how can I get service address while release is not validated/activated ?!! -> user will check validity of release on its own
+        //if(_releaseManager.isValidRelease(releaseVersion)) { 
+            service =  _service[releaseVersion][serviceDomain]; 
+        //}
     }
 
     function getChainNft() external view override returns (ChainNft) {
@@ -239,11 +292,6 @@ contract Registry is
 
         if(info.objectAddress > address(0)) 
         {
-            // parent is registered + object-parent types are valid
-            if(_isValidContractCombination[objectType][parentType] == false) {
-                revert InvalidTypesCombination(objectType, parentType);
-            }
-
             address contractAddress = info.objectAddress;
 
             if(_nftIdByAddress[contractAddress].gtz()) { 
@@ -251,12 +299,6 @@ contract Registry is
             }
 
             _nftIdByAddress[contractAddress] = nftId;
-        }
-        else
-        {
-            if(_isValidObjectCombination[objectType][parentType] == false) {
-                revert InvalidTypesCombination(objectType, parentType);
-            }
         }
 
         emit LogRegistration(nftId, parentNftId, objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
@@ -370,27 +412,39 @@ contract Registry is
     // 2) DO NOT use object type (e.g. POLCY, BUNDLE, STAKE) as parent type
     // 3) DO NOT use REGISTRY as object type
     // 2) DO NOT use PROTOCOL and "zeroObjectType"
-    function _setupValidObjectParentCombinations() 
+    function _setupValidCoreTypesAndCombinations() 
         private 
     {
+        _coreTypes[REGISTRY()] = true;
+        _coreTypes[SERVICE()] = true;
+        _coreTypes[TOKEN()] = true;
+        _coreTypes[INSTANCE()] = true;
+        _coreTypes[PRODUCT()] = true;
+        _coreTypes[POOL()] = true;
+        _coreTypes[DISTRIBUTION()] = true;
+        _coreTypes[POLICY()] = true;
+        _coreTypes[BUNDLE()] = true;
+        _coreTypes[STAKE()] = true;
+        
         // registry as parent, ONLY registry owner
-        _isValidContractCombination[TOKEN()][REGISTRY()] = true;
-        _isValidContractCombination[SERVICE()][REGISTRY()] = true;
+        //_coreContractCombinations[REGISTRY()][REGISTRY()] = true; // only for global regstry
+        _coreContractCombinations[TOKEN()][REGISTRY()] = true;
+        //_coreContractCombinations[SERVICE()][REGISTRY()] = true;// do not need it here -> registerService() registers exactly this combination
 
         // registry as parent, ONLY approved
-        _isValidContractCombination[INSTANCE()][REGISTRY()] = true;
+        _coreContractCombinations[INSTANCE()][REGISTRY()] = true;
 
         // instance as parent, ONLY approved
-        _isValidContractCombination[PRODUCT()][INSTANCE()] = true;
-        _isValidContractCombination[DISTRIBUTION()][INSTANCE()] = true;
-        _isValidContractCombination[ORACLE()][INSTANCE()] = true;
-        _isValidContractCombination[POOL()][INSTANCE()] = true;
+        _coreContractCombinations[PRODUCT()][INSTANCE()] = true;
+        _coreContractCombinations[DISTRIBUTION()][INSTANCE()] = true;
+        _coreContractCombinations[ORACLE()][INSTANCE()] = true;
+        _coreContractCombinations[POOL()][INSTANCE()] = true;
 
         // product as parent, ONLY approved
-        _isValidObjectCombination[POLICY()][PRODUCT()] = true;
+        _coreObjectCombinations[POLICY()][PRODUCT()] = true;
 
         // pool as parent, ONLY approved
-        _isValidObjectCombination[BUNDLE()][POOL()] = true;
-        _isValidObjectCombination[STAKE()][POOL()] = true;
+        _coreObjectCombinations[BUNDLE()][POOL()] = true;
+        _coreObjectCombinations[STAKE()][POOL()] = true;
     }
 }
