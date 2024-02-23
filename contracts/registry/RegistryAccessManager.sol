@@ -5,29 +5,31 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
 import {RoleId, RoleIdLib,
-        REGISTRY_SERVICE_MANAGER_ROLE,
-        REGISTRY_SERVICE_ADMIN_ROLE,
+        GIF_MANAGER_ROLE,
+        GIF_ADMIN_ROLE,
         RELEASE_MANAGER_ROLE} from "../types/RoleId.sol";
 
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
 
 /*
-    3 types of roles: 
-    1) REGISTRAR roles 
-        - each one is unique
-        - always have 1 member
-        - one role is set for each function of each version of registry service
-    2) REGISTRY_SERVICE_MANAGER_ROLE aka GIF_MANAGER_ROLE
+    4 types of roles:
+    1) RELEASE_MANAGER_ROLE
+        - has only ReleaseManager as member
+        - responsible for setting and granting of REGISTRAR roles
+    1) REGISTRAR roles
+        - set and granted by RELEASE_MANAGER_ROLE
+        - each has 1 unique member (regular service ver.X) (subject to change)
+        - each set to 1 target (registry service ver.X) and 1 selector (function of registry service ver.X) (subject to change)
+    2) GIF_MANAGER_ROLE
         - can have arbitrary number of members
         - responsible for services registrations
         - responsible for token registration and activation
-    3) REGISTRY_SERVICE_ADMIN_ROLE aka GIF_ADMIN_ROLE
-        - admin of REGISTRY_SERVICE_MANAGER_ROLE
+    3) GIF_ADMIN_ROLE
+        - admin of GIF_MANAGER_ROLE
         - MUST have 1 member at any time
         - granted/revoked ONLY in transferAdminRole() -> consider lock out situations!!!
-        - responsible for release manager initialization
-        - responsible for creation and activation of each release
+        - responsible for creation and activation of releases
 
 */
 
@@ -71,8 +73,8 @@ contract RegistryAccessManager is AccessManaged
         _configureAdminRoleInitial();
 
         address admin = msg.sender;
-        _grantRole(REGISTRY_SERVICE_ADMIN_ROLE(), admin, 0);
-        _grantRole(REGISTRY_SERVICE_MANAGER_ROLE(), manager, 0);
+        _grantRole(GIF_ADMIN_ROLE(), admin, 0);
+        _grantRole(GIF_MANAGER_ROLE(), manager, 0);
     }
 
     function initialize(address releaseManager, address tokenRegistry)
@@ -124,10 +126,10 @@ contract RegistryAccessManager is AccessManaged
 
     /*function transferAdmin(address to)
         external
-        restricted // only with REGISTRY_SERVICE_ADMIN_ROLE or nft owner
+        restricted // only with GIF_ADMIN_ROLE or nft owner
     {
-        _accessManager.revoke(REGISTRY_SERVICE_ADMIN_ROLE, );
-        _accesssManager.grant(REGISTRY_SERVICE_ADMIN_ROLE, to, 0);
+        _accessManager.revoke(GIF_ADMIN_ROLE, );
+        _accesssManager.grant(GIF_ADMIN_ROLE, to, 0);
     }*/
 
     //--- view functions ----------------------------------------------------//
@@ -147,7 +149,7 @@ contract RegistryAccessManager is AccessManaged
         bytes4[] memory functionSelector = new bytes4[](1);
 
         functionSelector[0] = RegistryAccessManager.initialize.selector;
-        _setTargetFunctionRole(address(this), functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
+        _setTargetFunctionRole(address(this), functionSelector, GIF_ADMIN_ROLE());
     }
 
     function _configureAdminRole() private
@@ -157,15 +159,16 @@ contract RegistryAccessManager is AccessManaged
         // for RegistryServiceProxyManager
         // TODO upgrading with releaseManager.upgrade()->proxy.upgrade()???
         //functionSelector[0] = RegistryServiceManager.upgrade.selector;
-        //_setTargetFunctionRole(address(this), functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
+        //_setTargetFunctionRole(address(this), functionSelector, GIF_ADMIN_ROLE());
 
         // for TokenRegistry
 
         // for ReleaseManager
         functionSelector[0] = ReleaseManager.createNextRelease.selector;
-        _setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
-        //functionSelector[0] = ReleaseManager.activateNextRelease.selector;
-        //_setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_ADMIN_ROLE());
+        _setTargetFunctionRole(_releaseManager, functionSelector, GIF_ADMIN_ROLE());
+
+        functionSelector[0] = ReleaseManager.activateNextRelease.selector;
+        _setTargetFunctionRole(_releaseManager, functionSelector, GIF_ADMIN_ROLE());
     }
     
     function _configureManagerRole() private 
@@ -174,14 +177,17 @@ contract RegistryAccessManager is AccessManaged
 
         // for TokenRegistry
         functionSelector[0] = TokenRegistry.setActive.selector;
-        _setTargetFunctionRole(address(_tokenRegistry), functionSelector, REGISTRY_SERVICE_MANAGER_ROLE());
+        _setTargetFunctionRole(address(_tokenRegistry), functionSelector, GIF_MANAGER_ROLE());
 
         // for ReleaseManager
         functionSelector[0] = ReleaseManager.registerService.selector;
-        _setTargetFunctionRole(_releaseManager, functionSelector, REGISTRY_SERVICE_MANAGER_ROLE());
+        _setTargetFunctionRole(_releaseManager, functionSelector, GIF_MANAGER_ROLE());
+
+        functionSelector[0] = ReleaseManager.registerRegistryService.selector;
+        _setTargetFunctionRole(_releaseManager, functionSelector, GIF_MANAGER_ROLE());
 
         // set admin
-        _setRoleAdmin(REGISTRY_SERVICE_MANAGER_ROLE(), REGISTRY_SERVICE_ADMIN_ROLE());
+        _setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
     }
 
     function _configureReleaseManagerRole() private

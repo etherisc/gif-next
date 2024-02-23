@@ -38,8 +38,8 @@ function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId
 function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
 
 
-function REGISTRY_SERVICE_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
-function REGISTRY_SERVICE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 
+function GIF_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
+function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 
 function RELEASE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1700); } 
 
 // @dev Returns true iff role ids a and b are identical
