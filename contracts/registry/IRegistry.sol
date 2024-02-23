@@ -14,13 +14,16 @@ interface IRegistry is IERC165 {
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
+    // registerService()
+    error CallerNotReleaseManager();
+    error ServiceAlreadyRegistered(address service);
+
     // register()
     error CallerNotRegistryService();
     error ServiceRegistration();
 
-    // registerService()
-    error CallerNotReleaseManager();
-    error ServiceAlreadyRegistered(address service);
+    // registerWithCustomTypes()
+    error CoreTypeRegistration();
 
     // _register()
     error ZeroParentAddress();

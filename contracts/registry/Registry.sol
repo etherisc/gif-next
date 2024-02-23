@@ -117,6 +117,7 @@ contract Registry is
         ObjectType objectType = info.objectType;
         ObjectType parentType = _info[info.parentNftId].objectType;
 
+        // TODO do not need it here -> SERVICE is no longer part of _coreContractCombinations
         // no service registrations
         if(objectType == SERVICE()) {
             revert ServiceRegistration();
@@ -148,15 +149,16 @@ contract Registry is
         ObjectType parentType = _info[info.parentNftId].objectType;
 
         if(_coreTypes[objectType]) {
-            //revert CoreTypeRegistration(objectType);
+            revert CoreTypeRegistration();
         }
 
         if(
+
+            parentType == PROTOCOL() ||
             parentType == REGISTRY() ||
-            parentType == SERVICE() ||
-            parentType == INSTANCE()
+            parentType == SERVICE()
         ) {
-            //revert InvalidParentType(parentType);
+            revert InvalidTypesCombination(objectType, parentType);
         }
 
         _register(info);
