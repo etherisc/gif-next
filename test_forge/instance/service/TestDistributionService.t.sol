@@ -22,7 +22,13 @@ contract TestDistributionService is TestGifBase {
             distributionOwner
         );
 
-        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.ExpectedRoleMissing.selector, DISTRIBUTION_OWNER_ROLE(), distributionOwner));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ComponentServiceBase.ErrorComponentServiceExpectedRoleMissing.selector, 
+                instanceNftId,
+                DISTRIBUTION_OWNER_ROLE(), 
+                distributionOwner));
+
         distributionService.register(address(distribution));
     }
 
