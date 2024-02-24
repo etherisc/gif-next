@@ -32,7 +32,13 @@ contract TestProductService is TestGifBase {
             productOwner
         );
 
-        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.ExpectedRoleMissing.selector, PRODUCT_OWNER_ROLE(), productOwner));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ComponentServiceBase.ErrorComponentServiceExpectedRoleMissing.selector, 
+                instanceNftId, 
+                PRODUCT_OWNER_ROLE(), 
+                productOwner));
+
         productService.register(address(product));
     }
 
@@ -59,5 +65,4 @@ contract TestProductService is TestGifBase {
         NftId nftId = productService.register(address(product));
         assertTrue(nftId.gtz(), "nftId is zero");
     }
-
 }
