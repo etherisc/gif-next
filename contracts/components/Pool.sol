@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ObjectType, POOL} from "../types/ObjectType.sol";
-import {IProductService} from "../instance/service/IProductService.sol";
+import {POOL} from "../types/ObjectType.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
 import {IBundleService} from "../instance/service/IBundleService.sol";
-import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
+import {NftId, NftIdLib} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
@@ -15,8 +14,6 @@ import {ISetup} from "../instance/module/ISetup.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 
-// import {IPool} from "../instance/module/pool/IPoolModule.sol";
-import {ITreasury} from "../instance/module/ITreasury.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 
@@ -37,23 +34,12 @@ abstract contract Pool is BaseComponent, IPoolComponent {
 
     // may be used to interact with instance by derived contracts
     IPoolService internal _poolService;
-
-    // only relevant to protect callback functions for "active" pools
-    IProductService private _productService;
-
     IBundleService private _bundleService;
 
     modifier onlyPoolService() {
         require(
             msg.sender == address(_poolService), 
             "ERROR:POL-001:NOT_POOL_SERVICE");
-        _;
-    }
-
-    modifier onlyProductService() {
-        require(
-            msg.sender == address(_productService), 
-            "ERROR:POL-002:NOT_PRODUCT_SERVICE");
         _;
     }
 
@@ -82,7 +68,7 @@ abstract contract Pool is BaseComponent, IPoolComponent {
         _tokenHandler = new TokenHandler(token);
 
         _poolService = _instance.getPoolService();
-        _productService = _instance.getProductService();
+        // _productService = _instance.getProductService();
         _bundleService = _instance.getBundleService();
 
         _registerInterface(type(IPoolComponent).interfaceId);

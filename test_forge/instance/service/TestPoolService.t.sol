@@ -51,7 +51,7 @@ contract TestPoolService is TestGifBase {
         );
 
         NftId nftId = poolService.register(address(pool));
-        assertFalse(nftId.eqz(), "nftId is zero");
+        assertTrue(nftId.gtz(), "nftId is zero");
     }
 
 }

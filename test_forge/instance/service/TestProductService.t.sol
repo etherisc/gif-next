@@ -57,7 +57,7 @@ contract TestProductService is TestGifBase {
         );
 
         NftId nftId = productService.register(address(product));
-        assertFalse(nftId.eqz(), "nftId is zero");
+        assertTrue(nftId.gtz(), "nftId is zero");
     }
 
 }

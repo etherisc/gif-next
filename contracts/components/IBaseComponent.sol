@@ -11,14 +11,15 @@ interface IBaseComponent is IRegisterable {
     error ErrorBaseComponentWalletAddressIsSameAsCurrent(address newWallet);
     error ErrorBaseComponentWalletAllowanceTooSmall(address oldWallet, address newWallet, uint256 allowance, uint256 balance);
     error ErrorBaseComponentUnauthorized(address caller, uint64 requiredRoleIdNum);
+    error ErrorBaseComponentNotProductService(address caller);
 
     event LogBaseComponentWalletAddressChanged(address newWallet);
     event LogBaseComponentWalletTokensTransferred(address from, address to, uint256 amount);
 
-    function getName() external pure virtual returns (string memory name);
+    function getName() external pure returns (string memory name);
 
+    // TODO remove and replace with accessmanaged target locking mechanism
     function lock() external;
-
     function unlock() external;
 
     function getToken() external view returns (IERC20Metadata token);

@@ -42,7 +42,7 @@ contract TestDistributionService is TestGifBase {
         );
 
         NftId nftId = distributionService.register(address(distribution));
-        assertFalse(nftId.eqz(), "nftId is zero");
+        assertTrue(nftId.gtz(), "nftId is zero");
     }
 
 }

@@ -5,32 +5,40 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IBaseComponent} from "./IBaseComponent.sol";
-import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
+import {IProductService} from "../instance/service/IProductService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
-import {ObjectType, INSTANCE} from "../types/ObjectType.sol";
+import {ObjectType, INSTANCE, PRODUCT} from "../types/ObjectType.sol";
 import {VersionLib} from "../types/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 
+// TODO also inherit oz accessmanaged
 abstract contract BaseComponent is
     Registerable,
     IBaseComponent
 {
     using NftIdLib for NftId;
 
-    IComponentOwnerService internal _componentOwnerService;
     IInstanceService internal _instanceService;
+    IProductService internal _productService;
 
     address internal _deployer;
     address internal _wallet;
     IERC20Metadata internal _token;
     IInstance internal _instance;
     NftId internal _productNftId;
+
+    modifier onlyProductService() {
+        if(msg.sender != address(_productService)) {
+            revert ErrorBaseComponentNotProductService(msg.sender);
+        }
+        _;
+    }
 
     modifier onlyInstanceRole(uint64 roleIdNum) {
         RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
@@ -41,6 +49,7 @@ abstract contract BaseComponent is
         _;
     }
 
+    // TODO move to oz accessmanaged locked (which is included in restricted modifier)
     modifier isNotLocked() {
         InstanceAccessManager accessManager = InstanceAccessManager(_instance.authority());
         if (accessManager.isTargetLocked(address(this))) {
@@ -61,15 +70,15 @@ abstract contract BaseComponent is
         bytes memory data = "";
         _initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
 
-        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
+        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(instanceNftId);
         _instance = IInstance(instanceInfo.objectAddress);
         require(
             _instance.supportsInterface(type(IInstance).interfaceId),
             ""
         );
 
-        _componentOwnerService = _instance.getComponentOwnerService();
-        _instanceService = IInstanceService(getRegistry().getServiceAddress(INSTANCE(), VersionLib.toVersion(3, 0, 0).toMajorPart()));
+        _instanceService = IInstanceService(_registry.getServiceAddress(INSTANCE(), VersionLib.toVersion(3, 0, 0).toMajorPart()));
+        _productService = IProductService(_registry.getServiceAddress(PRODUCT(), VersionLib.toVersion(3, 0, 0).toMajorPart()));
         _wallet = address(this);
         _token = IERC20Metadata(token);
 
