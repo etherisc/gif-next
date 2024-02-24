@@ -29,7 +29,7 @@ import {IPoolService} from "./IPoolService.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
-import {IBaseComponent} from "../../components/IBaseComponent.sol";
+import {IComponent} from "../../components/IComponent.sol";
 
 string constant POOL_SERVICE_NAME = "PoolService";
 
@@ -68,7 +68,7 @@ contract PoolService is
         returns(NftId poolNftId)
     {
         (
-            IBaseComponent pool,
+            IComponent pool,
             address owner,
             IInstance instance,
             NftId instanceNftId

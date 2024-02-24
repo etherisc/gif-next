@@ -8,7 +8,7 @@ import {NftId, NftIdLib} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
-import {BaseComponent} from "./BaseComponent.sol";
+import {Component} from "./Component.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 
@@ -20,7 +20,7 @@ import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {Registerable} from "../shared/Registerable.sol";
 
-abstract contract Pool is BaseComponent, IPoolComponent {
+abstract contract Pool is Component, IPoolComponent {
     using NftIdLib for NftId;
 
     bool internal _isConfirmingApplication;
@@ -56,7 +56,7 @@ abstract contract Pool is BaseComponent, IPoolComponent {
         Fee memory performanceFee,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, token, POOL(), isInterceptor, initialOwner)
+        Component(registry, instanceNftId, token, POOL(), isInterceptor, initialOwner)
     {
         _isConfirmingApplication = isConfirmingApplication;
         // TODO add validation

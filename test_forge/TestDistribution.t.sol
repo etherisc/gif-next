@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/types/RoleId.sol";
-import {IBaseComponent} from "../contracts/components/IBaseComponent.sol";
+import {IComponent} from "../contracts/components/IComponent.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {IAccess} from "../contracts/instance/module/IAccess.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
@@ -37,7 +37,7 @@ contract TestDistribution is TestGifBase {
         assertEq(distributionFee.fixedFee, 456, "distribution fee not 456");
     }
 
-    function test_BaseComponent_setWallet_to_extowned() public {
+    function test_Component_setWallet_to_extowned() public {
         // GIVEN
         _prepareDistribution();
 
@@ -50,7 +50,7 @@ contract TestDistribution is TestGifBase {
         assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not changed to externallyOwnerWallet");
     }
 
-    function test_BaseComponent_setWallet_to_component() public {
+    function test_Component_setWallet_to_component() public {
         // GIVEN
         _prepareDistribution();
 
@@ -65,7 +65,7 @@ contract TestDistribution is TestGifBase {
         assertEq(distribution.getWallet(), address(distribution), "wallet not changed to distribution component");
     }
 
-    function test_BaseComponent_setWallet_same_address() public {
+    function test_Component_setWallet_same_address() public {
         // GIVEN
         _prepareDistribution();
 
@@ -74,13 +74,13 @@ contract TestDistribution is TestGifBase {
         assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not externallyOwnerWallet");
 
         // THEN
-        vm.expectRevert(abi.encodeWithSelector(IBaseComponent.ErrorBaseComponentWalletAddressIsSameAsCurrent.selector, externallyOwnerWallet));
+        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentWalletAddressIsSameAsCurrent.selector, externallyOwnerWallet));
 
         // WHEN
         distribution.setWallet(externallyOwnerWallet);
     }
 
-    function test_BaseComponent_setWallet_to_another_extowned() public {
+    function test_Component_setWallet_to_another_extowned() public {
         // GIVEN
         _prepareDistribution();
 
@@ -97,7 +97,7 @@ contract TestDistribution is TestGifBase {
         assertEq(distribution.getWallet(), externallyOwnedWallet2, "wallet not changed to other externally owned wallet");
     }
     
-    function test_BaseComponent_setWallet_to_externally_owned_with_balance() public {
+    function test_Component_setWallet_to_externally_owned_with_balance() public {
         // GIVEN        
         _prepareDistribution();
 
@@ -119,7 +119,7 @@ contract TestDistribution is TestGifBase {
         assertEq(token.balanceOf(externallyOwnedWallet), INITIAL_BALANCE, "exeternally owned wallet balance not 100000");
     }
 
-    function test_BaseComponent_setWallet_to_component_with_balance() public {
+    function test_Component_setWallet_to_component_with_balance() public {
         // GIVEN        
         _prepareDistribution();
 
@@ -149,7 +149,7 @@ contract TestDistribution is TestGifBase {
         assertEq(token.balanceOf(externallyOwnedWallet), 0, "exeternally owned wallet balance not 0");
     }
 
-    function test_BaseComponent_setWallet_to_component_without_allowance() public {
+    function test_Component_setWallet_to_component_without_allowance() public {
         // GIVEN        
         _prepareDistribution();
 
@@ -168,7 +168,7 @@ contract TestDistribution is TestGifBase {
         // THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IBaseComponent.ErrorBaseComponentWalletAllowanceTooSmall.selector, 
+                IComponent.ErrorComponentWalletAllowanceTooSmall.selector, 
                 externallyOwnedWallet, 
                 address(distribution), 
                 0, 
@@ -178,7 +178,7 @@ contract TestDistribution is TestGifBase {
         distribution.setWallet(address(distribution));
     }
 
-    function test_BaseComponent_setWallet_to_another_externally_owned_with_balance() public {
+    function test_Component_setWallet_to_another_externally_owned_with_balance() public {
         // GIVEN        
         _prepareDistribution();
 
@@ -210,7 +210,7 @@ contract TestDistribution is TestGifBase {
         assertEq(token.balanceOf(externallyOwnedWallet2), INITIAL_BALANCE, "exeternally owned wallet 2 balance not 100000");
     }
 
-    function test_BaseComponent_lock() public {
+    function test_Component_lock() public {
         // GIVEN
         _prepareDistribution();
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
@@ -223,7 +223,7 @@ contract TestDistribution is TestGifBase {
         distribution.setFees(newDistributionFee);
     }
 
-    function test_BaseComponent_unlock() public {
+    function test_Component_unlock() public {
         // GIVEN
         _prepareDistribution();
         distribution.lock();

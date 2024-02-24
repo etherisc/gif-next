@@ -7,14 +7,14 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {NftId} from "../types/NftId.sol";
 
-interface IBaseComponent is IRegisterable {
-    error ErrorBaseComponentWalletAddressIsSameAsCurrent(address newWallet);
-    error ErrorBaseComponentWalletAllowanceTooSmall(address oldWallet, address newWallet, uint256 allowance, uint256 balance);
-    error ErrorBaseComponentUnauthorized(address caller, uint64 requiredRoleIdNum);
-    error ErrorBaseComponentNotProductService(address caller);
+interface IComponent is IRegisterable {
+    error ErrorComponentWalletAddressIsSameAsCurrent(address newWallet);
+    error ErrorComponentWalletAllowanceTooSmall(address oldWallet, address newWallet, uint256 allowance, uint256 balance);
+    error ErrorComponentUnauthorized(address caller, uint64 requiredRoleIdNum);
+    error ErrorComponentNotProductService(address caller);
 
-    event LogBaseComponentWalletAddressChanged(address newWallet);
-    event LogBaseComponentWalletTokensTransferred(address from, address to, uint256 amount);
+    event LogComponentWalletAddressChanged(address newWallet);
+    event LogComponentWalletTokensTransferred(address from, address to, uint256 amount);
 
     function getName() external pure returns (string memory name);
 

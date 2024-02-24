@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IProductComponent} from "../../components/IProductComponent.sol";
 import {Product} from "../../components/Product.sol";
-import {IBaseComponent} from "../../components/IBaseComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IInstance} from "../IInstance.sol";

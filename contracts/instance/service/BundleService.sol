@@ -29,7 +29,6 @@ import {IBundleService} from "./IBundleService.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
-import {IBaseComponent} from "../../components/IBaseComponent.sol";
 
 string constant BUNDLE_SERVICE_NAME = "BundleService";
 

@@ -13,7 +13,7 @@ import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {StateId} from "../types/StateId.sol";
 import {Timestamp} from "../types/Timestamp.sol";
 import {Fee} from "../types/Fee.sol";
-import {BaseComponent} from "./BaseComponent.sol";
+import {Component} from "./Component.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
@@ -25,7 +25,7 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {Pool} from "../components/Pool.sol";
 import {Distribution} from "../components/Distribution.sol";
 
-abstract contract Product is BaseComponent, IProductComponent {
+abstract contract Product is Component, IProductComponent {
     using NftIdLib for NftId;
 
     IPolicyService internal _policyService;
@@ -48,7 +48,7 @@ abstract contract Product is BaseComponent, IProductComponent {
         Fee memory productFee,
         Fee memory processingFee,
         address initialOwner
-    ) BaseComponent(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
+    ) Component(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
         _policyService = _instance.getPolicyService(); 
         _pool = Pool(pool);

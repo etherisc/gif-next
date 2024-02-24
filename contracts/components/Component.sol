@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IBaseComponent} from "./IBaseComponent.sol";
+import {IComponent} from "./IComponent.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -18,9 +18,9 @@ import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 
 // TODO also inherit oz accessmanaged
-abstract contract BaseComponent is
+abstract contract Component is
     Registerable,
-    IBaseComponent
+    IComponent
 {
     using NftIdLib for NftId;
 
@@ -35,7 +35,7 @@ abstract contract BaseComponent is
 
     modifier onlyProductService() {
         if(msg.sender != address(_productService)) {
-            revert ErrorBaseComponentNotProductService(msg.sender);
+            revert ErrorComponentNotProductService(msg.sender);
         }
         _;
     }
@@ -44,7 +44,7 @@ abstract contract BaseComponent is
         RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
         InstanceAccessManager accessManager = InstanceAccessManager(_instance.authority());
         if( !accessManager.hasRole(roleId, msg.sender)) {
-            revert ErrorBaseComponentUnauthorized(msg.sender, roleIdNum);
+            revert ErrorComponentUnauthorized(msg.sender, roleIdNum);
         }
         _;
     }
@@ -82,7 +82,7 @@ abstract contract BaseComponent is
         _wallet = address(this);
         _token = IERC20Metadata(token);
 
-        _registerInterface(type(IBaseComponent).interfaceId);
+        _registerInterface(type(IComponent).interfaceId);
     }
 
     function getName() public pure virtual returns (string memory name);
@@ -117,7 +117,7 @@ abstract contract BaseComponent is
 
         // checks
         if (newWallet == currentWallet) {
-            revert ErrorBaseComponentWalletAddressIsSameAsCurrent(newWallet);
+            revert ErrorComponentWalletAddressIsSameAsCurrent(newWallet);
         }
 
         if (currentBalance > 0) {
@@ -127,14 +127,14 @@ abstract contract BaseComponent is
                 // move tokens from external wallet to component smart contract or another external wallet
                 uint256 allowance = _token.allowance(currentWallet, address(this));
                 if (allowance < currentBalance) {
-                    revert ErrorBaseComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
+                    revert ErrorComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
                 }
             }
         }
 
         // effects
         _wallet = newWallet;
-        emit LogBaseComponentWalletAddressChanged(newWallet);
+        emit LogComponentWalletAddressChanged(newWallet);
 
         // interactions
         if (currentBalance > 0) {
@@ -145,7 +145,7 @@ abstract contract BaseComponent is
             }
             
             SafeERC20.safeTransferFrom(_token, currentWallet, newWallet, currentBalance);
-            emit LogBaseComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
+            emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
         }
     }
 

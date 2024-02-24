@@ -22,7 +22,7 @@ import {Service} from "../../shared/Service.sol";
 import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {IDistributionService} from "./IDistributionService.sol";
-import {IBaseComponent} from "../../components/IBaseComponent.sol";
+import {IComponent} from "../../components/IComponent.sol";
 
 
 contract DistributionService is
@@ -60,7 +60,7 @@ contract DistributionService is
         returns(NftId distributionNftId)
     {
         (
-            IBaseComponent distribution,
+            IComponent distribution,
             address owner,
             IInstance instance,
             NftId instanceNftId

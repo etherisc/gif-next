@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IBaseComponent} from "../../components/IBaseComponent.sol";
+import {IComponent} from "../../components/IComponent.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
@@ -55,7 +55,7 @@ abstract contract ComponentServiceBase is Service {
     )
         internal
         returns (
-            IBaseComponent component,
+            IComponent component,
             address owner,
             IInstance instance,
             NftId instanceNftId
@@ -71,8 +71,8 @@ abstract contract ComponentServiceBase is Service {
         }
 
         // check this is a component
-        component = IBaseComponent(componentAddress);
-        if(!component.supportsInterface(type(IBaseComponent).interfaceId)) {
+        component = IComponent(componentAddress);
+        if(!component.supportsInterface(type(IComponent).interfaceId)) {
             revert ErrorComponentServiceNotComponent(componentAddress);
         }
 

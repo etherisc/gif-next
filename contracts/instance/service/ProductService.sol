@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IProductComponent} from "../../components/IProductComponent.sol";
 import {Product} from "../../components/Product.sol";
-import {IBaseComponent} from "../../components/IBaseComponent.sol";
+import {IComponent} from "../../components/IComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IInstance} from "../IInstance.sol";
@@ -77,8 +77,8 @@ contract ProductService is ComponentServiceBase, IProductService {
         returns(NftId productNftId)
     {
         (
-            IBaseComponent product,
-            address productOwner,
+            IComponent product,
+            address owner,
             IInstance instance,
             NftId instanceNftId
         ) = _checkComponentForRegistration(
@@ -89,7 +89,7 @@ contract ProductService is ComponentServiceBase, IProductService {
         (
             IRegistry.ObjectInfo memory productInfo,
             bytes memory data
-        ) = getRegistryService().registerProduct(product, productOwner);
+        ) = getRegistryService().registerProduct(product, owner);
         product.linkToRegisteredNftId();
         productNftId = productInfo.nftId;
 
