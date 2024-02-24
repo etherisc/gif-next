@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IBaseComponent} from "../../components/IBaseComponent.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
@@ -14,6 +15,13 @@ import {InstanceService} from "../InstanceService.sol";
 import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 
 abstract contract ComponentServiceBase is Service {
+
+
+    error ErrorComponentServiceAlreadyRegistered(address component, NftId nftId);
+    error ErrorComponentServiceNotComponent(address component);
+    error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
+    error ErrorComponentServiceSenderNotOwner(address component, address initialOwner, address sender);
+    error ErrorComponentServiceExpectedRoleMissing(NftId instanceNftId, RoleId requiredRole, address sender);
 
     error ErrorComponentServiceBaseComponentLocked(address componentAddress);
     error ExpectedRoleMissing(RoleId expected, address caller);
@@ -37,6 +45,60 @@ abstract contract ComponentServiceBase is Service {
     function getInstanceService() public view returns (InstanceService) {
         address service = getRegistry().getServiceAddress(INSTANCE(), getMajorVersion());
         return InstanceService(service);
+    }
+
+    // internal functions
+    function _checkComponentForRegistration(
+        address componentAddress,
+        ObjectType requiredType,
+        RoleId requiredRole
+    )
+        internal
+        returns (
+            IBaseComponent component,
+            address owner,
+            IInstance instance,
+            NftId instanceNftId
+        )
+    {
+        // component may only be registerd by initial owner of component
+        owner = msg.sender;
+
+        // check component has not already been registerd
+        NftId compoentNftId = _registry.getNftId(componentAddress);
+        if(compoentNftId.gtz()) {
+            revert ErrorComponentServiceAlreadyRegistered(componentAddress, compoentNftId);
+        }
+
+        // check this is a component
+        component = IBaseComponent(componentAddress);
+        if(!component.supportsInterface(type(IBaseComponent).interfaceId)) {
+            revert ErrorComponentServiceNotComponent(componentAddress);
+        }
+
+        // check component is of required type
+        (IRegistry.ObjectInfo memory componentInfo, ) = component.getInitialInfo();
+        if(componentInfo.objectType != requiredType) {
+            revert ErrorComponentServiceInvalidType(componentAddress, requiredType, componentInfo.objectType);
+        }
+
+        // check msg.sender is component owner
+        address initialOwner = componentInfo.initialOwner;
+        if(owner != initialOwner) {
+            revert ErrorComponentServiceSenderNotOwner(componentAddress, componentInfo.initialOwner, owner);
+        }
+
+        // check instance has assigned required role to owner
+        instanceNftId = componentInfo.parentNftId;
+        instance = _getInstance(instanceNftId);
+        bool hasRole = getInstanceService().hasRole(
+            owner, 
+            requiredRole, 
+            address(instance));
+
+        if(!hasRole) {
+            revert ErrorComponentServiceExpectedRoleMissing(instanceNftId, requiredRole, owner);
+        }
     }
 
     // internal view functions

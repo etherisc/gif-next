@@ -76,34 +76,30 @@ contract ProductService is ComponentServiceBase, IProductService {
         external
         returns(NftId productNftId)
     {
-        address productOwner = msg.sender;
-        IBaseComponent product = IBaseComponent(productAddress);
+        (
+            IBaseComponent product,
+            address productOwner,
+            IInstance instance,
+            NftId instanceNftId
+        ) = _checkComponentForRegistration(
+            productAddress,
+            PRODUCT(),
+            PRODUCT_OWNER_ROLE());
 
-        IRegistry.ObjectInfo memory info;
-        bytes memory data;
-        (info, data) = getRegistryService().registerProduct(product, productOwner);
+        (
+            IRegistry.ObjectInfo memory productInfo,
+            bytes memory data
+        ) = getRegistryService().registerProduct(product, productOwner);
+        product.linkToRegisteredNftId();
+        productNftId = productInfo.nftId;
 
-        NftId instanceNftId = info.parentNftId;
-        IInstance instance = _getInstance(instanceNftId);
-        bool hasRole = getInstanceService().hasRole(
-            productOwner, 
-            PRODUCT_OWNER_ROLE(), 
-            address(instance));
-
-        if(!hasRole) {
-            revert ExpectedRoleMissing(PRODUCT_OWNER_ROLE(), productOwner);
-        }
-
-        productNftId = info.nftId;
-        string memory productName;
-        ISetup.ProductSetupInfo memory initialSetup;
-        (productName, initialSetup) = _decodeAndVerifyProductData(data);
-
+        (
+            string memory name, 
+            ISetup.ProductSetupInfo memory initialSetup
+        ) = _decodeAndVerifyProductData(data);
         instance.createProductSetup(productNftId, initialSetup);
 
-        getInstanceService().createTarget(instanceNftId, productAddress, productName);
-
-        product.linkToRegisteredNftId();
+        getInstanceService().createTarget(instanceNftId, productAddress, name);
     }
 
     function _decodeAndVerifyProductData(bytes memory data) 

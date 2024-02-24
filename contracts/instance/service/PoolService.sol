@@ -67,33 +67,30 @@ contract PoolService is
         external
         returns(NftId poolNftId)
     {
-        address poolOwner = msg.sender;
-        IBaseComponent pool = IBaseComponent(poolAddress);
+        (
+            IBaseComponent pool,
+            address owner,
+            IInstance instance,
+            NftId instanceNftId
+        ) = _checkComponentForRegistration(
+            poolAddress,
+            POOL(),
+            POOL_OWNER_ROLE());
 
-        IRegistry.ObjectInfo memory info;
-        bytes memory data;
-        (info, data) = getRegistryService().registerPool(pool, poolOwner);
+        (
+            IRegistry.ObjectInfo memory poolInfo,
+            bytes memory data
+        ) = getRegistryService().registerPool(pool, owner);
+        pool.linkToRegisteredNftId();
+        poolNftId = poolInfo.nftId;
 
-        NftId instanceNftId = info.parentNftId;
-        IInstance instance = _getInstance(instanceNftId);
-        bool hasRole = getInstanceService().hasRole(
-            poolOwner, 
-            POOL_OWNER_ROLE(), 
-            address(instance));
-
-        if(!hasRole) {
-            revert ExpectedRoleMissing(POOL_OWNER_ROLE(), poolOwner);
-        }
-
-        poolNftId = info.nftId;
-        string memory poolName;
-        ISetup.PoolSetupInfo memory initialSetup;
-        (poolName, initialSetup) = _decodeAndVerifyPoolData(data);
+        (
+            string memory name, 
+            ISetup.PoolSetupInfo memory initialSetup
+        ) = _decodeAndVerifyPoolData(data);
         instance.createPoolSetup(poolNftId, initialSetup);
 
-        getInstanceService().createTarget(instanceNftId, poolAddress, poolName);
-
-        pool.linkToRegisteredNftId();
+        getInstanceService().createTarget(instanceNftId, poolAddress, name);
     }
 
     function _decodeAndVerifyPoolData(bytes memory data) 

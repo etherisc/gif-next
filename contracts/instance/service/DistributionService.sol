@@ -59,35 +59,30 @@ contract DistributionService is
         external
         returns(NftId distributionNftId)
     {
-        address distributionOwner = msg.sender;
-        IBaseComponent distribution = IBaseComponent(distributionAddress);
+        (
+            IBaseComponent distribution,
+            address owner,
+            IInstance instance,
+            NftId instanceNftId
+        ) = _checkComponentForRegistration(
+            distributionAddress,
+            DISTRIBUTION(),
+            DISTRIBUTION_OWNER_ROLE());
 
-        IRegistry.ObjectInfo memory info;
-        bytes memory data;
-        (info, data) = getRegistryService().registerDistribution(distribution, distributionOwner);
+        (
+            IRegistry.ObjectInfo memory distributionInfo,
+            bytes memory data
+        ) = getRegistryService().registerDistribution(distribution, owner);
+        distribution.linkToRegisteredNftId();
+        distributionNftId = distributionInfo.nftId;
 
-        NftId instanceNftId = info.parentNftId;
-        IInstance instance = _getInstance(instanceNftId);
-        InstanceService instanceService = getInstanceService();
-
-        bool hasRole = instanceService.hasRole(
-            distributionOwner, 
-            DISTRIBUTION_OWNER_ROLE(), 
-            address(instance));
-
-        if(!hasRole) {
-            revert ExpectedRoleMissing(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        }
-
-        distributionNftId = info.nftId;
-        string memory distributionName;
-        ISetup.DistributionSetupInfo memory initialSetup;
-        (distributionName, initialSetup) = _decodeAndVerifyDistributionData(data);
+        (
+            string memory name, 
+            ISetup.DistributionSetupInfo memory initialSetup
+        ) = _decodeAndVerifyDistributionData(data);
         instance.createDistributionSetup(distributionNftId, initialSetup);
 
-        instanceService.createTarget(instanceNftId, distributionAddress, distributionName);
-
-        distribution.linkToRegisteredNftId();
+        getInstanceService().createTarget(instanceNftId, distributionAddress, name);
     }
 
     function _decodeAndVerifyDistributionData(bytes memory data)

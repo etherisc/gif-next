@@ -20,14 +20,8 @@ import {BundleManager} from "./BundleManager.sol";
 import {NftId} from "../types/NftId.sol";
 import {NumberId} from "../types/NumberId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT} from "../types/ObjectType.sol";
-import {RiskId, RiskIdLib} from "../types/RiskId.sol";
-import {RoleId, RoleIdLib} from "../types/RoleId.sol";
-import {StateId, ACTIVE} from "../types/StateId.sol";
-import {TimestampLib} from "../types/Timestamp.sol";
-import {ERC165} from "../shared/ERC165.sol";
-import {Registerable} from "../shared/Registerable.sol";
-import {ComponentOwnerService} from "./service/ComponentOwnerService.sol";
-import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
+import {RiskId} from "../types/RiskId.sol";
+import {StateId} from "../types/StateId.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
@@ -225,10 +219,6 @@ contract Instance is
 
     function toPolicyKey32(NftId policyNftId) public pure returns (Key32) {
         return policyNftId.toKey32(POLICY());
-    }
-
-    function getComponentOwnerService() external view returns (IComponentOwnerService) {
-        return ComponentOwnerService(_registry.getServiceAddress(COMPONENT(), VersionPart.wrap(3)));
     }
 
     function getDistributionService() external view returns (IDistributionService) {

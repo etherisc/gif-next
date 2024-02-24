@@ -4,17 +4,15 @@ pragma solidity ^0.8.19;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IRisk} from "../instance/module/IRisk.sol";
-import {ITreasury} from "../instance/module/ITreasury.sol";
-import {IProductService} from "../instance/service/IProductService.sol";
 import {IPolicyService} from "../instance/service/IPolicyService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
-import {ObjectType, PRODUCT} from "../types/ObjectType.sol";
+import {NftId, NftIdLib} from "../types/NftId.sol";
+import {PRODUCT} from "../types/ObjectType.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {StateId} from "../types/StateId.sol";
 import {Timestamp} from "../types/Timestamp.sol";
-import {Fee, FeeLib} from "../types/Fee.sol";
+import {Fee} from "../types/Fee.sol";
 import {BaseComponent} from "./BaseComponent.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -27,12 +25,9 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {Pool} from "../components/Pool.sol";
 import {Distribution} from "../components/Distribution.sol";
 
-import {zeroNftId} from "../types/NftId.sol";
-
 abstract contract Product is BaseComponent, IProductComponent {
     using NftIdLib for NftId;
 
-    IProductService internal _productService;
     IPolicyService internal _policyService;
     Pool internal _pool;
     Distribution internal _distribution;
@@ -55,7 +50,6 @@ abstract contract Product is BaseComponent, IProductComponent {
         address initialOwner
     ) BaseComponent(registry, instanceNftid, token, PRODUCT(), isInterceptor, initialOwner) {
         // TODO add validation
-        _productService = _instance.getProductService();
         _policyService = _instance.getPolicyService(); 
         _pool = Pool(pool);
         _distribution = Distribution(distribution);
@@ -76,8 +70,8 @@ abstract contract Product is BaseComponent, IProductComponent {
         RiskId riskId,
         uint256 lifetime,
         bytes memory applicationData,
-        ReferralId referralId,
-        NftId bundleNftId
+        NftId bundleNftId,
+        ReferralId referralId
     )
         external 
         view 

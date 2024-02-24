@@ -27,7 +27,13 @@ contract TestPoolService is TestGifBase {
             poolOwner
         );
 
-        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.ExpectedRoleMissing.selector, POOL_OWNER_ROLE(), poolOwner));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ComponentServiceBase.ErrorComponentServiceExpectedRoleMissing.selector, 
+                instanceNftId,
+                POOL_OWNER_ROLE(), 
+                poolOwner));
+
         poolService.register(address(pool));
     }
 
@@ -51,7 +57,6 @@ contract TestPoolService is TestGifBase {
         );
 
         NftId nftId = poolService.register(address(pool));
-        assertFalse(nftId.eqz(), "nftId is zero");
+        assertTrue(nftId.gtz(), "nftId is zero");
     }
-
 }

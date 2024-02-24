@@ -23,10 +23,6 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
-import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
-//import {ProductService} from "../../contracts/instance/service/ProductService.sol";
-//import {PoolService} from "../../contracts/instance/service/PoolService.sol";
-//import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
@@ -143,12 +139,6 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
     function _deployAndRegisterServices() internal
     {
-        componentOwnerService = new ComponentOwnerService(
-            address(registry), 
-            registryNftId, 
-            registryOwner            
-        );
-
         releaseManager.registerService(componentOwnerService);
     }
 

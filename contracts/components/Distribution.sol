@@ -28,14 +28,6 @@ abstract contract Distribution is
     TokenHandler internal _tokenHandler;
 
     IDistributionService private _distributionService;
-    IProductService private _productService;
-
-    modifier onlyProductService() {
-        require(
-            msg.sender == address(_productService), 
-            "ERROR:POL-002:NOT_PRODUCT_SERVICE");
-        _;
-    }
 
     constructor(
         address registry,
@@ -52,9 +44,7 @@ abstract contract Distribution is
         _initialDistributionFee = distributionFee;
 
         _tokenHandler = TokenHandler(token);
-
         _distributionService = _instance.getDistributionService();
-        _productService = _instance.getProductService();
 
         _registerInterface(type(IDistributionComponent).interfaceId);
     }
