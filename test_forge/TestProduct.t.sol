@@ -519,18 +519,14 @@ contract TestProduct is TestGifBase {
         );
 
         productNftId = productService.register(address(product));
-        product.setProductNftId(productNftId);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
-        distribution.setProductNftId(productNftId);
         Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
         distribution.setFees(distributionFee);
         vm.stopPrank();
 
-
         vm.startPrank(poolOwner);
-        pool.setProductNftId(productNftId);
         Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
         pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
         vm.stopPrank();

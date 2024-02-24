@@ -85,8 +85,6 @@ abstract contract Component is
         _registerInterface(type(IComponent).interfaceId);
     }
 
-    function getName() public pure virtual returns (string memory name);
-
     // from component contract
     // TODO only owner and instance owner 
     function lock() external onlyOwner override {
@@ -98,13 +96,16 @@ abstract contract Component is
         _instanceService.setTargetLocked(getName(), false);
     }
 
-    function getWallet()
-        external
-        view
+    function setProductNftId(NftId productNftId)
+        public
         override
-        returns (address walletAddress)
+        onlyProductService() 
     {
-        return _wallet;
+        if(_productNftId.gtz()) {
+            revert ErrorComponentProductNftAlreadySet();
+        }
+
+        _productNftId = productNftId;
     }
 
     /// @dev Sets the wallet address for the component. 
@@ -149,17 +150,23 @@ abstract contract Component is
         }
     }
 
+    function getName() public pure virtual returns (string memory name);
+
+    function getWallet()
+        external
+        view
+        override
+        returns (address walletAddress)
+    {
+        return _wallet;
+    }
+
     function getToken() public view override returns (IERC20Metadata token) {
         return _token;
     }
 
     function getInstance() public view override returns (IInstance instance) {
         return _instance;
-    }
-
-    function setProductNftId(NftId productNftId) public override onlyOwner {
-        require(_productNftId.eq(zeroNftId()), "product nft id already set");
-        _productNftId = productNftId;
     }
 
     function getProductNftId() public view override returns (NftId productNftId) {

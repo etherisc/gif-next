@@ -8,6 +8,8 @@ import {IInstance} from "../instance/IInstance.sol";
 import {NftId} from "../types/NftId.sol";
 
 interface IComponent is IRegisterable {
+
+    error ErrorComponentProductNftAlreadySet();
     error ErrorComponentWalletAddressIsSameAsCurrent(address newWallet);
     error ErrorComponentWalletAllowanceTooSmall(address oldWallet, address newWallet, uint256 allowance, uint256 balance);
     error ErrorComponentUnauthorized(address caller, uint64 requiredRoleIdNum);
