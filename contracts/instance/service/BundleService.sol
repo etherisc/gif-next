@@ -24,7 +24,7 @@ import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
 import {BundleManager} from "../BundleManager.sol";
-import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
+import {ComponentService} from "../base/ComponentService.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {InstanceService} from "../InstanceService.sol";
@@ -33,7 +33,7 @@ import {InstanceReader} from "../InstanceReader.sol";
 string constant BUNDLE_SERVICE_NAME = "BundleService";
 
 contract BundleService is 
-    ComponentServiceBase, 
+    ComponentService, 
     IBundleService 
 {
     using NftIdLib for NftId;

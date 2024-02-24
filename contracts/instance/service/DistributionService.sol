@@ -19,14 +19,14 @@ import {Versionable} from "../../shared/Versionable.sol";
 
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
-import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
+import {ComponentService} from "../base/ComponentService.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 import {IComponent} from "../../components/IComponent.sol";
 
 
 contract DistributionService is
-    ComponentServiceBase,
+    ComponentService,
     IDistributionService
 {
     using NftIdLib for NftId;

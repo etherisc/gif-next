@@ -14,19 +14,14 @@ import {Service} from "../../shared/Service.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 
-abstract contract ComponentServiceBase is Service {
-
+abstract contract ComponentService is Service {
 
     error ErrorComponentServiceAlreadyRegistered(address component, NftId nftId);
     error ErrorComponentServiceNotComponent(address component);
     error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
     error ErrorComponentServiceSenderNotOwner(address component, address initialOwner, address sender);
     error ErrorComponentServiceExpectedRoleMissing(NftId instanceNftId, RoleId requiredRole, address sender);
-
-    error ErrorComponentServiceBaseComponentLocked(address componentAddress);
-    error ExpectedRoleMissing(RoleId expected, address caller);
-    error ComponentTypeInvalid(ObjectType componentType);
-
+    error ErrorComponentServiceComponentLocked(address component);
 
     /// @dev modifier to check if caller is a registered service
     modifier onlyService() {

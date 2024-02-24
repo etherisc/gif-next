@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import {TestGifBase} from "../../base/TestGifBase.sol";
 import {NftId, NftIdLib} from "../../../contracts/types/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
-import {ComponentServiceBase} from "../../../contracts/instance/base/ComponentServiceBase.sol";
+import {ComponentService} from "../../../contracts/instance/base/ComponentService.sol";
 import {FeeLib} from "../../../contracts/types/Fee.sol";
 import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 
@@ -24,7 +24,7 @@ contract TestDistributionService is TestGifBase {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ComponentServiceBase.ErrorComponentServiceExpectedRoleMissing.selector, 
+                ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
                 instanceNftId,
                 DISTRIBUTION_OWNER_ROLE(), 
                 distributionOwner));

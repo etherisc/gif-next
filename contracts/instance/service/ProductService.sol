@@ -35,13 +35,13 @@ import {RoleId, PRODUCT_OWNER_ROLE} from "../../types/RoleId.sol";
 
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
-import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
+import {ComponentService} from "../base/ComponentService.sol";
 import {IProductService} from "./IProductService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
 import {IPoolService} from "./PoolService.sol";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
-contract ProductService is ComponentServiceBase, IProductService {
+contract ProductService is ComponentService, IProductService {
     using NftIdLib for NftId;
 
     IPoolService internal _poolService;

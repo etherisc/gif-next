@@ -6,7 +6,7 @@ import {NftId, NftIdLib} from "../../../contracts/types/NftId.sol";
 import {POOL_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
 import {FeeLib} from "../../../contracts/types/Fee.sol";
 import {UFixedLib} from "../../../contracts/types/UFixed.sol";
-import {ComponentServiceBase} from "../../../contracts/instance/base/ComponentServiceBase.sol";
+import {ComponentService} from "../../../contracts/instance/base/ComponentService.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 
 contract TestPoolService is TestGifBase {
@@ -29,7 +29,7 @@ contract TestPoolService is TestGifBase {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ComponentServiceBase.ErrorComponentServiceExpectedRoleMissing.selector, 
+                ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
                 instanceNftId,
                 POOL_OWNER_ROLE(), 
                 poolOwner));
