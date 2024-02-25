@@ -74,7 +74,7 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    RegistryAccessManager registryAccessManagerAddress;
+    RegistryAccessManager registryAccessManager;
     ReleaseManager public releaseManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
@@ -273,10 +273,10 @@ contract TestGifBase is Test {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        registryAccessManagerAddress = new RegistryAccessManager(registryOwner);
+        registryAccessManager = new RegistryAccessManager(registryOwner);
 
         releaseManager = new ReleaseManager(
-            registryAccessManagerAddress,
+            registryAccessManager,
             VersionPartLib.toVersionPart(3));
 
         registryAddress = address(releaseManager.getRegistry());
@@ -288,10 +288,10 @@ contract TestGifBase is Test {
 
         tokenRegistry = new TokenRegistry();
 
-        registryAccessManagerAddress.initialize(address(releaseManager), address(tokenRegistry));
+        registryAccessManager.initialize(address(releaseManager), address(tokenRegistry));
 
         registryServiceManager = new RegistryServiceManager(
-            registryAccessManagerAddress.authority(),
+            registryAccessManager.authority(),
             registryAddress
         );        
         
@@ -310,8 +310,8 @@ contract TestGifBase is Test {
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
 
         console.log("registry owner", address(registryOwner));
-        console.log("registry access manager", address(registryAccessManagerAddress));
-        console.log("registry access manager authority", registryAccessManagerAddress.authority());
+        console.log("registry access manager", address(registryAccessManager));
+        console.log("registry access manager authority", registryAccessManager.authority());
         console.log("release manager", address(releaseManager));
         console.log("release manager authority", releaseManager.authority());
         console.log("registry service proxy manager", address(registryServiceManager));
@@ -449,25 +449,24 @@ contract TestGifBase is Test {
         
         masterInstance = new Instance();
         masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, MASTER_INSTANCE_OWNER);
-        ( IRegistry.ObjectInfo memory masterInstanceObjectInfo, ) = registryService.registerInstance(masterInstance);
-        masterInstanceNftId = masterInstanceObjectInfo.nftId;
         
-        masterInstanceReader = new InstanceReader(address(registry), masterInstanceNftId);
+        masterInstanceReader = new InstanceReader();
+        masterInstanceReader.initialize(address(registry), address(masterInstance));
         masterInstance.setInstanceReader(masterInstanceReader);
         
         masterBundleManager = new BundleManager();
-        masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), masterInstanceNftId);
+        masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), address(masterInstance));
         masterInstance.setBundleManager(masterBundleManager);
 
         // revoke ADMIN_ROLE from registryOwner. token is already owned by 0x1
         masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(registryOwner));
         
+        masterInstanceNftId = instanceService.setMasterInstance(address(masterInstanceAccessManager), address(masterInstance), address(masterInstanceReader), address(masterBundleManager));
+
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
         // solhint-enable
-
-        instanceService.setMasterInstance(address(masterInstanceAccessManager), address(masterInstance), address(masterInstanceReader), address(masterBundleManager));
     }
 
 

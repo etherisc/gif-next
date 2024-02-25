@@ -12,7 +12,8 @@ contract TestInstanceService is TestGifBase {
     function test_setMasterInstanceReader() public {
         // GIVEN
         vm.startPrank(registryOwner);
-        InstanceReader newMasterInstanceReader = new InstanceReader(address(registry), masterInstanceNftId);
+        InstanceReader newMasterInstanceReader = new InstanceReader();
+        newMasterInstanceReader.initialize(address(registry), address(masterInstance));
         
         // WHEN
         instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
@@ -24,7 +25,8 @@ contract TestInstanceService is TestGifBase {
     function test_setMasterInstanceReader_not_master_instance() public {
         // GIVEN
         vm.startPrank(registryOwner);
-        InstanceReader newMasterInstanceReader = new InstanceReader(address(registry), instanceNftId);
+        InstanceReader newMasterInstanceReader = new InstanceReader();
+        newMasterInstanceReader.initialize(address(registry), address(instance));
         
         // THEN
         vm.expectRevert("ERROR:CRD-015:INSTANCE_READER_INSTANCE_MISMATCH");
@@ -47,7 +49,8 @@ contract TestInstanceService is TestGifBase {
     function test_upgradeInstanceReader() public {
         // GIVEN
         vm.startPrank(registryOwner);
-        InstanceReader newMasterInstanceReader = new InstanceReader(address(registry), masterInstanceNftId);
+        InstanceReader newMasterInstanceReader = new InstanceReader();
+        newMasterInstanceReader.initialize(address(registry), address(masterInstance));
         instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();
         
@@ -64,7 +67,8 @@ contract TestInstanceService is TestGifBase {
     function test_upgradeInstanceReader_not_authorized() public {
         // GIVEN
         vm.startPrank(registryOwner);
-        InstanceReader newMasterInstanceReader = new InstanceReader(address(registry), masterInstanceNftId);
+        InstanceReader newMasterInstanceReader = new InstanceReader();
+        newMasterInstanceReader.initialize(address(registry), address(masterInstance));
         instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();
         

@@ -34,7 +34,7 @@ contract MockObjectManagerTest is TestGifBase {
         objectManager.initialize(
             address(authority),
             address(registry),
-            instanceNftId
+            address(instance)
         );
     }
 
@@ -57,7 +57,6 @@ contract MockObjectManagerTest is TestGifBase {
 
         assertEq(objectManager.authority(), address(authority), "unexpected authority");
         assertEq(address(objectManager.getRegistry()), address(registry), "unexpected registry");
-        assertEq(address(objectManager.getInstanceReader()), address(instanceReader), "unexpected instance reader");
 
         NftId fakeComponentNftId = toNftId(13);
         NftId fakeObjectNftId = toNftId(17);
@@ -144,7 +143,7 @@ contract MockObjectManagerTest is TestGifBase {
         objectManager.initialize(
             address(newAuthority),
             address(registry),
-            instanceNftId
+            address(instance)
         );
 
         // initialize clone a second time to push a bad registry address
@@ -152,15 +151,15 @@ contract MockObjectManagerTest is TestGifBase {
         objectManager.initialize(
             address(authority),
             address(1),
-            instanceNftId
+            address(instance)
         );
 
-        // initialize clone a second time to push a bad instancd nft id
+        // initialize clone a second time to push a bad instancd address
         vm.expectRevert();
         objectManager.initialize(
             address(authority),
             address(registry),
-            toNftId(13)
+            address(registryService)
         );
     }
 }

@@ -25,7 +25,7 @@ contract NftIdSetTest is TestGifBase {
         objectManager.initialize(
             address(dummyAuthority),
             address(registry),
-            instanceNftId
+            address(instance)
         );
     }
 
