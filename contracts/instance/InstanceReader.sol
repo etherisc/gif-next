@@ -31,39 +31,21 @@ contract InstanceReader {
     bool private _initialized;
 
     IRegistry internal _registry;
-    NftId internal _instanceNftId;
     IInstance internal _instance;
     IKeyValueStore internal _store;
 
-    constructor(
-        address registry, 
-        NftId instanceNftId
-    )
-    {
-        initialize(registry, instanceNftId);
-    }
-
-    function initialize(address registry, NftId instanceNftId) public {
+    function initialize(address registry, address instance) public {
         require(!_initialized, "ERROR:CRD-000:ALREADY_INITIALIZED");
 
         require(
             address(registry) != address(0),
             "ERROR:CRD-001:REGISTRY_ZERO");
 
-        require(
-            instanceNftId.gtz(),
-            "ERROR:CRD-002:NFT_ID_ZERO");
 
         _registry = IRegistry(registry);
-        _instanceNftId = instanceNftId;
-        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(_instanceNftId);
 
-        require(
-            instanceInfo.objectType == INSTANCE(), 
-            "ERROR:CRD-003:PARENT_NOT_INSTANCE");
-
-        _instance = IInstance(instanceInfo.objectAddress);
-        _store = IKeyValueStore(instanceInfo.objectAddress);
+        _instance = IInstance(instance);
+        _store = IKeyValueStore(instance);
 
         _initialized = true;
     }
@@ -299,10 +281,6 @@ contract InstanceReader {
 
     function getInstanceStore() external view returns (IKeyValueStore store) {
         return _store;
-    }
-
-    function getInstanceNftId() external view returns (NftId nftId) {
-        return _instanceNftId;
     }
 
     function toUFixed(uint256 value, int8 exp) public pure returns (UFixed) {
