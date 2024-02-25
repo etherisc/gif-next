@@ -19,8 +19,10 @@ import {IRisk} from "./module/IRisk.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
+import {IRegisterable} from "../shared/IRegisterable.sol";
 
-interface IInstanceBase is IERC165, IKeyValueStore {
+
+interface IInstanceBase is IRegisterable, IKeyValueStore {
 
 
 }

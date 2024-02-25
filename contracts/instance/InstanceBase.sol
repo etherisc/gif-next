@@ -33,7 +33,6 @@ import {IInstanceBase} from "./IInstanceBase.sol";
 contract InstanceBase is
     IInstanceBase,
     KeyValueStore,
-    ERC165,
     Registerable
 {
 

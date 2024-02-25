@@ -7,6 +7,8 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 
+import {IInstanceBase} from "./IInstanceBase.sol";
+
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
@@ -24,7 +26,7 @@ import {IPolicy} from "./module/IPolicy.sol";
 import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
 
-interface IInstance is IERC165, IKeyValueStore, IAccessManaged {
+interface IInstance is IInstanceBase, IAccessManaged {
 
     function getComponentOwnerService() external view returns (IComponentOwnerService);
     function getDistributionService() external view returns (IDistributionService);

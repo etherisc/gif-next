@@ -37,8 +37,8 @@ import {VersionPart} from "../types/Version.sol";
 import {InstanceBase} from "./InstanceBase.sol";
 
 contract Instance is
-    AccessManagedUpgradeable,
     IInstance,
+    AccessManagedUpgradeable,
     // Initializable,
     InstanceBase
 {
@@ -51,7 +51,6 @@ contract Instance is
 
     bool private _initialized;
 
-    InstanceAccessManager internal _accessManager;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
 
@@ -62,8 +61,6 @@ contract Instance is
         require(!_initialized, "Contract instance has already been initialized");
 
         __AccessManaged_init(accessManagerAddress);
-                
-        _accessManager = InstanceAccessManager(accessManagerAddress);
         
         _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
 
@@ -252,7 +249,7 @@ contract Instance is
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        require(instanceReader.getInstanceNftId() == getNftId(), "NFT ID of InstanceReader does not match");
+        require(instanceReader.getInstance() == Instance(this), "InstanceReader instance mismatch");
         _instanceReader = instanceReader;
     }
 
@@ -262,7 +259,7 @@ contract Instance is
     
     function setBundleManager(BundleManager bundleManager) external restricted() {
         require(address(_bundleManager) == address(0), "BundleManager is set");
-        require(bundleManager.getInstanceNftId() == getNftId(), "NFT ID of BundleManager does not match");
+        require(bundleManager.getInstance() == Instance(this), "BundleManager instance mismatch");
         _bundleManager = bundleManager;
     }
 
