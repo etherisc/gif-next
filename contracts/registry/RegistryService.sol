@@ -40,11 +40,9 @@ contract RegistryService is
     // TODO update to real hash when registry is stable
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 
-    address public constant NFT_LOCK_ADDRESS = address(0x1);
-
-
-    function registerInstance(IRegisterable instance)
+    function registerInstance(IRegisterable instance, address owner)
         external
+        restricted
         returns(
             IRegistry.ObjectInfo memory info,
             bytes memory data
@@ -54,10 +52,9 @@ contract RegistryService is
             revert NotInstance();
         }
 
-        (info, data) = _getAndVerifyContractInfo(instance, INSTANCE(), msg.sender);
+        (info, data) = _getAndVerifyContractInfo(instance, INSTANCE(), owner);
 
         info.nftId = _registry.register(info);
-        instance.linkToRegisteredNftId(); // asume safe
         
         return (info, data);
     }
