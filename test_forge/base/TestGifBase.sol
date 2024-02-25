@@ -448,7 +448,7 @@ contract TestGifBase is Test {
         masterInstanceAccessManager.__InstanceAccessManager_initialize(registryOwner);
         
         masterInstance = new Instance();
-        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, MASTER_INSTANCE_OWNER);
+        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, registryOwner);
         
         masterInstanceReader = new InstanceReader();
         masterInstanceReader.initialize(address(registry), address(masterInstance));
@@ -462,6 +462,7 @@ contract TestGifBase is Test {
         masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(registryOwner));
         
         masterInstanceNftId = instanceService.setMasterInstance(address(masterInstanceAccessManager), address(masterInstance), address(masterInstanceReader), address(masterBundleManager));
+        chainNft.transferFrom(registryOwner, MASTER_INSTANCE_OWNER, masterInstanceNftId.toInt());
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));

@@ -51,7 +51,7 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const instance = masterInstanceBaseContract as Instance;
-    await executeTx(() => instance.initialize(accessManagerAddress, registry.registryAddress, registry.registryNftId, MASTER_INSTANCE_OWNER));
+    await executeTx(() => instance.initialize(accessManagerAddress, registry.registryAddress, registry.registryNftId, resolveAddress(owner)));
 
     const { address: instanceReaderAddress, contract: masterReaderBaseContract } = await deployContract(
         "InstanceReader",
@@ -95,6 +95,8 @@ export async function deployAndRegisterMasterInstance(
     const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
     // nftId is the first field of the ObjectInfo struct
     const masterInstanceNfdId = (logRegistrationInfo as unknown);
+
+    await executeTx(() => registry.chainNft.transferFrom(resolveAddress(owner), MASTER_INSTANCE_OWNER, BigInt(masterInstanceNfdId as string)));
 
     logger.info(`instance registered - masterInstanceNftId: ${masterInstanceNfdId}`);
     logger.info(`master addresses set`);
