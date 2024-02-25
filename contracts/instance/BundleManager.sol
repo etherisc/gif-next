@@ -32,17 +32,13 @@ contract BundleManager is
 
     mapping(NftId bundleNftId => LibNftIdSet.Set policies) internal _activePolicies;
 
-    constructor() ObjectManager() {
-    }
-
-
     /// @dev links a policy with its bundle
     // to link a policy it MUST NOT yet have been activated
     // the bundle MUST be unlocked (active) for linking (underwriting) and registered with this instance
     function linkPolicy(NftId policyNftId) external restricted() {
-        NftId bundleNftId = _instanceReader.getPolicyInfo(policyNftId).bundleNftId;
+        NftId bundleNftId = _instance.getInstanceReader().getPolicyInfo(policyNftId).bundleNftId;
         // decision will likely depend on the decision what to check here and what in the service
-        NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
+        NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
 
         // ensure bundle is unlocked (in active set) and registered with this instance
         if (!_isActive(poolNftId, bundleNftId)) {
@@ -59,11 +55,11 @@ contract BundleManager is
     // - the policy MUST be past its expiry period and it MUST NOT have any open claims
     // - the policy's payoutAmount MUST be equal to its sumInsuredAmount and MUST NOT have any open claims
     function unlinkPolicy(NftId policyNftId) external restricted() {
-        IPolicy.PolicyInfo memory policyInfo = _instanceReader.getPolicyInfo(policyNftId);
+        IPolicy.PolicyInfo memory policyInfo = _instance.getInstanceReader().getPolicyInfo(policyNftId);
 
         NftId bundleNftId = policyInfo.bundleNftId;
         // decision will likely depend on the decision what to check here and what in the service
-        NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
+        NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
 
         // ensure bundle is registered with this instance
         if (!_contains(poolNftId, bundleNftId)) {
@@ -78,7 +74,7 @@ contract BundleManager is
     /// @dev add a new bundle to a riskpool registerd with this instance
     // the corresponding pool is fetched via instance reader
     function add(NftId bundleNftId) external restricted() {
-        NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
+        NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
 
         // ensure pool is registered with instance
         if(poolNftId.eqz()) {
@@ -91,14 +87,14 @@ contract BundleManager is
 
     /// @dev unlocked (active) bundles are available to underwrite new policies
     function unlock(NftId bundleNftId) external restricted() {
-        NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
+        NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
         _activate(poolNftId, bundleNftId);
         emit LogBundleManagerBundleUnlocked(poolNftId, bundleNftId);
     }
 
     /// @dev locked (deactivated) bundles may not underwrite any new policies
     function lock(NftId bundleNftId) external restricted() {
-        NftId poolNftId = _instanceReader.getBundleInfo(bundleNftId).poolNftId;
+        NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
         _deactivate(poolNftId, bundleNftId);
         emit LogBundleManagerBundleLocked(poolNftId, bundleNftId);
     }
