@@ -33,6 +33,8 @@ import {ReleaseManager} from "./ReleaseManager.sol";
 
 contract RegistryAccessManager is AccessManaged
 {
+    event LogDetail(string message);
+
     error NotInitialized();
     error AlreadyInitialized();
 
@@ -60,7 +62,7 @@ contract RegistryAccessManager is AccessManaged
         _;
     }
 
-    constructor(address manager)
+    constructor(address admin, address manager)
         AccessManaged(msg.sender)
     {
         _accessManager = new AccessManager(address(this));
@@ -70,7 +72,9 @@ contract RegistryAccessManager is AccessManaged
 
         _configureAdminRoleInitial();
 
-        address admin = msg.sender;
+        // allows RegistryDeployer to call initialize()
+        _grantRole(REGISTRY_SERVICE_ADMIN_ROLE(), msg.sender, 0);
+        // allows admin to call createNextRelease()
         _grantRole(REGISTRY_SERVICE_ADMIN_ROLE(), admin, 0);
         _grantRole(REGISTRY_SERVICE_MANAGER_ROLE(), manager, 0);
     }
@@ -201,7 +205,7 @@ contract RegistryAccessManager is AccessManaged
     }
 
     function _grantRole(RoleId roleId, address account, uint32 executionDelay) private {
-            _accessManager.grantRole(roleId.toInt(), account, executionDelay);
+        _accessManager.grantRole(roleId.toInt(), account, executionDelay);
     }
 
     function _getNextRoleId() private returns(RoleId roleId) {

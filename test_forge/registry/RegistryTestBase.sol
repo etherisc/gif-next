@@ -134,7 +134,9 @@ contract RegistryTestBase is Test, FoundryRandom {
     {
         _startPrank(registryOwner);
 
-        accessManager = new RegistryAccessManager(registryOwner);
+        address admin = registryOwner;
+        address manager = registryOwner;
+        accessManager = new RegistryAccessManager(admin, manager);
 
         releaseManager = new ReleaseManager(
             accessManager,

@@ -55,7 +55,9 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
     {
         vm.startPrank(registryOwner);
 
-        RegistryAccessManager accessManager = new RegistryAccessManager(registryOwner);
+        address admin = registryOwner;
+        address manager = registryOwner;
+        RegistryAccessManager accessManager = new RegistryAccessManager(admin, manager);
 
         ReleaseManager releaseManager = new ReleaseManager(
             accessManager,
