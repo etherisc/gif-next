@@ -10,7 +10,7 @@ import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {RegistryService} from "../registry/RegistryService.sol";
+import {IRegistryService} from "../registry/IRegistryService.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 import {Service} from "../../contracts/shared/Service.sol";
 import {IService} from "../shared/IService.sol";
@@ -28,7 +28,6 @@ contract InstanceService is Service, IInstanceService {
 
     // TODO update to real hash when instance is stable
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
-    string public constant NAME = "InstanceService";
 
     modifier onlyInstanceOwner(NftId instanceNftId) {
         IRegistry registry = getRegistry();
@@ -63,7 +62,7 @@ contract InstanceService is Service, IInstanceService {
         address registryAddress = address(registry);
         NftId registryNftId = registry.getNftId(registryAddress);
         address registryServiceAddress = registry.getServiceAddress(REGISTRY(), getMajorVersion());
-        RegistryService registryService = RegistryService(registryServiceAddress);
+        IRegistryService registryService = IRegistryService(registryServiceAddress);
 
         // initially set the authority of the access managar to this (being the instance service). 
         // This will allow the instance service to bootstrap the authorizations of the instance
@@ -73,15 +72,13 @@ contract InstanceService is Service, IInstanceService {
 
         clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(address(clonedAccessManager), registryAddress, registryNftId, msg.sender);
-        ( IRegistry.ObjectInfo memory info, ) = registryService.registerInstance(clonedInstance);
-        clonedInstanceNftId = info.nftId;
         
         clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-        clonedInstanceReader.initialize(registryAddress, clonedInstanceNftId);
+        clonedInstanceReader.initialize(registryAddress, address(clonedInstance));
         clonedInstance.setInstanceReader(clonedInstanceReader);
 
         clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
-        clonedBundleManager.initialize(address(clonedAccessManager), registryAddress, clonedInstanceNftId);
+        clonedBundleManager.initialize(address(clonedAccessManager), registryAddress, address(clonedInstance));
         clonedInstance.setBundleManager(clonedBundleManager);
 
         // TODO amend setters with instance specific , policy manager ...
@@ -92,6 +89,10 @@ contract InstanceService is Service, IInstanceService {
         // TODO: use a role less powerful than admin, maybe INSTANCE_ADMIN (does not exist yet)
         clonedAccessManager.grantRole(ADMIN_ROLE(), instanceOwner);
         clonedAccessManager.revokeRole(ADMIN_ROLE(), address(this));
+
+        ( IRegistry.ObjectInfo memory info, ) = registryService.registerInstance(clonedInstance, instanceOwner);
+        clonedInstanceNftId = info.nftId;
+        clonedInstance.linkToRegisteredNftId();
 
         emit LogInstanceCloned(address(clonedAccessManager), address(clonedInstance), address(clonedInstanceReader), clonedInstanceNftId);
     }
@@ -219,7 +220,15 @@ contract InstanceService is Service, IInstanceService {
             INSTANCE_SERVICE_ROLE());
     }
 
-    function setMasterInstance(address accessManagerAddress, address instanceAddress, address instanceReaderAddress, address bundleManagerAddress) external onlyOwner {
+    function setMasterInstance(
+        address accessManagerAddress, 
+        address instanceAddress, 
+        address instanceReaderAddress, 
+        address bundleManagerAddress) 
+            external 
+            onlyOwner 
+            returns(NftId masterInstanceNftId)
+    {
         require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
         require(_masterInstance == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
         require(_masterInstanceBundleManager == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
@@ -229,18 +238,25 @@ contract InstanceService is Service, IInstanceService {
         require (instanceReaderAddress != address(0), "ERROR:CRD-007:INSTANCE_READER_ZERO");
         require (bundleManagerAddress != address(0), "ERROR:CRD-008:BUNDLE_MANAGER_ZERO");
 
-        Instance instance = Instance(instanceAddress);
+        IInstance instance = IInstance(instanceAddress);
         InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
         BundleManager bundleManager = BundleManager(bundleManagerAddress);
 
         require(instance.authority() == accessManagerAddress, "ERROR:CRD-009:INSTANCE_AUTHORITY_MISMATCH");
-        require(instanceReader.getInstanceNftId() == instance.getNftId(), "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
-        require(bundleManager.getInstanceNftId() == instance.getNftId(), "ERROR:CRD-011:BUNDLE_MANAGER_INSTANCE_MISMATCH");
+        require(instanceReader.getInstance() == instance, "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
+        require(bundleManager.getInstance() == instance, "ERROR:CRD-011:BUNDLE_MANAGER_INSTANCE_MISMATCH");
 
         _masterInstanceAccessManager = accessManagerAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
         _masterInstanceBundleManager = bundleManagerAddress;
+        
+        IRegistryService registryService = IRegistryService(getRegistry().getServiceAddress(REGISTRY(), getMajorVersion()));
+        IInstance masterInstance = IInstance(_masterInstance);
+        (IRegistry.ObjectInfo memory info, ) = registryService.registerInstance(masterInstance, getOwner());
+        masterInstanceNftId = info.nftId;
+
+        masterInstance.linkToRegisteredNftId();
     }
 
     function setMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
@@ -249,11 +265,12 @@ contract InstanceService is Service, IInstanceService {
         require(instanceReaderAddress != _masterInstanceReader, "ERROR:CRD-014:INSTANCE_READER_MASTER_SAME_AS_NEW");
 
         InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
-        require(instanceReader.getInstanceNftId() == Instance(_masterInstance).getNftId(), "ERROR:CRD-015:INSTANCE_READER_INSTANCE_MISMATCH");
+        require(instanceReader.getInstance() == IInstance(_masterInstance), "ERROR:CRD-015:INSTANCE_READER_INSTANCE_MISMATCH");
 
         _masterInstanceReader = instanceReaderAddress;
     }
 
+    // TODO access restriction
     function upgradeInstanceReader(NftId instanceNftId) external {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
@@ -265,7 +282,7 @@ contract InstanceService is Service, IInstanceService {
         }
         
         InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-        upgradedInstanceReaderClone.initialize(address(registry), instanceNftId);
+        upgradedInstanceReaderClone.initialize(address(registry), address(instance));
         instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
