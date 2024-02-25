@@ -89,22 +89,6 @@ export async function deployAndRegisterMasterInstance(
     // revoke admin role for protocol owner
     await executeTx(() => accessManager.revokeRole(0, resolveAddress(owner)));
 
-
-
-/*
-        // FIXME register instance in registry
-        logger.debug(`registering instance ${instanceAddress} in registry ...`);
-        const registryServiceAsInstanceOwner = IRegistryService__factory.connect(await resolveAddress(registry.registryServiceAddress), owner);
-        const rcpt = await executeTx(async () => await registryServiceAsInstanceOwner.registerInstance(instanceAddress));
-        // this extracts the ObjectInfo struct from the LogRegistration event
-        const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
-        // nftId is the first field of the ObjectInfo struct
-        const masterInstanceNfdId = (logRegistrationInfo as unknown);
-        
-        logger.info(`instance registered - masterInstanceNftId: ${masterInstanceNfdId}`);
-        // const instanceNftId = 21101;
-*/
-
     logger.debug(`setting master addresses into instance service and registering master instance`);
     const rcpt = await executeTx(() => services.instanceService.setMasterInstance(accessManagerAddress, instanceAddress, instanceReaderAddress, bundleManagerAddress));
     // this extracts the ObjectInfo struct from the LogRegistration event
