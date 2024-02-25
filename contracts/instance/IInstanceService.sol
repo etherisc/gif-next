@@ -8,7 +8,7 @@ import {IService} from "../shared/IService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IBaseComponent} from "../components/IBaseComponent.sol";
+import {IComponent} from "../components/IComponent.sol";
 
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";

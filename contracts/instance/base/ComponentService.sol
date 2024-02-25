@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IBaseComponent} from "../../components/IBaseComponent.sol";
+import {IComponent} from "../../components/IComponent.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {IInstance} from "../../instance/IInstance.sol";
@@ -14,19 +14,14 @@ import {Service} from "../../shared/Service.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 
-abstract contract ComponentServiceBase is Service {
-
+abstract contract ComponentService is Service {
 
     error ErrorComponentServiceAlreadyRegistered(address component, NftId nftId);
     error ErrorComponentServiceNotComponent(address component);
     error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
     error ErrorComponentServiceSenderNotOwner(address component, address initialOwner, address sender);
     error ErrorComponentServiceExpectedRoleMissing(NftId instanceNftId, RoleId requiredRole, address sender);
-
-    error ErrorComponentServiceBaseComponentLocked(address componentAddress);
-    error ExpectedRoleMissing(RoleId expected, address caller);
-    error ComponentTypeInvalid(ObjectType componentType);
-
+    error ErrorComponentServiceComponentLocked(address component);
 
     /// @dev modifier to check if caller is a registered service
     modifier onlyService() {
@@ -55,7 +50,7 @@ abstract contract ComponentServiceBase is Service {
     )
         internal
         returns (
-            IBaseComponent component,
+            IComponent component,
             address owner,
             IInstance instance,
             NftId instanceNftId
@@ -71,8 +66,8 @@ abstract contract ComponentServiceBase is Service {
         }
 
         // check this is a component
-        component = IBaseComponent(componentAddress);
-        if(!component.supportsInterface(type(IBaseComponent).interfaceId)) {
+        component = IComponent(componentAddress);
+        if(!component.supportsInterface(type(IComponent).interfaceId)) {
             revert ErrorComponentServiceNotComponent(componentAddress);
         }
 

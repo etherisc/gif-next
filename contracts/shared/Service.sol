@@ -8,14 +8,16 @@ import {Version, VersionPart, VersionLib} from "../types/Version.sol";
 import {Versionable} from "./Versionable.sol";
 import {IService} from "./IService.sol";
 import {IVersionable} from "./IVersionable.sol";
-import {RegisterableUpgradable} from "./RegisterableUpgradable.sol";
+import {Versionable} from "./Versionable.sol";
+import {Registerable} from "./Registerable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 
 
 /// @dev service base contract
 abstract contract Service is 
-    RegisterableUpgradable,
+    Registerable,
+    Versionable,
     IService
 {
     function getDomain() public pure virtual override returns(ObjectType);
