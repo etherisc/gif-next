@@ -1,5 +1,5 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleManager, IRegistryService__factory, IRegistry__factory, Instance, InstanceAccessManager, InstanceService__factory } from "../../typechain-types";
+import { BundleManager, IRegistry__factory, Instance, InstanceAccessManager, InstanceService__factory, InstanceReader } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -53,23 +53,10 @@ export async function deployAndRegisterMasterInstance(
     const instance = masterInstanceBaseContract as Instance;
     await executeTx(() => instance.initialize(accessManagerAddress, registry.registryAddress, registry.registryNftId, MASTER_INSTANCE_OWNER));
 
-    // FIXME register instance in registry
-    logger.debug(`registering instance ${instanceAddress} in registry ...`);
-    const registryServiceAsInstanceOwner = IRegistryService__factory.connect(await resolveAddress(registry.registryServiceAddress), owner);
-    const rcpt = await executeTx(async () => await registryServiceAsInstanceOwner.registerInstance(instanceAddress));
-    // this extracts the ObjectInfo struct from the LogRegistration event
-    const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
-    // nftId is the first field of the ObjectInfo struct
-    const masterInstanceNfdId = (logRegistrationInfo as unknown);
-    
-    logger.info(`instance registered - masterInstanceNftId: ${masterInstanceNfdId}`);
-    // const instanceNftId = 21101;
-
-
-    const { address: instanceReaderAddress } = await deployContract(
+    const { address: instanceReaderAddress, contract: masterReaderBaseContract } = await deployContract(
         "InstanceReader",
         owner,
-        [registry.registryAddress, masterInstanceNfdId],
+        [],
         { 
             libraries: {
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
@@ -81,6 +68,8 @@ export async function deployAndRegisterMasterInstance(
             }
         }
     );
+    const instanceReader = masterReaderBaseContract as InstanceReader;
+    await executeTx(() => instanceReader["initialize(address,address)"](registry.registryAddress, instanceAddress));
 
     const {address: bundleManagerAddress, contract: bundleManagerBaseContrat} = await deployContract(
         "BundleManager",
@@ -94,14 +83,36 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const bundleManager = bundleManagerBaseContrat as BundleManager;
-    await executeTx(() => bundleManager["initialize(address,address,uint96)"](accessManagerAddress, registry.registryAddress, BigInt(masterInstanceNfdId as string)));
+    await executeTx(() => bundleManager["initialize(address,address,address)"](accessManagerAddress, registry.registryAddress, instanceAddress));
 
     await executeTx(() => instance.setBundleManager(bundleManagerAddress));
     // revoke admin role for protocol owner
     await executeTx(() => accessManager.revokeRole(0, resolveAddress(owner)));
 
-    logger.debug(`setting master addresses into instance service`);
-    await executeTx(() => services.instanceService.setMasterInstance(accessManagerAddress, instanceAddress, instanceReaderAddress, bundleManagerAddress));
+
+
+/*
+        // FIXME register instance in registry
+        logger.debug(`registering instance ${instanceAddress} in registry ...`);
+        const registryServiceAsInstanceOwner = IRegistryService__factory.connect(await resolveAddress(registry.registryServiceAddress), owner);
+        const rcpt = await executeTx(async () => await registryServiceAsInstanceOwner.registerInstance(instanceAddress));
+        // this extracts the ObjectInfo struct from the LogRegistration event
+        const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
+        // nftId is the first field of the ObjectInfo struct
+        const masterInstanceNfdId = (logRegistrationInfo as unknown);
+        
+        logger.info(`instance registered - masterInstanceNftId: ${masterInstanceNfdId}`);
+        // const instanceNftId = 21101;
+*/
+
+    logger.debug(`setting master addresses into instance service and registering master instance`);
+    const rcpt = await executeTx(() => services.instanceService.setMasterInstance(accessManagerAddress, instanceAddress, instanceReaderAddress, bundleManagerAddress));
+    // this extracts the ObjectInfo struct from the LogRegistration event
+    const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
+    // nftId is the first field of the ObjectInfo struct
+    const masterInstanceNfdId = (logRegistrationInfo as unknown);
+
+    logger.info(`instance registered - masterInstanceNftId: ${masterInstanceNfdId}`);
     logger.info(`master addresses set`);
     
     logger.info("======== Finished deployment of master instance ========");
