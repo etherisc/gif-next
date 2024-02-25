@@ -17,20 +17,19 @@ import {Registerable} from "../shared/Registerable.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 
-// TODO also inherit oz accessmanaged
+// TODO discuss to inherit from oz accessmanaged
+// TODO make contract upgradeable, then add ComponentUpradeable that also intherits from Versionable
+// same pattern as for Service which is also upgradeable
 abstract contract Component is
     Registerable,
     IComponent
 {
-    using NftIdLib for NftId;
-
     IInstanceService internal _instanceService;
     IProductService internal _productService;
 
-    address internal _deployer;
-    address internal _wallet;
-    IERC20Metadata internal _token;
     IInstance internal _instance;
+    IERC20Metadata internal _token;
+    address internal _wallet;
     NftId internal _productNftId;
 
     modifier onlyProductService() {
@@ -40,6 +39,7 @@ abstract contract Component is
         _;
     }
 
+    // TODO discuss replacement with modifier restricted from accessmanaged
     modifier onlyInstanceRole(uint64 roleIdNum) {
         RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
         InstanceAccessManager accessManager = InstanceAccessManager(_instance.authority());
@@ -49,7 +49,7 @@ abstract contract Component is
         _;
     }
 
-    // TODO move to oz accessmanaged locked (which is included in restricted modifier)
+    // TODO discuss replacement with modifier restricted from accessmanaged
     modifier isNotLocked() {
         InstanceAccessManager accessManager = InstanceAccessManager(_instance.authority());
         if (accessManager.isTargetLocked(address(this))) {
@@ -85,19 +85,20 @@ abstract contract Component is
         _registerInterface(type(IComponent).interfaceId);
     }
 
-    // from component contract
-    // TODO only owner and instance owner 
+    // TODO discuss replacement with modifier restricted from accessmanaged
     function lock() external onlyOwner override {
         _instanceService.setTargetLocked(getName(), true);
     }
     
-    // TODO only owner and instance owner 
+    // TODO discuss replacement with modifier restricted from accessmanaged
     function unlock() external onlyOwner override {
         _instanceService.setTargetLocked(getName(), false);
     }
 
+    // TODO discuss to split this base contract into a minimal component base (eg oracle)
+    // and a component base that is linked to a product component (all others in v3)
     function setProductNftId(NftId productNftId)
-        public
+        external
         override
         onlyProductService() 
     {
@@ -150,6 +151,7 @@ abstract contract Component is
         }
     }
 
+    // TODO set name via constructor or initialization, pure function likely too restrictive
     function getName() public pure virtual returns (string memory name);
 
     function getWallet()
