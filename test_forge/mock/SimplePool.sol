@@ -22,6 +22,7 @@ contract SimplePool is Pool {
     ) Pool(
         registry,
         instanceNftId,
+        "SimplePool",
         token,
         isInterceptor,
         isConfirmingApplication,
@@ -29,12 +30,8 @@ contract SimplePool is Pool {
         poolFee,
         stakingFee,
         performanceFee,
-        initialOwner
+        initialOwner,
+        ""
     ) {
     }
-
-    function getName() public pure override returns (string memory) {
-        return "SimplePool";
-    }
-    
 }

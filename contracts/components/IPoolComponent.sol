@@ -1,13 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {NftId} from "../types/NftId.sol";
 import {Fee} from "../types/Fee.sol";
+import {IComponent} from "./IComponent.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
+import {NftId} from "../types/NftId.sol";
 import {UFixed} from "../types/UFixed.sol";
 
-interface IPoolComponent {
+interface IPoolComponent is IComponent {
 
     event LogUnderwrittenByPool(NftId policyNftId, uint256 collateralizationAmount, address pool);
+
+    function getSetupInfo() external view returns (ISetup.PoolSetupInfo memory setupInfo);
 
     function setFees(
         Fee memory poolFee,

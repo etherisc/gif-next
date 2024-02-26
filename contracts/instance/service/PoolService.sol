@@ -30,6 +30,7 @@ import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
 import {IComponent} from "../../components/IComponent.sol";
+import {IPoolComponent} from "../../components/IPoolComponent.sol";
 
 string constant POOL_SERVICE_NAME = "PoolService";
 
@@ -68,7 +69,7 @@ contract PoolService is
         returns(NftId poolNftId)
     {
         (
-            IComponent pool,
+            IComponent component,
             address owner,
             IInstance instance,
             NftId instanceNftId
@@ -77,47 +78,13 @@ contract PoolService is
             POOL(),
             POOL_OWNER_ROLE());
 
-        (
-            IRegistry.ObjectInfo memory poolInfo,
-            bytes memory data
-        ) = getRegistryService().registerPool(pool, owner);
+        IPoolComponent pool = IPoolComponent(poolAddress);
+        IRegistry.ObjectInfo memory poolInfo = getRegistryService().registerPool(pool, owner);
         pool.linkToRegisteredNftId();
         poolNftId = poolInfo.nftId;
 
-        (
-            string memory name, 
-            ISetup.PoolSetupInfo memory initialSetup
-        ) = _decodeAndVerifyPoolData(data);
-        instance.createPoolSetup(poolNftId, initialSetup);
-
-        getInstanceService().createTarget(instanceNftId, poolAddress, name);
-    }
-
-    function _decodeAndVerifyPoolData(bytes memory data) 
-        internal 
-        returns(string memory name, ISetup.PoolSetupInfo memory setup)
-    {
-        (name, setup) = abi.decode(
-            data,
-            (string, ISetup.PoolSetupInfo)
-        );
-
-        // TODO add checks
-        /*IRegistry _registry = getRegistry();
-
-        if(wallet == address(0)) {
-            revert WalletIsZero();
-        }
-
-        ObjectType tokenType = _registry.getObjectInfo(address(token)).objectType;
-
-        if(tokenType != TOKEN()) {
-            revert InvalidToken();
-        } 
-
-        if(UFixedLib.eqz(info.collateralizationLevel)) { 
-            revert CollateralizationLevelIsZero();
-        }*/
+        instance.createPoolSetup(poolNftId, pool.getSetupInfo());
+        getInstanceService().createTarget(instanceNftId, poolAddress, pool.getName());
     }
 
     function setFees(

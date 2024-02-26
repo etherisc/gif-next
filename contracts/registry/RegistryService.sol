@@ -44,27 +44,24 @@ contract RegistryService is
         external
         restricted
         returns(
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
+            IRegistry.ObjectInfo memory info
         ) 
     {
         if(!instance.supportsInterface(type(IInstance).interfaceId)) {
             revert NotInstance();
         }
 
-        (info, data) = _getAndVerifyContractInfo(instance, INSTANCE(), owner);
-
+        info = _getAndVerifyContractInfo(instance, INSTANCE(), owner);
         info.nftId = _registry.register(info);
-        
-        return (info, data);
+
+        instance.linkToRegisteredNftId(); // asume safe
     }
 
     function registerProduct(IComponent product, address owner)
         external
         restricted
         returns(
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
+            IRegistry.ObjectInfo memory info
         ) 
     {
         // CAN revert if no ERC165 support -> will revert with empty message 
@@ -72,49 +69,38 @@ contract RegistryService is
             revert NotProduct();
         }
 
-        (info, data) = _getAndVerifyContractInfo(product, PRODUCT(), owner);
-
+        info = _getAndVerifyContractInfo(product, PRODUCT(), owner);
         info.nftId = _registry.register(info);
-
-        return (info, data);  
     }
 
     function registerPool(IComponent pool, address owner)
         external
         restricted
         returns(
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
+            IRegistry.ObjectInfo memory info
         ) 
     {
         if(!pool.supportsInterface(type(IPoolComponent).interfaceId)) {
             revert NotPool();
         }
 
-        (info, data) = _getAndVerifyContractInfo(pool, POOL(), owner);
-
+        info = _getAndVerifyContractInfo(pool, POOL(), owner);
         info.nftId = _registry.register(info);
-
-        return (info, data);  
     }
 
     function registerDistribution(IComponent distribution, address owner)
         external
         restricted
         returns(
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
+            IRegistry.ObjectInfo memory info
         ) 
     {
         if(!distribution.supportsInterface(type(IDistributionComponent).interfaceId)) {
             revert NotDistribution();
         }
 
-        (info, data) = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
-
+        info = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
         info.nftId = _registry.register(info);
-
-        return (info, data);  
     }
 
     function registerPolicy(IRegistry.ObjectInfo memory info)
@@ -177,15 +163,14 @@ contract RegistryService is
 
     // from IRegisterable
 
-    function getInitialInfo() 
-        public 
-        view
-        virtual override(IRegisterable, Registerable)
-        returns (IRegistry.ObjectInfo memory info, bytes memory data)
+    function getFunctionConfigs()
+        external
+        pure
+        returns(
+            FunctionConfig[] memory config
+        )
     {
-        (info , data) = super.getInitialInfo();
-
-        FunctionConfig[] memory config = new FunctionConfig[](6);
+        config = new FunctionConfig[](6);
 
         // order of service registrations MUST be reverse to this array 
         /*config[-1].serviceDomain = STAKE();
@@ -209,8 +194,6 @@ contract RegistryService is
         // registerInstance() have no restriction
         config[5].serviceDomain = INSTANCE();
         config[5].selector = RegistryService.registerInstance.selector;
-
-        data = abi.encode(config);
     }
 
     // Internal
@@ -221,16 +204,12 @@ contract RegistryService is
         address expectedOwner // assume can be 0 when given by other service
     )
         internal
-        view
+        // view
         returns(
-            IRegistry.ObjectInfo memory info, 
-            bytes memory data
+            IRegistry.ObjectInfo memory info 
         )
     {
-        (
-            info, 
-            data
-        ) = registerable.getInitialInfo();
+        info = registerable.getInitialInfo();
         info.objectAddress = address(registerable);
 
         if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
@@ -254,15 +233,6 @@ contract RegistryService is
         if(getRegistry().isRegistered(owner)) { 
             revert RegisterableOwnerIsRegistered();
         }
-
-        /*NftId parentNftId = info.parentNftId;
-        IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(parentNftId);
-
-        if(parentInfo.objectType != parentType) { // parent registration + type
-            revert InvalidParent(parentNftId);
-        }*/
-
-        return(info, data);
     }
 
     function _verifyObjectInfo(
@@ -288,25 +258,5 @@ contract RegistryService is
         if(getRegistry().isRegistered(owner)) { 
             revert RegisterableOwnerIsRegistered();
         }
-
-        // can catch all 3 if check that initialOwner is not registered
-        /*if(info.initialOwner == msg.sender) {
-            revert InitialOwnerIsParent();
-        }
-
-        if(info.initialOwner == address(this)) {
-            revert InitialOwnerIsService();
-        }
-
-        if(info.initialOwner == address(getRegistry())) {
-            revert InitialOwnerIsRegistry();
-        }*/
-
-        /*NftId parentNftId = info.parentNftId;
-        IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(parentNftId);
-
-        if(parentInfo.objectType != parentType) { // parent registration + type
-            revert InvalidParent(parentNftId);
-        }*/        
     }
 }

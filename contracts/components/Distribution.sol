@@ -22,8 +22,8 @@ abstract contract Distribution is
 {
     using NftIdLib for NftId;
 
-    Fee internal _initialDistributionFee;
     bool internal _isVerifying;
+    Fee internal _initialDistributionFee;
 
     TokenHandler internal _tokenHandler;
 
@@ -33,18 +33,20 @@ abstract contract Distribution is
         address registry,
         NftId instanceNftId,
         // TODO refactor into tokenNftId
+        string memory name,
         address token,
         bool verifying,
         Fee memory distributionFee,
-        address initialOwner
+        address initialOwner,
+        bytes memory data
     )
-        Component(registry, instanceNftId, token, DISTRIBUTION(), true, initialOwner)
+        Component(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data)
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 
-        _tokenHandler = TokenHandler(token);
-        _distributionService = _instance.getDistributionService();
+        _tokenHandler = new TokenHandler(token);
+        _distributionService = getInstance().getDistributionService();
 
         _registerInterface(type(IDistributionComponent).interfaceId);
     }
@@ -115,40 +117,28 @@ abstract contract Distribution is
     }
 
     function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
-        InstanceReader reader = _instance.getInstanceReader();
-        return reader.getDistributionSetupInfo(getNftId());
+        InstanceReader reader = getInstance().getInstanceReader();
+        setupInfo = reader.getDistributionSetupInfo(getNftId());
+
+        // fallback to initial setup info (wallet is always != address(0))
+        if(setupInfo.wallet == address(0)) {
+            setupInfo = _getInitialSetupInfo();
+        }
+    }
+
+    function _getInitialSetupInfo() internal view returns (ISetup.DistributionSetupInfo memory setupInfo) {
+        return ISetup.DistributionSetupInfo(
+            zeroNftId(),
+            _tokenHandler,
+            _initialDistributionFee,
+            _isVerifying,
+            address(this)
+        );
     }
     
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying) {
         return _isVerifying;
-    }
-
-    // from IRegisterable
-
-    function getInitialInfo() 
-        public 
-        view
-        override (IRegisterable, Registerable)
-        returns(IRegistry.ObjectInfo memory, bytes memory)
-    {
-        (
-            IRegistry.ObjectInfo memory info, 
-        ) = super.getInitialInfo();
-
-        return (
-            info,
-            abi.encode(
-                getName(),
-                ISetup.DistributionSetupInfo(
-                    _productNftId,
-                    _tokenHandler,
-                    _initialDistributionFee,
-                    _isVerifying,
-                    address(this)
-                )
-            )
-        );
     }
 }

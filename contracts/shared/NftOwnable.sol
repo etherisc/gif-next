@@ -57,6 +57,9 @@ contract NftOwnable is INftOwnable {
         return _nftId;
     }
 
+    function getInitialOwner() public view returns (address) {
+        return _initialOwner;
+    }
 
     function getOwner() public view virtual override returns (address) {
         if (_nftId.gtz()) {

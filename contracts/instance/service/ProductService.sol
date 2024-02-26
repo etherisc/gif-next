@@ -73,7 +73,7 @@ contract ProductService is ComponentService, IProductService {
         returns(NftId productNftId)
     {
         (
-            IComponent product,
+            IComponent component,
             address owner,
             IInstance instance,
             NftId instanceNftId
@@ -82,35 +82,26 @@ contract ProductService is ComponentService, IProductService {
             PRODUCT(),
             PRODUCT_OWNER_ROLE());
 
-        (
-            IRegistry.ObjectInfo memory productInfo,
-            bytes memory data
-        ) = getRegistryService().registerProduct(product, owner);
-
+        IProductComponent product = IProductComponent(productAddress);
+        IRegistry.ObjectInfo memory productInfo = getRegistryService().registerProduct(product, owner);
         productNftId = productInfo.nftId;
         _createProductSetup(
             instance, 
             product, 
-            productNftId, 
-            data);
+            productNftId);
     }
 
 
     function _createProductSetup(
         IInstance instance, 
-        IComponent product, 
-        NftId productNftId, 
-        bytes memory data
+        IProductComponent product, 
+        NftId productNftId 
     )
         internal
         returns (string memory name)
     {
-        (
-            string memory name, 
-            ISetup.ProductSetupInfo memory setup
-        ) = _decodeAndVerifyProductData(data);
-
         // wire distribution and pool components to product component
+        ISetup.ProductSetupInfo memory setup = product.getSetupInfo();
         IComponent distribution = IComponent(_registry.getObjectInfo(setup.distributionNftId).objectAddress);
         IComponent pool = IComponent(_registry.getObjectInfo(setup.poolNftId).objectAddress);
 
@@ -120,13 +111,13 @@ contract ProductService is ComponentService, IProductService {
         product.linkToRegisteredNftId();
 
         // create product setup in instance
-        instance.createProductSetup(productNftId, setup);
+        instance.createProductSetup(productNftId, product.getSetupInfo());
 
         // create target for instane access manager
         getInstanceService().createTarget(
             _registry.getNftId(address(instance)), 
             address(product), 
-            name);
+            product.getName());
     }
 
     function getDomain() public pure override(IService, Service) returns(ObjectType) {

@@ -17,14 +17,12 @@ contract SimpleDistribution is Distribution {
     ) Distribution(
         registry,
         instanceNftId,
+        "SimpleDistribution",
         token,
         verifying,
         distributionFee,
-        initialOwner
+        initialOwner,
+        ""
     ) {
-    }
-
-    function getName() public pure override returns (string memory) {
-        return "SimpleDistribution";
     }
 }

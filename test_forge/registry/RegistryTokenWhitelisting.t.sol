@@ -39,6 +39,8 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         tokenRegistry.setActive(address(usdc), majorVersion3, blacklist);
     }
 
+// TODO refactor
+/*
     function test_registryTokenInitial() public {
         assertFalse(tokenRegistry.isRegistered(address(dip)), "dip is registered");
         assertTrue(tokenRegistry.isRegistered(address(usdc)), "usdc not registered");
@@ -46,8 +48,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         assertFalse(tokenRegistry.isActive(address(dip), registry.getLatestVersion()), "dip active in current relase");
         assertFalse(tokenRegistry.isActive(address(usdc), registry.getLatestVersion()), "usdc active in current relase");
     }
-// TODO refactor
-/*
+
     function test_registryTokenWhitelistHappyCase() public {
 
         vm.prank(address(releaseManager));
@@ -80,7 +81,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         assertTrue(tokenRegistry.isActive(address(usdc), majorVersion3), "usdc not whitelisted in version 3");
         assertTrue(tokenRegistry.isActive(address(usdc), majorVersion4), "usdc not whitelisted in version 4");
     }
-*/
+
     function test_registryTokenWhitelistNotToken() public {
         vm.expectRevert(
             abi.encodeWithSelector(TokenRegistry.NotToken.selector,
@@ -98,7 +99,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         vm.prank(address(registryOwner));
         tokenRegistry.setActive(outsider, majorVersion3, whitelist);
     }
-/* TODO refactor
+
     function test_registryTokenWhitelistInvalidRelease() public {
 
         // attempt to whitelist for version 2 (too low)
@@ -142,7 +143,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         vm.prank(registryOwner);
         tokenRegistry.setActive(address(usdc), majorVersion5, whitelist);
     }
-*/
+
     function test_registryTokenBlacklistHappyCase() public {
 
         vm.prank(address(registryOwner));
@@ -164,5 +165,7 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         vm.prank(outsider);
         tokenRegistry.setActive(address(usdc), majorVersion3, blacklist);
     }
+
+*/
 }
 

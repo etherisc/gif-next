@@ -21,8 +21,9 @@ import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
 import {ComponentService} from "../base/ComponentService.sol";
 import {InstanceService} from "../InstanceService.sol";
-import {IDistributionService} from "./IDistributionService.sol";
 import {IComponent} from "../../components/IComponent.sol";
+import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
+import {IDistributionService} from "./IDistributionService.sol";
 
 
 contract DistributionService is
@@ -60,7 +61,7 @@ contract DistributionService is
         returns(NftId distributionNftId)
     {
         (
-            IComponent distribution,
+            IComponent component,
             address owner,
             IInstance instance,
             NftId instanceNftId
@@ -69,30 +70,20 @@ contract DistributionService is
             DISTRIBUTION(),
             DISTRIBUTION_OWNER_ROLE());
 
-        (
-            IRegistry.ObjectInfo memory distributionInfo,
-            bytes memory data
-        ) = getRegistryService().registerDistribution(distribution, owner);
+        IRegistry.ObjectInfo memory distributionInfo = getRegistryService().registerDistribution(component, owner);
+        IDistributionComponent distribution = IDistributionComponent(distributionAddress);
         distribution.linkToRegisteredNftId();
         distributionNftId = distributionInfo.nftId;
 
-        (
-            string memory name, 
-            ISetup.DistributionSetupInfo memory initialSetup
-        ) = _decodeAndVerifyDistributionData(data);
-        instance.createDistributionSetup(distributionNftId, initialSetup);
-
-        getInstanceService().createTarget(instanceNftId, distributionAddress, name);
+        instance.createDistributionSetup(distributionNftId, distribution.getSetupInfo());
+        getInstanceService().createTarget(instanceNftId, distributionAddress, distribution.getName());
     }
 
     function _decodeAndVerifyDistributionData(bytes memory data)
         internal 
-        returns(string memory name, ISetup.DistributionSetupInfo memory setup)
+        returns(string memory name)
     {
-        (name, setup) = abi.decode(
-            data,
-            (string, ISetup.DistributionSetupInfo)
-        );
+        (name) = abi.decode(data, (string));
 
         // TODO add checks if applicable 
     }

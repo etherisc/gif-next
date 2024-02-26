@@ -37,20 +37,6 @@ contract RegistryServiceMock is Versionable {
 
 contract RegistryServiceMockWithSimpleConfig is RegistryService
 {
-    function getInitialInfo() public view override 
-        returns(
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
-        )
-    {
-        (info, ) = super.getInitialInfo();
-        FunctionConfig[] memory config = new FunctionConfig[](1);
-
-        config[0].serviceDomain = DISTRIBUTION();
-        config[0].selector = RegistryService.registerDistribution.selector;
-
-        data = abi.encode(config);
-    }
 
     function getVersion()
         public

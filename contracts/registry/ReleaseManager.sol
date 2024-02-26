@@ -135,6 +135,7 @@ contract ReleaseManager is AccessManaged
         if(!service.supportsInterface(type(IRegistryService).interfaceId)) {
             revert NotRegistryService();
         }
+
         // TODO unreliable! MUST guarantee the same authority -> how?
         address serviceAuthority = service.authority();
         if(serviceAuthority != authority()) {
@@ -143,16 +144,14 @@ contract ReleaseManager is AccessManaged
                 serviceAuthority); 
         }
 
-        (
-            IRegistry.ObjectInfo memory info, 
-            bytes memory data
-        ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
+        IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
 
         VersionPart version = _next;
         ObjectType domain = REGISTRY();
         _verifyServiceInfo(info, version, domain);
 
-        _createRelease(data);
+        // data: config bytes
+        _createRelease(service.getFunctionConfigs());
 
         //setTargetClosed(service, true);
         
@@ -173,12 +172,8 @@ contract ReleaseManager is AccessManaged
             revert NotService();
         }
 
-        (
-            IRegistry.ObjectInfo memory info, 
-            //bytes memory data
-        ) = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
-
-        VersionPart version = _next;
+        IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
+        VersionPart version = getNextVersion();
         ObjectType domain = _release[version].domains[_awaitingRegistration];// reversed registration order of services specified in RegistryService config
         _verifyServiceInfo(info, version, domain);
 
@@ -244,13 +239,12 @@ contract ReleaseManager is AccessManaged
         address expectedOwner // assume always valid, can not be 0
     )
         internal
-        view
+        // view
         returns(
-            IRegistry.ObjectInfo memory info, 
-            bytes memory data
+            IRegistry.ObjectInfo memory info
         )
     {
-        (info, data) = service.getInitialInfo();
+        info = service.getInitialInfo();
         info.objectAddress = address(service);
         info.isInterceptor = false; // service is never interceptor, at least now
 
@@ -267,23 +261,10 @@ contract ReleaseManager is AccessManaged
         if(owner == address(service)) {
             revert SelfRegistration();
         }
-
-        /*if(owner == address(0)) { // never 0
-            revert();// RegisterableOwnerIsZero();
-        }*/
         
         if(_registry.isRegistered(owner)) { 
             revert RegisterableOwnerIsRegistered(); 
         }
-
-        /*NftId parentNftId = info.parentNftId;
-        IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(parentNftId);
-
-        if(parentInfo.objectType != parentType) { // parent registration + type
-            revert InvalidParent(parentNftId);
-        }*/
-
-        return(info, data);
     }
 
     function _verifyServiceInfo(
@@ -312,11 +293,10 @@ contract ReleaseManager is AccessManaged
     }
 
     // TODO check if registry supports types specified in the config array
-    function _createRelease(bytes memory configBytes)
+    function _createRelease(IRegistryService.FunctionConfig[] memory config)
         internal
     {
-        VersionPart version = _next;
-        IRegistryService.FunctionConfig[] memory config = abi.decode(configBytes, (IRegistryService.FunctionConfig[]));
+        VersionPart version = getNextVersion();
 
         if(config.length == 0) {
             revert ConfigMissing();
