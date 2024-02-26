@@ -6,7 +6,6 @@ import {StateId} from "../../types/StateId.sol";
 
 import {IKeyValueStore} from "./IKeyValueStore.sol";
 
-import {IComponentOwnerService} from "../service/IComponentOwnerService.sol";
 import {IDistributionService} from "../service/IDistributionService.sol";
 import {IProductService} from "../service/IProductService.sol";
 import {IPoolService} from "../service/IPoolService.sol";
@@ -16,7 +15,6 @@ interface IInstanceBase {
     function updateState(Key32 key, StateId state) external;
     function getState(Key32 key) external view returns (StateId state);
 
-    function getComponentOwnerService() external view returns(IComponentOwnerService);
     function getDistributionService() external view returns(IDistributionService);
     function getProductService() external view returns(IProductService service);
     function getPoolService() external view returns(IPoolService service);

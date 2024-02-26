@@ -4,7 +4,6 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IProductComponent} from "../../components/IProductComponent.sol";
 import {Product} from "../../components/Product.sol";
-import {IBaseComponent} from "../../components/IBaseComponent.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IInstance} from "../IInstance.sol";
@@ -35,14 +34,14 @@ import {Version, VersionLib} from "../../types/Version.sol";
 
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
-import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
+import {ComponentService} from "../base/ComponentService.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IBundleService} from "./IBundleService.sol";
 
 
-contract PolicyService is ComponentServiceBase, IPolicyService {
+contract PolicyService is ComponentService, IPolicyService {
     using NftIdLib for NftId;
     using TimestampLib for Timestamp;
 

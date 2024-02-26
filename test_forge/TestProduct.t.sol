@@ -65,8 +65,8 @@ contract TestProduct is TestGifBase {
             riskId,
             30,
             "",
-            ReferralLib.zero(),
-            bundleNftId
+            bundleNftId,
+            ReferralLib.zero()
         );
         assertEq(premium, 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
     }
@@ -100,10 +100,8 @@ contract TestProduct is TestGifBase {
 
         assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
-
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        // assertEq(policyInfo.owner, customer, "customer not set");
-        assertTrue(eqRiskId(riskId, riskId), "riskId not set");
+        assertTrue(eqRiskId(policyInfo.riskId, riskId), "riskId not set");
         assertEq(policyInfo.sumInsuredAmount, 1000, "sumInsuredAmount not set");
         assertEq(policyInfo.lifetime, 30, "lifetime not set");
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
@@ -112,8 +110,6 @@ contract TestProduct is TestGifBase {
     function test_Product_underwrite() public {
         // GIVEN
         _prepareProduct();  
-
-        
 
         vm.startPrank(productOwner);
 
@@ -216,9 +212,9 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
 
-        assertEq(token.balanceOf(address(product)), 10, "product balance not 10");
+        assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
-        assertEq(token.balanceOf(address(pool)), 10130, "pool balance not 130");
+        assertEq(token.balanceOf(pool.getWallet()), 10130, "pool balance not 10130");
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
@@ -374,8 +370,12 @@ contract TestProduct is TestGifBase {
         IBundle.BundleInfo memory bundleInfoBefore = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfoBefore.lockedAmount, 1000, "lockedAmount not 1000");
         assertEq(bundleInfoBefore.balanceAmount, 10000, "lockedAmount not 1000");
-        
-        // // WHEN
+
+        assertEq(token.balanceOf(product.getWallet()), 0, "product balance not 0");
+        assertEq(token.balanceOf(address(customer)), 1000, "customer balance not 1000");
+        assertEq(token.balanceOf(pool.getWallet()), 10000, "pool balance not 10000");
+
+        // WHEN
         dproduct.collectPremium(policyNftId, TimestampLib.blockTimestamp());
         
         // THEN
@@ -390,9 +390,9 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
 
-        assertEq(token.balanceOf(address(product)), 10, "product balance not 10");
+        assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
-        assertEq(token.balanceOf(address(pool)), 10130, "pool balance not 130");
+        assertEq(token.balanceOf(pool.getWallet()), 10130, "pool balance not 10130");
     }
 
     function test_Product_close() public {
@@ -519,18 +519,14 @@ contract TestProduct is TestGifBase {
         );
 
         productNftId = productService.register(address(product));
-        product.setProductNftId(productNftId);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
-        distribution.setProductNftId(productNftId);
         Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
         distribution.setFees(distributionFee);
         vm.stopPrank();
 
-
         vm.startPrank(poolOwner);
-        pool.setProductNftId(productNftId);
         Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
         pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
         vm.stopPrank();

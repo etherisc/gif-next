@@ -13,7 +13,6 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
-import {ComponentOwnerService} from "../../contracts/instance/service/ComponentOwnerService.sol";
 import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
 import {DistributionServiceManager} from "../../contracts/instance/service/DistributionServiceManager.sol";
 import {ProductService} from "../../contracts/instance/service/ProductService.sol";
@@ -87,7 +86,6 @@ contract TestGifBase is Test {
     InstanceServiceManager public instanceServiceManager;
     InstanceService public instanceService;
     NftId public instanceServiceNftId;
-    ComponentOwnerService public componentOwnerService;
     DistributionServiceManager public distributionServiceManager;
     DistributionService public distributionService;
     NftId public distributionServiceNftId;

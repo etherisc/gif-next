@@ -214,10 +214,6 @@ contract Instance is
         return policyNftId.toKey32(POLICY());
     }
 
-    function getComponentOwnerService() external view returns (IComponentOwnerService) {
-        return ComponentOwnerService(_registry.getServiceAddress(COMPONENT(), VersionPart.wrap(3)));
-    }
-
     function getDistributionService() external view returns (IDistributionService) {
         return IDistributionService(_registry.getServiceAddress(DISTRIBUTION(), VersionPart.wrap(3)));
     }

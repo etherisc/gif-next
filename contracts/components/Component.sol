@@ -4,43 +4,52 @@ pragma solidity ^0.8.20;
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {IBaseComponent} from "./IBaseComponent.sol";
-import {IComponentOwnerService} from "../instance/service/IComponentOwnerService.sol";
+import {IComponent} from "./IComponent.sol";
+import {IProductService} from "../instance/service/IProductService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
-import {ObjectType, INSTANCE} from "../types/ObjectType.sol";
+import {ObjectType, INSTANCE, PRODUCT} from "../types/ObjectType.sol";
 import {VersionLib} from "../types/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 
-abstract contract BaseComponent is
+// TODO discuss to inherit from oz accessmanaged
+// TODO make contract upgradeable, then add ComponentUpradeable that also intherits from Versionable
+// same pattern as for Service which is also upgradeable
+abstract contract Component is
     Registerable,
-    IBaseComponent
+    IComponent
 {
-    using NftIdLib for NftId;
-
-    IComponentOwnerService internal _componentOwnerService;
     IInstanceService internal _instanceService;
+    IProductService internal _productService;
 
-    address internal _deployer;
-    address internal _wallet;
-    IERC20Metadata internal _token;
     IInstance internal _instance;
+    IERC20Metadata internal _token;
+    address internal _wallet;
     NftId internal _productNftId;
 
-    modifier onlyInstanceRole(uint64 roleIdNum) {
-        RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
-        InstanceAccessManager accessManager = InstanceAccessManager(_instance.authority());
-        if( !accessManager.hasRole(roleId, msg.sender)) {
-            revert ErrorBaseComponentUnauthorized(msg.sender, roleIdNum);
+    modifier onlyProductService() {
+        if(msg.sender != address(_productService)) {
+            revert ErrorComponentNotProductService(msg.sender);
         }
         _;
     }
 
+    // TODO discuss replacement with modifier restricted from accessmanaged
+    modifier onlyInstanceRole(uint64 roleIdNum) {
+        RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
+        InstanceAccessManager accessManager = InstanceAccessManager(_instance.authority());
+        if( !accessManager.hasRole(roleId, msg.sender)) {
+            revert ErrorComponentUnauthorized(msg.sender, roleIdNum);
+        }
+        _;
+    }
+
+    // TODO discuss replacement with modifier restricted from accessmanaged
     modifier isNotLocked() {
         InstanceAccessManager accessManager = InstanceAccessManager(_instance.authority());
         if (accessManager.isTargetLocked(address(this))) {
@@ -61,41 +70,43 @@ abstract contract BaseComponent is
         bytes memory data = "";
         _initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
 
-        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
+        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(instanceNftId);
         _instance = IInstance(instanceInfo.objectAddress);
         require(
             _instance.supportsInterface(type(IInstance).interfaceId),
             ""
         );
 
-        _componentOwnerService = _instance.getComponentOwnerService();
-        _instanceService = IInstanceService(getRegistry().getServiceAddress(INSTANCE(), VersionLib.toVersion(3, 0, 0).toMajorPart()));
+        _instanceService = IInstanceService(_registry.getServiceAddress(INSTANCE(), VersionLib.toVersion(3, 0, 0).toMajorPart()));
+        _productService = IProductService(_registry.getServiceAddress(PRODUCT(), VersionLib.toVersion(3, 0, 0).toMajorPart()));
         _wallet = address(this);
         _token = IERC20Metadata(token);
 
-        _registerInterface(type(IBaseComponent).interfaceId);
+        _registerInterface(type(IComponent).interfaceId);
     }
 
-    function getName() public pure virtual returns (string memory name);
-
-    // from component contract
-    // TODO only owner and instance owner 
+    // TODO discuss replacement with modifier restricted from accessmanaged
     function lock() external onlyOwner override {
         _instanceService.setTargetLocked(getName(), true);
     }
     
-    // TODO only owner and instance owner 
+    // TODO discuss replacement with modifier restricted from accessmanaged
     function unlock() external onlyOwner override {
         _instanceService.setTargetLocked(getName(), false);
     }
 
-    function getWallet()
+    // TODO discuss to split this base contract into a minimal component base (eg oracle)
+    // and a component base that is linked to a product component (all others in v3)
+    function setProductNftId(NftId productNftId)
         external
-        view
         override
-        returns (address walletAddress)
+        onlyProductService() 
     {
-        return _wallet;
+        if(_productNftId.gtz()) {
+            revert ErrorComponentProductNftAlreadySet();
+        }
+
+        _productNftId = productNftId;
     }
 
     /// @dev Sets the wallet address for the component. 
@@ -108,7 +119,7 @@ abstract contract BaseComponent is
 
         // checks
         if (newWallet == currentWallet) {
-            revert ErrorBaseComponentWalletAddressIsSameAsCurrent(newWallet);
+            revert ErrorComponentWalletAddressIsSameAsCurrent(newWallet);
         }
 
         if (currentBalance > 0) {
@@ -118,14 +129,14 @@ abstract contract BaseComponent is
                 // move tokens from external wallet to component smart contract or another external wallet
                 uint256 allowance = _token.allowance(currentWallet, address(this));
                 if (allowance < currentBalance) {
-                    revert ErrorBaseComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
+                    revert ErrorComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
                 }
             }
         }
 
         // effects
         _wallet = newWallet;
-        emit LogBaseComponentWalletAddressChanged(newWallet);
+        emit LogComponentWalletAddressChanged(newWallet);
 
         // interactions
         if (currentBalance > 0) {
@@ -136,8 +147,20 @@ abstract contract BaseComponent is
             }
             
             SafeERC20.safeTransferFrom(_token, currentWallet, newWallet, currentBalance);
-            emit LogBaseComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
+            emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
         }
+    }
+
+    // TODO set name via constructor or initialization, pure function likely too restrictive
+    function getName() public pure virtual returns (string memory name);
+
+    function getWallet()
+        external
+        view
+        override
+        returns (address walletAddress)
+    {
+        return _wallet;
     }
 
     function getToken() public view override returns (IERC20Metadata token) {
@@ -146,11 +169,6 @@ abstract contract BaseComponent is
 
     function getInstance() public view override returns (IInstance instance) {
         return _instance;
-    }
-
-    function setProductNftId(NftId productNftId) public override onlyOwner {
-        require(_productNftId.eq(zeroNftId()), "product nft id already set");
-        _productNftId = productNftId;
     }
 
     function getProductNftId() public view override returns (NftId productNftId) {

@@ -5,8 +5,10 @@ import {INftOwnable} from "./INftOwnable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
 
+// TODO make contract upgradeable
 contract NftOwnable is INftOwnable {
 
+    // TODO move vars to struct and add _getNftOwnableStorage
     IRegistry internal _registry;
     NftId private _nftId;
     address private _initialOwner; 

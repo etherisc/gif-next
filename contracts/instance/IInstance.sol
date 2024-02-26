@@ -32,7 +32,6 @@ import {IBundleService} from "./service/IBundleService.sol";
 
 interface IInstance is IRegisterable, IKeyValueStore, IAccessManaged {
 
-    function getComponentOwnerService() external view returns (IComponentOwnerService);
     function getDistributionService() external view returns (IDistributionService);
     function getProductService() external view returns (IProductService);
     function getPoolService() external view returns (IPoolService);

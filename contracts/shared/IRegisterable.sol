@@ -5,8 +5,6 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {INftOwnable} from "./INftOwnable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {NftId} from "../types/NftId.sol";
-import {ObjectType} from "../types/ObjectType.sol";
 
 interface IRegisterable is IERC165, INftOwnable {
 

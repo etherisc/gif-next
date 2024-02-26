@@ -10,7 +10,7 @@ import {IService} from "../shared/IService.sol";
 import {IRegistry} from "./IRegistry.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IBaseComponent} from "../components/IBaseComponent.sol";
+import {IComponent} from "../components/IComponent.sol";
 
 interface IRegistryService is 
      IService, 
@@ -41,13 +41,13 @@ interface IRegistryService is
      function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info, bytes memory data); 
 
-     function registerProduct(IBaseComponent product, address owner)
+     function registerProduct(IComponent product, address owner)
           external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
-     function registerPool(IBaseComponent pool, address owner)
+     function registerPool(IComponent pool, address owner)
           external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
-     function registerDistribution(IBaseComponent distribution, address owner)
+     function registerDistribution(IComponent distribution, address owner)
           external returns(IRegistry.ObjectInfo memory info, bytes memory data);
 
      function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);

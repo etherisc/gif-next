@@ -6,7 +6,7 @@ import {NftId, NftIdLib} from "../../../contracts/types/NftId.sol";
 import {POOL_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
 import {FeeLib} from "../../../contracts/types/Fee.sol";
 import {UFixedLib} from "../../../contracts/types/UFixed.sol";
-import {ComponentServiceBase} from "../../../contracts/instance/base/ComponentServiceBase.sol";
+import {ComponentService} from "../../../contracts/instance/base/ComponentService.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 
 contract TestPoolService is TestGifBase {
@@ -27,7 +27,13 @@ contract TestPoolService is TestGifBase {
             poolOwner
         );
 
-        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.ExpectedRoleMissing.selector, POOL_OWNER_ROLE(), poolOwner));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
+                instanceNftId,
+                POOL_OWNER_ROLE(), 
+                poolOwner));
+
         poolService.register(address(pool));
     }
 
@@ -51,7 +57,6 @@ contract TestPoolService is TestGifBase {
         );
 
         NftId nftId = poolService.register(address(pool));
-        assertFalse(nftId.eqz(), "nftId is zero");
+        assertTrue(nftId.gtz(), "nftId is zero");
     }
-
 }
