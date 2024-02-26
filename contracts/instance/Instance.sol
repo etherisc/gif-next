@@ -39,17 +39,13 @@ import {InstanceBase} from "./InstanceBase.sol";
 contract Instance is
     IInstance,
     AccessManagedUpgradeable,
-    // Initializable,
     InstanceBase
 {
-
     uint64 public constant ADMIN_ROLE = type(uint64).min;
     uint64 public constant PUBLIC_ROLE = type(uint64).max;
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000;
 
     uint32 public constant EXECUTION_DELAY = 0;
-
-    bool private _initialized;
 
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
@@ -58,14 +54,11 @@ contract Instance is
         public 
         initializer
     {
-        require(!_initialized, "Contract instance has already been initialized");
-
         __AccessManaged_init(accessManagerAddress);
         
         _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
 
         _registerInterface(type(IInstance).interfaceId);    
-        _initialized = true;
     }
 
     //--- ProductSetup ------------------------------------------------------//
