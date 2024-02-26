@@ -29,8 +29,6 @@ import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
 import {ISetup} from "./module/ISetup.sol";
 
-import {ComponentOwnerService} from "./service/ComponentOwnerService.sol";
-import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";

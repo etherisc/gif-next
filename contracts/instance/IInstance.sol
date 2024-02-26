@@ -20,7 +20,6 @@ import {ISetup} from "./module/ISetup.sol";
 import {IRisk} from "./module/IRisk.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 
-import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
