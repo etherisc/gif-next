@@ -34,7 +34,7 @@ export async function deployAndRegisterMasterInstance(
         });
 
     const accessManager = accessManagerBaseContract as InstanceAccessManager;
-    await executeTx(() => accessManager.__InstanceAccessManager_initialize(resolveAddress(owner)));
+    await executeTx(() => accessManager.initialize(resolveAddress(owner)));
 
     const { address: instanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",

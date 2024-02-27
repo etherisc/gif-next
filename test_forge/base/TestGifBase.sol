@@ -443,7 +443,7 @@ contract TestGifBase is Test {
     function _deployMasterInstance() internal 
     {
         masterInstanceAccessManager = new InstanceAccessManager();
-        masterInstanceAccessManager.__InstanceAccessManager_initialize(registryOwner);
+        masterInstanceAccessManager.initialize(registryOwner);
         
         masterInstance = new Instance();
         masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, registryOwner);

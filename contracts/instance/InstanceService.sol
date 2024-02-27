@@ -68,7 +68,7 @@ contract InstanceService is Service, IInstanceService {
         // This will allow the instance service to bootstrap the authorizations of the instance
         // and then transfer the ownership of the access manager to the instance owner once everything is setup
         clonedAccessManager = InstanceAccessManager(Clones.clone(_masterInstanceAccessManager));
-        clonedAccessManager.__InstanceAccessManager_initialize(address(this));
+        clonedAccessManager.initialize(address(this));
 
         clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(address(clonedAccessManager), registryAddress, registryNftId, msg.sender);
