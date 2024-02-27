@@ -18,8 +18,8 @@ interface IProductComponent {
         RiskId riskId,
         uint256 lifetime,
         bytes memory applicationData,
-        ReferralId referralId,
-        NftId bundleNftId
+        NftId bundleNftId,
+        ReferralId referralId
     ) external view returns (uint256 premiumAmount);
 
     function calculateNetPremium(

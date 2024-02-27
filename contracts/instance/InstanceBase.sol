@@ -22,8 +22,6 @@ import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {StateId, ACTIVE} from "../types/StateId.sol";
 import {ERC165} from "../shared/ERC165.sol";
 import {Registerable} from "../shared/Registerable.sol";
-import {ComponentOwnerService} from "./service/ComponentOwnerService.sol";
-import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";

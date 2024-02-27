@@ -10,7 +10,7 @@ import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
 import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
 import {UFixedLib} from "../../../contracts/types/UFixed.sol";
-import {ComponentServiceBase} from "../../../contracts/instance/base/ComponentServiceBase.sol";
+import {ComponentService} from "../../../contracts/instance/base/ComponentService.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 
 contract TestProductService is TestGifBase {
@@ -32,7 +32,13 @@ contract TestProductService is TestGifBase {
             productOwner
         );
 
-        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.ExpectedRoleMissing.selector, PRODUCT_OWNER_ROLE(), productOwner));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
+                instanceNftId, 
+                PRODUCT_OWNER_ROLE(), 
+                productOwner));
+
         productService.register(address(product));
     }
 
@@ -57,7 +63,6 @@ contract TestProductService is TestGifBase {
         );
 
         NftId nftId = productService.register(address(product));
-        assertFalse(nftId.eqz(), "nftId is zero");
+        assertTrue(nftId.gtz(), "nftId is zero");
     }
-
 }

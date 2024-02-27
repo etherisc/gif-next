@@ -2,8 +2,8 @@
 pragma solidity 0.8.20;
 
 import {TestGifBase} from "../base/TestGifBase.sol";
-import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
 import {IAccess} from "../../contracts/instance/module/IAccess.sol";
+import {IComponent} from "../../contracts/components/IComponent.sol";
 import {PRODUCT_OWNER_ROLE, RoleIdLib} from "../../contracts/types/RoleId.sol";
 import {SimpleProduct, SPECIAL_ROLE_INT} from "../mock/SimpleProduct.sol";
 import {FeeLib} from "../../contracts/types/Fee.sol";
@@ -37,7 +37,7 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.startPrank(outsider);
 
         // THEN - missing role
-        vm.expectRevert(abi.encodeWithSelector(IBaseComponent.ErrorBaseComponentUnauthorized.selector, outsider, 11111));
+        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentUnauthorized.selector, outsider, 11111));
 
         // WHEN
         SimpleProduct dproduct = SimpleProduct(address(product));

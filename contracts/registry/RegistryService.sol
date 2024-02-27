@@ -8,7 +8,7 @@ import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
 import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-import {IBaseComponent} from "../../contracts/components/IBaseComponent.sol";
+import {IComponent} from "../../contracts/components/IComponent.sol";
 import {IPoolComponent} from "../../contracts/components/IPoolComponent.sol";
 import {IProductComponent} from "../../contracts/components/IProductComponent.sol";
 import {IDistributionComponent} from "../../contracts/components/IDistributionComponent.sol";
@@ -62,7 +62,7 @@ contract RegistryService is
         return (info, data);
     }
 
-    function registerProduct(IBaseComponent product, address owner)
+    function registerProduct(IComponent product, address owner)
         external
         restricted
         returns(
@@ -82,7 +82,7 @@ contract RegistryService is
         return (info, data);  
     }
 
-    function registerPool(IBaseComponent pool, address owner)
+    function registerPool(IComponent pool, address owner)
         external
         restricted
         returns(
@@ -101,7 +101,7 @@ contract RegistryService is
         return (info, data);  
     }
 
-    function registerDistribution(IBaseComponent distribution, address owner)
+    function registerDistribution(IComponent distribution, address owner)
         external
         restricted
         returns(

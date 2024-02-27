@@ -6,7 +6,6 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 
-import {IComponentOwnerService} from "./service/IComponentOwnerService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";

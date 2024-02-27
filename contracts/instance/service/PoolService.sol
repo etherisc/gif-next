@@ -24,17 +24,17 @@ import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
 import {BundleManager} from "../BundleManager.sol";
-import {ComponentServiceBase} from "../base/ComponentServiceBase.sol";
+import {ComponentService} from "../base/ComponentService.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IRegistryService} from "../../registry/IRegistryService.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
-import {IBaseComponent} from "../../components/IBaseComponent.sol";
+import {IComponent} from "../../components/IComponent.sol";
 
 string constant POOL_SERVICE_NAME = "PoolService";
 
 contract PoolService is 
-    ComponentServiceBase, 
+    ComponentService, 
     IPoolService 
 {
     using NftIdLib for NftId;
@@ -67,33 +67,30 @@ contract PoolService is
         external
         returns(NftId poolNftId)
     {
-        address poolOwner = msg.sender;
-        IBaseComponent pool = IBaseComponent(poolAddress);
+        (
+            IComponent pool,
+            address owner,
+            IInstance instance,
+            NftId instanceNftId
+        ) = _checkComponentForRegistration(
+            poolAddress,
+            POOL(),
+            POOL_OWNER_ROLE());
 
-        IRegistry.ObjectInfo memory info;
-        bytes memory data;
-        (info, data) = getRegistryService().registerPool(pool, poolOwner);
+        (
+            IRegistry.ObjectInfo memory poolInfo,
+            bytes memory data
+        ) = getRegistryService().registerPool(pool, owner);
+        pool.linkToRegisteredNftId();
+        poolNftId = poolInfo.nftId;
 
-        NftId instanceNftId = info.parentNftId;
-        IInstance instance = _getInstance(instanceNftId);
-        bool hasRole = getInstanceService().hasRole(
-            poolOwner, 
-            POOL_OWNER_ROLE(), 
-            address(instance));
-
-        if(!hasRole) {
-            revert ExpectedRoleMissing(POOL_OWNER_ROLE(), poolOwner);
-        }
-
-        poolNftId = info.nftId;
-        string memory poolName;
-        ISetup.PoolSetupInfo memory initialSetup;
-        (poolName, initialSetup) = _decodeAndVerifyPoolData(data);
+        (
+            string memory name, 
+            ISetup.PoolSetupInfo memory initialSetup
+        ) = _decodeAndVerifyPoolData(data);
         instance.createPoolSetup(poolNftId, initialSetup);
 
-        getInstanceService().createTarget(instanceNftId, poolAddress, poolName);
-
-        pool.linkToRegisteredNftId();
+        getInstanceService().createTarget(instanceNftId, poolAddress, name);
     }
 
     function _decodeAndVerifyPoolData(bytes memory data) 

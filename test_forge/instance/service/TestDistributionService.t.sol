@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import {TestGifBase} from "../../base/TestGifBase.sol";
 import {NftId, NftIdLib} from "../../../contracts/types/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
-import {ComponentServiceBase} from "../../../contracts/instance/base/ComponentServiceBase.sol";
+import {ComponentService} from "../../../contracts/instance/base/ComponentService.sol";
 import {FeeLib} from "../../../contracts/types/Fee.sol";
 import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 
@@ -22,7 +22,13 @@ contract TestDistributionService is TestGifBase {
             distributionOwner
         );
 
-        vm.expectRevert(abi.encodeWithSelector(ComponentServiceBase.ExpectedRoleMissing.selector, DISTRIBUTION_OWNER_ROLE(), distributionOwner));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
+                instanceNftId,
+                DISTRIBUTION_OWNER_ROLE(), 
+                distributionOwner));
+
         distributionService.register(address(distribution));
     }
 
@@ -42,7 +48,7 @@ contract TestDistributionService is TestGifBase {
         );
 
         NftId nftId = distributionService.register(address(distribution));
-        assertFalse(nftId.eqz(), "nftId is zero");
+        assertTrue(nftId.gtz(), "nftId is zero");
     }
 
 }

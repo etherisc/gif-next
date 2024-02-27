@@ -7,7 +7,7 @@ import {IProductService} from "../instance/service/IProductService.sol";
 import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
-import {BaseComponent} from "./BaseComponent.sol";
+import {Component} from "./Component.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
@@ -17,7 +17,7 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 
 abstract contract Distribution is
-    BaseComponent,
+    Component,
     IDistributionComponent
 {
     using NftIdLib for NftId;
@@ -28,14 +28,6 @@ abstract contract Distribution is
     TokenHandler internal _tokenHandler;
 
     IDistributionService private _distributionService;
-    IProductService private _productService;
-
-    modifier onlyProductService() {
-        require(
-            msg.sender == address(_productService), 
-            "ERROR:POL-002:NOT_PRODUCT_SERVICE");
-        _;
-    }
 
     constructor(
         address registry,
@@ -46,15 +38,13 @@ abstract contract Distribution is
         Fee memory distributionFee,
         address initialOwner
     )
-        BaseComponent(registry, instanceNftId, token, DISTRIBUTION(), true, initialOwner)
+        Component(registry, instanceNftId, token, DISTRIBUTION(), true, initialOwner)
     {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 
         _tokenHandler = TokenHandler(token);
-
         _distributionService = _instance.getDistributionService();
-        _productService = _instance.getProductService();
 
         _registerInterface(type(IDistributionComponent).interfaceId);
     }
