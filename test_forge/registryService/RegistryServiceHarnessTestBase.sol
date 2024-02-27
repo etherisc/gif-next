@@ -17,7 +17,7 @@ import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
-import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
+import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
 
@@ -47,7 +47,7 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
     address public registerableOwner = makeAddr("registerableOwner");
     address public outsider = makeAddr("outsider");
 
-    RegistryServiceManagerMock public registryServiceManager;
+    RegistryServiceManagerMockWithHarness public registryServiceManager;
     RegistryServiceHarness public registryServiceHarness;
     IRegistry public registry;
 
@@ -63,7 +63,7 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
 
         registry = IRegistry(releaseManager.getRegistry());
 
-        registryServiceManager = new RegistryServiceManagerMock(
+        registryServiceManager = new RegistryServiceManagerMockWithHarness(
             address(accessManager), 
             address(registry));
         vm.stopPrank();

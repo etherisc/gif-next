@@ -73,7 +73,7 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    RegistryAccessManager registryAccessManagerAddress;
+    RegistryAccessManager registryAccessManager;
     ReleaseManager public releaseManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
@@ -271,10 +271,10 @@ contract TestGifBase is Test {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        registryAccessManagerAddress = new RegistryAccessManager(registryOwner);
+        registryAccessManager = new RegistryAccessManager(registryOwner);
 
         releaseManager = new ReleaseManager(
-            registryAccessManagerAddress,
+            registryAccessManager,
             VersionPartLib.toVersionPart(3));
 
         registryAddress = address(releaseManager.getRegistry());
@@ -286,19 +286,23 @@ contract TestGifBase is Test {
 
         tokenRegistry = new TokenRegistry();
 
-        registryAccessManagerAddress.initialize(address(releaseManager), address(tokenRegistry));
+        registryAccessManager.initialize(address(releaseManager), address(tokenRegistry));
 
         registryServiceManager = new RegistryServiceManager(
-            registryAccessManagerAddress.authority(),
+            registryAccessManager.authority(),
             registryAddress
         );        
         
         registryService = registryServiceManager.getRegistryService();
 
-        releaseManager.createNextRelease(registryService);
+        releaseManager.createNextRelease();
 
-        registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
-        tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service
+        releaseManager.registerRegistryService(registryService);
+
+        // TODO it is also linking to registry
+        // TODO links to _initial version instead _latest
+        //registryServiceManager.linkToNftOwnable(registryAddress);// links to initial registry service
+        //tokenRegistry.linkToNftOwnable(registryAddress);// links to initial registry service
 
         
         /* solhint-disable */
@@ -308,8 +312,8 @@ contract TestGifBase is Test {
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
 
         console.log("registry owner", address(registryOwner));
-        console.log("registry access manager", address(registryAccessManagerAddress));
-        console.log("registry access manager authority", registryAccessManagerAddress.authority());
+        console.log("registry access manager", address(registryAccessManager));
+        console.log("registry access manager authority", registryAccessManager.authority());
         console.log("release manager", address(releaseManager));
         console.log("release manager authority", releaseManager.authority());
         console.log("registry service proxy manager", address(registryServiceManager));
@@ -408,36 +412,11 @@ contract TestGifBase is Test {
         console.log("policyService nft id", policyService.getNftId().toInt());
         // solhint-enable
 
-        // //--- component owner service ---------------------------------//
-        // componentOwnerService = new ComponentOwnerService(registryAddress, registryNftId, registryOwner); 
-        // releaseManager.registerService(componentOwnerService);
-        // assertTrue(componentOwnerService.getNftId().gtz(), "component owner service registration failure");
-
-        // registryAccessManagerAddress.grantRole(PRODUCT_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        // registryAccessManagerAddress.grantRole(POOL_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-        // registryAccessManagerAddress.grantRole(DISTRIBUTION_REGISTRAR_ROLE().toInt(), address(componentOwnerService), 0);
-
-        // /* solhint-disable */
-        // console.log("service name", componentOwnerService.NAME());
-        // console.log("service deployed at", address(componentOwnerService));
-        // console.log("service nft id", componentOwnerService.getNftId().toInt());
-        // /* solhint-enable */
-
-        // //--- product service ---------------------------------//
-
-        // productService = new ProductService(registryAddress, registryNftId, registryOwner);
-        // releaseManager.registerService(productService);
-        // registryAccessManagerAddress.grantRole(POLICY_REGISTRAR_ROLE().toInt(), address(productService), 0);
-
-        // /* solhint-disable */
-        // console.log("service name", productService.NAME());
-        // console.log("service deployed at", address(productService));
-        // console.log("service nft id", productService.getNftId().toInt());
-        // console.log("service allowance is set to POLICY");
-        // /* solhint-enable */
-
         // activate initial release -> activated upon last service registration
-        //releaseManager.activateNextRelease();
+        releaseManager.activateNextRelease();
+
+        registryServiceManager.linkToNftOwnable(registryAddress);// links to latest registry service
+        tokenRegistry.linkToNftOwnable(registryAddress);// links to to latest registry service
     }
 
     function _deployMasterInstance() internal 
@@ -497,7 +476,7 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("token deployed at", usdcAddress);
 
-        tokenRegistry.setActive(address(token), registry.getMajorVersion(), true);
+        tokenRegistry.setActive(address(token), registry.getLatestVersion(), true);
     }
 
 

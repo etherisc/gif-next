@@ -46,7 +46,9 @@ contract NftOwnableTest is Test {
 
         accessManager.initialize(address(releaseManager), address(0x1));
 
-        releaseManager.createNextRelease(registryService);
+        releaseManager.createNextRelease();
+
+        releaseManager.registerRegistryService(registryService);
 
         registryServiceManager.linkToNftOwnable(address(registry));// links to registry service
 

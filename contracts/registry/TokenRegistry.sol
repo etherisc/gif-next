@@ -32,13 +32,15 @@ contract TokenRegistry is
 
 
     /// @dev link ownership of token registry to nft owner of registry service
+    // TODO latter registry service will get new release, new address, new nft, TokenRegistry will not catch that -> use AccessManaged only for services
     function linkToNftOwnable(address registryAddress) 
         external
         onlyOwner
     {
         IRegistry registry = IRegistry(registryAddress);
-        // TODO use _latest instead of `next version` -> but _latest is 0 before first release activation
-        address registryServiceAddress = registry.getServiceAddress(REGISTRY(), registry.getMajorVersionMax());
+        // TODO use _latest instead of _initial -> but _latest is 0 before first release activation
+        address registryServiceAddress = registry.getServiceAddress(REGISTRY(), registry.getNextVersion());
+        //address registryServiceAddress = registry.getServiceAddress(REGISTRY(), registry.getInitialVersion());
 
         _linkToNftOwnable(registryAddress, registryServiceAddress);
     }
@@ -58,7 +60,7 @@ contract TokenRegistry is
         // verify valid major version
         // ensure major version increments is one
         uint256 version = majorVersion.toInt();
-        if (version < _registry.getMajorVersionMin().toInt() || version > _registry.getMajorVersionMax().toInt()) {
+        if (!_registry.isValidRelease(majorVersion)) {
             revert TokenMajorVersionInvalid(majorVersion);
         }
 

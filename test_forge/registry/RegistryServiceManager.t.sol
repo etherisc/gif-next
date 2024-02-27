@@ -60,7 +60,9 @@ contract RegistryServiceManagerTest is Test {
         TokenRegistry tokenRegistry = new TokenRegistry();
         accessManager.initialize(address(releaseManager), address(tokenRegistry));
 
-        releaseManager.createNextRelease(registryService);
+        releaseManager.createNextRelease();
+
+        releaseManager.registerRegistryService(registryService);
 
         registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
 

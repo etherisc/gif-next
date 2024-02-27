@@ -43,8 +43,8 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
         assertFalse(tokenRegistry.isRegistered(address(dip)), "dip is registered");
         assertTrue(tokenRegistry.isRegistered(address(usdc)), "usdc not registered");
 
-        assertFalse(tokenRegistry.isActive(address(dip), registry.getMajorVersion()), "dip active in current relase");
-        assertFalse(tokenRegistry.isActive(address(usdc), registry.getMajorVersion()), "usdc active in current relase");
+        assertFalse(tokenRegistry.isActive(address(dip), registry.getLatestVersion()), "dip active in current relase");
+        assertFalse(tokenRegistry.isActive(address(usdc), registry.getLatestVersion()), "usdc active in current relase");
     }
 // TODO refactor
 /*
