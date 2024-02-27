@@ -14,49 +14,32 @@ contract ObjectManager is
     Cloneable
 {
 
-    event LogObjectManagerInitialized(NftId instanceNftId, address instanceReader);
+    event LogObjectManagerInitialized(address instance);
 
     error ErrorObjectManagerNftIdInvalid(NftId instanceNftId);
     error ErrorObjectManagerAlreadyAdded(NftId componentNftId, NftId objectNftId);
 
     mapping(NftId compnentNftId => LibNftIdSet.Set objects) internal _activeObjects;
     mapping(NftId compnentNftId => LibNftIdSet.Set objects) internal _allObjects;
-    NftId internal _instanceNftId;
-    InstanceReader internal _instanceReader;
-
-    constructor() Cloneable() {
-        _instanceReader = InstanceReader(address(0));
-    }
+    IInstance internal _instance; // store instance address -> more flexible, instance may not be registered during ObjectManager initialization
 
     /// @dev call to initialize MUST be made in the same transaction as cloning of the contract
     function initialize(
         address authority,
         address registry,
-        NftId instanceNftId
+        address instance
     )
         external 
     {
         initialize(authority, registry);
 
-        // check/handle instance nft id/instance reader
-        IRegistry.ObjectInfo memory instanceInfo = _registry.getObjectInfo(instanceNftId);
-        if (instanceInfo.objectType != INSTANCE()) {
-            revert ErrorObjectManagerNftIdInvalid(instanceNftId);
-        }
-
-        IInstance instance = IInstance(instanceInfo.objectAddress);
-        _instanceReader = instance.getInstanceReader();
-        _instanceNftId = instanceNftId;
+        _instance = IInstance(instance);
         
-        emit LogObjectManagerInitialized(instanceNftId, address(_instanceReader));
+        emit LogObjectManagerInitialized(instance);
     }
 
-    function getInstanceReader() external view returns (InstanceReader) {
-        return _instanceReader;
-    }
-
-    function getInstanceNftId() external view returns (NftId) {
-        return _instanceNftId;
+    function getInstance() external view returns (IInstance) {
+        return _instance;
     }
 
     function _add(NftId componentNftId, NftId objectNftId) internal {

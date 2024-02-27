@@ -38,8 +38,7 @@ interface IRegistryService is
           bytes4 selector;
      }
 
-     // TODO used by service -> add owner arg 
-     function registerInstance(IRegisterable instance)
+     function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info, bytes memory data); 
 
      function registerProduct(IComponent product, address owner)

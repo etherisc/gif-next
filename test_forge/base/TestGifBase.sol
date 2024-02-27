@@ -422,29 +422,29 @@ contract TestGifBase is Test {
     function _deployMasterInstance() internal 
     {
         masterInstanceAccessManager = new InstanceAccessManager();
-        masterInstanceAccessManager.__InstanceAccessManager_initialize(registryOwner);
+        masterInstanceAccessManager.initialize(registryOwner);
         
         masterInstance = new Instance();
-        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, MASTER_INSTANCE_OWNER);
-        ( IRegistry.ObjectInfo memory masterInstanceObjectInfo, ) = registryService.registerInstance(masterInstance);
-        masterInstanceNftId = masterInstanceObjectInfo.nftId;
+        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, registryOwner);
         
-        masterInstanceReader = new InstanceReader(address(registry), masterInstanceNftId);
+        masterInstanceReader = new InstanceReader();
+        masterInstanceReader.initialize(address(registry), address(masterInstance));
         masterInstance.setInstanceReader(masterInstanceReader);
         
         masterBundleManager = new BundleManager();
-        masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), masterInstanceNftId);
+        masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), address(masterInstance));
         masterInstance.setBundleManager(masterBundleManager);
 
         // revoke ADMIN_ROLE from registryOwner. token is already owned by 0x1
         masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(registryOwner));
         
+        masterInstanceNftId = instanceService.setMasterInstance(address(masterInstanceAccessManager), address(masterInstance), address(masterInstanceReader), address(masterBundleManager));
+        chainNft.transferFrom(registryOwner, MASTER_INSTANCE_OWNER, masterInstanceNftId.toInt());
+
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
         // solhint-enable
-
-        instanceService.setMasterInstance(address(masterInstanceAccessManager), address(masterInstance), address(masterInstanceReader), address(masterBundleManager));
     }
 
 

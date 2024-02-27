@@ -1,51 +1,47 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+
+import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
+import {NftId} from "../types/NftId.sol";
+import {NumberId} from "../types/NumberId.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT} from "../types/ObjectType.sol";
+import {RiskId, RiskIdLib} from "../types/RiskId.sol";
+import {RoleId, RoleIdLib} from "../types/RoleId.sol";
+import {StateId, ACTIVE} from "../types/StateId.sol";
+import {TimestampLib} from "../types/Timestamp.sol";
+import {VersionPart} from "../types/Version.sol";
+
+import {ERC165} from "../shared/ERC165.sol";
+import {Registerable} from "../shared/Registerable.sol";
+
+import {IInstance} from "./IInstance.sol";
+import {InstanceReader} from "./InstanceReader.sol";
+import {InstanceAccessManager} from "./InstanceAccessManager.sol";
+import {BundleManager} from "./BundleManager.sol";
+
+import {KeyValueStore} from "./base/KeyValueStore.sol";
 
 import {IAccess} from "./module/IAccess.sol";
 import {IBundle} from "./module/IBundle.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
 import {ISetup} from "./module/ISetup.sol";
-import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
-import {KeyValueStore} from "./base/KeyValueStore.sol";
-import {IInstance} from "./IInstance.sol";
-import {InstanceReader} from "./InstanceReader.sol";
-import {InstanceAccessManager} from "./InstanceAccessManager.sol";
-import {BundleManager} from "./BundleManager.sol";
-import {NftId} from "../types/NftId.sol";
-import {NumberId} from "../types/NumberId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT} from "../types/ObjectType.sol";
-import {RiskId} from "../types/RiskId.sol";
-import {StateId} from "../types/StateId.sol";
+
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPolicyService} from "./service/IPolicyService.sol";
 import {IBundleService} from "./service/IBundleService.sol";
-import {VersionPart} from "../types/Version.sol";
-import {InstanceBase} from "./InstanceBase.sol";
+
 
 contract Instance is
-    AccessManagedUpgradeable,
     IInstance,
-    // Initializable,
-    InstanceBase
+    AccessManagedUpgradeable,
+    Registerable,
+    KeyValueStore
 {
-
-    uint64 public constant ADMIN_ROLE = type(uint64).min;
-    uint64 public constant PUBLIC_ROLE = type(uint64).max;
-    uint64 public constant CUSTOM_ROLE_ID_MIN = 10000;
-
-    uint32 public constant EXECUTION_DELAY = 0;
-
-    bool private _initialized;
-
-    InstanceAccessManager internal _accessManager;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
 
@@ -53,16 +49,11 @@ contract Instance is
         public 
         initializer
     {
-        require(!_initialized, "Contract instance has already been initialized");
-
         __AccessManaged_init(accessManagerAddress);
-                
-        _accessManager = InstanceAccessManager(accessManagerAddress);
         
         _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
 
         _registerInterface(type(IInstance).interfaceId);    
-        _initialized = true;
     }
 
     //--- ProductSetup ------------------------------------------------------//
@@ -242,7 +233,7 @@ contract Instance is
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        require(instanceReader.getInstanceNftId() == getNftId(), "NFT ID of InstanceReader does not match");
+        require(instanceReader.getInstance() == Instance(this), "InstanceReader instance mismatch");
         _instanceReader = instanceReader;
     }
 
@@ -252,7 +243,7 @@ contract Instance is
     
     function setBundleManager(BundleManager bundleManager) external restricted() {
         require(address(_bundleManager) == address(0), "BundleManager is set");
-        require(bundleManager.getInstanceNftId() == getNftId(), "NFT ID of BundleManager does not match");
+        require(bundleManager.getInstance() == Instance(this), "BundleManager instance mismatch");
         _bundleManager = bundleManager;
     }
 

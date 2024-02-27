@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
-import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {RoleId, RoleIdLib } from "../types/RoleId.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
 import {IAccess} from "./module/IAccess.sol";
@@ -32,14 +32,13 @@ contract InstanceAccessManager is
     mapping(ShortString name => address target) internal _targetForName;
     address [] internal _targets;
 
-    AccessManagerUpgradeableInitializeable internal _accessManager;
+    AccessManager internal _accessManager;
 
-    function __InstanceAccessManager_initialize(address initialAdmin) external initializer
+    function initialize(address initialAdmin) external initializer
     {
         // if size of the contract gets too large, this can be externalized which will reduce the contract size considerably
-        _accessManager = new AccessManagerUpgradeableInitializeable();
-        // this service required adin rights to access manager to be able to grant/revoke roles
-        _accessManager.__AccessManagerUpgradeableInitializeable_init(address(this));
+        _accessManager = new AccessManager(address(this));
+        // this service required admin rights to access manager to be able to grant/revoke roles
         _accessManager.grantRole(_accessManager.ADMIN_ROLE(), initialAdmin, 0);
 
         __AccessManaged_init(address(_accessManager));
@@ -275,10 +274,6 @@ contract InstanceAccessManager is
         address target = _targetForName[ShortStrings.toShortString(targetName)];
         uint64 roleIdInt = RoleId.unwrap(roleId);
         _accessManager.setTargetFunctionRole(target, selectors, roleIdInt);
-    }
-
-    function getAccessManager() public restricted() returns (AccessManagerUpgradeableInitializeable) {
-        return _accessManager;
     }
 
     function setTargetClosed(string memory targetName, bool closed) public restricted() {
