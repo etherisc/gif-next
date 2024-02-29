@@ -8,7 +8,7 @@ import {UFixed} from "../../contracts/types/UFixed.sol";
 
 contract SimplePool is Pool {
     
-    constructor(
+    function initialize(
         address registry,
         NftId instanceNftId,
         address token,
@@ -19,19 +19,20 @@ contract SimplePool is Pool {
         Fee memory stakingFee,
         Fee memory performanceFee,
         address initialOwner
-    ) Pool(
-        registry,
-        instanceNftId,
-        "SimplePool",
-        token,
-        isInterceptor,
-        isConfirmingApplication,
-        collateralizationLevel,
-        poolFee,
-        stakingFee,
-        performanceFee,
-        initialOwner,
-        ""
-    ) {
+    ) external {
+        __initialize(
+            registry,
+            instanceNftId,
+            "SimplePool",
+            token,
+            isInterceptor,
+            isConfirmingApplication,
+            collateralizationLevel,
+            poolFee,
+            stakingFee,
+            performanceFee,
+            initialOwner,
+            ""
+        );
     }
 }

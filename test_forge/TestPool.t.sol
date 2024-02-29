@@ -22,7 +22,8 @@ contract TestPool is TestGifBase {
 
         vm.startPrank(poolOwner);
 
-        pool = new SimplePool(
+        SimplePool spool = new SimplePool();
+        spool.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -34,6 +35,7 @@ contract TestPool is TestGifBase {
             FeeLib.zeroFee(),
             poolOwner
         );
+        pool = spool;
 
         NftId poolNftId = poolService.register(address(pool));
         ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
@@ -65,7 +67,8 @@ contract TestPool is TestGifBase {
 
         vm.startPrank(poolOwner);
 
-        pool = new SimplePool(
+        SimplePool spool = new SimplePool();
+        spool.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -77,6 +80,7 @@ contract TestPool is TestGifBase {
             FeeLib.zeroFee(),
             poolOwner
         );
+        pool = spool;
 
         NftId poolNftId = poolService.register(address(pool));
         Fee memory newPoolFee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
@@ -108,7 +112,8 @@ contract TestPool is TestGifBase {
 
         vm.startPrank(poolOwner);
 
-        pool = new SimplePool(
+        SimplePool spool = new SimplePool();
+        spool.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -120,6 +125,7 @@ contract TestPool is TestGifBase {
             FeeLib.zeroFee(),
             poolOwner
         );
+        pool = spool;
 
         poolNftId = poolService.register(address(pool));
         vm.stopPrank();
@@ -158,7 +164,8 @@ contract TestPool is TestGifBase {
 
         vm.startPrank(poolOwner);
 
-        pool = new SimplePool(
+        SimplePool spool = new SimplePool();
+        spool.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -170,6 +177,7 @@ contract TestPool is TestGifBase {
             FeeLib.zeroFee(),
             poolOwner
         );
+        pool = spool;
 
         NftId poolNftId = poolService.register(address(pool));
 

@@ -12,13 +12,9 @@ import {Component} from "./Component.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
-
 import {ISetup} from "../instance/module/ISetup.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {Registerable} from "../shared/Registerable.sol";
 
 abstract contract Pool is Component, IPoolComponent {
     using NftIdLib for NftId;
@@ -43,7 +39,7 @@ abstract contract Pool is Component, IPoolComponent {
         _;
     }
 
-    constructor(
+    function __initialize(
         address registry,
         NftId instanceNftId,
         string memory name,
@@ -57,9 +53,9 @@ abstract contract Pool is Component, IPoolComponent {
         Fee memory performanceFee,
         address initialOwner,
         bytes memory data
-    )
-        Component(registry, instanceNftId, name, token, POOL(), isInterceptor, initialOwner, data)
-    {
+    ) internal {
+        _initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptor, initialOwner, data);
+
         _isConfirmingApplication = isConfirmingApplication;
         // TODO add validation
         _collateralizationLevel = collateralizationLevel;

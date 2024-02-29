@@ -15,9 +15,6 @@ import {Timestamp} from "../types/Timestamp.sol";
 import {Fee} from "../types/Fee.sol";
 import {Component} from "./Component.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
 import {InstanceReader} from "../instance/InstanceReader.sol";
@@ -38,7 +35,7 @@ abstract contract Product is Component, IProductComponent {
     NftId internal _poolNftId;
     NftId internal _distributionNftId;
 
-    constructor(
+    function __initialize(
         address registry,
         NftId instanceNftid,
         string memory name,
@@ -50,9 +47,9 @@ abstract contract Product is Component, IProductComponent {
         Fee memory processingFee,
         address initialOwner,
         bytes memory data
-    )
-        Component(registry, instanceNftid, name, token, PRODUCT(), isInterceptor, initialOwner, data)
-    {
+    ) internal {
+        _initializeComponent(registry, instanceNftid, name, token, PRODUCT(), isInterceptor, initialOwner, data);
+
         // TODO add validation
         _policyService = getInstance().getPolicyService(); 
         _pool = Pool(pool);

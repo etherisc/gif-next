@@ -20,7 +20,8 @@ contract TestProductService is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        product = new SimpleProduct(
+        SimpleProduct sproduct = new SimpleProduct();
+        sproduct.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -31,6 +32,7 @@ contract TestProductService is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
+        product = sproduct;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -50,7 +52,8 @@ contract TestProductService is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        product = new SimpleProduct(
+        SimpleProduct sproduct = new SimpleProduct();
+        sproduct.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -61,6 +64,7 @@ contract TestProductService is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
+        product = sproduct;
 
         NftId nftId = productService.register(address(product));
         assertTrue(nftId.gtz(), "nftId is zero");

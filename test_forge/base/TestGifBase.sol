@@ -597,7 +597,8 @@ contract TestGifBase is Test {
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
-        distribution = new SimpleDistribution(
+        SimpleDistribution  sdistribution = new SimpleDistribution();
+        sdistribution.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -605,11 +606,13 @@ contract TestGifBase is Test {
             FeeLib.zeroFee(),
             distributionOwner
         );
+        distribution = sdistribution;
         distributionNftId = distributionService.register(address(distribution));
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
-        pool = new SimplePool(
+        SimplePool spool = new SimplePool();
+        spool.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -621,6 +624,7 @@ contract TestGifBase is Test {
             FeeLib.zeroFee(),
             poolOwner
         );
+        pool = spool;
         poolNftId = poolService.register(address(pool));
         vm.stopPrank();
     }

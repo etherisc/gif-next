@@ -14,7 +14,8 @@ contract TestPoolService is TestGifBase {
 
     function test_PoolService_register_missingPoolOwnerRole() public {
         vm.startPrank(poolOwner);
-        pool = new SimplePool(
+        SimplePool spool = new SimplePool();
+        spool.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -26,6 +27,7 @@ contract TestPoolService is TestGifBase {
             FeeLib.zeroFee(),
             poolOwner
         );
+        pool = spool;
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -43,7 +45,8 @@ contract TestPoolService is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
-        pool = new SimplePool(
+        SimplePool spool = new SimplePool();
+        spool.initialize(
             address(registry),
             instanceNftId,
             address(token),
@@ -55,6 +58,7 @@ contract TestPoolService is TestGifBase {
             FeeLib.zeroFee(),
             poolOwner
         );
+        pool = spool;
 
         NftId nftId = poolService.register(address(pool));
         assertTrue(nftId.gtz(), "nftId is zero");
