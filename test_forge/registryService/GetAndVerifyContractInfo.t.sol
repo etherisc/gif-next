@@ -32,23 +32,15 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             ""
         );
 
-        ( 
-            IRegistry.ObjectInfo memory infoFromRegistryService,
-            bytes memory dataFromRegistryService 
-        ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
+        IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
                 registerableType,
                 registerableOwner);
 
-        ( 
-            IRegistry.ObjectInfo memory infoFromRegisterable,
-            bytes memory dataFromRegisterable
-        ) = registerable.getInitialInfo();
+        IRegistry.ObjectInfo memory infoFromRegisterable = registerable.getInitialInfo();
         
         assertTrue(eqObjectInfo(infoFromRegistryService, infoFromRegisterable), 
             "Info returned by registry service is different from info stored in registerable");
-        assertEq(dataFromRegistryService, dataFromRegisterable, 
-            "Data returned by registry service is different from data stored in registerable");
     } 
 
     function test_withRegisterableTypeDifferentFromExpectedType() public 
@@ -151,25 +143,17 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             ""
         );
 
-        ( 
-            IRegistry.ObjectInfo memory infoFromRegistryService,
-            bytes memory dataFromRegistryService 
-        ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
+        IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
                 registerableType,
                 registerableOwner);
 
-        ( 
-            IRegistry.ObjectInfo memory infoFromRegisterable,
-            bytes memory dataFromRegisterable
-        ) = registerable.getInitialInfo();
+        IRegistry.ObjectInfo memory infoFromRegisterable = registerable.getInitialInfo();
 
         infoFromRegisterable.objectAddress = address(registerable);
         
         assertTrue(eqObjectInfo(infoFromRegistryService, infoFromRegisterable), 
             "Info returned by registry service is different from info stored in registerable");
-        assertEq(dataFromRegistryService, dataFromRegisterable, 
-            "Data returned by registry service is different from data stored in registerable");
     }
 
     function test_withRegisterableOwnerDifferentFromExpectedOwner() public

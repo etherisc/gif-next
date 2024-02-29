@@ -38,17 +38,25 @@ interface IRegistryService is
           bytes4 selector;
      }
 
-     function registerInstance(IRegisterable instance, address owner)
-          external returns(IRegistry.ObjectInfo memory info, bytes memory data); 
+    function getFunctionConfigs()
+        external
+        pure
+        returns(
+            FunctionConfig[] memory config
+        );
+
+     // TODO used by service -> add owner arg 
+    function registerInstance(IRegisterable instance, address owner)
+          external returns(IRegistry.ObjectInfo memory info); 
 
      function registerProduct(IComponent product, address owner)
-          external returns(IRegistry.ObjectInfo memory info, bytes memory data);
+          external returns(IRegistry.ObjectInfo memory info);
 
      function registerPool(IComponent pool, address owner)
-          external returns(IRegistry.ObjectInfo memory info, bytes memory data);
+          external returns(IRegistry.ObjectInfo memory info);
 
      function registerDistribution(IComponent distribution, address owner)
-          external returns(IRegistry.ObjectInfo memory info, bytes memory data);
+          external returns(IRegistry.ObjectInfo memory info);
 
      function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 

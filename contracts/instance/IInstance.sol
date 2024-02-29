@@ -13,18 +13,23 @@ import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 
-import {IKeyValueStore} from "./base/IKeyValueStore.sol";
-
 import {IBundle} from "./module/IBundle.sol";
-import {ISetup} from "./module/ISetup.sol";
-import {IRisk} from "./module/IRisk.sol";
-import {IPolicy} from "./module/IPolicy.sol";
-
+import {IBundleService} from "./service/IBundleService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
+import {InstanceAccessManager} from "./InstanceAccessManager.sol";
+import {IKeyValueStore} from "./base/IKeyValueStore.sol";
+import {IPolicy} from "./module/IPolicy.sol";
+import {IPolicyService} from "./service/IPolicyService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPolicyService} from "./service/IPolicyService.sol";
 import {IBundleService} from "./service/IBundleService.sol";
+import {IRisk} from "./module/IRisk.sol";
+import {ISetup} from "./module/ISetup.sol";
+import {NftId} from "../types/NftId.sol";
+import {RiskId} from "../types/RiskId.sol";
+import {StateId} from "../types/StateId.sol";
+import {VersionPart} from "../types/Version.sol";
 
 
 
@@ -61,6 +66,7 @@ interface IInstance is IRegisterable, IKeyValueStore, IAccessManaged {
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
     function updatePolicyState(NftId policyNftId, StateId newState) external;
 
+    function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleManager() external view returns (BundleManager);
 }

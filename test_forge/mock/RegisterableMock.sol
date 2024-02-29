@@ -41,9 +41,9 @@ contract RegisterableMock is ERC165, IRegisterable {
         public 
         view 
         virtual 
-        returns (IRegistry.ObjectInfo memory, bytes memory data) 
+        returns (IRegistry.ObjectInfo memory) 
     {
-        return (_info, bytes(""));
+        return _info;
     }
 
     // from INftOwnable

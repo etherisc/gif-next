@@ -142,7 +142,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     // FIXME temporal solution while registration in ProductServiceManager constructor is not possible
     const rcptBdl = await executeTx(async () => await releaseManager.registerService(bundleServiceAddress));
     const logRegistrationInfoBdl = getFieldFromTxRcptLogs(rcptBdl!, registry.registry.interface, "LogRegistration", "nftId");
-    const bundleServiceNftId = (logRegistrationInfoBdl as unknown[])[0];
+    const bundleServiceNftId = (logRegistrationInfoBdl as unknown);
     logger.info(`bundleServiceManager deployed - bundleServiceAddress: ${bundleServiceAddress} bundleServiceManagerAddress: ${bundleServiceManagerAddress} nftId: ${bundleServiceNftId}`);
 
     const { address: policyServiceManagerAddress, contract: policyServiceManagerBaseContract, } = await deployContract(
@@ -164,7 +164,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     // FIXME temporal solution while registration in ProductServiceManager constructor is not possible
     const rcptPol = await executeTx(async () => await releaseManager.registerService(policyServiceAddress));
     const logRegistrationInfoPol = getFieldFromTxRcptLogs(rcptPol!, registry.registry.interface, "LogRegistration", "nftId");
-    const policyServiceNftId = (logRegistrationInfoPol as unknown[])[0];
+    const policyServiceNftId = (logRegistrationInfoPol as unknown);
     logger.info(`policyServiceManager deployed - policyServiceAddress: ${policyServiceAddress} policyServiceManagerAddress: ${policyServiceManagerAddress} nftId: ${policyServiceNftId}`);
 
     // activate first release

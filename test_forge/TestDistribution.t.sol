@@ -16,7 +16,27 @@ contract TestDistribution is TestGifBase {
 
     uint256 public constant INITIAL_BALANCE = 100000;
 
-    function test_DistributionSetFees() public {
+    function test_Distribution_setupInfo() public {
+        // GIVEN
+        _prepareDistribution();
+
+        ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
+
+        // check nft id
+        assertTrue(distributionSetupInfo.productNftId.eqz(), "product nft not zero");
+
+        // check token handler
+        assertTrue(address(distributionSetupInfo.tokenHandler) != address(0), "token handler zero");
+        assertEq(address(distributionSetupInfo.tokenHandler.getToken()), address(distribution.getToken()), "unexpected token for token handler");
+
+        // check fees
+        Fee memory distributionFee = distributionSetupInfo.distributionFee;
+        assertEq(distributionFee.fractionalFee.toInt(), 0, "distribution fee not 0");
+        assertEq(distributionFee.fixedFee, 0, "distribution fee not 0");
+    }
+
+
+    function test_Distribution_SetFees() public {
         // GIVEN
         _prepareDistribution();
 

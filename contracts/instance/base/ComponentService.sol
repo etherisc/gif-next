@@ -49,6 +49,7 @@ abstract contract ComponentService is Service {
         RoleId requiredRole
     )
         internal
+        view
         returns (
             IComponent component,
             address owner,
@@ -72,7 +73,7 @@ abstract contract ComponentService is Service {
         }
 
         // check component is of required type
-        (IRegistry.ObjectInfo memory componentInfo, ) = component.getInitialInfo();
+        IRegistry.ObjectInfo memory componentInfo = component.getInitialInfo();
         if(componentInfo.objectType != requiredType) {
             revert ErrorComponentServiceInvalidType(componentAddress, requiredType, componentInfo.objectType);
         }

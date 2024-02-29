@@ -160,11 +160,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         internal
     {
         IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(registeredContract);
-
-        (
-            IRegistry.ObjectInfo memory infoFromRegisterable,
-            bytes memory dataFromRegisterable
-        ) = IRegisterable(registeredContract).getInitialInfo();
+        IRegistry.ObjectInfo memory infoFromRegisterable = IRegisterable(registeredContract).getInitialInfo();
 
         infoFromRegisterable.nftId = infoFromRegistry.nftId; // initial value is random
         infoFromRegisterable.objectAddress = registeredContract;// registry enforces objectAddress 
@@ -173,8 +169,6 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
             "Info from registry is different from info in registry service");
         assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegisterable), 
             "Info from registry is different from info in registered contract");
-        assertEq(dataFromRegistryService, dataFromRegisterable, 
-            "Data from registry service is different from data in registered contract");
     }
 
     function _assert_registered_object(IRegistry.ObjectInfo memory objectInfo) internal 

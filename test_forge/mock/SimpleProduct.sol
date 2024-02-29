@@ -28,18 +28,16 @@ contract SimpleProduct is Product {
     ) Product(
         registry,
         instanceNftid,
+        "SimpleProduct",
         token,
         isInterceptor,
         pool,
         distribution,
         productFee,
         processingFee,
-        initialOwner
+        initialOwner,
+        ""
     ) {
-    }
-
-    function getName() public pure override returns (string memory) {
-        return "SimpleProduct";
     }
 
     function createRisk(

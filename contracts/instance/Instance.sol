@@ -34,7 +34,7 @@ import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPolicyService} from "./service/IPolicyService.sol";
 import {IBundleService} from "./service/IBundleService.sol";
-
+import {VersionPart, VersionPartLib} from "../types/Version.sol";
 
 contract Instance is
     IInstance,
@@ -42,6 +42,18 @@ contract Instance is
     Registerable,
     KeyValueStore
 {
+
+    uint256 public constant GIF_MAJOR_VERSION = 3;
+
+    uint64 public constant ADMIN_ROLE = type(uint64).min;
+    uint64 public constant PUBLIC_ROLE = type(uint64).max;
+    uint64 public constant CUSTOM_ROLE_ID_MIN = 10000;
+
+    uint32 public constant EXECUTION_DELAY = 0;
+
+    bool private _initialized;
+
+    InstanceAccessManager internal _accessManager;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
 
@@ -235,6 +247,10 @@ contract Instance is
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
         require(instanceReader.getInstance() == Instance(this), "InstanceReader instance mismatch");
         _instanceReader = instanceReader;
+    }
+
+    function getMajorVersion() external pure returns (VersionPart majorVersion) {
+        return VersionPartLib.toVersionPart(GIF_MAJOR_VERSION);
     }
 
     function getInstanceReader() external view returns (InstanceReader) {

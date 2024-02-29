@@ -17,16 +17,12 @@ contract RegistryServiceHarness is RegistryService {
         ObjectType expectedType, 
         address expectedOwner)
         public
-        view
+        // view
         returns(
-            IRegistry.ObjectInfo memory info, 
-            bytes memory data
+            IRegistry.ObjectInfo memory info
         )
     {
-        (
-            info, 
-            data
-        ) = _getAndVerifyContractInfo(
+        info = _getAndVerifyContractInfo(
             registerable,
             expectedType,
             expectedOwner);

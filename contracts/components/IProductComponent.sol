@@ -2,11 +2,15 @@
 pragma solidity ^0.8.20;
 
 import {Fee} from "../types/Fee.sol";
+import {IComponent} from "./IComponent.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 import {NftId} from "../types/NftId.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId} from "../types/RiskId.sol";
 
-interface IProductComponent {
+interface IProductComponent is IComponent {
+
+    function getSetupInfo() external view returns (ISetup.ProductSetupInfo memory setupInfo);
 
     function setFees(
         Fee memory productFee,

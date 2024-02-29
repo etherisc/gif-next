@@ -20,6 +20,36 @@ import {POLICY} from "../contracts/types/ObjectType.sol";
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
 
+    function test_Product_setupInfo() public {
+        _prepareProduct();
+
+        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+
+        // check nft id (components -> product)
+        uint256 productNftIdInt = product.getNftId().toInt();
+        assertTrue(productNftIdInt > 0, "product nft zero");
+        assertEq(product.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (product)");
+        assertEq(distribution.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (distribution)");
+        assertEq(pool.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (pool)");
+        
+        // check nft id links (product -> components)
+        assertEq(productSetupInfo.distributionNftId.toInt(), distribution.getNftId().toInt(), "unexpected distribution nft id");
+        assertEq(productSetupInfo.poolNftId.toInt(), pool.getNftId().toInt(), "unexpected distribution nft id");
+
+        // check token handler
+        assertTrue(address(productSetupInfo.tokenHandler) != address(0), "token handler zero");
+        assertEq(address(productSetupInfo.tokenHandler.getToken()), address(distribution.getToken()), "unexpected token for token handler");
+
+        // check fees
+        Fee memory productFee = productSetupInfo.productFee;
+        assertEq(productFee.fractionalFee.toInt(), 0, "product fee not 0");
+        assertEq(productFee.fixedFee, 0, "product fee not 0");
+        Fee memory processingFee = productSetupInfo.processingFee;
+        assertEq(processingFee.fractionalFee.toInt(), 0, "processing fee not 0");
+        assertEq(processingFee.fixedFee, 0, "processing fee not 0");
+    }
+
+
     function test_Product_SetFees() public {
         _prepareProduct();
         vm.startPrank(productOwner);
@@ -40,6 +70,7 @@ contract TestProduct is TestGifBase {
         productFee = productSetupInfo.productFee;
         assertEq(productFee.fractionalFee.toInt(), 123, "product fee not 123");
         assertEq(productFee.fixedFee, 456, "product fee not 456");
+
         processingFee = productSetupInfo.processingFee;
         assertEq(processingFee.fractionalFee.toInt(), 789, "processing fee not 789");
         assertEq(processingFee.fixedFee, 101112, "processing fee not 101112");
@@ -495,8 +526,6 @@ contract TestProduct is TestGifBase {
         assertTrue(riskInfo.productNftId.eq(productNftId), "productNftId not set");
         assertEq(riskInfo.data, newData, "data not updated to new data");
     }
-
-    
 
     function _prepareProduct() internal {
         vm.startPrank(instanceOwner);

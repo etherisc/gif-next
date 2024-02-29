@@ -46,6 +46,7 @@ abstract contract Pool is Component, IPoolComponent {
     constructor(
         address registry,
         NftId instanceNftId,
+        string memory name,
         // TODO refactor into tokenNftId
         address token,
         bool isInterceptor,
@@ -54,9 +55,10 @@ abstract contract Pool is Component, IPoolComponent {
         Fee memory poolFee,
         Fee memory stakingFee,
         Fee memory performanceFee,
-        address initialOwner
+        address initialOwner,
+        bytes memory data
     )
-        Component(registry, instanceNftId, token, POOL(), isInterceptor, initialOwner)
+        Component(registry, instanceNftId, name, token, POOL(), isInterceptor, initialOwner, data)
     {
         _isConfirmingApplication = isConfirmingApplication;
         // TODO add validation
@@ -67,9 +69,8 @@ abstract contract Pool is Component, IPoolComponent {
 
         _tokenHandler = new TokenHandler(token);
 
-        _poolService = _instance.getPoolService();
-        // _productService = _instance.getProductService();
-        _bundleService = _instance.getBundleService();
+        _poolService = getInstance().getPoolService();
+        _bundleService = getInstance().getBundleService();
 
         _registerInterface(type(IPoolComponent).interfaceId);
     }
@@ -182,40 +183,26 @@ abstract contract Pool is Component, IPoolComponent {
     }
 
     function getSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
-        InstanceReader reader = _instance.getInstanceReader();
-        return reader.getPoolSetupInfo(getNftId());
+        InstanceReader reader = getInstance().getInstanceReader();
+        setupInfo = reader.getPoolSetupInfo(getNftId());
+
+        // fallback to initial setup info (wallet is always != address(0))
+        if(setupInfo.wallet == address(0)) {
+            setupInfo = _getInitialSetupInfo();
+        }
     }
 
-    // from IRegisterable
-
-    // TODO used only once, occupies space
-    // TODO do not use super
-    function getInitialInfo() 
-        public
-        view
-        override (IRegisterable, Registerable)
-        returns (IRegistry.ObjectInfo memory, bytes memory)
-    {
-        (
-            IRegistry.ObjectInfo memory info, 
-        ) = super.getInitialInfo();
-
-        return (
-            info,
-            abi.encode(
-                getName(),
-                ISetup.PoolSetupInfo(
-                    _productNftId,
-                    _tokenHandler,
-                    _collateralizationLevel,
-                    _initialPoolFee,
-                    _initialStakingFee,
-                    _initialPerformanceFee,
-                    false,
-                    _isConfirmingApplication,
-                    _wallet
-                )
-            )
+    function _getInitialSetupInfo() internal view returns (ISetup.PoolSetupInfo memory) {
+        return ISetup.PoolSetupInfo(
+            getProductNftId(),
+            _tokenHandler,
+            _collateralizationLevel,
+            _initialPoolFee,
+            _initialStakingFee,
+            _initialPerformanceFee,
+            false,
+            _isConfirmingApplication,
+            getWallet()
         );
     }
 

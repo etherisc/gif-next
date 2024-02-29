@@ -11,5 +11,5 @@ interface IRegisterable is IERC165, INftOwnable {
     function getInitialInfo() 
         external 
         view
-        returns (IRegistry.ObjectInfo memory, bytes memory data);
+        returns (IRegistry.ObjectInfo memory);
 }

@@ -77,10 +77,7 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
         address expectedOwner)
         internal
     {
-        ( 
-            IRegistry.ObjectInfo memory info,
-            bytes memory data
-        ) = registerable.getInitialInfo();
+        IRegistry.ObjectInfo memory info = registerable.getInitialInfo();
         info.objectAddress = address(registerable);
         bool expectRevert = false;
 
@@ -112,18 +109,13 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
                 expectedType,
                 expectedOwner);
         } else {
-            ( 
-                IRegistry.ObjectInfo memory infoFromRegistryService,
-                bytes memory dataFromRegistryService
-            ) = registryServiceHarness.exposed_getAndVerifyContractInfo(
+            IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
                 registerable,
                 expectedType,
                 expectedOwner);  
 
             assertTrue(eqObjectInfo(info, infoFromRegistryService), 
                 "Info read from registerable is different from info returned by registry service");
-            assertEq(data, dataFromRegistryService, 
-                "Data read from registerable is different from data returned by registry service");
         }
     }
 

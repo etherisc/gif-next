@@ -90,9 +90,9 @@ contract InstanceService is Service, IInstanceService {
         clonedAccessManager.grantRole(ADMIN_ROLE(), instanceOwner);
         clonedAccessManager.revokeRole(ADMIN_ROLE(), address(this));
 
-        ( IRegistry.ObjectInfo memory info, ) = registryService.registerInstance(clonedInstance, instanceOwner);
+        IRegistry.ObjectInfo memory info = registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
-        clonedInstance.linkToRegisteredNftId();
+        // clonedInstance.linkToRegisteredNftId();
 
         emit LogInstanceCloned(address(clonedAccessManager), address(clonedInstance), address(clonedInstanceReader), clonedInstanceNftId);
     }
@@ -220,7 +220,7 @@ contract InstanceService is Service, IInstanceService {
             INSTANCE_SERVICE_ROLE());
     }
 
-    function setMasterInstance(
+    function setAndRegisterMasterInstance(
         address accessManagerAddress, 
         address instanceAddress, 
         address instanceReaderAddress, 
@@ -253,10 +253,10 @@ contract InstanceService is Service, IInstanceService {
         
         IRegistryService registryService = IRegistryService(getRegistry().getServiceAddress(REGISTRY(), getMajorVersion()));
         IInstance masterInstance = IInstance(_masterInstance);
-        (IRegistry.ObjectInfo memory info, ) = registryService.registerInstance(masterInstance, getOwner());
+        IRegistry.ObjectInfo memory info = registryService.registerInstance(masterInstance, getOwner());
         masterInstanceNftId = info.nftId;
 
-        masterInstance.linkToRegisteredNftId();
+        // masterInstance.linkToRegisteredNftId();
     }
 
     function setMasterInstanceReader(address instanceReaderAddress) external onlyOwner {

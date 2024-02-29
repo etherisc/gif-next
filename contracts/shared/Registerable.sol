@@ -71,20 +71,16 @@ contract Registerable is
         public 
         view 
         virtual 
-        returns (IRegistry.ObjectInfo memory, bytes memory data) 
+        returns (IRegistry.ObjectInfo memory info) 
     {
-        RegisterableStorage storage $ = _getRegisterableStorage();
-        return (
-            IRegistry.ObjectInfo(
-                getNftId(),
-                $._parentNftId,
-                $._objectType,
-                $._isInterceptor,
-                address(this), 
-                getOwner(),
-                $._data
-            ),
-            bytes("")
-        );
+        RegisterableStorage memory $ = _getRegisterableStorage();
+        info = IRegistry.ObjectInfo(
+            zeroNftId(),
+            $._parentNftId,
+            $._objectType,
+            $._isInterceptor,
+            address(this), 
+            getInitialOwner(),
+            $._data);
     }
 }

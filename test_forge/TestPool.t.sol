@@ -14,6 +14,50 @@ import {SimplePool} from "./mock/SimplePool.sol";
 contract TestPool is TestGifBase {
     using NftIdLib for NftId;
 
+
+    function test_Pool_setupInfo() public {
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        vm.stopPrank();
+
+        vm.startPrank(poolOwner);
+
+        pool = new SimplePool(
+            address(registry),
+            instanceNftId,
+            address(token),
+            false,
+            false,
+            UFixedLib.toUFixed(1),
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            poolOwner
+        );
+
+        NftId poolNftId = poolService.register(address(pool));
+        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+
+        // check nftid
+        assertTrue(poolSetupInfo.productNftId.eqz(), "product nft not zero");
+
+        // check token handler
+        assertTrue(address(poolSetupInfo.tokenHandler) != address(0), "token handler zero");
+        assertEq(address(poolSetupInfo.tokenHandler.getToken()), address(pool.getToken()), "unexpected token for token handler");
+
+        // check fees
+        Fee memory poolFee = poolSetupInfo.poolFee;
+        Fee memory stakingFee = poolSetupInfo.stakingFee;
+        Fee memory performanceFee = poolSetupInfo.performanceFee;
+        assertEq(poolFee.fractionalFee.toInt(), 0, "pool fee not 0");
+        assertEq(poolFee.fixedFee, 0, "pool fee not 0");
+        assertEq(stakingFee.fractionalFee.toInt(), 0, "staking fee not 0");
+        assertEq(stakingFee.fixedFee, 0, "staking fee not 0");
+        assertEq(performanceFee.fractionalFee.toInt(), 0, "performance fee not 0");
+        assertEq(performanceFee.fixedFee, 0, "performance fee not 0");
+    }
+
+
     function test_Pool_setFees() public {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
@@ -35,28 +79,15 @@ contract TestPool is TestGifBase {
         );
 
         NftId poolNftId = poolService.register(address(pool));
+        Fee memory newPoolFee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
+        Fee memory newStakingFee = FeeLib.toFee(UFixedLib.toUFixed(333,0), 444);
+        Fee memory newPerformanceFee = FeeLib.toFee(UFixedLib.toUFixed(555,0), 666);
+        pool.setFees(newPoolFee, newStakingFee, newPerformanceFee);
 
         ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
         Fee memory poolFee = poolSetupInfo.poolFee;
         Fee memory stakingFee = poolSetupInfo.stakingFee;
         Fee memory performanceFee = poolSetupInfo.performanceFee;
-        assertEq(poolFee.fractionalFee.toInt(), 0, "pool fee not 0");
-        assertEq(poolFee.fixedFee, 0, "pool fee not 0");
-        assertEq(stakingFee.fractionalFee.toInt(), 0, "staking fee not 0");
-        assertEq(stakingFee.fixedFee, 0, "staking fee not 0");
-        assertEq(performanceFee.fractionalFee.toInt(), 0, "performance fee not 0");
-        assertEq(performanceFee.fixedFee, 0, "performance fee not 0");
-        
-        Fee memory newPoolFee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
-        Fee memory newStakingFee = FeeLib.toFee(UFixedLib.toUFixed(333,0), 444);
-        Fee memory newPerformanceFee = FeeLib.toFee(UFixedLib.toUFixed(555,0), 666);
-
-        pool.setFees(newPoolFee, newStakingFee, newPerformanceFee);
-
-        poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-        poolFee = poolSetupInfo.poolFee;
-        stakingFee = poolSetupInfo.stakingFee;
-        performanceFee = poolSetupInfo.performanceFee;
         assertEq(poolFee.fractionalFee.toInt(), 111, "pool fee not 111");
         assertEq(poolFee.fixedFee, 222, "pool fee not 222");
         assertEq(stakingFee.fractionalFee.toInt(), 333, "staking fee not 333");
