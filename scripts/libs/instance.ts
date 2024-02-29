@@ -91,7 +91,7 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(() => accessManager.revokeRole(0, resolveAddress(owner)));
 
     logger.debug(`setting master addresses into instance service and registering master instance`);
-    const rcpt = await executeTx(() => services.instanceService.setAndRegisterMasterInstance(accessManagerAddress, instanceAddress, instanceReaderAddress, bundleManagerAddress));
+    const rcpt = await executeTx(() => services.instanceService.setAndRegisterMasterInstance(instanceAddress));
     // this extracts the ObjectInfo struct from the LogRegistration event
     const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
     // nftId is the first field of the ObjectInfo struct

@@ -220,28 +220,30 @@ contract InstanceService is Service, IInstanceService {
             INSTANCE_SERVICE_ROLE());
     }
 
-    function setAndRegisterMasterInstance(
-        address accessManagerAddress, 
-        address instanceAddress, 
-        address instanceReaderAddress, 
-        address bundleManagerAddress) 
+    function setAndRegisterMasterInstance(address instanceAddress) 
             external 
             onlyOwner 
             returns(NftId masterInstanceNftId)
     {
-        require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
         require(_masterInstance == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
+        require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
         require(_masterInstanceBundleManager == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
 
-        require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
         require (instanceAddress != address(0), "ERROR:CRD-006:INSTANCE_ZERO");
+
+        IInstance instance = IInstance(instanceAddress);
+        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
+        address accessManagerAddress = address(accessManager);
+        InstanceReader instanceReader = instance.getInstanceReader();
+        address instanceReaderAddress = address(instanceReader);
+        BundleManager bundleManager = instance.getBundleManager();
+        address bundleManagerAddress = address(bundleManager);
+
+        require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
         require (instanceReaderAddress != address(0), "ERROR:CRD-007:INSTANCE_READER_ZERO");
         require (bundleManagerAddress != address(0), "ERROR:CRD-008:BUNDLE_MANAGER_ZERO");
 
-        IInstance instance = IInstance(instanceAddress);
-        InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
-        BundleManager bundleManager = BundleManager(bundleManagerAddress);
-
+        
         require(instance.authority() == accessManagerAddress, "ERROR:CRD-009:INSTANCE_AUTHORITY_MISMATCH");
         require(instanceReader.getInstance() == instance, "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
         require(bundleManager.getInstance() == instance, "ERROR:CRD-011:BUNDLE_MANAGER_INSTANCE_MISMATCH");
