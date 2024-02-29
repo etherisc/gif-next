@@ -112,19 +112,6 @@ abstract contract Component is
         _registerInterface(type(IComponent).interfaceId);
     }
 
-    constructor(
-        address registry,
-        NftId instanceNftId,
-        string memory name,
-        address token,
-        ObjectType componentType,
-        bool isInterceptor,
-        address initialOwner,
-        bytes memory data
-    )
-    {
-        _initializeComponent(registry, instanceNftId, name, token, componentType, isInterceptor, initialOwner, data);
-    }
 
     // TODO discuss replacement with modifier restricted from accessmanaged
     function lock() external onlyOwner override {

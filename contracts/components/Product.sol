@@ -25,9 +25,10 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {Pool} from "../components/Pool.sol";
 import {Distribution} from "../components/Distribution.sol";
 
-abstract contract Product is Component, IProductComponent {
-    using NftIdLib for NftId;
-
+abstract contract Product is
+    Component, 
+    IProductComponent
+{
     IPolicyService internal _policyService;
     Pool internal _pool;
     Distribution internal _distribution;
@@ -40,7 +41,7 @@ abstract contract Product is Component, IProductComponent {
 
     constructor(
         address registry,
-        NftId instanceNftid,
+        NftId instanceNftId,
         string memory name,
         address token,
         bool isInterceptor,
@@ -51,8 +52,9 @@ abstract contract Product is Component, IProductComponent {
         address initialOwner,
         bytes memory data
     )
-        Component(registry, instanceNftid, name, token, PRODUCT(), isInterceptor, initialOwner, data)
     {
+        _initializeComponent(registry, instanceNftId, name, token, PRODUCT(), isInterceptor, initialOwner, data);
+
         // TODO add validation
         _policyService = getInstance().getPolicyService(); 
         _pool = Pool(pool);

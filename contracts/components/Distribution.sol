@@ -20,8 +20,6 @@ abstract contract Distribution is
     Component,
     IDistributionComponent
 {
-    using NftIdLib for NftId;
-
     bool internal _isVerifying;
     Fee internal _initialDistributionFee;
 
@@ -40,8 +38,9 @@ abstract contract Distribution is
         address initialOwner,
         bytes memory data
     )
-        Component(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data)
     {
+        _initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data);
+
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 

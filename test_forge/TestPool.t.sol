@@ -15,6 +15,25 @@ contract TestPool is TestGifBase {
     using NftIdLib for NftId;
 
 
+    function test_Pool_contractLocation() public {
+        pool = new SimplePool(
+            address(registry),
+            instanceNftId,
+            address(token),
+            false,
+            false,
+            UFixedLib.toUFixed(1),
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
+            poolOwner
+        );
+
+        bytes memory name = "gif-next.contracts.component.Pool.sol";
+        bytes32 locationHash = pool.getContractLocation(name);
+        assertEq(locationHash, 0xecf35607b7e822969ee3625cd815bfc27031f3a93d0be2676e5bde943e2e2300, "check hash");
+    }
+
     function test_Pool_setupInfo() public {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
