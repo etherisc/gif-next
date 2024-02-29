@@ -70,7 +70,8 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const instanceReader = masterReaderBaseContract as InstanceReader;
-    await executeTx(() => instanceReader["initialize(address,address)"](registry.registryAddress, instanceAddress));
+    await executeTx(() => instanceReader.initialize(registry.registryAddress, instanceAddress));
+    await executeTx(() => instance.setInstanceReader(instanceReaderAddress));
 
     const {address: bundleManagerAddress, contract: bundleManagerBaseContrat} = await deployContract(
         "BundleManager",
@@ -85,8 +86,8 @@ export async function deployAndRegisterMasterInstance(
     );
     const bundleManager = bundleManagerBaseContrat as BundleManager;
     await executeTx(() => bundleManager["initialize(address,address,address)"](accessManagerAddress, registry.registryAddress, instanceAddress));
-
     await executeTx(() => instance.setBundleManager(bundleManagerAddress));
+
     // revoke admin role for protocol owner
     await executeTx(() => accessManager.revokeRole(0, resolveAddress(owner)));
 
