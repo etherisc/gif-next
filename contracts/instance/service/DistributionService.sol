@@ -47,9 +47,8 @@ contract DistributionService is
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while DistributionService is not deployed in DistributionServiceManager constructor
         //      owner is DistributionServiceManager deployer
-        _initializeService(registryAddress, owner);
-
-        _registerInterface(type(IDistributionService).interfaceId);
+        initializeService(registryAddress, owner);
+        registerInterface(type(IDistributionService).interfaceId);
     }
 
     function getDomain() public pure override(Service, IService) returns(ObjectType) {

@@ -18,7 +18,6 @@ import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 
 // TODO discuss to inherit from oz accessmanaged
-// TODO make contract upgradeable
 // then add (Distribution|Pool|Product)Upradeable that also intherit from Versionable
 // same pattern as for Service which is also upgradeable
 abstract contract Component is
@@ -30,13 +29,23 @@ abstract contract Component is
 
     struct ComponentStorage {
         IInstance _instance; // instance for this component
+
         string _name; // unique (per instance) component name
         IERC20Metadata _token; // token for this component
         address _wallet; // wallet for this component (default = component contract itself)
+        bool _isNftInterceptor; // declares if component is involved in nft transfers
         IInstanceService _instanceService; // instance service for this component
 
         NftId _productNftId; // only relevant for components that are linked to a aproduct
         IProductService _productService; // product service for component, might not be relevant for some component types (eg oracles)
+    }
+
+
+    modifier onlyChainNft() {
+        if(msg.sender != getRegistry().getChainNftAddress()) {
+            revert ErrorComponentNotChainNft(msg.sender);
+        }
+        _;
     }
 
 
@@ -73,7 +82,7 @@ abstract contract Component is
     }
 
 
-    function _initializeComponent(
+    function initializeComponent(
         address registry,
         NftId instanceNftId,
         string memory name,
@@ -83,15 +92,16 @@ abstract contract Component is
         address initialOwner,
         bytes memory data
     )
-        internal
-        //onlyInitializing//TODO uncomment when "fully" upgradeable
+        public
         virtual
+        onlyInitializing()
     {
         ComponentStorage storage $ = _getComponentStorage();
-        _initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
+        initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
 
         // set unique name of component
         $._name = name;
+        $._isNftInterceptor = isInterceptor;
 
         // set and check linked instance
         IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
@@ -109,22 +119,16 @@ abstract contract Component is
         $._wallet = address(this);
         $._token = IERC20Metadata(token);
 
-        _registerInterface(type(IComponent).interfaceId);
+        registerInterface(type(IComponent).interfaceId);
     }
 
-    constructor(
-        address registry,
-        NftId instanceNftId,
-        string memory name,
-        address token,
-        ObjectType componentType,
-        bool isInterceptor,
-        address initialOwner,
-        bytes memory data
-    )
-    {
-        _initializeComponent(registry, instanceNftId, name, token, componentType, isInterceptor, initialOwner, data);
-    }
+    /// @dev callback function for nft transfers. may only be called by chain nft contract.
+    /// default implementation is empty. overriding functions MUST add onlyChainNft modifier
+    function nftTransferFrom(address from, address to, uint256 tokenId)
+        external
+        virtual override
+        onlyChainNft()
+    { }
 
     // TODO discuss replacement with modifier restricted from accessmanaged
     function lock() external onlyOwner override {
@@ -155,7 +159,11 @@ abstract contract Component is
     /// if the current wallet has tokens, these will be transferred. 
     /// if the new wallet address is externally owned, an approval from the 
     /// owner of the external wallet for the component to move all tokens must exist. 
-    function setWallet(address newWallet) external override onlyOwner {
+    function setWallet(address newWallet)
+        external
+        override
+        onlyOwner
+    {
         ComponentStorage storage $ = _getComponentStorage();
 
         address currentWallet = $._wallet;
@@ -209,6 +217,10 @@ abstract contract Component is
 
     function getToken() public view override returns (IERC20Metadata token) {
         return _getComponentStorage()._token;
+    }
+
+    function isNftInterceptor() public view override returns(bool isInterceptor) {
+        return _getComponentStorage()._isNftInterceptor;
     }
 
     function getInstance() public view override returns (IInstance instance) {

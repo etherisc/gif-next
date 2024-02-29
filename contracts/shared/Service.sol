@@ -36,21 +36,21 @@ abstract contract Service is
         return VersionLib.toVersion(3,0,0);
     }
 
-    function _initializeService(
+    function initializeService(
         address registry, 
         address initialOwner
     )
-        internal
+        public
         virtual
-        //onlyInitializing //TODO uncomment when "fully" upgradeable
+        onlyInitializing()
     {
         // service must provide its name and version upon registration
         bytes memory data = abi.encode(getDomain(), getMajorVersion());
         NftId registryNftId = _getRegistryNftId(registry); 
         bool isInterceptor = false;
 
-        _initializeRegisterable(registry, registryNftId, SERVICE(), isInterceptor, initialOwner, data);
-        _registerInterface(type(IService).interfaceId);
+        initializeRegisterable(registry, registryNftId, SERVICE(), isInterceptor, initialOwner, data);
+        registerInterface(type(IService).interfaceId);
     }
 
     // this is just a conveniene function, actual validation will be done upon registration

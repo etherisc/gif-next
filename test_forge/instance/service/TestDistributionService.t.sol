@@ -17,7 +17,6 @@ contract TestDistributionService is TestGifBase {
             address(registry),
             instanceNftId,
             address(token),
-            false,
             FeeLib.zeroFee(),
             distributionOwner
         );
@@ -42,7 +41,6 @@ contract TestDistributionService is TestGifBase {
             address(registry),
             instanceNftId,
             address(token),
-            false,
             FeeLib.zeroFee(),
             distributionOwner
         );

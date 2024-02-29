@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../types/NftId.sol";
 
-interface INftOwnable {
+interface INftOwnable is
+    IERC165
+{
+    error ErrorInitialOwnerZero();
     error ErrorNotOwner(address account);
 
     error ErrorAlreadyLinked(address registry, NftId nftId);

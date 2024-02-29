@@ -61,7 +61,7 @@ abstract contract ComponentService is Service {
         owner = msg.sender;
 
         // check component has not already been registerd
-        NftId compoentNftId = _registry.getNftId(componentAddress);
+        NftId compoentNftId = getRegistry().getNftId(componentAddress);
         if(compoentNftId.gtz()) {
             revert ErrorComponentServiceAlreadyRegistered(componentAddress, compoentNftId);
         }

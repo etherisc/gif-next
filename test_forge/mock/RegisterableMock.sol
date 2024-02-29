@@ -32,8 +32,15 @@ contract RegisterableMock is ERC165, IRegisterable {
             data
         );
 
-        _initializeERC165();
-        _registerInterface(type(IRegisterable).interfaceId);       
+        initializeMock();
+    }
+
+    function initializeMock()
+        public
+        initializer()
+    {
+        initializeERC165();
+        registerInterface(type(IRegisterable).interfaceId);       
     }
 
     // from IRegisterable

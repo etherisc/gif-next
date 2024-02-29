@@ -15,23 +15,65 @@ contract SimplePool is Pool {
         bool isInterceptor,
         bool isConfirmingApplication,
         UFixed collateralizationLevel,
-        Fee memory poolFee,
-        Fee memory stakingFee,
-        Fee memory performanceFee,
+        UFixed retentionLevel,
         address initialOwner
-    ) Pool(
-        registry,
-        instanceNftId,
-        "SimplePool",
-        token,
-        isInterceptor,
-        isConfirmingApplication,
-        collateralizationLevel,
-        poolFee,
-        stakingFee,
-        performanceFee,
-        initialOwner,
-        ""
-    ) {
+    ) 
+    {
+        initialize(
+            registry,
+            instanceNftId,
+            token,
+            isInterceptor,
+            isConfirmingApplication,
+            collateralizationLevel,
+            retentionLevel,
+            initialOwner
+        );
+    }
+
+    function initialize(
+        address registry,
+        NftId instanceNftId,
+        address token,
+        bool isInterceptor,
+        bool isConfirmingApplication,
+        UFixed collateralizationLevel,
+        UFixed retentionLevel,
+        address initialOwner
+    )
+        public
+        virtual
+        initializer()
+    {
+        initializePool(
+            registry,
+            instanceNftId,
+            "SimplePool",
+            token,
+            isInterceptor,
+            false, // externally managed
+            isConfirmingApplication, // verifying applications
+            collateralizationLevel,
+            retentionLevel,
+            initialOwner,
+            "");
+    }
+
+    function createBundle(
+        Fee memory fee,
+        uint256 initialAmount,
+        uint256 lifetime,
+        bytes memory filter
+    )
+        external
+        returns (NftId bundleNftId)
+    {
+        address bundleOwner = msg.sender;
+        return _createBundle(
+            bundleOwner, 
+            fee, 
+            initialAmount, 
+            lifetime, 
+            filter);
     }
 }

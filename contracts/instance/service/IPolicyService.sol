@@ -52,32 +52,26 @@ interface IPolicyService is IService {
         ReferralId referralId
     ) external returns (NftId nftId);
 
-    /**
-     * @dev revokes the application represented by {policyNftId}.
-     * an application can only be revoked in applied state.
-     * only the application holder may revoke an application.
-     */
-    function revoke(NftId policyNftId) external;
+    /// @dev declines an application represented by {policyNftId}
+    /// an application can only be declined in applied state
+    /// only the related product may decline an application
+    function decline(NftId policyNftId) external;
 
-    /**
-     * @dev underwrites the policy represented by {policyNftId}.
-     * optionally collects premiums and activates the policy.
-     * - premium payment is only attempted if requirePremiumPayment is set to true
-     * - activation is only done if activateAt is a non-zero timestamp
-     */
+    /// @dev underwrites the policy represented by {policyNftId}.
+    /// optionally collects premiums and activates the policy.
+    /// - premium payment is only attempted if requirePremiumPayment is set to true
+    /// - activation is only done if activateAt is a non-zero timestamp
+    /// an application can only be underwritten in applied state
+    /// only the related product may underwrite an application
     function underwrite(
         NftId policyNftId,
         bool requirePremiumPayment,
         Timestamp activateAt
     ) external;
 
-    // function decline(uint256 nftId) external;
-    // function expire(uint256 nftId) external;
-
     function collectPremium(NftId policyNftId, Timestamp activateAt) external;
 
     function activate(NftId policyNftId, Timestamp activateAt) external;
-
 
     function close(NftId nftId) external;
 

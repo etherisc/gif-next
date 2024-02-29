@@ -32,11 +32,7 @@ import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
-// import {TestProduct} from "../../contracts/test/TestProduct.sol";
-// import {TestPool} from "../../contracts/test/TestPool.sol";
-// import {TestDistribution} from "../../contracts/test/TestDistribution.sol";
 import {Distribution} from "../../contracts/components/Distribution.sol";
-import {Pool} from "../../contracts/components/Pool.sol";
 import {Product} from "../../contracts/components/Product.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
@@ -120,7 +116,7 @@ contract TestGifBase is Test {
     // TestDistribution public distribution;
     Distribution public distribution;
     NftId public distributionNftId;
-    Pool public pool;
+    SimplePool public pool;
     NftId public poolNftId;
     Product public product;
     NftId public productNftId;
@@ -281,7 +277,7 @@ contract TestGifBase is Test {
         registry = Registry(registryAddress);
         registryNftId = registry.getNftId(address(registry)); 
 
-        address chainNftAddress = address(registry.getChainNft());
+        address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
 
         tokenRegistry = new TokenRegistry();
@@ -601,7 +597,6 @@ contract TestGifBase is Test {
             address(registry),
             instanceNftId,
             address(token),
-            false,
             FeeLib.zeroFee(),
             distributionOwner
         );
@@ -616,9 +611,7 @@ contract TestGifBase is Test {
             false,
             false,
             UFixedLib.toUFixed(1),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
+            UFixedLib.toUFixed(1),
             poolOwner
         );
         poolNftId = poolService.register(address(pool));
