@@ -62,6 +62,7 @@ abstract contract Distribution is
     )
         external
         override
+        // FIXME: all the components exposed functions must be restrited AND onlyOwner 
         restricted()
     {
         _distributionService.setFees(distributionFee);
