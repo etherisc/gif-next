@@ -118,8 +118,7 @@ contract ProductService is ComponentService, IProductService {
             _registry.getNftId(address(instance)), 
             address(product), 
             product.getName());
-        getInstanceService().grantProductDefaultPermissions(instance.getNftId(), product);
-
+        getInstanceService().grantProductDefaultPermissions(instance.getNftId(), address(product), product.getName());
     }
 
     function getDomain() public pure override(IService, Service) returns(ObjectType) {

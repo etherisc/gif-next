@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
-import {Component} from "../components/Component.sol";
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
@@ -354,70 +353,64 @@ contract InstanceService is Service, IInstanceService {
         accessManager.createGifTarget(targetAddress, targetName);
     }
 
-    function grantDistributionDefaultPermissions(NftId instanceNftId, IDistributionComponent distribution) external onlyRegisteredService {
+    function grantDistributionDefaultPermissions(NftId instanceNftId, address distributionAddress, string memory distributionName) external onlyRegisteredService {
         IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(address(distribution));
+        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionAddress);
 
         if (distributionInfo.objectType != DISTRIBUTION()) {
-            revert ErrorInstanceServiceInvalidComponentType(address(distribution), DISTRIBUTION(), distributionInfo.objectType);
+            revert ErrorInstanceServiceInvalidComponentType(distributionAddress, DISTRIBUTION(), distributionInfo.objectType);
         }
 
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
         InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
 
-        bytes4[] memory fctSelectors = new bytes4[](3);
-        fctSelectors[0] = distribution.setFees.selector;
-        fctSelectors[1] = Component.lock.selector;
-        fctSelectors[2] = Component.unlock.selector;
-        instanceAccessManager.setTargetFunctionRole(distribution.getName(), fctSelectors, DISTRIBUTION_OWNER_ROLE());
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = IDistributionComponent.setFees.selector;
+        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors, DISTRIBUTION_OWNER_ROLE());
 
         bytes4[] memory fctSelectors2 = new bytes4[](2);
-        fctSelectors2[0] = distribution.processSale.selector;
-        fctSelectors2[1] = distribution.processRenewal.selector;
-        instanceAccessManager.setTargetFunctionRole(distribution.getName(), fctSelectors2, PRODUCT_SERVICE_ROLE());
+        fctSelectors2[0] = IDistributionComponent.processSale.selector;
+        fctSelectors2[1] = IDistributionComponent.processRenewal.selector;
+        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors2, PRODUCT_SERVICE_ROLE());
     }
 
-    function grantPoolDefaultPermissions(NftId instanceNftId, IPoolComponent pool) external onlyRegisteredService {
+    function grantPoolDefaultPermissions(NftId instanceNftId, address poolAddress, string memory poolName) external onlyRegisteredService {
         IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory poolInfo = registry.getObjectInfo(address(pool));
+        IRegistry.ObjectInfo memory poolInfo = registry.getObjectInfo(poolAddress);
 
         if (poolInfo.objectType != POOL()) {
-            revert ErrorInstanceServiceInvalidComponentType(address(pool), POOL(), poolInfo.objectType);
+            revert ErrorInstanceServiceInvalidComponentType(poolAddress, POOL(), poolInfo.objectType);
         }
 
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
         InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
 
-        bytes4[] memory fctSelectors = new bytes4[](3);
-        fctSelectors[0] = pool.setFees.selector;
-        fctSelectors[1] = Component.lock.selector;
-        fctSelectors[2] = Component.unlock.selector;
-        instanceAccessManager.setTargetFunctionRole(pool.getName(), fctSelectors, POOL_OWNER_ROLE());
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = IPoolComponent.setFees.selector;
+        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors, POOL_OWNER_ROLE());
 
         bytes4[] memory fctSelectors2 = new bytes4[](1);
-        fctSelectors2[0] = pool.underwrite.selector;
-        instanceAccessManager.setTargetFunctionRole(pool.getName(), fctSelectors2, POLICY_SERVICE_ROLE());
+        fctSelectors2[0] = IPoolComponent.underwrite.selector;
+        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors2, POLICY_SERVICE_ROLE());
     }
 
-    function grantProductDefaultPermissions(NftId instanceNftId, IProductComponent product) external onlyRegisteredService {
+    function grantProductDefaultPermissions(NftId instanceNftId, address productAddress, string memory productName) external onlyRegisteredService {
         IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(address(product));
+        IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(productAddress);
 
         if (productInfo.objectType != PRODUCT()) {
-            revert ErrorInstanceServiceInvalidComponentType(address(product), PRODUCT(), productInfo.objectType);
+            revert ErrorInstanceServiceInvalidComponentType(productAddress, PRODUCT(), productInfo.objectType);
         }
 
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
         InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
 
-        bytes4[] memory fctSelectors = new bytes4[](3);
-        fctSelectors[0] = product.setFees.selector;
-        fctSelectors[1] = Component.lock.selector;
-        fctSelectors[2] = Component.unlock.selector;
-        instanceAccessManager.setTargetFunctionRole(product.getName(), fctSelectors, PRODUCT_OWNER_ROLE());
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = IProductComponent.setFees.selector;
+        instanceAccessManager.setTargetFunctionRole(productName, fctSelectors, PRODUCT_OWNER_ROLE());
     }
 
     function setTargetLocked(string memory targetName, bool locked) external {
