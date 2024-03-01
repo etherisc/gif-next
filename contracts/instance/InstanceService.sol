@@ -387,10 +387,13 @@ contract InstanceService is Service, IInstanceService {
         Instance instance = Instance(instanceInfo.objectAddress);
         InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
 
-        bytes4[] memory fctSelectors = new bytes4[](2);
+        bytes4[] memory fctSelectors = new bytes4[](1);
         fctSelectors[0] = pool.setFees.selector;
-        fctSelectors[1] = pool.underwrite.selector;
         instanceAccessManager.setTargetFunctionRole(pool.getName(), fctSelectors, POOL_OWNER_ROLE());
+
+        bytes4[] memory fctSelectors2 = new bytes4[](1);
+        fctSelectors2[0] = pool.underwrite.selector;
+        instanceAccessManager.setTargetFunctionRole(pool.getName(), fctSelectors2, POLICY_SERVICE_ROLE());
     }
 
     function grantProductDefaultPermissions(NftId instanceNftId, IProductComponent product) external onlyRegisteredService {
