@@ -96,12 +96,12 @@ abstract contract Pool is
 
 
     /**
-     * @dev see {IPool.underwrite}. 
+     * @dev see {IPool.verifyApplication}. 
      * Default implementation that only writes a {LogUnderwrittenByPool} entry.
      */
-    function underwrite(
-        NftId policyNftId, 
-        bytes memory policyData,
+    function verifyApplication(
+        NftId applicationNftId, 
+        bytes memory applicationData,
         bytes memory bundleFilter,
         uint256 collateralizationAmount
     )
@@ -109,7 +109,12 @@ abstract contract Pool is
         onlyProductService
         virtual override 
     {
-        _underwrite(policyNftId, policyData, bundleFilter, collateralizationAmount);
+        require(
+            policyMatchesBundle(applicationData, bundleFilter),
+            "ERROR:POL-020:POLICY_BUNDLE_MISMATCH"
+        );
+
+        emit LogUnderwrittenByPool(applicationNftId, collateralizationAmount, address(this));
     }
 
 
@@ -146,6 +151,7 @@ abstract contract Pool is
     {
         return true;
     }
+
 
     function setFees(
         Fee memory poolFee,
@@ -216,22 +222,6 @@ abstract contract Pool is
     }
 
     // Internals
-
-    function _underwrite(
-        NftId policyNftId, 
-        bytes memory policyData,
-        bytes memory bundleFilter,
-        uint256 collateralizationAmount
-    )
-        internal 
-    {
-        require(
-            policyMatchesBundle(policyData, bundleFilter),
-            "ERROR:POL-020:POLICY_BUNDLE_MISMATCH"
-        );
-
-        emit LogUnderwrittenByPool(policyNftId, collateralizationAmount, address(this));
-    }
 
     function _createBundle(
         address bundleOwner,

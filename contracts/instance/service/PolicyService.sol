@@ -236,18 +236,19 @@ contract PolicyService is ComponentService, IPolicyService {
         internal
         view
         returns (
+            NftId poolNftId,
             NftId bundleNftId,
             IBundle.BundleInfo memory bundleInfo,
             uint256 collateralAmount
         )
     {
         // check match between policy and bundle (via pool)
+        poolNftId = productSetupInfo.poolNftId;
         bundleNftId = policyInfo.bundleNftId;
         bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        require(bundleInfo.poolNftId == productSetupInfo.poolNftId, "POLICY_BUNDLE_MISMATCH");
+        require(bundleInfo.poolNftId == poolNftId, "POLICY_BUNDLE_MISMATCH");
 
         // calculate required collateral
-        NftId poolNftId = productSetupInfo.poolNftId;
         ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
 
         // obtain remaining return values
@@ -269,24 +270,6 @@ contract PolicyService is ComponentService, IPolicyService {
         return bundleInfo;
     }
 
-    function _underwriteByPool(
-        NftId poolNftId,
-        NftId policyNftId,
-        IPolicy.PolicyInfo memory policyInfo,
-        bytes memory bundleFilter,
-        uint256 collateralAmount
-    )
-        internal
-    {
-        address poolAddress = getRegistry().getObjectInfo(poolNftId).objectAddress;
-        IPoolComponent pool = IPoolComponent(poolAddress);
-        pool.underwrite(
-            policyNftId, 
-            policyInfo.applicationData, 
-            bundleFilter,
-            collateralAmount);
-    }
-
 
     function revoke(
         NftId policyNftId
@@ -299,7 +282,7 @@ contract PolicyService is ComponentService, IPolicyService {
 
 
     function underwrite(
-        NftId policyNftId,
+        NftId applicationNftId, // = policyNftId
         bool requirePremiumPayment,
         Timestamp activateAt
     )
@@ -307,47 +290,37 @@ contract PolicyService is ComponentService, IPolicyService {
         override
     {
         // check caller is registered product
-        (
-            IRegistry.ObjectInfo memory productInfo, 
-            IInstance instance
-        ) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        InstanceReader instanceReader = instance.getInstanceReader();
+        IInstance instance;
+        InstanceReader instanceReader;
+        NftId productNftId;
+        {
+            IRegistry.ObjectInfo memory productInfo;
+            (productInfo, instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+            instanceReader = instance.getInstanceReader();
+            productNftId = productInfo.nftId;
+        }
 
-        // check match between policy and calling product
-        NftId productNftId = productInfo.nftId;
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        // check policy matches with calling product
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(applicationNftId);
         require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
-        require(instanceReader.getPolicyState(policyNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
 
-        NftId bundleNftId;
-        IBundle.BundleInfo memory bundleInfo;
-        uint256 collateralAmount;
-        uint256 netPremiumAmount = 0; // > 0 if immediate premium payment 
-        // {
-        //     ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        //     IBundle.BundleInfo memory bundleInfo;
-            
-            (
-                bundleNftId,
-                bundleInfo,
-                collateralAmount
-            ) = _getAndVerifyUnderwritingSetup(
-                instance,
-                instanceReader,
-                policyInfo,
-                instanceReader.getProductSetupInfo(productNftId)
-            );
-        // }
+        // check policy is in state applied
+        require(instanceReader.getPolicyState(applicationNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
         
-        // lock bundle collateral
-        bundleInfo = _lockCollateralInBundle(
+        (
+            NftId poolNftId,
+            NftId bundleNftId,
+            IBundle.BundleInfo memory bundleInfo,
+            uint256 collateralAmount
+        ) = _getAndVerifyUnderwritingSetup(
             instance,
-            bundleNftId,
-            bundleInfo,
-            policyNftId, 
-            collateralAmount);
-        StateId newPolicyState = UNDERWRITTEN();
+            instanceReader,
+            policyInfo,
+            instanceReader.getProductSetupInfo(productNftId)
+        );
         
+        StateId newPolicyState = UNDERWRITTEN();
+
         // optional activation of policy
         if(activateAt > zeroTimestamp()) {
             newPolicyState = ACTIVE();
@@ -355,37 +328,45 @@ contract PolicyService is ComponentService, IPolicyService {
             policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
         }
 
+        // lock bundle collateral
+        uint256 netPremiumAmount = 0; // > 0 if immediate premium payment 
+
         // optional collection of premium
         if(requirePremiumPayment) {
             netPremiumAmount = _processPremiumByTreasury(
                 instance, 
-                productInfo.nftId,
-                policyNftId, 
+                productNftId,
+                applicationNftId, 
                 policyInfo.premiumAmount);
 
             policyInfo.premiumPaidAmount += policyInfo.premiumAmount;
         }
 
-        _bundleService.underwritePolicy(instance, policyNftId, bundleNftId, collateralAmount, netPremiumAmount);
-        instance.updatePolicy(policyNftId, policyInfo, newPolicyState);
+        // lock collateral and update bundle book keeping
+        bundleInfo = _bundleService.lockCollateral(
+            instance,
+            applicationNftId, 
+            bundleNftId,
+            collateralAmount,
+            netPremiumAmount);
 
-        // involve pool if necessary
-        {
-            ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(bundleInfo.poolNftId);
+        instance.updatePolicy(applicationNftId, policyInfo, newPolicyState);
 
-            if(poolInfo.isConfirmingApplication) {
-                _underwriteByPool(
-                    bundleInfo.poolNftId,
-                    policyNftId,
-                    policyInfo,
-                    bundleInfo.filter,
-                    collateralAmount
-                );
-            }
+        // also verify/confirm application by pool if necessary
+        if(instanceReader.getPoolSetupInfo(poolNftId).isVerifyingApplications) {
+            IPoolComponent pool = IPoolComponent(
+                getRegistry().getObjectInfo(poolNftId).objectAddress);
+
+            pool.verifyApplication(
+                applicationNftId, 
+                policyInfo.applicationData, 
+                bundleInfo.filter,
+                collateralAmount);
         }
 
         // TODO: add logging
     }
+
 
     function calculateRequiredCollateral(UFixed collateralizationLevel, uint256 sumInsuredAmount) public pure override returns(uint256 collateralAmount) {
         UFixed sumInsuredUFixed = UFixedLib.toUFixed(sumInsuredAmount);

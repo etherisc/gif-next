@@ -164,17 +164,23 @@ contract BundleService is
         bundleManager.unlock(bundleNftId);
     }
 
-    function underwritePolicy(IInstance instance,
+    function lockCollateral(
+        IInstance instance,
         NftId policyNftId, 
         NftId bundleNftId, 
         uint256 collateralAmount,
         uint256 netPremiumAmount
     ) 
         external
-        onlyService 
+        onlyService
+        returns (
+            IBundle.BundleInfo memory bundleInfo
+        )
     {
         InstanceReader instanceReader = instance.getInstanceReader();
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+
+        // TODO add validation
 
         // lock collateral
         bundleInfo.lockedAmount += collateralAmount;

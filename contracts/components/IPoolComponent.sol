@@ -34,8 +34,8 @@ interface IPoolComponent is IComponent {
     /// the pool has the option to check the details and object to underwriting by reverting.
     /// the function is only called for "active" pools that ask to be involved/notified
     /// by product related state changes.
-    function underwrite(
-        NftId policyNftId, 
+    function verifyApplication(
+        NftId applicationNftId, 
         bytes memory policyData,
         bytes memory bundleFilter,
         uint256 collateralizationAmount
@@ -49,7 +49,7 @@ interface IPoolComponent is IComponent {
     function getCollateralizationLevel() external view returns (UFixed collateralizationLevel);
 
     /// @dev declares if pool intercept transfers of bundle nft ids
-    /// - yes: pool may block transfer of bundle ownership or simply updates some bookkeeping related to bundle ownership
+    /// - yes: pool may block transfer of bundle ownership or simply updates some bookkeeping related to bundle ownership. callback function is nftTransferFrom
     /// - no: pool is not involved in transfer of bundle ownership
     function isInterceptingBundleTransfers() external view returns (bool);
 
