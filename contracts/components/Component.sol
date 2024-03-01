@@ -114,6 +114,7 @@ abstract contract Component is
         _getComponentStorage()._instanceService.setTargetLocked(getName(), true);
     }
     
+    // FIXME: this cannot be `restricted` as this method will be inaccessible when the component is locked
     function unlock() external restricted() override {
         _getComponentStorage()._instanceService.setTargetLocked(getName(), false);
     }
