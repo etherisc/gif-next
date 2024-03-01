@@ -114,7 +114,7 @@ contract ProductService is ComponentService, IProductService {
         instance.createProductSetup(productNftId, product.getSetupInfo());
 
         // create target for instane access manager
-        getInstanceService().createTarget(
+        getInstanceService().createGifTarget(
             _registry.getNftId(address(instance)), 
             address(product), 
             product.getName());

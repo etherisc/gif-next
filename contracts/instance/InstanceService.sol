@@ -122,6 +122,7 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function _createGifTargets(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
+        clonedAccessManager.createGifTarget(address(clonedAccessManager), "InstanceAccessManager");
         clonedAccessManager.createGifTarget(address(clonedInstance), "Instance");
         clonedAccessManager.createGifTarget(address(clonedBundleManager), "BundleManager");
     }   
@@ -137,7 +138,7 @@ contract InstanceService is Service, IInstanceService {
         clonedAccessManager.setTargetFunctionRole(
             "Instance",
             instanceDistributionServiceSelectors, 
-            DISTRIBUTION_SERVICE_ROLE());
+            DISTRIBUTION_SERVICE_ROLE());        
     }
 
     function _grantPoolServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
@@ -217,6 +218,13 @@ contract InstanceService is Service, IInstanceService {
         clonedAccessManager.setTargetFunctionRole(
             "Instance",
             instanceInstanceServiceSelectors, 
+            INSTANCE_SERVICE_ROLE());
+
+        bytes4[] memory instanceAccessManagerInstanceServiceSelectors = new bytes4[](1);
+        instanceAccessManagerInstanceServiceSelectors[0] = clonedAccessManager.createGifTarget.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            "InstanceAccessManager",
+            instanceAccessManagerInstanceServiceSelectors, 
             INSTANCE_SERVICE_ROLE());
     }
 
@@ -334,12 +342,12 @@ contract InstanceService is Service, IInstanceService {
         return accessManager.hasRole(role, account);
     }
 
-    function createTarget(NftId instanceNftId, address targetAddress, string memory targetName) external onlyRegisteredService {
+    function createGifTarget(NftId instanceNftId, address targetAddress, string memory targetName) external onlyRegisteredService {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
         InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
-        accessManager.createTarget(targetAddress, targetName);
+        accessManager.createGifTarget(targetAddress, targetName);
     }
 
     function setTargetLocked(string memory targetName, bool locked) external {
