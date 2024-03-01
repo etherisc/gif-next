@@ -7,17 +7,22 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
+import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 import {NftId} from "../types/NftId.sol";
 
-interface IComponent is IRegisterable {
+interface IComponent is 
+    IRegisterable,
+    ITransferInterceptor
+{
 
+    error ErrorComponentNotChainNft(address caller);
+    error ErrorComponentNotProductService(address caller);
     error ErrorComponentNotInstance(NftId instanceNftId, address instance);
     error ErrorComponentProductNftAlreadySet();
     error ErrorComponentWalletAddressZero();
     error ErrorComponentWalletAddressIsSameAsCurrent(address newWallet);
     error ErrorComponentWalletAllowanceTooSmall(address oldWallet, address newWallet, uint256 allowance, uint256 balance);
     error ErrorComponentUnauthorized(address caller, uint64 requiredRoleIdNum);
-    error ErrorComponentNotProductService(address caller);
 
     event LogComponentWalletAddressChanged(address newWallet);
     event LogComponentWalletTokensTransferred(address from, address to, uint256 amount);
@@ -32,6 +37,8 @@ interface IComponent is IRegisterable {
 
     function setWallet(address walletAddress) external;
     function getWallet() external view returns (address walletAddress);
+
+    function isNftInterceptor() external view returns(bool isInterceptor);
 
     function getInstance() external view returns (IInstance instance);
 

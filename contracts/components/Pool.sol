@@ -28,8 +28,11 @@ abstract contract Pool is
     bytes32 public constant POOL_STORAGE_LOCATION_V1 = 0xecf35607b7e822969ee3625cd815bfc27031f3a93d0be2676e5bde943e2e2300;
 
     struct PoolStorage {
-        bool _isConfirmingApplication;
         UFixed _collateralizationLevel;
+
+        bool _isExternallyManaged;
+        bool _isInterceptingBundleTransfers;
+        bool _isVerifyingApplications;
 
         Fee _initialPoolFee;
         Fee _initialStakingFee;
@@ -56,9 +59,10 @@ abstract contract Pool is
         string memory name,
         // TODO refactor into tokenNftId
         address token,
-        bool isInterceptor,
-        bool isConfirmingApplication,
         UFixed collateralizationLevel,
+        bool isInterceptingNftTransfers,
+        bool isExternallyManaging,
+        bool isVerifying,
         Fee memory poolFee,
         Fee memory stakingFee,
         Fee memory performanceFee,
@@ -69,11 +73,12 @@ abstract contract Pool is
         //onlyInitializing//TODO uncomment when "fully" upgradeable
         virtual
     {
-        _initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptor, initialOwner, data);
+        _initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, data);
 
         PoolStorage storage $ = _getStorage();
 
-        $._isConfirmingApplication = isConfirmingApplication;
+        $._isExternallyManaged = isExternallyManaging;
+        $._isVerifyingApplications = isVerifying;
 
         // TODO add validation
         $._collateralizationLevel = collateralizationLevel;
@@ -107,29 +112,39 @@ abstract contract Pool is
         _underwrite(policyNftId, policyData, bundleFilter, collateralizationAmount);
     }
 
-    /**
-     * @dev see {IPoolComponent.policyMatchesBundle}. 
-     * Default implementation always returns true
-     */
+
+    function isInterceptingBundleTransfers() external view override returns (bool) {
+        return isNftInterceptor();
+    }
+
+
+    function isExternallyManaged() external view override returns (bool) {
+        return _getStorage()._isExternallyManaged;
+    }
+
+
+    function getCollateralizationLevel() external view override returns (UFixed collateralizationLevel) {
+        return _getStorage()._collateralizationLevel;
+    }
+
+
+    function isVerifyingApplications() external view override returns (bool isConfirmingApplication) {
+        return _getStorage()._isVerifyingApplications;
+    }
+
+
+    /// @dev see {IPoolComponent.policyMatchesBundle}. 
+    /// Default implementation always returns true
     function policyMatchesBundle(
         bytes memory, // policyData
         bytes memory // bundleFilter
     )
         public
-        view
+        pure
         virtual override
         returns (bool isMatching)
     {
         return true;
-    }
-
-
-    function isConfirmingApplication() external view override returns (bool isConfirmingApplication) {
-        return _getStorage()._isConfirmingApplication;
-    }
-
-    function getCollateralizationLevel() external view override returns (UFixed collateralizationLevel) {
-        return _getStorage()._collateralizationLevel;
     }
 
     function setFees(
@@ -194,8 +209,8 @@ abstract contract Pool is
             $._initialPoolFee,
             $._initialStakingFee,
             $._initialPerformanceFee,
-            false,
-            $._isConfirmingApplication,
+            isNftInterceptor(),
+            $._isVerifyingApplications,
             getWallet()
         );
     }

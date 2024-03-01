@@ -323,9 +323,9 @@ contract PolicyService is ComponentService, IPolicyService {
         IBundle.BundleInfo memory bundleInfo;
         uint256 collateralAmount;
         uint256 netPremiumAmount = 0; // > 0 if immediate premium payment 
-        {
-            ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-            IBundle.BundleInfo memory bundleInfo;
+        // {
+        //     ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+        //     IBundle.BundleInfo memory bundleInfo;
             
             (
                 bundleNftId,
@@ -335,9 +335,9 @@ contract PolicyService is ComponentService, IPolicyService {
                 instance,
                 instanceReader,
                 policyInfo,
-                productSetupInfo
+                instanceReader.getProductSetupInfo(productNftId)
             );
-        }
+        // }
         
         // lock bundle collateral
         bundleInfo = _lockCollateralInBundle(

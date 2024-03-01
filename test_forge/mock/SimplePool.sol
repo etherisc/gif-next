@@ -26,9 +26,10 @@ contract SimplePool is Pool {
             instanceNftId,
             "SimplePool",
             token,
-            isInterceptor,
-            isConfirmingApplication,
             collateralizationLevel,
+            isInterceptor,
+            false, // externally managed
+            isConfirmingApplication,
             poolFee,
             stakingFee,
             performanceFee,

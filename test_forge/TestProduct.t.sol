@@ -286,15 +286,15 @@ contract TestProduct is TestGifBase {
         vm.startPrank(investor);
         pool.lockBundle(bundleNftId);
 
-        Timestamp now = TimestampLib.blockTimestamp();
+        Timestamp timeNow = TimestampLib.blockTimestamp();
 
         // THEN - WHEN - try underwrite on locked bundle
         vm.expectRevert();
-        dproduct.underwrite(policyNftId, false, now); 
+        dproduct.underwrite(policyNftId, false, timeNow); 
 
         // WHEN - unlock bundle and try underwrite again
         pool.unlockBundle(bundleNftId);
-        dproduct.underwrite(policyNftId, false, now);
+        dproduct.underwrite(policyNftId, false, timeNow);
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
