@@ -139,7 +139,7 @@ abstract contract Pool is Component, IPoolComponent {
     )
         external
         override
-        // TODO add onlyBundleOwner
+        // TODO: add onlyBundleOwner
     {
         _bundleService.setBundleFee(bundleNftId, fee);
     }
@@ -149,7 +149,7 @@ abstract contract Pool is Component, IPoolComponent {
     )
         external
         override
-        // TODO add onlyBundleOwner
+        // TODO: add onlyBundleOwner
     {
         _bundleService.lockBundle(bundleNftId);
     }
@@ -159,7 +159,7 @@ abstract contract Pool is Component, IPoolComponent {
     )
         external
         override
-        // TODO add onlyBundleOwner
+        // TODO: add onlyBundleOwner
     {
         _bundleService.unlockBundle(bundleNftId);
     }
