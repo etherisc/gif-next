@@ -535,8 +535,7 @@ contract TestProduct is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        SimpleProduct sproduct = new SimpleProduct();
-        sproduct.initialize(
+        product = new SimpleProduct(
             address(registry),
             instanceNftId,
             address(token),
@@ -547,8 +546,7 @@ contract TestProduct is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
-        product = sproduct;
-
+        
         productNftId = productService.register(address(product));
         vm.stopPrank();
 

@@ -262,8 +262,7 @@ contract TestDistribution is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
-        SimpleDistribution sdistribution = new SimpleDistribution();
-        sdistribution.initialize(
+        distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
             address(token),
@@ -271,8 +270,7 @@ contract TestDistribution is TestGifBase {
             FeeLib.zeroFee(),
             distributionOwner
         );
-        distribution = sdistribution;
-
+        
         distributionNftId = distributionService.register(address(distribution));
     }
 

@@ -20,8 +20,7 @@ contract TestProductService is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        SimpleProduct sproduct = new SimpleProduct();
-        sproduct.initialize(
+        product = new SimpleProduct(
             address(registry),
             instanceNftId,
             address(token),
@@ -32,8 +31,7 @@ contract TestProductService is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
-        product = sproduct;
-
+        
         vm.expectRevert(
             abi.encodeWithSelector(
                 ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
@@ -52,8 +50,7 @@ contract TestProductService is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        SimpleProduct sproduct = new SimpleProduct();
-        sproduct.initialize(
+        product = new SimpleProduct(
             address(registry),
             instanceNftId,
             address(token),
@@ -64,7 +61,6 @@ contract TestProductService is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
-        product = sproduct;
 
         NftId nftId = productService.register(address(product));
         assertTrue(nftId.gtz(), "nftId is zero");

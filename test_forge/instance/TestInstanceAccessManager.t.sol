@@ -21,8 +21,7 @@ contract TestInstanceAccessManager is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        SimpleProduct sproduct = new SimpleProduct();
-        sproduct.initialize(
+        product = new SimpleProduct(
             address(registry),
             instanceNftId,
             address(token),
@@ -33,7 +32,6 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
-        product = sproduct;
         vm.stopPrank();
 
         vm.startPrank(outsider);
@@ -57,8 +55,7 @@ contract TestInstanceAccessManager is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        SimpleProduct sproduct = new SimpleProduct();
-        sproduct.initialize(
+        product = new SimpleProduct(
             address(registry),
             instanceNftId,
             address(token),
@@ -69,7 +66,6 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
-        product = sproduct;
         vm.stopPrank();
 
         vm.startPrank(outsider);
@@ -90,8 +86,7 @@ contract TestInstanceAccessManager is TestGifBase {
         _prepareDistributionAndPool();
 
         vm.startPrank(productOwner);
-        SimpleProduct sproduct = new SimpleProduct();
-        sproduct.initialize(
+        product = new SimpleProduct(
             address(registry),
             instanceNftId,
             address(token),
@@ -102,7 +97,6 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
-        product = sproduct;
         productService.register(address(product));
         product.lock();
 

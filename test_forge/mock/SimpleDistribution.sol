@@ -7,15 +7,14 @@ import {Fee} from "../../contracts/types/Fee.sol";
 
 contract SimpleDistribution is Distribution {
     
-    function initialize(
+    constructor(
         address registry,
         NftId instanceNftId,
         address token,
         bool verifying,
         Fee memory distributionFee,
         address initialOwner
-    ) public {
-        __initialize(
+    ) Distribution (
             registry,
             instanceNftId,
             "SimpleDistribution",
@@ -24,6 +23,6 @@ contract SimpleDistribution is Distribution {
             distributionFee,
             initialOwner, 
             ""
-        );
+        ) {
     }
 }

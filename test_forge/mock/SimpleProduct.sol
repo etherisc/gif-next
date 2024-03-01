@@ -13,7 +13,7 @@ uint64 constant SPECIAL_ROLE_INT = 11111;
 
 contract SimpleProduct is Product {
 
-    function initialize (
+    constructor(
         address registry,
         NftId instanceNftid,
         address token,
@@ -23,8 +23,7 @@ contract SimpleProduct is Product {
         Fee memory productFee,
         Fee memory processingFee,
         address initialOwner
-    ) external {
-        __initialize(
+    ) Product (
             registry,
             instanceNftid,
             "SimpleProduct",
@@ -36,7 +35,7 @@ contract SimpleProduct is Product {
             processingFee,
             initialOwner,
             ""
-        );
+        ) {
     }
 
     function createRisk(

@@ -13,8 +13,7 @@ contract TestDistributionService is TestGifBase {
 
     function test_DistributionService_register_missingDistributionOwnerRole() public {
         vm.startPrank(distributionOwner);
-        SimpleDistribution sdistribution = new SimpleDistribution();
-        sdistribution.initialize(
+        distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
             address(token),
@@ -22,8 +21,7 @@ contract TestDistributionService is TestGifBase {
             FeeLib.zeroFee(),
             distributionOwner
         );
-        distribution = sdistribution;
-
+        
         vm.expectRevert(
             abi.encodeWithSelector(
                 ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
@@ -40,8 +38,7 @@ contract TestDistributionService is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
-        SimpleDistribution sdistribution = new SimpleDistribution();
-        sdistribution.initialize(
+        distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
             address(token),
@@ -49,8 +46,7 @@ contract TestDistributionService is TestGifBase {
             FeeLib.zeroFee(),
             distributionOwner
         );
-        distribution = sdistribution;
-
+        
         NftId nftId = distributionService.register(address(distribution));
         assertTrue(nftId.gtz(), "nftId is zero");
     }

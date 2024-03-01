@@ -29,7 +29,7 @@ abstract contract Distribution is
 
     IDistributionService private _distributionService;
 
-    function __initialize(
+    constructor(
         address registry,
         NftId instanceNftId,
         // TODO refactor into tokenNftId
@@ -39,8 +39,7 @@ abstract contract Distribution is
         Fee memory distributionFee,
         address initialOwner,
         bytes memory data
-    ) internal {
-        _initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data);
+    ) Component (registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data) {
 
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;

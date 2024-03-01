@@ -68,6 +68,19 @@ abstract contract Component is
         _;
     }
 
+    constructor(
+        address registry,
+        NftId instanceNftId,
+        string memory name,
+        address token,
+        ObjectType componentType,
+        bool isInterceptor,
+        address initialOwner,
+        bytes memory data
+    ) {
+        _initializeComponent(registry, instanceNftId, name, token, componentType, isInterceptor, initialOwner, data);
+    }
+
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
         assembly {
             $.slot := CONTRACT_LOCATION_V1
@@ -86,7 +99,7 @@ abstract contract Component is
         bytes memory data
     )
         internal
-        //onlyInitializing // TODO uncomment when "fully" upgradeable
+        initializer 
         virtual
     {
         ComponentStorage storage $ = _getComponentStorage();
@@ -101,6 +114,9 @@ abstract contract Component is
         if(!$._instance.supportsInterface(type(IInstance).interfaceId)) {
             revert ErrorComponentNotInstance(instanceNftId, instanceInfo.objectAddress);
         }
+
+        // initialize AccessManagedUpgradeable
+        __AccessManaged_init($._instance.authority());
 
         // set linked services
         VersionPart gifVersion = $._instance.getMajorVersion();
