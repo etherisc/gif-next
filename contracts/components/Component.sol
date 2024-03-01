@@ -110,12 +110,11 @@ abstract contract Component is
         _registerInterface(type(IComponent).interfaceId);
     }
 
-    function lock() external restricted() override {
+    function lock() external onlyOwner override {
         _getComponentStorage()._instanceService.setTargetLocked(getName(), true);
     }
     
-    // FIXME: this cannot be `restricted` as this method will be inaccessible when the component is locked
-    function unlock() external restricted() override {
+    function unlock() external onlyOwner override {
         _getComponentStorage()._instanceService.setTargetLocked(getName(), false);
     }
 
