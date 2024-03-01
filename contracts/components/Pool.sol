@@ -78,32 +78,11 @@ abstract contract Pool is Component, IPoolComponent {
         _registerInterface(type(IPoolComponent).interfaceId);
     }
 
-    function createBundle(
-        Fee memory fee,
-        uint256 initialAmount,
-        uint256 lifetime,
-        bytes memory filter
-    )
-        external
-        virtual override
-        returns(NftId bundleNftId)
-    {
-        address owner = msg.sender;
-        bundleNftId = _bundleService.createBundle(
-            owner,
-            fee,
-            initialAmount,
-            lifetime,
-            filter
-        );
-
-        // TODO add logging
-    }
-
     /**
      * @dev see {IPool.underwrite}. 
      * Default implementation that only writes a {LogUnderwrittenByPool} entry.
      */
+    // FIXME: remove this function .. only _internal
     function underwrite(
         NftId policyNftId, 
         bytes memory policyData,
@@ -111,7 +90,7 @@ abstract contract Pool is Component, IPoolComponent {
         uint256 collateralizationAmount
     )
         external
-        onlyProductService
+        restricted()
         virtual override 
     {
         _underwrite(policyNftId, policyData, bundleFilter, collateralizationAmount);
@@ -148,7 +127,7 @@ abstract contract Pool is Component, IPoolComponent {
         Fee memory performanceFee
     )
         external
-        onlyOwner
+        restricted()
         override
     {
         _poolService.setFees(poolFee, stakingFee, performanceFee);

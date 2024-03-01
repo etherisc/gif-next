@@ -57,12 +57,12 @@ abstract contract Distribution is
         _registerInterface(type(IDistributionComponent).interfaceId);
     }
 
-
     function setFees(
         Fee memory distributionFee
     )
         external
         override
+        restricted()
     {
         _distributionService.setFees(distributionFee);
     }
@@ -100,7 +100,7 @@ abstract contract Distribution is
         uint256 feeAmount
     )
         external
-        onlyProductService
+        restricted()
         virtual override
     {
         // default is no action
@@ -111,7 +111,7 @@ abstract contract Distribution is
         uint256 feeAmount
     )
         external
-        onlyProductService
+        restricted()
         virtual override
     {
         // default is no action

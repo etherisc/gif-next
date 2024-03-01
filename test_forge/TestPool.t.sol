@@ -130,7 +130,8 @@ contract TestPool is TestGifBase {
         token.approve(address(poolSetupInfo.tokenHandler), 10000);
 
         // WHEN
-        bundleNftId = pool.createBundle(
+        SimplePool spool = SimplePool(address(pool));
+        bundleNftId = spool.createBundle(
             FeeLib.zeroFee(), 
             10000, 
             604800, 
@@ -179,7 +180,8 @@ contract TestPool is TestGifBase {
         ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
         token.approve(address(poolSetupInfo.tokenHandler), 10000);
 
-        NftId bundleNftId = pool.createBundle(
+        SimplePool spool = SimplePool(address(pool));
+        NftId bundleNftId = spool.createBundle(
             FeeLib.zeroFee(), 
             10000, 
             604800, 

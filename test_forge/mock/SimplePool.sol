@@ -34,4 +34,25 @@ contract SimplePool is Pool {
         ""
     ) {
     }
+
+    function createBundle(
+        Fee memory fee,
+        uint256 initialAmount,
+        uint256 lifetime,
+        bytes calldata filter
+    )
+        external
+        virtual 
+        returns(NftId bundleNftId)
+    {
+        address owner = msg.sender;
+        bundleNftId = _createBundle(
+            owner,
+            fee,
+            initialAmount,
+            lifetime,
+            filter
+        );
+    }
+
 }

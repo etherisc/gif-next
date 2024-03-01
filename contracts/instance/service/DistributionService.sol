@@ -76,6 +76,7 @@ contract DistributionService is
 
         instance.createDistributionSetup(distributionNftId, distribution.getSetupInfo());
         getInstanceService().createGifTarget(instanceNftId, distributionAddress, distribution.getName());
+        getInstanceService().grantDistributionDefaultPermissions(instanceNftId, distribution);
     }
 
     function _decodeAndVerifyDistributionData(bytes memory data)

@@ -19,16 +19,6 @@ interface IPoolComponent is IComponent {
         Fee memory performanceFee
     ) external;
 
-    /**
-     * @dev creates a new bundle for this pool.
-     */
-    function createBundle(
-        Fee memory fee,
-        uint256 initialAmount,
-        uint256 lifetime,
-        bytes memory filter
-    ) external returns(NftId bundleNftId);
-
     function setBundleFee(
         NftId policyNftId, 
         Fee memory fee

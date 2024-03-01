@@ -49,25 +49,6 @@ abstract contract Component is
         _;
     }
 
-    // TODO discuss replacement with modifier restricted from accessmanaged
-    modifier onlyInstanceRole(uint64 roleIdNum) {
-        RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
-        InstanceAccessManager accessManager = InstanceAccessManager(_getComponentStorage()._instance.authority());
-        if( !accessManager.hasRole(roleId, msg.sender)) {
-            revert ErrorComponentUnauthorized(msg.sender, roleIdNum);
-        }
-        _;
-    }
-
-    // TODO discuss replacement with modifier restricted from accessmanaged
-    modifier isNotLocked() {
-        InstanceAccessManager accessManager = InstanceAccessManager(_getComponentStorage()._instance.authority());
-        if (accessManager.isTargetLocked(address(this))) {
-            revert IAccess.ErrorIAccessTargetLocked(address(this));
-        }
-        _;
-    }
-
     constructor(
         address registry,
         NftId instanceNftId,
@@ -129,13 +110,11 @@ abstract contract Component is
         _registerInterface(type(IComponent).interfaceId);
     }
 
-    // TODO discuss replacement with modifier restricted from accessmanaged
-    function lock() external onlyOwner override {
+    function lock() external restricted() override {
         _getComponentStorage()._instanceService.setTargetLocked(getName(), true);
     }
     
-    // TODO discuss replacement with modifier restricted from accessmanaged
-    function unlock() external onlyOwner override {
+    function unlock() external restricted() override {
         _getComponentStorage()._instanceService.setTargetLocked(getName(), false);
     }
 

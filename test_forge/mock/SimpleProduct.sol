@@ -118,7 +118,7 @@ contract SimpleProduct is Product {
 
     function doSomethingSpecial() 
         public 
-        onlyInstanceRole(SPECIAL_ROLE_INT)
+        restricted()
         returns (bool) 
     {
         return true;
@@ -126,7 +126,7 @@ contract SimpleProduct is Product {
 
     function doWhenNotLocked() 
         public 
-        isNotLocked
+        restricted()
         returns (bool) 
     {
         return true;

@@ -85,6 +85,7 @@ contract PoolService is
 
         instance.createPoolSetup(poolNftId, pool.getSetupInfo());
         getInstanceService().createGifTarget(instanceNftId, poolAddress, pool.getName());
+        getInstanceService().grantPoolDefaultPermissions(instanceNftId, pool);
     }
 
     function setFees(
