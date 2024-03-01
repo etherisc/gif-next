@@ -39,8 +39,15 @@ abstract contract Distribution is
         Fee memory distributionFee,
         address initialOwner,
         bytes memory data
-    ) Component (registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data) {
-
+    ) Component (
+        registry, 
+        instanceNftId, 
+        name, token, 
+        DISTRIBUTION(), 
+        true, 
+        initialOwner, 
+        data
+    ) {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 

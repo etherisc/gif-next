@@ -87,7 +87,6 @@ abstract contract Component is
         }
     }
 
-
     function _initializeComponent(
         address registry,
         NftId instanceNftId,

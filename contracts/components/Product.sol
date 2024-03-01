@@ -47,8 +47,16 @@ abstract contract Product is Component, IProductComponent {
         Fee memory processingFee,
         address initialOwner,
         bytes memory data
-    ) Component (registry, instanceNftid, name, token, PRODUCT(), isInterceptor, initialOwner, data) {
-
+    ) Component (
+        registry, 
+        instanceNftid, 
+        name, 
+        token, 
+        PRODUCT(), 
+        isInterceptor, 
+        initialOwner, 
+        data
+    ) {
         // TODO add validation
         _policyService = getInstance().getPolicyService(); 
         _pool = Pool(pool);

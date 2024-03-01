@@ -53,7 +53,16 @@ abstract contract Pool is Component, IPoolComponent {
         Fee memory performanceFee,
         address initialOwner,
         bytes memory data
-    ) Component(registry, instanceNftId, name, token, POOL(), isInterceptor, initialOwner, data) {
+    ) Component(
+        registry, 
+        instanceNftId, 
+        name, 
+        token, 
+        POOL(), 
+        isInterceptor, 
+        initialOwner, 
+        data
+    ) {
         _isConfirmingApplication = isConfirmingApplication;
         // TODO add validation
         _collateralizationLevel = collateralizationLevel;

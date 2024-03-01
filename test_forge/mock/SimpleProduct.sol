@@ -24,18 +24,18 @@ contract SimpleProduct is Product {
         Fee memory processingFee,
         address initialOwner
     ) Product (
-            registry,
-            instanceNftid,
-            "SimpleProduct",
-            token,
-            isInterceptor,
-            pool,
-            distribution,
-            productFee,
-            processingFee,
-            initialOwner,
-            ""
-        ) {
+        registry,
+        instanceNftid,
+        "SimpleProduct",
+        token,
+        isInterceptor,
+        pool,
+        distribution,
+        productFee,
+        processingFee,
+        initialOwner,
+        ""
+    ) {
     }
 
     function createRisk(

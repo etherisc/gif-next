@@ -20,19 +20,18 @@ contract SimplePool is Pool {
         Fee memory performanceFee,
         address initialOwner
     ) Pool (
-            registry,
-            instanceNftId,
-            "SimplePool",
-            token,
-            isInterceptor,
-            isConfirmingApplication,
-            collateralizationLevel,
-            poolFee,
-            stakingFee,
-            performanceFee,
-            initialOwner,
-            ""
-        ) {
-            
+        registry,
+        instanceNftId,
+        "SimplePool",
+        token,
+        isInterceptor,
+        isConfirmingApplication,
+        collateralizationLevel,
+        poolFee,
+        stakingFee,
+        performanceFee,
+        initialOwner,
+        ""
+    ) {
     }
 }

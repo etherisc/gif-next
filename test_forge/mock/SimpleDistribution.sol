@@ -15,14 +15,14 @@ contract SimpleDistribution is Distribution {
         Fee memory distributionFee,
         address initialOwner
     ) Distribution (
-            registry,
-            instanceNftId,
-            "SimpleDistribution",
-            token,
-            verifying,
-            distributionFee,
-            initialOwner, 
-            ""
-        ) {
+        registry,
+        instanceNftId,
+        "SimpleDistribution",
+        token,
+        verifying,
+        distributionFee,
+        initialOwner, 
+        ""
+    ) {
     }
 }
