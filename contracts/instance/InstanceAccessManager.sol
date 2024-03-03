@@ -6,7 +6,7 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
-import {RoleId, RoleIdLib } from "../types/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
 import {IAccess} from "./module/IAccess.sol";
 
@@ -34,62 +34,73 @@ contract InstanceAccessManager is
 
     AccessManager internal _accessManager;
 
-    function initialize(address initialAdmin) external initializer
+    function initialize(address initialAdmin) external initializer 
     {
         // if size of the contract gets too large, this can be externalized which will reduce the contract size considerably
         _accessManager = new AccessManager(address(this));
-        // this service required admin rights to access manager to be able to grant/revoke roles
-        _accessManager.grantRole(_accessManager.ADMIN_ROLE(), initialAdmin, 0);
 
         __AccessManaged_init(address(_accessManager));
 
-        _createRole(RoleIdLib.toRoleId(_accessManager.ADMIN_ROLE()), ADMIN_ROLE_NAME, false, false);
-        _createRole(RoleIdLib.toRoleId(_accessManager.PUBLIC_ROLE()), PUBLIC_ROLE_NAME, false, false);
+        _createRole(ADMIN_ROLE(), ADMIN_ROLE_NAME, false, false);
+        _createRole(PUBLIC_ROLE(), PUBLIC_ROLE_NAME, false, false);
+
+        // assume initialAdmin is instance service which requires admin rights to access manager during instance cloning
+        EnumerableSet.add(_roleMembers[ADMIN_ROLE()], initialAdmin);
+        _accessManager.grantRole(ADMIN_ROLE().toInt(), initialAdmin, 0);
     }
 
     //--- Role ------------------------------------------------------//
+    // INSTANCE_SERVICE_ROLE
     function createGifRole(RoleId roleId, string memory name) external restricted() {
         _createRole(roleId, name, false, true);
     }
 
+    // INSTANCE_OWNER_ROLE
     function createRole(RoleId roleId, string memory name) external restricted() {
         _createRole(roleId, name, true, true);
     }
 
+    // INSTANCE_OWNER_ROLE
     function setRoleLocked(RoleId roleId, bool locked) external restricted() {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessSetLockedForNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessSetLockedForNonexistentRole(roleId);
+        }
+
+        if(!_role[roleId].isCustom) {
+            revert IAccess.ErrorIAccessSetLockedForNoncustomRole(roleId);
         }
 
         _role[roleId].isLocked = locked;
         _role[roleId].updatedAt = TimestampLib.blockTimestamp();
     }
 
-    function roleExists(RoleId roleId) public view returns (bool exists) {
-        return _role[roleId].createdAt.gtz();
-    }
-
+    // TODO Oz's grantRole() have different modifier and works with all role admins -> while this function works only with one role...
+    // INSTANCE_OWNER_ROLE
     function grantRole(RoleId roleId, address member) external restricted() returns (bool granted) {
-        if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessGrantNonexstentRole(roleId);
+        if(!_role[roleId].isCustom) {
+            revert IAccess.ErrorIAccessGrantNoncustomRole(roleId);
         }
 
-        if (_role[roleId].isLocked) {
-            revert IAccess.ErrorIAccessRoleIdNotActive(roleId);
+        return _grantRole(roleId, member);
+    }
+    // INSTANCE_SERVICE_ROLE
+    function grantGifRole(RoleId roleId, address member) external restricted() returns (bool granted) {
+        if(_role[roleId].isCustom) {
+            revert IAccess.ErrorIAccessGrantCustomRole(roleId);
         }
 
-        if (!EnumerableSet.contains(_roleMembers[roleId], member)) {
-            _accessManager.grantRole(roleId.toInt(), member, EXECUTION_DELAY);
-            EnumerableSet.add(_roleMembers[roleId], member);
-            return true;
-        }
-
-        return false;
+        return _grantRole(roleId, member);
     }
 
+    // TODO oz's revokeRole() have different modifier and works with all roles admins while this function works only with one role...
+    // INSTANCE_OWNER_ROLE
     function revokeRole(RoleId roleId, address member) external restricted() returns (bool revoked) {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRevokeNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRevokeNonexistentRole(roleId);
+        }
+
+        if(!_role[roleId].isCustom) {
+            revert IAccess.ErrorIAccessRevokeNoncustomRole(roleId);
         }
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
@@ -102,13 +113,18 @@ contract InstanceAccessManager is
     }
 
     /// @dev not restricted function by intention
-    /// the restriction to role members is already enforced by the call to the access manger
+    /// the restriction to role members is already enforced by the call to the access manager
     function renounceRole(RoleId roleId) external returns (bool revoked) {
         address member = msg.sender;
 
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRenounceNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRenounceNonexistentRole(roleId);
         }
+
+        // TODO prohibit renouncing GIF roles???
+        /*if(!_role[roleId].isCustom) {
+            revert IAccess.ErrorIAccessRenounceNoncustomRole(roleId);
+        }*/
 
         if (EnumerableSet.contains(_roleMembers[roleId], member)) {
             // cannot use accessManger.renounce as it directly checks against msg.sender
@@ -118,6 +134,10 @@ contract InstanceAccessManager is
         }
 
         return false;
+    }
+
+    function roleExists(RoleId roleId) public view returns (bool exists) {
+        return _role[roleId].createdAt.gtz();
     }
 
     function roles() external view returns (uint256 numberOfRoles) {
@@ -149,23 +169,51 @@ contract InstanceAccessManager is
     }
 
     //--- Target ------------------------------------------------------//
+    // INSTANCE_SERVICE_ROLE
     function createGifTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, false, true);
     }
-
+    // INSTANCE_SERVICE_ROLE
     function createTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, true, true);
     }
-
+    // INSTANCE_SERVICE_ROLE
     function setTargetLocked(string memory targetName, bool locked) external restricted() {
         address target = _targetForName[ShortStrings.toShortString(targetName)];
         
         if (target == address(0)) {
-            revert IAccess.ErrorIAccessSetLockedForNonexstentTarget(target);
+            revert IAccess.ErrorIAccessSetLockedForNonexistentTarget(target);
+        }
+
+        if(!_target[target].isCustom) {
+            revert IAccess.ErrorIAccessSetLockedForNoncustomTarget(target);
         }
 
         _target[target].isLocked = locked;
         _accessManager.setTargetClosed(target, locked);
+    }
+    // ADMIN_ROLE
+    function setTargetFunctionRole(
+        string memory targetName,
+        bytes4[] calldata selectors,
+        RoleId roleId
+    ) public virtual restricted() {
+        address target = _targetForName[ShortStrings.toShortString(targetName)];
+
+        if (target == address(0)) {
+            revert IAccess.ErrorIAccessSetForNonexistentTarget(target);
+        }
+
+        if (!roleExists(roleId)) {
+            revert IAccess.ErrorIAccessSetNonexistentRole(roleId);
+        }
+
+        uint64 roleIdInt = RoleId.unwrap(roleId);
+        _accessManager.setTargetFunctionRole(target, selectors, roleIdInt);
+    }
+
+    function isTargetLocked(address target) public view returns (bool locked) {
+        return _accessManager.isTargetClosed(target);
     }
 
     function targetExists(address target) public view returns (bool exists) {
@@ -230,6 +278,25 @@ contract InstanceAccessManager is
         }
     }
 
+    function _grantRole(RoleId roleId, address member) internal returns (bool granted) {
+        if (!roleExists(roleId)) {
+            revert IAccess.ErrorIAccessGrantNonexistentRole(roleId);
+        }
+
+        // GIF roles are never locked
+        if (_role[roleId].isLocked) {
+            revert IAccess.ErrorIAccessRoleIdNotActive(roleId);
+        }
+
+        if (!EnumerableSet.contains(_roleMembers[roleId], member)) {
+            _accessManager.grantRole(roleId.toInt(), member, EXECUTION_DELAY);
+            EnumerableSet.add(_roleMembers[roleId], member);
+            return true;
+        }
+
+        return false;        
+    }
+
     function _createTarget(address target, string memory name, bool isCustom, bool validateParameters) internal {
         if (validateParameters) {
             _validateTargetParameters(target, name, isCustom);
@@ -256,36 +323,6 @@ contract InstanceAccessManager is
 
     function _validateTargetParameters(address target, string memory name, bool isCustom) internal view {
         // TODO: implement
-    }
-
-    function setTargetFunctionRole(
-        address target,
-        bytes4[] calldata selectors,
-        uint64 roleId
-    ) public virtual restricted() {
-        _accessManager.setTargetFunctionRole(target, selectors, roleId);
-    }
-
-    function setTargetFunctionRole(
-        string memory targetName,
-        bytes4[] calldata selectors,
-        RoleId roleId
-    ) public virtual restricted() {
-        address target = _targetForName[ShortStrings.toShortString(targetName)];
-        uint64 roleIdInt = RoleId.unwrap(roleId);
-        _accessManager.setTargetFunctionRole(target, selectors, roleIdInt);
-    }
-
-    function setTargetClosed(string memory targetName, bool closed) public restricted() {
-        address target = _targetForName[ShortStrings.toShortString(targetName)];
-        if (target == address(0)) {
-            revert IAccess.ErrorIAccessTargetAddressZero();
-        }
-        _accessManager.setTargetClosed(target, closed);
-    }
-
-    function isTargetLocked(address target) public view returns (bool locked) {
-        return _accessManager.isTargetClosed(target);
     }
 
     function canCall(

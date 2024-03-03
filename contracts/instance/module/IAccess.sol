@@ -34,15 +34,22 @@ interface IAccess {
     error ErrorIAccessRoleNameNotUnique(RoleId roleId, ShortString name);
     error ErrorIAccessRoleInvalidUpdate(RoleId roleId, bool isCustom);
     error ErrorIAccessRoleIsCustomIsImmutable(RoleId roleId, bool isCustom, bool isCustomExisting);
-    error ErrorIAccessSetLockedForNonexstentRole(RoleId roleId);
-    error ErrorIAccessGrantNonexstentRole(RoleId roleId);
-    error ErrorIAccessRevokeNonexstentRole(RoleId roleId); 
-    error ErrorIAccessRenounceNonexstentRole(RoleId roleId);
+    error ErrorIAccessSetNonexistentRole(RoleId roleId);
+    error ErrorIAccessSetLockedForNonexistentRole(RoleId roleId);
+    error ErrorIAccessSetLockedForNoncustomRole(RoleId roleId);
+    error ErrorIAccessGrantNonexistentRole(RoleId roleId);
+    error ErrorIAccessGrantNoncustomRole(RoleId roleId);
+    error ErrorIAccessGrantCustomRole(RoleId roleId);
+    error ErrorIAccessRevokeNonexistentRole(RoleId roleId); 
+    error ErrorIAccessRevokeNoncustomRole(RoleId roleId);
+    error ErrorIAccessRenounceNonexistentRole(RoleId roleId);
 
     error ErrorIAccessTargetAddressZero();
     error ErrorIAccessTargetAlreadyExists(address target, ShortString name);
     error ErrorIAccessTargetNameEmpty(address target);
     error ErrorIAccessTargetNameExists(address target, address existingTarget, ShortString name);
-    error ErrorIAccessSetLockedForNonexstentTarget(address target);
     error ErrorIAccessTargetLocked(address target);
+    error ErrorIAccessSetLockedForNonexistentTarget(address target);
+    error ErrorIAccessSetLockedForNoncustomTarget(address target);
+    error ErrorIAccessSetForNonexistentTarget(address target);
 }

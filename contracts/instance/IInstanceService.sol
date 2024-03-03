@@ -34,7 +34,7 @@ interface IInstanceService is IService {
         );
 
     function hasRole(address account, RoleId role, address instanceAddress) external returns (bool);
-    function setTargetLocked(string memory targetName, bool locked) external;
+    function setComponentLocked(string memory componentName, bool locked) external;
 
 }
 

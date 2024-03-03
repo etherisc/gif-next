@@ -88,7 +88,7 @@ export async function deployAndRegisterMasterInstance(
 
     await executeTx(() => instance.setBundleManager(bundleManagerAddress));
     // revoke admin role for protocol owner
-    await executeTx(() => accessManager.revokeRole(0, resolveAddress(owner)));
+    await executeTx(() => accessManager.renounceRole(0));
 
     logger.debug(`setting master addresses into instance service and registering master instance`);
     const rcpt = await executeTx(() => services.instanceService.setAndRegisterMasterInstance(accessManagerAddress, instanceAddress, instanceReaderAddress, bundleManagerAddress));

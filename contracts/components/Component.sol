@@ -128,12 +128,12 @@ abstract contract Component is
 
     // TODO discuss replacement with modifier restricted from accessmanaged
     function lock() external onlyOwner override {
-        _getComponentStorage()._instanceService.setTargetLocked(getName(), true);
+        _getComponentStorage()._instanceService.setComponentLocked(getName(), true);
     }
     
     // TODO discuss replacement with modifier restricted from accessmanaged
     function unlock() external onlyOwner override {
-        _getComponentStorage()._instanceService.setTargetLocked(getName(), false);
+        _getComponentStorage()._instanceService.setComponentLocked(getName(), false);
     }
 
     // only product service may set product nft id during registration of product setup

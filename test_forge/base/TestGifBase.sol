@@ -49,6 +49,7 @@ import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION,
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {
     ADMIN_ROLE,
+    INSTANCE_OWNER_ROLE,
     PRODUCT_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
     DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
@@ -131,7 +132,7 @@ contract TestGifBase is Test {
     NftId public bundleNftId;
     uint256 public initialCapitalAmount;
 
-    address constant public MASTER_INSTANCE_OWNER = address(0x1);
+    address constant public NFT_LOCK_ADDRESS = address(0x1);
     address public registryOwner = makeAddr("registryOwner");
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
@@ -300,7 +301,7 @@ contract TestGifBase is Test {
         releaseManager.registerRegistryService(registryService);
 
         // TODO it is also linking to registry
-        // TODO links to _initial version instead _latest
+        // TODO links to _initial version instead of _latest
         //registryServiceManager.linkToNftOwnable(registryAddress);// links to initial registry service
         //tokenRegistry.linkToNftOwnable(registryAddress);// links to initial registry service
 
@@ -435,20 +436,23 @@ contract TestGifBase is Test {
         masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), address(masterInstance));
         masterInstance.setBundleManager(masterBundleManager);
 
-        // revoke ADMIN_ROLE from registryOwner. token is already owned by 0x1
-        masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(registryOwner));
+        // revoke ADMIN_ROLE from registryOwner
+        assert(masterInstanceAccessManager.renounceRole(ADMIN_ROLE()));
         
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(
             address(masterInstanceAccessManager), 
             address(masterInstance), 
             address(masterInstanceReader), 
             address(masterBundleManager));
-
-        chainNft.transferFrom(registryOwner, MASTER_INSTANCE_OWNER, masterInstanceNftId.toInt());
+            
+        chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
+        console.log("master instance access manager deployed at", address(masterInstanceAccessManager));
+        console.log("master instance reader deployed at", address(masterInstanceReader));
+        console.log("master bundle manager deployed at", address(masterBundleManager));
         // solhint-enable
     }
 
@@ -463,14 +467,13 @@ contract TestGifBase is Test {
         ) = instanceService.createInstanceClone();
 
         
-        // solhint-disable-next-line
+        // solhint-disable
         console.log("instance deployed at", address(instance));
-        // solhint-disable-next-line
         console.log("instance nft id", instanceNftId.toInt());
-        // solhint-disable-next-line
         console.log("instance access manager deployed at", address(instanceAccessManager));
-        // solhint-disable-next-line
         console.log("instance reader deployed at", address(instanceReader));
+        console.log("bundle manager deployed at", address(instanceBundleManager));
+        // solhint-enable
     }
 
     function _deployAndActivateToken() internal {
