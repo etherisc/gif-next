@@ -173,7 +173,7 @@ contract InstanceAccessManager is
     function createGifTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, false, true);
     }
-    // INSTANCE_SERVICE_ROLE
+    // ADMIN_ROLE, func is not used
     function createTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, true, true);
     }
@@ -192,7 +192,7 @@ contract InstanceAccessManager is
         _target[target].isLocked = locked;
         _accessManager.setTargetClosed(target, locked);
     }
-    // ADMIN_ROLE
+    // INSTANCE_SERVICE_ROLE
     function setTargetFunctionRole(
         string memory targetName,
         bytes4[] calldata selectors,

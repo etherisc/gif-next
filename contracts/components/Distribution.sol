@@ -39,9 +39,15 @@ abstract contract Distribution is
         Fee memory distributionFee,
         address initialOwner,
         bytes memory data
-    )
-        Component(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data)
-    {
+    ) Component (
+        registry, 
+        instanceNftId, 
+        name, token, 
+        DISTRIBUTION(), 
+        true, 
+        initialOwner, 
+        data
+    ) {
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;
 
@@ -51,12 +57,13 @@ abstract contract Distribution is
         _registerInterface(type(IDistributionComponent).interfaceId);
     }
 
-
     function setFees(
         Fee memory distributionFee
     )
         external
         override
+        onlyOwner
+        restricted()
     {
         _distributionService.setFees(distributionFee);
     }
@@ -94,7 +101,8 @@ abstract contract Distribution is
         uint256 feeAmount
     )
         external
-        onlyProductService
+        onlyOwner
+        restricted()
         virtual override
     {
         // default is no action
@@ -105,7 +113,8 @@ abstract contract Distribution is
         uint256 feeAmount
     )
         external
-        onlyProductService
+        onlyOwner
+        restricted()
         virtual override
     {
         // default is no action

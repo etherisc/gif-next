@@ -5,6 +5,7 @@ import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {PRODUCT_OWNER_ROLE} from "../contracts/types/RoleId.sol";
 import {SimpleProduct} from "./mock/SimpleProduct.sol";
+import {SimplePool} from "./mock/SimplePool.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
@@ -284,7 +285,8 @@ contract TestProduct is TestGifBase {
 
         assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         vm.startPrank(investor);
-        pool.lockBundle(bundleNftId);
+        SimplePool spool = SimplePool(address(pool));
+        spool.lockBundle(bundleNftId);
 
         Timestamp now = TimestampLib.blockTimestamp();
 
@@ -293,7 +295,7 @@ contract TestProduct is TestGifBase {
         dproduct.underwrite(policyNftId, false, now); 
 
         // WHEN - unlock bundle and try underwrite again
-        pool.unlockBundle(bundleNftId);
+        spool.unlockBundle(bundleNftId);
         dproduct.underwrite(policyNftId, false, now);
 
         // THEN
@@ -546,7 +548,7 @@ contract TestProduct is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
-
+        
         productNftId = productService.register(address(product));
         vm.stopPrank();
 
@@ -569,7 +571,8 @@ contract TestProduct is TestGifBase {
         token.approve(address(poolSetupInfo.tokenHandler), 10000);
 
         Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        bundleNftId = pool.createBundle(
+        SimplePool spool = SimplePool(address(pool));
+        bundleNftId = spool.createBundle(
             bundleFee, 
             10000, 
             604800, 

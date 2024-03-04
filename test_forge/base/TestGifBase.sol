@@ -439,12 +439,8 @@ contract TestGifBase is Test {
         // revoke ADMIN_ROLE from registryOwner
         assert(masterInstanceAccessManager.renounceRole(ADMIN_ROLE()));
         
-        masterInstanceNftId = instanceService.setAndRegisterMasterInstance(
-            address(masterInstanceAccessManager), 
-            address(masterInstance), 
-            address(masterInstanceReader), 
-            address(masterBundleManager));
-            
+        masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
+
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 
         // solhint-disable

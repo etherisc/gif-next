@@ -29,6 +29,9 @@ import {
     POLICY_SERVICE_ROLE, 
     BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, POLICY, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../types/ObjectType.sol";
+import {IDistributionComponent} from "../components/IDistributionComponent.sol";
+import {IPoolComponent} from "../components/IPoolComponent.sol";
+import {IProductComponent} from "../components/IProductComponent.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -152,7 +155,7 @@ contract InstanceService is Service, IInstanceService {
         clonedAccessManager.setTargetFunctionRole(
             "Instance",
             instanceDistributionServiceSelectors, 
-            DISTRIBUTION_SERVICE_ROLE());
+            DISTRIBUTION_SERVICE_ROLE());        
     }
 
     function _grantPoolServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
@@ -235,13 +238,15 @@ contract InstanceService is Service, IInstanceService {
             INSTANCE_SERVICE_ROLE());
 
         // configure authorizations for instance service on instance access manager
-        bytes4[] memory accessManagerInstanceServiceSelectors = new bytes4[](2);
-        accessManagerInstanceServiceSelectors[0] = clonedAccessManager.createTarget.selector; 
+        bytes4[] memory accessManagerInstanceServiceSelectors = new bytes4[](3);
+        accessManagerInstanceServiceSelectors[0] = clonedAccessManager.createGifTarget.selector;
         accessManagerInstanceServiceSelectors[1] = clonedAccessManager.setTargetLocked.selector;
+        accessManagerInstanceServiceSelectors[2] = clonedAccessManager.setTargetFunctionRole.selector;
+        // not used 
+        //accessManagerInstanceServiceSelectors[3] = clonedAccessManager.createTarget.selector;
         // used only during cloning when instance service has ADMIN_ROLE, otherwise uncomment
-        //accessManagerInstanceServiceSelectors[2] = clonedAccessManager.createGifRole.selector;
-        //accessManagerInstanceServiceSelectors[3] = clonedAccessManager.grantGifRole.selector;
-        //accessManagerInstanceServiceSelectors[4] = clonedAccessManager.createGifTarget.selector;
+        //accessManagerInstanceServiceSelectors[4] = clonedAccessManager.createGifRole.selector;
+        //accessManagerInstanceServiceSelectors[5] = clonedAccessManager.grantGifRole.selector;
         clonedAccessManager.setTargetFunctionRole(
             "InstanceAccessManager",
             accessManagerInstanceServiceSelectors, 
@@ -256,34 +261,34 @@ contract InstanceService is Service, IInstanceService {
         accessManagerInstanceOwnerSelectors[1] = clonedAccessManager.grantRole.selector;
         accessManagerInstanceOwnerSelectors[2] = clonedAccessManager.revokeRole.selector;
         accessManagerInstanceOwnerSelectors[3] = clonedAccessManager.setRoleLocked.selector;
-        //accessManagerInstanceOwnerSelectors[4] = clonedAccessManager.setTargetFunctionRole.selector;// MUST not set: a) GIF roles b) for GIF targets
         clonedAccessManager.setTargetFunctionRole(
             "InstanceAccessManager",
             accessManagerInstanceOwnerSelectors, 
             INSTANCE_OWNER_ROLE());
     }
 
-    function setAndRegisterMasterInstance(
-        address accessManagerAddress, 
-        address instanceAddress, 
-        address instanceReaderAddress, 
-        address bundleManagerAddress) 
+    function setAndRegisterMasterInstance(address instanceAddress) 
             external 
             onlyOwner 
             returns(NftId masterInstanceNftId)
     {
-        require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
         require(_masterInstance == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
+        require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
         require(_masterInstanceBundleManager == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
 
-        require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
         require (instanceAddress != address(0), "ERROR:CRD-006:INSTANCE_ZERO");
-        require (instanceReaderAddress != address(0), "ERROR:CRD-007:INSTANCE_READER_ZERO");
-        require (bundleManagerAddress != address(0), "ERROR:CRD-008:BUNDLE_MANAGER_ZERO");
 
         IInstance instance = IInstance(instanceAddress);
-        InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
-        BundleManager bundleManager = BundleManager(bundleManagerAddress);
+        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
+        address accessManagerAddress = address(accessManager);
+        InstanceReader instanceReader = instance.getInstanceReader();
+        address instanceReaderAddress = address(instanceReader);
+        BundleManager bundleManager = instance.getBundleManager();
+        address bundleManagerAddress = address(bundleManager);
+
+        require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
+        require (instanceReaderAddress != address(0), "ERROR:CRD-007:INSTANCE_READER_ZERO");
+        require (bundleManagerAddress != address(0), "ERROR:CRD-008:BUNDLE_MANAGER_ZERO");
 
         require(instance.authority() == accessManagerAddress, "ERROR:CRD-009:INSTANCE_AUTHORITY_MISMATCH");
         require(instanceReader.getInstance() == instance, "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
@@ -375,15 +380,79 @@ contract InstanceService is Service, IInstanceService {
         InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
         return accessManager.hasRole(role, account);
     }
-
-    function createTarget(NftId instanceNftId, address targetAddress, string memory targetName) external onlyRegisteredService {
+    // TODO used to create component targets which are not Gif tergets?
+    function createGifTarget(NftId instanceNftId, address targetAddress, string memory targetName) external onlyRegisteredService {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
         InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
-        accessManager.createTarget(targetAddress, targetName);
+        accessManager.createGifTarget(targetAddress, targetName);
+    }
+    // TODO why is instance access manager responsible for component access management?
+    //      1). potentially, instance and component are controlled by 2 different entities
+    //      2). hard to predict what access management mechanism will be used by some future component
+    //      3). instance access manager already used by 2 "admins": insatance service and instance owner
+    function grantDistributionDefaultPermissions(NftId instanceNftId, address distributionAddress, string memory distributionName) external onlyRegisteredService {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionAddress);
+
+        if (distributionInfo.objectType != DISTRIBUTION()) {
+            revert ErrorInstanceServiceInvalidComponentType(distributionAddress, DISTRIBUTION(), distributionInfo.objectType);
+        }
+
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
+
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = IDistributionComponent.setFees.selector;
+        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors, DISTRIBUTION_OWNER_ROLE());
+
+        bytes4[] memory fctSelectors2 = new bytes4[](2);
+        fctSelectors2[0] = IDistributionComponent.processSale.selector;
+        fctSelectors2[1] = IDistributionComponent.processRenewal.selector;
+        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors2, PRODUCT_SERVICE_ROLE());
     }
 
+    function grantPoolDefaultPermissions(NftId instanceNftId, address poolAddress, string memory poolName) external onlyRegisteredService {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory poolInfo = registry.getObjectInfo(poolAddress);
+
+        if (poolInfo.objectType != POOL()) {
+            revert ErrorInstanceServiceInvalidComponentType(poolAddress, POOL(), poolInfo.objectType);
+        }
+
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
+
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = IPoolComponent.setFees.selector;
+        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors, POOL_OWNER_ROLE());
+
+        bytes4[] memory fctSelectors2 = new bytes4[](1);
+        fctSelectors2[0] = IPoolComponent.underwrite.selector;
+        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors2, POLICY_SERVICE_ROLE());
+    }
+
+    function grantProductDefaultPermissions(NftId instanceNftId, address productAddress, string memory productName) external onlyRegisteredService {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(productAddress);
+
+        if (productInfo.objectType != PRODUCT()) {
+            revert ErrorInstanceServiceInvalidComponentType(productAddress, PRODUCT(), productInfo.objectType);
+        }
+
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
+
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = IProductComponent.setFees.selector;
+        instanceAccessManager.setTargetFunctionRole(productName, fctSelectors, PRODUCT_OWNER_ROLE());
+    }
+
+    // assume component can lock only itself
     function setComponentLocked(string memory componentName, bool locked) external {
         address componentAddress = msg.sender;
         IRegistry registry = getRegistry();
@@ -393,7 +462,7 @@ contract InstanceService is Service, IInstanceService {
         }
 
         // TODO validate component type
-        // TODO validate componentName or read it from component
+        // TODO validate component name
         // TODO component can provide name of other component or GIF contract...use component address as id
 
         address instanceAddress = registry.getObjectInfo(componentInfo.parentNftId).objectAddress;

@@ -19,7 +19,7 @@ contract SimplePool is Pool {
         Fee memory stakingFee,
         Fee memory performanceFee,
         address initialOwner
-    ) Pool(
+    ) Pool (
         registry,
         instanceNftId,
         "SimplePool",
@@ -34,4 +34,37 @@ contract SimplePool is Pool {
         ""
     ) {
     }
+
+    function createBundle(
+        Fee memory fee,
+        uint256 initialAmount,
+        uint256 lifetime,
+        bytes calldata filter
+    )
+        external
+        virtual 
+        returns(NftId bundleNftId)
+    {
+        address owner = msg.sender;
+        bundleNftId = _createBundle(
+            owner,
+            fee,
+            initialAmount,
+            lifetime,
+            filter
+        );
+    }
+
+    function setBundleFee(NftId bundleNftId, Fee memory fee) external {
+        _setBundleFee(bundleNftId, fee);
+    }
+
+    function lockBundle(NftId bundleNftId) external {
+        _lockBundle(bundleNftId);
+    }
+
+    function unlockBundle(NftId bundleNftId) external {
+        _unlockBundle(bundleNftId);
+    }
+
 }

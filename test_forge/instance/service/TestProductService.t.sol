@@ -31,7 +31,7 @@ contract TestProductService is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
-
+        
         vm.expectRevert(
             abi.encodeWithSelector(
                 ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
