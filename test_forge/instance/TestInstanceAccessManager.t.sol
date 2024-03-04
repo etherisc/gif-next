@@ -5,18 +5,16 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 
 
 import {TestGifBase} from "../base/TestGifBase.sol";
-import {IAccess} from "../../contracts/instance/module/IAccess.sol";
-import {IComponent} from "../../contracts/components/IComponent.sol";
 import {PRODUCT_OWNER_ROLE, RoleIdLib} from "../../contracts/types/RoleId.sol";
 import {SimpleProduct, SPECIAL_ROLE_INT} from "../mock/SimpleProduct.sol";
 import {FeeLib} from "../../contracts/types/Fee.sol";
+import {RoleId} from "../../contracts/types/RoleId.sol";
 
 contract TestInstanceAccessManager is TestGifBase {
 
     uint256 public constant INITIAL_BALANCE = 100000;
 
-    // FIXME: fix test
-    function skip_test_InstanceAccessManager_hasRole_unauthorized() public {
+    function test_InstanceAccessManager_hasRole_unauthorized() public {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
@@ -36,25 +34,23 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
+        productService.register(address(product));
+        SimpleProduct dproduct = SimpleProduct(address(product));
         vm.stopPrank();
 
         vm.startPrank(outsider);
-
-        // THEN - missing role
-        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentUnauthorized.selector, outsider, 11111));
+        
+        // THEN - call not auhorized
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, address(outsider)));
 
         // WHEN
-        SimpleProduct dproduct = SimpleProduct(address(product));
         dproduct.doSomethingSpecial();
     }
 
-    // FIXME: fix test
-    function skip_test_InstanceAccessManager_hasRole_customRole() public {
+    function test_InstanceAccessManager_hasRole_customRole() public {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        instanceAccessManager.createRole(RoleIdLib.toRoleId(SPECIAL_ROLE_INT), "SpecialRole");
-        instanceAccessManager.grantRole(RoleIdLib.toRoleId(SPECIAL_ROLE_INT), outsider);
         vm.stopPrank();
 
         _prepareDistributionAndPool();
@@ -71,6 +67,17 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
+        productService.register(address(product));
+        vm.stopPrank();
+
+        // assign special role to outsider
+        vm.startPrank(instanceOwner);
+        RoleId specialRoleId = RoleIdLib.toRoleId(SPECIAL_ROLE_INT);
+        instanceAccessManager.createRole(specialRoleId, "SpecialRole");
+        bytes4[] memory fcts = new bytes4[](1);
+        fcts[0] = SimpleProduct.doSomethingSpecial.selector;
+        instanceAccessManager.setTargetFunctionRole(product.getName(), fcts, specialRoleId);
+        instanceAccessManager.grantRole(specialRoleId, outsider);
         vm.stopPrank();
 
         vm.startPrank(outsider);

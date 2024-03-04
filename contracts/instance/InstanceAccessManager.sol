@@ -58,7 +58,7 @@ contract InstanceAccessManager is
 
     function setRoleLocked(RoleId roleId, bool locked) external restricted() {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessSetLockedForNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
         _role[roleId].isLocked = locked;
@@ -71,7 +71,7 @@ contract InstanceAccessManager is
 
     function grantRole(RoleId roleId, address member) external restricted() returns (bool granted) {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessGrantNonexstentRole(roleId);
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
         if (_role[roleId].isLocked) {
@@ -161,7 +161,7 @@ contract InstanceAccessManager is
         address target = _targetForName[ShortStrings.toShortString(targetName)];
         
         if (target == address(0)) {
-            revert IAccess.ErrorIAccessSetLockedForNonexstentTarget(target);
+            revert IAccess.ErrorIAccessTargetDoesNotExist(ShortStrings.toShortString(targetName));
         }
 
         _target[target].isLocked = locked;
@@ -236,7 +236,7 @@ contract InstanceAccessManager is
         }
 
         if (_target[target].createdAt.gtz()) {
-            revert IAccess.ErrorIAccessTargetAlreadyExists(target, _target[target].name);
+            revert IAccess.ErrorIAccessTargetExists(target, _target[target].name);
         }
         if (_targetForName[ShortStrings.toShortString(name)] != address(0)) {
             revert IAccess.ErrorIAccessTargetNameExists(target, _targetForName[ShortStrings.toShortString(name)], ShortStrings.toShortString(name));
@@ -259,19 +259,18 @@ contract InstanceAccessManager is
     }
 
     function setTargetFunctionRole(
-        address target,
-        bytes4[] calldata selectors,
-        uint64 roleId
-    ) public virtual restricted() {
-        _accessManager.setTargetFunctionRole(target, selectors, roleId);
-    }
-
-    function setTargetFunctionRole(
         string memory targetName,
         bytes4[] calldata selectors,
         RoleId roleId
     ) public virtual restricted() {
         address target = _targetForName[ShortStrings.toShortString(targetName)];
+        
+        if (target == address(0)) {
+            revert IAccess.ErrorIAccessTargetDoesNotExist(ShortStrings.toShortString(targetName));
+        }
+        if (! roleExists(roleId)) {
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+        }
         uint64 roleIdInt = RoleId.unwrap(roleId);
         _accessManager.setTargetFunctionRole(target, selectors, roleIdInt);
     }
@@ -279,7 +278,7 @@ contract InstanceAccessManager is
     function setTargetClosed(string memory targetName, bool closed) public restricted() {
         address target = _targetForName[ShortStrings.toShortString(targetName)];
         if (target == address(0)) {
-            revert IAccess.ErrorIAccessTargetAddressZero();
+            revert IAccess.ErrorIAccessTargetDoesNotExist(ShortStrings.toShortString(targetName));
         }
         _accessManager.setTargetClosed(target, closed);
     }
