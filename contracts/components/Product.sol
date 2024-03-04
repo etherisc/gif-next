@@ -228,6 +228,7 @@ abstract contract Product is Component, IProductComponent {
     )
         external
         onlyOwner
+        restricted()
         override
     {
         getProductService().setFees(productFee, processingFee);

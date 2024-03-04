@@ -82,7 +82,6 @@ abstract contract Pool is Component, IPoolComponent {
      * @dev see {IPool.underwrite}. 
      * Default implementation that only writes a {LogUnderwrittenByPool} entry.
      */
-    // FIXME: remove this function .. only _internal
     function underwrite(
         NftId policyNftId, 
         bytes memory policyData,
@@ -127,6 +126,7 @@ abstract contract Pool is Component, IPoolComponent {
         Fee memory performanceFee
     )
         external
+        onlyOwner
         restricted()
         override
     {
