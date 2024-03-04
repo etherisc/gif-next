@@ -15,8 +15,7 @@ contract TestInstanceAccessManager is TestGifBase {
 
     uint256 public constant INITIAL_BALANCE = 100000;
 
-    // FIXME: fix test
-    function skip_test_InstanceAccessManager_hasRole_unauthorized() public {
+    function test_InstanceAccessManager_hasRole_unauthorized() public {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
@@ -36,15 +35,15 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
+        SimpleProduct dproduct = SimpleProduct(address(product));
         vm.stopPrank();
 
         vm.startPrank(outsider);
-
-        // THEN - missing role
-        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentUnauthorized.selector, outsider, 11111));
+        
+        // THEN - call not auhorized
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, address(outsider)));
 
         // WHEN
-        SimpleProduct dproduct = SimpleProduct(address(product));
         dproduct.doSomethingSpecial();
     }
 
