@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {IComponent} from "./IComponent.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
@@ -10,7 +11,7 @@ import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
+import {NftId} from "../types/NftId.sol";
 import {ObjectType, INSTANCE, PRODUCT} from "../types/ObjectType.sol";
 import {VersionPart} from "../types/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
@@ -23,7 +24,8 @@ import {IAccess} from "../instance/module/IAccess.sol";
 // same pattern as for Service which is also upgradeable
 abstract contract Component is
     Registerable,
-    IComponent
+    IComponent,
+    AccessManagedUpgradeable
 {
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.component.Component.sol")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant CONTRACT_LOCATION_V1 = 0xffe8d4462baed26a47154f4b8f6db497d2f772496965791d25bd456e342b7f00;
@@ -47,23 +49,17 @@ abstract contract Component is
         _;
     }
 
-    // TODO discuss replacement with modifier restricted from accessmanaged
-    modifier onlyInstanceRole(uint64 roleIdNum) {
-        RoleId roleId = RoleIdLib.toRoleId(roleIdNum);
-        InstanceAccessManager accessManager = InstanceAccessManager(_getComponentStorage()._instance.authority());
-        if( !accessManager.hasRole(roleId, msg.sender)) {
-            revert ErrorComponentUnauthorized(msg.sender, roleIdNum);
-        }
-        _;
-    }
-
-    // TODO discuss replacement with modifier restricted from accessmanaged
-    modifier isNotLocked() {
-        InstanceAccessManager accessManager = InstanceAccessManager(_getComponentStorage()._instance.authority());
-        if (accessManager.isTargetLocked(address(this))) {
-            revert IAccess.ErrorIAccessTargetLocked(address(this));
-        }
-        _;
+    constructor(
+        address registry,
+        NftId instanceNftId,
+        string memory name,
+        address token,
+        ObjectType componentType,
+        bool isInterceptor,
+        address initialOwner,
+        bytes memory data
+    ) {
+        _initializeComponent(registry, instanceNftId, name, token, componentType, isInterceptor, initialOwner, data);
     }
 
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
@@ -71,7 +67,6 @@ abstract contract Component is
             $.slot := CONTRACT_LOCATION_V1
         }
     }
-
 
     function _initializeComponent(
         address registry,
@@ -84,7 +79,7 @@ abstract contract Component is
         bytes memory data
     )
         internal
-        //onlyInitializing//TODO uncomment when "fully" upgradeable
+        initializer 
         virtual
     {
         ComponentStorage storage $ = _getComponentStorage();
@@ -100,6 +95,9 @@ abstract contract Component is
             revert ErrorComponentNotInstance(instanceNftId, instanceInfo.objectAddress);
         }
 
+        // initialize AccessManagedUpgradeable
+        __AccessManaged_init($._instance.authority());
+
         // set linked services
         VersionPart gifVersion = $._instance.getMajorVersion();
         $._instanceService = IInstanceService(getRegistry().getServiceAddress(INSTANCE(), gifVersion));
@@ -112,26 +110,10 @@ abstract contract Component is
         _registerInterface(type(IComponent).interfaceId);
     }
 
-    constructor(
-        address registry,
-        NftId instanceNftId,
-        string memory name,
-        address token,
-        ObjectType componentType,
-        bool isInterceptor,
-        address initialOwner,
-        bytes memory data
-    )
-    {
-        _initializeComponent(registry, instanceNftId, name, token, componentType, isInterceptor, initialOwner, data);
-    }
-
-    // TODO discuss replacement with modifier restricted from accessmanaged
     function lock() external onlyOwner override {
         _getComponentStorage()._instanceService.setTargetLocked(getName(), true);
     }
     
-    // TODO discuss replacement with modifier restricted from accessmanaged
     function unlock() external onlyOwner override {
         _getComponentStorage()._instanceService.setTargetLocked(getName(), false);
     }

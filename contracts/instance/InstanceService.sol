@@ -18,6 +18,9 @@ import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POLICY_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, POLICY, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../types/ObjectType.sol";
+import {IDistributionComponent} from "../components/IDistributionComponent.sol";
+import {IPoolComponent} from "../components/IPoolComponent.sol";
+import {IProductComponent} from "../components/IProductComponent.sol";
 
 contract InstanceService is Service, IInstanceService {
 
@@ -122,6 +125,7 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function _createGifTargets(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
+        clonedAccessManager.createGifTarget(address(clonedAccessManager), "InstanceAccessManager");
         clonedAccessManager.createGifTarget(address(clonedInstance), "Instance");
         clonedAccessManager.createGifTarget(address(clonedBundleManager), "BundleManager");
     }   
@@ -137,7 +141,7 @@ contract InstanceService is Service, IInstanceService {
         clonedAccessManager.setTargetFunctionRole(
             "Instance",
             instanceDistributionServiceSelectors, 
-            DISTRIBUTION_SERVICE_ROLE());
+            DISTRIBUTION_SERVICE_ROLE());        
     }
 
     function _grantPoolServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
@@ -218,30 +222,39 @@ contract InstanceService is Service, IInstanceService {
             "Instance",
             instanceInstanceServiceSelectors, 
             INSTANCE_SERVICE_ROLE());
+
+        bytes4[] memory instanceAccessManagerInstanceServiceSelectors = new bytes4[](1);
+        instanceAccessManagerInstanceServiceSelectors[0] = clonedAccessManager.createGifTarget.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            "InstanceAccessManager",
+            instanceAccessManagerInstanceServiceSelectors, 
+            INSTANCE_SERVICE_ROLE());
     }
 
-    function setAndRegisterMasterInstance(
-        address accessManagerAddress, 
-        address instanceAddress, 
-        address instanceReaderAddress, 
-        address bundleManagerAddress) 
+    function setAndRegisterMasterInstance(address instanceAddress) 
             external 
             onlyOwner 
             returns(NftId masterInstanceNftId)
     {
-        require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
         require(_masterInstance == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
+        require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
         require(_masterInstanceBundleManager == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
 
-        require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
         require (instanceAddress != address(0), "ERROR:CRD-006:INSTANCE_ZERO");
+
+        IInstance instance = IInstance(instanceAddress);
+        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
+        address accessManagerAddress = address(accessManager);
+        InstanceReader instanceReader = instance.getInstanceReader();
+        address instanceReaderAddress = address(instanceReader);
+        BundleManager bundleManager = instance.getBundleManager();
+        address bundleManagerAddress = address(bundleManager);
+
+        require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
         require (instanceReaderAddress != address(0), "ERROR:CRD-007:INSTANCE_READER_ZERO");
         require (bundleManagerAddress != address(0), "ERROR:CRD-008:BUNDLE_MANAGER_ZERO");
 
-        IInstance instance = IInstance(instanceAddress);
-        InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
-        BundleManager bundleManager = BundleManager(bundleManagerAddress);
-
+        
         require(instance.authority() == accessManagerAddress, "ERROR:CRD-009:INSTANCE_AUTHORITY_MISMATCH");
         require(instanceReader.getInstance() == instance, "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
         require(bundleManager.getInstance() == instance, "ERROR:CRD-011:BUNDLE_MANAGER_INSTANCE_MISMATCH");
@@ -332,12 +345,72 @@ contract InstanceService is Service, IInstanceService {
         return accessManager.hasRole(role, account);
     }
 
-    function createTarget(NftId instanceNftId, address targetAddress, string memory targetName) external onlyRegisteredService {
+    function createGifTarget(NftId instanceNftId, address targetAddress, string memory targetName) external onlyRegisteredService {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
         InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
-        accessManager.createTarget(targetAddress, targetName);
+        accessManager.createGifTarget(targetAddress, targetName);
+    }
+
+    function grantDistributionDefaultPermissions(NftId instanceNftId, address distributionAddress, string memory distributionName) external onlyRegisteredService {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionAddress);
+
+        if (distributionInfo.objectType != DISTRIBUTION()) {
+            revert ErrorInstanceServiceInvalidComponentType(distributionAddress, DISTRIBUTION(), distributionInfo.objectType);
+        }
+
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
+
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = IDistributionComponent.setFees.selector;
+        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors, DISTRIBUTION_OWNER_ROLE());
+
+        bytes4[] memory fctSelectors2 = new bytes4[](2);
+        fctSelectors2[0] = IDistributionComponent.processSale.selector;
+        fctSelectors2[1] = IDistributionComponent.processRenewal.selector;
+        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors2, PRODUCT_SERVICE_ROLE());
+    }
+
+    function grantPoolDefaultPermissions(NftId instanceNftId, address poolAddress, string memory poolName) external onlyRegisteredService {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory poolInfo = registry.getObjectInfo(poolAddress);
+
+        if (poolInfo.objectType != POOL()) {
+            revert ErrorInstanceServiceInvalidComponentType(poolAddress, POOL(), poolInfo.objectType);
+        }
+
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
+
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = IPoolComponent.setFees.selector;
+        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors, POOL_OWNER_ROLE());
+
+        bytes4[] memory fctSelectors2 = new bytes4[](1);
+        fctSelectors2[0] = IPoolComponent.underwrite.selector;
+        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors2, POLICY_SERVICE_ROLE());
+    }
+
+    function grantProductDefaultPermissions(NftId instanceNftId, address productAddress, string memory productName) external onlyRegisteredService {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(productAddress);
+
+        if (productInfo.objectType != PRODUCT()) {
+            revert ErrorInstanceServiceInvalidComponentType(productAddress, PRODUCT(), productInfo.objectType);
+        }
+
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        Instance instance = Instance(instanceInfo.objectAddress);
+        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
+
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = IProductComponent.setFees.selector;
+        instanceAccessManager.setTargetFunctionRole(productName, fctSelectors, PRODUCT_OWNER_ROLE());
     }
 
     function setTargetLocked(string memory targetName, bool locked) external {

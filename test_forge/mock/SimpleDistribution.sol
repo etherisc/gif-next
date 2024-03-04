@@ -14,14 +14,14 @@ contract SimpleDistribution is Distribution {
         bool verifying,
         Fee memory distributionFee,
         address initialOwner
-    ) Distribution(
+    ) Distribution (
         registry,
         instanceNftId,
         "SimpleDistribution",
         token,
         verifying,
         distributionFee,
-        initialOwner,
+        initialOwner, 
         ""
     ) {
     }

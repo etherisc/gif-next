@@ -25,7 +25,6 @@ import {IComponent} from "../../components/IComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 
-
 contract DistributionService is
     ComponentService,
     IDistributionService
@@ -76,7 +75,8 @@ contract DistributionService is
         distributionNftId = distributionInfo.nftId;
 
         instance.createDistributionSetup(distributionNftId, distribution.getSetupInfo());
-        getInstanceService().createTarget(instanceNftId, distributionAddress, distribution.getName());
+        getInstanceService().createGifTarget(instanceNftId, distributionAddress, distribution.getName());
+        getInstanceService().grantDistributionDefaultPermissions(instanceNftId, distributionAddress, distribution.getName());
     }
 
     function _decodeAndVerifyDistributionData(bytes memory data)

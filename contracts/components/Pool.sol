@@ -12,13 +12,9 @@ import {Component} from "./Component.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
-
 import {ISetup} from "../instance/module/ISetup.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {Registerable} from "../shared/Registerable.sol";
 
 abstract contract Pool is Component, IPoolComponent {
     using NftIdLib for NftId;
@@ -57,9 +53,16 @@ abstract contract Pool is Component, IPoolComponent {
         Fee memory performanceFee,
         address initialOwner,
         bytes memory data
-    )
-        Component(registry, instanceNftId, name, token, POOL(), isInterceptor, initialOwner, data)
-    {
+    ) Component(
+        registry, 
+        instanceNftId, 
+        name, 
+        token, 
+        POOL(), 
+        isInterceptor, 
+        initialOwner, 
+        data
+    ) {
         _isConfirmingApplication = isConfirmingApplication;
         // TODO add validation
         _collateralizationLevel = collateralizationLevel;
@@ -75,28 +78,6 @@ abstract contract Pool is Component, IPoolComponent {
         _registerInterface(type(IPoolComponent).interfaceId);
     }
 
-    function createBundle(
-        Fee memory fee,
-        uint256 initialAmount,
-        uint256 lifetime,
-        bytes memory filter
-    )
-        external
-        virtual override
-        returns(NftId bundleNftId)
-    {
-        address owner = msg.sender;
-        bundleNftId = _bundleService.createBundle(
-            owner,
-            fee,
-            initialAmount,
-            lifetime,
-            filter
-        );
-
-        // TODO add logging
-    }
-
     /**
      * @dev see {IPool.underwrite}. 
      * Default implementation that only writes a {LogUnderwrittenByPool} entry.
@@ -108,7 +89,7 @@ abstract contract Pool is Component, IPoolComponent {
         uint256 collateralizationAmount
     )
         external
-        onlyProductService
+        restricted()
         virtual override 
     {
         _underwrite(policyNftId, policyData, bundleFilter, collateralizationAmount);
@@ -146,39 +127,21 @@ abstract contract Pool is Component, IPoolComponent {
     )
         external
         onlyOwner
+        restricted()
         override
     {
         _poolService.setFees(poolFee, stakingFee, performanceFee);
     }
 
-    function setBundleFee(
-        NftId bundleNftId, 
-        Fee memory fee
-    )
-        external
-        override
-        // TODO add onlyBundleOwner
-    {
+    function _setBundleFee(NftId bundleNftId, Fee memory fee) internal {
         _bundleService.setBundleFee(bundleNftId, fee);
     }
 
-    function lockBundle(
-        NftId bundleNftId
-    )
-        external
-        override
-        // TODO add onlyBundleOwner
-    {
+    function _lockBundle(NftId bundleNftId) internal {
         _bundleService.lockBundle(bundleNftId);
     }
 
-    function unlockBundle(
-        NftId bundleNftId
-    )
-        external
-        override
-        // TODO add onlyBundleOwner
-    {
+    function _unlockBundle(NftId bundleNftId) internal {
         _bundleService.unlockBundle(bundleNftId);
     }
 
