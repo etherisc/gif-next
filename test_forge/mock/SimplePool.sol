@@ -55,4 +55,16 @@ contract SimplePool is Pool {
         );
     }
 
+    function setBundleFee(NftId bundleNftId, Fee memory fee) external {
+        _setBundleFee(bundleNftId, fee);
+    }
+
+    function lockBundle(NftId bundleNftId) external {
+        _lockBundle(bundleNftId);
+    }
+
+    function unlockBundle(NftId bundleNftId) external {
+        _unlockBundle(bundleNftId);
+    }
+
 }

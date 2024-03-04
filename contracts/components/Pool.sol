@@ -133,34 +133,15 @@ abstract contract Pool is Component, IPoolComponent {
         _poolService.setFees(poolFee, stakingFee, performanceFee);
     }
 
-    function setBundleFee(
-        NftId bundleNftId, 
-        Fee memory fee
-    )
-        external
-        override
-        // TODO: add onlyBundleOwner
-    {
+    function _setBundleFee(NftId bundleNftId, Fee memory fee) internal {
         _bundleService.setBundleFee(bundleNftId, fee);
     }
 
-    function lockBundle(
-        NftId bundleNftId
-    )
-        external
-        override
-        // TODO: add onlyBundleOwner
-    {
+    function _lockBundle(NftId bundleNftId) internal {
         _bundleService.lockBundle(bundleNftId);
     }
 
-    function unlockBundle(
-        NftId bundleNftId
-    )
-        external
-        override
-        // TODO: add onlyBundleOwner
-    {
+    function _unlockBundle(NftId bundleNftId) internal {
         _bundleService.unlockBundle(bundleNftId);
     }
 

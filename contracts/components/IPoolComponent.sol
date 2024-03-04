@@ -19,11 +19,6 @@ interface IPoolComponent is IComponent {
         Fee memory performanceFee
     ) external;
 
-    function setBundleFee(
-        NftId policyNftId, 
-        Fee memory fee
-    ) external;
-
     /** 
      * @dev this is a callback function that is called by the product service when underwriting a policy.
      * the pool has the option to check the details and object to underwriting by reverting.
@@ -36,10 +31,6 @@ interface IPoolComponent is IComponent {
         bytes memory bundleFilter,
         uint256 collateralizationAmount
     ) external;
-
-    function lockBundle(NftId bundleNftId) external;
-
-    function unlockBundle(NftId bundleNftId) external;
 
     /**
      * @dev returns true iff the policy application data in policyData matches

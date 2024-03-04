@@ -189,7 +189,7 @@ contract TestPool is TestGifBase {
         );
 
         Fee memory fee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
-        pool.setBundleFee(bundleNftId, fee);
+        spool.setBundleFee(bundleNftId, fee);
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         Fee memory bundleFee = bundleInfo.fee;

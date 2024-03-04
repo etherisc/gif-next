@@ -285,7 +285,8 @@ contract TestProduct is TestGifBase {
 
         assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         vm.startPrank(investor);
-        pool.lockBundle(bundleNftId);
+        SimplePool spool = SimplePool(address(pool));
+        spool.lockBundle(bundleNftId);
 
         Timestamp now = TimestampLib.blockTimestamp();
 
@@ -294,7 +295,7 @@ contract TestProduct is TestGifBase {
         dproduct.underwrite(policyNftId, false, now); 
 
         // WHEN - unlock bundle and try underwrite again
-        pool.unlockBundle(bundleNftId);
+        spool.unlockBundle(bundleNftId);
         dproduct.underwrite(policyNftId, false, now);
 
         // THEN
