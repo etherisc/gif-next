@@ -252,22 +252,8 @@ contract PolicyService is ComponentService, IPolicyService {
         ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
 
         // obtain remaining return values
+        // TODO required collateral amount should be calculated by pool service, not policy service
         collateralAmount = calculateRequiredCollateral(poolInfo.collateralizationLevel, policyInfo.sumInsuredAmount);
-    }
-
-    function _lockCollateralInBundle(
-        IInstance instance,
-        NftId bundleNftId, 
-        IBundle.BundleInfo memory bundleInfo,
-        NftId policyNftId, 
-        uint256 collateralAmount
-    )
-        internal
-        returns (IBundle.BundleInfo memory)
-    {
-        bundleInfo.lockedAmount += collateralAmount;
-        // TODO: track policy associated to bundle in bundlemanager (tbd) and how much is locked for it
-        return bundleInfo;
     }
 
 
@@ -281,6 +267,7 @@ contract PolicyService is ComponentService, IPolicyService {
     }
 
 
+    /// @dev underwites application which includes the locking of the required collateral from the pool.
     function underwrite(
         NftId applicationNftId, // = policyNftId
         bool requirePremiumPayment,
@@ -343,6 +330,16 @@ contract PolicyService is ComponentService, IPolicyService {
         }
 
         // lock collateral and update bundle book keeping
+        // TODO introduct indirection via pool service
+        // well pool would only need to be involved when a part of the collateral
+        // is provided by a "re insurance policy" of the pool
+        // but then again the policiy would likely best be attached to the bundle
+        // retention level: fraction of sum insured that product will cover from pool funds directly
+        // eg retention level 30%, payouts up to 30% of the sum insured will be made from the product's pool directly
+        // for the remaining 70% the pool owns a policy that will cover claims that exceed the 30% of the sum insured
+        // open points:
+        // - do we need a link of a bundle to this policy or is it enough to know that the pool has an active policy?
+        // - when to buy such policies and for which amount? manual trigger or link to bundle creation and/or funding?
         bundleInfo = _bundleService.lockCollateral(
             instance,
             applicationNftId, 
