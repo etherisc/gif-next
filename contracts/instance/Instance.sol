@@ -59,11 +59,11 @@ contract Instance is
 
     function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) 
         public 
-        initializer
+        initializer()
     {
         __AccessManaged_init(accessManagerAddress);
         
-        _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
+        initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
 
         _registerInterface(type(IInstance).interfaceId);    
     }
@@ -225,23 +225,23 @@ contract Instance is
     }
 
     function getDistributionService() external view returns (IDistributionService) {
-        return IDistributionService(_registry.getServiceAddress(DISTRIBUTION(), VersionPart.wrap(3)));
+        return IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), VersionPart.wrap(3)));
     }
 
     function getProductService() external view returns (IProductService) {
-        return IProductService(_registry.getServiceAddress(PRODUCT(), VersionPart.wrap(3)));
+        return IProductService(getRegistry().getServiceAddress(PRODUCT(), VersionPart.wrap(3)));
     }
 
     function getPoolService() external view returns (IPoolService) {
-        return IPoolService(_registry.getServiceAddress(POOL(), VersionPart.wrap(3)));
+        return IPoolService(getRegistry().getServiceAddress(POOL(), VersionPart.wrap(3)));
     }
 
     function getPolicyService() external view returns (IPolicyService) {
-        return IPolicyService(_registry.getServiceAddress(POLICY(), VersionPart.wrap(3)));
+        return IPolicyService(getRegistry().getServiceAddress(POLICY(), VersionPart.wrap(3)));
     }
 
     function getBundleService() external view returns (IBundleService) {
-        return IBundleService(_registry.getServiceAddress(BUNDLE(), VersionPart.wrap(3)));
+        return IBundleService(getRegistry().getServiceAddress(BUNDLE(), VersionPart.wrap(3)));
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {

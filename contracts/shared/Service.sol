@@ -40,16 +40,16 @@ abstract contract Service is
         address registry, 
         address initialOwner
     )
-        internal
+        public
         virtual
-        //onlyInitializing //TODO uncomment when "fully" upgradeable
+        onlyInitializing()
     {
         // service must provide its name and version upon registration
         bytes memory data = abi.encode(getDomain(), getMajorVersion());
         NftId registryNftId = _getRegistryNftId(registry); 
         bool isInterceptor = false;
 
-        _initializeRegisterable(registry, registryNftId, SERVICE(), isInterceptor, initialOwner, data);
+        initializeRegisterable(registry, registryNftId, SERVICE(), isInterceptor, initialOwner, data);
         _registerInterface(type(IService).interfaceId);
     }
 

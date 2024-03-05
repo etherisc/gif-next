@@ -392,9 +392,49 @@ Intercepting property
 
 ### Product
 
+#### Claim and Payout
+
+The sequence below sketches the small payout flow (payout < retention amount)
+
+```mermaid
+sequenceDiagram
+  participant customer
+  participant product
+  participant productService
+  participant poolService
+  product->>productService: createPayout()
+  productService ->> poolService: requestPayout()
+  poolService ->> poolService: processPayout()
+  poolService ->> customer: transfer token for payout
+  poolService ->> productService: payoutExecuted()
+```
+
+The sequence below sketches the call flow for payouts larger than the retention amount
+
+```mermaid
+sequenceDiagram
+  participant customer
+  participant product
+  participant productService
+  participant poolService
+  participant pool
+  pool ->> reinsuranceProduct: applyForPolicy()
+  product->>productService: createPayout()
+  productService ->> poolService: requestPayout()
+  poolService ->> pool: addPendingPayout()
+  pool ->> pool: getReinsurancePolicy()
+  pool ->> reinsuranceProduct: claim()
+  reinsuranceProduct -->> reinsurancePool: requestPayout
+  reinsurancePool ->> pool: payoutExecutedCallback()
+  pool ->> pool: processPendingPayout()
+  pool ->> poolService: processPayout()
+  poolService ->> customer: transfer token for payout
+  poolService ->> productService: payoutExecuted()
+```
+
 ### Pool
 
-### Distribution
+### Distribution
 
 ### Oracle
 

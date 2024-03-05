@@ -39,7 +39,7 @@ abstract contract Distribution is
         bytes memory data
     )
     {
-        _initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data);
+        initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data);
 
         _isVerifying = verifying;
         _initialDistributionFee = distributionFee;

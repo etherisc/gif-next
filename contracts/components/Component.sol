@@ -83,7 +83,7 @@ abstract contract Component is
     }
 
 
-    function _initializeComponent(
+    function initializeComponent(
         address registry,
         NftId instanceNftId,
         string memory name,
@@ -93,12 +93,12 @@ abstract contract Component is
         address initialOwner,
         bytes memory data
     )
-        internal
-        //onlyInitializing//TODO uncomment when "fully" upgradeable
+        public
         virtual
+        onlyInitializing()
     {
         ComponentStorage storage $ = _getComponentStorage();
-        _initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
+        initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
 
         // set unique name of component
         $._name = name;

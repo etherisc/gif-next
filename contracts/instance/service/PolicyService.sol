@@ -64,8 +64,8 @@ contract PolicyService is ComponentService, IPolicyService {
 
         _initializeService(registryAddress, owner);
 
-        _poolService = IPoolService(_registry.getServiceAddress(POOL(), getMajorVersion()));
-        _bundleService = IBundleService(_registry.getServiceAddress(BUNDLE(), getMajorVersion()));
+        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getMajorVersion()));
+        _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getMajorVersion()));
 
         _registerInterface(type(IPolicyService).interfaceId);
     }
@@ -330,10 +330,10 @@ contract PolicyService is ComponentService, IPolicyService {
         }
 
         // lock collateral and update bundle book keeping
-        // TODO introduct indirection via pool service
+        // TODO introduct indirection via pool service?
         // well pool would only need to be involved when a part of the collateral
         // is provided by a "re insurance policy" of the pool
-        // but then again the policiy would likely best be attached to the bundle
+        // but then again the policiy would likely best be attached to the bundle. really? why?
         // retention level: fraction of sum insured that product will cover from pool funds directly
         // eg retention level 30%, payouts up to 30% of the sum insured will be made from the product's pool directly
         // for the remaining 70% the pool owns a policy that will cover claims that exceed the 30% of the sum insured

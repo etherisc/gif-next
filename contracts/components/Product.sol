@@ -53,7 +53,7 @@ abstract contract Product is
         bytes memory data
     )
     {
-        _initializeComponent(registry, instanceNftId, name, token, PRODUCT(), isInterceptor, initialOwner, data);
+        initializeComponent(registry, instanceNftId, name, token, PRODUCT(), isInterceptor, initialOwner, data);
 
         // TODO add validation
         _policyService = getInstance().getPolicyService(); 

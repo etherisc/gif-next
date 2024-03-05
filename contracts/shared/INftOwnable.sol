@@ -5,6 +5,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../types/NftId.sol";
 
 interface INftOwnable {
+    error ErrorInitialOwnerZero();
     error ErrorNotOwner(address account);
 
     error ErrorAlreadyLinked(address registry, NftId nftId);

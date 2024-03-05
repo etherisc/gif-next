@@ -15,11 +15,32 @@ contract SimplePool is Pool {
         bool isInterceptor,
         bool isConfirmingApplication,
         UFixed collateralizationLevel,
-        Fee memory poolFee,
-        Fee memory stakingFee,
-        Fee memory performanceFee,
         address initialOwner
     ) 
+    {
+        initialize(
+            registry,
+            instanceNftId,
+            token,
+            isInterceptor,
+            isConfirmingApplication,
+            collateralizationLevel,
+            initialOwner
+        );
+    }
+
+    function initialize(
+        address registry,
+        NftId instanceNftId,
+        address token,
+        bool isInterceptor,
+        bool isConfirmingApplication,
+        UFixed collateralizationLevel,
+        address initialOwner
+    )
+        internal
+        virtual
+        initializer()
     {
         _initializePool(
             registry,
@@ -30,9 +51,6 @@ contract SimplePool is Pool {
             isInterceptor,
             false, // externally managed
             isConfirmingApplication,
-            poolFee,
-            stakingFee,
-            performanceFee,
             initialOwner,
             "");
     }

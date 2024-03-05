@@ -21,9 +21,6 @@ contract TestPoolService is TestGifBase {
             false,
             false,
             UFixedLib.toUFixed(1),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
             poolOwner
         );
 
@@ -50,9 +47,6 @@ contract TestPoolService is TestGifBase {
             false,
             false,
             UFixedLib.toUFixed(1),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
             poolOwner
         );
 

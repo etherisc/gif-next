@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
+import {console} from "../lib/forge-std/src/Test.sol";
+
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol";
@@ -14,8 +16,7 @@ import {SimplePool} from "./mock/SimplePool.sol";
 contract TestPool is TestGifBase {
     using NftIdLib for NftId;
 
-
-    function test_Pool_contractLocation() public {
+    function test_Pool_contractLocations() public {
         pool = new SimplePool(
             address(registry),
             instanceNftId,
@@ -23,15 +24,21 @@ contract TestPool is TestGifBase {
             false,
             false,
             UFixedLib.toUFixed(1),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
             poolOwner
         );
 
-        bytes memory name = "gif-next.contracts.component.Pool.sol";
-        bytes32 locationHash = pool.getContractLocation(name);
+        bytes32 locationHash = getLocationHash("gif-next.contracts.component.Pool.sol");
         assertEq(locationHash, 0xecf35607b7e822969ee3625cd815bfc27031f3a93d0be2676e5bde943e2e2300, "check hash");
+
+        getLocationHash("etherisc.storage.Pool");
+        getLocationHash("etherisc.storage.NftOwnable");
+        getLocationHash("etherisc.storage.PolicyHolder");
+    }
+
+    function getLocationHash(string memory location) public returns (bytes32 locationHash) {
+        locationHash = pool.getContractLocation(bytes(location));
+        console.log(location);
+        console.logBytes32(locationHash);
     }
 
     function test_Pool_setupInfo() public {
@@ -48,9 +55,6 @@ contract TestPool is TestGifBase {
             false,
             false,
             UFixedLib.toUFixed(1),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
             poolOwner
         );
 
@@ -91,9 +95,6 @@ contract TestPool is TestGifBase {
             false,
             false,
             UFixedLib.toUFixed(1),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
             poolOwner
         );
 
@@ -134,9 +135,6 @@ contract TestPool is TestGifBase {
             false,
             false,
             UFixedLib.toUFixed(1),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
             poolOwner
         );
 
@@ -184,9 +182,6 @@ contract TestPool is TestGifBase {
             false,
             false,
             UFixedLib.toUFixed(1),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
             poolOwner
         );
 

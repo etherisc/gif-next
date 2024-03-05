@@ -27,8 +27,9 @@ contract ProxyManager is
 
     /// @dev only used to capture proxy owner
     constructor()
-        NftOwnable()
-    { }
+    { 
+        initializeOwner(msg.sender);
+    }
 
     /// @dev deploy initial contract
     function deploy(address initialImplementation, bytes memory initializationData)

@@ -5,7 +5,7 @@ import {POOL} from "../types/ObjectType.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
 import {IBundleService} from "../instance/service/IBundleService.sol";
 import {NftId, NftIdLib} from "../types/NftId.sol";
-import {Fee} from "../types/Fee.sol";
+import {Fee, FeeLib} from "../types/Fee.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {Component} from "./Component.sol";
@@ -24,8 +24,8 @@ abstract contract Pool is
     Component, 
     IPoolComponent 
 {
-    // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.component.Pool.sol")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant POOL_STORAGE_LOCATION_V1 = 0xecf35607b7e822969ee3625cd815bfc27031f3a93d0be2676e5bde943e2e2300;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Pool")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant POOL_STORAGE_LOCATION_V1 = 0x25e3e51823fbfffb988e0a2744bb93722d9f3e906c07cc0a9e77884c46c58300;
 
     struct PoolStorage {
         UFixed _collateralizationLevel;
@@ -46,7 +46,7 @@ abstract contract Pool is
     }
 
     modifier onlyPoolService() {
-        if(msg.sender != address(_getStorage()._poolService)) {
+        if(msg.sender != address(_getPoolStorage()._poolService)) {
             revert ErrorPoolNotPoolService(msg.sender);
         }
         _;
@@ -63,28 +63,26 @@ abstract contract Pool is
         bool isInterceptingNftTransfers,
         bool isExternallyManaging,
         bool isVerifying,
-        Fee memory poolFee,
-        Fee memory stakingFee,
-        Fee memory performanceFee,
         address initialOwner,
         bytes memory data
     )
         internal
-        //onlyInitializing//TODO uncomment when "fully" upgradeable
         virtual
+        onlyInitializing()
     {
-        _initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, data);
+        initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, data);
 
-        PoolStorage storage $ = _getStorage();
+        PoolStorage storage $ = _getPoolStorage();
 
         $._isExternallyManaged = isExternallyManaging;
         $._isVerifyingApplications = isVerifying;
 
         // TODO add validation
         $._collateralizationLevel = collateralizationLevel;
-        $._initialPoolFee = poolFee;
-        $._initialStakingFee = stakingFee;
-        $._initialPerformanceFee = performanceFee;
+        $._initialPoolFee = FeeLib.zeroFee();
+        $._initialStakingFee = FeeLib.zeroFee();
+        $._initialPerformanceFee = FeeLib.zeroFee();
+
 
         $._tokenHandler = new TokenHandler(token);
 
@@ -124,17 +122,17 @@ abstract contract Pool is
 
 
     function isExternallyManaged() external view override returns (bool) {
-        return _getStorage()._isExternallyManaged;
+        return _getPoolStorage()._isExternallyManaged;
     }
 
 
     function getCollateralizationLevel() external view override returns (UFixed collateralizationLevel) {
-        return _getStorage()._collateralizationLevel;
+        return _getPoolStorage()._collateralizationLevel;
     }
 
 
     function isVerifyingApplications() external view override returns (bool isConfirmingApplication) {
-        return _getStorage()._isVerifyingApplications;
+        return _getPoolStorage()._isVerifyingApplications;
     }
 
 
@@ -162,7 +160,7 @@ abstract contract Pool is
         onlyOwner
         override
     {
-        _getStorage()._poolService.setFees(poolFee, stakingFee, performanceFee);
+        _getPoolStorage()._poolService.setFees(poolFee, stakingFee, performanceFee);
     }
 
     function setBundleFee(
@@ -173,7 +171,7 @@ abstract contract Pool is
         override
         // TODO add onlyBundleOwner
     {
-        _getStorage()._bundleService.setBundleFee(bundleNftId, fee);
+        _getPoolStorage()._bundleService.setBundleFee(bundleNftId, fee);
     }
 
     function lockBundle(
@@ -183,7 +181,7 @@ abstract contract Pool is
         override
         // TODO add onlyBundleOwner
     {
-        _getStorage()._bundleService.lockBundle(bundleNftId);
+        _getPoolStorage()._bundleService.lockBundle(bundleNftId);
     }
 
     function unlockBundle(
@@ -193,7 +191,7 @@ abstract contract Pool is
         override
         // TODO add onlyBundleOwner
     {
-        _getStorage()._bundleService.unlockBundle(bundleNftId);
+        _getPoolStorage()._bundleService.unlockBundle(bundleNftId);
     }
 
     function getSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
@@ -207,7 +205,7 @@ abstract contract Pool is
     }
 
     function _getInitialSetupInfo() internal view returns (ISetup.PoolSetupInfo memory) {
-        PoolStorage storage $ = _getStorage();
+        PoolStorage storage $ = _getPoolStorage();
         return ISetup.PoolSetupInfo(
             getProductNftId(),
             $._tokenHandler,
@@ -233,7 +231,7 @@ abstract contract Pool is
         internal
         returns(NftId bundleNftId)
     {
-        bundleNftId = _getStorage()._bundleService.createBundle(
+        bundleNftId = _getPoolStorage()._bundleService.createBundle(
             bundleOwner,
             fee,
             amount,
@@ -248,10 +246,9 @@ abstract contract Pool is
     }
 
 
-    function _getStorage() private pure returns (PoolStorage storage $) {
+    function _getPoolStorage() private pure returns (PoolStorage storage $) {
         assembly {
             $.slot := POOL_STORAGE_LOCATION_V1
         }
     }
-
 }

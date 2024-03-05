@@ -52,7 +52,7 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(instance, INSTANCE(), owner);
-        info.nftId = _registry.register(info);
+        info.nftId = getRegistry().register(info);
 
         instance.linkToRegisteredNftId(); // asume safe
     }
@@ -70,7 +70,7 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(product, PRODUCT(), owner);
-        info.nftId = _registry.register(info);
+        info.nftId = getRegistry().register(info);
     }
 
     function registerPool(IComponent pool, address owner)
@@ -85,7 +85,7 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(pool, POOL(), owner);
-        info.nftId = _registry.register(info);
+        info.nftId = getRegistry().register(info);
     }
 
     function registerDistribution(IComponent distribution, address owner)
@@ -100,7 +100,7 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
-        info.nftId = _registry.register(info);
+        info.nftId = getRegistry().register(info);
     }
 
     function registerPolicy(IRegistry.ObjectInfo memory info)
@@ -110,7 +110,7 @@ contract RegistryService is
     {
         _verifyObjectInfo(info, POLICY());
 
-        nftId = _registry.register(info);
+        nftId = getRegistry().register(info);
     }
 
     function registerBundle(IRegistry.ObjectInfo memory info)
@@ -120,7 +120,7 @@ contract RegistryService is
     {
         _verifyObjectInfo(info, BUNDLE());
 
-        nftId = _registry.register(info);
+        nftId = getRegistry().register(info);
     }
 
     function registerStake(IRegistry.ObjectInfo memory info)
@@ -130,7 +130,7 @@ contract RegistryService is
     {
         _verifyObjectInfo(info, STAKE());
 
-        nftId = _registry.register(info);
+        nftId = getRegistry().register(info);
     }
 
     // From IService
