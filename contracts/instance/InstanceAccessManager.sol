@@ -69,6 +69,7 @@ contract InstanceAccessManager is
         return _role[roleId].createdAt.gtz();
     }
 
+    // TODO remove restricted - should be done by access manager (onlyAuthorized) - needs test to verify
     function grantRole(RoleId roleId, address member) external restricted() returns (bool granted) {
         if (!roleExists(roleId)) {
             revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
@@ -87,6 +88,7 @@ contract InstanceAccessManager is
         return false;
     }
 
+    // TODO remove restricted
     function revokeRole(RoleId roleId, address member) external restricted() returns (bool revoked) {
         if (!roleExists(roleId)) {
             revert IAccess.ErrorIAccessRevokeNonexstentRole(roleId);
@@ -147,6 +149,11 @@ contract InstanceAccessManager is
     function getRoleMember(RoleId roleId, uint256 idx) external view returns (address roleMember) {
         return EnumerableSet.at(_roleMembers[roleId], idx);
     }
+
+    // TODO add function `setRoleAdmin` to allow changing the admin role for a given role
+    // - create new role X (id must be even)
+    // - create new admin role for X (id + 1 ... avoid collision with existing roles)
+    // - grant admin role for X to admin
 
     //--- Target ------------------------------------------------------//
     function createGifTarget(address target, string memory name) external restricted() {

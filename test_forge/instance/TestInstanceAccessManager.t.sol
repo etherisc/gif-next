@@ -73,9 +73,11 @@ contract TestInstanceAccessManager is TestGifBase {
         // assign special role to outsider
         vm.startPrank(instanceOwner);
         RoleId specialRoleId = RoleIdLib.toRoleId(SPECIAL_ROLE_INT);
+        // TODO no number as param, number is set by contract and returned
         instanceAccessManager.createRole(specialRoleId, "SpecialRole");
         bytes4[] memory fcts = new bytes4[](1);
         fcts[0] = SimpleProduct.doSomethingSpecial.selector;
+        // TODO: make product a "TargetContract" (interface with getName() function)
         instanceAccessManager.setTargetFunctionRole(product.getName(), fcts, specialRoleId);
         instanceAccessManager.grantRole(specialRoleId, outsider);
         vm.stopPrank();
