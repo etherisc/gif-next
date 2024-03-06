@@ -156,9 +156,8 @@ contract RegistryService is
 
         __AccessManaged_init(initialAuthority);
 
-        _initializeService(address(registry), owner);
-
-        _registerInterface(type(IRegistryService).interfaceId);
+        initializeService(address(registry), owner);
+        registerInterface(type(IRegistryService).interfaceId);
     }
 
     // from IRegisterable

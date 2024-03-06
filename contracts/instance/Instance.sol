@@ -64,8 +64,7 @@ contract Instance is
         __AccessManaged_init(accessManagerAddress);
         
         initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
-
-        _registerInterface(type(IInstance).interfaceId);    
+        registerInterface(type(IInstance).interfaceId);    
     }
 
     //--- ProductSetup ------------------------------------------------------//

@@ -20,34 +20,38 @@ abstract contract Distribution is
     Component,
     IDistributionComponent
 {
-    bool internal _isVerifying;
-    Fee internal _initialDistributionFee;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Distribution")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant DISTRIBUTION_STORAGE_LOCATION_V1 = 0xaab7c5ea03d290056d6c060e0833d3ebcbe647f7694616a2ec52738a64b2f900;
 
-    TokenHandler internal _tokenHandler;
+    struct DistributionStorage {
+        Fee _initialDistributionFee;
+        TokenHandler _tokenHandler;
+        IDistributionService _distributionService;
+    }
 
-    IDistributionService private _distributionService;
 
-    constructor(
+    function initializeDistribution(
         address registry,
         NftId instanceNftId,
-        // TODO refactor into tokenNftId
         string memory name,
         address token,
-        bool verifying,
         Fee memory distributionFee,
         address initialOwner,
         bytes memory data
     )
+        public
+        virtual
+        onlyInitializing()
     {
         initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data);
 
-        _isVerifying = verifying;
-        _initialDistributionFee = distributionFee;
+        DistributionStorage storage $ = _getDistributionStorage();
+        // TODO add validation
+        $._initialDistributionFee = distributionFee;
+        $._tokenHandler = new TokenHandler(token);
+        $._distributionService = getInstance().getDistributionService();
 
-        _tokenHandler = new TokenHandler(token);
-        _distributionService = getInstance().getDistributionService();
-
-        _registerInterface(type(IDistributionComponent).interfaceId);
+        registerInterface(type(IDistributionComponent).interfaceId);
     }
 
 
@@ -57,7 +61,7 @@ abstract contract Distribution is
         external
         override
     {
-        _distributionService.setFees(distributionFee);
+        _getDistributionStorage()._distributionService.setFees(distributionFee);
     }
 
     function calculateFeeAmount(
@@ -126,11 +130,11 @@ abstract contract Distribution is
     }
 
     function _getInitialSetupInfo() internal view returns (ISetup.DistributionSetupInfo memory setupInfo) {
+        DistributionStorage storage $ = _getDistributionStorage();
         return ISetup.DistributionSetupInfo(
             zeroNftId(),
-            _tokenHandler,
-            _initialDistributionFee,
-            _isVerifying,
+            $._tokenHandler,
+            $._initialDistributionFee,
             address(this)
         );
     }
@@ -138,6 +142,12 @@ abstract contract Distribution is
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying) {
-        return _isVerifying;
+        return true;
+    }
+
+    function _getDistributionStorage() private pure returns (DistributionStorage storage $) {
+        assembly {
+            $.slot := DISTRIBUTION_STORAGE_LOCATION_V1
+        }
     }
 }

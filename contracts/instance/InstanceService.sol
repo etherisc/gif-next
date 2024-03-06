@@ -31,7 +31,7 @@ contract InstanceService is Service, IInstanceService {
 
     modifier onlyInstanceOwner(NftId instanceNftId) {
         IRegistry registry = getRegistry();
-        ChainNft chainNft = registry.getChainNft();
+        ChainNft chainNft = ChainNft(registry.getChainNftAddress());
         
         if( msg.sender != chainNft.ownerOf(instanceNftId.toInt())) {
             revert ErrorInstanceServiceNotInstanceOwner(msg.sender, instanceNftId);
@@ -321,9 +321,8 @@ contract InstanceService is Service, IInstanceService {
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while InstanceService is not deployed in InstanceServiceManager constructor
         //      owner is InstanceServiceManager deployer
-        _initializeService(registryAddress, owner);
-        
-        _registerInterface(type(IInstanceService).interfaceId);
+        initializeService(registryAddress, owner);
+        registerInterface(type(IInstanceService).interfaceId);
     }
 
     function hasRole(address account, RoleId role, address instanceAddress) public view returns (bool) {

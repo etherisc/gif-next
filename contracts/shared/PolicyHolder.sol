@@ -13,7 +13,6 @@ import {NumberId} from "../types/NumberId.sol";
 
 contract PolicyHolder is
     ERC165,
-    Initializable,
     IPolicyHolder
 {
 

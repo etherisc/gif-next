@@ -21,7 +21,7 @@ contract ServiceMock is RegisterableMock, IService {
             "")
     {
         _info.data = abi.encode(getDomain(), getMajorVersion());
-        _registerInterface(type(IService).interfaceId);
+        registerInterface(type(IService).interfaceId);
     }
 
     // from IService
@@ -44,8 +44,8 @@ contract ServiceMock is RegisterableMock, IService {
     }
     
     // from IVersionable, DON NOT USE
-    function initialize(address implementation, address activatedBy, bytes memory activationData) external { revert(); }
-    function upgrade(address implementation, address activatedBy, bytes memory upgradeData) external { revert(); }
+    function initializeVersionable(address implementation, address activatedBy, bytes memory activationData) external { revert(); }
+    function upgradeVersionable(address implementation, address activatedBy, bytes memory upgradeData) external { revert(); }
     function isInitialized(Version version) external view returns(bool) { revert(); }
     function getVersionCount() external view returns(uint256 numberOfVersions) { revert(); }
     function getVersion(uint256 index) external view returns(Version version) { revert(); }

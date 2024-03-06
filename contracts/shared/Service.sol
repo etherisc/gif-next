@@ -36,7 +36,7 @@ abstract contract Service is
         return VersionLib.toVersion(3,0,0);
     }
 
-    function _initializeService(
+    function initializeService(
         address registry, 
         address initialOwner
     )
@@ -50,7 +50,7 @@ abstract contract Service is
         bool isInterceptor = false;
 
         initializeRegisterable(registry, registryNftId, SERVICE(), isInterceptor, initialOwner, data);
-        _registerInterface(type(IService).interfaceId);
+        registerInterface(type(IService).interfaceId);
     }
 
     // this is just a conveniene function, actual validation will be done upon registration

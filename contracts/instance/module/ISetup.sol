@@ -28,7 +28,6 @@ interface ISetup {
         NftId productNftId;
         TokenHandler tokenHandler;
         Fee distributionFee; // default distribution fee (no referral id)
-        bool isIntercepting; // intercepts nft transfers (for distributors)
         address wallet;
     }
 

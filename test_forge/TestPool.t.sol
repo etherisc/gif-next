@@ -33,6 +33,10 @@ contract TestPool is TestGifBase {
         getLocationHash("etherisc.storage.Pool");
         getLocationHash("etherisc.storage.NftOwnable");
         getLocationHash("etherisc.storage.PolicyHolder");
+        getLocationHash("etherisc.storage.Distribution");
+        getLocationHash("etherisc.storage.Pool");
+        getLocationHash("etherisc.storage.Product");
+        getLocationHash("etherisc.storage.Oracle");
     }
 
     function getLocationHash(string memory location) public returns (bytes32 locationHash) {

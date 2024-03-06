@@ -29,17 +29,21 @@ abstract contract Product is
     Component, 
     IProductComponent
 {
-    IPolicyService internal _policyService;
-    Pool internal _pool;
-    Distribution internal _distribution;
-    Fee internal _initialProductFee;
-    Fee internal _initialProcessingFee;
-    TokenHandler internal _tokenHandler;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Product")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant PRODUCT_STORAGE_LOCATION_V1 = 0x0bb7aafdb8e380f81267337bc5b5dfdf76e6d3a380ecadb51ec665246d9d6800;
 
-    NftId internal _poolNftId;
-    NftId internal _distributionNftId;
+    struct ProductStorage {
+        IPolicyService _policyService;
+        Pool _pool;
+        Distribution _distribution;
+        Fee _initialProductFee;
+        Fee _initialProcessingFee;
+        TokenHandler _tokenHandler;
+        NftId _poolNftId;
+        NftId _distributionNftId;
+    }
 
-    constructor(
+    function initializeProduct(
         address registry,
         NftId instanceNftId,
         string memory name,
@@ -52,22 +56,24 @@ abstract contract Product is
         address initialOwner,
         bytes memory data
     )
+        public
+        virtual
+        onlyInitializing()
     {
         initializeComponent(registry, instanceNftId, name, token, PRODUCT(), isInterceptor, initialOwner, data);
 
+        ProductStorage storage $ = _getProductStorage();
         // TODO add validation
-        _policyService = getInstance().getPolicyService(); 
-        _pool = Pool(pool);
-        _distribution = Distribution(distribution);
-        _initialProductFee = productFee;
-        _initialProcessingFee = processingFee;  
+        $._policyService = getInstance().getPolicyService(); 
+        $._pool = Pool(pool);
+        $._distribution = Distribution(distribution);
+        $._initialProductFee = productFee;
+        $._initialProcessingFee = processingFee;  
+        $._tokenHandler = new TokenHandler(token);
+        $._poolNftId = getRegistry().getNftId(pool);
+        $._distributionNftId = getRegistry().getNftId(distribution);
 
-        _tokenHandler = new TokenHandler(token);
-
-        _poolNftId = getRegistry().getNftId(address(_pool));
-        _distributionNftId = getRegistry().getNftId(address(_distribution));
-
-        _registerInterface(type(IProductComponent).interfaceId);  
+        registerInterface(type(IProductComponent).interfaceId);  
     }
 
 
@@ -84,7 +90,7 @@ abstract contract Product is
         override 
         returns (uint256 premiumAmount)
     {
-        (premiumAmount,,,,) = _policyService.calculatePremium(
+        (premiumAmount,,,,) = _getProductStorage()._policyService.calculatePremium(
             riskId,
             sumInsuredAmount,
             lifetime,
@@ -156,8 +162,11 @@ abstract contract Product is
         bytes memory applicationData,
         NftId bundleNftId,
         ReferralId referralId
-    ) internal returns (NftId nftId) {
-        nftId = _policyService.createApplication(
+    )
+        internal
+        returns (NftId nftId) 
+    {
+        return _getProductStorage()._policyService.createApplication(
             applicationOwner,
             riskId,
             sumInsuredAmount,
@@ -175,7 +184,7 @@ abstract contract Product is
     )
         internal
     {
-        _policyService.underwrite(
+        _getProductStorage()._policyService.underwrite(
             policyNftId, 
             requirePremiumPayment, 
             activateAt);
@@ -187,7 +196,7 @@ abstract contract Product is
     )
         internal
     {
-        _policyService.collectPremium(
+        _getProductStorage()._policyService.collectPremium(
             policyNftId, 
             activateAt);
     }
@@ -198,7 +207,7 @@ abstract contract Product is
     )
         internal
     {
-        _policyService.activate(
+        _getProductStorage()._policyService.activate(
             policyNftId, 
             activateAt);
     }
@@ -208,15 +217,15 @@ abstract contract Product is
     )
         internal
     {
-        _policyService.close(policyNftId);
+        _getProductStorage()._policyService.close(policyNftId);
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {
-        return getRegistry().getNftId(address(_pool));
+        return getRegistry().getNftId(address(_getProductStorage()._pool));
     }
 
     function getDistributionNftId() external view override returns (NftId distributionNftId) {
-        return getRegistry().getNftId(address(_distribution));
+        return getRegistry().getNftId(address(_getProductStorage()._distribution));
     }
 
     // from product component
@@ -242,22 +251,30 @@ abstract contract Product is
     }
 
     function _getInitialSetupInfo() internal view returns (ISetup.ProductSetupInfo memory setupInfo) {
-        ISetup.DistributionSetupInfo memory distributionSetupInfo = _distribution.getSetupInfo();
-        ISetup.PoolSetupInfo memory poolSetupInfo = _pool.getSetupInfo();
+        ProductStorage storage $ = _getProductStorage();
+
+        ISetup.DistributionSetupInfo memory distributionSetupInfo = $._distribution.getSetupInfo();
+        ISetup.PoolSetupInfo memory poolSetupInfo = $._pool.getSetupInfo();
 
         return ISetup.ProductSetupInfo(
             getToken(),
-            _tokenHandler,
-            _distributionNftId,
-            _poolNftId,
+            $._tokenHandler,
+            $._distributionNftId,
+            $._poolNftId,
             distributionSetupInfo.distributionFee, 
-            _initialProductFee,
-            _initialProcessingFee,
+            $._initialProductFee,
+            $._initialProcessingFee,
             poolSetupInfo.poolFee, 
             poolSetupInfo.stakingFee, 
             poolSetupInfo.performanceFee,
             false,
             getWallet()
         );
+    }
+
+    function _getProductStorage() private pure returns (ProductStorage storage $) {
+        assembly {
+            $.slot := PRODUCT_STORAGE_LOCATION_V1
+        }
     }
 }

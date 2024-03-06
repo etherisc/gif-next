@@ -38,11 +38,11 @@ contract SimplePool is Pool {
         UFixed collateralizationLevel,
         address initialOwner
     )
-        internal
+        public
         virtual
         initializer()
     {
-        _initializePool(
+        initializePool(
             registry,
             instanceNftId,
             "SimplePool",

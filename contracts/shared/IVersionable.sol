@@ -49,7 +49,7 @@ interface IVersionable {
      * implementation MUST call internal function Versionable._updateVersionHistory 
      * new version MUST inherit from previous version
      */
-    function initialize(address implementation, address activatedBy, bytes memory activationData) external;
+    function initializeVersionable(address implementation, address activatedBy, bytes memory activationData) external;
 
     /**
      * @dev
@@ -58,7 +58,7 @@ interface IVersionable {
      * new version MUST inherit from previous version
      * the first verion MUST revert 
      */
-    function upgrade(address implementation, address activatedBy, bytes memory upgradeData) external;
+    function upgradeVersionable(address implementation, address activatedBy, bytes memory upgradeData) external;
 
     /**
      * @dev returns true if the specified version has been activated for the current contract

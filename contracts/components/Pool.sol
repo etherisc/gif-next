@@ -53,7 +53,7 @@ abstract contract Pool is
     }
 
 
-    function _initializePool(
+    function initializePool(
         address registry,
         NftId instanceNftId,
         string memory name,
@@ -66,30 +66,25 @@ abstract contract Pool is
         address initialOwner,
         bytes memory data
     )
-        internal
+        public
         virtual
         onlyInitializing()
     {
         initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, data);
 
         PoolStorage storage $ = _getPoolStorage();
-
+        // TODO add validation
         $._isExternallyManaged = isExternallyManaging;
         $._isVerifyingApplications = isVerifying;
-
-        // TODO add validation
         $._collateralizationLevel = collateralizationLevel;
         $._initialPoolFee = FeeLib.zeroFee();
         $._initialStakingFee = FeeLib.zeroFee();
         $._initialPerformanceFee = FeeLib.zeroFee();
-
-
         $._tokenHandler = new TokenHandler(token);
-
         $._poolService = getInstance().getPoolService();
         $._bundleService = getInstance().getBundleService();
 
-        _registerInterface(type(IPoolComponent).interfaceId);
+        registerInterface(type(IPoolComponent).interfaceId);
     }
 
 
@@ -244,7 +239,6 @@ abstract contract Pool is
     function getContractLocation(bytes memory name) external pure returns (bytes32 hash) {
         return keccak256(abi.encode(uint256(keccak256(name)) - 1)) & ~bytes32(uint256(0xff));
     }
-
 
     function _getPoolStorage() private pure returns (PoolStorage storage $) {
         assembly {

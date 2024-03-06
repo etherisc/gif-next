@@ -18,7 +18,6 @@ import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 
 // TODO discuss to inherit from oz accessmanaged
-// TODO make contract upgradeable
 // then add (Distribution|Pool|Product)Upradeable that also intherit from Versionable
 // same pattern as for Service which is also upgradeable
 abstract contract Component is
@@ -43,7 +42,7 @@ abstract contract Component is
 
 
     modifier onlyChainNft() {
-        if(msg.sender != address(getRegistry().getChainNft())) {
+        if(msg.sender != getRegistry().getChainNftAddress()) {
             revert ErrorComponentNotChainNft(msg.sender);
         }
         _;
@@ -120,7 +119,7 @@ abstract contract Component is
         $._wallet = address(this);
         $._token = IERC20Metadata(token);
 
-        _registerInterface(type(IComponent).interfaceId);
+        registerInterface(type(IComponent).interfaceId);
     }
 
     /// @dev callback function for nft transfers. may only be called by chain nft contract.

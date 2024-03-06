@@ -62,12 +62,12 @@ contract PolicyService is ComponentService, IPolicyService {
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, owner);
+        initializeService(registryAddress, owner);
 
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getMajorVersion()));
         _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getMajorVersion()));
 
-        _registerInterface(type(IPolicyService).interfaceId);
+        registerInterface(type(IPolicyService).interfaceId);
     }
 
 

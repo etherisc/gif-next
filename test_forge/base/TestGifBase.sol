@@ -277,7 +277,7 @@ contract TestGifBase is Test {
         registry = Registry(registryAddress);
         registryNftId = registry.getNftId(address(registry)); 
 
-        address chainNftAddress = address(registry.getChainNft());
+        address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
 
         tokenRegistry = new TokenRegistry();
@@ -597,7 +597,6 @@ contract TestGifBase is Test {
             address(registry),
             instanceNftId,
             address(token),
-            false,
             FeeLib.zeroFee(),
             distributionOwner
         );

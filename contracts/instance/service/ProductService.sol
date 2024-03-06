@@ -60,11 +60,11 @@ contract ProductService is ComponentService, IProductService {
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, owner);
+        initializeService(registryAddress, owner);
 
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getMajorVersion()));
 
-        _registerInterface(type(IProductService).interfaceId);
+        registerInterface(type(IProductService).interfaceId);
     }
 
 

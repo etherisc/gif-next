@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
+// import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
+import {ERC165} from "./ERC165.sol";
 import {INftOwnable} from "./INftOwnable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
 
-// TODO make contract upgradeable
 contract NftOwnable is
-    Initializable,
+    ERC165,
     INftOwnable
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.NftOwnable")) - 1)) & ~bytes32(uint256(0xff));
@@ -42,6 +42,8 @@ contract NftOwnable is
     {
         _setInitialOwner(initialOwner);
         _setRegistry(registryAddress);
+        initializeERC165();
+        registerInterface(type(INftOwnable).interfaceId);
     }
 
 
@@ -50,6 +52,8 @@ contract NftOwnable is
         initializer()
     {
         _setInitialOwner(initialOwner);
+        initializeERC165();
+        registerInterface(type(INftOwnable).interfaceId);
     }
 
 
