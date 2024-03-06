@@ -85,6 +85,8 @@ interface IRegistry is IERC165 {
 
     function isRegisteredService(address contractAddress) external view returns (bool);
 
+    function isRegisteredComponent(address object) external view returns (bool);
+
     function isValidRelease(VersionPart version) external view returns (bool);
 
     function getServiceAddress(

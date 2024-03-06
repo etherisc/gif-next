@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
@@ -51,9 +52,15 @@ contract InstanceService is Service, IInstanceService {
     }
 
     modifier onlyRegisteredService() {
-        address caller = msg.sender;
-        if (! getRegistry().isRegisteredService(caller)) {
-            revert ErrorInstanceServiceRequestUnauhorized(caller);
+        if (! getRegistry().isRegisteredService(msg.sender)) {
+            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
+        }
+        _;
+    }
+
+    modifier onlyComponent() {
+        if (! getRegistry().isRegisteredComponent(msg.sender)) {
+            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
         }
         _;
     }
@@ -450,23 +457,16 @@ contract InstanceService is Service, IInstanceService {
         instanceAccessManager.setTargetFunctionRole(productName, fctSelectors, PRODUCT_OWNER_ROLE());
     }
 
-    // assume component can lock only itself
-    function setComponentLocked(string memory componentName, bool locked) external {
+    function setComponentLocked(bool locked) onlyComponent external {
         address componentAddress = msg.sender;
         IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
-        if (componentInfo.nftId.eqz()) {
-            revert ErrorInstanceServiceComponentNotRegistered(componentAddress);
-        }
-
-        // TODO validate component type
-        // TODO validate component name
-        // TODO component can provide name of other component or GIF contract...use component address as id
-
-        address instanceAddress = registry.getObjectInfo(componentInfo.parentNftId).objectAddress;
+        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
+        address instanceAddress = registry.getObjectInfo(instanceNftId).objectAddress;
         IInstance instance = IInstance(instanceAddress);
 
         InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
+        // TODO setLocked by target address?
+        string memory componentName = ShortStrings.toString(accessManager.getTargetInfo(componentAddress).name);
         accessManager.setTargetLocked(componentName, locked);
     }
 }
