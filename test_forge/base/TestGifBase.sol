@@ -423,7 +423,7 @@ contract TestGifBase is Test {
     function _deployMasterInstance() internal 
     {
         masterInstanceAccessManager = new InstanceAccessManager();
-        masterInstanceAccessManager.initialize(registryOwner);
+        masterInstanceAccessManager.initialize(registryOwner, address(registry));
         
         masterInstance = new Instance();
         masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, registryOwner);

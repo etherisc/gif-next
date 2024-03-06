@@ -7,7 +7,7 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {TestGifBase} from "../base/TestGifBase.sol";
 import {IAccess} from "../../contracts/instance/module/IAccess.sol";
 import {IComponent} from "../../contracts/components/IComponent.sol";
-import {PRODUCT_OWNER_ROLE, RoleIdLib} from "../../contracts/types/RoleId.sol";
+import {PRODUCT_OWNER_ROLE, INSTANCE_OWNER_ROLE, RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
 import {SimpleProduct, SPECIAL_ROLE_INT} from "../mock/SimpleProduct.sol";
 import {FeeLib} from "../../contracts/types/Fee.sol";
 
@@ -53,8 +53,8 @@ contract TestInstanceAccessManager is TestGifBase {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        instanceAccessManager.createRole(RoleIdLib.toRoleId(SPECIAL_ROLE_INT), "SpecialRole");
-        instanceAccessManager.grantRole(RoleIdLib.toRoleId(SPECIAL_ROLE_INT), outsider);
+        RoleId customRoleId = instanceAccessManager.createCustomRole("SpecialRole", INSTANCE_OWNER_ROLE());
+        instanceAccessManager.grantRole(customRoleId, outsider);
         vm.stopPrank();
 
         _prepareDistributionAndPool();
@@ -108,7 +108,7 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.startPrank(instanceOwner);
         bytes4[] memory fctSelectors = new bytes4[](1);
         fctSelectors[0] = SimpleProduct.doWhenNotLocked.selector;
-        instanceAccessManager.setTargetFunctionRole(product.getName(), fctSelectors, PRODUCT_OWNER_ROLE());
+        instanceAccessManager.setTargetFunctionCustomRole(product.getName(), fctSelectors, PRODUCT_OWNER_ROLE());
         vm.stopPrank();
 
         vm.startPrank(productOwner);

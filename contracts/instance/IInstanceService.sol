@@ -19,6 +19,7 @@ interface IInstanceService is IService {
 
     error ErrorInstanceServiceRequestUnauhorized(address caller);
     error ErrorInstanceServiceNotInstanceOwner(address caller, NftId instanceNftId);
+    error ErrorInstanceServiceNotInstance(NftId nftId);
     error ErrorInstanceServiceComponentNotRegistered(address componentAddress);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     

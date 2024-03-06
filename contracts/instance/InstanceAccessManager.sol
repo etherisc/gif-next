@@ -10,6 +10,8 @@ import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTA
 import {TimestampLib} from "../types/Timestamp.sol";
 import {IAccess} from "./module/IAccess.sol";
 
+import {IRegistry} from "../registry/IRegistry.sol";
+
 contract InstanceAccessManager is
     AccessManagedUpgradeable
 {
@@ -22,183 +24,243 @@ contract InstanceAccessManager is
     uint32 public constant EXECUTION_DELAY = 0;
 
     // role specific state
-    mapping(RoleId roleId => IAccess.RoleInfo info) internal _role;
+    mapping(RoleId roleId => IAccess.RoleInfo info) internal _roleInfo;
     mapping(RoleId roleId => EnumerableSet.AddressSet roleMembers) internal _roleMembers; 
-    mapping(ShortString name => RoleId roleId) internal _roleForName;
-    RoleId [] internal _roles;
+    mapping(ShortString name => RoleId roleId) internal _roleIdForName;
+    RoleId [] internal _roleIds;
+    uint64 _idNext;
 
     // target specific state
-    mapping(address target => IAccess.TargetInfo info) internal _target;
-    mapping(ShortString name => address target) internal _targetForName;
+    mapping(address target => IAccess.TargetInfo info) internal _targetInfo;
+    mapping(ShortString name => address target) internal _targetAddressForName;
     address [] internal _targets;
 
     AccessManager internal _accessManager;
+    IRegistry internal _registry;
 
-    function initialize(address initialAdmin) external initializer 
+    modifier restrictedToRoleAdmin(RoleId roleId) {
+        RoleId admin = getRoleAdmin(roleId);
+        (bool inRole, uint32 executionDelay) = _accessManager.hasRole(admin.toInt(), _msgSender());
+        assert(executionDelay == 0); // to be sure no delayed execution functionality is used
+        if (!inRole) {
+            revert IAccess.ErrorIAccessCallerIsNotRoleAdmin(_msgSender(), roleId);
+        }
+        _;
+    }
+
+    function initialize(address initialAdmin, address registry) external initializer 
     {
         // if size of the contract gets too large, this can be externalized which will reduce the contract size considerably
         _accessManager = new AccessManager(address(this));
 
         __AccessManaged_init(address(_accessManager));
 
-        _createRole(ADMIN_ROLE(), ADMIN_ROLE_NAME, false, false);
-        _createRole(PUBLIC_ROLE(), PUBLIC_ROLE_NAME, false, false);
+        _registry = IRegistry(_registry);
+        _idNext = CUSTOM_ROLE_ID_MIN;
+
+        _createRole(ADMIN_ROLE(), ADMIN_ROLE_NAME, false);
+        _createRole(PUBLIC_ROLE(), PUBLIC_ROLE_NAME, false);
 
         // assume initialAdmin is instance service which requires admin rights to access manager during instance cloning
-        EnumerableSet.add(_roleMembers[ADMIN_ROLE()], initialAdmin);
         _accessManager.grantRole(ADMIN_ROLE().toInt(), initialAdmin, 0);
+
+        EnumerableSet.add(_roleMembers[ADMIN_ROLE()], address(this));
+        EnumerableSet.add(_roleMembers[ADMIN_ROLE()], initialAdmin);
     }
 
     //--- Role ------------------------------------------------------//
-    // INSTANCE_SERVICE_ROLE
-    function createGifRole(RoleId roleId, string memory name) external restricted() {
-        _createRole(roleId, name, false, true);
+    // INSTANCE_SERVICE_ROLE 
+    // creates core or gif roles
+    // assume core roles are never revoked or renounced -> core roles admin is never active after intialization
+    // assume gif roles can be revoked or renounced
+    function createRole(RoleId roleId, string memory name, RoleId admin) 
+        external
+        restricted()
+    {
+        bool isCustom = false;
+        _validateRoleParameters(roleId, name, isCustom);
+        _createRole(roleId, name, isCustom);
+        setRoleAdmin(roleId, admin);
     }
 
     // INSTANCE_OWNER_ROLE
-    function createRole(RoleId roleId, string memory name) external restricted() {
-        _createRole(roleId, name, true, true);
+    // creates custom roles only
+    // TODO INSTANCE_OWNER_ROLE as default admin
+    function createCustomRole(string memory name, RoleId admin) 
+        external
+        restricted()
+        returns(RoleId roleId)
+    {
+        bool isCustom = true;
+        RoleId roleId = _getNextCustomRoleId();
+        _validateRoleParameters(roleId, name, isCustom);
+        _createRole(roleId, name, isCustom);
+        setRoleAdmin(roleId, admin);
     }
 
-    // INSTANCE_OWNER_ROLE
-    function setRoleLocked(RoleId roleId, bool locked) external restricted() {
+    // TODO MUST always be restricted to ADMIN_ROLE? -> use onlyAdminRole or use similar _getAdminRestrictions()
+    function setRoleAdmin(RoleId roleId, RoleId admin) 
+        public 
+        restricted()
+    {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessSetLockedForNonexistentRole(roleId);
+            revert IAccess.ErrorIAccessSetAdminForNonexistentRole(roleId);
         }
 
-        if(!_role[roleId].isCustom) {
-            revert IAccess.ErrorIAccessSetLockedForNoncustomRole(roleId);
-        }
-
-        _role[roleId].isLocked = locked;
-        _role[roleId].updatedAt = TimestampLib.blockTimestamp();
+        _roleInfo[roleId].admin = admin;      
     }
 
-    // TODO Oz's grantRole() have different modifier and works with all role admins -> while this function works only with one role...
-    // INSTANCE_OWNER_ROLE
-    function grantRole(RoleId roleId, address member) external restricted() returns (bool granted) {
-        if(!_role[roleId].isCustom) {
-            revert IAccess.ErrorIAccessGrantNoncustomRole(roleId);
+    // TODO notify member?
+    // TODO granting/revoking can be `attached` to nft transfer?
+    function grantRole(RoleId roleId, address member) 
+        external 
+        restrictedToRoleAdmin(roleId) 
+        returns (bool granted) 
+    {
+        if (!roleExists(roleId)) {
+            revert IAccess.ErrorIAccessGrantNonexistentRole(roleId);
         }
 
-        return _grantRole(roleId, member);
-    }
-    // INSTANCE_SERVICE_ROLE
-    function grantGifRole(RoleId roleId, address member) external restricted() returns (bool granted) {
-        if(_role[roleId].isCustom) {
-            revert IAccess.ErrorIAccessGrantCustomRole(roleId);
-        }
-
-        return _grantRole(roleId, member);
+        granted = !EnumerableSet.contains(_roleMembers[roleId], member);
+        if(granted) {
+            _accessManager.grantRole(roleId.toInt(), member, EXECUTION_DELAY);
+            EnumerableSet.add(_roleMembers[roleId], member);
+        }    
     }
 
-    // TODO oz's revokeRole() have different modifier and works with all roles admins while this function works only with one role...
-    // INSTANCE_OWNER_ROLE
-    function revokeRole(RoleId roleId, address member) external restricted() returns (bool revoked) {
+    function revokeRole(RoleId roleId, address member)
+        external 
+        restrictedToRoleAdmin(roleId) 
+        returns (bool revoked) 
+    {
         if (!roleExists(roleId)) {
             revert IAccess.ErrorIAccessRevokeNonexistentRole(roleId);
         }
 
-        if(!_role[roleId].isCustom) {
-            revert IAccess.ErrorIAccessRevokeNoncustomRole(roleId);
-        }
-
-        if (EnumerableSet.contains(_roleMembers[roleId], member)) {
+        revoked = EnumerableSet.contains(_roleMembers[roleId], member);
+        if(revoked) {
             _accessManager.revokeRole(roleId.toInt(), member);
             EnumerableSet.remove(_roleMembers[roleId], member);
-            return true;
         }
-
-        return false;
     }
 
     /// @dev not restricted function by intention
     /// the restriction to role members is already enforced by the call to the access manager
-    function renounceRole(RoleId roleId) external returns (bool revoked) {
+    function renounceRole(RoleId roleId) 
+        external 
+        returns (bool revoked) 
+    {
         address member = msg.sender;
 
         if (!roleExists(roleId)) {
             revert IAccess.ErrorIAccessRenounceNonexistentRole(roleId);
         }
 
-        // TODO prohibit renouncing GIF roles???
-        /*if(!_role[roleId].isCustom) {
-            revert IAccess.ErrorIAccessRenounceNoncustomRole(roleId);
-        }*/
-
-        if (EnumerableSet.contains(_roleMembers[roleId], member)) {
+        revoked = EnumerableSet.contains(_roleMembers[roleId], member);
+        if(revoked) {
             // cannot use accessManger.renounce as it directly checks against msg.sender
             _accessManager.revokeRole(roleId.toInt(), member);
             EnumerableSet.remove(_roleMembers[roleId], member);
-            return true;
         }
-
-        return false;
     }
 
     function roleExists(RoleId roleId) public view returns (bool exists) {
-        return _role[roleId].createdAt.gtz();
+        return _roleInfo[roleId].createdAt.gtz();
     }
 
-    function roles() external view returns (uint256 numberOfRoles) {
-        return _roles.length;
+    function getRoleAdmin(RoleId roleId) public view returns(RoleId admin) {
+        return _roleInfo[roleId].admin;
     }
 
-    function getRoleId(uint256 idx) external view returns (RoleId roleId) {
-        return _roles[idx];
-    }
-
-    function getRoleIdForName(string memory name) external view returns (RoleId roleId) {
-        return _roleForName[ShortStrings.toShortString(name)];
-    }
-
-    function getRole(RoleId roleId) external view returns (IAccess.RoleInfo memory role) {
-        return _role[roleId];
-    }
-
-    function hasRole(RoleId roleId, address account) external view returns (bool accountHasRole) {
-        (accountHasRole, ) = _accessManager.hasRole(roleId.toInt(), account);
+    function getRoleInfo(RoleId roleId) external view returns (IAccess.RoleInfo memory role) {
+        return _roleInfo[roleId];
     }
 
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers) {
         return EnumerableSet.length(_roleMembers[roleId]);
     }
 
-    function getRoleMember(RoleId roleId, uint256 idx) external view returns (address roleMember) {
+    function getRoleId(uint256 idx) external view returns (RoleId roleId) {
+        return _roleIds[idx];
+    }
+
+    function getRoleIdForName(string memory name) external view returns (RoleId roleId) {
+        return _roleIdForName[ShortStrings.toShortString(name)];
+    }
+
+    function roleMember(RoleId roleId, uint256 idx) external view returns (address roleMember) {
         return EnumerableSet.at(_roleMembers[roleId], idx);
+    }
+
+    function hasRole(RoleId roleId, address account) external view returns (bool accountHasRole) {
+        (accountHasRole, ) = _accessManager.hasRole(roleId.toInt(), account);
+    }
+
+    function roles() external view returns (uint256 numberOfRoles) {
+        return _roleIds.length;
     }
 
     //--- Target ------------------------------------------------------//
     // INSTANCE_SERVICE_ROLE
-    function createGifTarget(address target, string memory name) external restricted() {
-        _createTarget(target, name, false, true);
-    }
-    // ADMIN_ROLE, func is not used
     function createTarget(address target, string memory name) external restricted() {
-        _createTarget(target, name, true, true);
+        bool isCustom = false;
+        _createTarget(target, name, isCustom);
+    }
+    // INSTANCE_OWNER_ROLE
+    function createCustomTarget(address target, string memory name) 
+        external 
+        restricted() 
+    {
+        // TODO custom targets can not be registered before this function, but possibly can after...
+        if(_registry.isRegistered(target)) {
+            revert IAccess.ErrorIAccessCreateCustomTargetTargetIsRegistered(target);
+        }
+
+        bool isCustom = true;
+        _createTarget(target, name, isCustom);
     }
     // INSTANCE_SERVICE_ROLE
-    function setTargetLocked(string memory targetName, bool locked) external restricted() {
-        address target = _targetForName[ShortStrings.toShortString(targetName)];
+    // TODO if target name and role id are isomoprhic?
+    function setTargetLocked(string memory targetName, bool locked) 
+        external 
+        restricted() 
+    {
+        address target = _targetAddressForName[ShortStrings.toShortString(targetName)];
         
         if (target == address(0)) {
             revert IAccess.ErrorIAccessSetLockedForNonexistentTarget(target);
         }
 
-        if(!_target[target].isCustom) {
+        // TODO setLocked() for gif and custom targets but NEVER for core targets
+        /*if(!_targetInfo[target].isCustom) {
             revert IAccess.ErrorIAccessSetLockedForNoncustomTarget(target);
-        }
-
-        _target[target].isLocked = locked;
+        }*/
+        // TODO isLocked is redundant but makes getTargetInfo() faster
+        _targetInfo[target].isLocked = locked;
         _accessManager.setTargetClosed(target, locked);
     }
-    // INSTANCE_SERVICE_ROLE
+
+    // allowed combinations of roles and targets:
+    //1) set core role for core target 
+    //2) set gif role for gif target  
+    //3) set custom role for gif target
+    //4) set custom role for custom target
+
+    // ADMIN_ROLE if used only during initialization, works with:
+    //      any roles for any targets
+    // INSTANCE_SERVICE_ROLE if used not only initilization, works with:
+    //      core roles for core targets
+    //      gif roles for gif targets
     function setTargetFunctionRole(
         string memory targetName,
         bytes4[] calldata selectors,
         RoleId roleId
-    ) public virtual restricted() {
-        address target = _targetForName[ShortStrings.toShortString(targetName)];
+    ) 
+        public 
+        virtual 
+        restricted() // restrictedToRoleAdmin? -> instance service is admin of component roles?
+    { 
+        address target = _targetAddressForName[ShortStrings.toShortString(targetName)];
 
         if (target == address(0)) {
             revert IAccess.ErrorIAccessSetForNonexistentTarget(target);
@@ -211,32 +273,64 @@ contract InstanceAccessManager is
         uint64 roleIdInt = RoleId.unwrap(roleId);
         _accessManager.setTargetFunctionRole(target, selectors, roleIdInt);
     }
+    // INSTANCE_OWNER_ROLE
+    // custom role for gif target -> instance owner can mess with gif target (component) -> e.g. set customer role for function intendent to work with gif role
+    // custom role for custom target
+    function setTargetFunctionCustomRole(
+        string memory targetName,
+        bytes4[] calldata selectors,
+        RoleId roleId
+    ) public virtual restricted() {
+        address target = _targetAddressForName[ShortStrings.toShortString(targetName)];
+        if (target == address(0)) {
+            revert IAccess.ErrorIAccessSetForNonexistentTarget(target);
+        }
+
+        // TODO set for gif and custom targets
+        /*if(!_targetInfo[target].isCustom) {
+            revert IAccess.ErrorIAccessSetForNoncustomTarget(target);
+        }*/
+
+        if (!roleExists(roleId)) {
+            revert IAccess.ErrorIAccessSetNonexistentRole(roleId);
+        }
+
+        // TODO set for gif and custom roles
+        /*if(!_roleInfo[roleId].isCustom) {
+            revert IAccess.ErrorIAccessSetNoncustomRole(roleId);
+        }*/
+
+        uint64 roleIdInt = RoleId.unwrap(roleId);
+        _accessManager.setTargetFunctionRole(target, selectors, roleIdInt);
+    }
 
     function isTargetLocked(address target) public view returns (bool locked) {
         return _accessManager.isTargetClosed(target);
     }
 
     function targetExists(address target) public view returns (bool exists) {
-        return _target[target].createdAt.gtz();
+        return _targetInfo[target].createdAt.gtz();
+    }
+
+    function getTargetInfo(address target) public view returns (IAccess.TargetInfo memory) {
+        return _targetInfo[target];
     }
 
     //--- internal view/pure functions --------------------------------------//
 
-    function _createRole(RoleId roleId, string memory name, bool isCustom, bool validateParameters) internal {
-        if (validateParameters) {
-            _validateRoleParameters(roleId, name, isCustom);
-        }
-
+    function _createRole(RoleId roleId, string memory name, bool isCustom) 
+        internal
+    {
         IAccess.RoleInfo memory role = IAccess.RoleInfo(
             ShortStrings.toShortString(name), 
             isCustom,
-            false, // role un-locked,
+            ADMIN_ROLE(),
             TimestampLib.blockTimestamp(),
             TimestampLib.blockTimestamp());
 
-        _role[roleId] = role;
-        _roleForName[role.name] = roleId;
-        _roles.push(roleId);
+        _roleInfo[roleId] = role;
+        _roleIdForName[role.name] = roleId;
+        _roleIds.push(roleId);
     }
 
     function _validateRoleParameters(
@@ -248,19 +342,11 @@ contract InstanceAccessManager is
         view 
         returns (IAccess.RoleInfo memory existingRole)
     {
-        // check role id
-        uint64 roleIdInt = RoleId.unwrap(roleId);
-        if(roleIdInt == _accessManager.ADMIN_ROLE() || roleIdInt == _accessManager.PUBLIC_ROLE()) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId); 
+        if(roleExists(roleId)) {
+            revert IAccess.ErrorIAccessRoleIdAlreadyExists(roleId);
         }
 
-        // prevent changing isCustom for existing roles
-        existingRole = _role[roleId];
-
-        if (existingRole.createdAt.gtz() && isCustom != existingRole.isCustom) {
-            revert IAccess.ErrorIAccessRoleIsCustomIsImmutable(roleId, isCustom, existingRole.isCustom); 
-        }
-
+        uint roleIdInt = roleId.toInt();
         if (isCustom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
             revert IAccess.ErrorIAccessRoleIdTooSmall(roleId); 
         } else if (!isCustom && roleIdInt >= CUSTOM_ROLE_ID_MIN) {
@@ -273,41 +359,17 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessRoleNameEmpty(roleId);
         }
 
-        if (_roleForName[nameShort] != RoleIdLib.zero() && _roleForName[nameShort] != roleId) {
-            revert IAccess.ErrorIAccessRoleNameNotUnique(_roleForName[nameShort], nameShort);
+        if (_roleIdForName[nameShort].gtz()) {
+            revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[nameShort], nameShort);
         }
     }
 
-    function _grantRole(RoleId roleId, address member) internal returns (bool granted) {
-        if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessGrantNonexistentRole(roleId);
-        }
-
-        // GIF roles are never locked
-        if (_role[roleId].isLocked) {
-            revert IAccess.ErrorIAccessRoleIdNotActive(roleId);
-        }
-
-        if (!EnumerableSet.contains(_roleMembers[roleId], member)) {
-            _accessManager.grantRole(roleId.toInt(), member, EXECUTION_DELAY);
-            EnumerableSet.add(_roleMembers[roleId], member);
-            return true;
-        }
-
-        return false;        
+    function _getNextCustomRoleId() internal returns(RoleId) {
+        return RoleIdLib.toRoleId(_idNext++);
     }
 
-    function _createTarget(address target, string memory name, bool isCustom, bool validateParameters) internal {
-        if (validateParameters) {
-            _validateTargetParameters(target, name, isCustom);
-        }
-
-        if (_target[target].createdAt.gtz()) {
-            revert IAccess.ErrorIAccessTargetAlreadyExists(target, _target[target].name);
-        }
-        if (_targetForName[ShortStrings.toShortString(name)] != address(0)) {
-            revert IAccess.ErrorIAccessTargetNameExists(target, _targetForName[ShortStrings.toShortString(name)], ShortStrings.toShortString(name));
-        }
+    function _createTarget(address target, string memory name, bool isCustom) internal {
+        _validateTargetParameters(target, name, isCustom);
 
         IAccess.TargetInfo memory info = IAccess.TargetInfo(
             ShortStrings.toShortString(name), 
@@ -316,13 +378,27 @@ contract InstanceAccessManager is
             TimestampLib.blockTimestamp(),
             TimestampLib.blockTimestamp());
 
-        _target[target] = info;
-        _targetForName[info.name] = target;
+        _targetInfo[target] = info;
+        _targetAddressForName[info.name] = target;
         _targets.push(target);
     }
 
     function _validateTargetParameters(address target, string memory name, bool isCustom) internal view {
-        // TODO: implement
+        if (_targetInfo[target].createdAt.gtz()) {
+            revert IAccess.ErrorIAccessTargetAlreadyExists(target, _targetInfo[target].name);
+        }
+
+        ShortString nameShort = ShortStrings.toShortString(name);
+        if (ShortStrings.byteLength(nameShort) == 0) {
+            revert IAccess.ErrorIAccessTargetNameEmpty(target);
+        }
+
+        if (_targetAddressForName[nameShort] != address(0)) {
+            revert IAccess.ErrorIAccessTargetNameExists(
+                target, 
+                _targetAddressForName[nameShort], 
+                nameShort);
+        }
     }
 
     function canCall(

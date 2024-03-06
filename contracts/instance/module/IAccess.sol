@@ -12,7 +12,8 @@ interface IAccess {
     struct RoleInfo {
         ShortString name;
         bool isCustom;
-        bool isLocked;
+        //bool isLocked;
+        RoleId admin;
         Timestamp createdAt;
         Timestamp updatedAt;
     }
@@ -25,23 +26,21 @@ interface IAccess {
         Timestamp updatedAt;
     }
 
+    error ErrorIAccessCallerIsNotRoleAdmin(address caller, RoleId roleId);
+
     error ErrorIAccessRoleIdInvalid(RoleId roleId);
     error ErrorIAccessRoleIdTooBig(RoleId roleId);
     error ErrorIAccessRoleIdTooSmall(RoleId roleId);
-    error ErrorIAccessRoleIdAlreadyExists(RoleId roleId, ShortString name);
-    error ErrorIAccessRoleIdNotActive(RoleId roleId);
+    error ErrorIAccessRoleIdAlreadyExists(RoleId roleId);
     error ErrorIAccessRoleNameEmpty(RoleId roleId);
     error ErrorIAccessRoleNameNotUnique(RoleId roleId, ShortString name);
-    error ErrorIAccessRoleInvalidUpdate(RoleId roleId, bool isCustom);
-    error ErrorIAccessRoleIsCustomIsImmutable(RoleId roleId, bool isCustom, bool isCustomExisting);
+    error ErrorIAccessSetAdminForNonexistentRole(RoleId roleId);
     error ErrorIAccessSetNonexistentRole(RoleId roleId);
+    error ErrorIAccessSetNoncustomRole(RoleId roleId);
     error ErrorIAccessSetLockedForNonexistentRole(RoleId roleId);
     error ErrorIAccessSetLockedForNoncustomRole(RoleId roleId);
     error ErrorIAccessGrantNonexistentRole(RoleId roleId);
-    error ErrorIAccessGrantNoncustomRole(RoleId roleId);
-    error ErrorIAccessGrantCustomRole(RoleId roleId);
     error ErrorIAccessRevokeNonexistentRole(RoleId roleId); 
-    error ErrorIAccessRevokeNoncustomRole(RoleId roleId);
     error ErrorIAccessRenounceNonexistentRole(RoleId roleId);
 
     error ErrorIAccessTargetAddressZero();
@@ -49,7 +48,9 @@ interface IAccess {
     error ErrorIAccessTargetNameEmpty(address target);
     error ErrorIAccessTargetNameExists(address target, address existingTarget, ShortString name);
     error ErrorIAccessTargetLocked(address target);
+    error ErrorIAccessCreateCustomTargetTargetIsRegistered(address target);
     error ErrorIAccessSetLockedForNonexistentTarget(address target);
     error ErrorIAccessSetLockedForNoncustomTarget(address target);
     error ErrorIAccessSetForNonexistentTarget(address target);
+    error ErrorIAccessSetForNoncustomTarget(address target);
 }
