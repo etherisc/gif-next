@@ -107,6 +107,10 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
+        if (!roleExists(admin)) {
+            revert IAccess.ErrorIAccessRoleIdInvalid(admin);
+        }        
+
         _roleInfo[roleId].admin = admin;      
     }
 
@@ -220,7 +224,6 @@ contract InstanceAccessManager is
         _createTarget(target, name, isCustom);
     }
     // INSTANCE_SERVICE_ROLE
-    // TODO if target name and role id are isomoprhic?
     function setTargetLocked(string memory targetName, bool locked) 
         external 
         restricted() 
@@ -249,7 +252,7 @@ contract InstanceAccessManager is
 
     // ADMIN_ROLE if used only during initialization, works with:
     //      any roles for any targets
-    // INSTANCE_SERVICE_ROLE if used not only initilization, works with:
+    // INSTANCE_SERVICE_ROLE if used not only during initilization, works with:
     //      core roles for core targets
     //      gif roles for gif targets
     function setTargetFunctionRole(
@@ -259,7 +262,7 @@ contract InstanceAccessManager is
     ) 
         public 
         virtual 
-        restricted() // restrictedToRoleAdmin? -> instance service is admin of component roles?
+        restricted()
     {
         ShortString nameShort = ShortStrings.toShortString(targetName);
         address target = _targetAddressForName[nameShort];
@@ -289,7 +292,7 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessTargetDoesNotExist(nameShort);
         }
 
-        // TODO set for gif and custom targets
+        // TODO set for gif and custom targets but NEVER for core targets
         /*if(!_targetInfo[target].isCustom) {
             revert IAccess.ErrorIAccessSetForNoncustomTarget(target);
         }*/
