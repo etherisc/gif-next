@@ -24,6 +24,7 @@ contract TestPool is TestGifBase {
             false,
             false,
             UFixedLib.toUFixed(1),
+            UFixedLib.toUFixed(1),
             poolOwner
         );
 
@@ -58,6 +59,7 @@ contract TestPool is TestGifBase {
             address(token),
             false,
             false,
+            UFixedLib.toUFixed(1),
             UFixedLib.toUFixed(1),
             poolOwner
         );
@@ -99,6 +101,7 @@ contract TestPool is TestGifBase {
             false,
             false,
             UFixedLib.toUFixed(1),
+            UFixedLib.toUFixed(1),
             poolOwner
         );
 
@@ -138,6 +141,7 @@ contract TestPool is TestGifBase {
             address(token),
             false,
             false,
+            UFixedLib.toUFixed(1),
             UFixedLib.toUFixed(1),
             poolOwner
         );
@@ -185,6 +189,7 @@ contract TestPool is TestGifBase {
             address(token),
             false,
             false,
+            UFixedLib.toUFixed(1),
             UFixedLib.toUFixed(1),
             poolOwner
         );

@@ -29,6 +29,7 @@ abstract contract Pool is
 
     struct PoolStorage {
         UFixed _collateralizationLevel;
+        UFixed _retentionLevel;
 
         bool _isExternallyManaged;
         bool _isInterceptingBundleTransfers;
@@ -59,10 +60,11 @@ abstract contract Pool is
         string memory name,
         // TODO refactor into tokenNftId
         address token,
-        UFixed collateralizationLevel,
         bool isInterceptingNftTransfers,
         bool isExternallyManaging,
         bool isVerifying,
+        UFixed collateralizationLevel,
+        UFixed retentionLevel,
         address initialOwner,
         bytes memory data
     )
@@ -74,13 +76,14 @@ abstract contract Pool is
 
         PoolStorage storage $ = _getPoolStorage();
         // TODO add validation
+        $._tokenHandler = new TokenHandler(token);
         $._isExternallyManaged = isExternallyManaging;
         $._isVerifyingApplications = isVerifying;
         $._collateralizationLevel = collateralizationLevel;
+        $._retentionLevel = retentionLevel;
         $._initialPoolFee = FeeLib.zeroFee();
         $._initialStakingFee = FeeLib.zeroFee();
         $._initialPerformanceFee = FeeLib.zeroFee();
-        $._tokenHandler = new TokenHandler(token);
         $._poolService = getInstance().getPoolService();
         $._bundleService = getInstance().getBundleService();
 
@@ -118,6 +121,11 @@ abstract contract Pool is
 
     function isExternallyManaged() external view override returns (bool) {
         return _getPoolStorage()._isExternallyManaged;
+    }
+
+
+    function getRetentionLevel() external view override returns (UFixed retentionLevel) {
+        return _getPoolStorage()._retentionLevel;
     }
 
 
@@ -204,12 +212,14 @@ abstract contract Pool is
         return ISetup.PoolSetupInfo(
             getProductNftId(),
             $._tokenHandler,
+            isNftInterceptor(),
+            $._isExternallyManaged,
+            $._isVerifyingApplications,
             $._collateralizationLevel,
+            $._retentionLevel,
             $._initialPoolFee,
             $._initialStakingFee,
             $._initialPerformanceFee,
-            isNftInterceptor(),
-            $._isVerifyingApplications,
             getWallet()
         );
     }

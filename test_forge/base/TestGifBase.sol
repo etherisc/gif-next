@@ -611,6 +611,7 @@ contract TestGifBase is Test {
             false,
             false,
             UFixedLib.toUFixed(1),
+            UFixedLib.toUFixed(1),
             poolOwner
         );
         poolNftId = poolService.register(address(pool));

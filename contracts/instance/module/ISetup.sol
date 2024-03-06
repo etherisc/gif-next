@@ -34,12 +34,14 @@ interface ISetup {
     struct PoolSetupInfo {
         NftId productNftId;
         TokenHandler tokenHandler;
-        UFixed collateralizationLevel;
+        bool isInterceptingBundleTransfers; // intercepts nft transfers for bundles
+        bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts
+        bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 
+        UFixed collateralizationLevel; // factor to calculate collateral for sum insurance (default 100%)
+        UFixed retentionLevel; // amount of collateral held in pool (default 100%)
         Fee poolFee; // pool fee on net premium
         Fee stakingFee; // pool fee on staked capital from investor
         Fee performanceFee; // pool fee on profits from capital investors
-        bool isIntercepting; // intercepts nft transfers for bundles
-        bool isVerifyingApplications; // confirms applications before they are underwritten
         address wallet;
     }
 }

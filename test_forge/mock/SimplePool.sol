@@ -15,6 +15,7 @@ contract SimplePool is Pool {
         bool isInterceptor,
         bool isConfirmingApplication,
         UFixed collateralizationLevel,
+        UFixed retentionLevel,
         address initialOwner
     ) 
     {
@@ -25,6 +26,7 @@ contract SimplePool is Pool {
             isInterceptor,
             isConfirmingApplication,
             collateralizationLevel,
+            retentionLevel,
             initialOwner
         );
     }
@@ -36,6 +38,7 @@ contract SimplePool is Pool {
         bool isInterceptor,
         bool isConfirmingApplication,
         UFixed collateralizationLevel,
+        UFixed retentionLevel,
         address initialOwner
     )
         public
@@ -47,10 +50,11 @@ contract SimplePool is Pool {
             instanceNftId,
             "SimplePool",
             token,
-            collateralizationLevel,
             isInterceptor,
             false, // externally managed
-            isConfirmingApplication,
+            isConfirmingApplication, // verifying applications
+            collateralizationLevel,
+            retentionLevel,
             initialOwner,
             "");
     }

@@ -1,13 +1,16 @@
 # GIF-Next (Generic Insurance Framework, next version)
 
-## tmp
 
 ```mermaid
-  graph TD;
-      A-->B;
-      A-->C;
-      B-->D;
-      C-->D;
+  graph TD
+      IPoolComponent --> IComponent
+      IComponent --> IRegisterable
+      IComponent --> ITransferInterceptor
+      IRegistryService --> IService
+      IService-->IRegisterable
+      IService-->IVersionable
+      IRegisterable-->INftOwnable
+      INftOwnable-->IERC165
 ```
 
 ## Add OpenZeppelin V5 Dependencies
