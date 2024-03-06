@@ -41,7 +41,10 @@ import {IPoolService} from "./IPoolService.sol";
 import {IBundleService} from "./IBundleService.sol";
 
 
-contract PolicyService is ComponentService, IPolicyService {
+contract PolicyService is
+    ComponentService, 
+    IPolicyService
+{
     using NftIdLib for NftId;
     using TimestampLib for Timestamp;
 
@@ -81,6 +84,7 @@ contract PolicyService is ComponentService, IPolicyService {
         (productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
+
     // TODO: no access restrictions
     function calculatePremium(
         RiskId riskId,
@@ -92,7 +96,7 @@ contract PolicyService is ComponentService, IPolicyService {
     )
         public
         view 
-        override
+        virtual override
         returns (
             uint256 premiumAmount,
             uint256 productFeeAmount,
@@ -177,7 +181,11 @@ contract PolicyService is ComponentService, IPolicyService {
         bytes memory applicationData,
         NftId bundleNftId,
         ReferralId referralId
-    ) external override returns (NftId policyNftId) {
+    )
+        external 
+        virtual override
+        returns (NftId policyNftId)
+    {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         // TODO: add validations (see create bundle in pool service)
 
@@ -257,13 +265,13 @@ contract PolicyService is ComponentService, IPolicyService {
     }
 
 
-    function revoke(
+    function decline(
         NftId policyNftId
     )
         external
         override
     {
-        require(false, "ERROR:PRS-234:NOT_YET_IMPLEMENTED");
+        require(false, "ERROR:PRS-235:NOT_YET_IMPLEMENTED");
     }
 
 
@@ -274,7 +282,7 @@ contract PolicyService is ComponentService, IPolicyService {
         Timestamp activateAt
     )
         external 
-        override
+        virtual override
     {
         // check caller is registered product
         IInstance instance;

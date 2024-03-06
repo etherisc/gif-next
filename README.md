@@ -408,6 +408,9 @@ Intercepting property
 #### Claim and Payout
 
 The sequence below sketches the small payout flow (payout < retention amount)
+- retention level: 30%
+- sum insured: 1000
+- payout: 200
 
 ```mermaid
 sequenceDiagram
@@ -423,6 +426,11 @@ sequenceDiagram
 ```
 
 The sequence below sketches the call flow for payouts larger than the retention amount
+- retention level: 30%
+- sum insured: 1000
+- payout: 500
+  * locally available: 300
+  * via policy (re-insurance): 200
 
 ```mermaid
 sequenceDiagram
@@ -434,13 +442,13 @@ sequenceDiagram
   pool ->> reinsuranceProduct: applyForPolicy()
   product->>productService: createPayout()
   productService ->> poolService: requestPayout()
-  poolService ->> pool: addPendingPayout()
+  poolService -->> productService: splitPayout() ? processPayout() ?
+  poolService ->> pool: pendingPayoutAdded()
   pool ->> pool: getReinsurancePolicy()
   pool ->> reinsuranceProduct: claim()
   reinsuranceProduct -->> reinsurancePool: requestPayout
   reinsurancePool ->> pool: payoutExecutedCallback()
-  pool ->> pool: processPendingPayout()
-  pool ->> poolService: processPayout()
+  pool ->> poolService: processPendingPayout()
   poolService ->> customer: transfer token for payout
   poolService ->> productService: payoutExecuted()
 ```

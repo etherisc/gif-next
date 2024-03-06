@@ -90,8 +90,12 @@ function RISK() pure returns (ObjectType) {
     return toObjectType(200);
 }
 
-function POLICY() pure returns (ObjectType) {
+function APPLICATION() pure returns (ObjectType) {
     return toObjectType(210);
+}
+
+function POLICY() pure returns (ObjectType) {
+    return toObjectType(211);
 }
 
 function BUNDLE() pure returns (ObjectType) {
