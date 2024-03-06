@@ -104,7 +104,7 @@ contract InstanceAccessManager is
         restricted()
     {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessSetAdminForNonexistentRole(roleId);
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
         _roleInfo[roleId].admin = admin;      
@@ -118,7 +118,7 @@ contract InstanceAccessManager is
         returns (bool granted) 
     {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessGrantNonexistentRole(roleId);
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
         granted = !EnumerableSet.contains(_roleMembers[roleId], member);
@@ -134,7 +134,7 @@ contract InstanceAccessManager is
         returns (bool revoked) 
     {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRevokeNonexistentRole(roleId);
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
         revoked = EnumerableSet.contains(_roleMembers[roleId], member);
@@ -153,7 +153,7 @@ contract InstanceAccessManager is
         address member = msg.sender;
 
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRenounceNonexistentRole(roleId);
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
         revoked = EnumerableSet.contains(_roleMembers[roleId], member);
@@ -213,7 +213,7 @@ contract InstanceAccessManager is
     {
         // TODO custom targets can not be registered before this function, but possibly can after...
         if(_registry.isRegistered(target)) {
-            revert IAccess.ErrorIAccessCreateCustomTargetTargetIsRegistered(target);
+            revert IAccess.ErrorIAccessTargetIsRegistered(target);
         }
 
         bool isCustom = true;
@@ -225,10 +225,11 @@ contract InstanceAccessManager is
         external 
         restricted() 
     {
-        address target = _targetAddressForName[ShortStrings.toShortString(targetName)];
+        ShortString nameShort = ShortStrings.toShortString(targetName);
+        address target = _targetAddressForName[nameShort];
         
         if (target == address(0)) {
-            revert IAccess.ErrorIAccessSetLockedForNonexistentTarget(target);
+            revert IAccess.ErrorIAccessTargetDoesNotExist(nameShort);
         }
 
         // TODO setLocked() for gif and custom targets but NEVER for core targets
@@ -259,15 +260,16 @@ contract InstanceAccessManager is
         public 
         virtual 
         restricted() // restrictedToRoleAdmin? -> instance service is admin of component roles?
-    { 
-        address target = _targetAddressForName[ShortStrings.toShortString(targetName)];
+    {
+        ShortString nameShort = ShortStrings.toShortString(targetName);
+        address target = _targetAddressForName[nameShort];
 
         if (target == address(0)) {
-            revert IAccess.ErrorIAccessSetForNonexistentTarget(target);
+            revert IAccess.ErrorIAccessTargetDoesNotExist(nameShort);
         }
 
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessSetNonexistentRole(roleId);
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
         uint64 roleIdInt = RoleId.unwrap(roleId);
@@ -281,9 +283,10 @@ contract InstanceAccessManager is
         bytes4[] calldata selectors,
         RoleId roleId
     ) public virtual restricted() {
-        address target = _targetAddressForName[ShortStrings.toShortString(targetName)];
+        ShortString nameShort = ShortStrings.toShortString(targetName);
+        address target = _targetAddressForName[nameShort];
         if (target == address(0)) {
-            revert IAccess.ErrorIAccessSetForNonexistentTarget(target);
+            revert IAccess.ErrorIAccessTargetDoesNotExist(nameShort);
         }
 
         // TODO set for gif and custom targets
@@ -292,7 +295,7 @@ contract InstanceAccessManager is
         }*/
 
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessSetNonexistentRole(roleId);
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
         // TODO set for gif and custom roles

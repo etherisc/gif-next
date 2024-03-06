@@ -10,6 +10,7 @@ import {IComponent} from "../../contracts/components/IComponent.sol";
 import {PRODUCT_OWNER_ROLE, INSTANCE_OWNER_ROLE, RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
 import {SimpleProduct, SPECIAL_ROLE_INT} from "../mock/SimpleProduct.sol";
 import {FeeLib} from "../../contracts/types/Fee.sol";
+import {RoleId} from "../../contracts/types/RoleId.sol";
 
 contract TestInstanceAccessManager is TestGifBase {
 
@@ -36,15 +37,16 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
+        productService.register(address(product));
+        SimpleProduct dproduct = SimpleProduct(address(product));
         vm.stopPrank();
 
         vm.startPrank(outsider);
-
-        // THEN - missing role
-        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentUnauthorized.selector, outsider, 11111));
+        
+        // THEN - call not auhorized
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, address(outsider)));
 
         // WHEN
-        SimpleProduct dproduct = SimpleProduct(address(product));
         dproduct.doSomethingSpecial();
     }
 
@@ -53,8 +55,6 @@ contract TestInstanceAccessManager is TestGifBase {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        RoleId customRoleId = instanceAccessManager.createCustomRole("SpecialRole", INSTANCE_OWNER_ROLE());
-        instanceAccessManager.grantRole(customRoleId, outsider);
         vm.stopPrank();
 
         _prepareDistributionAndPool();
@@ -71,6 +71,16 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
+        productService.register(address(product));
+        vm.stopPrank();
+
+        // assign special role to outsider
+        vm.startPrank(instanceOwner);
+        bytes4[] memory fcts = new bytes4[](1);
+        fcts[0] = SimpleProduct.doSomethingSpecial.selector;
+        RoleId customRoleId = instanceAccessManager.createCustomRole("SpecialRole", INSTANCE_OWNER_ROLE());
+        instanceAccessManager.setTargetFunctionCustomRole(product.getName(), fcts, customRoleId);
+        instanceAccessManager.grantRole(customRoleId, outsider);
         vm.stopPrank();
 
         vm.startPrank(outsider);
