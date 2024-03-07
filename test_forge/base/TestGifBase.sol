@@ -307,30 +307,32 @@ contract TestGifBase is Test {
 
         
         /* solhint-disable */
-        console.log("registry deployed at", address(registry));
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
         console.log("global registry nft id", chainNft.GLOBAL_REGISTRY_ID());
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
 
-        console.log("registry owner", address(registryOwner));
-        console.log("registry access manager", address(registryAccessManager));
-        console.log("registry access manager authority", registryAccessManager.authority());
-        console.log("release manager", address(releaseManager));
-        console.log("release manager authority", releaseManager.authority());
-        console.log("registry service proxy manager", address(registryServiceManager));
-        console.log("registry service proxy manager linked to nft", registryServiceManager.getNftId().toInt());
-        console.log("registry service proxy manager owner", registryServiceManager.getOwner());
-        console.log("registry service", address(registryService));
-        console.log("registry service nft", registryService.getNftId().toInt());
-        console.log("registry service authority", registryService.authority());
-        console.log("registry service owner", registryService.getOwner());
-        console.log("registry", address(registry));
-        console.log("registry nft", registry.getNftId(address(registry)).toInt());
+        console.log("registry deployed at", address(registry));
         console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
         console.log("registry owner (opt 2)", registry.getOwner());
-        console.log("token registry", address(tokenRegistry));
+
+        console.log("registry access manager deployed at", address(registryAccessManager));
+        console.log("registry access manager authority", registryAccessManager.authority());
+
+        console.log("release manager deployed at", address(releaseManager));
+        console.log("release manager authority", releaseManager.authority());
+
+        console.log("token registry deployed at", address(tokenRegistry));
         console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
-        console.log("token registry linked owner", tokenRegistry.getOwner());        
+        console.log("token registry linked owner", tokenRegistry.getOwner());
+
+        console.log("registry service proxy manager deployed at", address(registryServiceManager));
+        console.log("registry service proxy manager linked to nft", registryServiceManager.getNftId().toInt());
+        console.log("registry service proxy manager owner", registryServiceManager.getOwner());
+
+        console.log("registry service deployed at", address(registryService));
+        console.log("registry service nft", registryService.getNftId().toInt());
+        console.log("registry service owner", registryService.getOwner());
+        console.log("registry service authority", registryService.authority());
         /* solhint-enable */
     }
 
