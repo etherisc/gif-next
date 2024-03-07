@@ -79,7 +79,7 @@ async function verifyOwnership(
         throw new Error("chainNft registry address mismatch");
     }
     const registryC = IRegistry__factory.connect(await resolveAddress(registry.registryAddress), ethers.provider);
-    if (await registryC.getChainNft() !== registry.chainNftAddress) {
+    if (await registryC.getChainNftAddress() !== registry.chainNftAddress) {
         throw new Error("registry chainNft address mismatch");
     }
 
