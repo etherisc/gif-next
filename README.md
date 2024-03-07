@@ -433,6 +433,7 @@ sequenceDiagram
 ```
 
 *: if pool is configured to verify payouts before execution
+
 **: callback only if customer is contract (IPolicyHolder)
 
 The sequence below sketches the call flow for payouts larger than the retention amount
