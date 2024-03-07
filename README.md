@@ -440,7 +440,7 @@ The sequence below sketches the call flow for payouts larger than the retention 
   * via policy (re-insurance): 200
 
 ```mermaid
-sequenceDiagram
+sequenceDiagram 
   participant customer
   participant product
   participant productService
