@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Key32, KeyId, Key32Lib} from "./Key32.sol";
 import {NftId} from "./NftId.sol";
-import {DISTRIBUTION_TYPE} from "./ObjectType.sol";
+import {DISTRIBUTOR_TYPE} from "./ObjectType.sol";
 
 type DistributorType is bytes8;
 
@@ -45,7 +45,7 @@ library DistributorTypeLib {
 
     /// @dev Returns the key32 value for the specified nft id and object type.
     function toKey32(DistributorType id) public pure returns (Key32 key) {
-        return Key32Lib.toKey32(DISTRIBUTION_TYPE(), toKeyId(id));
+        return Key32Lib.toKey32(DISTRIBUTOR_TYPE(), toKeyId(id));
     }
 
     /// @dev Returns the key id value for the specified nft id

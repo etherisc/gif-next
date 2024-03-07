@@ -4,16 +4,59 @@ pragma solidity ^0.8.19;
 import {Fee} from "../types/Fee.sol";
 import {IComponent} from "./IComponent.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
-import {ReferralId} from "../types/Referral.sol";
+import {ReferralId, ReferralStatus} from "../types/Referral.sol";
 import {NftId} from "../types/NftId.sol";
+import {DistributorType} from "../types/DistributorType.sol";
+import {UFixed} from "../types/UFixed.sol";
+import {Timestamp} from "../types/Timestamp.sol";
 
 interface IDistributionComponent is IComponent {
+
+    event LogDistributorUpdated(address to, address caller);
 
     function getSetupInfo() external view returns (ISetup.DistributionSetupInfo memory setupInfo);
 
     function setFees(
         Fee memory distributionFee
     ) external;
+
+    function createDistributorType(
+        string memory name,
+        UFixed minDiscountPercentage,
+        UFixed maxDiscountPercentage,
+        UFixed commissionPercentage,
+        uint32 maxReferralCount,
+        uint32 maxReferralLifetime,
+        bool allowSelfReferrals,
+        bool allowRenewals,
+        bytes memory data
+    ) external returns (DistributorType distributorType);
+
+    function createDistributor(
+        address distributor,
+        DistributorType distributorType,
+        bytes memory data
+    ) external returns(NftId distributorNftId);
+
+    function updateDistributorType(
+        NftId distributorNftId,
+        DistributorType distributorType,
+        bytes memory data
+    ) external;
+
+    /**
+     * @dev lets distributors create referral codes.
+     * referral codes need to be unique
+     * distributor is identified via msg.sender.
+     */
+    function createReferral(
+        NftId distributorNftId,
+        string memory code,
+        UFixed discountPercentage,
+        uint32 maxReferrals,
+        Timestamp expiryAt,
+        bytes memory data
+    ) external returns (ReferralId referralId);
 
     function calculateFeeAmount(
         ReferralId referralId,
@@ -38,6 +81,16 @@ interface IDistributionComponent is IComponent {
         ReferralId referralId,
         uint256 feeAmount
     ) external;
+
+    function getDiscountPercentage(
+        string memory referralCode
+    ) external view returns (UFixed discountPercentage, ReferralStatus status);
+
+    function getDistributionFee() external view returns (Fee memory distibutionFee);
+
+    function getReferralId(
+        string memory referralCode
+    ) external returns (ReferralId referralId);
 
     /// @dev returns true iff the referral id is valid
     function referralIsValid(ReferralId referralId) external view returns (bool isValid);

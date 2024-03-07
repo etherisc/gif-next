@@ -19,6 +19,7 @@ import {IDistributionService} from "./service/IDistributionService.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 import {IPolicy} from "./module/IPolicy.sol";
+import {IDistribution} from "./module/IDistribution.sol";
 import {IPolicyService} from "./service/IPolicyService.sol";
 import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
@@ -30,6 +31,7 @@ import {NftId} from "../types/NftId.sol";
 import {RiskId} from "../types/RiskId.sol";
 import {StateId} from "../types/StateId.sol";
 import {VersionPart} from "../types/Version.sol";
+import {Key32} from "../types/Key32.sol";
 
 
 
@@ -57,6 +59,18 @@ interface IInstance is IRegisterable, IKeyValueStore, IAccessManaged {
     function createProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup) external;
     function updateProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup, StateId newState) external;
     function updateProductSetupState(NftId productNftId, StateId newState) external;
+
+    function createDistributorType(Key32 distributorKey, IDistribution.DistributorTypeInfo memory info) external;
+    function updateDistributorType(Key32 distributorKey, IDistribution.DistributorTypeInfo memory info, StateId newState) external;
+    function updateDistributorTypeState(Key32 distributorKey, StateId newState) external;
+
+    function createDistributor(NftId nftId, IDistribution.DistributorInfo memory info) external;
+    function updateDistributor(NftId nftId, IDistribution.DistributorInfo memory info, StateId newState) external;
+    function updateDistributorState(NftId nftId, StateId newState) external;
+
+    function createReferral(Key32 referralKey, IDistribution.ReferralInfo memory referralInfo) external;
+    function updateReferral(Key32 referralKey, IDistribution.ReferralInfo memory referralInfo, StateId newState) external;
+    function updateReferralState(Key32 referralKey, StateId newState) external;
 
     function createRisk(RiskId riskId, IRisk.RiskInfo memory risk) external;
     function updateRisk(RiskId riskId, IRisk.RiskInfo memory risk, StateId newState) external;
