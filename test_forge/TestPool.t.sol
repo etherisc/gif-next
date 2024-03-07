@@ -42,8 +42,10 @@ contract TestPool is TestGifBase {
 
     function getLocationHash(string memory location) public returns (bytes32 locationHash) {
         locationHash = pool.getContractLocation(bytes(location));
+        // solhint-disable
         console.log(location);
         console.logBytes32(locationHash);
+        // solhint-enable
     }
 
     function test_Pool_setupInfo() public {
