@@ -422,8 +422,11 @@ sequenceDiagram
   productService ->> poolService: requestPayout()
   poolService ->> poolService: processPayout()
   poolService ->> customer: transfer token for payout
+  poolService -->> customer: payoutExecutedCallback() *
   poolService ->> productService: payoutExecuted()
 ```
+
+*: callback only if customer is contract (IPolicyHolder)
 
 The sequence below sketches the call flow for payouts larger than the retention amount
 - retention level: 30%
@@ -442,11 +445,11 @@ sequenceDiagram
   pool ->> reinsuranceProduct: applyForPolicy()
   product->>productService: createPayout()
   productService ->> poolService: requestPayout()
-  poolService -->> productService: splitPayout() ? processPayout() ?
   poolService ->> pool: pendingPayoutAdded()
   pool ->> pool: getReinsurancePolicy()
   pool ->> reinsuranceProduct: claim()
-  reinsuranceProduct -->> reinsurancePool: requestPayout
+  reinsuranceProduct -->> reinsurancePool: createPayout
+  reinsurancePool ->> pool: transfer token for payout
   reinsurancePool ->> pool: payoutExecutedCallback()
   pool ->> poolService: processPendingPayout()
   poolService ->> customer: transfer token for payout
