@@ -58,6 +58,7 @@ contract RegisterableMock is ERC165, IRegisterable {
 
     // from INftOwnable, DO NOT USE
     function getRegistry() external view returns (IRegistry) { revert(); }
+    function getRegistryAddress() external view returns (address) { revert(); }
     function getNftId() external view returns (NftId) { revert(); }
     function getOwner() external view returns (address) { revert(); }
 }

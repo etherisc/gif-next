@@ -7,6 +7,7 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {IRegistryLinked} from "../../contracts/shared/IRegistryLinked.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
@@ -94,7 +95,7 @@ contract NftOwnableTest is Test {
     function test_NftOwnableLinkToRegNftIdWithUninitializedRegistry() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorRegistryNotInitialized.selector));
+                IRegistryLinked.ErrorRegistryNotInitialized.selector));
         mock.linkToRegisteredNftId();
     }
 
@@ -136,7 +137,7 @@ contract NftOwnableTest is Test {
         // attempt to initialize with zero registry address
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorRegistryAddressZero.selector));
+                IRegistryLinked.ErrorRegistryAddressZero.selector));
         mockUninitialized.initialize(mockOwner, address(0));
     }
 
@@ -144,7 +145,7 @@ contract NftOwnableTest is Test {
         // attempt to initialize with non-registry
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNotRegistry.selector,
+                IRegistryLinked.ErrorNotRegistry.selector,
                 address(1)));
         mockUninitialized.initialize(mockOwner, address(1));
     }
@@ -156,7 +157,7 @@ contract NftOwnableTest is Test {
         // attempt to initialize with non-registry
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNotRegistry.selector,
+                IRegistryLinked.ErrorNotRegistry.selector,
                 fakeRegistryAddress));
         mockUninitialized.initialize(mockOwner, fakeRegistryAddress);
     }

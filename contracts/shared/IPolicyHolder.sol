@@ -15,10 +15,10 @@ import {NumberId} from "../types/NumberId.sol";
 interface IPolicyHolder is IERC165, IERC721Receiver {
 
     /// @dev callback function that will be called after successful policy creation
-    function policyCreated(NftId policyNftId) external;
+    function policyCreatedCallback(NftId policyNftId) external;
 
     /// @dev callback function that will be called after a successful payout
-    function payoutProcessed(NftId policyNftId, NumberId payoutId, address beneficiary, uint256 amount) external;
+    function payoutExecutedCallback(NftId policyNftId, NumberId payoutId, address beneficiary, uint256 amount) external;
 
     /// @dev determines beneficiary address that will be used in payouts targeting this contract
     /// returned address will override GIF default where the policy nft holder is treated as beneficiary

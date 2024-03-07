@@ -7,16 +7,18 @@ import {ERC165} from "./ERC165.sol";
 import {INftOwnable} from "./INftOwnable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
+import {RegistryLinked} from "./RegistryLinked.sol";
 
 contract NftOwnable is
     ERC165,
+    RegistryLinked,
     INftOwnable
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.NftOwnable")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant NFT_OWNABLE_STORAGE_LOCATION_V1 = 0x07ebcf49758b6ed3af50fa146bec0abe157c0218fe65dc0874c286e9d5da4f00;
 
     struct NftOwnableStorage {
-        IRegistry _registry;
+        // IRegistry _registry;
         NftId _nftId;
         address _initialOwner; 
     }
@@ -41,7 +43,8 @@ contract NftOwnable is
         onlyInitializing()
     {
         _setInitialOwner(initialOwner);
-        _setRegistry(registryAddress);
+
+        initializeRegistryLinked(registryAddress);
         initializeERC165();
         registerInterface(type(INftOwnable).interfaceId);
     }
@@ -68,26 +71,26 @@ contract NftOwnable is
         NftOwnableStorage storage $ = _getNftOwnableStorage();
 
         if ($._nftId.gtz()) {
-            revert ErrorAlreadyLinked(address($._registry), $._nftId);
+            revert ErrorAlreadyLinked(address(getRegistry()), $._nftId);
         }
 
-        if (address($._registry) == address(0)) {
+        if (address(getRegistry()) == address(0)) {
             revert ErrorRegistryNotInitialized();
         }
 
         address contractAddress = address(this);
 
-        if (!$._registry.isRegistered(contractAddress)) {
+        if (!getRegistry().isRegistered(contractAddress)) {
             revert ErrorContractNotRegistered(contractAddress);
         }
 
-        $._nftId = $._registry.getNftId(contractAddress);
+        $._nftId = getRegistry().getNftId(contractAddress);
     }
 
 
-    function getRegistry() public view virtual override returns (IRegistry) {
-        return _getNftOwnableStorage()._registry;
-    }
+    // function getRegistry() public view virtual override returns (IRegistry) {
+    //     return _getNftOwnableStorage()._registry;
+    // }
 
     function getNftId() public view virtual override returns (NftId) {
         return _getNftOwnableStorage()._nftId;
@@ -101,7 +104,7 @@ contract NftOwnable is
         NftOwnableStorage storage $ = _getNftOwnableStorage();
 
         if ($._nftId.gtz()) {
-            return $._registry.ownerOf($._nftId);
+            return getRegistry().ownerOf($._nftId);
         }
 
         return $._initialOwner;
@@ -135,48 +138,48 @@ contract NftOwnable is
         NftOwnableStorage storage $ = _getNftOwnableStorage();
 
         if ($._nftId.gtz()) {
-            revert ErrorAlreadyLinked(address($._registry), $._nftId);
+            revert ErrorAlreadyLinked(address(getRegistry()), $._nftId);
         }
 
         _setRegistry(registryAddress);
 
-        if (!$._registry.isRegistered(nftOwnableAddress)) {
+        if (!getRegistry().isRegistered(nftOwnableAddress)) {
             revert ErrorContractNotRegistered(nftOwnableAddress);
         }
 
-        $._nftId = $._registry.getNftId(nftOwnableAddress);
+        $._nftId = getRegistry().getNftId(nftOwnableAddress);
 
         return $._nftId;
     }
 
 
-    function _setRegistry(address registryAddress)
-        private
-    {
-        NftOwnableStorage storage $ = _getNftOwnableStorage();
+    // function _setRegistry(address registryAddress)
+    //     private
+    // {
+    //     NftOwnableStorage storage $ = _getNftOwnableStorage();
 
-        if (address($._registry) != address(0)) {
-            revert ErrorRegistryAlreadyInitialized(address($._registry));
-        }
+    //     if (address($._registry) != address(0)) {
+    //         revert ErrorRegistryAlreadyInitialized(address($._registry));
+    //     }
 
-        if (registryAddress == address(0)) {
-            revert ErrorRegistryAddressZero();
-        }
+    //     if (registryAddress == address(0)) {
+    //         revert ErrorRegistryAddressZero();
+    //     }
 
-        if (registryAddress.code.length == 0) {
-            revert ErrorNotRegistry(registryAddress);
-        }
+    //     if (registryAddress.code.length == 0) {
+    //         revert ErrorNotRegistry(registryAddress);
+    //     }
 
-        $._registry = IRegistry(registryAddress);
+    //     $._registry = IRegistry(registryAddress);
 
-        try $._registry.supportsInterface(type(IRegistry).interfaceId) returns (bool isRegistry) {
-            if (!isRegistry) {
-                revert ErrorNotRegistry(registryAddress);
-            }
-        } catch {
-            revert ErrorNotRegistry(registryAddress);
-        }
-    }
+    //     try $._registry.supportsInterface(type(IRegistry).interfaceId) returns (bool isRegistry) {
+    //         if (!isRegistry) {
+    //             revert ErrorNotRegistry(registryAddress);
+    //         }
+    //     } catch {
+    //         revert ErrorNotRegistry(registryAddress);
+    //     }
+    // }
 
 
     function _getNftOwnableStorage() private pure returns (NftOwnableStorage storage $) {
