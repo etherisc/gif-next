@@ -125,47 +125,30 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
-        granted = !EnumerableSet.contains(_roleMembers[roleId], member);
+        granted = EnumerableSet.add(_roleMembers[roleId], member);
         if(granted) {
             _accessManager.grantRole(roleId.toInt(), member, EXECUTION_DELAY);
-            EnumerableSet.add(_roleMembers[roleId], member);
+            
         }    
     }
 
     function revokeRole(RoleId roleId, address member)
         external 
         restrictedToRoleAdmin(roleId) 
-        returns (bool revoked) 
+        returns (bool) 
     {
-        if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
-        }
-
-        revoked = EnumerableSet.contains(_roleMembers[roleId], member);
-        if(revoked) {
-            _accessManager.revokeRole(roleId.toInt(), member);
-            EnumerableSet.remove(_roleMembers[roleId], member);
-        }
+        return _revokeRole(roleId, member);
     }
 
     /// @dev not restricted function by intention
     /// the restriction to role members is already enforced by the call to the access manager
     function renounceRole(RoleId roleId) 
         external 
-        returns (bool revoked) 
+        returns (bool) 
     {
         address member = msg.sender;
-
-        if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
-        }
-
-        revoked = EnumerableSet.contains(_roleMembers[roleId], member);
-        if(revoked) {
-            // cannot use accessManger.renounce as it directly checks against msg.sender
-            _accessManager.revokeRole(roleId.toInt(), member);
-            EnumerableSet.remove(_roleMembers[roleId], member);
-        }
+        // cannot use accessManger.renounce as it directly checks against msg.sender
+        return _revokeRole(roleId, member);
     }
 
     function roleExists(RoleId roleId) public view returns (bool exists) {
@@ -279,7 +262,7 @@ contract InstanceAccessManager is
         _accessManager.setTargetFunctionRole(target, selectors, roleIdInt);
     }
     // INSTANCE_OWNER_ROLE
-    // custom role for gif target -> instance owner can mess with gif target (component) -> e.g. set customer role for function intendent to work with gif role
+    // custom role for gif target -> instance owner can mess with gif target (component) -> e.g. set custom role for function intendent to work with gif role
     // custom role for custom target
     function setTargetFunctionCustomRole(
         string memory targetName,
@@ -367,6 +350,20 @@ contract InstanceAccessManager is
 
         if (_roleIdForName[nameShort].gtz()) {
             revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[nameShort], nameShort);
+        }
+    }
+
+    function _revokeRole(RoleId roleId, address member) 
+        internal
+        returns(bool revoked)
+    {
+        if (!roleExists(roleId)) {
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+        }
+
+        revoked = EnumerableSet.remove(_roleMembers[roleId], member);
+        if(revoked) {
+            _accessManager.revokeRole(roleId.toInt(), member);
         }
     }
 
