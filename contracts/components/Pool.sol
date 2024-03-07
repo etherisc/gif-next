@@ -12,13 +12,9 @@ import {Component} from "./Component.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
-
 import {ISetup} from "../instance/module/ISetup.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {Registerable} from "../shared/Registerable.sol";
 
 abstract contract Pool is
     Component, 
@@ -90,7 +86,6 @@ abstract contract Pool is
         registerInterface(type(IPoolComponent).interfaceId);
     }
 
-
     /**
      * @dev see {IPool.verifyApplication}. 
      * Default implementation that only writes a {LogUnderwrittenByPool} entry.
@@ -102,7 +97,7 @@ abstract contract Pool is
         uint256 collateralizationAmount
     )
         external
-        onlyProductService
+        restricted()
         virtual override 
     {
         require(
@@ -161,6 +156,7 @@ abstract contract Pool is
     )
         external
         onlyOwner
+        restricted()
         override
     {
         _getPoolStorage()._poolService.setFees(poolFee, stakingFee, performanceFee);

@@ -24,7 +24,7 @@ contract TestPoolService is TestGifBase {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-
+        
         vm.expectRevert(
             abi.encodeWithSelector(
                 ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
@@ -51,7 +51,7 @@ contract TestPoolService is TestGifBase {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-
+        
         NftId nftId = poolService.register(address(pool));
         assertTrue(nftId.gtz(), "nftId is zero");
     }

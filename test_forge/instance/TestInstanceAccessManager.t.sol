@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+
+
 import {TestGifBase} from "../base/TestGifBase.sol";
-import {IAccess} from "../../contracts/instance/module/IAccess.sol";
-import {IComponent} from "../../contracts/components/IComponent.sol";
 import {PRODUCT_OWNER_ROLE, RoleIdLib} from "../../contracts/types/RoleId.sol";
 import {SimpleProduct, SPECIAL_ROLE_INT} from "../mock/SimpleProduct.sol";
 import {FeeLib} from "../../contracts/types/Fee.sol";
+import {RoleId} from "../../contracts/types/RoleId.sol";
 
 contract TestInstanceAccessManager is TestGifBase {
 
@@ -32,15 +34,16 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
+        productService.register(address(product));
+        SimpleProduct dproduct = SimpleProduct(address(product));
         vm.stopPrank();
 
         vm.startPrank(outsider);
-
-        // THEN - missing role
-        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentUnauthorized.selector, outsider, 11111));
+        
+        // THEN - call not auhorized
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, address(outsider)));
 
         // WHEN
-        SimpleProduct dproduct = SimpleProduct(address(product));
         dproduct.doSomethingSpecial();
     }
 
@@ -48,8 +51,6 @@ contract TestInstanceAccessManager is TestGifBase {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        instanceAccessManager.createRole(RoleIdLib.toRoleId(SPECIAL_ROLE_INT), "SpecialRole");
-        instanceAccessManager.grantRole(RoleIdLib.toRoleId(SPECIAL_ROLE_INT), outsider);
         vm.stopPrank();
 
         _prepareDistributionAndPool();
@@ -66,6 +67,17 @@ contract TestInstanceAccessManager is TestGifBase {
             FeeLib.zeroFee(),
             productOwner
         );
+        productService.register(address(product));
+        vm.stopPrank();
+
+        // assign special role to outsider
+        vm.startPrank(instanceOwner);
+        RoleId specialRoleId = RoleIdLib.toRoleId(SPECIAL_ROLE_INT);
+        instanceAccessManager.createRole(specialRoleId, "SpecialRole");
+        bytes4[] memory fcts = new bytes4[](1);
+        fcts[0] = SimpleProduct.doSomethingSpecial.selector;
+        instanceAccessManager.setTargetFunctionRole(product.getName(), fcts, specialRoleId);
+        instanceAccessManager.grantRole(specialRoleId, outsider);
         vm.stopPrank();
 
         vm.startPrank(outsider);
@@ -98,10 +110,19 @@ contract TestInstanceAccessManager is TestGifBase {
             productOwner
         );
         productService.register(address(product));
+        vm.stopPrank();
+
+        vm.startPrank(instanceOwner);
+        bytes4[] memory fctSelectors = new bytes4[](1);
+        fctSelectors[0] = SimpleProduct.doWhenNotLocked.selector;
+        instanceAccessManager.setTargetFunctionRole(product.getName(), fctSelectors, PRODUCT_OWNER_ROLE());
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
         product.lock();
 
         // THEN - expect locked
-        vm.expectRevert(abi.encodeWithSelector(IAccess.ErrorIAccessTargetLocked.selector, address(product)));
+        vm.expectRevert(abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, address(productOwner)));
 
         // WHEN
         SimpleProduct dproduct = SimpleProduct(address(product));

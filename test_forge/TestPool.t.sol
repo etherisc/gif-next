@@ -63,7 +63,7 @@ contract TestPool is TestGifBase {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-
+        
         NftId poolNftId = poolService.register(address(pool));
         ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
 
@@ -104,7 +104,7 @@ contract TestPool is TestGifBase {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-
+        
         NftId poolNftId = poolService.register(address(pool));
         Fee memory newPoolFee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
         Fee memory newStakingFee = FeeLib.toFee(UFixedLib.toUFixed(333,0), 444);
@@ -145,7 +145,7 @@ contract TestPool is TestGifBase {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-
+        
         poolNftId = poolService.register(address(pool));
         vm.stopPrank();
 
@@ -155,7 +155,8 @@ contract TestPool is TestGifBase {
         token.approve(address(poolSetupInfo.tokenHandler), 10000);
 
         // WHEN
-        bundleNftId = pool.createBundle(
+        SimplePool spool = SimplePool(address(pool));
+        bundleNftId = spool.createBundle(
             FeeLib.zeroFee(), 
             10000, 
             604800, 
@@ -193,7 +194,7 @@ contract TestPool is TestGifBase {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-
+        
         NftId poolNftId = poolService.register(address(pool));
 
         vm.stopPrank();
@@ -202,7 +203,8 @@ contract TestPool is TestGifBase {
         ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
         token.approve(address(poolSetupInfo.tokenHandler), 10000);
 
-        NftId bundleNftId = pool.createBundle(
+        SimplePool spool = SimplePool(address(pool));
+        NftId bundleNftId = spool.createBundle(
             FeeLib.zeroFee(), 
             10000, 
             604800, 
@@ -210,7 +212,7 @@ contract TestPool is TestGifBase {
         );
 
         Fee memory fee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
-        pool.setBundleFee(bundleNftId, fee);
+        spool.setBundleFee(bundleNftId, fee);
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         Fee memory bundleFee = bundleInfo.fee;

@@ -20,7 +20,7 @@ contract TestDistributionService is TestGifBase {
             FeeLib.zeroFee(),
             distributionOwner
         );
-
+        
         vm.expectRevert(
             abi.encodeWithSelector(
                 ComponentService.ErrorComponentServiceExpectedRoleMissing.selector, 
@@ -44,7 +44,7 @@ contract TestDistributionService is TestGifBase {
             FeeLib.zeroFee(),
             distributionOwner
         );
-
+        
         NftId nftId = distributionService.register(address(distribution));
         assertTrue(nftId.gtz(), "nftId is zero");
     }

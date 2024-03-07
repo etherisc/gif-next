@@ -63,17 +63,20 @@ contract SimplePool is Pool {
         Fee memory fee,
         uint256 initialAmount,
         uint256 lifetime,
-        bytes memory filter
+        bytes calldata filter
     )
         external
-        returns (NftId bundleNftId)
+        virtual 
+        returns(NftId bundleNftId)
     {
-        address bundleOwner = msg.sender;
-        return _createBundle(
-            bundleOwner, 
-            fee, 
-            initialAmount, 
-            lifetime, 
-            filter);
+        address owner = msg.sender;
+        bundleNftId = _createBundle(
+            owner,
+            fee,
+            initialAmount,
+            lifetime,
+            filter
+        );
     }
+
 }

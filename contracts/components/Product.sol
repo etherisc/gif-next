@@ -15,9 +15,6 @@ import {Timestamp} from "../types/Timestamp.sol";
 import {Fee} from "../types/Fee.sol";
 import {Component} from "./Component.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
 import {InstanceReader} from "../instance/InstanceReader.sol";
@@ -235,6 +232,7 @@ abstract contract Product is
     )
         external
         onlyOwner
+        restricted()
         override
     {
         getProductService().setFees(productFee, processingFee);

@@ -3,13 +3,11 @@ pragma solidity ^0.8.20;
 
 import {Product} from "../../contracts/components/Product.sol";
 import {RiskId} from "../../contracts/types/RiskId.sol";
-import {IRisk} from "../../contracts/instance/module/IRisk.sol";
 import {StateId} from "../../contracts/types/StateId.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {ReferralId} from "../../contracts/types/Referral.sol";
 import {Timestamp} from "../../contracts/types/Timestamp.sol";
-import {RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
@@ -151,7 +149,7 @@ contract SimpleProduct is Product {
 
     function doSomethingSpecial() 
         public 
-        onlyInstanceRole(SPECIAL_ROLE_INT)
+        restricted()
         returns (bool) 
     {
         return true;
@@ -159,7 +157,7 @@ contract SimpleProduct is Product {
 
     function doWhenNotLocked() 
         public 
-        isNotLocked
+        restricted()
         returns (bool) 
     {
         return true;

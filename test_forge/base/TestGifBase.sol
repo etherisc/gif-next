@@ -434,11 +434,7 @@ contract TestGifBase is Test {
         // revoke ADMIN_ROLE from registryOwner. token is already owned by 0x1
         masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(registryOwner));
         
-        masterInstanceNftId = instanceService.setAndRegisterMasterInstance(
-            address(masterInstanceAccessManager), 
-            address(masterInstance), 
-            address(masterInstanceReader), 
-            address(masterBundleManager));
+        masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
         chainNft.transferFrom(registryOwner, MASTER_INSTANCE_OWNER, masterInstanceNftId.toInt());
 
