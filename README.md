@@ -405,7 +405,11 @@ Intercepting property
 
 ### Product
 
-#### Claim and Payout
+### Payout Handling
+
+Pool specifies **retention level**.
+Retention level defines up to which percentage of the sum insured the pool is payout out using its own/current funds.
+Depending on the amount of a new payout the poolService decides to either execute the payout directly or to add the payout as a pending payout with a notification of the pool.
 
 The sequence below sketches the small payout flow (payout < retention amount)
 - retention level: 30%
