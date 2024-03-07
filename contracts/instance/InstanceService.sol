@@ -236,11 +236,11 @@ contract InstanceService is Service, IInstanceService {
             onlyOwner 
             returns(NftId masterInstanceNftId)
     {
-        require(_masterInstance == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
-        require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
-        require(_masterInstanceBundleManager == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
+        if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
+        if(_masterInstanceAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
+        if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
 
-        require (instanceAddress != address(0), "ERROR:CRD-006:INSTANCE_ZERO");
+        if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
         InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
@@ -250,14 +250,13 @@ contract InstanceService is Service, IInstanceService {
         BundleManager bundleManager = instance.getBundleManager();
         address bundleManagerAddress = address(bundleManager);
 
-        require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
-        require (instanceReaderAddress != address(0), "ERROR:CRD-007:INSTANCE_READER_ZERO");
-        require (bundleManagerAddress != address(0), "ERROR:CRD-008:BUNDLE_MANAGER_ZERO");
-
+        if(accessManagerAddress == address(0)) { revert ErrorInstanceServiceAccessManagerZero(); }
+        if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
+        if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
         
-        require(instance.authority() == accessManagerAddress, "ERROR:CRD-009:INSTANCE_AUTHORITY_MISMATCH");
-        require(instanceReader.getInstance() == instance, "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
-        require(bundleManager.getInstance() == instance, "ERROR:CRD-011:BUNDLE_MANAGER_INSTANCE_MISMATCH");
+        if(instance.authority() != accessManagerAddress) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
+        if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
+        if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
 
         _masterInstanceAccessManager = accessManagerAddress;
         _masterInstance = instanceAddress;
@@ -273,12 +272,12 @@ contract InstanceService is Service, IInstanceService {
     }
 
     function setMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
-        require(_masterInstanceReader != address(0), "ERROR:CRD-003:INSTANCE_READER_MASTER_NOT_SET");
-        require (instanceReaderAddress != address(0), "ERROR:CRD-012:INSTANCE_READER_ZERO");
-        require(instanceReaderAddress != _masterInstanceReader, "ERROR:CRD-014:INSTANCE_READER_MASTER_SAME_AS_NEW");
+        if(_masterInstanceReader == address(0)) { revert ErrorInstanceServiceMasterInstanceReaderNotSet(); }
+        if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderAddressZero(); }
+        if(instanceReaderAddress == _masterInstanceReader) { revert ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader(); }
 
         InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
-        require(instanceReader.getInstance() == IInstance(_masterInstance), "ERROR:CRD-015:INSTANCE_READER_INSTANCE_MISMATCH");
+        if(instanceReader.getInstance() != IInstance(_masterInstance)) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch(); }
 
         _masterInstanceReader = instanceReaderAddress;
     }
