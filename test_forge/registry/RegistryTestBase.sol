@@ -150,7 +150,7 @@ contract RegistryTestBase is Test, FoundryRandom {
         registry = Registry(registryAddress);
         registryNftId = registry.getNftId(address(registry));
 
-        address chainNftAddress = address(registry.getChainNft());
+        address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
         
         tokenRegistry = new TokenRegistry();
@@ -457,7 +457,7 @@ contract RegistryTestBase is Test, FoundryRandom {
         //console.log("Checking all IRegistry getters");
 
         // check getters without args
-        assertEq(address(registry.getChainNft()), address(chainNft), "getChainNft() returned unexpected value");
+        assertEq(registry.getChainNftAddress(), address(chainNft), "getChainNft() returned unexpected value");
         assertEq(registry.getObjectCount(), EnumerableSet.length(_nftIds) - 1, "getObjectCount() returned unexpected value");// -1 because of zeroNftId in the set
         //assertEq(registry.getOwner(), registryOwner, "getOwner() returned unexpected value");
 

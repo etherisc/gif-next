@@ -11,11 +11,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "./IRegisterable.sol";
 import {Versionable} from "./Versionable.sol";
 
-import {ERC165} from "./ERC165.sol";
-
 contract Registerable is
-    ERC165,
-    Initializable,
     NftOwnable,
     IRegisterable
 {
@@ -37,7 +33,7 @@ contract Registerable is
         }
     }
 
-    function _initializeRegisterable(
+    function initializeRegisterable(
         address registryAddress,
         NftId parentNftId,
         ObjectType objectType,
@@ -45,12 +41,11 @@ contract Registerable is
         address initialOwner,
         bytes memory data
     )
-        internal
-        //onlyInitializing//TODO uncomment when "fully" upgradeable
+        public
         virtual
+        onlyInitializing
     {
-        _initializeERC165();
-        _initializeNftOwnable(
+        initializeNftOwnable(
             initialOwner,
             registryAddress);
 
@@ -63,7 +58,7 @@ contract Registerable is
         $._isInterceptor = isInterceptor;
         $._data = data;
 
-        _registerInterface(type(IRegisterable).interfaceId);
+        registerInterface(type(IRegisterable).interfaceId);
     }
 
 

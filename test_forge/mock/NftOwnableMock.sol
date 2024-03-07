@@ -5,10 +5,26 @@ import {NftOwnable} from "../../contracts/shared/NftOwnable.sol";
 
 contract NftOwnableMock is NftOwnable {
 
-    constructor() NftOwnable() {}
+    constructor() {
+        initializeOwner(msg.sender);
+    }
 
-    function initializeNftOwnable(address initialOwner, address registryAddress) external {
-        _initializeNftOwnable(initialOwner, registryAddress);
+    function linkToNftOwnable(address registryAddress, address nftOwnableAddress) external {
+        _linkToNftOwnable(registryAddress, nftOwnableAddress);
+    }
+}
+
+
+contract NftOwnableMockUninitialized is NftOwnable {
+
+    function initialize(
+        address initialOwner,
+        address registry
+    )
+        public
+        initializer()
+    {
+        initializeNftOwnable(initialOwner, registry);
     }
 
     function linkToNftOwnable(address registryAddress, address nftOwnableAddress) external {

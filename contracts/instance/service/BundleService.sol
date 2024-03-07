@@ -55,9 +55,8 @@ contract BundleService is
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while PoolService is not deployed in PoolServiceManager constructor
         //      owner is PoolServiceManager deployer
-        _initializeService(registryAddress, owner);
-
-        _registerInterface(type(IBundleService).interfaceId);
+        initializeService(registryAddress, owner);
+        registerInterface(type(IBundleService).interfaceId);
     }
 
     function getDomain() public pure override(Service, IService) returns(ObjectType) {
@@ -164,17 +163,23 @@ contract BundleService is
         bundleManager.unlock(bundleNftId);
     }
 
-    function underwritePolicy(IInstance instance,
+    function lockCollateral(
+        IInstance instance,
         NftId policyNftId, 
         NftId bundleNftId, 
         uint256 collateralAmount,
         uint256 netPremiumAmount
     ) 
         external
-        onlyService 
+        onlyService
+        returns (
+            IBundle.BundleInfo memory bundleInfo
+        )
     {
         InstanceReader instanceReader = instance.getInstanceReader();
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+
+        // TODO add validation
 
         // lock collateral
         bundleInfo.lockedAmount += collateralAmount;

@@ -27,8 +27,9 @@ contract TokenRegistry is
     mapping(address token => mapping(VersionPart majorVersion => bool isActive)) internal _active;
 
     constructor()
-        NftOwnable()
-    { }
+    { 
+        initializeOwner(msg.sender);
+    }
 
 
     /// @dev link ownership of token registry to nft owner of registry service
@@ -60,7 +61,7 @@ contract TokenRegistry is
         // verify valid major version
         // ensure major version increments is one
         uint256 version = majorVersion.toInt();
-        if (!_registry.isValidRelease(majorVersion)) {
+        if (!getRegistry().isValidRelease(majorVersion)) {
             revert TokenMajorVersionInvalid(majorVersion);
         }
 
