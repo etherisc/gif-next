@@ -5,12 +5,19 @@ import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStri
 
 import {RoleId} from "../../types/RoleId.sol";
 import {Timestamp} from "../../types/Timestamp.sol";
+import {NftId} from "../../types/NftId.sol";
 
 interface IAccess {
 
+    enum Type {
+        Core,
+        Gif,
+        Custom        
+    }
+
     struct RoleInfo {
         ShortString name;
-        bool isCustom;
+        Type rtype;
         //bool isLocked;
         RoleId admin;
         Timestamp createdAt;
@@ -19,7 +26,7 @@ interface IAccess {
 
     struct TargetInfo {
         ShortString name;
-        bool isCustom;
+        Type ttype;
         bool isLocked;
         Timestamp createdAt;
         Timestamp updatedAt;
@@ -33,16 +40,15 @@ interface IAccess {
     error ErrorIAccessRoleIdAlreadyExists(RoleId roleId);
     error ErrorIAccessRoleNameEmpty(RoleId roleId);
     error ErrorIAccessRoleNameNotUnique(RoleId roleId, ShortString name);
-    error ErrorIAccessSetNoncustomRole(RoleId roleId);
-    error ErrorIAccessSetLockedForNoncustomRole(RoleId roleId);
+    error ErrorIAccessRoleTypeInvalid(RoleId roleId, Type rtype);
 
     error ErrorIAccessTargetAddressZero();
     error ErrorIAccessTargetDoesNotExist(ShortString name);
     error ErrorIAccessTargetAlreadyExists(address target, ShortString name);
+    error ErrorIAccessTargetTypeInvalid(ShortString name, Type ttype);
+    error ErrorIAccessTargetInstanceMismatch(ShortString name, NftId instanceNftId);
     error ErrorIAccessTargetNameEmpty(address target);
     error ErrorIAccessTargetNameExists(address target, address existingTarget, ShortString name);
     error ErrorIAccessTargetLocked(address target);
     error ErrorIAccessTargetIsRegistered(address target);
-    error ErrorIAccessSetLockedForNoncustomTarget(address target);
-    error ErrorIAccessSetForNoncustomTarget(address target);
 }

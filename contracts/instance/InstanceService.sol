@@ -132,24 +132,23 @@ contract InstanceService is Service, IInstanceService {
 
     function _createCoreAndGifRoles(InstanceAccessManager clonedAccessManager) internal {
         // default roles controlled by INSTANCE_OWNER_ROLE -> gif roles
-        clonedAccessManager.createRole(INSTANCE_OWNER_ROLE(), "InstanceOwnerRole", ADMIN_ROLE());
-        clonedAccessManager.createRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
-        clonedAccessManager.createRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
-        clonedAccessManager.createRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", INSTANCE_OWNER_ROLE());
+        clonedAccessManager.createGifRole(INSTANCE_OWNER_ROLE(), "InstanceOwnerRole", ADMIN_ROLE()); // TODO admin is INSTANCE_OWNER_ROLE, see _grantInstanceOwnerAuthorizations()
+        clonedAccessManager.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
+        clonedAccessManager.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
+        clonedAccessManager.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", INSTANCE_OWNER_ROLE());
         // default roles controlled by INSTANCE_SERVICE_ROLE -> core roles, all set/granted only once during cloning
-        clonedAccessManager.createRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createRole(POOL_SERVICE_ROLE(), "PoolServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole", ADMIN_ROLE());
-        // custom roles -> controled by component owner
+        clonedAccessManager.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole", ADMIN_ROLE());
+        clonedAccessManager.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole", ADMIN_ROLE());
+        clonedAccessManager.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole", ADMIN_ROLE());
+        clonedAccessManager.createCoreRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole", ADMIN_ROLE());
+        clonedAccessManager.createCoreRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole", ADMIN_ROLE());
+        clonedAccessManager.createCoreRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole", ADMIN_ROLE());
     }
 
     function _createCoreTargets(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
-        clonedAccessManager.createTarget(address(clonedAccessManager), "InstanceAccessManager");
-        clonedAccessManager.createTarget(address(clonedInstance), "Instance");
-        clonedAccessManager.createTarget(address(clonedBundleManager), "BundleManager");
+        clonedAccessManager.createCoreTarget(address(clonedAccessManager), "InstanceAccessManager");
+        clonedAccessManager.createCoreTarget(address(clonedInstance), "Instance");
+        clonedAccessManager.createCoreTarget(address(clonedBundleManager), "BundleManager");
     }   
 
     function _grantDistributionServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
@@ -246,10 +245,11 @@ contract InstanceService is Service, IInstanceService {
             INSTANCE_SERVICE_ROLE());
 
         // configure authorizations for instance service on instance access manager
-        bytes4[] memory accessManagerInstanceServiceSelectors = new bytes4[](3);
-        accessManagerInstanceServiceSelectors[0] = clonedAccessManager.createTarget.selector;
-        accessManagerInstanceServiceSelectors[1] = clonedAccessManager.setTargetLocked.selector;
-        accessManagerInstanceServiceSelectors[2] = clonedAccessManager.setTargetFunctionRole.selector;
+        bytes4[] memory accessManagerInstanceServiceSelectors = new bytes4[](4);
+        accessManagerInstanceServiceSelectors[0] = clonedAccessManager.createCoreTarget.selector;
+        accessManagerInstanceServiceSelectors[1] = clonedAccessManager.createGifTarget.selector;
+        accessManagerInstanceServiceSelectors[2] = clonedAccessManager.setTargetLocked.selector;
+        accessManagerInstanceServiceSelectors[3] = clonedAccessManager.setTargetFunctionRole.selector;
         clonedAccessManager.setTargetFunctionRole(
             "InstanceAccessManager",
             accessManagerInstanceServiceSelectors, 
@@ -394,7 +394,7 @@ contract InstanceService is Service, IInstanceService {
 
         Instance instance = Instance(instanceInfo.objectAddress);
         InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
-        accessManager.createTarget(targetAddress, targetName);
+        accessManager.createGifTarget(targetAddress, targetName);
     }
 
     function grantDistributionDefaultPermissions(NftId instanceNftId, address distributionAddress, string memory distributionName) external onlyRegisteredService {
