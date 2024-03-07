@@ -422,15 +422,18 @@ sequenceDiagram
   participant product
   participant productService
   participant poolService
+  participant pool
   product->>productService: createPayout()
   productService ->> poolService: requestPayout()
+  poolService -->> pool: verifyPayout() *
   poolService ->> poolService: processPayout()
   poolService ->> customer: transfer token for payout
-  poolService -->> customer: payoutExecutedCallback() *
   poolService ->> productService: payoutExecuted()
+  poolService -->> customer: payoutExecutedCallback() **
 ```
 
-*: callback only if customer is contract (IPolicyHolder)
+*: if pool is configured to verify payouts before execution
+**: callback only if customer is contract (IPolicyHolder)
 
 The sequence below sketches the call flow for payouts larger than the retention amount
 - retention level: 30%
