@@ -35,7 +35,7 @@ interface IRegistryService is
      struct FunctionConfig
      {
           ObjectType serviceDomain;
-          bytes4 selector;
+          bytes4[] selectors;
      }
 
     function getFunctionConfigs()

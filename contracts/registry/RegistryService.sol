@@ -178,33 +178,37 @@ contract RegistryService is
             FunctionConfig[] memory config
         )
     {
-        config = new FunctionConfig[](7);
+        config = new FunctionConfig[](6);
 
         // order of service registrations MUST be reverse to this array 
         /*config[-1].serviceDomain = STAKE();
         config[-1].selector = RegistryService.registerStake.selector;*/
 
         config[0].serviceDomain = POLICY();
-        config[0].selector = RegistryService.registerPolicy.selector;
+        config[0].selectors = new bytes4[](1);
+        config[0].selectors[0] = RegistryService.registerPolicy.selector;
 
         config[1].serviceDomain = BUNDLE();
-        config[1].selector = RegistryService.registerBundle.selector;
+        config[1].selectors = new bytes4[](1);
+        config[1].selectors[0] = RegistryService.registerBundle.selector;
 
         config[2].serviceDomain = PRODUCT();
-        config[2].selector = RegistryService.registerProduct.selector;
+        config[2].selectors = new bytes4[](1);
+        config[2].selectors[0] = RegistryService.registerProduct.selector;
 
         config[3].serviceDomain = POOL();
-        config[3].selector = RegistryService.registerPool.selector;
+        config[3].selectors = new bytes4[](1);
+        config[3].selectors[0] = RegistryService.registerPool.selector;
 
         config[4].serviceDomain = DISTRIBUTION();
-        config[4].selector = RegistryService.registerDistribution.selector;
-
-        config[5].serviceDomain = DISTRIBUTION();
-        config[5].selector = RegistryService.registerDistributor.selector;
+        config[4].selectors = new bytes4[](2);
+        config[4].selectors[0] = RegistryService.registerDistribution.selector;
+        config[4].selectors[1] = RegistryService.registerDistributor.selector;
 
         // registerInstance() have no restriction
-        config[6].serviceDomain = INSTANCE();
-        config[6].selector = RegistryService.registerInstance.selector;
+        config[5].serviceDomain = INSTANCE();
+        config[5].selectors = new bytes4[](1);
+        config[5].selectors[0] = RegistryService.registerInstance.selector;
     }
 
     // Internal
