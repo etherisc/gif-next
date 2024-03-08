@@ -66,8 +66,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress],
         { libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
                 BlocknumberLib: libraries.blockNumberLibAddress, 
+                DistributorTypeLib: libraries.distributorTypeLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                ReferralLib: libraries.referralLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
