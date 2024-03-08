@@ -95,18 +95,24 @@ contract InstanceAccessManager is
 
     // INSTANCE_OWNER_ROLE
     // creates custom roles only
-    // TODO INSTANCE_OWNER_ROLE as default admin
-    function createCustomRole(string memory name, RoleId admin) 
+    function createCustomRole(string memory name)
         external
         restricted()
-        returns(RoleId roleId)
+        returns(RoleId roleId, RoleId admin)
     {
-        RoleId roleId = _getNextCustomRoleId();
-        _validateRoleParameters(roleId, name, IAccess.Type.Custom);
+        (
+            RoleId roleId,
+            RoleId admin
+        ) = _getNextCustomRoleId();
+
         _createRole(roleId, name, IAccess.Type.Custom);
+        _createRole(admin, name, IAccess.Type.Custom);
+
+        grantRole(admin, msg.sender);
         setRoleAdmin(roleId, admin);
     }
 
+    // ADMIN_ROLE
     // TODO MUST always be restricted to ADMIN_ROLE? -> use onlyAdminRole or use similar _getAdminRestrictions()
     function setRoleAdmin(RoleId roleId, RoleId admin) 
         public 
@@ -126,7 +132,7 @@ contract InstanceAccessManager is
     // TODO notify member?
     // TODO granting/revoking can be `attached` to nft transfer?
     function grantRole(RoleId roleId, address member) 
-        external 
+        public
         restrictedToRoleAdmin(roleId) 
         returns (bool granted) 
     {
@@ -387,8 +393,17 @@ contract InstanceAccessManager is
         }
     }
 
-    function _getNextCustomRoleId() internal returns(RoleId) {
-        return RoleIdLib.toRoleId(_idNext++);
+    function _getNextCustomRoleId() 
+        internal 
+        returns(RoleId roleId, RoleId admin) 
+    {
+        uint64 idNext = _idNext;
+        uint64 admin = idNext + 1;
+
+        _idNext = idNext + 2;
+
+        roleId = RoleIdLib.toRoleId(idNext);
+        admin = RoleIdLib.toRoleId(admin)
     }
 
     function _createTarget(address target, string memory name, IAccess.Type ttype) internal {

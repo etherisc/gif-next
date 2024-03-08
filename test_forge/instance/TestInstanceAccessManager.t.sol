@@ -50,7 +50,6 @@ contract TestInstanceAccessManager is TestGifBase {
         dproduct.doSomethingSpecial();
     }
 
-    // FIXME: fix test
     function skip_test_InstanceAccessManager_hasRole_customRole() public {
         // GIVEN
         vm.startPrank(instanceOwner);
@@ -74,12 +73,17 @@ contract TestInstanceAccessManager is TestGifBase {
         productService.register(address(product));
         vm.stopPrank();
 
-        // assign special role to outsider
         vm.startPrank(instanceOwner);
+        // create special role and special role admin
+        RoleId customRoleId;
+        RoleId customRoleAdmin;
+        (customRoleId, customRoleAdmin) = instanceAccessManager.createCustomRole("SpecialRole");
+        // set special role for product custom product function 
         bytes4[] memory fcts = new bytes4[](1);
         fcts[0] = SimpleProduct.doSomethingSpecial.selector;
-        RoleId customRoleId = instanceAccessManager.createCustomRole("SpecialRole", INSTANCE_OWNER_ROLE());
         instanceAccessManager.setTargetFunctionCustomRole(product.getName(), fcts, customRoleId);
+        // assign special role to outsider
+        //instanceAccessManager.grantRole("SpecialRole", outsider);
         instanceAccessManager.grantRole(customRoleId, outsider);
         vm.stopPrank();
 
