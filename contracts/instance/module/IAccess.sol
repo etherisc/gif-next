@@ -10,6 +10,7 @@ import {NftId} from "../../types/NftId.sol";
 interface IAccess {
 
     enum Type {
+        NotInitialized,
         Core,
         Gif,
         Custom        

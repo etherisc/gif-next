@@ -147,12 +147,12 @@ contract InstanceService is Service, IInstanceService
         clonedAccessManager.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
         clonedAccessManager.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", INSTANCE_OWNER_ROLE());
         // default roles controlled by INSTANCE_SERVICE_ROLE -> core roles, all set/granted only once during cloning
-        clonedAccessManager.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createCoreRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createCoreRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole", ADMIN_ROLE());
-        clonedAccessManager.createCoreRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole", ADMIN_ROLE());
+        clonedAccessManager.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
+        clonedAccessManager.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
+        clonedAccessManager.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
+        clonedAccessManager.createCoreRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole");
+        clonedAccessManager.createCoreRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole");
+        clonedAccessManager.createCoreRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole");
     }
 
     function _createCoreTargets(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {

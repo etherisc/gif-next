@@ -75,15 +75,15 @@ contract InstanceAccessManager is
     //--- Role ------------------------------------------------------//
     // INSTANCE_SERVICE_ROLE 
     // assume core roles are never revoked or renounced -> core roles admin is never active after intialization
-    function createCoreRole(RoleId roleId, string memory name, RoleId admin) 
+    function createCoreRole(RoleId roleId, string memory name)
         external
         restricted()
     {
         _createRole(roleId, name, IAccess.Type.Core);
-        setRoleAdmin(roleId, admin);
     }
     // INSTANCE_SERVICE_ROLE
     // assume gif roles can be revoked or renounced
+    // TODO who can be admin of gif role?
     function createGifRole(RoleId roleId, string memory name, RoleId admin) 
         external
         restricted()
@@ -112,13 +112,16 @@ contract InstanceAccessManager is
     }
 
     // ADMIN_ROLE
-    // TODO core roles admin is always ADMIN_ROLE
     // TODO restricted to ADMIN_ROLE or have restrictedToRoleAdmin modifier ???
     function setRoleAdmin(RoleId roleId, RoleId admin) 
         public 
         restricted()
     {
         if (!roleExists(roleId)) {
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+        }
+
+        if(_roleInfo[roleId].rtype == IAccess.Type.Core) {
             revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
