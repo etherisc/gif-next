@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {VersionPartLib} from "../../contracts/types/Version.sol";
+
+import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -23,15 +24,16 @@ import {PolicyService} from "../../contracts/instance/service/PolicyService.sol"
 import {PolicyServiceManager} from "../../contracts/instance/service/PolicyServiceManager.sol";
 import {BundleService} from "../../contracts/instance/service/BundleService.sol";
 import {BundleServiceManager} from "../../contracts/instance/service/BundleServiceManager.sol";
+
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
-import {BundleManager} from "../../contracts/instance/BundleManager.sol";
-
+import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
+import {BundleManager} from "../../contracts/instance/BundleManager.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
-import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
+
 // import {TestProduct} from "../../contracts/test/TestProduct.sol";
 // import {TestPool} from "../../contracts/test/TestPool.sol";
 // import {TestDistribution} from "../../contracts/test/TestDistribution.sol";
@@ -103,12 +105,14 @@ contract TestGifBase is Test {
     BundleService public bundleService;
     NftId public bundleServiceNftId;
 
+    AccessManagerUpgradeableInitializeable masterOzAccessManager;
     InstanceAccessManager masterInstanceAccessManager;
     BundleManager masterBundleManager;
     Instance masterInstance;
     NftId masterInstanceNftId;
     InstanceReader masterInstanceReader;
 
+    AccessManagerUpgradeableInitializeable ozAccessManager;
     InstanceAccessManager instanceAccessManager;
     BundleManager instanceBundleManager;
     Instance public instance;
@@ -424,8 +428,13 @@ contract TestGifBase is Test {
 
     function _deployMasterInstance() internal 
     {
+        masterOzAccessManager = new AccessManagerUpgradeableInitializeable();
+        // grants registryOwner ADMIN_ROLE
+        masterOzAccessManager.initialize(registryOwner);
+
         masterInstanceAccessManager = new InstanceAccessManager();
-        masterInstanceAccessManager.initialize(registryOwner, address(registry));
+        masterOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAccessManager), 0);
+        masterInstanceAccessManager.initialize(address(masterOzAccessManager), address(registry));
         
         masterInstance = new Instance();
         masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, registryOwner);
@@ -439,7 +448,7 @@ contract TestGifBase is Test {
         masterInstance.setBundleManager(masterBundleManager);
 
         // revoke ADMIN_ROLE from registryOwner
-        assert(masterInstanceAccessManager.renounceRole(ADMIN_ROLE()));
+        masterOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
         
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
@@ -457,6 +466,7 @@ contract TestGifBase is Test {
 
     function _createInstance() internal {
         ( 
+            ozAccessManager,
             instanceAccessManager, 
             instance,
             instanceNftId,
@@ -468,6 +478,7 @@ contract TestGifBase is Test {
         // solhint-disable
         console.log("instance deployed at", address(instance));
         console.log("instance nft id", instanceNftId.toInt());
+        console.log("oz access manager deployed at", address(ozAccessManager));
         console.log("instance access manager deployed at", address(instanceAccessManager));
         console.log("instance reader deployed at", address(instanceReader));
         console.log("bundle manager deployed at", address(instanceBundleManager));

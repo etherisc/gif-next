@@ -57,11 +57,12 @@ contract Instance is
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
 
-    function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) 
+    function initialize(address instanceAccessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) 
         public 
         initializer
     {
-        __AccessManaged_init(accessManagerAddress);
+        _accessManager = InstanceAccessManager(instanceAccessManagerAddress);
+        __AccessManaged_init(_accessManager.authority());
         
         _initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
 
@@ -265,5 +266,9 @@ contract Instance is
 
     function getBundleManager() external view returns (BundleManager) {
         return _bundleManager;
+    }
+
+    function getInstanceAccessManager() external view returns (InstanceAccessManager) {
+        return _accessManager;
     }
 }

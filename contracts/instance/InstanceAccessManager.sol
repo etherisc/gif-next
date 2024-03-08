@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
@@ -9,6 +8,8 @@ import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStri
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
 import {NftId} from "../types/NftId.sol";
+
+import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 
 import {IAccess} from "./module/IAccess.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -36,7 +37,7 @@ contract InstanceAccessManager is
     mapping(ShortString name => address target) internal _targetAddressForName;
     address [] internal _targets;
 
-    AccessManager internal _accessManager;
+    AccessManagerUpgradeableInitializeable internal _accessManager;
     IRegistry internal _registry;
 
     modifier restrictedToRoleAdmin(RoleId roleId) {
@@ -49,27 +50,25 @@ contract InstanceAccessManager is
         _;
     }
 
-    function initialize(address initialAdmin, address registry) external initializer 
+    function initialize(address ozAccessManager, address registry) external initializer 
     {
-        require(initialAdmin != address(0));
+        require(ozAccessManager != address(0));
         require(registry != address(0));
 
-        // if size of the contract gets too large, this can be externalized which will reduce the contract size considerably
-        _accessManager = new AccessManager(address(this));
+        __AccessManaged_init(ozAccessManager);
 
-        __AccessManaged_init(address(_accessManager));
-
+        _accessManager = AccessManagerUpgradeableInitializeable(ozAccessManager);
         _registry = IRegistry(registry);
         _idNext = CUSTOM_ROLE_ID_MIN;
 
         _createRole(ADMIN_ROLE(), ADMIN_ROLE_NAME, IAccess.Type.Core);
-        _createRole(PUBLIC_ROLE(), PUBLIC_ROLE_NAME, IAccess.Type.Core);
+        //_createRole(PUBLIC_ROLE(), PUBLIC_ROLE_NAME, IAccess.Type.Core);
 
-        // assume initialAdmin is instance service which requires admin rights to access manager during instance cloning
-        _accessManager.grantRole(ADMIN_ROLE().toInt(), initialAdmin, 0);
-
+        // assume `this` is already a member of ADMIN_ROLE
+        // assume msg.sender is instance service which is also member of ADMIN_ROLE
+        // assume instance service will renounce ADMIN_ROLE through ozAccessManager and should not be added to _roleMembers here
         EnumerableSet.add(_roleMembers[ADMIN_ROLE()], address(this));
-        EnumerableSet.add(_roleMembers[ADMIN_ROLE()], initialAdmin);
+        //EnumerableSet.add(_roleMembers[ADMIN_ROLE()], initialAdmin);
     }
 
     //--- Role ------------------------------------------------------//

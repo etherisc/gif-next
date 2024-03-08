@@ -10,6 +10,7 @@ import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
+import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
@@ -34,8 +35,9 @@ import {IDistributionComponent} from "../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../components/IPoolComponent.sol";
 import {IProductComponent} from "../components/IProductComponent.sol";
 
-contract InstanceService is Service, IInstanceService {
-
+contract InstanceService is Service, IInstanceService 
+{
+    address internal _masterOzAccessManager;
     address internal _masterInstanceAccessManager;
     address internal _masterInstance;
     address internal _masterInstanceReader;
@@ -68,7 +70,8 @@ contract InstanceService is Service, IInstanceService {
     function createInstanceClone()
         external 
         returns (
-            InstanceAccessManager clonedAccessManager, 
+            AccessManagerUpgradeableInitializeable clonedOzAccessManager,
+            InstanceAccessManager clonedInstanceAccessManager, 
             Instance clonedInstance,
             NftId clonedInstanceNftId,
             InstanceReader clonedInstanceReader,
@@ -82,34 +85,41 @@ contract InstanceService is Service, IInstanceService {
         address registryServiceAddress = registry.getServiceAddress(REGISTRY(), getMajorVersion());
         IRegistryService registryService = IRegistryService(registryServiceAddress);
 
+        clonedOzAccessManager = AccessManagerUpgradeableInitializeable(
+            Clones.clone(_masterOzAccessManager));
+
         // initially grants ADMIN_ROLE to this (being the instance service). 
         // This will allow the instance service to bootstrap the authorizations of the instance.
+        // Instance service will not use oz access manager directlly but through instance access manager instead
         // Instance service will renounce ADMIN_ROLE when bootstraping is finished
-        clonedAccessManager = InstanceAccessManager(Clones.clone(_masterInstanceAccessManager));
-        clonedAccessManager.initialize(address(this), registryAddress);
+        clonedOzAccessManager.initialize(address(this));
+
+        clonedInstanceAccessManager = InstanceAccessManager(Clones.clone(_masterInstanceAccessManager));
+        clonedOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAccessManager), 0);
+        clonedInstanceAccessManager.initialize(address(clonedOzAccessManager), registryAddress);
 
         clonedInstance = Instance(Clones.clone(_masterInstance));
-        clonedInstance.initialize(address(clonedAccessManager), registryAddress, registryNftId, instanceOwner);
+        clonedInstance.initialize(address(clonedInstanceAccessManager), registryAddress, registryNftId, instanceOwner);
         
         clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
         clonedInstanceReader.initialize(registryAddress, address(clonedInstance));
         clonedInstance.setInstanceReader(clonedInstanceReader);
 
         clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
-        clonedBundleManager.initialize(address(clonedAccessManager), registryAddress, address(clonedInstance));
+        clonedBundleManager.initialize(address(clonedInstanceAccessManager), registryAddress, address(clonedInstance));
         clonedInstance.setBundleManager(clonedBundleManager);
 
         // TODO amend setters with instance specific , policy manager ...
 
-        _grantInitialAuthorizations(clonedAccessManager, clonedInstance, clonedBundleManager, instanceOwner);
+        _grantInitialAuthorizations(clonedInstanceAccessManager, clonedInstance, clonedBundleManager, instanceOwner);
 
-        assert(clonedAccessManager.renounceRole(ADMIN_ROLE()));
+        clonedOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
 
         IRegistry.ObjectInfo memory info = registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
         // clonedInstance.linkToRegisteredNftId();
 
-        emit LogInstanceCloned(address(clonedAccessManager), address(clonedInstance), address(clonedInstanceReader), clonedInstanceNftId);
+        emit LogInstanceCloned(address(clonedOzAccessManager), address(clonedInstanceAccessManager), address(clonedInstance), address(clonedInstanceReader), clonedInstanceNftId);
     }
 
     function _grantInitialAuthorizations(
@@ -282,22 +292,26 @@ contract InstanceService is Service, IInstanceService {
         require (instanceAddress != address(0), "ERROR:CRD-006:INSTANCE_ZERO");
 
         IInstance instance = IInstance(instanceAddress);
-        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
-        address accessManagerAddress = address(accessManager);
+        AccessManagerUpgradeableInitializeable ozAccessManager = AccessManagerUpgradeableInitializeable(instance.authority());
+        address ozAccessManagerAddress = address(ozAccessManager);
+        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
+        address instanceAccessManagerAddress = address(instanceAccessManager);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
         BundleManager bundleManager = instance.getBundleManager();
         address bundleManagerAddress = address(bundleManager);
 
-        require (accessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
+        require (ozAccessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
+        require (instanceAccessManagerAddress != address(0), "ERROR:CRD-005:INSTANCE_ACCESS_MANAGER_ZERO");
         require (instanceReaderAddress != address(0), "ERROR:CRD-007:INSTANCE_READER_ZERO");
         require (bundleManagerAddress != address(0), "ERROR:CRD-008:BUNDLE_MANAGER_ZERO");
 
-        require(instance.authority() == accessManagerAddress, "ERROR:CRD-009:INSTANCE_AUTHORITY_MISMATCH");
+        require(instance.authority() == instanceAccessManager.authority(), "ERROR:CRD-009:INSTANCE_AUTHORITY_MISMATCH");
         require(instanceReader.getInstance() == instance, "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
         require(bundleManager.getInstance() == instance, "ERROR:CRD-011:BUNDLE_MANAGER_INSTANCE_MISMATCH");
 
-        _masterInstanceAccessManager = accessManagerAddress;
+        _masterOzAccessManager = ozAccessManagerAddress;
+        _masterInstanceAccessManager = instanceAccessManagerAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
         _masterInstanceBundleManager = bundleManagerAddress;
@@ -384,7 +398,10 @@ contract InstanceService is Service, IInstanceService {
         return accessManager.hasRole(role, account);
     }
     // creates gif targets only -> they have INSTANCE as parent
-    function createGifTarget(NftId instanceNftId, address targetAddress, string memory targetName) external onlyRegisteredService {
+    function createGifTarget(NftId instanceNftId, address targetAddress, string memory targetName) 
+        external 
+        onlyRegisteredService 
+    {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         
@@ -393,7 +410,7 @@ contract InstanceService is Service, IInstanceService {
         }
 
         Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
         accessManager.createGifTarget(targetAddress, targetName);
     }
 
@@ -407,7 +424,7 @@ contract InstanceService is Service, IInstanceService {
 
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
+        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
 
         bytes4[] memory fctSelectors = new bytes4[](1);
         fctSelectors[0] = IDistributionComponent.setFees.selector;
@@ -429,7 +446,7 @@ contract InstanceService is Service, IInstanceService {
 
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
+        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
 
         bytes4[] memory fctSelectors = new bytes4[](1);
         fctSelectors[0] = IPoolComponent.setFees.selector;
@@ -450,7 +467,7 @@ contract InstanceService is Service, IInstanceService {
 
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
+        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
 
         bytes4[] memory fctSelectors = new bytes4[](1);
         fctSelectors[0] = IProductComponent.setFees.selector;
@@ -464,7 +481,7 @@ contract InstanceService is Service, IInstanceService {
         address instanceAddress = registry.getObjectInfo(instanceNftId).objectAddress;
         IInstance instance = IInstance(instanceAddress);
 
-        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
         // TODO setLocked by target address?
         string memory componentName = ShortStrings.toString(accessManager.getTargetInfo(componentAddress).name);
         accessManager.setTargetLocked(componentName, locked);

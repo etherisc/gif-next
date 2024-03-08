@@ -10,6 +10,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IComponent} from "../components/IComponent.sol";
 
+import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
@@ -23,12 +24,13 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceComponentNotRegistered(address componentAddress);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     
-    event LogInstanceCloned(address clonedAccessManagerAddress, address clonedInstanceAddress, address clonedInstanceReaderAddress, NftId clonedInstanceNftId);
+    event LogInstanceCloned(address clonedOzAccessManager, address clonedAccessManager, address clonedInstance, address clonedInstanceReader, NftId clonedInstanceNftId);
 
     function createInstanceClone()
         external 
         returns (
-            InstanceAccessManager clonedAccessManager, 
+            AccessManagerUpgradeableInitializeable clonedOzAccessManager,
+            InstanceAccessManager clonedInstanceAccessManager, 
             Instance clonedInstance,
             NftId instanceNftId,
             InstanceReader clonedInstanceReader,

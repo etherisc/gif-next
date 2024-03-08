@@ -69,4 +69,6 @@ interface IInstance is IRegisterable, IKeyValueStore, IAccessManaged {
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleManager() external view returns (BundleManager);
+
+    function getInstanceAccessManager() external view returns (InstanceAccessManager);
 }
