@@ -134,6 +134,7 @@ contract TestGifBase is Test {
     address public poolOwner = makeAddr("poolOwner");
     address public distributionOwner = makeAddr("distributionOwner");
     address public customer = makeAddr("customer");
+    address public customer2 = makeAddr("customer2");
     address public investor = makeAddr("investor");
     address public outsider = makeAddr("outsider");
 
