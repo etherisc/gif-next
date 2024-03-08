@@ -40,8 +40,10 @@ contract InstanceAccessManager is
     AccessManagerUpgradeableInitializeable internal _accessManager;
     IRegistry internal _registry;
 
-    // TODO check _accessManager.isTargetClosed(address(this)) or _targetInfo[address(this)].isLocked
     modifier restrictedToRoleAdmin(RoleId roleId) {
+        if(_accessManager.isTargetClosed(address(this))) {
+            revert IAccess.ErrorIAccessTargetLocked(address(this));
+        }
         RoleId admin = getRoleAdmin(roleId);
         (bool inRole, uint32 executionDelay) = _accessManager.hasRole(admin.toInt(), _msgSender());
         assert(executionDelay == 0); // to be sure no delayed execution functionality is used
