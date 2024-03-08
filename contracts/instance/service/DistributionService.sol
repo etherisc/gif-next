@@ -7,7 +7,7 @@ import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {ISetup} from "../../instance/module/ISetup.sol";
 
-import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
@@ -144,13 +144,16 @@ contract DistributionService is
     {
         (, NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
 
-        // FIXME: add this function
-        // distributorNftId = _registryService.registerDistributor(
-        //     distributionNftId,
-        //     DISTRIBUTOR(),
-        //     true, // distribution module is intercepting
-        //     distributor,
-        //     "");
+        distributorNftId = getRegistryService().registerDistributor(
+            IRegistry.ObjectInfo(
+                zeroNftId(), 
+                distributionNftId,
+                DISTRIBUTOR(),
+                true, // intercepting property for bundles is defined on pool
+                address(0),
+                distributor,
+                ""
+            ));
 
         IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo(
             distributorType,

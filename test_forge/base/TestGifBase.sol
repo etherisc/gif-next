@@ -251,6 +251,14 @@ contract TestGifBase is Test {
         }
     }
 
+    function equalStrings(string memory s1, string memory s2) internal pure returns (bool) {
+        return equalBytes(bytes(s1), bytes(s2));
+    }
+
+    function equalBytes(bytes memory b1, bytes memory b2) internal pure returns (bool) {
+        return keccak256(b1) == keccak256(b2);
+    }
+
     function _startMeasureGas(string memory label) internal virtual {
         _checkpointLabel = label;
         _checkpointGasLeft = gasleft();

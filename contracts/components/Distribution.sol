@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {DISTRIBUTION} from "../types/ObjectType.sol";
 import {IDistributionService} from "../instance/service/IDistributionService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
-import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
+import {NftId, zeroNftId, NftIdLib, toNftId} from "../types/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../types/Referral.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {Component} from "./Component.sol";
@@ -18,6 +18,7 @@ import {InstanceReader} from "../instance/InstanceReader.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {DistributorType} from "../types/DistributorType.sol";
 import {Timestamp} from "../types/Timestamp.sol";
+import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
 
 abstract contract Distribution is
@@ -282,6 +283,15 @@ abstract contract Distribution is
             $._distributionFee,
             address(this)
         );
+    }
+
+
+    function nftTransferFrom(address from, address to, uint256 tokenId) external virtual override (Component, ITransferInterceptor) {
+        // keep track of distributor nft owner
+        emit LogDistributorUpdated(to, msg.sender);
+        DistributionStorage storage $ = _getDistributionStorage();
+        $._distributorNftId[from] = zeroNftId();
+        $._distributorNftId[to] = toNftId(tokenId);
     }
     
 

@@ -19,7 +19,7 @@ import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
@@ -103,6 +103,15 @@ contract RegistryService is
         info.nftId = getRegistry().register(info);
     }
 
+    function registerDistributor(IRegistry.ObjectInfo memory info)
+        external
+        restricted 
+        returns(NftId nftId) 
+    {
+        _verifyObjectInfo(info, DISTRIBUTOR());
+        nftId = getRegistry().register(info);
+    }
+
     function registerPolicy(IRegistry.ObjectInfo memory info)
         external
         restricted 
@@ -169,7 +178,7 @@ contract RegistryService is
             FunctionConfig[] memory config
         )
     {
-        config = new FunctionConfig[](6);
+        config = new FunctionConfig[](7);
 
         // order of service registrations MUST be reverse to this array 
         /*config[-1].serviceDomain = STAKE();
@@ -190,9 +199,12 @@ contract RegistryService is
         config[4].serviceDomain = DISTRIBUTION();
         config[4].selector = RegistryService.registerDistribution.selector;
 
+        config[5].serviceDomain = DISTRIBUTION();
+        config[5].selector = RegistryService.registerDistributor.selector;
+
         // registerInstance() have no restriction
-        config[5].serviceDomain = INSTANCE();
-        config[5].selector = RegistryService.registerInstance.selector;
+        config[6].serviceDomain = INSTANCE();
+        config[6].selector = RegistryService.registerInstance.selector;
     }
 
     // Internal

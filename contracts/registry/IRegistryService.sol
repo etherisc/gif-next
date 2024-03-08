@@ -58,6 +58,8 @@ interface IRegistryService is
      function registerDistribution(IComponent distribution, address owner)
           external returns(IRegistry.ObjectInfo memory info);
 
+     function registerDistributor(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
+
      function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 
      function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
