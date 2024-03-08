@@ -50,7 +50,7 @@ contract TestInstanceAccessManager is TestGifBase {
         dproduct.doSomethingSpecial();
     }
 
-    function skip_test_InstanceAccessManager_hasRole_customRole() public {
+    function test_InstanceAccessManager_hasRole_customRole() public {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
@@ -77,7 +77,7 @@ contract TestInstanceAccessManager is TestGifBase {
         // create special role and special role admin
         RoleId customRoleId;
         RoleId customRoleAdmin;
-        (customRoleId, customRoleAdmin) = instanceAccessManager.createCustomRole("SpecialRole");
+        (customRoleId, customRoleAdmin) = instanceAccessManager.createCustomRole("SpecialRole", "SpecialRoleAdmin");
         // set special role for product custom product function 
         bytes4[] memory fcts = new bytes4[](1);
         fcts[0] = SimpleProduct.doSomethingSpecial.selector;

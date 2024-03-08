@@ -40,6 +40,7 @@ contract InstanceAccessManager is
     AccessManagerUpgradeableInitializeable internal _accessManager;
     IRegistry internal _registry;
 
+    // TODO check _accessManager.isTargetClosed(address(this)) or _targetInfo[address(this)].isLocked
     modifier restrictedToRoleAdmin(RoleId roleId) {
         RoleId admin = getRoleAdmin(roleId);
         (bool inRole, uint32 executionDelay) = _accessManager.hasRole(admin.toInt(), _msgSender());
@@ -93,25 +94,26 @@ contract InstanceAccessManager is
 
     // INSTANCE_OWNER_ROLE
     // creates custom roles only
-    function createCustomRole(string memory name)
+    function createCustomRole(string memory roleName, string memory adminName)
         external
         restricted()
         returns(RoleId roleId, RoleId admin)
     {
-        (
-            RoleId roleId,
-            RoleId admin
-        ) = _getNextCustomRoleId();
+        (roleId, admin) = _getNextCustomRoleId();
 
-        _createRole(roleId, name, IAccess.Type.Custom);
-        _createRole(admin, name, IAccess.Type.Custom);
+        _createRole(roleId, roleName, IAccess.Type.Custom);
+        _createRole(admin, adminName, IAccess.Type.Custom);
 
-        grantRole(admin, msg.sender);
+        this.grantRole(admin, msg.sender);
+
+        // TODO works without this -> why?
         setRoleAdmin(roleId, admin);
+        setRoleAdmin(admin, INSTANCE_OWNER_ROLE());
     }
 
     // ADMIN_ROLE
-    // TODO MUST always be restricted to ADMIN_ROLE? -> use onlyAdminRole or use similar _getAdminRestrictions()
+    // TODO core roles admin is always ADMIN_ROLE
+    // TODO restricted to ADMIN_ROLE or have restrictedToRoleAdmin modifier ???
     function setRoleAdmin(RoleId roleId, RoleId admin) 
         public 
         restricted()
@@ -183,6 +185,7 @@ contract InstanceAccessManager is
         return _roleIds[idx];
     }
 
+    // TODO now: for non existent name returns ADMIN_ROLE id
     function getRoleIdForName(string memory name) external view returns (RoleId roleId) {
         return _roleIdForName[ShortStrings.toShortString(name)];
     }

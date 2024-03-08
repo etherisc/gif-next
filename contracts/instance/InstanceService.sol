@@ -269,11 +269,12 @@ contract InstanceService is Service, IInstanceService
     function _grantInstanceOwnerAuthorizations(InstanceAccessManager clonedAccessManager, address instanceOwner) internal {
         // configure authorization for instance owner on instance access manager
         clonedAccessManager.grantRole(INSTANCE_OWNER_ROLE(), instanceOwner);
-        // TODO instance owner can grant/revoke/renounce INSTANCE_OWNER_ROLE -> through instance service?
+        // TODO instance owner can grant/revoke/renounce INSTANCE_OWNER_ROLE
         //clonedAccessManager.setRoleAdmin(INSTANCE_OWNER_ROLE(), INSTANCE_OWNER_ROLE()); -> invalid
-        bytes4[] memory accessManagerInstanceOwnerSelectors = new bytes4[](2);
-        accessManagerInstanceOwnerSelectors[0] = clonedAccessManager.createCustomTarget.selector;
-        accessManagerInstanceOwnerSelectors[1] = clonedAccessManager.setTargetFunctionCustomRole.selector;
+        bytes4[] memory accessManagerInstanceOwnerSelectors = new bytes4[](3);
+        accessManagerInstanceOwnerSelectors[0] = clonedAccessManager.createCustomRole.selector;
+        accessManagerInstanceOwnerSelectors[1] = clonedAccessManager.createCustomTarget.selector;
+        accessManagerInstanceOwnerSelectors[2] = clonedAccessManager.setTargetFunctionCustomRole.selector;
         clonedAccessManager.setTargetFunctionRole(
             "InstanceAccessManager",
             accessManagerInstanceOwnerSelectors, 
