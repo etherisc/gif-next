@@ -149,8 +149,7 @@ abstract contract Distribution is
         Timestamp expiryAt,
         bytes memory data
     )
-        public
-        // TODO add authz (only active distributor)
+        public // TODO: internal
         returns (ReferralId referralId)
     {
         DistributionStorage storage $ = _getDistributionStorage();
@@ -172,6 +171,7 @@ abstract contract Distribution is
         virtual override
         returns (uint256 feeAmount)
     {
+        // TODO: this is only if referralId is not valid
         ISetup.DistributionSetupInfo memory setupInfo = getSetupInfo();
         Fee memory fee = setupInfo.distributionFee;
         (feeAmount,) = FeeLib.calculateFee(fee, netPremiumAmount);

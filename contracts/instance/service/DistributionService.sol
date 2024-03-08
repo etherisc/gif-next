@@ -196,6 +196,8 @@ contract DistributionService is
         require(bytes(code).length > 0, "ERROR:DSV-030:CODE_INVALID");
         require(expiryAt > zeroTimestamp(), "ERROR:DSV-031:EXPIRY_AT_ZERO");
 
+        // FIXME: validate input against distributortype (get via nft)
+
         referralId = ReferralLib.toReferralId(distributionNftId, code);
         IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
             distributorNftId,
@@ -218,6 +220,9 @@ contract DistributionService is
         external
         virtual
     {
+        // TODO: fetch referral
+        // TODO: if referral is active, process sale with condiutions of this referral
+        // TODO: if referral is not active, process sale with conditions of distribution component
         revert("NOT_IMPLEMENTED_YET");
     }
 
