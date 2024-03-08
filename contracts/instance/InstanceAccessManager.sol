@@ -65,7 +65,7 @@ contract InstanceAccessManager is
         _idNext = CUSTOM_ROLE_ID_MIN;
 
         _createRole(ADMIN_ROLE(), ADMIN_ROLE_NAME, IAccess.Type.Core);
-        //_createRole(PUBLIC_ROLE(), PUBLIC_ROLE_NAME, IAccess.Type.Core);
+        _createRole(PUBLIC_ROLE(), PUBLIC_ROLE_NAME, IAccess.Type.Core);
 
         // assume `this` is already a member of ADMIN_ROLE
         // assume msg.sender is instance service which is also member of ADMIN_ROLE
@@ -368,7 +368,11 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessRoleIdTooSmall(roleId);
         }
 
-        if(rtype != IAccess.Type.Custom && roleIdInt >= CUSTOM_ROLE_ID_MIN) {
+        if(
+            rtype != IAccess.Type.Custom && 
+            roleIdInt >= CUSTOM_ROLE_ID_MIN && 
+            roleIdInt != PUBLIC_ROLE().toInt()) 
+        {
             revert IAccess.ErrorIAccessRoleIdTooBig(roleId);
         }
 
