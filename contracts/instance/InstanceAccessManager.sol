@@ -78,7 +78,6 @@ contract InstanceAccessManager is
         external
         restricted()
     {
-        _validateRoleParameters(roleId, name, IAccess.Type.Core);// TODO put inside _createRole
         _createRole(roleId, name, IAccess.Type.Core);
         setRoleAdmin(roleId, admin);
     }
@@ -88,7 +87,6 @@ contract InstanceAccessManager is
         external
         restricted()
     {
-        _validateRoleParameters(roleId, name, IAccess.Type.Gif);
         _createRole(roleId, name, IAccess.Type.Gif);
         setRoleAdmin(roleId, admin);
     }
@@ -334,10 +332,13 @@ contract InstanceAccessManager is
     function _createRole(RoleId roleId, string memory name, IAccess.Type rtype) 
         internal
     {
+        ShortString nameShort = ShortStrings.toShortString(name);
+        _validateRoleParameters(roleId, nameShort, rtype);
+
         IAccess.RoleInfo memory role = IAccess.RoleInfo(
-            ShortStrings.toShortString(name), 
+            nameShort, 
             rtype,
-            ADMIN_ROLE(),
+            ADMIN_ROLE(), // this value is dynamic, can be changed with setRoleAdmin()
             TimestampLib.blockTimestamp(),
             TimestampLib.blockTimestamp());
 
@@ -346,14 +347,9 @@ contract InstanceAccessManager is
         _roleIds.push(roleId);
     }
 
-    function _validateRoleParameters(
-        RoleId roleId, 
-        string memory name, 
-        IAccess.Type rtype
-    )
+    function _validateRoleParameters(RoleId roleId, ShortString name, IAccess.Type rtype)
         internal
-        view 
-        returns (IAccess.RoleInfo memory existingRole)
+        view
     {
         if(roleExists(roleId)) {
             revert IAccess.ErrorIAccessRoleIdAlreadyExists(roleId);
@@ -369,13 +365,12 @@ contract InstanceAccessManager is
         }
 
         // role name checks
-        ShortString nameShort = ShortStrings.toShortString(name);
-        if (ShortStrings.byteLength(nameShort) == 0) {
+        if (ShortStrings.byteLength(name) == 0) {
             revert IAccess.ErrorIAccessRoleNameEmpty(roleId);
         }
 
-        if (_roleIdForName[nameShort].gtz()) {
-            revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[nameShort], nameShort);
+        if (_roleIdForName[name].gtz()) {
+            revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[name], name);
         }
     }
 
@@ -397,20 +392,23 @@ contract InstanceAccessManager is
         internal 
         returns(RoleId roleId, RoleId admin) 
     {
-        uint64 idNext = _idNext;
-        uint64 admin = idNext + 1;
+        uint64 roleIdInt = _idNext;
+        uint64 adminInt = roleIdInt + 1;
 
-        _idNext = idNext + 2;
+        _idNext = roleIdInt + 2;
 
-        roleId = RoleIdLib.toRoleId(idNext);
-        admin = RoleIdLib.toRoleId(admin)
+        roleId = RoleIdLib.toRoleId(roleIdInt);
+        admin = RoleIdLib.toRoleId(adminInt);
     }
 
-    function _createTarget(address target, string memory name, IAccess.Type ttype) internal {
-        _validateTargetParameters(target, name);
+    function _createTarget(address target, string memory name, IAccess.Type ttype) 
+        internal 
+    {
+        ShortString nameShort = ShortStrings.toShortString(name);
+        _validateTargetParameters(target, nameShort);
 
         IAccess.TargetInfo memory info = IAccess.TargetInfo(
-            ShortStrings.toShortString(name), 
+            nameShort, 
             ttype,
             _accessManager.isTargetClosed(target), // sync with state in access manager
             TimestampLib.blockTimestamp(),
@@ -421,21 +419,23 @@ contract InstanceAccessManager is
         _targets.push(target);
     }
 
-    function _validateTargetParameters(address target, string memory name) internal view {
+    function _validateTargetParameters(address target, ShortString name) 
+        internal 
+        view 
+    {
         if (_targetInfo[target].createdAt.gtz()) {
             revert IAccess.ErrorIAccessTargetAlreadyExists(target, _targetInfo[target].name);
         }
 
-        ShortString nameShort = ShortStrings.toShortString(name);
-        if (ShortStrings.byteLength(nameShort) == 0) {
+        if (ShortStrings.byteLength(name) == 0) {
             revert IAccess.ErrorIAccessTargetNameEmpty(target);
         }
 
-        if (_targetAddressForName[nameShort] != address(0)) {
+        if (_targetAddressForName[name] != address(0)) {
             revert IAccess.ErrorIAccessTargetNameExists(
                 target, 
-                _targetAddressForName[nameShort], 
-                nameShort);
+                _targetAddressForName[name], 
+                name);
         }
     }
 
