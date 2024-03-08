@@ -142,7 +142,7 @@ contract InstanceService is Service, IInstanceService
 
     function _createCoreAndGifRoles(InstanceAccessManager clonedAccessManager) internal {
         // default roles controlled by INSTANCE_OWNER_ROLE -> gif roles
-        clonedAccessManager.createGifRole(INSTANCE_OWNER_ROLE(), "InstanceOwnerRole", ADMIN_ROLE()); // TODO admin is INSTANCE_OWNER_ROLE, see _grantInstanceOwnerAuthorizations()
+        clonedAccessManager.createGifRole(INSTANCE_OWNER_ROLE(), "InstanceOwnerRole", ADMIN_ROLE());
         clonedAccessManager.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
         clonedAccessManager.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
         clonedAccessManager.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", INSTANCE_OWNER_ROLE());
@@ -269,8 +269,8 @@ contract InstanceService is Service, IInstanceService
     function _grantInstanceOwnerAuthorizations(InstanceAccessManager clonedAccessManager, address instanceOwner) internal {
         // configure authorization for instance owner on instance access manager
         clonedAccessManager.grantRole(INSTANCE_OWNER_ROLE(), instanceOwner);
-        // TODO instance owner can grant/revoke/renounce INSTANCE_OWNER_ROLE
-        //clonedAccessManager.setRoleAdmin(INSTANCE_OWNER_ROLE(), INSTANCE_OWNER_ROLE()); -> invalid
+        // INSTANCE_OWNER_ROLE administrates itself
+        clonedAccessManager.setRoleAdmin(INSTANCE_OWNER_ROLE(), INSTANCE_OWNER_ROLE());
         bytes4[] memory accessManagerInstanceOwnerSelectors = new bytes4[](3);
         accessManagerInstanceOwnerSelectors[0] = clonedAccessManager.createCustomRole.selector;
         accessManagerInstanceOwnerSelectors[1] = clonedAccessManager.createCustomTarget.selector;
@@ -488,4 +488,3 @@ contract InstanceService is Service, IInstanceService
         accessManager.setTargetLocked(componentName, locked);
     }
 }
-
