@@ -38,6 +38,7 @@ contract DistributionService is
     IDistributionService
 {
     using NftIdLib for NftId;
+    using TimestampLib for Timestamp;
 
     address internal _registryAddress;
     
@@ -196,7 +197,15 @@ contract DistributionService is
         require(bytes(code).length > 0, "ERROR:DSV-030:CODE_INVALID");
         require(expiryAt > zeroTimestamp(), "ERROR:DSV-031:EXPIRY_AT_ZERO");
 
-        // FIXME: validate input against distributortype (get via nft)
+        InstanceReader instanceReader = instance.getInstanceReader();
+        IDistribution.DistributorInfo memory distributorTypeInfo = instanceReader.getDistributorInfo(distributorNftId);
+        DistributorType distributorType = distributorTypeInfo.distributorType;
+        IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
+
+        require(distributorTypeData.maxReferralCount >= maxReferrals, "ERROR:DSV-032:MAX_REFERRALS_EXCEEDED");
+        require(distributorTypeData.minDiscountPercentage <= discountPercentage, "ERROR:DSV-033:DISCOUNT_TOO_LOW");
+        require(distributorTypeData.maxDiscountPercentage >= discountPercentage, "ERROR:DSV-034:DISCOUNT_TOO_HIGH");
+        require(expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() <= distributorTypeData.maxReferralLifetime, "ERROR:DSV-035:EXPIRY_TOO_LONG");
 
         referralId = ReferralLib.toReferralId(distributionNftId, code);
         IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
