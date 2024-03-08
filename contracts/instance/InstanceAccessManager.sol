@@ -22,7 +22,7 @@ contract InstanceAccessManager is
     string public constant ADMIN_ROLE_NAME = "AdminRole";
     string public constant PUBLIC_ROLE_NAME = "PublicRole";
 
-    uint64 public constant CUSTOM_ROLE_ID_MIN = 10000;
+    uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
     uint32 public constant EXECUTION_DELAY = 0;
 
     // role specific state
@@ -105,8 +105,6 @@ contract InstanceAccessManager is
 
         _createRole(roleId, roleName, IAccess.Type.Custom);
         _createRole(admin, adminName, IAccess.Type.Custom);
-
-        this.grantRole(admin, msg.sender);
 
         // TODO works without this -> why?
         setRoleAdmin(roleId, admin);
@@ -205,6 +203,14 @@ contract InstanceAccessManager is
 
     function roles() external view returns (uint256 numberOfRoles) {
         return _roleIds.length;
+    }
+
+    function isCustomRoleAdmin(RoleId roleId) public pure returns (bool) {
+        uint roleIdInt = roleId.toInt();
+        return (
+            roleIdInt >= CUSTOM_ROLE_ID_MIN &&
+            roleIdInt % 2 == 1
+        );
     }
 
     //--- Target ------------------------------------------------------//
@@ -385,19 +391,38 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[name], name);
         }
     }
-
+    // TODO if custom role admin have > 1 member
     function _revokeRole(RoleId roleId, address member) 
         internal
-        returns(bool revoked)
+        returns(bool)
     {
         if (!roleExists(roleId)) {
             revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
-        revoked = EnumerableSet.remove(_roleMembers[roleId], member);
+        bool revoked = EnumerableSet.remove(_roleMembers[roleId], member);
         if(revoked) {
-            _accessManager.revokeRole(roleId.toInt(), member);
+            uint64 roleIdInt = roleId.toInt();
+            _accessManager.revokeRole(roleIdInt, member);
+
+            // revoke custom role if custom role admin is being revoked
+            if(isCustomRoleAdmin(roleId)) {
+                uint64 customRoleIdInt = roleIdInt - 1;
+                RoleId customRoleId = RoleIdLib.toRoleId(customRoleIdInt);
+                // loop through all custom role members
+                uint memberCount = EnumerableSet.length(_roleMembers[customRoleId]);
+                for(uint memberIdx = 0; memberIdx < memberCount; memberIdx++)
+                {
+                    member = EnumerableSet.at(_roleMembers[customRoleId], memberIdx);
+                    bool revokedCustom = EnumerableSet.remove(_roleMembers[customRoleId], member);
+                    if(revokedCustom) {
+                        _accessManager.revokeRole(customRoleIdInt, member);
+                    }
+                }
+            }
         }
+
+        return revoked;
     }
 
     function _getNextCustomRoleId() 

@@ -3,6 +3,8 @@ pragma solidity 0.8.20;
 
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
+import {Test, console} from "../../lib/forge-std/src/Test.sol";
+
 
 import {TestGifBase} from "../base/TestGifBase.sol";
 import {IAccess} from "../../contracts/instance/module/IAccess.sol";
@@ -82,6 +84,7 @@ contract TestInstanceAccessManager is TestGifBase {
         fcts[0] = SimpleProduct.doSomethingSpecial.selector;
         instanceAccessManager.setTargetFunctionCustomRole(product.getName(), fcts, customRoleId);
         // assign special role to outsider
+        instanceAccessManager.grantRole(customRoleAdmin, instanceOwner);
         //instanceAccessManager.grantRole("SpecialRole", outsider);
         instanceAccessManager.grantRole(customRoleId, outsider);
         vm.stopPrank();
@@ -139,5 +142,76 @@ contract TestInstanceAccessManager is TestGifBase {
 
         // THEN - expect function to be called
         dproduct.doWhenNotLocked();
+    }
+
+    function test_InstanceAccessManager_revokeRole_revokeCustomRoleAdmin() public {
+        vm.startPrank(instanceOwner);
+
+        RoleId customRoleId;
+        RoleId customRoleAdmin;
+        (customRoleId, customRoleAdmin) = instanceAccessManager.createCustomRole("SpecialRole#2", "SpecialRole#2Admin");
+        
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "custom role members count != 0 #1");
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 0, "custom role admin members count != 0 #1");
+
+        // grant custom role admin
+        assertTrue(instanceAccessManager.grantRole(customRoleAdmin, outsider), "grantRole() returned false #1");
+
+        vm.stopPrank();
+        vm.startPrank(outsider);
+
+         // grant custom role
+        assertTrue(instanceAccessManager.grantRole(customRoleId, address(registryService)), "grantRole() returned false #2");   
+
+        vm.stopPrank();
+        vm.startPrank(instanceOwner);
+
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 1, "custom role members count != 1 #1");
+        assertEq(instanceAccessManager.roleMember(customRoleId, 0), address(registryService), "custom role id member[0] != registryService");
+
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 1, "custom role admin members count != 1 #1");
+        assertEq(instanceAccessManager.roleMember(customRoleAdmin, 0), outsider, "custom role admin member[0] != outsider");
+
+        // revoke
+        assertTrue(instanceAccessManager.revokeRole(customRoleAdmin, outsider), "revokeRole() returned false");
+
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "custom role members count != 0 #2");
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 0, "custom role admin members count != 0 #2");
+        
+        vm.stopPrank();
+    }
+
+    function test_InstanceAccessManager_revokeRole_revokeCustomRole() public {
+        vm.startPrank(instanceOwner);
+
+        RoleId customRoleId;
+        RoleId customRoleAdmin;
+        (customRoleId, customRoleAdmin) = instanceAccessManager.createCustomRole("SpecialRole#2", "SpecialRole#2Admin");
+        
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "custom role members count != 0 #1");
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 0, "custom role admin members count != 0 #1");
+
+        // grant custom role admin
+        assertTrue(instanceAccessManager.grantRole(customRoleAdmin, outsider), "grantRole() returned false #1");
+
+        vm.stopPrank();
+        vm.startPrank(outsider);
+
+        // grant custom role
+        assertTrue(instanceAccessManager.grantRole(customRoleId, address(registryService)), "grantRole() returned false #2");   
+
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 1, "custom role members count != 1 #1");
+        assertEq(instanceAccessManager.roleMember(customRoleId, 0), address(registryService), "custom role id member[0] != registryService");
+
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 1, "custom role admin members count != 1 #1");
+        assertEq(instanceAccessManager.roleMember(customRoleAdmin, 0), outsider, "custom role admin member[0] != outsider");
+
+        // revoke
+        assertTrue(instanceAccessManager.revokeRole(customRoleId, address(registryService)), "revokeRole() returned false");
+
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "custom role members count != 0 #2");
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 1, "custom role admin members count != 0 #2");
+        
+        vm.stopPrank();      
     }
 }
