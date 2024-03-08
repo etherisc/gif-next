@@ -16,7 +16,7 @@ contract ProductServiceManager is ProxyManager {
     constructor(
         address registryAddress
     )
-        ProxyManager()
+        ProxyManager(registryAddress)
     {
         ProductService svc = new ProductService();
         bytes memory data = abi.encode(registryAddress, address(this));

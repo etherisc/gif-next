@@ -26,9 +26,18 @@ contract TokenRegistry is
     mapping(address token => bool registered) internal _registered;
     mapping(address token => mapping(VersionPart majorVersion => bool isActive)) internal _active;
 
-    constructor()
+    constructor(
+        address registry
+    )
     { 
-        initializeOwner(msg.sender);
+        initialize(registry);
+    }
+
+    function initialize(address registry)
+        public
+        initializer()
+    {
+        initializeNftOwnable(msg.sender, registry);
     }
 
 
@@ -41,9 +50,8 @@ contract TokenRegistry is
         IRegistry registry = IRegistry(registryAddress);
         // TODO use _latest instead of _initial -> but _latest is 0 before first release activation
         address registryServiceAddress = registry.getServiceAddress(REGISTRY(), registry.getNextVersion());
-        //address registryServiceAddress = registry.getServiceAddress(REGISTRY(), registry.getInitialVersion());
 
-        _linkToNftOwnable(registryAddress, registryServiceAddress);
+        _linkToNftOwnable(registryServiceAddress);
     }
 
     /// @dev token state is informative, registry have no clue about used tokens

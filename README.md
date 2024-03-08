@@ -420,15 +420,15 @@ The sequence below sketches the small payout flow (payout < retention amount)
 sequenceDiagram
   participant customer
   participant product
-  participant productService
+  participant claimService
   participant poolService
   participant pool
-  product->>productService: createPayout()
-  productService ->> poolService: requestPayout()
+  product->>claimService: createPayout()
+  claimService ->> poolService: requestPayout()
   poolService -->> pool: verifyPayout() *
   poolService ->> poolService: processPayout()
   poolService ->> customer: transfer token for payout
-  poolService ->> productService: payoutExecuted()
+  poolService ->> claimService: payoutExecuted()
   poolService -->> customer: payoutExecutedCallback() **
 ```
 
@@ -447,12 +447,12 @@ The sequence below sketches the call flow for payouts larger than the retention 
 sequenceDiagram 
   participant customer
   participant product
-  participant productService
+  participant claimService
   participant poolService
   participant pool
   pool ->> reinsuranceProduct: applyForPolicy()
-  product->>productService: createPayout()
-  productService ->> poolService: requestPayout()
+  product->>claimService: createPayout()
+  claimService ->> poolService: requestPayout()
   poolService ->> pool: pendingPayoutAdded()
   pool ->> pool: getReinsurancePolicy()
   pool ->> reinsuranceProduct: claim()
@@ -461,7 +461,7 @@ sequenceDiagram
   reinsurancePool ->> pool: payoutExecutedCallback()
   pool ->> poolService: processPendingPayout()
   poolService ->> customer: transfer token for payout
-  poolService ->> productService: payoutExecuted()
+  poolService ->> claimService: payoutExecuted()
 ```
 
 ### Pool

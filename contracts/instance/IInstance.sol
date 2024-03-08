@@ -76,9 +76,15 @@ interface IInstance is IRegisterable, IKeyValueStore, IAccessManaged {
     function updateRisk(RiskId riskId, IRisk.RiskInfo memory risk, StateId newState) external;
     function updateRiskState(RiskId riskId, StateId newState) external;
 
-    function createPolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy) external;
+    function createApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy) external;
+    function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
+    function updateApplicationState(NftId applicationNftId, StateId newState) external;
+
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
     function updatePolicyState(NftId policyNftId, StateId newState) external;
+
+    // TODO add claims/payouts function to instance
+    // function updateClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
 
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);

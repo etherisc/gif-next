@@ -57,14 +57,14 @@ contract RegistryServiceManagerTest is Test {
         
         registryService = registryServiceManager.getRegistryService();
         
-        TokenRegistry tokenRegistry = new TokenRegistry();
+        TokenRegistry tokenRegistry = new TokenRegistry(registryAddress);
         accessManager.initialize(address(releaseManager), address(tokenRegistry));
 
         releaseManager.createNextRelease();
 
         releaseManager.registerRegistryService(registryService);
 
-        registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
+        // registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
 
         vm.stopPrank();
     }
@@ -128,7 +128,7 @@ contract RegistryServiceManagerTest is Test {
         // attempt to redeploy with non-owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNotOwner.selector,
+                INftOwnable.ErrorNftOwnableNotOwner.selector,
                 registryOwnerNew));
         vm.prank(registryOwnerNew);
         registryServiceManager.deploy(
@@ -155,7 +155,7 @@ contract RegistryServiceManagerTest is Test {
         // attempt to upgrade with non-owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNotOwner.selector,
+                INftOwnable.ErrorNftOwnableNotOwner.selector,
                 registryOwnerNew));
         vm.prank(registryOwnerNew);
         registryServiceManager.upgrade(

@@ -73,7 +73,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: tokenRegistryAddress, contract: tokenRegistryBaseContract } = await deployContract(
         "TokenRegistry",
         owner,
-        undefined,
+        [registryAddress],
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
@@ -111,10 +111,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const rcptReg = await executeTx(async () => await releaseManager.registerRegistryService(registryService));
     const logReleaseCreationInfo = getFieldFromTxRcptLogs(rcptReg!, registry.interface, "LogRegistration", "nftId");
 
+    await registryServiceManager.linkOwnershipToServiceNft();
     const registryServiceNftId = (logReleaseCreationInfo as unknown);
-
-    //await registryServiceManager.linkToNftOwnable(registryAddress);
-    //await tokenRegistry.linkToNftOwnable(registryAddress);
 
     logger.info(`RegistryAccessManager deployed at ${registryAccessManager}`);
     logger.info(`ReleaseManager deployed at ${releaseManager}`);

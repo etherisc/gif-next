@@ -4,10 +4,12 @@ pragma solidity ^0.8.19;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IRisk} from "../instance/module/IRisk.sol";
+import {IApplicationService} from "../instance/service/IApplicationService.sol";
 import {IPolicyService} from "../instance/service/IPolicyService.sol";
+import {IClaimService} from "../instance/service/IClaimService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, NftIdLib} from "../types/NftId.sol";
-import {PRODUCT} from "../types/ObjectType.sol";
+import {PRODUCT, APPLICATION, POLICY, CLAIM } from "../types/ObjectType.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {StateId} from "../types/StateId.sol";
@@ -30,7 +32,9 @@ abstract contract Product is
     bytes32 public constant PRODUCT_STORAGE_LOCATION_V1 = 0x0bb7aafdb8e380f81267337bc5b5dfdf76e6d3a380ecadb51ec665246d9d6800;
 
     struct ProductStorage {
+        IApplicationService _applicationService;
         IPolicyService _policyService;
+        IClaimService _claimService;
         Pool _pool;
         Distribution _distribution;
         Fee _initialProductFee;
@@ -61,7 +65,10 @@ abstract contract Product is
 
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
-        $._policyService = getInstance().getPolicyService(); 
+        // TODO refactor to go via registry
+        $._applicationService = IApplicationService(getServiceAddress(APPLICATION())); 
+        $._policyService = IPolicyService(getServiceAddress(POLICY())); 
+        $._claimService = IClaimService(getServiceAddress(CLAIM())); 
         $._pool = Pool(pool);
         $._distribution = Distribution(distribution);
         $._initialProductFee = productFee;
@@ -156,21 +163,21 @@ abstract contract Product is
         RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 lifetime,
-        bytes memory applicationData,
         NftId bundleNftId,
-        ReferralId referralId
+        ReferralId referralId,
+        bytes memory applicationData
     )
         internal
-        returns (NftId nftId) 
+        returns (NftId applicationNftId) 
     {
-        return _getProductStorage()._policyService.createApplication(
+        return _getProductStorage()._applicationService.create(
             applicationOwner,
             riskId,
             sumInsuredAmount,
             lifetime,
-            applicationData,
             bundleNftId,
-            referralId
+            referralId,
+            applicationData
         );
     }
 

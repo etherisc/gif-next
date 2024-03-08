@@ -22,32 +22,32 @@ contract RegistryServiceManager is
     /// @dev initializes proxy manager with registry service implementation and deploys registry
     constructor(
         address initialAuthority, // used by implementation 
-        address registry) // used by implementation 
-        ProxyManager()
+        address registryAddress) // used by implementation 
+        ProxyManager(registryAddress)
     {
         require(initialAuthority > address(0), "RegistryServiceManager: initial authority is 0");
-        require(registry > address(0), "RegistryServiceManager: registry is 0");
+        require(registryAddress > address(0), "RegistryServiceManager: registry is 0");
         
         // implementation's initializer func `data` argument
-        bytes memory initializationData = abi.encode(
-            initialAuthority,
-            registry); 
-
+        RegistryService srv = new RegistryService();
+        bytes memory data = abi.encode(registryAddress, initialAuthority);
         IVersionable versionable = deploy(
-            address(new RegistryService()), 
-            initializationData);
+            address(srv), 
+            data);
 
         _registryService = RegistryService(address(versionable));
+
+//        _linkToNftOwnable(address(_registryService));
     }
 
-    // from IRegisterable
+    // // from IRegisterable
 
-    // IMPORTANT: registry here and in constructor MUST be the same
-    function linkToNftOwnable(address registry)
+    // // IMPORTANT: registry here and in constructor MUST be the same
+    function linkOwnershipToServiceNft()
         public
         onlyOwner
     {
-        _linkToNftOwnable(registry, address(_registryService));
+        _linkToNftOwnable(address(_registryService));
     }
 
     //--- view functions ----------------------------------------------------//

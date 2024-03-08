@@ -26,9 +26,16 @@ contract ProxyManager is
     bool internal _isDeployed;
 
     /// @dev only used to capture proxy owner
-    constructor()
+    constructor(address registry)
     { 
-        initializeOwner(msg.sender);
+        initializeProxyManager(registry);
+    }
+
+    function initializeProxyManager(address registry)
+        public
+        initializer()
+    {
+        initializeNftOwnable(msg.sender, registry);
     }
 
     /// @dev deploy initial contract

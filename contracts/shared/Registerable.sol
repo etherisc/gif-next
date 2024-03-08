@@ -49,9 +49,6 @@ contract Registerable is
             initialOwner,
             registryAddress);
 
-        // TODO check parentNftId -> registry.isRegistered(parentNftId)
-        // TODO check object-parent type pair -> registry.isValidTypeCombo() or something...verify with registry that setup will be able to register...
-
         RegisterableStorage storage $ = _getRegisterableStorage();
         $._parentNftId = parentNftId;
         $._objectType = objectType;
@@ -75,7 +72,7 @@ contract Registerable is
             $._objectType,
             $._isInterceptor,
             address(this), 
-            getInitialOwner(),
+            getOwner(),
             $._data);
     }
 }

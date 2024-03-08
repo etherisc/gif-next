@@ -21,32 +21,6 @@ contract RegistryLinked is
         virtual
         onlyInitializing()
     {
-        _setRegistry(registryAddress);
-    }
-
-
-    function getRegistry() public view returns (IRegistry) {
-        return _registry;
-    }
-
-
-    function getRegistryAddress() public view returns (address) {
-        return address(_registry);
-    }
-
-
-    function _setRegistry(address registryAddress)
-        internal
-    {
-
-        if (address(_registry) != address(0)) {
-            revert ErrorRegistryAlreadyInitialized(address(_registry));
-        }
-
-        if (registryAddress == address(0)) {
-            revert ErrorRegistryAddressZero();
-        }
-
         if (registryAddress.code.length == 0) {
             revert ErrorNotRegistry(registryAddress);
         }
@@ -60,5 +34,15 @@ contract RegistryLinked is
         } catch {
             revert ErrorNotRegistry(registryAddress);
         }
+    }
+
+
+    function getRegistry() public view returns (IRegistry) {
+        return _registry;
+    }
+
+
+    function getRegistryAddress() public view returns (address) {
+        return address(_registry);
     }
 }
