@@ -44,6 +44,7 @@ contract DistributorTest is TestGifBase {
         _prepareDistribution();
 
         string memory invalidCode = "some_invalid_referral_code";
+        // solhint-disable-next-line 
         console.log("invalid referral code", invalidCode);
 
         (
@@ -61,6 +62,7 @@ contract DistributorTest is TestGifBase {
     function testGifSetupReferralCreate() public {
         _setupTestData(true);
 
+        // solhint-disable-next-line 
         console.log("distributor nft id", distributorNftId.toInt());
 
         referralId = distribution.createReferral(
@@ -71,6 +73,7 @@ contract DistributorTest is TestGifBase {
             expiryAt,
             referralData);
 
+        // solhint-disable-next-line 
         console.log("referral id", vm.toString(ReferralId.unwrap(referralId)));        
 
         (
@@ -78,26 +81,32 @@ contract DistributorTest is TestGifBase {
             ReferralStatus statusFromCode
         ) = distribution.getDiscountPercentage(referralCode);
         assertTrue(discountFromCode == discountPercentage, "unexpected referral discount");
+        // solhint-disable-next-line 
         console.log("referral discount", UFixed.unwrap(discountFromCode));        
         assertTrue(statusFromCode == REFERRAL_OK(), "unexpected referral status");
+        // solhint-disable-next-line 
         console.log("referral status", uint(ReferralStatus.unwrap(statusFromCode)));        
 
         IDistribution.ReferralInfo memory info = instanceReader.getReferralInfo(referralId);
 
+        // solhint-disable-next-line 
         console.log("info distributor nft id", info.distributorNftId.toInt());
         assertTrue(info.distributorNftId == distributorNftId, "unexpected distributor nft id");
         assertEq(registry.ownerOf(info.distributorNftId), customer, "unexpected referral owner");
 
+        // solhint-disable-next-line 
         console.log("referral code", info.referralCode);
         assertTrue(
             equalStrings(info.referralCode, referralCode),
             "unexpected referral code");
 
         assertTrue(info.discountPercentage == discountPercentage, "unexpected discount percentage");
+        // solhint-disable-next-line 
         console.log("referral discount percentage", UFixed.unwrap(info.discountPercentage));        
 
         assertTrue(info.maxReferrals == maxReferrals, "unexpected max referrals");
         assertTrue(info.usedReferrals == 0, "used referrals not 0");
+        // solhint-disable-next-line 
         console.log("max referrals", info.maxReferrals);        
 
         assertTrue(info.expiryAt == expiryAt, "unexpected expiry at");

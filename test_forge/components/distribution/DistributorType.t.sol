@@ -58,18 +58,23 @@ contract DistributorTypeTest is TestGifBase {
             allowRenewals,
             data);
 
+        // solhint-disable-next-line 
         console.log("distributor type", vm.toString(DistributorType.unwrap(distributorType)));        
 
         IDistribution.DistributorTypeInfo memory info = instanceReader.getDistributorTypeInfo(distributorType);
+        // solhint-disable-next-line 
         console.log("distributor type name", info.name);
         assertTrue(equalStrings(info.name, name), "unexpected distributor type name");
 
         assertTrue(info.minDiscountPercentage == minDiscountPercentage, "unexpected min discount percentage");
         assertTrue(info.maxDiscountPercentage == maxDiscountPercentage, "unexpected max discount percentage");
+        // solhint-disable-next-line 
         console.log("distributor type minDiscountPercentage", UFixed.unwrap(info.minDiscountPercentage));        
+        // solhint-disable-next-line 
         console.log("distributor type maxDiscountPercentage", UFixed.unwrap(info.maxDiscountPercentage));        
 
         assertTrue(info.commissionPercentage == commissionPercentage, "unexpected commission percentage");
+        // solhint-disable-next-line 
         console.log("commission percentage", UFixed.unwrap(info.commissionPercentage));        
 
         assertEq(info.maxReferralCount, maxReferralCount, "unexpected referral count");
