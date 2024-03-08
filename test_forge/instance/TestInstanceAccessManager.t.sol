@@ -16,8 +16,7 @@ contract TestInstanceAccessManager is TestGifBase {
 
     uint256 public constant INITIAL_BALANCE = 100000;
 
-    // FIXME: fix test
-    function skip_test_InstanceAccessManager_hasRole_unauthorized() public {
+    function test_InstanceAccessManager_hasRole_unauthorized() public {
         // GIVEN
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
