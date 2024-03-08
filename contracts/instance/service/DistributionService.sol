@@ -7,11 +7,11 @@ import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {ISetup} from "../../instance/module/ISetup.sol";
 
-import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
-import {ObjectType, DISTRIBUTION} from "../../types/ObjectType.sol";
+import {ObjectType, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR} from "../../types/ObjectType.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
@@ -24,6 +24,14 @@ import {InstanceService} from "../InstanceService.sol";
 import {IComponent} from "../../components/IComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IDistributionService} from "./IDistributionService.sol";
+
+import {UFixed} from "../../types/UFixed.sol";
+import {DistributorType, DistributorTypeLib} from "../../types/DistributorType.sol";
+import {ReferralId, ReferralStatus, ReferralLib} from "../../types/Referral.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
+import {Key32} from "../../types/Key32.sol";
+import {IDistribution} from "../module/IDistribution.sol";
+
 
 contract DistributionService is
     ComponentService,
@@ -78,15 +86,6 @@ contract DistributionService is
         getInstanceService().grantDistributionDefaultPermissions(instanceNftId, distributionAddress, distribution.getName());
     }
 
-    function _decodeAndVerifyDistributionData(bytes memory data)
-        internal 
-        returns(string memory name)
-    {
-        (name) = abi.decode(data, (string));
-
-        // TODO add checks if applicable 
-    }
-
     function setFees(
         Fee memory distributionFee
     )
@@ -102,4 +101,177 @@ contract DistributionService is
         
         instance.updateDistributionSetup(distributionNftId, distSetupInfo, KEEP_STATE());
     }
+
+    function createDistributorType(
+        string memory name,
+        UFixed minDiscountPercentage,
+        UFixed maxDiscountPercentage,
+        UFixed commissionPercentage,
+        uint32 maxReferralCount,
+        uint32 maxReferralLifetime,
+        bool allowSelfReferrals,
+        bool allowRenewals,
+        bytes memory data
+    )
+        external
+        returns (DistributorType distributorType)
+    {
+        (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
+        Key32 key32 = distributorType.toKey32();
+
+        if(!instance.exists(key32)) {
+            IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
+                name,
+                minDiscountPercentage,
+                maxDiscountPercentage,
+                commissionPercentage,
+                maxReferralCount,
+                maxReferralLifetime,
+                allowSelfReferrals,
+                allowRenewals,
+                data);
+
+            instance.createDistributorType(key32, info);
+        }
+    }
+
+    function createDistributor(
+        address distributor,
+        DistributorType distributorType,
+        bytes memory data
+    ) external returns (NftId distributorNftId)
+    {
+        (, NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+
+        distributorNftId = getRegistryService().registerDistributor(
+            IRegistry.ObjectInfo(
+                zeroNftId(), 
+                distributionNftId,
+                DISTRIBUTOR(),
+                true, // intercepting property for bundles is defined on pool
+                address(0),
+                distributor,
+                ""
+            ));
+
+        IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo(
+            distributorType,
+            true, // active
+            data);
+
+        instance.createDistributor(distributorNftId, info);
+    }
+
+    function updateDistributorType(
+        NftId distributorNftId,
+        DistributorType distributorType,
+        bytes memory data
+    ) external virtual
+    {
+        (,, IInstance instance) = _getAndVerifyCallingDistribution();
+
+        IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo(
+            distributorType,
+            true, // active
+            data);
+
+        instance.updateDistributor(distributorNftId, info, KEEP_STATE());
+    }
+
+
+    function createReferral(
+        NftId distributorNftId,
+        string memory code,
+        UFixed discountPercentage,
+        uint32 maxReferrals,
+        Timestamp expiryAt,
+        bytes memory data
+    )
+        external
+        virtual
+        returns (ReferralId referralId)
+    {
+        (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        require(bytes(code).length > 0, "ERROR:DSV-030:CODE_INVALID");
+        require(expiryAt > zeroTimestamp(), "ERROR:DSV-031:EXPIRY_AT_ZERO");
+
+        referralId = ReferralLib.toReferralId(distributionNftId, code);
+        IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
+            distributorNftId,
+            code,
+            discountPercentage,
+            maxReferrals,
+            0, // used referrals
+            expiryAt,
+            data
+        );
+
+        instance.createReferral(referralId.toKey32(), info);
+        return referralId;
+    }
+
+    function processSale(
+        ReferralId referralId,
+        uint256 premiumAmount
+    )
+        external
+        virtual
+    {
+        revert("NOT_IMPLEMENTED_YET");
+    }
+
+    function calculateFeeAmount(
+        ReferralId referralId,
+        uint256 premiumAmount
+    )
+        external
+        virtual
+        view 
+        returns (uint256 feeAmount)
+    {
+        revert("NOT_IMPLEMENTED_YET");
+    }
+
+    function _getAndVerifyCallingDistribution()
+        internal
+        view
+        returns(
+            address distributionAddress,
+            NftId distributionNftId,
+            IInstance instance
+        )
+    {
+        ObjectType objectType;
+        (
+            distributionAddress,
+            distributionNftId,
+            objectType,
+            instance
+        ) = _getAndVerifyCaller();
+
+        require(objectType == DISTRIBUTION(), "ERROR:PRS-031:CALLER_NOT_DISTRUBUTION");
+    }
+
+    function _getAndVerifyCaller()
+        internal
+        view
+        returns(
+            address objectAddress,
+            NftId objectNftId,
+            ObjectType objectType,
+            IInstance instance
+        )
+    {
+        objectAddress = msg.sender;
+        objectNftId = getRegistry().getNftId(objectAddress);
+        require(objectNftId.gtz(), "ERROR:SRV-030:CALLER_UNKNOWN");
+        IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(objectNftId);
+        objectType = info.objectType;
+
+        IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(info.parentNftId);
+        require(parentInfo.objectType == INSTANCE(), "ERROR:SRV-031:PARENT_NOT_INSTANCE");
+        instance = IInstance(parentInfo.objectAddress);
+    }
+
 }

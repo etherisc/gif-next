@@ -66,7 +66,7 @@ function DISTRIBUTION() pure returns (ObjectType) {
     return toObjectType(120);
 }
 
-function DISTRIBUTION_TYPE() pure returns (ObjectType) {
+function DISTRIBUTOR_TYPE() pure returns (ObjectType) {
     return toObjectType(121);
 }
 

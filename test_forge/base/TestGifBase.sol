@@ -134,6 +134,7 @@ contract TestGifBase is Test {
     address public poolOwner = makeAddr("poolOwner");
     address public distributionOwner = makeAddr("distributionOwner");
     address public customer = makeAddr("customer");
+    address public customer2 = makeAddr("customer2");
     address public investor = makeAddr("investor");
     address public outsider = makeAddr("outsider");
 
@@ -249,6 +250,14 @@ contract TestGifBase is Test {
             // solhint-disable-next-line
             console.log("chain not anvil, skipping assertNftId");
         }
+    }
+
+    function equalStrings(string memory s1, string memory s2) internal pure returns (bool) {
+        return equalBytes(bytes(s1), bytes(s2));
+    }
+
+    function equalBytes(bytes memory b1, bytes memory b2) internal pure returns (bool) {
+        return keccak256(b1) == keccak256(b2);
     }
 
     function _startMeasureGas(string memory label) internal virtual {

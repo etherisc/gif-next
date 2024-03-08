@@ -135,9 +135,18 @@ contract InstanceService is Service, IInstanceService {
         IRegistry registry = getRegistry();
         address distributionServiceAddress = registry.getServiceAddress(DISTRIBUTION(), getMajorVersion());
         clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE(), distributionServiceAddress);
-        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](2);
+        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](11);
         instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
         instanceDistributionServiceSelectors[1] = clonedInstance.updateDistributionSetup.selector;
+        instanceDistributionServiceSelectors[2] = clonedInstance.createDistributorType.selector;
+        instanceDistributionServiceSelectors[3] = clonedInstance.updateDistributorType.selector;
+        instanceDistributionServiceSelectors[4] = clonedInstance.updateDistributorTypeState.selector;
+        instanceDistributionServiceSelectors[5] = clonedInstance.createDistributor.selector;
+        instanceDistributionServiceSelectors[6] = clonedInstance.updateDistributor.selector;
+        instanceDistributionServiceSelectors[7] = clonedInstance.updateDistributorState.selector;
+        instanceDistributionServiceSelectors[8] = clonedInstance.createReferral.selector;
+        instanceDistributionServiceSelectors[9] = clonedInstance.updateReferral.selector;
+        instanceDistributionServiceSelectors[10] = clonedInstance.updateReferralState.selector;
         clonedAccessManager.setTargetFunctionRole(
             "Instance",
             instanceDistributionServiceSelectors, 

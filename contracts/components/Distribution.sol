@@ -4,8 +4,8 @@ pragma solidity ^0.8.19;
 import {DISTRIBUTION} from "../types/ObjectType.sol";
 import {IDistributionService} from "../instance/service/IDistributionService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
-import {NftId, zeroNftId, NftIdLib} from "../types/NftId.sol";
-import {ReferralId} from "../types/Referral.sol";
+import {NftId, zeroNftId, NftIdLib, toNftId} from "../types/NftId.sol";
+import {ReferralId, ReferralStatus, ReferralLib} from "../types/Referral.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {Component} from "./Component.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
@@ -15,6 +15,11 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
+import {UFixed} from "../types/UFixed.sol";
+import {DistributorType} from "../types/DistributorType.sol";
+import {Timestamp} from "../types/Timestamp.sol";
+import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
+
 
 abstract contract Distribution is
     Component,
@@ -24,11 +29,11 @@ abstract contract Distribution is
     bytes32 public constant DISTRIBUTION_STORAGE_LOCATION_V1 = 0xaab7c5ea03d290056d6c060e0833d3ebcbe647f7694616a2ec52738a64b2f900;
 
     struct DistributionStorage {
-        Fee _initialDistributionFee;
+        Fee _distributionFee;
         TokenHandler _tokenHandler;
         IDistributionService _distributionService;
+        mapping(address distributor => NftId distributorNftId) _distributorNftId;
     }
-
 
     function initializeDistribution(
         address registry,
@@ -47,7 +52,7 @@ abstract contract Distribution is
 
         DistributionStorage storage $ = _getDistributionStorage();
         // TODO add validation
-        $._initialDistributionFee = distributionFee;
+        $._distributionFee = distributionFee;
         $._tokenHandler = new TokenHandler(token);
         $._distributionService = getInstance().getDistributionService();
 
@@ -65,6 +70,99 @@ abstract contract Distribution is
         _getDistributionStorage()._distributionService.setFees(distributionFee);
     }
 
+    function getDistributionFee() external view returns (Fee memory distributionFee) {
+        DistributionStorage storage $ = _getDistributionStorage();
+        return $._distributionFee;
+    }
+
+    function createDistributorType(
+        string memory name,
+        UFixed minDiscountPercentage,
+        UFixed maxDiscountPercentage,
+        UFixed commissionPercentage,
+        uint32 maxReferralCount,
+        uint32 maxReferralLifetime,
+        bool allowSelfReferrals,
+        bool allowRenewals,
+        bytes memory data
+    )
+        public
+        returns (DistributorType distributorType)
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        distributorType = $._distributionService.createDistributorType(
+            name,
+            minDiscountPercentage,
+            maxDiscountPercentage,
+            commissionPercentage,
+            maxReferralCount,
+            maxReferralLifetime,
+            allowSelfReferrals,
+            allowRenewals,
+            data);
+    }
+
+    function createDistributor(
+        address distributor,
+        DistributorType distributorType,
+        bytes memory data
+    )
+        public
+        returns(NftId distributorNftId)
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        require($._distributorNftId[distributor].eqz(), "ERROR:DST-030:ALREADY_DISTRIBUTOR");
+
+        distributorNftId = $._distributionService.createDistributor(
+            distributor,
+            distributorType,
+            data);
+
+        $._distributorNftId[distributor] = distributorNftId;
+    }
+
+    function updateDistributorType(
+        NftId distributorNftId,
+        DistributorType distributorType,
+        bytes memory data
+    )
+        public
+        // TODO figure out what we need for authz
+        // and add it
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        $._distributionService.updateDistributorType(
+            distributorNftId,
+            distributorType,
+            data);
+    }
+
+    /**
+     * @dev lets distributors create referral codes.
+     * referral codes need to be unique
+     */
+    function createReferral(
+        NftId distributorNftId,
+        string memory code,
+        UFixed discountPercentage,
+        uint32 maxReferrals,
+        Timestamp expiryAt,
+        bytes memory data
+    )
+        public
+        // TODO add authz (only active distributor)
+        returns (ReferralId referralId)
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        referralId = $._distributionService.createReferral(
+            distributorNftId,
+            code,
+            discountPercentage,
+            maxReferrals,
+            expiryAt,
+            data);
+    }
+
     function calculateFeeAmount(
         ReferralId referralId,
         uint256 netPremiumAmount
@@ -77,8 +175,52 @@ abstract contract Distribution is
         ISetup.DistributionSetupInfo memory setupInfo = getSetupInfo();
         Fee memory fee = setupInfo.distributionFee;
         (feeAmount,) = FeeLib.calculateFee(fee, netPremiumAmount);
+        // TODO: use this? 
+        // return _distributionService.calculateFeeAmount(referralId, premiumAmount);        
     }
 
+    function isDistributor(address candidate)
+        public
+        view
+        returns (bool)
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        return $._distributorNftId[candidate].gtz();
+    }
+
+    function getDistributorNftId(address distributor)
+        public
+        view
+        returns (NftId distributorNftId)
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        return $._distributorNftId[distributor];
+    }
+
+    function getDiscountPercentage(string memory referralCode)
+        external
+        view
+        returns (
+            UFixed discountPercentage, 
+            ReferralStatus status
+        )
+    {
+        ReferralId referralId = getReferralId(referralCode);
+        return getInstanceReader().getDiscountPercentage(referralId);
+    }
+
+
+    function getReferralId(
+        string memory referralCode
+    )
+        public
+        view 
+        returns (ReferralId referralId)
+    {
+        return ReferralLib.toReferralId(
+            getNftId(), 
+            referralCode);      
+    }
 
     function calculateRenewalFeeAmount(
         ReferralId referralId,
@@ -95,14 +237,15 @@ abstract contract Distribution is
 
     function processSale(
         ReferralId referralId,
-        uint256 feeAmount
+        uint256 premiumAmount
     )
         external
         onlyOwner
         restricted()
         virtual override
     {
-        // default is no action
+        DistributionStorage storage $ = _getDistributionStorage();
+        $._distributionService.processSale(referralId, premiumAmount);        
     }
 
     function processRenewal(
@@ -137,9 +280,18 @@ abstract contract Distribution is
         return ISetup.DistributionSetupInfo(
             zeroNftId(),
             $._tokenHandler,
-            $._initialDistributionFee,
+            $._distributionFee,
             address(this)
         );
+    }
+
+
+    function nftTransferFrom(address from, address to, uint256 tokenId) external virtual override (Component, ITransferInterceptor) {
+        // keep track of distributor nft owner
+        emit LogDistributorUpdated(to, msg.sender);
+        DistributionStorage storage $ = _getDistributionStorage();
+        $._distributorNftId[from] = zeroNftId();
+        $._distributorNftId[to] = toNftId(tokenId);
     }
     
 

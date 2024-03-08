@@ -10,6 +10,7 @@ import {IProductService} from "../instance/service/IProductService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType, INSTANCE, PRODUCT} from "../types/ObjectType.sol";
@@ -31,7 +32,7 @@ abstract contract Component is
 
     struct ComponentStorage {
         IInstance _instance; // instance for this component
-
+        InstanceReader _instanceReader; // instance reader for this component
         string _name; // unique (per instance) component name
         IERC20Metadata _token; // token for this component
         address _wallet; // wallet for this component (default = component contract itself)
@@ -98,6 +99,7 @@ abstract contract Component is
         // set linked services
         VersionPart gifVersion = $._instance.getMajorVersion();
         $._instanceService = IInstanceService(getRegistry().getServiceAddress(INSTANCE(), gifVersion));
+        $._instanceReader = $._instance.getInstanceReader();
         $._productService = IProductService(getRegistry().getServiceAddress(PRODUCT(), gifVersion));
 
         // set wallet and token
@@ -209,6 +211,10 @@ abstract contract Component is
 
     function getInstance() public view override returns (IInstance instance) {
         return _getComponentStorage()._instance;
+    }
+
+    function getInstanceReader() public view returns (InstanceReader reader) {
+        return _getComponentStorage()._instanceReader;
     }
 
     function getName() public view override returns(string memory name) {

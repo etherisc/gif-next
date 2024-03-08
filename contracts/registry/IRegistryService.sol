@@ -35,7 +35,7 @@ interface IRegistryService is
      struct FunctionConfig
      {
           ObjectType serviceDomain;
-          bytes4 selector;
+          bytes4[] selectors;
      }
 
     function getFunctionConfigs()
@@ -57,6 +57,8 @@ interface IRegistryService is
 
      function registerDistribution(IComponent distribution, address owner)
           external returns(IRegistry.ObjectInfo memory info);
+
+     function registerDistributor(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 
      function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 

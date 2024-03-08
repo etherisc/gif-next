@@ -61,7 +61,7 @@ contract ReleaseManager is AccessManaged
 
     mapping(VersionPart version => IRegistry.ReleaseInfo info) _release;
 
-    mapping(VersionPart version => mapping(ObjectType serviceDomain => bytes4)) _selector; // registry service function selector assigned to domain 
+    mapping(VersionPart version => mapping(ObjectType serviceDomain => bytes4[])) _selectors; // registry service function selector assigned to domain 
 
     uint _awaitingRegistration; // "services left to register" counter
 
@@ -178,14 +178,13 @@ contract ReleaseManager is AccessManaged
         _verifyServiceInfo(info, version, domain);
 
         // setup and grant unique role if service does registrations
-        bytes4[] memory selector = new bytes4[](1);
-        selector[0] = _selector[version][domain];
+        bytes4[] memory selectors = _selectors[version][domain];
         address registryService = _registry.getServiceAddress(REGISTRY(), version);
-        if(selector[0] != 0) {
+        if(selectors.length > 0) {
             _accessManager.setAndGrantUniqueRole(
                 address(service), 
                 registryService, 
-                selector);
+                selectors);
         }
         
         _awaitingRegistration--;
@@ -306,21 +305,21 @@ contract ReleaseManager is AccessManaged
         for(uint idx = 0; idx < config.length; idx++)
         {
             ObjectType domain = config[idx].serviceDomain;
-            bytes4 selector = config[idx].selector;
-
             // not "registry service" / zero domain
             if(
                 domain == REGISTRY() ||
                 domain.eqz()
             ) { revert ConfigServiceDomainInvalid(idx, domain); } 
 
+            bytes4[] memory selectors = config[idx].selectors;
+
             // TODO can be zero -> e.g. duplicate domain, first with zero selector, second with non zero selector -> need to check _release[version].domains.contains(domain) instead
             // no overwrite
-            if(_selector[version][domain] > 0) {
+            if(_selectors[version][domain].length > 0) {
                 revert SelectorAlreadyExists(version, domain); 
             }
             
-            _selector[version][domain] = selector;
+            _selectors[version][domain] = selectors;
             _release[version].domains.push(domain);
         }
         // TODO set when activated?
