@@ -444,7 +444,7 @@ contract TestGifBase is Test {
         masterInstance.setInstanceReader(masterInstanceReader);
         
         masterBundleManager = new BundleManager();
-        masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), address(masterInstance));
+        masterBundleManager.initialize(masterInstanceAccessManager.authority(), address(registry), address(masterInstance));
         masterInstance.setBundleManager(masterBundleManager);
 
         // revoke ADMIN_ROLE from registryOwner
