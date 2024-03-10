@@ -52,14 +52,15 @@ contract InstanceService is Service, IInstanceService
         }
         _;
     }
-
+    // TODO check service domain?
+    // TODO check release version?
     modifier onlyRegisteredService() {
         if (! getRegistry().isRegisteredService(msg.sender)) {
             revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
         }
         _;
     }
-
+    // TODO check release version?
     modifier onlyComponent() {
         if (! getRegistry().isRegisteredComponent(msg.sender)) {
             revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
@@ -399,13 +400,12 @@ contract InstanceService is Service, IInstanceService
         return accessManager.hasRole(role, account);
     }
     // creates gif targets only -> they have INSTANCE as parent
-    function createGifTarget(NftId instanceNftId, address targetAddress, string memory targetName) 
+    function createGifTarget(NftId instanceNftId, address targetAddress, string memory targetName, bytes4[][] memory selectors, RoleId[] memory roles) 
         external 
         onlyRegisteredService 
     {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        
         if(instanceInfo.objectType != INSTANCE()) {
             revert ErrorInstanceServiceNotInstance(instanceNftId);
         }
@@ -413,70 +413,15 @@ contract InstanceService is Service, IInstanceService
         Instance instance = Instance(instanceInfo.objectAddress);
         InstanceAccessManager accessManager = instance.getInstanceAccessManager();
         accessManager.createGifTarget(targetAddress, targetName);
-    }
-
-    function grantDistributionDefaultPermissions(NftId instanceNftId, address distributionAddress, string memory distributionName) external onlyRegisteredService {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionAddress);
-
-        if (distributionInfo.objectType != DISTRIBUTION()) {
-            revert ErrorInstanceServiceInvalidComponentType(distributionAddress, DISTRIBUTION(), distributionInfo.objectType);
+        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++)
+        {
+            accessManager.setTargetFunctionRole(targetName, selectors[roleIdx], roles[roleIdx]);
         }
-
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
-
-        bytes4[] memory fctSelectors = new bytes4[](1);
-        fctSelectors[0] = IDistributionComponent.setFees.selector;
-        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors, DISTRIBUTION_OWNER_ROLE());
-
-        bytes4[] memory fctSelectors2 = new bytes4[](2);
-        fctSelectors2[0] = IDistributionComponent.processSale.selector;
-        fctSelectors2[1] = IDistributionComponent.processRenewal.selector;
-        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors2, PRODUCT_SERVICE_ROLE());
-    }
-
-    function grantPoolDefaultPermissions(NftId instanceNftId, address poolAddress, string memory poolName) external onlyRegisteredService {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory poolInfo = registry.getObjectInfo(poolAddress);
-
-        if (poolInfo.objectType != POOL()) {
-            revert ErrorInstanceServiceInvalidComponentType(poolAddress, POOL(), poolInfo.objectType);
-        }
-
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
-
-        bytes4[] memory fctSelectors = new bytes4[](1);
-        fctSelectors[0] = IPoolComponent.setFees.selector;
-        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors, POOL_OWNER_ROLE());
-
-        bytes4[] memory fctSelectors2 = new bytes4[](1);
-        fctSelectors2[0] = IPoolComponent.underwrite.selector;
-        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors2, POLICY_SERVICE_ROLE());
-    }
-
-    function grantProductDefaultPermissions(NftId instanceNftId, address productAddress, string memory productName) external onlyRegisteredService {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(productAddress);
-
-        if (productInfo.objectType != PRODUCT()) {
-            revert ErrorInstanceServiceInvalidComponentType(productAddress, PRODUCT(), productInfo.objectType);
-        }
-
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
-
-        bytes4[] memory fctSelectors = new bytes4[](1);
-        fctSelectors[0] = IProductComponent.setFees.selector;
-        instanceAccessManager.setTargetFunctionRole(productName, fctSelectors, PRODUCT_OWNER_ROLE());
+        
     }
 
     // TODO called by component, but target can be component helper...so needs target name
-    // TODO check that targetName belongs to component...how???
+    // TODO check that targetName associated with component...how???
     //function setTargetLocked(string memory targetName, bool locked) onlyComponent external {
     function setComponentLocked(bool locked) onlyComponent external {
         address componentAddress = msg.sender;

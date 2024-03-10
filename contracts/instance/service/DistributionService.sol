@@ -9,10 +9,11 @@ import {ISetup} from "../../instance/module/ISetup.sol";
 
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
-import {DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
+import {PRODUCT_SERVICE_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
 import {ObjectType, DISTRIBUTION} from "../../types/ObjectType.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
+import {RoleId} from "../../types/RoleId.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
@@ -75,8 +76,25 @@ contract DistributionService is
         distributionNftId = distributionInfo.nftId;
 
         instance.createDistributionSetup(distributionNftId, distribution.getSetupInfo());
-        getInstanceService().createGifTarget(instanceNftId, distributionAddress, distribution.getName());
-        getInstanceService().grantDistributionDefaultPermissions(instanceNftId, distributionAddress, distribution.getName());
+        // TODO move to distribution?
+        bytes4[][] memory selectors = new bytes4[][](2);
+        selectors[0] = new bytes4[](1);
+        selectors[1] = new bytes4[](2);
+
+        selectors[0][0] = IDistributionComponent.setFees.selector;
+        selectors[1][0] = IDistributionComponent.processSale.selector;
+        selectors[1][1] = IDistributionComponent.processRenewal.selector;
+
+        RoleId[] memory roles = new RoleId[](2);
+        roles[0] = DISTRIBUTION_OWNER_ROLE();
+        roles[1] = PRODUCT_SERVICE_ROLE();
+
+        getInstanceService().createGifTarget(
+            instanceNftId, 
+            distributionAddress, 
+            distribution.getName(), 
+            selectors, 
+            roles);
     }
 
     function _decodeAndVerifyDistributionData(bytes memory data)

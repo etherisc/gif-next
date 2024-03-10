@@ -113,12 +113,20 @@ contract ProductService is ComponentService, IProductService {
         // create product setup in instance
         instance.createProductSetup(productNftId, product.getSetupInfo());
 
+        bytes4[][] memory selectors = new bytes4[][](1);
+        selectors[0] = new bytes4[](1);
+        selectors[0][0] = IProductComponent.setFees.selector;
+
+        RoleId[] memory roles = new RoleId[](1);
+        roles[0] = PRODUCT_OWNER_ROLE();
+
         // create target for instane access manager
         getInstanceService().createGifTarget(
             _registry.getNftId(address(instance)), 
             address(product), 
-            product.getName());
-        getInstanceService().grantProductDefaultPermissions(instance.getNftId(), address(product), product.getName());
+            product.getName(),
+            selectors,
+            roles);
     }
 
     function getDomain() public pure override(IService, Service) returns(ObjectType) {
