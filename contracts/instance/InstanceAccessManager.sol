@@ -41,9 +41,6 @@ contract InstanceAccessManager is
     IRegistry internal _registry;
 
     modifier restrictedToRoleAdmin(RoleId roleId) {
-        if(_accessManager.isTargetClosed(address(this))) {
-            revert IAccess.ErrorIAccessTargetLocked(address(this));
-        }
         RoleId admin = getRoleAdmin(roleId);
         (bool inRole, uint32 executionDelay) = _accessManager.hasRole(admin.toInt(), _msgSender());
         assert(executionDelay == 0); // to be sure no delayed execution functionality is used
@@ -311,14 +308,6 @@ contract InstanceAccessManager is
         // not core target
         if(_targetInfo[target].ttype == IAccess.Type.Core) {
             revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, _targetInfo[target].ttype);
-        }
-
-        // target belongs to instance owned by caller
-        // TODO parent may be !instance
-        NftId instanceNftId = _registry.getObjectInfo(target).parentNftId;
-        address instanceAddress = _registry.getObjectInfo(instanceNftId).objectAddress;
-        if(_registry.ownerOf(instanceAddress) != msg.sender) {
-            revert IAccess.ErrorIAccessTargetInstanceMismatch(nameShort, instanceNftId);
         }
 
         // not core role
