@@ -5,7 +5,6 @@ import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStri
 
 import {RoleId} from "../../types/RoleId.sol";
 import {Timestamp} from "../../types/Timestamp.sol";
-import {NftId} from "../../types/NftId.sol";
 
 interface IAccess {
 
@@ -47,9 +46,9 @@ interface IAccess {
     error ErrorIAccessTargetDoesNotExist(ShortString name);
     error ErrorIAccessTargetAlreadyExists(address target, ShortString name);
     error ErrorIAccessTargetTypeInvalid(ShortString name, Type ttype);
-    error ErrorIAccessTargetInstanceMismatch(ShortString name, NftId instanceNftId);
     error ErrorIAccessTargetNameEmpty(address target);
     error ErrorIAccessTargetNameExists(address target, address existingTarget, ShortString name);
     error ErrorIAccessTargetLocked(address target);
     error ErrorIAccessTargetIsRegistered(address target);
+    error ErrorIAccessTargetAuthorityInvalid(address target, address targetAuthority);
 }

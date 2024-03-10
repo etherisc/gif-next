@@ -336,14 +336,22 @@ contract InstanceAccessManager is
 
     //--- internal view/pure functions --------------------------------------//
 
-    function _createRole(RoleId roleId, string memory name, IAccess.Type rtype) 
+    function _createRole(RoleId roleId, string memory nameLong, IAccess.Type rtype) 
         internal
     {
-        ShortString nameShort = ShortStrings.toShortString(name);
-        _validateRole(roleId, nameShort, rtype);
+        ShortString name = ShortStrings.toShortString(nameLong);
+        _validateRole(roleId, name, rtype);
+
+        if(roleExists(roleId)) {
+            revert IAccess.ErrorIAccessRoleIdAlreadyExists(roleId);
+        }
+
+        if (_roleIdForName[name].gtz()) {
+            revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[name], name);
+        }
 
         IAccess.RoleInfo memory role = IAccess.RoleInfo(
-            nameShort, 
+            name, 
             rtype,
             ADMIN_ROLE(),
             TimestampLib.blockTimestamp(),
@@ -358,9 +366,6 @@ contract InstanceAccessManager is
         internal
         view
     {
-        if(roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRoleIdAlreadyExists(roleId);
-        }
 
         uint roleIdInt = roleId.toInt();
         if(rtype == IAccess.Type.Custom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
@@ -378,10 +383,6 @@ contract InstanceAccessManager is
         // role name checks
         if (ShortStrings.byteLength(name) == 0) {
             revert IAccess.ErrorIAccessRoleNameEmpty(roleId);
-        }
-
-        if (_roleIdForName[name].gtz()) {
-            revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[name], name);
         }
     }
     // TODO if custom role admin have > 1 member -> limit to 1 member or revoke from all members?
@@ -429,14 +430,25 @@ contract InstanceAccessManager is
         admin = RoleIdLib.toRoleId(adminInt);
     }
 
-    function _createTarget(address target, string memory name, IAccess.Type ttype) 
+    function _createTarget(address target, string memory nameLong, IAccess.Type ttype) 
         internal 
     {
-        ShortString nameShort = ShortStrings.toShortString(name);
-        _validateTarget(target, nameShort);
+        ShortString name = ShortStrings.toShortString(nameLong);
+        _validateTarget(target, name, ttype);
+
+        if (_targetInfo[target].createdAt.gtz()) {
+            revert IAccess.ErrorIAccessTargetAlreadyExists(target, _targetInfo[target].name);
+        }
+
+        if (_targetAddressForName[name] != address(0)) {
+            revert IAccess.ErrorIAccessTargetNameExists(
+                target, 
+                _targetAddressForName[name], 
+                name);
+        }
 
         IAccess.TargetInfo memory info = IAccess.TargetInfo(
-            nameShort, 
+            name, 
             ttype,
             _accessManager.isTargetClosed(target), // sync with state in access manager
             TimestampLib.blockTimestamp(),
@@ -447,8 +459,7 @@ contract InstanceAccessManager is
         _targets.push(target);
     }
 
-    // TODO check target have the same authority -> check depends on target upgradabillity
-    function _validateTarget(address target, ShortString name) 
+    function _validateTarget(address target, ShortString name, IAccess.Type ttype) 
         internal 
         view 
     {
@@ -460,13 +471,6 @@ contract InstanceAccessManager is
 
         if (ShortStrings.byteLength(name) == 0) {
             revert IAccess.ErrorIAccessTargetNameEmpty(target);
-        }
-        // TODO redundant cos always set with targetInfo
-        if (_targetAddressForName[name] != address(0)) {
-            revert IAccess.ErrorIAccessTargetNameExists(
-                target, 
-                _targetAddressForName[name], 
-                name);
         }
     }
 
@@ -498,3 +502,79 @@ contract InstanceAccessManager is
         return _accessManager.canCall(caller, target, selector);
     }
 }
+
+
+/// TODO taget admin example:
+    // 1) ADMIN_ROLE (or `this`) is always admin for core targets 
+    // 2) INSTANCE_OWNER_ROLE (or instance owner address) is always admin for gif(component) target
+    // 3) INSTANCE_OWNER_ROLE or custom role is initial admin for custom target, initialAdmin can be changed
+    /*function setTargetFunctionRole(
+        string memory targetName,
+        bytes4[] calldata selectors,
+        RoleId roleId
+    ) 
+        public 
+        virtual
+    {
+        ShortString nameShort = ShortStrings.toShortString(targetName);
+        address target = _targetAddressForName[nameShort];
+
+        if(msg.sender != getTargetAdmin(target)) {
+            revert IAccess.ErrorIAccessNotTargetAdmin(target, msg.sender);
+        }
+        // checked at target creation time or always?
+        if(!_registry.isRegistered(target)) {
+            revert IAccess.ErrorIAccessTargetNotRegistered(target);
+        }
+        // guarantee apropriate target admin for core targets
+        // not core target
+        if(_targetInfo[target].ttype == IAccess.Type.Core) {
+            revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, _targetInfo[target].ttype);
+        }
+
+        // not core role
+        if(_roleInfo[roleId].rtype == IAccess.Type.Core) {
+            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, _roleInfo[roleId].rtype);
+        }
+
+        _setTargetFunctionRole(target, nameShort, selectors, roleId);
+    }
+
+    function setTargetLocked(string memory targetName, bool locked) 
+        external
+    {
+        ShortString nameShort = ShortStrings.toShortString(targetName);
+        address target = _targetAddressForName[nameShort];
+
+        if(msg.sender != getTargetAdmin(target)) {
+            revert IAccess.ErrorIAccessNotTargetAdmin(target, msg.sender);
+        }
+
+        _accessManager.setTargetClosed(target, locked);
+    }
+
+    function setTargetAdmin(address target, address admin) 
+        public 
+        restricted()
+    {
+        if (!targetExists(target)) {
+            revert IAccess.ErrorIAccessTargetInvalid(target);
+        }
+
+        if (!targetExists(admin)) {
+            revert IAccess.ErrorIAccessTargetInvalid(target);
+        }
+
+        if(_targetInfo[target].ttype == IAccess.Type.Core) {
+            revert IAccess.ErrorIAccessTargetInvalid(target);
+        }
+
+        // target admin is not target itself
+        //if (!targetExists(admin)) {
+        //    revert IAccess.ErrorIAccessRoleIdInvalid(admin);
+        //}       
+
+        _targetAdmin[target] = admin; 
+    }*/
+///
+
