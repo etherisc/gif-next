@@ -452,8 +452,10 @@ contract InstanceAccessManager is
         internal 
         view 
     {
-        if (_targetInfo[target].createdAt.gtz()) {
-            revert IAccess.ErrorIAccessTargetAlreadyExists(target, _targetInfo[target].name);
+        address targetAuthority = AccessManagedUpgradeable(target).authority();
+        // TODO check depends on target upgradabillity
+        if(targetAuthority != authority()) {
+            revert IAccess.ErrorIAccessTargetAuthorityInvalid(target, targetAuthority);
         }
 
         if (ShortStrings.byteLength(name) == 0) {
