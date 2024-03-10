@@ -106,7 +106,7 @@ contract InstanceService is Service, IInstanceService
         clonedInstance.setInstanceReader(clonedInstanceReader);
 
         clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
-        clonedBundleManager.initialize(address(clonedInstanceAccessManager), registryAddress, address(clonedInstance));
+        clonedBundleManager.initialize(clonedInstanceAccessManager.authority(), registryAddress, address(clonedInstance));
         clonedInstance.setBundleManager(clonedBundleManager);
 
         // TODO amend setters with instance specific , policy manager ...
@@ -475,6 +475,9 @@ contract InstanceService is Service, IInstanceService
         instanceAccessManager.setTargetFunctionRole(productName, fctSelectors, PRODUCT_OWNER_ROLE());
     }
 
+    // TODO called by component, but target can be component helper...so needs target name
+    // TODO check that targetName belongs to component...how???
+    //function setTargetLocked(string memory targetName, bool locked) onlyComponent external {
     function setComponentLocked(bool locked) onlyComponent external {
         address componentAddress = msg.sender;
         IRegistry registry = getRegistry();
