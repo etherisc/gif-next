@@ -92,7 +92,6 @@ contract InstanceAccessManager is
     }
 
     // INSTANCE_OWNER_ROLE
-    // creates custom roles only
     function createCustomRole(string memory roleName, string memory adminName)
         external
         restricted()
@@ -168,7 +167,7 @@ contract InstanceAccessManager is
     function roleExists(RoleId roleId) public view returns (bool exists) {
         return _roleInfo[roleId].createdAt.gtz();
     }
-
+    // TODO returns ADMIN_ROLE id for non existent roleId
     function getRoleAdmin(RoleId roleId) public view returns(RoleId admin) {
         return _roleInfo[roleId].admin;
     }
@@ -212,19 +211,25 @@ contract InstanceAccessManager is
 
     //--- Target ------------------------------------------------------//
     // INSTANCE_SERVICE_ROLE
+    // assume some core targets are registred (instance) while others are not (instance accesss manager, instance reader, bundle manager)
     function createCoreTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, IAccess.Type.Core);
     }
     // INSTANCE_SERVICE_ROLE
-    function createGifTarget(address target, string memory name) external restricted() {
+    // assume gif target is registered and belongs to the same instance as instance access manager
+    function createGifTarget(address target, string memory name) external restricted() 
+    {
         _createTarget(target, name, IAccess.Type.Gif);
     }
     // INSTANCE_OWNER_ROLE
+    // assume custom target.authority() is constant -> target can not be used with different instance access manager
+    // assume custom target can not be registered as component -> each service which is doing component registration MUST register a gif target
+    // assume custom target can not be registered as instance or service -> why?
+    // TODO check target associated with instance owner or instance or instance's components or components helpers
     function createCustomTarget(address target, string memory name) 
         external 
         restricted() 
     {
-        // TODO custom targets can not be registered before this function, but possibly can after...
         if(_registry.isRegistered(target)) {
             revert IAccess.ErrorIAccessTargetIsRegistered(target);
         }
@@ -232,6 +237,7 @@ contract InstanceAccessManager is
         _createTarget(target, name, IAccess.Type.Custom);
     }
     // INSTANCE_SERVICE_ROLE
+    // IMPORTANT: instance access manager MUST be of Core type -> otherwise will be locked forever
     function setTargetLocked(string memory targetName, bool locked) 
         external 
         restricted() 
@@ -262,9 +268,6 @@ contract InstanceAccessManager is
     // INSTANCE_SERVICE_ROLE if used not only during initilization, works with:
     //      core roles for core targets
     //      gif roles for gif targets
-    // TODO taget admin example: 
-    // 1) INSTANCE_OWNER_ROLE is admin role for component target
-    // 2) ADMIN_ROLE is admin role for core targets
     function setTargetFunctionRole(
         string memory targetName,
         bytes4[] calldata selectors,
@@ -291,8 +294,9 @@ contract InstanceAccessManager is
     }
 
     // INSTANCE_OWNER_ROLE
-    // custom role for gif target -> instance owner can mess with gif target (component) -> e.g. set custom role for function intendent to work with gif role
+    // custom role for gif target
     // custom role for custom target
+    // TODO instance owner can mess with gif target (component) -> e.g. set custom role for function intendent to work with gif role
     function setTargetFunctionCustomRole(
         string memory targetName,
         bytes4[] calldata selectors,
@@ -336,12 +340,12 @@ contract InstanceAccessManager is
         internal
     {
         ShortString nameShort = ShortStrings.toShortString(name);
-        _validateRoleParameters(roleId, nameShort, rtype);
+        _validateRole(roleId, nameShort, rtype);
 
         IAccess.RoleInfo memory role = IAccess.RoleInfo(
             nameShort, 
             rtype,
-            ADMIN_ROLE(), // this value is dynamic, can be changed with setRoleAdmin()
+            ADMIN_ROLE(),
             TimestampLib.blockTimestamp(),
             TimestampLib.blockTimestamp());
 
@@ -350,7 +354,7 @@ contract InstanceAccessManager is
         _roleIds.push(roleId);
     }
 
-    function _validateRoleParameters(RoleId roleId, ShortString name, IAccess.Type rtype)
+    function _validateRole(RoleId roleId, ShortString name, IAccess.Type rtype)
         internal
         view
     {
@@ -380,16 +384,16 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[name], name);
         }
     }
-    // TODO if custom role admin have > 1 member
+    // TODO if custom role admin have > 1 member -> limit to 1 member or revoke from all members?
     function _revokeRole(RoleId roleId, address member) 
         internal
-        returns(bool)
+        returns(bool revoked)
     {
         if (!roleExists(roleId)) {
             revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
         }
 
-        bool revoked = EnumerableSet.remove(_roleMembers[roleId], member);
+        revoked = EnumerableSet.remove(_roleMembers[roleId], member);
         if(revoked) {
             uint64 roleIdInt = roleId.toInt();
             _accessManager.revokeRole(roleIdInt, member);
@@ -410,8 +414,6 @@ contract InstanceAccessManager is
                 }
             }
         }
-
-        return revoked;
     }
 
     function _getNextCustomRoleId() 
@@ -431,7 +433,7 @@ contract InstanceAccessManager is
         internal 
     {
         ShortString nameShort = ShortStrings.toShortString(name);
-        _validateTargetParameters(target, nameShort);
+        _validateTarget(target, nameShort);
 
         IAccess.TargetInfo memory info = IAccess.TargetInfo(
             nameShort, 
@@ -445,7 +447,8 @@ contract InstanceAccessManager is
         _targets.push(target);
     }
 
-    function _validateTargetParameters(address target, ShortString name) 
+    // TODO check target have the same authority -> check depends on target upgradabillity
+    function _validateTarget(address target, ShortString name) 
         internal 
         view 
     {
@@ -456,7 +459,7 @@ contract InstanceAccessManager is
         if (ShortStrings.byteLength(name) == 0) {
             revert IAccess.ErrorIAccessTargetNameEmpty(target);
         }
-
+        // TODO redundant cos always set with targetInfo
         if (_targetAddressForName[name] != address(0)) {
             revert IAccess.ErrorIAccessTargetNameExists(
                 target, 
