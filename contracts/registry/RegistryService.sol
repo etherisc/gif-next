@@ -19,7 +19,7 @@ import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
@@ -39,6 +39,33 @@ contract RegistryService is
 
     // TODO update to real hash when registry is stable
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
+
+    // From IService
+    function getDomain() public pure override(IService, Service) returns(ObjectType serviceDomain) {
+        return REGISTRY(); 
+    }
+
+    // from Versionable
+
+    /// @dev top level initializer
+    function _initialize(
+        address owner, 
+        bytes memory data
+    )
+        internal
+        virtual override
+        initializer()
+    {
+        (
+            address registryAddress,
+            address initialAuthority
+        ) = abi.decode(data, (address, address));
+
+        __AccessManaged_init(initialAuthority);
+
+        initializeService(registryAddress, owner);
+        registerInterface(type(IRegistryService).interfaceId);
+    }
 
     function registerInstance(IRegisterable instance, address owner)
         external
@@ -142,33 +169,6 @@ contract RegistryService is
         nftId = getRegistry().register(info);
     }
 
-    // From IService
-    function getDomain() public pure override(IService, Service) returns(ObjectType serviceDomain) {
-        return REGISTRY(); 
-    }
-
-    // from Versionable
-
-    /// @dev top level initializer
-    function _initialize(
-        address owner, 
-        bytes memory data
-    )
-        internal
-        initializer
-        virtual override
-    {
-        (
-            address initialAuthority,
-            address registry
-        ) = abi.decode(data, (address, address));
-
-        __AccessManaged_init(initialAuthority);
-
-        initializeService(address(registry), owner);
-        registerInterface(type(IRegistryService).interfaceId);
-    }
-
     // from IRegisterable
 
     function getFunctionConfigs()
@@ -178,37 +178,43 @@ contract RegistryService is
             FunctionConfig[] memory config
         )
     {
-        config = new FunctionConfig[](6);
+        config = new FunctionConfig[](8);
 
         // order of service registrations MUST be reverse to this array 
         /*config[-1].serviceDomain = STAKE();
         config[-1].selector = RegistryService.registerStake.selector;*/
 
-        config[0].serviceDomain = POLICY();
+        config[0].serviceDomain = APPLICATION();
         config[0].selectors = new bytes4[](1);
         config[0].selectors[0] = RegistryService.registerPolicy.selector;
 
-        config[1].serviceDomain = BUNDLE();
-        config[1].selectors = new bytes4[](1);
-        config[1].selectors[0] = RegistryService.registerBundle.selector;
+        config[1].serviceDomain = POLICY();
+        config[1].selectors = new bytes4[](0);
 
-        config[2].serviceDomain = PRODUCT();
-        config[2].selectors = new bytes4[](1);
-        config[2].selectors[0] = RegistryService.registerProduct.selector;
+        config[2].serviceDomain = CLAIM();
+        config[2].selectors = new bytes4[](0);
 
-        config[3].serviceDomain = POOL();
+        config[3].serviceDomain = BUNDLE();
         config[3].selectors = new bytes4[](1);
-        config[3].selectors[0] = RegistryService.registerPool.selector;
+        config[3].selectors[0] = RegistryService.registerBundle.selector;
 
-        config[4].serviceDomain = DISTRIBUTION();
-        config[4].selectors = new bytes4[](2);
-        config[4].selectors[0] = RegistryService.registerDistribution.selector;
-        config[4].selectors[1] = RegistryService.registerDistributor.selector;
+        config[4].serviceDomain = PRODUCT();
+        config[4].selectors = new bytes4[](1);
+        config[4].selectors[0] = RegistryService.registerProduct.selector;
+
+        config[5].serviceDomain = POOL();
+        config[5].selectors = new bytes4[](1);
+        config[5].selectors[0] = RegistryService.registerPool.selector;
+
+        config[6].serviceDomain = DISTRIBUTION();
+        config[6].selectors = new bytes4[](2);
+        config[6].selectors[0] = RegistryService.registerDistribution.selector;
+        config[6].selectors[1] = RegistryService.registerDistributor.selector;
 
         // registerInstance() have no restriction
-        config[5].serviceDomain = INSTANCE();
-        config[5].selectors = new bytes4[](1);
-        config[5].selectors[0] = RegistryService.registerInstance.selector;
+        config[7].serviceDomain = INSTANCE();
+        config[7].selectors = new bytes4[](1);
+        config[7].selectors[0] = RegistryService.registerInstance.selector;
     }
 
     // Internal

@@ -57,14 +57,14 @@ contract RegistryServiceManagerTest is Test {
         
         registryService = registryServiceManager.getRegistryService();
         
-        TokenRegistry tokenRegistry = new TokenRegistry();
+        TokenRegistry tokenRegistry = new TokenRegistry(registryAddress);
         accessManager.initialize(address(releaseManager), address(tokenRegistry));
 
         releaseManager.createNextRelease();
 
         releaseManager.registerRegistryService(registryService);
 
-        registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
+        // registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
 
         vm.stopPrank();
     }
@@ -128,7 +128,7 @@ contract RegistryServiceManagerTest is Test {
         // attempt to redeploy with non-owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNotOwner.selector,
+                INftOwnable.ErrorNftOwnableNotOwner.selector,
                 registryOwnerNew));
         vm.prank(registryOwnerNew);
         registryServiceManager.deploy(
@@ -138,7 +138,7 @@ contract RegistryServiceManagerTest is Test {
         // attempt to redeploy with owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                ProxyManager.ErrorAlreadyDeployed.selector));
+                ProxyManager.ErrorProxyManagerAlreadyDeployed.selector));
         vm.prank(registryOwner);
         registryServiceManager.deploy(
             mockImplementation,
@@ -155,7 +155,7 @@ contract RegistryServiceManagerTest is Test {
         // attempt to upgrade with non-owner account
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNotOwner.selector,
+                INftOwnable.ErrorNftOwnableNotOwner.selector,
                 registryOwnerNew));
         vm.prank(registryOwnerNew);
         registryServiceManager.upgrade(
@@ -163,7 +163,7 @@ contract RegistryServiceManagerTest is Test {
             emptyUpgradeData);
 
         assertEq(registryService.getVersion().toInt(), VersionLib.toVersion(3, 0, 0).toInt(), "unexpected registry service before upgrad");
-        assertEq(registryService.getVersionCount(), 1, "version count not 1 before upgrade");
+        assertEq(registryServiceManager.getVersionCount(), 1, "version count not 1 before upgrade");
 
         // attempt to upgrade with owner account
         vm.prank(registryOwner);
@@ -175,7 +175,7 @@ contract RegistryServiceManagerTest is Test {
             address(registryService));
 
         assertEq(registryServiceUpgraded.getVersion().toInt(), VersionLib.toVersion(3, 0, 1).toInt(), "unexpected registry service after upgrad");
-        assertEq(registryServiceUpgraded.getVersionCount(), 2, "version count not 2 after upgrade");
+        assertEq(registryServiceManager.getVersionCount(), 2, "version count not 2 after upgrade");
 
         assertEq(registryServiceUpgraded.getMessage(), "hi from upgrade mock", "unexpected message from upgraded registry service");
     }

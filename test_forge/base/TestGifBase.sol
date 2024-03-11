@@ -19,8 +19,14 @@ import {ProductService} from "../../contracts/instance/service/ProductService.so
 import {ProductServiceManager} from "../../contracts/instance/service/ProductServiceManager.sol";
 import {PoolService} from "../../contracts/instance/service/PoolService.sol";
 import {PoolServiceManager} from "../../contracts/instance/service/PoolServiceManager.sol";
+
+import {ApplicationService} from "../../contracts/instance/service/ApplicationService.sol";
+import {ApplicationServiceManager} from "../../contracts/instance/service/ApplicationServiceManager.sol";
 import {PolicyService} from "../../contracts/instance/service/PolicyService.sol";
 import {PolicyServiceManager} from "../../contracts/instance/service/PolicyServiceManager.sol";
+import {ClaimService} from "../../contracts/instance/service/ClaimService.sol";
+import {ClaimServiceManager} from "../../contracts/instance/service/ClaimServiceManager.sol";
+
 import {BundleService} from "../../contracts/instance/service/BundleService.sol";
 import {BundleServiceManager} from "../../contracts/instance/service/BundleServiceManager.sol";
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
@@ -91,9 +97,17 @@ contract TestGifBase is Test {
     PoolServiceManager public poolServiceManager;
     PoolService public poolService;
     NftId public poolServiceNftId;
+
+    ApplicationServiceManager public applicationServiceManager;
+    ApplicationService public applicationService;
+    NftId public applicationServiceNftId;
     PolicyServiceManager public policyServiceManager;
     PolicyService public policyService;
     NftId public policyServiceNftId;
+    ClaimServiceManager public claimServiceManager;
+    ClaimService public claimService;
+    NftId public claimServiceNftId;
+
     BundleServiceManager public bundleServiceManager;
     BundleService public bundleService;
     NftId public bundleServiceNftId;
@@ -289,7 +303,8 @@ contract TestGifBase is Test {
         address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
 
-        tokenRegistry = new TokenRegistry();
+        // solhint-disable
+        tokenRegistry = new TokenRegistry(registryAddress);
 
         registryAccessManager.initialize(address(releaseManager), address(tokenRegistry));
 
@@ -298,18 +313,12 @@ contract TestGifBase is Test {
             registryAddress
         );        
         
-        registryService = registryServiceManager.getRegistryService();
-
         releaseManager.createNextRelease();
 
+        registryService = registryServiceManager.getRegistryService();
         releaseManager.registerRegistryService(registryService);
+        registryServiceManager.linkOwnershipToServiceNft();
 
-        // TODO it is also linking to registry
-        // TODO links to _initial version instead _latest
-        //registryServiceManager.linkToNftOwnable(registryAddress);// links to initial registry service
-        //tokenRegistry.linkToNftOwnable(registryAddress);// links to initial registry service
-
-        
         /* solhint-disable */
         console.log("registry deployed at", address(registry));
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
@@ -348,7 +357,6 @@ contract TestGifBase is Test {
         // temporal solution, register in separate tx
         releaseManager.registerService(instanceService);
         instanceServiceNftId = registry.getNftId(address(instanceService));
-
 
         // solhint-disable 
         console.log("instanceService domain", instanceService.getDomain().toInt());
@@ -405,6 +413,18 @@ contract TestGifBase is Test {
         // solhint-enable
 
         // MUST follow bundle service registration 
+        // --- claim service ---------------------------------//
+        claimServiceManager = new ClaimServiceManager(address(registry));
+        claimService = claimServiceManager.getClaimService();
+        releaseManager.registerService(claimService);
+        claimServiceNftId = registry.getNftId(address(claimService));
+
+        // solhint-disable
+        console.log("claimService domain", claimService.getDomain().toInt());
+        console.log("claimService deployed at", address(claimService));
+        console.log("claimService nft id", claimService.getNftId().toInt());
+        // solhint-enable
+
         // --- policy service ---------------------------------//
         policyServiceManager = new PolicyServiceManager(address(registry));
         policyService = policyServiceManager.getPolicyService();
@@ -417,11 +437,20 @@ contract TestGifBase is Test {
         console.log("policyService nft id", policyService.getNftId().toInt());
         // solhint-enable
 
+        // --- application service ---------------------------------//
+        applicationServiceManager = new ApplicationServiceManager(address(registry));
+        applicationService = applicationServiceManager.getApplicationService();
+        releaseManager.registerService(applicationService);
+        applicationServiceNftId = registry.getNftId(address(applicationService));
+
+        // solhint-disable
+        console.log("applicationService domain", applicationService.getDomain().toInt());
+        console.log("applicationService deployed at", address(applicationService));
+        console.log("applicationService nft id", applicationService.getNftId().toInt());
+        // solhint-enable
+
         // activate initial release -> activated upon last service registration
         releaseManager.activateNextRelease();
-
-        registryServiceManager.linkToNftOwnable(registryAddress);// links to latest registry service
-        tokenRegistry.linkToNftOwnable(registryAddress);// links to to latest registry service
     }
 
     function _deployMasterInstance() internal 

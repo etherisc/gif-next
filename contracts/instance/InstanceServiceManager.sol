@@ -17,7 +17,7 @@ contract InstanceServiceManager is ProxyManager {
     constructor(
         address registryAddress
     )
-        ProxyManager()
+        ProxyManager(registryAddress)
     {
         InstanceService instSrv = new InstanceService();
         // bytes memory initCode = type(InstanceService).creationCode;

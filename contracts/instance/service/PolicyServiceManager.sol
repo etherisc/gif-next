@@ -16,7 +16,7 @@ contract PolicyServiceManager is ProxyManager {
     constructor(
         address registryAddress
     )
-        ProxyManager()
+        ProxyManager(registryAddress)
     {
         PolicyService svc = new PolicyService();
         bytes memory data = abi.encode(registryAddress, address(this));
@@ -39,7 +39,7 @@ contract PolicyServiceManager is ProxyManager {
         //    address(_productService));
 
         // implies that after this constructor call only upgrade functionality is available
-        _isDeployed = true;
+        // _isDeployed = true;
     }
 
     //--- view functions ----------------------------------------------------//

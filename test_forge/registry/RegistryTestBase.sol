@@ -153,7 +153,7 @@ contract RegistryTestBase is Test, FoundryRandom {
         address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
         
-        tokenRegistry = new TokenRegistry();
+        tokenRegistry = new TokenRegistry(registryAddress);
 
         accessManager.initialize(address(releaseManager), address(tokenRegistry));
 
@@ -175,7 +175,7 @@ contract RegistryTestBase is Test, FoundryRandom {
 
         releaseManager.activateNextRelease();
 
-        registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service nft
+        // registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service nft
         tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service nft*/
 
         _stopPrank();

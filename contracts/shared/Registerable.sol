@@ -18,8 +18,6 @@ contract Registerable is
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.shared.Registerable.sol")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant REGISTERABLE_LOCATION_V1 = 0x6548007c3f4340f82f348c576c0ff69f4f529cadd5ad41f96aae61abceeaa300;
 
-    error ErrorRegisterableNotRegistry(address registryAddress);
-
     struct RegisterableStorage {
         NftId _parentNftId;
         ObjectType _objectType;
@@ -49,16 +47,11 @@ contract Registerable is
             initialOwner,
             registryAddress);
 
-        // TODO check parentNftId -> registry.isRegistered(parentNftId)
-        // TODO check object-parent type pair -> registry.isValidTypeCombo() or something...verify with registry that setup will be able to register...
-
         RegisterableStorage storage $ = _getRegisterableStorage();
         $._parentNftId = parentNftId;
         $._objectType = objectType;
         $._isInterceptor = isInterceptor;
         $._data = data;
-
-        registerInterface(type(IRegisterable).interfaceId);
     }
 
 
@@ -75,7 +68,7 @@ contract Registerable is
             $._objectType,
             $._isInterceptor,
             address(this), 
-            getInitialOwner(),
+            getOwner(),
             $._data);
     }
 }

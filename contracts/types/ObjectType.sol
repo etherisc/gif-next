@@ -98,12 +98,12 @@ function POLICY() pure returns (ObjectType) {
     return toObjectType(211);
 }
 
-function BUNDLE() pure returns (ObjectType) {
-    return toObjectType(220);
+function CLAIM() pure returns (ObjectType) {
+    return toObjectType(212);
 }
 
-function CLAIM() pure returns (ObjectType) {
-    return toObjectType(211);
+function BUNDLE() pure returns (ObjectType) {
+    return toObjectType(220);
 }
 
 function PAYOUT() pure returns (ObjectType) {

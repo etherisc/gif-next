@@ -23,17 +23,17 @@ interface IApplicationService is IService {
     function create(
         address applicationOwner,
         RiskId riskId,
-        NftId bundleNftId,
-        ReferralId referralId,
         uint256 sumInsuredAmount,
         uint256 lifetime,
+        NftId bundleNftId,
+        ReferralId referralId,
         bytes memory applicationData
     ) external returns (NftId applicationNftId);
 
     /// @dev updates application attributes
     /// may only be called while the application is in applied state
     /// may only be called by the referenced product related to applicationNftId
-    function ajust(
+    function adjust(
         NftId applicationNftId,
         RiskId riskId,
         NftId bundleNftId,

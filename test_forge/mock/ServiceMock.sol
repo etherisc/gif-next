@@ -44,13 +44,8 @@ contract ServiceMock is RegisterableMock, IService {
     }
     
     // from IVersionable, DON NOT USE
-    function initializeVersionable(address implementation, address activatedBy, bytes memory activationData) external { revert(); }
-    function upgradeVersionable(address implementation, address activatedBy, bytes memory upgradeData) external { revert(); }
-    function isInitialized(Version version) external view returns(bool) { revert(); }
-    function getVersionCount() external view returns(uint256 numberOfVersions) { revert(); }
-    function getVersion(uint256 index) external view returns(Version version) { revert(); }
-    function getVersionInfo(Version version) external view returns(VersionInfo memory versionInfo) { revert(); }
-    function getInitializedVersion() external view returns(uint64) { revert(); }
+    function initializeVersionable(address activatedBy, bytes memory activationData) external { revert(); }
+    function upgradeVersionable(bytes memory upgradeData) external { revert(); }
 }
 
 contract SelfOwnedServiceMock is ServiceMock {
