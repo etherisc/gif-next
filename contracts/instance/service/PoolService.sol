@@ -55,9 +55,8 @@ contract PoolService is
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while PoolService is not deployed in PoolServiceManager constructor
         //      owner is PoolServiceManager deployer
-        _initializeService(registryAddress, owner);
-
-        _registerInterface(type(IPoolService).interfaceId);
+        initializeService(registryAddress, owner);
+        registerInterface(type(IPoolService).interfaceId);
     }
 
     function getDomain() public pure override(Service, IService) returns(ObjectType) {
@@ -90,7 +89,7 @@ contract PoolService is
         selectors[1] = new bytes4[](1);
 
         selectors[0][0] = IPoolComponent.setFees.selector;
-        selectors[1][0] = IPoolComponent.underwrite.selector;
+        selectors[1][0] = IPoolComponent.verifyApplication.selector;
 
         RoleId[] memory roles = new RoleId[](2);
         roles[0] = POOL_OWNER_ROLE();

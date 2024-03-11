@@ -47,7 +47,7 @@ contract RegistryServiceManagerTest is Test {
         address registryAddress = address(releaseManager.getRegistry());
         registry = Registry(registryAddress);
 
-        address chainNftAddress = address(registry.getChainNft());
+        address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
 
         registryServiceManager = new RegistryServiceManager(
@@ -100,7 +100,7 @@ contract RegistryServiceManagerTest is Test {
 
         // check contract links
         assertEq(address(registryService.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(address(registry.getChainNft()), address(chainNft), "unexpected chain nft address");
+        assertEq(registry.getChainNftAddress(), address(chainNft), "unexpected chain nft address");
 
         // check nft ids
         assertTrue(registry.getNftId(address(registryService)).gtz(), "registry service nft id (option 1) zero");

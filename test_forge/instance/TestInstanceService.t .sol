@@ -29,7 +29,9 @@ contract TestInstanceService is TestGifBase {
         newMasterInstanceReader.initialize(address(registry), address(instance));
         
         // THEN
-        vm.expectRevert("ERROR:CRD-015:INSTANCE_READER_INSTANCE_MISMATCH");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IInstanceService.ErrorInstanceServiceInstanceReaderInstanceMismatch.selector));
 
         // WHEN
         instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
@@ -40,7 +42,9 @@ contract TestInstanceService is TestGifBase {
         vm.startPrank(registryOwner);
 
         // THEN
-        vm.expectRevert("ERROR:CRD-014:INSTANCE_READER_MASTER_SAME_AS_NEW");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IInstanceService.ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader.selector));
 
         // WHEN
         instanceService.setMasterInstanceReader(address(masterInstanceReader));
@@ -73,7 +77,10 @@ contract TestInstanceService is TestGifBase {
         vm.stopPrank();
         
         // THEN
-        vm.expectRevert(abi.encodeWithSelector(IInstanceService.ErrorInstanceServiceRequestUnauhorized.selector, address(this)));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IInstanceService.ErrorInstanceServiceRequestUnauhorized.selector, 
+                address(this)));
 
         // WHEN
         instanceService.upgradeInstanceReader(instanceNftId);

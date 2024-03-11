@@ -60,11 +60,11 @@ contract ProductService is ComponentService, IProductService {
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        _initializeService(registryAddress, owner);
+        initializeService(registryAddress, owner);
 
-        _poolService = IPoolService(_registry.getServiceAddress(POOL(), getMajorVersion()));
+        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getMajorVersion()));
 
-        _registerInterface(type(IProductService).interfaceId);
+        registerInterface(type(IProductService).interfaceId);
     }
 
 
@@ -102,8 +102,8 @@ contract ProductService is ComponentService, IProductService {
     {
         // wire distribution and pool components to product component
         ISetup.ProductSetupInfo memory setup = product.getSetupInfo();
-        IComponent distribution = IComponent(_registry.getObjectInfo(setup.distributionNftId).objectAddress);
-        IComponent pool = IComponent(_registry.getObjectInfo(setup.poolNftId).objectAddress);
+        IComponent distribution = IComponent(getRegistry().getObjectInfo(setup.distributionNftId).objectAddress);
+        IComponent pool = IComponent(getRegistry().getObjectInfo(setup.poolNftId).objectAddress);
 
         distribution.setProductNftId(productNftId);
         pool.setProductNftId(productNftId);
@@ -122,7 +122,7 @@ contract ProductService is ComponentService, IProductService {
 
         // create target for instane access manager
         getInstanceService().createGifTarget(
-            _registry.getNftId(address(instance)), 
+            getRegistry().getNftId(address(instance)), 
             address(product), 
             product.getName(),
             selectors,
@@ -148,13 +148,13 @@ contract ProductService is ComponentService, IProductService {
         //     revert WalletIsZero();
         // }
 
-        // IRegistry.ObjectInfo memory tokenInfo = _registry.getObjectInfo(address(info.token));
+        // IRegistry.ObjectInfo memory tokenInfo = getRegistry().getObjectInfo(address(info.token));
 
         // if(tokenInfo.objectType != TOKEN()) {
         //     revert InvalidToken();
         // } 
 
-        // IRegistry.ObjectInfo memory poolInfo = _registry.getObjectInfo(info.poolNftId);
+        // IRegistry.ObjectInfo memory poolInfo = getRegistry().getObjectInfo(info.poolNftId);
 
         // if(poolInfo.objectType != POOL()) {
         //     revert InvalidPool();
@@ -168,7 +168,7 @@ contract ProductService is ComponentService, IProductService {
         // //require(tokenInfo.objectAddress == address(poolSetup.token), "ERROR:COS-018:PRODUCT_POOL_TOKEN_MISMATCH");
         // // TODO pool is not linked
 
-        // IRegistry.ObjectInfo memory distributionInfo = _registry.getObjectInfo(info.distributionNftId);
+        // IRegistry.ObjectInfo memory distributionInfo = getRegistry().getObjectInfo(info.distributionNftId);
 
         // if(distributionInfo.objectType != DISTRIBUTION()) {
         //     revert  InvalidDistribution();

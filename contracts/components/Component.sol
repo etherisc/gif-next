@@ -10,6 +10,7 @@ import {IProductService} from "../instance/service/IProductService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType, INSTANCE, PRODUCT} from "../types/ObjectType.sol";
@@ -19,7 +20,6 @@ import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 
 // TODO discuss to inherit from oz accessmanaged
-// TODO make contract upgradeable
 // then add (Distribution|Pool|Product)Upradeable that also intherit from Versionable
 // same pattern as for Service which is also upgradeable
 abstract contract Component is
@@ -32,13 +32,23 @@ abstract contract Component is
 
     struct ComponentStorage {
         IInstance _instance; // instance for this component
+        InstanceReader _instanceReader; // instance reader for this component
         string _name; // unique (per instance) component name
         IERC20Metadata _token; // token for this component
         address _wallet; // wallet for this component (default = component contract itself)
+        bool _isNftInterceptor; // declares if component is involved in nft transfers
         IInstanceService _instanceService; // instance service for this component
 
         NftId _productNftId; // only relevant for components that are linked to a aproduct
         IProductService _productService; // product service for component, might not be relevant for some component types (eg oracles)
+    }
+
+
+    modifier onlyChainNft() {
+        if(msg.sender != getRegistry().getChainNftAddress()) {
+            revert ErrorComponentNotChainNft(msg.sender);
+        }
+        _;
     }
 
 
@@ -49,26 +59,13 @@ abstract contract Component is
         _;
     }
 
-    constructor(
-        address registry,
-        NftId instanceNftId,
-        string memory name,
-        address token,
-        ObjectType componentType,
-        bool isInterceptor,
-        address initialOwner,
-        bytes memory data
-    ) {
-        _initializeComponent(registry, instanceNftId, name, token, componentType, isInterceptor, initialOwner, data);
-    }
-
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
         assembly {
             $.slot := CONTRACT_LOCATION_V1
         }
     }
 
-    function _initializeComponent(
+    function initializeComponent(
         address registry,
         NftId instanceNftId,
         string memory name,
@@ -78,15 +75,16 @@ abstract contract Component is
         address initialOwner,
         bytes memory data
     )
-        internal
-        initializer 
+        public
         virtual
+        onlyInitializing()
     {
         ComponentStorage storage $ = _getComponentStorage();
-        _initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
+        initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
 
         // set unique name of component
         $._name = name;
+        $._isNftInterceptor = isInterceptor;
 
         // set and check linked instance
         IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
@@ -101,15 +99,25 @@ abstract contract Component is
         // set linked services
         VersionPart gifVersion = $._instance.getMajorVersion();
         $._instanceService = IInstanceService(getRegistry().getServiceAddress(INSTANCE(), gifVersion));
+        $._instanceReader = $._instance.getInstanceReader();
         $._productService = IProductService(getRegistry().getServiceAddress(PRODUCT(), gifVersion));
 
         // set wallet and token
         $._wallet = address(this);
         $._token = IERC20Metadata(token);
 
-        _registerInterface(type(IComponent).interfaceId);
+        registerInterface(type(IComponent).interfaceId);
     }
 
+    /// @dev callback function for nft transfers. may only be called by chain nft contract.
+    /// default implementation is empty. overriding functions MUST add onlyChainNft modifier
+    function nftTransferFrom(address from, address to, uint256 tokenId)
+        external
+        virtual override
+        onlyChainNft()
+    { }
+
+    // TODO discuss replacement with modifier restricted from accessmanaged
     function lock() external onlyOwner override {
         _getComponentStorage()._instanceService.setComponentLocked(true);
     }
@@ -137,7 +145,11 @@ abstract contract Component is
     /// if the current wallet has tokens, these will be transferred. 
     /// if the new wallet address is externally owned, an approval from the 
     /// owner of the external wallet for the component to move all tokens must exist. 
-    function setWallet(address newWallet) external override onlyOwner {
+    function setWallet(address newWallet)
+        external
+        override
+        onlyOwner
+    {
         ComponentStorage storage $ = _getComponentStorage();
 
         address currentWallet = $._wallet;
@@ -193,8 +205,16 @@ abstract contract Component is
         return _getComponentStorage()._token;
     }
 
+    function isNftInterceptor() public view override returns(bool isInterceptor) {
+        return _getComponentStorage()._isNftInterceptor;
+    }
+
     function getInstance() public view override returns (IInstance instance) {
         return _getComponentStorage()._instance;
+    }
+
+    function getInstanceReader() public view returns (InstanceReader reader) {
+        return _getComponentStorage()._instanceReader;
     }
 
     function getName() public view override returns(string memory name) {

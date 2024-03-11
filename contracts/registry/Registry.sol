@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {NftId, toNftId, zeroNftId} from "../types/NftId.sol";
 import {VersionPart} from "../types/Version.sol";
-import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
-
-import {ERC165} from "../shared/ERC165.sol";
+import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../types/ObjectType.sol";
 
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
@@ -23,7 +22,6 @@ import {ReleaseManager} from "./ReleaseManager.sol";
 // 4) state object by regular service (POLICY, BUNDLE, STAKE)
 
 contract Registry is
-    ERC165,
     IRegistry
 {
     address public constant NFT_LOCK_ADDRESS = address(0x1);
@@ -75,8 +73,6 @@ contract Registry is
 
         // set object types and object parent relations
         _setupValidCoreTypesAndCombinations();
-
-        _registerInterface(type(IRegistry).interfaceId);
     }
 
     function registerService(
@@ -194,6 +190,10 @@ contract Registry is
         return _chainNft.totalSupply();
     }
 
+    function getReleaseManagerAddress() external view returns (address) {
+        return address(_releaseManager);
+    }
+
     function getNftId() external view returns (NftId nftId) {
         return _registryNftId;
     }
@@ -251,12 +251,22 @@ contract Registry is
         //}
     }
 
-    function getChainNft() external view override returns (ChainNft) {
-        return _chainNft;
+    function getChainNftAddress() external view override returns (address) {
+        return address(_chainNft);
     }
 
     function getOwner() public view returns (address owner) {
         return ownerOf(address(this));
+    }
+
+    // IERC165
+
+    function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
+        if(interfaceId == type(IERC165).interfaceId || interfaceId == type(IRegistry).interfaceId) {
+            return true;
+        }
+
+        return false;
     }
 
     // Internals
@@ -446,6 +456,8 @@ contract Registry is
         _coreContractCombinations[DISTRIBUTION()][INSTANCE()] = true;
         _coreContractCombinations[ORACLE()][INSTANCE()] = true;
         _coreContractCombinations[POOL()][INSTANCE()] = true;
+
+        _coreObjectCombinations[DISTRIBUTOR()][DISTRIBUTION()] = true;
 
         // product as parent, ONLY approved
         _coreObjectCombinations[POLICY()][PRODUCT()] = true;

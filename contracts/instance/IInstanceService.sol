@@ -18,6 +18,24 @@ import {BundleManager} from "./BundleManager.sol";
 
 interface IInstanceService is IService {
 
+    error ErrorInstanceServiceMasterInstanceAlreadySet();
+    error ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet();
+    error ErrorInstanceServiceMasterBundleManagerAlreadySet();
+    error ErrorInstanceServiceInstanceAddressZero();
+
+    error ErrorInstanceServiceMasterInstanceReaderNotSet();
+    error ErrorInstanceServiceInstanceReaderAddressZero();
+    error ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader();
+    error ErrorInstanceServiceInstanceReaderInstanceMismatch();
+
+    error ErrorInstanceServiceAccessManagerZero();
+    error ErrorInstanceServiceInstanceReaderZero();
+    error ErrorInstanceServiceBundleManagerZero();
+
+    error ErrorInstanceServiceInstanceAuthorityMismatch();
+    error ErrorInstanceServiceInstanceReaderInstanceMismatch2();
+    error ErrorInstanceServiceBundleMangerInstanceMismatch();
+
     error ErrorInstanceServiceRequestUnauhorized(address caller);
     error ErrorInstanceServiceNotInstanceOwner(address caller, NftId instanceNftId);
     error ErrorInstanceServiceNotInstance(NftId nftId);

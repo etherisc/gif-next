@@ -27,8 +27,9 @@ contract ProxyManager is
 
     /// @dev only used to capture proxy owner
     constructor()
-        NftOwnable()
-    { }
+    { 
+        initializeOwner(msg.sender);
+    }
 
     /// @dev deploy initial contract
     function deploy(address initialImplementation, bytes memory initializationData)
@@ -81,11 +82,11 @@ contract ProxyManager is
     }
 
     function getDeployData(address implementation, address proxyOwner, bytes memory deployData) public pure returns (bytes memory data) {
-        return abi.encodeWithSelector(IVersionable.initialize.selector, implementation, proxyOwner, deployData);
+        return abi.encodeWithSelector(IVersionable.initializeVersionable.selector, implementation, proxyOwner, deployData);
     }
 
     function getUpgradeData(address implementation, address proxyOwner, bytes memory upgradeData) public pure returns (bytes memory data) {
-        return abi.encodeWithSelector(IVersionable.upgrade.selector, implementation, proxyOwner, upgradeData);
+        return abi.encodeWithSelector(IVersionable.upgradeVersionable.selector, implementation, proxyOwner, upgradeData);
     }
 
     function getProxy() public returns (UpgradableProxyWithAdmin) {

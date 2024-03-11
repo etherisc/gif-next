@@ -13,6 +13,6 @@ contract TestRegisterable is Registerable {
     // solhint-disable-next-line no-empty-blocks
     {
         bytes memory data = "";
-        _initializeRegisterable(registry, registryNftId, objectType, isInterceptor, initialOwner, data);
+        initializeRegisterable(registry, registryNftId, objectType, isInterceptor, initialOwner, data);
     }
 }

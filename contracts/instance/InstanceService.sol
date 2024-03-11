@@ -167,9 +167,18 @@ contract InstanceService is Service, IInstanceService
         IRegistry registry = getRegistry();
         address distributionServiceAddress = registry.getServiceAddress(DISTRIBUTION(), getMajorVersion());
         clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE(), distributionServiceAddress);
-        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](2);
-        instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;// can instance owner set another role for this function?
+        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](11);
+        instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
         instanceDistributionServiceSelectors[1] = clonedInstance.updateDistributionSetup.selector;
+        instanceDistributionServiceSelectors[2] = clonedInstance.createDistributorType.selector;
+        instanceDistributionServiceSelectors[3] = clonedInstance.updateDistributorType.selector;
+        instanceDistributionServiceSelectors[4] = clonedInstance.updateDistributorTypeState.selector;
+        instanceDistributionServiceSelectors[5] = clonedInstance.createDistributor.selector;
+        instanceDistributionServiceSelectors[6] = clonedInstance.updateDistributor.selector;
+        instanceDistributionServiceSelectors[7] = clonedInstance.updateDistributorState.selector;
+        instanceDistributionServiceSelectors[8] = clonedInstance.createReferral.selector;
+        instanceDistributionServiceSelectors[9] = clonedInstance.updateReferral.selector;
+        instanceDistributionServiceSelectors[10] = clonedInstance.updateReferralState.selector;
         clonedAccessManager.setTargetFunctionRole(
             "Instance",
             instanceDistributionServiceSelectors, 
@@ -178,7 +187,7 @@ contract InstanceService is Service, IInstanceService
 
     function _grantPoolServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for pool service on instance
-        address poolServiceAddress = _registry.getServiceAddress(POOL(), getMajorVersion());
+        address poolServiceAddress = getRegistry().getServiceAddress(POOL(), getMajorVersion());
         clonedAccessManager.grantRole(POOL_SERVICE_ROLE(), address(poolServiceAddress));
         bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
@@ -191,7 +200,7 @@ contract InstanceService is Service, IInstanceService
 
     function _grantProductServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for product service on instance
-        address productServiceAddress = _registry.getServiceAddress(PRODUCT(), getMajorVersion());
+        address productServiceAddress = getRegistry().getServiceAddress(PRODUCT(), getMajorVersion());
         clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE(), address(productServiceAddress));
         bytes4[] memory instanceProductServiceSelectors = new bytes4[](5);
         instanceProductServiceSelectors[0] = clonedInstance.createProductSetup.selector;
@@ -207,7 +216,7 @@ contract InstanceService is Service, IInstanceService
 
     function _grantPolicyServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for policy service on instance
-        address policyServiceAddress = _registry.getServiceAddress(POLICY(), getMajorVersion());
+        address policyServiceAddress = getRegistry().getServiceAddress(POLICY(), getMajorVersion());
         clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), address(policyServiceAddress));
         bytes4[] memory instancePolicyServiceSelectors = new bytes4[](3);
         instancePolicyServiceSelectors[0] = clonedInstance.createPolicy.selector;
@@ -221,7 +230,7 @@ contract InstanceService is Service, IInstanceService
 
     function _grantBundleServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
         // configure authorization for bundle service on instance
-        address bundleServiceAddress = _registry.getServiceAddress(BUNDLE(), getMajorVersion());
+        address bundleServiceAddress = getRegistry().getServiceAddress(BUNDLE(), getMajorVersion());
         clonedAccessManager.grantRole(BUNDLE_SERVICE_ROLE(), address(bundleServiceAddress));
         bytes4[] memory instanceBundleServiceSelectors = new bytes4[](2);
         instanceBundleServiceSelectors[0] = clonedInstance.createBundle.selector;
@@ -246,7 +255,7 @@ contract InstanceService is Service, IInstanceService
 
     function _grantInstanceServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for instance service on instance
-        address instanceServiceAddress = _registry.getServiceAddress(INSTANCE(), getMajorVersion());
+        address instanceServiceAddress = getRegistry().getServiceAddress(INSTANCE(), getMajorVersion());
         clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE(), instanceServiceAddress);
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
         instanceInstanceServiceSelectors[0] = clonedInstance.setInstanceReader.selector;
@@ -287,11 +296,11 @@ contract InstanceService is Service, IInstanceService
             onlyOwner 
             returns(NftId masterInstanceNftId)
     {
-        require(_masterInstance == address(0), "ERROR:CRD-002:INSTANCE_MASTER_ALREADY_SET");
-        require(_masterInstanceAccessManager == address(0), "ERROR:CRD-001:ACCESS_MANAGER_MASTER_ALREADY_SET");
-        require(_masterInstanceBundleManager == address(0), "ERROR:CRD-004:BUNDLE_MANAGER_MASTER_ALREADY_SET");
+        if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
+        if(_masterInstanceAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
+        if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
 
-        require (instanceAddress != address(0), "ERROR:CRD-006:INSTANCE_ZERO");
+        if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
         AccessManagerUpgradeableInitializeable ozAccessManager = AccessManagerUpgradeableInitializeable(instance.authority());
@@ -326,16 +335,13 @@ contract InstanceService is Service, IInstanceService
         // masterInstance.linkToRegisteredNftId();
     }
 
-    function setMasterInstanceReader(address instanceReaderAddress) 
-        external 
-        onlyOwner 
-    {
-        require(_masterInstanceReader != address(0), "ERROR:CRD-003:INSTANCE_READER_MASTER_NOT_SET");
-        require (instanceReaderAddress != address(0), "ERROR:CRD-012:INSTANCE_READER_ZERO");
-        require(instanceReaderAddress != _masterInstanceReader, "ERROR:CRD-014:INSTANCE_READER_MASTER_SAME_AS_NEW");
+    function setMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
+        if(_masterInstanceReader == address(0)) { revert ErrorInstanceServiceMasterInstanceReaderNotSet(); }
+        if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderAddressZero(); }
+        if(instanceReaderAddress == _masterInstanceReader) { revert ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader(); }
 
         InstanceReader instanceReader = InstanceReader(instanceReaderAddress);
-        require(instanceReader.getInstance() == IInstance(_masterInstance), "ERROR:CRD-015:INSTANCE_READER_INSTANCE_MISMATCH");
+        if(instanceReader.getInstance() != IInstance(_masterInstance)) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch(); }
 
         _masterInstanceReader = instanceReaderAddress;
     }
@@ -388,9 +394,8 @@ contract InstanceService is Service, IInstanceService
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while InstanceService is not deployed in InstanceServiceManager constructor
         //      owner is InstanceServiceManager deployer
-        _initializeService(registryAddress, owner);
-        
-        _registerInterface(type(IInstanceService).interfaceId);
+        initializeService(registryAddress, owner);
+        registerInterface(type(IInstanceService).interfaceId);
     }
 
     // TODO call instance access manager directlly and delete this function?

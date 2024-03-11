@@ -31,7 +31,8 @@ abstract contract Versionable is
         _disableInitializers();
     }
     // TODO write test where new version of private _updateVersionHistory is added and used... 
-    function initialize(
+
+    function initializeVersionable(
         address implementation,
         address activatedBy,
         bytes memory data
@@ -44,7 +45,7 @@ abstract contract Versionable is
     }
 
     // TODO activatedBy MUST ALWAYS be an owner?
-    function upgrade(
+    function upgradeVersionable(
         address implementation,
         address activatedBy,
         bytes memory data

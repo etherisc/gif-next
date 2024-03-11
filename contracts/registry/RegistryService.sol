@@ -19,7 +19,7 @@ import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, POLICY, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
@@ -52,7 +52,7 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(instance, INSTANCE(), owner);
-        info.nftId = _registry.register(info);
+        info.nftId = getRegistry().register(info);
 
         instance.linkToRegisteredNftId(); // asume safe
     }
@@ -70,7 +70,7 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(product, PRODUCT(), owner);
-        info.nftId = _registry.register(info);
+        info.nftId = getRegistry().register(info);
     }
 
     function registerPool(IComponent pool, address owner)
@@ -85,7 +85,7 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(pool, POOL(), owner);
-        info.nftId = _registry.register(info);
+        info.nftId = getRegistry().register(info);
     }
 
     function registerDistribution(IComponent distribution, address owner)
@@ -100,7 +100,16 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
-        info.nftId = _registry.register(info);
+        info.nftId = getRegistry().register(info);
+    }
+
+    function registerDistributor(IRegistry.ObjectInfo memory info)
+        external
+        restricted 
+        returns(NftId nftId) 
+    {
+        _verifyObjectInfo(info, DISTRIBUTOR());
+        nftId = getRegistry().register(info);
     }
 
     function registerPolicy(IRegistry.ObjectInfo memory info)
@@ -110,7 +119,7 @@ contract RegistryService is
     {
         _verifyObjectInfo(info, POLICY());
 
-        nftId = _registry.register(info);
+        nftId = getRegistry().register(info);
     }
 
     function registerBundle(IRegistry.ObjectInfo memory info)
@@ -120,7 +129,7 @@ contract RegistryService is
     {
         _verifyObjectInfo(info, BUNDLE());
 
-        nftId = _registry.register(info);
+        nftId = getRegistry().register(info);
     }
 
     function registerStake(IRegistry.ObjectInfo memory info)
@@ -130,7 +139,7 @@ contract RegistryService is
     {
         _verifyObjectInfo(info, STAKE());
 
-        nftId = _registry.register(info);
+        nftId = getRegistry().register(info);
     }
 
     // From IService
@@ -156,9 +165,8 @@ contract RegistryService is
 
         __AccessManaged_init(initialAuthority);
 
-        _initializeService(address(registry), owner);
-
-        _registerInterface(type(IRegistryService).interfaceId);
+        initializeService(address(registry), owner);
+        registerInterface(type(IRegistryService).interfaceId);
     }
 
     // from IRegisterable
@@ -177,23 +185,30 @@ contract RegistryService is
         config[-1].selector = RegistryService.registerStake.selector;*/
 
         config[0].serviceDomain = POLICY();
-        config[0].selector = RegistryService.registerPolicy.selector;
+        config[0].selectors = new bytes4[](1);
+        config[0].selectors[0] = RegistryService.registerPolicy.selector;
 
         config[1].serviceDomain = BUNDLE();
-        config[1].selector = RegistryService.registerBundle.selector;
+        config[1].selectors = new bytes4[](1);
+        config[1].selectors[0] = RegistryService.registerBundle.selector;
 
         config[2].serviceDomain = PRODUCT();
-        config[2].selector = RegistryService.registerProduct.selector;
+        config[2].selectors = new bytes4[](1);
+        config[2].selectors[0] = RegistryService.registerProduct.selector;
 
         config[3].serviceDomain = POOL();
-        config[3].selector = RegistryService.registerPool.selector;
+        config[3].selectors = new bytes4[](1);
+        config[3].selectors[0] = RegistryService.registerPool.selector;
 
         config[4].serviceDomain = DISTRIBUTION();
-        config[4].selector = RegistryService.registerDistribution.selector;
+        config[4].selectors = new bytes4[](2);
+        config[4].selectors[0] = RegistryService.registerDistribution.selector;
+        config[4].selectors[1] = RegistryService.registerDistributor.selector;
 
         // registerInstance() have no restriction
         config[5].serviceDomain = INSTANCE();
-        config[5].selector = RegistryService.registerInstance.selector;
+        config[5].selectors = new bytes4[](1);
+        config[5].selectors[0] = RegistryService.registerInstance.selector;
     }
 
     // Internal

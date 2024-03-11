@@ -16,7 +16,7 @@ contract TestService is Service {
     constructor(address registry, NftId registryNftId, address initialOwner)
     // solhint-disable-next-line no-empty-blocks
     {
-        _initializeService(registry, initialOwner);
+        initializeService(registry, initialOwner);
     }
 
     function getDomain() public pure override returns(ObjectType) {
