@@ -8,6 +8,7 @@ import {NftId, zeroNftId, NftIdLib, toNftId} from "../types/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../types/Referral.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {Component} from "./Component.sol";
+import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
@@ -17,7 +18,7 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {UFixed} from "../types/UFixed.sol";
 import {DistributorType} from "../types/DistributorType.sol";
-import {Timestamp} from "../types/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
 
@@ -261,8 +262,15 @@ abstract contract Distribution is
     }
 
     function referralIsValid(ReferralId referralId) external view returns (bool isValid) {
-        // default is invalid
-        return false;
+        InstanceReader reader = getInstance().getInstanceReader();
+        IDistribution.ReferralInfo memory info = reader.getReferralInfo(referralId);
+
+        if (info.distributorNftId.eqz()) {
+            return false;
+        }
+
+        isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
+        isValid = isValid && info.usedReferrals < info.maxReferrals;
     }
 
     function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
