@@ -141,7 +141,7 @@ abstract contract Distribution is
      * @dev lets distributors create referral codes.
      * referral codes need to be unique
      */
-    function createReferral(
+    function _createReferral(
         NftId distributorNftId,
         string memory code,
         UFixed discountPercentage,
@@ -149,7 +149,7 @@ abstract contract Distribution is
         Timestamp expiryAt,
         bytes memory data
     )
-        public // TODO: internal
+        internal
         returns (ReferralId referralId)
     {
         DistributionStorage storage $ = _getDistributionStorage();
