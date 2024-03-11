@@ -102,12 +102,7 @@ contract TokenRegistry is
             revert NotContract(token);
         }
 
-        // MUST not be GIF registerable
-        if(ERC165Checker.supportsInterface(token, type(IRegisterable).interfaceId)) {
-            revert NotToken(token);
-        }
-
-        // MUST have decimals > 0
+        // MUST have decimals > 0 (indicator that this is in fact an erc20 token)
         IERC20Metadata erc20 = IERC20Metadata(token);
         if(erc20.decimals() == 0) {
             revert TokenDecimalsZero();

@@ -39,7 +39,7 @@ contract ProductServiceManager is ProxyManager {
         //    address(_productService));
 
         // implies that after this constructor call only upgrade functionality is available
-        _isDeployed = true;
+        // _isDeployed = true;
     }
 
     //--- view functions ----------------------------------------------------//

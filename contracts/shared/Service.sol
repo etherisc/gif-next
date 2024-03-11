@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {ObjectType, SERVICE} from "../types/ObjectType.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
-import {Version, VersionPart, VersionLib} from "../types/Version.sol";
+import {Version, VersionPart, VersionLib, VersionPartLib} from "../types/Version.sol";
 
 import {Versionable} from "./Versionable.sol";
 import {IService} from "./IService.sol";
@@ -22,8 +22,9 @@ abstract contract Service is
 {
     function getDomain() public pure virtual override returns(ObjectType);
 
+    // version major version MUST be consistent with major version of getVersion()
     function getMajorVersion() public view virtual override returns(VersionPart majorVersion) {
-        return getVersion().toMajorPart(); 
+        return VersionPartLib.toVersionPart(3); 
     }
 
     // from Versionable
@@ -44,17 +45,14 @@ abstract contract Service is
         virtual
         onlyInitializing()
     {
-        // service must provide its name and version upon registration
-        bytes memory data = abi.encode(getDomain(), getMajorVersion());
-        NftId registryNftId = _getRegistryNftId(registry); 
-        bool isInterceptor = false;
+        initializeRegisterable(
+            registry, 
+            IRegistry(registry).getNftId(), 
+            SERVICE(), 
+            false, // is interceptor
+            initialOwner, 
+            ""); // data
 
-        initializeRegisterable(registry, registryNftId, SERVICE(), isInterceptor, initialOwner, data);
         registerInterface(type(IService).interfaceId);
-    }
-
-    // this is just a conveniene function, actual validation will be done upon registration
-    function _getRegistryNftId(address registryAddress) internal view returns (NftId) {
-        return IRegistry(registryAddress).getNftId(registryAddress);
     }
 }

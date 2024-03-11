@@ -95,10 +95,10 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         ],
         {
             libraries: {
-                BlocknumberLib: libraries.blockNumberLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress
+                VersionLib: libraries.versionLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress
             }
         });
     const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
