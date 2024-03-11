@@ -11,6 +11,8 @@ import {Timestamp} from "../../types/Timestamp.sol";
 
 
 interface IDistributionService is IService {
+    error ErrorIDistributionServiceInvalidReferralId(ReferralId referralId);
+
     function setFees(
         Fee memory distributionFee
     ) external;

@@ -121,6 +121,9 @@ contract DistributionService is
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
         Key32 key32 = distributorType.toKey32();
 
+        // FIXME: commission <= maxDiscountPercentage
+        // FIXME: maxDiscountPercentage <= distributionFee
+        
         if(!instance.exists(key32)) {
             IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
                 name,
@@ -230,8 +233,12 @@ contract DistributionService is
         virtual
     {
         // TODO: fetch referral
-        // TODO: if referral is active, process sale with condiutions of this referral
-        // TODO: if referral is not active, process sale with conditions of distribution component
+        // TODO: update referral usage numbers
+        // TODO: update bookkeeping
+        // TODO: calculate commission for distributor
+        // TODO: calculate fee for distribution owner
+        // TODO: updates sum of commission per distributor -> DistributorInfo
+        // TODO: updates sum of fee per distribution owner
         revert("NOT_IMPLEMENTED_YET");
     }
 
@@ -244,7 +251,15 @@ contract DistributionService is
         view 
         returns (uint256 feeAmount)
     {
-        revert("NOT_IMPLEMENTED_YET");
+        (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        InstanceReader reader = getInstance().getInstanceReader();
+        IDistribution.ReferralInfo memory info = reader.getReferralInfo(referralId);
+        if(info.expiryAt > TimestampLib.blockTimestamp()) {
+            revert ErrorIDistributionServiceInvalidReferralId(referralId);
+        }
+
+        // TODO: if referral code is not valid -> return distributionFee from setup
+        // TODO: if referral code is valid, then return (distributionFee(fixed + pct) - referralDiscount(pct)) ... discount <= distributionFee
     }
 
     function _getAndVerifyCallingDistribution()

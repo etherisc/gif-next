@@ -172,12 +172,13 @@ abstract contract Distribution is
         virtual override
         returns (uint256 feeAmount)
     {
-        // TODO: this is only if referralId is not valid
-        ISetup.DistributionSetupInfo memory setupInfo = getSetupInfo();
-        Fee memory fee = setupInfo.distributionFee;
-        (feeAmount,) = FeeLib.calculateFee(fee, netPremiumAmount);
-        // TODO: use this? 
-        // return _distributionService.calculateFeeAmount(referralId, premiumAmount);        
+        if (! referralIsValid(referralId)) {
+            ISetup.DistributionSetupInfo memory setupInfo = getSetupInfo();
+            Fee memory fee = setupInfo.distributionFee;
+            return FeeLib.calculateFee(fee, netPremiumAmount);
+        }
+
+        return _distributionService.calculateFeeAmount(referralId, premiumAmount);        
     }
 
     function isDistributor(address candidate)
@@ -262,6 +263,7 @@ abstract contract Distribution is
     }
 
     function referralIsValid(ReferralId referralId) external view returns (bool isValid) {
+        // TODO: move to DistributionService
         InstanceReader reader = getInstance().getInstanceReader();
         IDistribution.ReferralInfo memory info = reader.getReferralInfo(referralId);
 

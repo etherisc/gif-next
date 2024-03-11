@@ -166,6 +166,7 @@ contract PolicyService is
         {
             NftId distributionNftId = product.getDistributionNftId();
             ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
+            // FIXME: call distributionService.calculateFeeAmount
             (distributionFeeAmount,) = FeeLib.calculateFee(distributionSetupInfo.distributionFee, netPremiumAmount);
         }
         
@@ -516,6 +517,7 @@ contract PolicyService is
                 tokenHandler.transfer(policyOwner, productWallet, productFeeAmount);
                 tokenHandler.transfer(policyOwner, poolWallet, netAmount);
                 netPremiumAmount = netAmount;
+                // TODO: also move distribution tokens to distribution wallet and call `Distribution.processSale` to update distribution balances
             }
         }
 
