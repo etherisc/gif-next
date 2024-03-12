@@ -6,6 +6,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IApplicationService} from "../instance/service/IApplicationService.sol";
 import {IPolicyService} from "../instance/service/IPolicyService.sol";
+import {IProductService} from "../instance/service/IProductService.sol";
 import {IClaimService} from "../instance/service/IClaimService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, NftIdLib} from "../types/NftId.sol";
@@ -32,6 +33,7 @@ abstract contract Product is
     bytes32 public constant PRODUCT_STORAGE_LOCATION_V1 = 0x0bb7aafdb8e380f81267337bc5b5dfdf76e6d3a380ecadb51ec665246d9d6800;
 
     struct ProductStorage {
+        IProductService _productService;
         IApplicationService _applicationService;
         IPolicyService _policyService;
         IClaimService _claimService;
@@ -66,9 +68,10 @@ abstract contract Product is
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
         // TODO refactor to go via registry
-        $._applicationService = IApplicationService(getServiceAddress(APPLICATION())); 
-        $._policyService = IPolicyService(getServiceAddress(POLICY())); 
-        $._claimService = IClaimService(getServiceAddress(CLAIM())); 
+        $._productService = IProductService(_getServiceAddress(PRODUCT())); 
+        $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
+        $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
+        $._claimService = IClaimService(_getServiceAddress(CLAIM())); 
         $._pool = Pool(pool);
         $._distribution = Distribution(distribution);
         $._initialProductFee = productFee;
@@ -128,7 +131,7 @@ abstract contract Product is
         RiskId id,
         bytes memory data
     ) internal {
-        getProductService().createRisk(
+        _getProductService().createRisk(
             id,
             data
         );
@@ -138,7 +141,7 @@ abstract contract Product is
         RiskId id,
         bytes memory data
     ) internal {
-        getProductService().updateRisk(
+        _getProductService().updateRisk(
             id,
             data
         );
@@ -148,7 +151,7 @@ abstract contract Product is
         RiskId id,
         StateId state
     ) internal {
-        getProductService().updateRiskState(
+        _getProductService().updateRiskState(
             id,
             state
         );
@@ -242,7 +245,7 @@ abstract contract Product is
         restricted()
         override
     {
-        getProductService().setFees(productFee, processingFee);
+        _getProductService().setFees(productFee, processingFee);
     }
 
     function getSetupInfo() public view returns (ISetup.ProductSetupInfo memory setupInfo) {
@@ -281,5 +284,9 @@ abstract contract Product is
         assembly {
             $.slot := PRODUCT_STORAGE_LOCATION_V1
         }
+    }
+
+    function _getProductService() internal view returns (IProductService) {
+        return _getProductStorage()._productService;
     }
 }
