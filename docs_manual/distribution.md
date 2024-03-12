@@ -1,6 +1,6 @@
 # Distribution / Referral sequences
 
-## Create distributor type
+## createDistributorType
 
 ```mermaid
 sequenceDiagram
@@ -19,7 +19,7 @@ sequenceDiagram
 ```
 
 
-## Create distributor
+## createDistributor
 
 ```mermaid
 sequenceDiagram
@@ -44,7 +44,7 @@ sequenceDiagram
     D ->> C: distributorNftId
 ```
 
-## Create Referral
+## createReferral
 
 ```mermaid
 sequenceDiagram
@@ -61,5 +61,27 @@ sequenceDiagram
     I ->> DS: ReferralId
     DS ->> D: ReferralId
     D ->> C: ReferralId
+```
+
+## calculateFeeAmount
+
+```mermaid
+sequenceDiagram
+    actor C as Caller
+    participant D as Distribution
+    participant DS as DistributionService
+    participant I as Instance
+    
+    C ->> +D: calculateFeeAmount(referralId, netPremium)
+    D ->> I: getReferralInfo()
+    I ->> D: IDistribution.ReferralInfo
+    D ->> D: validate referral
+    D ->> -DS: calculateFeeAmount(referralId, netPremium)
+    DS ->> I: getReferralInfo()
+    I ->> DS: IDistribution.ReferralInfo
+    DS ->> DS: validate referral
+    DS ->> DS: calculate fee <br>distributionFee(fixed + pct) - referralDiscount(pct)) 
+    DS ->> D: feeAmount
+    D ->> C: feeAmount
 ```
 
