@@ -175,10 +175,11 @@ abstract contract Distribution is
         if (! referralIsValid(referralId)) {
             ISetup.DistributionSetupInfo memory setupInfo = getSetupInfo();
             Fee memory fee = setupInfo.distributionFee;
-            return FeeLib.calculateFee(fee, netPremiumAmount);
+            (feeAmount,) = FeeLib.calculateFee(fee, netPremiumAmount);
         }
 
-        return _distributionService.calculateFeeAmount(referralId, premiumAmount);        
+        DistributionStorage storage $ = _getDistributionStorage();
+        return $._distributionService.calculateFeeAmount(referralId, netPremiumAmount);        
     }
 
     function isDistributor(address candidate)
@@ -262,17 +263,9 @@ abstract contract Distribution is
         // default is no action
     }
 
-    function referralIsValid(ReferralId referralId) external view returns (bool isValid) {
-        // TODO: move to DistributionService
-        InstanceReader reader = getInstance().getInstanceReader();
-        IDistribution.ReferralInfo memory info = reader.getReferralInfo(referralId);
-
-        if (info.distributorNftId.eqz()) {
-            return false;
-        }
-
-        isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
-        isValid = isValid && info.usedReferrals < info.maxReferrals;
+    function referralIsValid(ReferralId referralId) public view returns (bool isValid) {
+        DistributionStorage storage $ = _getDistributionStorage();
+        return $._distributionService.referralIsValid(referralId);        
     }
 
     function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {

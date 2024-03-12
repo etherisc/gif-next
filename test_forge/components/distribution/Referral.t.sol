@@ -8,7 +8,7 @@ import {ReferralLib} from "../../../contracts/types/Referral.sol";
 
 contract ReferralTest is ReferralTestBase {
 
-    function test_Distribution_referralIsValid() public {
+    function test_Distribution_referralIsValid_true() public {
         _setupTestData(true);
 
         // solhint-disable-next-line 

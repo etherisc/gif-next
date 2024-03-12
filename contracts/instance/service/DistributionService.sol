@@ -253,7 +253,7 @@ contract DistributionService is
         returns (uint256 feeAmount)
     {
         (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
-        InstanceReader reader = getInstance().getInstanceReader();
+        InstanceReader reader = instance.getInstanceReader();
         IDistribution.ReferralInfo memory info = reader.getReferralInfo(referralId);
         if(info.expiryAt > TimestampLib.blockTimestamp()) {
             revert ErrorIDistributionServiceInvalidReferralId(referralId);
@@ -261,6 +261,18 @@ contract DistributionService is
 
         // TODO: if referral code is not valid -> return distributionFee from setup
         // TODO: if referral code is valid, then return (distributionFee(fixed + pct) - referralDiscount(pct)) ... discount <= distributionFee
+    }
+
+    function referralIsValid(ReferralId referralId) public view returns (bool isValid) {
+        (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
+
+        if (info.distributorNftId.eqz()) {
+            return false;
+        }
+
+        isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
+        isValid = isValid && info.usedReferrals < info.maxReferrals;
     }
 
     function _getAndVerifyCallingDistribution()

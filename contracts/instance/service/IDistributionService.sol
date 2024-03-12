@@ -64,4 +64,8 @@ interface IDistributionService is IService {
         ReferralId referralId,
         uint256 premiumAmount
     ) external view returns (uint256 feeAmount);
+
+    function referralIsValid(
+        ReferralId referralId
+    ) external view returns (bool isValid);
 }
