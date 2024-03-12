@@ -67,6 +67,16 @@ jobs:
       - name: Run all tests
         run: forge test -vv
 
+      - name: Extract contract sizes report
+        run: forge build --sizes | egrep "|([^|]+)|([^|]*)|([^|]*)|" > contract_sizes.log
+
+      - name: Archive size log
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract_sizes
+          path: |
+            contract_sizes.log
+            
 
   publish:
     name: Publish npm package to npmjs
