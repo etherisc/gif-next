@@ -205,6 +205,7 @@ contract DistributionService is
         DistributorType distributorType = distributorTypeInfo.distributorType;
         IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
 
+        // FIXME: no require
         require(distributorTypeData.maxReferralCount >= maxReferrals, "ERROR:DSV-032:MAX_REFERRALS_EXCEEDED");
         require(distributorTypeData.minDiscountPercentage <= discountPercentage, "ERROR:DSV-033:DISCOUNT_TOO_LOW");
         require(distributorTypeData.maxDiscountPercentage >= discountPercentage, "ERROR:DSV-034:DISCOUNT_TOO_HIGH");

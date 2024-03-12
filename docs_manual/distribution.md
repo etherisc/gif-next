@@ -11,9 +11,7 @@ sequenceDiagram
     
     C ->> D: createDistributorType()
     D ->> DS: createDistributorType()
-    DS ->> I: createDistributorType()
-    I ->> I: persist IDistribution.DistributorTypeInfo
-    I ->> DS: DistributorType
+    DS -->> I: createDistributorType()
     DS ->> D: DistributorType
     D ->> C: DistributorType
 ```
@@ -37,9 +35,7 @@ sequenceDiagram
     R ->> R: mint NFT
     R ->> RS: distributorNftId
     RS ->> DS: IRegistry.ObjectInfo
-    DS ->> I: createDistributor(distributorNftId, IRegistry.ObjectInfo)
-    I ->> I: persist data
-    I ->> DS: distributorNftId
+    DS -->> I: createDistributor(distributorNftId, IRegistry.ObjectInfo)
     DS ->> D: distributorNftId
     D ->> C: distributorNftId
 ```
@@ -56,9 +52,7 @@ sequenceDiagram
     C ->> D: createReferral(distributorNftId, code, discount)
     D ->> DS: createReferral(distributorNftId, code, discount)
     DS ->> DS: validate input
-    DS ->> I: createReferral(IDistribution.ReferralInfo)
-    I ->> I: persist data
-    I ->> DS: ReferralId
+    DS -->> I: createReferral(ReferralId, IDistribution.ReferralInfo)
     DS ->> D: ReferralId
     D ->> C: ReferralId
 ```
@@ -70,15 +64,15 @@ sequenceDiagram
     actor C as Caller
     participant D as Distribution
     participant DS as DistributionService
-    participant I as Instance
+    participant IR as InstanceReader
     
     C ->> +D: calculateFeeAmount(referralId, netPremium)
-    D ->> I: getReferralInfo()
-    I ->> D: IDistribution.ReferralInfo
+    D ->> IR: getReferralInfo()
+    IR ->> D: IDistribution.ReferralInfo
     D ->> D: validate referral
     D ->> -DS: calculateFeeAmount(referralId, netPremium)
-    DS ->> I: getReferralInfo()
-    I ->> DS: IDistribution.ReferralInfo
+    DS ->> IR: getReferralInfo()
+    IR ->> DS: IDistribution.ReferralInfo
     DS ->> DS: validate referral
     DS ->> DS: calculate fee <br>distributionFee(fixed + pct) - referralDiscount(pct)) 
     DS ->> D: feeAmount
@@ -93,6 +87,7 @@ sequenceDiagram
     participant PS as PolicyService
     participant D as Distribution
     participant DS as DistributionService
+    participant IR as InstanceReader
     participant I as Instance
     
     C ->> +PS: underwrite(policy, premiumAmount)
@@ -101,10 +96,9 @@ sequenceDiagram
     PS ->> +DS: calculateFeeAmount(referralId, premiumAmount)
     DS ->> -PS: feeAmount
     PS -->> -PS: move tokens
-    PS ->> D: TODO: call through Distribution or DistributionService
     PS ->> DS: processSale(referralId, premiumAmount)
-    DS ->> I: getReferralInfo()
-    I ->> DS: IDistribution.ReferralInfo
+    DS ->> IR: getReferralInfo()
+    IR ->> DS: IDistribution.ReferralInfo
     DS ->> DS: calculateFeeAmount(referralId, netPremium)
     DS ->> DS: update referral usage in IDistribution.ReferralInfo
     DS -->> I: update IDistribution.ReferralInfo
