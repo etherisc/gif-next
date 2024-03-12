@@ -118,7 +118,6 @@ abstract contract Component is
         onlyChainNft()
     { }
 
-    // TODO discuss replacement with modifier restricted from accessmanaged
     function lock() external onlyOwner override {
         _getComponentStorage()._instanceService.setTargetLocked(getName(), true);
     }

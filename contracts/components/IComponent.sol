@@ -30,7 +30,6 @@ interface IComponent is
 
     function getName() external view returns (string memory name);
 
-    // TODO remove and replace with accessmanaged target locking mechanism
     function lock() external;
     function unlock() external;
 
