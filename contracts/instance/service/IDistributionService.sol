@@ -11,7 +11,15 @@ import {Timestamp} from "../../types/Timestamp.sol";
 
 
 interface IDistributionService is IService {
+    error ErrorIDistributionServiceParentNftIdNotInstance(NftId nftId, NftId parentNftId);
+    error ErrorIDistributionServiceCallerNotDistributor(address caller);
     error ErrorIDistributionServiceInvalidReferralId(ReferralId referralId);
+    error ErrorIDistributionServiceMaxReferralsExceeded(uint256 maxReferrals);
+    error ErrorIDistributionServiceDiscountTooLow(uint256 minDiscountPercentage, uint256 discountPercentage);
+    error ErrorIDistributionServiceDiscountTooHigh(uint256 maxDiscountPercentage, uint256 discountPercentage);
+    error ErrorIDistributionServiceExpiryTooLong(uint256 maxReferralLifetime, uint256 expiryAt);
+    error ErrorIDistributionServiceInvalidReferral(string code);
+    error ErrorIDistributionServiceExpirationInvalid(Timestamp expiryAt);
 
     function setFees(
         Fee memory distributionFee

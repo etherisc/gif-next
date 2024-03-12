@@ -199,19 +199,31 @@ contract DistributionService is
         returns (ReferralId referralId)
     {
         (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
-        require(bytes(code).length > 0, "ERROR:DSV-030:CODE_INVALID");
-        require(expiryAt > zeroTimestamp(), "ERROR:DSV-031:EXPIRY_AT_ZERO");
+
+        if (bytes(code).length == 0) {
+            revert ErrorIDistributionServiceInvalidReferral(code);
+        }
+        if (expiryAt.eqz()) {
+            revert ErrorIDistributionServiceExpirationInvalid(expiryAt);
+        }
 
         InstanceReader instanceReader = instance.getInstanceReader();
         IDistribution.DistributorInfo memory distributorTypeInfo = instanceReader.getDistributorInfo(distributorNftId);
         DistributorType distributorType = distributorTypeInfo.distributorType;
         IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
 
-        // FIXME: no require
-        require(distributorTypeData.maxReferralCount >= maxReferrals, "ERROR:DSV-032:MAX_REFERRALS_EXCEEDED");
-        require(distributorTypeData.minDiscountPercentage <= discountPercentage, "ERROR:DSV-033:DISCOUNT_TOO_LOW");
-        require(distributorTypeData.maxDiscountPercentage >= discountPercentage, "ERROR:DSV-034:DISCOUNT_TOO_HIGH");
-        require(expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() <= distributorTypeData.maxReferralLifetime, "ERROR:DSV-035:EXPIRY_TOO_LONG");
+        if (distributorTypeData.maxReferralCount < maxReferrals) {
+            revert ErrorIDistributionServiceMaxReferralsExceeded(distributorTypeData.maxReferralCount);
+        }
+        if (distributorTypeData.minDiscountPercentage > discountPercentage) {
+            revert ErrorIDistributionServiceDiscountTooLow(distributorTypeData.minDiscountPercentage.toInt(), discountPercentage.toInt());
+        }
+        if (distributorTypeData.maxDiscountPercentage < discountPercentage) {
+            revert ErrorIDistributionServiceDiscountTooHigh(distributorTypeData.maxDiscountPercentage.toInt(), discountPercentage.toInt());
+        }
+        if (expiryAt.toInt() - TimestampLib.blockTimestamp().toInt() > distributorTypeData.maxReferralLifetime) {
+            revert ErrorIDistributionServiceExpiryTooLong(distributorTypeData.maxReferralLifetime, expiryAt.toInt());
+        }
 
         referralId = ReferralLib.toReferralId(distributionNftId, code);
         IDistribution.ReferralInfo memory info = IDistribution.ReferralInfo(
@@ -305,7 +317,9 @@ contract DistributionService is
             instance
         ) = _getAndVerifyCaller();
 
-        require(objectType == DISTRIBUTION(), "ERROR:PRS-031:CALLER_NOT_DISTRUBUTION");
+        if(objectType != DISTRIBUTION()) {
+            revert ErrorIDistributionServiceCallerNotDistributor(msg.sender);
+        }
     }
 
     function _getAndVerifyDistribution(NftId distributionNftId)
@@ -318,7 +332,9 @@ contract DistributionService is
     {
         IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(distributionNftId);
         IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(info.parentNftId);
-        require(parentInfo.objectType == INSTANCE(), "ERROR:SRV-031:PARENT_NOT_INSTANCE");
+        if (parentInfo.objectType != INSTANCE()) {
+            revert ErrorIDistributionServiceParentNftIdNotInstance(distributionNftId, info.parentNftId);
+        }
         instance = IInstance(parentInfo.objectAddress);
     }
 
@@ -334,12 +350,16 @@ contract DistributionService is
     {
         objectAddress = msg.sender;
         objectNftId = getRegistry().getNftId(objectAddress);
-        require(objectNftId.gtz(), "ERROR:SRV-030:CALLER_UNKNOWN");
+        if ( objectNftId.eqz()) {
+            revert ErrorIServiceCallerUnknown(objectAddress);
+        }
         IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(objectNftId);
         objectType = info.objectType;
 
         IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(info.parentNftId);
-        require(parentInfo.objectType == INSTANCE(), "ERROR:SRV-032:PARENT_NOT_INSTANCE");
+        if (parentInfo.objectType != INSTANCE()) {
+            revert ErrorIDistributionServiceParentNftIdNotInstance(objectNftId, info.parentNftId);
+        }
         instance = IInstance(parentInfo.objectAddress);
     }
 
