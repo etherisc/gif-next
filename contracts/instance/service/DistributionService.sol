@@ -339,7 +339,7 @@ contract DistributionService is
         objectType = info.objectType;
 
         IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(info.parentNftId);
-        require(parentInfo.objectType == INSTANCE(), "ERROR:SRV-031:PARENT_NOT_INSTANCE");
+        require(parentInfo.objectType == INSTANCE(), "ERROR:SRV-032:PARENT_NOT_INSTANCE");
         instance = IInstance(parentInfo.objectAddress);
     }
 
