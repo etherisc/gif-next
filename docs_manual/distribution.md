@@ -85,3 +85,32 @@ sequenceDiagram
     D ->> C: feeAmount
 ```
 
+## processSale
+
+```mermaid
+sequenceDiagram
+    actor C as Caller
+    participant PS as PolicyService
+    participant D as Distribution
+    participant DS as DistributionService
+    participant I as Instance
+    
+    C ->> +PS: underwrite(policy, premiumAmount)
+    PS -->> PS: check preconditions
+    PS -->> PS: calculate fees
+    PS ->> +DS: calculateFeeAmount(referralId, premiumAmount)
+    DS ->> -PS: feeAmount
+    PS -->> -PS: move tokens
+    PS ->> D: TODO: call through Distribution or DistributionService
+    PS ->> DS: processSale(referralId, premiumAmount)
+    DS ->> I: getReferralInfo()
+    I ->> DS: IDistribution.ReferralInfo
+    DS ->> DS: calculateFeeAmount(referralId, netPremium)
+    DS ->> DS: update referral usage in IDistribution.ReferralInfo
+    DS -->> I: update IDistribution.ReferralInfo
+    DS ->> DS: calculate distributor commission<br> and fee for distribution owner
+    DS -->> I: update IDistribution.DistributorInfo
+    DS -->> I: update ISetup.DistributionSetupInfo
+    DS ->> PS: 
+    PS ->> C: netPremiumAmount
+```
