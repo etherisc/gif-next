@@ -163,25 +163,6 @@ abstract contract Distribution is
             data);
     }
 
-    function calculateFeeAmount(
-        ReferralId referralId,
-        uint256 netPremiumAmount
-    )
-        external
-        view
-        virtual override
-        returns (uint256 feeAmount)
-    {
-        if (! referralIsValid(referralId)) {
-            ISetup.DistributionSetupInfo memory setupInfo = getSetupInfo();
-            Fee memory fee = setupInfo.distributionFee;
-            (feeAmount,) = FeeLib.calculateFee(fee, netPremiumAmount);
-        }
-
-        DistributionStorage storage $ = _getDistributionStorage();
-        return $._distributionService.calculateFeeAmount(referralId, netPremiumAmount);        
-    }
-
     function isDistributor(address candidate)
         public
         view
@@ -261,11 +242,6 @@ abstract contract Distribution is
         virtual override
     {
         // default is no action
-    }
-
-    function referralIsValid(ReferralId referralId) public view returns (bool isValid) {
-        DistributionStorage storage $ = _getDistributionStorage();
-        return $._distributionService.referralIsValid(referralId);        
     }
 
     function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {

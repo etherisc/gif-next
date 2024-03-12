@@ -58,11 +58,6 @@ interface IDistributionComponent is IComponent {
         bytes memory data
     ) external returns (ReferralId referralId);
 
-    function calculateFeeAmount(
-        ReferralId referralId,
-        uint256 netPremiumAmount
-    ) external view returns (uint256 feeAmount);
-
     function calculateRenewalFeeAmount(
         ReferralId referralId,
         uint256 netPremiumAmount
@@ -91,9 +86,6 @@ interface IDistributionComponent is IComponent {
     function getReferralId(
         string memory referralCode
     ) external returns (ReferralId referralId);
-
-    /// @dev returns true iff the referral id is valid
-    function referralIsValid(ReferralId referralId) external view returns (bool isValid);
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying);

@@ -1,17 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Test, Vm, console} from "../../../lib/forge-std/src/Test.sol";
 import {TestGifBase} from "../../base/TestGifBase.sol";
 
 import {NftId} from "../../../contracts/types/NftId.sol";
-import {Key32} from "../../../contracts/types/Key32.sol";
-import {DistributorType, DistributorTypeLib} from "../../../contracts/types/DistributorType.sol";
-import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
-import {InstanceReader} from "../../../contracts/instance/InstanceReader.sol";
-import {ReferralId, ReferralStatus, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN} from "../../../contracts/types/Referral.sol";
-import {Timestamp, TimestampLib, toTimestamp} from "../../../contracts/types/Timestamp.sol";
-import {UFixed} from "../../../contracts/types/UFixed.sol";
+import {DistributorType} from "../../../contracts/types/DistributorType.sol";
+import {ReferralId} from "../../../contracts/types/Referral.sol";
+import {Timestamp, toTimestamp} from "../../../contracts/types/Timestamp.sol";
+import {UFixed, UFixedLib} from "../../../contracts/types/UFixed.sol";
 import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {FeeLib} from "../../../contracts/types/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
@@ -49,7 +45,7 @@ contract ReferralTestBase is TestGifBase {
             address(registry),
             instanceNftId,
             address(token),
-            FeeLib.zeroFee(),
+            FeeLib.toFee(UFixedLib.toUFixed(1,-1), 0),
             distributionOwner
         );
         distributionNftId = distributionService.register(address(distribution));
@@ -72,7 +68,7 @@ contract ReferralTestBase is TestGifBase {
         distributorData = "..";
 
         referralCode = "SAVE!!!";
-        discountPercentage = instanceReader.toUFixed(55, -3);
+        discountPercentage = instanceReader.toUFixed(5, -2);
         maxReferrals = 10;
         expiryAt = toTimestamp(block.timestamp + 7 * 24 * 3600);
         referralData = "...";

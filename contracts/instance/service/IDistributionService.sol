@@ -61,11 +61,13 @@ interface IDistributionService is IService {
     ) external;
 
     function calculateFeeAmount(
+        NftId distributionNftId,
         ReferralId referralId,
-        uint256 premiumAmount
+        uint256 netPremiumAmount
     ) external view returns (uint256 feeAmount);
 
     function referralIsValid(
+        NftId distributorNftId,
         ReferralId referralId
     ) external view returns (bool isValid);
 }

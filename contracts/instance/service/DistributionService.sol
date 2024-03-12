@@ -8,7 +8,7 @@ import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {ISetup} from "../../instance/module/ISetup.sol";
 
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {Fee} from "../../types/Fee.sol";
+import {Fee, FeeLib} from "../../types/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
 import {ObjectType, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR} from "../../types/ObjectType.sol";
@@ -25,7 +25,7 @@ import {IComponent} from "../../components/IComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 
-import {UFixed} from "../../types/UFixed.sol";
+import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {DistributorType, DistributorTypeLib} from "../../types/DistributorType.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../../types/Referral.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
@@ -39,6 +39,8 @@ contract DistributionService is
 {
     using NftIdLib for NftId;
     using TimestampLib for Timestamp;
+    using UFixedLib for UFixed;
+    using FeeLib for Fee;
 
     address internal _registryAddress;
     
@@ -244,27 +246,38 @@ contract DistributionService is
     }
 
     function calculateFeeAmount(
+        NftId distributionNftId,
         ReferralId referralId,
-        uint256 premiumAmount
+        uint256 netPremiumAmount
     )
         external
         virtual
         view 
         returns (uint256 feeAmount)
     {
-        (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        (address distributionAddress, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
-        IDistribution.ReferralInfo memory info = reader.getReferralInfo(referralId);
-        if(info.expiryAt > TimestampLib.blockTimestamp()) {
-            revert ErrorIDistributionServiceInvalidReferralId(referralId);
-        }
 
-        // TODO: if referral code is not valid -> return distributionFee from setup
-        // TODO: if referral code is valid, then return (distributionFee(fixed + pct) - referralDiscount(pct)) ... discount <= distributionFee
+        // calculate fee based on the distribution components fee
+        ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
+        Fee memory fee = setupInfo.distributionFee;
+        (feeAmount,) = fee.calculateFee(netPremiumAmount);
+
+        if (referralIsValid(distributionNftId, referralId)) {
+            // (distributionFee(fixed + pct) - referralDiscount(pct)) ... discount <= distributionFee
+            IDistribution.ReferralInfo memory info = reader.getReferralInfo(referralId);
+            uint256 discountAmount = UFixedLib.toUFixed(netPremiumAmount).mul(info.discountPercentage).toInt();
+            if (discountAmount > feeAmount) {
+                feeAmount = 0;
+            } else {
+                feeAmount -= discountAmount;
+            }
+        } 
+        // else - just use distributionFee from component
     }
 
-    function referralIsValid(ReferralId referralId) public view returns (bool isValid) {
-        (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+    function referralIsValid(NftId distributionNftId, ReferralId referralId) public view returns (bool isValid) {
+        (address distributionAddress, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
         IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
 
         if (info.distributorNftId.eqz()) {
@@ -293,6 +306,20 @@ contract DistributionService is
         ) = _getAndVerifyCaller();
 
         require(objectType == DISTRIBUTION(), "ERROR:PRS-031:CALLER_NOT_DISTRUBUTION");
+    }
+
+    function _getAndVerifyDistribution(NftId distributionNftId)
+        internal
+        view
+        returns(
+            address distributionAddress,
+            IInstance instance
+        )
+    {
+        IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(distributionNftId);
+        IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(info.parentNftId);
+        require(parentInfo.objectType == INSTANCE(), "ERROR:SRV-031:PARENT_NOT_INSTANCE");
+        instance = IInstance(parentInfo.objectAddress);
     }
 
     function _getAndVerifyCaller()
