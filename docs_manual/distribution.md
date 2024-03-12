@@ -1,0 +1,65 @@
+# Distribution / Referral sequences
+
+## Create distributor type
+
+```mermaid
+sequenceDiagram
+    actor C as Caller
+    participant D as Distribution
+    participant DS as DistributionService
+    participant I as Instance
+    
+    C ->> D: createDistributorType()
+    D ->> DS: createDistributorType()
+    DS ->> I: createDistributorType()
+    I ->> I: persist IDistribution.DistributorTypeInfo
+    I ->> DS: DistributorType
+    DS ->> D: DistributorType
+    D ->> C: DistributorType
+```
+
+
+## Create distributor
+
+```mermaid
+sequenceDiagram
+    actor C as Caller
+    participant D as Distribution
+    participant DS as DistributionService
+    participant RS as RegistryService
+    participant R as Registry
+    participant I as Instance
+    
+    C ->> D: createDistributor(address, type)
+    D ->> DS: createDistributor(address, type)
+    DS ->> RS: registerDistributor()
+    RS ->> R: register()
+    R ->> R: mint NFT
+    R ->> RS: distributorNftId
+    RS ->> DS: IRegistry.ObjectInfo
+    DS ->> I: createDistributor(distributorNftId, IRegistry.ObjectInfo)
+    I ->> I: persist data
+    I ->> DS: distributorNftId
+    DS ->> D: distributorNftId
+    D ->> C: distributorNftId
+```
+
+## Create Referral
+
+```mermaid
+sequenceDiagram
+    actor C as Caller
+    participant D as Distribution
+    participant DS as DistributionService
+    participant I as Instance
+    
+    C ->> D: createReferral(distributorNftId, code, discount)
+    D ->> DS: createReferral(distributorNftId, code, discount)
+    DS ->> DS: validate input
+    DS ->> I: createReferral(IDistribution.ReferralInfo)
+    I ->> I: persist data
+    I ->> DS: ReferralId
+    DS ->> D: ReferralId
+    D ->> C: ReferralId
+```
+
