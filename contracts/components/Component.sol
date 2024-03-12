@@ -18,6 +18,7 @@ import {VersionPart} from "../types/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
+import {VersionPart} from "../types/Version.sol";
 
 // TODO discuss to inherit from oz accessmanaged
 // then add (Distribution|Pool|Product)Upradeable that also intherit from Versionable
@@ -117,7 +118,6 @@ abstract contract Component is
         onlyChainNft()
     { }
 
-    // TODO discuss replacement with modifier restricted from accessmanaged
     function lock() external onlyOwner override {
         _getComponentStorage()._instanceService.setTargetLocked(getName(), true);
     }
@@ -215,6 +215,11 @@ abstract contract Component is
 
     function getInstanceReader() public view returns (InstanceReader reader) {
         return _getComponentStorage()._instanceReader;
+    }
+
+    function getServiceAddress(ObjectType domain) public view returns (address service) {
+        VersionPart majorVersion = getInstance().getMajorVersion();
+        return getRegistry().getServiceAddress(domain, majorVersion);
     }
 
     function getName() public view override returns(string memory name) {

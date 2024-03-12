@@ -58,8 +58,8 @@ contract PolicyService is
         bytes memory data
     )
         internal
-        initializer
         virtual override
+        initializer
     {
         address registryAddress;
         address initialOwner;
@@ -171,69 +171,6 @@ contract PolicyService is
         }
         
         (bundleFeeAmount,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
-    }
-
-
-    function createApplication(
-        address applicationOwner,
-        RiskId riskId,
-        uint256 sumInsuredAmount,
-        uint256 lifetime,
-        bytes memory applicationData,
-        NftId bundleNftId,
-        ReferralId referralId
-    )
-        external 
-        virtual override
-        returns (NftId policyNftId)
-    {
-        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        // TODO: add validations (see create bundle in pool service)
-
-        policyNftId = getRegistryService().registerPolicy(
-            IRegistry.ObjectInfo(
-                zeroNftId(),
-                productInfo.nftId,
-                POLICY(),
-                false, // intercepting property for policies is defined on product
-                address(0),
-                applicationOwner,
-                ""
-            )
-        );
-
-        (uint256 premiumAmount,,,,) = calculatePremium(
-            riskId,
-            sumInsuredAmount,
-            lifetime,
-            applicationData,
-            bundleNftId,
-            referralId
-        );
-
-        IPolicy.PolicyInfo memory policyInfo = IPolicy.PolicyInfo(
-            productInfo.nftId,
-            bundleNftId,
-            referralId,
-            riskId,
-            sumInsuredAmount,
-            premiumAmount,
-            0,
-            lifetime,
-            applicationData,
-            "",
-            0,
-            0,
-            0,
-            zeroTimestamp(),
-            zeroTimestamp(),
-            zeroTimestamp()
-        );
-        
-        instance.createPolicy(policyNftId, policyInfo);
-        instance.updatePolicyState(policyNftId, APPLIED());
-
-        // TODO: add logging
     }
 
     function _getAndVerifyUnderwritingSetup(
@@ -429,9 +366,22 @@ contract PolicyService is
         // TODO: add logging
     }
 
+
+    function expire(
+        NftId policyNftId
+    )
+        external
+        override
+        // solhint-disable-next-line no-empty-blocks
+    {
+        
+    }
+
     function close(
         NftId policyNftId
-    ) external override // solhint-disable-next-line no-empty-blocks
+    )
+        external 
+        override
     {
         (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();

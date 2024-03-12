@@ -26,7 +26,7 @@ import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol"
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {ObjectType, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, BUNDLE} from "../../types/ObjectType.sol";
-import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE, CLOSED} from "../../types/StateId.sol";
+import {APPLIED, REVOKED, UNDERWRITTEN, ACTIVE, KEEP_STATE, CLOSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {ReferralId} from "../../types/Referral.sol";
@@ -48,13 +48,12 @@ contract ApplicationService is
     IApplicationService
 {
 
-
-    function initialize(
+    function _initialize(
         address owner, 
         bytes memory data
     )
-        public
-        virtual
+        internal
+        virtual override
         initializer()
     {
         // TODO check this, might no longer be the way, refactor if necessary
@@ -67,17 +66,22 @@ contract ApplicationService is
     }
 
 
+    function getDomain() public pure override(IService, Service) returns(ObjectType) {
+        return APPLICATION();
+    }
+
+
     function create(
         address applicationOwner,
         RiskId riskId,
-        NftId bundleNftId,
-        ReferralId referralId,
         uint256 sumInsuredAmount,
         uint256 lifetime,
+        NftId bundleNftId,
+        ReferralId referralId,
         bytes memory applicationData
     )
         external
-        virtual override
+        virtual
         returns (NftId applicationNftId)
     {
         (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
@@ -123,8 +127,8 @@ contract ApplicationService is
             zeroTimestamp()
         );
         
-        instance.createPolicy(applicationNftId, policyInfo);
-        instance.updatePolicyState(applicationNftId, APPLIED());
+        instance.createApplication(applicationNftId, policyInfo);
+        instance.updateApplicationState(applicationNftId, APPLIED());
 
         // TODO: add logging
     }
@@ -142,7 +146,7 @@ contract ApplicationService is
     }
 
 
-    function ajust(
+    function adjust(
         NftId applicationNftId,
         RiskId riskId,
         NftId bundleNftId,
@@ -157,11 +161,12 @@ contract ApplicationService is
 
     }
 
-    function revoke(NftId policyNftId)
+    function revoke(NftId applicationNftId)
         external
         virtual override
     {
-
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        instance.updateApplicationState(applicationNftId, REVOKED());
     }
 
 
@@ -207,11 +212,6 @@ contract ApplicationService is
         premiumAmount = netPremiumAmount + productFeeAmount;
         premiumAmount += poolFeeAmount + bundleFeeAmount;
         premiumAmount += distributionFeeAmount;
-    }
-
-
-    function getDomain() public pure override(IService, Service) returns(ObjectType) {
-        return APPLICATION();
     }
 
 

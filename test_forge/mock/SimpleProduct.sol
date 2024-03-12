@@ -113,9 +113,9 @@ contract SimpleProduct is Product {
             riskId,
             sumInsuredAmount,
             lifetime,
-            applicationData,
             bundleNftId,
-            referralId
+            referralId,
+            applicationData
         );
     }
 

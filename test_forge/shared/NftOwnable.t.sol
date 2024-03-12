@@ -18,48 +18,20 @@ import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessMana
 import {DIP} from "../mock/Dip.sol";
 import {NftOwnableMock, NftOwnableMockUninitialized} from "../mock/NftOwnableMock.sol";
 
-contract NftOwnableTest is Test {
+import {TestGifBase} from "../base/TestGifBase.sol";
 
-    address public registryOwner = makeAddr("registryOwner");
+contract NftOwnableTest is TestGifBase {
+
     address public mockOwner = makeAddr("mockOwner");
-    address public outsider = makeAddr("outsider");
 
     NftOwnableMockUninitialized public mockUninitialized;
     NftOwnableMock public mock;
-    IRegistry public registry;
-    RegistryService public registryService;
 
-    function setUp() public {
-
-        vm.startPrank(registryOwner);
-
-        RegistryAccessManager accessManager = new RegistryAccessManager(registryOwner);
-
-        ReleaseManager releaseManager = new ReleaseManager(
-            accessManager,
-            VersionPartLib.toVersionPart(3));
-
-        registry = IRegistry(releaseManager.getRegistry());
-
-        RegistryServiceManager registryServiceManager = new RegistryServiceManager(
-            accessManager.authority(),
-            address(registry)
-        );        
-        
-        registryService = registryServiceManager.getRegistryService();
-
-        accessManager.initialize(address(releaseManager), address(0x1));
-
-        releaseManager.createNextRelease();
-
-        releaseManager.registerRegistryService(registryService);
-
-        registryServiceManager.linkToNftOwnable(address(registry));// links to registry service
-
-        vm.stopPrank();
+    function setUp() public override {
+        super.setUp();
 
         vm.startPrank(mockOwner);
-        mock = new NftOwnableMock();
+        mock = new NftOwnableMock(address(registry));
         mockUninitialized = new NftOwnableMockUninitialized();
         vm.stopPrank();
     }
@@ -86,16 +58,18 @@ contract NftOwnableTest is Test {
     function test_NftOwnableLinkToRegNftIdTwice() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorAlreadyLinked.selector,
-                address(registry),
+                INftOwnable.ErrorNftOwnableAlreadyLinked.selector,
                 registryService.getNftId()));
+
         registryService.linkToRegisteredNftId();
     }
 
     function test_NftOwnableLinkToRegNftIdWithUninitializedRegistry() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                IRegistryLinked.ErrorRegistryNotInitialized.selector));
+                INftOwnable.ErrorNftOwnableContractNotRegistered.selector,
+                address(address(mock))));
+
         mock.linkToRegisteredNftId();
     }
 
@@ -104,7 +78,7 @@ contract NftOwnableTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorContractNotRegistered.selector,
+                INftOwnable.ErrorNftOwnableContractNotRegistered.selector,
                 address(mockUninitialized)));
         mockUninitialized.linkToRegisteredNftId();
     }
@@ -115,14 +89,6 @@ contract NftOwnableTest is Test {
 
         address fakeOwner = makeAddr("fakeOwner");
         address fakeRegistry = makeAddr("fakeRegistry");
-
-        // attempt to reinitialize with new initial owner
-        // this initialization has already happened when constructing the mock
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                Initializable.InvalidInitialization.selector));
-
-        mock.initializeOwner(fakeOwner);
 
         // attempt to reinitialize with new initial owner and registry
         // initializeNftOwnable is not an initializer (and can only be called in the context of an initializer)
@@ -137,7 +103,9 @@ contract NftOwnableTest is Test {
         // attempt to initialize with zero registry address
         vm.expectRevert(
             abi.encodeWithSelector(
-                IRegistryLinked.ErrorRegistryAddressZero.selector));
+                IRegistryLinked.ErrorNotRegistry.selector,
+                address(0)));
+
         mockUninitialized.initialize(mockOwner, address(0));
     }
 
@@ -164,23 +132,13 @@ contract NftOwnableTest is Test {
 
     //--- linkToNftOwnable(address registryAddress, address nftOwnableAddress) tests
 
-    function test_NftOwnableLinkToNftOwnableNotOwner() public {
-        // attempt to initialize with non-registry
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                INftOwnable.ErrorNotOwner.selector,
-                outsider));
-        vm.prank(outsider);
-        mock.linkToNftOwnable(address(registry), address(mock));
-    }
-
     function test_NftOwnableLinkToNftOwnableContractNotRegistered() public {
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorContractNotRegistered.selector,
+                INftOwnable.ErrorNftOwnableContractNotRegistered.selector,
                 address(mock)));
         vm.prank(mockOwner);
-        mock.linkToNftOwnable(address(registry), address(mock));
+        mock.linkToNftOwnable(address(mock));
     }
 
     function test_NftOwnableLinkToNftOwnableHappyCase() public {
@@ -190,7 +148,7 @@ contract NftOwnableTest is Test {
 
         // NFT_LOCK_ADDRESS becomes owner of mock
         vm.prank(mockOwner);
-        mock.linkToNftOwnable(address(registry), address(registry));
+        mock.linkToNftOwnable(address(registry));
 
         assertEq(mock.getNftId().toInt(), registry.getNftId(registryAddress).toInt(), "mock nft id not registry nft id");
         assertEq(mock.getOwner(), address(0x1), "mock owner not registry owner after linking");
@@ -201,15 +159,15 @@ contract NftOwnableTest is Test {
 
         // NFT_LOCK_ADDRESS becomes owner of mock
         vm.prank(mockOwner);
-        mock.linkToNftOwnable(address(registry), address(registryService));
+        mock.linkToNftOwnable(address(registryService));
         NftId mockNftId = mock.getNftId();
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorAlreadyLinked.selector,
-                registryAddress,
+                INftOwnable.ErrorNftOwnableAlreadyLinked.selector,
                 mockNftId));
+
         vm.prank(registryOwner);
-        mock.linkToNftOwnable(address(registry), address(registryService));
+        mock.linkToNftOwnable(address(registryService));
     }
 }

@@ -10,12 +10,13 @@ contract ERC165 is
 {
     mapping(bytes4 => bool) private _isSupported;
 
-    // @dev register support for ERC165 itself
+    // @dev initializes with support for ERC165
     function initializeERC165() public onlyInitializing() {
         _isSupported[type(IERC165).interfaceId] = true;
     }
 
     // @dev register support for provided interfaceId
+    // includes initialization for ERC165_ID if not yet done
     function registerInterface(bytes4 interfaceId) public onlyInitializing() {
         _isSupported[interfaceId] = true;
     }

@@ -149,18 +149,31 @@ function printAddresses(
     addresses += `instanceServiceManagerAddress: ${services.instanceServiceManagerAddress}\n`;
     addresses += `instanceServiceAddress: ${services.instanceServiceAddress}\n`;
     addresses += `instanceServiceNftId: ${services.instanceServiceNftId}\n`;
+
     addresses += `distributionServiceManagerAddress: ${services.distributionServiceManagerAddress}\n`;
     addresses += `distributionServiceAddress: ${services.distributionServiceAddress}\n`;
     addresses += `distributionServiceNftId: ${services.distributionServiceNftId}\n`;
+
     addresses += `poolServiceManagerAddress: ${services.poolServiceManagerAddress}\n`;
     addresses += `poolServiceAddress: ${services.poolServiceAddress}\n`;
     addresses += `poolServiceNftId: ${services.poolServiceNftId}\n`;
+
     addresses += `productServiceManagerAddress: ${services.productServiceManagerAddress}\n`;
     addresses += `productServiceAddress: ${services.productServiceAddress}\n`;
     addresses += `productServiceNftId: ${services.productServiceNftId}\n`;
+
+    addresses += `applicationServiceManagerAddress: ${services.applicationServiceManagerAddress}\n`;
+    addresses += `applicationServiceAddress: ${services.applicationServiceAddress}\n`;
+    addresses += `applicationServiceNftId: ${services.applicationServiceNftId}\n`;
+
     addresses += `policyServiceManagerAddress: ${services.policyServiceManagerAddress}\n`;
     addresses += `policyServiceAddress: ${services.policyServiceAddress}\n`;
     addresses += `policyServiceNftId: ${services.policyServiceNftId}\n`;
+
+    addresses += `claimServiceManagerAddress: ${services.claimServiceManagerAddress}\n`;
+    addresses += `claimServiceAddress: ${services.claimServiceAddress}\n`;
+    addresses += `claimServiceNftId: ${services.claimServiceNftId}\n`;
+
     addresses += `bundleServiceManagerAddress: ${services.bundleServiceManagerAddress}\n`;
     addresses += `bundleServiceAddress: ${services.bundleServiceAddress}\n`;
     addresses += `bundleServiceNftId: ${services.bundleServiceNftId}\n`;
