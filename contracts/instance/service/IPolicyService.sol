@@ -8,7 +8,7 @@ import {NftId} from "../../types/NftId.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
 import {StateId} from "../../types/StateId.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
+import {Timestamp, Seconds} from "../../types/Timestamp.sol";
 import {UFixed} from "../../types/UFixed.sol";
 import {Fee} from "../../types/Fee.sol";
 
@@ -65,7 +65,7 @@ interface IPolicyService is IService {
     function calculatePremium(
         RiskId riskId,
         uint256 sumInsuredAmount,
-        uint256 lifetime,
+        Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,
         ReferralId referralId

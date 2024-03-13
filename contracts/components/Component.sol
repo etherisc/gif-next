@@ -55,13 +55,13 @@ abstract contract Component is
         ObjectType componentType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory data
+        bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
         public
         virtual
         onlyInitializing()
     {
-        initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
+        initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, registryData);
 
         // set and check linked instance
         ComponentStorage storage $ = _getComponentStorage();

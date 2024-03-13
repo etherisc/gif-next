@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {POOL} from "../types/ObjectType.sol";
-import {IPoolService} from "../instance/service/IPoolService.sol";
-import {IBundleService} from "../instance/service/IBundleService.sol";
-import {NftId, NftIdLib} from "../types/NftId.sol";
-import {Fee, FeeLib} from "../types/Fee.sol";
-import {UFixed} from "../types/UFixed.sol";
-import {IPoolComponent} from "./IPoolComponent.sol";
 import {Component} from "./Component.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
-
-import {ISetup} from "../instance/module/ISetup.sol";
+import {Fee, FeeLib} from "../types/Fee.sol";
+import {IBundleService} from "../instance/service/IBundleService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
+import {IPoolComponent} from "./IPoolComponent.sol";
+import {IPoolService} from "../instance/service/IPoolService.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
+import {NftId, NftIdLib} from "../types/NftId.sol";
+import {POOL} from "../types/ObjectType.sol";
+import {RoleId, PUBLIC_ROLE} from "../types/RoleId.sol";
+import {Seconds} from "../types/Timestamp.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
+import {UFixed} from "../types/UFixed.sol";
 
 
 abstract contract Pool is
@@ -26,10 +26,13 @@ abstract contract Pool is
     struct PoolStorage {
         UFixed _collateralizationLevel;
         UFixed _retentionLevel;
-
+        uint256 _maxCapitalAmount;
+        
         bool _isExternallyManaged;
-        bool _isInterceptingBundleTransfers;
         bool _isVerifyingApplications;
+
+        RoleId _bundleOwnerRole;
+        bool _isInterceptingBundleTransfers;
 
         Fee _initialPoolFee;
         Fee _initialStakingFee;
@@ -41,6 +44,15 @@ abstract contract Pool is
         IPoolService _poolService;
         IBundleService _bundleService;
     }
+
+
+    modifier onlyBundleOwner(NftId bundleNftId) {
+        if(msg.sender != getRegistry().ownerOf(bundleNftId)) {
+            revert ErrorPoolNotBundleOwner(bundleNftId, msg.sender);
+        }
+        _;
+    }
+
 
     modifier onlyPoolService() {
         if(msg.sender != address(_getPoolStorage()._poolService)) {
@@ -54,7 +66,6 @@ abstract contract Pool is
         address registry,
         NftId instanceNftId,
         string memory name,
-        // TODO refactor into tokenNftId
         address token,
         bool isInterceptingNftTransfers,
         bool isExternallyManaging,
@@ -62,19 +73,21 @@ abstract contract Pool is
         UFixed collateralizationLevel,
         UFixed retentionLevel,
         address initialOwner,
-        bytes memory data
+        bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
         public
         virtual
         onlyInitializing()
     {
-        initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, data);
+        initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, registryData);
 
         PoolStorage storage $ = _getPoolStorage();
         // TODO add validation
         $._tokenHandler = new TokenHandler(token);
+        $._maxCapitalAmount = type(uint256).max;
         $._isExternallyManaged = isExternallyManaging;
         $._isVerifyingApplications = isVerifying;
+        $._bundleOwnerRole = PUBLIC_ROLE();
         $._collateralizationLevel = collateralizationLevel;
         $._retentionLevel = retentionLevel;
         $._initialPoolFee = FeeLib.zeroFee();
@@ -86,66 +99,121 @@ abstract contract Pool is
         registerInterface(type(IPoolComponent).interfaceId);
     }
 
-    /**
-     * @dev see {IPool.verifyApplication}. 
-     * Default implementation that only writes a {LogUnderwrittenByPool} entry.
-     */
-    function verifyApplication(
-        NftId applicationNftId, 
-        bytes memory applicationData,
-        bytes memory bundleFilter,
-        uint256 collateralizationAmount
-    )
-        external
-        restricted()
-        virtual override 
-    {
-        require(
-            policyMatchesBundle(applicationData, bundleFilter),
-            "ERROR:POL-020:POLICY_BUNDLE_MISMATCH"
-        );
 
-        emit LogUnderwrittenByPool(applicationNftId, collateralizationAmount, address(this));
-    }
-
-
-    function isInterceptingBundleTransfers() external view override returns (bool) {
-        return isNftInterceptor();
-    }
-
-
-    function isExternallyManaged() external view override returns (bool) {
-        return _getPoolStorage()._isExternallyManaged;
-    }
-
-
-    function getRetentionLevel() external view override returns (UFixed retentionLevel) {
-        return _getPoolStorage()._retentionLevel;
-    }
-
-
-    function getCollateralizationLevel() external view override returns (UFixed collateralizationLevel) {
-        return _getPoolStorage()._collateralizationLevel;
-    }
-
-
-    function isVerifyingApplications() external view override returns (bool isConfirmingApplication) {
-        return _getPoolStorage()._isVerifyingApplications;
-    }
-
-
-    /// @dev see {IPoolComponent.policyMatchesBundle}. 
-    /// Default implementation always returns true
-    function policyMatchesBundle(
-        bytes memory, // policyData
-        bytes memory // bundleFilter
+    function stake(
+        NftId bundleNftId, 
+        uint256 amount
     )
         public
-        pure
-        virtual override
-        returns (bool isMatching)
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
     {
-        return true;
+        // TODO add implementation
+    }
+
+
+    function unstake(
+        NftId bundleNftId, 
+        uint256 amount
+    )
+        public
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
+    {
+        // TODO add implementation
+    }
+
+
+    function extend(
+        NftId bundleNftId, 
+        Seconds lifetimeExtension
+    )
+        public
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
+    {
+        // TODO add implementation
+    }
+
+
+    function lockBundle(NftId bundleNftId)
+        public
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
+    {
+        _getPoolStorage()._bundleService.lockBundle(bundleNftId);
+    }
+
+
+    function unlockBundle(NftId bundleNftId)
+        public
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
+    {
+        _getPoolStorage()._bundleService.unlockBundle(bundleNftId);
+    }
+
+
+    function close(NftId bundleNftId)
+        public
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
+    {
+        // TODO add implementation
+    }
+
+
+    function setBundleFee(
+        NftId bundleNftId, 
+        Fee memory fee
+    )
+        public
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
+    {
+        _getPoolStorage()._bundleService.setBundleFee(bundleNftId, fee);
+    }
+
+
+    function setMaxCapitalAmount(uint256 maxCapitalAmount)
+        public
+        virtual
+        restricted()
+        onlyOwner()
+    {
+        // TODO refactor to use pool service
+        // _getPoolStorage()._poolService.setMaxCapitalAmount(...);
+
+        uint256 previousMaxCapitalAmount = _getPoolStorage()._maxCapitalAmount;
+        _getPoolStorage()._maxCapitalAmount = maxCapitalAmount;
+
+        emit LogPoolBundleMaxCapitalAmountUpdated(previousMaxCapitalAmount, maxCapitalAmount);
+    }
+
+
+    function setBundleOwnerRole(RoleId bundleOwnerRole)
+        public
+        virtual
+        restricted()
+        onlyOwner()
+    {
+        // TODO refactor to use pool service
+        // _getPoolStorage()._poolService.setBundleOwnerRole(...);
+
+        if(_getPoolStorage()._bundleOwnerRole != PUBLIC_ROLE()) {
+            revert ErrorPoolBundleOwnerRoleAlreadySet();
+        }
+
+        _getPoolStorage()._bundleOwnerRole = bundleOwnerRole;
+
+        emit LogPoolBundleOwnerRoleSet(bundleOwnerRole);
     }
 
 
@@ -154,44 +222,96 @@ abstract contract Pool is
         Fee memory stakingFee,
         Fee memory performanceFee
     )
-        external
-        onlyOwner
+        public
+        virtual
         restricted()
-        override
+        onlyOwner()
     {
         _getPoolStorage()._poolService.setFees(poolFee, stakingFee, performanceFee);
     }
 
-    function setBundleFee(
+
+    /// @dev see {IPool.verifyApplication}
+    function verifyApplication(
+        NftId applicationNftId, 
+        bytes memory applicationData,
         NftId bundleNftId, 
-        Fee memory fee
+        bytes memory bundleFilter,
+        uint256 collateralizationAmount
     )
-        external
-        override
-        // TODO add onlyBundleOwner
+        public
+        virtual
+        restricted()
     {
-        _getPoolStorage()._bundleService.setBundleFee(bundleNftId, fee);
+        // validate application data against bundle filter
+        if(!applicationMatchesBundle(
+            applicationNftId,
+            applicationData, 
+            bundleNftId, 
+            bundleFilter,
+            collateralizationAmount)
+        )
+        {
+            revert ErrorPoolApplicationBundleMismatch(applicationNftId);
+        }
+
+        emit LogPoolVerifiedByPool(address(this), applicationNftId, collateralizationAmount);
     }
 
-    function lockBundle(
-        NftId bundleNftId
-    )
-        external
-        override
-        // TODO add onlyBundleOwner
-    {
-        _getPoolStorage()._bundleService.lockBundle(bundleNftId);
+
+    function getCollateralizationLevel() public view virtual returns (UFixed collateralizationLevel) {
+        return _getPoolStorage()._collateralizationLevel;
     }
 
-    function unlockBundle(
-        NftId bundleNftId
-    )
-        external
-        override
-        // TODO add onlyBundleOwner
-    {
-        _getPoolStorage()._bundleService.unlockBundle(bundleNftId);
+
+    function getRetentionLevel() public view virtual returns (UFixed retentionLevel) {
+        return _getPoolStorage()._retentionLevel;
     }
+
+
+    function isExternallyManaged() public view virtual returns (bool) {
+        return _getPoolStorage()._isExternallyManaged;
+    }
+
+
+    function isVerifyingApplications() public view virtual returns (bool isConfirmingApplication) {
+        return _getPoolStorage()._isVerifyingApplications;
+    }
+
+
+    function getMaxCapitalAmount() public view virtual returns (uint256 maxCapitalAmount) {
+        return _getPoolStorage()._maxCapitalAmount;
+    }
+
+
+    function isInterceptingBundleTransfers() public view virtual returns (bool) {
+        return isNftInterceptor();
+    }
+
+
+    function getBundleOwnerRole() public view returns (RoleId bundleOwnerRole) {
+        return _getPoolStorage()._bundleOwnerRole;
+    }
+
+
+    /// @dev see {IPoolComponent.applicationMatchesBundle}
+    /// Override this function to implement any custom application verification 
+    /// Default implementation always returns true
+    function applicationMatchesBundle(
+        NftId applicationNftId, 
+        bytes memory applicationData,
+        NftId bundleNftId, 
+        bytes memory bundleFilter,
+        uint256 collateralizationAmount
+    )
+        public
+        view
+        virtual override
+        returns (bool isMatching)
+    {
+        return true;
+    }
+
 
     function getSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
         InstanceReader reader = getInstance().getInstanceReader();
@@ -203,30 +323,13 @@ abstract contract Pool is
         }
     }
 
-    function _getInitialSetupInfo() internal view returns (ISetup.PoolSetupInfo memory) {
-        PoolStorage storage $ = _getPoolStorage();
-        return ISetup.PoolSetupInfo(
-            getProductNftId(),
-            $._tokenHandler,
-            isNftInterceptor(),
-            $._isExternallyManaged,
-            $._isVerifyingApplications,
-            $._collateralizationLevel,
-            $._retentionLevel,
-            $._initialPoolFee,
-            $._initialStakingFee,
-            $._initialPerformanceFee,
-            getWallet()
-        );
-    }
-
     // Internals
 
     function _createBundle(
         address bundleOwner,
         Fee memory fee,
         uint256 amount,
-        uint256 lifetime, 
+        Seconds lifetime, 
         bytes memory filter
     )
         internal
@@ -242,9 +345,30 @@ abstract contract Pool is
         // TODO add logging
     }
 
+    // TODO remove function once this is no longer used to produce contract locations on the fly ...
     function getContractLocation(bytes memory name) external pure returns (bytes32 hash) {
         return keccak256(abi.encode(uint256(keccak256(name)) - 1)) & ~bytes32(uint256(0xff));
     }
+
+
+    function _getInitialSetupInfo() internal view returns (ISetup.PoolSetupInfo memory) {
+        PoolStorage storage $ = _getPoolStorage();
+        return ISetup.PoolSetupInfo(
+            getProductNftId(),
+            $._tokenHandler,
+            $._maxCapitalAmount,
+            isNftInterceptor(),
+            $._isExternallyManaged,
+            $._isVerifyingApplications,
+            $._collateralizationLevel,
+            $._retentionLevel,
+            $._initialPoolFee,
+            $._initialStakingFee,
+            $._initialPerformanceFee,
+            getWallet()
+        );
+    }
+
 
     function _getPoolStorage() private pure returns (PoolStorage storage $) {
         assembly {

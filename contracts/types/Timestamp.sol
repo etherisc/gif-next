@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
 
 type Timestamp is uint40;
 
@@ -12,7 +12,8 @@ using {
     neTimestamp as !=,
     TimestampLib.gtz,
     TimestampLib.eqz,
-    TimestampLib.addSeconds
+    TimestampLib.addSeconds,
+    TimestampLib.toInt
 } for Timestamp global;
 
 /// @dev return true if Timestamp a is after Timestamp b
@@ -103,25 +104,73 @@ library TimestampLib {
         return neTimestamp(a, b);
     }
 
-    /// @dev return true if Timestamp is larger than 0
-    function gtz(Timestamp timestamp) public pure returns (bool) {
-        return Timestamp.unwrap(timestamp) > 0;
-    }
-
     /// @dev return true if Timestamp equals 0
     function eqz(Timestamp timestamp) public pure returns (bool) {
         return Timestamp.unwrap(timestamp) == 0;
     }
 
+    /// @dev return true if Timestamp is larger than 0
+    function gtz(Timestamp timestamp) public pure returns (bool) {
+        return Timestamp.unwrap(timestamp) > 0;
+    }
+
     /// @dev return true if Timestamp a is not equal to Timestamp b
     function addSeconds(
         Timestamp timestamp,
-        uint256 timeDelta
+        Seconds duration
     ) public pure returns (Timestamp) {
-        return toTimestamp(Timestamp.unwrap(timestamp) + uint40(timeDelta));
+        return toTimestamp(Timestamp.unwrap(timestamp) + duration.toInt());
     }
 
     function toInt(Timestamp timestamp) public pure returns (uint256) {
         return uint256(uint40(Timestamp.unwrap(timestamp)));
+    }
+}
+
+type Seconds is uint40;
+
+using {
+    SecondsLib.eqz,
+    SecondsLib.gtz,
+    SecondsLib.toInt
+} for Seconds global;
+
+
+library SecondsLib {
+
+    error ErrorSecondsLibDurationTooBig(uint256 duration);
+
+    /// @dev converts the uint duration into Seconds
+    /// function reverts if duration is exceeding max Seconds value
+    function toSeconds(uint256 duration) public pure returns (Seconds) {
+        // if(duration > type(uint40).max) {
+        if(duration > _max()) {
+            revert ErrorSecondsLibDurationTooBig(duration);
+        }
+
+        return Seconds.wrap(uint40(duration));
+    }
+
+    /// @dev return true if duration equals 0
+    function eqz(Seconds duration) public pure returns (bool) {
+        return Seconds.unwrap(duration) == 0;
+    }
+
+    /// @dev return true if duration is larger than 0
+    function gtz(Seconds duration) public pure returns (bool) {
+        return Seconds.unwrap(duration) > 0;
+    }
+
+    function toInt(Seconds duration) public pure returns (uint256) {
+        return uint256(uint40(Seconds.unwrap(duration)));
+    }
+
+    function max() public pure returns (Seconds) {
+        return Seconds.wrap(_max());
+    }
+
+    function _max() internal pure returns (uint40) {
+        // IMPORTANT: type nees to match with actual definition for Seconds
+        return type(uint40).max;
     }
 }

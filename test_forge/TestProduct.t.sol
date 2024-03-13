@@ -13,7 +13,7 @@ import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../contracts/types/Timestamp.sol";
+import {Timestamp, TimestampLib, zeroTimestamp, Seconds, SecondsLib} from "../contracts/types/Timestamp.sol";
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
 import {ReferralLib} from "../contracts/types/Referral.sol";
@@ -22,6 +22,13 @@ import {POLICY} from "../contracts/types/ObjectType.sol";
 
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
+
+    Seconds public sec30;
+
+    function setUp() public override {
+        super.setUp();
+        sec30 = SecondsLib.toSeconds(30);
+    }
 
     function test_Product_setupInfo() public {
         _prepareProduct();
@@ -97,7 +104,7 @@ contract TestProduct is TestGifBase {
         uint256 premium = product.calculatePremium(
             1000,
             riskId,
-            30,
+            SecondsLib.toSeconds(30),
             "",
             bundleNftId,
             ReferralLib.zero()
@@ -124,7 +131,7 @@ contract TestProduct is TestGifBase {
             customer,
             riskId,
             1000,
-            30,
+            SecondsLib.toSeconds(30),
             "",
             bundleNftId,
             ReferralLib.zero()
@@ -137,7 +144,7 @@ contract TestProduct is TestGifBase {
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(eqRiskId(policyInfo.riskId, riskId), "riskId not set");
         assertEq(policyInfo.sumInsuredAmount, 1000, "sumInsuredAmount not set");
-        assertEq(policyInfo.lifetime, 30, "lifetime not set");
+        assertEq(policyInfo.lifetime.toInt(), 30, "lifetime not set");
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
     }
 
@@ -159,7 +166,7 @@ contract TestProduct is TestGifBase {
             customer,
             riskId,
             1000,
-            30,
+            SecondsLib.toSeconds(30),
             "",
             bundleNftId,
             ReferralLib.zero()
@@ -182,7 +189,7 @@ contract TestProduct is TestGifBase {
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
-        assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
+        assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
@@ -218,7 +225,7 @@ contract TestProduct is TestGifBase {
             customer,
             riskId,
             1000,
-            30,
+            SecondsLib.toSeconds(30),
             "",
             bundleNftId,
             ReferralLib.zero()
@@ -244,7 +251,7 @@ contract TestProduct is TestGifBase {
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
-        assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
+        assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
@@ -275,7 +282,7 @@ contract TestProduct is TestGifBase {
             customer,
             riskId,
             1000,
-            30,
+            SecondsLib.toSeconds(30),
             "",
             bundleNftId,
             ReferralLib.zero()
@@ -322,7 +329,7 @@ contract TestProduct is TestGifBase {
             customer,
             riskId,
             1000,
-            30,
+            SecondsLib.toSeconds(30),
             "",
             bundleNftId,
             ReferralLib.zero()
@@ -353,7 +360,7 @@ contract TestProduct is TestGifBase {
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
-        assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
+        assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
     }
 
     function test_Product_collectPremium() public {
@@ -384,7 +391,7 @@ contract TestProduct is TestGifBase {
             customer,
             riskId,
             1000,
-            30,
+            SecondsLib.toSeconds(30),
             "",
             bundleNftId,
             ReferralLib.zero()
@@ -421,7 +428,7 @@ contract TestProduct is TestGifBase {
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
-        assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
+        assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
@@ -458,7 +465,7 @@ contract TestProduct is TestGifBase {
             customer,
             riskId,
             1000,
-            30,
+            SecondsLib.toSeconds(30),
             "",
             bundleNftId,
             ReferralLib.zero()
@@ -575,7 +582,7 @@ contract TestProduct is TestGifBase {
         bundleNftId = spool.createBundle(
             bundleFee, 
             10000, 
-            604800, 
+            SecondsLib.toSeconds(604800), 
             ""
         );
         vm.stopPrank();

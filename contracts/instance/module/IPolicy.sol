@@ -5,7 +5,7 @@ import {NftId} from "../../types/NftId.sol";
 import {ClaimId} from "../../types/ClaimId.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
+import {Timestamp, Seconds} from "../../types/Timestamp.sol";
 
 interface IPolicy {
 
@@ -18,7 +18,7 @@ interface IPolicy {
         uint256 sumInsuredAmount;
         uint256 premiumAmount;
         uint256 premiumPaidAmount;
-        uint256 lifetime;
+        Seconds lifetime;
         bytes applicationData;
         bytes policyData;
         uint16 claimsCount;

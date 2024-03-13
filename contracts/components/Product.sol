@@ -14,7 +14,7 @@ import {PRODUCT, APPLICATION, POLICY, CLAIM } from "../types/ObjectType.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {StateId} from "../types/StateId.sol";
-import {Timestamp} from "../types/Timestamp.sol";
+import {Timestamp, Seconds} from "../types/Timestamp.sol";
 import {Fee} from "../types/Fee.sol";
 import {Component} from "./Component.sol";
 
@@ -57,13 +57,13 @@ abstract contract Product is
         Fee memory productFee,
         Fee memory processingFee,
         address initialOwner,
-        bytes memory data
+        bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
         public
         virtual
         onlyInitializing()
     {
-        initializeComponent(registry, instanceNftId, name, token, PRODUCT(), isInterceptor, initialOwner, data);
+        initializeComponent(registry, instanceNftId, name, token, PRODUCT(), isInterceptor, initialOwner, registryData);
 
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
@@ -87,7 +87,7 @@ abstract contract Product is
     function calculatePremium(
         uint256 sumInsuredAmount,
         RiskId riskId,
-        uint256 lifetime,
+        Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,
         ReferralId referralId
@@ -111,7 +111,7 @@ abstract contract Product is
     function calculateNetPremium(
         uint256 sumInsuredAmount,
         RiskId riskId,
-        uint256 lifetime,
+        Seconds lifetime,
         bytes memory applicationData
     )
         external
@@ -165,7 +165,7 @@ abstract contract Product is
         address applicationOwner,
         RiskId riskId,
         uint256 sumInsuredAmount,
-        uint256 lifetime,
+        Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
         bytes memory applicationData

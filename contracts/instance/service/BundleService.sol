@@ -19,7 +19,7 @@ import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 import {KEEP_STATE, StateId} from "../../types/StateId.sol";
-import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
+import {TimestampLib, Seconds, zeroTimestamp} from "../../types/Timestamp.sol";
 
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
@@ -67,7 +67,7 @@ contract BundleService is
         address owner, 
         Fee memory fee, 
         uint256 stakingAmount, 
-        uint256 lifetime, 
+        Seconds lifetime, 
         bytes calldata filter
     )
         external

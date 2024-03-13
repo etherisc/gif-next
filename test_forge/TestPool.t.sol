@@ -10,8 +10,9 @@ import {Pool} from "../contracts/components/Pool.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
-import {UFixedLib} from "../contracts/types/UFixed.sol";
+import {SecondsLib} from "../contracts/types/Timestamp.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
+import {UFixedLib} from "../contracts/types/UFixed.sol";
 
 contract TestPool is TestGifBase {
     using NftIdLib for NftId;
@@ -161,7 +162,7 @@ contract TestPool is TestGifBase {
         bundleNftId = spool.createBundle(
             FeeLib.zeroFee(), 
             10000, 
-            604800, 
+            SecondsLib.toSeconds(604800), 
             ""
         );
 
@@ -209,7 +210,7 @@ contract TestPool is TestGifBase {
         NftId bundleNftId = spool.createBundle(
             FeeLib.zeroFee(), 
             10000, 
-            604800, 
+            SecondsLib.toSeconds(604800), 
             ""
         );
 

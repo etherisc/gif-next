@@ -42,13 +42,13 @@ abstract contract Distribution is
         address token,
         Fee memory distributionFee,
         address initialOwner,
-        bytes memory data
+        bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
         public
         virtual
         onlyInitializing()
     {
-        initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data);
+        initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, registryData);
 
         DistributionStorage storage $ = _getDistributionStorage();
         // TODO add validation
