@@ -20,6 +20,8 @@ interface IDistributionService is IService {
     error ErrorIDistributionServiceExpiryTooLong(uint256 maxReferralLifetime, uint256 expiryAt);
     error ErrorIDistributionServiceInvalidReferral(string code);
     error ErrorIDistributionServiceExpirationInvalid(Timestamp expiryAt);
+    error ErrorIDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
+    error ErrorIDistributionServiceMaxDiscountTooHigh(uint256 maxDiscountPercentage, uint256 maxMaxDiscountPercentage);
 
     function setFees(
         Fee memory distributionFee

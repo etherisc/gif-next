@@ -120,12 +120,21 @@ contract DistributionService is
         returns (DistributorType distributorType)
     {
         (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+
+        {
+            if (commissionPercentage > maxDiscountPercentage) {
+                revert ErrorIDistributionServiceCommissionTooHigh(commissionPercentage.toInt(), maxDiscountPercentage.toInt());
+            }
+
+            ISetup.DistributionSetupInfo memory setupInfo = instance.getInstanceReader().getDistributionSetupInfo(distributionNftId);
+            if (maxDiscountPercentage > setupInfo.distributionFee.fractionalFee) {
+                revert ErrorIDistributionServiceMaxDiscountTooHigh(maxDiscountPercentage.toInt(), setupInfo.distributionFee.fractionalFee.toInt());
+            }
+        }
+        
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
         Key32 key32 = distributorType.toKey32();
 
-        // FIXME: commission <= maxDiscountPercentage
-        // FIXME: maxDiscountPercentage <= distributionFee
-        
         if(!instance.exists(key32)) {
             IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
                 name,

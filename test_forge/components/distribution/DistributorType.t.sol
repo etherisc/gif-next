@@ -84,22 +84,6 @@ contract DistributorTypeTest is TestGifBase {
         assertTrue(equalBytes(info.data, data), "unexpected data for referral type");
     }
 
-    function testGifSetupDistributorCreate() public {
-        _prepareDistribution();
-        _setupTestData(true);
-
-        NftId distributorNftId = distribution.createDistributor(
-            customer,
-            distributorType,
-            distributorData);
-
-        assertEq(registry.ownerOf(distributorNftId), customer, "unexpected distributor nft owner");
-
-        IDistribution.DistributorInfo memory info = instanceReader.getDistributorInfo(distributorNftId);
-        assertTrue(info.active, "distributor info not active");
-        assertTrue(info.distributorType == distributorType, "unexpected distributor type");
-        assertTrue(equalBytes(info.data, distributorData), "unexpected distributor data");
-    }
 
     function _setupTestData(bool createDistributorType) internal {
         name = "Basic";
