@@ -104,7 +104,7 @@ contract ApplicationService is
         );
 
         // (uint256 premiumAmount,,,,,) = calculatePremium(
-        IPolicy.PremiumAmount memory premium = calculatePremium(
+        IPolicy.Premium memory premium = calculatePremium(
             productInfo.nftId,
             riskId,
             sumInsuredAmount,
@@ -190,7 +190,7 @@ contract ApplicationService is
         view
         virtual override
         returns (
-            IPolicy.PremiumAmount memory premiumAmount
+            IPolicy.Premium memory premium
         )
     {
         uint256 netPremiumAmount = _getAndVerifyProduct(productNftId).calculateNetPremium(
@@ -201,7 +201,7 @@ contract ApplicationService is
         );
 
         (
-            premiumAmount
+            premium
         ) = _calculateFeeAmounts(
             netPremiumAmount,
             _getAndVerifyProduct(productNftId),
@@ -221,7 +221,7 @@ contract ApplicationService is
         internal
         view
         returns (
-            IPolicy.PremiumAmount memory premium
+            IPolicy.Premium memory premium
         )
     {
         InstanceReader instanceReader;
@@ -231,7 +231,7 @@ contract ApplicationService is
         }
         
         NftId poolNftId = product.getPoolNftId();
-        premium = IPolicy.PremiumAmount(
+        premium = IPolicy.Premium(
             netPremiumAmount,
             netPremiumAmount,
             0, 0, 0, 0, 0);

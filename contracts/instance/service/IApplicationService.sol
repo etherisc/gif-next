@@ -75,6 +75,6 @@ interface IApplicationService is IService {
         external
         view
         returns (
-            IPolicy.PremiumAmount memory premiumAmount
+            IPolicy.Premium memory premium
         );
 }

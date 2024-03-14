@@ -276,7 +276,7 @@ contract DistributionService is
         view 
         returns (uint256 distributionFeeAmount, uint256 commissionAmount)
     {
-        (address distributionAddress, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
+        (, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
 
         // calculate fee based on the distribution components fee
@@ -285,15 +285,10 @@ contract DistributionService is
         (distributionFeeAmount,) = fee.calculateFee(netPremiumAmount);
 
         if (referralIsValid(distributionNftId, referralId)) {
-            // (distributionFee(fixed + pct) - referralDiscount(pct)) ... discount <= distributionFee
-            IDistribution.ReferralInfo memory info = reader.getReferralInfo(referralId);
-            uint256 discountAmount = UFixedLib.toUFixed(netPremiumAmount).mul(info.discountPercentage).toInt();
-            if (discountAmount > distributionFeeAmount) {
-                distributionFeeAmount = 0;
-            } else {
-                distributionFeeAmount -= discountAmount;
-            }
-            // TODO: calculate commission
+            IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
+            IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
+            IDistribution.DistributorTypeInfo memory distributorTypeInfo = reader.getDistributorTypeInfo(distributorInfo.distributorType);
+            commissionAmount = UFixedLib.toUFixed(netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
         } 
     }
 

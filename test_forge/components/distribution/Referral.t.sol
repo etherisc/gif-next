@@ -56,11 +56,12 @@ contract ReferralTest is ReferralTestBase {
             expiryAt,
             referralData);
 
-        (uint256 feeAmount,) = distributionService.calculateFeeAmount(distributionNftId, ReferralLib.zero(), 1000);
+        (uint256 feeAmount, uint256 commissionAmount) = distributionService.calculateFeeAmount(distributionNftId, ReferralLib.zero(), 1000);
         assertEq(feeAmount, 100, "fee amount is not correct");
+        assertEq(commissionAmount, 0, "commission amount is not correct");
     }
 
-    function test_Distribution_calculateFeeAmount_referralDiscount() public {
+    function test_Distribution_calculateFeeAmount_withReferral() public {
         _setupTestData(true);
 
         // solhint-disable-next-line 
@@ -74,8 +75,9 @@ contract ReferralTest is ReferralTestBase {
             expiryAt,
             referralData);
 
-        (uint256 feeAmount,) = distributionService.calculateFeeAmount(distributionNftId, referralId, 1000);
-        assertEq(feeAmount, 50, "fee amount is not correct");
+        (uint256 feeAmount, uint256 commissionAmount) = distributionService.calculateFeeAmount(distributionNftId, referralId, 1000);
+        assertEq(feeAmount, 100, "fee amount is not correct");
+        assertEq(commissionAmount, 30, "commission amount is not correct");
     }
 
 }
