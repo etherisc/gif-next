@@ -20,6 +20,7 @@ import {Component} from "./Component.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
 import {InstanceReader} from "../instance/InstanceReader.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {Pool} from "../components/Pool.sol";
 import {Distribution} from "../components/Distribution.sol";
@@ -94,7 +95,8 @@ abstract contract Product is
         override 
         returns (uint256 premiumAmount)
     {
-        (premiumAmount,,,,) = _getProductStorage()._policyService.calculatePremium(
+        IPolicy.Premium memory premium = _getProductStorage()._applicationService.calculatePremium(
+            getNftId(),
             riskId,
             sumInsuredAmount,
             lifetime,
@@ -102,6 +104,7 @@ abstract contract Product is
             bundleNftId,
             referralId
         );
+        premiumAmount = premium.premiumAmount;
     }
 
 
