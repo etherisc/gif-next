@@ -7,8 +7,9 @@ import {IService} from "../../shared/IService.sol";
 import {NftId} from "../../types/NftId.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
+import {Seconds} from "../../types/Seconds.sol";
 import {StateId} from "../../types/StateId.sol";
-import {Timestamp, Seconds} from "../../types/Timestamp.sol";
+import {Timestamp} from "../../types/Timestamp.sol";
 import {UFixed} from "../../types/UFixed.sol";
 import {Fee} from "../../types/Fee.sol";
 

@@ -3,7 +3,8 @@ pragma solidity ^0.8.20;
 
 import {NftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
-import {Timestamp, Seconds} from "../../types/Timestamp.sol";
+import {Seconds} from "../../types/Seconds.sol";
+import {Timestamp} from "../../types/Timestamp.sol";
 
 interface IBundle {
     struct BundleInfo {

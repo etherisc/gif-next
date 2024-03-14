@@ -11,7 +11,7 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {NftId, NftIdLib} from "../types/NftId.sol";
 import {POOL} from "../types/ObjectType.sol";
 import {RoleId, PUBLIC_ROLE} from "../types/RoleId.sol";
-import {Seconds} from "../types/Timestamp.sol";
+import {Seconds} from "../types/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../types/UFixed.sol";
 

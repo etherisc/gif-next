@@ -6,7 +6,7 @@ import {Fee} from "../../types/Fee.sol";
 import {IService} from "../../shared/IService.sol";
 import {IBundle} from "../module/IBundle.sol";
 import {IInstance} from "../../instance/IInstance.sol";
-import {Seconds} from "../../types/Timestamp.sol";
+import {Seconds} from "../../types/Seconds.sol";
 import {StateId} from "../../types/StateId.sol";
 
 interface IBundleService is IService {

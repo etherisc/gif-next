@@ -6,7 +6,7 @@ import {IComponent} from "./IComponent.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {NftId} from "../types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
-import {Seconds} from "../types/Timestamp.sol";
+import {Seconds} from "../types/Seconds.sol";
 import {UFixed} from "../types/UFixed.sol";
 
 /// @dev pool components hold and manage the collateral to cover active policies

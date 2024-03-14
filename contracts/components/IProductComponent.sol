@@ -7,7 +7,7 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {NftId} from "../types/NftId.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId} from "../types/RiskId.sol";
-import {Seconds} from "../types/Timestamp.sol";
+import {Seconds} from "../types/Seconds.sol";
 
 interface IProductComponent is IComponent {
 

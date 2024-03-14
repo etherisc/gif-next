@@ -13,8 +13,9 @@ import {NftId, NftIdLib} from "../types/NftId.sol";
 import {PRODUCT, APPLICATION, POLICY, CLAIM } from "../types/ObjectType.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
+import {Seconds} from "../types/Seconds.sol";
 import {StateId} from "../types/StateId.sol";
-import {Timestamp, Seconds} from "../types/Timestamp.sol";
+import {Timestamp} from "../types/Timestamp.sol";
 import {Fee} from "../types/Fee.sol";
 import {Component} from "./Component.sol";
 

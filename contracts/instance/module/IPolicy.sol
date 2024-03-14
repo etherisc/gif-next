@@ -5,7 +5,8 @@ import {NftId} from "../../types/NftId.sol";
 import {ClaimId} from "../../types/ClaimId.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
-import {Timestamp, Seconds} from "../../types/Timestamp.sol";
+import {Seconds} from "../../types/Seconds.sol";
+import {Timestamp} from "../../types/Timestamp.sol";
 
 interface IPolicy {
 

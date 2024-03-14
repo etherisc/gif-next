@@ -10,16 +10,17 @@ import {ISetup} from "../module/ISetup.sol";
 import {IPolicy} from "../module/IPolicy.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
-import {Versionable} from "../../shared/Versionable.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
-import {Version, VersionLib} from "../../types/Version.sol";
 import {KEEP_STATE, StateId} from "../../types/StateId.sol";
-import {TimestampLib, Seconds, zeroTimestamp} from "../../types/Timestamp.sol";
+import {Seconds} from "../../types/Seconds.sol";
+import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
+import {Version, VersionLib} from "../../types/Version.sol";
+import {Versionable} from "../../shared/Versionable.sol";
 
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";

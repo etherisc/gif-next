@@ -10,7 +10,7 @@ import {Pool} from "../contracts/components/Pool.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
-import {SecondsLib} from "../contracts/types/Timestamp.sol";
+import {SecondsLib} from "../contracts/types/Seconds.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
 
