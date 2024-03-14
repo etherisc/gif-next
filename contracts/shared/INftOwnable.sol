@@ -3,8 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-
 import {IRegistryLinked} from "./IRegistryLinked.sol";
 import {NftId} from "../types/NftId.sol";
 

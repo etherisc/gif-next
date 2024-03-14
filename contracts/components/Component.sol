@@ -118,7 +118,6 @@ abstract contract Component is
         onlyChainNft()
     { }
 
-
     function lock() external onlyOwner override {
         _getComponentStorage()._instanceService.setComponentLocked(true);
     }

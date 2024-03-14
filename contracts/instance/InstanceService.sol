@@ -18,18 +18,7 @@ import {Service} from "../../contracts/shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
-import {
-    ADMIN_ROLE,
-    INSTANCE_OWNER_ROLE,
-    DISTRIBUTION_OWNER_ROLE, 
-    POOL_OWNER_ROLE, 
-    PRODUCT_OWNER_ROLE, 
-    INSTANCE_SERVICE_ROLE, 
-    DISTRIBUTION_SERVICE_ROLE, 
-    POOL_SERVICE_ROLE, 
-    PRODUCT_SERVICE_ROLE, 
-    APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, 
-    CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../types/ObjectType.sol";
 import {IDistributionComponent} from "../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../components/IPoolComponent.sol";
@@ -287,7 +276,7 @@ contract InstanceService is
     }
 
     function _grantInstanceServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
-// configure authorization for instance service on instance
+        // configure authorization for instance service on instance
         address instanceServiceAddress = getRegistry().getServiceAddress(INSTANCE(), getMajorVersion());
         clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE(), instanceServiceAddress);
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
@@ -352,7 +341,7 @@ contract InstanceService is
         if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
         
         if(instance.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(instance.authority() != bundleManager.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
+        if(bundleManager.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
 
