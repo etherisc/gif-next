@@ -2,12 +2,14 @@
 pragma solidity ^0.8.20;
 
 import {NftId} from "../../types/NftId.sol";
-import {NumberId} from "../../types/NumberId.sol";
+import {ClaimId} from "../../types/ClaimId.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
 import {Timestamp} from "../../types/Timestamp.sol";
 
 interface IPolicy {
+
+    /// @dev policy data for the full policy lifecycle
     struct PolicyInfo {
         NftId productNftId;
         NftId bundleNftId;
@@ -37,7 +39,7 @@ interface IPolicy {
 
     // claimId neeeds to be encoded policyNftId:claimId combination
     struct PayoutInfo {
-        NumberId claimId;
+        ClaimId claimId;
         uint256 amount;
         bytes data;
         Timestamp paidAt; // payoment of confirmed claim amount (or declinedAt)

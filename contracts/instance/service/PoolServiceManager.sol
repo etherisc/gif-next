@@ -16,7 +16,7 @@ contract PoolServiceManager is ProxyManager {
     constructor(
         address registryAddress
     )
-        ProxyManager()
+        ProxyManager(registryAddress)
     {
         PoolService poolSrv = new PoolService();
         bytes memory data = abi.encode(registryAddress, address(this));

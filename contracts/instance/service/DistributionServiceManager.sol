@@ -16,7 +16,7 @@ contract DistributionServiceManager is ProxyManager {
     constructor(
         address registryAddress
     )
-        ProxyManager()
+        ProxyManager(registryAddress)
     {
         DistributionService distSrv = new DistributionService();
         bytes memory data = abi.encode(registryAddress, address(this));

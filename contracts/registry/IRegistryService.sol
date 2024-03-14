@@ -38,15 +38,15 @@ interface IRegistryService is
           bytes4[] selectors;
      }
 
-    function getFunctionConfigs()
-        external
-        pure
-        returns(
-            FunctionConfig[] memory config
-        );
+     function getFunctionConfigs()
+          external
+          pure
+          returns(
+               FunctionConfig[] memory config
+          );
 
      // TODO used by service -> add owner arg 
-    function registerInstance(IRegisterable instance, address owner)
+     function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info); 
 
      function registerProduct(IComponent product, address owner)

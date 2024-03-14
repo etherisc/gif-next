@@ -19,6 +19,7 @@ import {BundleManager} from "./BundleManager.sol";
 interface IInstanceService is IService {
 
     error ErrorInstanceServiceMasterInstanceAlreadySet();
+    error ErrorInstanceServiceMasterOzAccessManagerAlreadySet();
     error ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet();
     error ErrorInstanceServiceMasterBundleManagerAlreadySet();
     error ErrorInstanceServiceInstanceAddressZero();
@@ -28,11 +29,13 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch();
 
-    error ErrorInstanceServiceAccessManagerZero();
+    error ErrorInstanceServiceOzAccessManagerZero();
+    error ErrorInstanceServiceInstanceAccessManagerZero();
     error ErrorInstanceServiceInstanceReaderZero();
     error ErrorInstanceServiceBundleManagerZero();
 
     error ErrorInstanceServiceInstanceAuthorityMismatch();
+    error ErrorInstanceServiceBundleManagerAuthorityMismatch();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch2();
     error ErrorInstanceServiceBundleMangerInstanceMismatch();
 

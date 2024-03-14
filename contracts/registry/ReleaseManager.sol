@@ -41,7 +41,7 @@ contract ReleaseManager is AccessManaged
     error SelfRegistration();
     error RegisterableOwnerIsRegistered();
 
-    // _verifyServiceInfo
+    // _verifyService
     error UnexpectedServiceVersion(VersionPart expected, VersionPart found);
     error UnexpectedServiceDomain(ObjectType expected, ObjectType found);
     
@@ -148,12 +148,8 @@ contract ReleaseManager is AccessManaged
 
         VersionPart version = _next;
         ObjectType domain = REGISTRY();
-        _verifyServiceInfo(info, version, domain);
-
-        // data: config bytes
+        _verifyService(service, version, domain);
         _createRelease(service.getFunctionConfigs());
-
-        //setTargetClosed(service, true);
         
         nftId = _registry.registerService(info, version, domain);
 
@@ -175,7 +171,7 @@ contract ReleaseManager is AccessManaged
         IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
         VersionPart version = getNextVersion();
         ObjectType domain = _release[version].domains[_awaitingRegistration];// reversed registration order of services specified in RegistryService config
-        _verifyServiceInfo(info, version, domain);
+        _verifyService(service, version, domain);
 
         // setup and grant unique role if service does registrations
         bytes4[] memory selectors = _selectors[version][domain];
@@ -266,8 +262,8 @@ contract ReleaseManager is AccessManaged
         }
     }
 
-    function _verifyServiceInfo(
-        IRegistry.ObjectInfo memory info,
+    function _verifyService(
+        IService service,
         VersionPart expectedVersion,
         ObjectType expectedDomain
     )
@@ -275,20 +271,15 @@ contract ReleaseManager is AccessManaged
         view
         returns(ObjectType)
     {
-        (
-            ObjectType domain,
-            VersionPart version
-        ) = abi.decode(info.data, (ObjectType, VersionPart));
-
-        if(version != expectedVersion) {
-            revert UnexpectedServiceVersion(expectedVersion, version);
+        if(service.getMajorVersion() != expectedVersion) {
+            revert UnexpectedServiceVersion(expectedVersion, service.getMajorVersion());
         }
 
-        if(domain != expectedDomain) {
-            revert UnexpectedServiceDomain(expectedDomain, domain);
+        if(service.getDomain() != expectedDomain) {
+            revert UnexpectedServiceDomain(expectedDomain, service.getDomain());
         }
 
-        return domain;
+        return expectedDomain;
     }
 
     // TODO check if registry supports types specified in the config array

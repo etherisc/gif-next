@@ -28,14 +28,16 @@ import {
     DISTRIBUTION_SERVICE_ROLE, 
     POOL_SERVICE_ROLE, 
     PRODUCT_SERVICE_ROLE, 
-    POLICY_SERVICE_ROLE, 
-    BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
-import {ObjectType, INSTANCE, BUNDLE, POLICY, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../types/ObjectType.sol";
+    APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, 
+    CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../types/ObjectType.sol";
 import {IDistributionComponent} from "../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../components/IPoolComponent.sol";
 import {IProductComponent} from "../components/IProductComponent.sol";
 
-contract InstanceService is Service, IInstanceService 
+contract InstanceService is
+    Service,
+    IInstanceService
 {
     address internal _masterOzAccessManager;
     address internal _masterInstanceAccessManager;
@@ -135,7 +137,9 @@ contract InstanceService is Service, IInstanceService
         _grantDistributionServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantPoolServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantProductServiceAuthorizations(clonedAccessManager, clonedInstance);
+        _grantApplicationServiceAuthorizations(clonedAccessManager, clonedInstance);    
         _grantPolicyServiceAuthorizations(clonedAccessManager, clonedInstance);    
+        _grantClaimServiceAuthorizations(clonedAccessManager, clonedInstance);    
         _grantBundleServiceAuthorizations(clonedAccessManager, clonedInstance, clonedBundleManager);
         _grantInstanceServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantInstanceOwnerAuthorizations(clonedAccessManager, instanceOwner);
@@ -147,11 +151,13 @@ contract InstanceService is Service, IInstanceService
         clonedAccessManager.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
         clonedAccessManager.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
         clonedAccessManager.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", INSTANCE_OWNER_ROLE());
-        // default roles controlled by INSTANCE_SERVICE_ROLE -> core roles, all set/granted only once during cloning
+        // default roles controlled by ADMIN_ROLE -> core roles, all set/granted only once during cloning
         clonedAccessManager.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
         clonedAccessManager.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
         clonedAccessManager.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
+        clonedAccessManager.createCoreRole(APPLICATION_SERVICE_ROLE(), "ApplicationServiceRole");
         clonedAccessManager.createCoreRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole");
+        clonedAccessManager.createCoreRole(CLAIM_SERVICE_ROLE(), "ClaimServiceRole");
         clonedAccessManager.createCoreRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole");
         clonedAccessManager.createCoreRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole");
     }
@@ -214,18 +220,45 @@ contract InstanceService is Service, IInstanceService
             PRODUCT_SERVICE_ROLE());
     }
 
+    function _grantApplicationServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
+        // configure authorization for application services on instance
+        address applicationServiceAddress = getRegistry().getServiceAddress(APPLICATION(), getMajorVersion());
+        clonedAccessManager.grantRole(APPLICATION_SERVICE_ROLE(), applicationServiceAddress);
+        bytes4[] memory instanceApplicationServiceSelectors = new bytes4[](3);
+        instanceApplicationServiceSelectors[0] = clonedInstance.createApplication.selector;
+        instanceApplicationServiceSelectors[1] = clonedInstance.updateApplication.selector;
+        instanceApplicationServiceSelectors[2] = clonedInstance.updateApplicationState.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            "Instance",
+            instanceApplicationServiceSelectors, 
+            APPLICATION_SERVICE_ROLE());
+    }
+
     function _grantPolicyServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
-        // configure authorization for policy service on instance
+        // configure authorization for policy services on instance
         address policyServiceAddress = getRegistry().getServiceAddress(POLICY(), getMajorVersion());
-        clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), address(policyServiceAddress));
-        bytes4[] memory instancePolicyServiceSelectors = new bytes4[](3);
-        instancePolicyServiceSelectors[0] = clonedInstance.createPolicy.selector;
-        instancePolicyServiceSelectors[1] = clonedInstance.updatePolicy.selector;
-        instancePolicyServiceSelectors[2] = clonedInstance.updatePolicyState.selector;
+        clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), policyServiceAddress);
+        bytes4[] memory instancePolicyServiceSelectors = new bytes4[](2);
+        instancePolicyServiceSelectors[0] = clonedInstance.updatePolicy.selector;
+        instancePolicyServiceSelectors[1] = clonedInstance.updatePolicyState.selector;
         clonedAccessManager.setTargetFunctionRole(
             "Instance",
             instancePolicyServiceSelectors, 
             POLICY_SERVICE_ROLE());
+    }
+
+    function _grantClaimServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
+        // configure authorization for claim/payout services on instance
+        address claimServiceAddress = getRegistry().getServiceAddress(CLAIM(), getMajorVersion());
+        clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), claimServiceAddress);
+        // TODO add claims function authz
+        bytes4[] memory instanceClaimServiceSelectors = new bytes4[](0);
+        // instanceClaimServiceSelectors[0] = clonedInstance.updatePolicy.selector;
+        // instanceClaimServiceSelectors[1] = clonedInstance.updatePolicyState.selector;
+        clonedAccessManager.setTargetFunctionRole(
+            "Instance",
+            instanceClaimServiceSelectors, 
+            CLAIM_SERVICE_ROLE());
     }
 
     function _grantBundleServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
@@ -254,7 +287,7 @@ contract InstanceService is Service, IInstanceService
     }
 
     function _grantInstanceServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
-        // configure authorization for instance service on instance
+// configure authorization for instance service on instance
         address instanceServiceAddress = getRegistry().getServiceAddress(INSTANCE(), getMajorVersion());
         clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE(), instanceServiceAddress);
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
@@ -297,6 +330,7 @@ contract InstanceService is Service, IInstanceService
             returns(NftId masterInstanceNftId)
     {
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
+        if(_masterOzAccessManager != address(0)) { revert ErrorInstanceServiceMasterOzAccessManagerAlreadySet(); }
         if(_masterInstanceAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
         if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
 
@@ -312,14 +346,15 @@ contract InstanceService is Service, IInstanceService
         BundleManager bundleManager = instance.getBundleManager();
         address bundleManagerAddress = address(bundleManager);
 
-        require (ozAccessManagerAddress != address(0), "ERROR:CRD-005:ACCESS_MANAGER_ZERO");
-        require (instanceAccessManagerAddress != address(0), "ERROR:CRD-005:INSTANCE_ACCESS_MANAGER_ZERO");
-        require (instanceReaderAddress != address(0), "ERROR:CRD-007:INSTANCE_READER_ZERO");
-        require (bundleManagerAddress != address(0), "ERROR:CRD-008:BUNDLE_MANAGER_ZERO");
-
-        require(instance.authority() == instanceAccessManager.authority(), "ERROR:CRD-009:INSTANCE_AUTHORITY_MISMATCH");
-        require(instanceReader.getInstance() == instance, "ERROR:CRD-010:INSTANCE_READER_INSTANCE_MISMATCH");
-        require(bundleManager.getInstance() == instance, "ERROR:CRD-011:BUNDLE_MANAGER_INSTANCE_MISMATCH");
+        if(ozAccessManagerAddress == address(0)) { revert ErrorInstanceServiceOzAccessManagerZero();}
+        if(instanceAccessManagerAddress == address(0)) { revert ErrorInstanceServiceInstanceAccessManagerZero(); }
+        if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
+        if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
+        
+        if(instance.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
+        if(instance.authority() != bundleManager.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
+        if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
+        if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
 
         _masterOzAccessManager = ozAccessManagerAddress;
         _masterInstanceAccessManager = instanceAccessManagerAddress;

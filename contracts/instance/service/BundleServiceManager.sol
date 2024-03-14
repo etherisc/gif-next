@@ -16,7 +16,7 @@ contract BundleServiceManager is ProxyManager {
     constructor(
         address registryAddress
     )
-        ProxyManager()
+        ProxyManager(registryAddress)
     {
         BundleService bundleSrv = new BundleService();
         bytes memory data = abi.encode(registryAddress, address(this));

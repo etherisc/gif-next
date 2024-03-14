@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
+import {console} from "../lib/forge-std/src/Test.sol";
+
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {PRODUCT_OWNER_ROLE} from "../contracts/types/RoleId.sol";
@@ -305,8 +307,6 @@ contract TestProduct is TestGifBase {
     function test_activate() public {
         // GIVEN
         _prepareProduct();  
-
-        
 
         vm.startPrank(productOwner);
 

@@ -134,7 +134,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
         registryServiceNftId = registry.getNftId(address(registryService));
 
-        registryServiceManager.linkToNftOwnable(address(registry));// links to registry service
+        // registryServiceManager.linkToNftOwnable(address(registry));// links to registry service
     }
 
     function _deployAndRegisterServices() internal

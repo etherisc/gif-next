@@ -5,6 +5,7 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
 import {NftId} from "../types/NftId.sol";
+import {ClaimId} from "../types/ClaimId.sol";
 import {NumberId} from "../types/NumberId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../types/ObjectType.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
@@ -173,11 +174,20 @@ contract Instance is
         updateState(riskId.toKey32(), newState);
     }
 
-    //--- Policy ------------------------------------------------------------//
-    function createPolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy) external restricted() {
-        create(toPolicyKey32(policyNftId), abi.encode(policy));
+    //--- Application (Policy) ----------------------------------------------//
+    function createApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy) external restricted() {
+        create(toPolicyKey32(applicationNftId), abi.encode(policy));
     }
 
+    function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
+        update(toPolicyKey32(applicationNftId), abi.encode(policy), newState);
+    }
+
+    function updateApplicationState(NftId applicationNftId, StateId newState) external restricted() {
+        updateState(toPolicyKey32(applicationNftId), newState);
+    }
+
+    //--- Policy ------------------------------------------------------------//
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         update(toPolicyKey32(policyNftId), abi.encode(policy), newState);
     }
@@ -187,15 +197,15 @@ contract Instance is
     }
 
     //--- Claim -------------------------------------------------------------//
-    function createClaim(NftId policyNftId, NumberId claimId, IPolicy.ClaimInfo memory claim) external restricted() {
+    function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external restricted() {
         create(toPolicyKey32(policyNftId), abi.encode(claim));
     }
 
-    function updateClaim(NftId policyNftId, NumberId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external restricted() {
+    function updateClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external restricted() {
         update(toPolicyKey32(policyNftId), abi.encode(claim), newState);
     }
 
-    function updateClaimState(NftId policyNftId, StateId newState) external restricted() {
+    function updateClaimState(NftId policyNftId, ClaimId claimId, StateId newState) external restricted() {
         updateState(toPolicyKey32(policyNftId), newState);
     }
 
@@ -204,7 +214,7 @@ contract Instance is
         create(toPolicyKey32(policyNftId), abi.encode(payout));
     }
 
-    function updateClaim(NftId policyNftId, NumberId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
+    function updatePayout(NftId policyNftId, NumberId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
         update(toPolicyKey32(policyNftId), abi.encode(payout), newState);
     }
 
