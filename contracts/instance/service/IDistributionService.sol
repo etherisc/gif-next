@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import {NftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
+import {IPolicy} from "../module/IPolicy.sol";
 import {IService} from "../../shared/IService.sol";
 import {UFixed} from "../../types/UFixed.sol";
 import {DistributorType} from "../../types/DistributorType.sol";
@@ -73,8 +74,8 @@ interface IDistributionService is IService {
     function calculateFeeAmount(
         NftId distributionNftId,
         ReferralId referralId,
-        uint256 netPremiumAmount
-    ) external view returns (uint256 feeAmount, uint256 commissionAmount);
+        IPolicy.Premium memory premium
+    ) external view returns (IPolicy.Premium memory finalPremium);
 
     function referralIsValid(
         NftId distributorNftId,

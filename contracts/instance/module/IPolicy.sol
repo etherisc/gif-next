@@ -10,14 +10,17 @@ import {Timestamp} from "../../types/Timestamp.sol";
 interface IPolicy {
 
     struct Premium {
-        uint256 premiumAmount;
         uint256 netPremiumAmount;
+        // fullPremium = netPremium + productFee + poolFee + bundleFee + distributionOwnerFee + comission
+        uint256 fullPremiumAmount;
+        // premium = fullPremium - discount
+        uint256 premiumAmount;
         uint256 productFeeAmount;
         uint256 poolFeeAmount;
         uint256 bundleFeeAmount;
-        uint256 distributionFeeAmount;
-        // the commission is part of the distribution fee
-        uint256 comissionAmount;
+        uint256 distributionOwnerFeeAmount;
+        uint256 commissionAmount;
+        uint256 discountAmount;
     }
 
     /// @dev policy data for the full policy lifecycle

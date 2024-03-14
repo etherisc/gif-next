@@ -234,37 +234,34 @@ contract ApplicationService is
         premium = IPolicy.Premium(
             netPremiumAmount,
             netPremiumAmount,
-            0, 0, 0, 0, 0);
+            0, 0, 0, 0, 0, 0, 0);
 
         {
             {
                 ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(product.getProductNftId());
                 (uint256 t,) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
                 premium.productFeeAmount = t;
-                premium.premiumAmount += t;
+                premium.fullPremiumAmount += t;
             }
             {
                 ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
                 (uint256 t,) = FeeLib.calculateFee(poolSetupInfo.poolFee, netPremiumAmount);
                 premium.poolFeeAmount = t;
-                premium.premiumAmount += t;
+                premium.fullPremiumAmount += t;
             }
             {
                 IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
                 require(bundleInfo.poolNftId == poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
                 (uint256 t,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
                 premium.bundleFeeAmount = t;
-                premium.premiumAmount += t;
+                premium.fullPremiumAmount += t;
             }
             {
-                (uint256 t1, uint256 t2) = _distributionService.calculateFeeAmount(
+                premium = _distributionService.calculateFeeAmount(
                     product.getDistributionNftId(),
                     referralId,
-                    netPremiumAmount
+                    premium
                 );
-                premium.distributionFeeAmount = t1;
-                premium.comissionAmount = t2;
-                premium.premiumAmount += t1 + t2;
             }
         }
         

@@ -6,6 +6,7 @@ import {IInstance} from "../../instance/IInstance.sol";
 import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 import {InstanceReader} from "../../instance/InstanceReader.sol";
 import {ISetup} from "../../instance/module/ISetup.sol";
+import {IPolicy} from "../module/IPolicy.sol";
 
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
@@ -269,27 +270,39 @@ contract DistributionService is
     function calculateFeeAmount(
         NftId distributionNftId,
         ReferralId referralId,
-        uint256 netPremiumAmount
+        IPolicy.Premium memory premium
     )
         external
         virtual
         view 
-        returns (uint256 distributionFeeAmount, uint256 commissionAmount)
+        returns (IPolicy.Premium memory finalPremium)
     {
         (, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
-
+        
         // calculate fee based on the distribution components fee
         ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
         Fee memory fee = setupInfo.distributionFee;
-        (distributionFeeAmount,) = fee.calculateFee(netPremiumAmount);
+        (uint256 distributionOwnerFeeAmount,) = fee.calculateFee(premium.netPremiumAmount);
+        
+        if (! referralIsValid(distributionNftId, referralId)) {
+            premium.distributionOwnerFeeAmount = distributionOwnerFeeAmount;
+            premium.fullPremiumAmount += distributionOwnerFeeAmount;
+            premium.premiumAmount = premium.fullPremiumAmount;
+            return premium;
+        }
 
-        if (referralIsValid(distributionNftId, referralId)) {
-            IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
-            IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
-            IDistribution.DistributorTypeInfo memory distributorTypeInfo = reader.getDistributorTypeInfo(distributorInfo.distributorType);
-            commissionAmount = UFixedLib.toUFixed(netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
-        } 
+        IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
+        IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
+        IDistribution.DistributorTypeInfo memory distributorTypeInfo = reader.getDistributorTypeInfo(distributorInfo.distributorType);
+        uint256 commissionAmount = UFixedLib.toUFixed(premium.netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
+        premium.distributionOwnerFeeAmount = distributionOwnerFeeAmount;
+        premium.commissionAmount = commissionAmount;
+        premium.fullPremiumAmount += distributionOwnerFeeAmount + commissionAmount;
+        premium.discountAmount = UFixedLib.toUFixed(premium.fullPremiumAmount).mul(referralInfo.discountPercentage).toInt();
+        premium.premiumAmount = premium.fullPremiumAmount - premium.discountAmount;
+
+        return premium; 
     }
 
     function referralIsValid(NftId distributionNftId, ReferralId referralId) public view returns (bool isValid) {

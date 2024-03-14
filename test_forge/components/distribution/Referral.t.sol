@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Test.sol";
 import {FeeLib} from "../../../contracts/types/Fee.sol";
+import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {ReferralLib} from "../../../contracts/types/Referral.sol";
 import {ReferralTestBase} from "./ReferralTestBase.sol";
 
@@ -56,9 +57,16 @@ contract ReferralTest is ReferralTestBase {
             expiryAt,
             referralData);
 
-        (uint256 feeAmount, uint256 commissionAmount) = distributionService.calculateFeeAmount(distributionNftId, ReferralLib.zero(), 1000);
-        assertEq(feeAmount, 100, "fee amount is not correct");
-        assertEq(commissionAmount, 0, "commission amount is not correct");
+        IPolicy.Premium memory premium = IPolicy.Premium(
+            1000, 1000, 0,
+            0, 0, 0, 0, 0, 0);
+
+        premium = distributionService.calculateFeeAmount(distributionNftId, ReferralLib.zero(), premium);
+        assertEq(premium.distributionOwnerFeeAmount, 100, "distributionOwnerFeeAmount amount is not correct");
+        assertEq(premium.commissionAmount, 0, "commissionAmount amount is not correct");
+        assertEq(premium.discountAmount, 0, "discountAmount amount is not correct");
+        assertEq(premium.fullPremiumAmount, 1100, "fullPremium amount is not correct");
+        assertEq(premium.premiumAmount, 1100, "premium amount is not correct");
     }
 
     function test_Distribution_calculateFeeAmount_withReferral() public {
@@ -75,9 +83,18 @@ contract ReferralTest is ReferralTestBase {
             expiryAt,
             referralData);
 
-        (uint256 feeAmount, uint256 commissionAmount) = distributionService.calculateFeeAmount(distributionNftId, referralId, 1000);
-        assertEq(feeAmount, 100, "fee amount is not correct");
-        assertEq(commissionAmount, 30, "commission amount is not correct");
+        IPolicy.Premium memory premium = IPolicy.Premium(
+            1000, 1000, 0,
+            0, 0, 0, 0, 0, 0);
+
+        premium = distributionService.calculateFeeAmount(distributionNftId, referralId, premium);
+        assertEq(premium.distributionOwnerFeeAmount, 100, "distributionOwnerFeeAmount amount is not correct");
+        assertEq(premium.commissionAmount, 30, "commissionAmount amount is not correct");
+        assertEq(premium.discountAmount, 57, "discountAmount amount is not correct");
+        assertEq(premium.fullPremiumAmount, 1130, "fullPremium amount is not correct");
+        assertEq(premium.premiumAmount, 1073, "premium amount is not correct");
+        // assertEq(feeAmount, 100, "fee amount is not correct");
+        // assertEq(commissionAmount, 30, "commission amount is not correct");
     }
 
 }
