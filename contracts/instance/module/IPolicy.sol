@@ -9,6 +9,16 @@ import {Timestamp} from "../../types/Timestamp.sol";
 
 interface IPolicy {
 
+    struct PremiumAmount {
+        uint256 premiumAmount;
+        uint256 netPremiumAmount;
+        uint256 distributionFeeAmount;
+        uint256 comissionAmount;
+        uint256 productFeeAmount;
+        uint256 poolFeeAmount;
+        uint256 bundleFeeAmount;
+    }
+
     /// @dev policy data for the full policy lifecycle
     struct PolicyInfo {
         NftId productNftId;

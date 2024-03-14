@@ -25,7 +25,7 @@ import {Versionable} from "../../shared/Versionable.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
-import {ObjectType, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, BUNDLE} from "../../types/ObjectType.sol";
+import {ObjectType, DISTRIBUTION, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, BUNDLE} from "../../types/ObjectType.sol";
 import {APPLIED, REVOKED, UNDERWRITTEN, ACTIVE, KEEP_STATE, CLOSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
@@ -38,6 +38,7 @@ import {ComponentService} from "../base/ComponentService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
 import {IApplicationService} from "./IApplicationService.sol";
 import {IBundleService} from "./IBundleService.sol";
+import {IDistributionService} from "./IDistributionService.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
@@ -47,6 +48,7 @@ contract ApplicationService is
     ComponentService, 
     IApplicationService
 {
+    IDistributionService internal _distributionService;
 
     function _initialize(
         address owner, 
@@ -63,6 +65,8 @@ contract ApplicationService is
 
         initializeService(registryAddress, owner);
         registerInterface(type(IApplicationService).interfaceId);
+
+        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), getMajorVersion()));
     }
 
 
@@ -99,7 +103,9 @@ contract ApplicationService is
             )
         );
 
-        (uint256 premiumAmount,,,,) = calculatePremium(
+        // (uint256 premiumAmount,,,,,) = calculatePremium(
+        IPolicy.PremiumAmount memory premium = calculatePremium(
+            productInfo.nftId,
             riskId,
             sumInsuredAmount,
             lifetime,
@@ -114,7 +120,7 @@ contract ApplicationService is
             referralId,
             riskId,
             sumInsuredAmount,
-            premiumAmount,
+            premium.premiumAmount,
             0,
             lifetime,
             applicationData,
@@ -169,8 +175,10 @@ contract ApplicationService is
         instance.updateApplicationState(applicationNftId, REVOKED());
     }
 
-
+    // TODO: maybe move this to a pricing service later
+    // FIXME: this !!
     function calculatePremium(
+        NftId productNftId,
         RiskId riskId,
         uint256 sumInsuredAmount,
         uint256 lifetime,
@@ -182,15 +190,10 @@ contract ApplicationService is
         view
         virtual override
         returns (
-            uint256 premiumAmount,
-            uint256 distributionFeeAmount,
-            uint256 productFeeAmount,
-            uint256 poolFeeAmount,
-            uint256 bundleFeeAmount
+            IPolicy.PremiumAmount memory premiumAmount
         )
     {
-        Product product = _getAndVerifyInstanceAndProduct();
-        uint256 netPremiumAmount = product.calculateNetPremium(
+        uint256 netPremiumAmount = _getAndVerifyProduct(productNftId).calculateNetPremium(
             sumInsuredAmount,
             riskId,
             lifetime,
@@ -198,25 +201,17 @@ contract ApplicationService is
         );
 
         (
-            productFeeAmount,
-            poolFeeAmount,
-            bundleFeeAmount,
-            distributionFeeAmount
+            premiumAmount
         ) = _calculateFeeAmounts(
             netPremiumAmount,
-            product,
+            _getAndVerifyProduct(productNftId),
             bundleNftId,
             referralId
         );
-
-        premiumAmount = netPremiumAmount + productFeeAmount;
-        premiumAmount += poolFeeAmount + bundleFeeAmount;
-        premiumAmount += distributionFeeAmount;
     }
 
 
     // internal functions
-
     function _calculateFeeAmounts(
         uint256 netPremiumAmount,
         Product product,
@@ -226,10 +221,7 @@ contract ApplicationService is
         internal
         view
         returns (
-            uint256 productFeeAmount,
-            uint256 poolFeeAmount,
-            uint256 bundleFeeAmount,
-            uint256 distributionFeeAmount
+            IPolicy.PremiumAmount memory premium
         )
     {
         InstanceReader instanceReader;
@@ -239,30 +231,56 @@ contract ApplicationService is
         }
         
         NftId poolNftId = product.getPoolNftId();
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        require(bundleInfo.poolNftId == poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
+        premium = IPolicy.PremiumAmount(
+            netPremiumAmount,
+            netPremiumAmount,
+            0, 0, 0, 0, 0);
 
         {
-            ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(product.getProductNftId());
-            (productFeeAmount,) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
-        }
-        {
-            ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-            (poolFeeAmount,) = FeeLib.calculateFee(poolSetupInfo.poolFee, netPremiumAmount);
-        }
-        {
-            NftId distributionNftId = product.getDistributionNftId();
-            ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
-            (distributionFeeAmount,) = FeeLib.calculateFee(distributionSetupInfo.distributionFee, netPremiumAmount);
+            {
+                ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(product.getProductNftId());
+                (uint256 t,) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
+                premium.productFeeAmount = t;
+                premium.premiumAmount += t;
+            }
+            {
+                ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+                (uint256 t,) = FeeLib.calculateFee(poolSetupInfo.poolFee, netPremiumAmount);
+                premium.poolFeeAmount = t;
+                premium.premiumAmount += t;
+            }
+            {
+                IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+                require(bundleInfo.poolNftId == poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
+                (uint256 t,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
+                premium.bundleFeeAmount = t;
+                premium.premiumAmount += t;
+            }
+            {
+                (uint256 t1, uint256 t2) = _distributionService.calculateFeeAmount(
+                    product.getDistributionNftId(),
+                    referralId,
+                    netPremiumAmount
+                );
+                premium.distributionFeeAmount = t1;
+                premium.comissionAmount = t2;
+                premium.premiumAmount += t1 + t2;
+            }
         }
         
-        (bundleFeeAmount,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
     }
 
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
         (productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        product = Product(productInfo.objectAddress);
+    }
+
+    function _getAndVerifyProduct(NftId productNftId) internal view returns (Product product) {
+        IRegistry registry = getRegistry();        
+        IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(productNftId);
+        require(productInfo.objectType == PRODUCT(), "OBJECT_TYPE_INVALID");
         product = Product(productInfo.objectAddress);
     }
 }

@@ -24,7 +24,8 @@ interface IDistribution {
         DistributorType distributorType;
         bool active;
         bytes data;
-        // TODO: track commission, number of sold policies, etc.
+        uint256 sumCommisions;
+        uint256 numPoliciesSold;
     }
 
     struct ReferralInfo {   

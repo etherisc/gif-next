@@ -260,7 +260,8 @@ abstract contract Distribution is
             zeroNftId(),
             $._tokenHandler,
             $._distributionFee,
-            address(this)
+            address(this),
+            0
         );
     }
 

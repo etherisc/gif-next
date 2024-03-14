@@ -130,6 +130,7 @@ contract PolicyService is
         premiumAmount += distributionFeeAmount;
     }
 
+    // TODO: use from ApplicationService
     function _calculateFeeAmounts(
         uint256 netPremiumAmount,
         Product product,
@@ -459,6 +460,7 @@ contract PolicyService is
                     premiumAmount
                 );
             } else {
+                // FIXME: this is wrong as netPremium is not netPremium here!!! 
                 (uint256 productFeeAmount, uint256 netAmount) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
                 address productWallet = productSetupInfo.wallet;
                 if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premiumAmount) {
@@ -469,6 +471,8 @@ contract PolicyService is
                 netPremiumAmount = netAmount;
                 // TODO: also move distribution tokens to distribution wallet and call `Distribution.processSale` to update distribution balances
             }
+
+            // TODO: netPremium + productFee + poolFee + bundleFee + distributionFee + comission = premiumAmount
         }
 
         // TODO: add logging

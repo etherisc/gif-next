@@ -74,7 +74,7 @@ interface IDistributionService is IService {
         NftId distributionNftId,
         ReferralId referralId,
         uint256 netPremiumAmount
-    ) external view returns (uint256 feeAmount);
+    ) external view returns (uint256 feeAmount, uint256 commissionAmount);
 
     function referralIsValid(
         NftId distributorNftId,

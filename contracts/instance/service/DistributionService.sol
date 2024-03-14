@@ -173,7 +173,9 @@ contract DistributionService is
         IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo(
             distributorType,
             true, // active
-            data);
+            data,
+            0,
+            0);
 
         instance.createDistributor(distributorNftId, info);
     }
@@ -185,13 +187,11 @@ contract DistributionService is
     ) external virtual
     {
         (,, IInstance instance) = _getAndVerifyCallingDistribution();
-
-        IDistribution.DistributorInfo memory info = IDistribution.DistributorInfo(
-            distributorType,
-            true, // active
-            data);
-
-        instance.updateDistributor(distributorNftId, info, KEEP_STATE());
+        InstanceReader instanceReader = instance.getInstanceReader();
+        IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
+        distributorInfo.distributorType = distributorType;
+        distributorInfo.data = data;
+        instance.updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
     }
 
 
@@ -217,8 +217,8 @@ contract DistributionService is
         }
 
         InstanceReader instanceReader = instance.getInstanceReader();
-        IDistribution.DistributorInfo memory distributorTypeInfo = instanceReader.getDistributorInfo(distributorNftId);
-        DistributorType distributorType = distributorTypeInfo.distributorType;
+        IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
+        DistributorType distributorType = distributorInfo.distributorType;
         IDistribution.DistributorTypeInfo memory distributorTypeData = instanceReader.getDistributorTypeInfo(distributorType);
 
         if (distributorTypeData.maxReferralCount < maxReferrals) {
@@ -274,7 +274,7 @@ contract DistributionService is
         external
         virtual
         view 
-        returns (uint256 feeAmount)
+        returns (uint256 distributionFeeAmount, uint256 commissionAmount)
     {
         (address distributionAddress, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
@@ -282,19 +282,19 @@ contract DistributionService is
         // calculate fee based on the distribution components fee
         ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
         Fee memory fee = setupInfo.distributionFee;
-        (feeAmount,) = fee.calculateFee(netPremiumAmount);
+        (distributionFeeAmount,) = fee.calculateFee(netPremiumAmount);
 
         if (referralIsValid(distributionNftId, referralId)) {
             // (distributionFee(fixed + pct) - referralDiscount(pct)) ... discount <= distributionFee
             IDistribution.ReferralInfo memory info = reader.getReferralInfo(referralId);
             uint256 discountAmount = UFixedLib.toUFixed(netPremiumAmount).mul(info.discountPercentage).toInt();
-            if (discountAmount > feeAmount) {
-                feeAmount = 0;
+            if (discountAmount > distributionFeeAmount) {
+                distributionFeeAmount = 0;
             } else {
-                feeAmount -= discountAmount;
+                distributionFeeAmount -= discountAmount;
             }
+            // TODO: calculate commission
         } 
-        // else - just use distributionFee from component
     }
 
     function referralIsValid(NftId distributionNftId, ReferralId referralId) public view returns (bool isValid) {

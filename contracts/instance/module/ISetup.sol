@@ -29,7 +29,7 @@ interface ISetup {
         TokenHandler tokenHandler;
         Fee distributionFee; // default distribution fee (no referral id)
         address wallet;
-        // TODO: add sum of distibution owner fees (excl commissions from distributors)
+        uint256 sumDistributionFees;
     }
 
     struct PoolSetupInfo {

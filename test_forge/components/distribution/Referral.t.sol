@@ -56,7 +56,7 @@ contract ReferralTest is ReferralTestBase {
             expiryAt,
             referralData);
 
-        uint256 feeAmount = distributionService.calculateFeeAmount(distributionNftId, ReferralLib.zero(), 1000);
+        (uint256 feeAmount,) = distributionService.calculateFeeAmount(distributionNftId, ReferralLib.zero(), 1000);
         assertEq(feeAmount, 100, "fee amount is not correct");
     }
 
@@ -74,7 +74,7 @@ contract ReferralTest is ReferralTestBase {
             expiryAt,
             referralData);
 
-        uint256 feeAmount = distributionService.calculateFeeAmount(distributionNftId, referralId, 1000);
+        (uint256 feeAmount,) = distributionService.calculateFeeAmount(distributionNftId, referralId, 1000);
         assertEq(feeAmount, 50, "fee amount is not correct");
     }
 
