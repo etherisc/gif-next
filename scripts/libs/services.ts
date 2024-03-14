@@ -95,10 +95,12 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         [registry.registryAddress],
         { libraries: {
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
+                FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ReferralLib: libraries.referralLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
+                UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress, 
             }});
