@@ -16,7 +16,7 @@ import {Service} from "../../contracts/shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
-import {ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../types/ObjectType.sol";
 import {IDistributionComponent} from "../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../components/IPoolComponent.sol";
@@ -435,6 +435,20 @@ contract InstanceService is
         bytes4[] memory fctSelectors2 = new bytes4[](1);
         fctSelectors2[0] = IPoolComponent.verifyApplication.selector;
         instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors2, POLICY_SERVICE_ROLE());
+
+        // bundle owner specific functions
+        bytes4[] memory fctSelectors3 = new bytes4[](7);
+        fctSelectors3[0] = IPoolComponent.stake.selector;
+        fctSelectors3[1] = IPoolComponent.unstake.selector;
+        fctSelectors3[2] = IPoolComponent.extend.selector;
+        fctSelectors3[3] = IPoolComponent.lockBundle.selector;
+        fctSelectors3[4] = IPoolComponent.unlockBundle.selector;
+        fctSelectors3[5] = IPoolComponent.close.selector;
+        fctSelectors3[6] = IPoolComponent.setBundleFee.selector;
+        instanceAccessManager.setTargetFunctionRole(
+            poolName, 
+            fctSelectors3, 
+            IPoolComponent(poolAddress).getBundleOwnerRole());
     }
 
     function grantProductDefaultPermissions(NftId instanceNftId, address productAddress, string memory productName) external onlyRegisteredService {

@@ -94,7 +94,7 @@ contract TestDistribution is TestGifBase {
         assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not externallyOwnerWallet");
 
         // THEN
-        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentWalletAddressIsSameAsCurrent.selector, externallyOwnerWallet));
+        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentWalletAddressIsSameAsCurrent.selector));
 
         // WHEN
         distribution.setWallet(externallyOwnerWallet);
