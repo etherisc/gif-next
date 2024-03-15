@@ -16,6 +16,13 @@ using {
     RoleIdLib.toKey32
 } for RoleId global;
 
+
+/// @dev role id needs to match with oz AccessManager.ADMIN_ROLE
+function ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(type(uint64).min); }
+
+/// @dev role id needs to match with oz AccessManager.PUBLIC_ROLE
+function PUBLIC_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(type(uint64).max); }
+
 // general pure free functions
 function DISTRIBUTION_OWNER_ROLE_NAME() pure returns (string memory) { return "DistributionOwnerRole"; }
 function ORACLE_OWNER_ROLE_NAME() pure returns (string memory) { return "OracleOwnerRole"; }

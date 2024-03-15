@@ -42,13 +42,13 @@ abstract contract Distribution is
         address token,
         Fee memory distributionFee,
         address initialOwner,
-        bytes memory data
+        bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
         public
         virtual
         onlyInitializing()
     {
-        initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, data);
+        initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, registryData);
 
         DistributionStorage storage $ = _getDistributionStorage();
         // TODO add validation
@@ -206,7 +206,7 @@ abstract contract Distribution is
         )
     {
         ReferralId referralId = getReferralId(referralCode);
-        return getInstanceReader().getDiscountPercentage(referralId);
+        return _getInstanceReader().getDiscountPercentage(referralId);
     }
 
 
@@ -286,7 +286,7 @@ abstract contract Distribution is
     }
 
 
-    function nftTransferFrom(address from, address to, uint256 tokenId) external virtual override (Component, ITransferInterceptor) {
+    function _nftTransferFrom(address from, address to, uint256 tokenId) internal virtual override {
         // keep track of distributor nft owner
         emit LogDistributorUpdated(to, msg.sender);
         DistributionStorage storage $ = _getDistributionStorage();

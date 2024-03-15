@@ -22,6 +22,7 @@ import {TokenHandler} from "../../shared/TokenHandler.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
+import {Seconds} from "../../types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
@@ -75,7 +76,7 @@ contract ApplicationService is
         address applicationOwner,
         RiskId riskId,
         uint256 sumInsuredAmount,
-        uint256 lifetime,
+        Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
         bytes memory applicationData
@@ -173,7 +174,7 @@ contract ApplicationService is
     function calculatePremium(
         RiskId riskId,
         uint256 sumInsuredAmount,
-        uint256 lifetime,
+        Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,
         ReferralId referralId

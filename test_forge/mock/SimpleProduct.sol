@@ -7,7 +7,7 @@ import {StateId} from "../../contracts/types/StateId.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {ReferralId} from "../../contracts/types/Referral.sol";
-import {Timestamp} from "../../contracts/types/Timestamp.sol";
+import {Timestamp, Seconds} from "../../contracts/types/Timestamp.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
@@ -103,7 +103,7 @@ contract SimpleProduct is Product {
         address applicationOwner,
         RiskId riskId,
         uint256 sumInsuredAmount,
-        uint256 lifetime,
+        Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,
         ReferralId referralId

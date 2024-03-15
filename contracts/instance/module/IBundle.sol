@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {NftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
+import {Seconds} from "../../types/Seconds.sol";
 import {Timestamp} from "../../types/Timestamp.sol";
 
 interface IBundle {
@@ -13,7 +14,7 @@ interface IBundle {
         uint256 capitalAmount; // net investment capital + net premiums - payouts
         uint256 lockedAmount; // capital amount linked to collateralizaion of non-closed policies (<= balance)
         uint256 balanceAmount; // total amount of funds: capitalAmount + fees (balance >= captial)
-        uint256 lifetime;
+        Seconds lifetime;
         Timestamp expiredAt; // no new policies
         Timestamp closedAt; // no open policies, locked amount = 0
     }

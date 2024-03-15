@@ -34,6 +34,7 @@ interface ISetup {
     struct PoolSetupInfo {
         NftId productNftId;
         TokenHandler tokenHandler;
+        uint256 maxCapitalAmount; // max capital amount allowed for pool
         bool isInterceptingBundleTransfers; // intercepts nft transfers for bundles
         bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts
         bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 

@@ -3,10 +3,11 @@ pragma solidity ^0.8.19;
 
 import {NftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
-import {StateId} from "../../types/StateId.sol";
 import {IService} from "../../shared/IService.sol";
 import {IBundle} from "../module/IBundle.sol";
 import {IInstance} from "../../instance/IInstance.sol";
+import {Seconds} from "../../types/Seconds.sol";
+import {StateId} from "../../types/StateId.sol";
 
 interface IBundleService is IService {
     error ErrorIBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
@@ -15,7 +16,7 @@ interface IBundleService is IService {
         address owner,
         Fee memory fee, 
         uint256 amount,
-        uint256 lifetime, 
+        Seconds lifetime, 
         bytes calldata filter
     ) external returns(NftId bundleNftId);
 
