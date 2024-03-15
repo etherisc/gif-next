@@ -149,6 +149,19 @@ contract TestInstanceAccessManager is TestGifBase {
         dproduct.doWhenNotLocked();
     }
 
+    function test_InstanceAccessMamanger_tryRenounceCoreRole() public {
+
+        vm.startPrank(instanceOwner);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccess.ErrorIAccessRoleTypeInvalid.selector,
+            INSTANCE_OWNER_ROLE(),
+            IAccess.Type.Core));
+        instanceAccessManager.renounceRole(INSTANCE_OWNER_ROLE());
+
+        vm.stopPrank();        
+    }
+
     function test_InstanceAccessMamanger_grantRole_gifRole_HappyCase() public {
         gifRoleMember = productOwner;
 
@@ -169,13 +182,16 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.stopPrank();        
     }
 
-    // TODO renounce of gif role must be prohibited???
-    function test_InstanceAccessMamanger_renounceRole_gifRole_HappyCase() public {
+    function test_InstanceAccessMamanger_tryRenounceGifRole() public {
         test_InstanceAccessMamanger_grantRole_gifRole_HappyCase();
 
         vm.startPrank(gifRoleMember);
 
-        assertTrue(instanceAccessManager.renounceRole(PRODUCT_OWNER_ROLE()), "grantRole(PRODUCT_OWNER_ROLE) returned false");
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccess.ErrorIAccessRoleTypeInvalid.selector,
+            PRODUCT_OWNER_ROLE(),
+            IAccess.Type.Gif));
+        instanceAccessManager.renounceRole(PRODUCT_OWNER_ROLE());
 
         vm.stopPrank();        
     }

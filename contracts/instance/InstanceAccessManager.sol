@@ -124,7 +124,7 @@ contract InstanceAccessManager is
         }
 
         if(_roleInfo[roleId].rtype == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, _roleInfo[roleId].rtype);
+            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, IAccess.Type.Core);
         }
 
         if (!roleExists(admin)) {
@@ -189,6 +189,11 @@ contract InstanceAccessManager is
         external 
         returns (bool) 
     {
+        IAccess.Type rtype = _roleInfo[roleId].rtype;
+        if(rtype == IAccess.Type.Core || rtype == IAccess.Type.Gif) {
+            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, rtype);
+        }
+
         address member = msg.sender;
         // cannot use accessManger.renounce as it directly checks against msg.sender
         return _revokeRole(roleId, member);
@@ -304,12 +309,12 @@ contract InstanceAccessManager is
 
         // not custom target
         if(_targetInfo[target].ttype == IAccess.Type.Custom) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, _targetInfo[target].ttype);
+            revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, IAccess.Type.Custom);
         }
 
         // not custom role
         if(_roleInfo[roleId].rtype == IAccess.Type.Custom) {
-            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, _roleInfo[roleId].rtype);
+            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, IAccess.Type.Custom);
         }
 
         _setTargetFunctionRole(target, nameShort, selectors, roleId);
@@ -335,12 +340,12 @@ contract InstanceAccessManager is
 
         // not core target
         if(_targetInfo[target].ttype == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, _targetInfo[target].ttype);
+            revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, IAccess.Type.Core);
         }
 
         // not core role
         if(_roleInfo[roleId].rtype == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, _roleInfo[roleId].rtype);
+            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, IAccess.Type.Core);
         }
 
         _setTargetFunctionRole(target, nameShort, selectors, roleId);
@@ -422,7 +427,6 @@ contract InstanceAccessManager is
     }
 
     // INSTANCE_OWNER_ROLE
-    // TODO prohibit renouncing Gif and Core roles?
     function _revokeRole(RoleId roleId, address member)
         internal
         returns(bool revoked)
