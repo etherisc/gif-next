@@ -240,11 +240,11 @@ contract ApplicationService is
         NftId poolNftId = product.getPoolNftId();
         premium = IPolicy.Premium(
             netPremiumAmount, // net premium
-            0, 0, 0, 0, 0, // fix fees
-            0, 0, 0, 0, // variable fees
             netPremiumAmount, // full premium
-            0, 0, 0, // distribution owner fee/commission/discount
-            0); // premium
+            0, // premium
+            0, 0, 0, 0, // fix fees
+            0, 0, 0, 0, // variable fees
+            0, 0, 0, 0); // distribution owner fee/commission/discount
 
         {
             {

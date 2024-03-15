@@ -45,7 +45,7 @@ contract TestDistribution is TestGifBase {
         assertEq(distributionFee.fractionalFee.toInt(), 0, "distribution fee not 0");
         assertEq(distributionFee.fixedFee, 0, "distribution fee not 0");
         
-        Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(124,0), 457);
+        Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(12,0), 34);
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
 
         // WHEN
@@ -58,8 +58,8 @@ contract TestDistribution is TestGifBase {
         assertEq(distributionFee.fixedFee, 456, "distribution fee not 456");
 
         Fee memory minDistributionOwnerFee = distributionSetupInfo.minDistributionOwnerFee;
-        assertEq(minDistributionOwnerFee.fractionalFee.toInt(), 124, "min distribution owner fee not 0");
-        assertEq(minDistributionOwnerFee.fixedFee, 457, "min distribution owner fee not 0");
+        assertEq(minDistributionOwnerFee.fractionalFee.toInt(), 12, "min distribution owner fee not 0");
+        assertEq(minDistributionOwnerFee.fixedFee, 34, "min distribution owner fee not 0");
     }
 
     function test_Component_setWallet_to_extowned() public {

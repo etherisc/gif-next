@@ -46,7 +46,7 @@ contract ReferralTestBase is TestGifBase {
             instanceNftId,
             address(token),
             FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0),
-            FeeLib.toFee(UFixedLib.toUFixed(1,-1), 0),
+            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0),
             distributionOwner
         );
         distributionNftId = distributionService.register(address(distribution));
