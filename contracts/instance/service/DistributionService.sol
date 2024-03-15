@@ -288,7 +288,7 @@ contract DistributionService is
         ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
         Fee memory distributionFee = setupInfo.distributionFee;
         Fee memory minDistributionOwnerFee = setupInfo.minDistributionOwnerFee;
-        uint256 distributionFeeVarAmount = (UFixedLib.toUFixed(premium.netPremiumAmount) * minDistributionOwnerFee.fractionalFee).toInt();
+        uint256 distributionFeeVarAmount = (UFixedLib.toUFixed(premium.netPremiumAmount) * distributionFee.fractionalFee).toInt();
         premium.distributionFeeVarAmount = distributionFeeVarAmount;
         premium.fullPremiumAmount += distributionFeeVarAmount;
             

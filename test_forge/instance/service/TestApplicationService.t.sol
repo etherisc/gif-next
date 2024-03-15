@@ -12,11 +12,13 @@ import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
 import {UFixedLib} from "../../../contracts/types/UFixed.sol";
 import {ComponentService} from "../../../contracts/instance/base/ComponentService.sol";
-import {ReferralLib} from "../../../contracts/types/Referral.sol";
+import {DistributorType} from "../../../contracts/types/DistributorType.sol";
+import {ReferralId, ReferralLib} from "../../../contracts/types/Referral.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/types/RiskId.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
+import {TimestampLib} from "../../../contracts/types/Timestamp.sol";
 
 contract TestProductService is TestGifBase {
     using NftIdLib for NftId;
@@ -145,6 +147,66 @@ contract TestProductService is TestGifBase {
         assertEq(premium.productFeeVarAmount, 5, "productFeeVarAmount invalid");
         assertEq(premium.distributionOwnerFeeFixAmount, 3, "distributionOwnerFeeFixAmount invalid");
         assertEq(premium.distributionOwnerFeeVarAmount, 5, "distributionOwnerFeeVarAmount invalid");
+    }
+
+    function test_ApplicationService_calculatePremium_onlyVariableFeesWithReferral() public {
+        _createAndRegisterDistributionPoolProductWithFees(
+            FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0),
+            FeeLib.toFee(UFixedLib.toUFixed(30, -2), 0),
+            FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0),
+            FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0),
+            FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0)
+        );
+
+        DistributorType distributorType = distribution.createDistributorType(
+            "Gold",
+            UFixedLib.zero(),
+            UFixedLib.toUFixed(10, -2),
+            UFixedLib.toUFixed(5, -2),
+            10,
+            14 * 24 * 3600,
+            false,
+            false,
+            "");
+
+        NftId distributorNftId = distribution.createDistributor(
+            customer,
+            distributorType,
+            "");
+        
+        ReferralId referralId = distribution.createReferral(
+            distributorNftId,
+            "GET_A_DISCOUNT",
+            UFixedLib.toUFixed(10, -2),
+            5,
+            TimestampLib.blockTimestamp().addSeconds(604800),
+            "");
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        IPolicy.Premium memory premium = applicationService.calculatePremium(
+            productNftId, 
+            riskId, 
+            1000, 
+            300, 
+            "", 
+            bundleNftId, 
+            referralId);
+
+        assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
+        assertEq(premium.fullPremiumAmount, 160, "fullPremiumAmount invalid");
+        assertEq(premium.premiumAmount, 144, "premiumAmount invalid");
+        assertEq(premium.distributionFeeFixAmount, 0, "distributionFeeFixAmount invalid");
+        assertEq(premium.distributionFeeVarAmount, 30, "distributionFeeVarAmount invalid");
+        assertEq(premium.poolFeeFixAmount, 0, "poolFeeFixAmount invalid");
+        assertEq(premium.poolFeeVarAmount, 10, "poolFeeVarAmount invalid");
+        assertEq(premium.bundleFeeFixAmount, 0, "bundleFeeFixAmount invalid");
+        assertEq(premium.bundleFeeVarAmount, 10, "bundleFeeVarAmount invalid");
+        assertEq(premium.productFeeFixAmount, 0, "productFeeFixAmount invalid");
+        assertEq(premium.productFeeVarAmount, 10, "productFeeVarAmount invalid");
+        assertEq(premium.discountAmount, 16, "discountAmount invalid");
+        assertEq(premium.commissionAmount, 5, "commissionAmount invalid");
+        assertEq(premium.distributionOwnerFeeFixAmount, 0, "distributionOwnerFeeFixAmount invalid");
+        assertEq(premium.distributionOwnerFeeVarAmount, 9, "distributionOwnerFeeVarAmount invalid");
     }
 
     function _createAndRegisterDistributionPoolProductWithFees(
