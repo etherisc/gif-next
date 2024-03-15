@@ -262,7 +262,9 @@ contract ApplicationService is
             }
             {
                 IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-                require(bundleInfo.poolNftId == poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
+                if(bundleInfo.poolNftId != poolNftId) {
+                    revert IApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+                }
                 uint256 t = bundleInfo.fee.fixedFee;
                 premium.bundleFeeFixAmount = t;
                 premium.fullPremiumAmount += t;
@@ -313,7 +315,9 @@ contract ApplicationService is
             }
             {
                 IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-                require(bundleInfo.poolNftId == poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
+                if(bundleInfo.poolNftId != poolNftId) {
+                    revert IApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+                }
                 uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * bundleInfo.fee.fractionalFee).toInt();
                 premium.bundleFeeVarAmount = t;
                 premium.fullPremiumAmount += t;

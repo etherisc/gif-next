@@ -19,6 +19,7 @@ import {Fee} from "../../types/Fee.sol";
 interface IApplicationService is IService {
     
     error IApplicationServicePolicyNotApplied(NftId applicationNftId);
+    error IApplicationServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
 
     /// @dev creates a new application based on the specified attributes
     /// may only be called by a product component
