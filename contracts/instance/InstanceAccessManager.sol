@@ -153,6 +153,31 @@ contract InstanceAccessManager is
         return _revokeRole(roleId, member);
     }
 
+    // INSTANCE_OWNER_ROLE
+    // IMPORTANT: unbounded function, revoke all or revert
+    // Instance owner role decides what to do in case of custom role admin bening revoked:
+    // 1) revoke custom role from ALL members
+    // 2) revoke custom role admin from ALL members
+    // 3) 1) + 2)
+    // 4) revoke only 1 member of custom role admin
+    function revokeRoleAllMembers(RoleId roleId) 
+        external
+        restrictedToRoleAdmin(roleId) 
+        returns (bool revoked)
+    {
+        if (!roleExists(roleId)) {
+            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+        }
+
+        uint memberCount = EnumerableSet.length(_roleMembers[roleId]);
+        for(uint memberIdx = 0; memberIdx < memberCount; memberIdx++)
+        {
+            address member = EnumerableSet.at(_roleMembers[roleId], memberIdx);
+            EnumerableSet.remove(_roleMembers[roleId], member);
+            assert(_accessManager.revokeRole(roleId.toInt(), member));
+        }  
+    }
+
     /// @dev not restricted function by intention
     /// the restriction to role members is already enforced by the call to the access manager
     function renounceRole(RoleId roleId) 
@@ -199,14 +224,6 @@ contract InstanceAccessManager is
 
     function roles() external view returns (uint256 numberOfRoles) {
         return _roleIds.length;
-    }
-
-    function isCustomRoleAdmin(RoleId roleId) public pure returns (bool) {
-        uint roleIdInt = roleId.toInt();
-        return (
-            roleIdInt >= CUSTOM_ROLE_ID_MIN &&
-            roleIdInt % 2 == 1
-        );
     }
 
     //--- Target ------------------------------------------------------//
@@ -380,7 +397,6 @@ contract InstanceAccessManager is
         internal
         view
     {
-
         uint roleIdInt = roleId.toInt();
         if(rtype == IAccess.Type.Custom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
             revert IAccess.ErrorIAccessRoleIdTooSmall(roleId);
@@ -412,24 +428,7 @@ contract InstanceAccessManager is
 
         revoked = EnumerableSet.remove(_roleMembers[roleId], member);
         if(revoked) {
-            uint64 roleIdInt = roleId.toInt();
-            _accessManager.revokeRole(roleIdInt, member);
-
-            // revoke custom role if custom role admin is being revoked
-            if(isCustomRoleAdmin(roleId)) {
-                uint64 customRoleIdInt = roleIdInt - 1;
-                RoleId customRoleId = RoleIdLib.toRoleId(customRoleIdInt);
-                // loop through all custom role members
-                uint memberCount = EnumerableSet.length(_roleMembers[customRoleId]);
-                for(uint memberIdx = 0; memberIdx < memberCount; memberIdx++)
-                {
-                    member = EnumerableSet.at(_roleMembers[customRoleId], memberIdx);
-                    bool revokedCustom = EnumerableSet.remove(_roleMembers[customRoleId], member);
-                    if(revokedCustom) {
-                        _accessManager.revokeRole(customRoleIdInt, member);
-                    }
-                }
-            }
+            _accessManager.revokeRole(roleId.toInt(), member);
         }
     }
 
