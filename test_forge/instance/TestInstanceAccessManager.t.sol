@@ -18,6 +18,13 @@ contract TestInstanceAccessManager is TestGifBase {
 
     uint256 public constant INITIAL_BALANCE = 100000;
 
+    address gifRoleMember;
+
+    RoleId customRoleId;
+    RoleId customRoleAdmin;
+    address customRoleMember;
+    address customRoleAdminMember;
+
     function test_InstanceAccessManager_hasRole_unauthorized() public {
         // GIVEN
         vm.startPrank(instanceOwner);
@@ -78,11 +85,11 @@ contract TestInstanceAccessManager is TestGifBase {
         // create special role and special role admin
         RoleId customRoleId;
         RoleId customRoleAdmin;
-        (customRoleId, customRoleAdmin) = instanceAccessManager.createCustomRole("SpecialRole", "SpecialRoleAdmin");
+        (customRoleId, customRoleAdmin) = instanceAccessManager.createRole("SpecialRole", "SpecialRoleAdmin");
         // set special role for product custom product function 
         bytes4[] memory fcts = new bytes4[](1);
         fcts[0] = SimpleProduct.doSomethingSpecial.selector;
-        instanceAccessManager.setTargetFunctionCustomRole(product.getName(), fcts, customRoleId);
+        instanceAccessManager.setTargetFunctionRole(product.getName(), fcts, customRoleId);
         // assign special role to outsider
         instanceAccessManager.grantRole(customRoleAdmin, instanceOwner);
         //instanceAccessManager.grantRole("SpecialRole", outsider);
@@ -124,7 +131,7 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.startPrank(instanceOwner);
         bytes4[] memory fctSelectors = new bytes4[](1);
         fctSelectors[0] = SimpleProduct.doWhenNotLocked.selector;
-        instanceAccessManager.setTargetFunctionCustomRole(product.getName(), fctSelectors, PRODUCT_OWNER_ROLE());
+        instanceAccessManager.setTargetFunctionRole(product.getName(), fctSelectors, PRODUCT_OWNER_ROLE());
         vm.stopPrank();
 
         vm.startPrank(productOwner);
@@ -144,74 +151,196 @@ contract TestInstanceAccessManager is TestGifBase {
         dproduct.doWhenNotLocked();
     }
 
-    function test_InstanceAccessManager_revokeRole_revokeCustomRoleAdmin() public {
+    function test_InstanceAccessMamanger_grantRole_gifRole_HappyCase() public {
+        gifRoleMember = productOwner;
+
         vm.startPrank(instanceOwner);
 
-        RoleId customRoleId;
-        RoleId customRoleAdmin;
-        (customRoleId, customRoleAdmin) = instanceAccessManager.createCustomRole("SpecialRole#2", "SpecialRole#2Admin");
-        
-        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "custom role members count != 0 #1");
-        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 0, "custom role admin members count != 0 #1");
+        assertTrue(instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), gifRoleMember), "grantRole(PRODUCT_OWNER_ROLE, productOwner) returned false");
 
-        // grant custom role admin
-        assertTrue(instanceAccessManager.grantRole(customRoleAdmin, outsider), "grantRole() returned false #1");
-
-        vm.stopPrank();
-        vm.startPrank(outsider);
-
-         // grant custom role
-        assertTrue(instanceAccessManager.grantRole(customRoleId, address(registryService)), "grantRole() returned false #2");   
-
-        vm.stopPrank();
-        vm.startPrank(instanceOwner);
-
-        assertEq(instanceAccessManager.roleMembers(customRoleId), 1, "custom role members count != 1 #1");
-        assertEq(instanceAccessManager.roleMember(customRoleId, 0), address(registryService), "custom role id member[0] != registryService");
-
-        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 1, "custom role admin members count != 1 #1");
-        assertEq(instanceAccessManager.roleMember(customRoleAdmin, 0), outsider, "custom role admin member[0] != outsider");
-
-        // revoke
-        assertTrue(instanceAccessManager.revokeRole(customRoleAdmin, outsider), "revokeRole() returned false");
-
-        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "custom role members count != 0 #2");
-        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 0, "custom role admin members count != 0 #2");
-        
         vm.stopPrank();
     }
 
-    function test_InstanceAccessManager_revokeRole_revokeCustomRole() public {
+    function test_InstanceAccessMamanger_revokeRole_gifRole_HappyCase() public {
+        test_InstanceAccessMamanger_grantRole_gifRole_HappyCase();
+
         vm.startPrank(instanceOwner);
 
-        RoleId customRoleId;
-        RoleId customRoleAdmin;
-        (customRoleId, customRoleAdmin) = instanceAccessManager.createCustomRole("SpecialRole#2", "SpecialRole#2Admin");
+        assertTrue(instanceAccessManager.revokeRole(PRODUCT_OWNER_ROLE(), gifRoleMember), "grantRole(PRODUCT_OWNER_ROLE, productOwner) returned false");
+
+        vm.stopPrank();        
+    }
+
+    // TODO renounce of gif role must be prohibited???
+    function test_InstanceAccessMamanger_renounceRole_gifRole_HappyCase() public {
+        test_InstanceAccessMamanger_grantRole_gifRole_HappyCase();
+
+        vm.startPrank(gifRoleMember);
+
+        assertTrue(instanceAccessManager.renounceRole(PRODUCT_OWNER_ROLE()), "grantRole(PRODUCT_OWNER_ROLE) returned false");
+
+        vm.stopPrank();        
+    }
+
+    function test_InstanceAccessMamanger_grantRole_customRole_HappyCase() public 
+    {
+        vm.startPrank(instanceOwner);
+
+        // create custom role
+        (customRoleId, customRoleAdmin) = instanceAccessManager.createRole("SpecialRole", "SpecialRoleAdmin");
+        customRoleMember = productOwner;
+        customRoleAdminMember = outsider;
+
+        //checkpoint
+        assertEq(instanceAccessManager.getRoleAdmin(customRoleId).toInt(), customRoleAdmin.toInt(), "getRoleAdmin(customRoleId) returned !customRoleAdmin #1");
+        assertEq(instanceAccessManager.getRoleAdmin(customRoleAdmin).toInt(), INSTANCE_OWNER_ROLE().toInt(), "getRoleAdmin(customRoleAdmin) returned !INSTANCE_OWNER_ROLE #1");
         
-        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "custom role members count != 0 #1");
-        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 0, "custom role admin members count != 0 #1");
+        assertFalse(instanceAccessManager.hasRole(customRoleId, instanceOwner));
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleMember));
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleAdminMember));
+
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, instanceOwner));
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, customRoleMember));
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, customRoleAdminMember));
+
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "roleMembers(customRoleId) != 0 #1");
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 0, "roleMembers(customRoleAdmin) != 0 #1");
 
         // grant custom role admin
-        assertTrue(instanceAccessManager.grantRole(customRoleAdmin, outsider), "grantRole() returned false #1");
+        assertTrue(instanceAccessManager.grantRole(customRoleAdmin, customRoleAdminMember), "grantRole(customRoleAdmin, outsider) returned false");
+        assertTrue(instanceAccessManager.hasRole(customRoleAdmin, customRoleAdminMember));
+
+        // grant custom role admin to itself
+        assertTrue(instanceAccessManager.grantRole(customRoleAdmin, instanceOwner), "grantRole(customRoleAdmin, instanceOwner) returned false");
+        assertTrue(instanceAccessManager.hasRole(customRoleAdmin, instanceOwner));
 
         vm.stopPrank();
-        vm.startPrank(outsider);
+        vm.startPrank(customRoleAdminMember);
 
         // grant custom role
-        assertTrue(instanceAccessManager.grantRole(customRoleId, address(registryService)), "grantRole() returned false #2");   
+        assertTrue(instanceAccessManager.grantRole(customRoleId, customRoleMember), "grantRole(customRoleId, productOwner) returned false");
+        assertTrue(instanceAccessManager.hasRole(customRoleId, customRoleMember));
 
-        assertEq(instanceAccessManager.roleMembers(customRoleId), 1, "custom role members count != 1 #1");
-        assertEq(instanceAccessManager.roleMember(customRoleId, 0), address(registryService), "custom role id member[0] != registryService");
+        // grant custom role to itself
+        assertTrue(instanceAccessManager.grantRole(customRoleId, customRoleAdminMember), "grantRole(customRoleId, outsider) returned false");
+        assertTrue(instanceAccessManager.hasRole(customRoleId, customRoleAdminMember));
 
-        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 1, "custom role admin members count != 1 #1");
-        assertEq(instanceAccessManager.roleMember(customRoleAdmin, 0), outsider, "custom role admin member[0] != outsider");
+        vm.stopPrank();
 
-        // revoke
-        assertTrue(instanceAccessManager.revokeRole(customRoleId, address(registryService)), "revokeRole() returned false");
+        // checkpoint
+        assertEq(instanceAccessManager.getRoleAdmin(customRoleId).toInt(), customRoleAdmin.toInt(), "getRoleAdmin(customRoleId) returned !customRoleAdmin #2");
+        assertEq(instanceAccessManager.getRoleAdmin(customRoleAdmin).toInt(), INSTANCE_OWNER_ROLE().toInt(), "getRoleAdmin(customRoleAdmin) returned !INSTANCE_OWNER_ROLE #2");
 
-        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "custom role members count != 0 #2");
-        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 1, "custom role admin members count != 0 #2");
-        
-        vm.stopPrank();      
+        assertFalse(instanceAccessManager.hasRole(customRoleId, instanceOwner));
+        assertTrue(instanceAccessManager.hasRole(customRoleId, customRoleMember));
+        assertTrue(instanceAccessManager.hasRole(customRoleId, customRoleAdminMember));
+
+        assertTrue(instanceAccessManager.hasRole(customRoleAdmin, instanceOwner));
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, customRoleMember));
+        assertTrue(instanceAccessManager.hasRole(customRoleAdmin, customRoleAdminMember));
+
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 2, "roleMembers(customRoleId) != 2 #2");
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 2, "roleMembers(customRoleAdmin) != 2 #4");
+    }
+
+    function test_InstanceAccessMamanger_revokeRole_customRole_HappyCase() public {
+        test_InstanceAccessMamanger_grantRole_customRole_HappyCase();
+
+        vm.startPrank(customRoleAdminMember);
+
+        // revoke custom role
+        assertTrue(instanceAccessManager.revokeRole(customRoleId, customRoleMember), "revokeRole(customRoleId, customRoleMember) returned false");
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleMember));
+
+        // revoke custom role from itself
+        assertTrue(instanceAccessManager.revokeRole(customRoleId, customRoleAdminMember), "revokeRole(customRoleId, customRoleAdminMember) returned false");
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleAdminMember));
+
+        vm.stopPrank();
+        vm.startPrank(instanceOwner);
+
+        // revoke custom role admin
+        assertTrue(instanceAccessManager.revokeRole(customRoleAdmin, customRoleAdminMember), "revokeRole(customRoleAdmin, customRoleAdminMember) returned false");
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, customRoleAdminMember));
+
+        // revoke custom role admin from itself
+        assertTrue(instanceAccessManager.revokeRole(customRoleAdmin, instanceOwner), "revokeRole(customRoleAdmin, instanceOwner) returned false");
+
+        vm.stopPrank();
+
+        //checkpoint
+        assertEq(instanceAccessManager.getRoleAdmin(customRoleId).toInt(), customRoleAdmin.toInt(), "getRoleAdmin(customRoleId) returned !customRoleAdmin #3");
+        assertEq(instanceAccessManager.getRoleAdmin(customRoleAdmin).toInt(), INSTANCE_OWNER_ROLE().toInt(), "getRoleAdmin(customRoleAdmin) returned !INSTANCE_OWNER_ROLE #3");
+
+        assertFalse(instanceAccessManager.hasRole(customRoleId, instanceOwner));
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleMember));
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleAdminMember));
+
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, instanceOwner));
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, customRoleMember));
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, customRoleAdminMember));
+
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "roleMembers(customRoleId) != 2 #3");
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 0, "roleMembers(customRoleAdmin) != 2 #5");
+    }
+
+    function test_InstanceAccessMamanger_renounceRole_customRole_HappyCase() public {
+        test_InstanceAccessMamanger_grantRole_customRole_HappyCase();
+
+        // renounce custom role
+        vm.startPrank(customRoleMember);
+
+        assertTrue(instanceAccessManager.renounceRole(customRoleId), "revokeRole(customRoleId) returned false");
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleMember));
+
+        vm.stopPrank();
+        vm.startPrank(customRoleAdminMember);
+
+        // renounce custom role by custom role admin
+        assertTrue(instanceAccessManager.renounceRole(customRoleId), "revokeRole(customRoleId) returned false");
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleAdminMember));
+
+        // renounce custom admin role by custom role admin
+        assertTrue(instanceAccessManager.renounceRole(customRoleAdmin), "revokeRole(customRoleAdmin) returned false");
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, customRoleAdminMember));
+
+        vm.stopPrank();
+        vm.startPrank(instanceOwner);
+
+        // renounce custom role admin by instance owner
+        assertTrue(instanceAccessManager.renounceRole(customRoleAdmin), "revokeRole(customRoleAdmin) returned false");
+
+        vm.stopPrank(); 
+
+        //checkpoint
+        assertEq(instanceAccessManager.getRoleAdmin(customRoleId).toInt(), customRoleAdmin.toInt(), "getRoleAdmin(customRoleId) returned !customRoleAdmin #3");
+        assertEq(instanceAccessManager.getRoleAdmin(customRoleAdmin).toInt(), INSTANCE_OWNER_ROLE().toInt(), "getRoleAdmin(customRoleAdmin) returned !INSTANCE_OWNER_ROLE #3");
+
+        assertFalse(instanceAccessManager.hasRole(customRoleId, instanceOwner));
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleMember));
+        assertFalse(instanceAccessManager.hasRole(customRoleId, customRoleAdminMember));
+
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, instanceOwner));
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, customRoleMember));
+        assertFalse(instanceAccessManager.hasRole(customRoleAdmin, customRoleAdminMember));
+
+        assertEq(instanceAccessManager.roleMembers(customRoleId), 0, "roleMembers(customRoleId) != 0 #2");
+        assertEq(instanceAccessManager.roleMembers(customRoleAdmin), 0, "roleMembers(customRoleAdmin) != 0 #2");
+    }
+
+    function test_InstanceAccessManager_transferOwnerRole_HappyCase() public {
+
+        assertTrue(instanceAccessManager.hasRole(INSTANCE_OWNER_ROLE(), instanceOwner));        
+        assertEq(instanceAccessManager.roleMembers(INSTANCE_OWNER_ROLE()), 1, "roleMembers(INSTANCE_OWNER_ROLE) != 1 #1");
+
+        vm.startPrank(address(instance));
+
+        instanceAccessManager.transferOwnerRole(instanceOwner, outsider);
+
+        vm.stopPrank();
+
+        assertFalse(instanceAccessManager.hasRole(INSTANCE_OWNER_ROLE(), instanceOwner));
+        assertTrue(instanceAccessManager.hasRole(INSTANCE_OWNER_ROLE(), outsider));
+        assertEq(instanceAccessManager.roleMembers(INSTANCE_OWNER_ROLE()), 1, "roleMembers(INSTANCE_OWNER_ROLE) != 1 #2");
     }
 }
