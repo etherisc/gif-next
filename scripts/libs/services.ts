@@ -95,7 +95,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         [registry.registryAddress],
         { libraries: {
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
-                FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ReferralLib: libraries.referralLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
@@ -209,10 +208,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress],
         { libraries: {
-                FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
-                // UFixedLib: libraries.uFixedLibAddress,
+                UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress, 
             }});
