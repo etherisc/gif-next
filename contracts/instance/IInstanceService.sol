@@ -43,6 +43,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceNotInstanceOwner(address caller, NftId instanceNftId);
     error ErrorInstanceServiceNotInstance(NftId nftId);
     error ErrorInstanceServiceComponentNotRegistered(address componentAddress);
+    error ErrorInstanceServiceInstanceComponentMismatch(NftId instanceNftId, NftId componentNftId);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     
     event LogInstanceCloned(address clonedOzAccessManager, address clonedAccessManager, address clonedInstance, address clonedInstanceReader, NftId clonedInstanceNftId);
@@ -58,7 +59,14 @@ interface IInstanceService is IService {
             BundleManager clonedBundleManager
         );
 
-    function hasRole(address account, RoleId role, address instanceAddress) external returns (bool);
+    function createGifTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        bytes4[][] memory selectors,
+        RoleId[] memory roles
+    ) external;
+
     function setComponentLocked(bool locked) external;
 
 }

@@ -75,6 +75,7 @@ contract InstanceAccessManager is
     }
 
     //--- Role ------------------------------------------------------//
+    // ADMIN_ROLE
     // assume all core roles are know at deployment time
     // assume core roles are set and granted only during instance cloning
     // assume core roles are never revoked or renounced -> core roles admin is never active after intialization
@@ -177,7 +178,8 @@ contract InstanceAccessManager is
         {
             address member = EnumerableSet.at(_roleMembers[roleId], memberIdx);
             EnumerableSet.remove(_roleMembers[roleId], member);
-            assert(_accessManager.revokeRole(roleId.toInt(), member));
+            // TODO no return value, can fail silentlly
+            _accessManager.revokeRole(roleId.toInt(), member);
         }  
     }
 
@@ -373,7 +375,7 @@ contract InstanceAccessManager is
         internal
     {
         ShortString name = ShortStrings.toShortString(roleName);
-        _validateRole(roleId, name);
+        _validateRole(roleId, name, rtype);
 
         if(roleExists(roleId)) {
             revert IAccess.ErrorIAccessRoleIdAlreadyExists(roleId);
