@@ -22,7 +22,8 @@ interface IDistributionService is IService {
     error ErrorIDistributionServiceInvalidReferral(string code);
     error ErrorIDistributionServiceExpirationInvalid(Timestamp expiryAt);
     error ErrorIDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
-    error ErrorIDistributionServiceMaxDiscountTooHigh(uint256 maxDiscountPercentage, uint256 maxMaxDiscountPercentage);
+    error ErrorIDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
+    error ErrorIDistributionServiceMaxDiscountTooHigh(uint256 maxDiscountPercentage, uint256 limit);
 
     function setFees(
         Fee memory minDistributionOwnerFee,

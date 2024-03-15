@@ -200,11 +200,17 @@ contract ApplicationService is
             applicationData
         );
         // TODO: add all fixed fee parts on top of the netPremium
+        premium = _getFixedFeeAmounts(
+            netPremiumAmount,
+            _getAndVerifyProduct(productNftId),
+            bundleNftId,
+            referralId
+        );
 
         (
             premium
-        ) = _calculateFeeAmounts(
-            netPremiumAmount,
+        ) = _calculateVariableFeeAmounts(
+            premium,
             _getAndVerifyProduct(productNftId),
             bundleNftId,
             referralId
@@ -213,7 +219,7 @@ contract ApplicationService is
 
 
     // internal functions
-    function _calculateFeeAmounts(
+    function _getFixedFeeAmounts(
         uint256 netPremiumAmount,
         Product product,
         NftId bundleNftId,
@@ -233,28 +239,82 @@ contract ApplicationService is
         
         NftId poolNftId = product.getPoolNftId();
         premium = IPolicy.Premium(
-            netPremiumAmount,
-            netPremiumAmount,
-            0, 0, 0, 0, 0, 0, 0);
+            netPremiumAmount, // net premium
+            0, 0, 0, 0, 0, // fix fees
+            0, 0, 0, 0, // variable fees
+            netPremiumAmount, // full premium
+            0, 0, 0, // distribution owner fee/commission/discount
+            0); // premium
 
         {
             {
                 ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(product.getProductNftId());
-                (uint256 t,) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
-                premium.productFeeAmount = t;
+                uint256 t = productSetupInfo.productFee.fixedFee;
+                premium.productFeeFixAmount = t;
                 premium.fullPremiumAmount += t;
             }
             {
                 ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-                (uint256 t,) = FeeLib.calculateFee(poolSetupInfo.poolFee, netPremiumAmount);
-                premium.poolFeeAmount = t;
+                uint256 t = poolSetupInfo.poolFee.fixedFee;
+                premium.poolFeeFixAmount = t;
                 premium.fullPremiumAmount += t;
             }
             {
                 IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
                 require(bundleInfo.poolNftId == poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
-                (uint256 t,) = FeeLib.calculateFee(bundleInfo.fee, netPremiumAmount);
-                premium.bundleFeeAmount = t;
+                uint256 t = bundleInfo.fee.fixedFee;
+                premium.bundleFeeFixAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+            {
+                ISetup.DistributionSetupInfo memory distInto = instanceReader.getDistributionSetupInfo(product.getDistributionNftId());
+                uint256 t = distInto.distributionFee.fixedFee;
+                premium.distributionFeeFixAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+        }
+        
+    }
+
+    function _calculateVariableFeeAmounts(
+        IPolicy.Premium memory premium,
+        Product product,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        internal
+        view
+        returns (
+            IPolicy.Premium memory finalPremium
+        )
+    {
+        InstanceReader instanceReader;
+        {
+            IInstance instance = product.getInstance();
+            instanceReader = instance.getInstanceReader();
+        }
+        
+        NftId poolNftId = product.getPoolNftId();
+        uint256 netPremiumAmount = premium.netPremiumAmount;
+
+        {
+            {
+                ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(product.getProductNftId());
+                uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * productSetupInfo.productFee.fractionalFee).toInt();
+                premium.productFeeVarAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+            {
+                ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+                uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * poolSetupInfo.poolFee.fractionalFee).toInt();
+                premium.poolFeeVarAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+            {
+                IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+                require(bundleInfo.poolNftId == poolNftId,"ERROR:PRS-035:BUNDLE_POOL_MISMATCH");
+                uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * bundleInfo.fee.fractionalFee).toInt();
+                premium.bundleFeeVarAmount = t;
                 premium.fullPremiumAmount += t;
             }
             {
@@ -265,7 +325,8 @@ contract ApplicationService is
                 );
             }
         }
-        
+
+        return premium;
     }
 
 

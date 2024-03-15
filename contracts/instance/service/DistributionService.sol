@@ -97,6 +97,10 @@ contract DistributionService is
         external
         override
     {
+        if (minDistributionOwnerFee.fractionalFee > distributionFee.fractionalFee) {
+            revert ErrorIDistributionServiceMinFeeTooHigh(minDistributionOwnerFee.fractionalFee.toInt(), distributionFee.fractionalFee.toInt());
+        }
+
         (IRegistry.ObjectInfo memory info , IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
         InstanceReader instanceReader = instance.getInstanceReader();
         NftId distributionNftId = info.nftId;
@@ -125,13 +129,11 @@ contract DistributionService is
         (,NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
 
         {
-            if (commissionPercentage > maxDiscountPercentage) {
-                revert ErrorIDistributionServiceCommissionTooHigh(commissionPercentage.toInt(), maxDiscountPercentage.toInt());
-            }
-
             ISetup.DistributionSetupInfo memory setupInfo = instance.getInstanceReader().getDistributionSetupInfo(distributionNftId);
-            if (maxDiscountPercentage > setupInfo.distributionFee.fractionalFee) {
-                revert ErrorIDistributionServiceMaxDiscountTooHigh(maxDiscountPercentage.toInt(), setupInfo.distributionFee.fractionalFee.toInt());
+            UFixed variableFeesPartsTotal = setupInfo.minDistributionOwnerFee.fractionalFee.add(commissionPercentage);
+            UFixed maxDiscountPercentageLimit = setupInfo.distributionFee.fractionalFee.sub(variableFeesPartsTotal);
+            if (maxDiscountPercentage.gt(maxDiscountPercentageLimit)) {
+                revert ErrorIDistributionServiceMaxDiscountTooHigh(maxDiscountPercentage.toInt(), maxDiscountPercentageLimit.toInt());
             }
         }
         
@@ -282,28 +284,35 @@ contract DistributionService is
         (, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
         
-        // calculate fee based on the distribution components fee
+        // first calculate all fixed and variable fees for the distribution - this will defined the fullPremium
         ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
-        Fee memory fee = setupInfo.distributionFee;
-        (uint256 distributionOwnerFeeAmount,) = fee.calculateFee(premium.netPremiumAmount);
-        
+        Fee memory distributionFee = setupInfo.distributionFee;
+        Fee memory minDistributionOwnerFee = setupInfo.minDistributionOwnerFee;
+        uint256 distributionFeeVarAmount = (UFixedLib.toUFixed(premium.netPremiumAmount) * minDistributionOwnerFee.fractionalFee).toInt();
+        premium.distributionFeeVarAmount = distributionFeeVarAmount;
+        premium.fullPremiumAmount += distributionFeeVarAmount;
+            
+        // if the referral is not valid, then the distribution owner gets everything
         if (! referralIsValid(distributionNftId, referralId)) {
-            premium.distributionOwnerFeeAmount = distributionOwnerFeeAmount;
-            premium.fullPremiumAmount += distributionOwnerFeeAmount;
+            premium.distributionOwnerFeeFixAmount = premium.distributionOwnerFeeFixAmount;
+            premium.distributionOwnerFeeVarAmount = premium.distributionFeeVarAmount;
             premium.premiumAmount = premium.fullPremiumAmount;
             return premium;
         }
 
+        // if the referral is valid, the the commission and discount are calculated based in the full premium
+        // the remaing amount goes to the distribution owner
         IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
         IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
         IDistribution.DistributorTypeInfo memory distributorTypeInfo = reader.getDistributorTypeInfo(distributorInfo.distributorType);
-        uint256 commissionAmount = UFixedLib.toUFixed(premium.netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
-        premium.distributionOwnerFeeAmount = distributionOwnerFeeAmount;
-        premium.commissionAmount = commissionAmount;
-        premium.fullPremiumAmount += distributionOwnerFeeAmount + commissionAmount;
-        premium.discountAmount = UFixedLib.toUFixed(premium.fullPremiumAmount).mul(referralInfo.discountPercentage).toInt();
-        premium.premiumAmount = premium.fullPremiumAmount - premium.discountAmount;
 
+        uint256 commissionAmount = UFixedLib.toUFixed(premium.netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
+        premium.commissionAmount = commissionAmount;
+        premium.discountAmount = UFixedLib.toUFixed(premium.fullPremiumAmount).mul(referralInfo.discountPercentage).toInt();
+        premium.distributionOwnerFeeFixAmount = minDistributionOwnerFee.fixedFee;
+        premium.distributionOwnerFeeVarAmount = distributionFeeVarAmount - commissionAmount - premium.discountAmount;
+        premium.premiumAmount = premium.fullPremiumAmount - premium.discountAmount;
+        
         return premium; 
     }
 

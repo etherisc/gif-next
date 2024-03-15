@@ -389,7 +389,7 @@ contract PolicyService is
                 if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premium.premiumAmount) {
                     revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premium.premiumAmount);
                 }
-                tokenHandler.transfer(policyOwner, productWallet, premium.productFeeAmount);
+                tokenHandler.transfer(policyOwner, productWallet, premium.productFeeFixAmount + premium.productFeeVarAmount);
                 tokenHandler.transfer(policyOwner, poolWallet, premium.netPremiumAmount);
                 netPremiumAmount = premium.netPremiumAmount;
                 // TODO: also move distribution tokens to distribution wallet and call `Distribution.processSale` to update distribution balances

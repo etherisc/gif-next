@@ -58,11 +58,16 @@ contract ReferralTest is ReferralTestBase {
             referralData);
 
         IPolicy.Premium memory premium = IPolicy.Premium(
-            1000, 1000, 0,
-            0, 0, 0, 0, 0, 0);
+            1000, 
+            0, 0, 0, 0,
+            0, 0, 0, 0, 
+            1000, 
+            0, 0, 0, 0,
+            0
+            );
 
         premium = distributionService.calculateFeeAmount(distributionNftId, ReferralLib.zero(), premium);
-        assertEq(premium.distributionOwnerFeeAmount, 100, "distributionOwnerFeeAmount amount is not correct");
+        assertEq(premium.distributionOwnerFeeFixAmount + premium.distributionOwnerFeeVarAmount, 100, "distributionOwnerFeeAmount amount is not correct");
         assertEq(premium.commissionAmount, 0, "commissionAmount amount is not correct");
         assertEq(premium.discountAmount, 0, "discountAmount amount is not correct");
         assertEq(premium.fullPremiumAmount, 1100, "fullPremium amount is not correct");
@@ -84,11 +89,16 @@ contract ReferralTest is ReferralTestBase {
             referralData);
 
         IPolicy.Premium memory premium = IPolicy.Premium(
-            1000, 1000, 0,
-            0, 0, 0, 0, 0, 0);
+            1000, 
+            0, 0, 0, 0,
+            0, 0, 0, 0, 
+            1000, 
+            0, 0, 0, 0,
+            0
+            );
 
         premium = distributionService.calculateFeeAmount(distributionNftId, referralId, premium);
-        assertEq(premium.distributionOwnerFeeAmount, 100, "distributionOwnerFeeAmount amount is not correct");
+        assertEq(premium.distributionOwnerFeeFixAmount + premium.distributionOwnerFeeVarAmount, 100, "distributionOwnerFeeAmount amount is not correct");
         assertEq(premium.commissionAmount, 30, "commissionAmount amount is not correct");
         assertEq(premium.discountAmount, 57, "discountAmount amount is not correct");
         assertEq(premium.fullPremiumAmount, 1130, "fullPremium amount is not correct");
