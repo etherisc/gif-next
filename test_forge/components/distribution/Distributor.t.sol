@@ -63,7 +63,8 @@ contract DistributorTest is TestGifBase {
         // solhint-disable-next-line 
         console.log("distributor nft id", distributorNftId.toInt());
 
-        referralId = distribution.createReferral(
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        referralId = sdistribution.createReferral(
             distributorNftId,
             referralCode,
             discountPercentage,

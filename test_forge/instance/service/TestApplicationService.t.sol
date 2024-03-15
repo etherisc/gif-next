@@ -15,6 +15,7 @@ import {ComponentService} from "../../../contracts/instance/base/ComponentServic
 import {DistributorType} from "../../../contracts/types/DistributorType.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/types/Referral.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/types/RiskId.sol";
+import {SecondsLib} from "../../../contracts/types/Seconds.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
@@ -37,7 +38,7 @@ contract TestProductService is TestGifBase {
             productNftId, 
             riskId, 
             1000, 
-            300, 
+            SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
             ReferralLib.zero());
@@ -61,7 +62,7 @@ contract TestProductService is TestGifBase {
             productNftId, 
             riskId, 
             1000, 
-            300, 
+            SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
             ReferralLib.zero());
@@ -95,7 +96,7 @@ contract TestProductService is TestGifBase {
             productNftId, 
             riskId, 
             1000, 
-            300, 
+            SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
             ReferralLib.zero());
@@ -129,7 +130,7 @@ contract TestProductService is TestGifBase {
             productNftId, 
             riskId, 
             1000, 
-            300, 
+            SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
             ReferralLib.zero());
@@ -174,12 +175,13 @@ contract TestProductService is TestGifBase {
             distributorType,
             "");
         
-        ReferralId referralId = distribution.createReferral(
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        ReferralId referralId = sdistribution.createReferral(
             distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(10, -2),
             5,
-            TimestampLib.blockTimestamp().addSeconds(604800),
+            TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(604800)),
             "");
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -187,7 +189,7 @@ contract TestProductService is TestGifBase {
             productNftId, 
             riskId, 
             1000, 
-            300, 
+            SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
             referralId);
@@ -267,7 +269,7 @@ contract TestProductService is TestGifBase {
         bundleNftId = spool.createBundle(
             bundleFee, 
             10000, 
-            604800, 
+            SecondsLib.toSeconds(604800), 
             ""
         );
         vm.stopPrank();

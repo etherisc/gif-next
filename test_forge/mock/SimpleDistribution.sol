@@ -55,7 +55,7 @@ contract SimpleDistribution is Distribution {
         );
     }
 
-        /**
+    /**
      * @dev lets distributors create referral codes.
      * referral codes need to be unique
      */

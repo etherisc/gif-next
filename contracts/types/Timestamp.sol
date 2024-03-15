@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.20;
+
+import {Seconds} from "./Seconds.sol";
 
 type Timestamp is uint40;
 
@@ -12,7 +14,8 @@ using {
     neTimestamp as !=,
     TimestampLib.gtz,
     TimestampLib.eqz,
-    TimestampLib.addSeconds
+    TimestampLib.addSeconds,
+    TimestampLib.toInt
 } for Timestamp global;
 
 /// @dev return true if Timestamp a is after Timestamp b
@@ -49,10 +52,6 @@ function neTimestamp(Timestamp a, Timestamp b) pure returns (bool) {
 function toTimestamp(uint256 timestamp) pure returns (Timestamp) {
     return Timestamp.wrap(uint40(timestamp));
 }
-
-// function blockTimestamp() view returns (Timestamp) {
-//     return toTimestamp(block.timestamp);
-// }
 
 /// @dev Return the Timestamp zero (0)
 function zeroTimestamp() pure returns (Timestamp) {
@@ -103,22 +102,22 @@ library TimestampLib {
         return neTimestamp(a, b);
     }
 
-    /// @dev return true if Timestamp is larger than 0
-    function gtz(Timestamp timestamp) public pure returns (bool) {
-        return Timestamp.unwrap(timestamp) > 0;
-    }
-
     /// @dev return true if Timestamp equals 0
     function eqz(Timestamp timestamp) public pure returns (bool) {
         return Timestamp.unwrap(timestamp) == 0;
     }
 
+    /// @dev return true if Timestamp is larger than 0
+    function gtz(Timestamp timestamp) public pure returns (bool) {
+        return Timestamp.unwrap(timestamp) > 0;
+    }
+
     /// @dev return true if Timestamp a is not equal to Timestamp b
     function addSeconds(
         Timestamp timestamp,
-        uint256 timeDelta
+        Seconds duration
     ) public pure returns (Timestamp) {
-        return toTimestamp(Timestamp.unwrap(timestamp) + uint40(timeDelta));
+        return toTimestamp(Timestamp.unwrap(timestamp) + duration.toInt());
     }
 
     function toInt(Timestamp timestamp) public pure returns (uint256) {

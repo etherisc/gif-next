@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Pool} from "../../contracts/components/Pool.sol";
-import {NftId} from "../../contracts/types/NftId.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
+import {NftId} from "../../contracts/types/NftId.sol";
+import {Pool} from "../../contracts/components/Pool.sol";
+import {Seconds} from "../../contracts/types/Timestamp.sol";
 import {UFixed} from "../../contracts/types/UFixed.sol";
 
 contract SimplePool is Pool {
@@ -62,7 +63,7 @@ contract SimplePool is Pool {
     function createBundle(
         Fee memory fee,
         uint256 initialAmount,
-        uint256 lifetime,
+        Seconds lifetime,
         bytes calldata filter
     )
         external

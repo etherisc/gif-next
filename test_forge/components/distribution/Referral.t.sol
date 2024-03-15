@@ -6,6 +6,7 @@ import {FeeLib} from "../../../contracts/types/Fee.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {ReferralLib} from "../../../contracts/types/Referral.sol";
 import {ReferralTestBase} from "./ReferralTestBase.sol";
+import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 
 contract ReferralTest is ReferralTestBase {
 
@@ -15,7 +16,8 @@ contract ReferralTest is ReferralTestBase {
         // solhint-disable-next-line 
         console.log("distributor nft id", distributorNftId.toInt());
 
-        referralId = distribution.createReferral(
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        referralId = sdistribution.createReferral(
             distributorNftId,
             referralCode,
             discountPercentage,
@@ -32,7 +34,8 @@ contract ReferralTest is ReferralTestBase {
         // solhint-disable-next-line 
         console.log("distributor nft id", distributorNftId.toInt());
 
-        referralId = distribution.createReferral(
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        referralId = sdistribution.createReferral(
             distributorNftId,
             referralCode,
             discountPercentage,

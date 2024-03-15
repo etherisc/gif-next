@@ -29,40 +29,21 @@ abstract contract Component is
     AccessManagedUpgradeable
 {
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.component.Component.sol")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant CONTRACT_LOCATION_V1 = 0xffe8d4462baed26a47154f4b8f6db497d2f772496965791d25bd456e342b7f00;
+    bytes32 public constant COMPONENT_LOCATION_V1 = 0xffe8d4462baed26a47154f4b8f6db497d2f772496965791d25bd456e342b7f00;
 
     struct ComponentStorage {
-        IInstance _instance; // instance for this component
-        InstanceReader _instanceReader; // instance reader for this component
         string _name; // unique (per instance) component name
         IERC20Metadata _token; // token for this component
+        IInstance _instance; // instance for this component
         address _wallet; // wallet for this component (default = component contract itself)
+        InstanceReader _instanceReader; // instance reader for this component
         bool _isNftInterceptor; // declares if component is involved in nft transfers
-        IInstanceService _instanceService; // instance service for this component
-
         NftId _productNftId; // only relevant for components that are linked to a aproduct
-        IProductService _productService; // product service for component, might not be relevant for some component types (eg oracles)
-    }
-
-
-    modifier onlyChainNft() {
-        if(msg.sender != getRegistry().getChainNftAddress()) {
-            revert ErrorComponentNotChainNft(msg.sender);
-        }
-        _;
-    }
-
-
-    modifier onlyProductService() {
-        if(msg.sender != address(_getComponentStorage()._productService)) {
-            revert ErrorComponentNotProductService(msg.sender);
-        }
-        _;
     }
 
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
         assembly {
-            $.slot := CONTRACT_LOCATION_V1
+            $.slot := COMPONENT_LOCATION_V1
         }
     }
 
@@ -74,77 +55,44 @@ abstract contract Component is
         ObjectType componentType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory data
+        bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
         public
         virtual
         onlyInitializing()
     {
-        ComponentStorage storage $ = _getComponentStorage();
-        initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, data);
-
-        // set unique name of component
-        $._name = name;
-        $._isNftInterceptor = isInterceptor;
+        initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, registryData);
 
         // set and check linked instance
-        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
-        $._instance = IInstance(instanceInfo.objectAddress);
+        ComponentStorage storage $ = _getComponentStorage();
+        $._instance = IInstance(
+            getRegistry().getObjectInfo(instanceNftId).objectAddress);
+
         if(!$._instance.supportsInterface(type(IInstance).interfaceId)) {
-            revert ErrorComponentNotInstance(instanceNftId, instanceInfo.objectAddress);
+            revert ErrorComponentNotInstance(instanceNftId);
         }
 
         // initialize AccessManagedUpgradeable
         __AccessManaged_init($._instance.authority());
 
-        // set linked services
-        VersionPart gifVersion = $._instance.getMajorVersion();
-        $._instanceService = IInstanceService(getRegistry().getServiceAddress(INSTANCE(), gifVersion));
+        // set component state
+        $._name = name;
+        $._isNftInterceptor = isInterceptor;
         $._instanceReader = $._instance.getInstanceReader();
-        $._productService = IProductService(getRegistry().getServiceAddress(PRODUCT(), gifVersion));
-
-        // set wallet and token
         $._wallet = address(this);
         $._token = IERC20Metadata(token);
 
         registerInterface(type(IComponent).interfaceId);
     }
 
-    /// @dev callback function for nft transfers. may only be called by chain nft contract.
-    /// default implementation is empty. overriding functions MUST add onlyChainNft modifier
-    function nftTransferFrom(address from, address to, uint256 tokenId)
-        external
-        virtual override
-        onlyChainNft()
-    { }
-
     function lock() external onlyOwner override {
-        _getComponentStorage()._instanceService.setTargetLocked(getName(), true);
+        IInstanceService(_getServiceAddress(INSTANCE())).setTargetLocked(getName(), true);
     }
     
     function unlock() external onlyOwner override {
-        _getComponentStorage()._instanceService.setTargetLocked(getName(), false);
+        IInstanceService(_getServiceAddress(INSTANCE())).setTargetLocked(getName(), false);
     }
 
-    // only product service may set product nft id during registration of product setup
-    function setProductNftId(NftId productNftId)
-        external
-        override
-        onlyProductService() 
-    {
-        ComponentStorage storage $ = _getComponentStorage();
-
-        if($._productNftId.gtz()) {
-            revert ErrorComponentProductNftAlreadySet();
-        }
-
-        $._productNftId = productNftId;
-    }
-
-    /// @dev Sets the wallet address for the component. 
-    /// if the current wallet has tokens, these will be transferred. 
-    /// if the new wallet address is externally owned, an approval from the 
-    /// owner of the external wallet for the component to move all tokens must exist. 
     function setWallet(address newWallet)
         external
         override
@@ -159,8 +107,9 @@ abstract contract Component is
         if (newWallet == address(0)) {
             revert ErrorComponentWalletAddressZero();
         }
+
         if (newWallet == currentWallet) {
-            revert ErrorComponentWalletAddressIsSameAsCurrent(newWallet);
+            revert ErrorComponentWalletAddressIsSameAsCurrent();
         }
 
         if (currentBalance > 0) {
@@ -177,7 +126,7 @@ abstract contract Component is
 
         // effects
         $._wallet = newWallet;
-        emit LogComponentWalletAddressChanged(newWallet);
+        emit LogComponentWalletAddressChanged(currentWallet, newWallet);
 
         // interactions
         if (currentBalance > 0) {
@@ -192,11 +141,41 @@ abstract contract Component is
         }
     }
 
-    function getWallet()
-        public
-        view
+    function setProductNftId(NftId productNftId)
+        external
         override
-        returns (address walletAddress)
+    {
+        ComponentStorage storage $ = _getComponentStorage();
+
+        // verify caller is product service
+        if(msg.sender != _getServiceAddress(PRODUCT())) {
+            revert ErrorComponentNotProductService(msg.sender);
+        }
+
+        // verify component is not yet linked to a product
+        if($._productNftId.gtz()) {
+            revert ErrorComponentProductNftAlreadySet();
+        }
+
+        $._productNftId = productNftId;
+    }
+
+    /// @dev callback function for nft transfers
+    /// may only be called by chain nft contract.
+    /// do not override this function to implement business logic for handling transfers
+    /// override internal function _nftTransferFrom instead
+    function nftTransferFrom(address from, address to, uint256 tokenId)
+        external
+        virtual override
+    {
+        if(msg.sender != getRegistry().getChainNftAddress()) {
+            revert ErrorComponentNotChainNft(msg.sender);
+        }
+
+        _nftTransferFrom(from, to, tokenId);
+    }
+
+    function getWallet() public view override returns (address walletAddress)
     {
         return _getComponentStorage()._wallet;
     }
@@ -213,15 +192,6 @@ abstract contract Component is
         return _getComponentStorage()._instance;
     }
 
-    function getInstanceReader() public view returns (InstanceReader reader) {
-        return _getComponentStorage()._instanceReader;
-    }
-
-    function getServiceAddress(ObjectType domain) public view returns (address service) {
-        VersionPart majorVersion = getInstance().getMajorVersion();
-        return getRegistry().getServiceAddress(domain, majorVersion);
-    }
-
     function getName() public view override returns(string memory name) {
         return _getComponentStorage()._name;
     }
@@ -230,12 +200,22 @@ abstract contract Component is
         return _getComponentStorage()._productNftId;
     }
 
-    function getInstanceService() public view returns (IInstanceService) {
-        return _getComponentStorage()._instanceService;
+    /// @dev internal function for nft transfers.
+    /// handling logic that deals with nft transfers need to overwrite this function
+    function _nftTransferFrom(address from, address to, uint256 tokenId)
+        internal
+        virtual
+    { }
+
+    /// @dev returns reader for linked instance
+    function _getInstanceReader() internal view returns (InstanceReader reader) {
+        return _getComponentStorage()._instanceReader;
     }
 
-    function getProductService() public view returns (IProductService) {
-        return _getComponentStorage()._productService;
+    /// @dev returns the service address for the specified domain
+    /// gets address via lookup from registry using the major version form the linked instance
+    function _getServiceAddress(ObjectType domain) internal view returns (address service) {
+        VersionPart majorVersion = _getComponentStorage()._instance.getMajorVersion();
+        return getRegistry().getServiceAddress(domain, majorVersion);
     }
-
 }

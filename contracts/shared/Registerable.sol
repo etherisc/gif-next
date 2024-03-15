@@ -37,7 +37,7 @@ contract Registerable is
         ObjectType objectType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory data
+        bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
         public
         virtual
@@ -51,7 +51,7 @@ contract Registerable is
         $._parentNftId = parentNftId;
         $._objectType = objectType;
         $._isInterceptor = isInterceptor;
-        $._data = data;
+        $._data = registryData;
     }
 
 

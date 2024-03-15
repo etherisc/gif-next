@@ -19,6 +19,7 @@ import {TokenHandler} from "../../shared/TokenHandler.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
+import {Seconds} from "../../types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
@@ -219,6 +220,7 @@ contract PolicyService is
             pool.verifyApplication(
                 applicationNftId, 
                 policyInfo.applicationData, 
+                bundleNftId,
                 bundleInfo.filter,
                 collateralAmount);
         }

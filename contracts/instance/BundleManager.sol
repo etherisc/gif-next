@@ -71,7 +71,7 @@ contract BundleManager is
     }
 
 
-    /// @dev add a new bundle to a riskpool registerd with this instance
+    /// @dev add a new bundle to a pool registerd with this instance
     // the corresponding pool is fetched via instance reader
     function add(NftId bundleNftId) external restricted() {
         NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;

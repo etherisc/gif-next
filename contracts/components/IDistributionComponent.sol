@@ -45,20 +45,6 @@ interface IDistributionComponent is IComponent {
         bytes memory data
     ) external;
 
-    /**
-     * @dev lets distributors create referral codes.
-     * referral codes need to be unique
-     * distributor is identified via msg.sender.
-     */
-    function createReferral(
-        NftId distributorNftId,
-        string memory code,
-        UFixed discountPercentage,
-        uint32 maxReferrals,
-        Timestamp expiryAt,
-        bytes memory data
-    ) external returns (ReferralId referralId);
-
     function calculateRenewalFeeAmount(
         ReferralId referralId,
         uint256 netPremiumAmount
