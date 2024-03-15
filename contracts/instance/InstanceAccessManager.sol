@@ -72,7 +72,8 @@ contract InstanceAccessManager is
     }
 
     //--- Role ------------------------------------------------------//
-    // INSTANCE_SERVICE_ROLE 
+    // assume all core roles are know at deployment time
+    // assume core roles are set and granted only during instance cloning
     // assume core roles are never revoked or renounced -> core roles admin is never active after intialization
     function createCoreRole(RoleId roleId, string memory name)
         external
@@ -108,7 +109,8 @@ contract InstanceAccessManager is
     }
 
     // ADMIN_ROLE
-    // TODO restricted to ADMIN_ROLE or have restrictedToRoleAdmin modifier ???
+    // assume used by instance service only during instance cloning
+    // assume used only by this.createRole(), this.createGifRole() afterwards
     function setRoleAdmin(RoleId roleId, RoleId admin) 
         public 
         restricted()
@@ -118,7 +120,7 @@ contract InstanceAccessManager is
         }
 
         if(_roleInfo[roleId].rtype == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, _roleInfo[roleId].rtype);
         }
 
         if (!roleExists(admin)) {
@@ -128,8 +130,6 @@ contract InstanceAccessManager is
         _roleInfo[roleId].admin = admin;      
     }
 
-    // TODO notify member?
-    // TODO granting/revoking can be `attached` to nft transfer?
     function grantRole(RoleId roleId, address member) 
         public
         restrictedToRoleAdmin(roleId) 
@@ -189,7 +189,7 @@ contract InstanceAccessManager is
         return _roleIdForName[ShortStrings.toShortString(name)];
     }
 
-    function roleMember(RoleId roleId, uint256 idx) external view returns (address roleMember) {
+    function roleMember(RoleId roleId, uint256 idx) external view returns (address member) {
         return EnumerableSet.at(_roleMembers[roleId], idx);
     }
 
@@ -210,7 +210,7 @@ contract InstanceAccessManager is
     }
 
     //--- Target ------------------------------------------------------//
-    // INSTANCE_SERVICE_ROLE
+    // ADMIN_ROLE
     // assume some core targets are registred (instance) while others are not (instance accesss manager, instance reader, bundle manager)
     function createCoreTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, IAccess.Type.Core);
@@ -294,6 +294,8 @@ contract InstanceAccessManager is
     }
 
     // INSTANCE_OWNER_ROLE
+    // gif role for gif target
+    // gif role for custom target
     // custom role for gif target
     // custom role for custom target
     // TODO instance owner can mess with gif target (component) -> e.g. set custom role for function intendent to work with gif role
@@ -334,7 +336,19 @@ contract InstanceAccessManager is
         return _targetInfo[target];
     }
 
-    //--- internal view/pure functions --------------------------------------//
+
+    //--- Interceptor ------------------------------------------------------------//
+    // INSTANCE_ROLE or onlyInstance
+    function transferOwnerRole(address from, address to) restricted external
+    {
+        bool revoked = this.revokeRole(INSTANCE_OWNER_ROLE(), from);
+        bool granted = this.grantRole(INSTANCE_OWNER_ROLE(), to);
+        if(!revoked || !granted) {
+            revert();
+        }
+    }
+
+    //--- Role internal view/pure functions --------------------------------------//
 
     function _createRole(RoleId roleId, string memory nameLong, IAccess.Type rtype) 
         internal
@@ -430,6 +444,8 @@ contract InstanceAccessManager is
         admin = RoleIdLib.toRoleId(adminInt);
     }
 
+    //--- Target internal view/pure functions --------------------------------------//
+
     function _createTarget(address target, string memory nameLong, IAccess.Type ttype) 
         internal 
     {
@@ -502,79 +518,3 @@ contract InstanceAccessManager is
         return _accessManager.canCall(caller, target, selector);
     }
 }
-
-
-/// TODO taget admin example:
-    // 1) ADMIN_ROLE (or `this`) is always admin for core targets 
-    // 2) INSTANCE_OWNER_ROLE (or instance owner address) is always admin for gif(component) target
-    // 3) INSTANCE_OWNER_ROLE or custom role is initial admin for custom target, initialAdmin can be changed
-    /*function setTargetFunctionRole(
-        string memory targetName,
-        bytes4[] calldata selectors,
-        RoleId roleId
-    ) 
-        public 
-        virtual
-    {
-        ShortString nameShort = ShortStrings.toShortString(targetName);
-        address target = _targetAddressForName[nameShort];
-
-        if(msg.sender != getTargetAdmin(target)) {
-            revert IAccess.ErrorIAccessNotTargetAdmin(target, msg.sender);
-        }
-        // checked at target creation time or always?
-        if(!_registry.isRegistered(target)) {
-            revert IAccess.ErrorIAccessTargetNotRegistered(target);
-        }
-        // guarantee apropriate target admin for core targets
-        // not core target
-        if(_targetInfo[target].ttype == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, _targetInfo[target].ttype);
-        }
-
-        // not core role
-        if(_roleInfo[roleId].rtype == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, _roleInfo[roleId].rtype);
-        }
-
-        _setTargetFunctionRole(target, nameShort, selectors, roleId);
-    }
-
-    function setTargetLocked(string memory targetName, bool locked) 
-        external
-    {
-        ShortString nameShort = ShortStrings.toShortString(targetName);
-        address target = _targetAddressForName[nameShort];
-
-        if(msg.sender != getTargetAdmin(target)) {
-            revert IAccess.ErrorIAccessNotTargetAdmin(target, msg.sender);
-        }
-
-        _accessManager.setTargetClosed(target, locked);
-    }
-
-    function setTargetAdmin(address target, address admin) 
-        public 
-        restricted()
-    {
-        if (!targetExists(target)) {
-            revert IAccess.ErrorIAccessTargetInvalid(target);
-        }
-
-        if (!targetExists(admin)) {
-            revert IAccess.ErrorIAccessTargetInvalid(target);
-        }
-
-        if(_targetInfo[target].ttype == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessTargetInvalid(target);
-        }
-
-        // target admin is not target itself
-        //if (!targetExists(admin)) {
-        //    revert IAccess.ErrorIAccessRoleIdInvalid(admin);
-        //}       
-
-        _targetAdmin[target] = admin; 
-    }*/
-///
-
