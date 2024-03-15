@@ -13,7 +13,7 @@ import {POOL} from "../types/ObjectType.sol";
 import {RoleId, PUBLIC_ROLE} from "../types/RoleId.sol";
 import {Seconds} from "../types/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {UFixed} from "../types/UFixed.sol";
+import {UFixed, UFixedLib} from "../types/UFixed.sol";
 
 
 abstract contract Pool is
@@ -24,21 +24,22 @@ abstract contract Pool is
     bytes32 public constant POOL_STORAGE_LOCATION_V1 = 0x25e3e51823fbfffb988e0a2744bb93722d9f3e906c07cc0a9e77884c46c58300;
 
     struct PoolStorage {
-        UFixed _collateralizationLevel;
-        UFixed _retentionLevel;
-        uint256 _maxCapitalAmount;
+        // TODO cleanup
+        // UFixed _collateralizationLevel;
+        // UFixed _retentionLevel;
+        // uint256 _maxCapitalAmount;
         
-        bool _isExternallyManaged;
-        bool _isVerifyingApplications;
+        // bool _isExternallyManaged;
+        // bool _isVerifyingApplications;
 
-        RoleId _bundleOwnerRole;
-        bool _isInterceptingBundleTransfers;
+        // RoleId _bundleOwnerRole;
+        // bool _isInterceptingBundleTransfers;
 
-        Fee _initialPoolFee;
-        Fee _initialStakingFee;
-        Fee _initialPerformanceFee;
+        // Fee _initialPoolFee;
+        // Fee _initialStakingFee;
+        // Fee _initialPerformanceFee;
 
-        TokenHandler _tokenHandler;
+        // TokenHandler _tokenHandler;
 
         // may be used to interact with instance by derived contracts
         IPoolService _poolService;
@@ -68,10 +69,10 @@ abstract contract Pool is
         string memory name,
         address token,
         bool isInterceptingNftTransfers,
-        bool isExternallyManaging,
-        bool isVerifying,
-        UFixed collateralizationLevel,
-        UFixed retentionLevel,
+        // bool isExternallyManaging,
+        // bool isVerifying,
+        // UFixed collateralizationLevel,
+        // UFixed retentionLevel,
         address initialOwner,
         bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
@@ -82,17 +83,17 @@ abstract contract Pool is
         initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, registryData);
 
         PoolStorage storage $ = _getPoolStorage();
-        // TODO add validation
-        $._tokenHandler = new TokenHandler(token);
-        $._maxCapitalAmount = type(uint256).max;
-        $._isExternallyManaged = isExternallyManaging;
-        $._isVerifyingApplications = isVerifying;
-        $._bundleOwnerRole = PUBLIC_ROLE();
-        $._collateralizationLevel = collateralizationLevel;
-        $._retentionLevel = retentionLevel;
-        $._initialPoolFee = FeeLib.zeroFee();
-        $._initialStakingFee = FeeLib.zeroFee();
-        $._initialPerformanceFee = FeeLib.zeroFee();
+        // TODO cleanup
+        // $._tokenHandler = new TokenHandler(token);
+        // $._maxCapitalAmount = type(uint256).max;
+        // $._isExternallyManaged = isExternallyManaging;
+        // $._isVerifyingApplications = isVerifying;
+        // $._bundleOwnerRole = PUBLIC_ROLE();
+        // $._collateralizationLevel = collateralizationLevel;
+        // $._retentionLevel = retentionLevel;
+        // $._initialPoolFee = FeeLib.zeroFee();
+        // $._initialStakingFee = FeeLib.zeroFee();
+        // $._initialPerformanceFee = FeeLib.zeroFee();
         $._poolService = getInstance().getPoolService();
         $._bundleService = getInstance().getBundleService();
 
@@ -188,13 +189,7 @@ abstract contract Pool is
         restricted()
         onlyOwner()
     {
-        // TODO refactor to use pool service
-        // _getPoolStorage()._poolService.setMaxCapitalAmount(...);
-
-        uint256 previousMaxCapitalAmount = _getPoolStorage()._maxCapitalAmount;
-        _getPoolStorage()._maxCapitalAmount = maxCapitalAmount;
-
-        emit LogPoolBundleMaxCapitalAmountUpdated(previousMaxCapitalAmount, maxCapitalAmount);
+        _getPoolStorage()._poolService.setMaxCapitalAmount(maxCapitalAmount);
     }
 
 
@@ -204,16 +199,7 @@ abstract contract Pool is
         restricted()
         onlyOwner()
     {
-        // TODO refactor to use pool service
-        // _getPoolStorage()._poolService.setBundleOwnerRole(...);
-
-        if(_getPoolStorage()._bundleOwnerRole != PUBLIC_ROLE()) {
-            revert ErrorPoolBundleOwnerRoleAlreadySet();
-        }
-
-        _getPoolStorage()._bundleOwnerRole = bundleOwnerRole;
-
-        emit LogPoolBundleOwnerRoleSet(bundleOwnerRole);
+        _getPoolStorage()._poolService.setBundleOwnerRole(bundleOwnerRole);
     }
 
 
@@ -259,41 +245,6 @@ abstract contract Pool is
     }
 
 
-    function getCollateralizationLevel() public view virtual returns (UFixed collateralizationLevel) {
-        return _getPoolStorage()._collateralizationLevel;
-    }
-
-
-    function getRetentionLevel() public view virtual returns (UFixed retentionLevel) {
-        return _getPoolStorage()._retentionLevel;
-    }
-
-
-    function isExternallyManaged() public view virtual returns (bool) {
-        return _getPoolStorage()._isExternallyManaged;
-    }
-
-
-    function isVerifyingApplications() public view virtual returns (bool isConfirmingApplication) {
-        return _getPoolStorage()._isVerifyingApplications;
-    }
-
-
-    function getMaxCapitalAmount() public view virtual returns (uint256 maxCapitalAmount) {
-        return _getPoolStorage()._maxCapitalAmount;
-    }
-
-
-    function isInterceptingBundleTransfers() public view virtual returns (bool) {
-        return isNftInterceptor();
-    }
-
-
-    function getBundleOwnerRole() public view returns (RoleId bundleOwnerRole) {
-        return _getPoolStorage()._bundleOwnerRole;
-    }
-
-
     /// @dev see {IPoolComponent.applicationMatchesBundle}
     /// Override this function to implement any custom application verification 
     /// Default implementation always returns true
@@ -313,13 +264,17 @@ abstract contract Pool is
     }
 
 
-    function getSetupInfo() public view returns (ISetup.PoolSetupInfo memory setupInfo) {
-        InstanceReader reader = getInstance().getInstanceReader();
-        setupInfo = reader.getPoolSetupInfo(getNftId());
+    function getPoolInfo() external view returns (ISetup.PoolInfo memory poolInfo) {
+        poolInfo = abi.decode(getComponentInfo().data, (ISetup.PoolInfo));
+    }
 
-        // fallback to initial setup info (wallet is always != address(0))
-        if(setupInfo.wallet == address(0)) {
-            setupInfo = _getInitialSetupInfo();
+
+    function getComponentInfo() public view returns (ISetup.ComponentInfo memory info) {
+        info = _getInstanceReader().getComponentInfo(getNftId());
+
+        // fallback to initial info (wallet is always != address(0))
+        if(info.wallet == address(0)) {
+            info = _getInitialInfo();
         }
     }
 
@@ -350,23 +305,51 @@ abstract contract Pool is
         return keccak256(abi.encode(uint256(keccak256(name)) - 1)) & ~bytes32(uint256(0xff));
     }
 
+    /// @dev defines initial pool specification
+    /// overwrite this function according to your use case
+    function _getInitialInfo()
+        internal
+        view 
+        virtual
+        returns (ISetup.ComponentInfo memory info)
+    {
+        // PoolStorage storage $ = _getPoolStorage();
 
-    function _getInitialSetupInfo() internal view returns (ISetup.PoolSetupInfo memory) {
-        PoolStorage storage $ = _getPoolStorage();
-        return ISetup.PoolSetupInfo(
-            getProductNftId(),
-            $._tokenHandler,
-            $._maxCapitalAmount,
-            isNftInterceptor(),
-            $._isExternallyManaged,
-            $._isVerifyingApplications,
-            $._collateralizationLevel,
-            $._retentionLevel,
-            $._initialPoolFee,
-            $._initialStakingFee,
-            $._initialPerformanceFee,
-            getWallet()
-        );
+        return ISetup.ComponentInfo(
+            getName(),
+            getToken(),
+            TokenHandler(address(0)), // will be created by GIF service during registration
+            address(this), // contract is its own wallet
+            abi.encode(
+                ISetup.PoolInfo(
+                    NftIdLib.zero(), // will be set when GIF registers the related product
+                    PUBLIC_ROLE(), // bundleOwnerRole
+                    type(uint256).max, // maxCapitalAmount,
+                    isNftInterceptor(), // isInterceptingBundleTransfers
+                    false, // isExternallyManaged,
+                    false, // isVerifyingApplications,
+                    UFixedLib.toUFixed(1), // collateralizationLevel,
+                    UFixedLib.toUFixed(1), // retentionLevel,
+                    FeeLib.zeroFee(), // initialPoolFee,
+                    FeeLib.zeroFee(), // initialStakingFee,
+                    FeeLib.zeroFee() // initialPerformanceFee,
+                )));
+
+        // return ISetup.PoolInfo(
+        //     getProductNftId(),
+        //     TokenHandler(address(0)), // GIF will be created by GIF during registration
+        //     PUBLIC_ROLE(), // bundleOwnerRole
+        //     type(uint256).max, // maxCapitalAmount,
+        //     isNftInterceptor(), // isInterceptingBundleTransfers
+        //     false, // isExternallyManaged,
+        //     false, // isVerifyingApplications,
+        //     UFixedLib.toUFixed(1), // collateralizationLevel,
+        //     UFixedLib.toUFixed(1), // retentionLevel,
+        //     FeeLib.zero(), // initialPoolFee,
+        //     FeeLib.zero(), // initialStakingFee,
+        //     FeeLib.zero(), // initialPerformanceFee,
+        //     getWallet()
+        // );
     }
 
 

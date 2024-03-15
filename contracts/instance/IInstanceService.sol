@@ -52,8 +52,9 @@ interface IInstanceService is IService {
             BundleManager clonedBundleManager
         );
 
-    function hasRole(address account, RoleId role, address instanceAddress) external returns (bool);
     function setTargetLocked(string memory targetName, bool locked) external;
+
+    function hasRole(address account, RoleId role, address instanceAddress) external returns (bool);
 
 }
 

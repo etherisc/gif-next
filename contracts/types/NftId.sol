@@ -40,6 +40,13 @@ function neNftId(NftId a, NftId b) pure returns (bool isDifferent) {
 
 // library functions that operate on user defined type
 library NftIdLib {
+
+    /// @dev the zero nft id
+    /// is never a valid nft id and implies a non-initialized value
+    function zero() public pure returns (NftId) {
+        return NftId.wrap(0);
+    }
+
     /// @dev Converts the NftId to a uint256.
     function toInt(NftId nftId) public pure returns (uint96) {
         return uint96(NftId.unwrap(nftId));

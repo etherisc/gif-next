@@ -151,14 +151,14 @@ contract InstanceReader {
         }
     }
 
-    function getPoolSetupInfo(NftId poolNftId)
+    function getComponentInfo(NftId poolNftId)
         public
         view
-        returns (ISetup.PoolSetupInfo memory info)
+        returns (ISetup.ComponentInfo memory info)
     {
         bytes memory data = _store.getData(toPoolKey(poolNftId));
         if (data.length > 0) {
-            return abi.decode(data, (ISetup.PoolSetupInfo));
+            return abi.decode(data, (ISetup.ComponentInfo));
         }
     }
 

@@ -52,10 +52,11 @@ contract SimplePool is Pool {
             "SimplePool",
             token,
             isInterceptor,
-            false, // externally managed
-            isConfirmingApplication, // verifying applications
-            collateralizationLevel,
-            retentionLevel,
+            // TODO refactor
+            // false, // externally managed
+            // isConfirmingApplication, // verifying applications
+            // collateralizationLevel,
+            // retentionLevel,
             initialOwner,
             "");
     }

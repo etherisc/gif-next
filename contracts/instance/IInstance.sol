@@ -48,8 +48,8 @@ interface IInstance is IRegisterable, IKeyValueStore, IAccessManaged {
     function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external;
     function updateDistributionSetupState(NftId distributionNftId, StateId newState) external;
 
-    function createPoolSetup(NftId poolNftId, ISetup.PoolSetupInfo memory setup) external;
-    function updatePoolSetup(NftId poolNftId, ISetup.PoolSetupInfo memory setup, StateId newState) external;
+    function createPoolSetup(NftId poolNftId, ISetup.ComponentInfo memory info) external;
+    function updatePoolSetup(NftId poolNftId, ISetup.ComponentInfo memory info, StateId newState) external;
     function updatePoolSetupState(NftId poolNftId, StateId newState) external;
 
     function createBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle) external;

@@ -248,8 +248,9 @@ contract ApplicationService is
             (productFeeAmount,) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
         }
         {
-            ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-            (poolFeeAmount,) = FeeLib.calculateFee(poolSetupInfo.poolFee, netPremiumAmount);
+            ISetup.PoolInfo memory poolInfo = abi.decode(
+                instanceReader.getComponentInfo(poolNftId).data, (ISetup.PoolInfo));
+            (poolFeeAmount,) = FeeLib.calculateFee(poolInfo.poolFee, netPremiumAmount);
         }
         {
             NftId distributionNftId = product.getDistributionNftId();

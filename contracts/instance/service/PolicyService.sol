@@ -161,8 +161,10 @@ contract PolicyService is
             (productFeeAmount,) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
         }
         {
-            ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-            (poolFeeAmount,) = FeeLib.calculateFee(poolSetupInfo.poolFee, netPremiumAmount);
+            ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+            ISetup.PoolInfo memory poolInfo = abi.decode(
+                componentInfo.data, (ISetup.PoolInfo));
+            (poolFeeAmount,) = FeeLib.calculateFee(poolInfo.poolFee, netPremiumAmount);
         }
         {
             NftId distributionNftId = product.getDistributionNftId();
@@ -195,7 +197,9 @@ contract PolicyService is
         require(bundleInfo.poolNftId == poolNftId, "POLICY_BUNDLE_MISMATCH");
 
         // calculate required collateral
-        ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
+        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        ISetup.PoolInfo memory poolInfo = abi.decode(
+            componentInfo.data, (ISetup.PoolInfo));
 
         // obtain remaining return values
         // TODO required collateral amount should be calculated by pool service, not policy service
@@ -296,7 +300,12 @@ contract PolicyService is
         instance.updatePolicy(applicationNftId, policyInfo, newPolicyState);
 
         // also verify/confirm application by pool if necessary
-        if(instanceReader.getPoolSetupInfo(poolNftId).isVerifyingApplications) {
+        if(abi.decode(
+            instanceReader.getComponentInfo(poolNftId).data, 
+            (ISetup.PoolInfo)
+            ).isVerifyingApplications
+        )
+        {
             IPoolComponent pool = IPoolComponent(
                 getRegistry().getObjectInfo(poolNftId).objectAddress);
 
@@ -445,11 +454,16 @@ contract PolicyService is
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
-            ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
+            InstanceReader instanceReader = instance.getInstanceReader();
+            ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
             TokenHandler tokenHandler = productSetupInfo.tokenHandler;
             address policyOwner = getRegistry().ownerOf(policyNftId);
-            ISetup.PoolSetupInfo memory poolSetupInfo = instance.getInstanceReader().getPoolSetupInfo(productSetupInfo.poolNftId);
-            address poolWallet = poolSetupInfo.wallet;
+
+            ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productSetupInfo.poolNftId);
+            ISetup.PoolInfo memory poolInfo = abi.decode(
+                componentInfo.data, (ISetup.PoolInfo));
+
+            address poolWallet = componentInfo.wallet;
             netPremiumAmount = premiumAmount;
             Fee memory productFee = productSetupInfo.productFee;
 

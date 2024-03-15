@@ -263,7 +263,7 @@ abstract contract Product is
         ProductStorage storage $ = _getProductStorage();
 
         ISetup.DistributionSetupInfo memory distributionSetupInfo = $._distribution.getSetupInfo();
-        ISetup.PoolSetupInfo memory poolSetupInfo = $._pool.getSetupInfo();
+        ISetup.PoolInfo memory poolInfo = $._pool.getPoolInfo();
 
         return ISetup.ProductSetupInfo(
             getToken(),
@@ -273,9 +273,9 @@ abstract contract Product is
             distributionSetupInfo.distributionFee, 
             $._initialProductFee,
             $._initialProcessingFee,
-            poolSetupInfo.poolFee, 
-            poolSetupInfo.stakingFee, 
-            poolSetupInfo.performanceFee,
+            poolInfo.poolFee, 
+            poolInfo.stakingFee, 
+            poolInfo.performanceFee,
             false,
             getWallet()
         );

@@ -68,19 +68,20 @@ contract TestPool is TestGifBase {
         );
         
         NftId poolNftId = poolService.register(address(pool));
-        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
+        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        ISetup.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (ISetup.PoolInfo));
 
         // check nftid
-        assertTrue(poolSetupInfo.productNftId.eqz(), "product nft not zero");
+        assertTrue(poolInfo.productNftId.eqz(), "product nft not zero");
 
         // check token handler
-        assertTrue(address(poolSetupInfo.tokenHandler) != address(0), "token handler zero");
-        assertEq(address(poolSetupInfo.tokenHandler.getToken()), address(pool.getToken()), "unexpected token for token handler");
+        assertTrue(address(componentInfo.tokenHandler) != address(0), "token handler zero");
+        assertEq(address(componentInfo.tokenHandler.getToken()), address(pool.getToken()), "unexpected token for token handler");
 
         // check fees
-        Fee memory poolFee = poolSetupInfo.poolFee;
-        Fee memory stakingFee = poolSetupInfo.stakingFee;
-        Fee memory performanceFee = poolSetupInfo.performanceFee;
+        Fee memory poolFee = poolInfo.poolFee;
+        Fee memory stakingFee = poolInfo.stakingFee;
+        Fee memory performanceFee = poolInfo.performanceFee;
         assertEq(poolFee.fractionalFee.toInt(), 0, "pool fee not 0");
         assertEq(poolFee.fixedFee, 0, "pool fee not 0");
         assertEq(stakingFee.fractionalFee.toInt(), 0, "staking fee not 0");
@@ -107,25 +108,31 @@ contract TestPool is TestGifBase {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-        
+
+        console.log(poolOwner, "poolOwner");
+        console.log(pool.getOwner());
+
         NftId poolNftId = poolService.register(address(pool));
+
         Fee memory newPoolFee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
         Fee memory newStakingFee = FeeLib.toFee(UFixedLib.toUFixed(333,0), 444);
         Fee memory newPerformanceFee = FeeLib.toFee(UFixedLib.toUFixed(555,0), 666);
         pool.setFees(newPoolFee, newStakingFee, newPerformanceFee);
 
-        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-        Fee memory poolFee = poolSetupInfo.poolFee;
-        Fee memory stakingFee = poolSetupInfo.stakingFee;
-        Fee memory performanceFee = poolSetupInfo.performanceFee;
+        vm.stopPrank();
+
+        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        ISetup.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (ISetup.PoolInfo));
+
+        Fee memory poolFee = poolInfo.poolFee;
+        Fee memory stakingFee = poolInfo.stakingFee;
+        Fee memory performanceFee = poolInfo.performanceFee;
         assertEq(poolFee.fractionalFee.toInt(), 111, "pool fee not 111");
         assertEq(poolFee.fixedFee, 222, "pool fee not 222");
         assertEq(stakingFee.fractionalFee.toInt(), 333, "staking fee not 333");
         assertEq(stakingFee.fixedFee, 444, "staking fee not 444");
         assertEq(performanceFee.fractionalFee.toInt(), 555, "performance fee not 555");
         assertEq(performanceFee.fixedFee, 666, "performance fee not 666");
-
-        vm.stopPrank();
     }
 
     function test_Pool_createBundle() public {
@@ -153,9 +160,8 @@ contract TestPool is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(investor);
-
-        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-        token.approve(address(poolSetupInfo.tokenHandler), 10000);
+        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        token.approve(address(componentInfo.tokenHandler), 10000);
 
         // WHEN
         SimplePool spool = SimplePool(address(pool));
@@ -170,7 +176,7 @@ contract TestPool is TestGifBase {
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
 
         assertEq(token.balanceOf(poolOwner), 0, "pool owner balance not 0");
-        assertEq(token.balanceOf(poolSetupInfo.wallet), 10000, "pool wallet balance not 10000");
+        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet balance not 10000");
 
         assertEq(instanceBundleManager.bundles(poolNftId), 1, "expected only 1 bundle");
         assertTrue(instanceBundleManager.getBundleNftId(poolNftId, 0).eq(bundleNftId), "bundle nft id in bundle manager not equal to bundle nft id");
@@ -197,14 +203,14 @@ contract TestPool is TestGifBase {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-        
+
         NftId poolNftId = poolService.register(address(pool));
 
         vm.stopPrank();
         vm.startPrank(investor);
 
-        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-        token.approve(address(poolSetupInfo.tokenHandler), 10000);
+        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        token.approve(address(componentInfo.tokenHandler), 10000);
 
         SimplePool spool = SimplePool(address(pool));
         NftId bundleNftId = spool.createBundle(

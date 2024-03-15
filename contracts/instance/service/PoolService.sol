@@ -13,13 +13,13 @@ import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 
+import {Fee, FeeLib} from "../../types/Fee.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
-import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
-import {Fee, FeeLib} from "../../types/Fee.sol";
-import {Version, VersionLib} from "../../types/Version.sol";
-import {KEEP_STATE, StateId} from "../../types/StateId.sol";
+import {RoleId, POOL_OWNER_ROLE, PUBLIC_ROLE} from "../../types/RoleId.sol";
+import {StateId, KEEP_STATE} from "../../types/StateId.sol";
 import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
+import {Version, VersionLib} from "../../types/Version.sol";
 
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
@@ -78,14 +78,64 @@ contract PoolService is
             POOL_OWNER_ROLE());
 
         IPoolComponent pool = IPoolComponent(poolAddress);
-        IRegistry.ObjectInfo memory poolInfo = getRegistryService().registerPool(pool, owner);
+        IRegistry.ObjectInfo memory registryInfo = getRegistryService().registerPool(pool, owner);
         pool.linkToRegisteredNftId();
-        poolNftId = poolInfo.nftId;
+        poolNftId = registryInfo.nftId;
 
-        instance.createPoolSetup(poolNftId, pool.getSetupInfo());
+        // amend component info with pool specific token handler
+        ISetup.ComponentInfo memory componentInfo = pool.getComponentInfo();
+        componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token));
+
+        // save amended component info with instance
+        instance.createPoolSetup(poolNftId, componentInfo);
+
         getInstanceService().createGifTarget(instanceNftId, poolAddress, pool.getName());
         getInstanceService().grantPoolDefaultPermissions(instanceNftId, poolAddress, pool.getName());
     }
+
+
+    function setMaxCapitalAmount(uint256 maxCapitalAmount)
+        external
+        virtual
+    {
+        (IRegistry.ObjectInfo memory registryInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        InstanceReader instanceReader = instance.getInstanceReader();
+        NftId poolNftId = registryInfo.nftId;
+
+        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        ISetup.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (ISetup.PoolInfo));
+        uint256 previousMaxCapitalAmount = poolInfo.maxCapitalAmount;
+
+        poolInfo.maxCapitalAmount = maxCapitalAmount;
+        componentInfo.data = abi.encode(poolInfo);
+        instance.updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
+
+        emit LogPoolServiceMaxCapitalAmountUpdated(poolNftId, previousMaxCapitalAmount, maxCapitalAmount);
+    }
+
+    function setBundleOwnerRole(RoleId bundleOwnerRole)
+        external
+        virtual
+    {
+        (IRegistry.ObjectInfo memory registryInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        InstanceReader instanceReader = instance.getInstanceReader();
+        NftId poolNftId = registryInfo.nftId;
+
+        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        ISetup.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (ISetup.PoolInfo));
+
+        // bundle owner role may only be set once per pool
+        if(poolInfo.bundleOwnerRole != PUBLIC_ROLE()) {
+            revert ErrorPoolServiceBundleOwnerRoleAlreadySet(poolNftId);
+        }
+
+        poolInfo.bundleOwnerRole = bundleOwnerRole;
+        componentInfo.data = abi.encode(poolInfo);
+        instance.updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
+
+        emit LogPoolServiceBundleOwnerRoleSet(poolNftId, bundleOwnerRole);
+    }
+
 
     function setFees(
         Fee memory poolFee,
@@ -93,17 +143,21 @@ contract PoolService is
         Fee memory performanceFee
     )
         external
-        override
+        virtual
     {
-        (IRegistry.ObjectInfo memory poolInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (IRegistry.ObjectInfo memory registryInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
-        NftId poolNftId = poolInfo.nftId;
+        NftId poolNftId = registryInfo.nftId;
 
-        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-        poolSetupInfo.poolFee = poolFee;
-        poolSetupInfo.stakingFee = stakingFee;
-        poolSetupInfo.performanceFee = performanceFee;
-        
-        instance.updatePoolSetup(poolNftId, poolSetupInfo, KEEP_STATE());
+        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        ISetup.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (ISetup.PoolInfo));
+
+        poolInfo.poolFee = poolFee;
+        poolInfo.stakingFee = stakingFee;
+        poolInfo.performanceFee = performanceFee;
+        componentInfo.data = abi.encode(poolInfo);
+        instance.updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
+
+        // TODO add logging
     }
 }

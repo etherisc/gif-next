@@ -448,7 +448,7 @@ contract InstanceService is
         instanceAccessManager.setTargetFunctionRole(
             poolName, 
             fctSelectors3, 
-            IPoolComponent(poolAddress).getBundleOwnerRole());
+            IPoolComponent(poolAddress).getPoolInfo().bundleOwnerRole);
     }
 
     function grantProductDefaultPermissions(NftId instanceNftId, address productAddress, string memory productName) external onlyRegisteredService {
@@ -485,6 +485,5 @@ contract InstanceService is
         InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
         accessManager.setTargetClosed(targetName, locked);
     }
-    
 }
 

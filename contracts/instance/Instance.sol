@@ -36,6 +36,7 @@ import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPolicyService} from "./service/IPolicyService.sol";
 import {IBundleService} from "./service/IBundleService.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart, VersionPartLib} from "../types/Version.sol";
 
 contract Instance is
@@ -96,12 +97,12 @@ contract Instance is
     }
 
     //--- PoolSetup ------------------------------------------------------//
-    function createPoolSetup(NftId poolNftId, ISetup.PoolSetupInfo memory setup) external restricted() {
-        create(_toNftKey32(poolNftId, POOL()), abi.encode(setup));
+    function createPoolSetup(NftId poolNftId, ISetup.ComponentInfo memory info) external restricted() {
+        create(_toNftKey32(poolNftId, POOL()), abi.encode(info));
     }
 
-    function updatePoolSetup(NftId poolNftId, ISetup.PoolSetupInfo memory setup, StateId newState) external restricted() {
-        update(_toNftKey32(poolNftId, POOL()), abi.encode(setup), newState);
+    function updatePoolSetup(NftId poolNftId, ISetup.ComponentInfo memory info, StateId newState) external restricted() {
+        update(_toNftKey32(poolNftId, POOL()), abi.encode(info), newState);
     }
 
     function updatePoolSetupState(NftId poolNftId, StateId newState) external restricted() {

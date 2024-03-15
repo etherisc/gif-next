@@ -278,17 +278,19 @@ contract BundleService is
     {
         // process token transfer(s)
         if(stakingAmount > 0) {
-            ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
-            TokenHandler tokenHandler = poolInfo.tokenHandler;
+            ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+            ISetup.PoolInfo memory poolInfo = abi.decode(
+                componentInfo.data, (ISetup.PoolInfo));
+
+            TokenHandler tokenHandler = componentInfo.tokenHandler;
             address bundleOwner = getRegistry().ownerOf(bundleNftId);
             Fee memory stakingFee = poolInfo.stakingFee;
 
             tokenHandler.transfer(
                 bundleOwner,
-                poolInfo.wallet,
+                componentInfo.wallet,
                 stakingAmount
             );
-
 
             if (! FeeLib.feeIsZero(stakingFee)) {
                 (uint256 stakingFeeAmount, uint256 netAmount) = FeeLib.calculateFee(stakingFee, stakingAmount);

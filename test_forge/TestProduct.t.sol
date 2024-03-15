@@ -575,8 +575,8 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(investor);
-        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-        token.approve(address(poolSetupInfo.tokenHandler), 10000);
+        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        token.approve(address(componentInfo.tokenHandler), 10000);
 
         Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
         SimplePool spool = SimplePool(address(pool));
