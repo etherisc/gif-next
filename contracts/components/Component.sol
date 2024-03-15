@@ -86,11 +86,11 @@ abstract contract Component is
     }
 
     function lock() external onlyOwner override {
-        IInstanceService(_getServiceAddress(INSTANCE())).setTargetLocked(getName(), true);
+        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
     }
     
     function unlock() external onlyOwner override {
-        IInstanceService(_getServiceAddress(INSTANCE())).setTargetLocked(getName(), false);
+        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
     }
 
     function setWallet(address newWallet)
