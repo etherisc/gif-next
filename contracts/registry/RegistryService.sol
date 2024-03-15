@@ -184,12 +184,12 @@ contract RegistryService is
         /*config[-1].serviceDomain = STAKE();
         config[-1].selector = RegistryService.registerStake.selector;*/
 
-        config[0].serviceDomain = APPLICATION();
-        config[0].selectors = new bytes4[](1);
-        config[0].selectors[0] = RegistryService.registerPolicy.selector;
+        config[0].serviceDomain = POLICY();
+        config[0].selectors = new bytes4[](0);
 
-        config[1].serviceDomain = POLICY();
-        config[1].selectors = new bytes4[](0);
+        config[1].serviceDomain = APPLICATION();
+        config[1].selectors = new bytes4[](1);
+        config[1].selectors[0] = RegistryService.registerPolicy.selector;
 
         config[2].serviceDomain = CLAIM();
         config[2].selectors = new bytes4[](0);

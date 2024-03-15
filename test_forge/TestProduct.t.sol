@@ -239,7 +239,7 @@ contract TestProduct is TestGifBase {
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000 + 130, "lockedAmount not 1000");
+        assertEq(bundleInfo.balanceAmount, 10000 + 100, "balanceAmount not 1100");
         
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
@@ -247,8 +247,8 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
-        assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
-        assertEq(token.balanceOf(pool.getWallet()), 10130, "pool balance not 10130");
+        assertEq(token.balanceOf(address(customer)), 890, "customer balance not 890");
+        assertEq(token.balanceOf(pool.getWallet()), 10100, "pool balance not 10100");
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
@@ -416,7 +416,7 @@ contract TestProduct is TestGifBase {
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000 + 130, "lockedAmount not 1000");
+        assertEq(bundleInfo.balanceAmount, 10000 + 100, "balanceAmount not 1100");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
@@ -424,8 +424,8 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.expiredAt == policyInfo.activatedAt.addSeconds(30), "expiredAt not activatedAt + 30");
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
-        assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
-        assertEq(token.balanceOf(pool.getWallet()), 10130, "pool balance not 10130");
+        assertEq(token.balanceOf(address(customer)), 890, "customer balance not 890");
+        assertEq(token.balanceOf(pool.getWallet()), 10100, "pool balance not 10100");
     }
 
     function test_Product_close() public {
@@ -479,12 +479,12 @@ contract TestProduct is TestGifBase {
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount, 0, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000 + 130, "balanceAmount not 10130");
+        assertEq(bundleInfo.balanceAmount, 10000 + 100, "balanceAmount not 10100");
         
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.closedAt.gtz(), "expiredAt not set");
         
-        assertEq(token.balanceOf(address(pool)), 10130, "pool balance not 130");
+        assertEq(token.balanceOf(address(pool)), 10100, "pool balance not 130");
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 0, "expected no active policy");
     }
