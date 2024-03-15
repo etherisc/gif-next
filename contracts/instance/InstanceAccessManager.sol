@@ -17,6 +17,9 @@ import {IRegistry} from "../registry/IRegistry.sol";
 contract InstanceAccessManager is
     AccessManagedUpgradeable
 {
+    event LogRoleCreation(RoleId roleId, ShortString name, IAccess.Type rtype);
+    event LogTargetCreation(address target, ShortString name, IAccess.Type ttype, bool isLocked);
+
     using RoleIdLib for RoleId;
 
     string public constant ADMIN_ROLE_NAME = "AdminRole";
@@ -366,12 +369,11 @@ contract InstanceAccessManager is
     }
 
     //--- Role internal view/pure functions --------------------------------------//
-
-    function _createRole(RoleId roleId, string memory nameLong, IAccess.Type rtype) 
+    function _createRole(RoleId roleId, string memory roleName, IAccess.Type rtype) 
         internal
     {
-        ShortString name = ShortStrings.toShortString(nameLong);
-        _validateRole(roleId, name, rtype);
+        ShortString name = ShortStrings.toShortString(roleName);
+        _validateRole(roleId, name);
 
         if(roleExists(roleId)) {
             revert IAccess.ErrorIAccessRoleIdAlreadyExists(roleId);
@@ -381,16 +383,17 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[name], name);
         }
 
-        IAccess.RoleInfo memory role = IAccess.RoleInfo(
-            name, 
+        _roleInfo[roleId] = IAccess.RoleInfo(
+            name,
             rtype,
             ADMIN_ROLE(),
             TimestampLib.blockTimestamp(),
-            TimestampLib.blockTimestamp());
-
-        _roleInfo[roleId] = role;
-        _roleIdForName[role.name] = roleId;
+            TimestampLib.blockTimestamp()
+        );
+        _roleIdForName[name] = roleId;
         _roleIds.push(roleId);
+
+        emit LogRoleCreation(roleId, name, rtype);
     }
 
     function _validateRole(RoleId roleId, ShortString name, IAccess.Type rtype)
@@ -446,11 +449,10 @@ contract InstanceAccessManager is
     }
 
     //--- Target internal view/pure functions --------------------------------------//
-
-    function _createTarget(address target, string memory nameLong, IAccess.Type ttype) 
+    function _createTarget(address target, string memory targetName, IAccess.Type ttype) 
         internal 
     {
-        ShortString name = ShortStrings.toShortString(nameLong);
+        ShortString name = ShortStrings.toShortString(targetName);
         _validateTarget(target, name, ttype);
 
         if (_targetInfo[target].createdAt.gtz()) {
@@ -464,16 +466,18 @@ contract InstanceAccessManager is
                 name);
         }
 
-        IAccess.TargetInfo memory info = IAccess.TargetInfo(
-            name, 
+        bool isLocked = _accessManager.isTargetClosed(target);// sync with state in access manager
+        _targetInfo[target] = IAccess.TargetInfo(
+            name,
             ttype,
-            _accessManager.isTargetClosed(target), // sync with state in access manager
+            isLocked,
             TimestampLib.blockTimestamp(),
-            TimestampLib.blockTimestamp());
-
-        _targetInfo[target] = info;
-        _targetAddressForName[info.name] = target;
+            TimestampLib.blockTimestamp()
+        );
+        _targetAddressForName[name] = target;
         _targets.push(target);
+
+        emit LogTargetCreation(target, name, ttype, isLocked); 
     }
 
     function _validateTarget(address target, ShortString name, IAccess.Type ttype) 
