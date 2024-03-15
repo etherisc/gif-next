@@ -294,7 +294,7 @@ contract DistributionService is
             
         // if the referral is not valid, then the distribution owner gets everything
         if (! referralIsValid(distributionNftId, referralId)) {
-            premium.distributionOwnerFeeFixAmount = premium.distributionOwnerFeeFixAmount;
+            premium.distributionOwnerFeeFixAmount = premium.distributionFeeFixAmount;
             premium.distributionOwnerFeeVarAmount = premium.distributionFeeVarAmount;
             premium.premiumAmount = premium.fullPremiumAmount;
             return premium;

@@ -106,9 +106,7 @@ contract TestProduct is TestGifBase {
     }
 
     function test_Product_createApplication() public {
-        _prepareProduct();  
-
-        
+        _prepareProduct();
 
         vm.startPrank(productOwner);
 
