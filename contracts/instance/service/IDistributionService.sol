@@ -25,6 +25,7 @@ interface IDistributionService is IService {
     error ErrorIDistributionServiceMaxDiscountTooHigh(uint256 maxDiscountPercentage, uint256 maxMaxDiscountPercentage);
 
     function setFees(
+        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee
     ) external;
     

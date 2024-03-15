@@ -45,16 +45,21 @@ contract TestDistribution is TestGifBase {
         assertEq(distributionFee.fractionalFee.toInt(), 0, "distribution fee not 0");
         assertEq(distributionFee.fixedFee, 0, "distribution fee not 0");
         
+        Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(124,0), 457);
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
 
         // WHEN
-        distribution.setFees(newDistributionFee);
+        distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);
 
         // THEN
         distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
         distributionFee = distributionSetupInfo.distributionFee;
         assertEq(distributionFee.fractionalFee.toInt(), 123, "distribution fee not 123");
         assertEq(distributionFee.fixedFee, 456, "distribution fee not 456");
+
+        Fee memory minDistributionOwnerFee = distributionSetupInfo.minDistributionOwnerFee;
+        assertEq(minDistributionOwnerFee.fractionalFee.toInt(), 124, "min distribution owner fee not 0");
+        assertEq(minDistributionOwnerFee.fixedFee, 457, "min distribution owner fee not 0");
     }
 
     function test_Component_setWallet_to_extowned() public {
@@ -235,13 +240,14 @@ contract TestDistribution is TestGifBase {
         // GIVEN
         _prepareDistribution();
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
+        Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(124,0), 457);
 
         // WHEN
         distribution.lock();
 
         // THEN
         vm.expectRevert(abi.encodeWithSelector(IAccess.ErrorIAccessTargetLocked.selector, address(distribution)));
-        distribution.setFees(newDistributionFee);
+        distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);
     }
 
     // FIXME: fix test
@@ -255,7 +261,8 @@ contract TestDistribution is TestGifBase {
 
         // THEN
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
-        distribution.setFees(newDistributionFee);
+        Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(124,0), 457);
+        distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);
     }
 
     function _prepareDistribution() internal {

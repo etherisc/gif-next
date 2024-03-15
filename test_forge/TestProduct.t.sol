@@ -554,7 +554,8 @@ contract TestProduct is TestGifBase {
 
         vm.startPrank(distributionOwner);
         Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        distribution.setFees(distributionFee);
+        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        distribution.setFees(minDistributionOwnerFee, distributionFee);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);

@@ -91,6 +91,7 @@ contract DistributionService is
     }
 
     function setFees(
+        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee
     )
         external
@@ -101,6 +102,7 @@ contract DistributionService is
         NftId distributionNftId = info.nftId;
 
         ISetup.DistributionSetupInfo memory distSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
+        distSetupInfo.minDistributionOwnerFee = minDistributionOwnerFee;
         distSetupInfo.distributionFee = distributionFee;
         
         instance.updateDistributionSetup(distributionNftId, distSetupInfo, KEEP_STATE());

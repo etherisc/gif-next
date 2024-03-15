@@ -64,6 +64,7 @@ abstract contract Distribution is
     }
 
     function setFees(
+        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee
     )
         external
@@ -71,7 +72,7 @@ abstract contract Distribution is
         onlyOwner
         restricted()
     {
-        _getDistributionStorage()._distributionService.setFees(distributionFee);
+        _getDistributionStorage()._distributionService.setFees(minDistributionOwnerFee, distributionFee);
     }
 
     function getDistributionFee() external view returns (Fee memory distributionFee) {

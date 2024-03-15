@@ -17,6 +17,7 @@ interface IDistributionComponent is IComponent {
     function getSetupInfo() external view returns (ISetup.DistributionSetupInfo memory setupInfo);
 
     function setFees(
+        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee
     ) external;
 
