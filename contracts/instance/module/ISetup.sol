@@ -14,12 +14,8 @@ interface ISetup {
         TokenHandler tokenHandler;
         NftId distributionNftId;
         NftId poolNftId;
-        Fee distributionFee; // default distribution fee (no referral id)
         Fee productFee; // product fee on net premium
-        Fee processingFee; // product fee on payout amounts
-        Fee poolFee; // pool fee on net premium
-        Fee stakingFee; // pool fee on staked capital from investor
-        Fee performanceFee; // pool fee on profits from capital investors
+        Fee processingFee; // product fee on payout amounts        
         bool isIntercepting; // intercepts nft transfers (for products)
         address wallet;
     }
@@ -27,7 +23,8 @@ interface ISetup {
     struct DistributionSetupInfo {
         NftId productNftId;
         TokenHandler tokenHandler;
-        Fee distributionFee; // default distribution fee (no referral id)
+        Fee minDistributionOwnerFee;
+        Fee distributionFee; // recalculated whenever any fee on the product/pool/dist/disttype is changed
         address wallet;
         uint256 sumDistributionFees;
     }

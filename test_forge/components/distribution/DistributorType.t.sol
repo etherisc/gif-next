@@ -39,6 +39,7 @@ contract DistributorTypeTest is TestGifBase {
             instanceNftId,
             address(token),
             FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
             distributionOwner
         );
         distributionNftId = distributionService.register(address(distribution));

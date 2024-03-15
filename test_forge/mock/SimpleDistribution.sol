@@ -15,6 +15,7 @@ contract SimpleDistribution is Distribution {
         address registry,
         NftId instanceNftId,
         address token,
+        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee,
         address initialOwner
     ) 
@@ -24,6 +25,7 @@ contract SimpleDistribution is Distribution {
             instanceNftId,
             "SimpleDistribution",
             token,
+            minDistributionOwnerFee,
             distributionFee,
             initialOwner);
     }
@@ -33,6 +35,7 @@ contract SimpleDistribution is Distribution {
         NftId instanceNftId,
         string memory name,
         address token,
+        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee,
         address initialOwner
     )
@@ -45,6 +48,7 @@ contract SimpleDistribution is Distribution {
             instanceNftId,
             name,
             token,
+            minDistributionOwnerFee,
             distributionFee,
             initialOwner,
             ""

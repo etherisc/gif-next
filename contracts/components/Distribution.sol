@@ -30,6 +30,7 @@ abstract contract Distribution is
     bytes32 public constant DISTRIBUTION_STORAGE_LOCATION_V1 = 0xaab7c5ea03d290056d6c060e0833d3ebcbe647f7694616a2ec52738a64b2f900;
 
     struct DistributionStorage {
+        Fee _minDistributionOwnerFee;
         Fee _distributionFee;
         TokenHandler _tokenHandler;
         IDistributionService _distributionService;
@@ -41,6 +42,7 @@ abstract contract Distribution is
         NftId instanceNftId,
         string memory name,
         address token,
+        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee,
         address initialOwner,
         bytes memory data
@@ -53,6 +55,7 @@ abstract contract Distribution is
 
         DistributionStorage storage $ = _getDistributionStorage();
         // TODO add validation
+        $._minDistributionOwnerFee = minDistributionOwnerFee;
         $._distributionFee = distributionFee;
         $._tokenHandler = new TokenHandler(token);
         $._distributionService = getInstance().getDistributionService();
@@ -259,6 +262,7 @@ abstract contract Distribution is
         return ISetup.DistributionSetupInfo(
             zeroNftId(),
             $._tokenHandler,
+            $._minDistributionOwnerFee,
             $._distributionFee,
             address(this),
             0

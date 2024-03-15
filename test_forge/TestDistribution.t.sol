@@ -269,6 +269,7 @@ contract TestDistribution is TestGifBase {
             instanceNftId,
             address(token),
             FeeLib.zeroFee(),
+            FeeLib.zeroFee(),
             distributionOwner
         );
         

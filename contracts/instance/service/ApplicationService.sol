@@ -199,6 +199,7 @@ contract ApplicationService is
             lifetime,
             applicationData
         );
+        // TODO: add all fixed fee parts on top of the netPremium
 
         (
             premium

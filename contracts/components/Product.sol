@@ -261,20 +261,13 @@ abstract contract Product is
     function _getInitialSetupInfo() internal view returns (ISetup.ProductSetupInfo memory setupInfo) {
         ProductStorage storage $ = _getProductStorage();
 
-        ISetup.DistributionSetupInfo memory distributionSetupInfo = $._distribution.getSetupInfo();
-        ISetup.PoolSetupInfo memory poolSetupInfo = $._pool.getSetupInfo();
-
         return ISetup.ProductSetupInfo(
             getToken(),
             $._tokenHandler,
             $._distributionNftId,
             $._poolNftId,
-            distributionSetupInfo.distributionFee, 
             $._initialProductFee,
             $._initialProcessingFee,
-            poolSetupInfo.poolFee, 
-            poolSetupInfo.stakingFee, 
-            poolSetupInfo.performanceFee,
             false,
             getWallet()
         );
