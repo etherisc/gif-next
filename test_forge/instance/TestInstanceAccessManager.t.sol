@@ -83,8 +83,6 @@ contract TestInstanceAccessManager is TestGifBase {
 
         vm.startPrank(instanceOwner);
         // create special role and special role admin
-        RoleId customRoleId;
-        RoleId customRoleAdmin;
         (customRoleId, customRoleAdmin) = instanceAccessManager.createRole("SpecialRole", "SpecialRoleAdmin");
         // set special role for product custom product function 
         bytes4[] memory fcts = new bytes4[](1);

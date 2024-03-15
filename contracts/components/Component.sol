@@ -86,26 +86,11 @@ abstract contract Component is
     }
 
     function lock() external onlyOwner override {
-        _getComponentStorage()._instanceService.setComponentLocked(true);
+        IInstanceService(_getServiceAddress(INSTANCE())).setTargetLocked(getName(), true);
     }
     
     function unlock() external onlyOwner override {
-        _getComponentStorage()._instanceService.setComponentLocked(false);
-    }
-
-    // only product service may set product nft id during registration of product setup
-    function setProductNftId(NftId productNftId)
-        external
-        override
-        onlyProductService() 
-    {
-        ComponentStorage storage $ = _getComponentStorage();
-
-        if($._productNftId.gtz()) {
-            revert ErrorComponentProductNftAlreadySet();
-        }
-
-        $._productNftId = productNftId;
+        IInstanceService(_getServiceAddress(INSTANCE())).setTargetLocked(getName(), false);
     }
 
     function setWallet(address newWallet)
