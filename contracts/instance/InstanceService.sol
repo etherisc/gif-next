@@ -178,7 +178,7 @@ contract InstanceService is
         instanceDistributionServiceSelectors[8] = clonedInstance.createReferral.selector;
         instanceDistributionServiceSelectors[9] = clonedInstance.updateReferral.selector;
         instanceDistributionServiceSelectors[10] = clonedInstance.updateReferralState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceDistributionServiceSelectors, 
             DISTRIBUTION_SERVICE_ROLE());        
@@ -191,7 +191,7 @@ contract InstanceService is
         bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
         instancePoolServiceSelectors[1] = clonedInstance.updatePoolSetup.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instancePoolServiceSelectors, 
             POOL_SERVICE_ROLE());
@@ -207,7 +207,7 @@ contract InstanceService is
         instanceProductServiceSelectors[2] = clonedInstance.createRisk.selector;
         instanceProductServiceSelectors[3] = clonedInstance.updateRisk.selector;
         instanceProductServiceSelectors[4] = clonedInstance.updateRiskState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceProductServiceSelectors, 
             PRODUCT_SERVICE_ROLE());
@@ -221,7 +221,7 @@ contract InstanceService is
         instanceApplicationServiceSelectors[0] = clonedInstance.createApplication.selector;
         instanceApplicationServiceSelectors[1] = clonedInstance.updateApplication.selector;
         instanceApplicationServiceSelectors[2] = clonedInstance.updateApplicationState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceApplicationServiceSelectors, 
             APPLICATION_SERVICE_ROLE());
@@ -234,7 +234,7 @@ contract InstanceService is
         bytes4[] memory instancePolicyServiceSelectors = new bytes4[](2);
         instancePolicyServiceSelectors[0] = clonedInstance.updatePolicy.selector;
         instancePolicyServiceSelectors[1] = clonedInstance.updatePolicyState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instancePolicyServiceSelectors, 
             POLICY_SERVICE_ROLE());
@@ -248,7 +248,7 @@ contract InstanceService is
         bytes4[] memory instanceClaimServiceSelectors = new bytes4[](0);
         // instanceClaimServiceSelectors[0] = clonedInstance.updatePolicy.selector;
         // instanceClaimServiceSelectors[1] = clonedInstance.updatePolicyState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceClaimServiceSelectors, 
             CLAIM_SERVICE_ROLE());
@@ -261,7 +261,7 @@ contract InstanceService is
         bytes4[] memory instanceBundleServiceSelectors = new bytes4[](2);
         instanceBundleServiceSelectors[0] = clonedInstance.createBundle.selector;
         instanceBundleServiceSelectors[1] = clonedInstance.updateBundle.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceBundleServiceSelectors, 
             BUNDLE_SERVICE_ROLE());
@@ -273,7 +273,7 @@ contract InstanceService is
         bundleManagerBundleServiceSelectors[2] = clonedBundleManager.add.selector;
         bundleManagerBundleServiceSelectors[3] = clonedBundleManager.lock.selector;
         bundleManagerBundleServiceSelectors[4] = clonedBundleManager.unlock.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "BundleManager",
             bundleManagerBundleServiceSelectors, 
             BUNDLE_SERVICE_ROLE());

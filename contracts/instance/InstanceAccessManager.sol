@@ -93,7 +93,7 @@ contract InstanceAccessManager is
     }
 
     // INSTANCE_OWNER_ROLE
-    function createCustomRole(string memory roleName, string memory adminName)
+    function createRole(string memory roleName, string memory adminName)
         external
         restricted()
         returns(RoleId roleId, RoleId admin)
@@ -225,8 +225,8 @@ contract InstanceAccessManager is
     // assume custom target.authority() is constant -> target can not be used with different instance access manager
     // assume custom target can not be registered as component -> each service which is doing component registration MUST register a gif target
     // assume custom target can not be registered as instance or service -> why?
-    // TODO check target associated with instance owner or instance or instance's components or components helpers
-    function createCustomTarget(address target, string memory name) 
+    // TODO check target associated with instance owner or instance or instance components or components helpers
+    function createTarget(address target, string memory name) 
         external 
         restricted() 
     {
@@ -268,7 +268,7 @@ contract InstanceAccessManager is
     // INSTANCE_SERVICE_ROLE if used not only during initilization, works with:
     //      core roles for core targets
     //      gif roles for gif targets
-    function setTargetFunctionRole(
+    function setCoreTargetFunctionRole(
         string memory targetName,
         bytes4[] calldata selectors,
         RoleId roleId
@@ -299,7 +299,7 @@ contract InstanceAccessManager is
     // custom role for gif target
     // custom role for custom target
     // TODO instance owner can mess with gif target (component) -> e.g. set custom role for function intendent to work with gif role
-    function setTargetFunctionCustomRole(
+    function setTargetFunctionRole(
         string memory targetName,
         bytes4[] calldata selectors,
         RoleId roleId
@@ -399,8 +399,10 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessRoleNameEmpty(roleId);
         }
     }
-    // TODO if custom role admin have > 1 member -> limit to 1 member or revoke from all members?
-    function _revokeRole(RoleId roleId, address member) 
+
+    // INSTANCE_OWNER_ROLE
+    // TODO prohibit renouncing Gif and Core roles?
+    function _revokeRole(RoleId roleId, address member)
         internal
         returns(bool revoked)
     {
