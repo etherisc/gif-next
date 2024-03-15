@@ -12,7 +12,7 @@ import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {StateId, ACTIVE} from "../types/StateId.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
-import {VersionPart} from "../types/Version.sol";
+import {VersionPart, VersionPartLib} from "../types/Version.sol";
 
 import {ERC165} from "../shared/ERC165.sol";
 import {Registerable} from "../shared/Registerable.sol";
@@ -36,10 +36,12 @@ import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPolicyService} from "./service/IPolicyService.sol";
 import {IBundleService} from "./service/IBundleService.sol";
-import {VersionPart, VersionPartLib} from "../types/Version.sol";
+
+import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
 contract Instance is
     IInstance,
+    ITransferInterceptor,
     AccessManagedUpgradeable,
     Registerable,
     KeyValueStore
@@ -220,6 +222,13 @@ contract Instance is
 
     function updatePayoutState(NftId policyNftId, StateId newState) external restricted() {
         updateState(toPolicyKey32(policyNftId), newState);
+    }
+
+    //--- ITransferInterceptor ------------------------------------------------------------//
+    function nftTransferFrom(address from, address to, uint256 tokenId) external
+    {
+        // assume from and tokenId are always valid and correspond to _accessManager
+        _accessManager.transferOwnerRole(from, to);
     }
 
     //--- internal view/pure functions --------------------------------------//
