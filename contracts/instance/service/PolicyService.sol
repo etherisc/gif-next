@@ -369,12 +369,12 @@ contract PolicyService is
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
-            ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
-            IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
+            InstanceReader instanceReader = instance.getInstanceReader();
+            ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
             TokenHandler tokenHandler = productSetupInfo.tokenHandler;
             address policyOwner = getRegistry().ownerOf(policyNftId);
-            ISetup.PoolSetupInfo memory poolSetupInfo = instance.getInstanceReader().getPoolSetupInfo(productSetupInfo.poolNftId);
-            address poolWallet = poolSetupInfo.wallet;
+            address poolWallet = instanceReader.getComponentInfo(productSetupInfo.poolNftId).wallet;
             IPolicy.Premium memory premium = _applicationService.calculatePremium(
                 productNftId,
                 policyInfo.riskId,

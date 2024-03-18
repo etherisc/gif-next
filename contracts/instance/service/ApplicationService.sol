@@ -10,6 +10,7 @@ import {Product} from "../../components/Product.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IInstance} from "../IInstance.sol";
+import {IComponents} from "../module/IComponents.sol";
 import {IPolicy} from "../module/IPolicy.sol";
 import {IRisk} from "../module/IRisk.sol";
 import {IBundle} from "../module/IBundle.sol";
@@ -253,8 +254,8 @@ contract ApplicationService is
                 premium.fullPremiumAmount += t;
             }
             {
-                ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-                uint256 t = poolSetupInfo.poolFee.fixedFee;
+                bytes memory componentData = instanceReader.getComponentInfo(poolNftId).data;
+                uint256 t = abi.decode(componentData, (IComponents.PoolInfo)).poolFee.fixedFee;
                 premium.poolFeeFixAmount = t;
                 premium.fullPremiumAmount += t;
             }
@@ -306,8 +307,9 @@ contract ApplicationService is
                 premium.fullPremiumAmount += t;
             }
             {
-                ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-                uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * poolSetupInfo.poolFee.fractionalFee).toInt();
+                bytes memory componentData = instanceReader.getComponentInfo(poolNftId).data;
+                UFixed poolFractionalFee = abi.decode(componentData, (IComponents.PoolInfo)).poolFee.fractionalFee;
+                uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * poolFractionalFee).toInt();
                 premium.poolFeeVarAmount = t;
                 premium.fullPremiumAmount += t;
             }

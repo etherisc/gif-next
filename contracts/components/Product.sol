@@ -276,9 +276,6 @@ abstract contract Product is
             $._poolNftId,
             $._initialProductFee,
             $._initialProcessingFee,
-            poolInfo.poolFee, 
-            poolInfo.stakingFee, 
-            poolInfo.performanceFee,
             false,
             getWallet()
         );
