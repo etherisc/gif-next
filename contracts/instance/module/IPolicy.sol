@@ -10,6 +10,30 @@ import {Timestamp} from "../../types/Timestamp.sol";
 
 interface IPolicy {
 
+    struct Premium {
+        // this is the net premium calculated by the product 
+        uint256 netPremiumAmount;
+        // fullPremium = netPremium + all fixed amounts + all variable amounts (excl commission and minDistribtuionOwnerFee variable part)
+        uint256 fullPremiumAmount;
+        // premium = fullPremium - discount
+        uint256 premiumAmount;
+        uint256 productFeeFixAmount;
+        uint256 poolFeeFixAmount;
+        uint256 bundleFeeFixAmount;
+        uint256 distributionFeeFixAmount;
+        uint256 productFeeVarAmount;
+        uint256 poolFeeVarAmount;
+        uint256 bundleFeeVarAmount;
+        uint256 distributionFeeVarAmount;
+        uint256 distributionOwnerFeeFixAmount;
+        // this is the remaining amount when the commission and discount are subtracted from the distribution fee variable part (must be at least the minDistributionOwnerFee)
+        uint256 distributionOwnerFeeVarAmount;
+        // this value is based on distributor type referenced in the referral 
+        uint256 commissionAmount;
+        // this is based on referral used
+        uint256 discountAmount;
+    }
+
     /// @dev policy data for the full policy lifecycle
     struct PolicyInfo {
         NftId productNftId;

@@ -425,18 +425,6 @@ contract TestGifBase is Test {
         console.log("claimService nft id", claimService.getNftId().toInt());
         // solhint-enable
 
-        // --- policy service ---------------------------------//
-        policyServiceManager = new PolicyServiceManager(address(registry));
-        policyService = policyServiceManager.getPolicyService();
-        releaseManager.registerService(policyService);
-        policyServiceNftId = registry.getNftId(address(policyService));
-
-        // solhint-disable
-        console.log("policyService domain", policyService.getDomain().toInt());
-        console.log("policyService deployed at", address(policyService));
-        console.log("policyService nft id", policyService.getNftId().toInt());
-        // solhint-enable
-
         // --- application service ---------------------------------//
         applicationServiceManager = new ApplicationServiceManager(address(registry));
         applicationService = applicationServiceManager.getApplicationService();
@@ -447,6 +435,18 @@ contract TestGifBase is Test {
         console.log("applicationService domain", applicationService.getDomain().toInt());
         console.log("applicationService deployed at", address(applicationService));
         console.log("applicationService nft id", applicationService.getNftId().toInt());
+        // solhint-enable
+
+        // --- policy service ---------------------------------//
+        policyServiceManager = new PolicyServiceManager(address(registry));
+        policyService = policyServiceManager.getPolicyService();
+        releaseManager.registerService(policyService);
+        policyServiceNftId = registry.getNftId(address(policyService));
+
+        // solhint-disable
+        console.log("policyService domain", policyService.getDomain().toInt());
+        console.log("policyService deployed at", address(policyService));
+        console.log("policyService nft id", policyService.getNftId().toInt());
         // solhint-enable
 
         // activate initial release -> activated upon last service registration
@@ -632,6 +632,7 @@ contract TestGifBase is Test {
             address(registry),
             instanceNftId,
             address(token),
+            FeeLib.zeroFee(),
             FeeLib.zeroFee(),
             distributionOwner
         );

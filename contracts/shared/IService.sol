@@ -11,6 +11,8 @@ interface IService is
     IRegisterable,
     IVersionable
 {
+    error ErrorIServiceCallerUnknown(address caller);
+    
     function getDomain() external pure returns(ObjectType serviceDomain);
     function getMajorVersion() external view returns(VersionPart majorVersion);
 }
