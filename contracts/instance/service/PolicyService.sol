@@ -386,14 +386,15 @@ contract PolicyService is
             // move distribution fee to distribution wallet
             ISetup.DistributionSetupInfo memory distributionSetupInfo = instance.getInstanceReader().getDistributionSetupInfo(productSetupInfo.distributionNftId);
             address distributionWallet = distributionSetupInfo.wallet;
-            uint256 distributionFeeAmount = premium.distributionFeeFixAmount + premium.distributionFeeVarAmount;
-            tokenHandler.transfer(policyOwner, distributionWallet, distributionFeeAmount);
-            _distributionService.processSale(productSetupInfo.distributionNftId, policyInfo.referralId, premium, distributionFeeAmount);
+            uint256 distributionFeeAmountToTransfer = premium.distributionFeeFixAmount + premium.distributionFeeVarAmount - premium.discountAmount;
+            tokenHandler.transfer(policyOwner, distributionWallet, distributionFeeAmountToTransfer);
+            _distributionService.processSale(productSetupInfo.distributionNftId, policyInfo.referralId, premium, distributionFeeAmountToTransfer);
             
             // move netpremium to pool wallet
             tokenHandler.transfer(policyOwner, poolWallet, premium.netPremiumAmount);
             
-            // TODO: move pool/bundle related tokens too
+            // TODO: move pool related tokens too
+            // TODO: move bundle related tokens too
             netPremiumAmount = premium.netPremiumAmount;
         }
 
