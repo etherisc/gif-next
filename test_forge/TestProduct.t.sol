@@ -255,7 +255,8 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
-        assertEq(token.balanceOf(address(customer)), 890, "customer balance not 890");
+        assertEq(token.balanceOf(distribution.getWallet()), 10, "distibution balance not 10");
+        assertEq(token.balanceOf(address(customer)), 880, "customer balance not 880");
         assertEq(token.balanceOf(pool.getWallet()), 10100, "pool balance not 10100");
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
@@ -432,7 +433,8 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
-        assertEq(token.balanceOf(address(customer)), 890, "customer balance not 890");
+        assertEq(token.balanceOf(distribution.getWallet()), 10, "distibution balance not 10");
+        assertEq(token.balanceOf(address(customer)), 880, "customer balance not 880");
         assertEq(token.balanceOf(pool.getWallet()), 10100, "pool balance not 10100");
     }
 

@@ -50,14 +50,6 @@ interface IDistributionComponent is IComponent {
         uint256 netPremiumAmount
     ) external view returns (uint256 feeAmount);
 
-    /// @dev callback from product service when selling a policy for a specific referralId
-    /// the used referral id and the collected fee are provided as parameters
-    /// the component implementation can then process this information accordingly
-    function processSale(
-        ReferralId referralId,
-        uint256 feeAmount
-    ) external;
-
     /// @dev callback from product service when a policy is renews for a specific referralId
     function processRenewal(
         ReferralId referralId,

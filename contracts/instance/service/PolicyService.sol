@@ -2,7 +2,6 @@
 pragma solidity ^0.8.19;
 
 import {IRegistry} from "../../registry/IRegistry.sol";
-import {IProductComponent} from "../../components/IProductComponent.sol";
 import {Product} from "../../components/Product.sol";
 import {IComponents} from "../module/IComponents.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
@@ -11,37 +10,26 @@ import {IPolicy} from "../module/IPolicy.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IRisk} from "../module/IRisk.sol";
 import {IBundle} from "../module/IBundle.sol";
-import {IProductService} from "./IProductService.sol";
-import {ITreasury} from "../module/ITreasury.sol";
 import {ISetup} from "../module/ISetup.sol";
 
 import {TokenHandler} from "../../shared/TokenHandler.sol";
 
-import {IVersionable} from "../../shared/IVersionable.sol";
-import {Versionable} from "../../shared/Versionable.sol";
-
-import {Seconds} from "../../types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
-import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
-import {ObjectType, APPLICATION, INSTANCE, PRODUCT, POOL, POLICY, BUNDLE} from "../../types/ObjectType.sol";
+import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE} from "../../types/ObjectType.sol";
 import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE, CLOSED} from "../../types/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {Fee, FeeLib} from "../../types/Fee.sol";
-import {ReferralId} from "../../types/Referral.sol";
-import {RiskId} from "../../types/RiskId.sol";
+import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {StateId} from "../../types/StateId.sol";
-import {Version, VersionLib} from "../../types/Version.sol";
-//import {RoleId, PRODUCT_OWNER_ROLE} from "../../types/RoleId.sol";
 
-import {IService} from "../../shared/IService.sol";
-import {Service} from "../../shared/Service.sol";
 import {ComponentService} from "../base/ComponentService.sol";
 import {IApplicationService} from "./IApplicationService.sol";
-import {IPolicyService} from "./IPolicyService.sol";
-import {InstanceReader} from "../InstanceReader.sol";
-import {IPoolService} from "./IPoolService.sol";
 import {IBundleService} from "./IBundleService.sol";
+import {IDistributionService} from "./IDistributionService.sol";
+import {InstanceReader} from "../InstanceReader.sol";
+import {IPolicyService} from "./IPolicyService.sol";
+import {IPoolService} from "./IPoolService.sol";
+import {IService} from "../../shared/IService.sol";
+import {Service} from "../../shared/Service.sol";
 
 
 contract PolicyService is
@@ -54,6 +42,7 @@ contract PolicyService is
     IPoolService internal _poolService;
     IBundleService internal _bundleService;
     IApplicationService internal _applicationService;
+    IDistributionService internal _distributionService;
 
     event LogProductServiceSender(address sender);
 
@@ -74,6 +63,7 @@ contract PolicyService is
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getMajorVersion()));
         _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getMajorVersion()));
         _applicationService = IApplicationService(getRegistry().getServiceAddress(APPLICATION(), getMajorVersion()));
+        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), getMajorVersion()));
 
         registerInterface(type(IPolicyService).interfaceId);
     }
@@ -187,7 +177,6 @@ contract PolicyService is
         if(requirePremiumPayment) {
             netPremiumAmount = _processPremiumByTreasury(
                 instance, 
-                productNftId,
                 applicationNftId, 
                 policyInfo.premiumAmount);
 
@@ -256,7 +245,6 @@ contract PolicyService is
 
         uint256 netPremiumAmount = _processPremiumByTreasury(
                 instance, 
-                productInfo.nftId,
                 policyNftId, 
                 unpaidPremiumAmount);
 
@@ -360,7 +348,6 @@ contract PolicyService is
 
     function _processPremiumByTreasury(
         IInstance instance,
-        NftId productNftId,
         NftId policyNftId,
         uint256 premiumAmount
     )
@@ -369,9 +356,9 @@ contract PolicyService is
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
-            InstanceReader instanceReader = instance.getInstanceReader();
-            ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+            NftId productNftId = getRegistry().getObjectInfo(policyNftId).parentNftId;
+            ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
+            IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
             TokenHandler tokenHandler = productSetupInfo.tokenHandler;
             address policyOwner = getRegistry().ownerOf(policyNftId);
             address poolWallet = instanceReader.getComponentInfo(productSetupInfo.poolNftId).wallet;
@@ -385,24 +372,29 @@ contract PolicyService is
                 policyInfo.referralId
                 );
 
-            // if (FeeLib.feeIsZero(premium.productFeeAmount)) {
-            //     tokenHandler.transfer(
-            //         policyOwner,
-            //         poolWallet,
-            //         premiumAmount
-            //     );
-            // } else {
-                address productWallet = productSetupInfo.wallet;
-                if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premium.premiumAmount) {
-                    revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premium.premiumAmount);
-                }
-                tokenHandler.transfer(policyOwner, productWallet, premium.productFeeFixAmount + premium.productFeeVarAmount);
-                tokenHandler.transfer(policyOwner, poolWallet, premium.netPremiumAmount);
-                netPremiumAmount = premium.netPremiumAmount;
-                // TODO: also move distribution tokens to distribution wallet and call `Distribution.processSale` to update distribution balances
-            // }
-            // TODO: move pool/bundle related tokens too
+            if (premium.premiumAmount != premiumAmount) {
+                revert ErrorIPolicyServicePremiumMismatch(policyNftId, premiumAmount, premium.premiumAmount);
+            }
 
+            // move product fee to product wallet
+            address productWallet = productSetupInfo.wallet;
+            if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premium.premiumAmount) {
+                revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premium.premiumAmount);
+            }
+            tokenHandler.transfer(policyOwner, productWallet, premium.productFeeFixAmount + premium.productFeeVarAmount);
+
+            // move distribution fee to distribution wallet
+            ISetup.DistributionSetupInfo memory distributionSetupInfo = instance.getInstanceReader().getDistributionSetupInfo(productSetupInfo.distributionNftId);
+            address distributionWallet = distributionSetupInfo.wallet;
+            uint256 distributionFeeAmount = premium.distributionFeeFixAmount + premium.distributionFeeVarAmount;
+            tokenHandler.transfer(policyOwner, distributionWallet, distributionFeeAmount);
+            _distributionService.processSale(productSetupInfo.distributionNftId, policyInfo.referralId, premium, distributionFeeAmount);
+            
+            // move netpremium to pool wallet
+            tokenHandler.transfer(policyOwner, poolWallet, premium.netPremiumAmount);
+            
+            // TODO: move pool/bundle related tokens too
+            netPremiumAmount = premium.netPremiumAmount;
         }
 
         // TODO: add logging

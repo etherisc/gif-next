@@ -42,6 +42,7 @@ contract DistributionService is
     using TimestampLib for Timestamp;
     using UFixedLib for UFixed;
     using FeeLib for Fee;
+    using ReferralLib for ReferralId;
 
     address internal _registryAddress;
     
@@ -255,20 +256,50 @@ contract DistributionService is
     }
 
     function processSale(
+        NftId distributionNftId,
         ReferralId referralId,
-        uint256 premiumAmount
+        IPolicy.Premium memory premium,
+        uint256 transferredDistributionFeeAmount
     )
         external
         virtual
     {
-        // TODO: fetch referral
-        // TODO: update referral usage numbers
-        // TODO: update bookkeeping
-        // TODO: calculate commission for distributor
-        // TODO: calculate fee for distribution owner
-        // TODO: updates sum of commission per distributor -> DistributorInfo
-        // TODO: updates sum of fee per distribution owner
-        revert("NOT_IMPLEMENTED_YET");
+        bool isReferral = ! referralId.eqz();
+        bool referralValid = referralIsValid(distributionNftId, referralId);
+
+        if (isReferral && ! referralValid) {
+            revert ErrorIDistributionServiceReferralInvalid(distributionNftId, referralId);
+        }
+
+        (, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
+        InstanceReader reader = instance.getInstanceReader();
+        IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
+        IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
+        ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
+        
+        uint256 distributionOwnerFee = premium.distributionOwnerFeeFixAmount + premium.distributionOwnerFeeVarAmount;
+        uint256 commissionAmount = premium.commissionAmount;
+
+        if (transferredDistributionFeeAmount != distributionOwnerFee + commissionAmount) {
+            revert ErrorIDistributionServiceInvalidFeeTransferred(transferredDistributionFeeAmount, distributionOwnerFee + commissionAmount);
+        }
+
+
+        if (distributionOwnerFee > 0) {
+            setupInfo.sumDistributionOwnerFees += distributionOwnerFee;
+            instance.updateDistributionSetup(distributionNftId, setupInfo, KEEP_STATE());
+        }
+
+        if (isReferral) {
+            referralInfo.usedReferrals += 1;
+            instance.updateReferral(referralId.toKey32(), referralInfo, KEEP_STATE());
+
+            if (commissionAmount > 0) {
+                distributorInfo.sumCommisions += commissionAmount;
+                distributorInfo.numPoliciesSold += 1;
+                instance.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
+            }
+        }
     }
 
     function calculateFeeAmount(
@@ -302,20 +333,45 @@ contract DistributionService is
 
         // if the referral is valid, the the commission and discount are calculated based in the full premium
         // the remaing amount goes to the distribution owner
-        IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
-        IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
-        IDistribution.DistributorTypeInfo memory distributorTypeInfo = reader.getDistributorTypeInfo(distributorInfo.distributorType);
+        {
+            IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
+            IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
+            IDistribution.DistributorTypeInfo memory distributorTypeInfo = reader.getDistributorTypeInfo(distributorInfo.distributorType);
 
-        uint256 commissionAmount = UFixedLib.toUFixed(premium.netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
-        premium.commissionAmount = commissionAmount;
-        premium.discountAmount = UFixedLib.toUFixed(premium.fullPremiumAmount).mul(referralInfo.discountPercentage).toInt();
-        premium.distributionOwnerFeeFixAmount = minDistributionOwnerFee.fixedFee;
-        premium.distributionOwnerFeeVarAmount = distributionFeeVarAmount - commissionAmount - premium.discountAmount;
-        premium.premiumAmount = premium.fullPremiumAmount - premium.discountAmount;
+            uint256 commissionAmount = UFixedLib.toUFixed(premium.netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
+            premium.commissionAmount = commissionAmount;
+            premium.discountAmount = UFixedLib.toUFixed(premium.fullPremiumAmount).mul(referralInfo.discountPercentage).toInt();
+            premium.distributionOwnerFeeFixAmount = minDistributionOwnerFee.fixedFee;
+            premium.distributionOwnerFeeVarAmount = distributionFeeVarAmount - commissionAmount - premium.discountAmount;
+            premium.premiumAmount = premium.fullPremiumAmount - premium.discountAmount;
+        }
+
+        // sanity check to validate the fee calculation
+        if (premium.distributionOwnerFeeFixAmount < minDistributionOwnerFee.fixedFee) {
+            revert ErrorIDistributionServiceFeeCalculationMismatch(
+                premium.distributionFeeFixAmount,
+                premium.distributionFeeVarAmount,
+                premium.distributionOwnerFeeFixAmount,
+                premium.distributionOwnerFeeVarAmount,
+                premium.commissionAmount,
+                premium.discountAmount
+            );
+        }
+        if ((premium.distributionFeeVarAmount) != (premium.discountAmount + premium.distributionOwnerFeeVarAmount + premium.commissionAmount)) {
+            revert ErrorIDistributionServiceFeeCalculationMismatch(
+                premium.distributionFeeFixAmount,
+                premium.distributionFeeVarAmount,
+                premium.distributionOwnerFeeFixAmount,
+                premium.distributionOwnerFeeVarAmount,
+                premium.commissionAmount,
+                premium.discountAmount
+            );
+        }
         
         return premium; 
     }
 
+    // TODO: zero should return false
     function referralIsValid(NftId distributionNftId, ReferralId referralId) public view returns (bool isValid) {
         (address distributionAddress, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
         IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
