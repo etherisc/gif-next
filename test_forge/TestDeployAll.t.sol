@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 import {console} from "../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
+import {BUNDLE, COMPONENT, POLICY, RISK} from "../contracts/types/ObjectType.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol";
 
 contract TestDeployAll is TestGifBase {
@@ -39,14 +40,23 @@ contract TestDeployAll is TestGifBase {
         assertTrue(address(instanceReader) != address(0), "instance reader is zero address");
     }
 
-    // function testDeployAllInstanceOwner() public {
-    //     NftId nftId = registry.getNftId(address(instance));
-    //     assertEq(
-    //         registry.ownerOf(nftId),
-    //         instanceOwner,
-    //         "unexpected instance owner"
-    //     );
-    // }
+    function testDeployAllInstanceOwner() public {
+        NftId nftId = registry.getNftId(address(instance));
+        assertEq(
+            registry.ownerOf(nftId),
+            instanceOwner,
+            "unexpected instance owner"
+        );
+    }
+
+
+    function testDeployAllInstanceLifecycles() public {
+        assertTrue(instance.hasLifecycle(BUNDLE()), "instance misses bundle lifecycle");
+        assertTrue(instance.hasLifecycle(COMPONENT()), "instance misses component lifecycle");
+        assertTrue(instance.hasLifecycle(POLICY()), "instance misses policy lifecycle");
+        assertTrue(instance.hasLifecycle(RISK()), "instance misses risk lifecycle");
+    }
+
 
     // function testDeployAllInstanceNftId() public {
     //     NftId nftId = registry.getNftId(address(instance));

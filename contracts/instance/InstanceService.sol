@@ -234,9 +234,10 @@ contract InstanceService is
         // configure authorization for bundle service on instance
         address bundleServiceAddress = getRegistry().getServiceAddress(BUNDLE(), getMajorVersion());
         clonedAccessManager.grantRole(BUNDLE_SERVICE_ROLE(), address(bundleServiceAddress));
-        bytes4[] memory instanceBundleServiceSelectors = new bytes4[](2);
+        bytes4[] memory instanceBundleServiceSelectors = new bytes4[](3);
         instanceBundleServiceSelectors[0] = clonedInstance.createBundle.selector;
         instanceBundleServiceSelectors[1] = clonedInstance.updateBundle.selector;
+        instanceBundleServiceSelectors[2] = clonedInstance.updateBundleState.selector;
         clonedAccessManager.setTargetFunctionRole(
             "Instance",
             instanceBundleServiceSelectors, 
@@ -448,7 +449,7 @@ contract InstanceService is
         instanceAccessManager.setTargetFunctionRole(
             poolName, 
             fctSelectors3, 
-            IPoolComponent(poolAddress).getBundleOwnerRole());
+            IPoolComponent(poolAddress).getPoolInfo().bundleOwnerRole);
     }
 
     function grantProductDefaultPermissions(NftId instanceNftId, address productAddress, string memory productName) external onlyRegisteredService {
@@ -485,6 +486,5 @@ contract InstanceService is
         InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
         accessManager.setTargetClosed(targetName, locked);
     }
-    
 }
 

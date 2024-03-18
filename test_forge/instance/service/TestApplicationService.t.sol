@@ -384,8 +384,9 @@ contract TestProductService is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(investor);
-        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-        token.approve(address(poolSetupInfo.tokenHandler), 10000);
+        token.approve(
+            address(instanceReader.getComponentInfo(poolNftId).tokenHandler), 
+            10000);
 
         SimplePool spool = SimplePool(address(pool));
         bundleNftId = spool.createBundle(

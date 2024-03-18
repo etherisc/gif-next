@@ -4,10 +4,11 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IProductComponent} from "../../components/IProductComponent.sol";
 import {Product} from "../../components/Product.sol";
-import {IPoolComponent} from "../../components/IPoolComponent.sol";
+import {IComponents} from "../module/IComponents.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IInstance} from "../IInstance.sol";
 import {IPolicy} from "../module/IPolicy.sol";
+import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IRisk} from "../module/IRisk.sol";
 import {IBundle} from "../module/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
@@ -111,7 +112,9 @@ contract PolicyService is
         require(bundleInfo.poolNftId == poolNftId, "POLICY_BUNDLE_MISMATCH");
 
         // calculate required collateral
-        ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        ISetup.PoolInfo memory poolInfo = abi.decode(
+            componentInfo.data, (ISetup.PoolInfo));
 
         // obtain remaining return values
         // TODO required collateral amount should be calculated by pool service, not policy service
@@ -212,7 +215,12 @@ contract PolicyService is
         instance.updatePolicy(applicationNftId, policyInfo, newPolicyState);
 
         // also verify/confirm application by pool if necessary
-        if(instanceReader.getPoolSetupInfo(poolNftId).isVerifyingApplications) {
+        if(abi.decode(
+            instanceReader.getComponentInfo(poolNftId).data, 
+            (ISetup.PoolInfo)
+            ).isVerifyingApplications
+        )
+        {
             IPoolComponent pool = IPoolComponent(
                 getRegistry().getObjectInfo(poolNftId).objectAddress);
 
@@ -361,12 +369,12 @@ contract PolicyService is
     {
         // process token transfer(s)
         if(premiumAmount > 0) {
-            ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
-            IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
+            InstanceReader instanceReader = instance.getInstanceReader();
+            ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
             TokenHandler tokenHandler = productSetupInfo.tokenHandler;
             address policyOwner = getRegistry().ownerOf(policyNftId);
-            ISetup.PoolSetupInfo memory poolSetupInfo = instance.getInstanceReader().getPoolSetupInfo(productSetupInfo.poolNftId);
-            address poolWallet = poolSetupInfo.wallet;
+            address poolWallet = instanceReader.getComponentInfo(productSetupInfo.poolNftId).wallet;
             IPolicy.Premium memory premium = _applicationService.calculatePremium(
                 productNftId,
                 policyInfo.riskId,

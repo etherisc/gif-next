@@ -40,6 +40,7 @@ library FeeLib {
         return Fee(UFixedLib.toUFixed(percent, -2), 0);
     }
 
+    // TODO rename to zero
     /// @dev Return a zero fee struct (0, 0)
     function zeroFee() public pure returns (Fee memory fee) {
         return Fee(UFixed.wrap(0), 0);

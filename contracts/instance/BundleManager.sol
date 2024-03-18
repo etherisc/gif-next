@@ -22,9 +22,10 @@ contract BundleManager is
     event LogBundleManagerBundleAdded(NftId poolNftId, NftId bundleNftId);
     event LogBundleManagerBundleUnlocked(NftId poolNftId, NftId bundleNftId);
     event LogBundleManagerBundleLocked(NftId poolNftId, NftId bundleNftId);
+    event LogBundleManagerBundleClosed(NftId poolNftId, NftId bundleNftId);
 
-    error ErrorBundleManagerErrorPolicyAlreadyActivated(NftId policyNftId);
-    error ErrorBundleManagerErrorBundleLocked(NftId bundleNftId, NftId policyNftId);
+    error ErrorBundleManagerPolicyAlreadyActivated(NftId policyNftId);
+    error ErrorBundleManagerBundleLocked(NftId bundleNftId, NftId policyNftId);
     error ErrorBundleManagerPolicyWithOpenClaims(NftId policyNftId, uint256 openClaimsCount);
     error ErrorBundleManagerPolicyNotCloseable(NftId policyNftId);
     error ErrorBundleManagerBundleUnknown(NftId bundleNftId);
@@ -32,7 +33,7 @@ contract BundleManager is
 
     mapping(NftId bundleNftId => LibNftIdSet.Set policies) internal _activePolicies;
 
-    /// @dev links a policy with its bundle
+    /// @dev links a policy to its bundle
     // to link a policy it MUST NOT yet have been activated
     // the bundle MUST be unlocked (active) for linking (underwriting) and registered with this instance
     function linkPolicy(NftId policyNftId) external restricted() {
@@ -42,7 +43,7 @@ contract BundleManager is
 
         // ensure bundle is unlocked (in active set) and registered with this instance
         if (!_isActive(poolNftId, bundleNftId)) {
-            revert ErrorBundleManagerErrorBundleLocked(bundleNftId, policyNftId);
+            revert ErrorBundleManagerBundleLocked(bundleNftId, policyNftId);
         }
 
         LibNftIdSet.add(_activePolicies[bundleNftId], policyNftId);
@@ -84,6 +85,7 @@ contract BundleManager is
         _add(poolNftId, bundleNftId);
         emit LogBundleManagerBundleAdded(poolNftId, bundleNftId);
     }
+
 
     /// @dev unlocked (active) bundles are available to underwrite new policies
     function unlock(NftId bundleNftId) external restricted() {

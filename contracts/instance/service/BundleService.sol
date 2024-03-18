@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Pool} from "../../components/Pool.sol";
+import {IBundle} from "../../instance/module/IBundle.sol";
+import {IComponents} from "../module/IComponents.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
-import {IBundle} from "../../instance/module/IBundle.sol";
 import {TokenHandler} from "../../instance/module/ITreasury.sol";
 import {ISetup} from "../module/ISetup.sol";
 import {IPolicy} from "../module/IPolicy.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
-
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
 import {POOL_OWNER_ROLE, RoleId} from "../../types/RoleId.sol";
+import {Pool} from "../../components/Pool.sol";
+
 import {Fee, FeeLib} from "../../types/Fee.sol";
-import {KEEP_STATE, StateId} from "../../types/StateId.sol";
+import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../../types/StateId.sol";
 import {Seconds} from "../../types/Seconds.sol";
 import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
@@ -64,7 +65,7 @@ contract BundleService is
         return BUNDLE();
     }
 
-    function createBundle(
+    function create(
         address owner, 
         Fee memory fee, 
         uint256 stakingAmount, 
@@ -119,7 +120,7 @@ contract BundleService is
         // TODO add logging
     }
 
-    function setBundleFee(
+    function setFee(
         NftId bundleNftId,
         Fee memory fee
     )
@@ -139,30 +140,6 @@ contract BundleService is
         instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
-    function updateBundle(NftId instanceNftId, NftId bundleNftId, IBundle.BundleInfo memory bundleInfo, StateId state) 
-        external
-        onlyService
-    {
-        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
-        IInstance instance = IInstance(instanceInfo.objectAddress);
-        instance.updateBundle(bundleNftId, bundleInfo, state);
-    } 
-
-    function lockBundle(NftId bundleNftId) 
-        external
-    {
-        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
-        BundleManager bundleManager = instance.getBundleManager();
-        bundleManager.lock(bundleNftId);
-    }
-
-    function unlockBundle(NftId bundleNftId) 
-        external
-    {
-        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
-        BundleManager bundleManager = instance.getBundleManager();
-        bundleManager.unlock(bundleNftId);
-    }
 
     function lockCollateral(
         IInstance instance,
@@ -190,6 +167,64 @@ contract BundleService is
         
         linkPolicy(instance, policyNftId);
     }
+
+
+    function lock(NftId bundleNftId) 
+        external
+        virtual
+    {
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+
+        // udpate bundle state
+        instance.updateBundleState(bundleNftId, PAUSED());
+
+        // update set of active bundles
+        BundleManager bundleManager = instance.getBundleManager();
+        bundleManager.lock(bundleNftId);
+
+        emit LogBundleServiceBundleLocked(bundleNftId);
+    }
+
+
+    function unlock(NftId bundleNftId) 
+        external
+        virtual
+    {
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+
+        // udpate bundle state
+        instance.updateBundleState(bundleNftId, ACTIVE());
+
+        // update set of active bundles
+        BundleManager bundleManager = instance.getBundleManager();
+        bundleManager.unlock(bundleNftId);
+
+        emit LogBundleServiceBundleActivated(bundleNftId);
+    }
+
+
+    function close(NftId bundleNftId) 
+        external
+        virtual
+    {
+        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+
+        // udpate bundle state
+        instance.updateBundleState(bundleNftId, CLOSED());
+
+        // ensure no open policies attached to bundle
+        BundleManager bundleManager = instance.getBundleManager();
+        uint256 openPolicies = bundleManager.activePolicies(bundleNftId);
+        if(openPolicies > 0) {
+            revert ErrorBundleServiceBundleWithOpenPolicies(bundleNftId, openPolicies);
+        }
+
+        // update set of active bundles
+        bundleManager.lock(bundleNftId);
+
+        emit LogBundleServiceBundleClosed(bundleNftId);
+    }
+
 
     function increaseBalance(IInstance instance,
         NftId bundleNftId, 
@@ -235,7 +270,7 @@ contract BundleService is
 
         // ensure policy has not yet been activated
         if (policyInfo.activatedAt.gtz()) {
-            revert BundleManager.ErrorBundleManagerErrorPolicyAlreadyActivated(policyNftId);
+            revert BundleManager.ErrorBundleManagerPolicyAlreadyActivated(policyNftId);
         }
         
         BundleManager bundleManager = instance.getBundleManager();
@@ -278,17 +313,19 @@ contract BundleService is
     {
         // process token transfer(s)
         if(stakingAmount > 0) {
-            ISetup.PoolSetupInfo memory poolInfo = instanceReader.getPoolSetupInfo(poolNftId);
-            TokenHandler tokenHandler = poolInfo.tokenHandler;
+            IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+            ISetup.PoolInfo memory poolInfo = abi.decode(
+                componentInfo.data, (ISetup.PoolInfo));
+
+            TokenHandler tokenHandler = componentInfo.tokenHandler;
             address bundleOwner = getRegistry().ownerOf(bundleNftId);
             Fee memory stakingFee = poolInfo.stakingFee;
 
             tokenHandler.transfer(
                 bundleOwner,
-                poolInfo.wallet,
+                componentInfo.wallet,
                 stakingAmount
             );
-
 
             if (! FeeLib.feeIsZero(stakingFee)) {
                 (uint256 stakingFeeAmount, uint256 netAmount) = FeeLib.calculateFee(stakingFee, stakingAmount);

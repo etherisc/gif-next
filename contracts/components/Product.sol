@@ -24,6 +24,7 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
 import {Pool} from "../components/Pool.sol";
 import {Distribution} from "../components/Distribution.sol";
 
@@ -264,6 +265,9 @@ abstract contract Product is
 
     function _getInitialSetupInfo() internal view returns (ISetup.ProductSetupInfo memory setupInfo) {
         ProductStorage storage $ = _getProductStorage();
+
+        ISetup.DistributionSetupInfo memory distributionSetupInfo = $._distribution.getSetupInfo();
+        IComponents.PoolInfo memory poolInfo = $._pool.getPoolInfo();
 
         return ISetup.ProductSetupInfo(
             getToken(),

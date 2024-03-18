@@ -115,6 +115,7 @@ function toObjectType(uint256 objectType) pure returns (ObjectType) {
     return ObjectType.wrap(uint8(objectType));
 }
 
+// TODO move to ObjecTypeLib and rename to zero()
 /// @dev Return the ObjectType zero (0)
 function zeroObjectType() pure returns (ObjectType) {
     return ObjectType.wrap(0);

@@ -101,6 +101,7 @@ library VersionLib {
         return Version.wrap(uint24(versionNumber));
     }
 
+    // TODO rename to zero()
     function zeroVersion() external pure returns(Version) {
         return Version.wrap(0);
     }
