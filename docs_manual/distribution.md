@@ -57,28 +57,6 @@ sequenceDiagram
     D ->> C: ReferralId
 ```
 
-## calculateFeeAmount
-
-```mermaid
-sequenceDiagram
-    actor C as Caller
-    participant D as Distribution
-    participant DS as DistributionService
-    participant IR as InstanceReader
-    
-    C ->> +D: calculateFeeAmount(referralId, netPremium)
-    D ->> IR: getReferralInfo()
-    IR ->> D: IDistribution.ReferralInfo
-    D ->> D: validate referral
-    D ->> -DS: calculateFeeAmount(referralId, netPremium)
-    DS ->> IR: getReferralInfo()
-    IR ->> DS: IDistribution.ReferralInfo
-    DS ->> DS: validate referral
-    DS ->> DS: calculate fee <br>distributionFee(fixed + pct) - referralDiscount(pct)) 
-    DS ->> D: feeAmount
-    D ->> C: feeAmount
-```
-
 ## processSale
 
 ```mermaid
