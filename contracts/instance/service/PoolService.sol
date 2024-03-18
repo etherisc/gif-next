@@ -6,7 +6,7 @@ import {IRegistry} from "../../registry/IRegistry.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IBundle} from "../../instance/module/IBundle.sol";
 import {TokenHandler} from "../../instance/module/ITreasury.sol";
-import {ISetup} from "../module/ISetup.sol";
+import {IComponents} from "../module/IComponents.sol";
 import {IPolicy} from "../module/IPolicy.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
@@ -83,7 +83,7 @@ contract PoolService is
         poolNftId = registryInfo.nftId;
 
         // amend component info with pool specific token handler
-        ISetup.ComponentInfo memory componentInfo = pool.getComponentInfo();
+        IComponents.ComponentInfo memory componentInfo = pool.getComponentInfo();
         componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token));
 
         // save amended component info with instance
@@ -102,8 +102,8 @@ contract PoolService is
         InstanceReader instanceReader = instance.getInstanceReader();
         NftId poolNftId = registryInfo.nftId;
 
-        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        ISetup.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (ISetup.PoolInfo));
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
         uint256 previousMaxCapitalAmount = poolInfo.maxCapitalAmount;
 
         poolInfo.maxCapitalAmount = maxCapitalAmount;
@@ -121,8 +121,8 @@ contract PoolService is
         InstanceReader instanceReader = instance.getInstanceReader();
         NftId poolNftId = registryInfo.nftId;
 
-        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        ISetup.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (ISetup.PoolInfo));
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
 
         // bundle owner role may only be set once per pool
         if(poolInfo.bundleOwnerRole != PUBLIC_ROLE()) {
@@ -149,8 +149,8 @@ contract PoolService is
         InstanceReader instanceReader = instance.getInstanceReader();
         NftId poolNftId = registryInfo.nftId;
 
-        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        ISetup.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (ISetup.PoolInfo));
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
 
         poolInfo.poolFee = poolFee;
         poolInfo.stakingFee = stakingFee;

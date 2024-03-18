@@ -19,6 +19,7 @@ using {
     UFixedLib.gtz
 } for UFixed global;
 
+// TODO move to UFixedLib and rename to zero()
 function zeroUFixed() pure returns (UFixed zero) {
     return UFixed.wrap(0);
 }

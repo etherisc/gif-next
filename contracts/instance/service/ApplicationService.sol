@@ -129,7 +129,6 @@ contract ApplicationService is
         );
         
         instance.createApplication(applicationNftId, policyInfo);
-        instance.updateApplicationState(applicationNftId, APPLIED());
 
         // TODO: add logging
     }

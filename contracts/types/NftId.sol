@@ -24,6 +24,7 @@ function toNftId(uint256 id) pure returns (NftId) {
     return NftId.wrap(uint96(id));
 }
 
+// TODO move to NftIdLib and rename to zero()
 /// @dev Return the NftId zero (0)
 function zeroNftId() pure returns (NftId) {
     return NftId.wrap(0);

@@ -8,6 +8,8 @@ import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
 import {PRODUCT_OWNER_ROLE} from "../contracts/types/RoleId.sol";
 import {SimpleProduct} from "./mock/SimpleProduct.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
+import {IComponents} from "../contracts/instance/module/IComponents.sol";
+import {ILifecycle} from "../contracts/instance/base/ILifecycle.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
@@ -115,8 +117,6 @@ contract TestProduct is TestGifBase {
 
     function test_Product_createApplication() public {
         _prepareProduct();  
-
-        
 
         vm.startPrank(productOwner);
 
@@ -575,7 +575,7 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(investor);
-        ISetup.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
         token.approve(address(componentInfo.tokenHandler), 10000);
 
         Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);

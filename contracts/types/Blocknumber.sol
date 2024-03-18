@@ -52,6 +52,7 @@ function blockBlocknumber() view returns (Blocknumber) {
     return toBlocknumber(block.number);
 }
 
+// TODO move to BlocknumberLib and rename to zero()
 /// @dev Return the Blocknumber zero (0)
 function zeroBlocknumber() pure returns (Blocknumber) {
     return toBlocknumber(0);

@@ -619,7 +619,8 @@ contract TestGifBase is Test {
     //     // solhint-disable-next-line
     //     console.log("bundle nft id", bundleNftId.toInt());
     // }
-    
+
+
     function _prepareDistributionAndPool() internal {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
@@ -648,6 +649,28 @@ contract TestGifBase is Test {
             UFixedLib.toUFixed(1),
             poolOwner
         );
+        poolNftId = poolService.register(address(pool));
+        vm.stopPrank();
+    }
+
+
+    function _preparePool() internal {
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        vm.stopPrank();
+
+        vm.startPrank(poolOwner);
+        pool = new SimplePool(
+            address(registry),
+            instanceNftId,
+            address(token),
+            false,
+            false,
+            UFixedLib.toUFixed(1),
+            UFixedLib.toUFixed(1),
+            poolOwner
+        );
+
         poolNftId = poolService.register(address(pool));
         vm.stopPrank();
     }

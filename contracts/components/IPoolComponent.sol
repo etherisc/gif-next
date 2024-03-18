@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Fee} from "../types/Fee.sol";
 import {IComponent} from "./IComponent.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId} from "../types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {Seconds} from "../types/Seconds.sol";
@@ -105,15 +105,9 @@ interface IPoolComponent is IComponent {
         view
         returns (bool isMatching);
 
-    // TODO move this to IComponent if this works ...
-    /// @dev returns component infos for this pool
-    /// when registered with an instance the info is obtained from the data stored in the instance
-    /// when not registered the function returns the info from the component contract
-    function getComponentInfo() external view returns (ISetup.ComponentInfo memory info);
-
     /// @dev returns pool specific infos for this pool
     /// when registered with an instance the info is obtained from the data stored in the instance
     /// when not registered the function returns the info from the component contract
-    function getPoolInfo() external view returns (ISetup.PoolInfo memory info);
+    function getPoolInfo() external view returns (IComponents.PoolInfo memory info);
 
 }

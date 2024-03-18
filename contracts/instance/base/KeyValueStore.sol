@@ -88,7 +88,7 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
 
         // create log entries
         // solhint-disable avoid-tx-origin
-        emit LogStateUpdated(key32.toObjectType(), key32.toKeyId(), state, stateOld, updatedBy, tx.origin, lastUpdatedIn);
+        emit LogStateUpdated(key32.toObjectType(), key32.toKeyId(), stateOld, state, updatedBy, tx.origin, lastUpdatedIn);
         emit LogInfoUpdated(key32.toObjectType(), key32.toKeyId(), state, updatedBy, tx.origin, lastUpdatedIn);
         // solhing-enable
     }
@@ -134,6 +134,9 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
         StateId stateOld = metadata.state;
         require(stateOld.gtz(), "ERROR:KVS-041:NOT_EXISTING");
 
+        // ensure state transistion is valid
+        checkTransition(metadata.objectType, stateOld, state);
+
         // update metadata (and state)
         address updatedBy = msg.sender;
         Blocknumber lastUpdatedIn = metadata.updatedIn;
@@ -143,7 +146,7 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
 
         // create log entry
         // solhint-disable-next-line avoid-tx-origin
-        emit LogStateUpdated(key32.toObjectType(), key32.toKeyId(), state, stateOld, updatedBy, tx.origin, lastUpdatedIn);
+        emit LogStateUpdated(key32.toObjectType(), key32.toKeyId(), stateOld, state, updatedBy, tx.origin, lastUpdatedIn);
     }
 
     function exists(Key32 key32) public view returns (bool) {

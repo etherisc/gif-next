@@ -11,14 +11,6 @@ import {UFixed} from "../../types/UFixed.sol";
 
 interface ISetup {
 
-    struct ComponentInfo {
-        string name; // component name (needs to be unique per instance)
-        IERC20Metadata token;
-        TokenHandler tokenHandler;
-        address wallet;
-        bytes data; // will hold component type specific additional info (eg encoded pool info)
-    }
-
     struct PoolInfo {
         NftId productNftId; // the nft of the product this pool is linked to
         RoleId bundleOwnerRole; // the required role for bundle owners

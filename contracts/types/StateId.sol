@@ -67,6 +67,7 @@ function toStateId(uint256 id) pure returns (StateId) {
     return StateId.wrap(uint8(id));
 }
 
+// TODO move to StateIdLib and rename to zero()
 /// @dev Return the StateId zero (0)
 function zeroStateId() pure returns (StateId) {
     return StateId.wrap(0);

@@ -6,6 +6,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {IComponent} from "./IComponent.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -199,6 +200,25 @@ abstract contract Component is
     function getProductNftId() public view override returns (NftId productNftId) {
         return _getComponentStorage()._productNftId;
     }
+
+    function getComponentInfo() public view returns (IComponents.ComponentInfo memory info) {
+        info = _getInstanceReader().getComponentInfo(getNftId());
+
+        // fallback to initial info (wallet is always != address(0))
+        if(info.wallet == address(0)) {
+            info = _getInitialInfo();
+        }
+    }
+
+    /// @dev defines initial component specification
+    /// overwrite this function according to your use case
+    function _getInitialInfo()
+        internal
+        view 
+        virtual
+        returns (IComponents.ComponentInfo memory info)
+    { }
+
 
     /// @dev internal function for nft transfers.
     /// handling logic that deals with nft transfers need to overwrite this function

@@ -7,7 +7,7 @@ import {IBundleService} from "../instance/service/IBundleService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId, NftIdLib} from "../types/NftId.sol";
 import {POOL} from "../types/ObjectType.sol";
 import {RoleId, PUBLIC_ROLE} from "../types/RoleId.sol";
@@ -24,24 +24,6 @@ abstract contract Pool is
     bytes32 public constant POOL_STORAGE_LOCATION_V1 = 0x25e3e51823fbfffb988e0a2744bb93722d9f3e906c07cc0a9e77884c46c58300;
 
     struct PoolStorage {
-        // TODO cleanup
-        // UFixed _collateralizationLevel;
-        // UFixed _retentionLevel;
-        // uint256 _maxCapitalAmount;
-        
-        // bool _isExternallyManaged;
-        // bool _isVerifyingApplications;
-
-        // RoleId _bundleOwnerRole;
-        // bool _isInterceptingBundleTransfers;
-
-        // Fee _initialPoolFee;
-        // Fee _initialStakingFee;
-        // Fee _initialPerformanceFee;
-
-        // TokenHandler _tokenHandler;
-
-        // may be used to interact with instance by derived contracts
         IPoolService _poolService;
         IBundleService _bundleService;
     }
@@ -69,10 +51,6 @@ abstract contract Pool is
         string memory name,
         address token,
         bool isInterceptingNftTransfers,
-        // bool isExternallyManaging,
-        // bool isVerifying,
-        // UFixed collateralizationLevel,
-        // UFixed retentionLevel,
         address initialOwner,
         bytes memory registryData // writeonly data that will saved in the object info record of the registry
     )
@@ -83,17 +61,6 @@ abstract contract Pool is
         initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, registryData);
 
         PoolStorage storage $ = _getPoolStorage();
-        // TODO cleanup
-        // $._tokenHandler = new TokenHandler(token);
-        // $._maxCapitalAmount = type(uint256).max;
-        // $._isExternallyManaged = isExternallyManaging;
-        // $._isVerifyingApplications = isVerifying;
-        // $._bundleOwnerRole = PUBLIC_ROLE();
-        // $._collateralizationLevel = collateralizationLevel;
-        // $._retentionLevel = retentionLevel;
-        // $._initialPoolFee = FeeLib.zeroFee();
-        // $._initialStakingFee = FeeLib.zeroFee();
-        // $._initialPerformanceFee = FeeLib.zeroFee();
         $._poolService = getInstance().getPoolService();
         $._bundleService = getInstance().getBundleService();
 
@@ -146,7 +113,7 @@ abstract contract Pool is
         restricted()
         onlyBundleOwner(bundleNftId)
     {
-        _getPoolStorage()._bundleService.lockBundle(bundleNftId);
+        _getPoolStorage()._bundleService.lock(bundleNftId);
     }
 
 
@@ -156,7 +123,7 @@ abstract contract Pool is
         restricted()
         onlyBundleOwner(bundleNftId)
     {
-        _getPoolStorage()._bundleService.unlockBundle(bundleNftId);
+        _getPoolStorage()._bundleService.unlock(bundleNftId);
     }
 
 
@@ -166,7 +133,7 @@ abstract contract Pool is
         restricted()
         onlyBundleOwner(bundleNftId)
     {
-        // TODO add implementation
+        _getPoolStorage()._bundleService.close(bundleNftId);
     }
 
 
@@ -179,7 +146,7 @@ abstract contract Pool is
         restricted()
         onlyBundleOwner(bundleNftId)
     {
-        _getPoolStorage()._bundleService.setBundleFee(bundleNftId, fee);
+        _getPoolStorage()._bundleService.setFee(bundleNftId, fee);
     }
 
 
@@ -229,7 +196,6 @@ abstract contract Pool is
         virtual
         restricted()
     {
-        // validate application data against bundle filter
         if(!applicationMatchesBundle(
             applicationNftId,
             applicationData, 
@@ -264,18 +230,8 @@ abstract contract Pool is
     }
 
 
-    function getPoolInfo() external view returns (ISetup.PoolInfo memory poolInfo) {
-        poolInfo = abi.decode(getComponentInfo().data, (ISetup.PoolInfo));
-    }
-
-
-    function getComponentInfo() public view returns (ISetup.ComponentInfo memory info) {
-        info = _getInstanceReader().getComponentInfo(getNftId());
-
-        // fallback to initial info (wallet is always != address(0))
-        if(info.wallet == address(0)) {
-            info = _getInitialInfo();
-        }
+    function getPoolInfo() external view returns (IComponents.PoolInfo memory poolInfo) {
+        poolInfo = abi.decode(getComponentInfo().data, (IComponents.PoolInfo));
     }
 
     // Internals
@@ -290,7 +246,7 @@ abstract contract Pool is
         internal
         returns(NftId bundleNftId)
     {
-        bundleNftId = _getPoolStorage()._bundleService.createBundle(
+        bundleNftId = _getPoolStorage()._bundleService.create(
             bundleOwner,
             fee,
             amount,
@@ -310,18 +266,16 @@ abstract contract Pool is
     function _getInitialInfo()
         internal
         view 
-        virtual
-        returns (ISetup.ComponentInfo memory info)
+        virtual override
+        returns (IComponents.ComponentInfo memory info)
     {
-        // PoolStorage storage $ = _getPoolStorage();
-
-        return ISetup.ComponentInfo(
+        return IComponents.ComponentInfo(
             getName(),
             getToken(),
             TokenHandler(address(0)), // will be created by GIF service during registration
             address(this), // contract is its own wallet
             abi.encode(
-                ISetup.PoolInfo(
+                IComponents.PoolInfo(
                     NftIdLib.zero(), // will be set when GIF registers the related product
                     PUBLIC_ROLE(), // bundleOwnerRole
                     type(uint256).max, // maxCapitalAmount,
@@ -334,22 +288,6 @@ abstract contract Pool is
                     FeeLib.zeroFee(), // initialStakingFee,
                     FeeLib.zeroFee() // initialPerformanceFee,
                 )));
-
-        // return ISetup.PoolInfo(
-        //     getProductNftId(),
-        //     TokenHandler(address(0)), // GIF will be created by GIF during registration
-        //     PUBLIC_ROLE(), // bundleOwnerRole
-        //     type(uint256).max, // maxCapitalAmount,
-        //     isNftInterceptor(), // isInterceptingBundleTransfers
-        //     false, // isExternallyManaged,
-        //     false, // isVerifyingApplications,
-        //     UFixedLib.toUFixed(1), // collateralizationLevel,
-        //     UFixedLib.toUFixed(1), // retentionLevel,
-        //     FeeLib.zero(), // initialPoolFee,
-        //     FeeLib.zero(), // initialStakingFee,
-        //     FeeLib.zero(), // initialPerformanceFee,
-        //     getWallet()
-        // );
     }
 
 

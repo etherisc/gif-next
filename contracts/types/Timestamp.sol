@@ -53,6 +53,7 @@ function toTimestamp(uint256 timestamp) pure returns (Timestamp) {
     return Timestamp.wrap(uint40(timestamp));
 }
 
+// TODO move to TimestampLib and rename to zero()
 /// @dev Return the Timestamp zero (0)
 function zeroTimestamp() pure returns (Timestamp) {
     return toTimestamp(0);

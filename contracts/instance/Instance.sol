@@ -26,6 +26,7 @@ import {KeyValueStore} from "./base/KeyValueStore.sol";
 
 import {IAccess} from "./module/IAccess.sol";
 import {IBundle} from "./module/IBundle.sol";
+import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
@@ -67,6 +68,8 @@ contract Instance is
         __AccessManaged_init(accessManagerAddress);
         
         initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
+        initializeLifecycle();
+
         registerInterface(type(IInstance).interfaceId);    
     }
 
@@ -97,11 +100,11 @@ contract Instance is
     }
 
     //--- PoolSetup ------------------------------------------------------//
-    function createPoolSetup(NftId poolNftId, ISetup.ComponentInfo memory info) external restricted() {
+    function createPoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info) external restricted() {
         create(_toNftKey32(poolNftId, POOL()), abi.encode(info));
     }
 
-    function updatePoolSetup(NftId poolNftId, ISetup.ComponentInfo memory info, StateId newState) external restricted() {
+    function updatePoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info, StateId newState) external restricted() {
         update(_toNftKey32(poolNftId, POOL()), abi.encode(info), newState);
     }
 

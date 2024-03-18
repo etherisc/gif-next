@@ -15,6 +15,7 @@ import {InstanceReader} from "./InstanceReader.sol";
 
 import {IBundle} from "./module/IBundle.sol";
 import {IBundleService} from "./service/IBundleService.sol";
+import {IComponents} from "./module/IComponents.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IKeyValueStore} from "./base/IKeyValueStore.sol";
@@ -48,8 +49,8 @@ interface IInstance is IRegisterable, IKeyValueStore, IAccessManaged {
     function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external;
     function updateDistributionSetupState(NftId distributionNftId, StateId newState) external;
 
-    function createPoolSetup(NftId poolNftId, ISetup.ComponentInfo memory info) external;
-    function updatePoolSetup(NftId poolNftId, ISetup.ComponentInfo memory info, StateId newState) external;
+    function createPoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info) external;
+    function updatePoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info, StateId newState) external;
     function updatePoolSetupState(NftId poolNftId, StateId newState) external;
 
     function createBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle) external;
