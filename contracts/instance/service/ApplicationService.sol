@@ -177,7 +177,6 @@ contract ApplicationService is
     }
 
     // TODO: maybe move this to a pricing service later
-    // FIXME: this !!
     function calculatePremium(
         NftId productNftId,
         RiskId riskId,
@@ -200,7 +199,7 @@ contract ApplicationService is
             lifetime,
             applicationData
         );
-        // TODO: add all fixed fee parts on top of the netPremium
+
         premium = _getFixedFeeAmounts(
             netPremiumAmount,
             _getAndVerifyProduct(productNftId),

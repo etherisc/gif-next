@@ -72,7 +72,6 @@ contract PolicyService is
 
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getMajorVersion()));
         _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getMajorVersion()));
-        // FIXME: application service is currently deployed AFTER policy service
         _applicationService = IApplicationService(getRegistry().getServiceAddress(APPLICATION(), getMajorVersion()));
 
         registerInterface(type(IPolicyService).interfaceId);
@@ -385,8 +384,6 @@ contract PolicyService is
             //         premiumAmount
             //     );
             // } else {
-                // FIXME: this is wrong as netPremium is not netPremium here!!! 
-                // (uint256 productFeeAmount, uint256 netAmount) = FeeLib.calculateFee(productSetupInfo.productFee, netPremiumAmount);
                 address productWallet = productSetupInfo.wallet;
                 if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premium.premiumAmount) {
                     revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premium.premiumAmount);
@@ -396,6 +393,7 @@ contract PolicyService is
                 netPremiumAmount = premium.netPremiumAmount;
                 // TODO: also move distribution tokens to distribution wallet and call `Distribution.processSale` to update distribution balances
             // }
+            // TODO: move pool/bundle related tokens too
 
         }
 

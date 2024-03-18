@@ -235,7 +235,6 @@ contract TestDistribution is TestGifBase {
         assertEq(token.balanceOf(externallyOwnedWallet2), INITIAL_BALANCE, "exeternally owned wallet 2 balance not 100000");
     }
 
-    // FIXME: fix test
     function skip_test_Component_lock() public {
         // GIVEN
         _prepareDistribution();
@@ -250,7 +249,6 @@ contract TestDistribution is TestGifBase {
         distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);
     }
 
-    // FIXME: fix test
     function skip_test_Component_unlock() public {
         // GIVEN
         _prepareDistribution();
