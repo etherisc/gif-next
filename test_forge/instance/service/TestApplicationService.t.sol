@@ -272,6 +272,67 @@ contract TestProductService is TestGifBase {
         assertEq(premium.distributionOwnerFeeVarAmount, 25, "distributionOwnerFeeVarAmount invalid");
     }
 
+    function test_ApplicationService_calculatePremium_variableAndFixedFeesWithReferral() public {
+        _createAndRegisterDistributionPoolProductWithFees(
+            FeeLib.toFee(UFixedLib.toUFixed(2, -2), 5),
+            FeeLib.toFee(UFixedLib.toUFixed(30, -2), 10),
+            FeeLib.toFee(UFixedLib.toUFixed(10, -2), 10),
+            FeeLib.toFee(UFixedLib.toUFixed(10, -2), 10),
+            FeeLib.toFee(UFixedLib.toUFixed(10, -2), 10)
+        );
+
+        DistributorType distributorType = distribution.createDistributorType(
+            "Gold",
+            UFixedLib.zero(),
+            UFixedLib.toUFixed(10, -2),
+            UFixedLib.toUFixed(5, -2),
+            10,
+            14 * 24 * 3600,
+            false,
+            false,
+            "");
+
+        NftId distributorNftId = distribution.createDistributor(
+            customer,
+            distributorType,
+            "");
+        
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        ReferralId referralId = sdistribution.createReferral(
+            distributorNftId,
+            "GET_A_DISCOUNT",
+            UFixedLib.toUFixed(10, -2),
+            5,
+            TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(604800)),
+            "");
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        IPolicy.Premium memory premium = applicationService.calculatePremium(
+            productNftId, 
+            riskId, 
+            1000, 
+            SecondsLib.toSeconds(300), 
+            "", 
+            bundleNftId, 
+            referralId);
+
+        assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
+        assertEq(premium.fullPremiumAmount, 200, "fullPremiumAmount invalid");
+        assertEq(premium.premiumAmount, 180, "premiumAmount invalid");
+        assertEq(premium.distributionFeeFixAmount, 10, "distributionFeeFixAmount invalid");
+        assertEq(premium.distributionFeeVarAmount, 30, "distributionFeeVarAmount invalid");
+        assertEq(premium.poolFeeFixAmount, 10, "poolFeeFixAmount invalid");
+        assertEq(premium.poolFeeVarAmount, 10, "poolFeeVarAmount invalid");
+        assertEq(premium.bundleFeeFixAmount, 10, "bundleFeeFixAmount invalid");
+        assertEq(premium.bundleFeeVarAmount, 10, "bundleFeeVarAmount invalid");
+        assertEq(premium.productFeeFixAmount, 10, "productFeeFixAmount invalid");
+        assertEq(premium.productFeeVarAmount, 10, "productFeeVarAmount invalid");
+        assertEq(premium.discountAmount, 20, "discountAmount invalid");
+        assertEq(premium.commissionAmount, 5, "commissionAmount invalid");
+        assertEq(premium.distributionOwnerFeeFixAmount, 5, "distributionOwnerFeeFixAmount invalid");
+        assertEq(premium.distributionOwnerFeeVarAmount, 5, "distributionOwnerFeeVarAmount invalid");
+    }
+
     function _createAndRegisterDistributionPoolProductWithFees(
         Fee memory minDistributionOwnerFee,
         Fee memory distributionFee,
