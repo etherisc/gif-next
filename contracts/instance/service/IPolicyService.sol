@@ -61,26 +61,6 @@ interface IPolicyService is IService {
     /// this function can only be called by a product. the policy needs to match with the calling product
     function close(NftId policyNftId) external;
 
-    /// @dev calculates the total premium amount for the specified attributes
-    /// also returns the various fees included in the total premium amount
-    function calculatePremium(
-        RiskId riskId,
-        uint256 sumInsuredAmount,
-        Seconds lifetime,
-        bytes memory applicationData,
-        NftId bundleNftId,
-        ReferralId referralId
-    )
-        external
-        view
-        returns (
-            uint256 premiumAmount,
-            uint256 productFeeAmount,
-            uint256 poolFeeAmount,
-            uint256 bundleFeeAmount,
-            uint256 distributionFeeAmount
-        );
-
     // TODO move function to pool service
     function calculateRequiredCollateral(
         UFixed collateralizationLevel, 

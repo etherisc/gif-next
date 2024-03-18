@@ -99,6 +99,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 ReferralLib: libraries.referralLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
+                UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress, 
             }});
@@ -201,13 +202,34 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const claimServiceNftId = (logRegistrationInfoClm as unknown);
     logger.info(`claimServiceManager deployed - claimServiceAddress: ${claimServiceAddress} claimServiceManagerAddress: ${claimServiceManagerAddress} nftId: ${claimServiceNftId}`);
 
+    logger.info("-------- application service --------");
+    const { address: applicationServiceManagerAddress, contract: applicationServiceManagerBaseContract, } = await deployContract(
+        "ApplicationServiceManager",
+        owner,
+        [registry.registryAddress],
+        { libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                UFixedLib: libraries.uFixedLibAddress,
+                VersionLib: libraries.versionLibAddress, 
+                VersionPartLib: libraries.versionPartLibAddress, 
+            }});
+
+    const applicationServiceManager = applicationServiceManagerBaseContract as ApplicationServiceManager;
+    const applicationServiceAddress = await applicationServiceManager.getApplicationService();
+    const applicationService = PolicyService__factory.connect(applicationServiceAddress, owner);
+
+    const rcptAppl = await executeTx(async () => await releaseManager.registerService(applicationServiceAddress));
+    const logRegistrationInfoAppl = getFieldFromTxRcptLogs(rcptAppl!, registry.registry.interface, "LogRegistration", "nftId");
+    const applicationServiceNftId = (logRegistrationInfoAppl as unknown);
+    logger.info(`applicaionServiceManager deployed - applicaionServiceAddress: ${applicationServiceAddress} policyServiceManagerAddress: ${applicationServiceManagerAddress} nftId: ${applicationServiceNftId}`);
+
     logger.info("-------- policy service --------");
     const { address: policyServiceManagerAddress, contract: policyServiceManagerBaseContract, } = await deployContract(
         "PolicyServiceManager",
         owner,
         [registry.registryAddress],
         { libraries: {
-                FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
@@ -223,29 +245,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const logRegistrationInfoPol = getFieldFromTxRcptLogs(rcptPol!, registry.registry.interface, "LogRegistration", "nftId");
     const policyServiceNftId = (logRegistrationInfoPol as unknown);
     logger.info(`policyServiceManager deployed - policyServiceAddress: ${policyServiceAddress} policyServiceManagerAddress: ${policyServiceManagerAddress} nftId: ${policyServiceNftId}`);
-
-    logger.info("-------- application service --------");
-    const { address: applicationServiceManagerAddress, contract: applicationServiceManagerBaseContract, } = await deployContract(
-        "ApplicationServiceManager",
-        owner,
-        [registry.registryAddress],
-        { libraries: {
-                FeeLib: libraries.feeLibAddress,
-                NftIdLib: libraries.nftIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                // UFixedLib: libraries.uFixedLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
-            }});
-
-    const applicationServiceManager = applicationServiceManagerBaseContract as ApplicationServiceManager;
-    const applicationServiceAddress = await applicationServiceManager.getApplicationService();
-    const applicationService = PolicyService__factory.connect(applicationServiceAddress, owner);
-
-    const rcptAppl = await executeTx(async () => await releaseManager.registerService(applicationServiceAddress));
-    const logRegistrationInfoAppl = getFieldFromTxRcptLogs(rcptAppl!, registry.registry.interface, "LogRegistration", "nftId");
-    const applicationServiceNftId = (logRegistrationInfoAppl as unknown);
-    logger.info(`applicaionServiceManager deployed - applicaionServiceAddress: ${applicationServiceAddress} policyServiceManagerAddress: ${applicationServiceManagerAddress} nftId: ${applicationServiceNftId}`);
 
     logger.info("======== Finished deployment of services ========");
 

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IPolicy} from "../module/IPolicy.sol";
 import {IRisk} from "../module/IRisk.sol";
 import {IService} from "../../shared/IService.sol";
 
@@ -18,6 +19,7 @@ import {Fee} from "../../types/Fee.sol";
 interface IApplicationService is IService {
     
     error IApplicationServicePolicyNotApplied(NftId applicationNftId);
+    error IApplicationServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
 
     /// @dev creates a new application based on the specified attributes
     /// may only be called by a product component
@@ -64,6 +66,7 @@ interface IApplicationService is IService {
     /// @dev calculates the premium amount for the specified attributes
     /// also returns the various fee components involved with creating a policy
     function calculatePremium(
+        NftId productNftId,
         RiskId riskId,
         uint256 sumInsuredAmount,
         Seconds lifetime,
@@ -74,10 +77,6 @@ interface IApplicationService is IService {
         external
         view
         returns (
-            uint256 premiumAmount,
-            uint256 distributionFeeAmount,
-            uint256 productFeeAmount,
-            uint256 poolFeeAmount,
-            uint256 bundleFeeAmount
+            IPolicy.Premium memory premium
         );
 }

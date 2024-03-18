@@ -17,6 +17,7 @@ interface IDistributionComponent is IComponent {
     function getSetupInfo() external view returns (ISetup.DistributionSetupInfo memory setupInfo);
 
     function setFees(
+        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee
     ) external;
 
@@ -43,25 +44,6 @@ interface IDistributionComponent is IComponent {
         DistributorType distributorType,
         bytes memory data
     ) external;
-
-    /**
-     * @dev lets distributors create referral codes.
-     * referral codes need to be unique
-     * distributor is identified via msg.sender.
-     */
-    function createReferral(
-        NftId distributorNftId,
-        string memory code,
-        UFixed discountPercentage,
-        uint32 maxReferrals,
-        Timestamp expiryAt,
-        bytes memory data
-    ) external returns (ReferralId referralId);
-
-    function calculateFeeAmount(
-        ReferralId referralId,
-        uint256 netPremiumAmount
-    ) external view returns (uint256 feeAmount);
 
     function calculateRenewalFeeAmount(
         ReferralId referralId,
@@ -91,9 +73,6 @@ interface IDistributionComponent is IComponent {
     function getReferralId(
         string memory referralCode
     ) external returns (ReferralId referralId);
-
-    /// @dev returns true iff the referral id is valid
-    function referralIsValid(ReferralId referralId) external view returns (bool isValid);
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying);
