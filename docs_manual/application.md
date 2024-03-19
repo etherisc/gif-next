@@ -1,4 +1,4 @@
-# Application sequances 
+# ApplicationService sequences 
 
 ## calculatePremium
 

@@ -1,4 +1,4 @@
-# Distribution / Referral sequences
+# DistributionService / Referral sequences
 
 ## createDistributorType
 
@@ -63,21 +63,20 @@ sequenceDiagram
 sequenceDiagram
     actor C as Caller
     participant PS as PolicyService
-    participant D as Distribution
+    participant AS as ApplicationService
     participant DS as DistributionService
     participant IR as InstanceReader
     participant I as Instance
     
-    C ->> +PS: underwrite(policy, premiumAmount)
-    PS -->> PS: check preconditions
+    C ->> PS: underwrite(policy, premiumAmount)
+    PS -->> +PS: check preconditions
     PS -->> PS: calculate fees
-    PS ->> +DS: calculateFeeAmount(referralId, premiumAmount)
-    DS ->> -PS: feeAmount
+    PS ->> +AS: calculateFeeAmount(referralId, premiumAmount)
+    AS ->> -PS: feeAmount
     PS -->> -PS: move tokens
     PS ->> DS: processSale(referralId, premiumAmount)
     DS ->> IR: getReferralInfo()
     IR ->> DS: IDistribution.ReferralInfo
-    DS ->> DS: calculateFeeAmount(referralId, netPremium)
     DS ->> DS: update referral usage in IDistribution.ReferralInfo
     DS -->> I: update IDistribution.ReferralInfo
     DS ->> DS: calculate distributor commission<br> and fee for distribution owner
