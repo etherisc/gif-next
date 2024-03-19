@@ -411,9 +411,8 @@ contract InstanceService is
         fctSelectors[0] = IDistributionComponent.setFees.selector;
         instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors, DISTRIBUTION_OWNER_ROLE());
 
-        bytes4[] memory fctSelectors2 = new bytes4[](2);
-        fctSelectors2[0] = IDistributionComponent.processSale.selector;
-        fctSelectors2[1] = IDistributionComponent.processRenewal.selector;
+        bytes4[] memory fctSelectors2 = new bytes4[](1);
+        fctSelectors2[0] = IDistributionComponent.processRenewal.selector;
         instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors2, PRODUCT_SERVICE_ROLE());
     }
 

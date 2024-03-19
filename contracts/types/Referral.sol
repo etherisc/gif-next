@@ -82,4 +82,8 @@ library ReferralLib {
     function toKeyId(ReferralId id) public pure returns (KeyId keyId) {
         return KeyId.wrap(bytes31(ReferralId.unwrap(id)));
     }
+
+    function eqz(ReferralId id) public pure returns (bool) {
+        return eqReferralId(id, zero());
+    }
 }

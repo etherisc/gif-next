@@ -28,6 +28,6 @@ interface ISetup {
         Fee minDistributionOwnerFee;
         Fee distributionFee; // recalculated whenever any fee on the product/pool/dist/disttype is changed
         address wallet;
-        uint256 sumDistributionFees;
+        uint256 sumDistributionOwnerFees;
     }
 }
