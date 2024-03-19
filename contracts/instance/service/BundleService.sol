@@ -314,8 +314,8 @@ contract BundleService is
         // process token transfer(s)
         if(stakingAmount > 0) {
             IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-            ISetup.PoolInfo memory poolInfo = abi.decode(
-                componentInfo.data, (ISetup.PoolInfo));
+            IComponents.PoolInfo memory poolInfo = abi.decode(
+                componentInfo.data, (IComponents.PoolInfo));
 
             TokenHandler tokenHandler = componentInfo.tokenHandler;
             address bundleOwner = getRegistry().ownerOf(bundleNftId);

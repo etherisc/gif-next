@@ -113,8 +113,8 @@ contract PolicyService is
 
         // calculate required collateral
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        ISetup.PoolInfo memory poolInfo = abi.decode(
-            componentInfo.data, (ISetup.PoolInfo));
+        IComponents.PoolInfo memory poolInfo = abi.decode(
+            componentInfo.data, (IComponents.PoolInfo));
 
         // obtain remaining return values
         // TODO required collateral amount should be calculated by pool service, not policy service
@@ -217,7 +217,7 @@ contract PolicyService is
         // also verify/confirm application by pool if necessary
         if(abi.decode(
             instanceReader.getComponentInfo(poolNftId).data, 
-            (ISetup.PoolInfo)
+            (IComponents.PoolInfo)
             ).isVerifyingApplications
         )
         {
