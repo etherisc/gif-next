@@ -5,6 +5,7 @@ import {ACTIVE, APPLIED} from "../../../contracts/types/StateId.sol";
 import {console} from "../../../lib/forge-std/src/Test.sol";
 import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
+import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
@@ -318,8 +319,8 @@ contract ReferralTest is ReferralTestBase {
         vm.stopPrank();
 
         vm.startPrank(investor);
-        ISetup.PoolSetupInfo memory poolSetupInfo = instanceReader.getPoolSetupInfo(poolNftId);
-        token.approve(address(poolSetupInfo.tokenHandler), 10000);
+        IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
+        token.approve(address(poolInfo.tokenHandler), 10000);
 
         SimplePool spool = SimplePool(address(pool));
         bundleNftId = spool.createBundle(

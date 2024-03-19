@@ -361,7 +361,7 @@ contract PolicyService is
             IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
             TokenHandler tokenHandler = productSetupInfo.tokenHandler;
             address policyOwner = getRegistry().ownerOf(policyNftId);
-            address poolWallet = instanceReader.getComponentInfo(productSetupInfo.poolNftId).wallet;
+            address poolWallet = instance.getInstanceReader().getComponentInfo(productSetupInfo.poolNftId).wallet;
             IPolicy.Premium memory premium = _applicationService.calculatePremium(
                 productNftId,
                 policyInfo.riskId,
