@@ -467,30 +467,38 @@ contract TestGifBase is Test {
         masterOzAccessManager.initialize(registryOwner);
 
         masterInstanceAccessManager = new InstanceAccessManager();
-        masterOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAccessManager), 0);
-        masterInstanceAccessManager.initialize(address(masterOzAccessManager), address(registry));
         
         masterInstance = new Instance();
-        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, registryOwner);
+        masterInstance.initialize(
+            address(masterOzAccessManager),
+            address(registry),
+            registryOwner);
         
         masterInstanceReader = new InstanceReader();
-        masterInstanceReader.initialize(address(registry), address(masterInstance));
+        masterInstanceReader.initialize(address(masterInstance));
         masterInstance.setInstanceReader(masterInstanceReader);
         
         masterBundleManager = new BundleManager();
-        masterBundleManager.initialize(masterInstanceAccessManager.authority(), address(registry), address(masterInstance));
+        masterBundleManager.initialize(address(masterInstance));
         masterInstance.setBundleManager(masterBundleManager);
 
-        // revoke ADMIN_ROLE from registryOwner
-        masterOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
-        
+        masterInstanceAccessManager = new InstanceAccessManager();
+        masterOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAccessManager), 0);
+        masterInstanceAccessManager.initialize(address(masterInstance));
+        masterInstance.setInstanceAccessManager(masterInstanceAccessManager);
+
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 
+        // revoke ADMIN_ROLE from all members
+        masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(masterInstanceAccessManager));
+        masterOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
+
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
+        console.log("master oz access manager deployed at", address(masterOzAccessManager));
         console.log("master instance access manager deployed at", address(masterInstanceAccessManager));
         console.log("master instance reader deployed at", address(masterInstanceReader));
         console.log("master bundle manager deployed at", address(masterBundleManager));
@@ -510,12 +518,12 @@ contract TestGifBase is Test {
 
         
         // solhint-disable
-        console.log("instance deployed at", address(instance));
-        console.log("instance nft id", instanceNftId.toInt());
-        console.log("oz access manager deployed at", address(ozAccessManager));
-        console.log("instance access manager deployed at", address(instanceAccessManager));
-        console.log("instance reader deployed at", address(instanceReader));
-        console.log("bundle manager deployed at", address(instanceBundleManager));
+        console.log("cloned instance deployed at", address(instance));
+        console.log("cloned instance nft id", instanceNftId.toInt());
+        console.log("cloned oz access manager deployed at", address(ozAccessManager));
+        console.log("cloned instance access manager deployed at", address(instanceAccessManager));
+        console.log("cloned instance reader deployed at", address(instanceReader));
+        console.log("cloned bundle manager deployed at", address(instanceBundleManager));
         // solhint-enable
     }
 

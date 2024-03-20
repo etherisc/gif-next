@@ -247,6 +247,31 @@ contract ChainNftTest is Test {
         chainNft.mint(outsider, address(interceptor), uri);
     }
 
+    // IMPORTANT needs to exactly match with event defined in MockInterceptor
+    event LogNftMintIntercepted(address to, uint256 tokenId);
+
+    function test_chainNftMintWithInterceptorHappyCase() public {
+        vm.expectEmit(address(interceptor));
+        emit LogNftMintIntercepted(outsider, chainNft.getNextTokenId());
+
+        vm.recordLogs();
+        vm.prank(registry);
+        uint256 tokenId = chainNft.mint(outsider, address(interceptor), "");
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+
+        // check exact list of logs
+        assertEq(entries.length, 2);
+
+        // open zeppelin transfer log
+        assertEq(entries[0].topics[0], keccak256("Transfer(address,address,uint256)"), "not transfer event");
+        assertEq(entries[0].emitter, address(chainNft), "unexpected emitter for nft transfer");
+        // emit for interceptor log
+        assertEq(entries[1].topics[0], keccak256("LogNftMintIntercepted(address,uint256)"), "not interceptor event");
+        assertEq(entries[1].emitter, address(interceptor), "unexpected emitter for interceptor log");
+
+        assertEq(chainNft.balanceOf(outsider), 1, "unexpected nft balance for outsider");
+        assertEq(chainNft.ownerOf(tokenId), outsider, "unexpected owner for token");
+    }
 
     function test_chainNftTransferWithoutInterceptorHappyCase() public {
         vm.prank(registry);

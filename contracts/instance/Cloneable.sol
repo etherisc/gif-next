@@ -10,7 +10,8 @@ abstract contract Cloneable is
     AccessManagedUpgradeable
 {
     event CloneableInitialized(address authority, address registry);
-
+    
+    error CloneableAuthorityZero();
     error CloneableRegistryInvalid(address registry);
 
     IRegistry internal _registry;
@@ -25,9 +26,13 @@ abstract contract Cloneable is
         address registry
     )
         public 
-        initializer
+        onlyInitializing
     {
         // check/handle access managed
+        if(authority == address(0)) {
+            revert CloneableAuthorityZero();
+        }
+        
         __AccessManaged_init(authority);
 
         // check/handle registry

@@ -22,11 +22,7 @@ contract NftIdSetTest is TestGifBase {
         MockObjectManager master = new MockObjectManager();
 
         objectManager = MockObjectManager(Clones.clone(address(master)));
-        objectManager.initialize(
-            address(dummyAuthority),
-            address(registry),
-            address(instance)
-        );
+        objectManager.initialize(address(instance));
     }
 
     function test_addToSetHappyCase() public {

@@ -34,21 +34,21 @@ interface IAccess {
 
     error ErrorIAccessCallerIsNotRoleAdmin(address caller, RoleId roleId);
 
-    error ErrorIAccessRoleIdInvalid(RoleId roleId);
+    error ErrorIAccessRoleIdDoesNotExist(RoleId roleId);
     error ErrorIAccessRoleIdTooBig(RoleId roleId);
     error ErrorIAccessRoleIdTooSmall(RoleId roleId);
-    error ErrorIAccessRoleIdAlreadyExists(RoleId roleId);
+    error ErrorIAccessRoleIdExists(RoleId roleId);
     error ErrorIAccessRoleNameEmpty(RoleId roleId);
-    error ErrorIAccessRoleNameNotUnique(RoleId roleId, ShortString name);
+    error ErrorIAccessRoleNameExists(RoleId roleId, RoleId existingRoleId, ShortString name);
     error ErrorIAccessRoleTypeInvalid(RoleId roleId, Type rtype);
 
     error ErrorIAccessTargetAddressZero();
     error ErrorIAccessTargetDoesNotExist(ShortString name);
-    error ErrorIAccessTargetAlreadyExists(address target, ShortString name);
+    error ErrorIAccessTargetExists(address target, ShortString name);
     error ErrorIAccessTargetTypeInvalid(ShortString name, Type ttype);
     error ErrorIAccessTargetNameEmpty(address target);
     error ErrorIAccessTargetNameExists(address target, address existingTarget, ShortString name);
     error ErrorIAccessTargetLocked(address target);
-    error ErrorIAccessTargetIsRegistered(address target);
+    error ErrorIAccessTargetRegistered(address target);
     error ErrorIAccessTargetAuthorityInvalid(address target, address targetAuthority);
 }

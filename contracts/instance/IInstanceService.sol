@@ -46,7 +46,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceComponentMismatch(NftId instanceNftId, NftId componentNftId);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     
-    event LogInstanceCloned(address clonedOzAccessManager, address clonedAccessManager, address clonedInstance, address clonedInstanceReader, NftId clonedInstanceNftId);
+    event LogInstanceCloned(address clonedOzAccessManager, address clonedInstanceAccessManager, address clonedInstance, address clonedBundleManager, address clonedInstanceReader, NftId clonedInstanceNftId);
 
     function createInstanceClone()
         external 

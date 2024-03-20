@@ -180,9 +180,17 @@ function printAddresses(
     addresses += `--------\n`;
     addresses += `masterInstanceAddress: ${masterInstance.instanceAddress}\n`;
     addresses += `masterInstanceNftId: ${masterInstance.instanceNftId}\n`;
+    addresses += `masterOzAccessManagerAddress: ${masterInstance.ozAccessManagerAddress}\n`;
+    addresses += `masterInstanceAccessManagerAddress: ${masterInstance.instanceAccessManagerAddress}\n`;
+    addresses += `masterBundleManagerAddress: ${masterInstance.instanceBundleManagerAddress}\n`;
+    addresses += `masterInstanceReaderAddress: ${masterInstance.instanceReaderAddress}\n`;
     addresses += `--------\n`;
     addresses += `clonedInstanceAddress: ${clonedInstance.instanceAddress}\n`;
     addresses += `clonedInstanceNftId: ${clonedInstance.instanceNftId}\n`;
+    addresses += `clonedOzAccessManagerAddress: ${clonedInstance.ozAccessManagerAddress}\n`;
+    addresses += `clonedInstanceAccessManagerAddress: ${clonedInstance.instanceAccessManagerAddress}\n`;
+    addresses += `clonedBundleManagerAddress: ${clonedInstance.instanceBundleManagerAddress}\n`;
+    addresses += `clonedInstanceReaderAddress: ${clonedInstance.instanceReaderAddress}\n`;
     addresses += `--------\n`;
     // addresses += `tokenAddress: ${tokenAddress}\n`;
     // addresses += `poolAddress: ${poolAddress}\n`;
@@ -195,6 +203,14 @@ function printAddresses(
     logger.info(addresses);
 }
 
+export type InstanceAddresses = {
+    ozAccessManagerAddress: AddressLike,
+    instanceAccessManagerAddress: AddressLike,
+    instanceReaderAddress: AddressLike,
+    instanceBundleManagerAddress: AddressLike,
+    instanceAddress: AddressLike,
+    instanceNftId: string,
+}
 
 
 main().catch((error) => {

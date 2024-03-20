@@ -5,14 +5,16 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
-import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_ROLE} from "../types/RoleId.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
 import {NftId} from "../types/NftId.sol";
 
 import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 
-import {IAccess} from "./module/IAccess.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+
+import {IInstance} from "./IInstance.sol";
+import {IAccess} from "./module/IAccess.sol";
 
 contract InstanceAccessManager is
     AccessManagedUpgradeable
@@ -24,6 +26,8 @@ contract InstanceAccessManager is
 
     string public constant ADMIN_ROLE_NAME = "AdminRole";
     string public constant PUBLIC_ROLE_NAME = "PublicRole";
+    string public constant INSTANCE_ROLE_NAME = "InstanceRole";
+    string public constant INSTANCE_OWNER_ROLE_NAME = "InstanceOwnerRole";
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
     uint32 public constant EXECUTION_DELAY = 0;
@@ -53,32 +57,36 @@ contract InstanceAccessManager is
         _;
     }
 
-    function initialize(address ozAccessManager, address registry) external initializer 
+    // instance owner is granted upon instance nft minting in callback function
+    function initialize(address instanceAddress) external initializer 
     {
-        require(ozAccessManager != address(0));
-        require(registry != address(0));
+        IInstance instance = IInstance(instanceAddress);
+        IRegistry registry = instance.getRegistry();
+        address authority = instance.authority();
 
-        __AccessManaged_init(ozAccessManager);
+        __AccessManaged_init(authority);
 
-        _accessManager = AccessManagerUpgradeableInitializeable(ozAccessManager);
-        _registry = IRegistry(registry);
+        _accessManager = AccessManagerUpgradeableInitializeable(authority);
+        _registry = registry;
         _idNext = CUSTOM_ROLE_ID_MIN;
 
         _createRole(ADMIN_ROLE(), ADMIN_ROLE_NAME, IAccess.Type.Core);
         _createRole(PUBLIC_ROLE(), PUBLIC_ROLE_NAME, IAccess.Type.Core);
+        _createRole(INSTANCE_ROLE(), INSTANCE_ROLE_NAME, IAccess.Type.Core);
+        _createRole(INSTANCE_OWNER_ROLE(), INSTANCE_OWNER_ROLE_NAME, IAccess.Type.Gif);
 
         // assume `this` is already a member of ADMIN_ROLE
-        // assume msg.sender is instance service which is also member of ADMIN_ROLE
-        // assume instance service will renounce ADMIN_ROLE through ozAccessManager and should not be added to _roleMembers here
         EnumerableSet.add(_roleMembers[ADMIN_ROLE()], address(this));
-        //EnumerableSet.add(_roleMembers[ADMIN_ROLE()], initialAdmin);
+
+        grantRole(INSTANCE_ROLE(), instanceAddress);
+        setRoleAdmin(INSTANCE_OWNER_ROLE(), INSTANCE_ROLE());
     }
 
     //--- Role ------------------------------------------------------//
     // ADMIN_ROLE
     // assume all core roles are know at deployment time
     // assume core roles are set and granted only during instance cloning
-    // assume core roles are never revoked or renounced -> core roles admin is never active after intialization
+    // assume core roles are never revoked -> core roles admin is never active after intialization
     function createCoreRole(RoleId roleId, string memory name)
         external
         restricted()
@@ -86,8 +94,8 @@ contract InstanceAccessManager is
         _createRole(roleId, name, IAccess.Type.Core);
     }
     // INSTANCE_SERVICE_ROLE
-    // assume gif roles can be revoked or renounced
-    // TODO who can be admin of gif role?
+    // assume gif roles can be revoked
+    // assume admin is INSTANCE_OWNER_ROLE or INSTANCE_ROLE
     function createGifRole(RoleId roleId, string memory name, RoleId admin) 
         external
         restricted()
@@ -120,7 +128,7 @@ contract InstanceAccessManager is
         restricted()
     {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+            revert IAccess.ErrorIAccessRoleIdDoesNotExist(roleId);
         }
 
         if(_roleInfo[roleId].rtype == IAccess.Type.Core) {
@@ -128,7 +136,7 @@ contract InstanceAccessManager is
         }
 
         if (!roleExists(admin)) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(admin);
+            revert IAccess.ErrorIAccessRoleIdDoesNotExist(admin);
         }        
 
         _roleInfo[roleId].admin = admin;      
@@ -140,7 +148,7 @@ contract InstanceAccessManager is
         returns (bool granted) 
     {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+            revert IAccess.ErrorIAccessRoleIdDoesNotExist(roleId);
         }
 
         granted = EnumerableSet.add(_roleMembers[roleId], member);
@@ -159,7 +167,7 @@ contract InstanceAccessManager is
 
     // INSTANCE_OWNER_ROLE
     // IMPORTANT: unbounded function, revoke all or revert
-    // Instance owner role decides what to do in case of custom role admin bening revoked:
+    // Instance owner role decides what to do in case of custom role admin bening revoked, e.g.:
     // 1) revoke custom role from ALL members
     // 2) revoke custom role admin from ALL members
     // 3) 1) + 2)
@@ -170,7 +178,7 @@ contract InstanceAccessManager is
         returns (bool revoked)
     {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+            revert IAccess.ErrorIAccessRoleIdDoesNotExist(roleId);
         }
 
         uint memberCount = EnumerableSet.length(_roleMembers[roleId]);
@@ -178,7 +186,6 @@ contract InstanceAccessManager is
         {
             address member = EnumerableSet.at(_roleMembers[roleId], memberIdx);
             EnumerableSet.remove(_roleMembers[roleId], member);
-            // TODO no return value, can fail silentlly
             _accessManager.revokeRole(roleId.toInt(), member);
         }  
     }
@@ -207,11 +214,11 @@ contract InstanceAccessManager is
         return _roleInfo[roleId].admin;
     }
 
-    function getRoleInfo(RoleId roleId) external view returns (IAccess.RoleInfo memory role) {
+    function getRoleInfo(RoleId roleId) external view returns (IAccess.RoleInfo memory info) {
         return _roleInfo[roleId];
     }
 
-    function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers) {
+    function roleMembers(RoleId roleId) public view returns (uint256 numberOfMembers) {
         return EnumerableSet.length(_roleMembers[roleId]);
     }
 
@@ -258,7 +265,7 @@ contract InstanceAccessManager is
         restricted() 
     {
         if(_registry.isRegistered(target)) {
-            revert IAccess.ErrorIAccessTargetIsRegistered(target);
+            revert IAccess.ErrorIAccessTargetRegistered(target);
         }
 
         _createTarget(target, name, IAccess.Type.Custom);
@@ -363,18 +370,6 @@ contract InstanceAccessManager is
         return _targetInfo[target];
     }
 
-
-    //--- Interceptor ------------------------------------------------------------//
-    // INSTANCE_ROLE or onlyInstance
-    function transferOwnerRole(address from, address to) restricted external
-    {
-        bool revoked = this.revokeRole(INSTANCE_OWNER_ROLE(), from);
-        bool granted = this.grantRole(INSTANCE_OWNER_ROLE(), to);
-        if(!revoked || !granted) {
-            revert();
-        }
-    }
-
     //--- Role internal view/pure functions --------------------------------------//
     function _createRole(RoleId roleId, string memory roleName, IAccess.Type rtype) 
         internal
@@ -383,11 +378,11 @@ contract InstanceAccessManager is
         _validateRole(roleId, name, rtype);
 
         if(roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRoleIdAlreadyExists(roleId);
+            revert IAccess.ErrorIAccessRoleIdExists(roleId);
         }
 
         if (_roleIdForName[name].gtz()) {
-            revert IAccess.ErrorIAccessRoleNameNotUnique(_roleIdForName[name], name);
+            revert IAccess.ErrorIAccessRoleNameExists(roleId, _roleIdForName[name], name);
         }
 
         _roleInfo[roleId] = IAccess.RoleInfo(
@@ -426,13 +421,12 @@ contract InstanceAccessManager is
         }
     }
 
-    // INSTANCE_OWNER_ROLE
     function _revokeRole(RoleId roleId, address member)
         internal
         returns(bool revoked)
     {
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+            revert IAccess.ErrorIAccessRoleIdDoesNotExist(roleId);
         }
 
         revoked = EnumerableSet.remove(_roleMembers[roleId], member);
@@ -462,7 +456,7 @@ contract InstanceAccessManager is
         _validateTarget(target, name, ttype);
 
         if (_targetInfo[target].createdAt.gtz()) {
-            revert IAccess.ErrorIAccessTargetAlreadyExists(target, _targetInfo[target].name);
+            revert IAccess.ErrorIAccessTargetExists(target, _targetInfo[target].name);
         }
 
         if (_targetAddressForName[name] != address(0)) {
@@ -491,7 +485,6 @@ contract InstanceAccessManager is
         view 
     {
         address targetAuthority = AccessManagedUpgradeable(target).authority();
-        // TODO check depends on target upgradabillity
         if(targetAuthority != authority()) {
             revert IAccess.ErrorIAccessTargetAuthorityInvalid(target, targetAuthority);
         }
@@ -514,7 +507,7 @@ contract InstanceAccessManager is
         }
 
         if (!roleExists(roleId)) {
-            revert IAccess.ErrorIAccessRoleIdInvalid(roleId);
+            revert IAccess.ErrorIAccessRoleIdDoesNotExist(roleId);
         }
 
         uint64 roleIdInt = RoleId.unwrap(roleId);
