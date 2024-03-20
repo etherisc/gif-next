@@ -16,8 +16,10 @@ import {INftOwnable} from "../../shared/INftOwnable.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
-import {RoleId, POOL_OWNER_ROLE, PUBLIC_ROLE} from "../../types/RoleId.sol";
-import {StateId, KEEP_STATE} from "../../types/StateId.sol";
+import {PUBLIC_ROLE, POOL_OWNER_ROLE, POLICY_SERVICE_ROLE, RoleId} from "../../types/RoleId.sol";
+import {Fee, FeeLib} from "../../types/Fee.sol";
+import {Version, VersionLib} from "../../types/Version.sol";
+import {KEEP_STATE, StateId} from "../../types/StateId.sol";
 import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
@@ -67,6 +69,46 @@ contract PoolService is
         return POOL();
     }
 
+    /*function register(address poolAddress) 
+        external
+        returns(NftId poolNftId)
+    {
+        (
+            IComponent component,
+            address owner,
+            IInstance instance,
+            NftId instanceNftId
+        ) = _checkComponentForRegistration(
+            poolAddress,
+            POOL(),
+            POOL_OWNER_ROLE());
+
+        IPoolComponent pool = IPoolComponent(poolAddress);
+        IRegistry.ObjectInfo memory registryInfo = getRegistryService().registerPool(pool, owner);
+        pool.linkToRegisteredNftId();
+        poolNftId = registryInfo.nftId;
+
+        instance.createPoolSetup(poolNftId, pool.getSetupInfo());
+
+        bytes4[][] memory selectors = new bytes4[][](2);
+        selectors[0] = new bytes4[](1);
+        selectors[1] = new bytes4[](1);
+
+        selectors[0][0] = IPoolComponent.setFees.selector;
+        selectors[1][0] = IPoolComponent.verifyApplication.selector;
+
+        RoleId[] memory roles = new RoleId[](2);
+        roles[0] = POOL_OWNER_ROLE();
+        roles[1] = POLICY_SERVICE_ROLE();
+
+        getInstanceService().createGifTarget(
+            instanceNftId, 
+            poolAddress, 
+            pool.getName(), 
+            selectors, 
+            roles);
+    }*/
+
     function register(address poolAddress) 
         external
         returns(NftId poolNftId)
@@ -93,8 +135,23 @@ contract PoolService is
         // save amended component info with instance
         instance.createPoolSetup(poolNftId, componentInfo);
 
-        getInstanceService().createGifTarget(instanceNftId, poolAddress, pool.getName());
-        getInstanceService().grantPoolDefaultPermissions(instanceNftId, poolAddress, pool.getName());
+        bytes4[][] memory selectors = new bytes4[][](2);
+        selectors[0] = new bytes4[](1);
+        selectors[1] = new bytes4[](1);
+
+        selectors[0][0] = IPoolComponent.setFees.selector;
+        selectors[1][0] = IPoolComponent.verifyApplication.selector;
+
+        RoleId[] memory roles = new RoleId[](2);
+        roles[0] = POOL_OWNER_ROLE();
+        roles[1] = POLICY_SERVICE_ROLE();
+
+        getInstanceService().createGifTarget(
+            instanceNftId, 
+            poolAddress, 
+            pool.getName(), 
+            selectors, 
+            roles);
     }
 
 

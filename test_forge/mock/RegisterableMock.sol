@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
+
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {NftId, zeroNftId} from "../../contracts/types/NftId.sol";
@@ -107,4 +109,18 @@ contract RegisterableMockWithRandomInvalidAddress is RegisterableMock {
 
         _info.objectAddress = invalidAddress;
     }
+}
+
+contract SimpleAccessManagedRegisterableMock is RegisterableMock, AccessManaged {
+    constructor(NftId parentNftId, ObjectType objectType, address authority)
+        AccessManaged(authority)
+        RegisterableMock(
+            zeroNftId(),
+            parentNftId,
+            objectType,
+            false,
+            msg.sender,
+            ""
+        )
+    {}
 }

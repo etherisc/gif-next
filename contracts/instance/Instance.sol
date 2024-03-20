@@ -9,13 +9,15 @@ import {ClaimId} from "../types/ClaimId.sol";
 import {NumberId} from "../types/NumberId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../types/ObjectType.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
-import {RoleId, RoleIdLib} from "../types/RoleId.sol";
+import {RoleId, RoleIdLib, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
 import {StateId, ACTIVE} from "../types/StateId.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
-import {VersionPart} from "../types/Version.sol";
+import {VersionPart, VersionPartLib} from "../types/Version.sol";
 
 import {ERC165} from "../shared/ERC165.sol";
 import {Registerable} from "../shared/Registerable.sol";
+
+import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IInstance} from "./IInstance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
@@ -61,13 +63,21 @@ contract Instance is
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
 
-    function initialize(address accessManagerAddress, address registryAddress, NftId registryNftId, address initialOwner) 
+    modifier onlyChainNft() {
+        if(msg.sender != getRegistry().getChainNftAddress()) {
+            revert();
+        }
+        _;
+    }
+
+    function initialize(address authority, address registryAddress, address initialOwner) 
         public 
         initializer()
     {
-        __AccessManaged_init(accessManagerAddress);
+        __AccessManaged_init(authority);
         
-        initializeRegisterable(registryAddress, registryNftId, INSTANCE(), false, initialOwner, "");
+        IRegistry registry = IRegistry(registryAddress);
+        initializeRegisterable(registryAddress, registry.getNftId(), INSTANCE(), true, initialOwner, "");
         initializeLifecycle();
 
         registerInterface(type(IInstance).interfaceId);    
@@ -225,6 +235,17 @@ contract Instance is
         updateState(toPolicyKey32(policyNftId), newState);
     }
 
+    //--- ITransferInterceptor ------------------------------------------------------------//
+    function nftMint(address to, uint256 tokenId) external onlyChainNft {
+        assert(_accessManager.roleMembers(INSTANCE_OWNER_ROLE()) == 0);// temp
+        assert(_accessManager.grantRole(INSTANCE_OWNER_ROLE(), to) == true);
+    }
+
+    function nftTransferFrom(address from, address to, uint256 tokenId) external onlyChainNft {
+        assert(_accessManager.revokeRole(INSTANCE_OWNER_ROLE(), from) == true);
+        assert(_accessManager.grantRole(INSTANCE_OWNER_ROLE(), to) == true);
+    }
+
     //--- internal view/pure functions --------------------------------------//
     function _toNftKey32(NftId nftId, ObjectType objectType) internal pure returns (Key32) {
         return nftId.toKey32(objectType);
@@ -286,10 +307,21 @@ contract Instance is
     function setBundleManager(BundleManager bundleManager) external restricted() {
         require(address(_bundleManager) == address(0), "BundleManager is set");
         require(bundleManager.getInstance() == Instance(this), "BundleManager instance mismatch");
+        require(bundleManager.authority() == authority(), "BundleManager authority mismatch");
         _bundleManager = bundleManager;
     }
 
     function getBundleManager() external view returns (BundleManager) {
         return _bundleManager;
+    }
+
+    function setInstanceAccessManager(InstanceAccessManager accessManager) external restricted {
+        require(address(_accessManager) == address(0), "InstanceAccessManager is set");
+        require(accessManager.authority() == authority(), "InstanceAccessManager authority mismatch");  
+        _accessManager = accessManager;      
+    }
+
+    function getInstanceAccessManager() external view returns (InstanceAccessManager) {
+        return _accessManager;
     }
 }

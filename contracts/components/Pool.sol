@@ -110,7 +110,7 @@ abstract contract Pool is
     function lockBundle(NftId bundleNftId)
         public
         virtual
-        restricted()
+        //restricted() // TODO consider adding this back
         onlyBundleOwner(bundleNftId)
     {
         _getPoolStorage()._bundleService.lock(bundleNftId);
@@ -120,7 +120,7 @@ abstract contract Pool is
     function unlockBundle(NftId bundleNftId)
         public
         virtual
-        restricted()
+        //restricted()
         onlyBundleOwner(bundleNftId)
     {
         _getPoolStorage()._bundleService.unlock(bundleNftId);
@@ -130,7 +130,7 @@ abstract contract Pool is
     function close(NftId bundleNftId)
         public
         virtual
-        restricted()
+        //restricted()
         onlyBundleOwner(bundleNftId)
     {
         _getPoolStorage()._bundleService.close(bundleNftId);

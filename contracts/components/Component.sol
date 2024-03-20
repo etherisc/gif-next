@@ -48,6 +48,13 @@ abstract contract Component is
         }
     }
 
+    modifier onlyChainNft() {
+        if(msg.sender != getRegistry().getChainNftAddress()) {
+            revert ErrorComponentNotChainNft(msg.sender);
+        }
+        _;
+    }
+
     function initializeComponent(
         address registry,
         NftId instanceNftId,
@@ -87,11 +94,11 @@ abstract contract Component is
     }
 
     function lock() external onlyOwner override {
-        IInstanceService(_getServiceAddress(INSTANCE())).setTargetLocked(getName(), true);
+        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
     }
     
     function unlock() external onlyOwner override {
-        IInstanceService(_getServiceAddress(INSTANCE())).setTargetLocked(getName(), false);
+        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
     }
 
     function setWallet(address newWallet)
@@ -161,18 +168,21 @@ abstract contract Component is
         $._productNftId = productNftId;
     }
 
+    function nftMint(address to, uint256 tokenId) 
+        external 
+        virtual
+        onlyChainNft
+    {}
+
     /// @dev callback function for nft transfers
     /// may only be called by chain nft contract.
     /// do not override this function to implement business logic for handling transfers
     /// override internal function _nftTransferFrom instead
     function nftTransferFrom(address from, address to, uint256 tokenId)
         external
-        virtual override
+        virtual
+        onlyChainNft
     {
-        if(msg.sender != getRegistry().getChainNftAddress()) {
-            revert ErrorComponentNotChainNft(msg.sender);
-        }
-
         _nftTransferFrom(from, to, tokenId);
     }
 

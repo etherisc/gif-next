@@ -13,7 +13,7 @@ contract TestInstanceService is TestGifBase {
         // GIVEN
         vm.startPrank(registryOwner);
         InstanceReader newMasterInstanceReader = new InstanceReader();
-        newMasterInstanceReader.initialize(address(registry), address(masterInstance));
+        newMasterInstanceReader.initialize(address(masterInstance));
         
         // WHEN
         instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
@@ -26,7 +26,7 @@ contract TestInstanceService is TestGifBase {
         // GIVEN
         vm.startPrank(registryOwner);
         InstanceReader newMasterInstanceReader = new InstanceReader();
-        newMasterInstanceReader.initialize(address(registry), address(instance));
+        newMasterInstanceReader.initialize(address(instance));
         
         // THEN
         vm.expectRevert(
@@ -54,7 +54,7 @@ contract TestInstanceService is TestGifBase {
         // GIVEN
         vm.startPrank(registryOwner);
         InstanceReader newMasterInstanceReader = new InstanceReader();
-        newMasterInstanceReader.initialize(address(registry), address(masterInstance));
+        newMasterInstanceReader.initialize(address(masterInstance));
         instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();
         
@@ -72,7 +72,7 @@ contract TestInstanceService is TestGifBase {
         // GIVEN
         vm.startPrank(registryOwner);
         InstanceReader newMasterInstanceReader = new InstanceReader();
-        newMasterInstanceReader.initialize(address(registry), address(masterInstance));
+        newMasterInstanceReader.initialize(address(masterInstance));
         instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();
         

@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity 0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {VersionPartLib} from "../../contracts/types/Version.sol";
+
+import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -29,13 +30,14 @@ import {ClaimServiceManager} from "../../contracts/instance/service/ClaimService
 
 import {BundleService} from "../../contracts/instance/service/BundleService.sol";
 import {BundleServiceManager} from "../../contracts/instance/service/BundleServiceManager.sol";
+
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
-import {BundleManager} from "../../contracts/instance/BundleManager.sol";
-
+import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
+import {BundleManager} from "../../contracts/instance/BundleManager.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {Distribution} from "../../contracts/components/Distribution.sol";
@@ -51,6 +53,7 @@ import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION,
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
 import {
     ADMIN_ROLE,
+    INSTANCE_OWNER_ROLE,
     PRODUCT_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
     DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
@@ -112,12 +115,14 @@ contract TestGifBase is Test {
     BundleService public bundleService;
     NftId public bundleServiceNftId;
 
+    AccessManagerUpgradeableInitializeable masterOzAccessManager;
     InstanceAccessManager masterInstanceAccessManager;
     BundleManager masterBundleManager;
     Instance masterInstance;
     NftId masterInstanceNftId;
     InstanceReader masterInstanceReader;
 
+    AccessManagerUpgradeableInitializeable ozAccessManager;
     InstanceAccessManager instanceAccessManager;
     BundleManager instanceBundleManager;
     Instance public instance;
@@ -141,7 +146,7 @@ contract TestGifBase is Test {
     NftId public bundleNftId;
     uint256 public initialCapitalAmount;
 
-    address constant public MASTER_INSTANCE_OWNER = address(0x1);
+    address constant public NFT_LOCK_ADDRESS = address(0x1);
     address public registryOwner = makeAddr("registryOwner");
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
@@ -320,30 +325,32 @@ contract TestGifBase is Test {
         registryServiceManager.linkOwnershipToServiceNft();
 
         /* solhint-disable */
-        console.log("registry deployed at", address(registry));
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
         console.log("global registry nft id", chainNft.GLOBAL_REGISTRY_ID());
         console.log("registry nft id", registry.getNftId(address(registry)).toInt());
 
-        console.log("registry owner", address(registryOwner));
-        console.log("registry access manager", address(registryAccessManager));
-        console.log("registry access manager authority", registryAccessManager.authority());
-        console.log("release manager", address(releaseManager));
-        console.log("release manager authority", releaseManager.authority());
-        console.log("registry service proxy manager", address(registryServiceManager));
-        console.log("registry service proxy manager linked to nft", registryServiceManager.getNftId().toInt());
-        console.log("registry service proxy manager owner", registryServiceManager.getOwner());
-        console.log("registry service", address(registryService));
-        console.log("registry service nft", registryService.getNftId().toInt());
-        console.log("registry service authority", registryService.authority());
-        console.log("registry service owner", registryService.getOwner());
-        console.log("registry", address(registry));
-        console.log("registry nft", registry.getNftId(address(registry)).toInt());
+        console.log("registry deployed at", address(registry));
         console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
         console.log("registry owner (opt 2)", registry.getOwner());
-        console.log("token registry", address(tokenRegistry));
+
+        console.log("registry access manager deployed at", address(registryAccessManager));
+        console.log("registry access manager authority", registryAccessManager.authority());
+
+        console.log("release manager deployed at", address(releaseManager));
+        console.log("release manager authority", releaseManager.authority());
+
+        console.log("token registry deployed at", address(tokenRegistry));
         console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
-        console.log("token registry linked owner", tokenRegistry.getOwner());        
+        console.log("token registry linked owner", tokenRegistry.getOwner());
+
+        console.log("registry service proxy manager deployed at", address(registryServiceManager));
+        console.log("registry service proxy manager linked to nft", registryServiceManager.getNftId().toInt());
+        console.log("registry service proxy manager owner", registryServiceManager.getOwner());
+
+        console.log("registry service deployed at", address(registryService));
+        console.log("registry service nft", registryService.getNftId().toInt());
+        console.log("registry service owner", registryService.getOwner());
+        console.log("registry service authority", registryService.authority());
         /* solhint-enable */
     }
 
@@ -455,36 +462,53 @@ contract TestGifBase is Test {
 
     function _deployMasterInstance() internal 
     {
+        masterOzAccessManager = new AccessManagerUpgradeableInitializeable();
+        // grants registryOwner ADMIN_ROLE
+        masterOzAccessManager.initialize(registryOwner);
+
         masterInstanceAccessManager = new InstanceAccessManager();
-        masterInstanceAccessManager.initialize(registryOwner);
         
         masterInstance = new Instance();
-        masterInstance.initialize(address(masterInstanceAccessManager), address(registry), registryNftId, registryOwner);
+        masterInstance.initialize(
+            address(masterOzAccessManager),
+            address(registry),
+            registryOwner);
         
         masterInstanceReader = new InstanceReader();
-        masterInstanceReader.initialize(address(registry), address(masterInstance));
+        masterInstanceReader.initialize(address(masterInstance));
         masterInstance.setInstanceReader(masterInstanceReader);
         
         masterBundleManager = new BundleManager();
-        masterBundleManager.initialize(address(masterInstanceAccessManager), address(registry), address(masterInstance));
+        masterBundleManager.initialize(address(masterInstance));
         masterInstance.setBundleManager(masterBundleManager);
 
-        // revoke ADMIN_ROLE from registryOwner. token is already owned by 0x1
-        masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(registryOwner));
-        
+        masterInstanceAccessManager = new InstanceAccessManager();
+        masterOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAccessManager), 0);
+        masterInstanceAccessManager.initialize(address(masterInstance));
+        masterInstance.setInstanceAccessManager(masterInstanceAccessManager);
+
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
-        chainNft.transferFrom(registryOwner, MASTER_INSTANCE_OWNER, masterInstanceNftId.toInt());
+        chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
+
+        // revoke ADMIN_ROLE from all members
+        masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(masterInstanceAccessManager));
+        masterOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
+        console.log("master oz access manager deployed at", address(masterOzAccessManager));
+        console.log("master instance access manager deployed at", address(masterInstanceAccessManager));
+        console.log("master instance reader deployed at", address(masterInstanceReader));
+        console.log("master bundle manager deployed at", address(masterBundleManager));
         // solhint-enable
     }
 
 
     function _createInstance() internal {
         ( 
+            ozAccessManager,
             instanceAccessManager, 
             instance,
             instanceNftId,
@@ -493,14 +517,14 @@ contract TestGifBase is Test {
         ) = instanceService.createInstanceClone();
 
         
-        // solhint-disable-next-line
-        console.log("instance deployed at", address(instance));
-        // solhint-disable-next-line
-        console.log("instance nft id", instanceNftId.toInt());
-        // solhint-disable-next-line
-        console.log("instance access manager deployed at", address(instanceAccessManager));
-        // solhint-disable-next-line
-        console.log("instance reader deployed at", address(instanceReader));
+        // solhint-disable
+        console.log("cloned instance deployed at", address(instance));
+        console.log("cloned instance nft id", instanceNftId.toInt());
+        console.log("cloned oz access manager deployed at", address(ozAccessManager));
+        console.log("cloned instance access manager deployed at", address(instanceAccessManager));
+        console.log("cloned instance reader deployed at", address(instanceReader));
+        console.log("cloned bundle manager deployed at", address(instanceBundleManager));
+        // solhint-enable
     }
 
     function _deployAndActivateToken() internal {

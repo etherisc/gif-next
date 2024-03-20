@@ -223,19 +223,6 @@ abstract contract Distribution is
         return 0 * netPremiumAmount;
     }
 
-    function processSale(
-        ReferralId referralId,
-        uint256 premiumAmount
-    )
-        external
-        onlyOwner
-        restricted()
-        virtual override
-    {
-        DistributionStorage storage $ = _getDistributionStorage();
-        $._distributionService.processSale(referralId, premiumAmount);        
-    }
-
     function processRenewal(
         ReferralId referralId,
         uint256 feeAmount

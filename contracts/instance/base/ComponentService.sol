@@ -87,10 +87,10 @@ abstract contract ComponentService is Service {
         // check instance has assigned required role to owner
         instanceNftId = componentInfo.parentNftId;
         instance = _getInstance(instanceNftId);
-        bool hasRole = getInstanceService().hasRole(
-            owner, 
-            requiredRole, 
-            address(instance));
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        bool hasRole = accessManager.hasRole(
+            requiredRole,
+            owner);
 
         if(!hasRole) {
             revert ErrorComponentServiceExpectedRoleMissing(instanceNftId, requiredRole, owner);
@@ -128,7 +128,7 @@ abstract contract ComponentService is Service {
         address instanceAddress = registry.getObjectInfo(info.parentNftId).objectAddress;
         instance = IInstance(instanceAddress);
 
-        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
         if (accessManager.isTargetLocked(info.objectAddress)) {
             revert IAccess.ErrorIAccessTargetLocked(info.objectAddress);
         }

@@ -149,7 +149,6 @@ contract Registry is
         }
 
         if(
-
             parentType == PROTOCOL() ||
             parentType == REGISTRY() ||
             parentType == SERVICE()
@@ -186,7 +185,7 @@ contract Registry is
         return _releaseManager.getReleaseInfo(version);
     }
 
-    function getObjectCount() external view override returns (uint256) {
+    function getObjectCount() external view returns (uint256) {
         return _chainNft.totalSupply();
     }
 
@@ -198,11 +197,11 @@ contract Registry is
         return _registryNftId;
     }
 
-    function getNftId(address object) external view override returns (NftId id) {
+    function getNftId(address object) external view returns (NftId id) {
         return _nftIdByAddress[object];
     }
 
-    function ownerOf(NftId nftId) public view override returns (address) {
+    function ownerOf(NftId nftId) public view returns (address) {
         return _chainNft.ownerOf(nftId.toInt());
     }
 
@@ -210,24 +209,29 @@ contract Registry is
         return _chainNft.ownerOf(_nftIdByAddress[contractAddress].toInt());
     }
 
-    function getObjectInfo(NftId nftId) external view override returns (ObjectInfo memory) {
+    function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory) {
         return _info[nftId];
     }
 
-    function getObjectInfo(address object) external view override returns (ObjectInfo memory) {
+    function getObjectInfo(address object) external view returns (ObjectInfo memory) {
         return _info[_nftIdByAddress[object]];
     }
 
-    function isRegistered(NftId nftId) public view override returns (bool) {
+    function isRegistered(NftId nftId) public view returns (bool) {
         return _info[nftId].objectType.gtz();
     }
 
-    function isRegistered(address object) external view override returns (bool) {
+    function isRegistered(address object) external view returns (bool) {
         return _nftIdByAddress[object].gtz();
     }
 
-    function isRegisteredService(address object) external view override returns (bool) {
+    function isRegisteredService(address object) external view returns (bool) {
         return _info[_nftIdByAddress[object]].objectType == SERVICE();
+    }
+
+    function isRegisteredComponent(address object) external view returns (bool) {
+        NftId objectParentNftId = _info[_nftIdByAddress[object]].parentNftId;
+        return _info[objectParentNftId].objectType == INSTANCE();
     }
 
     function isValidRelease(VersionPart version) external view returns (bool)
@@ -287,18 +291,9 @@ contract Registry is
         }
 
         address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
+        uint256 tokenId = _chainNft.getNextTokenId();
+        nftId = toNftId(tokenId);
 
-        // TODO does external call
-        // compute next nftId, do all checks and stores, mint() at most end...
-        uint256 mintedTokenId = _chainNft.mint(
-            info.initialOwner,
-            interceptor,
-            EMPTY_URI);
-        nftId = toNftId(mintedTokenId);
-
-        // TODO move nftId out of info struct
-        // getters by nftId -> return struct without nftId
-        // getters by address -> return nftId AND struct
         info.nftId = nftId;
         _info[nftId] = info;
 
@@ -314,6 +309,14 @@ contract Registry is
         }
 
         emit LogRegistration(nftId, parentNftId, objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
+
+        // calls nft receiver(1) and interceptor(2)
+        uint256 mintedTokenId = _chainNft.mint(
+            info.initialOwner,
+            interceptor,
+            EMPTY_URI);
+        assert(mintedTokenId == tokenId);
+        
     }
 
     /// @dev obtain interceptor address for this nft if applicable, address(0) otherwise
