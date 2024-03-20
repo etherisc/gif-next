@@ -198,7 +198,6 @@ contract PolicyService is
 
         uint256 netPremiumAmount = _processPremiumByTreasury(
                 instance, 
-                productNftId,
                 policyNftId, 
                 unpaidPremiumAmount);
 

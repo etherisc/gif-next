@@ -118,8 +118,8 @@ contract ReferralTest is ReferralTestBase {
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000 + 100, "balanceAmount not 1100");
+        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
+        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 100, "capitalAmount not 1100");
         
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
@@ -210,8 +210,8 @@ contract ReferralTest is ReferralTestBase {
         assertTrue(instanceReader.getPolicyState(policyNftId2) == ACTIVE(), "policy state not ACTIVE");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount, 2000, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000 + 200, "balanceAmount not 1100");
+        assertEq(bundleInfo.lockedAmount.toInt(), 2000, "lockedAmount not 1000");
+        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 200, "capitalAmount not 1100");
         
         assertEq(token.balanceOf(distribution.getWallet()), 28, "distribution balance not 14");
         
@@ -262,8 +262,8 @@ contract ReferralTest is ReferralTestBase {
         assertTrue(instanceReader.getPolicyState(policyNftId3) == ACTIVE(), "policy3 state not ACTIVE");
 
         bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount, 3000, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000 + 300, "balanceAmount not 1100");
+        assertEq(bundleInfo.lockedAmount.toInt(), 3000, "lockedAmount not 1000");
+        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 300, "capitalAmount not 1100");
         
         assertEq(token.balanceOf(distribution.getWallet()), 42, "distribution balance not 14");
         
