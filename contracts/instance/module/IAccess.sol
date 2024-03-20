@@ -49,6 +49,6 @@ interface IAccess {
     error ErrorIAccessTargetNameEmpty(address target);
     error ErrorIAccessTargetNameExists(address target, address existingTarget, ShortString name);
     error ErrorIAccessTargetLocked(address target);
-    error ErrorIAccessTargetRegistered(address target);
+    error ErrorIAccessTargetNotRegistered(address target);
     error ErrorIAccessTargetAuthorityInvalid(address target, address targetAuthority);
 }

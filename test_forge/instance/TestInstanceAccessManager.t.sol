@@ -9,21 +9,28 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 //import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
+import {PRODUCT} from "../../contracts/types/ObjectType.sol";
+import {zeroNftId} from "../../contracts/types/NftId.sol";
 import {FeeLib} from "../../contracts/types/Fee.sol";
 import {RoleId} from "../../contracts/types/RoleId.sol";
 import {TimestampLib} from "../../contracts/types/Timestamp.sol";
 import {ADMIN_ROLE, PRODUCT_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, INSTANCE_OWNER_ROLE, RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
+
+import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
+
+import {IComponent} from "../../contracts/components/IComponent.sol";
 
 import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
 import {IAccess} from "../../contracts/instance/module/IAccess.sol";
-import {IComponent} from "../../contracts/components/IComponent.sol";
 
 import {TestGifBase} from "../base/TestGifBase.sol";
 import {SimpleProduct, SPECIAL_ROLE_INT} from "../mock/SimpleProduct.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
+import {RegisterableMock, SimpleAccessManagedRegisterableMock} from "../mock/RegisterableMock.sol";
+
 
 
 function eqRoleInfo(IAccess.RoleInfo memory a, IAccess.RoleInfo memory b) pure returns (bool isSame) {
@@ -832,8 +839,14 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_createGifTarget_HappyCase() public
     {
-        IAccessManaged gifTarget = new AccessManagedMock(address(ozAccessManager));
+        vm.startPrank(instanceOwner);
+        IRegisterable gifTarget = new SimpleAccessManagedRegisterableMock(instanceNftId, PRODUCT(), address(ozAccessManager));
         address gifTargetAddress = address(gifTarget);
+        vm.stopPrank();
+
+        vm.startPrank(address(registryService));
+        registry.register(gifTarget.getInitialInfo());
+        vm.stopPrank();
     
         IAccess.TargetInfo memory info = IAccess.TargetInfo({
             name: ShortStrings.toShortString("GifTarget1234"),
@@ -865,39 +878,86 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.stopPrank();
     }
 
-    function test_InstanceAccessManager_createGifTarget_withExistingTargetAddress() public
+    function test_InstanceAccessManager_createGifTarget_withNotRegisteredTarget() public
     {
-        IAccessManaged gifTarget = new AccessManagedMock(address(ozAccessManager));
+        vm.startPrank(instanceOwner);
+        IRegisterable gifTarget = new SimpleAccessManagedRegisterableMock(instanceNftId, PRODUCT(), address(ozAccessManager));
+        address gifTargetAddress = address(gifTarget);
+        vm.stopPrank();
+
+        vm.startPrank(address(instanceService));
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccess.ErrorIAccessTargetNotRegistered.selector,
+            gifTargetAddress));
+        instanceAccessManager.createGifTarget(gifTargetAddress, "GifTarget1234");
+        vm.stopPrank();
+    }
+
+    function test_InstanceAccessManager_createGifTarget_withNotIAccessManagedTarget() public
+    {
+        IRegisterable gifTarget = new RegisterableMock(
+            zeroNftId(), 
+            instanceNftId, 
+            PRODUCT(),
+            false,
+            instanceOwner,
+            ""
+        );
         address gifTargetAddress = address(gifTarget);
 
         vm.startPrank(address(instanceService));
-
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccess.ErrorIAccessTargetNotRegistered.selector,
+            gifTargetAddress));
         instanceAccessManager.createGifTarget(gifTargetAddress, "GifTarget1234");
+        vm.stopPrank();
+    }
 
+    function test_InstanceAccessManager_createGifTarget_withExistingTargetAddress() public
+    {
+        vm.startPrank(instanceOwner);
+        IRegisterable gifTarget = new SimpleAccessManagedRegisterableMock(instanceNftId, PRODUCT(), address(ozAccessManager));
+        address gifTargetAddress = address(gifTarget);
+        vm.stopPrank();
+
+        vm.startPrank(address(registryService));
+        registry.register(gifTarget.getInitialInfo());
+        vm.stopPrank();
+
+        vm.startPrank(address(instanceService));
+        instanceAccessManager.createGifTarget(gifTargetAddress, "GifTarget1234");
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessTargetExists.selector,
             gifTargetAddress,
             ShortStrings.toShortString("GifTarget1234")));
         instanceAccessManager.createGifTarget(gifTargetAddress, "GifTarget5678");
-
         vm.stopPrank();
     }
 
     function test_InstanceAccessManager_createGifTarget_withZeroTargetAddress() public
     {
         vm.startPrank(address(instanceService));
-        vm.expectRevert();
+        vm.expectRevert(abi.encodeWithSelector(
+            IAccess.ErrorIAccessTargetNotRegistered.selector,
+            address(0)));
         instanceAccessManager.createGifTarget(address(0), "GifTarget1234");
         vm.stopPrank();
     }
 
     function test_InstanceAccessManager_createGifTarget_withExistingTargetName() public
     {
-        IAccessManaged gifTarget1 = new AccessManagedMock(address(ozAccessManager));
+        vm.startPrank(instanceOwner);
+        IRegisterable gifTarget1 = new SimpleAccessManagedRegisterableMock(instanceNftId, PRODUCT(), address(ozAccessManager));
         address gifTargetAddress1 = address(gifTarget1);
 
-        IAccessManaged gifTarget2 = new AccessManagedMock(address(ozAccessManager));
+        IRegisterable gifTarget2 = new SimpleAccessManagedRegisterableMock(instanceNftId, PRODUCT(), address(ozAccessManager));
         address gifTargetAddress2 = address(gifTarget2);
+        vm.stopPrank();
+
+        vm.startPrank(address(registryService));
+        registry.register(gifTarget1.getInitialInfo());
+        registry.register(gifTarget2.getInitialInfo());
+        vm.stopPrank();
 
         vm.startPrank(address(instanceService));
 
@@ -915,24 +975,34 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_createGifTarget_withEmptyTargetName() public
     {
-        IAccessManaged gifTarget = new AccessManagedMock(address(ozAccessManager));
+        vm.startPrank(instanceOwner);
+        IRegisterable gifTarget = new SimpleAccessManagedRegisterableMock(instanceNftId, PRODUCT(), address(ozAccessManager));
         address gifTargetAddress = address(gifTarget);
+        vm.stopPrank();
+
+        vm.startPrank(address(registryService));
+        registry.register(gifTarget.getInitialInfo());
+        vm.stopPrank();
 
         vm.startPrank(address(instanceService));
-
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessTargetNameEmpty.selector,
             gifTargetAddress));
         instanceAccessManager.createGifTarget(gifTargetAddress, "");
-
         vm.stopPrank();
     }
 
     function test_InstanceAccessManager_createGifTarget_withInvalidTargetAuthority() public
     {
+        vm.startPrank(instanceOwner);
         IAccessManager accessManager = new AccessManager(address(this));
-        IAccessManaged gifTarget = new AccessManagedMock(address(accessManager));
+        IRegisterable gifTarget = new SimpleAccessManagedRegisterableMock(instanceNftId, PRODUCT(), address(accessManager));
         address gifTargetAddress = address(gifTarget);
+        vm.stopPrank();
+
+        vm.startPrank(address(registryService));
+        registry.register(gifTarget.getInitialInfo());
+        vm.stopPrank();
 
         vm.startPrank(address(instanceService));
 
@@ -1062,16 +1132,6 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.stopPrank();
     }
 
-    function test_InstanceAccessManager_createTarget_withRegisteredTarget() public
-    {
-        vm.startPrank(instanceOwner);
-        vm.expectRevert(abi.encodeWithSelector(
-            IAccess.ErrorIAccessTargetRegistered.selector,
-            address(registry)));
-        instanceAccessManager.createTarget(address(registry), "CustomTarget1234");
-        vm.stopPrank();
-    }
-
     //--- Set target locked -----------------------------------------------------//
 
     function test_InstanceAccessManager_setTargetLocked_ToggleCoreTarget() public
@@ -1095,8 +1155,14 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_setTargetLocked_ToggleGifTarget() public
     {
-        IAccessManaged gifTarget = new AccessManagedMock(address(ozAccessManager));
+        vm.startPrank(instanceOwner);
+        IRegisterable gifTarget = new SimpleAccessManagedRegisterableMock(instanceNftId, PRODUCT(), address(ozAccessManager));
         address gifTargetAddress = address(gifTarget);
+        vm.stopPrank();
+
+        vm.startPrank(address(registryService));
+        registry.register(gifTarget.getInitialInfo());
+        vm.stopPrank();
 
         vm.startPrank(address(instanceService));
         instanceAccessManager.createGifTarget(gifTargetAddress, "GifTarget1234");

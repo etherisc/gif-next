@@ -253,21 +253,19 @@ contract InstanceAccessManager is
     // assume gif target is registered and belongs to the same instance as instance access manager
     function createGifTarget(address target, string memory name) external restricted() 
     {
+        if(!_registry.isRegistered(target)) {
+            revert IAccess.ErrorIAccessTargetNotRegistered(target);
+        }
+
         _createTarget(target, name, IAccess.Type.Gif);
     }
     // INSTANCE_OWNER_ROLE
-    // assume custom target.authority() is constant -> target can not be used with different instance access manager
+    // assume custom target.authority() is constant -> target MUST not be used with different instance access manager
     // assume custom target can not be registered as component -> each service which is doing component registration MUST register a gif target
     // assume custom target can not be registered as instance or service -> why?
     // TODO check target associated with instance owner or instance or instance components or components helpers
-    function createTarget(address target, string memory name) 
-        external 
-        restricted() 
+    function createTarget(address target, string memory name) external restricted() 
     {
-        if(_registry.isRegistered(target)) {
-            revert IAccess.ErrorIAccessTargetRegistered(target);
-        }
-
         _createTarget(target, name, IAccess.Type.Custom);
     }
     // INSTANCE_SERVICE_ROLE
