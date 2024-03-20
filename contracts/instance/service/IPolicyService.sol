@@ -24,6 +24,8 @@ interface IPolicyService is IService {
     error ErrorIPolicyServiceOpenClaims(NftId policyNftId, uint16 openClaimsCount);
     error ErrorIPolicyServicePolicyHasNotExpired(NftId policyNftId, Timestamp expiredAt);
 
+    error ErrorIPolicyServicePremiumMismatch(NftId policyNftId, uint256 premiumAmount, uint256 recalculatedPremiumAmount);
+
     /// @dev declines an application represented by {policyNftId}
     /// an application can only be declined in applied state
     /// only the related product may decline an application
@@ -60,26 +62,6 @@ interface IPolicyService is IService {
     /// a policy can only be closed when it has been expired. in addition, it must not have any open claims
     /// this function can only be called by a product. the policy needs to match with the calling product
     function close(NftId policyNftId) external;
-
-    /// @dev calculates the total premium amount for the specified attributes
-    /// also returns the various fees included in the total premium amount
-    function calculatePremium(
-        RiskId riskId,
-        uint256 sumInsuredAmount,
-        Seconds lifetime,
-        bytes memory applicationData,
-        NftId bundleNftId,
-        ReferralId referralId
-    )
-        external
-        view
-        returns (
-            uint256 premiumAmount,
-            uint256 productFeeAmount,
-            uint256 poolFeeAmount,
-            uint256 bundleFeeAmount,
-            uint256 distributionFeeAmount
-        );
 
     // TODO move function to pool service
     function calculateRequiredCollateral(

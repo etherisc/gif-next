@@ -68,6 +68,5 @@ interface IInstanceService is IService {
     ) external;
 
     function setComponentLocked(bool locked) external;
-
 }
 

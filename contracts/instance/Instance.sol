@@ -28,6 +28,7 @@ import {KeyValueStore} from "./base/KeyValueStore.sol";
 
 import {IAccess} from "./module/IAccess.sol";
 import {IBundle} from "./module/IBundle.sol";
+import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
@@ -38,6 +39,8 @@ import {IPoolService} from "./service/IPoolService.sol";
 import {IProductService} from "./service/IProductService.sol";
 import {IPolicyService} from "./service/IPolicyService.sol";
 import {IBundleService} from "./service/IBundleService.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
+import {VersionPart, VersionPartLib} from "../types/Version.sol";
 
 contract Instance is
     IInstance,
@@ -75,6 +78,8 @@ contract Instance is
         
         IRegistry registry = IRegistry(registryAddress);
         initializeRegisterable(registryAddress, registry.getNftId(), INSTANCE(), true, initialOwner, "");
+        initializeLifecycle();
+
         registerInterface(type(IInstance).interfaceId);    
     }
 
@@ -105,12 +110,12 @@ contract Instance is
     }
 
     //--- PoolSetup ------------------------------------------------------//
-    function createPoolSetup(NftId poolNftId, ISetup.PoolSetupInfo memory setup) external restricted() {
-        create(_toNftKey32(poolNftId, POOL()), abi.encode(setup));
+    function createPoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info) external restricted() {
+        create(_toNftKey32(poolNftId, POOL()), abi.encode(info));
     }
 
-    function updatePoolSetup(NftId poolNftId, ISetup.PoolSetupInfo memory setup, StateId newState) external restricted() {
-        update(_toNftKey32(poolNftId, POOL()), abi.encode(setup), newState);
+    function updatePoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info, StateId newState) external restricted() {
+        update(_toNftKey32(poolNftId, POOL()), abi.encode(info), newState);
     }
 
     function updatePoolSetupState(NftId poolNftId, StateId newState) external restricted() {

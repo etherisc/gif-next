@@ -30,6 +30,7 @@
 				"esbenp.prettier-vscode",
 				"ryanluker.vscode-coverage-gutters",
 				"ms-vsliveshare.vsliveshare",
+				"bierner.markdown-mermaid",
 			]
 		}
 	},

@@ -263,9 +263,10 @@ contract InstanceService is
         // configure authorization for bundle service on instance
         address bundleServiceAddress = getRegistry().getServiceAddress(BUNDLE(), getMajorVersion());
         clonedAccessManager.grantRole(BUNDLE_SERVICE_ROLE(), address(bundleServiceAddress));
-        bytes4[] memory instanceBundleServiceSelectors = new bytes4[](2);
+        bytes4[] memory instanceBundleServiceSelectors = new bytes4[](3);
         instanceBundleServiceSelectors[0] = clonedInstance.createBundle.selector;
         instanceBundleServiceSelectors[1] = clonedInstance.updateBundle.selector;
+        instanceBundleServiceSelectors[2] = clonedInstance.updateBundleState.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceBundleServiceSelectors, 

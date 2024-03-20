@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {IComponents} from "../instance/module/IComponents.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
@@ -65,4 +66,9 @@ interface IComponent is
     function getProductNftId() external view returns (NftId productNftId);
 
     function isNftInterceptor() external view returns(bool isInterceptor);
+
+    /// @dev returns component infos for this pool
+    /// when registered with an instance the info is obtained from the data stored in the instance
+    /// when not registered the function returns the info from the component contract
+    function getComponentInfo() external view returns (IComponents.ComponentInfo memory info);
 }

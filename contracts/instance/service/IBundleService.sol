@@ -10,9 +10,16 @@ import {Seconds} from "../../types/Seconds.sol";
 import {StateId} from "../../types/StateId.sol";
 
 interface IBundleService is IService {
-    error ErrorIBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
 
-    function createBundle(
+    event LogBundleServiceBundleActivated(NftId bundleNftId);
+    event LogBundleServiceBundleLocked(NftId bundleNftId);
+    event LogBundleServiceBundleClosed(NftId bundleNftId);
+
+    error ErrorBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
+    error ErrorBundleServiceBundleNotOpen(NftId bundleNftId, StateId state);
+    error ErrorBundleServiceBundleWithOpenPolicies(NftId bundleNftId, uint256 openPoliciesCount);
+
+    function create(
         address owner,
         Fee memory fee, 
         uint256 amount,
@@ -20,12 +27,12 @@ interface IBundleService is IService {
         bytes calldata filter
     ) external returns(NftId bundleNftId);
 
-    function setBundleFee(
+
+    function setFee(
         NftId bundleNftId,
         Fee memory fee
     ) external;
 
-    function updateBundle(NftId instanceNftId, NftId bundleNftId, IBundle.BundleInfo memory bundleInfo, StateId state) external;
 
     function lockCollateral(
         IInstance instanceNftId, 
@@ -43,13 +50,13 @@ interface IBundleService is IService {
 
     function closePolicy(IInstance instance, NftId policyNftId, NftId bundleNftId, uint256 collateralAmount) external;
 
-    // function fundBundle(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
-    // function defundBundle(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
-    function lockBundle(NftId bundleNftId) external;
+    function lock(NftId bundleNftId) external;
 
-    function unlockBundle(NftId bundleNftId) external;
+    function unlock(NftId bundleNftId) external;
 
-    // function closeBundle(NftId bundleNftId) external;
+    function close(NftId bundleNftId) external;
 }

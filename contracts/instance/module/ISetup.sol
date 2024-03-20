@@ -5,21 +5,19 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Fee} from "../../types/Fee.sol";
 import {NftId} from "../../types/NftId.sol";
-import {UFixed} from "../../types/UFixed.sol";
+import {RoleId} from "../../types/RoleId.sol";
 import {TokenHandler} from "../../shared/TokenHandler.sol";
+import {UFixed} from "../../types/UFixed.sol";
 
 interface ISetup {
+
     struct ProductSetupInfo {
         IERC20Metadata token;
         TokenHandler tokenHandler;
         NftId distributionNftId;
         NftId poolNftId;
-        Fee distributionFee; // default distribution fee (no referral id)
         Fee productFee; // product fee on net premium
-        Fee processingFee; // product fee on payout amounts
-        Fee poolFee; // pool fee on net premium
-        Fee stakingFee; // pool fee on staked capital from investor
-        Fee performanceFee; // pool fee on profits from capital investors
+        Fee processingFee; // product fee on payout amounts        
         bool isIntercepting; // intercepts nft transfers (for products)
         address wallet;
     }
@@ -27,22 +25,9 @@ interface ISetup {
     struct DistributionSetupInfo {
         NftId productNftId;
         TokenHandler tokenHandler;
-        Fee distributionFee; // default distribution fee (no referral id)
+        Fee minDistributionOwnerFee;
+        Fee distributionFee; // recalculated whenever any fee on the product/pool/dist/disttype is changed
         address wallet;
-    }
-
-    struct PoolSetupInfo {
-        NftId productNftId;
-        TokenHandler tokenHandler;
-        uint256 maxCapitalAmount; // max capital amount allowed for pool
-        bool isInterceptingBundleTransfers; // intercepts nft transfers for bundles
-        bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts
-        bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 
-        UFixed collateralizationLevel; // factor to calculate collateral for sum insurance (default 100%)
-        UFixed retentionLevel; // amount of collateral held in pool (default 100%)
-        Fee poolFee; // pool fee on net premium
-        Fee stakingFee; // pool fee on staked capital from investor
-        Fee performanceFee; // pool fee on profits from capital investors
-        address wallet;
+        uint256 sumDistributionOwnerFees;
     }
 }

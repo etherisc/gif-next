@@ -17,6 +17,7 @@ interface IDistributionComponent is IComponent {
     function getSetupInfo() external view returns (ISetup.DistributionSetupInfo memory setupInfo);
 
     function setFees(
+        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee
     ) external;
 
@@ -44,37 +45,10 @@ interface IDistributionComponent is IComponent {
         bytes memory data
     ) external;
 
-    /**
-     * @dev lets distributors create referral codes.
-     * referral codes need to be unique
-     * distributor is identified via msg.sender.
-     */
-    function createReferral(
-        NftId distributorNftId,
-        string memory code,
-        UFixed discountPercentage,
-        uint32 maxReferrals,
-        Timestamp expiryAt,
-        bytes memory data
-    ) external returns (ReferralId referralId);
-
-    function calculateFeeAmount(
-        ReferralId referralId,
-        uint256 netPremiumAmount
-    ) external view returns (uint256 feeAmount);
-
     function calculateRenewalFeeAmount(
         ReferralId referralId,
         uint256 netPremiumAmount
     ) external view returns (uint256 feeAmount);
-
-    /// @dev callback from product service when selling a policy for a specific referralId
-    /// the used referral id and the collected fee are provided as parameters
-    /// the component implementation can then process this information accordingly
-    function processSale(
-        ReferralId referralId,
-        uint256 feeAmount
-    ) external;
 
     /// @dev callback from product service when a policy is renews for a specific referralId
     function processRenewal(
@@ -91,9 +65,6 @@ interface IDistributionComponent is IComponent {
     function getReferralId(
         string memory referralCode
     ) external returns (ReferralId referralId);
-
-    /// @dev returns true iff the referral id is valid
-    function referralIsValid(ReferralId referralId) external view returns (bool isValid);
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
     function isVerifying() external view returns (bool verifying);

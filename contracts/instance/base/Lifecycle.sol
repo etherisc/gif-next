@@ -1,19 +1,27 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
+
 import {NftId} from "../../types/NftId.sol";
 import {ObjectType, COMPONENT, BUNDLE, POLICY, RISK} from "../../types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, UNDERWRITTEN, REVOKED, DECLINED} from "../../types/StateId.sol";
 import {ILifecycle} from "./ILifecycle.sol";
 
-contract Lifecycle is ILifecycle {
+contract Lifecycle is
+    Initializable,
+    ILifecycle
+{
     mapping(ObjectType objectType => StateId initialState)
         private _initialState;
 
     mapping(ObjectType objectType => mapping(StateId stateFrom => mapping(StateId stateTo => bool isValid)))
         private _isValidTransition;
 
-    constructor() {
+    function initializeLifecycle()
+        public
+        onlyInitializing
+    {
         _setupBundleLifecycle();
         _setupComponentLifecycle();
         _setupPolicyLifecycle();
@@ -78,6 +86,7 @@ contract Lifecycle is ILifecycle {
     function _setupBundleLifecycle() internal {
         _initialState[BUNDLE()] = ACTIVE();
         _isValidTransition[BUNDLE()][ACTIVE()][PAUSED()] = true;
+        _isValidTransition[BUNDLE()][ACTIVE()][CLOSED()] = true;
         _isValidTransition[BUNDLE()][PAUSED()][ACTIVE()] = true;
         _isValidTransition[BUNDLE()][PAUSED()][CLOSED()] = true;
     }

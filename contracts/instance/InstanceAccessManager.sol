@@ -93,7 +93,7 @@ contract InstanceAccessManager is
     {
         _createRole(roleId, name, IAccess.Type.Core);
     }
-    // INSTANCE_SERVICE_ROLE
+    // ADMIN_ROLE
     // assume gif roles can be revoked
     // assume admin is INSTANCE_OWNER_ROLE or INSTANCE_ROLE
     function createGifRole(RoleId roleId, string memory name, RoleId admin) 

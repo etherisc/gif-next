@@ -17,6 +17,7 @@ import {StateId} from "../types/StateId.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IInstance} from "./IInstance.sol";
 import {IKeyValueStore} from "../instance/base/IKeyValueStore.sol";
@@ -147,14 +148,14 @@ contract InstanceReader {
         }
     }
 
-    function getPoolSetupInfo(NftId poolNftId)
+    function getComponentInfo(NftId poolNftId)
         public
         view
-        returns (ISetup.PoolSetupInfo memory info)
+        returns (IComponents.ComponentInfo memory info)
     {
         bytes memory data = _store.getData(toPoolKey(poolNftId));
         if (data.length > 0) {
-            return abi.decode(data, (ISetup.PoolSetupInfo));
+            return abi.decode(data, (IComponents.ComponentInfo));
         }
     }
 
