@@ -185,7 +185,7 @@ contract Registry is
         return _releaseManager.getReleaseInfo(version);
     }
 
-    function getObjectCount() external view override returns (uint256) {
+    function getObjectCount() external view returns (uint256) {
         return _chainNft.totalSupply();
     }
 
@@ -197,11 +197,11 @@ contract Registry is
         return _registryNftId;
     }
 
-    function getNftId(address object) external view override returns (NftId id) {
+    function getNftId(address object) external view returns (NftId id) {
         return _nftIdByAddress[object];
     }
 
-    function ownerOf(NftId nftId) public view override returns (address) {
+    function ownerOf(NftId nftId) public view returns (address) {
         return _chainNft.ownerOf(nftId.toInt());
     }
 
@@ -209,24 +209,29 @@ contract Registry is
         return _chainNft.ownerOf(_nftIdByAddress[contractAddress].toInt());
     }
 
-    function getObjectInfo(NftId nftId) external view override returns (ObjectInfo memory) {
+    function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory) {
         return _info[nftId];
     }
 
-    function getObjectInfo(address object) external view override returns (ObjectInfo memory) {
+    function getObjectInfo(address object) external view returns (ObjectInfo memory) {
         return _info[_nftIdByAddress[object]];
     }
 
-    function isRegistered(NftId nftId) public view override returns (bool) {
+    function isRegistered(NftId nftId) public view returns (bool) {
         return _info[nftId].objectType.gtz();
     }
 
-    function isRegistered(address object) external view override returns (bool) {
+    function isRegistered(address object) external view returns (bool) {
         return _nftIdByAddress[object].gtz();
     }
 
-    function isRegisteredService(address object) external view override returns (bool) {
+    function isRegisteredService(address object) external view returns (bool) {
         return _info[_nftIdByAddress[object]].objectType == SERVICE();
+    }
+
+    function isRegisteredComponent(address object) external view returns (bool) {
+        NftId objectParentNftId = _info[_nftIdByAddress[object]].parentNftId;
+        return _info[objectParentNftId].objectType == INSTANCE();
     }
 
     function isValidRelease(VersionPart version) external view returns (bool)

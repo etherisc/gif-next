@@ -10,10 +10,11 @@ import {IPolicy} from "../module/IPolicy.sol";
 
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
-import {DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
+import {PRODUCT_SERVICE_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
 import {ObjectType, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR} from "../../types/ObjectType.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
+import {RoleId} from "../../types/RoleId.sol";
 
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
@@ -87,8 +88,24 @@ contract DistributionService is
         distributionNftId = distributionInfo.nftId;
 
         instance.createDistributionSetup(distributionNftId, distribution.getSetupInfo());
-        getInstanceService().createGifTarget(instanceNftId, distributionAddress, distribution.getName());
-        getInstanceService().grantDistributionDefaultPermissions(instanceNftId, distributionAddress, distribution.getName());
+        // TODO move to distribution?
+        bytes4[][] memory selectors = new bytes4[][](2);
+        selectors[0] = new bytes4[](1);
+        selectors[1] = new bytes4[](2);
+
+        selectors[0][0] = IDistributionComponent.setFees.selector;
+        selectors[1][0] = IDistributionComponent.processRenewal.selector;
+
+        RoleId[] memory roles = new RoleId[](2);
+        roles[0] = DISTRIBUTION_OWNER_ROLE();
+        roles[1] = PRODUCT_SERVICE_ROLE();
+
+        getInstanceService().createGifTarget(
+            instanceNftId, 
+            distributionAddress, 
+            distribution.getName(), 
+            selectors, 
+            roles);
     }
 
     function setFees(

@@ -6,8 +6,12 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {NftId} from "../types/NftId.sol";
 import {StateId} from "../types/StateId.sol";
 import {RiskId} from "../types/RiskId.sol";
+import {VersionPart} from "../types/Version.sol";
+import {Key32} from "../types/Key32.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
+
+import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {BundleManager} from "./BundleManager.sol";
@@ -28,17 +32,15 @@ import {IPolicyService} from "./service/IPolicyService.sol";
 import {IBundleService} from "./service/IBundleService.sol";
 import {IRisk} from "./module/IRisk.sol";
 import {ISetup} from "./module/ISetup.sol";
-import {NftId} from "../types/NftId.sol";
-import {RiskId} from "../types/RiskId.sol";
-import {StateId} from "../types/StateId.sol";
-import {VersionPart} from "../types/Version.sol";
-import {Key32} from "../types/Key32.sol";
 
 
 
-
-interface IInstance is IRegisterable, IKeyValueStore, IAccessManaged {
-
+interface IInstance is 
+    IRegisterable, 
+    ITransferInterceptor, 
+    IAccessManaged, 
+    IKeyValueStore 
+{
     function getDistributionService() external view returns (IDistributionService);
     function getProductService() external view returns (IProductService);
     function getPoolService() external view returns (IPoolService);
@@ -90,4 +92,7 @@ interface IInstance is IRegisterable, IKeyValueStore, IAccessManaged {
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleManager() external view returns (BundleManager);
+
+    function setInstanceAccessManager(InstanceAccessManager accessManager) external;
+    function getInstanceAccessManager() external view returns (InstanceAccessManager);
 }

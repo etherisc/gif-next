@@ -10,6 +10,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IComponent} from "../components/IComponent.sol";
 
+import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
@@ -18,6 +19,7 @@ import {BundleManager} from "./BundleManager.sol";
 interface IInstanceService is IService {
 
     error ErrorInstanceServiceMasterInstanceAlreadySet();
+    error ErrorInstanceServiceMasterOzAccessManagerAlreadySet();
     error ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet();
     error ErrorInstanceServiceMasterBundleManagerAlreadySet();
     error ErrorInstanceServiceInstanceAddressZero();
@@ -27,34 +29,44 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch();
 
-    error ErrorInstanceServiceAccessManagerZero();
+    error ErrorInstanceServiceOzAccessManagerZero();
+    error ErrorInstanceServiceInstanceAccessManagerZero();
     error ErrorInstanceServiceInstanceReaderZero();
     error ErrorInstanceServiceBundleManagerZero();
 
     error ErrorInstanceServiceInstanceAuthorityMismatch();
+    error ErrorInstanceServiceBundleManagerAuthorityMismatch();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch2();
     error ErrorInstanceServiceBundleMangerInstanceMismatch();
 
     error ErrorInstanceServiceRequestUnauhorized(address caller);
     error ErrorInstanceServiceNotInstanceOwner(address caller, NftId instanceNftId);
+    error ErrorInstanceServiceNotInstance(NftId nftId);
     error ErrorInstanceServiceComponentNotRegistered(address componentAddress);
+    error ErrorInstanceServiceInstanceComponentMismatch(NftId instanceNftId, NftId componentNftId);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     
-    event LogInstanceCloned(address clonedAccessManagerAddress, address clonedInstanceAddress, address clonedInstanceReaderAddress, NftId clonedInstanceNftId);
+    event LogInstanceCloned(address clonedOzAccessManager, address clonedInstanceAccessManager, address clonedInstance, address clonedBundleManager, address clonedInstanceReader, NftId clonedInstanceNftId);
 
     function createInstanceClone()
         external 
         returns (
-            InstanceAccessManager clonedAccessManager, 
+            AccessManagerUpgradeableInitializeable clonedOzAccessManager,
+            InstanceAccessManager clonedInstanceAccessManager, 
             Instance clonedInstance,
             NftId instanceNftId,
             InstanceReader clonedInstanceReader,
             BundleManager clonedBundleManager
         );
 
-    function setTargetLocked(string memory targetName, bool locked) external;
+    function createGifTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        bytes4[][] memory selectors,
+        RoleId[] memory roles
+    ) external;
 
-    function hasRole(address account, RoleId role, address instanceAddress) external returns (bool);
-
+    function setComponentLocked(bool locked) external;
 }
 

@@ -16,7 +16,8 @@ contract MockObjectManagerTest is TestGifBase {
     MockObjectManager public masterObjectManager;
     MockObjectManager public objectManager;
 
-    MockAuthority public authority;
+    // FIX ME
+    //MockAuthority public authority;
 
     function setUp() public override {
         super.setUp();
@@ -28,14 +29,10 @@ contract MockObjectManagerTest is TestGifBase {
         objectManager = MockObjectManager(Clones.clone(address(masterObjectManager)));
 
         // create authority mock
-        authority = new MockAuthority();
+        //authority = new MockAuthority();
 
         // initialize clone
-        objectManager.initialize(
-            address(authority),
-            address(registry),
-            address(instance)
-        );
+        objectManager.initialize(address(instance));
     }
 
 
@@ -43,7 +40,7 @@ contract MockObjectManagerTest is TestGifBase {
 
         // solhint-disable no-console
         console.log("====================");
-        console.log("authority", address(authority));
+        //console.log("authority", address(authority));
         console.log("registry address", address(registry));
         console.log("instance nft id", address(instance));
         console.log("instanceReader", address(instanceReader));
@@ -55,7 +52,7 @@ contract MockObjectManagerTest is TestGifBase {
         assertTrue(address(objectManager) != address(0), "object manager zero");
         assertTrue(address(objectManager) != address(masterObjectManager), "object manager and master object manager identical");
 
-        assertEq(objectManager.authority(), address(authority), "unexpected authority");
+        assertEq(objectManager.authority(), instance.authority(), "unexpected authority");
         assertEq(address(objectManager.getRegistry()), address(registry), "unexpected registry");
 
         NftId fakeComponentNftId = toNftId(13);
@@ -135,31 +132,7 @@ contract MockObjectManagerTest is TestGifBase {
     }
 
     function test_MockObjectManagerAttemptDoubleInitialization() public {
-        // create authority mock
-        MockAuthority newAuthority = new MockAuthority();
-
-        // initialize clone a second time to push a bad authority
-        vm.expectRevert();
-        objectManager.initialize(
-            address(newAuthority),
-            address(registry),
-            address(instance)
-        );
-
-        // initialize clone a second time to push a bad registry address
-        vm.expectRevert();
-        objectManager.initialize(
-            address(authority),
-            address(1),
-            address(instance)
-        );
-
-        // initialize clone a second time to push a bad instancd address
-        vm.expectRevert();
-        objectManager.initialize(
-            address(authority),
-            address(registry),
-            address(registryService)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Initializable.InvalidInitialization.selector));
+        objectManager.initialize(address(instance));
     }
 }

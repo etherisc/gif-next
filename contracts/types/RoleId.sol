@@ -29,11 +29,12 @@ function ORACLE_OWNER_ROLE_NAME() pure returns (string memory) { return "OracleO
 function POOL_OWNER_ROLE_NAME() pure returns (string memory) { return "PoolOwnerRole"; }
 function PRODUCT_OWNER_ROLE_NAME() pure returns (string memory) { return "ProductOwnerRole"; }
 
-function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(100); }
-function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(200); }
-function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(300); }
-function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(400); }
+function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2); }
+function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(3); }
+function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(4); }
+function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(5); }
 
+function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1900); }
 function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
 function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2200); }
@@ -42,6 +43,7 @@ function APPLICATION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toR
 function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2410); }
 function CLAIM_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2420); }
 function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
+function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600); }
 
 function GIF_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
 function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 

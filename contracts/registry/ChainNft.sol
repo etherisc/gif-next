@@ -95,6 +95,10 @@ contract ChainNft is ERC721Enumerable {
 
         _totalMinted++;
         _safeMint(to, tokenId);
+
+        if(interceptor != address(0)) {
+            ITransferInterceptor(interceptor).nftMint(to, tokenId);
+        }
     }
 
 

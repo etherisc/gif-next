@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
@@ -9,6 +10,7 @@ import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
+import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
@@ -16,7 +18,7 @@ import {Service} from "../../contracts/shared/Service.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
-import {ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE} from "../types/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../types/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../types/ObjectType.sol";
 import {IDistributionComponent} from "../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../components/IPoolComponent.sol";
@@ -26,7 +28,7 @@ contract InstanceService is
     Service,
     IInstanceService
 {
-
+    address internal _masterOzAccessManager;
     address internal _masterInstanceAccessManager;
     address internal _masterInstance;
     address internal _masterInstanceReader;
@@ -35,20 +37,24 @@ contract InstanceService is
     // TODO update to real hash when instance is stable
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
 
-    modifier onlyInstanceOwner(NftId instanceNftId) {
-        IRegistry registry = getRegistry();
-        ChainNft chainNft = ChainNft(registry.getChainNftAddress());
-        
-        if( msg.sender != chainNft.ownerOf(instanceNftId.toInt())) {
-            revert ErrorInstanceServiceNotInstanceOwner(msg.sender, instanceNftId);
+    modifier onlyInstanceOwner(NftId instanceNftId) {        
+        if(msg.sender != getRegistry().ownerOf(instanceNftId)) {
+            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
         }
         _;
     }
-
+    // TODO check service domain?
+    // TODO check release version?
     modifier onlyRegisteredService() {
-        address caller = msg.sender;
-        if (! getRegistry().isRegisteredService(caller)) {
-            revert ErrorInstanceServiceRequestUnauhorized(caller);
+        if (! getRegistry().isRegisteredService(msg.sender)) {
+            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
+        }
+        _;
+    }
+    // TODO check release version?
+    modifier onlyComponent() {
+        if (! getRegistry().isRegisteredComponent(msg.sender)) {
+            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
         }
         _;
     }
@@ -56,7 +62,8 @@ contract InstanceService is
     function createInstanceClone()
         external 
         returns (
-            InstanceAccessManager clonedAccessManager, 
+            AccessManagerUpgradeableInitializeable clonedOzAccessManager,
+            InstanceAccessManager clonedInstanceAccessManager, 
             Instance clonedInstance,
             NftId clonedInstanceNftId,
             InstanceReader clonedInstanceReader,
@@ -70,42 +77,62 @@ contract InstanceService is
         address registryServiceAddress = registry.getServiceAddress(REGISTRY(), getMajorVersion());
         IRegistryService registryService = IRegistryService(registryServiceAddress);
 
-        // initially set the authority of the access managar to this (being the instance service). 
-        // This will allow the instance service to bootstrap the authorizations of the instance
-        // and then transfer the ownership of the access manager to the instance owner once everything is setup
-        clonedAccessManager = InstanceAccessManager(Clones.clone(_masterInstanceAccessManager));
-        clonedAccessManager.initialize(address(this));
+        clonedOzAccessManager = AccessManagerUpgradeableInitializeable(
+            Clones.clone(_masterOzAccessManager));
+
+        // initially grants ADMIN_ROLE to this (being the instance service). 
+        // This will allow the instance service to bootstrap the authorizations of the instance.
+        // Instance service will not use oz access manager directlly but through instance access manager instead
+        // Instance service will renounce ADMIN_ROLE when bootstraping is finished
+        clonedOzAccessManager.initialize(address(this));
 
         clonedInstance = Instance(Clones.clone(_masterInstance));
-        clonedInstance.initialize(address(clonedAccessManager), registryAddress, registryNftId, msg.sender);
+        clonedInstance.initialize(
+            address(clonedOzAccessManager),
+            registryAddress, 
+            instanceOwner);
         
         clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-        clonedInstanceReader.initialize(registryAddress, address(clonedInstance));
+        clonedInstanceReader.initialize(address(clonedInstance));
         clonedInstance.setInstanceReader(clonedInstanceReader);
 
         clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
-        clonedBundleManager.initialize(address(clonedAccessManager), registryAddress, address(clonedInstance));
+        clonedBundleManager.initialize(address(clonedInstance));
         clonedInstance.setBundleManager(clonedBundleManager);
+
+        clonedInstanceAccessManager = InstanceAccessManager(Clones.clone(_masterInstanceAccessManager));
+        clonedOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAccessManager), 0);
+        clonedInstanceAccessManager.initialize(address(clonedInstance));
+        clonedInstance.setInstanceAccessManager(clonedInstanceAccessManager);
 
         // TODO amend setters with instance specific , policy manager ...
 
-        _grantInitialAuthorizations(clonedAccessManager, clonedInstance, clonedBundleManager);
+        _grantInitialAuthorizations(clonedInstanceAccessManager, clonedInstance, clonedBundleManager, instanceOwner);
 
-        // to complete setup switch instance ownership to the instance owner
-        // TODO: use a role less powerful than admin, maybe INSTANCE_ADMIN (does not exist yet)
-        clonedAccessManager.grantRole(ADMIN_ROLE(), instanceOwner);
-        clonedAccessManager.revokeRole(ADMIN_ROLE(), address(this));
+        clonedOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
 
         IRegistry.ObjectInfo memory info = registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
         // clonedInstance.linkToRegisteredNftId();
 
-        emit LogInstanceCloned(address(clonedAccessManager), address(clonedInstance), address(clonedInstanceReader), clonedInstanceNftId);
+        emit LogInstanceCloned(
+            address(clonedOzAccessManager), 
+            address(clonedInstanceAccessManager), 
+            address(clonedInstance), 
+            address(clonedBundleManager), 
+            address(clonedInstanceReader), 
+            clonedInstanceNftId);
     }
 
-    function _grantInitialAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
-        _createGifRoles(clonedAccessManager);
-        _createGifTargets(clonedAccessManager, clonedInstance, clonedBundleManager);
+    function _grantInitialAuthorizations(
+        InstanceAccessManager clonedAccessManager, 
+        Instance clonedInstance, 
+        BundleManager clonedBundleManager,
+        address instanceOwner) 
+            internal 
+    {
+        _createCoreAndGifRoles(clonedAccessManager);
+        _createCoreTargets(clonedAccessManager, clonedInstance, clonedBundleManager);
         _grantDistributionServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantPoolServiceAuthorizations(clonedAccessManager, clonedInstance);
         _grantProductServiceAuthorizations(clonedAccessManager, clonedInstance);
@@ -114,33 +141,35 @@ contract InstanceService is
         _grantClaimServiceAuthorizations(clonedAccessManager, clonedInstance);    
         _grantBundleServiceAuthorizations(clonedAccessManager, clonedInstance, clonedBundleManager);
         _grantInstanceServiceAuthorizations(clonedAccessManager, clonedInstance);
+        _grantInstanceOwnerAuthorizations(clonedAccessManager, instanceOwner);
     }
 
-    function _createGifRoles(InstanceAccessManager clonedAccessManager) internal {
-        clonedAccessManager.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole");
-        clonedAccessManager.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole");
-        clonedAccessManager.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole");
-
-        clonedAccessManager.createGifRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
-        clonedAccessManager.createGifRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
-        clonedAccessManager.createGifRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole");
-        clonedAccessManager.createGifRole(APPLICATION_SERVICE_ROLE(), "ApplicationServiceRole");
-        clonedAccessManager.createGifRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole");
-        clonedAccessManager.createGifRole(CLAIM_SERVICE_ROLE(), "ClaimServiceRole");
-        clonedAccessManager.createGifRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole");
-        clonedAccessManager.createGifRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
+    function _createCoreAndGifRoles(InstanceAccessManager clonedAccessManager) internal {
+        // default roles controlled by ADMIN_ROLE -> core roles
+        // all set/granted only once during cloning (the only exception is INSTANCE_OWNER_ROLE, hooked to instance nft)
+        clonedAccessManager.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
+        clonedAccessManager.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
+        clonedAccessManager.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
+        clonedAccessManager.createCoreRole(APPLICATION_SERVICE_ROLE(), "ApplicationServiceRole");
+        clonedAccessManager.createCoreRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole");
+        clonedAccessManager.createCoreRole(CLAIM_SERVICE_ROLE(), "ClaimServiceRole");
+        clonedAccessManager.createCoreRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole");
+        clonedAccessManager.createCoreRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole");
+        // default roles controlled by INSTANCE_OWNER_ROLE -> gif roles
+        clonedAccessManager.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
+        clonedAccessManager.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
+        clonedAccessManager.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", INSTANCE_OWNER_ROLE());
     }
 
-    function _createGifTargets(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
-        clonedAccessManager.createGifTarget(address(clonedAccessManager), "InstanceAccessManager");
-        clonedAccessManager.createGifTarget(address(clonedInstance), "Instance");
-        clonedAccessManager.createGifTarget(address(clonedBundleManager), "BundleManager");
+    function _createCoreTargets(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
+        clonedAccessManager.createCoreTarget(address(clonedAccessManager), "InstanceAccessManager");
+        clonedAccessManager.createCoreTarget(address(clonedInstance), "Instance");
+        clonedAccessManager.createCoreTarget(address(clonedBundleManager), "BundleManager");
     }   
 
     function _grantDistributionServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for distribution service on instance
-        IRegistry registry = getRegistry();
-        address distributionServiceAddress = registry.getServiceAddress(DISTRIBUTION(), getMajorVersion());
+        address distributionServiceAddress = getRegistry().getServiceAddress(DISTRIBUTION(), getMajorVersion());
         clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE(), distributionServiceAddress);
         bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](11);
         instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
@@ -154,7 +183,7 @@ contract InstanceService is
         instanceDistributionServiceSelectors[8] = clonedInstance.createReferral.selector;
         instanceDistributionServiceSelectors[9] = clonedInstance.updateReferral.selector;
         instanceDistributionServiceSelectors[10] = clonedInstance.updateReferralState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceDistributionServiceSelectors, 
             DISTRIBUTION_SERVICE_ROLE());        
@@ -167,7 +196,7 @@ contract InstanceService is
         bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
         instancePoolServiceSelectors[1] = clonedInstance.updatePoolSetup.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instancePoolServiceSelectors, 
             POOL_SERVICE_ROLE());
@@ -183,7 +212,7 @@ contract InstanceService is
         instanceProductServiceSelectors[2] = clonedInstance.createRisk.selector;
         instanceProductServiceSelectors[3] = clonedInstance.updateRisk.selector;
         instanceProductServiceSelectors[4] = clonedInstance.updateRiskState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceProductServiceSelectors, 
             PRODUCT_SERVICE_ROLE());
@@ -197,7 +226,7 @@ contract InstanceService is
         instanceApplicationServiceSelectors[0] = clonedInstance.createApplication.selector;
         instanceApplicationServiceSelectors[1] = clonedInstance.updateApplication.selector;
         instanceApplicationServiceSelectors[2] = clonedInstance.updateApplicationState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceApplicationServiceSelectors, 
             APPLICATION_SERVICE_ROLE());
@@ -210,7 +239,7 @@ contract InstanceService is
         bytes4[] memory instancePolicyServiceSelectors = new bytes4[](2);
         instancePolicyServiceSelectors[0] = clonedInstance.updatePolicy.selector;
         instancePolicyServiceSelectors[1] = clonedInstance.updatePolicyState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instancePolicyServiceSelectors, 
             POLICY_SERVICE_ROLE());
@@ -224,7 +253,7 @@ contract InstanceService is
         bytes4[] memory instanceClaimServiceSelectors = new bytes4[](0);
         // instanceClaimServiceSelectors[0] = clonedInstance.updatePolicy.selector;
         // instanceClaimServiceSelectors[1] = clonedInstance.updatePolicyState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceClaimServiceSelectors, 
             CLAIM_SERVICE_ROLE());
@@ -238,7 +267,7 @@ contract InstanceService is
         instanceBundleServiceSelectors[0] = clonedInstance.createBundle.selector;
         instanceBundleServiceSelectors[1] = clonedInstance.updateBundle.selector;
         instanceBundleServiceSelectors[2] = clonedInstance.updateBundleState.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceBundleServiceSelectors, 
             BUNDLE_SERVICE_ROLE());
@@ -250,30 +279,47 @@ contract InstanceService is
         bundleManagerBundleServiceSelectors[2] = clonedBundleManager.add.selector;
         bundleManagerBundleServiceSelectors[3] = clonedBundleManager.lock.selector;
         bundleManagerBundleServiceSelectors[4] = clonedBundleManager.unlock.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "BundleManager",
             bundleManagerBundleServiceSelectors, 
             BUNDLE_SERVICE_ROLE());
     }
 
     function _grantInstanceServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
-// configure authorization for instance service on instance
+        // configure authorization for instance service on instance
         address instanceServiceAddress = getRegistry().getServiceAddress(INSTANCE(), getMajorVersion());
         clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE(), instanceServiceAddress);
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
         instanceInstanceServiceSelectors[0] = clonedInstance.setInstanceReader.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceInstanceServiceSelectors, 
             INSTANCE_SERVICE_ROLE());
 
-        bytes4[] memory instanceAccessManagerInstanceServiceSelectors = new bytes4[](1);
-        instanceAccessManagerInstanceServiceSelectors[0] = clonedAccessManager.createGifTarget.selector;
-        clonedAccessManager.setTargetFunctionRole(
+        // configure authorizations for instance service on instance access manager
+        bytes4[] memory accessManagerInstanceServiceSelectors = new bytes4[](3);
+        accessManagerInstanceServiceSelectors[0] = clonedAccessManager.createGifTarget.selector;
+        accessManagerInstanceServiceSelectors[1] = clonedAccessManager.setTargetLocked.selector;
+        accessManagerInstanceServiceSelectors[2] = clonedAccessManager.setCoreTargetFunctionRole.selector;
+        clonedAccessManager.setCoreTargetFunctionRole(
             "InstanceAccessManager",
-            instanceAccessManagerInstanceServiceSelectors, 
+            accessManagerInstanceServiceSelectors, 
             INSTANCE_SERVICE_ROLE());
     }
+
+    function _grantInstanceOwnerAuthorizations(InstanceAccessManager clonedAccessManager, address instanceOwner) internal {
+        // configure authorization for instance owner on instance access manager
+        // instance owner role is granted/revoked ONLY by INSTANCE_ROLE
+        bytes4[] memory accessManagerInstanceOwnerSelectors = new bytes4[](3);
+        accessManagerInstanceOwnerSelectors[0] = clonedAccessManager.createRole.selector;
+        accessManagerInstanceOwnerSelectors[1] = clonedAccessManager.createTarget.selector;
+        accessManagerInstanceOwnerSelectors[2] = clonedAccessManager.setTargetFunctionRole.selector;
+        clonedAccessManager.setCoreTargetFunctionRole(
+            "InstanceAccessManager",
+            accessManagerInstanceOwnerSelectors, 
+            INSTANCE_OWNER_ROLE());
+    }
+
 
     function setAndRegisterMasterInstance(address instanceAddress) 
             external 
@@ -281,28 +327,34 @@ contract InstanceService is
             returns(NftId masterInstanceNftId)
     {
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
+        if(_masterOzAccessManager != address(0)) { revert ErrorInstanceServiceMasterOzAccessManagerAlreadySet(); }
         if(_masterInstanceAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
         if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
 
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
-        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
-        address accessManagerAddress = address(accessManager);
+        AccessManagerUpgradeableInitializeable ozAccessManager = AccessManagerUpgradeableInitializeable(instance.authority());
+        address ozAccessManagerAddress = address(ozAccessManager);
+        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
+        address instanceAccessManagerAddress = address(instanceAccessManager);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
         BundleManager bundleManager = instance.getBundleManager();
         address bundleManagerAddress = address(bundleManager);
 
-        if(accessManagerAddress == address(0)) { revert ErrorInstanceServiceAccessManagerZero(); }
+        if(ozAccessManagerAddress == address(0)) { revert ErrorInstanceServiceOzAccessManagerZero();}
+        if(instanceAccessManagerAddress == address(0)) { revert ErrorInstanceServiceInstanceAccessManagerZero(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
         if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
         
-        if(instance.authority() != accessManagerAddress) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
+        if(instance.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
+        if(bundleManager.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
 
-        _masterInstanceAccessManager = accessManagerAddress;
+        _masterOzAccessManager = ozAccessManagerAddress;
+        _masterInstanceAccessManager = instanceAccessManagerAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
         _masterInstanceBundleManager = bundleManagerAddress;
@@ -326,19 +378,16 @@ contract InstanceService is
         _masterInstanceReader = instanceReaderAddress;
     }
 
-    // TODO access restriction
-    function upgradeInstanceReader(NftId instanceNftId) external {
+    function upgradeInstanceReader(NftId instanceNftId) 
+        external 
+        onlyInstanceOwner(instanceNftId) 
+    {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         Instance instance = Instance(instanceInfo.objectAddress);
-        address owner = instance.getOwner();
-
-        if (msg.sender != owner) {
-            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
-        }
         
         InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-        upgradedInstanceReaderClone.initialize(address(registry), address(instance));
+        upgradedInstanceReaderClone.initialize(address(instance));
         instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
@@ -381,109 +430,66 @@ contract InstanceService is
         registerInterface(type(IInstanceService).interfaceId);
     }
 
-    function hasRole(address account, RoleId role, address instanceAddress) public view returns (bool) {
-        Instance instance = Instance(instanceAddress);
-        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
-        return accessManager.hasRole(role, account);
-    }
+    // all gif targets MUST be childs of instanceNftId
+    function createGifTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        bytes4[][] memory selectors,
+        RoleId[] memory roles
+    )
+        external
+        onlyRegisteredService
+    {
+        (
+            IInstance instance, // or instanceInfo
+            NftId targetNftId  // or targetInfo
+        ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
 
-    function createGifTarget(NftId instanceNftId, address targetAddress, string memory targetName) external onlyRegisteredService {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
         accessManager.createGifTarget(targetAddress, targetName);
-    }
-
-    function grantDistributionDefaultPermissions(NftId instanceNftId, address distributionAddress, string memory distributionName) external onlyRegisteredService {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory distributionInfo = registry.getObjectInfo(distributionAddress);
-
-        if (distributionInfo.objectType != DISTRIBUTION()) {
-            revert ErrorInstanceServiceInvalidComponentType(distributionAddress, DISTRIBUTION(), distributionInfo.objectType);
+        // set proposed target config
+        // TODO restriction: for gif targets can set only once and only here?
+        //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
+        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++)
+        {
+            accessManager.setCoreTargetFunctionRole(targetName, selectors[roleIdx], roles[roleIdx]);
         }
-
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
-
-        bytes4[] memory fctSelectors = new bytes4[](1);
-        fctSelectors[0] = IDistributionComponent.setFees.selector;
-        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors, DISTRIBUTION_OWNER_ROLE());
-
-        bytes4[] memory fctSelectors2 = new bytes4[](1);
-        fctSelectors2[0] = IDistributionComponent.processRenewal.selector;
-        instanceAccessManager.setTargetFunctionRole(distributionName, fctSelectors2, PRODUCT_SERVICE_ROLE());
     }
 
-    function grantPoolDefaultPermissions(NftId instanceNftId, address poolAddress, string memory poolName) external onlyRegisteredService {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory poolInfo = registry.getObjectInfo(poolAddress);
-
-        if (poolInfo.objectType != POOL()) {
-            revert ErrorInstanceServiceInvalidComponentType(poolAddress, POOL(), poolInfo.objectType);
-        }
-
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
-
-        bytes4[] memory fctSelectors = new bytes4[](1);
-        fctSelectors[0] = IPoolComponent.setFees.selector;
-        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors, POOL_OWNER_ROLE());
-
-        bytes4[] memory fctSelectors2 = new bytes4[](1);
-        fctSelectors2[0] = IPoolComponent.verifyApplication.selector;
-        instanceAccessManager.setTargetFunctionRole(poolName, fctSelectors2, POLICY_SERVICE_ROLE());
-
-        // bundle owner specific functions
-        bytes4[] memory fctSelectors3 = new bytes4[](7);
-        fctSelectors3[0] = IPoolComponent.stake.selector;
-        fctSelectors3[1] = IPoolComponent.unstake.selector;
-        fctSelectors3[2] = IPoolComponent.extend.selector;
-        fctSelectors3[3] = IPoolComponent.lockBundle.selector;
-        fctSelectors3[4] = IPoolComponent.unlockBundle.selector;
-        fctSelectors3[5] = IPoolComponent.close.selector;
-        fctSelectors3[6] = IPoolComponent.setBundleFee.selector;
-        instanceAccessManager.setTargetFunctionRole(
-            poolName, 
-            fctSelectors3, 
-            IPoolComponent(poolAddress).getPoolInfo().bundleOwnerRole);
-    }
-
-    function grantProductDefaultPermissions(NftId instanceNftId, address productAddress, string memory productName) external onlyRegisteredService {
-        IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(productAddress);
-
-        if (productInfo.objectType != PRODUCT()) {
-            revert ErrorInstanceServiceInvalidComponentType(productAddress, PRODUCT(), productInfo.objectType);
-        }
-
-        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
-        Instance instance = Instance(instanceInfo.objectAddress);
-        InstanceAccessManager instanceAccessManager = InstanceAccessManager(instance.authority());
-
-        bytes4[] memory fctSelectors = new bytes4[](1);
-        fctSelectors[0] = IProductComponent.setFees.selector;
-        instanceAccessManager.setTargetFunctionRole(productName, fctSelectors, PRODUCT_OWNER_ROLE());
-    }
-
-    function setTargetLocked(string memory targetName, bool locked) external {
+    // TODO called by component, but target can be component helper...so needs target name
+    // TODO check that targetName associated with component...how???
+    //function setTargetLocked(string memory targetName, bool locked) onlyComponent external {
+    function setComponentLocked(bool locked) onlyComponent external {
         address componentAddress = msg.sender;
         IRegistry registry = getRegistry();
-        IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
-        if (componentInfo.nftId.eqz()) {
-            revert ErrorInstanceServiceComponentNotRegistered(componentAddress);
-        }
-
-        // TODO validate component type
-
-
-        address instanceAddress = registry.getObjectInfo(componentInfo.parentNftId).objectAddress;
+        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
+        address instanceAddress = registry.getObjectInfo(instanceNftId).objectAddress;
         IInstance instance = IInstance(instanceAddress);
 
-        InstanceAccessManager accessManager = InstanceAccessManager(instance.authority());
-        accessManager.setTargetClosed(targetName, locked);
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        // TODO setLocked by target address?
+        string memory componentName = ShortStrings.toString(accessManager.getTargetInfo(componentAddress).name);
+        accessManager.setTargetLocked(componentName, locked);
+    }
+
+    function _validateInstanceAndComponent(NftId instanceNftId, address componentAddress) 
+        internal
+        view
+        returns (IInstance instance, NftId componentNftId)
+    {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
+        if(instanceInfo.objectType != INSTANCE()) {
+            revert ErrorInstanceServiceNotInstance(instanceNftId);
+        }
+
+        IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
+        if(componentInfo.parentNftId != instanceNftId) {
+            revert ErrorInstanceServiceInstanceComponentMismatch(instanceNftId, componentInfo.nftId);
+        }
+
+        instance = Instance(instanceInfo.objectAddress);
+        componentNftId = componentInfo.nftId;
     }
 }
-

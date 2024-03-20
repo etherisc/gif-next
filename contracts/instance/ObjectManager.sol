@@ -24,18 +24,16 @@ contract ObjectManager is
     IInstance internal _instance; // store instance address -> more flexible, instance may not be registered during ObjectManager initialization
 
     /// @dev call to initialize MUST be made in the same transaction as cloning of the contract
-    function initialize(
-        address authority,
-        address registry,
-        address instance
-    )
+    function initialize(address instanceAddress) 
+        initializer
         external 
     {
-        initialize(authority, registry);
+        IInstance instance = IInstance(instanceAddress);
+        initialize(instance.authority(), instance.getRegistryAddress());
 
-        _instance = IInstance(instance);
+        _instance = instance;
         
-        emit LogObjectManagerInitialized(instance);
+        emit LogObjectManagerInitialized(instanceAddress);
     }
 
     function getInstance() external view returns (IInstance) {
