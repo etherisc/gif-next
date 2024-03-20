@@ -149,7 +149,6 @@ contract Registry is
         }
 
         if(
-
             parentType == PROTOCOL() ||
             parentType == REGISTRY() ||
             parentType == SERVICE()
@@ -287,18 +286,9 @@ contract Registry is
         }
 
         address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
+        uint256 tokenId = _chainNft.getNextTokenId();
+        nftId = toNftId(tokenId);
 
-        // TODO does external call
-        // compute next nftId, do all checks and stores, mint() at most end...
-        uint256 mintedTokenId = _chainNft.mint(
-            info.initialOwner,
-            interceptor,
-            EMPTY_URI);
-        nftId = toNftId(mintedTokenId);
-
-        // TODO move nftId out of info struct
-        // getters by nftId -> return struct without nftId
-        // getters by address -> return nftId AND struct
         info.nftId = nftId;
         _info[nftId] = info;
 
@@ -314,6 +304,14 @@ contract Registry is
         }
 
         emit LogRegistration(nftId, parentNftId, objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
+
+        // calls nft receiver(1) and interceptor(2)
+        uint256 mintedTokenId = _chainNft.mint(
+            info.initialOwner,
+            interceptor,
+            EMPTY_URI);
+        assert(mintedTokenId == tokenId);
+        
     }
 
     /// @dev obtain interceptor address for this nft if applicable, address(0) otherwise
