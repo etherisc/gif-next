@@ -86,40 +86,35 @@ contract PolicyService is
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
-        (productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (, productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
 
-    function _getAndVerifyUnderwritingSetup(
-        IInstance instance,
-        InstanceReader instanceReader,
-        IPolicy.PolicyInfo memory policyInfo,
-        ISetup.ProductSetupInfo memory productSetupInfo
-    )
-        internal
-        view
-        returns (
-            NftId poolNftId,
-            NftId bundleNftId,
-            IBundle.BundleInfo memory bundleInfo,
-            uint256 collateralAmount
-        )
-    {
-        // check match between policy and bundle (via pool)
-        poolNftId = productSetupInfo.poolNftId;
-        bundleNftId = policyInfo.bundleNftId;
-        bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        require(bundleInfo.poolNftId == poolNftId, "POLICY_BUNDLE_MISMATCH");
+    // function _getAndVerifyUnderwritingSetup(
+    //     IInstance instance,
+    //     InstanceReader instanceReader,
+    //     IPolicy.PolicyInfo memory policyInfo,
+    //     ISetup.ProductSetupInfo memory productSetupInfo
+    // )
+    //     internal
+    //     view
+    //     returns (
+    //         NftId poolNftId,
+    //         IComponents.PoolInfo memory poolInfo,
+    //         NftId bundleNftId,
+    //         IBundle.BundleInfo memory bundleInfo
+    //     )
+    // {
+    //     // check match between policy and bundle (via pool)
+    //     poolNftId = productSetupInfo.poolNftId;
+    //     bundleNftId = policyInfo.bundleNftId;
+    //     bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+    //     require(bundleInfo.poolNftId == poolNftId, "BUNDLE_POOL_MISMATCH");
 
-        // calculate required collateral
-        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        IComponents.PoolInfo memory poolInfo = abi.decode(
-            componentInfo.data, (IComponents.PoolInfo));
-
-        // obtain remaining return values
-        // TODO required collateral amount should be calculated by pool service, not policy service
-        collateralAmount = calculateRequiredCollateral(poolInfo.collateralizationLevel, policyInfo.sumInsuredAmount);
-    }
+    //     // calculate required collateral
+    //     IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+    //     poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
+    // }
 
 
     function decline(
@@ -142,42 +137,23 @@ contract PolicyService is
         virtual override
     {
         // check caller is registered product
-        IInstance instance;
-        InstanceReader instanceReader;
-        NftId productNftId;
-        {
-            IRegistry.ObjectInfo memory productInfo;
-            (productInfo, instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-            instanceReader = instance.getInstanceReader();
-            productNftId = productInfo.nftId;
-        }
+        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        InstanceReader instanceReader = instance.getInstanceReader();
 
         // check policy matches with calling product
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(applicationNftId);
-        require(policyInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
+        IPolicy.PolicyInfo memory applicationInfo = instanceReader.getPolicyInfo(applicationNftId);
+        require(applicationInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
 
         // check policy is in state applied
         require(instanceReader.getPolicyState(applicationNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
-        
-        (
-            NftId poolNftId,
-            NftId bundleNftId,
-            IBundle.BundleInfo memory bundleInfo,
-            uint256 collateralAmount
-        ) = _getAndVerifyUnderwritingSetup(
-            instance,
-            instanceReader,
-            policyInfo,
-            instanceReader.getProductSetupInfo(productNftId)
-        );
         
         StateId newPolicyState = UNDERWRITTEN();
 
         // optional activation of policy
         if(activateAt > zeroTimestamp()) {
             newPolicyState = ACTIVE();
-            policyInfo.activatedAt = activateAt;
-            policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
+            applicationInfo.activatedAt = activateAt;
+            applicationInfo.expiredAt = activateAt.addSeconds(applicationInfo.lifetime);
         }
 
         // lock bundle collateral
@@ -189,48 +165,25 @@ contract PolicyService is
                 instance, 
                 productNftId,
                 applicationNftId, 
-                policyInfo.premiumAmount);
+                applicationInfo.premiumAmount);
 
-            policyInfo.premiumPaidAmount += policyInfo.premiumAmount;
+            applicationInfo.premiumPaidAmount += applicationInfo.premiumAmount;
         }
 
-        // lock collateral and update bundle book keeping
-        // TODO introduct indirection via pool service?
-        // well pool would only need to be involved when a part of the collateral
-        // is provided by a "re insurance policy" of the pool
-        // but then again the policiy would likely best be attached to the bundle. really? why?
-        // retention level: fraction of sum insured that product will cover from pool funds directly
+        // store updated policy info
+        instance.updatePolicy(applicationNftId, applicationInfo, newPolicyState);
+
+        // lock collateral and update pool and bundle book keeping
+        // pool retention level: fraction of sum insured that product will cover from pool funds directly
         // eg retention level 30%, payouts up to 30% of the sum insured will be made from the product's pool directly
         // for the remaining 70% the pool owns a policy that will cover claims that exceed the 30% of the sum insured
-        // open points:
-        // - do we need a link of a bundle to this policy or is it enough to know that the pool has an active policy?
-        // - when to buy such policies and for which amount? manual trigger or link to bundle creation and/or funding?
-        bundleInfo = _bundleService.lockCollateral(
+        // might also call pool component (for isVerifyingApplications pools)
+        _poolService.lockCollateral(
             instance,
+            productNftId,
             applicationNftId, 
-            bundleNftId,
-            collateralAmount,
-            netPremiumAmount);
-
-        instance.updatePolicy(applicationNftId, policyInfo, newPolicyState);
-
-        // also verify/confirm application by pool if necessary
-        if(abi.decode(
-            instanceReader.getComponentInfo(poolNftId).data, 
-            (IComponents.PoolInfo)
-            ).isVerifyingApplications
-        )
-        {
-            IPoolComponent pool = IPoolComponent(
-                getRegistry().getObjectInfo(poolNftId).objectAddress);
-
-            pool.verifyApplication(
-                applicationNftId, 
-                policyInfo.applicationData, 
-                bundleNftId,
-                bundleInfo.filter,
-                collateralAmount);
-        }
+            applicationInfo,
+            netPremiumAmount); // for pool book keeping (fee + additional capital)
 
         // TODO: add logging
     }
@@ -244,7 +197,7 @@ contract PolicyService is
 
     function collectPremium(NftId policyNftId, Timestamp activateAt) external override {
         // check caller is registered product
-        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
 
@@ -256,7 +209,7 @@ contract PolicyService is
 
         uint256 netPremiumAmount = _processPremiumByTreasury(
                 instance, 
-                productInfo.nftId,
+                productNftId,
                 policyNftId, 
                 unpaidPremiumAmount);
 
@@ -274,7 +227,7 @@ contract PolicyService is
 
     function activate(NftId policyNftId, Timestamp activateAt) public override {
         // check caller is registered product
-        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -308,7 +261,7 @@ contract PolicyService is
         external 
         override
     {
-        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -340,7 +293,11 @@ contract PolicyService is
 
         policyInfo.closedAt = TimestampLib.blockTimestamp();
 
-        _bundleService.closePolicy(instance, policyNftId, policyInfo.bundleNftId, policyInfo.sumInsuredAmount);
+        _poolService.releaseCollateral(
+            instance, 
+            policyNftId, 
+            policyInfo);
+
         instance.updatePolicy(policyNftId, policyInfo, CLOSED());
     }
 

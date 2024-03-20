@@ -105,12 +105,12 @@ abstract contract ComponentService is Service {
     }
 
     function _getAndVerifyComponentInfoAndInstance(
-        //address component,
         ObjectType expectedType
     )
         internal
         view
         returns(
+            NftId nftId,
             IRegistry.ObjectInfo memory info, 
             IInstance instance
         )
@@ -121,6 +121,8 @@ abstract contract ComponentService is Service {
         //require(componentNftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
 
         info = registry.getObjectInfo(msg.sender);
+        nftId = info.nftId;
+
         require(info.objectType == expectedType, "OBJECT_TYPE_INVALID");
 
         address instanceAddress = registry.getObjectInfo(info.parentNftId).objectAddress;

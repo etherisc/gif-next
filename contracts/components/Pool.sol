@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount, AmountLib} from "../types/Amount.sol";
 import {Component} from "./Component.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {IBundleService} from "../instance/service/IBundleService.sol";
@@ -14,7 +15,6 @@ import {RoleId, PUBLIC_ROLE} from "../types/RoleId.sol";
 import {Seconds} from "../types/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../types/UFixed.sol";
-
 
 abstract contract Pool is
     Component, 
@@ -239,7 +239,7 @@ abstract contract Pool is
     function _createBundle(
         address bundleOwner,
         Fee memory fee,
-        uint256 amount,
+        Amount amount,
         Seconds lifetime, 
         bytes memory filter
     )
@@ -274,11 +274,15 @@ abstract contract Pool is
             getToken(),
             TokenHandler(address(0)), // will be created by GIF service during registration
             address(this), // contract is its own wallet
+            AmountLib.zero(), // balance amount
+            AmountLib.zero(), // fee amount
             abi.encode(
                 IComponents.PoolInfo(
                     NftIdLib.zero(), // will be set when GIF registers the related product
                     PUBLIC_ROLE(), // bundleOwnerRole
                     type(uint256).max, // maxCapitalAmount,
+                    0, // initial balance amount
+                    0, // initial fee amount
                     isNftInterceptor(), // isInterceptingBundleTransfers
                     false, // isExternallyManaged,
                     false, // isVerifyingApplications,

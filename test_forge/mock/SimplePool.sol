@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {AmountLib} from "../../contracts/types/Amount.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {Pool} from "../../contracts/components/Pool.sol";
@@ -75,7 +76,7 @@ contract SimplePool is Pool {
         bundleNftId = _createBundle(
             owner,
             fee,
-            initialAmount,
+            AmountLib.toAmount(initialAmount),
             lifetime,
             filter
         );

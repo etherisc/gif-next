@@ -194,17 +194,18 @@ contract RegistryService is
         config[2].serviceDomain = CLAIM();
         config[2].selectors = new bytes4[](0);
 
-        config[3].serviceDomain = BUNDLE();
+        config[3].serviceDomain = PRODUCT();
         config[3].selectors = new bytes4[](1);
-        config[3].selectors[0] = RegistryService.registerBundle.selector;
+        config[3].selectors[0] = RegistryService.registerProduct.selector;
 
-        config[4].serviceDomain = PRODUCT();
+        config[4].serviceDomain = POOL();
         config[4].selectors = new bytes4[](1);
-        config[4].selectors[0] = RegistryService.registerProduct.selector;
+        config[4].selectors[0] = RegistryService.registerPool.selector;
 
-        config[5].serviceDomain = POOL();
+        // registration of bundle service must preceed registration of pool service
+        config[5].serviceDomain = BUNDLE();
         config[5].selectors = new bytes4[](1);
-        config[5].selectors[0] = RegistryService.registerPool.selector;
+        config[5].selectors[0] = RegistryService.registerBundle.selector;
 
         config[6].serviceDomain = DISTRIBUTION();
         config[6].selectors = new bytes4[](2);
