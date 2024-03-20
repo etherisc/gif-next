@@ -246,7 +246,7 @@ abstract contract Pool is
         internal
         returns(NftId bundleNftId)
     {
-        bundleNftId = _getPoolStorage()._bundleService.create(
+        bundleNftId = _getPoolStorage()._poolService.createBundle(
             bundleOwner,
             fee,
             amount,

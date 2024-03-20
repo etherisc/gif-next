@@ -13,6 +13,7 @@ import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 
+import {Amount} from "../../types/Amount.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
@@ -20,6 +21,7 @@ import {PUBLIC_ROLE, POOL_OWNER_ROLE, POLICY_SERVICE_ROLE, RoleId} from "../../t
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 import {KEEP_STATE, StateId} from "../../types/StateId.sol";
+import {Seconds} from "../../types/Seconds.sol";
 import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
@@ -217,6 +219,34 @@ contract PoolService is
         instance.updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
 
         // TODO add logging
+    }
+
+
+    function createBundle(
+        address owner, // initial bundle owner
+        Fee memory fee, // fees deducted from premium that go to bundle owner
+        Amount stakingAmount, // staking amount - staking fees result in initial bundle capital
+        Seconds lifetime, // initial duration for which new policies are covered
+        bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
+    )
+        external 
+        virtual
+        returns(NftId bundleNftId)
+    {
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        InstanceReader instanceReader = instance.getInstanceReader();
+
+        // TODO add implementation that takes care of staking fees
+        Amount stakingAfterFeesAmount = stakingAmount;
+
+        bundleNftId = _bundleService.create(
+            instance,
+            poolNftId,
+            owner,
+            fee,
+            stakingAfterFeesAmount,
+            lifetime,
+            filter);
     }
 
 

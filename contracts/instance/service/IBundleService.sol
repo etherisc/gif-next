@@ -23,8 +23,10 @@ interface IBundleService is IService {
     error ErrorBundleServiceBundleWithOpenPolicies(NftId bundleNftId, uint256 openPoliciesCount);
 
     /// @dev create a new bundle for the specified attributes
-    /// may only be called by registered and unlocked pool components
+    /// may only be called by pool service
     function create(
+        IInstance instance, // instance relevant for bundle
+        NftId poolNftId, // the pool the bundle will be linked to
         address owner, // initial bundle owner
         Fee memory fee, // fees deducted from premium that go to bundle owner
         Amount stakingAmount, // staking amount - staking fees result in initial bundle capital
@@ -42,15 +44,22 @@ interface IBundleService is IService {
     ) external;
 
 
+    /// @dev locks the specified collateral in the bundle
+    /// the locked collateral is added to the bundle locked capital
+    /// the bundles' fees are updated with the fees for this premium
+    /// the premium (minus bundle fee) is added to the bundle capital
+    /// may only be called by pool service
     function lockCollateral(
         IInstance instanceNftId, 
         NftId policyNftId, 
         NftId bundleNftId, 
         uint256 collateralAmount, 
-        uint256 netPremium
+        uint256 premium // premium amount after pool fee
     ) external;
 
 
+    /// @dev releases the specified collateral in the bundle
+    /// may only be called by pool service
     function releaseCollateral(
         IInstance instance, 
         NftId policyNftId, 

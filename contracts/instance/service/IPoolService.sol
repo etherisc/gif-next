@@ -37,6 +37,7 @@ interface IPoolService is IService {
         Fee memory performanceFee
     ) external;
 
+
     /// @dev locks required collateral to cover the specified application (and turn it into a policy)
     /// - retention level == 1: the full collateral amount will be locked by the specified bundle
     /// - retention level < 1: a part of the coverage is provided by the specified bundle, the rest by the pool component
@@ -63,17 +64,17 @@ interface IPoolService is IService {
     /// @dev create a new bundle for the provided parameters
     /// staking fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
-    // function createBundle(
-    //     address owner, // initial bundle owner
-    //     Fee memory fee, // fees deducted from premium that go to bundle owner
-    //     Amount stakingAmount, // staking amount - staking fees result in initial bundle capital
-    //     Seconds lifetime, // initial duration for which new policies are covered
-    //     bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
-    // )
-    //     external 
-    //     returns(NftId bundleNftId); // the nft id of the newly created bundle
+    function createBundle(
+        address owner, // initial bundle owner
+        Fee memory fee, // fees deducted from premium that go to bundle owner
+        Amount stakingAmount, // staking amount - staking fees result in initial bundle capital
+        Seconds lifetime, // initial duration for which new policies are covered
+        bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
+    )
+        external 
+        returns(NftId bundleNftId); // the nft id of the newly created bundle
 
-
+    // TODO continue here
     /// @dev closes the specified bundle
     /// only open bundles (active or locked) may be closed
     /// to close a bundle it may not have any non-closed polices attached to it
@@ -86,6 +87,7 @@ interface IPoolService is IService {
     /// staking fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
     // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+
 
     /// @dev decrease stakes for bundle
     /// performance fees will be deducted by the pool service from the staking amount

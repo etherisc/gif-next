@@ -112,6 +112,8 @@ contract BundleService is
 
 
     function create(
+        IInstance instance,
+        NftId poolNftId,
         address owner, 
         Fee memory fee, 
         Amount stakingAmount, 
@@ -123,7 +125,6 @@ contract BundleService is
         // TODO add restricted and add authz for pool service
         returns(NftId bundleNftId)
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         // create initial bundle info
