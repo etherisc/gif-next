@@ -60,56 +60,16 @@ contract PoolService is
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while PoolService is not deployed in PoolServiceManager constructor
         //      owner is PoolServiceManager deployer
-        initializeService(registryAddress, owner);
+        initializeService(registryAddress, address(0), owner);
 
-        _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getMajorVersion()));
+        _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getVersion().toMajorPart()));
 
         registerInterface(type(IPoolService).interfaceId);
     }
 
-    function getDomain() public pure override(Service, IService) returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return POOL();
     }
-
-    /*function register(address poolAddress) 
-        external
-        returns(NftId poolNftId)
-    {
-        (
-            IComponent component,
-            address owner,
-            IInstance instance,
-            NftId instanceNftId
-        ) = _checkComponentForRegistration(
-            poolAddress,
-            POOL(),
-            POOL_OWNER_ROLE());
-
-        IPoolComponent pool = IPoolComponent(poolAddress);
-        IRegistry.ObjectInfo memory registryInfo = getRegistryService().registerPool(pool, owner);
-        pool.linkToRegisteredNftId();
-        poolNftId = registryInfo.nftId;
-
-        instance.createPoolSetup(poolNftId, pool.getSetupInfo());
-
-        bytes4[][] memory selectors = new bytes4[][](2);
-        selectors[0] = new bytes4[](1);
-        selectors[1] = new bytes4[](1);
-
-        selectors[0][0] = IPoolComponent.setFees.selector;
-        selectors[1][0] = IPoolComponent.verifyApplication.selector;
-
-        RoleId[] memory roles = new RoleId[](2);
-        roles[0] = POOL_OWNER_ROLE();
-        roles[1] = POLICY_SERVICE_ROLE();
-
-        getInstanceService().createGifTarget(
-            instanceNftId, 
-            poolAddress, 
-            pool.getName(), 
-            selectors, 
-            roles);
-    }*/
 
     function register(address poolAddress) 
         external

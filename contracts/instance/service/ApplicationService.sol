@@ -65,14 +65,14 @@ contract ApplicationService is
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, owner);
+        initializeService(registryAddress, address(0), owner);
         registerInterface(type(IApplicationService).interfaceId);
 
-        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), getMajorVersion()));
+        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), getVersion().toMajorPart()));
     }
 
 
-    function getDomain() public pure override(IService, Service) returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return APPLICATION();
     }
 

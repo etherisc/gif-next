@@ -20,6 +20,7 @@ import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE} fr
 import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE, CLOSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {StateId} from "../../types/StateId.sol";
+import {VersionPart} from "../../types/Version.sol";
 
 import {ComponentService} from "../base/ComponentService.sol";
 import {IApplicationService} from "./IApplicationService.sol";
@@ -58,18 +59,19 @@ contract PolicyService is
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, owner);
+        initializeService(registryAddress, address(0), owner);
 
-        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getMajorVersion()));
-        _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getMajorVersion()));
-        _applicationService = IApplicationService(getRegistry().getServiceAddress(APPLICATION(), getMajorVersion()));
-        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), getMajorVersion()));
+        VersionPart majorVersion = getVersion().toMajorPart();
+        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), majorVersion));
+        _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), majorVersion));
+        _applicationService = IApplicationService(getRegistry().getServiceAddress(APPLICATION(), majorVersion));
+        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), majorVersion));
 
         registerInterface(type(IPolicyService).interfaceId);
     }
 
 
-    function getDomain() public pure override(IService, Service) returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return POLICY();
     }
 

@@ -51,13 +51,14 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         owner,
         [
             registryAccessManager,
-            3//initialVersion
+            3 //initialVersion
         ], 
         {
             libraries: {
                 TimestampLib: libraries.timestampLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                VersionLib: libraries.versionPartLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress
             }
         });

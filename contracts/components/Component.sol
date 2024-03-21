@@ -58,7 +58,6 @@ abstract contract Component is
 
     function initializeComponent(
         address registry,
-        // address authority, // TODO needs authority as parameter for initialization
         NftId instanceNftId,
         string memory name,
         address token,

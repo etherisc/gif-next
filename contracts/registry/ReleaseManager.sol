@@ -271,8 +271,9 @@ contract ReleaseManager is AccessManaged
         view
         returns(ObjectType)
     {
-        if(service.getMajorVersion() != expectedVersion) {
-            revert UnexpectedServiceVersion(expectedVersion, service.getMajorVersion());
+        VersionPart majorVersion = service.getVersion().toMajorPart();
+        if(majorVersion != expectedVersion) {
+            revert UnexpectedServiceVersion(expectedVersion, majorVersion);
         }
 
         if(service.getDomain() != expectedDomain) {

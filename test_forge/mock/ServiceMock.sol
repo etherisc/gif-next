@@ -21,17 +21,13 @@ contract ServiceMock is RegisterableMock, AccessManagedUpgradeable, IService {
             initialOwner,
             "")
     {
-        _info.data = abi.encode(getDomain(), getMajorVersion());
+        _info.data = abi.encode(getDomain(), getVersion().toMajorPart());
         registerInterface(type(IService).interfaceId);
     }
 
     // from IService
     function getDomain() public pure virtual returns(ObjectType) {
         return PRODUCT();
-    }
-
-    function getMajorVersion() public view virtual override returns(VersionPart majorVersion) {
-        return getVersion().toMajorPart(); 
     }
 
     // from IVersionable

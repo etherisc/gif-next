@@ -16,7 +16,6 @@ import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 
 abstract contract ComponentService is Service {
 
-    error ErrorComponentServiceAlreadyRegistered(address component, NftId nftId);
     error ErrorComponentServiceNotComponent(address component);
     error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
     error ErrorComponentServiceSenderNotOwner(address component, address initialOwner, address sender);
@@ -33,13 +32,15 @@ abstract contract ComponentService is Service {
     // view functions
 
     function getRegistryService() public view virtual returns (IRegistryService) {
-        address service = getRegistry().getServiceAddress(REGISTRY(), getMajorVersion());
-        return IRegistryService(service);
+        return IRegistryService(_getServiceAddress(REGISTRY()));
     }
 
     function getInstanceService() public view returns (InstanceService) {
-        address service = getRegistry().getServiceAddress(INSTANCE(), getMajorVersion());
-        return InstanceService(service);
+        return InstanceService(_getServiceAddress(INSTANCE()));
+    }
+
+    function _getServiceAddress(ObjectType domain) internal view returns (address) {
+        return getRegistry().getServiceAddress(domain, getVersion().toMajorPart());
     }
 
     // internal functions
@@ -59,12 +60,6 @@ abstract contract ComponentService is Service {
     {
         // component may only be registerd by initial owner of component
         owner = msg.sender;
-
-        // check component has not already been registerd
-        NftId compoentNftId = getRegistry().getNftId(componentAddress);
-        if(compoentNftId.gtz()) {
-            revert ErrorComponentServiceAlreadyRegistered(componentAddress, compoentNftId);
-        }
 
         // check this is a component
         component = IComponent(componentAddress);
@@ -87,22 +82,12 @@ abstract contract ComponentService is Service {
         // check instance has assigned required role to owner
         instanceNftId = componentInfo.parentNftId;
         instance = _getInstance(instanceNftId);
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
-        bool hasRole = accessManager.hasRole(
-            requiredRole,
-            owner);
-
-        if(!hasRole) {
+        if(!instance.getInstanceAccessManager().hasRole(requiredRole, owner)) {
             revert ErrorComponentServiceExpectedRoleMissing(instanceNftId, requiredRole, owner);
         }
     }
 
     // internal view functions
-
-    function _getInstance(NftId instanceNftId) internal view returns (IInstance) {
-        IRegistry.ObjectInfo memory instanceInfo = getRegistry().getObjectInfo(instanceNftId);
-        return IInstance(instanceInfo.objectAddress);
-    }
 
     function _getAndVerifyComponentInfoAndInstance(
         ObjectType expectedType
@@ -116,21 +101,21 @@ abstract contract ComponentService is Service {
         )
     {
         IRegistry registry = getRegistry();
-        //TODO redundant check -> just check type
-        //NftId componentNftId = registry.getNftId(component); 
-        //require(componentNftId.gtz(), "ERROR_COMPONENT_UNKNOWN");
 
         info = registry.getObjectInfo(msg.sender);
-        nftId = info.nftId;
-
         require(info.objectType == expectedType, "OBJECT_TYPE_INVALID");
 
-        address instanceAddress = registry.getObjectInfo(info.parentNftId).objectAddress;
-        instance = IInstance(instanceAddress);
+        nftId = info.nftId;
+        instance = _getInstance(info.parentNftId);
 
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
-        if (accessManager.isTargetLocked(info.objectAddress)) {
+        if (instance.getInstanceAccessManager().isTargetLocked(info.objectAddress)) {
             revert IAccess.ErrorIAccessTargetLocked(info.objectAddress);
         }
+    }
+
+    function _getInstance(NftId instanceNftId) internal view returns (IInstance) {
+        return IInstance(
+            getRegistry().getObjectInfo(
+                instanceNftId).objectAddress);
     }
 }

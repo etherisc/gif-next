@@ -31,8 +31,6 @@ import {IRegistryService} from "./IRegistryService.sol";
 import {Registry} from "./Registry.sol";
 
 contract RegistryService is
-    // TODO cleanup
-    // AccessManagedUpgradeable,
     Service,
     IRegistryService
 {
@@ -42,7 +40,7 @@ contract RegistryService is
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 
     // From IService
-    function getDomain() public pure override(IService, Service) returns(ObjectType serviceDomain) {
+    function getDomain() public pure override returns(ObjectType serviceDomain) {
         return REGISTRY(); 
     }
 
@@ -62,9 +60,8 @@ contract RegistryService is
             address initialAuthority
         ) = abi.decode(data, (address, address));
 
-        __AccessManaged_init(initialAuthority);
+        initializeService(registryAddress, initialAuthority, owner);
 
-        initializeService(registryAddress, owner);
         registerInterface(type(IRegistryService).interfaceId);
     }
 

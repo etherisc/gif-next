@@ -60,9 +60,9 @@ contract ProductService is ComponentService, IProductService {
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, owner);
+        initializeService(registryAddress, address(0), owner);
 
-        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getMajorVersion()));
+        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
 
         registerInterface(type(IProductService).interfaceId);
     }
@@ -129,7 +129,7 @@ contract ProductService is ComponentService, IProductService {
             roles);
     }
 
-    function getDomain() public pure override(IService, Service) returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return PRODUCT();
     }
 

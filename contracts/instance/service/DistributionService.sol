@@ -60,11 +60,11 @@ contract DistributionService is
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while DistributionService is not deployed in DistributionServiceManager constructor
         //      owner is DistributionServiceManager deployer
-        initializeService(registryAddress, owner);
+        initializeService(registryAddress, address(0), owner);
         registerInterface(type(IDistributionService).interfaceId);
     }
 
-    function getDomain() public pure override(Service, IService) returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return DISTRIBUTION();
     }
 
@@ -410,7 +410,7 @@ contract DistributionService is
     {
         distributionNftId = getRegistry().getNftId(msg.sender);
         if (distributionNftId.eqz()) {
-            revert ErrorIServiceCallerUnknown(msg.sender);
+            revert ErrorDistributionServiceCallerNotRegistered(msg.sender);
         }
 
         IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(distributionNftId);
