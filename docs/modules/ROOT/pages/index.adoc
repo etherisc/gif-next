@@ -1,0 +1,3 @@
+= GIF Next
+
+General documentation for the GIF-next smart contracts. 

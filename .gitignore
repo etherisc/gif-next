@@ -6,7 +6,7 @@ typechain
 typechain-types
 
 # Hardhat files
-docs
+docs/modules/api/pages/*adoc
 cache
 artifacts
 
