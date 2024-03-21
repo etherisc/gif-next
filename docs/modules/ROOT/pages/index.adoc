@@ -2,7 +2,25 @@
 
 Documentation for the next version of the GIF framework smart contracts. 
 
-== Introduction 
+== Coding guidelines 
 
+* If nothing else is specified, use the https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/GUIDELINES.md#solidity-conventions[Solidity coding guidelines] from OpenZeppelin. 
+* Do not use `require`. Always use custom errors. 
+* Put custom errors in the interface file (if it exists). Name the custom error `Error<NameOfContract><NameOfError>`. This helps to avoid duplicates. Example 
+[source, solidity]
+----
+interface IInstanceService {
+    error ErrorIInstanceServiceRequestUnauhorized(address caller);
+    
+    {...}
+}
+----
+* Put events in the interface file (if it exists). Name the event `Log<NameOfContract><NameOfEvent>`. This helps to avoid duplicates. Example
+[source, solidity]
+----
+event LogInstanceCloned(NftId clonedInstanceNftId, address owner, address caller);
+----
+* Do not use structs as event parameters.
+* When creating a new contract file, use the same pragma and license (Apache-2.0) as the other contracts in the project.
 
 

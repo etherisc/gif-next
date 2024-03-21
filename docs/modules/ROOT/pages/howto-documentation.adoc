@@ -10,6 +10,8 @@ Smart contacts written in Solidity are documented using NatSpec. Natspec is simi
 
 Natspec documentation is automatically generated during each build and stored in a separate branch that is prefixed with `docs/`. Documentation from the `develop` branch is automatically published to documentation site at https://docs.etherisc.com/gif-next/3.x/ after each push to the branch.
 
+The vscode plugin `AsciiDoc` is included in the devcontainer to make it easier to write documentation. 
+
 == Rules
 
 * Put manually written documentation in the `docs/modules/ROOT/pages` directory and use the `adoc` file extension.
