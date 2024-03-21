@@ -40,10 +40,20 @@ jobs:
       - name: Generate documentation from source
         run: hh docgen
 
-      - name: add and push generated docs to docs branch
+      - name: Extract branch name (PR)
+        if: github.event_name == 'pull_request'
         run: |
           export BRANCH_NAME=docs/$GITHUB_REF_NAME
           echo $BRANCH_NAME
+      
+      - name: Extract branch name (push)
+        if: github.event_name != 'pull_request'
+        run: |
+          export BRANCH_NAME=docs/$GITHUB_HEAD_REF
+          echo $BRANCH_NAME
+
+      - name: add and push generated docs to docs branch
+        run: |
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "username@users.noreply.github.com"
           git add -f docs/modules/api/pages/*.adoc
