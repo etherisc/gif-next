@@ -40,14 +40,29 @@ jobs:
       - name: Generate documentation from source
         run: hh docgen
 
-      - name: add and push generated docs to docs branch
+      - name: add and push generated docs to docs branch (PR build)
+        if: ${{ github.event_name == 'pull_request' }}
         run: |
-          export BRANCH_NAME=docs/$GITHUB_REF_NAME
-          echo $BRANCH_NAME
+          export DOCS_BRANCH_NAME=docs/$GITHUB_HEAD_REF
+          echo $DOCS_BRANCH_NAME
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "username@users.noreply.github.com"
           git add -f docs/modules/api/pages/*.adoc
-          git branch -f $BRANCH_NAME
-          git checkout $BRANCH_NAME
-          git commit -m "docs: add generated documentation"
-          git push --force origin $BRANCH_NAME
+          git branch -f $DOCS_BRANCH_NAME
+          git checkout $DOCS_BRANCH_NAME
+          git commit -m "docs: add auto-generated documentation"
+          git push --force origin $DOCS_BRANCH_NAME
+      
+      - name: add and push generated docs to docs branch (branch build)
+        if: ${{ github.event_name != 'pull_request' }}
+        run: |
+          export DOCS_BRANCH_NAME=docs/$GITHUB_REF_NAME
+          echo $DOCS_BRANCH_NAME
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "username@users.noreply.github.com"
+          git add -f docs/modules/api/pages/*.adoc
+          git branch -f $DOCS_BRANCH_NAME
+          git checkout $DOCS_BRANCH_NAME
+          git commit -m "docs: add auto-generated documentation"
+          git push --force origin $DOCS_BRANCH_NAME
+
