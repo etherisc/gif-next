@@ -19,9 +19,7 @@ const config: HardhatUserConfig = {
       }
     }
   },
-  docgen: {
-    pages: 'files',
-  },
+  docgen: require("./docs/config"),
   networks: {
     hardhat: {
     },
