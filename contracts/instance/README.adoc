@@ -1,0 +1,17 @@
+= Components
+ 
+Contains the instance related contracts. 
+
+== Contracts
+
+{{AccessManagerUpgradeableInitializeable}}
+{{Cloneable}}
+{{InstanceAccessManager}}
+{{InstanceService}}
+{{ObjectManager}}
+{{BundleManager}}
+{{IInstanceService}}
+{{InstanceReader}}
+{{Instance}}
+{{IInstance}}
+{{InstanceServiceManager}}

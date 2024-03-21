@@ -49,5 +49,5 @@ jobs:
           git add -f docs/modules/api/pages/*.adoc
           git branch -f $BRANCH_NAME
           git checkout $BRANCH_NAME
-          git commit -m "docs: update documentation"
+          git commit -m "docs: add generated documentation"
           git push --force origin $BRANCH_NAME
