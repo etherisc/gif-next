@@ -1,0 +1,53 @@
+name: Generate documentation
+
+on:
+  push:
+    branches: [main, develop]
+    tags: '*'
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  generate_docs:
+    if: ${{ github.actor != 'dependabot[bot]' }}
+    name: Generate documentation
+    runs-on: ubuntu-latest
+    env: 
+      CI_COMMIT_MESSAGE: Continuous Integration Build Artifacts
+      CI_COMMIT_AUTHOR: Continuous Integration
+    permissions:
+      contents: write    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+    
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: NPM install globals
+        run:  npm install -g hardhat-shorthand
+      
+      - name: NPM install
+        run: npm install
+      
+      - name: Generate documentation from source
+        run: hh docgen
+
+      - name: add and push generated docs to docs branch
+        run: |
+          export BRANCH_NAME=docs/$GITHUB_HEAD_REF
+          echo $BRANCH_NAME
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "username@users.noreply.github.com"
+          git add -f docs/modules/api/pages/*.adoc
+          git branch -f $BRANCH_NAME
+          git checkout $BRANCH_NAME
+          git commit -m "docs: update documentation"
+          git push --force origin $BRANCH_NAME
