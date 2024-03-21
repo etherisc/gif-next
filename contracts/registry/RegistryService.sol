@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+// import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -31,7 +31,8 @@ import {IRegistryService} from "./IRegistryService.sol";
 import {Registry} from "./Registry.sol";
 
 contract RegistryService is
-    AccessManagedUpgradeable,
+    // TODO cleanup
+    // AccessManagedUpgradeable,
     Service,
     IRegistryService
 {

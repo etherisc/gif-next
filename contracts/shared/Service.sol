@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+
 import {ObjectType, SERVICE} from "../types/ObjectType.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
 import {Version, VersionPart, VersionLib, VersionPartLib} from "../types/Version.sol";
@@ -18,6 +21,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 abstract contract Service is 
     Registerable,
     Versionable,
+    AccessManagedUpgradeable,
     IService
 {
     function getDomain() public pure virtual override returns(ObjectType);
@@ -53,6 +57,7 @@ abstract contract Service is
             initialOwner, 
             ""); // data
 
+        registerInterface(type(IAccessManaged).interfaceId);
         registerInterface(type(IService).interfaceId);
     }
 }

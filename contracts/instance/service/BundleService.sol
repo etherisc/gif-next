@@ -394,6 +394,7 @@ contract BundleService is
         bundleManager.unlinkPolicy(policyNftId);
     }
 
+    // TODO move this to pool service
     function _processStakingByTreasury(
         InstanceReader instanceReader,
         NftId poolNftId,
