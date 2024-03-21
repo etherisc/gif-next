@@ -1,4 +1,4 @@
-name: Delete docs branch when a branch is deleted
+name: Delete docs branch
 
 on:
   delete:
