@@ -47,7 +47,7 @@ jobs:
           echo $DOCS_BRANCH_NAME
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "username@users.noreply.github.com"
-          git add -f docs/modules/api/pages/**/*.adoc
+          git add -f docs/modules/api/pages/
           git branch -f $DOCS_BRANCH_NAME
           git checkout $DOCS_BRANCH_NAME
           git commit -m "docs: add auto-generated documentation"
@@ -60,7 +60,7 @@ jobs:
           echo $DOCS_BRANCH_NAME
           git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
           git config --global user.email "username@users.noreply.github.com"
-          git add -f docs/modules/api/pages/**/*.adoc
+          git add -f docs/modules/api/pages/
           git branch -f $DOCS_BRANCH_NAME
           git checkout $DOCS_BRANCH_NAME
           git commit -m "docs: add auto-generated documentation"
