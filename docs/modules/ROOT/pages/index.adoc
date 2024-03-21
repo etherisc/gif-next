@@ -23,5 +23,6 @@ event LogInstanceCloned(NftId clonedInstanceNftId, address owner, address caller
 ----
 * Do not use structs as event parameters.
 * When creating a new contract file, use the same pragma and license (Apache-2.0) as the other contracts in the project.
+* Remove commented code blocks, except if it is obvious that it will be relevant again within a reasonable amount of time. The code is not lost, its always accessible in the git history.
 
 
