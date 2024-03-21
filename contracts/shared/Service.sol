@@ -43,6 +43,7 @@ abstract contract Service is
 
     function initializeService(
         address registry, 
+        // address authority, // TODO needs authority as parameter for initialization
         address initialOwner
     )
         public
