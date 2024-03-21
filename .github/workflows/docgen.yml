@@ -43,13 +43,13 @@ jobs:
       - name: Extract branch name (PR)
         if: github.event_name == 'pull_request'
         run: |
-          export BRANCH_NAME=docs/$GITHUB_REF_NAME
+          export BRANCH_NAME=docs/$GITHUB_HEAD_REF
           echo $BRANCH_NAME
       
       - name: Extract branch name (push)
         if: github.event_name != 'pull_request'
         run: |
-          export BRANCH_NAME=docs/$GITHUB_HEAD_REF
+          export BRANCH_NAME=docs/$GITHUB_REF_NAME
           echo $BRANCH_NAME
 
       - name: add and push generated docs to docs branch
