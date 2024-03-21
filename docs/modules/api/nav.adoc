@@ -1,4 +1,4 @@
 .API
 * xref:components.adoc[Components]
 * xref:instance.adoc[Instance]
-* xref:base/base.adoc[Instance/base]
+* xref:instance/base.adoc[Instance/base]
