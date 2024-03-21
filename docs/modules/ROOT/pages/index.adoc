@@ -1,3 +1,8 @@
 = GIF Next
 
-General documentation for the GIF-next smart contracts. 
+Documentation for the next version of the GIF framework smart contracts. 
+
+== Introduction 
+
+
+
