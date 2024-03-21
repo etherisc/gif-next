@@ -4,7 +4,8 @@ Documentation for the next version of the GIF framework smart contracts.
 
 == Coding guidelines 
 
-* If nothing else is specified, use the https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/GUIDELINES.md#solidity-conventions[Solidity coding guidelines] from OpenZeppelin. 
+* If nothing else is specified, use the https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/GUIDELINES.md#solidity-conventions[OpenZeppeling Solidity coding guidelines] and https://docs.soliditylang.org/en/latest/style-guide.html[Solidity style guide].
+* Functions within a contract are orders as follows: constructor, receive function (if exists), fallback function (if exists), external, public, internal, private. Within a grouping, place the view and pure functions last. (from https://docs.soliditylang.org/en/latest/style-guide.html#order-of-functions)
 * Do not use `require`. Always use custom errors. 
 * Put custom errors in the interface file (if it exists). Name the custom error `Error<NameOfContract><NameOfError>`. This helps to avoid duplicates. Example 
 [source, solidity]
