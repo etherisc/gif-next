@@ -1,6 +1,6 @@
 = Components
  
-Contains the base components. 
+Contains the components contracts. 
 
 == Contracts
 

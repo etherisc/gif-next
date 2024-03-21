@@ -1,7 +1,4 @@
 .API
-* xref:flows.adoc[Flows]
-* xref:modules.adoc[Modules]
-* xref:services.adoc[Services]
-* xref:shared.adoc[Shared]
-* xref:test.adoc[Test]
-* xref:tokens.adoc[Tokens]
+* xref:components.adoc[Components]
+* xref:instance.adoc[Instance]
+* xref:base/base.adoc[Instance/base]
