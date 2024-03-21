@@ -294,12 +294,14 @@ contract BundleService is
     }
 
 
-    function close(NftId bundleNftId) 
+    function close(
+        IInstance instance,
+        NftId bundleNftId
+    ) 
         external
         virtual
+        // TODO add restricted and autz for pool service
     {
-        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
-
         // udpate bundle state
         instance.updateBundleState(bundleNftId, CLOSED());
 
@@ -312,8 +314,6 @@ contract BundleService is
 
         // update set of active bundles
         bundleManager.lock(bundleNftId);
-
-        emit LogBundleServiceBundleClosed(bundleNftId);
     }
 
 

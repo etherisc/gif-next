@@ -133,7 +133,7 @@ abstract contract Pool is
         //restricted()
         onlyBundleOwner(bundleNftId)
     {
-        _getPoolStorage()._bundleService.close(bundleNftId);
+        _getPoolStorage()._poolService.closeBundle(bundleNftId);
     }
 
 

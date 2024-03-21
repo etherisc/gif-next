@@ -247,6 +247,25 @@ contract PoolService is
             stakingAfterFeesAmount,
             lifetime,
             filter);
+
+        emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
+    }
+
+
+    function closeBundle(NftId bundleNftId)
+        external
+        virtual
+    {
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+
+        // TODO book keeping for pool collateral released outside of retention level
+
+        // releasing collateral in bundle
+        _bundleService.close(instance, bundleNftId);
+
+        // TODO get performance fee for pool, transfer of remaining funds + bundle fees to bundle owner
+
+        emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId);
     }
 
 

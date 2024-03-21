@@ -17,6 +17,9 @@ interface IPoolService is IService {
     event LogPoolServiceMaxCapitalAmountUpdated(NftId poolNftId, uint256 previousMaxCapitalAmount, uint256 currentMaxCapitalAmount);
     event LogPoolServiceBundleOwnerRoleSet(NftId poolNftId, RoleId bundleOwnerRole);
 
+    event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
+    event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
+
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceBundlePoolMismatch(NftId bundlePoolNftId, NftId productPoolNftId);
 
@@ -74,13 +77,13 @@ interface IPoolService is IService {
         external 
         returns(NftId bundleNftId); // the nft id of the newly created bundle
 
-    // TODO continue here
+
     /// @dev closes the specified bundle
     /// only open bundles (active or locked) may be closed
     /// to close a bundle it may not have any non-closed polices attached to it
     /// bundle fees and remaining capital (after deduction of the performance fee) will be transferred to the bundle owner
     /// may only be called by registered and unlocked pool components
-    // function closeBundle(NftId bundleNftId) external;
+    function closeBundle(NftId bundleNftId) external;
 
 
     /// @dev increase stakes for bundle

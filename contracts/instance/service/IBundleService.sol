@@ -15,7 +15,6 @@ interface IBundleService is IService {
 
     event LogBundleServiceBundleActivated(NftId bundleNftId);
     event LogBundleServiceBundleLocked(NftId bundleNftId);
-    event LogBundleServiceBundleClosed(NftId bundleNftId);
 
     error ErrorBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
     error ErrorBundleServiceBundleNotOpen(NftId bundleNftId, StateId state, Timestamp expiredAt);
@@ -35,6 +34,25 @@ interface IBundleService is IService {
     )
         external 
         returns(NftId bundleNftId); // the nft id of the newly created bundle
+
+    /// @dev locks the specified bundle, locked bundles are not available to collateralize new policies
+    /// only active bundles may be locked
+    /// may only be called by registered and unlocked pool components
+    function lock(NftId bundleNftId) external;
+
+    /// @dev activates the specified bundle
+    /// only locked bundles may be unlocked
+    /// may only be called by registered and unlocked pool components
+    function unlock(NftId bundleNftId) external;
+
+    /// @dev closes the specified bundle
+    /// only open bundles (active or locked) may be closed
+    /// to close a bundle it may not have any non-closed polices attached to it
+    /// may only be called by registered and unlocked pool components
+    function close(
+        IInstance instance, 
+        NftId bundleNftId
+    ) external;
 
     /// @dev set bundle fee to provided value
     /// may only be called by registered and unlocked pool components
@@ -72,20 +90,4 @@ interface IBundleService is IService {
     // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
     // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
-
-    /// @dev locks the specified bundle, locked bundles are not available to collateralize new policies
-    /// only active bundles may be locked
-    /// may only be called by registered and unlocked pool components
-    function lock(NftId bundleNftId) external;
-
-    /// @dev activates the specified bundle
-    /// only locked bundles may be unlocked
-    /// may only be called by registered and unlocked pool components
-    function unlock(NftId bundleNftId) external;
-
-    /// @dev closes the specified bundle
-    /// only open bundles (active or locked) may be closed
-    /// to close a bundle it may not have any non-closed polices attached to it
-    /// may only be called by registered and unlocked pool components
-    function close(NftId bundleNftId) external;
 }
