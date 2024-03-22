@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {ObjectType, SERVICE} from "../types/ObjectType.sol";
+import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+
+import {ObjectType, REGISTRY, SERVICE} from "../types/ObjectType.sol";
 import {NftId, zeroNftId} from "../types/NftId.sol";
 import {Version, VersionPart, VersionLib, VersionPartLib} from "../types/Version.sol";
 
@@ -18,14 +21,11 @@ import {IRegistry} from "../registry/IRegistry.sol";
 abstract contract Service is 
     Registerable,
     Versionable,
+    AccessManagedUpgradeable,
     IService
 {
-    function getDomain() public pure virtual override returns(ObjectType);
 
-    // version major version MUST be consistent with major version of getVersion()
-    function getMajorVersion() public view virtual override returns(VersionPart majorVersion) {
-        return VersionPartLib.toVersionPart(3); 
-    }
+    uint8 private constant GIF_MAJOR_VERSION = 3;
 
     // from Versionable
     function getVersion()
@@ -34,11 +34,12 @@ abstract contract Service is
         virtual override (IVersionable, Versionable)
         returns(Version)
     {
-        return VersionLib.toVersion(3,0,0);
+        return VersionLib.toVersion(GIF_MAJOR_VERSION,0,0);
     }
 
     function initializeService(
         address registry, 
+        address authority, // real authority for registry service adress(0) for other services
         address initialOwner
     )
         public
@@ -53,6 +54,19 @@ abstract contract Service is
             initialOwner, 
             ""); // data
 
+        // externally provided authority
+        if(authority != address(0)) {
+            __AccessManaged_init(authority);
+        } else {
+            address registryServiceAddress = getRegistry().getServiceAddress(
+                REGISTRY(), 
+                VersionPartLib.toVersionPart(GIF_MAJOR_VERSION));
+
+            // copy authority from already registered registry services
+            __AccessManaged_init(IAccessManaged(registryServiceAddress).authority());
+        }
+
+        registerInterface(type(IAccessManaged).interfaceId);
         registerInterface(type(IService).interfaceId);
     }
 }

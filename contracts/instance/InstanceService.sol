@@ -74,7 +74,7 @@ contract InstanceService is
         IRegistry registry = getRegistry();
         address registryAddress = address(registry);
         NftId registryNftId = registry.getNftId(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress(REGISTRY(), getMajorVersion());
+        address registryServiceAddress = registry.getServiceAddress(REGISTRY(), getVersion().toMajorPart());
         IRegistryService registryService = IRegistryService(registryServiceAddress);
 
         clonedOzAccessManager = AccessManagerUpgradeableInitializeable(
@@ -169,7 +169,7 @@ contract InstanceService is
 
     function _grantDistributionServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for distribution service on instance
-        address distributionServiceAddress = getRegistry().getServiceAddress(DISTRIBUTION(), getMajorVersion());
+        address distributionServiceAddress = getRegistry().getServiceAddress(DISTRIBUTION(), getVersion().toMajorPart());
         clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE(), distributionServiceAddress);
         bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](11);
         instanceDistributionServiceSelectors[0] = clonedInstance.createDistributionSetup.selector;
@@ -191,7 +191,7 @@ contract InstanceService is
 
     function _grantPoolServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for pool service on instance
-        address poolServiceAddress = getRegistry().getServiceAddress(POOL(), getMajorVersion());
+        address poolServiceAddress = getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart());
         clonedAccessManager.grantRole(POOL_SERVICE_ROLE(), address(poolServiceAddress));
         bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = clonedInstance.createPoolSetup.selector;
@@ -204,7 +204,7 @@ contract InstanceService is
 
     function _grantProductServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for product service on instance
-        address productServiceAddress = getRegistry().getServiceAddress(PRODUCT(), getMajorVersion());
+        address productServiceAddress = getRegistry().getServiceAddress(PRODUCT(), getVersion().toMajorPart());
         clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE(), address(productServiceAddress));
         bytes4[] memory instanceProductServiceSelectors = new bytes4[](5);
         instanceProductServiceSelectors[0] = clonedInstance.createProductSetup.selector;
@@ -220,7 +220,7 @@ contract InstanceService is
 
     function _grantApplicationServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for application services on instance
-        address applicationServiceAddress = getRegistry().getServiceAddress(APPLICATION(), getMajorVersion());
+        address applicationServiceAddress = getRegistry().getServiceAddress(APPLICATION(), getVersion().toMajorPart());
         clonedAccessManager.grantRole(APPLICATION_SERVICE_ROLE(), applicationServiceAddress);
         bytes4[] memory instanceApplicationServiceSelectors = new bytes4[](3);
         instanceApplicationServiceSelectors[0] = clonedInstance.createApplication.selector;
@@ -234,7 +234,7 @@ contract InstanceService is
 
     function _grantPolicyServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for policy services on instance
-        address policyServiceAddress = getRegistry().getServiceAddress(POLICY(), getMajorVersion());
+        address policyServiceAddress = getRegistry().getServiceAddress(POLICY(), getVersion().toMajorPart());
         clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), policyServiceAddress);
         bytes4[] memory instancePolicyServiceSelectors = new bytes4[](2);
         instancePolicyServiceSelectors[0] = clonedInstance.updatePolicy.selector;
@@ -247,7 +247,7 @@ contract InstanceService is
 
     function _grantClaimServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for claim/payout services on instance
-        address claimServiceAddress = getRegistry().getServiceAddress(CLAIM(), getMajorVersion());
+        address claimServiceAddress = getRegistry().getServiceAddress(CLAIM(), getVersion().toMajorPart());
         clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), claimServiceAddress);
         // TODO add claims function authz
         bytes4[] memory instanceClaimServiceSelectors = new bytes4[](0);
@@ -261,7 +261,7 @@ contract InstanceService is
 
     function _grantBundleServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance, BundleManager clonedBundleManager) internal {
         // configure authorization for bundle service on instance
-        address bundleServiceAddress = getRegistry().getServiceAddress(BUNDLE(), getMajorVersion());
+        address bundleServiceAddress = getRegistry().getServiceAddress(BUNDLE(), getVersion().toMajorPart());
         clonedAccessManager.grantRole(BUNDLE_SERVICE_ROLE(), address(bundleServiceAddress));
         bytes4[] memory instanceBundleServiceSelectors = new bytes4[](3);
         instanceBundleServiceSelectors[0] = clonedInstance.createBundle.selector;
@@ -287,7 +287,7 @@ contract InstanceService is
 
     function _grantInstanceServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for instance service on instance
-        address instanceServiceAddress = getRegistry().getServiceAddress(INSTANCE(), getMajorVersion());
+        address instanceServiceAddress = getRegistry().getServiceAddress(INSTANCE(), getVersion().toMajorPart());
         clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE(), instanceServiceAddress);
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
         instanceInstanceServiceSelectors[0] = clonedInstance.setInstanceReader.selector;
@@ -359,7 +359,7 @@ contract InstanceService is
         _masterInstanceReader = instanceReaderAddress;
         _masterInstanceBundleManager = bundleManagerAddress;
         
-        IRegistryService registryService = IRegistryService(getRegistry().getServiceAddress(REGISTRY(), getMajorVersion()));
+        IRegistryService registryService = IRegistryService(getRegistry().getServiceAddress(REGISTRY(), getVersion().toMajorPart()));
         IInstance masterInstance = IInstance(_masterInstance);
         IRegistry.ObjectInfo memory info = registryService.registerInstance(masterInstance, getOwner());
         masterInstanceNftId = info.nftId;
@@ -408,7 +408,7 @@ contract InstanceService is
     }
 
     // From IService
-    function getDomain() public pure override(Service, IService) returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return INSTANCE();
     }
     
@@ -426,7 +426,7 @@ contract InstanceService is
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
         // TODO while InstanceService is not deployed in InstanceServiceManager constructor
         //      owner is InstanceServiceManager deployer
-        initializeService(registryAddress, owner);
+        initializeService(registryAddress, address(0), owner);
         registerInterface(type(IInstanceService).interfaceId);
     }
 
@@ -459,18 +459,18 @@ contract InstanceService is
 
     // TODO called by component, but target can be component helper...so needs target name
     // TODO check that targetName associated with component...how???
-    //function setTargetLocked(string memory targetName, bool locked) onlyComponent external {
     function setComponentLocked(bool locked) onlyComponent external {
         address componentAddress = msg.sender;
         IRegistry registry = getRegistry();
         NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
-        address instanceAddress = registry.getObjectInfo(instanceNftId).objectAddress;
-        IInstance instance = IInstance(instanceAddress);
 
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
-        // TODO setLocked by target address?
-        string memory componentName = ShortStrings.toString(accessManager.getTargetInfo(componentAddress).name);
-        accessManager.setTargetLocked(componentName, locked);
+        IInstance instance = IInstance(
+            registry.getObjectInfo(
+                instanceNftId).objectAddress);
+
+        instance.getInstanceAccessManager().setTargetLocked(
+            componentAddress, 
+            locked);
     }
 
     function _validateInstanceAndComponent(NftId instanceNftId, address componentAddress) 

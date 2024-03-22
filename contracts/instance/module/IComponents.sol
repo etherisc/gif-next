@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {Amount} from "../../types/Amount.sol";
 import {Fee} from "../../types/Fee.sol";
 import {NftId} from "../../types/NftId.sol";
 import {RoleId} from "../../types/RoleId.sol";
@@ -16,13 +17,18 @@ interface IComponents {
         IERC20Metadata token;
         TokenHandler tokenHandler;
         address wallet;
+        Amount balanceAmount; // calculated balance (may not necessarily match withg wallet balance)
+        Amount feeAmount; // accumulated fees belonging to component owner
         bytes data; // will hold component type specific additional info (eg encoded pool info)
     }
 
     struct PoolInfo {
         NftId productNftId; // the nft of the product this pool is linked to
         RoleId bundleOwnerRole; // the required role for bundle owners
+        // TODO maxCapitalAmount -> maxBalanceAmount
         uint256 maxCapitalAmount; // max capital amount allowed for pool
+        uint256 balanceAmount; // current pool balance (accounting view)
+        uint256 feeAmount; // accumulated fee amount
         bool isInterceptingBundleTransfers; // intercepts nft transfers for bundles
         bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts
         bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 

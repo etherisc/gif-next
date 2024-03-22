@@ -113,6 +113,29 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const distributionServiceNftId = (logRegistrationInfoDs as unknown);
     logger.info(`distributionServiceManager deployed - distributionServiceAddress: ${distributionServiceAddress} distributionServiceManagerAddress: ${distributionServiceManagerAddress} nftId: ${distributionServiceNftId}`);
 
+    logger.info("-------- bundle service --------");
+    const { address: bundleServiceManagerAddress, contract: bundleServiceManagerBaseContract, } = await deployContract(
+        "BundleServiceManager",
+        owner,
+        [registry.registryAddress],
+        { libraries: {
+                AmountLib: libraries.amountLibAddress,
+                FeeLib: libraries.feeLibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress, 
+                VersionPartLib: libraries.versionPartLibAddress, 
+            }});
+
+    const bundleServiceManager = bundleServiceManagerBaseContract as BundleServiceManager;
+    const bundleServiceAddress = await bundleServiceManager.getBundleService();
+    const bundleService = BundleService__factory.connect(bundleServiceAddress, owner);
+
+    const rcptBdl = await executeTx(async () => await releaseManager.registerService(bundleServiceAddress));
+    const logRegistrationInfoBdl = getFieldFromTxRcptLogs(rcptBdl!, registry.registry.interface, "LogRegistration", "nftId");
+    const bundleServiceNftId = (logRegistrationInfoBdl as unknown);
+    logger.info(`bundleServiceManager deployed - bundleServiceAddress: ${bundleServiceAddress} bundleServiceManagerAddress: ${bundleServiceManagerAddress} nftId: ${bundleServiceNftId}`);
+
     logger.info("-------- pool service --------");
     const { address: poolServiceManagerAddress, contract: poolServiceManagerBaseContract, } = await deployContract(
         "PoolServiceManager",
@@ -156,28 +179,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const logRegistrationInfoPrd = getFieldFromTxRcptLogs(rcptPrd!, registry.registry.interface, "LogRegistration", "nftId");
     const productServiceNftId = (logRegistrationInfoPrd as unknown);
     logger.info(`productServiceManager deployed - productServiceAddress: ${productServiceAddress} productServiceManagerAddress: ${productServiceManagerAddress} nftId: ${productServiceNftId}`);
-
-    logger.info("-------- bundle service --------");
-    const { address: bundleServiceManagerAddress, contract: bundleServiceManagerBaseContract, } = await deployContract(
-        "BundleServiceManager",
-        owner,
-        [registry.registryAddress],
-        { libraries: {
-                FeeLib: libraries.feeLibAddress,
-                NftIdLib: libraries.nftIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
-            }});
-
-    const bundleServiceManager = bundleServiceManagerBaseContract as BundleServiceManager;
-    const bundleServiceAddress = await bundleServiceManager.getBundleService();
-    const bundleService = BundleService__factory.connect(bundleServiceAddress, owner);
-
-    const rcptBdl = await executeTx(async () => await releaseManager.registerService(bundleServiceAddress));
-    const logRegistrationInfoBdl = getFieldFromTxRcptLogs(rcptBdl!, registry.registry.interface, "LogRegistration", "nftId");
-    const bundleServiceNftId = (logRegistrationInfoBdl as unknown);
-    logger.info(`bundleServiceManager deployed - bundleServiceAddress: ${bundleServiceAddress} bundleServiceManagerAddress: ${bundleServiceManagerAddress} nftId: ${bundleServiceNftId}`);
 
     logger.info("-------- claim service --------");
     const { address: claimServiceManagerAddress, contract: claimServiceManagerBaseContract, } = await deployContract(

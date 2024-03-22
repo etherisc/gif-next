@@ -148,6 +148,7 @@ contract InstanceReader {
         }
     }
 
+    // TODO consider to replace by component type specific getXyzInfo
     function getComponentInfo(NftId poolNftId)
         public
         view

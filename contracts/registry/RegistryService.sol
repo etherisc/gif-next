@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
-import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+// import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -31,7 +31,6 @@ import {IRegistryService} from "./IRegistryService.sol";
 import {Registry} from "./Registry.sol";
 
 contract RegistryService is
-    AccessManagedUpgradeable,
     Service,
     IRegistryService
 {
@@ -41,7 +40,7 @@ contract RegistryService is
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 
     // From IService
-    function getDomain() public pure override(IService, Service) returns(ObjectType serviceDomain) {
+    function getDomain() public pure override returns(ObjectType serviceDomain) {
         return REGISTRY(); 
     }
 
@@ -61,9 +60,8 @@ contract RegistryService is
             address initialAuthority
         ) = abi.decode(data, (address, address));
 
-        __AccessManaged_init(initialAuthority);
+        initializeService(registryAddress, initialAuthority, owner);
 
-        initializeService(registryAddress, owner);
         registerInterface(type(IRegistryService).interfaceId);
     }
 
@@ -194,17 +192,18 @@ contract RegistryService is
         config[2].serviceDomain = CLAIM();
         config[2].selectors = new bytes4[](0);
 
-        config[3].serviceDomain = BUNDLE();
+        config[3].serviceDomain = PRODUCT();
         config[3].selectors = new bytes4[](1);
-        config[3].selectors[0] = RegistryService.registerBundle.selector;
+        config[3].selectors[0] = RegistryService.registerProduct.selector;
 
-        config[4].serviceDomain = PRODUCT();
+        config[4].serviceDomain = POOL();
         config[4].selectors = new bytes4[](1);
-        config[4].selectors[0] = RegistryService.registerProduct.selector;
+        config[4].selectors[0] = RegistryService.registerPool.selector;
 
-        config[5].serviceDomain = POOL();
+        // registration of bundle service must preceed registration of pool service
+        config[5].serviceDomain = BUNDLE();
         config[5].selectors = new bytes4[](1);
-        config[5].selectors[0] = RegistryService.registerPool.selector;
+        config[5].selectors[0] = RegistryService.registerBundle.selector;
 
         config[6].serviceDomain = DISTRIBUTION();
         config[6].selectors = new bytes4[](2);

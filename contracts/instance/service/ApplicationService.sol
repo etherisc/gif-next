@@ -65,14 +65,14 @@ contract ApplicationService is
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, owner);
+        initializeService(registryAddress, address(0), owner);
         registerInterface(type(IApplicationService).interfaceId);
 
-        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), getMajorVersion()));
+        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), getVersion().toMajorPart()));
     }
 
 
-    function getDomain() public pure override(IService, Service) returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return APPLICATION();
     }
 
@@ -90,13 +90,13 @@ contract ApplicationService is
         virtual
         returns (NftId applicationNftId)
     {
-        (IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         // TODO: add validations (see create bundle in pool service)
 
         applicationNftId = getRegistryService().registerPolicy(
             IRegistry.ObjectInfo(
                 zeroNftId(),
-                productInfo.nftId,
+                productNftId,
                 POLICY(),
                 false, // intercepting property for policies is defined on product
                 address(0),
@@ -107,7 +107,7 @@ contract ApplicationService is
 
         // (uint256 premiumAmount,,,,,) = calculatePremium(
         IPolicy.Premium memory premium = calculatePremium(
-            productInfo.nftId,
+            productNftId,
             riskId,
             sumInsuredAmount,
             lifetime,
@@ -117,7 +117,7 @@ contract ApplicationService is
         );
 
         IPolicy.PolicyInfo memory policyInfo = IPolicy.PolicyInfo(
-            productInfo.nftId,
+            productNftId,
             bundleNftId,
             referralId,
             riskId,
@@ -172,7 +172,7 @@ contract ApplicationService is
         external
         virtual override
     {
-        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         instance.updateApplicationState(applicationNftId, REVOKED());
     }
 
@@ -337,7 +337,7 @@ contract ApplicationService is
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
-        (productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (, productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
 

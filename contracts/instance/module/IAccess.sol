@@ -43,9 +43,9 @@ interface IAccess {
     error ErrorIAccessRoleTypeInvalid(RoleId roleId, Type rtype);
 
     error ErrorIAccessTargetAddressZero();
-    error ErrorIAccessTargetDoesNotExist(ShortString name);
+    error ErrorIAccessTargetDoesNotExist(address target);
     error ErrorIAccessTargetExists(address target, ShortString name);
-    error ErrorIAccessTargetTypeInvalid(ShortString name, Type ttype);
+    error ErrorIAccessTargetTypeInvalid(address target, Type ttype);
     error ErrorIAccessTargetNameEmpty(address target);
     error ErrorIAccessTargetNameExists(address target, address existingTarget, ShortString name);
     error ErrorIAccessTargetLocked(address target);

@@ -149,7 +149,7 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
     }
 
-    function test_Product_underwrite() public {
+    function test_Product_underwriteWithoutPayment() public {
         // GIVEN
         _prepareProduct();  
 
@@ -163,10 +163,11 @@ contract TestProduct is TestGifBase {
         SimpleProduct dproduct = SimpleProduct(address(product));
         dproduct.createRisk(riskId, data);
 
+        uint sumInsuredAmount = 1000;
         NftId policyNftId = dproduct.createApplication(
             customer,
             riskId,
-            1000,
+            sumInsuredAmount,
             SecondsLib.toSeconds(30),
             "",
             bundleNftId,
@@ -178,19 +179,24 @@ contract TestProduct is TestGifBase {
         assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         // WHEN
-        dproduct.underwrite(policyNftId, false, TimestampLib.blockTimestamp()); 
+        bool requirePremiumPayment = false;
+        dproduct.underwrite(policyNftId, requirePremiumPayment, TimestampLib.blockTimestamp()); 
 
         // THEN
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
 
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000, "lockedAmount not 1000");
-
+        console.log("checking policy info after underwriting");
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.sumInsuredAmount, 1000, "sumInsuredAmount not 1000");
+        assertEq(policyInfo.sumInsuredAmount, sumInsuredAmount, "sumInsuredAmount not 1000");
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
+
+        console.log("checking bundle info after underwriting");
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
+        assertEq(bundleInfo.capitalAmount.toInt(), 10000, "capitalAmount not 10000");
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
@@ -240,14 +246,16 @@ contract TestProduct is TestGifBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        dproduct.underwrite(policyNftId, true, TimestampLib.blockTimestamp()); 
+        bool collectPremiumAmount = true;
+        dproduct.underwrite(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000 + 100, "balanceAmount not 1100");
+        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
+        assertEq(bundleInfo.feeAmount.toInt(), 10, "feeAmount not 10");
+        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 100 - 10, "capitalAmount not 1100");
         
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
@@ -349,7 +357,7 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceReader.getPolicyState(policyNftId) == UNDERWRITTEN(), "policy state not UNDERWRITTEN");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
+        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.eqz(), "activatedAt set");
@@ -411,12 +419,12 @@ contract TestProduct is TestGifBase {
         assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == UNDERWRITTEN(), "state not UNDERWRITTEN");
         
         IBundle.BundleInfo memory bundleInfoBefore = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfoBefore.lockedAmount, 1000, "lockedAmount not 1000");
-        assertEq(bundleInfoBefore.balanceAmount, 10000, "lockedAmount not 1000");
+        assertEq(bundleInfoBefore.lockedAmount.toInt(), 1000, "lockedAmount not 1000 (before)");
+        assertEq(bundleInfoBefore.capitalAmount.toInt(), 10000, "capitalAmount not 10000 (before)");
 
-        assertEq(token.balanceOf(product.getWallet()), 0, "product balance not 0");
-        assertEq(token.balanceOf(address(customer)), 1000, "customer balance not 1000");
-        assertEq(token.balanceOf(pool.getWallet()), 10000, "pool balance not 10000");
+        assertEq(token.balanceOf(product.getWallet()), 0, "product balance not 0 (before)");
+        assertEq(token.balanceOf(address(customer)), 1000, "customer balance not 1000 (before)");
+        assertEq(token.balanceOf(pool.getWallet()), 10000, "pool balance not 10000 (before)");
 
         // WHEN
         dproduct.collectPremium(policyNftId, TimestampLib.blockTimestamp());
@@ -425,8 +433,9 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount, 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000 + 100, "balanceAmount not 1100");
+        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
+        assertEq(bundleInfo.feeAmount.toInt(), 10, "feeAmount not 10");
+        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 100 - 10, "capitalAmount not 1100");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
@@ -489,8 +498,9 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceReader.getPolicyState(policyNftId) == CLOSED(), "policy state not CLOSE");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount, 0, "lockedAmount not 1000");
-        assertEq(bundleInfo.balanceAmount, 10000 + 100, "balanceAmount not 10100");
+        assertEq(bundleInfo.lockedAmount.toInt(), 0, "lockedAmount not 1000");
+        assertEq(bundleInfo.feeAmount.toInt(), 10, "feeAmount not 10");
+        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 100 - 10, "capitalAmount not 1100");
         
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.closedAt.gtz(), "expiredAt not set");

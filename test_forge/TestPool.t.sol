@@ -16,6 +16,7 @@ import {POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol";
 import {SecondsLib} from "../contracts/types/Seconds.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/types/StateId.sol";
+import {TimestampLib} from "../contracts/types/Timestamp.sol";
 import {TestGifBase} from "./base/TestGifBase.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
 
@@ -77,7 +78,7 @@ contract TestPool is TestGifBase {
         IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
 
         // check nftid
-        assertTrue(poolInfo.productNftId.eqz(), "product nft not zero");
+        assertTrue(poolInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
 
         // check token handler
         assertTrue(address(componentInfo.tokenHandler) != address(0), "token handler zero");
@@ -187,6 +188,12 @@ contract TestPool is TestGifBase {
         assertTrue(instanceBundleManager.getBundleNftId(poolNftId, 0).eq(bundleNftId), "bundle nft id in bundle manager not equal to bundle nft id");
         assertEq(instanceBundleManager.activeBundles(poolNftId), 1, "expected one active bundle");
         assertTrue(instanceBundleManager.getActiveBundleNftId(poolNftId, 0).eq(bundleNftId), "active bundle nft id in bundle manager not equal to bundle nft id");
+
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        assertEq(
+            bundleInfo.expiredAt.toInt(), 
+            TimestampLib.blockTimestamp().toInt() + bundleInfo.lifetime.toInt(),
+            "unexpected expired at");
     }
 
 

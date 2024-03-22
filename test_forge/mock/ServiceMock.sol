@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
+import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
+import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 import {NftId} from "../../contracts/types/NftId.sol";
 import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
@@ -9,7 +10,7 @@ import {ObjectType, toObjectType, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} 
 import {IService} from "../../contracts/shared/IService.sol";
 import {RegisterableMock} from "./RegisterableMock.sol";
 
-contract ServiceMock is RegisterableMock, IService {
+contract ServiceMock is RegisterableMock, AccessManagedUpgradeable, IService {
 
     constructor(NftId nftId, NftId registryNftId, bool isInterceptor, address initialOwner)
         RegisterableMock(
@@ -20,17 +21,13 @@ contract ServiceMock is RegisterableMock, IService {
             initialOwner,
             "")
     {
-        _info.data = abi.encode(getDomain(), getMajorVersion());
+        _info.data = abi.encode(getDomain(), getVersion().toMajorPart());
         registerInterface(type(IService).interfaceId);
     }
 
     // from IService
     function getDomain() public pure virtual returns(ObjectType) {
         return PRODUCT();
-    }
-
-    function getMajorVersion() public view virtual override returns(VersionPart majorVersion) {
-        return getVersion().toMajorPart(); 
     }
 
     // from IVersionable

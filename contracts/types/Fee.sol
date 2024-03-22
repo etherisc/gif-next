@@ -21,10 +21,13 @@ library FeeLib {
             uint256 netAmount
         )
     {
-        UFixed fractionalAmount = UFixedLib.toUFixed(amount) *
-            fee.fractionalFee;
-        feeAmount = fractionalAmount.toInt() + fee.fixedFee;
-        netAmount = amount - feeAmount;
+        netAmount = amount;
+        if(gtz(fee)) {
+            UFixed fractionalAmount = 
+                UFixedLib.toUFixed(amount) * fee.fractionalFee;
+            feeAmount = fractionalAmount.toInt() + fee.fixedFee;
+            netAmount -= feeAmount;
+        }
     }
 
     /// @dev Converts the uint256 to a fee struct.
@@ -51,7 +54,11 @@ library FeeLib {
         return a.fixedFee == b.fixedFee && a.fractionalFee == b.fractionalFee;
     }
 
-    function feeIsZero(Fee memory fee) public pure returns (bool) {
+    function gtz(Fee memory fee) public pure returns (bool) {
+        return UFixed.unwrap(fee.fractionalFee) > 0 || fee.fixedFee > 0;
+    }
+
+    function eqz(Fee memory fee) public pure returns (bool) {
         return fee.fixedFee == 0 && UFixed.unwrap(fee.fractionalFee) == 0;
     }
 }
