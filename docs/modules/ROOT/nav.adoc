@@ -1,3 +1,4 @@
 * xref:index.adoc[Overview]
 * xref:howto-documentation.adoc[Documentation Howto]
+* xref:authz.adoc[Authorization]
 * https://github.com/etherisc/gif-next/issues/new[Report a bug]

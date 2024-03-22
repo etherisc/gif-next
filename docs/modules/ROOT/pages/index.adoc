@@ -11,7 +11,7 @@ Documentation for the next version of the GIF framework smart contracts.
 [source, solidity]
 ----
 interface IInstanceService {
-    error ErrorIInstanceServiceRequestUnauhorized(address caller);
+    error ErrorInstanceServiceRequestUnauhorized(address caller);
     
     {...}
 }
@@ -30,5 +30,9 @@ event LogInstanceCloned(NftId clonedInstanceNftId, address owner, address caller
 * Use `TODO:` and `FIXME:` comments to mark code that needs to be fixed or improved.
 * Include graphics and diagrams to explain complex concepts.
 * Keep documentation current. If you change the code, update the documentation as well. 
+* Write meaningful commit messages and reference the issue number (`#262`) in the commit message. 
+* Use the Check-Effect-Interact pattern. See https://fravoll.github.io/solidity-patterns/checks_effects_interactions.html[here] for more information.
+* Ensure proper authorization of the contracts. See xref:authz.adoc[this page] for details.
+* The name of test methods must be unique. Stick to the following naming convention: `test_<ContractName>_<FunctionName>_<ContextIfNeeded>`. Example: `test_Product_calculatePremium` or `test_Product_underwrite_BalanceTooLow`.
 
 
