@@ -106,7 +106,7 @@ contract BundleService is
         );
 
         // create bundle info in instance
-        instance.createBundle(bundleNftId, bundleInfo);
+        instance.getInstanceStore().createBundle(bundleNftId, bundleInfo);
 
         BundleManager bundleManager = instance.getBundleManager();
         bundleManager.add(bundleNftId);
@@ -137,7 +137,7 @@ contract BundleService is
 
         bundleInfo.fee = fee;
 
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
 
@@ -163,7 +163,7 @@ contract BundleService is
         bundleInfo.lockedAmount += collateralAmount;
         bundleInfo.balanceAmount += netPremiumAmount;
 
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
         
         linkPolicy(instance, policyNftId);
     }
@@ -176,7 +176,7 @@ contract BundleService is
         (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
 
         // udpate bundle state
-        instance.updateBundleState(bundleNftId, PAUSED());
+        instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
 
         // update set of active bundles
         BundleManager bundleManager = instance.getBundleManager();
@@ -193,7 +193,7 @@ contract BundleService is
         (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
 
         // udpate bundle state
-        instance.updateBundleState(bundleNftId, ACTIVE());
+        instance.getInstanceStore().updateBundleState(bundleNftId, ACTIVE());
 
         // update set of active bundles
         BundleManager bundleManager = instance.getBundleManager();
@@ -210,7 +210,7 @@ contract BundleService is
         (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
 
         // udpate bundle state
-        instance.updateBundleState(bundleNftId, CLOSED());
+        instance.getInstanceStore().updateBundleState(bundleNftId, CLOSED());
 
         // ensure no open policies attached to bundle
         BundleManager bundleManager = instance.getBundleManager();
@@ -238,7 +238,7 @@ contract BundleService is
 
         bundleInfo.balanceAmount += amount;
 
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
     function closePolicy(IInstance instance,
@@ -255,7 +255,7 @@ contract BundleService is
         // lock collateral
         bundleInfo.lockedAmount -= collateralAmount;
 
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
         
         unlinkPolicy(instance, policyNftId);
     }
@@ -272,7 +272,7 @@ contract BundleService is
         if (policyInfo.activatedAt.gtz()) {
             revert BundleManager.ErrorBundleManagerPolicyAlreadyActivated(policyNftId);
         }
-        
+
         BundleManager bundleManager = instance.getBundleManager();
         bundleManager.linkPolicy(policyNftId);
     }

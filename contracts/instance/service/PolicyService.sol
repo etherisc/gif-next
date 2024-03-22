@@ -201,7 +201,7 @@ contract PolicyService is
             collateralAmount,
             netPremiumAmount);
 
-        instance.updatePolicy(applicationNftId, policyInfo, newPolicyState);
+        instance.getInstanceStore().updatePolicy(applicationNftId, policyInfo, newPolicyState);
 
         // also verify/confirm application by pool if necessary
         if(abi.decode(
@@ -251,7 +251,7 @@ contract PolicyService is
         policyInfo.premiumPaidAmount += unpaidPremiumAmount;
 
         _bundleService.increaseBalance(instance, policyInfo.bundleNftId, netPremiumAmount);
-        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         if(activateAt.gtz() && policyInfo.activatedAt.eqz()) {
             activate(policyNftId, activateAt);
@@ -274,7 +274,7 @@ contract PolicyService is
         policyInfo.activatedAt = activateAt;
         policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-        instance.updatePolicy(policyNftId, policyInfo, ACTIVE());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, ACTIVE());
 
         // TODO: add logging
     }
@@ -329,7 +329,7 @@ contract PolicyService is
         policyInfo.closedAt = TimestampLib.blockTimestamp();
 
         _bundleService.closePolicy(instance, policyNftId, policyInfo.bundleNftId, policyInfo.sumInsuredAmount);
-        instance.updatePolicy(policyNftId, policyInfo, CLOSED());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
     }
 
     function _getPoolNftId(
