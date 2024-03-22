@@ -88,8 +88,7 @@ contract DistributionService is
         distribution.linkToRegisteredNftId();
         distributionNftId = distributionInfo.nftId;
 
-        InstanceStore instanceStore = instance.getInstanceStore();
-        instanceStore.createDistributionSetup(distributionNftId, distribution.getSetupInfo());
+        instance.getInstanceStore().createDistributionSetup(distributionNftId, distribution.getSetupInfo());
         // TODO move to distribution?
         bytes4[][] memory selectors = new bytes4[][](2);
         selectors[0] = new bytes4[](1);
@@ -290,7 +289,7 @@ contract DistributionService is
             revert ErrorIDistributionServiceReferralInvalid(distributionNftId, referralId);
         }
 
-        (, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
+        (, IInstance instance) = _getAndVerifyDistributionAndInstance(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
         InstanceStore store = instance.getInstanceStore();
         IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
@@ -332,7 +331,7 @@ contract DistributionService is
         view 
         returns (IPolicy.Premium memory finalPremium)
     {
-        (, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
+        (, IInstance instance) = _getAndVerifyDistributionAndInstance(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
         
         // first calculate all fixed and variable fees for the distribution - this will defined the fullPremium
@@ -393,7 +392,7 @@ contract DistributionService is
 
     // TODO: zero should return false
     function referralIsValid(NftId distributionNftId, ReferralId referralId) public view returns (bool isValid) {
-        (address distributionAddress, IInstance instance) = _getAndVerifyDistribution(distributionNftId);
+        (address distributionAddress, IInstance instance) = _getAndVerifyDistributionAndInstance(distributionNftId);
         IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
 
         if (info.distributorNftId.eqz()) {
@@ -404,7 +403,7 @@ contract DistributionService is
         isValid = isValid && info.usedReferrals < info.maxReferrals;
     }
 
-    function _getAndVerifyCallingDistribution()
+    /*function _getAndVerifyCallingDistribution()
         internal
         view
         returns(
@@ -430,10 +429,11 @@ contract DistributionService is
         internal
         view
         returns(
-            address distributionAddress,
+            address distributionAddress, // TODO always returns 0
             IInstance instance
         )
     {
+        // TODO check info.objectType == DISTRIBUTION()?
         IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(distributionNftId);
         IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(info.parentNftId);
         if (parentInfo.objectType != INSTANCE()) {
@@ -453,18 +453,57 @@ contract DistributionService is
         )
     {
         objectAddress = msg.sender;
-        objectNftId = getRegistry().getNftId(objectAddress);
-        if ( objectNftId.eqz()) {
+        IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(objectAddress);
+        objectNftId = info.nftId;
+        objectType = info.objectType;
+
+        if(objectNftId.eqz()) {
             revert ErrorIServiceCallerUnknown(objectAddress);
         }
-        IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(objectNftId);
-        objectType = info.objectType;
 
         IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(info.parentNftId);
         if (parentInfo.objectType != INSTANCE()) {
             revert ErrorIDistributionServiceParentNftIdNotInstance(objectNftId, info.parentNftId);
         }
         instance = IInstance(parentInfo.objectAddress);
+    }*/
+
+
+
+
+    function _getAndVerifyDistributionAndInstance(NftId distributionNftId)
+        internal
+        view
+        returns(
+            address distributionAddress,
+            IInstance instance
+        )
+    {
+        IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(distributionNftId);
+
+        if(info.objectType != DISTRIBUTION()) {
+            revert ErrorIDistributionServiceNotDistribution(distributionNftId);
+        }
+
+        IRegistry.ObjectInfo memory parentInfo = getRegistry().getObjectInfo(info.parentNftId);
+        if (parentInfo.objectType != INSTANCE()) {
+            revert ErrorIDistributionServiceParentNftIdNotInstance(distributionNftId, info.parentNftId);
+        }
+        instance = IInstance(parentInfo.objectAddress);
+        distributionAddress = info.objectAddress;
+    }
+
+    function _getAndVerifyCallingDistribution()
+        internal
+        view
+        returns(
+            address distributionAddress,
+            NftId distributionNftId,
+            IInstance instance
+        )
+    {
+        distributionNftId = getRegistry().getNftId(msg.sender);
+        (distributionAddress, instance) = _getAndVerifyDistributionAndInstance(distributionNftId);
     }
 
 }
