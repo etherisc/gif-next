@@ -15,15 +15,17 @@ The vscode plugin `AsciiDoc` is included in the devcontainer to make it easier t
 == Rules
 
 * Put manually written documentation in the `docs/modules/ROOT/pages` directory and use the `adoc` file extension.
-* Use Natspec syntax to document solidity smart contracts
-* Document in the interface contract if it exists
-* Do not document the obvious ... instead explain what the code does and how it works. 
-* Document at least public/external functions 
-* When updating code, update the documentation as well. 
-* When removing code, remove the documentation as well.
-* Use graphics and diagrams to explain complex concepts
+* Use Natspec syntax to document solidity smart contracts.
+* Document in the interface contract if it exists.
+* Do not document the obvious ... instead explain what the code does, how it does this and how it can be used. 
+* Integrating a small code example goes a long way. This is often be easier to understand than a long explanation.
+* Document at least public/external functions.
+* Update the documentation in the same PR as the code changes.
+* Delete dead documentation.
+* Use graphics and diagrams to explain complex concepts.
 * When using external tools (e.g. mermaid or draw.io) to create diagrams, store the source of the diagram in the same folder as the image. This is imporant to be able to modify the diagram in the future.
 * If possible use SVG images instead of PNG or JPG.
+* The consumers of this documentation are developers, auditors, and other technical people working with the framework and not the consumers. Write the documentation accordingly.
 
 == Technical rules
 

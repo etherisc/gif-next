@@ -1,2 +1,3 @@
 * xref:index.adoc[Overview]
 * xref:howto-documentation.adoc[Documentation Howto]
+* https://github.com/etherisc/gif-next/issues/new[Report a bug]
