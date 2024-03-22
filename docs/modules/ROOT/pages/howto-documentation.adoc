@@ -1,0 +1,58 @@
+= How to write documentation
+
+== Introduction 
+
+Documentation for our framework and smart contracts is written in AsciiDoc. This format is easy to read and write, and it can be converted to HTML, PDF, and other formats. Language documentation can be found at https://docs.asciidoctor.org/asciidoc/latest/
+
+A nice cheat sheet for AsciiDoc can be found at https://drive.google.com/file/d/1Y7VaiafvidX5CaX90gJz7t6HZqE-dJWq/view 
+
+Smart contacts written in Solidity are documented using NatSpec. Natspec is similar to JavaDoc and is used to generate documentation for the smart contracts direcly in the code. The Natspec docs may use AsciiDoc syntax for formatting. For more details continue reading at https://docs.soliditylang.org/en/latest/natspec-format.html 
+
+Natspec documentation is automatically generated during each build and stored in a separate branch that is prefixed with `docs/`. Documentation from the `develop` branch is automatically published to documentation site at https://docs.etherisc.com/gif-next/3.x/ after each push to the branch.
+
+The vscode plugin `AsciiDoc` is included in the devcontainer to make it easier to write documentation. 
+
+== Rules
+
+* Put manually written documentation in the `docs/modules/ROOT/pages` directory and use the `adoc` file extension.
+* Use Natspec syntax to document solidity smart contracts.
+* Document in the interface contract if it exists.
+* Do not document the obvious ... instead explain what the code does, how it does this and how it can be used. 
+* Integrating a small code example goes a long way. This is often be easier to understand than a long explanation.
+* Document at least public/external functions.
+* Update the documentation in the same PR as the code changes.
+* Delete dead documentation.
+* Use graphics and diagrams to explain complex concepts.
+* When using external tools (e.g. mermaid or draw.io) to create diagrams, store the source of the diagram in the same folder as the image. This is imporant to be able to modify the diagram in the future.
+* If possible use SVG images instead of PNG or JPG.
+* The consumers of this documentation are developers, auditors, and other technical people working with the framework and not the consumers. Write the documentation accordingly.
+
+== Technical rules
+
+=== Structure
+
+Each folder that contains contracts must contain a `README.adoc` file. This file should contain a brief description of the contracts in the folder and a list of the contracts for which documentation should be generated. Unless this file exists, no netspec is generated for a folder. 
+
+Example:
+
+[source]
+----
+= Components
+
+Contains the components contracts. 
+
+== Contracts
+
+{{Component}}
+{{Distribution}}
+{{IComponent}}
+{{IDistributionComponent}}
+{{IPoolComponent}}
+{{IProductComponent}}
+{{Pool}}
+{{Product}}
+----
+
+== Generating natspec docs locally
+
+To generate natspec documentation locally, you can use the command `hh docgen`. This will generate the documentation in the `docs/modules/api/pages/` directory. Do not commit those files to the repository, as they are automatically generated during the build process. 

@@ -1,3 +1,38 @@
 = GIF Next
 
-General documentation for the GIF-next smart contracts. 
+Documentation for the next version of the GIF framework smart contracts. 
+
+== Coding guidelines 
+
+* If nothing else is specified, use the https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/GUIDELINES.md#solidity-conventions[OpenZeppeling Solidity coding guidelines] and https://docs.soliditylang.org/en/latest/style-guide.html[Solidity style guide].
+* Functions within a contract are orders as follows: constructor, receive function (if exists), fallback function (if exists), external, public, internal, private. Within a grouping, place the view and pure functions last. (from https://docs.soliditylang.org/en/latest/style-guide.html#order-of-functions)
+* Do not use `require`. Always use custom errors. 
+* Put custom errors in the interface file (if it exists). Name the custom error `Error<NameOfContract><NameOfError>`. This helps to avoid duplicates. Example 
+[source, solidity]
+----
+interface IInstanceService {
+    error ErrorInstanceServiceRequestUnauhorized(address caller);
+    
+    {...}
+}
+----
+* Put events in the interface file (if it exists). Name the event `Log<NameOfContract><NameOfEvent>`. This helps to avoid duplicates. Example
+[source, solidity]
+----
+event LogInstanceCloned(NftId clonedInstanceNftId, address owner, address caller);
+----
+* Do not use structs as event parameters.
+* When creating a new contract file, use the same pragma and license (Apache-2.0) as the other contracts in the project.
+* Remove dead code and commented code blocks, except if it is obvious that it will be relevant again within a reasonable amount of time. The code is not lost, its always accessible in the git history.
+* Document all functions and events. See xref:howto-documentation.adoc[this page for more information].
+* When copying code or other form of documentation, check the license and make sure that the code is compatible with the Apache-2.0 license. Always keep a reference the source in the comments!
+* Document known limitations and shortcomings. If you cannot complete the code in time, add a TODO comment with a description of what is missing and create an issue for it. 
+* Use `TODO:` and `FIXME:` comments to mark code that needs to be fixed or improved.
+* Include graphics and diagrams to explain complex concepts.
+* Keep documentation current. If you change the code, update the documentation as well. 
+* Write meaningful commit messages and reference the issue number (`#262`) in the commit message. 
+* Use the Check-Effect-Interact pattern. See https://fravoll.github.io/solidity-patterns/checks_effects_interactions.html[here] for more information.
+* Ensure proper authorization of the contracts. See xref:authz.adoc[this page] for details.
+* The name of test methods must be unique. Stick to the following naming convention: `test_<ContractName>_<FunctionName>_<ContextIfNeeded>`. Example: `test_Product_calculatePremium` or `test_Product_underwrite_BalanceTooLow`.
+
+
