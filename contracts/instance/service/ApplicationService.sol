@@ -44,7 +44,6 @@ import {IDistributionService} from "./IDistributionService.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
-import {InstanceStore} from "../InstanceStore.sol";
 
 
 contract ApplicationService is 
@@ -136,7 +135,7 @@ contract ApplicationService is
             zeroTimestamp()
         );
         
-        instance.getInstanceStore().createApplication(applicationNftId, policyInfo);
+        instance.createApplication(applicationNftId, policyInfo);
 
         // TODO: add logging
     }
@@ -174,7 +173,7 @@ contract ApplicationService is
         virtual override
     {
         (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
+        instance.updateApplicationState(applicationNftId, REVOKED());
     }
 
     // TODO: maybe move this to a pricing service later

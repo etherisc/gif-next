@@ -27,8 +27,6 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {ITreasury} from "../instance/module/ITreasury.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
 
-import {InstanceStore} from "./InstanceStore.sol";
-
 
 contract InstanceReader {
     bool private _initialized;
@@ -44,7 +42,7 @@ contract InstanceReader {
             "ERROR:CRD-001:INSTANCE_ZERO");
 
         _instance = IInstance(instance);
-        _store = _instance.getInstanceStore();
+        _store = IKeyValueStore(instance);
 
         _initialized = true;
     }
@@ -68,7 +66,7 @@ contract InstanceReader {
         view
         returns (StateId state)
     {
-        return _store.getState(toPolicyKey(policyNftId));
+        return _instance.getState(toPolicyKey(policyNftId));
     }
 
     function getRiskInfo(RiskId riskId)
