@@ -1148,13 +1148,13 @@ contract TestInstanceAccessManager is TestGifBase {
             IAccess.ErrorIAccessTargetTypeInvalid.selector, 
             ShortStrings.toShortString("Instance"),
             IAccess.Type.Core));
-        instanceAccessManager.setTargetLocked("Instance", true);
+        instanceAccessManager.setTargetLockedByInstance("Instance", true);
 
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessTargetTypeInvalid.selector, 
             ShortStrings.toShortString("Instance"),
             IAccess.Type.Core));
-        instanceAccessManager.setTargetLocked("Instance", false);
+        instanceAccessManager.setTargetLockedByInstance("Instance", false);
 
         vm.stopPrank();
     }
@@ -1173,11 +1173,11 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.startPrank(address(instanceService));
         instanceAccessManager.createGifTarget(gifTargetAddress, "GifTarget1234");
 
-        instanceAccessManager.setTargetLocked("GifTarget1234", true);
+        instanceAccessManager.setTargetLockedByService("GifTarget1234", true);
 
         assertTrue(instanceAccessManager.isTargetLocked(gifTargetAddress), "gif target is not locked");
 
-        instanceAccessManager.setTargetLocked("GifTarget1234", false);
+        instanceAccessManager.setTargetLockedByService("GifTarget1234", false);
         vm.stopPrank();
 
         assertFalse(instanceAccessManager.isTargetLocked(gifTargetAddress), "gif target is locked");
@@ -1193,11 +1193,11 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(address(instanceService));
-        instanceAccessManager.setTargetLocked("CustomTarget1234", true);
+        instanceAccessManager.setTargetLockedByService("CustomTarget1234", true);
 
         assertTrue(instanceAccessManager.isTargetLocked(customTargetAddress), "custom target is not locked");
 
-        instanceAccessManager.setTargetLocked("CustomTarget1234", false);
+        instanceAccessManager.setTargetLockedByService("CustomTarget1234", false);
         vm.stopPrank();
 
         assertFalse(instanceAccessManager.isTargetLocked(customTargetAddress), "custom target is locked");
@@ -1209,7 +1209,7 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessTargetDoesNotExist.selector, 
             ShortStrings.toShortString("NonExistingTarget")));
-        instanceAccessManager.setTargetLocked("NonExistingTarget", true);
+        instanceAccessManager.setTargetLockedByService("NonExistingTarget", true);
         vm.stopPrank();
     }
 

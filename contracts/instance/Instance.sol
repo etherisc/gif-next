@@ -117,7 +117,7 @@ contract Instance is
         external 
         restricted // INSTANCE_OWNER_ROLE
     {
-        _accessManager.setTargetLockedbyInstance(targetName, locked);
+        _accessManager.setTargetLockedByInstance(targetName, locked);
     }
 
     //--- ITransferInterceptor ------------------------------------------------------------//

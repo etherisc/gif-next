@@ -319,7 +319,7 @@ contract InstanceService is
         // configure authorizations for instance service on instance access manager
         bytes4[] memory accessManagerInstanceServiceSelectors = new bytes4[](3);
         accessManagerInstanceServiceSelectors[0] = clonedAccessManager.createGifTarget.selector;
-        accessManagerInstanceServiceSelectors[1] = clonedAccessManager.setTargetLocked.selector; //lock component->instanceService->accessManager
+        accessManagerInstanceServiceSelectors[1] = clonedAccessManager.setTargetLockedByService.selector;
         accessManagerInstanceServiceSelectors[2] = clonedAccessManager.setCoreTargetFunctionRole.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "InstanceAccessManager",
@@ -332,7 +332,7 @@ contract InstanceService is
         accessManagerInstanceSelectors[0] = clonedAccessManager.createRole.selector;
         accessManagerInstanceSelectors[1] = clonedAccessManager.createTarget.selector;
         accessManagerInstanceSelectors[2] = clonedAccessManager.setTargetFunctionRole.selector;
-        accessManagerInstanceSelectors[3] = clonedAccessManager.setTargetLockedbyInstance.selector; // lock instanceOwner->Instance->accessManager
+        accessManagerInstanceSelectors[3] = clonedAccessManager.setTargetLockedByInstance.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "InstanceAccessManager",
             accessManagerInstanceSelectors, 
@@ -506,7 +506,7 @@ contract InstanceService is
         InstanceAccessManager accessManager = instance.getInstanceAccessManager();
         // TODO setLocked by target address?
         string memory componentName = ShortStrings.toString(accessManager.getTargetInfo(componentAddress).name);
-        accessManager.setTargetLocked(componentName, locked);
+        accessManager.setTargetLockedByService(componentName, locked);
     }
 
     function _validateInstanceAndComponent(NftId instanceNftId, address componentAddress) 
