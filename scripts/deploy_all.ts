@@ -184,7 +184,6 @@ function printAddresses(
     addresses += `masterInstanceAccessManagerAddress: ${masterInstance.instanceAccessManagerAddress}\n`;
     addresses += `masterBundleManagerAddress: ${masterInstance.instanceBundleManagerAddress}\n`;
     addresses += `masterInstanceReaderAddress: ${masterInstance.instanceReaderAddress}\n`;
-    addresses += `masterInstanceStoreAddress: ${masterInstance.instanceStoreAddress}\n`;
     addresses += `--------\n`;
     addresses += `clonedInstanceAddress: ${clonedInstance.instanceAddress}\n`;
     addresses += `clonedInstanceNftId: ${clonedInstance.instanceNftId}\n`;
