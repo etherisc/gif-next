@@ -58,7 +58,7 @@ contract Instance is
     }
 
     function initialize(address authority, address registryAddress, address initialOwner) 
-        public 
+        external 
         initializer()
     {
         __AccessManaged_init(authority);
@@ -68,6 +68,8 @@ contract Instance is
 
         registerInterface(type(IInstance).interfaceId);    
     }
+
+    //--- Roles ------------------------------------------------------------//
 
     function createRole(string memory roleName, string memory adminName)
         external
@@ -91,13 +93,7 @@ contract Instance is
         _accessManager.revokeRole(roleId, account);
     }
 
-    function hasRole(RoleId roleId, address account) 
-        external 
-        view 
-        returns (bool)
-    {
-        return _accessManager.hasRole(roleId, account);
-    }
+    //--- Targets ------------------------------------------------------------//
 
     function createTarget(address target, string memory name) 
         external 

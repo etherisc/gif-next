@@ -21,12 +21,7 @@ import {InstanceStore} from "./InstanceStore.sol";
 
 import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
-import {IBundle} from "./module/IBundle.sol";
-import {IRisk} from "./module/IRisk.sol";
-import {ISetup} from "./module/ISetup.sol";
-import {IComponents} from "./module/IComponents.sol";
-import {IPolicy} from "./module/IPolicy.sol";
-import {IDistribution} from "./module/IDistribution.sol";
+import {IAccess} from "./module/IAccess.sol";
 
 import {IBundleService} from "./service/IBundleService.sol";
 import {IDistributionService} from "./service/IDistributionService.sol";
