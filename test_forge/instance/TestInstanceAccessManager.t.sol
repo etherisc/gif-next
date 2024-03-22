@@ -1148,13 +1148,13 @@ contract TestInstanceAccessManager is TestGifBase {
             IAccess.ErrorIAccessTargetTypeInvalid.selector, 
             ShortStrings.toShortString("Instance"),
             IAccess.Type.Core));
-        instanceAccessManager.setTargetLockedByInstance("Instance", true);
+        instanceAccessManager.setTargetLockedByService("Instance", true);
 
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessTargetTypeInvalid.selector, 
             ShortStrings.toShortString("Instance"),
             IAccess.Type.Core));
-        instanceAccessManager.setTargetLockedByInstance("Instance", false);
+        instanceAccessManager.setTargetLockedByService("Instance", false);
 
         vm.stopPrank();
     }
