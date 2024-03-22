@@ -248,11 +248,10 @@ contract InstanceService is
     function _grantClaimServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for claim/payout services on instance
         address claimServiceAddress = getRegistry().getServiceAddress(CLAIM(), getVersion().toMajorPart());
-        clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), claimServiceAddress);
-        // TODO add claims function authz
-        bytes4[] memory instanceClaimServiceSelectors = new bytes4[](0);
-        // instanceClaimServiceSelectors[0] = clonedInstance.updatePolicy.selector;
-        // instanceClaimServiceSelectors[1] = clonedInstance.updatePolicyState.selector;
+        clonedAccessManager.grantRole(CLAIM_SERVICE_ROLE(), claimServiceAddress);
+        bytes4[] memory instanceClaimServiceSelectors = new bytes4[](2);
+        instanceClaimServiceSelectors[0] = clonedInstance.createClaim.selector;
+        instanceClaimServiceSelectors[1] = clonedInstance.updateClaim.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceClaimServiceSelectors, 

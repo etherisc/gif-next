@@ -80,40 +80,16 @@ contract ClaimService is
 
 
     function create(
+        IInstance instance,
         NftId policyNftId, 
+        ClaimId claimId, 
         Amount claimAmount,
         bytes memory claimData
     )
         external
         virtual
-        returns (ClaimId claimId)
+        // TODO add restricted and grant to policy service
     {
-        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        InstanceReader instanceReader = instance.getInstanceReader();
-
-        // check caller(product) policy match
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        if(policyInfo.productNftId != productNftId) {
-            revert ErrorClaimServicePolicyProductMismatch(policyNftId, 
-            policyInfo.productNftId, 
-            productNftId);
-        }
-
-        // check policy is in its active period
-        if(policyInfo.activatedAt.eqz() || TimestampLib.blockTimestamp() >= policyInfo.expiredAt) {
-            revert ErrorClaimServicePolicyNotOpen(policyNftId);
-        }
-
-        // check policy including this claim is still within sum insured
-        if(policyInfo.payoutAmount.toInt() + claimAmount.toInt() > policyInfo.sumInsuredAmount) {
-            revert ErrorClaimServiceClaimExceedsSumInsured(
-                policyNftId, 
-                AmountLib.toAmount(policyInfo.sumInsuredAmount), 
-                AmountLib.toAmount(policyInfo.payoutAmount.toInt() + claimAmount.toInt()));
-        }
-
-        // create claim and save it with instance
-        claimId = ClaimIdLib.toClaimId(policyInfo.claimsCount + 1);
         instance.createClaim(
             policyNftId, 
             claimId, 
@@ -123,12 +99,6 @@ contract ClaimService is
                 0, // payoutsCount
                 claimData,
                 TimestampLib.zero())); // closedAt
-
-        // update and save policy info with instance
-        policyInfo.claimsCount += 1;
-        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
-
-        emit LogClaimServiceClaimCreated(policyNftId, claimId, claimAmount);
     }
 
 

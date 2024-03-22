@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Product} from "../../contracts/components/Product.sol";
-import {RiskId} from "../../contracts/types/RiskId.sol";
-import {StateId} from "../../contracts/types/StateId.sol";
+import {Amount} from "../../contracts/types/Amount.sol";
+import {ClaimId} from "../../contracts/types/ClaimId.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
+import {Product} from "../../contracts/components/Product.sol";
 import {ReferralId} from "../../contracts/types/Referral.sol";
+import {RiskId} from "../../contracts/types/RiskId.sol";
+import {StateId} from "../../contracts/types/StateId.sol";
 import {Timestamp, Seconds} from "../../contracts/types/Timestamp.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
@@ -145,6 +147,14 @@ contract SimpleProduct is Product {
         NftId policyNftId
     ) public {
         _close(policyNftId);
+    }
+
+    function createClaim(
+        NftId policyNftId,
+        Amount claimAmount,
+        bytes memory claimData
+    ) public returns (ClaimId) {
+        return _createClaim(policyNftId, claimAmount, claimData);
     }
 
     function doSomethingSpecial() 

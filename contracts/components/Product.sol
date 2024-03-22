@@ -3,6 +3,10 @@ pragma solidity ^0.8.19;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {Amount} from "../types/Amount.sol";
+import {ClaimId} from "../types/ClaimId.sol";
+import {Component} from "./Component.sol";
+import {Fee} from "../types/Fee.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IApplicationService} from "../instance/service/IApplicationService.sol";
 import {IPolicyService} from "../instance/service/IPolicyService.sol";
@@ -16,8 +20,6 @@ import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {Seconds} from "../types/Seconds.sol";
 import {StateId} from "../types/StateId.sol";
 import {Timestamp} from "../types/Timestamp.sol";
-import {Fee} from "../types/Fee.sol";
-import {Component} from "./Component.sol";
 
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
@@ -70,7 +72,7 @@ abstract contract Product is
 
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
-        // TODO refactor to go via registry
+        // TODO refactor to go via registry ?
         $._productService = IProductService(_getServiceAddress(PRODUCT())); 
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
@@ -86,50 +88,17 @@ abstract contract Product is
         registerInterface(type(IProductComponent).interfaceId);  
     }
 
-
-    function calculatePremium(
-        uint256 sumInsuredAmount,
-        RiskId riskId,
-        Seconds lifetime,
-        bytes memory applicationData,
-        NftId bundleNftId,
-        ReferralId referralId
-    )
-        external 
-        view 
-        override 
-        returns (uint256 premiumAmount)
-    {
-        IPolicy.Premium memory premium = _getProductStorage()._applicationService.calculatePremium(
-            getNftId(),
-            riskId,
-            sumInsuredAmount,
-            lifetime,
-            applicationData,
-            bundleNftId,
-            referralId
-        );
-        premiumAmount = premium.premiumAmount;
-    }
-
-
-    function calculateNetPremium(
-        uint256 sumInsuredAmount,
-        RiskId riskId,
-        Seconds lifetime,
-        bytes memory applicationData
+    // from product component
+    function setFees(
+        Fee memory productFee,
+        Fee memory processingFee
     )
         external
-        view
-        virtual override
-        returns (uint256 netPremiumAmount)
+        onlyOwner
+        restricted()
+        override
     {
-        // default 10% of sum insured
-        return sumInsuredAmount / 10;
-    }
-
-    function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {
-        return RiskIdLib.toRiskId(riskName);
+        _getProductService().setFees(productFee, processingFee);
     }
 
     function _createRisk(
@@ -229,7 +198,66 @@ abstract contract Product is
     )
         internal
     {
-        _getProductStorage()._policyService.close(policyNftId);
+        _getProductStorage()._policyService.close(
+            policyNftId);
+    }
+
+    function _createClaim(
+        NftId policyNftId,
+        Amount claimAmount,
+        bytes memory claimData
+    )
+        internal
+        returns(ClaimId)
+    {
+        return _getProductStorage()._policyService.createClaim(
+            policyNftId,
+            claimAmount,
+            claimData);
+    }
+
+    function calculatePremium(
+        uint256 sumInsuredAmount,
+        RiskId riskId,
+        Seconds lifetime,
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        external 
+        view 
+        override 
+        returns (uint256 premiumAmount)
+    {
+        IPolicy.Premium memory premium = _getProductStorage()._applicationService.calculatePremium(
+            getNftId(),
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        premiumAmount = premium.premiumAmount;
+    }
+
+    function calculateNetPremium(
+        uint256 sumInsuredAmount,
+        RiskId riskId,
+        Seconds lifetime,
+        bytes memory applicationData
+    )
+        external
+        view
+        virtual override
+        returns (uint256 netPremiumAmount)
+    {
+        // default 10% of sum insured
+        return sumInsuredAmount / 10;
+    }
+
+    function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {
+        return RiskIdLib.toRiskId(riskName);
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {
@@ -238,19 +266,6 @@ abstract contract Product is
 
     function getDistributionNftId() external view override returns (NftId distributionNftId) {
         return getRegistry().getNftId(address(_getProductStorage()._distribution));
-    }
-
-    // from product component
-    function setFees(
-        Fee memory productFee,
-        Fee memory processingFee
-    )
-        external
-        onlyOwner
-        restricted()
-        override
-    {
-        _getProductService().setFees(productFee, processingFee);
     }
 
     function getSetupInfo() public view returns (ISetup.ProductSetupInfo memory setupInfo) {

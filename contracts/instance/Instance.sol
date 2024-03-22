@@ -211,15 +211,15 @@ contract Instance is
 
     //--- Claim -------------------------------------------------------------//
     function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external restricted() {
-        create(toPolicyKey32(policyNftId), abi.encode(claim));
+        create(claimId.toKey32(policyNftId), abi.encode(claim));
     }
 
     function updateClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external restricted() {
-        update(toPolicyKey32(policyNftId), abi.encode(claim), newState);
+        update(claimId.toKey32(policyNftId), abi.encode(claim), newState);
     }
 
     function updateClaimState(NftId policyNftId, ClaimId claimId, StateId newState) external restricted() {
-        updateState(toPolicyKey32(policyNftId), newState);
+        updateState(claimId.toKey32(policyNftId), newState);
     }
 
     //--- Payout ------------------------------------------------------------//

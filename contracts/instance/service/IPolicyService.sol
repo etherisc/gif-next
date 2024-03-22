@@ -4,6 +4,8 @@ pragma solidity ^0.8.19;
 import {IRisk} from "../module/IRisk.sol";
 import {IService} from "../../shared/IService.sol";
 
+import {Amount} from "../../types/Amount.sol";
+import {ClaimId} from "../../types/ClaimId.sol";
 import {NftId} from "../../types/NftId.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
@@ -14,7 +16,13 @@ import {UFixed} from "../../types/UFixed.sol";
 import {Fee} from "../../types/Fee.sol";
 
 interface IPolicyService is IService {
-    
+
+    event LogPolicyServiceClaimCreated(NftId policyNftId, ClaimId claimId, Amount claimAmount);
+
+    error ErrorPolicyServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
+    error ErrorPolicyServicePolicyNotOpen(NftId policyNftId);
+    error ErrorPolicyServiceClaimExceedsSumInsured(NftId policyNftId, Amount sumInsured, Amount payoutsIncludingClaimAmount);
+
     error ErrorIPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     error ErrorIPolicyServicePremiumAlreadyPaid(NftId policyNftId, uint256 premiumPaidAmount);
     error ErrorIPolicyServicePolicyNotActivated(NftId policyNftId);
@@ -62,6 +70,14 @@ interface IPolicyService is IService {
     /// a policy can only be closed when it has been expired. in addition, it must not have any open claims
     /// this function can only be called by a product. the policy needs to match with the calling product
     function close(NftId policyNftId) external;
+
+    /// @dev create a new claim for the specified policy
+    /// function can only be called by product, policy needs to match with calling product
+    function createClaim(
+        NftId policyNftId, 
+        Amount claimAmount,
+        bytes memory claimData
+    ) external returns (ClaimId);
 
     // TODO move function to pool service
     function calculateRequiredCollateral(

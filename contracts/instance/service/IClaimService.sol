@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IInstance} from "../IInstance.sol";
 import {IRisk} from "../module/IRisk.sol";
 import {IService} from "../../shared/IService.sol";
 
@@ -21,19 +22,15 @@ interface IClaimService is
     IService
 {
 
-    event LogClaimServiceClaimCreated(NftId policyNftId, ClaimId claimId, Amount claimAmount);
-
-    error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
-    error ErrorClaimServicePolicyNotOpen(NftId policyNftId);
-    error ErrorClaimServiceClaimExceedsSumInsured(NftId policyNftId, Amount sumInsured, Amount payoutsIncludingClaimAmount);
-
     /// @dev create a new claim for the specified policy
     /// function can only be called by product, policy needs to match with calling product
     function create(
+        IInstance instance,
         NftId policyNftId, 
+        ClaimId claimId,
         Amount claimAmount,
         bytes memory claimData
-    ) external returns (ClaimId);
+    ) external;
 
     /// @dev confirms the specified claim and fixes the final claim amount
     /// function can only be called by product, policy needs to match with calling product
