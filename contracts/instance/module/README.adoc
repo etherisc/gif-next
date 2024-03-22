@@ -1,0 +1,15 @@
+= Modules
+ 
+Contains the instance module contracts. 
+
+== Contracts
+
+{{IAccess}}
+{{IBundle}}
+{{IComponents}}
+{{IDistribution}}
+{{IPolicy}}
+{{IRisk}}
+{{ISetup}}
+{{ITreasury}}
+
