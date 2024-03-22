@@ -170,17 +170,18 @@ contract UFixedTest is Test {
     }
 
     function testOpMulBig() public {
-        UFixed a = UFixed.wrap(1 * 10 ** 18);
-        UFixed d = UFixed.wrap(2 * 10 ** 18);
+        UFixed one = UFixedLib.toUFixed(1);
+        UFixed two = UFixedLib.toUFixed(2);
 
         // bigUFixed * 1 = bigUFixed
         // bigUFixed = 1 * 10 ** 31
-        UFixed bigUFixed = UFixed.wrap(1 * 10 ** 32 - 1);
-        assertTrue((bigUFixed * a) == bigUFixed);
-        assertTrue((bigUFixed.mul(a)).eq(bigUFixed));
+        // UFixed bigUFixed = UFixed.wrap(1 * 10 ** 32 - 1);
+        UFixed bigUFixed = UFixedLib.toUFixed(1, 6);
+        assertTrue((bigUFixed * one) == bigUFixed, "unexpected outcome (1)");
+        assertTrue((bigUFixed.mul(one)).eq(bigUFixed), "unexpected outcome (2)");
 
-        assertTrue((bigUFixed * d) == (bigUFixed + bigUFixed));
-        assertTrue((bigUFixed.mul(d)).eq(bigUFixed + bigUFixed));
+        assertTrue((bigUFixed * two) == (bigUFixed + bigUFixed), "unexpected outcome (3)");
+        assertTrue((bigUFixed.mul(two)).eq(bigUFixed + bigUFixed), "unexpected outcome (4)");
     }
 
     function testOpMulZero() public {

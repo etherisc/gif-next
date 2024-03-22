@@ -12,8 +12,9 @@ import {Timestamp} from "../../types/Timestamp.sol";
 
 
 interface IDistributionService is IService {
+    error ErrorDistributionServiceCallerNotRegistered(address caller);
     error ErrorIDistributionServiceParentNftIdNotInstance(NftId nftId, NftId parentNftId);
-    error ErrorIDistributionServiceNotDistribution(NftId nftId);
+    error ErrorIDistributionServiceCallerNotDistributor(address caller);
     error ErrorIDistributionServiceInvalidReferralId(ReferralId referralId);
     error ErrorIDistributionServiceMaxReferralsExceeded(uint256 maxReferrals);
     error ErrorIDistributionServiceDiscountTooLow(uint256 minDiscountPercentage, uint256 discountPercentage);

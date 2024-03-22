@@ -1,0 +1,14 @@
+= Components
+ 
+Contains the components contracts. 
+
+== Contracts
+
+{{Component}}
+{{Distribution}}
+{{IComponent}}
+{{IDistributionComponent}}
+{{IPoolComponent}}
+{{IProductComponent}}
+{{Pool}}
+{{Product}}

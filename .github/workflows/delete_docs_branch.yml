@@ -1,0 +1,26 @@
+name: Delete docs branch
+
+on:
+  delete:
+jobs:
+  delete-docs-branch:
+    if: ${{ github.actor != 'dependabot[bot]' && github.event.ref_type == 'branch' }}
+    runs-on: ubuntu-latest
+    env: 
+      CI_COMMIT_MESSAGE: Continuous Integration Build Artifacts
+      CI_COMMIT_AUTHOR: Continuous Integration
+    permissions:
+      contents: write    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: delete corresponding docs branch
+        continue-on-error: true        
+        run: |
+          echo "Branch deleted: ${{ github.event.ref }}"
+          export DOCS_BRANCH_NAME=docs/${{ github.event.ref }}
+          echo "Deleting branch $DOCS_BRANCH_NAME"
+          git config --global user.name "${{ env.CI_COMMIT_AUTHOR }}"
+          git config --global user.email "username@users.noreply.github.com"
+          git push origin --delete $DOCS_BRANCH_NAME

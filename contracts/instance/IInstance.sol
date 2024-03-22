@@ -44,7 +44,7 @@ interface IInstance is
 
     function createTarget(address target, string memory name) external;
     function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
-    function setTargetLocked(string memory targetName, bool locked) external;
+    function setTargetLocked(address target, bool locked) external;
 
     function getDistributionService() external view returns (IDistributionService);
     function getProductService() external view returns (IProductService);

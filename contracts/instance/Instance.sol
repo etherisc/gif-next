@@ -113,11 +113,11 @@ contract Instance is
         _accessManager.setTargetFunctionRole(targetName, selectors, roleId);
     }
 
-    function setTargetLocked(string memory targetName, bool locked)
+    function setTargetLocked(address target, bool locked)
         external 
         restricted // INSTANCE_OWNER_ROLE
     {
-        _accessManager.setTargetLockedByInstance(targetName, locked);
+        _accessManager.setTargetLockedByInstance(target, locked);
     }
 
     //--- ITransferInterceptor ------------------------------------------------------------//

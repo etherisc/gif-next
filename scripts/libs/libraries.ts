@@ -6,6 +6,7 @@ export type LibraryAddresses = {
     nftIdLibAddress: AddressLike;
     mathLibAddress: AddressLike;
     uFixedLibAddress: AddressLike;
+    amountLibAddress: AddressLike;
     objectTypeLibAddress: AddressLike;
     blockNumberLibAddress: AddressLike;
     versionLibAddress: AddressLike;
@@ -47,6 +48,17 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         "UFixedLib",
         owner);
     LIBRARY_ADDRESSES.set("UFixedLib", uFixedLibAddress);
+
+    const { address: amountLibAddress } = await deployContract(
+        "AmountLib",
+        owner, 
+        undefined,
+        {
+            libraries: {
+                UFixedLib: uFixedLibAddress,
+            }
+        });
+    LIBRARY_ADDRESSES.set("AmountLib", amountLibAddress);
 
     const { address: mathLibAddress } = await deployContract(
         "MathLib",
@@ -172,6 +184,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         nftIdLibAddress,
         mathLibAddress,
         uFixedLibAddress,
+        amountLibAddress,
         objectTypeLibAddress,
         blockNumberLibAddress,
         versionLibAddress,

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+// import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {NftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
@@ -13,8 +13,9 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IComponent} from "../components/IComponent.sol";
 
 interface IRegistryService is 
-     IService, 
-     IAccessManaged 
+     IService
+     // TODO cleanup
+     // IAccessManaged 
 {
      error SelfRegistration();
      error NotRegistryOwner();

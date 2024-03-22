@@ -1,0 +1,12 @@
+= Components
+ 
+Contains the instance base contracts. 
+
+== Contracts
+
+{{ComponentService}}
+{{IKeyValueStore}}
+{{ILifecycle}}
+{{KeyValueStore}}
+{{Lifecycle}}
+

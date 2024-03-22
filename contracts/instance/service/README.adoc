@@ -1,0 +1,29 @@
+= Service
+
+Contains the instance service contracts. 
+
+== Contracts
+
+{{ApplicationServiceManager}}
+{{BundleServiceManager}}
+{{ClaimServiceManager}}
+{{DistributionServiceManager}}
+{{IApplicationService}}
+{{IClaimService}}
+{{IPolicyService}}
+{{IProductService}}
+{{PolicyService}}
+{{PoolService}}
+{{ProductService}}
+{{ApplicationService}}
+{{BundleService}}
+{{ClaimService}}
+{{DistributionService}}
+{{IBundleService}}
+{{IDistributionService}}
+{{IPoolService}}
+{{PolicyServiceManager}}
+{{PoolServiceManager}}
+{{ProductServiceManager}}
+
+

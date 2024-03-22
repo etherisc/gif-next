@@ -271,37 +271,20 @@ contract InstanceAccessManager is
     }
 
     // TODO instance owner locks component instead of revoking it access to the instance...
-    function setTargetLockedByService(string memory targetName, bool locked)
+    function setTargetLockedByService(address target, bool locked)
         external 
         restricted // INSTANCE_SERVICE_ROLE
     {
-        _setTargetLocked(targetName, locked);
+        _setTargetLocked(target, locked);
     }
 
-    function setTargetLockedByInstance(string memory targetName, bool locked)
+    function setTargetLockedByInstance(address target, bool locked)
         external
         restricted // INSTANCE_ROLE
     {
-        _setTargetLocked(targetName, locked);
+        _setTargetLocked(target, locked);
     }
 
-    // IMPORTANT: instance access manager MUST be of Core type -> otherwise can be locked forever
-    function _setTargetLocked(string memory targetName, bool locked) internal
-    {
-        ShortString nameShort = ShortStrings.toShortString(targetName);
-        address target = _targetAddressForName[nameShort];
-        
-        if (target == address(0)) {
-            revert IAccess.ErrorIAccessTargetDoesNotExist(nameShort);
-        }
-
-        if(_targetInfo[target].ttype == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, _targetInfo[target].ttype);
-        }
-
-        _targetInfo[target].isLocked = locked;
-        _accessManager.setTargetClosed(target, locked);
-    }
 
     // allowed combinations of roles and targets:
     //1) set core role for core target 
@@ -328,7 +311,7 @@ contract InstanceAccessManager is
 
         // not custom target
         if(_targetInfo[target].ttype == IAccess.Type.Custom) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, IAccess.Type.Custom);
+            revert IAccess.ErrorIAccessTargetTypeInvalid(target, IAccess.Type.Custom);
         }
 
         // not custom role
@@ -359,7 +342,7 @@ contract InstanceAccessManager is
 
         // not core target
         if(_targetInfo[target].ttype == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(nameShort, IAccess.Type.Core);
+            revert IAccess.ErrorIAccessTargetTypeInvalid(target, IAccess.Type.Core);
         }
 
         // not core role
@@ -368,6 +351,11 @@ contract InstanceAccessManager is
         }
 
         _setTargetFunctionRole(target, nameShort, selectors, roleId);
+    }
+
+    function getTargetAddress(string memory targetName) public view returns(address targetAddress) {
+        ShortString nameShort = ShortStrings.toShortString(targetName);
+        return _targetAddressForName[nameShort];
     }
 
     function isTargetLocked(address target) public view returns (bool locked) {
@@ -506,6 +494,22 @@ contract InstanceAccessManager is
         }
     }
 
+    // IMPORTANT: instance access manager MUST be of Core type -> otherwise can be locked forever
+    function _setTargetLocked(address target, bool locked) internal
+    {
+        IAccess.Type targetType = _targetInfo[target].ttype;
+        if(target == address(0) || targetType == IAccess.Type.NotInitialized) {
+            revert IAccess.ErrorIAccessTargetDoesNotExist(target);
+        }
+
+        if(targetType == IAccess.Type.Core) {
+            revert IAccess.ErrorIAccessTargetTypeInvalid(target, targetType);
+        }
+
+        _targetInfo[target].isLocked = locked;
+        _accessManager.setTargetClosed(target, locked);
+    }
+
     function _setTargetFunctionRole(
         address target,
         ShortString name,
@@ -515,7 +519,7 @@ contract InstanceAccessManager is
         internal
     {
         if (target == address(0)) {
-            revert IAccess.ErrorIAccessTargetDoesNotExist(name);
+            revert IAccess.ErrorIAccessTargetDoesNotExist(target);
         }
 
         if (!roleExists(roleId)) {

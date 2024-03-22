@@ -1,0 +1,23 @@
+= Shared
+
+Contains the shared contracts. 
+
+== Contracts
+
+{{ContractDeployerLib}}
+{{ERC165}}
+{{INftOwnable}}
+{{IPolicyHolder}}
+{{IRegisterable}}
+{{IRegistryLinked}}
+{{IService}}
+{{IVersionable}}
+{{NftOwnable}}
+{{PolicyHolder}}
+{{ProxyManager}}
+{{Registerable}}
+{{RegistryLinked}}
+{{Service}}
+{{TokenHandler}}
+{{UpgradableProxyWithAdmin}}
+{{Versionable}}

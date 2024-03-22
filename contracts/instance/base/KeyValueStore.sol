@@ -5,7 +5,7 @@ import {Blocknumber, blockBlocknumber, zeroBlocknumber} from "../../types/Blockn
 import {Key32, KeyId, Key32Lib} from "../../types/Key32.sol";
 import {NftId} from "../../types/NftId.sol";
 import {ObjectType} from "../../types/ObjectType.sol";
-import {StateId, ACTIVE} from "../../types/StateId.sol";
+import {StateId, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
 import {Timestamp, TimestampLib} from "../../types/Timestamp.sol";
 
 import {Lifecycle} from "./Lifecycle.sol";
@@ -79,10 +79,15 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
         // update data
         _value[key32].data = data;
 
-        // update metadata (and state)
+        // update state 
+        if(state != KEEP_STATE()) {
+            metadata.state = state;
+        }
+
+        // update reest of metadata
         address updatedBy = msg.sender;
         Blocknumber lastUpdatedIn = metadata.updatedIn;
-        metadata.state = state;
+
         metadata.updatedBy = updatedBy;
         metadata.updatedIn = blockBlocknumber();
 

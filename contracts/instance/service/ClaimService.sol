@@ -64,12 +64,12 @@ contract ClaimService is
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, owner);
+        initializeService(registryAddress, address(0), owner);
         registerInterface(type(IClaimService).interfaceId);
     }
 
 
-    function getDomain() public pure override(IService, Service) returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return CLAIM();
     }
 
@@ -145,7 +145,7 @@ contract ClaimService is
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
-        (productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (, productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
 }

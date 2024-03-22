@@ -386,6 +386,18 @@ contract TestGifBase is Test {
         console.log("distributionService nft id", distributionService.getNftId().toInt());
         // solhint-enable
 
+        // --- bundle service ---------------------------------//
+        bundleServiceManager = new BundleServiceManager(address(registry));
+        bundleService = bundleServiceManager.getBundleService();
+        releaseManager.registerService(bundleService);
+        bundleServiceNftId = registry.getNftId(address(bundleService));
+
+        // solhint-disable
+        console.log("bundleService domain", bundleService.getDomain().toInt());
+        console.log("bundleService deployed at", address(bundleService));
+        console.log("bundleService nft id", bundleService.getNftId().toInt());
+        // solhint-enable
+
         // --- pool service ---------------------------------//
         poolServiceManager = new PoolServiceManager(address(registry));
         poolService = poolServiceManager.getPoolService();
@@ -408,18 +420,6 @@ contract TestGifBase is Test {
         console.log("productService domain", productService.getDomain().toInt());
         console.log("productService deployed at", address(productService));
         console.log("productService nft id", productService.getNftId().toInt());
-        // solhint-enable
-
-        // --- bundle service ---------------------------------//
-        bundleServiceManager = new BundleServiceManager(address(registry));
-        bundleService = bundleServiceManager.getBundleService();
-        releaseManager.registerService(bundleService);
-        bundleServiceNftId = registry.getNftId(address(bundleService));
-
-        // solhint-disable
-        console.log("bundleService domain", bundleService.getDomain().toInt());
-        console.log("bundleService deployed at", address(bundleService));
-        console.log("bundleService nft id", bundleService.getNftId().toInt());
         // solhint-enable
 
         // MUST follow bundle service registration 

@@ -60,9 +60,9 @@ contract ProductService is ComponentService, IProductService {
         address initialOwner;
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, owner);
+        initializeService(registryAddress, address(0), owner);
 
-        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getMajorVersion()));
+        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
 
         registerInterface(type(IProductService).interfaceId);
     }
@@ -129,7 +129,7 @@ contract ProductService is ComponentService, IProductService {
             roles);
     }
 
-    function getDomain() public pure override(IService, Service) returns(ObjectType) {
+    function getDomain() public pure override returns(ObjectType) {
         return PRODUCT();
     }
 
@@ -147,38 +147,6 @@ contract ProductService is ComponentService, IProductService {
         // if(wallet == address(0)) {
         //     revert WalletIsZero();
         // }
-
-        // IRegistry.ObjectInfo memory tokenInfo = getRegistry().getObjectInfo(address(info.token));
-
-        // if(tokenInfo.objectType != TOKEN()) {
-        //     revert InvalidToken();
-        // } 
-
-        // IRegistry.ObjectInfo memory poolInfo = getRegistry().getObjectInfo(info.poolNftId);
-
-        // if(poolInfo.objectType != POOL()) {
-        //     revert InvalidPool();
-        // }
-
-        // if(poolInfo.parentNftId != instanceNftId) {
-        //     revert InvalidPoolsInstance();
-        // }
-        // // TODO pool have the same token
-        // //ITreasury.PoolSetup memory poolSetup = instance.getPoolSetup(info.poolNftId);
-        // //require(tokenInfo.objectAddress == address(poolSetup.token), "ERROR:COS-018:PRODUCT_POOL_TOKEN_MISMATCH");
-        // // TODO pool is not linked
-
-        // IRegistry.ObjectInfo memory distributionInfo = getRegistry().getObjectInfo(info.distributionNftId);
-
-        // if(distributionInfo.objectType != DISTRIBUTION()) {
-        //     revert  InvalidDistribution();
-        // } 
-
-        // if(distributionInfo.parentNftId != instanceNftId) {
-        //     revert InvalidDistributionsInstance();
-        // }
-        // // TODO distribution have the same token
-        // // TODO distribution is not linked
     }
 
     function setFees(
@@ -189,13 +157,9 @@ contract ProductService is ComponentService, IProductService {
     {
         // TODO check args 
 
-        (
-            IRegistry.ObjectInfo memory productInfo, 
-            IInstance instance
-        ) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-
+        (NftId productNftId, IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
-        NftId productNftId = productInfo.nftId;
+
         ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
 
         productSetupInfo.productFee = productFee;
@@ -207,12 +171,11 @@ contract ProductService is ComponentService, IProductService {
     function createRisk(
         RiskId riskId,
         bytes memory data
-    ) external override {
-        (
-            IRegistry.ObjectInfo memory productInfo, 
-            IInstance instance
-        ) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        NftId productNftId = productInfo.nftId;
+    )
+        external 
+        override
+    {
+        (NftId productNftId, IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo(productNftId, data);
         instance.getInstanceStore().createRisk(
             riskId,
@@ -223,9 +186,12 @@ contract ProductService is ComponentService, IProductService {
     function updateRisk(
         RiskId riskId,
         bytes memory data
-    ) external {
-        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+    )
+        external
+    {
+        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
+
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
         riskInfo.data = data;
         instance.getInstanceStore().updateRisk(riskId, riskInfo, KEEP_STATE());
@@ -234,8 +200,10 @@ contract ProductService is ComponentService, IProductService {
     function updateRiskState(
         RiskId riskId,
         StateId state
-    ) external {
-        (, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+    ) 
+        external 
+    {
+        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         instance.getInstanceStore().updateRiskState(riskId, state);
     }
 }
