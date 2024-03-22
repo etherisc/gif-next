@@ -1,0 +1,26 @@
+= Types
+
+Contains the types contracts. 
+
+== Contracts
+
+{{AddressSet}}
+{{Blocknumber}}
+{{ChainId}}
+{{ClaimId}}
+{{DistributorType}}
+{{Fee}}
+{{Key32}}
+{{NftIdSet}}
+{{NftId}}
+{{NumberId}}
+{{ObjectType}}
+{{PayoutId}}
+{{Referral}}
+{{RiskId}}
+{{RoleId}}
+{{Seconds}}
+{{StateId}}
+{{Timestamp}}
+{{UFixed}}
+{{Version}}
