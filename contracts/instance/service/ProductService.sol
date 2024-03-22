@@ -111,7 +111,7 @@ contract ProductService is ComponentService, IProductService {
         product.linkToRegisteredNftId();
 
         // create product setup in instance
-        instance.createProductSetup(productNftId, product.getSetupInfo());
+        instance.getInstanceStore().createProductSetup(productNftId, product.getSetupInfo());
 
         bytes4[][] memory selectors = new bytes4[][](1);
         selectors[0] = new bytes4[](1);
@@ -165,7 +165,7 @@ contract ProductService is ComponentService, IProductService {
         productSetupInfo.productFee = productFee;
         productSetupInfo.processingFee = processingFee;
         
-        instance.updateProductSetup(productNftId, productSetupInfo, KEEP_STATE());
+        instance.getInstanceStore().updateProductSetup(productNftId, productSetupInfo, KEEP_STATE());
     }
 
     function createRisk(
@@ -177,8 +177,7 @@ contract ProductService is ComponentService, IProductService {
     {
         (NftId productNftId, IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo(productNftId, data);
-
-        instance.createRisk(
+        instance.getInstanceStore().createRisk(
             riskId,
             riskInfo
         );
@@ -195,16 +194,16 @@ contract ProductService is ComponentService, IProductService {
 
         IRisk.RiskInfo memory riskInfo = instanceReader.getRiskInfo(riskId);
         riskInfo.data = data;
-        instance.updateRisk(riskId, riskInfo, KEEP_STATE());
+        instance.getInstanceStore().updateRisk(riskId, riskInfo, KEEP_STATE());
     }
 
     function updateRiskState(
         RiskId riskId,
         StateId state
-    )
-        external
+    ) 
+        external 
     {
         (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        instance.updateRiskState(riskId, state);
+        instance.getInstanceStore().updateRiskState(riskId, state);
     }
 }

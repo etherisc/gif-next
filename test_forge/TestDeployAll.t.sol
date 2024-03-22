@@ -51,10 +51,10 @@ contract TestDeployAll is TestGifBase {
 
 
     function testDeployAllInstanceLifecycles() public {
-        assertTrue(instance.hasLifecycle(BUNDLE()), "instance misses bundle lifecycle");
-        assertTrue(instance.hasLifecycle(COMPONENT()), "instance misses component lifecycle");
-        assertTrue(instance.hasLifecycle(POLICY()), "instance misses policy lifecycle");
-        assertTrue(instance.hasLifecycle(RISK()), "instance misses risk lifecycle");
+        assertTrue(instance.getInstanceStore().hasLifecycle(BUNDLE()), "instance misses bundle lifecycle");
+        assertTrue(instance.getInstanceStore().hasLifecycle(COMPONENT()), "instance misses component lifecycle");
+        assertTrue(instance.getInstanceStore().hasLifecycle(POLICY()), "instance misses policy lifecycle");
+        assertTrue(instance.getInstanceStore().hasLifecycle(RISK()), "instance misses risk lifecycle");
     }
 
 
