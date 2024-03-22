@@ -77,6 +77,28 @@ contract Instance is
         (roleId, admin) = _accessManager.createRole(roleName, adminName);
     }
 
+    function grantRole(RoleId roleId, address account) 
+        external 
+        restricted // INSTANCE_OWNER_ROLE
+    {
+        _accessManager.grantRole(roleId, account);
+    }
+
+    function revokeRole(RoleId roleId, address account) 
+        external 
+        restricted // INSTANCE_OWNER_ROLE
+    {
+        _accessManager.revokeRole(roleId, account);
+    }
+
+    function hasRole(RoleId roleId, address account) 
+        external 
+        view 
+        returns (bool)
+    {
+        return _accessManager.hasRole(roleId, account);
+    }
+
     function createTarget(address target, string memory name) 
         external 
         restricted // INSTANCE_OWNER_ROLE

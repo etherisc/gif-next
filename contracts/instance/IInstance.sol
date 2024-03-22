@@ -44,6 +44,9 @@ interface IInstance is
     IAccessManaged
 {
     function createRole(string memory roleName, string memory adminName) external returns (RoleId roleId, RoleId admin);
+    function grantRole(RoleId roleId, address account) external;
+    function revokeRole(RoleId roleId, address account) external;
+
     function createTarget(address target, string memory name) external;
     function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
     function setTargetLocked(string memory targetName, bool locked) external;
