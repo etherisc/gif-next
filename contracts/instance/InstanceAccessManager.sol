@@ -73,7 +73,7 @@ contract InstanceAccessManager is
         _createRole(ADMIN_ROLE(), ADMIN_ROLE_NAME, IAccess.Type.Core);
         _createRole(PUBLIC_ROLE(), PUBLIC_ROLE_NAME, IAccess.Type.Core);
         _createRole(INSTANCE_ROLE(), INSTANCE_ROLE_NAME, IAccess.Type.Core);
-        _createRole(INSTANCE_OWNER_ROLE(), INSTANCE_OWNER_ROLE_NAME, IAccess.Type.Gif);
+        _createRole(INSTANCE_OWNER_ROLE(), INSTANCE_OWNER_ROLE_NAME, IAccess.Type.Gif);// TODO should be of core type
 
         // assume `this` is already a member of ADMIN_ROLE
         EnumerableSet.add(_roleMembers[ADMIN_ROLE()], address(this));
@@ -142,6 +142,7 @@ contract InstanceAccessManager is
         _roleInfo[roleId].admin = admin;      
     }
 
+    // TODO core role can be granted only to 1 member
     function grantRole(RoleId roleId, address member) 
         public
         restrictedToRoleAdmin(roleId) 
@@ -226,7 +227,7 @@ contract InstanceAccessManager is
         return _roleIds[idx];
     }
 
-    // TODO now: for non existent name returns ADMIN_ROLE id
+    // TODO returns ADMIN_ROLE id for non existent name
     function getRoleIdForName(string memory name) external view returns (RoleId roleId) {
         return _roleIdForName[ShortStrings.toShortString(name)];
     }
@@ -250,7 +251,7 @@ contract InstanceAccessManager is
         _createTarget(target, name, IAccess.Type.Core);
     }
     // INSTANCE_SERVICE_ROLE
-    // assume gif target is registered and belongs to the same instance as instance access manager
+    // TODO check for instance mismatch?
     function createGifTarget(address target, string memory name) external restricted() 
     {
         if(!_registry.isRegistered(target)) {
@@ -269,25 +270,21 @@ contract InstanceAccessManager is
         _createTarget(target, name, IAccess.Type.Custom);
     }
 
-    // INSTANCE_SERVICE_ROLE
-    // IMPORTANT: instance access manager MUST be of Core type -> otherwise will be locked forever
-    function setTargetLocked(address target, bool locked) 
+    // TODO instance owner locks component instead of revoking it access to the instance...
+    function setTargetLockedByService(address target, bool locked)
         external 
-        restricted() 
+        restricted // INSTANCE_SERVICE_ROLE
     {
-        IAccess.Type targetType = _targetInfo[target].ttype;
-        if(target == address(0) || targetType == IAccess.Type.NotInitialized) {
-            revert IAccess.ErrorIAccessTargetDoesNotExist(target);
-        }
-
-        if(targetType == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(target, targetType);
-        }
-
-        // TODO isLocked is redundant but makes getTargetInfo() faster
-        _targetInfo[target].isLocked = locked;
-        _accessManager.setTargetClosed(target, locked);
+        _setTargetLocked(target, locked);
     }
+
+    function setTargetLockedByInstance(address target, bool locked)
+        external
+        restricted // INSTANCE_ROLE
+    {
+        _setTargetLocked(target, locked);
+    }
+
 
     // allowed combinations of roles and targets:
     //1) set core role for core target 
@@ -362,7 +359,7 @@ contract InstanceAccessManager is
     }
 
     function isTargetLocked(address target) public view returns (bool locked) {
-        return _accessManager.isTargetClosed(target);
+        return _targetInfo[target].isLocked;
     }
 
     function targetExists(address target) public view returns (bool exists) {
@@ -495,6 +492,22 @@ contract InstanceAccessManager is
         if (ShortStrings.byteLength(name) == 0) {
             revert IAccess.ErrorIAccessTargetNameEmpty(target);
         }
+    }
+
+    // IMPORTANT: instance access manager MUST be of Core type -> otherwise can be locked forever
+    function _setTargetLocked(address target, bool locked) internal
+    {
+        IAccess.Type targetType = _targetInfo[target].ttype;
+        if(target == address(0) || targetType == IAccess.Type.NotInitialized) {
+            revert IAccess.ErrorIAccessTargetDoesNotExist(target);
+        }
+
+        if(targetType == IAccess.Type.Core) {
+            revert IAccess.ErrorIAccessTargetTypeInvalid(target, targetType);
+        }
+
+        _targetInfo[target].isLocked = locked;
+        _accessManager.setTargetClosed(target, locked);
     }
 
     function _setTargetFunctionRole(

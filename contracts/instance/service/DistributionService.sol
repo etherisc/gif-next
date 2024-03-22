@@ -33,6 +33,7 @@ import {ReferralId, ReferralStatus, ReferralLib} from "../../types/Referral.sol"
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {Key32} from "../../types/Key32.sol";
 import {IDistribution} from "../module/IDistribution.sol";
+import {InstanceStore} from "../InstanceStore.sol";
 
 
 contract DistributionService is
@@ -87,7 +88,7 @@ contract DistributionService is
         distribution.linkToRegisteredNftId();
         distributionNftId = distributionInfo.nftId;
 
-        instance.createDistributionSetup(distributionNftId, distribution.getSetupInfo());
+        instance.getInstanceStore().createDistributionSetup(distributionNftId, distribution.getSetupInfo());
         // TODO move to distribution?
         bytes4[][] memory selectors = new bytes4[][](2);
         selectors[0] = new bytes4[](1);
@@ -126,7 +127,7 @@ contract DistributionService is
         distSetupInfo.minDistributionOwnerFee = minDistributionOwnerFee;
         distSetupInfo.distributionFee = distributionFee;
         
-        instance.updateDistributionSetup(distributionNftId, distSetupInfo, KEEP_STATE());
+        instance.getInstanceStore().updateDistributionSetup(distributionNftId, distSetupInfo, KEEP_STATE());
     }
 
     function createDistributorType(
@@ -153,11 +154,11 @@ contract DistributionService is
                 revert ErrorIDistributionServiceMaxDiscountTooHigh(maxDiscountPercentage.toInt(), maxDiscountPercentageLimit.toInt());
             }
         }
-        
+
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
         Key32 key32 = distributorType.toKey32();
 
-        if(!instance.exists(key32)) {
+        if(!instance.getInstanceStore().exists(key32)) {
             IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
                 name,
                 minDiscountPercentage,
@@ -169,7 +170,7 @@ contract DistributionService is
                 allowRenewals,
                 data);
 
-            instance.createDistributorType(key32, info);
+            instance.getInstanceStore().createDistributorType(key32, info);
         }
     }
 
@@ -199,7 +200,7 @@ contract DistributionService is
             0,
             0);
 
-        instance.createDistributor(distributorNftId, info);
+        instance.getInstanceStore().createDistributor(distributorNftId, info);
     }
 
     function updateDistributorType(
@@ -213,7 +214,7 @@ contract DistributionService is
         IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
         distributorInfo.distributorType = distributorType;
         distributorInfo.data = data;
-        instance.updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
+        instance.getInstanceStore().updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
     }
 
 
@@ -267,7 +268,7 @@ contract DistributionService is
             data
         );
 
-        instance.createReferral(referralId.toKey32(), info);
+        instance.getInstanceStore().createReferral(referralId.toKey32(), info);
         return referralId;
     }
 
@@ -289,6 +290,7 @@ contract DistributionService is
 
         IInstance instance = _getInstanceForDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
+        InstanceStore store = instance.getInstanceStore();
         IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
         IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
         ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
@@ -303,17 +305,17 @@ contract DistributionService is
 
         if (distributionOwnerFee > 0) {
             setupInfo.sumDistributionOwnerFees += distributionOwnerFee;
-            instance.updateDistributionSetup(distributionNftId, setupInfo, KEEP_STATE());
+            store.updateDistributionSetup(distributionNftId, setupInfo, KEEP_STATE());
         }
 
         if (isReferral) {
             referralInfo.usedReferrals += 1;
-            instance.updateReferral(referralId.toKey32(), referralInfo, KEEP_STATE());
+            store.updateReferral(referralId.toKey32(), referralInfo, KEEP_STATE());
 
             if (commissionAmount > 0) {
                 distributorInfo.sumCommisions += commissionAmount;
                 distributorInfo.numPoliciesSold += 1;
-                instance.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
+                store.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
             }
         }
     }

@@ -135,7 +135,7 @@ contract ApplicationService is
             zeroTimestamp()
         );
         
-        instance.createApplication(applicationNftId, policyInfo);
+        instance.getInstanceStore().createApplication(applicationNftId, policyInfo);
 
         // TODO: add logging
     }
@@ -173,7 +173,7 @@ contract ApplicationService is
         virtual override
     {
         (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        instance.updateApplicationState(applicationNftId, REVOKED());
+        instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
     }
 
     // TODO: maybe move this to a pricing service later

@@ -162,7 +162,7 @@ contract PolicyService is
         }
 
         // store updated policy info
-        instance.updatePolicy(applicationNftId, applicationInfo, newPolicyState);
+        instance.getInstanceStore().updatePolicy(applicationNftId, applicationInfo, newPolicyState);
 
         // lock collateral and update pool and bundle book keeping
         // pool retention level: fraction of sum insured that product will cover from pool funds directly
@@ -206,7 +206,7 @@ contract PolicyService is
         policyInfo.premiumPaidAmount += unpaidPremiumAmount;
 
         _bundleService.increaseBalance(instance, policyInfo.bundleNftId, netPremiumAmount);
-        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         if(activateAt.gtz() && policyInfo.activatedAt.eqz()) {
             activate(policyNftId, activateAt);
@@ -229,7 +229,7 @@ contract PolicyService is
         policyInfo.activatedAt = activateAt;
         policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-        instance.updatePolicy(policyNftId, policyInfo, ACTIVE());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, ACTIVE());
 
         // TODO: add logging
     }
@@ -288,7 +288,7 @@ contract PolicyService is
             policyNftId, 
             policyInfo);
 
-        instance.updatePolicy(policyNftId, policyInfo, CLOSED());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
     }
 
     function _getPoolNftId(
@@ -316,11 +316,12 @@ contract PolicyService is
         // process token transfer(s)
         if(premiumAmount > 0) {
             NftId productNftId = getRegistry().getObjectInfo(policyNftId).parentNftId;
-            ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
-            IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
+            InstanceReader reader = instance.getInstanceReader();
+            ISetup.ProductSetupInfo memory productSetupInfo = reader.getProductSetupInfo(productNftId);
+            IPolicy.PolicyInfo memory policyInfo = reader.getPolicyInfo(policyNftId);
             TokenHandler tokenHandler = productSetupInfo.tokenHandler;
             address policyOwner = getRegistry().ownerOf(policyNftId);
-            address poolWallet = instance.getInstanceReader().getComponentInfo(productSetupInfo.poolNftId).wallet;
+            address poolWallet = reader.getComponentInfo(productSetupInfo.poolNftId).wallet;
             IPolicy.Premium memory premium = _applicationService.calculatePremium(
                 productNftId,
                 policyInfo.riskId,
