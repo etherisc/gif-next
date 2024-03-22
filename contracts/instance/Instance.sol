@@ -6,7 +6,7 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
 import {NftId} from "../types/NftId.sol";
 import {ClaimId} from "../types/ClaimId.sol";
-import {NumberId} from "../types/NumberId.sol";
+import {PayoutId} from "../types/PayoutId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../types/ObjectType.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {RoleId, RoleIdLib, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
@@ -223,15 +223,15 @@ contract Instance is
     }
 
     //--- Payout ------------------------------------------------------------//
-    function createPayout(NftId policyNftId, NumberId payoutId, IPolicy.PayoutInfo memory payout) external restricted() {
+    function createPayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout) external restricted() {
         create(toPolicyKey32(policyNftId), abi.encode(payout));
     }
 
-    function updatePayout(NftId policyNftId, NumberId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
+    function updatePayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
         update(toPolicyKey32(policyNftId), abi.encode(payout), newState);
     }
 
-    function updatePayoutState(NftId policyNftId, StateId newState) external restricted() {
+    function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
         updateState(toPolicyKey32(policyNftId), newState);
     }
 

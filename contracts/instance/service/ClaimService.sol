@@ -22,6 +22,7 @@ import {TokenHandler} from "../../shared/TokenHandler.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
+import {Amount, AmountLib} from "../../types/Amount.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
@@ -32,8 +33,8 @@ import {Fee, FeeLib} from "../../types/Fee.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
 import {StateId} from "../../types/StateId.sol";
-import {ClaimId} from "../../types/ClaimId.sol";
-import {PayoutId} from "../../types/PayoutId.sol";
+import {ClaimId, ClaimIdLib} from "../../types/ClaimId.sol";
+import {PayoutId, PayoutIdLib} from "../../types/PayoutId.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 
 import {ComponentService} from "../base/ComponentService.sol";
@@ -50,6 +51,7 @@ contract ClaimService is
     IClaimService
 {
 
+    IPoolService internal _poolService;
 
     function _initialize(
         address owner, 
@@ -65,6 +67,9 @@ contract ClaimService is
         (registryAddress, initialOwner) = abi.decode(data, (address, address));
 
         initializeService(registryAddress, address(0), owner);
+
+        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
+
         registerInterface(type(IClaimService).interfaceId);
     }
 
@@ -74,20 +79,60 @@ contract ClaimService is
     }
 
 
-    function createClaim(
+    function create(
         NftId policyNftId, 
-        uint256 claimAmount,
+        Amount claimAmount,
         bytes memory claimData
     )
         external
         virtual
-        returns (ClaimId)
+        returns (ClaimId claimId)
     {
+        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        InstanceReader instanceReader = instance.getInstanceReader();
 
+        // check caller(product) policy match
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        if(policyInfo.productNftId != productNftId) {
+            revert ErrorClaimServicePolicyProductMismatch(policyNftId, 
+            policyInfo.productNftId, 
+            productNftId);
+        }
+
+        // check policy is in its active period
+        if(policyInfo.activatedAt.eqz() || TimestampLib.blockTimestamp() >= policyInfo.expiredAt) {
+            revert ErrorClaimServicePolicyNotOpen(policyNftId);
+        }
+
+        // check policy including this claim is still within sum insured
+        if(policyInfo.payoutAmount.toInt() + claimAmount.toInt() > policyInfo.sumInsuredAmount) {
+            revert ErrorClaimServiceClaimExceedsSumInsured(
+                policyNftId, 
+                AmountLib.toAmount(policyInfo.sumInsuredAmount), 
+                AmountLib.toAmount(policyInfo.payoutAmount.toInt() + claimAmount.toInt()));
+        }
+
+        // create claim and save it with instance
+        claimId = ClaimIdLib.toClaimId(policyInfo.claimsCount + 1);
+        instance.createClaim(
+            policyNftId, 
+            claimId, 
+            IPolicy.ClaimInfo(
+                claimAmount,
+                AmountLib.zero(), // paidAmount
+                0, // payoutsCount
+                claimData,
+                TimestampLib.zero())); // closedAt
+
+        // update and save policy info with instance
+        policyInfo.claimsCount += 1;
+        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogClaimServiceClaimCreated(policyNftId, claimId, claimAmount);
     }
 
 
-    function confirmClaim(NftId policyNftId, ClaimId claimId, uint256 claimAmount)
+    function confirm(NftId policyNftId, ClaimId claimId, Amount claimAmount)
         external
         virtual
         // solhint-disable-next-line no-empty-blocks
@@ -96,7 +141,7 @@ contract ClaimService is
     }
 
 
-    function declineClaim(NftId policyNftId, ClaimId claimId)
+    function decline(NftId policyNftId, ClaimId claimId)
         external
         virtual
         // solhint-disable-next-line no-empty-blocks
@@ -105,7 +150,7 @@ contract ClaimService is
     }
 
 
-    function closeClaim(NftId policyNftId, ClaimId claimId)
+    function close(NftId policyNftId, ClaimId claimId)
         external
         virtual
         // solhint-disable-next-line no-empty-blocks
@@ -117,7 +162,7 @@ contract ClaimService is
     function createPayout(
         NftId policyNftId, 
         ClaimId claimId,
-        uint256 payoutAmount,
+        Amount payoutAmount,
         bytes calldata payoutData
     )
         external

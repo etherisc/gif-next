@@ -23,6 +23,7 @@ import {TokenHandler} from "../../shared/TokenHandler.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
+import {AmountLib} from "../../types/Amount.sol";
 import {Seconds} from "../../types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
@@ -129,7 +130,7 @@ contract ApplicationService is
             "",
             0,
             0,
-            0,
+            AmountLib.zero(),
             zeroTimestamp(),
             zeroTimestamp(),
             zeroTimestamp()

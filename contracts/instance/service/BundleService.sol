@@ -385,7 +385,7 @@ contract BundleService is
 
         // ensure policy is closeable
         if ( TimestampLib.blockTimestamp() < policyInfo.expiredAt
-            && policyInfo.payoutAmount < policyInfo.sumInsuredAmount)
+            && policyInfo.payoutAmount.toInt() < policyInfo.sumInsuredAmount)
         {
             revert BundleManager.ErrorBundleManagerPolicyNotCloseable(policyNftId);
         }

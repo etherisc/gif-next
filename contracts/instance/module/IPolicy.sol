@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount} from "../../types/Amount.sol";
 import {NftId} from "../../types/NftId.sol";
 import {ClaimId} from "../../types/ClaimId.sol";
 import {ReferralId} from "../../types/Referral.sol";
@@ -48,7 +49,7 @@ interface IPolicy {
         bytes policyData;
         uint16 claimsCount;
         uint16 openClaimsCount;
-        uint256 payoutAmount;
+        Amount payoutAmount;
         Timestamp activatedAt; // time of underwriting
         Timestamp expiredAt; // no new claims (activatedAt + lifetime)
         Timestamp closedAt; // no locked capital (or declinedAt)
@@ -56,16 +57,17 @@ interface IPolicy {
 
     // claimId neeeds to be encoded policyNftId:claimId combination
     struct ClaimInfo {
-        uint256 claimAmount;
-        uint256 paidAmount;
+        Amount claimAmount;
+        Amount paidAmount;
+        uint8 payoutsCount;
         bytes data;
-        Timestamp closedAt; // payoment of confirmed claim amount (or declinedAt)
+        Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
     }
 
     // claimId neeeds to be encoded policyNftId:claimId combination
     struct PayoutInfo {
         ClaimId claimId;
-        uint256 amount;
+        Amount amount;
         bytes data;
         Timestamp paidAt; // payoment of confirmed claim amount (or declinedAt)
     }

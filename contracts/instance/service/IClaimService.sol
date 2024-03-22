@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {IRisk} from "../module/IRisk.sol";
 import {IService} from "../../shared/IService.sol";
 
+import {Amount} from "../../types/Amount.sol";
 import {ClaimId} from "../../types/ClaimId.sol";
 import {PayoutId} from "../../types/PayoutId.sol";
 import {NftId} from "../../types/NftId.sol";
@@ -20,33 +21,39 @@ interface IClaimService is
     IService
 {
 
+    event LogClaimServiceClaimCreated(NftId policyNftId, ClaimId claimId, Amount claimAmount);
+
+    error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
+    error ErrorClaimServicePolicyNotOpen(NftId policyNftId);
+    error ErrorClaimServiceClaimExceedsSumInsured(NftId policyNftId, Amount sumInsured, Amount payoutsIncludingClaimAmount);
+
     /// @dev create a new claim for the specified policy
     /// function can only be called by product, policy needs to match with calling product
-    function createClaim(
+    function create(
         NftId policyNftId, 
-        uint256 claimAmount,
+        Amount claimAmount,
         bytes memory claimData
     ) external returns (ClaimId);
 
     /// @dev confirms the specified claim and fixes the final claim amount
     /// function can only be called by product, policy needs to match with calling product
-    function confirmClaim(NftId policyNftId, ClaimId claimId, uint256 claimAmount) external;
+    function confirm(NftId policyNftId, ClaimId claimId, Amount claimAmount) external;
 
     /// @dev declares the claim as invalid, no payout(s) will be made
     /// function can only be called by product, policy needs to match with calling product
-    function declineClaim(NftId policyNftId, ClaimId claimId) external;
+    function decline(NftId policyNftId, ClaimId claimId) external;
 
     /// @dev closes the claim
     /// a claim may only be closed once all existing payouts have been executed and the sum of the paid out amounts has reached the claim amount
     /// function can only be called by product, policy needs to match with calling product
-    function closeClaim(NftId policyNftId, ClaimId claimId) external; 
+    function close(NftId policyNftId, ClaimId claimId) external; 
 
     /// @dev create a new payout for the specified policy and claim
     /// function can only be called by product, policy needs to match with calling product
     function createPayout(
         NftId policyNftId, 
         ClaimId claimId,
-        uint256 payoutAmount,
+        Amount payoutAmount,
         bytes calldata payoutData
     ) external returns (PayoutId payoutId);
 

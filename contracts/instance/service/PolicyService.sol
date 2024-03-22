@@ -277,7 +277,7 @@ contract PolicyService is
             revert ErrorIPolicyServiceOpenClaims(policyNftId, policyInfo.openClaimsCount);
         }
 
-        if (TimestampLib.blockTimestamp().lte(policyInfo.expiredAt) && (policyInfo.payoutAmount < policyInfo.sumInsuredAmount)) {
+        if (TimestampLib.blockTimestamp().lte(policyInfo.expiredAt) && (policyInfo.payoutAmount.toInt() < policyInfo.sumInsuredAmount)) {
             revert ErrorIPolicyServicePolicyHasNotExpired(policyNftId, policyInfo.expiredAt);
         }
 

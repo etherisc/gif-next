@@ -3,6 +3,8 @@ pragma solidity ^0.8.20;
 
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
+import {ClaimId} from "../types/ClaimId.sol";
+import {PayoutId} from "../types/PayoutId.sol";
 import {NftId} from "../types/NftId.sol";
 import {StateId} from "../types/StateId.sol";
 import {RiskId} from "../types/RiskId.sol";
@@ -86,8 +88,13 @@ interface IInstance is
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
     function updatePolicyState(NftId policyNftId, StateId newState) external;
 
-    // TODO add claims/payouts function to instance
-    // function updateClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
+    function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external;
+    function updateClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external;
+    function updateClaimState(NftId policyNftId, ClaimId claimId, StateId newState) external;
+
+    function createPayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory claim) external;
+    function updatePayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory claim, StateId newState) external;
+    function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external;
 
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
