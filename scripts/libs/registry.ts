@@ -58,7 +58,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 TimestampLib: libraries.timestampLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
-                VersionLib: libraries.versionPartLibAddress,
+                VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress
             }
         });
@@ -109,13 +109,15 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     await releaseManager.createNextRelease();
 
+    logger.info(`>>>>>> (1)`);
     const rcptReg = await executeTx(async () => await releaseManager.registerRegistryService(registryService));
+    logger.info(`>>>>>> (2)`);
     const logReleaseCreationInfo = getFieldFromTxRcptLogs(rcptReg!, registry.interface, "LogRegistration", "nftId");
 
     await registryServiceManager.linkOwnershipToServiceNft();
     const registryServiceNftId = (logReleaseCreationInfo as unknown);
 
-    logger.info(`RegistryAccessManager deployed at ${registryAccessManager}`);
+    logger.info(`RegistryAccessManager deployeqd at ${registryAccessManager}`);
     logger.info(`ReleaseManager deployed at ${releaseManager}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);

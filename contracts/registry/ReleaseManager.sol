@@ -6,7 +6,7 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {NftId} from "../types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE} from "../types/ObjectType.sol";
-import {VersionPart, VersionPartLib} from "../types/Version.sol";
+import {Version, VersionLib, VersionPart, VersionPartLib} from "../types/Version.sol";
 import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
 
 import {IService} from "../shared/IService.sol";
@@ -55,19 +55,19 @@ contract ReleaseManager is AccessManaged
     RegistryAccessManager private immutable _accessManager;
     IRegistry private immutable _registry;
 
-    VersionPart immutable _initial;// first active version    
-    VersionPart _latest;// latest active version
-    VersionPart _next;// version to create and activate 
+    VersionPart immutable _initial;// first active major version    
+    VersionPart _latest;// latest active major version
+    VersionPart _next;// major version to create and activate 
 
-    mapping(VersionPart version => IRegistry.ReleaseInfo info) _release;
+    mapping(VersionPart majorVersion => IRegistry.ReleaseInfo info) _release;
 
-    mapping(VersionPart version => mapping(ObjectType serviceDomain => bytes4[])) _selectors; // registry service function selector assigned to domain 
+    mapping(VersionPart majorVersion => mapping(ObjectType serviceDomain => bytes4[])) _selectors; // registry service function selector assigned to domain 
 
     uint _awaitingRegistration; // "services left to register" counter
 
     mapping(address registryService => bool isActive) _active;
 
-    mapping(VersionPart version => bool isValid) _valid; // TODO refactor to use _active only
+    mapping(VersionPart majorVersion => bool isValid) _valid; // TODO refactor to use _active only
 
     constructor(
         RegistryAccessManager accessManager, 
@@ -146,12 +146,12 @@ contract ReleaseManager is AccessManaged
 
         IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
 
-        VersionPart version = _next;
+        VersionPart majorVersion = _next;
         ObjectType domain = REGISTRY();
-        _verifyService(service, version, domain);
+        _verifyService(service, majorVersion, domain);
         _createRelease(service.getFunctionConfigs());
         
-        nftId = _registry.registerService(info, version, domain);
+        nftId = _registry.registerService(info, majorVersion, domain);
 
         // external call
         service.linkToRegisteredNftId();
@@ -169,13 +169,13 @@ contract ReleaseManager is AccessManaged
         }
 
         IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
-        VersionPart version = getNextVersion();
-        ObjectType domain = _release[version].domains[_awaitingRegistration];// reversed registration order of services specified in RegistryService config
-        _verifyService(service, version, domain);
+        VersionPart majorVersion = getNextVersion();
+        ObjectType domain = _release[majorVersion].domains[_awaitingRegistration];// reversed registration order of services specified in RegistryService config
+        _verifyService(service, majorVersion, domain);
 
         // setup and grant unique role if service does registrations
-        bytes4[] memory selectors = _selectors[version][domain];
-        address registryService = _registry.getServiceAddress(REGISTRY(), version);
+        bytes4[] memory selectors = _selectors[majorVersion][domain];
+        address registryService = _registry.getServiceAddress(REGISTRY(), majorVersion);
         if(selectors.length > 0) {
             _accessManager.setAndGrantUniqueRole(
                 address(service), 
@@ -185,7 +185,7 @@ contract ReleaseManager is AccessManaged
         
         _awaitingRegistration--;
 
-        nftId = _registry.registerService(info, version, domain);
+        nftId = _registry.registerService(info, majorVersion, domain);
 
         // external call
         service.linkToRegisteredNftId(); 
@@ -271,7 +271,8 @@ contract ReleaseManager is AccessManaged
         view
         returns(ObjectType)
     {
-        VersionPart majorVersion = service.getVersion().toMajorPart();
+        Version version = service.getVersion();
+        VersionPart majorVersion = version.toMajorPart();
         if(majorVersion != expectedVersion) {
             revert UnexpectedServiceVersion(expectedVersion, majorVersion);
         }
