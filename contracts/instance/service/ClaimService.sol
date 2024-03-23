@@ -27,7 +27,7 @@ import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol"
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {ObjectType, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, CLAIM, BUNDLE} from "../../types/ObjectType.sol";
-import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE, CLOSED} from "../../types/StateId.sol";
+import {SUBMITTED, ACTIVE, KEEP_STATE, DECLINED, CONFIRMED, CLOSED} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {ReferralId} from "../../types/Referral.sol";
@@ -79,7 +79,7 @@ contract ClaimService is
     }
 
 
-    function create(
+    function submit(
         IInstance instance,
         NftId policyNftId, 
         ClaimId claimId, 
@@ -97,35 +97,72 @@ contract ClaimService is
                 claimAmount,
                 AmountLib.zero(), // paidAmount
                 0, // payoutsCount
+                0, // openPayoutsCount
                 claimData,
                 TimestampLib.zero())); // closedAt
     }
 
 
-    function confirm(NftId policyNftId, ClaimId claimId, Amount claimAmount)
+    function confirm(
+        IInstance instance,
+        InstanceReader instanceReader,
+        NftId policyNftId, 
+        ClaimId claimId, 
+        Amount confirmedAmount
+    )
         external
         virtual
-        // solhint-disable-next-line no-empty-blocks
     {
+        IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
+        claimInfo.claimAmount = confirmedAmount;
+        instance.updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
+    }
 
+    function decline(
+        IInstance instance,
+        InstanceReader instanceReader,
+        NftId policyNftId, 
+        ClaimId claimId
+    )
+        external
+        virtual
+    {
+        IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
+        claimInfo.closedAt = TimestampLib.blockTimestamp();
+        instance.updateClaim(policyNftId, claimId, claimInfo, DECLINED());
     }
 
 
-    function decline(NftId policyNftId, ClaimId claimId)
+    function close(
+        IInstance instance,
+        InstanceReader instanceReader,
+        NftId policyNftId, 
+        ClaimId claimId
+    )
         external
         virtual
-        // solhint-disable-next-line no-empty-blocks
     {
+        IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, CONFIRMED());
 
-    }
+        // check claim has no open payouts
+        if(claimInfo.openPayoutsCount > 0) {
+            revert ErrorClaimServiceClaimWithOpenPayouts(
+                policyNftId, 
+                claimId, 
+                claimInfo.openPayoutsCount);
+        }
 
+        // check claim paid amount matches with claim amount
+        if(claimInfo.paidAmount.toInt() < claimInfo.claimAmount.toInt()) {
+            revert ErrorClaimServiceClaimWithMissingPayouts(
+                policyNftId, 
+                claimId, 
+                claimInfo.claimAmount,
+                claimInfo.paidAmount);
+        }
 
-    function close(NftId policyNftId, ClaimId claimId)
-        external
-        virtual
-        // solhint-disable-next-line no-empty-blocks
-    {
-
+        claimInfo.closedAt = TimestampLib.blockTimestamp();
+        instance.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
     }
 
 
@@ -157,6 +194,29 @@ contract ClaimService is
 
 
     // internal functions
+
+    function _verifyClaim(
+        InstanceReader instanceReader,
+        NftId policyNftId, 
+        ClaimId claimId, 
+        StateId expectedState
+    )
+        internal
+        view
+        returns (
+            IPolicy.ClaimInfo memory claimInfo
+        )
+    {
+        // check claim is created state
+        StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
+        if(claimState != expectedState) {
+            revert ErrorClaimServiceClaimNotInExpectedState(
+                policyNftId, claimId, expectedState, claimState);
+        }
+
+        // get claim info
+        claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+    }
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;

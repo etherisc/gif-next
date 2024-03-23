@@ -20,7 +20,7 @@ import {Timestamp, TimestampLib, zeroTimestamp} from "../contracts/types/Timesta
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
 import {ReferralLib} from "../contracts/types/Referral.sol";
-import {APPLIED, ACTIVE, UNDERWRITTEN, CLOSED} from "../contracts/types/StateId.sol";
+import {APPLIED, ACTIVE, COLLATERALIZED, CLOSED} from "../contracts/types/StateId.sol";
 import {POLICY} from "../contracts/types/ObjectType.sol";
 
 contract TestProduct is TestGifBase {
@@ -250,7 +250,7 @@ contract TestProduct is TestGifBase {
         dproduct.collateralize(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
 
         // THEN
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
@@ -318,7 +318,7 @@ contract TestProduct is TestGifBase {
         dproduct.collateralize(policyNftId, false, timeNow);
 
         // THEN
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
     }
 */
 
@@ -354,7 +354,7 @@ contract TestProduct is TestGifBase {
         dproduct.collateralize(policyNftId, false, zeroTimestamp()); 
 
         // THEN 
-        assertTrue(instanceReader.getPolicyState(policyNftId) == UNDERWRITTEN(), "policy state not UNDERWRITTEN");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
@@ -416,7 +416,7 @@ contract TestProduct is TestGifBase {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == UNDERWRITTEN(), "state not UNDERWRITTEN");
+        assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == COLLATERALIZED(), "state not COLLATERALIZED");
         
         IBundle.BundleInfo memory bundleInfoBefore = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfoBefore.lockedAmount.toInt(), 1000, "lockedAmount not 1000 (before)");
@@ -488,7 +488,7 @@ contract TestProduct is TestGifBase {
         vm.startPrank(productOwner);
         dproduct.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
 
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
 
         // WHEN
         vm.warp(100); // warp 100 seconds

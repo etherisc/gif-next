@@ -60,7 +60,9 @@ interface IPolicy {
         Amount claimAmount;
         Amount paidAmount;
         uint8 payoutsCount;
+        uint8 openPayoutsCount;
         bytes data;
+        // TODO decide if to add processData that may include information supporting confirm or decline
         Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
     }
 

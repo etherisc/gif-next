@@ -17,7 +17,10 @@ import {Fee} from "../../types/Fee.sol";
 
 interface IPolicyService is IService {
 
-    event LogPolicyServiceClaimCreated(NftId policyNftId, ClaimId claimId, Amount claimAmount);
+    event LogPolicyServiceClaimSubmitted(NftId policyNftId, ClaimId claimId, Amount claimAmount);
+    event LogPolicyServiceClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount confirmedAmount);
+    event LogPolicyServiceClaimDeclined(NftId policyNftId, ClaimId claimId);
+    event LogPolicyServiceClaimClosed(NftId policyNftId, ClaimId claimId);
 
     error ErrorPolicyServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorPolicyServicePolicyNotOpen(NftId policyNftId);
@@ -73,11 +76,32 @@ interface IPolicyService is IService {
 
     /// @dev create a new claim for the specified policy
     /// function can only be called by product, policy needs to match with calling product
-    function createClaim(
+    function submitClaim(
         NftId policyNftId, 
         Amount claimAmount,
         bytes memory claimData
     ) external returns (ClaimId);
+
+    /// @dev declines the specified claim
+    /// function can only be called by product, policy needs to match with calling product
+    function declineClaim(
+        NftId policyNftId, 
+        ClaimId claimId) external;
+
+    /// @dev confirms the specified claim and specifies the payout amount
+    /// function can only be called by product, policy needs to match with calling product
+    function confirmClaim(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount confirmedAmount
+    ) external;
+
+    /// @dev closes the specified claim
+    /// function can only be called by product, policy needs to match with calling product
+    function closeClaim(
+        NftId policyNftId, 
+        ClaimId claimId
+    ) external;
 
     // TODO move function to pool service
     function calculateRequiredCollateral(

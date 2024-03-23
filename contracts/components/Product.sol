@@ -202,7 +202,7 @@ abstract contract Product is
             policyNftId);
     }
 
-    function _createClaim(
+    function _submitClaim(
         NftId policyNftId,
         Amount claimAmount,
         bytes memory claimData
@@ -210,10 +210,21 @@ abstract contract Product is
         internal
         returns(ClaimId)
     {
-        return _getProductStorage()._policyService.createClaim(
+        return _getProductStorage()._policyService.submitClaim(
             policyNftId,
             claimAmount,
             claimData);
+    }
+
+    function _declineClaim(
+        NftId policyNftId,
+        ClaimId claimId
+    )
+        internal
+    {
+        _getProductStorage()._policyService.declineClaim(
+            policyNftId,
+            claimId);
     }
 
     function calculatePremium(

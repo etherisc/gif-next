@@ -19,7 +19,7 @@ import {ClaimId, ClaimIdLib} from "../../types/ClaimId.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM} from "../../types/ObjectType.sol";
-import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE, CLOSED} from "../../types/StateId.sol";
+import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED, CONFIRMED} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {VersionPart} from "../../types/Version.sol";
@@ -118,7 +118,7 @@ contract PolicyService is
         // check policy is in state applied
         require(instanceReader.getPolicyState(applicationNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
         
-        StateId newPolicyState = UNDERWRITTEN();
+        StateId newPolicyState = COLLATERALIZED();
 
         // optional activation of policy
         if(activateAt > zeroTimestamp()) {
@@ -270,7 +270,7 @@ contract PolicyService is
         instance.updatePolicy(policyNftId, policyInfo, CLOSED());
     }
 
-    function createClaim(
+    function submitClaim(
         NftId policyNftId, 
         Amount claimAmount,
         bytes memory claimData
@@ -279,16 +279,11 @@ contract PolicyService is
         virtual
         returns (ClaimId claimId)
     {
-        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        InstanceReader instanceReader = instance.getInstanceReader();
-
-        // check caller(product) policy match
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        if(policyInfo.productNftId != productNftId) {
-            revert ErrorPolicyServicePolicyProductMismatch(policyNftId, 
-            policyInfo.productNftId, 
-            productNftId);
-        }
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
 
         // check policy is in its active period
         if(policyInfo.activatedAt.eqz() || TimestampLib.blockTimestamp() >= policyInfo.expiredAt) {
@@ -305,16 +300,104 @@ contract PolicyService is
 
         // create new claim
         claimId = ClaimIdLib.toClaimId(policyInfo.claimsCount + 1);
-        _claimService.create(instance, policyNftId, claimId, claimAmount, claimData);
+        _claimService.submit(instance, policyNftId, claimId, claimAmount, claimData);
 
         // update and save policy info with instance
         policyInfo.claimsCount += 1;
         policyInfo.openClaimsCount += 1;
         instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
-        emit LogPolicyServiceClaimCreated(policyNftId, claimId, claimAmount);
+        emit LogPolicyServiceClaimSubmitted(policyNftId, claimId, claimAmount);
     }
 
+    function confirmClaim(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount confirmedAmount
+    )
+        external
+    {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check/update claim info
+        _claimService.confirm(instance, instanceReader, policyNftId, claimId, confirmedAmount);
+
+        // update and save policy info with instance
+        instance.updatePolicy(policyNftId, policyInfo, CONFIRMED());
+
+        emit LogPolicyServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
+    }
+
+    function declineClaim(
+        NftId policyNftId, 
+        ClaimId claimId
+    )
+        external
+    {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check/update claim info
+        _claimService.decline(instance, instanceReader, policyNftId, claimId);
+
+        // update and save policy info with instance
+        policyInfo.openClaimsCount -= 1;
+        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogPolicyServiceClaimDeclined(policyNftId, claimId);
+    }
+
+    function closeClaim(
+        NftId policyNftId, 
+        ClaimId claimId
+    )
+        external
+    {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check/update claim info
+        _claimService.close(instance, instanceReader, policyNftId, claimId);
+
+        // update and save policy info with instance
+        policyInfo.openClaimsCount -= 1;
+        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogPolicyServiceClaimClosed(policyNftId, claimId);
+    }
+
+    function _verifyCallerWithPolicy(
+        NftId policyNftId
+    )
+        internal
+        returns (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        )
+    {
+        NftId productNftId;
+        (productNftId,, instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        instanceReader = instance.getInstanceReader();
+
+        // check caller(product) policy match
+        policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        if(policyInfo.productNftId != productNftId) {
+            revert ErrorPolicyServicePolicyProductMismatch(policyNftId, 
+            policyInfo.productNftId, 
+            productNftId);
+        }
+    }
 
     function _getPoolNftId(
         IInstance instance,

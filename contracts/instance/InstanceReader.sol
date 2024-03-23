@@ -81,6 +81,14 @@ contract InstanceReader {
         }
     }
 
+    function getClaimState(NftId policyNftId, ClaimId claimId)
+        public
+        view
+        returns (StateId state)
+    {
+        return _instance.getState(claimId.toKey32(policyNftId));
+    }
+
     function getRiskInfo(RiskId riskId)
         public 
         view 

@@ -19,13 +19,16 @@ import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
 import {UFixedLib} from "../../../contracts/types/UFixed.sol";
 import {Seconds, SecondsLib} from "../../../contracts/types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/types/Timestamp.sol";
+import {IPolicyService} from "../../../contracts/instance/service/IPolicyService.sol";
 import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/types/RiskId.sol";
 import {ReferralLib} from "../../../contracts/types/Referral.sol";
-import {APPLIED, ACTIVE, UNDERWRITTEN, CLOSED} from "../../../contracts/types/StateId.sol";
+import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/types/StateId.sol";
 import {POLICY} from "../../../contracts/types/ObjectType.sol";
 
 contract TestProductClaim is TestGifBase {
+
+    event LogClaimTestClaimInfo(NftId policyNftId, IPolicy.PolicyInfo policyInfo, ClaimId claimId, IPolicy.ClaimInfo claimInfo);
 
     uint256 public constant BUNDLE_CAPITAL = 5000;
     uint256 public constant SUM_INSURED = 1000;
@@ -52,34 +55,94 @@ contract TestProductClaim is TestGifBase {
             SecondsLib.toSeconds(60)); // lifetime
     }
 
-    event LogClaimTestClaimInfo(NftId policyNftId, IPolicy.PolicyInfo policyInfo, ClaimId claimId, IPolicy.ClaimInfo claimInfo);
+    // TODO this should not be here (copy paste from IPolicyService)
+    event LogPolicyServiceClaimSubmitted(NftId policyNftId, ClaimId claimId, Amount claimAmount);
+    event LogPolicyServiceClaimDeclined(NftId policyNftId, ClaimId claimId);
+    event LogPolicyServiceClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount confirmedAmount);
 
-    function test_ProductCreateClaimHappyCase() public {
+    function test_ProductSubmitClaimHappyCase() public {
         // GIVEN
         _approve();
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
 
+        // check policy info
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.claimsCount, 0, "claims count not 0 (before)");
+        assertEq(policyInfo.openClaimsCount, 0, "open claims count not 0 (before)");
+        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0 (before)");
+
         // WHEN
         Amount claimAmount = AmountLib.toAmount(499);
         bytes memory claimData = "please pay";
-        ClaimId claimId = prdct.createClaim(policyNftId, claimAmount, claimData); 
+
+        vm.expectEmit(address(policyService));
+        emit LogPolicyServiceClaimSubmitted(policyNftId, ClaimId.wrap(1), claimAmount);
+        ClaimId claimId = prdct.submitClaim(policyNftId, claimAmount, claimData); 
 
         // THEN
         assertTrue(claimId.gtz(), "claim id zero");
+        assertEq(claimId.toInt(), 1, "claim id not 1");
 
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        // check updated policy info
+        policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.claimsCount, 1, "claims count not 1");
+        assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1");
+        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0");
+
+        // check claim state and info
+        assertEq(instanceReader.getClaimState(policyNftId, claimId).toInt(), SUBMITTED().toInt(), "unexpected claim state");
+
         IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
-        emit LogClaimTestClaimInfo(policyNftId, policyInfo, claimId, claimInfo);
-
-        require(false, "ups");
+        assertEq(claimInfo.claimAmount.toInt(), claimAmount.toInt(), "unexpected claim amount");
+        assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
+        assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
+        assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
+        assertEq(keccak256(claimInfo.data), keccak256(claimData), "unexpected claim data");
+        assertTrue(claimInfo.closedAt.eqz(), "closed at not 0");
     }
 
-    event LogClaimTest(NftId productNftId, ISetup.ProductSetupInfo product);
+
+    function test_ProductDeclineClaimHappyCase() public {
+        // GIVEN
+        _approve();
+        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        Amount claimAmount = AmountLib.toAmount(499);
+        bytes memory claimData = "please pay";
+        ClaimId claimId = prdct.submitClaim(policyNftId, claimAmount, claimData); 
+
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.claimsCount, 1, "claims count not 1 (before)");
+        assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1 (before)");
+        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0 (before)");
+
+        // WHEN
+        vm.expectEmit(address(policyService));
+        emit LogPolicyServiceClaimDeclined(policyNftId, ClaimId.wrap(1));
+        prdct.declineClaim(policyNftId, claimId); 
+
+        policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfo.claimsCount, 1, "claims count not 1");
+        assertEq(policyInfo.openClaimsCount, 0, "open claims count not 0");
+        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0");
+
+        // check claim state and info
+        assertEq(instanceReader.getClaimState(policyNftId, claimId).toInt(), DECLINED().toInt(), "unexpected claim state");
+
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        assertEq(claimInfo.claimAmount.toInt(), claimAmount.toInt(), "unexpected claim amount");
+        assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
+        assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
+        assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
+        assertEq(keccak256(claimInfo.data), keccak256(claimData), "unexpected claim data");
+        assertEq(claimInfo.closedAt.toInt(), block.timestamp, "unexpected closed at");
+
+        // emit LogClaimTestClaimInfo(policyNftId, policyInfo, claimId, claimInfo);
+        // require(false, "ups...");
+    }
 
     function _approve() internal {
         // add allowance to pay premiums
         ISetup.ProductSetupInfo memory productSetup = instanceReader.getProductSetupInfo(productNftId);(productNftId);
-        emit LogClaimTest(productNftId, productSetup);
 
         vm.startPrank(customer);
         token.approve(
