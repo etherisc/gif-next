@@ -216,6 +216,19 @@ abstract contract Product is
             claimData);
     }
 
+    function _confirmClaim(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount confirmedAmount
+    )
+        internal
+    {
+        _getProductStorage()._policyService.confirmClaim(
+            policyNftId,
+            claimId,
+            confirmedAmount);
+    }
+
     function _declineClaim(
         NftId policyNftId,
         ClaimId claimId
@@ -223,6 +236,17 @@ abstract contract Product is
         internal
     {
         _getProductStorage()._policyService.declineClaim(
+            policyNftId,
+            claimId);
+    }
+
+    function _closeClaim(
+        NftId policyNftId,
+        ClaimId claimId
+    )
+        internal
+    {
+        _getProductStorage()._policyService.closeClaim(
             policyNftId,
             claimId);
     }

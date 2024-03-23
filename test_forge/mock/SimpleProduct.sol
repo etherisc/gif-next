@@ -157,11 +157,26 @@ contract SimpleProduct is Product {
         return _submitClaim(policyNftId, claimAmount, claimData);
     }
 
+    function confirmClaim(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount confirmedAmount
+    ) public {
+        _confirmClaim(policyNftId, claimId, confirmedAmount);
+    }
+
     function declineClaim(
         NftId policyNftId,
         ClaimId claimId
     ) public {
         _declineClaim(policyNftId, claimId);
+    }
+
+    function closeClaim(
+        NftId policyNftId,
+        ClaimId claimId
+    ) public {
+        _closeClaim(policyNftId, claimId);
     }
 
     function doSomethingSpecial() 
