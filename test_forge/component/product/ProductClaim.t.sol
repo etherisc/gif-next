@@ -96,7 +96,7 @@ contract TestProductClaim is TestGifBase {
         internal
     {
         vm.startPrank(productOwner);
-        prdct.underwrite(nftId, collectPremium, activateAt); 
+        prdct.collateralize(nftId, collectPremium, activateAt); 
         vm.stopPrank();
     }
 

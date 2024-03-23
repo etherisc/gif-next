@@ -99,7 +99,7 @@ contract PolicyService is
 
 
     /// @dev underwites application which includes the locking of the required collateral from the pool.
-    function underwrite(
+    function collateralize(
         NftId applicationNftId, // = policyNftId
         bool requirePremiumPayment,
         Timestamp activateAt

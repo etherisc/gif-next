@@ -37,7 +37,7 @@ interface IPoolComponent is IComponent {
 
     /// @dev locks the specified bundle
     /// a bundle to be locked MUST be in active state
-    /// locked bundles may not be used to underwrite any new policy
+    /// locked bundles may not be used to collateralize any new policy
     function lockBundle(NftId bundleNftId) external;
 
     /// @dev unlocks the specified bundle

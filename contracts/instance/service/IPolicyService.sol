@@ -39,15 +39,15 @@ interface IPolicyService is IService {
     /// only the related product may decline an application
     function decline(NftId policyNftId) external;
 
-    /// @dev underwrites the policy represented by {policyNftId}
+    /// @dev collateralizes the policy represented by {policyNftId}
     /// sets the policy state to underwritten
     /// may set the policy state to activated and set the activation date
     /// optionally collects premiums and activates the policy.
     /// - premium payment is only attempted if requirePremiumPayment is set to true
     /// - activation is only done if activateAt is a non-zero timestamp
     /// an application can only be underwritten in applied state
-    /// only the related product may underwrite an application
-    function underwrite(
+    /// only the related product may collateralize an application
+    function collateralize(
         NftId policyNftId,
         bool requirePremiumPayment,
         Timestamp activateAt

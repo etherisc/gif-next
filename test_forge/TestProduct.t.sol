@@ -149,7 +149,7 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
     }
 
-    function test_Product_underwriteWithoutPayment() public {
+    function test_Product_collateralizeWithoutPayment() public {
         // GIVEN
         _prepareProduct();  
 
@@ -180,7 +180,7 @@ contract TestProduct is TestGifBase {
 
         // WHEN
         bool requirePremiumPayment = false;
-        dproduct.underwrite(policyNftId, requirePremiumPayment, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId, requirePremiumPayment, TimestampLib.blockTimestamp()); 
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
@@ -202,7 +202,7 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
-    function test_Product_underwriteWithPayment() public {
+    function test_Product_collateralizeWithPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -247,7 +247,7 @@ contract TestProduct is TestGifBase {
         // WHEN
         vm.startPrank(productOwner);
         bool collectPremiumAmount = true;
-        dproduct.underwrite(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
@@ -271,7 +271,7 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 /*  FIX ME
-    function test_underwrite_reverts_on_locked_bundle() public {
+    function test_collateralize_reverts_on_locked_bundle() public {
         // GIVEN
         _prepareProduct();  
 
@@ -309,13 +309,13 @@ contract TestProduct is TestGifBase {
 
         Timestamp timeNow = TimestampLib.blockTimestamp();
 
-        // THEN - WHEN - try underwrite on locked bundle
+        // THEN - WHEN - try collateralize on locked bundle
         vm.expectRevert();
-        dproduct.underwrite(policyNftId, false, timeNow); 
+        dproduct.collateralize(policyNftId, false, timeNow); 
 
-        // WHEN - unlock bundle and try underwrite again
+        // WHEN - unlock bundle and try collateralize again
         pool.unlockBundle(bundleNftId);
-        dproduct.underwrite(policyNftId, false, timeNow);
+        dproduct.collateralize(policyNftId, false, timeNow);
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
@@ -351,7 +351,7 @@ contract TestProduct is TestGifBase {
         assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         // WHEN
-        dproduct.underwrite(policyNftId, false, zeroTimestamp()); 
+        dproduct.collateralize(policyNftId, false, zeroTimestamp()); 
 
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId) == UNDERWRITTEN(), "policy state not UNDERWRITTEN");
@@ -411,7 +411,7 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
         vm.startPrank(productOwner);
 
-        dproduct.underwrite(policyNftId, false, zeroTimestamp()); 
+        dproduct.collateralize(policyNftId, false, zeroTimestamp()); 
         
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
@@ -486,7 +486,7 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(productOwner);
-        dproduct.underwrite(policyNftId, true, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
 
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
 

@@ -121,12 +121,12 @@ contract SimpleProduct is Product {
         );
     }
 
-    function underwrite(
+    function collateralize(
         NftId policyNftId,
         bool requirePremiumPayment,
         Timestamp activateAt
     ) public {
-        _underwrite(policyNftId, requirePremiumPayment, activateAt);
+        _collateralize(policyNftId, requirePremiumPayment, activateAt);
     }
 
     function collectPremium(

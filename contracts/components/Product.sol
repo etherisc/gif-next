@@ -158,14 +158,14 @@ abstract contract Product is
         );
     }
 
-    function _underwrite(
+    function _collateralize(
         NftId policyNftId,
         bool requirePremiumPayment,
         Timestamp activateAt
     )
         internal
     {
-        _getProductStorage()._policyService.underwrite(
+        _getProductStorage()._policyService.collateralize(
             policyNftId, 
             requirePremiumPayment, 
             activateAt);
