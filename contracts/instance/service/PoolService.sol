@@ -121,7 +121,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId, IRegistry.ObjectInfo memory registryInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
@@ -139,7 +139,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId, IRegistry.ObjectInfo memory registryInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
@@ -166,7 +166,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId, IRegistry.ObjectInfo memory registryInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);

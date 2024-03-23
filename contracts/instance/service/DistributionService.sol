@@ -120,7 +120,7 @@ contract DistributionService is
             revert ErrorIDistributionServiceMinFeeTooHigh(minDistributionOwnerFee.fractionalFee.toInt(), distributionFee.fractionalFee.toInt());
         }
 
-        (NftId distributionNftId, IRegistry.ObjectInfo memory info , IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         ISetup.DistributionSetupInfo memory distSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
@@ -144,7 +144,7 @@ contract DistributionService is
         external
         returns (DistributorType distributorType)
     {
-        (NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
 
         {
             ISetup.DistributionSetupInfo memory setupInfo = instance.getInstanceReader().getDistributionSetupInfo(distributionNftId);
@@ -180,7 +180,7 @@ contract DistributionService is
         bytes memory data
     ) external returns (NftId distributorNftId)
     {
-        (NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
 
         distributorNftId = getRegistryService().registerDistributor(
             IRegistry.ObjectInfo(
@@ -209,7 +209,7 @@ contract DistributionService is
         bytes memory data
     ) external virtual
     {
-        (, IInstance instance) = _getAndVerifyCallingDistribution();
+        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
         InstanceReader instanceReader = instance.getInstanceReader();
         IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
         distributorInfo.distributorType = distributorType;
@@ -230,7 +230,7 @@ contract DistributionService is
         virtual
         returns (ReferralId referralId)
     {
-        (NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
 
         if (bytes(code).length == 0) {
             revert ErrorIDistributionServiceInvalidReferral(code);
@@ -401,29 +401,6 @@ contract DistributionService is
         isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
         isValid = isValid && info.usedReferrals < info.maxReferrals;
     }
-
-    function _getAndVerifyCallingDistribution()
-        internal
-        view
-        returns(
-            NftId distributionNftId,
-            IInstance instance
-        )
-    {
-        distributionNftId = getRegistry().getNftId(msg.sender);
-        if (distributionNftId.eqz()) {
-            revert ErrorDistributionServiceCallerNotRegistered(msg.sender);
-        }
-
-        IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(distributionNftId);
-        if(info.objectType != DISTRIBUTION()) {
-            revert ErrorIDistributionServiceCallerNotDistributor(msg.sender);
-        }
-
-        address instanceAddress = getRegistry().getObjectInfo(info.parentNftId).objectAddress;
-        instance = IInstance(instanceAddress);
-    }
-
 
     function _getInstanceForDistribution(NftId distributionNftId)
         internal

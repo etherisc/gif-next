@@ -178,7 +178,7 @@ contract BundleService is
         external
         override
     {
-        (NftId poolNftId, IRegistry.ObjectInfo memory info , IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);

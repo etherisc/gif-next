@@ -157,7 +157,7 @@ contract ProductService is ComponentService, IProductService {
     {
         // TODO check args 
 
-        (NftId productNftId, IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
@@ -175,7 +175,7 @@ contract ProductService is ComponentService, IProductService {
         external 
         override
     {
-        (NftId productNftId, IRegistry.ObjectInfo memory productInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         IRisk.RiskInfo memory riskInfo = IRisk.RiskInfo(productNftId, data);
 
         instance.getInstanceStore().createRisk(
