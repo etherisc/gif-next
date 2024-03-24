@@ -167,6 +167,8 @@ contract ClaimService is
 
 
     function createPayout(
+        IInstance instance,
+        InstanceReader instanceReader,
         NftId policyNftId, 
         ClaimId claimId,
         Amount payoutAmount,
@@ -181,12 +183,18 @@ contract ClaimService is
     }
 
 
-    function payoutExecuted(
+    function processPayout(
+        IInstance instance,
+        InstanceReader instanceReader,
         NftId policyNftId, 
         PayoutId payoutId
     )
         external
         virtual
+        returns (
+            Amount amount,
+            bool payoutIsClosingClaim
+        )
         // solhint-disable-next-line no-empty-blocks
     {
 

@@ -64,18 +64,29 @@ interface IClaimService is
     /// @dev create a new payout for the specified policy and claim
     /// function can only be called by product, policy needs to match with calling product
     function createPayout(
+        IInstance instance,
+        InstanceReader instanceReader,
         NftId policyNftId, 
         ClaimId claimId,
         Amount payoutAmount,
         bytes calldata payoutData
-    ) external returns (PayoutId payoutId);
+    )
+        external 
+        returns (PayoutId payoutId);
 
     /// @dev callback function to confirm transfer of payout token to beneficiary
     /// allows claim service to update claims/payout book keeping
     /// only pool service can confirm executed payout
-    function payoutExecuted(
+    function processPayout(
+        IInstance instance,
+        InstanceReader instanceReader,
         NftId policyNftId, 
         PayoutId payoutId
-    ) external;
+    )
+        external 
+        returns (
+            Amount amount,
+            bool payoutIsClosingClaim
+        );
 
 }

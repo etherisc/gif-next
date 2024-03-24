@@ -43,7 +43,7 @@ interface IPolicy {
         RiskId riskId;
         uint256 sumInsuredAmount;
         uint256 premiumAmount;
-        uint256 premiumPaidAmount;
+        uint256 premiumPaidAmount; // when lower than premium amount: max payout decreased accordingly
         Seconds lifetime;
         bytes applicationData;
         bytes policyData;
@@ -62,7 +62,7 @@ interface IPolicy {
         uint8 payoutsCount;
         uint8 openPayoutsCount;
         bytes data;
-        // TODO decide if to add processData that may include information supporting confirm or decline
+        // TODO consider to add processData that may include information supporting confirm or decline
         Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
     }
 
@@ -70,6 +70,7 @@ interface IPolicy {
     struct PayoutInfo {
         ClaimId claimId;
         Amount amount;
+        // TODO consider to add a beneficiary address that will be the receiver of the payout tokens
         bytes data;
         Timestamp paidAt; // payoment of confirmed claim amount (or declinedAt)
     }

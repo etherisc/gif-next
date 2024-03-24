@@ -7,6 +7,7 @@ import {IService} from "../../shared/IService.sol";
 import {Amount} from "../../types/Amount.sol";
 import {ClaimId} from "../../types/ClaimId.sol";
 import {NftId} from "../../types/NftId.sol";
+import {PayoutId} from "../../types/PayoutId.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
 import {Seconds} from "../../types/Seconds.sol";
@@ -21,6 +22,9 @@ interface IPolicyService is IService {
     event LogPolicyServiceClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount confirmedAmount);
     event LogPolicyServiceClaimDeclined(NftId policyNftId, ClaimId claimId);
     event LogPolicyServiceClaimClosed(NftId policyNftId, ClaimId claimId);
+
+    event LogPolicyServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
+    event LogPolicyServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
 
     error ErrorPolicyServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorPolicyServicePolicyNotOpen(NftId policyNftId);
@@ -75,12 +79,13 @@ interface IPolicyService is IService {
     function close(NftId policyNftId) external;
 
     /// @dev create a new claim for the specified policy
+    /// returns the id of the newly created claim
     /// function can only be called by product, policy needs to match with calling product
     function submitClaim(
         NftId policyNftId, 
         Amount claimAmount,
         bytes memory claimData
-    ) external returns (ClaimId);
+    ) external returns (ClaimId claimId);
 
     /// @dev declines the specified claim
     /// function can only be called by product, policy needs to match with calling product
@@ -101,6 +106,26 @@ interface IPolicyService is IService {
     function closeClaim(
         NftId policyNftId, 
         ClaimId claimId
+    ) external;
+
+    /// @dev creates a new payout for the specified claim
+    /// returns the id of the newly created payout, this id is unique for the specified policy
+    /// function can only be called by product, policy needs to match with calling product
+    function createPayout(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount amount,
+        bytes memory data
+    )
+        external
+        returns (PayoutId payoutId);
+
+    /// @dev processes the specified payout
+    /// this includes moving the payout token to the beneficiary (default: policy holder)
+    /// function can only be called by product, policy needs to match with calling product
+    function processPayout(
+        NftId policyNftId, 
+        PayoutId payoutId
     ) external;
 
     // TODO move function to pool service

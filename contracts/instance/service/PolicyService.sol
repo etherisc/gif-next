@@ -21,6 +21,7 @@ import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM} from "../../types/ObjectType.sol";
 import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED, CONFIRMED} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
+import {PayoutId} from "../../types/PayoutId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {VersionPart} from "../../types/Version.sol";
 
@@ -248,16 +249,13 @@ contract PolicyService is
             revert ErrorIPolicyServicePolicyAlreadyClosed(policyNftId);
         }
 
+        // TODO consider to allow for underpaid premiums (with the effects of reducing max payouts accordingly)
         if (policyInfo.premiumAmount != policyInfo.premiumPaidAmount) {
             revert ErrorIPolicyServicePremiumNotFullyPaid(policyNftId, policyInfo.premiumAmount, policyInfo.premiumPaidAmount);
         }
 
         if (policyInfo.openClaimsCount > 0) {
             revert ErrorIPolicyServiceOpenClaims(policyNftId, policyInfo.openClaimsCount);
-        }
-
-        if (TimestampLib.blockTimestamp().lte(policyInfo.expiredAt) && (policyInfo.payoutAmount.toInt() < policyInfo.sumInsuredAmount)) {
-            revert ErrorIPolicyServicePolicyHasNotExpired(policyNftId, policyInfo.expiredAt);
         }
 
         policyInfo.closedAt = TimestampLib.blockTimestamp();
@@ -374,6 +372,68 @@ contract PolicyService is
         instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogPolicyServiceClaimClosed(policyNftId, claimId);
+    }
+
+    function createPayout(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount amount,
+        bytes memory data
+    )
+        external
+        returns (PayoutId payoutId)
+    {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check/update claim info
+        payoutId = _claimService.createPayout(
+            instance, 
+            instanceReader, 
+            policyNftId, 
+            claimId,
+            amount,
+            data);
+
+        // update and save policy info with instance
+        policyInfo.payoutAmount.add(amount);
+        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogPolicyServicePayoutCreated(policyNftId, payoutId, amount);
+    }
+
+    function processPayout(
+        NftId policyNftId, 
+        PayoutId payoutId
+    )
+        external
+    {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check/update claim info
+        (
+            Amount amount,
+            bool payoutIsClosingClaim
+        ) = _claimService.processPayout(
+            instance, 
+            instanceReader, 
+            policyNftId, 
+            payoutId);
+
+        // update policy info if affected by processed payout
+        if(payoutIsClosingClaim) {
+            policyInfo.openClaimsCount -= 1;
+            instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        }
+
+        emit LogPolicyServicePayoutProcessed(policyNftId, payoutId, amount);
     }
 
     function _verifyCallerWithPolicy(

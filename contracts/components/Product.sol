@@ -14,6 +14,7 @@ import {IProductService} from "../instance/service/IProductService.sol";
 import {IClaimService} from "../instance/service/IClaimService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, NftIdLib} from "../types/NftId.sol";
+import {PayoutId} from "../types/PayoutId.sol";
 import {PRODUCT, APPLICATION, POLICY, CLAIM } from "../types/ObjectType.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
@@ -249,6 +250,33 @@ abstract contract Product is
         _getProductStorage()._policyService.closeClaim(
             policyNftId,
             claimId);
+    }
+
+    function _createPayout(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount amount,
+        bytes memory data
+    )
+        internal
+        returns (PayoutId)
+    {
+        return _getProductStorage()._policyService.createPayout(
+            policyNftId, 
+            claimId, 
+            amount, 
+            data);
+    }
+
+    function _processPayout(
+        NftId policyNftId,
+        PayoutId payoutId
+    )
+        internal
+    {
+        _getProductStorage()._policyService.processPayout(
+            policyNftId,
+            payoutId);
     }
 
     function calculatePremium(
