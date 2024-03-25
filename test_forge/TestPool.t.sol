@@ -363,7 +363,8 @@ contract TestPool is TestGifBase {
         token.approve(address(componentInfo.tokenHandler), 10000);
 
         // WHEN
-        return pool.createBundle(
+        SimplePool spool = SimplePool(address(pool));
+        return spool.createBundle(
             FeeLib.zeroFee(), 
             10000, 
             SecondsLib.toSeconds(604800), 
