@@ -42,6 +42,7 @@ import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {Distribution} from "../../contracts/components/Distribution.sol";
 import {Product} from "../../contracts/components/Product.sol";
+import {Pool} from "../../contracts/components/Pool.sol";
 import {USDC} from "../../contracts/test/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
 import {SimplePool} from "../mock/SimplePool.sol";
@@ -135,7 +136,7 @@ contract TestGifBase is Test {
     // TestDistribution public distribution;
     Distribution public distribution;
     NftId public distributionNftId;
-    SimplePool public pool;
+    Pool public pool;
     NftId public poolNftId;
     Product public product;
     NftId public productNftId;
