@@ -14,4 +14,19 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           review-message: "Please take a look :eyes:"
-          
+  
+  require-checker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Find require statements
+        uses: gkampitakis/github-action-todo-commenter@v1
+        with:
+          comment-title: ":construction: Require statements found"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          review-message: ":no_entry: Do not use require statements - please change it and use a custom error before merging this PR!"
+          tags: "\\s+require\\("
+  
