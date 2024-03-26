@@ -224,17 +224,7 @@ https://book.getfoundry.sh/reference/
 
 ## Style Guide
 
-Solidity code is to be written according to the [Solidity Style Guide](https://docs.soliditylang.org/en/latest/style-guide.html).
-
-Documentation of the code should be written inline using [NatSpec](https://docs.soliditylang.org/en/latest/natspec-format.html).
-
-### Naming conventions
-
-Additionally, we use the following naming conventions:
-
-- Function arguments and return types: If using custom data types, make the name include the type by appending the Type to the argument name, e.g. `function getInfo(NftId bundleNftId)` instead of `function getInfo(NftId bundleId)`. Background: Custom data types are lost when using the ABI or Typescript binding classes (e.g. instead of `NftID` a `uint96` is used), so the type needs to be included in the name to make it clear what the argument is without having to look at the documentation or checking the solidity source code. 
-- When naming a field or an attribute `id` and the context is not clear, call it `nftId` instead so its clear what type if id it is as there will be multiple ids for different kind of objects. Example: if you the function has a bundle nft id and a policy nft id as arguments, call them `bundleNftId` and `policyNftId` instead of `id` and `policyId`. In case of doubt, be a bit more verbose for the sake of clarity. 
-- When naming things, remember that the code will likely be used in Javascript/Typescript as well, so avoid names that are reserved in Javascript/Typescript. A list of reserved words in Javascript can be found [here](https://www.w3schools.com/js/js_reserved.asp) and a list of reserved words in Typescript can be found [here](https://www.tektutorialshub.com/typescript/identifiers-keywords-in-typescript/). 
+Please see https://docs.etherisc.com/gif-next/3.x/ for style guide and general coding rules. 
 
 ### Automatic code formatting
 
@@ -249,7 +239,7 @@ We use solhint to lint the code.
 To execute linting run `npm run lint`.
 
 
-### Adding Brownie (Legacy)
+### Adding Brownie (Legacy - don't do that :wink: )
 
 python3 is already installed
 
