@@ -28,6 +28,10 @@ This repository uses submodules. To checkout or update to the latest submodules,
 git submodule update --recursive
 ```
 
+## Example components
+
+A (very early) example of a product and a pool can be found in the [gif-next-sandbox repository](https://github.com/etherisc/gif-next-sandbox). 
+
 ## Hardhat 
 
 ### NPM Commands
