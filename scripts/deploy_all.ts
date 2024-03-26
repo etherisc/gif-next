@@ -132,6 +132,7 @@ function printAddresses(
     addresses += `key32LibAddress: ${libraries.key32LibAddress}\n`;
     addresses += `feeLibAddress: ${libraries.feeLibAddress}\n`;
     addresses += `stateIdLibAddress: ${libraries.stateIdLibAddress}\n`;
+    addresses += `referralLibAddress: ${libraries.referralLibAddress}\n`;
     addresses += `roleIdLibAddress: ${libraries.roleIdLibAddress}\n`;
     addresses += `riskIdLibAddress: ${libraries.riskIdLibAddress}\n`;
     addresses += `contractDeployerLibAddress: ${libraries.contractDeployerLibAddress}\n`;
