@@ -16,6 +16,7 @@ interface IBundleService is IService {
     event LogBundleServiceBundleActivated(NftId bundleNftId);
     event LogBundleServiceBundleLocked(NftId bundleNftId);
 
+    error ErrorBundleServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
     error ErrorBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
     error ErrorBundleServiceBundleNotOpen(NftId bundleNftId, StateId state, Timestamp expiredAt);
     error ErrorBundleServiceCapacityInsufficient(NftId bundleNftId, uint capacityAmount, uint collateralAmount);

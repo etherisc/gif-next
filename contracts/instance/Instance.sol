@@ -41,6 +41,18 @@ contract Instance is
     AccessManagedUpgradeable,
     Registerable
 {
+    error InstanceErrorReaderInstanceMismatch(address expectedInstance, address foundInstance);
+
+    error InstanceErrorBundleManagerAlreadySet();
+    error InstanceErrorBundleManagerAuthorityMismatch();
+    error InstanceErrorBundleManagerInstanceMismatch(address expectedInstance, address foundInstance);
+
+    error InstanceErrorAccessManagerAlreadySet();
+    error InstanceErrorAccessManagerAuthorityMismatch();
+
+    error InstanceErrorInstanceStoreAlreadySet();
+    error InstanceErrorInstanceStoreAuthorityMismatch();
+
     uint256 public constant GIF_MAJOR_VERSION = 3;
 
     bool private _initialized;
@@ -152,7 +164,9 @@ contract Instance is
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        require(instanceReader.getInstance() == Instance(this), "InstanceReader instance mismatch");
+        if(instanceReader.getInstance() != Instance(this)) {
+            revert InstanceErrorReaderInstanceMismatch(address(this), address(instanceReader.getInstance()));
+        }
         _instanceReader = instanceReader;
     }
 
@@ -165,9 +179,15 @@ contract Instance is
     }
     
     function setBundleManager(BundleManager bundleManager) external restricted() {
-        require(address(_bundleManager) == address(0), "BundleManager is set");
-        require(bundleManager.getInstance() == Instance(this), "BundleManager instance mismatch");
-        require(bundleManager.authority() == authority(), "BundleManager authority mismatch");
+        if(address(_bundleManager) != address(0)) {
+            revert InstanceErrorBundleManagerAlreadySet();
+        }
+        if(bundleManager.getInstance() != Instance(this)) {
+            revert InstanceErrorBundleManagerInstanceMismatch(address(this), address(bundleManager.getInstance()));
+        }
+        if(bundleManager.authority() != authority()) {
+            revert InstanceErrorBundleManagerAuthorityMismatch();
+        }
         _bundleManager = bundleManager;
     }
 
@@ -176,8 +196,12 @@ contract Instance is
     }
 
     function setInstanceAccessManager(InstanceAccessManager accessManager) external restricted {
-        require(address(_accessManager) == address(0), "InstanceAccessManager is set");
-        require(accessManager.authority() == authority(), "InstanceAccessManager authority mismatch");  
+        if(address(_accessManager) != address(0)) {
+            revert InstanceErrorAccessManagerAlreadySet();
+        }
+        if(accessManager.authority() != authority()) {
+            revert InstanceErrorAccessManagerAuthorityMismatch();
+        }
         _accessManager = accessManager;      
     }
 
@@ -186,8 +210,12 @@ contract Instance is
     }
 
     function setInstanceStore(InstanceStore instanceStore) external restricted {
-        require(address(_instanceStore) == address(0), "InstanceStore is set");
-        require(instanceStore.authority() == authority(), "InstanceStore authority mismatch");  
+        if(address(_instanceStore) != address(0)) {
+            revert InstanceErrorInstanceStoreAlreadySet();
+        }
+        if(instanceStore.authority() != authority()) {
+            revert InstanceErrorInstanceStoreAuthorityMismatch();
+        }
         _instanceStore = instanceStore;
     }
 

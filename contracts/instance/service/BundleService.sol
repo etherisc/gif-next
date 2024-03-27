@@ -180,13 +180,13 @@ contract BundleService is
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
-
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        require(bundleInfo.poolNftId.gtz(), "ERROR:PLS-010:BUNDLE_UNKNOWN");
-        require(poolNftId == bundleInfo.poolNftId, "ERROR:PLS-011:BUNDLE_POOL_MISMATCH");
+
+        if(bundleInfo.poolNftId != poolNftId) {
+            revert ErrorBundleServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+        }
 
         bundleInfo.fee = fee;
-
         instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 

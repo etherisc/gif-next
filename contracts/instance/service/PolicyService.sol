@@ -118,7 +118,7 @@ contract PolicyService is
         external
         override
     {
-        require(false, "ERROR:PRS-235:NOT_YET_IMPLEMENTED");
+        revert();
     }
 
 
@@ -137,10 +137,20 @@ contract PolicyService is
 
         // check policy matches with calling product
         IPolicy.PolicyInfo memory applicationInfo = instanceReader.getPolicyInfo(applicationNftId);
-        require(applicationInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
+        if(applicationInfo.productNftId != productNftId) {
+            revert ErrorIPolicyServicePolicyProductMismatch(
+                applicationNftId, 
+                applicationInfo.productNftId, 
+                productNftId);
+        }
 
         // check policy is in state applied
-        require(instanceReader.getPolicyState(applicationNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
+        if(instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
+            revert ErrorIPolicyServicePolicyStateInvalid(
+                applicationNftId, 
+                APPLIED(), 
+                instanceReader.getPolicyState(applicationNftId));
+        }
         
         StateId newPolicyState = UNDERWRITTEN();
 
