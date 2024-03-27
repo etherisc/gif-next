@@ -120,21 +120,23 @@ function printAddresses(
     // productAddress: AddressLike, productNftId: string,
 ) {
     let addresses = "\nAddresses of deployed smart contracts:\n==========\n";
-    addresses += `nftIdLibAddress: ${libraries.nftIdLibAddress}\n`;
-    addresses += `mathLibAddress: ${libraries.mathLibAddress}\n`;
-    addresses += `uFixedLibAddress: ${libraries.uFixedLibAddress}\n`;
-    addresses += `objectTypeLibAddress: ${libraries.objectTypeLibAddress}\n`;
+    addresses += `amountLibAddress: ${libraries.amountLibAddress}\n`;
     addresses += `blockNumberLibAddress: ${libraries.blockNumberLibAddress}\n`;
+    addresses += `contractDeployerLibAddress: ${libraries.contractDeployerLibAddress}\n`;
+    addresses += `feeLibAddress: ${libraries.feeLibAddress}\n`;
+    addresses += `key32LibAddress: ${libraries.key32LibAddress}\n`;
+    addresses += `libNftIdSetAddress: ${libraries.libNftIdSetAddress}\n`;
+    addresses += `mathLibAddress: ${libraries.mathLibAddress}\n`;
+    addresses += `nftIdLibAddress: ${libraries.nftIdLibAddress}\n`;
+    addresses += `objectTypeLibAddress: ${libraries.objectTypeLibAddress}\n`;
+    addresses += `referralLibAddress: ${libraries.referralLibAddress}\n`;
+    addresses += `riskIdLibAddress: ${libraries.riskIdLibAddress}\n`;
+    addresses += `roleIdLibAddress: ${libraries.roleIdLibAddress}\n`;
+    addresses += `stateIdLibAddress: ${libraries.stateIdLibAddress}\n`;
+    addresses += `timestampLibAddress: ${libraries.timestampLibAddress}\n`;
+    addresses += `uFixedLibAddress: ${libraries.uFixedLibAddress}\n`;
     addresses += `versionLibAddress: ${libraries.versionLibAddress}\n`;
     addresses += `versionPartLibAddress: ${libraries.versionPartLibAddress}\n`;
-    addresses += `timestampLibAddress: ${libraries.timestampLibAddress}\n`;
-    addresses += `libNftIdSetAddress: ${libraries.libNftIdSetAddress}\n`;
-    addresses += `key32LibAddress: ${libraries.key32LibAddress}\n`;
-    addresses += `feeLibAddress: ${libraries.feeLibAddress}\n`;
-    addresses += `stateIdLibAddress: ${libraries.stateIdLibAddress}\n`;
-    addresses += `roleIdLibAddress: ${libraries.roleIdLibAddress}\n`;
-    addresses += `riskIdLibAddress: ${libraries.riskIdLibAddress}\n`;
-    addresses += `contractDeployerLibAddress: ${libraries.contractDeployerLibAddress}\n`;
     addresses += `--------\n`;
     addresses += `registryAccessManagerAddress: ${registry.registryAccessManagerAddress}\n`;
     addresses += `releaseManagerAddress: ${registry.releaseManagerAddress}\n`;
