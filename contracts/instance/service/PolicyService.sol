@@ -104,7 +104,7 @@ contract PolicyService is
     //     poolNftId = productSetupInfo.poolNftId;
     //     bundleNftId = policyInfo.bundleNftId;
     //     bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-    //     require(bundleInfo.poolNftId == poolNftId, "BUNDLE_POOL_MISMATCH");
+    //     equire(bundleInfo.poolNftId == poolNftId, "BUNDLE_POOL_MISMATCH");
 
     //     // calculate required collateral
     //     IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
