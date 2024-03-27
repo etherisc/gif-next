@@ -47,6 +47,8 @@ import {ClaimService} from "../../contracts/instance/service/ClaimService.sol";
 import {ClaimServiceManager} from "../../contracts/instance/service/ClaimServiceManager.sol";
 import {BundleService} from "../../contracts/instance/service/BundleService.sol";
 import {BundleServiceManager} from "../../contracts/instance/service/BundleServiceManager.sol";
+import {PricingService} from "../../contracts/instance/service/PricingService.sol";
+import {PricingServiceManager} from "../../contracts/instance/service/PricingServiceManager.sol";
 
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
@@ -111,6 +113,9 @@ contract TestGifBase is Test {
     ClaimServiceManager public claimServiceManager;
     ClaimService public claimService;
     NftId public claimServiceNftId;
+    PricingService public pricingService;
+    NftId public pricingServiceNftId;
+    PricingServiceManager public pricingServiceManager;
 
     BundleServiceManager public bundleServiceManager;
     BundleService public bundleService;
@@ -365,20 +370,18 @@ contract TestGifBase is Test {
         instanceServiceManager = new InstanceServiceManager(address(registry));
         instanceService = instanceServiceManager.getInstanceService();
         // temporal solution, register in separate tx
-        releaseManager.registerService(instanceService);
-        instanceServiceNftId = registry.getNftId(address(instanceService));
+        instanceServiceNftId = releaseManager.registerService(instanceService);
 
         // solhint-disable 
         console.log("instanceService domain", instanceService.getDomain().toInt());
         console.log("instanceService deployed at", address(instanceService));
         console.log("instanceService nft id", instanceService.getNftId().toInt());
-        // solhint-enable 
+        // solhint-enable
 
         // --- distribution service ---------------------------------//
         distributionServiceManager = new DistributionServiceManager(address(registry));
         distributionService = distributionServiceManager.getDistributionService();
-        releaseManager.registerService(distributionService);
-        distributionServiceNftId = registry.getNftId(address(distributionService));
+        distributionServiceNftId = releaseManager.registerService(distributionService);
 
         // solhint-disable 
         console.log("distributionService domain", distributionService.getDomain().toInt());
@@ -386,11 +389,24 @@ contract TestGifBase is Test {
         console.log("distributionService nft id", distributionService.getNftId().toInt());
         // solhint-enable
 
+        // --- pricing service ---------------------------------//
+        // TODO chicken and egg problem, pricing service needs distribution service to be registered and vice versa
+        // option 1: do not store service references localy, in services
+        // option 2: do not use isValidReferal in  pricing service
+        pricingServiceManager = new PricingServiceManager(address(registry));
+        pricingService = pricingServiceManager.getPricingService();
+        pricingServiceNftId = releaseManager.registerService(pricingService);
+
+        // solhint-disable
+        console.log("pricingService domain", pricingService.getDomain().toInt());
+        console.log("pricingService deployed at", address(pricingService));
+        console.log("pricingService nft id", pricingService.getNftId().toInt());
+        // solhint-enable
+
         // --- bundle service ---------------------------------//
         bundleServiceManager = new BundleServiceManager(address(registry));
         bundleService = bundleServiceManager.getBundleService();
-        releaseManager.registerService(bundleService);
-        bundleServiceNftId = registry.getNftId(address(bundleService));
+        bundleServiceNftId = releaseManager.registerService(bundleService);
 
         // solhint-disable
         console.log("bundleService domain", bundleService.getDomain().toInt());
@@ -401,8 +417,7 @@ contract TestGifBase is Test {
         // --- pool service ---------------------------------//
         poolServiceManager = new PoolServiceManager(address(registry));
         poolService = poolServiceManager.getPoolService();
-        releaseManager.registerService(poolService);
-        poolServiceNftId = registry.getNftId(address(poolService));
+        poolServiceNftId = releaseManager.registerService(poolService);
 
         // solhint-disable
         console.log("poolService domain", poolService.getDomain().toInt());
@@ -413,8 +428,7 @@ contract TestGifBase is Test {
         // --- product service ---------------------------------//
         productServiceManager = new ProductServiceManager(address(registry));
         productService = productServiceManager.getProductService();
-        releaseManager.registerService(productService);
-        productServiceNftId = registry.getNftId(address(productService));
+        productServiceNftId = releaseManager.registerService(productService);
 
         // solhint-disable
         console.log("productService domain", productService.getDomain().toInt());
@@ -426,8 +440,7 @@ contract TestGifBase is Test {
         // --- claim service ---------------------------------//
         claimServiceManager = new ClaimServiceManager(address(registry));
         claimService = claimServiceManager.getClaimService();
-        releaseManager.registerService(claimService);
-        claimServiceNftId = registry.getNftId(address(claimService));
+        claimServiceNftId = releaseManager.registerService(claimService);
 
         // solhint-disable
         console.log("claimService domain", claimService.getDomain().toInt());
@@ -438,8 +451,7 @@ contract TestGifBase is Test {
         // --- application service ---------------------------------//
         applicationServiceManager = new ApplicationServiceManager(address(registry));
         applicationService = applicationServiceManager.getApplicationService();
-        releaseManager.registerService(applicationService);
-        applicationServiceNftId = registry.getNftId(address(applicationService));
+        applicationServiceNftId = releaseManager.registerService(applicationService);
 
         // solhint-disable
         console.log("applicationService domain", applicationService.getDomain().toInt());
@@ -450,8 +462,7 @@ contract TestGifBase is Test {
         // --- policy service ---------------------------------//
         policyServiceManager = new PolicyServiceManager(address(registry));
         policyService = policyServiceManager.getPolicyService();
-        releaseManager.registerService(policyService);
-        policyServiceNftId = registry.getNftId(address(policyService));
+        policyServiceNftId = releaseManager.registerService(policyService);
 
         // solhint-disable
         console.log("policyService domain", policyService.getDomain().toInt());
@@ -532,6 +543,7 @@ contract TestGifBase is Test {
         console.log("cloned instance access manager deployed at", address(instanceAccessManager));
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle manager deployed at", address(instanceBundleManager));
+        console.log("cloned instance store deployed at", address(instanceStore));
         // solhint-enable
     }
 

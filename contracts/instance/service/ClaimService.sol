@@ -142,10 +142,4 @@ contract ClaimService is
 
 
     // internal functions
-
-    function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
-        IRegistry.ObjectInfo memory productInfo;
-        (, productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
-        product = Product(productInfo.objectAddress);
-    }
 }

@@ -121,7 +121,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
@@ -139,7 +139,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
@@ -166,7 +166,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
@@ -193,7 +193,7 @@ contract PoolService is
         virtual
         returns(NftId bundleNftId)
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         // TODO add implementation that takes care of staking fees
@@ -216,7 +216,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
 
         // TODO book keeping for pool collateral released outside of retention level
 

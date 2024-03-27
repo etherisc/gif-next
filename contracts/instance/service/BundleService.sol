@@ -178,7 +178,7 @@ contract BundleService is
         external
         override
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
@@ -264,7 +264,7 @@ contract BundleService is
         external
         virtual
     {
-        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
 
         // udpate bundle state
         instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
@@ -281,7 +281,7 @@ contract BundleService is
         external
         virtual
     {
-        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
 
         // udpate bundle state
         instance.getInstanceStore().updateBundleState(bundleNftId, ACTIVE());

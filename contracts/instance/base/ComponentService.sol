@@ -21,11 +21,15 @@ abstract contract ComponentService is Service {
     error ErrorComponentServiceSenderNotOwner(address component, address initialOwner, address sender);
     error ErrorComponentServiceExpectedRoleMissing(NftId instanceNftId, RoleId requiredRole, address sender);
     error ErrorComponentServiceComponentLocked(address component);
+    error ErrorComponentServiceSenderNotService(address sender);
+    error ErrorComponentServiceComponentTypeInvalid(address component, ObjectType expectedType, ObjectType foundType);
 
     /// @dev modifier to check if caller is a registered service
     modifier onlyService() {
         address caller = msg.sender;
-        require(getRegistry().isRegisteredService(caller), "ERROR_NOT_SERVICE");
+        if(!getRegistry().isRegisteredService(caller)) {
+            revert ErrorComponentServiceSenderNotService(caller);
+        }
         _;
     }
 
@@ -37,10 +41,6 @@ abstract contract ComponentService is Service {
 
     function getInstanceService() public view returns (InstanceService) {
         return InstanceService(_getServiceAddress(INSTANCE()));
-    }
-
-    function _getServiceAddress(ObjectType domain) internal view returns (address) {
-        return getRegistry().getServiceAddress(domain, getVersion().toMajorPart());
     }
 
     // internal functions
@@ -88,34 +88,60 @@ abstract contract ComponentService is Service {
     }
 
     // internal view functions
-
-    function _getAndVerifyComponentInfoAndInstance(
-        ObjectType expectedType
+    function _getAndVerifyCallingComponentAndInstance(
+        ObjectType expectedType // assume always of `component` type
     )
         internal
         view
         returns(
-            NftId nftId,
-            IRegistry.ObjectInfo memory info, 
+            NftId componentNftId,
+            IRegistry.ObjectInfo memory componentInfo, 
             IInstance instance
         )
     {
-        IRegistry registry = getRegistry();
+        componentNftId = getRegistry().getNftId(msg.sender);
+        (componentInfo, instance) = _getAndVerifyComponentInfoAndInstance(componentNftId, expectedType);
 
-        info = registry.getObjectInfo(msg.sender);
-        require(info.objectType == expectedType, "OBJECT_TYPE_INVALID");
-
-        nftId = info.nftId;
-        instance = _getInstance(info.parentNftId);
-
-        if (instance.getInstanceAccessManager().isTargetLocked(info.objectAddress)) {
-            revert IAccess.ErrorIAccessTargetLocked(info.objectAddress);
+        if (instance.getInstanceAccessManager().isTargetLocked(componentInfo.objectAddress)) {
+            revert IAccess.ErrorIAccessTargetLocked(componentInfo.objectAddress);
         }
     }
 
+    function _getAndVerifyComponentInfoAndInstance(
+        NftId componentNftId,
+        ObjectType expectedType // assume always of `component` type
+    )
+        internal
+        view
+        returns(
+            IRegistry.ObjectInfo memory componentInfo, 
+            IInstance instance
+        )
+    {
+        componentInfo = getRegistry().getObjectInfo(componentNftId);
+        if(componentInfo.objectType != expectedType) {
+            revert ErrorComponentServiceComponentTypeInvalid(
+                componentInfo.objectAddress, 
+                expectedType, 
+                componentInfo.objectType);
+        }
+
+        instance = _getInstance(componentInfo.parentNftId);
+    }
+    // assume componentNftId is always of `instance` type
     function _getInstance(NftId instanceNftId) internal view returns (IInstance) {
         return IInstance(
             getRegistry().getObjectInfo(
                 instanceNftId).objectAddress);
+    }
+    // assume componentNftId is always of `component` type
+    /*function _getInstanceForComponent(NftId componentNftId) internal view returns (IInstance) {
+        NftId instanceNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
+        address instanceAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;
+        return IInstance(instanceAddress);
+    }*/
+
+    function _getServiceAddress(ObjectType domain) internal view returns (address) {
+        return getRegistry().getServiceAddress(domain, getVersion().toMajorPart());
     }
 }

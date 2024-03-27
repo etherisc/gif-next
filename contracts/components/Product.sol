@@ -8,9 +8,10 @@ import {IApplicationService} from "../instance/service/IApplicationService.sol";
 import {IPolicyService} from "../instance/service/IPolicyService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IClaimService} from "../instance/service/IClaimService.sol";
+import {IPricingService} from "../instance/service/IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, NftIdLib} from "../types/NftId.sol";
-import {PRODUCT, APPLICATION, POLICY, CLAIM } from "../types/ObjectType.sol";
+import {PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../types/ObjectType.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {Seconds} from "../types/Seconds.sol";
@@ -40,6 +41,7 @@ abstract contract Product is
         IApplicationService _applicationService;
         IPolicyService _policyService;
         IClaimService _claimService;
+        IPricingService _pricingService;
         Pool _pool;
         Distribution _distribution;
         Fee _initialProductFee;
@@ -75,6 +77,7 @@ abstract contract Product is
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
         $._claimService = IClaimService(_getServiceAddress(CLAIM())); 
+        $._pricingService = IPricingService(_getServiceAddress(PRICE()));
         $._pool = Pool(pool);
         $._distribution = Distribution(distribution);
         $._initialProductFee = productFee;
@@ -100,14 +103,14 @@ abstract contract Product is
         override 
         returns (uint256 premiumAmount)
     {
-        IPolicy.Premium memory premium = _getProductStorage()._applicationService.calculatePremium(
+        IPolicy.Premium memory premium = _getProductStorage()._pricingService.calculatePremium(
             getNftId(),
+            bundleNftId,
             riskId,
+            referralId,
             sumInsuredAmount,
             lifetime,
-            applicationData,
-            bundleNftId,
-            referralId
+            applicationData
         );
         premiumAmount = premium.premiumAmount;
     }
