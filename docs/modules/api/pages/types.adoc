@@ -1,0 +1,48 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+= Types
+
+Contains the types contracts. 
+
+== Contracts
+
+# Blocknumber
+
+# ChainId
+
+# ClaimId
+
+# DistributorType
+
+# Fee
+
+```solidity
+struct Fee {
+  UFixed fractionalFee;
+  uint256 fixedFee;
+}
+```
+
+# Key32
+
+# NftId
+
+# NumberId
+
+# ObjectType
+
+# PayoutId
+
+# RiskId
+
+# RoleId
+
+# Seconds
+
+# StateId
+
+# Timestamp
+
+# UFixed
+
+# Version
+
