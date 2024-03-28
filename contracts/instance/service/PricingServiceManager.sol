@@ -43,7 +43,7 @@ contract PricingServiceManager is ProxyManager {
     function getPricingService()
         external
         view
-        returns (PricingService getPricingService)
+        returns (PricingService)
     {
         return _pricingService;
     }
