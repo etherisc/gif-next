@@ -110,6 +110,10 @@ function PAYOUT() pure returns (ObjectType) {
     return toObjectType(212);
 }
 
+function PRICE() pure returns (ObjectType) {
+    return toObjectType(230);
+}
+
 /// @dev Converts the uint8 to a ObjectType.
 function toObjectType(uint256 objectType) pure returns (ObjectType) {
     return ObjectType.wrap(uint8(objectType));

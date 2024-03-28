@@ -106,7 +106,7 @@ contract BundleService is
 
             // save updated pool info
             componentInfo.data = abi.encode(poolInfo);
-            instance.updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
+            instance.getInstanceStore().updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
         }
     }
 
@@ -154,7 +154,7 @@ contract BundleService is
         );
 
         // create bundle info in instance
-        instance.createBundle(bundleNftId, bundleInfo);
+        instance.getInstanceStore().createBundle(bundleNftId, bundleInfo);
 
         // put bundle under bundle managemet
         BundleManager bundleManager = instance.getBundleManager();
@@ -178,16 +178,16 @@ contract BundleService is
         external
         override
     {
-        (NftId poolNftId, IRegistry.ObjectInfo memory info , IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
-
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        require(bundleInfo.poolNftId.gtz(), "ERROR:PLS-010:BUNDLE_UNKNOWN");
-        require(poolNftId == bundleInfo.poolNftId, "ERROR:PLS-011:BUNDLE_POOL_MISMATCH");
+
+        if(bundleInfo.poolNftId != poolNftId) {
+            revert ErrorBundleServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+        }
 
         bundleInfo.fee = fee;
-
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
 
@@ -256,7 +256,7 @@ contract BundleService is
         }
 
         // save updated bundle info
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
 
@@ -264,10 +264,10 @@ contract BundleService is
         external
         virtual
     {
-        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
 
         // udpate bundle state
-        instance.updateBundleState(bundleNftId, PAUSED());
+        instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
 
         // update set of active bundles
         BundleManager bundleManager = instance.getBundleManager();
@@ -281,10 +281,10 @@ contract BundleService is
         external
         virtual
     {
-        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
 
         // udpate bundle state
-        instance.updateBundleState(bundleNftId, ACTIVE());
+        instance.getInstanceStore().updateBundleState(bundleNftId, ACTIVE());
 
         // update set of active bundles
         BundleManager bundleManager = instance.getBundleManager();
@@ -303,7 +303,7 @@ contract BundleService is
         // TODO add restricted and autz for pool service
     {
         // udpate bundle state
-        instance.updateBundleState(bundleNftId, CLOSED());
+        instance.getInstanceStore().updateBundleState(bundleNftId, CLOSED());
 
         // ensure no open policies attached to bundle
         BundleManager bundleManager = instance.getBundleManager();
@@ -348,7 +348,7 @@ contract BundleService is
         // reduce locked amount by released collateral amount
         bundleInfo.lockedAmount = AmountLib.toAmount(bundleInfo.lockedAmount.toInt() - collateralAmount);
 
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
         
         _unlinkPolicy(instance, policyNftId);
     }
