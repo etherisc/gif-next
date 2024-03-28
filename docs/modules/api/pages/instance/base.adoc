@@ -1,0 +1,588 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+:xref-ComponentService-onlyService--: xref:instance/base.adoc#ComponentService-onlyService--
+= Components
+ 
+Contains the instance base contracts. 
+
+== Contracts
+
+:ErrorComponentServiceNotComponent: pass:normal[xref:#ComponentService-ErrorComponentServiceNotComponent-address-[`++ErrorComponentServiceNotComponent++`]]
+:ErrorComponentServiceInvalidType: pass:normal[xref:#ComponentService-ErrorComponentServiceInvalidType-address-ObjectType-ObjectType-[`++ErrorComponentServiceInvalidType++`]]
+:ErrorComponentServiceSenderNotOwner: pass:normal[xref:#ComponentService-ErrorComponentServiceSenderNotOwner-address-address-address-[`++ErrorComponentServiceSenderNotOwner++`]]
+:ErrorComponentServiceExpectedRoleMissing: pass:normal[xref:#ComponentService-ErrorComponentServiceExpectedRoleMissing-NftId-RoleId-address-[`++ErrorComponentServiceExpectedRoleMissing++`]]
+:ErrorComponentServiceComponentLocked: pass:normal[xref:#ComponentService-ErrorComponentServiceComponentLocked-address-[`++ErrorComponentServiceComponentLocked++`]]
+:ErrorComponentServiceSenderNotService: pass:normal[xref:#ComponentService-ErrorComponentServiceSenderNotService-address-[`++ErrorComponentServiceSenderNotService++`]]
+:ErrorComponentServiceComponentTypeInvalid: pass:normal[xref:#ComponentService-ErrorComponentServiceComponentTypeInvalid-address-ObjectType-ObjectType-[`++ErrorComponentServiceComponentTypeInvalid++`]]
+:onlyService: pass:normal[xref:#ComponentService-onlyService--[`++onlyService++`]]
+:getRegistryService: pass:normal[xref:#ComponentService-getRegistryService--[`++getRegistryService++`]]
+:getInstanceService: pass:normal[xref:#ComponentService-getInstanceService--[`++getInstanceService++`]]
+:_checkComponentForRegistration: pass:normal[xref:#ComponentService-_checkComponentForRegistration-address-ObjectType-RoleId-[`++_checkComponentForRegistration++`]]
+:_getAndVerifyCallingComponentAndInstance: pass:normal[xref:#ComponentService-_getAndVerifyCallingComponentAndInstance-ObjectType-[`++_getAndVerifyCallingComponentAndInstance++`]]
+:_getAndVerifyComponentInfoAndInstance: pass:normal[xref:#ComponentService-_getAndVerifyComponentInfoAndInstance-NftId-ObjectType-[`++_getAndVerifyComponentInfoAndInstance++`]]
+:_getInstance: pass:normal[xref:#ComponentService-_getInstance-NftId-[`++_getInstance++`]]
+:_getServiceAddress: pass:normal[xref:#ComponentService-_getServiceAddress-ObjectType-[`++_getServiceAddress++`]]
+
+[.contract]
+[[ComponentService]]
+=== `++ComponentService++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/base/ComponentService.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/base/ComponentService.sol";
+```
+
+[.contract-index]
+.Modifiers
+--
+* {xref-ComponentService-onlyService--}[`++onlyService()++`]
+--
+
+[.contract-index]
+.Functions
+--
+* [`++getRegistryService()++`]
+* [`++getInstanceService()++`]
+* [`++_checkComponentForRegistration(componentAddress, requiredType, requiredRole)++`]
+* [`++_getAndVerifyCallingComponentAndInstance(expectedType)++`]
+* [`++_getAndVerifyComponentInfoAndInstance(componentNftId, expectedType)++`]
+* [`++_getInstance(instanceNftId)++`]
+* [`++_getServiceAddress(domain)++`]
+
+[.contract-subindex-inherited]
+.Service
+* [`++getVersion()++`]
+* [`++initializeService(registry, authority, initialOwner)++`]
+
+[.contract-subindex-inherited]
+.IService
+* [`++getDomain()++`]
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+* [`++__AccessManaged_init(initialAuthority)++`]
+* [`++__AccessManaged_init_unchained(initialAuthority)++`]
+* [`++authority()++`]
+* [`++setAuthority(newAuthority)++`]
+* [`++isConsumingScheduledOp()++`]
+* [`++_setAuthority(newAuthority)++`]
+* [`++_checkCanCall(caller, data)++`]
+
+[.contract-subindex-inherited]
+.IAccessManaged
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+* [`++__Context_init()++`]
+* [`++__Context_init_unchained()++`]
+* [`++_msgSender()++`]
+* [`++_msgData()++`]
+
+[.contract-subindex-inherited]
+.Versionable
+* [`++initializeVersionable(activatedBy, data)++`]
+* [`++upgradeVersionable(data)++`]
+* [`++_initialize(owner, data)++`]
+* [`++_upgrade(data)++`]
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+* [`++initializeRegisterable(registryAddress, parentNftId, objectType, isInterceptor, initialOwner, registryData)++`]
+* [`++getInitialInfo()++`]
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+* [`++initializeNftOwnable(initialOwner, registryAddress)++`]
+* [`++linkToRegisteredNftId()++`]
+* [`++getNftId()++`]
+* [`++getOwner()++`]
+* [`++_linkToNftOwnable(nftOwnableAddress)++`]
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+* [`++initializeRegistryLinked(registryAddress)++`]
+* [`++getRegistry()++`]
+* [`++getRegistryAddress()++`]
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.ERC165
+* [`++initializeERC165()++`]
+* [`++registerInterface(interfaceId)++`]
+* [`++supportsInterface(interfaceId)++`]
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.Service
+
+[.contract-subindex-inherited]
+.IService
+
+[.contract-subindex-inherited]
+.AccessManagedUpgradeable
+
+[.contract-subindex-inherited]
+.IAccessManaged
+* [`++AuthorityUpdated(authority)++`]
+
+[.contract-subindex-inherited]
+.ContextUpgradeable
+
+[.contract-subindex-inherited]
+.Versionable
+
+[.contract-subindex-inherited]
+.IVersionable
+
+[.contract-subindex-inherited]
+.Registerable
+
+[.contract-subindex-inherited]
+.IRegisterable
+
+[.contract-subindex-inherited]
+.NftOwnable
+
+[.contract-subindex-inherited]
+.INftOwnable
+
+[.contract-subindex-inherited]
+.RegistryLinked
+
+[.contract-subindex-inherited]
+.IRegistryLinked
+
+[.contract-subindex-inherited]
+.ERC165
+
+[.contract-subindex-inherited]
+.IERC165
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[ComponentService-onlyService--]]
+==== `[.contract-item-name]#++onlyService++#++()++` [.item-kind]#modifier#
+
+modifier to check if caller is a registered service
+
+[.contract-item]
+[[ComponentService-getRegistryService--]]
+==== `[.contract-item-name]#++getRegistryService++#++() → contract IRegistryService++` [.item-kind]#public#
+
+[.contract-item]
+[[ComponentService-getInstanceService--]]
+==== `[.contract-item-name]#++getInstanceService++#++() → contract InstanceService++` [.item-kind]#public#
+
+[.contract-item]
+[[ComponentService-_checkComponentForRegistration-address-ObjectType-RoleId-]]
+==== `[.contract-item-name]#++_checkComponentForRegistration++#++(address componentAddress, ObjectType requiredType, RoleId requiredRole) → contract IComponent component, address owner, contract IInstance instance, NftId instanceNftId++` [.item-kind]#internal#
+
+[.contract-item]
+[[ComponentService-_getAndVerifyCallingComponentAndInstance-ObjectType-]]
+==== `[.contract-item-name]#++_getAndVerifyCallingComponentAndInstance++#++(ObjectType expectedType) → NftId componentNftId, struct IRegistry.ObjectInfo componentInfo, contract IInstance instance++` [.item-kind]#internal#
+
+[.contract-item]
+[[ComponentService-_getAndVerifyComponentInfoAndInstance-NftId-ObjectType-]]
+==== `[.contract-item-name]#++_getAndVerifyComponentInfoAndInstance++#++(NftId componentNftId, ObjectType expectedType) → struct IRegistry.ObjectInfo componentInfo, contract IInstance instance++` [.item-kind]#internal#
+
+[.contract-item]
+[[ComponentService-_getInstance-NftId-]]
+==== `[.contract-item-name]#++_getInstance++#++(NftId instanceNftId) → contract IInstance++` [.item-kind]#internal#
+
+[.contract-item]
+[[ComponentService-_getServiceAddress-ObjectType-]]
+==== `[.contract-item-name]#++_getServiceAddress++#++(ObjectType domain) → address++` [.item-kind]#internal#
+
+:Value: pass:normal[xref:#IKeyValueStore-Value[`++Value++`]]
+:Metadata: pass:normal[xref:#IKeyValueStore-Metadata[`++Metadata++`]]
+:LogInfoCreated: pass:normal[xref:#IKeyValueStore-LogInfoCreated-ObjectType-KeyId-StateId-address-address-[`++LogInfoCreated++`]]
+:LogInfoUpdated: pass:normal[xref:#IKeyValueStore-LogInfoUpdated-ObjectType-KeyId-StateId-address-address-Blocknumber-[`++LogInfoUpdated++`]]
+:LogStateUpdated: pass:normal[xref:#IKeyValueStore-LogStateUpdated-ObjectType-KeyId-StateId-StateId-address-address-Blocknumber-[`++LogStateUpdated++`]]
+:exists: pass:normal[xref:#IKeyValueStore-exists-Key32-[`++exists++`]]
+:get: pass:normal[xref:#IKeyValueStore-get-Key32-[`++get++`]]
+:getData: pass:normal[xref:#IKeyValueStore-getData-Key32-[`++getData++`]]
+:getMetadata: pass:normal[xref:#IKeyValueStore-getMetadata-Key32-[`++getMetadata++`]]
+:getState: pass:normal[xref:#IKeyValueStore-getState-Key32-[`++getState++`]]
+:toKey32: pass:normal[xref:#IKeyValueStore-toKey32-ObjectType-KeyId-[`++toKey32++`]]
+
+[.contract]
+[[IKeyValueStore]]
+=== `++IKeyValueStore++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/base/IKeyValueStore.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/base/IKeyValueStore.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++exists(key)++`]
+* [`++get(key)++`]
+* [`++getData(key)++`]
+* [`++getMetadata(key)++`]
+* [`++getState(key)++`]
+* [`++toKey32(objectType, id)++`]
+
+[.contract-subindex-inherited]
+.ILifecycle
+* [`++hasLifecycle(objectType)++`]
+* [`++getInitialState(objectType)++`]
+* [`++isValidTransition(objectType, fromId, toId)++`]
+
+--
+
+[.contract-index]
+.Events
+--
+* [`++LogInfoCreated(objectType, keyId, state, createdBy, txOrigin)++`]
+* [`++LogInfoUpdated(objectType, keyId, state, updatedBy, txOrigin, lastUpdatedIn)++`]
+* [`++LogStateUpdated(objectType, keyId, stateOld, stateNew, updatedBy, txOrigin, lastUpdatedIn)++`]
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+--
+
+[.contract-item]
+[[IKeyValueStore-exists-Key32-]]
+==== `[.contract-item-name]#++exists++#++(Key32 key) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[IKeyValueStore-get-Key32-]]
+==== `[.contract-item-name]#++get++#++(Key32 key) → struct IKeyValueStore.Value value++` [.item-kind]#external#
+
+[.contract-item]
+[[IKeyValueStore-getData-Key32-]]
+==== `[.contract-item-name]#++getData++#++(Key32 key) → bytes data++` [.item-kind]#external#
+
+[.contract-item]
+[[IKeyValueStore-getMetadata-Key32-]]
+==== `[.contract-item-name]#++getMetadata++#++(Key32 key) → struct IKeyValueStore.Metadata metadata++` [.item-kind]#external#
+
+[.contract-item]
+[[IKeyValueStore-getState-Key32-]]
+==== `[.contract-item-name]#++getState++#++(Key32 key) → StateId state++` [.item-kind]#external#
+
+[.contract-item]
+[[IKeyValueStore-toKey32-ObjectType-KeyId-]]
+==== `[.contract-item-name]#++toKey32++#++(ObjectType objectType, KeyId id) → Key32++` [.item-kind]#external#
+
+[.contract-item]
+[[IKeyValueStore-LogInfoCreated-ObjectType-KeyId-StateId-address-address-]]
+==== `[.contract-item-name]#++LogInfoCreated++#++(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin)++` [.item-kind]#event#
+
+[.contract-item]
+[[IKeyValueStore-LogInfoUpdated-ObjectType-KeyId-StateId-address-address-Blocknumber-]]
+==== `[.contract-item-name]#++LogInfoUpdated++#++(ObjectType objectType, KeyId keyId, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+[.contract-item]
+[[IKeyValueStore-LogStateUpdated-ObjectType-KeyId-StateId-StateId-address-address-Blocknumber-]]
+==== `[.contract-item-name]#++LogStateUpdated++#++(ObjectType objectType, KeyId keyId, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn)++` [.item-kind]#event#
+
+:ErrorNoLifecycle: pass:normal[xref:#ILifecycle-ErrorNoLifecycle-NftId-ObjectType-[`++ErrorNoLifecycle++`]]
+:ErrorInvalidStateTransition: pass:normal[xref:#ILifecycle-ErrorInvalidStateTransition-ObjectType-StateId-StateId-[`++ErrorInvalidStateTransition++`]]
+:hasLifecycle: pass:normal[xref:#ILifecycle-hasLifecycle-ObjectType-[`++hasLifecycle++`]]
+:getInitialState: pass:normal[xref:#ILifecycle-getInitialState-ObjectType-[`++getInitialState++`]]
+:isValidTransition: pass:normal[xref:#ILifecycle-isValidTransition-ObjectType-StateId-StateId-[`++isValidTransition++`]]
+
+[.contract]
+[[ILifecycle]]
+=== `++ILifecycle++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/base/ILifecycle.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/base/ILifecycle.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++hasLifecycle(objectType)++`]
+* [`++getInitialState(objectType)++`]
+* [`++isValidTransition(objectType, fromId, toId)++`]
+
+--
+
+[.contract-item]
+[[ILifecycle-hasLifecycle-ObjectType-]]
+==== `[.contract-item-name]#++hasLifecycle++#++(ObjectType objectType) → bool++` [.item-kind]#external#
+
+[.contract-item]
+[[ILifecycle-getInitialState-ObjectType-]]
+==== `[.contract-item-name]#++getInitialState++#++(ObjectType objectType) → StateId++` [.item-kind]#external#
+
+[.contract-item]
+[[ILifecycle-isValidTransition-ObjectType-StateId-StateId-]]
+==== `[.contract-item-name]#++isValidTransition++#++(ObjectType objectType, StateId fromId, StateId toId) → bool++` [.item-kind]#external#
+
+:create: pass:normal[xref:#KeyValueStore-create-Key32-bytes-[`++create++`]]
+:_create: pass:normal[xref:#KeyValueStore-_create-Key32-bytes-[`++_create++`]]
+:update: pass:normal[xref:#KeyValueStore-update-Key32-bytes-StateId-[`++update++`]]
+:_update: pass:normal[xref:#KeyValueStore-_update-Key32-bytes-StateId-[`++_update++`]]
+:updateData: pass:normal[xref:#KeyValueStore-updateData-Key32-bytes-[`++updateData++`]]
+:_updateData: pass:normal[xref:#KeyValueStore-_updateData-Key32-bytes-[`++_updateData++`]]
+:updateState: pass:normal[xref:#KeyValueStore-updateState-Key32-StateId-[`++updateState++`]]
+:_updateState: pass:normal[xref:#KeyValueStore-_updateState-Key32-StateId-[`++_updateState++`]]
+:exists: pass:normal[xref:#KeyValueStore-exists-Key32-[`++exists++`]]
+:get: pass:normal[xref:#KeyValueStore-get-Key32-[`++get++`]]
+:getMetadata: pass:normal[xref:#KeyValueStore-getMetadata-Key32-[`++getMetadata++`]]
+:getData: pass:normal[xref:#KeyValueStore-getData-Key32-[`++getData++`]]
+:getState: pass:normal[xref:#KeyValueStore-getState-Key32-[`++getState++`]]
+:toKey32: pass:normal[xref:#KeyValueStore-toKey32-ObjectType-KeyId-[`++toKey32++`]]
+
+[.contract]
+[[KeyValueStore]]
+=== `++KeyValueStore++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/base/KeyValueStore.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/base/KeyValueStore.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++create(key32, data)++`]
+* [`++_create(key32, data)++`]
+* [`++update(key32, data, state)++`]
+* [`++_update(key32, data, state)++`]
+* [`++updateData(key32, data)++`]
+* [`++_updateData(key32, data)++`]
+* [`++updateState(key32, state)++`]
+* [`++_updateState(key32, state)++`]
+* [`++exists(key32)++`]
+* [`++get(key32)++`]
+* [`++getMetadata(key32)++`]
+* [`++getData(key32)++`]
+* [`++getState(key32)++`]
+* [`++toKey32(objectType, id)++`]
+
+[.contract-subindex-inherited]
+.IKeyValueStore
+
+[.contract-subindex-inherited]
+.Lifecycle
+* [`++initializeLifecycle()++`]
+* [`++hasLifecycle(objectType)++`]
+* [`++getInitialState(objectType)++`]
+* [`++checkTransition(objectType, fromId, toId)++`]
+* [`++isValidTransition(objectType, fromId, toId)++`]
+* [`++_setupComponentLifecycle()++`]
+* [`++_setupBundleLifecycle()++`]
+* [`++_setupPolicyLifecycle()++`]
+* [`++_setupRiskLifecycle()++`]
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.IKeyValueStore
+* [`++LogInfoCreated(objectType, keyId, state, createdBy, txOrigin)++`]
+* [`++LogInfoUpdated(objectType, keyId, state, updatedBy, txOrigin, lastUpdatedIn)++`]
+* [`++LogStateUpdated(objectType, keyId, stateOld, stateNew, updatedBy, txOrigin, lastUpdatedIn)++`]
+
+[.contract-subindex-inherited]
+.Lifecycle
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[KeyValueStore-create-Key32-bytes-]]
+==== `[.contract-item-name]#++create++#++(Key32 key32, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[KeyValueStore-_create-Key32-bytes-]]
+==== `[.contract-item-name]#++_create++#++(Key32 key32, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[KeyValueStore-update-Key32-bytes-StateId-]]
+==== `[.contract-item-name]#++update++#++(Key32 key32, bytes data, StateId state)++` [.item-kind]#internal#
+
+[.contract-item]
+[[KeyValueStore-_update-Key32-bytes-StateId-]]
+==== `[.contract-item-name]#++_update++#++(Key32 key32, bytes data, StateId state)++` [.item-kind]#internal#
+
+[.contract-item]
+[[KeyValueStore-updateData-Key32-bytes-]]
+==== `[.contract-item-name]#++updateData++#++(Key32 key32, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[KeyValueStore-_updateData-Key32-bytes-]]
+==== `[.contract-item-name]#++_updateData++#++(Key32 key32, bytes data)++` [.item-kind]#internal#
+
+[.contract-item]
+[[KeyValueStore-updateState-Key32-StateId-]]
+==== `[.contract-item-name]#++updateState++#++(Key32 key32, StateId state)++` [.item-kind]#internal#
+
+[.contract-item]
+[[KeyValueStore-_updateState-Key32-StateId-]]
+==== `[.contract-item-name]#++_updateState++#++(Key32 key32, StateId state)++` [.item-kind]#internal#
+
+[.contract-item]
+[[KeyValueStore-exists-Key32-]]
+==== `[.contract-item-name]#++exists++#++(Key32 key32) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[KeyValueStore-get-Key32-]]
+==== `[.contract-item-name]#++get++#++(Key32 key32) → struct IKeyValueStore.Value value++` [.item-kind]#public#
+
+[.contract-item]
+[[KeyValueStore-getMetadata-Key32-]]
+==== `[.contract-item-name]#++getMetadata++#++(Key32 key32) → struct IKeyValueStore.Metadata metadata++` [.item-kind]#public#
+
+[.contract-item]
+[[KeyValueStore-getData-Key32-]]
+==== `[.contract-item-name]#++getData++#++(Key32 key32) → bytes data++` [.item-kind]#public#
+
+[.contract-item]
+[[KeyValueStore-getState-Key32-]]
+==== `[.contract-item-name]#++getState++#++(Key32 key32) → StateId state++` [.item-kind]#public#
+
+[.contract-item]
+[[KeyValueStore-toKey32-ObjectType-KeyId-]]
+==== `[.contract-item-name]#++toKey32++#++(ObjectType objectType, KeyId id) → Key32++` [.item-kind]#external#
+
+:initializeLifecycle: pass:normal[xref:#Lifecycle-initializeLifecycle--[`++initializeLifecycle++`]]
+:hasLifecycle: pass:normal[xref:#Lifecycle-hasLifecycle-ObjectType-[`++hasLifecycle++`]]
+:getInitialState: pass:normal[xref:#Lifecycle-getInitialState-ObjectType-[`++getInitialState++`]]
+:checkTransition: pass:normal[xref:#Lifecycle-checkTransition-ObjectType-StateId-StateId-[`++checkTransition++`]]
+:isValidTransition: pass:normal[xref:#Lifecycle-isValidTransition-ObjectType-StateId-StateId-[`++isValidTransition++`]]
+:_setupComponentLifecycle: pass:normal[xref:#Lifecycle-_setupComponentLifecycle--[`++_setupComponentLifecycle++`]]
+:_setupBundleLifecycle: pass:normal[xref:#Lifecycle-_setupBundleLifecycle--[`++_setupBundleLifecycle++`]]
+:_setupPolicyLifecycle: pass:normal[xref:#Lifecycle-_setupPolicyLifecycle--[`++_setupPolicyLifecycle++`]]
+:_setupRiskLifecycle: pass:normal[xref:#Lifecycle-_setupRiskLifecycle--[`++_setupRiskLifecycle++`]]
+
+[.contract]
+[[Lifecycle]]
+=== `++Lifecycle++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/base/Lifecycle.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/base/Lifecycle.sol";
+```
+
+[.contract-index]
+.Functions
+--
+* [`++initializeLifecycle()++`]
+* [`++hasLifecycle(objectType)++`]
+* [`++getInitialState(objectType)++`]
+* [`++checkTransition(objectType, fromId, toId)++`]
+* [`++isValidTransition(objectType, fromId, toId)++`]
+* [`++_setupComponentLifecycle()++`]
+* [`++_setupBundleLifecycle()++`]
+* [`++_setupPolicyLifecycle()++`]
+* [`++_setupRiskLifecycle()++`]
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++_checkInitializing()++`]
+* [`++_disableInitializers()++`]
+* [`++_getInitializedVersion()++`]
+* [`++_isInitializing()++`]
+
+--
+
+[.contract-index]
+.Events
+--
+
+[.contract-subindex-inherited]
+.ILifecycle
+
+[.contract-subindex-inherited]
+.Initializable
+* [`++Initialized(version)++`]
+
+--
+
+[.contract-item]
+[[Lifecycle-initializeLifecycle--]]
+==== `[.contract-item-name]#++initializeLifecycle++#++()++` [.item-kind]#public#
+
+[.contract-item]
+[[Lifecycle-hasLifecycle-ObjectType-]]
+==== `[.contract-item-name]#++hasLifecycle++#++(ObjectType objectType) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[Lifecycle-getInitialState-ObjectType-]]
+==== `[.contract-item-name]#++getInitialState++#++(ObjectType objectType) → StateId++` [.item-kind]#public#
+
+[.contract-item]
+[[Lifecycle-checkTransition-ObjectType-StateId-StateId-]]
+==== `[.contract-item-name]#++checkTransition++#++(ObjectType objectType, StateId fromId, StateId toId)++` [.item-kind]#public#
+
+[.contract-item]
+[[Lifecycle-isValidTransition-ObjectType-StateId-StateId-]]
+==== `[.contract-item-name]#++isValidTransition++#++(ObjectType objectType, StateId fromId, StateId toId) → bool++` [.item-kind]#public#
+
+[.contract-item]
+[[Lifecycle-_setupComponentLifecycle--]]
+==== `[.contract-item-name]#++_setupComponentLifecycle++#++()++` [.item-kind]#internal#
+
+[.contract-item]
+[[Lifecycle-_setupBundleLifecycle--]]
+==== `[.contract-item-name]#++_setupBundleLifecycle++#++()++` [.item-kind]#internal#
+
+[.contract-item]
+[[Lifecycle-_setupPolicyLifecycle--]]
+==== `[.contract-item-name]#++_setupPolicyLifecycle++#++()++` [.item-kind]#internal#
+
+[.contract-item]
+[[Lifecycle-_setupRiskLifecycle--]]
+==== `[.contract-item-name]#++_setupRiskLifecycle++#++()++` [.item-kind]#internal#
+

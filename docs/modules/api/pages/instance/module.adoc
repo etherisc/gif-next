@@ -1,0 +1,122 @@
+:github-icon: pass:[<svg class="icon"><use href="#github-icon"/></svg>]
+
+= Modules
+ 
+Contains the instance module contracts. 
+
+== Contracts
+
+:Type: pass:normal[xref:#IAccess-Type[`++Type++`]]
+:RoleInfo: pass:normal[xref:#IAccess-RoleInfo[`++RoleInfo++`]]
+:TargetInfo: pass:normal[xref:#IAccess-TargetInfo[`++TargetInfo++`]]
+:ErrorIAccessCallerIsNotRoleAdmin: pass:normal[xref:#IAccess-ErrorIAccessCallerIsNotRoleAdmin-address-RoleId-[`++ErrorIAccessCallerIsNotRoleAdmin++`]]
+:ErrorIAccessRoleIdDoesNotExist: pass:normal[xref:#IAccess-ErrorIAccessRoleIdDoesNotExist-RoleId-[`++ErrorIAccessRoleIdDoesNotExist++`]]
+:ErrorIAccessRoleIdTooBig: pass:normal[xref:#IAccess-ErrorIAccessRoleIdTooBig-RoleId-[`++ErrorIAccessRoleIdTooBig++`]]
+:ErrorIAccessRoleIdTooSmall: pass:normal[xref:#IAccess-ErrorIAccessRoleIdTooSmall-RoleId-[`++ErrorIAccessRoleIdTooSmall++`]]
+:ErrorIAccessRoleIdExists: pass:normal[xref:#IAccess-ErrorIAccessRoleIdExists-RoleId-[`++ErrorIAccessRoleIdExists++`]]
+:ErrorIAccessRoleNameEmpty: pass:normal[xref:#IAccess-ErrorIAccessRoleNameEmpty-RoleId-[`++ErrorIAccessRoleNameEmpty++`]]
+:ErrorIAccessRoleNameExists: pass:normal[xref:#IAccess-ErrorIAccessRoleNameExists-RoleId-RoleId-ShortString-[`++ErrorIAccessRoleNameExists++`]]
+:ErrorIAccessRoleTypeInvalid: pass:normal[xref:#IAccess-ErrorIAccessRoleTypeInvalid-RoleId-enum-IAccess-Type-[`++ErrorIAccessRoleTypeInvalid++`]]
+:ErrorIAccessTargetAddressZero: pass:normal[xref:#IAccess-ErrorIAccessTargetAddressZero--[`++ErrorIAccessTargetAddressZero++`]]
+:ErrorIAccessTargetDoesNotExist: pass:normal[xref:#IAccess-ErrorIAccessTargetDoesNotExist-address-[`++ErrorIAccessTargetDoesNotExist++`]]
+:ErrorIAccessTargetExists: pass:normal[xref:#IAccess-ErrorIAccessTargetExists-address-ShortString-[`++ErrorIAccessTargetExists++`]]
+:ErrorIAccessTargetTypeInvalid: pass:normal[xref:#IAccess-ErrorIAccessTargetTypeInvalid-address-enum-IAccess-Type-[`++ErrorIAccessTargetTypeInvalid++`]]
+:ErrorIAccessTargetNameEmpty: pass:normal[xref:#IAccess-ErrorIAccessTargetNameEmpty-address-[`++ErrorIAccessTargetNameEmpty++`]]
+:ErrorIAccessTargetNameExists: pass:normal[xref:#IAccess-ErrorIAccessTargetNameExists-address-address-ShortString-[`++ErrorIAccessTargetNameExists++`]]
+:ErrorIAccessTargetLocked: pass:normal[xref:#IAccess-ErrorIAccessTargetLocked-address-[`++ErrorIAccessTargetLocked++`]]
+:ErrorIAccessTargetNotRegistered: pass:normal[xref:#IAccess-ErrorIAccessTargetNotRegistered-address-[`++ErrorIAccessTargetNotRegistered++`]]
+:ErrorIAccessTargetAuthorityInvalid: pass:normal[xref:#IAccess-ErrorIAccessTargetAuthorityInvalid-address-address-[`++ErrorIAccessTargetAuthorityInvalid++`]]
+
+[.contract]
+[[IAccess]]
+=== `++IAccess++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IAccess.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IAccess.sol";
+```
+
+:BundleInfo: pass:normal[xref:#IBundle-BundleInfo[`++BundleInfo++`]]
+
+[.contract]
+[[IBundle]]
+=== `++IBundle++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IBundle.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IBundle.sol";
+```
+
+:ComponentInfo: pass:normal[xref:#IComponents-ComponentInfo[`++ComponentInfo++`]]
+:PoolInfo: pass:normal[xref:#IComponents-PoolInfo[`++PoolInfo++`]]
+
+[.contract]
+[[IComponents]]
+=== `++IComponents++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IComponents.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IComponents.sol";
+```
+
+:DistributorTypeInfo: pass:normal[xref:#IDistribution-DistributorTypeInfo[`++DistributorTypeInfo++`]]
+:DistributorInfo: pass:normal[xref:#IDistribution-DistributorInfo[`++DistributorInfo++`]]
+:ReferralInfo: pass:normal[xref:#IDistribution-ReferralInfo[`++ReferralInfo++`]]
+
+[.contract]
+[[IDistribution]]
+=== `++IDistribution++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IDistribution.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IDistribution.sol";
+```
+
+:Premium: pass:normal[xref:#IPolicy-Premium[`++Premium++`]]
+:PolicyInfo: pass:normal[xref:#IPolicy-PolicyInfo[`++PolicyInfo++`]]
+:ClaimInfo: pass:normal[xref:#IPolicy-ClaimInfo[`++ClaimInfo++`]]
+:PayoutInfo: pass:normal[xref:#IPolicy-PayoutInfo[`++PayoutInfo++`]]
+
+[.contract]
+[[IPolicy]]
+=== `++IPolicy++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IPolicy.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IPolicy.sol";
+```
+
+:RiskInfo: pass:normal[xref:#IRisk-RiskInfo[`++RiskInfo++`]]
+
+[.contract]
+[[IRisk]]
+=== `++IRisk++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/IRisk.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/IRisk.sol";
+```
+
+:ProductSetupInfo: pass:normal[xref:#ISetup-ProductSetupInfo[`++ProductSetupInfo++`]]
+:DistributionSetupInfo: pass:normal[xref:#ISetup-DistributionSetupInfo[`++DistributionSetupInfo++`]]
+
+[.contract]
+[[ISetup]]
+=== `++ISetup++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/ISetup.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/ISetup.sol";
+```
+
+:TreasuryInfo: pass:normal[xref:#ITreasury-TreasuryInfo[`++TreasuryInfo++`]]
+
+[.contract]
+[[ITreasury]]
+=== `++ITreasury++` link:https://github.com/etherisc/gif-next/blob/develop/contracts/instance/module/ITreasury.sol[{github-icon},role=heading-link]
+
+[.hljs-theme-light.nopadding]
+```solidity
+import "@etherisc/gif-next/contracts/instance/module/ITreasury.sol";
+```
+
