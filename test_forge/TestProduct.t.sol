@@ -19,9 +19,12 @@ import {Seconds, SecondsLib} from "../contracts/types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
-import {ReferralLib} from "../contracts/types/Referral.sol";
+import {ReferralLib, ReferralId} from "../contracts/types/Referral.sol";
 import {APPLIED, ACTIVE, UNDERWRITTEN, CLOSED} from "../contracts/types/StateId.sol";
 import {POLICY} from "../contracts/types/ObjectType.sol";
+import {DistributorType} from "../contracts/types/DistributorType.sol";
+import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
+import {IPolicyService} from "../contracts/instance/service/IPolicyService.sol";
 
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
@@ -270,6 +273,190 @@ contract TestProduct is TestGifBase {
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
+
+    function test_Product_withReferralUnderwriteWithPayment() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProduct();  
+
+        // set product fees and create risk
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zeroFee());
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        SimpleProduct dproduct = SimpleProduct(address(product));
+        dproduct.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        // configure distribution fee and referral
+        vm.startPrank(distributionOwner);
+        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
+        Fee memory distributionFee = FeeLib.toFee(UFixedLib.toUFixed(1, -1), 0);
+        distribution.setFees(minDistributionOwnerFee, distributionFee);
+
+        DistributorType distributorType = distribution.createDistributorType(
+            "Gold",
+            UFixedLib.zero(),
+            UFixedLib.toUFixed(5, -2),
+            UFixedLib.toUFixed(3, -2),
+            10,
+            14 * 24 * 3600,
+            false,
+            false,
+            "");
+
+        NftId distributorNftId = distribution.createDistributor(
+            customer2,
+            distributorType,
+            "");
+        
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        ReferralId referralId = sdistribution.createReferral(
+            distributorNftId,
+            "GET_A_DISCOUNT",
+            UFixedLib.toUFixed(2, -2),
+            5,
+            TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(604800)),
+            "");
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        // revert("checkApprove");
+
+        NftId policyNftId = dproduct.createApplication(
+            customer,
+            riskId,
+            1000,
+            SecondsLib.toSeconds(30),
+            "",
+            bundleNftId,
+            referralId
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(productOwner);
+        bool collectPremiumAmount = true;
+        dproduct.underwrite(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+
+        assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
+        assertEq(token.balanceOf(distribution.getWallet()), 7, "distibution balance not 7");
+        assertEq(token.balanceOf(address(customer)), 883, "customer balance not 883");
+    }
+
+    function test_Product_underWritewithReferralExpired() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProduct();  
+
+        // set product fees and create risk
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zeroFee());
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        SimpleProduct dproduct = SimpleProduct(address(product));
+        dproduct.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        // configure distribution fee and referral
+        vm.startPrank(distributionOwner);
+        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
+        Fee memory distributionFee = FeeLib.toFee(UFixedLib.toUFixed(1, -1), 0);
+        distribution.setFees(minDistributionOwnerFee, distributionFee);
+
+        DistributorType distributorType = distribution.createDistributorType(
+            "Gold",
+            UFixedLib.zero(),
+            UFixedLib.toUFixed(5, -2),
+            UFixedLib.toUFixed(3, -2),
+            10,
+            14 * 24 * 3600,
+            false,
+            false,
+            "");
+
+        NftId distributorNftId = distribution.createDistributor(
+            customer2,
+            distributorType,
+            "");
+        
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        // create short lived referral
+        ReferralId referralId = sdistribution.createReferral(
+            distributorNftId,
+            "GET_A_DISCOUNT",
+            UFixedLib.toUFixed(2, -2),
+            5,
+            TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10)),
+            "");
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        // revert("checkApprove");
+
+        NftId policyNftId = dproduct.createApplication(
+            customer,
+            riskId,
+            1000,
+            SecondsLib.toSeconds(30),
+            "",
+            bundleNftId,
+            referralId
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+        bool collectPremiumAmount = true;
+        
+        // wait 30 seconds to expire referral
+        vm.warp(30); 
+        Timestamp now = TimestampLib.blockTimestamp();
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorIPolicyServicePremiumMismatch.selector, 
+            policyNftId, 
+            137, 
+            140));
+        // WHEN
+        dproduct.underwrite(policyNftId, collectPremiumAmount, now);
+    }
+
 /*  FIX ME
     function test_underwrite_reverts_on_locked_bundle() public {
         // GIVEN
