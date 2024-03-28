@@ -137,6 +137,7 @@ function printAddresses(
     addresses += `uFixedLibAddress: ${libraries.uFixedLibAddress}\n`;
     addresses += `versionLibAddress: ${libraries.versionLibAddress}\n`;
     addresses += `versionPartLibAddress: ${libraries.versionPartLibAddress}\n`;
+    addresses += `instanceAuthorizationsLibAddress: ${libraries.instanceAuthorizationsLibAddress}\n`;
     addresses += `--------\n`;
     addresses += `registryAccessManagerAddress: ${registry.registryAccessManagerAddress}\n`;
     addresses += `releaseManagerAddress: ${registry.releaseManagerAddress}\n`;

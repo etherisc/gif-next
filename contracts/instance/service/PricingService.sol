@@ -132,7 +132,7 @@ contract PricingService is
                 bundleInfo
             );
 
-            premium = _calculateFeeAmount(
+            premium = _calculateDistributionOwnerFeeAmount(
                 premium,
                 distSetup,
                 referralId,
@@ -234,7 +234,7 @@ contract PricingService is
         return premium;
     }
 
-    function _calculateFeeAmount(
+    function _calculateDistributionOwnerFeeAmount(
         IPolicy.Premium memory premium,
         ISetup.DistributionSetupInfo memory distInfo,
         ReferralId referralId,
