@@ -58,7 +58,7 @@ abstract contract Distribution is
         $._minDistributionOwnerFee = minDistributionOwnerFee;
         $._distributionFee = distributionFee;
         $._tokenHandler = new TokenHandler(token);
-        $._distributionService = getInstance().getDistributionService();
+        $._distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION())); 
 
         registerInterface(type(IDistributionComponent).interfaceId);
     }

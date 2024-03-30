@@ -38,7 +38,7 @@ contract DistributorTest is TestGifBase {
     bytes public referralData;
 
 
-    function testGifSetupReferralUnknown() public {
+    function test_GifSetupReferralUnknown() public {
         _prepareDistribution();
 
         string memory invalidCode = "some_invalid_referral_code";
@@ -57,7 +57,7 @@ contract DistributorTest is TestGifBase {
             "invalid referral code not unknown");
     }
 
-    function testGifSetupReferralCreate() public {
+    function test_GifSetupReferralCreate() public {
         _setupTestData(true);
 
         // solhint-disable-next-line 
@@ -115,7 +115,7 @@ contract DistributorTest is TestGifBase {
     }
 
 
-    function testGifSetupDistributorCreateTwice() public {
+    function test_GifSetupDistributorCreateTwice() public {
         _prepareDistribution();
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
         _setupTestData(true);
@@ -129,7 +129,7 @@ contract DistributorTest is TestGifBase {
     }
 
 
-    function testGifSetupDistributorCreateTransfer() public {
+    function test_GifSetupDistributorCreateTransfer() public {
         _prepareDistribution();
 
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
@@ -152,7 +152,7 @@ contract DistributorTest is TestGifBase {
     }
 
 
-    function testGifSetupDistributorCreate() public {
+    function test_GifSetupDistributorCreate() public {
         _setupTestData(false);
 
         distributorNftId = distribution.createDistributor(
@@ -187,11 +187,35 @@ contract DistributorTest is TestGifBase {
         distributionNftId = distributionService.register(address(distribution));
     }
 
-    function _setupTestData(bool createDistributor) internal {
-        if (address(distribution) == address(0)) {
-            _prepareDistribution();
-        }
+    function test_DistributorTypeCreateHappyCase() public {
+        _prepareDistribution();
+        _createDistributorType();
 
+        IDistribution.DistributorTypeInfo memory distributorTypeInfo = instanceReader.getDistributorTypeInfo(distributorType);
+        assertEq(keccak256(bytes(distributorTypeInfo.name)), keccak256(bytes(name)), "unexpected name");
+        assertEq(distributorTypeInfo.minDiscountPercentage.toInt(), minDiscountPercentage.toInt(), "unexpected min discount percentage");
+        assertEq(distributorTypeInfo.maxDiscountPercentage.toInt(), maxDiscountPercentage.toInt(), "unexpected max discount percentage");
+        assertEq(distributorTypeInfo.commissionPercentage.toInt(), commissionPercentage.toInt(), "unexpected commission percentage");
+        assertEq(distributorTypeInfo.maxReferralCount, maxReferralCount, "unexpected max referral count");
+        assertEq(distributorTypeInfo.maxReferralLifetime, maxReferralLifetime, "unexpected max referral lifetime");
+        assertEq(distributorTypeInfo.allowSelfReferrals, allowSelfReferrals, "unexpected allow self referrals");
+        assertEq(distributorTypeInfo.allowRenewals, allowRenewals, "unexpected allow renewals");
+        assertEq(keccak256(distributorTypeInfo.data), keccak256(data), "unexpected data");
+    }
+
+    function test_DistributorCreateHappyCase() public {
+        _prepareDistribution();
+        _createDistributorType();
+        _createDistributor();
+
+        assertTrue(distributorNftId.gtz(), "distributor nft zero");
+
+        IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
+        assertEq(DistributorType.unwrap(distributorInfo.distributorType), DistributorType.unwrap(distributorType), "unexpected distributor type");
+        assertEq(keccak256(distributorInfo.data), keccak256(distributorData), "unexpected distributor data");
+    }
+
+    function _createDistributorType() internal {
         name = "Basic";
         minDiscountPercentage = instanceReader.toUFixed(5, -2);
         maxDiscountPercentage = instanceReader.toUFixed(75, -3);
@@ -201,13 +225,6 @@ contract DistributorTest is TestGifBase {
         allowSelfReferrals = true;
         allowRenewals = true;
         data = ".";
-        distributorData = "..";
-
-        referralCode = "SAVE!!!";
-        discountPercentage = instanceReader.toUFixed(55, -3);
-        maxReferrals = 10;
-        expiryAt = toTimestamp(block.timestamp + 7 * 24 * 3600);
-        referralData = "...";
 
         distributorType = distribution.createDistributorType(
             name,
@@ -219,12 +236,31 @@ contract DistributorTest is TestGifBase {
             allowSelfReferrals,
             allowRenewals,
             data);
+    }
+
+    function _createDistributor() internal {
+        distributorData = "..";
+        distributorNftId = distribution.createDistributor(
+            customer,
+            distributorType,
+            distributorData);
+    }
+
+    function _setupTestData(bool createDistributor) internal {
+        if (address(distribution) == address(0)) {
+            _prepareDistribution();
+        }
+
+        _createDistributorType();
+
+        referralCode = "SAVE!!!";
+        discountPercentage = instanceReader.toUFixed(55, -3);
+        maxReferrals = 10;
+        expiryAt = toTimestamp(block.timestamp + 7 * 24 * 3600);
+        referralData = "...";
 
         if (createDistributor) {
-            distributorNftId = distribution.createDistributor(
-                customer,
-                distributorType,
-                distributorData);
+            _createDistributor();
         }
     }
 }

@@ -4,9 +4,11 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {ClaimId} from "../types/ClaimId.sol";
+import {DistributorType} from "../types/DistributorType.sol";
 import {PayoutId} from "../types/PayoutId.sol";
 import {NftId} from "../types/NftId.sol";
 import {StateId} from "../types/StateId.sol";
+import {ReferralId} from "../types/Referral.sol";
 import {RiskId} from "../types/RiskId.sol";
 import {VersionPart} from "../types/Version.sol";
 import {Key32} from "../types/Key32.sol";
@@ -22,16 +24,10 @@ import {InstanceReader} from "./InstanceReader.sol";
 import {IBundle} from "./module/IBundle.sol";
 import {IBundleService} from "./service/IBundleService.sol";
 import {IComponents} from "./module/IComponents.sol";
-import {IDistributionService} from "./service/IDistributionService.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 import {IDistribution} from "./module/IDistribution.sol";
-import {IPolicyService} from "./service/IPolicyService.sol";
-import {IPoolService} from "./service/IPoolService.sol";
-import {IProductService} from "./service/IProductService.sol";
-import {IPolicyService} from "./service/IPolicyService.sol";
-import {IBundleService} from "./service/IBundleService.sol";
 import {IRisk} from "./module/IRisk.sol";
 import {ISetup} from "./module/ISetup.sol";
 
@@ -43,12 +39,6 @@ interface IInstance is
     IAccessManaged, 
     IKeyValueStore 
 {
-    function getDistributionService() external view returns (IDistributionService);
-    function getProductService() external view returns (IProductService);
-    function getPoolService() external view returns (IPoolService);
-    function getPolicyService() external view returns (IPolicyService);
-    function getBundleService() external view returns (IBundleService);
-
     function createDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup) external;
     function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external;
     function updateDistributionSetupState(NftId distributionNftId, StateId newState) external;
@@ -65,17 +55,17 @@ interface IInstance is
     function updateProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup, StateId newState) external;
     function updateProductSetupState(NftId productNftId, StateId newState) external;
 
-    function createDistributorType(Key32 distributorKey, IDistribution.DistributorTypeInfo memory info) external;
-    function updateDistributorType(Key32 distributorKey, IDistribution.DistributorTypeInfo memory info, StateId newState) external;
-    function updateDistributorTypeState(Key32 distributorKey, StateId newState) external;
+    function createDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info) external;
+    function updateDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info, StateId newState) external;
+    function updateDistributorTypeState(DistributorType distributorType, StateId newState) external;
 
     function createDistributor(NftId nftId, IDistribution.DistributorInfo memory info) external;
     function updateDistributor(NftId nftId, IDistribution.DistributorInfo memory info, StateId newState) external;
     function updateDistributorState(NftId nftId, StateId newState) external;
 
-    function createReferral(Key32 referralKey, IDistribution.ReferralInfo memory referralInfo) external;
-    function updateReferral(Key32 referralKey, IDistribution.ReferralInfo memory referralInfo, StateId newState) external;
-    function updateReferralState(Key32 referralKey, StateId newState) external;
+    function createReferral(ReferralId referralId, IDistribution.ReferralInfo memory referralInfo) external;
+    function updateReferral(ReferralId referralId, IDistribution.ReferralInfo memory referralInfo, StateId newState) external;
+    function updateReferralState(ReferralId referralId, StateId newState) external;
 
     function createRisk(RiskId riskId, IRisk.RiskInfo memory risk) external;
     function updateRisk(RiskId riskId, IRisk.RiskInfo memory risk, StateId newState) external;
@@ -99,7 +89,5 @@ interface IInstance is
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleManager() external view returns (BundleManager);
-
-    function setInstanceAccessManager(InstanceAccessManager accessManager) external;
     function getInstanceAccessManager() external view returns (InstanceAccessManager);
 }
