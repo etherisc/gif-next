@@ -8,7 +8,7 @@ export type LibraryAddresses = {
     uFixedLibAddress: AddressLike;
     amountLibAddress: AddressLike;
     claimIdLibAddress: AddressLike;
-    payoutLibAddress: AddressLike;
+    payoutIdLibAddress: AddressLike;
     objectTypeLibAddress: AddressLike;
     blockNumberLibAddress: AddressLike;
     versionLibAddress: AddressLike;
@@ -64,12 +64,24 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: claimIdLibAddress } = await deployContract(
         "ClaimIdLib",
-        owner);
+        owner, 
+        undefined,
+        {
+            libraries: {
+                Key32Lib: key32LibAddress,
+            }
+        });
     LIBRARY_ADDRESSES.set("ClaimIdLib", claimIdLibAddress);
 
     const { address: payoutIdLibAddress } = await deployContract(
         "PayoutIdLib",
-        owner);
+        owner, 
+        undefined,
+        {
+            libraries: {
+                Key32Lib: key32LibAddress,
+            }
+        });
     LIBRARY_ADDRESSES.set("PayoutIdLib", payoutIdLibAddress);
 
     const { address: mathLibAddress } = await deployContract(

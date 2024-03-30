@@ -189,7 +189,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 AmountLib: libraries.amountLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
-                ClaimIdLib: libraries.claimIdLibAddress,
+                PayoutIdLib: libraries.payoutIdLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress, 
             }});
@@ -234,6 +234,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         { libraries: {
             AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
+            ClaimIdLib: libraries.claimIdLibAddress,
+            PayoutIdLib: libraries.payoutIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             UFixedLib: libraries.uFixedLibAddress,
             VersionLib: libraries.versionLibAddress, 
