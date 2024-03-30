@@ -224,15 +224,15 @@ contract Instance is
 
     //--- Payout ------------------------------------------------------------//
     function createPayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout) external restricted() {
-        create(toPolicyKey32(policyNftId), abi.encode(payout));
+        create(payoutId.toKey32(policyNftId), abi.encode(payout));
     }
 
     function updatePayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
-        update(toPolicyKey32(policyNftId), abi.encode(payout), newState);
+        update(payoutId.toKey32(policyNftId), abi.encode(payout), newState);
     }
 
     function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
-        updateState(toPolicyKey32(policyNftId), newState);
+        updateState(payoutId.toKey32(policyNftId), newState);
     }
 
     //--- ITransferInterceptor ------------------------------------------------------------//

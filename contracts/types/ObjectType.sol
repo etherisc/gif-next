@@ -86,6 +86,10 @@ function POOL() pure returns (ObjectType) {
     return toObjectType(140);
 }
 
+function BUNDLE() pure returns (ObjectType) {
+    return toObjectType(220);
+}
+
 function RISK() pure returns (ObjectType) {
     return toObjectType(200);
 }
@@ -102,12 +106,8 @@ function CLAIM() pure returns (ObjectType) {
     return toObjectType(212);
 }
 
-function BUNDLE() pure returns (ObjectType) {
-    return toObjectType(220);
-}
-
 function PAYOUT() pure returns (ObjectType) {
-    return toObjectType(212);
+    return toObjectType(213); 
 }
 
 /// @dev Converts the uint8 to a ObjectType.

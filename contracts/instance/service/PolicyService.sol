@@ -21,7 +21,7 @@ import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM} from "../../types/ObjectType.sol";
 import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED, CONFIRMED} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
-import {PayoutId} from "../../types/PayoutId.sol";
+import {PayoutId, PayoutIdLib} from "../../types/PayoutId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {VersionPart} from "../../types/Version.sol";
 
@@ -389,12 +389,20 @@ contract PolicyService is
             IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
+
+        // TODO add checks
+        // claim needs to be open
+        // claim.paidAmount + amount <= claim.claimAmount
+
         // check/update claim info
-        payoutId = _claimService.createPayout(
+        uint8 claimNo = claimInfo.payoutsCount + 1;
+        payoutId = PayoutIdLib.toPayoutId(claimId, claimNo);
+        _claimService.createPayout(
             instance, 
-            instanceReader, 
             policyNftId, 
-            claimId,
+            payoutId,
             amount,
             data);
 

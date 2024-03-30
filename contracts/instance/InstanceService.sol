@@ -249,9 +249,11 @@ contract InstanceService is
         // configure authorization for claim/payout services on instance
         address claimServiceAddress = getRegistry().getServiceAddress(CLAIM(), getVersion().toMajorPart());
         clonedAccessManager.grantRole(CLAIM_SERVICE_ROLE(), claimServiceAddress);
-        bytes4[] memory instanceClaimServiceSelectors = new bytes4[](2);
+        bytes4[] memory instanceClaimServiceSelectors = new bytes4[](4);
         instanceClaimServiceSelectors[0] = clonedInstance.createClaim.selector;
         instanceClaimServiceSelectors[1] = clonedInstance.updateClaim.selector;
+        instanceClaimServiceSelectors[2] = clonedInstance.createPayout.selector;
+        instanceClaimServiceSelectors[3] = clonedInstance.updatePayout.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceClaimServiceSelectors, 

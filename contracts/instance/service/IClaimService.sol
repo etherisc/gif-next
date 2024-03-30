@@ -50,7 +50,8 @@ interface IClaimService is
         IInstance instance,
         InstanceReader instanceReader,
         NftId policyNftId, 
-        ClaimId claimId) external;
+        ClaimId claimId
+    ) external;
 
     /// @dev closes the claim
     /// a claim may only be closed once all existing payouts have been executed and the sum of the paid out amounts has reached the claim amount
@@ -59,20 +60,19 @@ interface IClaimService is
         IInstance instance,
         InstanceReader instanceReader,
         NftId policyNftId, 
-        ClaimId claimId) external; 
+        ClaimId claimId
+    ) external; 
 
-    /// @dev create a new payout for the specified policy and claim
+    /// @dev create a new payout for the specified policy
+    /// payoutId may be constructed using PayoutIdLib(claimId, payoutNo)
     /// function can only be called by product, policy needs to match with calling product
     function createPayout(
         IInstance instance,
-        InstanceReader instanceReader,
         NftId policyNftId, 
-        ClaimId claimId,
+        PayoutId payoutId,
         Amount payoutAmount,
         bytes calldata payoutData
-    )
-        external 
-        returns (PayoutId payoutId);
+    ) external; 
 
     /// @dev callback function to confirm transfer of payout token to beneficiary
     /// allows claim service to update claims/payout book keeping

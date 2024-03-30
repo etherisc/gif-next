@@ -30,9 +30,13 @@ function neClaimId(ClaimId a, ClaimId b) pure returns (bool isDifferent) {
 
 // library functions that operate on user defined type
 library ClaimIdLib {
-    /// @dev Converts the ClaimId to a uint.
+    /// @dev claim id min value (0), use only for non-initialized values
     function zero() public pure returns (ClaimId) {
         return ClaimId.wrap(0);
+    }
+    /// @dev claim id max value (2**16-1), use only for non-initialized values
+    function max() public pure returns (ClaimId) {
+        return ClaimId.wrap(type(uint16).max);
     }
 
     /// @dev Converts an uint into a ClaimId.

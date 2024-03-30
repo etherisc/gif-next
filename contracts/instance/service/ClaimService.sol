@@ -168,18 +168,23 @@ contract ClaimService is
 
     function createPayout(
         IInstance instance,
-        InstanceReader instanceReader,
         NftId policyNftId, 
-        ClaimId claimId,
+        PayoutId payoutId,
         Amount payoutAmount,
         bytes calldata payoutData
     )
         external
         virtual
-        returns(PayoutId payoutId)
-        // solhint-disable-next-line no-empty-blocks
+        // TODO add restricted and grant to policy service
     {
-
+        instance.createPayout(
+            policyNftId, 
+            payoutId, 
+            IPolicy.PayoutInfo(
+                payoutId.toClaimId(),
+                payoutAmount,
+                payoutData,
+                TimestampLib.zero()));
     }
 
 
