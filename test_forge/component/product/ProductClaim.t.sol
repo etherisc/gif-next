@@ -317,7 +317,7 @@ contract TestProductClaim is TestGifBase {
         token.approve(address(poolComponentInfo.tokenHandler), BUNDLE_CAPITAL);
 
         // SimplePool spool = SimplePool(address(pool));
-        bundleNftId = pool.createBundle(
+        bundleNftId = SimplePool(address(pool)).createBundle(
             FeeLib.zeroFee(), 
             BUNDLE_CAPITAL, 
             SecondsLib.toSeconds(604800), 

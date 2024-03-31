@@ -4,15 +4,16 @@ pragma solidity ^0.8.20;
 import {console} from "../../../lib/forge-std/src/Test.sol";
 import {TestGifBase} from "../../base/TestGifBase.sol";
 
-import {NftId} from "../../../contracts/types/NftId.sol";
-import {DistributorType} from "../../../contracts/types/DistributorType.sol";
-import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
-import {ReferralId, ReferralStatus, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN} from "../../../contracts/types/Referral.sol";
-import {Timestamp, toTimestamp} from "../../../contracts/types/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../../contracts/types/UFixed.sol";
-import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
-import {FeeLib} from "../../../contracts/types/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
+import {DistributorType} from "../../../contracts/types/DistributorType.sol";
+import {FeeLib} from "../../../contracts/types/Fee.sol";
+import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
+import {NftId} from "../../../contracts/types/NftId.sol";
+import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN} from "../../../contracts/types/Referral.sol";
+import {Seconds, SecondsLib} from "../../../contracts/types/Seconds.sol";
+import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
+import {Timestamp, toTimestamp, TimestampLib} from "../../../contracts/types/Timestamp.sol";
+import {UFixed, UFixedLib} from "../../../contracts/types/UFixed.sol";
 
 contract DistributorTest is TestGifBase {
 
@@ -213,6 +214,49 @@ contract DistributorTest is TestGifBase {
         IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
         assertEq(DistributorType.unwrap(distributorInfo.distributorType), DistributorType.unwrap(distributorType), "unexpected distributor type");
         assertEq(keccak256(distributorInfo.data), keccak256(distributorData), "unexpected distributor data");
+    }
+
+    function test_ReferralCreateHappyCase() public {
+        // GIVEN
+        _prepareDistribution();
+        _createDistributorType();
+        _createDistributor();
+
+        string memory referralCode = "saveNow";
+        UFixed referralDiscount = UFixedLib.toUFixed(5, -2);
+        uint32 maxReferralCount = 7;
+        Seconds thirtySeconds = SecondsLib.toSeconds(30);
+        Timestamp referralExpiresAt = TimestampLib.blockTimestamp().addSeconds(thirtySeconds);
+        bytes memory referralData = "refDat";
+
+        // WHEN
+        ReferralId referralId = SimpleDistribution(
+            address(distribution)).createReferral(
+                distributorNftId,
+                referralCode,
+                referralDiscount,
+                maxReferralCount,
+                referralExpiresAt,
+                referralData);
+
+        // THEN
+        assertTrue(
+            ReferralId.unwrap(referralId) != ReferralId.unwrap(
+                ReferralLib.zero()), 
+            "referral id zero");
+
+        IDistribution.ReferralInfo memory referral = instanceReader.getReferralInfo(referralId);
+        assertEq(referral.distributorNftId.toInt(), distributorNftId.toInt(), "unexpected distributor nft id");
+
+        assertEq(
+            keccak256(bytes(referral.referralCode)), 
+            keccak256(bytes(referralCode)), 
+            "unexpected code");
+
+        assertEq(referral.discountPercentage.toInt(), referralDiscount.toInt(), "unexpected discount");
+        assertEq(referral.maxReferrals, maxReferralCount, "unexpected max referral count");
+        assertEq(referral.expiryAt.toInt(), referralExpiresAt.toInt(), "unexpected expiry at");
+        assertEq(keccak256(referral.data), keccak256(referralData), "unexpected data");
     }
 
     function _createDistributorType() internal {

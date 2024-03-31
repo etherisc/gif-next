@@ -484,13 +484,13 @@ contract PolicyService is
     function _processPremiumByTreasury(
         IInstance instance,
         NftId policyNftId,
-        uint256 premiumAmount
+        uint256 premiumExpectedAmount
     )
         internal
         returns (uint256 netPremiumAmount)
     {
         // process token transfer(s)
-        if(premiumAmount > 0) {
+        if(premiumExpectedAmount > 0) {
             NftId productNftId = getRegistry().getObjectInfo(policyNftId).parentNftId;
             ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
             IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
@@ -507,8 +507,11 @@ contract PolicyService is
                 policyInfo.referralId
                 );
 
-            if (premium.premiumAmount != premiumAmount) {
-                revert ErrorIPolicyServicePremiumMismatch(policyNftId, premiumAmount, premium.premiumAmount);
+            if (premium.premiumAmount != premiumExpectedAmount) {
+                revert ErrorIPolicyServicePremiumMismatch(
+                    policyNftId, 
+                    premiumExpectedAmount, 
+                    premium.premiumAmount);
             }
 
             // move product fee to product wallet

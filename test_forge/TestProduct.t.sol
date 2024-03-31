@@ -19,7 +19,7 @@ import {Seconds, SecondsLib} from "../contracts/types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
-import {ReferralLib} from "../contracts/types/Referral.sol";
+import {ReferralId, ReferralLib} from "../contracts/types/Referral.sol";
 import {APPLIED, ACTIVE, COLLATERALIZED, CLOSED} from "../contracts/types/StateId.sol";
 import {POLICY} from "../contracts/types/ObjectType.sol";
 import {DistributorType} from "../contracts/types/DistributorType.sol";
@@ -274,7 +274,7 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
-    function test_Product_withReferralUnderwriteWithPayment() public {
+    function test_Product_withReferralCollateralizeWithPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -353,7 +353,8 @@ contract TestProduct is TestGifBase {
         // WHEN
         vm.startPrank(productOwner);
         bool collectPremiumAmount = true;
-        dproduct.underwrite(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        dproduct.collateralize(policyNftId, collectPremiumAmount, activateAt);(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
@@ -363,7 +364,7 @@ contract TestProduct is TestGifBase {
         assertEq(token.balanceOf(address(customer)), 883, "customer balance not 883");
     }
 
-    function test_Product_underWritewithReferralExpired() public {
+    function test_Product_collateralizeWithReferralExpired() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -422,13 +423,12 @@ contract TestProduct is TestGifBase {
 
         ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
         token.approve(address(productSetupInfo.tokenHandler), 1000);
-        // revert("checkApprove");
 
         NftId policyNftId = dproduct.createApplication(
             customer,
             riskId,
             1000,
-            SecondsLib.toSeconds(30),
+            SecondsLib.toSeconds(60), // policy lifetime
             "",
             bundleNftId,
             referralId
@@ -443,18 +443,23 @@ contract TestProduct is TestGifBase {
         vm.startPrank(productOwner);
         bool collectPremiumAmount = true;
         
-        // wait 30 seconds to expire referral
-        vm.warp(30); 
-        Timestamp now = TimestampLib.blockTimestamp();
+        // WHEN
+        // wait 20 seconds to expire referral
+        vm.warp(20); 
 
         // THEN
-        vm.expectRevert(abi.encodeWithSelector(
-            IPolicyService.ErrorIPolicyServicePremiumMismatch.selector, 
+        Timestamp activationAt = TimestampLib.blockTimestamp();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPolicyService.ErrorIPolicyServicePremiumMismatch.selector, 
+                policyNftId, 
+                137, 
+                140));
+
+        dproduct.collateralize(
             policyNftId, 
-            137, 
-            140));
-        // WHEN
-        dproduct.underwrite(policyNftId, collectPremiumAmount, now);
+            collectPremiumAmount, 
+            activationAt);
     }
 
 /*  FIX ME

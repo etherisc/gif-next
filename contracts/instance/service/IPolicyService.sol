@@ -39,7 +39,7 @@ interface IPolicyService is IService {
     error ErrorIPolicyServiceOpenClaims(NftId policyNftId, uint16 openClaimsCount);
     error ErrorIPolicyServicePolicyHasNotExpired(NftId policyNftId, Timestamp expiredAt);
 
-    error ErrorIPolicyServicePremiumMismatch(NftId policyNftId, uint256 premiumAmount, uint256 recalculatedPremiumAmount);
+    error ErrorIPolicyServicePremiumMismatch(NftId policyNftId, uint256 expectedPremiumAmount, uint256 recalculatedPremiumAmount);
 
     /// @dev declines an application represented by {policyNftId}
     /// an application can only be declined in applied state
