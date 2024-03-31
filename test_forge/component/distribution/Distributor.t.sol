@@ -7,6 +7,7 @@ import {TestGifBase} from "../../base/TestGifBase.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
 import {DistributorType} from "../../../contracts/types/DistributorType.sol";
 import {FeeLib} from "../../../contracts/types/Fee.sol";
+import {Distribution} from "../../../contracts/components/Distribution.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {NftId} from "../../../contracts/types/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN} from "../../../contracts/types/Referral.sol";
@@ -120,9 +121,14 @@ contract DistributorTest is TestGifBase {
         _prepareDistribution();
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
         _setupTestData(true);
-        assertTrue(distribution.isDistributor(customer), "customer still not distributor");
+        assertTrue(distribution.isDistributor(customer), "customer not yet distributor");
 
-        vm.expectRevert("ERROR:DST-030:ALREADY_DISTRIBUTOR");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Distribution.ErrorDistributionAlreadyDistributor.selector, 
+                customer, // distributor
+                distributorNftId)); // existing distributor nft id
+
         distributorNftId = distribution.createDistributor(
             customer,
             distributorType,

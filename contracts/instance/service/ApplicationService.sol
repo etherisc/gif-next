@@ -263,7 +263,7 @@ contract ApplicationService is
             {
                 IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
                 if(bundleInfo.poolNftId != poolNftId) {
-                    revert IApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+                    revert ErrorApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
                 }
                 uint256 t = bundleInfo.fee.fixedFee;
                 premium.bundleFeeFixAmount = t;
@@ -317,7 +317,7 @@ contract ApplicationService is
             {
                 IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
                 if(bundleInfo.poolNftId != poolNftId) {
-                    revert IApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+                    revert ErrorApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
                 }
                 uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * bundleInfo.fee.fractionalFee).toInt();
                 premium.bundleFeeVarAmount = t;
@@ -345,7 +345,11 @@ contract ApplicationService is
     function _getAndVerifyProduct(NftId productNftId) internal view returns (Product product) {
         IRegistry registry = getRegistry();        
         IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(productNftId);
-        require(productInfo.objectType == PRODUCT(), "OBJECT_TYPE_INVALID");
+
+        if(productInfo.objectType != PRODUCT()) {
+            revert ErrorApplicationServiceNotProduct(productNftId, productInfo.objectType);
+        }
+
         product = Product(productInfo.objectAddress);
     }
 }

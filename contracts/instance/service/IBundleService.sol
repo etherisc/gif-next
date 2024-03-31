@@ -21,6 +21,9 @@ interface IBundleService is IService {
     error ErrorBundleServiceCapacityInsufficient(NftId bundleNftId, uint capacityAmount, uint collateralAmount);
     error ErrorBundleServiceBundleWithOpenPolicies(NftId bundleNftId, uint256 openPoliciesCount);
 
+    error ErrorBundleServiceBundleUnknown(NftId bundleNftId);
+    error ErrorBundleServiceBundlePoolMismatch(NftId expectedPoolNftId, NftId bundlePoolNftId);
+
     /// @dev create a new bundle for the specified attributes
     /// may only be called by pool service
     function create(

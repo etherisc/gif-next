@@ -242,20 +242,38 @@ contract Instance is
     //--- initial setup functions -------------------------------------------//
 
     function setInstanceAccessManager(InstanceAccessManager accessManager) external restricted {
-        require(address(_accessManager) == address(0), "InstanceAccessManager is set");
-        require(accessManager.authority() == authority(), "InstanceAccessManager authority mismatch");  
+        if(address(_accessManager) != address(0)) {
+            revert ErrorInstanceInstanceAccessManagerAlreadySet(address(_accessManager));
+        }
+
+        if(accessManager.authority() != authority()) {
+            revert ErrorInstanceInstanceAccessManagerAuthorityMismatch(authority());
+        }
+
         _accessManager = accessManager;      
     }
 
     function setBundleManager(BundleManager bundleManager) external restricted() {
-        require(address(_bundleManager) == address(0), "BundleManager is set");
-        require(bundleManager.getInstance() == Instance(this), "BundleManager instance mismatch");
-        require(bundleManager.authority() == authority(), "BundleManager authority mismatch");
+        if(address(_bundleManager) != address(0)) {
+            revert ErrorInstanceBundleManagerAlreadySet(address(_bundleManager));
+        }
+
+        if(bundleManager.getInstance() != Instance(this)) {
+            revert ErrorInstanceBundleManagerInstanceMismatch(address(this));
+        }
+
+        if(bundleManager.authority() != authority()) {
+            revert ErrorInstanceBundleManagerAuthorityMismatch(authority());
+        }
+
         _bundleManager = bundleManager;
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        require(instanceReader.getInstance() == Instance(this), "InstanceReader instance mismatch");
+        if(instanceReader.getInstance() != Instance(this)) {
+            revert ErrorInstanceInstanceReaderInstanceMismatch(address(this));
+        }
+
         _instanceReader = instanceReader;
     }
 

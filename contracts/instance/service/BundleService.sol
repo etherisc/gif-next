@@ -182,8 +182,13 @@ contract BundleService is
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        require(bundleInfo.poolNftId.gtz(), "ERROR:PLS-010:BUNDLE_UNKNOWN");
-        require(poolNftId == bundleInfo.poolNftId, "ERROR:PLS-011:BUNDLE_POOL_MISMATCH");
+        if(bundleInfo.poolNftId.eqz()) {
+            revert ErrorBundleServiceBundleUnknown(bundleNftId);
+        }
+
+        if(bundleInfo.poolNftId != poolNftId) {
+            revert ErrorBundleServiceBundlePoolMismatch(poolNftId, bundleInfo.poolNftId );
+        }
 
         bundleInfo.fee = fee;
 

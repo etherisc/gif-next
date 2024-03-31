@@ -39,6 +39,15 @@ interface IInstance is
     IAccessManaged, 
     IKeyValueStore 
 {
+    error ErrorInstanceInstanceAccessManagerAlreadySet(address instanceAccessManager);
+    error ErrorInstanceInstanceAccessManagerAuthorityMismatch(address instanceAuthority);
+
+    error ErrorInstanceBundleManagerAlreadySet(address instanceBundleManager);
+    error ErrorInstanceBundleManagerInstanceMismatch(address instance);
+    error ErrorInstanceBundleManagerAuthorityMismatch(address instanceAuthority);
+
+    error ErrorInstanceInstanceReaderInstanceMismatch(address instanceAuthority);
+
     function createDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup) external;
     function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external;
     function updateDistributionSetupState(NftId distributionNftId, StateId newState) external;

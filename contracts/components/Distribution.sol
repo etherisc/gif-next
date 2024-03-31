@@ -37,6 +37,8 @@ abstract contract Distribution is
         mapping(address distributor => NftId distributorNftId) _distributorNftId;
     }
 
+    error ErrorDistributionAlreadyDistributor(address distributor, NftId distributorNftId);
+
     function initializeDistribution(
         address registry,
         NftId instanceNftId,
@@ -116,7 +118,9 @@ abstract contract Distribution is
         returns(NftId distributorNftId)
     {
         DistributionStorage storage $ = _getDistributionStorage();
-        require($._distributorNftId[distributor].eqz(), "ERROR:DST-030:ALREADY_DISTRIBUTOR");
+        if($._distributorNftId[distributor].gtz()) {
+            revert ErrorDistributionAlreadyDistributor(distributor, $._distributorNftId[distributor]);
+        }
 
         distributorNftId = $._distributionService.createDistributor(
             distributor,

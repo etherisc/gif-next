@@ -30,17 +30,23 @@ import {TimestampLib} from "../types/Timestamp.sol";
 
 
 contract InstanceReader {
+
+    error ErrorInstanceReaderAlreadyInitialized();
+    error ErrorInstanceReaderInstanceAddressZero();
+
     bool private _initialized;
 
     IInstance internal _instance;
     IKeyValueStore internal _store;
 
     function initialize(address instance) public {
-        require(!_initialized, "ERROR:CRD-000:ALREADY_INITIALIZED");
+        if(_initialized) {
+            revert ErrorInstanceReaderAlreadyInitialized();
+        }
 
-        require(
-            address(instance) != address(0),
-            "ERROR:CRD-001:INSTANCE_ZERO");
+        if(address(instance) == address(0)) {
+            revert ErrorInstanceReaderInstanceAddressZero();
+        }
 
         _instance = IInstance(instance);
         _store = IKeyValueStore(instance);
