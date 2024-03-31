@@ -23,12 +23,13 @@ import {TokenHandler} from "../../shared/TokenHandler.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
+import {AmountLib} from "../../types/Amount.sol";
 import {Seconds} from "../../types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {ObjectType, DISTRIBUTION, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, BUNDLE} from "../../types/ObjectType.sol";
-import {APPLIED, REVOKED, UNDERWRITTEN, ACTIVE, KEEP_STATE, CLOSED} from "../../types/StateId.sol";
+import {APPLIED, REVOKED, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {ReferralId} from "../../types/Referral.sol";
@@ -129,7 +130,7 @@ contract ApplicationService is
             "",
             0,
             0,
-            0,
+            AmountLib.zero(),
             zeroTimestamp(),
             zeroTimestamp(),
             zeroTimestamp()
@@ -262,7 +263,7 @@ contract ApplicationService is
             {
                 IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
                 if(bundleInfo.poolNftId != poolNftId) {
-                    revert IApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+                    revert ErrorApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
                 }
                 uint256 t = bundleInfo.fee.fixedFee;
                 premium.bundleFeeFixAmount = t;
@@ -316,7 +317,7 @@ contract ApplicationService is
             {
                 IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
                 if(bundleInfo.poolNftId != poolNftId) {
-                    revert IApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+                    revert ErrorApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
                 }
                 uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * bundleInfo.fee.fractionalFee).toInt();
                 premium.bundleFeeVarAmount = t;
@@ -344,7 +345,11 @@ contract ApplicationService is
     function _getAndVerifyProduct(NftId productNftId) internal view returns (Product product) {
         IRegistry registry = getRegistry();        
         IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(productNftId);
-        require(productInfo.objectType == PRODUCT(), "OBJECT_TYPE_INVALID");
+
+        if(productInfo.objectType != PRODUCT()) {
+            revert ErrorApplicationServiceNotProduct(productNftId, productInfo.objectType);
+        }
+
         product = Product(productInfo.objectAddress);
     }
 }

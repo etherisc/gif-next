@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {ClaimId} from "../types/ClaimId.sol";
 import {DistributorType} from "../types/DistributorType.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {Key32} from "../types/Key32.sol";
@@ -29,17 +30,23 @@ import {TimestampLib} from "../types/Timestamp.sol";
 
 
 contract InstanceReader {
+
+    error ErrorInstanceReaderAlreadyInitialized();
+    error ErrorInstanceReaderInstanceAddressZero();
+
     bool private _initialized;
 
     IInstance internal _instance;
     IKeyValueStore internal _store;
 
     function initialize(address instance) public {
-        require(!_initialized, "ERROR:CRD-000:ALREADY_INITIALIZED");
+        if(_initialized) {
+            revert ErrorInstanceReaderAlreadyInitialized();
+        }
 
-        require(
-            address(instance) != address(0),
-            "ERROR:CRD-001:INSTANCE_ZERO");
+        if(address(instance) == address(0)) {
+            revert ErrorInstanceReaderInstanceAddressZero();
+        }
 
         _instance = IInstance(instance);
         _store = IKeyValueStore(instance);
@@ -67,6 +74,25 @@ contract InstanceReader {
         returns (StateId state)
     {
         return _instance.getState(toPolicyKey(policyNftId));
+    }
+
+    function getClaimInfo(NftId policyNftId, ClaimId claimId)
+        public
+        view
+        returns (IPolicy.ClaimInfo memory info)
+    {
+        bytes memory data = _store.getData(claimId.toKey32(policyNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (IPolicy.ClaimInfo));
+        }
+    }
+
+    function getClaimState(NftId policyNftId, ClaimId claimId)
+        public
+        view
+        returns (StateId state)
+    {
+        return _instance.getState(claimId.toKey32(policyNftId));
     }
 
     function getRiskInfo(RiskId riskId)

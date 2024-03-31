@@ -34,8 +34,7 @@ contract BundleManager is
     mapping(NftId bundleNftId => LibNftIdSet.Set policies) internal _activePolicies;
 
     /// @dev links a policy to its bundle
-    // to link a policy it MUST NOT yet have been activated
-    // the bundle MUST be unlocked (active) for linking (underwriting) and registered with this instance
+    // to link a policy it MUST NOT yet have been linked
     function linkPolicy(NftId policyNftId) external restricted() {
         NftId bundleNftId = _instance.getInstanceReader().getPolicyInfo(policyNftId).bundleNftId;
         // decision will likely depend on the decision what to check here and what in the service
@@ -87,14 +86,14 @@ contract BundleManager is
     }
 
 
-    /// @dev unlocked (active) bundles are available to underwrite new policies
+    /// @dev unlocked (active) bundles are available to collateralize new policies
     function unlock(NftId bundleNftId) external restricted() {
         NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
         _activate(poolNftId, bundleNftId);
         emit LogBundleManagerBundleUnlocked(poolNftId, bundleNftId);
     }
 
-    /// @dev locked (deactivated) bundles may not underwrite any new policies
+    /// @dev locked (deactivated) bundles may not collateralize any new policies
     function lock(NftId bundleNftId) external restricted() {
         NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
         _deactivate(poolNftId, bundleNftId);

@@ -60,6 +60,11 @@ function zeroTimestamp() pure returns (Timestamp) {
 }
 
 library TimestampLib {
+
+    function zero() public pure returns (Timestamp) {
+        return toTimestamp(0);
+    }
+    
     function blockTimestamp() public view returns (Timestamp) {
         return Timestamp.wrap(uint40(block.timestamp));
     }

@@ -3,18 +3,18 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
-import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
+import {Key32} from "../types/Key32.sol";
 import {NftId} from "../types/NftId.sol";
 import {ClaimId} from "../types/ClaimId.sol";
-import {NumberId} from "../types/NumberId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../types/ObjectType.sol";
-import {RiskId, RiskIdLib} from "../types/RiskId.sol";
-import {RoleId, RoleIdLib, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
-import {StateId, ACTIVE} from "../types/StateId.sol";
-import {TimestampLib} from "../types/Timestamp.sol";
+import {DistributorType} from "../types/DistributorType.sol";
+import {PayoutId} from "../types/PayoutId.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, DISTRIBUTOR} from "../types/ObjectType.sol";
+import {ReferralId} from "../types/Referral.sol";
+import {RiskId} from "../types/RiskId.sol";
+import {INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
+import {StateId} from "../types/StateId.sol";
 import {VersionPart, VersionPartLib} from "../types/Version.sol";
 
-import {ERC165} from "../shared/ERC165.sol";
 import {Registerable} from "../shared/Registerable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -26,7 +26,6 @@ import {BundleManager} from "./BundleManager.sol";
 
 import {KeyValueStore} from "./base/KeyValueStore.sol";
 
-import {IAccess} from "./module/IAccess.sol";
 import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
@@ -34,12 +33,6 @@ import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
 import {ISetup} from "./module/ISetup.sol";
 
-import {IDistributionService} from "./service/IDistributionService.sol";
-import {IPoolService} from "./service/IPoolService.sol";
-import {IProductService} from "./service/IProductService.sol";
-import {IPolicyService} from "./service/IPolicyService.sol";
-import {IBundleService} from "./service/IBundleService.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart, VersionPartLib} from "../types/Version.sol";
 
 contract Instance is
@@ -123,55 +116,55 @@ contract Instance is
     }
 
     //--- DistributorType -------------------------------------------------------//
-    function createDistributorType(Key32 distributorKey, IDistribution.DistributorTypeInfo memory info) external restricted() {
-        create(distributorKey, abi.encode(info));
+    function createDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info) external restricted() {
+        create(distributorType.toKey32(), abi.encode(info));
     }
 
-    function updateDistributorType(Key32 distributorKey, IDistribution.DistributorTypeInfo memory info, StateId newState) external restricted() {
-        update(distributorKey, abi.encode(info), newState);
+    function updateDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info, StateId newState) external restricted() {
+        update(distributorType.toKey32(), abi.encode(info), newState);
     }
 
-    function updateDistributorTypeState(Key32 distributorKey, StateId newState) external restricted() {
-        updateState(distributorKey, newState);
+    function updateDistributorTypeState(DistributorType distributorType, StateId newState) external restricted() {
+        updateState(distributorType.toKey32(), newState);
     }
 
     //--- Distributor -------------------------------------------------------//
-    function createDistributor(NftId nftId, IDistribution.DistributorInfo memory info) external restricted() {
-        create(toDistributorKey32(nftId), abi.encode(info));
+    function createDistributor(NftId distributorNftId, IDistribution.DistributorInfo memory info) external restricted() {
+        create(_toNftKey32(distributorNftId, DISTRIBUTOR()), abi.encode(info));
     }
 
-    function updateDistributor(NftId nftId, IDistribution.DistributorInfo memory info, StateId newState) external restricted() {
-        update(toDistributorKey32(nftId), abi.encode(info), newState);
+    function updateDistributor(NftId distributorNftId, IDistribution.DistributorInfo memory info, StateId newState) external restricted() {
+        update(_toNftKey32(distributorNftId, DISTRIBUTOR()), abi.encode(info), newState);
     }
 
-    function updateDistributorState(NftId nftId, StateId newState) external restricted() {
-        updateState(toDistributorKey32(nftId), newState);
+    function updateDistributorState(NftId distributorNftId, StateId newState) external restricted() {
+        updateState(_toNftKey32(distributorNftId, DISTRIBUTOR()), newState);
     }
 
     //--- Referral ----------------------------------------------------------//
-    function createReferral(Key32 referralKey, IDistribution.ReferralInfo memory referralInfo) external restricted() {
-        create(referralKey, abi.encode(referralInfo));
+    function createReferral(ReferralId referralId, IDistribution.ReferralInfo memory referralInfo) external restricted() {
+        create(referralId.toKey32(), abi.encode(referralInfo));
     }
 
-    function updateReferral(Key32 referralKey, IDistribution.ReferralInfo memory referralInfo, StateId newState) external restricted() {
-        update(referralKey, abi.encode(referralInfo), newState);
+    function updateReferral(ReferralId referralId, IDistribution.ReferralInfo memory referralInfo, StateId newState) external restricted() {
+        update(referralId.toKey32(), abi.encode(referralInfo), newState);
     }
 
-    function updateReferralState(Key32 referralKey, StateId newState) external restricted() {
-        updateState(referralKey, newState);
+    function updateReferralState(ReferralId referralId, StateId newState) external restricted() {
+        updateState(referralId.toKey32(), newState);
     }
 
     //--- Bundle ------------------------------------------------------------//
     function createBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle) external restricted() {
-        create(toBundleKey32(bundleNftId), abi.encode(bundle));
+        create(_toNftKey32(bundleNftId, BUNDLE()), abi.encode(bundle));
     }
 
     function updateBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle, StateId newState) external restricted() {
-        update(toBundleKey32(bundleNftId), abi.encode(bundle), newState);
+        update(_toNftKey32(bundleNftId, BUNDLE()), abi.encode(bundle), newState);
     }
 
     function updateBundleState(NftId bundleNftId, StateId newState) external restricted() {
-        updateState(toBundleKey32(bundleNftId), newState);
+        updateState(_toNftKey32(bundleNftId, BUNDLE()), newState);
     }
 
     //--- Risk --------------------------------------------------------------//
@@ -189,50 +182,50 @@ contract Instance is
 
     //--- Application (Policy) ----------------------------------------------//
     function createApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy) external restricted() {
-        create(toPolicyKey32(applicationNftId), abi.encode(policy));
+        create(_toNftKey32(applicationNftId, POLICY()), abi.encode(policy));
     }
 
     function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        update(toPolicyKey32(applicationNftId), abi.encode(policy), newState);
+        update(_toNftKey32(applicationNftId, POLICY()), abi.encode(policy), newState);
     }
 
     function updateApplicationState(NftId applicationNftId, StateId newState) external restricted() {
-        updateState(toPolicyKey32(applicationNftId), newState);
+        updateState(_toNftKey32(applicationNftId, POLICY()), newState);
     }
 
     //--- Policy ------------------------------------------------------------//
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        update(toPolicyKey32(policyNftId), abi.encode(policy), newState);
+        update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
     }
 
     function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
-        updateState(toPolicyKey32(policyNftId), newState);
+        updateState(_toNftKey32(policyNftId, POLICY()), newState);
     }
 
     //--- Claim -------------------------------------------------------------//
     function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external restricted() {
-        create(toPolicyKey32(policyNftId), abi.encode(claim));
+        create(_toClaimKey32(policyNftId, claimId), abi.encode(claim));
     }
 
     function updateClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external restricted() {
-        update(toPolicyKey32(policyNftId), abi.encode(claim), newState);
+        update(_toClaimKey32(policyNftId, claimId), abi.encode(claim), newState);
     }
 
     function updateClaimState(NftId policyNftId, ClaimId claimId, StateId newState) external restricted() {
-        updateState(toPolicyKey32(policyNftId), newState);
+        updateState(_toClaimKey32(policyNftId, claimId), newState);
     }
 
     //--- Payout ------------------------------------------------------------//
-    function createPayout(NftId policyNftId, NumberId payoutId, IPolicy.PayoutInfo memory payout) external restricted() {
-        create(toPolicyKey32(policyNftId), abi.encode(payout));
+    function createPayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout) external restricted() {
+        create(_toPayoutKey32(policyNftId, payoutId), abi.encode(payout));
     }
 
-    function updatePayout(NftId policyNftId, NumberId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
-        update(toPolicyKey32(policyNftId), abi.encode(payout), newState);
+    function updatePayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
+        update(_toPayoutKey32(policyNftId, payoutId), abi.encode(payout), newState);
     }
 
-    function updatePayoutState(NftId policyNftId, StateId newState) external restricted() {
-        updateState(toPolicyKey32(policyNftId), newState);
+    function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
+        updateState(_toPayoutKey32(policyNftId, payoutId), newState);
     }
 
     //--- ITransferInterceptor ------------------------------------------------------------//
@@ -246,82 +239,72 @@ contract Instance is
         assert(_accessManager.grantRole(INSTANCE_OWNER_ROLE(), to) == true);
     }
 
-    //--- internal view/pure functions --------------------------------------//
-    function _toNftKey32(NftId nftId, ObjectType objectType) internal pure returns (Key32) {
-        return nftId.toKey32(objectType);
+    //--- initial setup functions -------------------------------------------//
+
+    function setInstanceAccessManager(InstanceAccessManager accessManager) external restricted {
+        if(address(_accessManager) != address(0)) {
+            revert ErrorInstanceInstanceAccessManagerAlreadySet(address(_accessManager));
+        }
+
+        if(accessManager.authority() != authority()) {
+            revert ErrorInstanceInstanceAccessManagerAuthorityMismatch(authority());
+        }
+
+        _accessManager = accessManager;      
     }
 
-    function toBundleKey32(NftId bundleNftId) public pure returns (Key32) {
-        return bundleNftId.toKey32(BUNDLE());
-    }
+    function setBundleManager(BundleManager bundleManager) external restricted() {
+        if(address(_bundleManager) != address(0)) {
+            revert ErrorInstanceBundleManagerAlreadySet(address(_bundleManager));
+        }
 
-    function toPolicyKey32(NftId policyNftId) public pure returns (Key32) {
-        return policyNftId.toKey32(POLICY());
-    }
+        if(bundleManager.getInstance() != Instance(this)) {
+            revert ErrorInstanceBundleManagerInstanceMismatch(address(this));
+        }
 
-    function toDistributionKey32(NftId distNftId) public pure returns (Key32) {
-        return distNftId.toKey32(DISTRIBUTION());
-    }
+        if(bundleManager.authority() != authority()) {
+            revert ErrorInstanceBundleManagerAuthorityMismatch(authority());
+        }
 
-    function toDistributorTypeKey32(NftId distNftId) public pure returns (Key32) {
-        return distNftId.toKey32(DISTRIBUTOR_TYPE());
-    }
-
-    function toDistributorKey32(NftId distNftId) public pure returns (Key32) {
-        return distNftId.toKey32(DISTRIBUTOR());
-    }
-    
-    function getDistributionService() external view returns (IDistributionService) {
-        return IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), VersionPart.wrap(3)));
-    }
-
-    function getProductService() external view returns (IProductService) {
-        return IProductService(getRegistry().getServiceAddress(PRODUCT(), VersionPart.wrap(3)));
-    }
-
-    function getPoolService() external view returns (IPoolService) {
-        return IPoolService(getRegistry().getServiceAddress(POOL(), VersionPart.wrap(3)));
-    }
-
-    function getPolicyService() external view returns (IPolicyService) {
-        return IPolicyService(getRegistry().getServiceAddress(POLICY(), VersionPart.wrap(3)));
-    }
-
-    function getBundleService() external view returns (IBundleService) {
-        return IBundleService(getRegistry().getServiceAddress(BUNDLE(), VersionPart.wrap(3)));
+        _bundleManager = bundleManager;
     }
 
     function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        require(instanceReader.getInstance() == Instance(this), "InstanceReader instance mismatch");
+        if(instanceReader.getInstance() != Instance(this)) {
+            revert ErrorInstanceInstanceReaderInstanceMismatch(address(this));
+        }
+
         _instanceReader = instanceReader;
     }
 
-    function getMajorVersion() external pure returns (VersionPart majorVersion) {
-        return VersionPartLib.toVersionPart(GIF_MAJOR_VERSION);
-    }
+    //--- external view functions -------------------------------------------//
 
     function getInstanceReader() external view returns (InstanceReader) {
         return _instanceReader;
-    }
-    
-    function setBundleManager(BundleManager bundleManager) external restricted() {
-        require(address(_bundleManager) == address(0), "BundleManager is set");
-        require(bundleManager.getInstance() == Instance(this), "BundleManager instance mismatch");
-        require(bundleManager.authority() == authority(), "BundleManager authority mismatch");
-        _bundleManager = bundleManager;
     }
 
     function getBundleManager() external view returns (BundleManager) {
         return _bundleManager;
     }
 
-    function setInstanceAccessManager(InstanceAccessManager accessManager) external restricted {
-        require(address(_accessManager) == address(0), "InstanceAccessManager is set");
-        require(accessManager.authority() == authority(), "InstanceAccessManager authority mismatch");  
-        _accessManager = accessManager;      
-    }
-
     function getInstanceAccessManager() external view returns (InstanceAccessManager) {
         return _accessManager;
+    }
+
+    function getMajorVersion() external pure returns (VersionPart majorVersion) {
+        return VersionPartLib.toVersionPart(GIF_MAJOR_VERSION);
+    }
+
+    //--- internal view/pure functions --------------------------------------//
+    function _toNftKey32(NftId nftId, ObjectType objectType) private pure returns (Key32) {
+        return nftId.toKey32(objectType);
+    }
+
+    function _toClaimKey32(NftId policyNftId, ClaimId claimId) private pure returns (Key32) {
+        return claimId.toKey32(policyNftId);
+    }
+
+    function _toPayoutKey32(NftId policyNftId, PayoutId payoutId) private pure returns (Key32) {
+        return payoutId.toKey32(policyNftId);
     }
 }

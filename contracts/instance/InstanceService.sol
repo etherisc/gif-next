@@ -13,16 +13,11 @@ import {BundleManager} from "./BundleManager.sol";
 import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
-import {ChainNft} from "../registry/ChainNft.sol";
 import {Service} from "../../contracts/shared/Service.sol";
-import {IService} from "../shared/IService.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../types/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../types/ObjectType.sol";
-import {IDistributionComponent} from "../components/IDistributionComponent.sol";
-import {IPoolComponent} from "../components/IPoolComponent.sol";
-import {IProductComponent} from "../components/IProductComponent.sol";
 
 contract InstanceService is
     Service,
@@ -72,10 +67,9 @@ contract InstanceService is
     {
         address instanceOwner = msg.sender;
         IRegistry registry = getRegistry();
-        address registryAddress = address(registry);
-        NftId registryNftId = registry.getNftId(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress(REGISTRY(), getVersion().toMajorPart());
-        IRegistryService registryService = IRegistryService(registryServiceAddress);
+        IRegistryService registryService = IRegistryService(
+            registry.getServiceAddress(
+                REGISTRY(), getVersion().toMajorPart()));
 
         clonedOzAccessManager = AccessManagerUpgradeableInitializeable(
             Clones.clone(_masterOzAccessManager));
@@ -89,7 +83,7 @@ contract InstanceService is
         clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(
             address(clonedOzAccessManager),
-            registryAddress, 
+            address(registry), 
             instanceOwner);
         
         clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
@@ -113,7 +107,6 @@ contract InstanceService is
 
         IRegistry.ObjectInfo memory info = registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
-        // clonedInstance.linkToRegisteredNftId();
 
         emit LogInstanceCloned(
             address(clonedOzAccessManager), 
@@ -248,11 +241,12 @@ contract InstanceService is
     function _grantClaimServiceAuthorizations(InstanceAccessManager clonedAccessManager, Instance clonedInstance) internal {
         // configure authorization for claim/payout services on instance
         address claimServiceAddress = getRegistry().getServiceAddress(CLAIM(), getVersion().toMajorPart());
-        clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), claimServiceAddress);
-        // TODO add claims function authz
-        bytes4[] memory instanceClaimServiceSelectors = new bytes4[](0);
-        // instanceClaimServiceSelectors[0] = clonedInstance.updatePolicy.selector;
-        // instanceClaimServiceSelectors[1] = clonedInstance.updatePolicyState.selector;
+        clonedAccessManager.grantRole(CLAIM_SERVICE_ROLE(), claimServiceAddress);
+        bytes4[] memory instanceClaimServiceSelectors = new bytes4[](4);
+        instanceClaimServiceSelectors[0] = clonedInstance.createClaim.selector;
+        instanceClaimServiceSelectors[1] = clonedInstance.updateClaim.selector;
+        instanceClaimServiceSelectors[2] = clonedInstance.createPayout.selector;
+        instanceClaimServiceSelectors[3] = clonedInstance.updatePayout.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "Instance",
             instanceClaimServiceSelectors, 
@@ -395,18 +389,6 @@ contract InstanceService is
         return _masterInstanceReader;
     }
 
-    function getMasterInstance() external view returns (address) {
-        return _masterInstance;
-    }
-
-    function getMasterInstanceAccessManager() external view returns (address) {
-        return _masterInstanceAccessManager;
-    }
-
-    function getMasterInstanceBundleManager() external view returns (address) {
-        return _masterInstanceBundleManager;
-    }
-
     // From IService
     function getDomain() public pure override returns(ObjectType) {
         return INSTANCE();
@@ -460,6 +442,7 @@ contract InstanceService is
     // TODO called by component, but target can be component helper...so needs target name
     // TODO check that targetName associated with component...how???
     function setComponentLocked(bool locked) onlyComponent external {
+
         address componentAddress = msg.sender;
         IRegistry registry = getRegistry();
         NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;

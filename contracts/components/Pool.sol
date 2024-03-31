@@ -5,12 +5,11 @@ import {Amount, AmountLib} from "../types/Amount.sol";
 import {Component} from "./Component.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {IBundleService} from "../instance/service/IBundleService.sol";
-import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId, NftIdLib} from "../types/NftId.sol";
-import {POOL} from "../types/ObjectType.sol";
+import {BUNDLE, POOL} from "../types/ObjectType.sol";
 import {RoleId, PUBLIC_ROLE} from "../types/RoleId.sol";
 import {Seconds} from "../types/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -61,8 +60,8 @@ abstract contract Pool is
         initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, registryData);
 
         PoolStorage storage $ = _getPoolStorage();
-        $._poolService = getInstance().getPoolService();
-        $._bundleService = getInstance().getBundleService();
+        $._poolService = IPoolService(_getServiceAddress(POOL())); 
+        $._bundleService = IBundleService(_getServiceAddress(BUNDLE()));
 
         registerInterface(type(IPoolComponent).interfaceId);
     }

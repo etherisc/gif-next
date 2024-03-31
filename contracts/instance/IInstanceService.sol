@@ -5,10 +5,6 @@ import {NftId} from "../types/NftId.sol";
 import {ObjectType} from "../types/ObjectType.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {IService} from "../shared/IService.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
-
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IComponent} from "../components/IComponent.sol";
 
 import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";

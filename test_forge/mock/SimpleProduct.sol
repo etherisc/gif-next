@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Product} from "../../contracts/components/Product.sol";
-import {RiskId} from "../../contracts/types/RiskId.sol";
-import {StateId} from "../../contracts/types/StateId.sol";
+import {Amount} from "../../contracts/types/Amount.sol";
+import {ClaimId} from "../../contracts/types/ClaimId.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
+import {PayoutId} from "../../contracts/types/PayoutId.sol";
+import {Product} from "../../contracts/components/Product.sol";
 import {ReferralId} from "../../contracts/types/Referral.sol";
+import {RiskId} from "../../contracts/types/RiskId.sol";
+import {StateId} from "../../contracts/types/StateId.sol";
 import {Timestamp, Seconds} from "../../contracts/types/Timestamp.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
@@ -119,12 +122,12 @@ contract SimpleProduct is Product {
         );
     }
 
-    function underwrite(
+    function collateralize(
         NftId policyNftId,
         bool requirePremiumPayment,
         Timestamp activateAt
     ) public {
-        _underwrite(policyNftId, requirePremiumPayment, activateAt);
+        _collateralize(policyNftId, requirePremiumPayment, activateAt);
     }
 
     function collectPremium(
@@ -145,6 +148,52 @@ contract SimpleProduct is Product {
         NftId policyNftId
     ) public {
         _close(policyNftId);
+    }
+
+    function submitClaim(
+        NftId policyNftId,
+        Amount claimAmount,
+        bytes memory claimData
+    ) public returns (ClaimId) {
+        return _submitClaim(policyNftId, claimAmount, claimData);
+    }
+
+    function confirmClaim(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount confirmedAmount
+    ) public {
+        _confirmClaim(policyNftId, claimId, confirmedAmount);
+    }
+
+    function declineClaim(
+        NftId policyNftId,
+        ClaimId claimId
+    ) public {
+        _declineClaim(policyNftId, claimId);
+    }
+
+    function closeClaim(
+        NftId policyNftId,
+        ClaimId claimId
+    ) public {
+        _closeClaim(policyNftId, claimId);
+    }
+
+    function createPayout(
+        NftId policyNftId,
+        ClaimId claimId,
+        Amount amount,
+        bytes memory data
+    ) public returns (PayoutId) {
+        return _createPayout(policyNftId, claimId, amount, data);
+    }
+
+    function processPayout(
+        NftId policyNftId,
+        PayoutId payoutId
+    ) public {
+        _processPayout(policyNftId, payoutId);
     }
 
     function doSomethingSpecial() 
