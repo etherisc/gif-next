@@ -5,6 +5,7 @@ Contains the types contracts.
 == Contracts
 
 {{LibAddressSet}} 
+{{LibAddressSet.Set}} 
 {{AmountLib}} 
 {{BlocknumberLib}}
 {{ChainIdLib}}
