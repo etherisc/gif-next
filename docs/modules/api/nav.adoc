@@ -2,3 +2,8 @@
 * xref:components.adoc[Components]
 * xref:instance.adoc[Instance]
 * xref:instance/base.adoc[Instance/base]
+* xref:instance/module.adoc[Instance/module]
+* xref:instance/service.adoc[Instance/service]
+* xref:registry.adoc[registry]
+* xref:shared.adoc[shared]
+* xref:types.adoc[types]
