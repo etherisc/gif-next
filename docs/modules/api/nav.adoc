@@ -1,9 +1,9 @@
-.API
-* xref:components.adoc[Components]
-* xref:instance.adoc[Instance]
-* xref:instance/base.adoc[Instance/base]
-* xref:instance/module.adoc[Instance/module]
-* xref:instance/service.adoc[Instance/service]
+.Contracts
+* xref:components.adoc[components]
+* xref:instance.adoc[instance]
+* xref:instance/base.adoc[instance/base]
+* xref:instance/module.adoc[instance/module]
+* xref:instance/service.adoc[instance/service]
 * xref:registry.adoc[registry]
 * xref:shared.adoc[shared]
 * xref:types.adoc[types]
