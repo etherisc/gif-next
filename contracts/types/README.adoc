@@ -5,13 +5,11 @@ Contains the types contracts.
 == Contracts
 
 {{LibAddressSet}} 
-{{LibAddressSet.Set}} 
 {{AmountLib}} 
 {{BlocknumberLib}}
 {{ChainIdLib}}
 {{ClaimIdLib}}
 {{DistributorTypeLib}}
-{{Fee}}
 {{FeeLib}}
 {{Key32Lib}}
 {{LibNftIdSet}}
