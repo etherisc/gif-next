@@ -11,6 +11,7 @@ Contains the types contracts.
 {{ChainIdLib}}
 {{ClaimIdLib}}
 {{DistributorTypeLib}}
+{{Fee}}
 {{FeeLib}}
 {{Key32Lib}}
 {{LibNftIdSet}}
@@ -28,4 +29,4 @@ Contains the types contracts.
 {{UFixedLib}}
 {{VersionLib}}
 {{VersionPartLib}}
-{{VersionPart}}
+
