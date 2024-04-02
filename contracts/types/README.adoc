@@ -4,23 +4,27 @@ Contains the types contracts.
 
 == Contracts
 
-{{AddressSet}}
-{{Blocknumber}}
-{{ChainId}}
-{{ClaimId}}
-{{DistributorType}}
-{{Fee}}
-{{Key32}}
-{{NftIdSet}}
-{{NftId}}
-{{NumberId}}
-{{ObjectType}}
-{{PayoutId}}
-{{Referral}}
-{{RiskId}}
-{{RoleId}}
-{{Seconds}}
-{{StateId}}
-{{Timestamp}}
-{{UFixed}}
-{{Version}}
+{{LibAddressSet}} 
+{{AmountLib}} 
+{{BlocknumberLib}}
+{{ChainIdLib}}
+{{ClaimIdLib}}
+{{DistributorTypeLib}}
+{{FeeLib}}
+{{Key32Lib}}
+{{LibNftIdSet}}
+{{NftIdLib}}
+{{NumberIdLib}}
+{{ObjectTypeLib}}
+{{PayoutIdLib}}
+{{ReferralLib}}
+{{RiskIdLib}}
+{{RoleIdLib}}
+{{SecondsLib}}
+{{StateIdLib}}
+{{TimestampLib}}
+{{MathLib}}
+{{UFixedLib}}
+{{VersionLib}}
+{{VersionPartLib}}
+{{VersionPart}}

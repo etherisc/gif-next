@@ -6,6 +6,7 @@ Contains the instance module contracts.
 
 {{IAccess}}
 {{IBundle}}
+{{IBundle.BundleInfo}}
 {{IComponents}}
 {{IDistribution}}
 {{IPolicy}}
