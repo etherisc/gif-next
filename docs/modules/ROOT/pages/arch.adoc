@@ -1,0 +1,30 @@
+= Architecture
+
+NOTE: This document is under construction
+
+== Rules
+
+=== General
+
+- Libraries, registry and services are pre-deployed on the chain (by Etherisc) and are owned by the protocol owner
+- Registry access is granted through the `RegistryAccessManager`
+- Transactional operations (writing) to the registry are done via the `RegistryService`
+- Services and registry are maintained and upgraded by the protocol owner
+
+=== Instance
+
+- New instances are created by the instancer owner calling `InstanceService.createInstanceClone`
+- Transactional operations (writing) are only via services
+- Read access to the instance is done through the `InstanceReader` and/or services
+- Every instance has its own `AuthorizationManager` for managing authorizations
+- Authorization is managed by the instance owner
+- GIF provides default set of authorizations when cloning the instance
+
+=== Component
+
+- Components are built and deployed by the component owners (which are not the same as the protocol owner)
+- Components interact with the instance through the services
+- Components are bound to a fixed major version of a service
+- End users (consumers) interact with the system through components
+- Components must provide all necessary functions for consumer interaction 
+- Components use the instance's `AuthorizationManager` for authorization checks
