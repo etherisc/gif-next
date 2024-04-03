@@ -267,8 +267,8 @@ contract TestProduct is TestGifBase {
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(distribution.getWallet()), 10, "distibution balance not 10");
-        assertEq(token.balanceOf(address(customer)), 880, "customer balance not 880");
-        assertEq(token.balanceOf(pool.getWallet()), 10100, "pool balance not 10100");
+        assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
+        assertEq(token.balanceOf(pool.getWallet()), 10120, "pool balance not 10120"); // 10000 + 100 (net premium) + 10 (pool fee) + 10 (bundle fee)
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
@@ -361,7 +361,7 @@ contract TestProduct is TestGifBase {
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(distribution.getWallet()), 7, "distibution balance not 7");
-        assertEq(token.balanceOf(address(customer)), 883, "customer balance not 883");
+        assertEq(token.balanceOf(address(customer)), 863, "customer balance not 863");
     }
 
     function test_Product_collateralizeWithReferralExpired() public {
@@ -636,8 +636,8 @@ contract TestProduct is TestGifBase {
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(distribution.getWallet()), 10, "distibution balance not 10");
-        assertEq(token.balanceOf(address(customer)), 880, "customer balance not 880");
-        assertEq(token.balanceOf(pool.getWallet()), 10100, "pool balance not 10100");
+        assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
+        assertEq(token.balanceOf(pool.getWallet()), 10120, "pool balance not 10120");
     }
 
     function test_Product_close() public {
@@ -697,7 +697,7 @@ contract TestProduct is TestGifBase {
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.closedAt.gtz(), "expiredAt not set");
         
-        assertEq(token.balanceOf(address(pool)), 10100, "pool balance not 130");
+        assertEq(token.balanceOf(address(pool)), 10120, "pool balance not 10120"); // 100 (netPremium) + 10 (poolFee) + 10 (bundleFee)
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 0, "expected no active policy");
     }

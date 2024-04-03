@@ -528,11 +528,15 @@ contract PolicyService is
             tokenHandler.transfer(policyOwner, distributionWallet, distributionFeeAmountToTransfer);
             _distributionService.processSale(productSetupInfo.distributionNftId, policyInfo.referralId, premium, distributionFeeAmountToTransfer);
             
-            // move netpremium to pool wallet
-            tokenHandler.transfer(policyOwner, poolWallet, premium.netPremiumAmount);
+            // move distribution fee to distribution wallet
+            uint256 poolFeeAmountToTransfer = premium.poolFeeFixAmount + premium.poolFeeVarAmount;
+            uint256 bundleFeeAmountToTransfer = premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
             
-            // TODO: move pool related tokens too
-            // TODO: move bundle related tokens too
+            // move netpremium to pool wallet
+            uint256 poolAmountToTransfer = premium.netPremiumAmount + poolFeeAmountToTransfer + bundleFeeAmountToTransfer;
+            tokenHandler.transfer(policyOwner, poolWallet, poolAmountToTransfer);
+            _poolService.processSale(policyInfo.bundleNftId, premium, AmountLib.toAmount(poolAmountToTransfer));
+
             netPremiumAmount = premium.netPremiumAmount;
         }
 
