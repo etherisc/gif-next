@@ -270,6 +270,9 @@ contract TestProduct is TestGifBase {
         assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
         assertEq(token.balanceOf(pool.getWallet()), 10120, "pool balance not 10120"); // 10000 + 100 (net premium) + 10 (pool fee) + 10 (bundle fee)
 
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+        assertEq(poolComponentInfo.feeAmount.toInt(), 10, "pool fee amount not 10");
+
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
@@ -362,6 +365,9 @@ contract TestProduct is TestGifBase {
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(distribution.getWallet()), 7, "distibution balance not 7");
         assertEq(token.balanceOf(address(customer)), 863, "customer balance not 863");
+
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+        assertEq(poolComponentInfo.feeAmount.toInt(), 10, "pool fee amount not 10");
     }
 
     function test_Product_collateralizeWithReferralExpired() public {
