@@ -114,10 +114,16 @@ contract PolicyService is
 
         // check policy matches with calling product
         IPolicy.PolicyInfo memory applicationInfo = instanceReader.getPolicyInfo(applicationNftId);
-        require(applicationInfo.productNftId == productNftId, "POLICY_PRODUCT_MISMATCH");
+        
+        if (applicationInfo.productNftId != productNftId) {
+            revert ErrorPolicyServiceProductMismatch(applicationNftId, applicationInfo.productNftId, productNftId);
+        }
 
         // check policy is in state applied
-        require(instanceReader.getPolicyState(applicationNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
+        // require(instanceReader.getPolicyState(applicationNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
+        if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
+            revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
+        }
         
         StateId newPolicyState = COLLATERALIZED();
 
@@ -461,7 +467,7 @@ contract PolicyService is
         // check caller(product) policy match
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         if(policyInfo.productNftId != productNftId) {
-            revert ErrorPolicyServicePolicyProductMismatch(policyNftId, 
+            revert ErrorPolicyServiceProductMismatch(policyNftId, 
             policyInfo.productNftId, 
             productNftId);
         }
