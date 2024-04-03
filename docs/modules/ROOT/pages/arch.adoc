@@ -19,12 +19,15 @@ NOTE: This document is under construction
 - Every instance has its own `AuthorizationManager` for managing authorizations
 - Authorization is managed by the instance owner
 - GIF provides default set of authorizations when cloning the instance
+- Instances are not upgradable
 
 === Component
 
 - Components are built and deployed by the component owners (which are not the same as the protocol owner)
 - Components interact with the instance through the services
 - Components are bound to a fixed major version of a service
+  Patch/Minor version upgrades of a service will be done by the protocol owner and will be completely transparent to the component owner
+  Major version upgrades will require a new component version to be deployed by the component owner
 - End users (consumers) interact with the system through components
 - Components must provide all necessary functions for consumer interaction 
 - Components use the instance's `AuthorizationManager` for authorization checks
