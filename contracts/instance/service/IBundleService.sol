@@ -78,6 +78,12 @@ interface IBundleService is IService {
         uint256 premium // premium amount after pool fee
     ) external;
 
+    /// @dev updates the bundle's fees of with the provided fee amount
+    function updateBundleFees(
+        IInstance instance,
+        NftId bundleNftId,
+        Amount feeAmount
+    ) external;
 
     /// @dev releases the specified collateral in the bundle
     /// may only be called by pool service

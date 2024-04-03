@@ -13,7 +13,7 @@ import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 
-import {Amount} from "../../types/Amount.sol";
+import {Amount, AmountLib} from "../../types/Amount.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
@@ -44,6 +44,7 @@ contract PoolService is
     IPoolService 
 {
     using NftIdLib for NftId;
+    using AmountLib for Amount;
 
     IBundleService internal _bundleService;
 
@@ -228,6 +229,38 @@ contract PoolService is
         emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId);
     }
 
+    function processSale(
+        NftId bundleNftId, 
+        IPolicy.Premium memory premium, 
+        Amount actualAmountTransferred
+    ) 
+        external
+        virtual
+    {
+        IRegistry registry = getRegistry();
+        IRegistry.ObjectInfo memory bundleObjectInfo = registry.getObjectInfo(bundleNftId);
+        IRegistry.ObjectInfo memory poolObjectInfo = registry.getObjectInfo(bundleObjectInfo.parentNftId);
+        IRegistry.ObjectInfo memory instanceObjectInfo = registry.getObjectInfo(poolObjectInfo.parentNftId);
+        IInstance instance = IInstance(instanceObjectInfo.objectAddress);
+
+        Amount poolFeeAmount = AmountLib.toAmount(premium.poolFeeFixAmount + premium.poolFeeVarAmount);
+        Amount bundleFeeAmount = AmountLib.toAmount(premium.bundleFeeFixAmount + premium.bundleFeeVarAmount);
+        Amount expectedTransferAmount = AmountLib.toAmount(premium.netPremiumAmount).add(poolFeeAmount).add(bundleFeeAmount);
+        if (! actualAmountTransferred.eq(expectedTransferAmount)) {
+            revert ErrorPoolServiceInvalidTransferAmount(expectedTransferAmount, actualAmountTransferred);
+        }
+        
+        // update pool fee balance
+        if (poolFeeAmount.gtz()) {
+            IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolObjectInfo.nftId);
+            poolComponentInfo.feeAmount = poolComponentInfo.feeAmount.add(poolFeeAmount);
+            instance.updatePoolSetup(poolObjectInfo.nftId, poolComponentInfo, KEEP_STATE());
+        }
+
+        if (bundleFeeAmount.gtz()) {
+            _bundleService.updateBundleFees(instance, bundleNftId, bundleFeeAmount);
+        }
+    }
 
     function lockCollateral(
         IInstance instance, 

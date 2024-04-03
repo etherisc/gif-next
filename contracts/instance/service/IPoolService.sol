@@ -22,6 +22,7 @@ interface IPoolService is IService {
 
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceBundlePoolMismatch(NftId bundlePoolNftId, NftId productPoolNftId);
+    error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
 
     /// @dev registers a new pool with the registry service
     function register(address poolAddress) external returns(NftId);
@@ -85,6 +86,8 @@ interface IPoolService is IService {
     /// may only be called by registered and unlocked pool components
     function closeBundle(NftId bundleNftId) external;
 
+    /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
+    function processSale(NftId bundleNftId, IPolicy.Premium memory premium, Amount actualAmountTransferred) external;
 
     /// @dev increase stakes for bundle
     /// staking fees will be deducted by the pool service from the staking amount
