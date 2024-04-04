@@ -43,6 +43,7 @@ contract PolicyService is
 {
     using NftIdLib for NftId;
     using TimestampLib for Timestamp;
+    using AmountLib for Amount;
 
     IApplicationService internal _applicationService;
     IBundleService internal _bundleService;
@@ -496,54 +497,77 @@ contract PolicyService is
         returns (uint256 netPremiumAmount)
     {
         // process token transfer(s)
-        if(premiumExpectedAmount > 0) {
-            NftId productNftId = getRegistry().getObjectInfo(policyNftId).parentNftId;
-            ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
-            IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
-            TokenHandler tokenHandler = productSetupInfo.tokenHandler;
-            address policyOwner = getRegistry().ownerOf(policyNftId);
-            address poolWallet = instance.getInstanceReader().getComponentInfo(productSetupInfo.poolNftId).wallet;
-            IPolicy.Premium memory premium = _applicationService.calculatePremium(
-                productNftId,
-                policyInfo.riskId,
-                policyInfo.sumInsuredAmount,
-                policyInfo.lifetime,
-                policyInfo.applicationData,
-                policyInfo.bundleNftId,
-                policyInfo.referralId
-                );
+        if(premiumExpectedAmount == 0) {
+            return 0;
+        }
 
-            if (premium.premiumAmount != premiumExpectedAmount) {
-                revert ErrorIPolicyServicePremiumMismatch(
-                    policyNftId, 
-                    premiumExpectedAmount, 
-                    premium.premiumAmount);
-            }
+        NftId productNftId = getRegistry().getObjectInfo(policyNftId).parentNftId;
+        IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
+        IPolicy.Premium memory premium = _applicationService.calculatePremium(
+            productNftId,
+            policyInfo.riskId,
+            policyInfo.sumInsuredAmount,
+            policyInfo.lifetime,
+            policyInfo.applicationData,
+            policyInfo.bundleNftId,
+            policyInfo.referralId
+            );
 
-            // move product fee to product wallet
+        if (premium.premiumAmount != premiumExpectedAmount) {
+            revert ErrorIPolicyServicePremiumMismatch(
+                policyNftId, 
+                premiumExpectedAmount, 
+                premium.premiumAmount);
+        }
+
+        address policyOwner = getRegistry().ownerOf(policyNftId);
+        ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
+        TokenHandler tokenHandler = productSetupInfo.tokenHandler;
+        if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premium.premiumAmount) {
+            revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premium.premiumAmount);
+        }
+
+        uint256 productFeeAmountToTransfer = premium.productFeeFixAmount + premium.productFeeVarAmount;
+        uint256 distributionFeeAmountToTransfer = premium.distributionFeeFixAmount + premium.distributionFeeVarAmount - premium.discountAmount;
+        uint256 poolFeeAmountToTransfer = premium.poolFeeFixAmount + premium.poolFeeVarAmount;
+        uint256 bundleFeeAmountToTransfer = premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
+        uint256 poolAmountToTransfer = premium.netPremiumAmount + poolFeeAmountToTransfer + bundleFeeAmountToTransfer;
+        netPremiumAmount = premium.netPremiumAmount;
+
+        // move product fee to product wallet
+        {
             address productWallet = productSetupInfo.wallet;
-            if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premium.premiumAmount) {
-                revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premium.premiumAmount);
-            }
-            tokenHandler.transfer(policyOwner, productWallet, premium.productFeeFixAmount + premium.productFeeVarAmount);
+            tokenHandler.transfer(policyOwner, productWallet, productFeeAmountToTransfer);
+        }
 
-            // move distribution fee to distribution wallet
+        // move distribution fee to distribution wallet
+        {
             ISetup.DistributionSetupInfo memory distributionSetupInfo = instance.getInstanceReader().getDistributionSetupInfo(productSetupInfo.distributionNftId);
             address distributionWallet = distributionSetupInfo.wallet;
-            uint256 distributionFeeAmountToTransfer = premium.distributionFeeFixAmount + premium.distributionFeeVarAmount - premium.discountAmount;
             tokenHandler.transfer(policyOwner, distributionWallet, distributionFeeAmountToTransfer);
             _distributionService.processSale(productSetupInfo.distributionNftId, policyInfo.referralId, premium, distributionFeeAmountToTransfer);
-            
-            // move distribution fee to distribution wallet
-            uint256 poolFeeAmountToTransfer = premium.poolFeeFixAmount + premium.poolFeeVarAmount;
-            uint256 bundleFeeAmountToTransfer = premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
-            
-            // move netpremium to pool wallet
-            uint256 poolAmountToTransfer = premium.netPremiumAmount + poolFeeAmountToTransfer + bundleFeeAmountToTransfer;
+        }
+        
+        // move netpremium, bundleFee and poolFee to pool wallet
+        {
+            address poolWallet = instance.getInstanceReader().getComponentInfo(productSetupInfo.poolNftId).wallet;
             tokenHandler.transfer(policyOwner, poolWallet, poolAmountToTransfer);
             _poolService.processSale(policyInfo.bundleNftId, premium, AmountLib.toAmount(poolAmountToTransfer));
+        }
 
-            netPremiumAmount = premium.netPremiumAmount;
+        // validate total amount transferred
+        {
+            Amount totalTransferred = 
+                AmountLib.toAmount(distributionFeeAmountToTransfer)
+                .add(AmountLib.toAmount(poolAmountToTransfer))
+                .add(AmountLib.toAmount(productFeeAmountToTransfer));
+
+            if (! AmountLib.toAmount(premium.premiumAmount).eq(totalTransferred)) {
+                revert ErrorPolicyServiceTransferredPremiumMismatch(
+                    policyNftId, 
+                    premium.premiumAmount, 
+                    totalTransferred.toInt());
+            }
         }
 
         // TODO: add logging
