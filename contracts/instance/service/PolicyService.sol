@@ -43,7 +43,6 @@ contract PolicyService is
 {
     using NftIdLib for NftId;
     using TimestampLib for Timestamp;
-    using AmountLib for Amount;
 
     IApplicationService internal _applicationService;
     IBundleService internal _bundleService;
@@ -552,21 +551,18 @@ contract PolicyService is
         {
             address poolWallet = instance.getInstanceReader().getComponentInfo(productSetupInfo.poolNftId).wallet;
             tokenHandler.transfer(policyOwner, poolWallet, poolAmountToTransfer);
-            _poolService.processSale(policyInfo.bundleNftId, premium, AmountLib.toAmount(poolAmountToTransfer));
+            _poolService.processSale(policyInfo.bundleNftId, premium, poolAmountToTransfer);
         }
 
         // validate total amount transferred
         {
-            Amount totalTransferred = 
-                AmountLib.toAmount(distributionFeeAmountToTransfer)
-                .add(AmountLib.toAmount(poolAmountToTransfer))
-                .add(AmountLib.toAmount(productFeeAmountToTransfer));
+            uint256 totalTransferred = distributionFeeAmountToTransfer + poolAmountToTransfer + productFeeAmountToTransfer;
 
-            if (! AmountLib.toAmount(premium.premiumAmount).eq(totalTransferred)) {
+            if (premium.premiumAmount != totalTransferred) {
                 revert ErrorPolicyServiceTransferredPremiumMismatch(
                     policyNftId, 
                     premium.premiumAmount, 
-                    totalTransferred.toInt());
+                    totalTransferred);
             }
         }
 

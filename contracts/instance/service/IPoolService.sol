@@ -87,7 +87,7 @@ interface IPoolService is IService {
     function closeBundle(NftId bundleNftId) external;
 
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
-    function processSale(NftId bundleNftId, IPolicy.Premium memory premium, Amount actualAmountTransferred) external;
+    function processSale(NftId bundleNftId, IPolicy.Premium memory premium, uint256 actualAmountTransferred) external;
 
     /// @dev increase stakes for bundle
     /// staking fees will be deducted by the pool service from the staking amount

@@ -232,7 +232,7 @@ contract PoolService is
     function processSale(
         NftId bundleNftId, 
         IPolicy.Premium memory premium, 
-        Amount actualAmountTransferred
+        uint256 actualAmountTransferred
     ) 
         external
         virtual
@@ -246,8 +246,8 @@ contract PoolService is
         Amount poolFeeAmount = AmountLib.toAmount(premium.poolFeeFixAmount + premium.poolFeeVarAmount);
         Amount bundleFeeAmount = AmountLib.toAmount(premium.bundleFeeFixAmount + premium.bundleFeeVarAmount);
         Amount expectedTransferAmount = AmountLib.toAmount(premium.netPremiumAmount).add(poolFeeAmount).add(bundleFeeAmount);
-        if (! actualAmountTransferred.eq(expectedTransferAmount)) {
-            revert ErrorPoolServiceInvalidTransferAmount(expectedTransferAmount, actualAmountTransferred);
+        if (! AmountLib.toAmount(actualAmountTransferred).eq(expectedTransferAmount)) {
+            revert ErrorPoolServiceInvalidTransferAmount(expectedTransferAmount, AmountLib.toAmount(actualAmountTransferred));
         }
         
         // update pool fee balance
