@@ -3,8 +3,12 @@ pragma solidity ^0.8.20;
 
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
+import {ClaimId} from "../types/ClaimId.sol";
+import {DistributorType} from "../types/DistributorType.sol";
+import {PayoutId} from "../types/PayoutId.sol";
 import {NftId} from "../types/NftId.sol";
 import {StateId} from "../types/StateId.sol";
+import {ReferralId} from "../types/Referral.sol";
 import {RiskId} from "../types/RiskId.sol";
 import {VersionPart} from "../types/Version.sol";
 import {Key32} from "../types/Key32.sol";
@@ -38,6 +42,18 @@ interface IInstance is
     ITransferInterceptor, 
     IAccessManaged
 {
+    error ErrorInstanceInstanceAccessManagerAlreadySet(address instanceAccessManager);
+    error ErrorInstanceInstanceAccessManagerAuthorityMismatch(address instanceAuthority);
+
+    error ErrorInstanceBundleManagerAlreadySet(address instanceBundleManager);
+    error ErrorInstanceBundleManagerInstanceMismatch(address instance);
+    error ErrorInstanceBundleManagerAuthorityMismatch(address instanceAuthority);
+
+    error ErrorInstanceInstanceReaderInstanceMismatch(address instanceAuthority);
+
+    error ErrorInstanceInstanceStoreAlreadySet(address instanceStore);
+    error ErrorInstanceInstanceStoreAuthorityMismatch(address instanceAuthority);
+
     function createRole(string memory roleName, string memory adminName) external returns (RoleId roleId, RoleId admin);
     function grantRole(RoleId roleId, address account) external;
     function revokeRole(RoleId roleId, address account) external;

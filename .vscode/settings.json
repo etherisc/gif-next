@@ -36,4 +36,5 @@
         "titleBar.inactiveBackground": "#be690099",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
+    "asciidoc.antora.enableAntoraSupport": true,
 }

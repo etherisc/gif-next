@@ -188,14 +188,15 @@ library InstanceAuthorizationsLib
     {
         // configure authorization for claim/payout services on instance
         address claimServiceAddress = registry.getServiceAddress(CLAIM(), majorVersion);
-        clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), claimServiceAddress);
-        // TODO add claims function authz
-        bytes4[] memory instanceClaimServiceSelectors = new bytes4[](0);
-        // instanceClaimServiceSelectors[0] = clonedInstanceStore.updatePolicy.selector;
-        // instanceClaimServiceSelectors[1] = clonedInstanceStore.updatePolicyState.selector;
+        clonedAccessManager.grantRole(CLAIM_SERVICE_ROLE(), claimServiceAddress);
+        bytes4[] memory instanceClaimServiceSelectors = new bytes4[](4);
+        instanceClaimServiceSelectors[0] = clonedInstanceStore.createClaim.selector;
+        instanceClaimServiceSelectors[1] = clonedInstanceStore.updateClaim.selector;
+        instanceClaimServiceSelectors[2] = clonedInstanceStore.createPayout.selector;
+        instanceClaimServiceSelectors[3] = clonedInstanceStore.updatePayout.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "InstanceStore",
-            instanceClaimServiceSelectors,
+            instanceClaimServiceSelectors, 
             CLAIM_SERVICE_ROLE());
     }
 

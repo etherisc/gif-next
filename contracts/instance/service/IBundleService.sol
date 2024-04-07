@@ -16,11 +16,13 @@ interface IBundleService is IService {
     event LogBundleServiceBundleActivated(NftId bundleNftId);
     event LogBundleServiceBundleLocked(NftId bundleNftId);
 
-    error ErrorBundleServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
     error ErrorBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
     error ErrorBundleServiceBundleNotOpen(NftId bundleNftId, StateId state, Timestamp expiredAt);
     error ErrorBundleServiceCapacityInsufficient(NftId bundleNftId, uint capacityAmount, uint collateralAmount);
     error ErrorBundleServiceBundleWithOpenPolicies(NftId bundleNftId, uint256 openPoliciesCount);
+
+    error ErrorBundleServiceBundleUnknown(NftId bundleNftId);
+    error ErrorBundleServiceBundlePoolMismatch(NftId bundleNftId, NftId expectedPool, NftId actualPool);
 
     /// @dev create a new bundle for the specified attributes
     /// may only be called by pool service
@@ -76,6 +78,12 @@ interface IBundleService is IService {
         uint256 premium // premium amount after pool fee
     ) external;
 
+    /// @dev updates the bundle's fees of with the provided fee amount
+    function updateBundleFees(
+        IInstance instance,
+        NftId bundleNftId,
+        Amount feeAmount
+    ) external;
 
     /// @dev releases the specified collateral in the bundle
     /// may only be called by pool service

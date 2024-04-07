@@ -157,22 +157,18 @@ contract DistributionService is
         }
 
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
-        Key32 key32 = distributorType.toKey32();
+        IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
+            name,
+            minDiscountPercentage,
+            maxDiscountPercentage,
+            commissionPercentage,
+            maxReferralCount,
+            maxReferralLifetime,
+            allowSelfReferrals,
+            allowRenewals,
+            data);
 
-        if(!instance.getInstanceStore().exists(key32)) {
-            IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
-                name,
-                minDiscountPercentage,
-                maxDiscountPercentage,
-                commissionPercentage,
-                maxReferralCount,
-                maxReferralLifetime,
-                allowSelfReferrals,
-                allowRenewals,
-                data);
-
-            instance.getInstanceStore().createDistributorType(key32, info);
-        }
+        instance.getInstanceStore().createDistributorType(distributorType, info);
     }
 
     function createDistributor(
@@ -269,7 +265,7 @@ contract DistributionService is
             data
         );
 
-        instance.getInstanceStore().createReferral(referralId.toKey32(), info);
+        instance.getInstanceStore().createReferral(referralId, info);
         return referralId;
     }
 
@@ -311,7 +307,7 @@ contract DistributionService is
 
         if (isReferral) {
             referralInfo.usedReferrals += 1;
-            store.updateReferral(referralId.toKey32(), referralInfo, KEEP_STATE());
+            store.updateReferral(referralId, referralInfo, KEEP_STATE());
 
             if (commissionAmount > 0) {
                 distributorInfo.sumCommisions += commissionAmount;

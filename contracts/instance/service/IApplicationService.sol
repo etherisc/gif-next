@@ -2,23 +2,20 @@
 pragma solidity ^0.8.19;
 
 import {IPolicy} from "../module/IPolicy.sol";
-import {IRisk} from "../module/IRisk.sol";
 import {IService} from "../../shared/IService.sol";
 
 import {NftId} from "../../types/NftId.sol";
+import {ObjectType} from "../../types/ObjectType.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
 import {Seconds} from "../../types/Seconds.sol";
-import {StateId} from "../../types/StateId.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
-import {UFixed} from "../../types/UFixed.sol";
-import {Fee} from "../../types/Fee.sol";
 
 /// @dev gif service responsible for creating applications
 /// only product components may call transaction functions
 interface IApplicationService is IService {
     
-    error IApplicationServicePolicyNotApplied(NftId applicationNftId);
+    error ErrorApplicationServiceNotProduct(NftId callerNftId, ObjectType callerType);
+    error ErrorApplicationServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
 
     /// @dev creates a new application based on the specified attributes
     /// may only be called by a product component

@@ -181,6 +181,9 @@ contract BundleService is
         (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        if(bundleInfo.poolNftId.eqz()) {
+            revert ErrorBundleServiceBundleUnknown(bundleNftId);
+        }
 
         if(bundleInfo.poolNftId != poolNftId) {
             revert ErrorBundleServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
@@ -242,23 +245,29 @@ contract BundleService is
         if(premiumAmount > 0) {
             // calculate fees and net premium amounts
             (
-                uint256 feeAmount, 
+                , 
                 uint256 netPremiumAmount
             ) = FeeLib.calculateFee(bundleInfo.fee, premiumAmount);
 
             // update bundle info with additional capital
             bundleInfo.capitalAmount = AmountLib.toAmount(bundleInfo.capitalAmount.toInt() + netPremiumAmount);
-
-            // update bundle info with additional fees
-            if(feeAmount > 0) {
-                bundleInfo.feeAmount = AmountLib.toAmount(bundleInfo.feeAmount.toInt() + feeAmount);
-            }
         }
 
         // save updated bundle info
         instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
+    function updateBundleFees(
+        IInstance instance,
+        NftId bundleNftId,
+        Amount feeAmount
+    )
+        external
+    {
+        IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
+        bundleInfo.feeAmount = bundleInfo.feeAmount.add(feeAmount);
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+    }
 
     function lock(NftId bundleNftId) 
         external
@@ -385,7 +394,7 @@ contract BundleService is
 
         // ensure policy is closeable
         if ( TimestampLib.blockTimestamp() < policyInfo.expiredAt
-            && policyInfo.payoutAmount < policyInfo.sumInsuredAmount)
+            && policyInfo.payoutAmount.toInt() < policyInfo.sumInsuredAmount)
         {
             revert BundleManager.ErrorBundleManagerPolicyNotCloseable(policyNftId);
         }

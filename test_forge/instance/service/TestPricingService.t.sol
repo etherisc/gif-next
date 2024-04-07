@@ -36,12 +36,12 @@ contract TestPricingService is TestGifBase {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
             productNftId, 
-            bundleNftId,
             riskId, 
-            ReferralLib.zero(), 
             1000, 
             SecondsLib.toSeconds(300), 
-            "");
+            "",
+            bundleNftId,
+            ReferralLib.zero());
 
         assertEq(premium.netPremiumAmount, 100);
         assertEq(premium.fullPremiumAmount, 100);
@@ -61,12 +61,12 @@ contract TestPricingService is TestGifBase {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
             productNftId, 
-            bundleNftId, 
             riskId, 
-            ReferralLib.zero(), 
             1000, 
             SecondsLib.toSeconds(300), 
-            "");
+            "",
+            bundleNftId,
+            ReferralLib.zero());
 
         assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
         assertEq(premium.fullPremiumAmount, 140, "fullPremiumAmount invalid");
@@ -95,12 +95,12 @@ contract TestPricingService is TestGifBase {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
             productNftId, 
-            bundleNftId, 
             riskId, 
-            ReferralLib.zero(), 
             1000, 
             SecondsLib.toSeconds(300), 
-            "");
+            "",
+            bundleNftId,
+            ReferralLib.zero());
 
         assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
         assertEq(premium.fullPremiumAmount, 120, "fullPremiumAmount invalid");
@@ -129,12 +129,12 @@ contract TestPricingService is TestGifBase {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
             productNftId, 
-            bundleNftId, 
             riskId, 
-            ReferralLib.zero(), 
             1000, 
             SecondsLib.toSeconds(300), 
-            "");
+            "",
+            bundleNftId,
+            ReferralLib.zero());
 
         assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
         assertEq(premium.fullPremiumAmount, 100 + 5 * 4 + 3 + 4 + 5 + 6, "fullPremiumAmount invalid");
@@ -188,12 +188,12 @@ contract TestPricingService is TestGifBase {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
             productNftId, 
-            bundleNftId, 
             riskId, 
-            referralId, 
             1000, 
             SecondsLib.toSeconds(300), 
-            "");
+            "",
+            bundleNftId,
+            referralId);
 
         assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
         assertEq(premium.fullPremiumAmount, 160, "fullPremiumAmount invalid");
@@ -249,12 +249,12 @@ contract TestPricingService is TestGifBase {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
             productNftId, 
-            bundleNftId, 
             riskId, 
-            referralId, 
             1000, 
             SecondsLib.toSeconds(300), 
-            "");
+            "",
+            bundleNftId,
+            referralId);
 
         assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
         assertEq(premium.fullPremiumAmount, 160, "fullPremiumAmount invalid");
@@ -310,12 +310,12 @@ contract TestPricingService is TestGifBase {
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
             productNftId, 
-            bundleNftId, 
             riskId, 
-            referralId, 
             1000, 
             SecondsLib.toSeconds(300), 
-            "");
+            "",
+            bundleNftId,
+            referralId);
 
         assertEq(premium.netPremiumAmount, 100, "netPremiumAmount invalid");
         assertEq(premium.fullPremiumAmount, 200, "fullPremiumAmount invalid");

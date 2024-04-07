@@ -4,13 +4,18 @@ pragma solidity ^0.8.20;
 // uint16 allows for 65'535 claims per policy
 type ClaimId is uint16;
 
+import {CLAIM} from "./ObjectType.sol";
+import {Key32, KeyId, Key32Lib} from "./Key32.sol";
+import {NftId} from "./NftId.sol";
+
 // type bindings
 using {
     eqClaimId as ==, 
     neClaimId as !=, 
     ClaimIdLib.eqz,
     ClaimIdLib.gtz,
-    ClaimIdLib.toInt
+    ClaimIdLib.toInt,
+    ClaimIdLib.toKey32
 } for ClaimId global;
 
 
@@ -25,9 +30,13 @@ function neClaimId(ClaimId a, ClaimId b) pure returns (bool isDifferent) {
 
 // library functions that operate on user defined type
 library ClaimIdLib {
-    /// @dev Converts the ClaimId to a uint.
+    /// @dev claim id min value (0), use only for non-initialized values
     function zero() public pure returns (ClaimId) {
         return ClaimId.wrap(0);
+    }
+    /// @dev claim id max value (2**16-1), use only for non-initialized values
+    function max() public pure returns (ClaimId) {
+        return ClaimId.wrap(type(uint16).max);
     }
 
     /// @dev Converts an uint into a ClaimId.
@@ -38,6 +47,20 @@ library ClaimIdLib {
     /// @dev Converts the ClaimId to a uint.
     function toInt(ClaimId a) public pure returns (uint16) {
         return uint16(ClaimId.unwrap(a));
+    }
+
+    /// @dev Converts the ClaimId and NftId to a Key32.
+    function toKey32(ClaimId claimId, NftId policyNftId) public pure returns (Key32) {
+        return Key32Lib.toKey32(CLAIM(), toKeyId(claimId, policyNftId));
+    }
+
+    /// @dev Converts the ClaimId and NftId to a Key32.
+    function toKeyId(ClaimId claimId, NftId policyNftId) public pure returns (KeyId) {
+        return KeyId.wrap(
+            bytes31(
+                bytes14(
+                    uint112(
+                        NftId.unwrap(policyNftId) << 16 + ClaimId.unwrap(claimId)))));
     }
 
     /// @dev Returns true if the value is non-zero (> 0).

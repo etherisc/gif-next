@@ -171,6 +171,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress],
         { libraries: {
+                AmountLib: libraries.amountLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -215,10 +216,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress],
         { libraries: {
-                // FeeLib: libraries.feeLibAddress,
+                AmountLib: libraries.amountLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
-                // UFixedLib: libraries.uFixedLibAddress,
+                PayoutIdLib: libraries.payoutIdLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress, 
             }});
@@ -238,11 +239,12 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress],
         { libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
-            }});
+            AmountLib: libraries.amountLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress, 
+            VersionPartLib: libraries.versionPartLibAddress, 
+        }});
 
     const applicationServiceManager = applicationServiceManagerBaseContract as ApplicationServiceManager;
     const applicationServiceAddress = await applicationServiceManager.getApplicationService();
@@ -259,12 +261,15 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         owner,
         [registry.registryAddress],
         { libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                UFixedLib: libraries.uFixedLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
-            }});
+            AmountLib: libraries.amountLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
+            ClaimIdLib: libraries.claimIdLibAddress,
+            PayoutIdLib: libraries.payoutIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            UFixedLib: libraries.uFixedLibAddress,
+            VersionLib: libraries.versionLibAddress, 
+            VersionPartLib: libraries.versionPartLibAddress, 
+        }});
 
     const policyServiceManager = policyServiceManagerBaseContract as PolicyServiceManager;
     const policyServiceAddress = await policyServiceManager.getPolicyService();

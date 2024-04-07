@@ -61,7 +61,7 @@ contract ReferralTest is ReferralTestBase {
         assertFalse(distributionService.referralIsValid(distributionNftId, ReferralLib.toReferralId(distributionNftId, "UNKNOWN")), "referral is valid");
     }
 
-    function test_Referral_underwriteWithReferral() public {
+    function test_Referral_collateralizeWithReferral() public {
         _setupTestData(true);
         _setupPoolAndProduct();
 
@@ -112,7 +112,7 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        dproduct.underwrite(policyNftId, true, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
@@ -140,11 +140,11 @@ contract ReferralTest is ReferralTestBase {
         assertEq(distributionSetupInfo.sumDistributionOwnerFees, 11, "sumDistributionOwnerFees not 11");
     }
 
-    function test_Referral_underwriteMultipleWithReferral() public {
+    function test_Referral_collateralizeMultipleWithReferral() public {
         _setupTestData(true);
         _setupPoolAndProduct();
 
-        // GIVEN - two policies to underwrite
+        // GIVEN - two policies to collateralize
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         token.transfer(customer2, 1000);
@@ -202,8 +202,8 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        dproduct.underwrite(policyNftId, true, TimestampLib.blockTimestamp()); 
-        dproduct.underwrite(policyNftId2, true, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId2, true, TimestampLib.blockTimestamp()); 
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
@@ -226,7 +226,7 @@ contract ReferralTest is ReferralTestBase {
         vm.stopPrank();
 
         // --------------------------------------------------------------
-        // GIVEN one more policy to underwrite with a different referral
+        // GIVEN one more policy to collateralize with a different referral
         vm.startPrank(distributionOwner);
         NftId distributorNftId2 = distribution.createDistributor(
             customer2,
@@ -256,7 +256,7 @@ contract ReferralTest is ReferralTestBase {
         );
 
         // WHEN 
-        dproduct.underwrite(policyNftId3, true, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId3, true, TimestampLib.blockTimestamp()); 
 
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId3) == ACTIVE(), "policy3 state not ACTIVE");

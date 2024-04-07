@@ -102,6 +102,7 @@ abstract contract ComponentService is Service {
         componentNftId = getRegistry().getNftId(msg.sender);
         (componentInfo, instance) = _getAndVerifyComponentInfoAndInstance(componentNftId, expectedType);
 
+        // locked component can not call services
         if (instance.getInstanceAccessManager().isTargetLocked(componentInfo.objectAddress)) {
             revert IAccess.ErrorIAccessTargetLocked(componentInfo.objectAddress);
         }

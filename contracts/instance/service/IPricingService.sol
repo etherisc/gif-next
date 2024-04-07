@@ -23,12 +23,12 @@ interface IPricingService is IService
 
     function calculatePremium(
         NftId productNftId,
-        NftId bundleNftId,
         RiskId riskId,
-        ReferralId referralId,
         uint256 sumInsuredAmount,
         Seconds lifetime,
-        bytes memory applicationData
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
     )
         external
         view

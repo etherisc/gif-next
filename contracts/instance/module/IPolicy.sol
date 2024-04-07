@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount} from "../../types/Amount.sol";
 import {NftId} from "../../types/NftId.sol";
 import {ClaimId} from "../../types/ClaimId.sol";
 import {ReferralId} from "../../types/Referral.sol";
@@ -42,13 +43,13 @@ interface IPolicy {
         RiskId riskId;
         uint256 sumInsuredAmount;
         uint256 premiumAmount;
-        uint256 premiumPaidAmount;
+        uint256 premiumPaidAmount; // when lower than premium amount: max payout decreased accordingly
         Seconds lifetime;
         bytes applicationData;
         bytes policyData;
         uint16 claimsCount;
         uint16 openClaimsCount;
-        uint256 payoutAmount;
+        Amount payoutAmount;
         Timestamp activatedAt; // time of underwriting
         Timestamp expiredAt; // no new claims (activatedAt + lifetime)
         Timestamp closedAt; // no locked capital (or declinedAt)
@@ -56,16 +57,20 @@ interface IPolicy {
 
     // claimId neeeds to be encoded policyNftId:claimId combination
     struct ClaimInfo {
-        uint256 claimAmount;
-        uint256 paidAmount;
+        Amount claimAmount;
+        Amount paidAmount;
+        uint8 payoutsCount;
+        uint8 openPayoutsCount;
         bytes data;
-        Timestamp closedAt; // payoment of confirmed claim amount (or declinedAt)
+        // TODO consider to add processData that may include information supporting confirm or decline
+        Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
     }
 
     // claimId neeeds to be encoded policyNftId:claimId combination
     struct PayoutInfo {
         ClaimId claimId;
-        uint256 amount;
+        Amount amount;
+        // TODO consider to add a beneficiary address that will be the receiver of the payout tokens
         bytes data;
         Timestamp paidAt; // payoment of confirmed claim amount (or declinedAt)
     }

@@ -3,12 +3,17 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
+import {Key32} from "../types/Key32.sol";
 import {NftId} from "../types/NftId.sol";
+import {RiskId} from "../types/RiskId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../types/ObjectType.sol";
 import {RoleId, RoleIdLib, eqRoleId, ADMIN_ROLE, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
 import {VersionPart, VersionPartLib} from "../types/Version.sol";
+import {ClaimId} from "../types/ClaimId.sol";
+import {ReferralId} from "../types/Referral.sol";
+import {PayoutId} from "../types/PayoutId.sol";
+import {DistributorType} from "../types/DistributorType.sol";
 
-import {ERC165} from "../shared/ERC165.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
@@ -22,7 +27,6 @@ import {InstanceStore} from "./InstanceStore.sol";
 
 import {KeyValueStore} from "./base/KeyValueStore.sol";
 
-import {IAccess} from "./module/IAccess.sol";
 import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
@@ -41,7 +45,7 @@ contract Instance is
     AccessManagedUpgradeable,
     Registerable
 {
-    error InstanceErrorReaderInstanceMismatch(address expectedInstance, address foundInstance);
+/*    error ErrorInstanceInstanceReaderInstanceMismatch(address expectedInstance, address foundInstance);
 
     error InstanceErrorBundleManagerAlreadySet();
     error InstanceErrorBundleManagerAuthorityMismatch();
@@ -51,7 +55,7 @@ contract Instance is
     error InstanceErrorAccessManagerAuthorityMismatch();
 
     error InstanceErrorInstanceStoreAlreadySet();
-    error InstanceErrorInstanceStoreAuthorityMismatch();
+    error InstanceErrorInstanceStoreAuthorityMismatch();*/
 
     uint256 public constant GIF_MAJOR_VERSION = 3;
 
@@ -133,6 +137,7 @@ contract Instance is
     }
 
     //--- ITransferInterceptor ------------------------------------------------------------//
+
     function nftMint(address to, uint256 tokenId) external onlyChainNft {
         assert(_accessManager.roleMembers(INSTANCE_OWNER_ROLE()) == 0);// temp
         assert(_accessManager.grantRole(INSTANCE_OWNER_ROLE(), to) == true);
@@ -141,6 +146,71 @@ contract Instance is
     function nftTransferFrom(address from, address to, uint256 tokenId) external onlyChainNft {
         assert(_accessManager.revokeRole(INSTANCE_OWNER_ROLE(), from) == true);
         assert(_accessManager.grantRole(INSTANCE_OWNER_ROLE(), to) == true);
+    }
+
+    //--- initial setup functions -------------------------------------------//
+
+    function setInstanceAccessManager(InstanceAccessManager accessManager) external restricted {
+        if(address(_accessManager) != address(0)) {
+            revert ErrorInstanceInstanceAccessManagerAlreadySet(address(_accessManager));
+        }
+        if(accessManager.authority() != authority()) {
+            revert ErrorInstanceInstanceAccessManagerAuthorityMismatch(authority());
+        }
+        _accessManager = accessManager;      
+    }
+    
+    function setBundleManager(BundleManager bundleManager) external restricted() {
+        if(address(_bundleManager) != address(0)) {
+            revert ErrorInstanceBundleManagerAlreadySet(address(_bundleManager));
+        }
+        if(bundleManager.getInstance() != Instance(this)) {
+            revert ErrorInstanceBundleManagerInstanceMismatch(address(this));
+        }
+        if(bundleManager.authority() != authority()) {
+            revert ErrorInstanceBundleManagerAuthorityMismatch(authority());
+        }
+        _bundleManager = bundleManager;
+    }
+
+    function setInstanceReader(InstanceReader instanceReader) external restricted() {
+        if(instanceReader.getInstance() != Instance(this)) {
+            revert ErrorInstanceInstanceReaderInstanceMismatch(address(this));
+        }
+
+        _instanceReader = instanceReader;
+    }
+
+    //--- external view functions -------------------------------------------//
+
+    function getInstanceReader() external view returns (InstanceReader) {
+        return _instanceReader;
+    }
+
+    function getBundleManager() external view returns (BundleManager) {
+        return _bundleManager;
+    }
+
+    function getInstanceAccessManager() external view returns (InstanceAccessManager) {
+        return _accessManager;
+    }
+
+    function setInstanceStore(InstanceStore instanceStore) external restricted {
+        if(address(_instanceStore) != address(0)) {
+            revert ErrorInstanceInstanceStoreAlreadySet(address(_instanceStore));
+        }
+        if(instanceStore.authority() != authority()) {
+            revert ErrorInstanceInstanceStoreAuthorityMismatch(authority());
+        }
+        _instanceStore = instanceStore;
+    }
+
+    function getInstanceStore() external view returns (InstanceStore) {
+        return _instanceStore;
+    }
+
+    function getMajorVersion() external pure returns (VersionPart majorVersion) {
+        return VersionPartLib.toVersionPart(GIF_MAJOR_VERSION);
     }
 
     function getDistributionService() external view returns (IDistributionService) {
@@ -161,66 +231,6 @@ contract Instance is
 
     function getBundleService() external view returns (IBundleService) {
         return IBundleService(getRegistry().getServiceAddress(BUNDLE(), VersionPart.wrap(3)));
-    }
-
-    function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        if(instanceReader.getInstance() != Instance(this)) {
-            revert InstanceErrorReaderInstanceMismatch(address(this), address(instanceReader.getInstance()));
-        }
-        _instanceReader = instanceReader;
-    }
-
-    function getMajorVersion() external pure returns (VersionPart majorVersion) {
-        return VersionPartLib.toVersionPart(GIF_MAJOR_VERSION);
-    }
-
-    function getInstanceReader() external view returns (InstanceReader) {
-        return _instanceReader;
-    }
-    
-    function setBundleManager(BundleManager bundleManager) external restricted() {
-        if(address(_bundleManager) != address(0)) {
-            revert InstanceErrorBundleManagerAlreadySet();
-        }
-        if(bundleManager.getInstance() != Instance(this)) {
-            revert InstanceErrorBundleManagerInstanceMismatch(address(this), address(bundleManager.getInstance()));
-        }
-        if(bundleManager.authority() != authority()) {
-            revert InstanceErrorBundleManagerAuthorityMismatch();
-        }
-        _bundleManager = bundleManager;
-    }
-
-    function getBundleManager() external view returns (BundleManager) {
-        return _bundleManager;
-    }
-
-    function setInstanceAccessManager(InstanceAccessManager accessManager) external restricted {
-        if(address(_accessManager) != address(0)) {
-            revert InstanceErrorAccessManagerAlreadySet();
-        }
-        if(accessManager.authority() != authority()) {
-            revert InstanceErrorAccessManagerAuthorityMismatch();
-        }
-        _accessManager = accessManager;      
-    }
-
-    function getInstanceAccessManager() external view returns (InstanceAccessManager) {
-        return _accessManager;
-    }
-
-    function setInstanceStore(InstanceStore instanceStore) external restricted {
-        if(address(_instanceStore) != address(0)) {
-            revert InstanceErrorInstanceStoreAlreadySet();
-        }
-        if(instanceStore.authority() != authority()) {
-            revert InstanceErrorInstanceStoreAuthorityMismatch();
-        }
-        _instanceStore = instanceStore;
-    }
-
-    function getInstanceStore() external view returns (InstanceStore) {
-        return _instanceStore;
     }
 
     //--- internal view/pure functions --------------------------------------//

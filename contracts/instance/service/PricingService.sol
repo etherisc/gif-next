@@ -65,12 +65,12 @@ contract PricingService is
     /// also returns the various fee components involved with creating a policy
     function calculatePremium(
         NftId productNftId,
-        NftId bundleNftId,
         RiskId riskId,
-        ReferralId referralId,
         uint256 sumInsuredAmount,
         Seconds lifetime,
-        bytes memory applicationData
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
     )
         external
         view

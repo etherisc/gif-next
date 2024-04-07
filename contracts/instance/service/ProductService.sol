@@ -24,7 +24,7 @@ import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {ObjectType, PRODUCT, POOL, POLICY} from "../../types/ObjectType.sol";
-import {APPLIED, UNDERWRITTEN, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
+import {APPLIED, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {ReferralId} from "../../types/Referral.sol";

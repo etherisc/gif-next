@@ -19,9 +19,12 @@ import {Seconds, SecondsLib} from "../contracts/types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../contracts/types/Timestamp.sol";
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
-import {ReferralLib} from "../contracts/types/Referral.sol";
-import {APPLIED, ACTIVE, UNDERWRITTEN, CLOSED} from "../contracts/types/StateId.sol";
+import {ReferralId, ReferralLib} from "../contracts/types/Referral.sol";
+import {APPLIED, ACTIVE, COLLATERALIZED, CLOSED} from "../contracts/types/StateId.sol";
 import {POLICY} from "../contracts/types/ObjectType.sol";
+import {DistributorType} from "../contracts/types/DistributorType.sol";
+import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
+import {IPolicyService} from "../contracts/instance/service/IPolicyService.sol";
 
 contract TestProduct is TestGifBase {
     using NftIdLib for NftId;
@@ -149,7 +152,7 @@ contract TestProduct is TestGifBase {
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
     }
 
-    function test_Product_underwriteWithoutPayment() public {
+    function test_Product_collateralizeWithoutPayment() public {
         // GIVEN
         _prepareProduct();  
 
@@ -180,7 +183,7 @@ contract TestProduct is TestGifBase {
 
         // WHEN
         bool requirePremiumPayment = false;
-        dproduct.underwrite(policyNftId, requirePremiumPayment, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId, requirePremiumPayment, TimestampLib.blockTimestamp()); 
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
@@ -202,7 +205,7 @@ contract TestProduct is TestGifBase {
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
-    function test_Product_underwriteWithPayment() public {
+    function test_Product_collateralizeWithPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -247,10 +250,10 @@ contract TestProduct is TestGifBase {
         // WHEN
         vm.startPrank(productOwner);
         bool collectPremiumAmount = true;
-        dproduct.underwrite(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
 
         // THEN
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
@@ -264,14 +267,209 @@ contract TestProduct is TestGifBase {
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(distribution.getWallet()), 10, "distibution balance not 10");
-        assertEq(token.balanceOf(address(customer)), 880, "customer balance not 880");
-        assertEq(token.balanceOf(pool.getWallet()), 10100, "pool balance not 10100");
+        assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
+        assertEq(token.balanceOf(pool.getWallet()), 10120, "pool balance not 10120"); // 10000 + 100 (net premium) + 10 (pool fee) + 10 (bundle fee)
+
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+        assertEq(poolComponentInfo.feeAmount.toInt(), 10, "pool fee amount not 10");
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
+
+    function test_Product_withReferralCollateralizeWithPayment() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProduct();  
+
+        // set product fees and create risk
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zeroFee());
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        SimpleProduct dproduct = SimpleProduct(address(product));
+        dproduct.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        // configure distribution fee and referral
+        vm.startPrank(distributionOwner);
+        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
+        Fee memory distributionFee = FeeLib.toFee(UFixedLib.toUFixed(1, -1), 0);
+        distribution.setFees(minDistributionOwnerFee, distributionFee);
+
+        DistributorType distributorType = distribution.createDistributorType(
+            "Gold",
+            UFixedLib.zero(),
+            UFixedLib.toUFixed(5, -2),
+            UFixedLib.toUFixed(3, -2),
+            10,
+            14 * 24 * 3600,
+            false,
+            false,
+            "");
+
+        NftId distributorNftId = distribution.createDistributor(
+            customer2,
+            distributorType,
+            "");
+        
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        ReferralId referralId = sdistribution.createReferral(
+            distributorNftId,
+            "GET_A_DISCOUNT",
+            UFixedLib.toUFixed(2, -2),
+            5,
+            TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(604800)),
+            "");
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        // revert("checkApprove");
+
+        NftId policyNftId = dproduct.createApplication(
+            customer,
+            riskId,
+            1000,
+            SecondsLib.toSeconds(30),
+            "",
+            bundleNftId,
+            referralId
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(productOwner);
+        bool collectPremiumAmount = true;
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+        dproduct.collateralize(policyNftId, collectPremiumAmount, activateAt);(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
+
+        // THEN
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+
+        assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
+        assertEq(token.balanceOf(distribution.getWallet()), 7, "distibution balance not 7");
+        assertEq(token.balanceOf(address(customer)), 863, "customer balance not 863");
+
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+        assertEq(poolComponentInfo.feeAmount.toInt(), 10, "pool fee amount not 10");
+    }
+
+    function test_Product_collateralizeWithReferralExpired() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProduct();  
+
+        // set product fees and create risk
+        vm.startPrank(productOwner);
+
+        Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
+        product.setFees(productFee, FeeLib.zeroFee());
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        SimpleProduct dproduct = SimpleProduct(address(product));
+        dproduct.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        // configure distribution fee and referral
+        vm.startPrank(distributionOwner);
+        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
+        Fee memory distributionFee = FeeLib.toFee(UFixedLib.toUFixed(1, -1), 0);
+        distribution.setFees(minDistributionOwnerFee, distributionFee);
+
+        DistributorType distributorType = distribution.createDistributorType(
+            "Gold",
+            UFixedLib.zero(),
+            UFixedLib.toUFixed(5, -2),
+            UFixedLib.toUFixed(3, -2),
+            10,
+            14 * 24 * 3600,
+            false,
+            false,
+            "");
+
+        NftId distributorNftId = distribution.createDistributor(
+            customer2,
+            distributorType,
+            "");
+        
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        // create short lived referral
+        ReferralId referralId = sdistribution.createReferral(
+            distributorNftId,
+            "GET_A_DISCOUNT",
+            UFixedLib.toUFixed(2, -2),
+            5,
+            TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(10)),
+            "");
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+        token.approve(address(productSetupInfo.tokenHandler), 1000);
+
+        NftId policyNftId = dproduct.createApplication(
+            customer,
+            riskId,
+            1000,
+            SecondsLib.toSeconds(60), // policy lifetime
+            "",
+            bundleNftId,
+            referralId
+        );
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+        bool collectPremiumAmount = true;
+        
+        // WHEN
+        // wait 20 seconds to expire referral
+        vm.warp(20); 
+
+        // THEN
+        Timestamp activationAt = TimestampLib.blockTimestamp();
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IPolicyService.ErrorIPolicyServicePremiumMismatch.selector, 
+                policyNftId, 
+                137, 
+                140));
+
+        dproduct.collateralize(
+            policyNftId, 
+            collectPremiumAmount, 
+            activationAt);
+    }
+
 /*  FIX ME
-    function test_underwrite_reverts_on_locked_bundle() public {
+    function test_collateralize_reverts_on_locked_bundle() public {
         // GIVEN
         _prepareProduct();  
 
@@ -309,16 +507,16 @@ contract TestProduct is TestGifBase {
 
         Timestamp timeNow = TimestampLib.blockTimestamp();
 
-        // THEN - WHEN - try underwrite on locked bundle
+        // THEN - WHEN - try collateralize on locked bundle
         vm.expectRevert();
-        dproduct.underwrite(policyNftId, false, timeNow); 
+        dproduct.collateralize(policyNftId, false, timeNow); 
 
-        // WHEN - unlock bundle and try underwrite again
+        // WHEN - unlock bundle and try collateralize again
         pool.unlockBundle(bundleNftId);
-        dproduct.underwrite(policyNftId, false, timeNow);
+        dproduct.collateralize(policyNftId, false, timeNow);
 
         // THEN
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
     }
 */
 
@@ -351,10 +549,10 @@ contract TestProduct is TestGifBase {
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         // WHEN
-        dproduct.underwrite(policyNftId, false, zeroTimestamp()); 
+        dproduct.collateralize(policyNftId, false, zeroTimestamp()); 
 
         // THEN 
-        assertTrue(instanceReader.getPolicyState(policyNftId) == UNDERWRITTEN(), "policy state not UNDERWRITTEN");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
@@ -411,12 +609,12 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
         vm.startPrank(productOwner);
 
-        dproduct.underwrite(policyNftId, false, zeroTimestamp()); 
+        dproduct.collateralize(policyNftId, false, zeroTimestamp()); 
         
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == UNDERWRITTEN(), "state not UNDERWRITTEN");
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == COLLATERALIZED(), "state not COLLATERALIZED");
         
         IBundle.BundleInfo memory bundleInfoBefore = instanceReader.getBundleInfo(bundleNftId);
         assertEq(bundleInfoBefore.lockedAmount.toInt(), 1000, "lockedAmount not 1000 (before)");
@@ -444,8 +642,8 @@ contract TestProduct is TestGifBase {
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(distribution.getWallet()), 10, "distibution balance not 10");
-        assertEq(token.balanceOf(address(customer)), 880, "customer balance not 880");
-        assertEq(token.balanceOf(pool.getWallet()), 10100, "pool balance not 10100");
+        assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
+        assertEq(token.balanceOf(pool.getWallet()), 10120, "pool balance not 10120");
     }
 
     function test_Product_close() public {
@@ -486,9 +684,9 @@ contract TestProduct is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(productOwner);
-        dproduct.underwrite(policyNftId, true, TimestampLib.blockTimestamp()); 
+        dproduct.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
 
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
 
         // WHEN
         vm.warp(100); // warp 100 seconds
@@ -505,7 +703,7 @@ contract TestProduct is TestGifBase {
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.closedAt.gtz(), "expiredAt not set");
         
-        assertEq(token.balanceOf(address(pool)), 10100, "pool balance not 130");
+        assertEq(token.balanceOf(address(pool)), 10120, "pool balance not 10120"); // 100 (netPremium) + 10 (poolFee) + 10 (bundleFee)
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 0, "expected no active policy");
     }

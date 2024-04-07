@@ -35,7 +35,7 @@ event LogInstanceCloned(NftId clonedInstanceNftId, address owner, address caller
 * Ensure proper authorization of the contracts. See xref:authz.adoc[this page] for details.
 
 
-=== Naming conventions
+== Naming conventions
 
 * Function arguments and return types: If using custom data types, make the name include the type by appending the Type to the argument name, e.g. `function getInfo(NftId bundleNftId)` instead of `function getInfo(NftId bundleId)`. Background: Custom data types are lost when using the ABI or Typescript binding classes (e.g. instead of `NftID` a `uint96` is used), so the type needs to be included in the name to make it clear what the argument is without having to look at the documentation or checking the solidity source code. 
 * When naming a field or an attribute `id` and the context is not clear, call it `nftId` instead so its clear what type of id it is as there will be multiple ids for different kind of objects. Example: if you the function has a bundle nft id and a policy nft id as arguments, call them `bundleNftId` and `policyNftId` instead of `id` and `policyId`. In case of doubt, be a bit more verbose for the sake of clarity. 
@@ -43,3 +43,7 @@ event LogInstanceCloned(NftId clonedInstanceNftId, address owner, address caller
 * Name custom errors `Error<NameOfContract><NameOfError>`.
 * Name events `Log<NameOfContract><NameOfEvent>`.
 * The name of test methods must be unique. Stick to the following naming convention: `test_<ContractName>_<FunctionName>_<ContextIfNeeded>`. Example: `test_Product_calculatePremium` or `test_Product_underwrite_BalanceTooLow`.
+
+== Example project
+
+Find an example project for the GIF framework component smart contracts at https://github.com/etherisc/gif-next-sandbox

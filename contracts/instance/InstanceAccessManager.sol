@@ -105,6 +105,7 @@ contract InstanceAccessManager is
     }
 
     // INSTANCE_OWNER_ROLE
+    // TODO specify how many owners role can have -> many roles MUST have exactly 1 member?
     function createRole(string memory roleName, string memory adminName)
         external
         restricted()

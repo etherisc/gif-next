@@ -9,6 +9,7 @@ using {
     AmountLib.eqz,
     AmountLib.gtz,
     AmountLib.toInt,
+    AmountLib.add,
     AmountLib.toUFixed
 } for Amount global;
 
@@ -40,9 +41,18 @@ library AmountLib {
         return Amount.unwrap(amount) == 0;
     }
 
+    /// @dev return true if amount1 equals amount2
+    function eq(Amount amount1, Amount amount2) public pure returns (bool) {
+        return Amount.unwrap(amount1) == Amount.unwrap(amount2);
+    }
+
     /// @dev return true if amount is larger than 0
     function gtz(Amount amount) public pure returns (bool) {
         return Amount.unwrap(amount) > 0;
+    }
+
+    function add(Amount a1, Amount a2) public pure returns (Amount) {
+        return Amount.wrap(Amount.unwrap(a1) + Amount.unwrap(a2));
     }
 
     function toInt(Amount amount) public pure returns (uint256) {

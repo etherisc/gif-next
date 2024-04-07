@@ -220,18 +220,6 @@ contract InstanceService is
         return _masterInstanceReader;
     }
 
-    function getMasterInstance() external view returns (address) {
-        return _masterInstance;
-    }
-
-    function getMasterInstanceAccessManager() external view returns (address) {
-        return _masterInstanceAccessManager;
-    }
-
-    function getMasterInstanceBundleManager() external view returns (address) {
-        return _masterInstanceBundleManager;
-    }
-
     // From IService
     function getDomain() public pure override returns(ObjectType) {
         return INSTANCE();
@@ -285,6 +273,7 @@ contract InstanceService is
     // TODO called by component, but target can be component helper...so needs target name
     // TODO check that targetName associated with component...how???
     function setComponentLocked(bool locked) onlyComponent external {
+
         address componentAddress = msg.sender;
         IRegistry registry = getRegistry();
         NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
