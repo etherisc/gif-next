@@ -96,7 +96,7 @@ contract PoolService is
         componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token));
 
         // save amended component info with instance
-        instance.createPoolSetup(poolNftId, componentInfo);
+        instance.getInstanceStore().createPoolSetup(poolNftId, componentInfo);
 
         bytes4[][] memory selectors = new bytes4[][](2);
         selectors[0] = new bytes4[](1);
@@ -122,7 +122,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId, IRegistry.ObjectInfo memory registryInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
@@ -131,7 +131,7 @@ contract PoolService is
 
         poolInfo.maxCapitalAmount = maxCapitalAmount;
         componentInfo.data = abi.encode(poolInfo);
-        instance.updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
 
         emit LogPoolServiceMaxCapitalAmountUpdated(poolNftId, previousMaxCapitalAmount, maxCapitalAmount);
     }
@@ -140,7 +140,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId, IRegistry.ObjectInfo memory registryInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
@@ -153,7 +153,7 @@ contract PoolService is
 
         poolInfo.bundleOwnerRole = bundleOwnerRole;
         componentInfo.data = abi.encode(poolInfo);
-        instance.updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
 
         emit LogPoolServiceBundleOwnerRoleSet(poolNftId, bundleOwnerRole);
     }
@@ -167,7 +167,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId, IRegistry.ObjectInfo memory registryInfo, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
@@ -177,7 +177,7 @@ contract PoolService is
         poolInfo.stakingFee = stakingFee;
         poolInfo.performanceFee = performanceFee;
         componentInfo.data = abi.encode(poolInfo);
-        instance.updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
 
         // TODO add logging
     }
@@ -194,7 +194,7 @@ contract PoolService is
         virtual
         returns(NftId bundleNftId)
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         // TODO add implementation that takes care of staking fees
@@ -217,7 +217,7 @@ contract PoolService is
         external
         virtual
     {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
 
         // TODO book keeping for pool collateral released outside of retention level
 
@@ -254,7 +254,7 @@ contract PoolService is
         if (poolFeeAmount.gtz()) {
             IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolObjectInfo.nftId);
             poolComponentInfo.feeAmount = poolComponentInfo.feeAmount.add(poolFeeAmount);
-            instance.updatePoolSetup(poolObjectInfo.nftId, poolComponentInfo, KEEP_STATE());
+            instance.getInstanceStore().updatePoolSetup(poolObjectInfo.nftId, poolComponentInfo, KEEP_STATE());
         }
 
         if (bundleFeeAmount.gtz()) {

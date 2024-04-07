@@ -11,6 +11,7 @@ import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
+import {InstanceStore} from "./InstanceStore.sol";
 
 interface IInstanceService is IService {
 
@@ -29,11 +30,13 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceAccessManagerZero();
     error ErrorInstanceServiceInstanceReaderZero();
     error ErrorInstanceServiceBundleManagerZero();
+    error ErrorInstanceServiceInstanceStoreZero();
 
     error ErrorInstanceServiceInstanceAuthorityMismatch();
     error ErrorInstanceServiceBundleManagerAuthorityMismatch();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch2();
     error ErrorInstanceServiceBundleMangerInstanceMismatch();
+    error ErrorInstanceServiceInstanceStoreAuthorityMismatch();
 
     error ErrorInstanceServiceRequestUnauhorized(address caller);
     error ErrorInstanceServiceNotInstanceOwner(address caller, NftId instanceNftId);
@@ -42,7 +45,15 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceComponentMismatch(NftId instanceNftId, NftId componentNftId);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     
-    event LogInstanceCloned(address clonedOzAccessManager, address clonedInstanceAccessManager, address clonedInstance, address clonedBundleManager, address clonedInstanceReader, NftId clonedInstanceNftId);
+    event LogInstanceCloned(
+        address clonedOzAccessManager,
+        address clonedInstanceAccessManager,
+        address clonedInstance,
+        address clonedInstanceStore,
+        address clonedBundleManager, 
+        address clonedInstanceReader, 
+        NftId clonedInstanceNftId
+    );
 
     function createInstanceClone()
         external 
@@ -52,7 +63,8 @@ interface IInstanceService is IService {
             Instance clonedInstance,
             NftId instanceNftId,
             InstanceReader clonedInstanceReader,
-            BundleManager clonedBundleManager
+            BundleManager clonedBundleManager,
+            InstanceStore clonedInstanceStore
         );
 
     function createGifTarget(
@@ -65,4 +77,3 @@ interface IInstanceService is IService {
 
     function setComponentLocked(bool locked) external;
 }
-

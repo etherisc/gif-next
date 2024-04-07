@@ -5,17 +5,17 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 
 import {Key32} from "../types/Key32.sol";
 import {NftId} from "../types/NftId.sol";
-import {ClaimId} from "../types/ClaimId.sol";
-import {DistributorType} from "../types/DistributorType.sol";
-import {PayoutId} from "../types/PayoutId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, DISTRIBUTOR} from "../types/ObjectType.sol";
-import {ReferralId} from "../types/Referral.sol";
 import {RiskId} from "../types/RiskId.sol";
-import {INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
-import {StateId} from "../types/StateId.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../types/ObjectType.sol";
+import {RoleId, RoleIdLib, eqRoleId, ADMIN_ROLE, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
 import {VersionPart, VersionPartLib} from "../types/Version.sol";
+import {ClaimId} from "../types/ClaimId.sol";
+import {ReferralId} from "../types/Referral.sol";
+import {PayoutId} from "../types/PayoutId.sol";
+import {DistributorType} from "../types/DistributorType.sol";
 
 import {Registerable} from "../shared/Registerable.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 
@@ -23,6 +23,7 @@ import {IInstance} from "./IInstance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {BundleManager} from "./BundleManager.sol";
+import {InstanceStore} from "./InstanceStore.sol";
 
 import {KeyValueStore} from "./base/KeyValueStore.sol";
 
@@ -33,28 +34,37 @@ import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
 import {ISetup} from "./module/ISetup.sol";
 
-import {VersionPart, VersionPartLib} from "../types/Version.sol";
+import {IDistributionService} from "./service/IDistributionService.sol";
+import {IPoolService} from "./service/IPoolService.sol";
+import {IProductService} from "./service/IProductService.sol";
+import {IPolicyService} from "./service/IPolicyService.sol";
+import {IBundleService} from "./service/IBundleService.sol";
 
 contract Instance is
     IInstance,
     AccessManagedUpgradeable,
-    Registerable,
-    KeyValueStore
+    Registerable
 {
+/*    error ErrorInstanceInstanceReaderInstanceMismatch(address expectedInstance, address foundInstance);
+
+    error InstanceErrorBundleManagerAlreadySet();
+    error InstanceErrorBundleManagerAuthorityMismatch();
+    error InstanceErrorBundleManagerInstanceMismatch(address expectedInstance, address foundInstance);
+
+    error InstanceErrorAccessManagerAlreadySet();
+    error InstanceErrorAccessManagerAuthorityMismatch();
+
+    error InstanceErrorInstanceStoreAlreadySet();
+    error InstanceErrorInstanceStoreAuthorityMismatch();*/
 
     uint256 public constant GIF_MAJOR_VERSION = 3;
-
-    uint64 public constant ADMIN_ROLE = type(uint64).min;
-    uint64 public constant PUBLIC_ROLE = type(uint64).max;
-    uint64 public constant CUSTOM_ROLE_ID_MIN = 10000;
-
-    uint32 public constant EXECUTION_DELAY = 0;
 
     bool private _initialized;
 
     InstanceAccessManager internal _accessManager;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
+    InstanceStore internal _instanceStore;
 
     modifier onlyChainNft() {
         if(msg.sender != getRegistry().getChainNftAddress()) {
@@ -64,171 +74,70 @@ contract Instance is
     }
 
     function initialize(address authority, address registryAddress, address initialOwner) 
-        public 
+        external 
         initializer()
     {
         __AccessManaged_init(authority);
         
         IRegistry registry = IRegistry(registryAddress);
         initializeRegisterable(registryAddress, registry.getNftId(), INSTANCE(), true, initialOwner, "");
-        initializeLifecycle();
 
         registerInterface(type(IInstance).interfaceId);    
     }
 
-    //--- ProductSetup ------------------------------------------------------//
-    function createProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup) external restricted() {
-        create(_toNftKey32(productNftId, PRODUCT()), abi.encode(setup));
+    //--- Roles ------------------------------------------------------------//
+
+    function createRole(string memory roleName, string memory adminName)
+        external
+        restricted // INSTANCE_OWNER_ROLE
+        returns (RoleId roleId, RoleId admin)
+    {
+        (roleId, admin) = _accessManager.createRole(roleName, adminName);
     }
 
-    function updateProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup, StateId newState) external restricted() {
-        update(_toNftKey32(productNftId, PRODUCT()), abi.encode(setup), newState);
+    function grantRole(RoleId roleId, address account) 
+        external 
+        restricted // INSTANCE_OWNER_ROLE
+    {
+        _accessManager.grantRole(roleId, account);
     }
 
-    function updateProductSetupState(NftId productNftId, StateId newState) external restricted() {
-        updateState(_toNftKey32(productNftId, PRODUCT()), newState);
+    function revokeRole(RoleId roleId, address account) 
+        external 
+        restricted // INSTANCE_OWNER_ROLE
+    {
+        _accessManager.revokeRole(roleId, account);
     }
 
-    //--- DistributionSetup ------------------------------------------------------//
-    function createDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup) external restricted() {
-        create(_toNftKey32(distributionNftId, DISTRIBUTION()), abi.encode(setup));
+    //--- Targets ------------------------------------------------------------//
+
+    function createTarget(address target, string memory name) 
+        external 
+        restricted // INSTANCE_OWNER_ROLE
+    {
+        _accessManager.createTarget(target, name);
     }
 
-    function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external restricted() {
-        update(_toNftKey32(distributionNftId, DISTRIBUTION()), abi.encode(setup), newState);
+    function setTargetFunctionRole(
+        string memory targetName,
+        bytes4[] calldata selectors,
+        RoleId roleId
+    ) 
+        external 
+        restricted // INSTANCE_OWNER_ROLE
+    {
+        _accessManager.setTargetFunctionRole(targetName, selectors, roleId);
     }
 
-    function updateDistributionSetupState(NftId distributionNftId, StateId newState) external restricted() {
-        updateState(_toNftKey32(distributionNftId, DISTRIBUTION()), newState);
-    }
-
-    //--- PoolSetup ------------------------------------------------------//
-    function createPoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info) external restricted() {
-        create(_toNftKey32(poolNftId, POOL()), abi.encode(info));
-    }
-
-    function updatePoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info, StateId newState) external restricted() {
-        update(_toNftKey32(poolNftId, POOL()), abi.encode(info), newState);
-    }
-
-    function updatePoolSetupState(NftId poolNftId, StateId newState) external restricted() {
-        updateState(_toNftKey32(poolNftId, POOL()), newState);
-    }
-
-    //--- DistributorType -------------------------------------------------------//
-    function createDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info) external restricted() {
-        create(distributorType.toKey32(), abi.encode(info));
-    }
-
-    function updateDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info, StateId newState) external restricted() {
-        update(distributorType.toKey32(), abi.encode(info), newState);
-    }
-
-    function updateDistributorTypeState(DistributorType distributorType, StateId newState) external restricted() {
-        updateState(distributorType.toKey32(), newState);
-    }
-
-    //--- Distributor -------------------------------------------------------//
-    function createDistributor(NftId distributorNftId, IDistribution.DistributorInfo memory info) external restricted() {
-        create(_toNftKey32(distributorNftId, DISTRIBUTOR()), abi.encode(info));
-    }
-
-    function updateDistributor(NftId distributorNftId, IDistribution.DistributorInfo memory info, StateId newState) external restricted() {
-        update(_toNftKey32(distributorNftId, DISTRIBUTOR()), abi.encode(info), newState);
-    }
-
-    function updateDistributorState(NftId distributorNftId, StateId newState) external restricted() {
-        updateState(_toNftKey32(distributorNftId, DISTRIBUTOR()), newState);
-    }
-
-    //--- Referral ----------------------------------------------------------//
-    function createReferral(ReferralId referralId, IDistribution.ReferralInfo memory referralInfo) external restricted() {
-        create(referralId.toKey32(), abi.encode(referralInfo));
-    }
-
-    function updateReferral(ReferralId referralId, IDistribution.ReferralInfo memory referralInfo, StateId newState) external restricted() {
-        update(referralId.toKey32(), abi.encode(referralInfo), newState);
-    }
-
-    function updateReferralState(ReferralId referralId, StateId newState) external restricted() {
-        updateState(referralId.toKey32(), newState);
-    }
-
-    //--- Bundle ------------------------------------------------------------//
-    function createBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle) external restricted() {
-        create(_toNftKey32(bundleNftId, BUNDLE()), abi.encode(bundle));
-    }
-
-    function updateBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle, StateId newState) external restricted() {
-        update(_toNftKey32(bundleNftId, BUNDLE()), abi.encode(bundle), newState);
-    }
-
-    function updateBundleState(NftId bundleNftId, StateId newState) external restricted() {
-        updateState(_toNftKey32(bundleNftId, BUNDLE()), newState);
-    }
-
-    //--- Risk --------------------------------------------------------------//
-    function createRisk(RiskId riskId, IRisk.RiskInfo memory risk) external restricted() {
-        create(riskId.toKey32(), abi.encode(risk));
-    }
-
-    function updateRisk(RiskId riskId, IRisk.RiskInfo memory risk, StateId newState) external restricted() {
-        update(riskId.toKey32(), abi.encode(risk), newState);
-    }
-
-    function updateRiskState(RiskId riskId, StateId newState) external restricted() {
-        updateState(riskId.toKey32(), newState);
-    }
-
-    //--- Application (Policy) ----------------------------------------------//
-    function createApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy) external restricted() {
-        create(_toNftKey32(applicationNftId, POLICY()), abi.encode(policy));
-    }
-
-    function updateApplication(NftId applicationNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        update(_toNftKey32(applicationNftId, POLICY()), abi.encode(policy), newState);
-    }
-
-    function updateApplicationState(NftId applicationNftId, StateId newState) external restricted() {
-        updateState(_toNftKey32(applicationNftId, POLICY()), newState);
-    }
-
-    //--- Policy ------------------------------------------------------------//
-    function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
-        update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
-    }
-
-    function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
-        updateState(_toNftKey32(policyNftId, POLICY()), newState);
-    }
-
-    //--- Claim -------------------------------------------------------------//
-    function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external restricted() {
-        create(_toClaimKey32(policyNftId, claimId), abi.encode(claim));
-    }
-
-    function updateClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim, StateId newState) external restricted() {
-        update(_toClaimKey32(policyNftId, claimId), abi.encode(claim), newState);
-    }
-
-    function updateClaimState(NftId policyNftId, ClaimId claimId, StateId newState) external restricted() {
-        updateState(_toClaimKey32(policyNftId, claimId), newState);
-    }
-
-    //--- Payout ------------------------------------------------------------//
-    function createPayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout) external restricted() {
-        create(_toPayoutKey32(policyNftId, payoutId), abi.encode(payout));
-    }
-
-    function updatePayout(NftId policyNftId, PayoutId payoutId, IPolicy.PayoutInfo memory payout, StateId newState) external restricted() {
-        update(_toPayoutKey32(policyNftId, payoutId), abi.encode(payout), newState);
-    }
-
-    function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
-        updateState(_toPayoutKey32(policyNftId, payoutId), newState);
+    function setTargetLocked(address target, bool locked)
+        external 
+        restricted // INSTANCE_OWNER_ROLE
+    {
+        _accessManager.setTargetLockedByInstance(target, locked);
     }
 
     //--- ITransferInterceptor ------------------------------------------------------------//
+
     function nftMint(address to, uint256 tokenId) external onlyChainNft {
         assert(_accessManager.roleMembers(INSTANCE_OWNER_ROLE()) == 0);// temp
         assert(_accessManager.grantRole(INSTANCE_OWNER_ROLE(), to) == true);
@@ -245,27 +154,22 @@ contract Instance is
         if(address(_accessManager) != address(0)) {
             revert ErrorInstanceInstanceAccessManagerAlreadySet(address(_accessManager));
         }
-
         if(accessManager.authority() != authority()) {
             revert ErrorInstanceInstanceAccessManagerAuthorityMismatch(authority());
         }
-
         _accessManager = accessManager;      
     }
-
+    
     function setBundleManager(BundleManager bundleManager) external restricted() {
         if(address(_bundleManager) != address(0)) {
             revert ErrorInstanceBundleManagerAlreadySet(address(_bundleManager));
         }
-
         if(bundleManager.getInstance() != Instance(this)) {
             revert ErrorInstanceBundleManagerInstanceMismatch(address(this));
         }
-
         if(bundleManager.authority() != authority()) {
             revert ErrorInstanceBundleManagerAuthorityMismatch(authority());
         }
-
         _bundleManager = bundleManager;
     }
 
@@ -291,20 +195,43 @@ contract Instance is
         return _accessManager;
     }
 
+    function setInstanceStore(InstanceStore instanceStore) external restricted {
+        if(address(_instanceStore) != address(0)) {
+            revert ErrorInstanceInstanceStoreAlreadySet(address(_instanceStore));
+        }
+        if(instanceStore.authority() != authority()) {
+            revert ErrorInstanceInstanceStoreAuthorityMismatch(authority());
+        }
+        _instanceStore = instanceStore;
+    }
+
+    function getInstanceStore() external view returns (InstanceStore) {
+        return _instanceStore;
+    }
+
     function getMajorVersion() external pure returns (VersionPart majorVersion) {
         return VersionPartLib.toVersionPart(GIF_MAJOR_VERSION);
     }
 
+    function getDistributionService() external view returns (IDistributionService) {
+        return IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), VersionPart.wrap(3)));
+    }
+
+    function getProductService() external view returns (IProductService) {
+        return IProductService(getRegistry().getServiceAddress(PRODUCT(), VersionPart.wrap(3)));
+    }
+
+    function getPoolService() external view returns (IPoolService) {
+        return IPoolService(getRegistry().getServiceAddress(POOL(), VersionPart.wrap(3)));
+    }
+
+    function getPolicyService() external view returns (IPolicyService) {
+        return IPolicyService(getRegistry().getServiceAddress(POLICY(), VersionPart.wrap(3)));
+    }
+
+    function getBundleService() external view returns (IBundleService) {
+        return IBundleService(getRegistry().getServiceAddress(BUNDLE(), VersionPart.wrap(3)));
+    }
+
     //--- internal view/pure functions --------------------------------------//
-    function _toNftKey32(NftId nftId, ObjectType objectType) private pure returns (Key32) {
-        return nftId.toKey32(objectType);
-    }
-
-    function _toClaimKey32(NftId policyNftId, ClaimId claimId) private pure returns (Key32) {
-        return claimId.toKey32(policyNftId);
-    }
-
-    function _toPayoutKey32(NftId policyNftId, PayoutId payoutId) private pure returns (Key32) {
-        return payoutId.toKey32(policyNftId);
-    }
 }
