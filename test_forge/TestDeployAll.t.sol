@@ -10,8 +10,9 @@ import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol
 contract TestDeployAll is TestGifBase {
     using NftIdLib for NftId;
 
+    // FIXME: add missing services
     function testDeployAllOverview() public {
-        assertEq(registry.getObjectCount(), 14, "invalid object count for base setup");
+        assertEq(registry.getObjectCount(), 15, "invalid object count for base setup");
         
         // validate instance service
         assertTrue(registry.getNftId(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");
@@ -51,10 +52,10 @@ contract TestDeployAll is TestGifBase {
 
 
     function testDeployAllInstanceLifecycles() public {
-        assertTrue(instance.hasLifecycle(BUNDLE()), "instance misses bundle lifecycle");
-        assertTrue(instance.hasLifecycle(COMPONENT()), "instance misses component lifecycle");
-        assertTrue(instance.hasLifecycle(POLICY()), "instance misses policy lifecycle");
-        assertTrue(instance.hasLifecycle(RISK()), "instance misses risk lifecycle");
+        assertTrue(instance.getInstanceStore().hasLifecycle(BUNDLE()), "instance misses bundle lifecycle");
+        assertTrue(instance.getInstanceStore().hasLifecycle(COMPONENT()), "instance misses component lifecycle");
+        assertTrue(instance.getInstanceStore().hasLifecycle(POLICY()), "instance misses policy lifecycle");
+        assertTrue(instance.getInstanceStore().hasLifecycle(RISK()), "instance misses risk lifecycle");
     }
 
 
