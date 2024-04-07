@@ -26,14 +26,6 @@ interface IDistributionService is IService {
     error ErrorIDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
     error ErrorIDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
     error ErrorIDistributionServiceMaxDiscountTooHigh(uint256 maxDiscountPercentage, uint256 limit);
-    error ErrorIDistributionServiceFeeCalculationMismatch(
-                uint256 distributionFeeFixAmount,
-                uint256 distributionFeeVarAmount,
-                uint256 distributionOwnerFeeFixAmount,
-                uint256 distributionOwnerFeeVarAmount,
-                uint256 commissionAmount,
-                uint256 discountAmount
-            );
     error ErrorIDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
     error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
 
@@ -87,12 +79,6 @@ interface IDistributionService is IService {
         IPolicy.Premium memory premium,
         Amount transferredDistributionFeeAmount
     ) external;
-
-    function calculateFeeAmount(
-        NftId distributionNftId,
-        ReferralId referralId,
-        IPolicy.Premium memory premium
-    ) external view returns (IPolicy.Premium memory finalPremium);
 
     function referralIsValid(
         NftId distributorNftId,
