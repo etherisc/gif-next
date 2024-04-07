@@ -147,7 +147,7 @@ contract ClaimService is
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.claimAmount = confirmedAmount;
-        instance.updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
+        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
 
         // update and save policy info with instance
         policyInfo.claimAmount = policyInfo.claimAmount.add(confirmedAmount);
@@ -172,7 +172,7 @@ contract ClaimService is
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.closedAt = TimestampLib.blockTimestamp();
-        instance.updateClaim(policyNftId, claimId, claimInfo, DECLINED());
+        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, DECLINED());
 
         // update and save policy info with instance
         policyInfo.openClaimsCount -= 1;
@@ -285,7 +285,7 @@ contract ClaimService is
 
         // update and save payout info with instance
         payoutInfo.paidAt = TimestampLib.blockTimestamp();
-        instance.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
+        instance.getInstanceStore().updatePayout(policyNftId, payoutId, payoutInfo, PAID());
 
         // TODO update and save claim info with instance
         ClaimId claimId = payoutId.toClaimId();
@@ -298,11 +298,11 @@ contract ClaimService is
         // update claim and policy info accordingly
         if(claimInfo.openPayoutsCount == 0 && claimInfo.paidAmount == claimInfo.claimAmount) {
             claimInfo.closedAt == TimestampLib.blockTimestamp();
-            instance.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
+            instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CLOSED());
 
             policyInfo.openClaimsCount -= 1;
         } else {
-            instance.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
+            instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
         }
 
         // update and save policy info with instance

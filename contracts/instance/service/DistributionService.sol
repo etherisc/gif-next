@@ -308,7 +308,7 @@ contract DistributionService is
 
         if (distributionOwnerFee.gtz()) {
             setupInfo.sumDistributionOwnerFees += distributionOwnerFee.toInt();
-            instance.updateDistributionSetup(distributionNftId, setupInfo, KEEP_STATE());
+            store.updateDistributionSetup(distributionNftId, setupInfo, KEEP_STATE());
         }
 
         if (isReferral) {

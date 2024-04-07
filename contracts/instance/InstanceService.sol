@@ -92,7 +92,7 @@ contract InstanceService is
             address(getRegistry()), 
             instanceOwner);
         // initialize and set before instance reader
-        clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
+        InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
         clonedInstanceStore.initialize(address(clonedInstance));
         clonedInstance.setInstanceStore(clonedInstanceStore);
         
