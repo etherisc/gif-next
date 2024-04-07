@@ -6,8 +6,12 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {ClaimId} from "../types/ClaimId.sol";
 import {DistributorType} from "../types/DistributorType.sol";
 import {PayoutId} from "../types/PayoutId.sol";
+import {ClaimId} from "../types/ClaimId.sol";
+import {DistributorType} from "../types/DistributorType.sol";
+import {PayoutId} from "../types/PayoutId.sol";
 import {NftId} from "../types/NftId.sol";
 import {StateId} from "../types/StateId.sol";
+import {ReferralId} from "../types/Referral.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId} from "../types/RiskId.sol";
 import {VersionPart} from "../types/Version.sol";

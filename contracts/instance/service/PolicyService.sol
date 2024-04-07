@@ -16,6 +16,8 @@ import {TokenHandler} from "../../shared/TokenHandler.sol";
 
 import {Amount, AmountLib} from "../../types/Amount.sol";
 import {ClaimId, ClaimIdLib} from "../../types/ClaimId.sol";
+import {Amount, AmountLib} from "../../types/Amount.sol";
+import {ClaimId, ClaimIdLib} from "../../types/ClaimId.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../../types/ObjectType.sol";

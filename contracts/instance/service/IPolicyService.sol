@@ -6,7 +6,10 @@ import {IService} from "../../shared/IService.sol";
 
 import {Amount} from "../../types/Amount.sol";
 import {ClaimId} from "../../types/ClaimId.sol";
+import {Amount} from "../../types/Amount.sol";
+import {ClaimId} from "../../types/ClaimId.sol";
 import {NftId} from "../../types/NftId.sol";
+import {PayoutId} from "../../types/PayoutId.sol";
 import {PayoutId} from "../../types/PayoutId.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";

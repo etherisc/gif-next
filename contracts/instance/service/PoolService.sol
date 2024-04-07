@@ -14,6 +14,7 @@ import {Versionable} from "../../shared/Versionable.sol";
 import {INftOwnable} from "../../shared/INftOwnable.sol";
 
 import {Amount, AmountLib} from "../../types/Amount.sol";
+import {Amount, AmountLib} from "../../types/Amount.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
@@ -44,6 +45,7 @@ contract PoolService is
     IPoolService 
 {
     using NftIdLib for NftId;
+    using AmountLib for Amount;
     using AmountLib for Amount;
 
     IBundleService internal _bundleService;

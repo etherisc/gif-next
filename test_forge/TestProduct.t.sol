@@ -21,6 +21,8 @@ import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/types/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/types/Referral.sol";
 import {APPLIED, ACTIVE, COLLATERALIZED, CLOSED} from "../contracts/types/StateId.sol";
+import {ReferralId, ReferralLib} from "../contracts/types/Referral.sol";
+import {APPLIED, ACTIVE, COLLATERALIZED, CLOSED} from "../contracts/types/StateId.sol";
 import {POLICY} from "../contracts/types/ObjectType.sol";
 import {DistributorType} from "../contracts/types/DistributorType.sol";
 import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
