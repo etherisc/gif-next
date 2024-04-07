@@ -90,7 +90,7 @@ contract ClaimService is
         virtual
         // TODO add restricted and grant to policy service
     {
-        instance.createClaim(
+        instance.getInstanceStore().createClaim(
             policyNftId, 
             claimId, 
             IPolicy.ClaimInfo(
@@ -115,7 +115,7 @@ contract ClaimService is
     {
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.claimAmount = confirmedAmount;
-        instance.updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
+        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
     }
 
     function decline(
@@ -129,7 +129,7 @@ contract ClaimService is
     {
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.closedAt = TimestampLib.blockTimestamp();
-        instance.updateClaim(policyNftId, claimId, claimInfo, DECLINED());
+        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, DECLINED());
     }
 
 
@@ -162,7 +162,7 @@ contract ClaimService is
         }
 
         claimInfo.closedAt = TimestampLib.blockTimestamp();
-        instance.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
+        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CLOSED());
     }
 
 
@@ -177,7 +177,7 @@ contract ClaimService is
         virtual
         // TODO add restricted and grant to policy service
     {
-        instance.createPayout(
+        instance.getInstanceStore().createPayout(
             policyNftId, 
             payoutId, 
             IPolicy.PayoutInfo(
@@ -233,7 +233,7 @@ contract ClaimService is
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
-        (, productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (, productInfo,) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
 }

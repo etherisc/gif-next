@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {ClaimId} from "../types/ClaimId.sol";
+import {ClaimId} from "../types/ClaimId.sol";
 import {DistributorType} from "../types/DistributorType.sol";
 import {Fee, FeeLib} from "../types/Fee.sol";
 import {Key32} from "../types/Key32.sol";
@@ -28,6 +29,8 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {ITreasury} from "../instance/module/ITreasury.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
 
+import {InstanceStore} from "./InstanceStore.sol";
+
 
 contract InstanceReader {
 
@@ -44,19 +47,19 @@ contract InstanceReader {
             revert ErrorInstanceReaderAlreadyInitialized();
         }
 
-        if(address(instance) == address(0)) {
+        if(instance == address(0)) {
             revert ErrorInstanceReaderInstanceAddressZero();
         }
 
         _instance = IInstance(instance);
-        _store = IKeyValueStore(instance);
+        _store = _instance.getInstanceStore();
 
         _initialized = true;
     }
 
 
     // module specific functions
-
+    // TODO return policy state too
     function getPolicyInfo(NftId policyNftId)
         public
         view
@@ -73,7 +76,7 @@ contract InstanceReader {
         view
         returns (StateId state)
     {
-        return _instance.getState(toPolicyKey(policyNftId));
+        return _store.getState(toPolicyKey(policyNftId));
     }
 
     function getClaimInfo(NftId policyNftId, ClaimId claimId)
@@ -92,7 +95,7 @@ contract InstanceReader {
         view
         returns (StateId state)
     {
-        return _instance.getState(claimId.toKey32(policyNftId));
+        return _store.getState(claimId.toKey32(policyNftId));
     }
 
     function getRiskInfo(RiskId riskId)
