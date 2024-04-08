@@ -22,7 +22,7 @@ interface IBundleService is IService {
     error ErrorBundleServiceBundleWithOpenPolicies(NftId bundleNftId, uint256 openPoliciesCount);
 
     error ErrorBundleServiceBundleUnknown(NftId bundleNftId);
-    error ErrorBundleServiceBundlePoolMismatch(NftId bundleNftId, NftId expectedPool, NftId actualPool);
+    error ErrorBundleServiceBundlePoolMismatch(NftId expectedPoolNftId, NftId bundlePoolNftId);
 
     /// @dev create a new bundle for the specified attributes
     /// may only be called by pool service

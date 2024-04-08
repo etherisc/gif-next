@@ -58,4 +58,21 @@ interface IApplicationService is IService {
     /// an application can only be revoked in applied state
     /// only the application holder may revoke an application
     function revoke(NftId policyNftId) external;
+
+    /// @dev calculates the premium amount for the specified attributes
+    /// also returns the various fee components involved with creating a policy
+    function calculatePremium(
+        NftId productNftId,
+        RiskId riskId,
+        uint256 sumInsuredAmount,
+        Seconds lifetime,
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        external
+        view
+        returns (
+            IPolicy.Premium memory premium
+        );
 }

@@ -26,7 +26,7 @@ interface IPolicyService is IService {
     event LogPolicyServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
     event LogPolicyServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
 
-    error ErrorPolicyServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
+    error ErrorPolicyServiceProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorPolicyServicePolicyNotOpen(NftId policyNftId);
     error ErrorPolicyServiceClaimExceedsSumInsured(NftId policyNftId, Amount sumInsured, Amount payoutsIncludingClaimAmount);
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);

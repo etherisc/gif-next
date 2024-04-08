@@ -6,27 +6,9 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {VersionPartLib} from "../../contracts/types/Version.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
-import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/types/ObjectType.sol";
-import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
-import {
-    ADMIN_ROLE,
-    INSTANCE_OWNER_ROLE,
-    PRODUCT_OWNER_ROLE, 
-    POOL_OWNER_ROLE, 
-    DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {UFixed, UFixedLib} from "../../contracts/types/UFixed.sol";
-import {Version} from "../../contracts/types/Version.sol";
 
-import {IVersionable} from "../../contracts/shared/IVersionable.sol";
-import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 
-import {RegistryService} from "../../contracts/registry/RegistryService.sol";
-import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
-import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
-import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -45,22 +27,19 @@ import {PolicyService} from "../../contracts/instance/service/PolicyService.sol"
 import {PolicyServiceManager} from "../../contracts/instance/service/PolicyServiceManager.sol";
 import {ClaimService} from "../../contracts/instance/service/ClaimService.sol";
 import {ClaimServiceManager} from "../../contracts/instance/service/ClaimServiceManager.sol";
+
 import {BundleService} from "../../contracts/instance/service/BundleService.sol";
 import {BundleServiceManager} from "../../contracts/instance/service/BundleServiceManager.sol";
-import {PricingService} from "../../contracts/instance/service/PricingService.sol";
-import {PricingServiceManager} from "../../contracts/instance/service/PricingServiceManager.sol";
 
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
-
 import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
-import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
-
+import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {Distribution} from "../../contracts/components/Distribution.sol";
 import {Product} from "../../contracts/components/Product.sol";
 import {Pool} from "../../contracts/components/Pool.sol";
@@ -70,6 +49,25 @@ import {SimplePool} from "../mock/SimplePool.sol";
 
 // import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
 // import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
+import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/types/ObjectType.sol";
+import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
+import {
+    ADMIN_ROLE,
+    INSTANCE_OWNER_ROLE,
+    PRODUCT_OWNER_ROLE, 
+    POOL_OWNER_ROLE, 
+    DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
+import {UFixed, UFixedLib} from "../../contracts/types/UFixed.sol";
+import {Version} from "../../contracts/types/Version.sol";
+
+import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
+import {IVersionable} from "../../contracts/shared/IVersionable.sol";
+import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
+import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
+import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 
 
 // solhint-disable-next-line max-states-count
@@ -113,26 +111,21 @@ contract TestGifBase is Test {
     ClaimServiceManager public claimServiceManager;
     ClaimService public claimService;
     NftId public claimServiceNftId;
-    PricingService public pricingService;
-    NftId public pricingServiceNftId;
-    PricingServiceManager public pricingServiceManager;
 
     BundleServiceManager public bundleServiceManager;
     BundleService public bundleService;
     NftId public bundleServiceNftId;
 
-    AccessManagerUpgradeableInitializeable public masterOzAccessManager;
-    InstanceAccessManager public masterInstanceAccessManager;
-    BundleManager public masterBundleManager;
-    InstanceStore public masterInstanceStore;
-    Instance public masterInstance;
-    NftId public masterInstanceNftId;
-    InstanceReader public masterInstanceReader;
+    AccessManagerUpgradeableInitializeable masterOzAccessManager;
+    InstanceAccessManager masterInstanceAccessManager;
+    BundleManager masterBundleManager;
+    Instance masterInstance;
+    NftId masterInstanceNftId;
+    InstanceReader masterInstanceReader;
 
-    AccessManagerUpgradeableInitializeable public ozAccessManager;
-    InstanceAccessManager public instanceAccessManager;
-    BundleManager public instanceBundleManager;
-    InstanceStore public instanceStore;
+    AccessManagerUpgradeableInitializeable ozAccessManager;
+    InstanceAccessManager instanceAccessManager;
+    BundleManager instanceBundleManager;
     Instance public instance;
     NftId public instanceNftId;
     InstanceReader public instanceReader;
@@ -370,18 +363,20 @@ contract TestGifBase is Test {
         instanceServiceManager = new InstanceServiceManager(address(registry));
         instanceService = instanceServiceManager.getInstanceService();
         // temporal solution, register in separate tx
-        instanceServiceNftId = releaseManager.registerService(instanceService);
+        releaseManager.registerService(instanceService);
+        instanceServiceNftId = registry.getNftId(address(instanceService));
 
         // solhint-disable 
         console.log("instanceService domain", instanceService.getDomain().toInt());
         console.log("instanceService deployed at", address(instanceService));
         console.log("instanceService nft id", instanceService.getNftId().toInt());
-        // solhint-enable
+        // solhint-enable 
 
         // --- distribution service ---------------------------------//
         distributionServiceManager = new DistributionServiceManager(address(registry));
         distributionService = distributionServiceManager.getDistributionService();
-        distributionServiceNftId = releaseManager.registerService(distributionService);
+        releaseManager.registerService(distributionService);
+        distributionServiceNftId = registry.getNftId(address(distributionService));
 
         // solhint-disable 
         console.log("distributionService domain", distributionService.getDomain().toInt());
@@ -389,24 +384,11 @@ contract TestGifBase is Test {
         console.log("distributionService nft id", distributionService.getNftId().toInt());
         // solhint-enable
 
-        // --- pricing service ---------------------------------//
-        // TODO chicken and egg problem, pricing service needs distribution service to be registered and vice versa
-        // option 1: do not store service references localy, in services
-        // option 2: do not use isValidReferal in  pricing service
-        pricingServiceManager = new PricingServiceManager(address(registry));
-        pricingService = pricingServiceManager.getPricingService();
-        pricingServiceNftId = releaseManager.registerService(pricingService);
-
-        // solhint-disable
-        console.log("pricingService domain", pricingService.getDomain().toInt());
-        console.log("pricingService deployed at", address(pricingService));
-        console.log("pricingService nft id", pricingService.getNftId().toInt());
-        // solhint-enable
-
         // --- bundle service ---------------------------------//
         bundleServiceManager = new BundleServiceManager(address(registry));
         bundleService = bundleServiceManager.getBundleService();
-        bundleServiceNftId = releaseManager.registerService(bundleService);
+        releaseManager.registerService(bundleService);
+        bundleServiceNftId = registry.getNftId(address(bundleService));
 
         // solhint-disable
         console.log("bundleService domain", bundleService.getDomain().toInt());
@@ -417,7 +399,8 @@ contract TestGifBase is Test {
         // --- pool service ---------------------------------//
         poolServiceManager = new PoolServiceManager(address(registry));
         poolService = poolServiceManager.getPoolService();
-        poolServiceNftId = releaseManager.registerService(poolService);
+        releaseManager.registerService(poolService);
+        poolServiceNftId = registry.getNftId(address(poolService));
 
         // solhint-disable
         console.log("poolService domain", poolService.getDomain().toInt());
@@ -428,7 +411,8 @@ contract TestGifBase is Test {
         // --- product service ---------------------------------//
         productServiceManager = new ProductServiceManager(address(registry));
         productService = productServiceManager.getProductService();
-        productServiceNftId = releaseManager.registerService(productService);
+        releaseManager.registerService(productService);
+        productServiceNftId = registry.getNftId(address(productService));
 
         // solhint-disable
         console.log("productService domain", productService.getDomain().toInt());
@@ -440,7 +424,8 @@ contract TestGifBase is Test {
         // --- claim service ---------------------------------//
         claimServiceManager = new ClaimServiceManager(address(registry));
         claimService = claimServiceManager.getClaimService();
-        claimServiceNftId = releaseManager.registerService(claimService);
+        releaseManager.registerService(claimService);
+        claimServiceNftId = registry.getNftId(address(claimService));
 
         // solhint-disable
         console.log("claimService domain", claimService.getDomain().toInt());
@@ -451,7 +436,8 @@ contract TestGifBase is Test {
         // --- application service ---------------------------------//
         applicationServiceManager = new ApplicationServiceManager(address(registry));
         applicationService = applicationServiceManager.getApplicationService();
-        applicationServiceNftId = releaseManager.registerService(applicationService);
+        releaseManager.registerService(applicationService);
+        applicationServiceNftId = registry.getNftId(address(applicationService));
 
         // solhint-disable
         console.log("applicationService domain", applicationService.getDomain().toInt());
@@ -462,7 +448,8 @@ contract TestGifBase is Test {
         // --- policy service ---------------------------------//
         policyServiceManager = new PolicyServiceManager(address(registry));
         policyService = policyServiceManager.getPolicyService();
-        policyServiceNftId = releaseManager.registerService(policyService);
+        releaseManager.registerService(policyService);
+        policyServiceNftId = registry.getNftId(address(policyService));
 
         // solhint-disable
         console.log("policyService domain", policyService.getDomain().toInt());
@@ -479,18 +466,15 @@ contract TestGifBase is Test {
         masterOzAccessManager = new AccessManagerUpgradeableInitializeable();
         // grants registryOwner ADMIN_ROLE
         masterOzAccessManager.initialize(registryOwner);
+
+        masterInstanceAccessManager = new InstanceAccessManager();
         
         masterInstance = new Instance();
         masterInstance.initialize(
             address(masterOzAccessManager),
             address(registry),
             registryOwner);
-        // MUST be initialized and set before instance reader
-        masterInstanceStore = new InstanceStore();
-        masterInstanceStore.initialize(address(masterInstance));
-        masterInstance.setInstanceStore(masterInstanceStore);
-        assert(masterInstance.getInstanceStore() == masterInstanceStore);
-
+        
         masterInstanceReader = new InstanceReader();
         masterInstanceReader.initialize(address(masterInstance));
         masterInstance.setInstanceReader(masterInstanceReader);
@@ -519,7 +503,6 @@ contract TestGifBase is Test {
         console.log("master instance access manager deployed at", address(masterInstanceAccessManager));
         console.log("master instance reader deployed at", address(masterInstanceReader));
         console.log("master bundle manager deployed at", address(masterBundleManager));
-        console.log("master instance store deployed at", address(masterInstanceStore));
         // solhint-enable
     }
 
@@ -531,8 +514,7 @@ contract TestGifBase is Test {
             instance,
             instanceNftId,
             instanceReader,
-            instanceBundleManager,
-            instanceStore
+            instanceBundleManager
         ) = instanceService.createInstanceClone();
 
         
@@ -543,7 +525,6 @@ contract TestGifBase is Test {
         console.log("cloned instance access manager deployed at", address(instanceAccessManager));
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle manager deployed at", address(instanceBundleManager));
-        console.log("cloned instance store deployed at", address(instanceStore));
         // solhint-enable
     }
 
