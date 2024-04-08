@@ -95,7 +95,7 @@ contract PolicyService is
         external
         override
     {
-        require(false, "ERROR:PRS-235:NOT_YET_IMPLEMENTED");
+        revert();
     }
 
 
@@ -120,7 +120,6 @@ contract PolicyService is
         }
 
         // check policy is in state applied
-        // require(instanceReader.getPolicyState(applicationNftId) == APPLIED(), "ERROR:PRS-021:STATE_NOT_APPLIED");
         if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
             revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
         }
