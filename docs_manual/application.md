@@ -1,25 +1,30 @@
 # ApplicationService sequences 
 
-## create
+## calculatePremium
 
 ```mermaid
 sequenceDiagram
     actor C as Caller
     participant AS as ApplicationService
-    participant RS as RegistryService
-    participant R as Registry
-    participant PS as PricingService
-    participant IS as InstanceStore    
+    participant P as Product
+    participant DS as DistributionService
+    participant IR as InstanceReader
     
-    C ->> AS: create()
-    AS ->> RS: registerPolicy(objectInfo)
-    RS ->> +R: register(objectInfo)
-    R ->> R: mint NFT
-    R ->> -RS: policyNftId
-    RS ->> AS: policyNftId
-    AS ->> +PS: calculatePremium(productNftId, sumInsured, referralId, [...])
-
-    PS ->> -AS: premium
-    AS ->> IS: createApplication(policyNftId, policyInfo)
-    AS ->> C: policyNftId
+    C ->> AS: calculatePremium(productNftId, sumInsured, referral, [...])
+    AS ->> P: calculateNetPremium(sumInsured)
+    P ->> AS: netPremium
+    AS ->> AS: _getFixedFeeAmounts()
+    AS ->> IR: getProductSetupInfo()<br/> getPoolSetupInfo() <br/> getBundleInfo() <br/> getDistributionSetupInfo()
+    AS ->> AS: _calculateVariableFeeAmounts
+    AS ->> DS: calculateFeeAmount(distributionNftId, referral, netPremium, (intermediary)premium)
+    DS ->> IR: getDistributionSetupInfo()
+    DS ->> DS: calculate distribution fee and full premium
+    DS ->> DS: referralIsValid()
+    DS ->> IR: getReferralInfo()<br/> getDistributorInfo<br/> getDistributorTypeInfo()
+    opt if referral is valid
+        DS ->> DS: calculate discount, comission based on referral
+    end
+    DS ->> DS: calculate distribution owner fee  and final premium
+    DS ->> AS: premium (final)
+    AS ->> C: premium
 ```
