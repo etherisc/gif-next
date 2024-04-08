@@ -20,50 +20,48 @@ interface IClaimService is
     IService
 {
 
+    event LogClaimServiceClaimSubmitted(NftId policyNftId, ClaimId claimId, Amount claimAmount);
+    event LogClaimServiceClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount confirmedAmount);
+    event LogClaimServiceClaimDeclined(NftId policyNftId, ClaimId claimId);
+    event LogClaimServiceClaimClosed(NftId policyNftId, ClaimId claimId);
+
     event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
     event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
 
     error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
+    error ErrorClaimServicePolicyNotOpen(NftId policyNftId);
+    error ErrorClaimServiceClaimExceedsSumInsured(NftId policyNftId, Amount sumInsured, Amount payoutsIncludingClaimAmount);
 
     error ErrorClaimServiceClaimWithOpenPayouts(NftId policyNftId, ClaimId claimId, uint8 openPayouts);
     error ErrorClaimServiceClaimWithMissingPayouts(NftId policyNftId, ClaimId claimId, Amount claimAmount, Amount paidAmount);
     error ErrorClaimServiceClaimNotInExpectedState(NftId policyNftId, ClaimId claimId, StateId expectedState, StateId actualState);
 
     /// @dev create a new claim for the specified policy
+    /// returns the id of the newly created claim
     /// function can only be called by product, policy needs to match with calling product
     function submit(
-        IInstance instance,
         NftId policyNftId, 
-        ClaimId claimId,
         Amount claimAmount,
         bytes memory claimData
-    ) external;
+    ) external returns (ClaimId claimId);
 
-    /// @dev confirms the specified claim and fixes the final claim amount
-    /// function can only be called by product, policy needs to match with calling product
-    function confirm(
-        IInstance instance,
-        InstanceReader instanceReader,
-        NftId policyNftId, 
-        ClaimId claimId, 
-        Amount claimAmount
-    ) external;
-
-    /// @dev declares the claim as invalid, no payout(s) will be made
+    /// @dev declines the specified claim
     /// function can only be called by product, policy needs to match with calling product
     function decline(
-        IInstance instance,
-        InstanceReader instanceReader,
         NftId policyNftId, 
-        ClaimId claimId
+        ClaimId claimId) external;
+
+    /// @dev confirms the specified claim and specifies the payout amount
+    /// function can only be called by product, policy needs to match with calling product
+    function confirm(
+        NftId policyNftId, 
+        ClaimId claimId,
+        Amount confirmedAmount
     ) external;
 
-    /// @dev closes the claim
-    /// a claim may only be closed once all existing payouts have been executed and the sum of the paid out amounts has reached the claim amount
+    /// @dev closes the specified claim
     /// function can only be called by product, policy needs to match with calling product
     function close(
-        IInstance instance,
-        InstanceReader instanceReader,
         NftId policyNftId, 
         ClaimId claimId
     ) external;
@@ -89,33 +87,4 @@ interface IClaimService is
         NftId policyNftId, 
         PayoutId payoutId
     ) external;
-
-
-    // /// @dev create a new payout for the specified policy
-    // /// payoutId may be constructed using PayoutIdLib(claimId, payoutNo)
-    // /// function can only be called by product, policy needs to match with calling product
-    // function createPayout(
-    //     IInstance instance,
-    //     NftId policyNftId, 
-    //     PayoutId payoutId,
-    //     Amount payoutAmount,
-    //     bytes calldata payoutData
-    // ) external; 
-
-
-    // /// @dev function to transfer payout token to beneficiary
-    // /// allows claim service to update claims/payout book keeping
-    // /// only pool service can confirm executed payout
-    // function processPayout(
-    //     IInstance instance,
-    //     InstanceReader instanceReader,
-    //     NftId policyNftId, 
-    //     PayoutId payoutId
-    // )
-    //     external 
-    //     returns (
-    //         Amount amount,
-    //         bool payoutIsClosingClaim
-    //     );
-
 }

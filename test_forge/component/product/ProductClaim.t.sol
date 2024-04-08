@@ -79,11 +79,20 @@ contract TestProductClaim is TestGifBase {
         Amount claimAmount = AmountLib.toAmount(499);
         bytes memory claimData = "please pay";
 
-        vm.expectEmit(address(policyService));
-        emit LogPolicyServiceClaimSubmitted(policyNftId, ClaimId.wrap(1), claimAmount);
+        vm.recordLogs();
         ClaimId claimId = prdct.submitClaim(policyNftId, claimAmount, claimData); 
+        Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
+        // checking last of 4 logs
+        assertEq(entries.length, 4, "unexpected number of logs");
+        assertEq(entries[3].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[3].topics[0], keccak256("LogClaimServiceClaimSubmitted(uint96,uint16,uint96)"), "unexpected log signature");
+        (uint96 nftIdInt ,uint24 claimIdInt, uint96 claimAmountInt) = abi.decode(entries[3].data, (uint96,uint16,uint96));
+        assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
+        assertEq(claimIdInt, claimId.toInt(), "unexpected claim id");
+        assertEq(claimAmountInt, claimAmount.toInt(), "unexpected claim amount");
+
         assertTrue(claimId.gtz(), "claim id zero");
         assertEq(claimId.toInt(), 1, "claim id not 1");
 
@@ -121,11 +130,21 @@ contract TestProductClaim is TestGifBase {
 
         // WHEN
         Amount confirmedAmount = AmountLib.toAmount(450);
-        vm.expectEmit(address(policyService));
-        emit LogPolicyServiceClaimConfirmed(policyNftId, ClaimId.wrap(1), confirmedAmount);
+
+        vm.recordLogs();
         prdct.confirmClaim(policyNftId, claimId, confirmedAmount); 
+        Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
+        // checking last of 4 logs
+        assertEq(entries.length, 5, "unexpected number of logs");
+        assertEq(entries[4].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[4].topics[0], keccak256("LogClaimServiceClaimConfirmed(uint96,uint16,uint96)"), "unexpected log signature");
+        (uint96 nftIdInt,uint24 claimIdInt, uint96 amountInt ) = abi.decode(entries[4].data, (uint96,uint16,uint96));
+        assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
+        assertEq(claimIdInt, claimId.toInt(), "unexpected claim id");
+        assertEq(amountInt, confirmedAmount.toInt(), "unexpected amount");
+
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.claimsCount, 1, "claims count not 1");
         assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1");
@@ -155,11 +174,20 @@ contract TestProductClaim is TestGifBase {
         assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0 (before)");
 
         // WHEN
-        vm.expectEmit(address(policyService));
-        emit LogPolicyServiceClaimDeclined(policyNftId, ClaimId.wrap(1));
+        // emit LogPolicyServiceClaimDeclined(policyNftId, ClaimId.wrap(1));
+        vm.recordLogs();
         prdct.declineClaim(policyNftId, claimId); 
+        Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
+        // checking last of 4 logs
+        assertEq(entries.length, 5, "unexpected number of logs");
+        assertEq(entries[4].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[4].topics[0], keccak256("LogClaimServiceClaimDeclined(uint96,uint16)"), "unexpected log signature");
+        (uint96 nftIdInt ,uint24 claimIdInt) = abi.decode(entries[4].data, (uint96,uint16));
+        assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
+        assertEq(claimIdInt, claimId.toInt(), "unexpected claim id");
+
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.claimsCount, 1, "claims count not 1");
         assertEq(policyInfo.openClaimsCount, 0, "open claims count not 0");

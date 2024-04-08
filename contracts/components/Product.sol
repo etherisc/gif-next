@@ -211,7 +211,7 @@ abstract contract Product is
         internal
         returns(ClaimId)
     {
-        return _getProductStorage()._policyService.submitClaim(
+        return _getProductStorage()._claimService.submit(
             policyNftId,
             claimAmount,
             claimData);
@@ -224,7 +224,7 @@ abstract contract Product is
     )
         internal
     {
-        _getProductStorage()._policyService.confirmClaim(
+        _getProductStorage()._claimService.confirm(
             policyNftId,
             claimId,
             confirmedAmount);
@@ -236,7 +236,7 @@ abstract contract Product is
     )
         internal
     {
-        _getProductStorage()._policyService.declineClaim(
+        _getProductStorage()._claimService.decline(
             policyNftId,
             claimId);
     }
@@ -247,7 +247,7 @@ abstract contract Product is
     )
         internal
     {
-        _getProductStorage()._policyService.closeClaim(
+        _getProductStorage()._claimService.close(
             policyNftId,
             claimId);
     }

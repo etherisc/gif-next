@@ -131,6 +131,7 @@ contract ApplicationService is
             0,
             0,
             AmountLib.zero(),
+            AmountLib.zero(),
             zeroTimestamp(),
             zeroTimestamp(),
             zeroTimestamp()

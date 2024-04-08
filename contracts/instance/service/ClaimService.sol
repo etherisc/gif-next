@@ -78,18 +78,36 @@ contract ClaimService is
         return CLAIM();
     }
 
-
     function submit(
-        IInstance instance,
         NftId policyNftId, 
-        ClaimId claimId, 
         Amount claimAmount,
         bytes memory claimData
     )
         external
         virtual
-        // TODO add restricted and grant to policy service
+        returns (ClaimId claimId)
     {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check policy is in its active period
+        if(policyInfo.activatedAt.eqz() || TimestampLib.blockTimestamp() >= policyInfo.expiredAt) {
+            revert ErrorClaimServicePolicyNotOpen(policyNftId);
+        }
+
+        // check policy including this claim is still within sum insured
+        if(policyInfo.payoutAmount.toInt() + claimAmount.toInt() > policyInfo.sumInsuredAmount) {
+            revert ErrorClaimServiceClaimExceedsSumInsured(
+                policyNftId, 
+                AmountLib.toAmount(policyInfo.sumInsuredAmount), 
+                AmountLib.toAmount(policyInfo.payoutAmount.toInt() + claimAmount.toInt()));
+        }
+
+        // create new claim
+        claimId = ClaimIdLib.toClaimId(policyInfo.claimsCount + 1);
         instance.createClaim(
             policyNftId, 
             claimId, 
@@ -100,48 +118,82 @@ contract ClaimService is
                 0, // openPayoutsCount
                 claimData,
                 TimestampLib.zero())); // closedAt
+
+        // update and save policy info with instance
+        policyInfo.claimsCount += 1;
+        policyInfo.openClaimsCount += 1;
+        // policy claim amount is only updated when claim is confirmed
+        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogClaimServiceClaimSubmitted(policyNftId, claimId, claimAmount);
     }
 
 
     function confirm(
-        IInstance instance,
-        InstanceReader instanceReader,
         NftId policyNftId, 
-        ClaimId claimId, 
+        ClaimId claimId,
         Amount confirmedAmount
     )
         external
         virtual
     {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.claimAmount = confirmedAmount;
         instance.updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
+
+        // update and save policy info with instance
+        policyInfo.claimAmount.add(confirmedAmount);
+        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
     }
 
     function decline(
-        IInstance instance,
-        InstanceReader instanceReader,
         NftId policyNftId, 
         ClaimId claimId
     )
         external
         virtual
     {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.closedAt = TimestampLib.blockTimestamp();
         instance.updateClaim(policyNftId, claimId, claimInfo, DECLINED());
+
+        // update and save policy info with instance
+        policyInfo.openClaimsCount -= 1;
+        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogClaimServiceClaimDeclined(policyNftId, claimId);
     }
 
-
     function close(
-        IInstance instance,
-        InstanceReader instanceReader,
         NftId policyNftId, 
         ClaimId claimId
     )
         external
         virtual
     {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, CONFIRMED());
 
         // check claim has no open payouts
@@ -163,8 +215,13 @@ contract ClaimService is
 
         claimInfo.closedAt = TimestampLib.blockTimestamp();
         instance.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
-    }
 
+        // update and save policy info with instance
+        policyInfo.openClaimsCount -= 1;
+        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogClaimServiceClaimClosed(policyNftId, claimId);
+    }
 
 
     function createPayout(
@@ -239,7 +296,7 @@ contract ClaimService is
         // update policy info if affected by processed payout
         if(payoutIsClosingClaim) {
             policyInfo.openClaimsCount -= 1;
-            instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+            instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
         }
 
         // TODO callback IPolicyHolder
