@@ -5,11 +5,12 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
+import {Amount} from "../types/Amount.sol";
+import {ClaimId} from "../types/ClaimId.sol";
 import {ERC165} from "./ERC165.sol";
 import {IPolicyHolder} from "./IPolicyHolder.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../types/NftId.sol";
-import {NumberId} from "../types/NumberId.sol";
+import {PayoutId} from "../types/PayoutId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
 
 /// @dev template implementation for IPolicyHolder
@@ -40,15 +41,20 @@ contract PolicyHolder is
     }
 
     /// @dev empty default implementation
-    function policyCreatedCallback(NftId policyNftId) external virtual { }
+    function policyActivated(NftId policyNftId) external {}
 
     /// @dev empty default implementation
-    function payoutExecutedCallback(NftId policyNftId, NumberId payoutId, address beneficiary, uint256 amount) external virtual { }
+    function policyExpired(NftId policyNftId) external {}
 
-    /// @dev determines beneficiary address that will be used in payouts targeting this contract
-    /// returned address will override GIF default where the policy nft holder is treated as beneficiary
-    function getBeneficiary(NftId policyId, NumberId claimId) external virtual view returns (address beneficiary) { 
-        // TODO add implementation
+    /// @dev empty default implementation
+    function claimConfirmed(NftId policyNftId, ClaimId claimId, Amount amount) external {}
+
+    /// @dev empty default implementation
+    function payoutExecuted(NftId policyNftId, PayoutId payoutId, address beneficiary, Amount amount) external {}
+
+    /// @dev returns current policy nft holder
+    function getBeneficiary(NftId policyNftId, ClaimId claimId) external virtual view returns (address beneficiary) { 
+        return getRegistry().ownerOf(policyNftId);
     }
 
     //--- IERC165 functions ---------------// 

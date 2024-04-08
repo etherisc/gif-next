@@ -85,6 +85,7 @@ interface IInstance is
     function updateApplicationState(NftId applicationNftId, StateId newState) external;
 
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
+    function updatePolicyClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external;
     function updatePolicyState(NftId policyNftId, StateId newState) external;
 
     function createClaim(NftId policyNftId, ClaimId claimId, IPolicy.ClaimInfo memory claim) external;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {console} from "../../../lib/forge-std/src/Test.sol";
+import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
 import {TestGifBase} from "../../base/TestGifBase.sol";
 import {Amount, AmountLib} from "../../../contracts/types/Amount.sol";
@@ -61,8 +61,8 @@ contract TestProductClaim is TestGifBase {
     event LogPolicyServiceClaimSubmitted(NftId policyNftId, ClaimId claimId, Amount claimAmount);
     event LogPolicyServiceClaimDeclined(NftId policyNftId, ClaimId claimId);
     event LogPolicyServiceClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount confirmedAmount);
-    event LogPolicyServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
-    event LogPolicyServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
+    event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
+    event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
 
     function test_ProductClaimSubmitHappyCase() public {
         // GIVEN
@@ -212,6 +212,8 @@ contract TestProductClaim is TestGifBase {
 
         assertEq(policyInfo.claimsCount, 1, "claims count not 1 (before)");
         assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1 (before)");
+        assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
+        assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
         assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0 (before)");
 
         // WHEN
@@ -219,11 +221,20 @@ contract TestProductClaim is TestGifBase {
         bytes memory payoutData = "some payout";
         PayoutId payoutIdExpected = PayoutIdLib.toPayoutId(claimId, 1);
 
-        vm.expectEmit(address(policyService));
-        emit LogPolicyServicePayoutCreated(policyNftId, payoutIdExpected, payoutAmount);
+        vm.recordLogs();
         PayoutId payoutId = prdct.createPayout(policyNftId, claimId, payoutAmount, payoutData);
+        Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
+        // checking last of 4 logs
+        assertEq(entries.length, 6, "unexpected number of logs");
+        assertEq(entries[5].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[5].topics[0], keccak256("LogClaimServicePayoutCreated(uint96,uint24,uint96)"), "unexpected log signature");
+        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmountInt) = abi.decode(entries[5].data, (uint96,uint24,uint96));
+        assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
+        assertEq(payoutIdInt, payoutId.toInt(), "unexpected payout id");
+        assertEq(payoutAmountInt, payoutAmount.toInt(), "unexpected payout amount");
+
         assertTrue(payoutId.gtz(), "payout id zero");
         assertEq(payoutId.toInt(), payoutIdExpected.toInt(), "unexpected payoutId");
 
@@ -238,7 +249,8 @@ contract TestProductClaim is TestGifBase {
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
         assertEq(claimInfo.claimAmount.toInt(), claimAmount.toInt(), "unexpected claim amount");
         assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
-        assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
+        assertEq(claimInfo.payoutsCount, 1, "payouts count not 1");
+        assertEq(claimInfo.openPayoutsCount, 1, "open payouts count not 1");
     }
 
     function _approve() internal {

@@ -49,7 +49,7 @@ interface IPolicy {
         bytes policyData;
         uint16 claimsCount;
         uint16 openClaimsCount;
-        Amount payoutAmount;
+        Amount payoutAmount; // sum of payouts (max = sum insured amount)
         Timestamp activatedAt; // time of underwriting
         Timestamp expiredAt; // no new claims (activatedAt + lifetime)
         Timestamp closedAt; // no locked capital (or declinedAt)

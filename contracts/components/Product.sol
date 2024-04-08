@@ -261,7 +261,7 @@ abstract contract Product is
         internal
         returns (PayoutId)
     {
-        return _getProductStorage()._policyService.createPayout(
+        return _getProductStorage()._claimService.createPayout(
             policyNftId, 
             claimId, 
             amount, 
@@ -274,7 +274,7 @@ abstract contract Product is
     )
         internal
     {
-        _getProductStorage()._policyService.processPayout(
+        _getProductStorage()._claimService.processPayout(
             policyNftId,
             payoutId);
     }

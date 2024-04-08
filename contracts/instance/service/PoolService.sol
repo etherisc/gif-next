@@ -281,6 +281,19 @@ contract PoolService is
     }
 
 
+    function reduceCollateral(
+        IInstance instance, 
+        NftId policyNftId, 
+        IPolicy.PolicyInfo memory policyInfo,
+        Amount payoutAmount
+    )
+        external
+        virtual
+    {
+        revert ErrorServiceNotImplemented();
+    }
+
+
     /// @dev releases the remaining collateral linked to the specified policy
     /// may only be called by the policy service for unlocked pool components
     function releaseCollateral(

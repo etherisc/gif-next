@@ -23,8 +23,9 @@ interface IPolicyService is IService {
     event LogPolicyServiceClaimDeclined(NftId policyNftId, ClaimId claimId);
     event LogPolicyServiceClaimClosed(NftId policyNftId, ClaimId claimId);
 
-    event LogPolicyServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
-    event LogPolicyServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
+    // TODO cleanup
+    // event LogPolicyServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
+    // event LogPolicyServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
 
     error ErrorPolicyServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorPolicyServicePolicyNotOpen(NftId policyNftId);
@@ -47,12 +48,12 @@ interface IPolicyService is IService {
     function decline(NftId policyNftId) external;
 
     /// @dev collateralizes the policy represented by {policyNftId}
-    /// sets the policy state to underwritten
+    /// sets the policy state to collateralized
     /// may set the policy state to activated and set the activation date
     /// optionally collects premiums and activates the policy.
     /// - premium payment is only attempted if requirePremiumPayment is set to true
     /// - activation is only done if activateAt is a non-zero timestamp
-    /// an application can only be underwritten in applied state
+    /// an application can only be collateralized in applied state
     /// only the related product may collateralize an application
     function collateralize(
         NftId policyNftId,
@@ -108,25 +109,6 @@ interface IPolicyService is IService {
         ClaimId claimId
     ) external;
 
-    /// @dev creates a new payout for the specified claim
-    /// returns the id of the newly created payout, this id is unique for the specified policy
-    /// function can only be called by product, policy needs to match with calling product
-    function createPayout(
-        NftId policyNftId, 
-        ClaimId claimId,
-        Amount amount,
-        bytes memory data
-    )
-        external
-        returns (PayoutId payoutId);
-
-    /// @dev processes the specified payout
-    /// this includes moving the payout token to the beneficiary (default: policy holder)
-    /// function can only be called by product, policy needs to match with calling product
-    function processPayout(
-        NftId policyNftId, 
-        PayoutId payoutId
-    ) external;
 
     // TODO move function to pool service
     function calculateRequiredCollateral(

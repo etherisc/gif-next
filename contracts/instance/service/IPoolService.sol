@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {Amount} from "../../types/Amount.sol";
 import {Fee} from "../../types/Fee.sol";
 import {NftId} from "../../types/NftId.sol";
+import {PayoutId} from "../../types/PayoutId.sol";
 import {IBundle} from "../module/IBundle.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IPolicy} from "../module/IPolicy.sol";
@@ -64,6 +65,17 @@ interface IPoolService is IService {
     ) external;
 
 
+    /// @dev reduces the locked collateral in the bundle associated with the specified policy
+    /// every payout of a policy reduces the collateral by the payout amount
+    /// may only be called by the claim service for unlocked pool components
+    function reduceCollateral(
+        IInstance instance, 
+        NftId policyNftId, 
+        IPolicy.PolicyInfo memory policyInfo,
+        Amount payoutAmount
+    ) external;
+
+
     /// @dev create a new bundle for the provided parameters
     /// staking fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
@@ -96,4 +108,34 @@ interface IPoolService is IService {
     /// performance fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
     // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+
+
+    // /// @dev creates a new payout for the specified claim
+    // /// returns the id of the newly created payout, this id is unique for the specified policy
+    // /// function can only be called by product, policy needs to match with calling product
+    // function createPayout(
+    //     NftId policyNftId, 
+    //     ClaimId claimId,
+    //     Amount amount,
+    //     bytes memory data
+    // )
+    //     external
+    //     returns (PayoutId payoutId);
+
+
+    // /// @dev processes the specified payout
+    // /// this includes moving the payout token to the beneficiary (default: policy holder)
+    // /// function can only be called by product, policy needs to match with calling product
+    // function processPayout(
+    //     NftId policyNftId, 
+    //     PayoutId payoutId
+    // ) external;
+
+    // /// @dev creates payout request to be processed by pool
+    // /// processing(?) fees will be deducted by the pool service from the staking amount
+    // /// may only be called by claim service
+    // function requestPayout(
+    //     IInstance instance,
+    //     PayoutId payoutId
+    // ) external; 
 }

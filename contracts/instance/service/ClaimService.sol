@@ -166,47 +166,112 @@ contract ClaimService is
     }
 
 
+
     function createPayout(
-        IInstance instance,
         NftId policyNftId, 
-        PayoutId payoutId,
-        Amount payoutAmount,
-        bytes calldata payoutData
+        ClaimId claimId,
+        Amount amount,
+        bytes memory data
     )
         external
-        virtual
+        returns (PayoutId payoutId)
         // TODO add restricted and grant to policy service
     {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
+
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        StateId claimState = instanceReader.getClaimState(policyNftId, claimId);
+
+        // TODO add checks
+        // claim needs to be open
+        // claim.paidAmount + amount <= claim.claimAmount
+
+        // check/update claim info
+        // create payout info with instance
+        uint8 claimNo = claimInfo.payoutsCount + 1;
+        payoutId = PayoutIdLib.toPayoutId(claimId, claimNo);
         instance.createPayout(
             policyNftId, 
             payoutId, 
             IPolicy.PayoutInfo(
                 payoutId.toClaimId(),
-                payoutAmount,
-                payoutData,
+                amount,
+                data,
                 TimestampLib.zero()));
+
+        // update and save claim info with instance
+        claimInfo.payoutsCount += 1;
+        claimInfo.openPayoutsCount += 1;
+        instance.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
+
+        // update and save policy info with instance
+        policyInfo.payoutAmount.add(amount);
+        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogClaimServicePayoutCreated(policyNftId, payoutId, amount);
     }
 
 
     function processPayout(
-        IInstance instance,
-        InstanceReader instanceReader,
         NftId policyNftId, 
         PayoutId payoutId
     )
         external
         virtual
-        returns (
-            Amount amount,
-            bool payoutIsClosingClaim
-        )
-        // solhint-disable-next-line no-empty-blocks
+        // TODO add restricted and grant to policy service
     {
+        (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        ) = _verifyCallerWithPolicy(policyNftId);
 
+        // TODO update and save payout info with instance
+        Amount amount = AmountLib.toAmount(0);
+        bool payoutIsClosingClaim = false;
+
+        // TODO update and save claim info with instance
+
+        // update policy info if affected by processed payout
+        if(payoutIsClosingClaim) {
+            policyInfo.openClaimsCount -= 1;
+            instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        }
+
+        // TODO callback IPolicyHolder
+
+        emit LogClaimServicePayoutProcessed(policyNftId, payoutId, amount);
     }
 
 
     // internal functions
+
+    function _verifyCallerWithPolicy(
+        NftId policyNftId
+    )
+        internal
+        returns (
+            IInstance instance,
+            InstanceReader instanceReader,
+            IPolicy.PolicyInfo memory policyInfo
+        )
+    {
+        NftId productNftId;
+        (productNftId,, instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        instanceReader = instance.getInstanceReader();
+
+        // check caller(product) policy match
+        policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        if(policyInfo.productNftId != productNftId) {
+            revert ErrorClaimServicePolicyProductMismatch(policyNftId, 
+            policyInfo.productNftId, 
+            productNftId);
+        }
+    }
 
     function _verifyClaim(
         InstanceReader instanceReader,

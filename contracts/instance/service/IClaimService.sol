@@ -20,6 +20,11 @@ interface IClaimService is
     IService
 {
 
+    event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
+    event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
+
+    error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
+
     error ErrorClaimServiceClaimWithOpenPayouts(NftId policyNftId, ClaimId claimId, uint8 openPayouts);
     error ErrorClaimServiceClaimWithMissingPayouts(NftId policyNftId, ClaimId claimId, Amount claimAmount, Amount paidAmount);
     error ErrorClaimServiceClaimNotInExpectedState(NftId policyNftId, ClaimId claimId, StateId expectedState, StateId actualState);
@@ -61,32 +66,56 @@ interface IClaimService is
         InstanceReader instanceReader,
         NftId policyNftId, 
         ClaimId claimId
-    ) external; 
+    ) external;
 
-    /// @dev create a new payout for the specified policy
-    /// payoutId may be constructed using PayoutIdLib(claimId, payoutNo)
+
+    /// @dev creates a new payout for the specified claim
+    /// returns the id of the newly created payout, this id is unique for the specified policy
     /// function can only be called by product, policy needs to match with calling product
     function createPayout(
-        IInstance instance,
         NftId policyNftId, 
-        PayoutId payoutId,
-        Amount payoutAmount,
-        bytes calldata payoutData
-    ) external; 
+        ClaimId claimId,
+        Amount amount,
+        bytes memory data
+    )
+        external
+        returns (PayoutId payoutId);
 
-    /// @dev callback function to confirm transfer of payout token to beneficiary
-    /// allows claim service to update claims/payout book keeping
-    /// only pool service can confirm executed payout
+
+    /// @dev processes the specified payout
+    /// this includes moving the payout token to the beneficiary (default: policy holder)
+    /// function can only be called by product, policy needs to match with calling product
     function processPayout(
-        IInstance instance,
-        InstanceReader instanceReader,
         NftId policyNftId, 
         PayoutId payoutId
-    )
-        external 
-        returns (
-            Amount amount,
-            bool payoutIsClosingClaim
-        );
+    ) external;
+
+
+    // /// @dev create a new payout for the specified policy
+    // /// payoutId may be constructed using PayoutIdLib(claimId, payoutNo)
+    // /// function can only be called by product, policy needs to match with calling product
+    // function createPayout(
+    //     IInstance instance,
+    //     NftId policyNftId, 
+    //     PayoutId payoutId,
+    //     Amount payoutAmount,
+    //     bytes calldata payoutData
+    // ) external; 
+
+
+    // /// @dev function to transfer payout token to beneficiary
+    // /// allows claim service to update claims/payout book keeping
+    // /// only pool service can confirm executed payout
+    // function processPayout(
+    //     IInstance instance,
+    //     InstanceReader instanceReader,
+    //     NftId policyNftId, 
+    //     PayoutId payoutId
+    // )
+    //     external 
+    //     returns (
+    //         Amount amount,
+    //         bool payoutIsClosingClaim
+    //     );
 
 }

@@ -198,6 +198,10 @@ contract Instance is
         update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
     }
 
+    function updatePolicyClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
+        update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
+    }
+
     function updatePolicyState(NftId policyNftId, StateId newState) external restricted() {
         updateState(_toNftKey32(policyNftId, POLICY()), newState);
     }
