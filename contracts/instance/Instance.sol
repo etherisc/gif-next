@@ -67,6 +67,10 @@ contract Instance is
         public 
         initializer()
     {
+        if(authority == address(0)) {
+            revert ErrorInstanceInstanceAccessManagerZero();
+        }
+
         __AccessManaged_init(authority);
         
         IRegistry registry = IRegistry(registryAddress);

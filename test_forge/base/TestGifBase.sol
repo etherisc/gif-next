@@ -509,14 +509,14 @@ contract TestGifBase is Test {
 
     function _createInstance() internal {
         ( 
-            ozAccessManager,
-            instanceAccessManager, 
             instance,
-            instanceNftId,
-            instanceReader,
-            instanceBundleManager
+            instanceNftId
         ) = instanceService.createInstanceClone();
 
+        instanceAccessManager = instance.getInstanceAccessManager();
+        ozAccessManager = AccessManagerUpgradeableInitializeable(instance.authority());
+        instanceReader = instance.getInstanceReader();
+        instanceBundleManager = instance.getBundleManager();
         
         // solhint-disable
         console.log("cloned instance deployed at", address(instance));

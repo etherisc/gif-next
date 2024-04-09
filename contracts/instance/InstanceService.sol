@@ -23,14 +23,16 @@ contract InstanceService is
     Service,
     IInstanceService
 {
+
+    // TODO update to real hash when instance is stable
+    bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
+
+    IRegistryService internal _registryService;
     address internal _masterOzAccessManager;
     address internal _masterInstanceAccessManager;
     address internal _masterInstance;
     address internal _masterInstanceReader;
     address internal _masterInstanceBundleManager;
-
-    // TODO update to real hash when instance is stable
-    bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
 
     modifier onlyInstanceOwner(NftId instanceNftId) {        
         if(msg.sender != getRegistry().ownerOf(instanceNftId)) {
@@ -57,21 +59,12 @@ contract InstanceService is
     function createInstanceClone()
         external 
         returns (
-            AccessManagerUpgradeableInitializeable clonedOzAccessManager,
-            InstanceAccessManager clonedInstanceAccessManager, 
             Instance clonedInstance,
-            NftId clonedInstanceNftId,
-            InstanceReader clonedInstanceReader,
-            BundleManager clonedBundleManager
+            NftId clonedInstanceNftId
         )
     {
         address instanceOwner = msg.sender;
-        IRegistry registry = getRegistry();
-        IRegistryService registryService = IRegistryService(
-            registry.getServiceAddress(
-                REGISTRY(), getVersion().toMajorPart()));
-
-        clonedOzAccessManager = AccessManagerUpgradeableInitializeable(
+        AccessManagerUpgradeableInitializeable clonedOzAccessManager = AccessManagerUpgradeableInitializeable(
             Clones.clone(_masterOzAccessManager));
 
         // initially grants ADMIN_ROLE to this (being the instance service). 
@@ -83,18 +76,18 @@ contract InstanceService is
         clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(
             address(clonedOzAccessManager),
-            address(registry), 
+            address(getRegistry()), 
             instanceOwner);
         
-        clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
+        InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
         clonedInstanceReader.initialize(address(clonedInstance));
         clonedInstance.setInstanceReader(clonedInstanceReader);
 
-        clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
+        BundleManager clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
         clonedBundleManager.initialize(address(clonedInstance));
         clonedInstance.setBundleManager(clonedBundleManager);
 
-        clonedInstanceAccessManager = InstanceAccessManager(Clones.clone(_masterInstanceAccessManager));
+        InstanceAccessManager clonedInstanceAccessManager = InstanceAccessManager(Clones.clone(_masterInstanceAccessManager));
         clonedOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAccessManager), 0);
         clonedInstanceAccessManager.initialize(address(clonedInstance));
         clonedInstance.setInstanceAccessManager(clonedInstanceAccessManager);
@@ -105,7 +98,7 @@ contract InstanceService is
 
         clonedOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
 
-        IRegistry.ObjectInfo memory info = registryService.registerInstance(clonedInstance, instanceOwner);
+        IRegistry.ObjectInfo memory info = _registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
 
         emit LogInstanceCloned(
@@ -336,8 +329,6 @@ contract InstanceService is
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
-        AccessManagerUpgradeableInitializeable ozAccessManager = AccessManagerUpgradeableInitializeable(instance.authority());
-        address ozAccessManagerAddress = address(ozAccessManager);
         InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
         address instanceAccessManagerAddress = address(instanceAccessManager);
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -345,28 +336,24 @@ contract InstanceService is
         BundleManager bundleManager = instance.getBundleManager();
         address bundleManagerAddress = address(bundleManager);
 
-        if(ozAccessManagerAddress == address(0)) { revert ErrorInstanceServiceOzAccessManagerZero();}
         if(instanceAccessManagerAddress == address(0)) { revert ErrorInstanceServiceInstanceAccessManagerZero(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
         if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
         
         if(instance.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(bundleManager.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
-        if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
+        if(bundleManager.authority() != instance.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
+        if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
-        _masterOzAccessManager = ozAccessManagerAddress;
+        _masterOzAccessManager = instance.authority();
         _masterInstanceAccessManager = instanceAccessManagerAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
         _masterInstanceBundleManager = bundleManagerAddress;
         
-        IRegistryService registryService = IRegistryService(getRegistry().getServiceAddress(REGISTRY(), getVersion().toMajorPart()));
         IInstance masterInstance = IInstance(_masterInstance);
-        IRegistry.ObjectInfo memory info = registryService.registerInstance(masterInstance, getOwner());
+        IRegistry.ObjectInfo memory info = _registryService.registerInstance(masterInstance, getOwner());
         masterInstanceNftId = info.nftId;
-
-        // masterInstance.linkToRegisteredNftId();
     }
 
     function setMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
@@ -393,6 +380,53 @@ contract InstanceService is
         instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
+
+    // all gif targets MUST be childs of instanceNftId
+    function createGifTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        bytes4[][] memory selectors,
+        RoleId[] memory roles
+    )
+        external
+        onlyRegisteredService
+    {
+        (
+            IInstance instance, // or instanceInfo
+            // or targetInfo
+        ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
+
+        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        accessManager.createGifTarget(targetAddress, targetName);
+        // set proposed target config
+        // TODO restriction: for gif targets can set only once and only here?
+        //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
+        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++)
+        {
+            accessManager.setCoreTargetFunctionRole(targetName, selectors[roleIdx], roles[roleIdx]);
+        }
+    }
+
+
+    // TODO called by component, but target can be component helper...so needs target name
+    // TODO check that targetName associated with component...how???
+    function setComponentLocked(bool locked) onlyComponent external {
+
+        address componentAddress = msg.sender;
+        IRegistry registry = getRegistry();
+        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
+
+        IInstance instance = IInstance(
+            registry.getObjectInfo(
+                instanceNftId).objectAddress);
+
+        instance.getInstanceAccessManager().setTargetLocked(
+            componentAddress, 
+            locked);
+    }
+
+
     function getMasterInstanceReader() external view returns (address) {
         return _masterInstanceReader;
     }
@@ -411,58 +445,22 @@ contract InstanceService is
         initializer
         virtual override
     {
-        address initialOwner;
-        address registryAddress;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
+        (
+            address registryAddress,
+            address initialOwner
+        ) = abi.decode(data, (address, address));
+
+        _registryService = IRegistryService(
+            IRegistry(registryAddress).getServiceAddress(
+                REGISTRY(), 
+                getVersion().toMajorPart()));
+
         // TODO while InstanceService is not deployed in InstanceServiceManager constructor
         //      owner is InstanceServiceManager deployer
         initializeService(registryAddress, address(0), owner);
         registerInterface(type(IInstanceService).interfaceId);
     }
 
-    // all gif targets MUST be childs of instanceNftId
-    function createGifTarget(
-        NftId instanceNftId,
-        address targetAddress,
-        string memory targetName,
-        bytes4[][] memory selectors,
-        RoleId[] memory roles
-    )
-        external
-        onlyRegisteredService
-    {
-        (
-            IInstance instance, // or instanceInfo
-            NftId targetNftId  // or targetInfo
-        ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
-
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
-        accessManager.createGifTarget(targetAddress, targetName);
-        // set proposed target config
-        // TODO restriction: for gif targets can set only once and only here?
-        //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
-        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++)
-        {
-            accessManager.setCoreTargetFunctionRole(targetName, selectors[roleIdx], roles[roleIdx]);
-        }
-    }
-
-    // TODO called by component, but target can be component helper...so needs target name
-    // TODO check that targetName associated with component...how???
-    function setComponentLocked(bool locked) onlyComponent external {
-
-        address componentAddress = msg.sender;
-        IRegistry registry = getRegistry();
-        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
-
-        IInstance instance = IInstance(
-            registry.getObjectInfo(
-                instanceNftId).objectAddress);
-
-        instance.getInstanceAccessManager().setTargetLocked(
-            componentAddress, 
-            locked);
-    }
 
     function _validateInstanceAndComponent(NftId instanceNftId, address componentAddress) 
         internal

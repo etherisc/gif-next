@@ -39,6 +39,7 @@ interface IInstance is
     IAccessManaged, 
     IKeyValueStore 
 {
+    error ErrorInstanceInstanceAccessManagerZero();
     error ErrorInstanceInstanceAccessManagerAlreadySet(address instanceAccessManager);
     error ErrorInstanceInstanceAccessManagerAuthorityMismatch(address instanceAuthority);
 

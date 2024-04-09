@@ -40,9 +40,4 @@ contract RegistryLinked is
     function getRegistry() public view returns (IRegistry) {
         return _registry;
     }
-
-
-    function getRegistryAddress() public view returns (address) {
-        return address(_registry);
-    }
 }

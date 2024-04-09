@@ -25,7 +25,6 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch();
 
-    error ErrorInstanceServiceOzAccessManagerZero();
     error ErrorInstanceServiceInstanceAccessManagerZero();
     error ErrorInstanceServiceInstanceReaderZero();
     error ErrorInstanceServiceBundleManagerZero();
@@ -47,12 +46,8 @@ interface IInstanceService is IService {
     function createInstanceClone()
         external 
         returns (
-            AccessManagerUpgradeableInitializeable clonedOzAccessManager,
-            InstanceAccessManager clonedInstanceAccessManager, 
             Instance clonedInstance,
-            NftId instanceNftId,
-            InstanceReader clonedInstanceReader,
-            BundleManager clonedBundleManager
+            NftId instanceNftId
         );
 
     function createGifTarget(
