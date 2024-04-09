@@ -9,6 +9,7 @@ import {Fee, FeeLib} from "../types/Fee.sol";
 import {Key32} from "../types/Key32.sol";
 import {NftId} from "../types/NftId.sol";
 import {ObjectType, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, TREASURY, BUNDLE} from "../types/ObjectType.sol";
+import {PayoutId} from "../types/PayoutId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../types/Referral.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RiskId} from "../types/RiskId.sol";
@@ -93,6 +94,25 @@ contract InstanceReader {
         returns (StateId state)
     {
         return _instance.getState(claimId.toKey32(policyNftId));
+    }
+
+    function getPayoutInfo(NftId policyNftId, PayoutId payoutId)
+        public
+        view
+        returns (IPolicy.PayoutInfo memory info)
+    {
+        bytes memory data = _store.getData(payoutId.toKey32(policyNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (IPolicy.PayoutInfo));
+        }
+    }
+
+    function getPayoutState(NftId policyNftId, PayoutId payoutId)
+        public
+        view
+        returns (StateId state)
+    {
+        return _instance.getState(payoutId.toKey32(policyNftId));
     }
 
     function getRiskInfo(RiskId riskId)

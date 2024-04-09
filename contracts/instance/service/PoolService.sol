@@ -211,7 +211,7 @@ contract PoolService is
             filter);
 
         // collect tokens from bundle owner
-        _transferStakingTokens(componentInfo, owner, stakingAmount);
+        _transferStakingAmount(componentInfo, owner, stakingAmount);
 
         emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
     }
@@ -371,8 +371,9 @@ contract PoolService is
     }
 
 
+    // TODO create (I)TreasuryService that deals with all gif related token transfers
     /// @dev transfers the specified amount from the bundle owner to the pool's wallet
-    function _transferStakingTokens(
+    function _transferStakingAmount(
         IComponents.ComponentInfo memory componentInfo,
         address bundleOwner,
         Amount stakingAmount

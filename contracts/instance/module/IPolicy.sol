@@ -71,7 +71,6 @@ interface IPolicy {
     struct PayoutInfo {
         ClaimId claimId;
         Amount amount;
-        // TODO consider to add a beneficiary address that will be the receiver of the payout tokens
         bytes data;
         Timestamp paidAt; // payoment of confirmed claim amount (or declinedAt)
     }

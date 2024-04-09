@@ -26,7 +26,7 @@ interface IClaimService is
     event LogClaimServiceClaimClosed(NftId policyNftId, ClaimId claimId);
 
     event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
-    event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
+    event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount, address beneficiary, Amount netAmount);
 
     error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorClaimServicePolicyNotOpen(NftId policyNftId);

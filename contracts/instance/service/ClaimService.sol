@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {IRisk} from "../module/IRisk.sol";
 import {IService} from "./IApplicationService.sol";
 
+import {IComponents} from "../module/IComponents.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
 import {IProductComponent} from "../../components/IProductComponent.sol";
 import {Product} from "../../components/Product.sol";
@@ -27,7 +28,7 @@ import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol"
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
 import {ObjectType, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, CLAIM, BUNDLE} from "../../types/ObjectType.sol";
-import {SUBMITTED, ACTIVE, KEEP_STATE, DECLINED, CONFIRMED, CLOSED} from "../../types/StateId.sol";
+import {SUBMITTED, ACTIVE, KEEP_STATE, DECLINED, CONFIRMED, CLOSED, PAID} from "../../types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {ReferralId} from "../../types/Referral.sol";
@@ -285,28 +286,106 @@ contract ClaimService is
             IPolicy.PolicyInfo memory policyInfo
         ) = _verifyCallerWithPolicy(policyNftId);
 
-        // TODO update and save payout info with instance
-        Amount payoutAmount = AmountLib.toAmount(0);
-        bool payoutIsClosingClaim = false;
+        // TODO add check that payout exists and is open
+        IPolicy.PayoutInfo memory payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+
+        // update and save payout info with instance
+        payoutInfo.paidAt = TimestampLib.blockTimestamp();
+        instance.updatePayout(policyNftId, payoutId, payoutInfo, PAID());
 
         // TODO update and save claim info with instance
+        ClaimId claimId = payoutId.toClaimId();
+        Amount payoutAmount = payoutInfo.amount;
+        IPolicy.ClaimInfo memory claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+        claimInfo.paidAmount = claimInfo.paidAmount.add(payoutAmount);
+        claimInfo.openPayoutsCount -= 1;
 
-        // TODO inform pool about payout
-        _poolService.reduceCollateral(instance, policyNftId, policyInfo, payoutAmount);
+        // check if this payout is closing the linked claim
+        // update claim and policy info accordingly
+        if(claimInfo.openPayoutsCount == 0 && claimInfo.paidAmount == claimInfo.claimAmount) {
+            claimInfo.closedAt == TimestampLib.blockTimestamp();
+            instance.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
 
-        // update policy info if affected by processed payout
-        if(payoutIsClosingClaim) {
             policyInfo.openClaimsCount -= 1;
             instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+        } else {
+            instance.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
         }
+
+        // inform pool about payout
+        _poolService.reduceCollateral(instance, policyNftId, policyInfo, payoutAmount);
+
+        // transfer payout token and fee
+        (
+            Amount netPayoutAmount,
+            address beneficiary
+        ) = _transferPayoutAmount(
+            instanceReader,
+            policyNftId,
+            policyInfo,
+            payoutInfo);
 
         // TODO callback IPolicyHolder
 
-        emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount);
+        emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount, beneficiary, netPayoutAmount);
     }
 
+    // TODO create (I)TreasuryService that deals with all gif related token transfers
+    function _transferPayoutAmount(
+        InstanceReader instanceReader,
+        NftId policyNftId,
+        IPolicy.PolicyInfo memory policyInfo,
+        IPolicy.PayoutInfo memory payoutInfo
+    )
+        internal
+        returns (
+            Amount netPayoutAmount,
+            address beneficiary
+        )
+    {
+        Amount payoutAmount = payoutInfo.amount;
+
+        if(payoutAmount.gtz()) {
+            NftId productNftId = policyInfo.productNftId;
+            ISetup.ProductSetupInfo memory setupInfo = instanceReader.getProductSetupInfo(productNftId);
+
+            // get pool component info from policy or product
+            NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
+            IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
+
+            netPayoutAmount = payoutAmount;
+            beneficiary = _getBeneficiary(policyNftId, payoutInfo.claimId);
+
+            if(FeeLib.gtz(setupInfo.processingFee)) {
+                // TODO calculate net payout and processing fees
+                // TODO transfer processing fees to product wallet
+                // TODO inform product to update fee book keeping
+            }
+
+            poolInfo.tokenHandler.transfer(
+                poolInfo.wallet,
+                beneficiary,
+                netPayoutAmount.toInt()
+            );
+        }
+    }
 
     // internal functions
+
+    function _getBeneficiary(
+        NftId policyNftId,
+        ClaimId claimId
+    )
+        internal
+        returns (address beneficiary)
+    {
+        // TODO check if owner is IPolicyHolder
+        // if so, obtain beneficiary from this contract
+
+        // default beneficiary is policy nft owner
+        beneficiary = getRegistry().ownerOf(policyNftId);
+    }
+
 
     function _verifyCallerWithPolicy(
         NftId policyNftId

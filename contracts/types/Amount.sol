@@ -6,6 +6,9 @@ import {UFixed, UFixedLib} from "./UFixed.sol";
 type Amount is uint96;
 
 using {
+    addAmount as +,
+    eqAmount as ==,
+    AmountLib.eq,
     AmountLib.eqz,
     AmountLib.gtz,
     AmountLib.toInt,
@@ -13,6 +16,13 @@ using {
     AmountLib.toUFixed
 } for Amount global;
 
+function addAmount(Amount a, Amount b) pure returns (Amount) {
+    return AmountLib.add(a, b);
+}
+
+function eqAmount(Amount a, Amount b) pure returns (bool) {
+    return AmountLib.eq(a, b);
+}
 
 library AmountLib {
 
