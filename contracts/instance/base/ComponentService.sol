@@ -21,11 +21,15 @@ abstract contract ComponentService is Service {
     error ErrorComponentServiceSenderNotOwner(address component, address initialOwner, address sender);
     error ErrorComponentServiceExpectedRoleMissing(NftId instanceNftId, RoleId requiredRole, address sender);
     error ErrorComponentServiceComponentLocked(address component);
+    error ErrorComponentServiceSenderNotService(address sender);
+    error ErrorComponentServiceComponentTypeInvalid(address component, ObjectType expectedType, ObjectType foundType);
 
     /// @dev modifier to check if caller is a registered service
     modifier onlyService() {
         address caller = msg.sender;
-        require(getRegistry().isRegisteredService(caller), "ERROR_NOT_SERVICE");
+        if(!getRegistry().isRegisteredService(caller)) {
+            revert ErrorComponentServiceSenderNotService(caller);
+        }
         _;
     }
 
@@ -103,7 +107,12 @@ abstract contract ComponentService is Service {
         IRegistry registry = getRegistry();
 
         info = registry.getObjectInfo(msg.sender);
-        require(info.objectType == expectedType, "OBJECT_TYPE_INVALID");
+        if(info.objectType != expectedType) {
+            revert ErrorComponentServiceComponentTypeInvalid(
+                info.objectAddress, 
+                expectedType, 
+                info.objectType);
+        }
 
         nftId = info.nftId;
         instance = _getInstance(info.parentNftId);

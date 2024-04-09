@@ -41,6 +41,11 @@ library AmountLib {
         return Amount.unwrap(amount) == 0;
     }
 
+    /// @dev return true if amount1 equals amount2
+    function eq(Amount amount1, Amount amount2) public pure returns (bool) {
+        return Amount.unwrap(amount1) == Amount.unwrap(amount2);
+    }
+
     /// @dev return true if amount is larger than 0
     function gtz(Amount amount) public pure returns (bool) {
         return Amount.unwrap(amount) > 0;

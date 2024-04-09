@@ -28,6 +28,7 @@ interface IPolicyService is IService {
     error ErrorIPolicyServicePolicyHasNotExpired(NftId policyNftId, Timestamp expiredAt);
 
     error ErrorIPolicyServicePremiumMismatch(NftId policyNftId, uint256 expectedPremiumAmount, uint256 recalculatedPremiumAmount);
+    error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, uint256 expectedPremiumAmount, uint256 transferredPremiumAmount);
 
     /// @dev collateralizes the policy represented by {policyNftId}
     /// sets the policy state to collateralized
