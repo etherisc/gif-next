@@ -143,6 +143,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         [registry.registryAddress],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
+                FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,

@@ -6,6 +6,7 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 
 import {Amount} from "../types/Amount.sol";
 import {ClaimId} from "../types/ClaimId.sol";
+import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {NftId} from "../types/NftId.sol";
 import {PayoutId} from "../types/PayoutId.sol";
 
@@ -13,7 +14,8 @@ import {PayoutId} from "../types/PayoutId.sol";
 /// GIF will notify policy holder contracts for policy creation and payout execution
 interface IPolicyHolder is
     IERC165,
-    IERC721Receiver
+    IERC721Receiver,
+    IRegistryLinked
 {
 
     /// @dev callback function that will be called after successful policy activation
@@ -32,7 +34,7 @@ interface IPolicyHolder is
     /// @dev callback function that will be called after a successful payout
     function payoutExecuted(NftId policyNftId, PayoutId payoutId, address beneficiary, Amount amount) external;
 
-    /// @dev determines beneficiary address that will be used in payouts targeting this contract
+    /// @dev determines policy and claim specific beneficiary address
     /// returned address will override GIF default where the policy nft holder is treated as beneficiary
     function getBeneficiary(NftId policyNftId, ClaimId claimId) external view returns (address beneficiary);
 }

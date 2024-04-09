@@ -232,7 +232,6 @@ contract ClaimService is
     )
         external
         returns (PayoutId payoutId)
-        // TODO add restricted and grant to policy service
     {
         (
             IInstance instance,
@@ -279,7 +278,6 @@ contract ClaimService is
     )
         external
         virtual
-        // TODO add restricted and grant to policy service
     {
         (
             IInstance instance,
@@ -288,10 +286,13 @@ contract ClaimService is
         ) = _verifyCallerWithPolicy(policyNftId);
 
         // TODO update and save payout info with instance
-        Amount amount = AmountLib.toAmount(0);
+        Amount payoutAmount = AmountLib.toAmount(0);
         bool payoutIsClosingClaim = false;
 
         // TODO update and save claim info with instance
+
+        // TODO inform pool about payout
+        _poolService.reduceCollateral(instance, policyNftId, policyInfo, payoutAmount);
 
         // update policy info if affected by processed payout
         if(payoutIsClosingClaim) {
@@ -301,7 +302,7 @@ contract ClaimService is
 
         // TODO callback IPolicyHolder
 
-        emit LogClaimServicePayoutProcessed(policyNftId, payoutId, amount);
+        emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount);
     }
 
 

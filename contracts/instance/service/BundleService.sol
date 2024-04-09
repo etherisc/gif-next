@@ -115,7 +115,7 @@ contract BundleService is
         IInstance instance,
         NftId poolNftId,
         address owner, 
-        Fee memory fee, 
+        Fee memory bundleFee, 
         Amount stakingAmount, 
         Seconds lifetime, 
         bytes calldata filter
@@ -125,21 +125,6 @@ contract BundleService is
         // TODO add restricted and add authz for pool service
         returns(NftId bundleNftId)
     {
-        InstanceReader instanceReader = instance.getInstanceReader();
-
-        // create initial bundle info
-        IBundle.BundleInfo  memory bundleInfo = IBundle.BundleInfo(
-            poolNftId,
-            fee,
-            filter,
-            stakingAmount,
-            AmountLib.zero(),
-            AmountLib.zero(),
-            lifetime,
-            TimestampLib.blockTimestamp().addSeconds(lifetime),
-            zeroTimestamp()
-        );
-
         // register bundle with registry
         bundleNftId = getRegistryService().registerBundle(
             IRegistry.ObjectInfo(
@@ -154,22 +139,26 @@ contract BundleService is
         );
 
         // create bundle info in instance
-        instance.createBundle(bundleNftId, bundleInfo);
+        instance.createBundle(
+            bundleNftId, 
+            IBundle.BundleInfo(
+                poolNftId,
+                bundleFee,
+                filter,
+                stakingAmount,
+                AmountLib.zero(),
+                AmountLib.zero(),
+                lifetime,
+                TimestampLib.blockTimestamp().addSeconds(lifetime),
+                zeroTimestamp()));
 
         // put bundle under bundle managemet
         BundleManager bundleManager = instance.getBundleManager();
         bundleManager.add(bundleNftId);
-        
-        // transfer full staking amount to pool wallet
-        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        componentInfo.tokenHandler.transfer(
-            owner,
-            componentInfo.wallet,
-            stakingAmount.toInt()
-        );
 
         // TODO add logging
     }
+
 
     function setFee(
         NftId bundleNftId,
@@ -404,40 +393,5 @@ contract BundleService is
         
         BundleManager bundleManager = instance.getBundleManager();
         bundleManager.unlinkPolicy(policyNftId);
-    }
-
-    // TODO move this to pool service
-    function _processStakingByTreasury(
-        InstanceReader instanceReader,
-        NftId poolNftId,
-        NftId bundleNftId,
-        Amount stakingAmount
-    )
-        internal
-    {
-        // process token transfer(s)
-        if(stakingAmount.gtz()) {
-            IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-            IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
-
-            TokenHandler tokenHandler = componentInfo.tokenHandler;
-            address bundleOwner = getRegistry().ownerOf(bundleNftId);
-            Fee memory stakingFee = poolInfo.stakingFee;
-
-            // pool fee and bundle capital book keeping
-            if (FeeLib.gtz(stakingFee)) {
-                (uint256 stakingFeeAmount, uint256 netAmount) = FeeLib.calculateFee(stakingFee, stakingAmount.toInt());
-
-
-                // TODO: track staking fees in pool's state (issue #177)
-            }
-
-            // transfer full staking amount to pool wallet
-            tokenHandler.transfer(
-                bundleOwner,
-                componentInfo.wallet,
-                stakingAmount.toInt()
-            );
-        }
     }
 }

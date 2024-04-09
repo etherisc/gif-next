@@ -38,6 +38,13 @@ interface IBundleService is IService {
         external 
         returns(NftId bundleNftId); // the nft id of the newly created bundle
 
+
+    /// @dev increase bundle stakes by the specified amount
+    /// may only be called by the bundle owner
+    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+
+    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+
     /// @dev locks the specified bundle, locked bundles are not available to collateralize new policies
     /// only active bundles may be locked
     /// may only be called by registered and unlocked pool components
@@ -95,8 +102,4 @@ interface IBundleService is IService {
     ) external;
 
     function increaseBalance(IInstance instance, NftId bundleNftId,  uint256 amount) external;
-
-    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
-
-    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 }

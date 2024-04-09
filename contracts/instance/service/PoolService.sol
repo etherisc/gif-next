@@ -197,17 +197,21 @@ contract PoolService is
         (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
-        // TODO add implementation that takes care of staking fees
-        Amount stakingAfterFeesAmount = stakingAmount;
+        // pool fee book keeping
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        Amount stakingNetAmount = _processStakingFees(componentInfo, stakingAmount);
 
         bundleNftId = _bundleService.create(
             instance,
             poolNftId,
             owner,
             fee,
-            stakingAfterFeesAmount,
+            stakingNetAmount,
             lifetime,
             filter);
+
+        // collect tokens from bundle owner
+        _transferStakingTokens(componentInfo, owner, stakingAmount);
 
         emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
     }
@@ -344,6 +348,47 @@ contract PoolService is
             policyNftId, 
             policyInfo.bundleNftId, 
             policyInfo.sumInsuredAmount);
+    }
+
+
+    function _processStakingFees(
+        IComponents.ComponentInfo memory componentInfo, 
+        Amount stakingAmount
+    )
+        internal
+        returns (Amount stakingNetAmount)
+    {
+        stakingNetAmount = stakingAmount;
+
+        // check if any staking fees apply
+        Fee memory stakingFee = abi.decode(componentInfo.data, (IComponents.PoolInfo)).stakingFee;
+        if (FeeLib.gtz(stakingFee)) {
+            (uint256 feeAmount, uint256 netAmount) = FeeLib.calculateFee(stakingFee, stakingAmount.toInt());
+            stakingNetAmount = AmountLib.toAmount(netAmount);
+
+            // TODO update fee balance for pool
+        }
+    }
+
+
+    /// @dev transfers the specified amount from the bundle owner to the pool's wallet
+    function _transferStakingTokens(
+        IComponents.ComponentInfo memory componentInfo,
+        address bundleOwner,
+        Amount stakingAmount
+    )
+        internal
+    {
+        TokenHandler tokenHandler = componentInfo.tokenHandler;
+        address poolWallet = componentInfo.wallet;
+
+        if(stakingAmount.gtz()) {
+            tokenHandler.transfer(
+                bundleOwner,
+                poolWallet,
+                stakingAmount.toInt()
+            );
+        }
     }
 
 }

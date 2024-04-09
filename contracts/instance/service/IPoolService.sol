@@ -113,19 +113,6 @@ interface IPoolService is IService {
     // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
 
-    // /// @dev creates a new payout for the specified claim
-    // /// returns the id of the newly created payout, this id is unique for the specified policy
-    // /// function can only be called by product, policy needs to match with calling product
-    // function createPayout(
-    //     NftId policyNftId, 
-    //     ClaimId claimId,
-    //     Amount amount,
-    //     bytes memory data
-    // )
-    //     external
-    //     returns (PayoutId payoutId);
-
-
     // /// @dev processes the specified payout
     // /// this includes moving the payout token to the beneficiary (default: policy holder)
     // /// function can only be called by product, policy needs to match with calling product
@@ -133,12 +120,4 @@ interface IPoolService is IService {
     //     NftId policyNftId, 
     //     PayoutId payoutId
     // ) external;
-
-    // /// @dev creates payout request to be processed by pool
-    // /// processing(?) fees will be deducted by the pool service from the staking amount
-    // /// may only be called by claim service
-    // function requestPayout(
-    //     IInstance instance,
-    //     PayoutId payoutId
-    // ) external; 
 }
