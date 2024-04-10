@@ -9,7 +9,6 @@ import {ObjectType} from "../types/ObjectType.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "./IRegisterable.sol";
-import {Versionable} from "./Versionable.sol";
 
 contract Registerable is
     NftOwnable,
@@ -23,12 +22,6 @@ contract Registerable is
         ObjectType _objectType;
         bool _isInterceptor;
         bytes _data;
-    }
-
-    function _getRegisterableStorage() private pure returns (RegisterableStorage storage $) {
-        assembly {
-            $.slot := REGISTERABLE_LOCATION_V1
-        }
     }
 
     function initializeRegisterable(
@@ -47,7 +40,11 @@ contract Registerable is
             initialOwner,
             registryAddress);
 
-        RegisterableStorage storage $ = _getRegisterableStorage();
+        RegisterableStorage storage $;
+        assembly {
+            $.slot := REGISTERABLE_LOCATION_V1
+        }
+
         $._parentNftId = parentNftId;
         $._objectType = objectType;
         $._isInterceptor = isInterceptor;
@@ -61,7 +58,11 @@ contract Registerable is
         virtual 
         returns (IRegistry.ObjectInfo memory info) 
     {
-        RegisterableStorage memory $ = _getRegisterableStorage();
+        RegisterableStorage storage $;
+        assembly {
+            $.slot := REGISTERABLE_LOCATION_V1
+        }
+
         info = IRegistry.ObjectInfo(
             zeroNftId(),
             $._parentNftId,

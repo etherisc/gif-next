@@ -228,15 +228,15 @@ contract DistributorTest is TestGifBase {
         _createDistributorType();
         _createDistributor();
 
-        string memory referralCode = "saveNow";
+        referralCode = "saveNow";
         UFixed referralDiscount = UFixedLib.toUFixed(5, -2);
-        uint32 maxReferralCount = 7;
+        maxReferralCount = 7;
         Seconds thirtySeconds = SecondsLib.toSeconds(30);
         Timestamp referralExpiresAt = TimestampLib.blockTimestamp().addSeconds(thirtySeconds);
-        bytes memory referralData = "refDat";
+        referralData = "refDat";
 
         // WHEN
-        ReferralId referralId = SimpleDistribution(
+        referralId = SimpleDistribution(
             address(distribution)).createReferral(
                 distributorNftId,
                 referralCode,

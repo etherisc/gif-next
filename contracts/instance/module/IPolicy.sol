@@ -41,15 +41,16 @@ interface IPolicy {
         NftId bundleNftId;
         ReferralId referralId;
         RiskId riskId;
-        uint256 sumInsuredAmount;
-        uint256 premiumAmount;
-        uint256 premiumPaidAmount; // when lower than premium amount: max payout decreased accordingly
+        Amount sumInsuredAmount;
+        Amount premiumAmount;
+        Amount premiumPaidAmount; // when lower than premium amount: max payout decreased accordingly
         Seconds lifetime;
         bytes applicationData;
         bytes policyData;
         uint16 claimsCount;
         uint16 openClaimsCount;
-        Amount payoutAmount;
+        Amount claimAmount; // sum of confirmed claim amounts (max = sum insured amount)
+        Amount payoutAmount; // sum of payouts (max = sum confirmed claim amountst)
         Timestamp activatedAt; // time of underwriting
         Timestamp expiredAt; // no new claims (activatedAt + lifetime)
         Timestamp closedAt; // no locked capital (or declinedAt)
@@ -70,7 +71,6 @@ interface IPolicy {
     struct PayoutInfo {
         ClaimId claimId;
         Amount amount;
-        // TODO consider to add a beneficiary address that will be the receiver of the payout tokens
         bytes data;
         Timestamp paidAt; // payoment of confirmed claim amount (or declinedAt)
     }

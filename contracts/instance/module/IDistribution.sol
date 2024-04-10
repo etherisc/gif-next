@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount} from "../../types/Amount.sol";
 import {DistributorType} from "../../types/DistributorType.sol";
 import {NftId} from "../../types/NftId.sol";
 import {Timestamp} from "../../types/Timestamp.sol";
@@ -24,8 +25,8 @@ interface IDistribution {
         DistributorType distributorType;
         bool active;
         bytes data;
-        uint256 sumCommisions;
-        uint256 numPoliciesSold;
+        Amount commissionAmount;
+        uint32 numPoliciesSold;
     }
 
     struct ReferralInfo {   

@@ -29,7 +29,7 @@ contract ObjectManager is
         external 
     {
         IInstance instance = IInstance(instanceAddress);
-        initialize(instance.authority(), instance.getRegistryAddress());
+        initialize(instance.authority(), address(instance.getRegistry()));
 
         _instance = instance;
         

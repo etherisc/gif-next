@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
 import {NftId} from "../../types/NftId.sol";
-import {ObjectType, COMPONENT, BUNDLE, POLICY, RISK, CLAIM} from "../../types/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED} from "../../types/StateId.sol";
+import {ObjectType, COMPONENT, BUNDLE, POLICY, RISK, CLAIM, PAYOUT} from "../../types/ObjectType.sol";
+import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID} from "../../types/StateId.sol";
 import {ILifecycle} from "./ILifecycle.sol";
 
 contract Lifecycle is
@@ -25,7 +25,7 @@ contract Lifecycle is
         _setupBundleLifecycle();
         _setupComponentLifecycle();
         _setupPolicyLifecycle();
-        _setupClaimLifecycle();
+        _setupClaimAndPayoutLifecycle();
         _setupRiskLifecycle();
     }
 
@@ -101,11 +101,14 @@ contract Lifecycle is
         _isValidTransition[POLICY()][ACTIVE()][CLOSED()] = true;
     }
 
-    function _setupClaimLifecycle() internal {
+    function _setupClaimAndPayoutLifecycle() internal {
         _initialState[CLAIM()] = SUBMITTED();
         _isValidTransition[CLAIM()][SUBMITTED()][CONFIRMED()] = true;
         _isValidTransition[CLAIM()][SUBMITTED()][DECLINED()] = true;
         _isValidTransition[CLAIM()][CONFIRMED()][CLOSED()] = true;
+
+        _initialState[PAYOUT()] = EXPECTED();
+        _isValidTransition[PAYOUT()][EXPECTED()][PAID()] = true;
     }
 
     function _setupRiskLifecycle() internal {

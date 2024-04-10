@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount} from "../types/Amount.sol";
 import {Fee} from "../types/Fee.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -18,17 +19,17 @@ interface IPoolComponent is IComponent {
 
     error ErrorPoolApplicationBundleMismatch(NftId applicationNftId);
 
-    event LogPoolVerifiedByPool(address pool, NftId applicationNftId, uint256 collateralizationAmount);
+    event LogPoolVerifiedByPool(address pool, NftId applicationNftId, Amount collateralizationAmount);
 
     /// @dev increases the staked tokens by the specified amount
     /// only the bundle owner may stake tokens
     /// bundle MUST be in active or locked state
-    function stake(NftId bundleNftId, uint256 amount) external;
+    function stake(NftId bundleNftId, Amount amount) external;
 
     /// @dev decreases the staked tokens by the specified amount
     /// only the bundle owner may unstake tokens from the bundle
     /// bundle MUST be in active, locked or closed state
-    function unstake(NftId bundleNftId, uint256 amount) external;
+    function unstake(NftId bundleNftId, Amount amount) external;
 
     /// @dev extends the bundle lifetime of the bundle by the specified time
     /// only the bundle owner may extend the bundle's lifetime
@@ -61,7 +62,7 @@ interface IPoolComponent is IComponent {
 
     /// @dev sets the maximum overall capital amound held by this pool
     /// function may only be called by pool owner
-    function setMaxCapitalAmount(uint256 maxCapitalAmount) external;
+    function setMaxCapitalAmount(Amount maxCapitalAmount) external;
 
     /// @dev sets the required role to create/own bundles
     /// may only be called once after setting up a pool
@@ -88,7 +89,7 @@ interface IPoolComponent is IComponent {
         bytes memory applicationData,
         NftId bundleNftId, 
         bytes memory bundleFilter,
-        uint256 collateralizationAmount
+        Amount collateralizationAmount
     ) external;
 
     /// @dev returns true iff the application matches with the bundle 
@@ -99,7 +100,7 @@ interface IPoolComponent is IComponent {
         bytes memory applicationData,
         NftId bundleNftId, 
         bytes memory bundleFilter,
-        uint256 collateralizationAmount
+        Amount collateralizationAmount
     )
         external
         view

@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {Amount} from "../../types/Amount.sol";
 import {Fee} from "../../types/Fee.sol";
 import {NftId} from "../../types/NftId.sol";
+import {PayoutId} from "../../types/PayoutId.sol";
 import {IBundle} from "../module/IBundle.sol";
 import {IInstance} from "../../instance/IInstance.sol";
 import {IPolicy} from "../module/IPolicy.sol";
@@ -14,7 +15,7 @@ import {StateId} from "../../types/StateId.sol";
 
 interface IPoolService is IService {
 
-    event LogPoolServiceMaxCapitalAmountUpdated(NftId poolNftId, uint256 previousMaxCapitalAmount, uint256 currentMaxCapitalAmount);
+    event LogPoolServiceMaxCapitalAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
     event LogPoolServiceBundleOwnerRoleSet(NftId poolNftId, RoleId bundleOwnerRole);
 
     event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
@@ -32,7 +33,7 @@ interface IPoolService is IService {
     function setBundleOwnerRole(RoleId bundleOwnerRole) external;
 
     /// @dev sets the max capital amount for the calling pool
-    function setMaxCapitalAmount(uint256 maxCapitalAmount) external;
+    function setMaxCapitalAmount(Amount maxCapitalAmount) external;
 
     /// @dev set pool sepecific fees
     function setFees(
@@ -52,7 +53,7 @@ interface IPoolService is IService {
         NftId productNftId,
         NftId applicationNftId,
         IPolicy.PolicyInfo memory applicationInfo,
-        uint256 premiumAmount
+        Amount premiumAmount
     ) external;
 
 
@@ -62,6 +63,17 @@ interface IPoolService is IService {
         IInstance instance, 
         NftId policyNftId, 
         IPolicy.PolicyInfo memory policyInfo
+    ) external;
+
+
+    /// @dev reduces the locked collateral in the bundle associated with the specified policy
+    /// every payout of a policy reduces the collateral by the payout amount
+    /// may only be called by the claim service for unlocked pool components
+    function reduceCollateral(
+        IInstance instance, 
+        NftId policyNftId, 
+        IPolicy.PolicyInfo memory policyInfo,
+        Amount payoutAmount
     ) external;
 
 
@@ -87,7 +99,7 @@ interface IPoolService is IService {
     function closeBundle(NftId bundleNftId) external;
 
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
-    function processSale(NftId bundleNftId, IPolicy.Premium memory premium, uint256 actualAmountTransferred) external;
+    function processSale(NftId bundleNftId, IPolicy.Premium memory premium, Amount actualAmountTransferred) external;
 
     /// @dev increase stakes for bundle
     /// staking fees will be deducted by the pool service from the staking amount

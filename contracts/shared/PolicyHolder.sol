@@ -5,11 +5,12 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
+import {Amount} from "../types/Amount.sol";
+import {ClaimId, ClaimIdLib} from "../types/ClaimId.sol";
 import {ERC165} from "./ERC165.sol";
 import {IPolicyHolder} from "./IPolicyHolder.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../types/NftId.sol";
-import {NumberId} from "../types/NumberId.sol";
+import {PayoutId} from "../types/PayoutId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
 
 /// @dev template implementation for IPolicyHolder
@@ -22,33 +23,43 @@ contract PolicyHolder is
     // TODO fix address
     bytes32 public constant POLICY_HOLDER_STORAGE_LOCATION_V1 = 0x07ebcf49758b6ed3af50fa146bec0abe157c0218fe65dc0874c286e9d5da4f00;
 
-    // TODO uncomment/fix/refactor
     struct PolicyHolderStorage {
-        // mapping(NftId policyId => mapping(NumberId claimId => address beneficiary)) private _claimBeneficiary;
-        // mapping(NftId policyId => address beneficiary) private _beneficiary;
-        bool dummy;
+        mapping(NftId policyId => mapping(ClaimId claimId => address beneficiary)) _beneficiary;
     }
 
     function initializePolicyHolder(
-        address registryAddress
+        address registryAddress,
+        address beneficiaryDefault
     )
         public
         virtual
         onlyInitializing()
     {
         initializeRegistryLinked(registryAddress);
+        registerInterface(type(IPolicyHolder).interfaceId);
     }
 
     /// @dev empty default implementation
-    function policyCreatedCallback(NftId policyNftId) external virtual { }
+    function policyActivated(NftId policyNftId) external {}
 
     /// @dev empty default implementation
-    function payoutExecutedCallback(NftId policyNftId, NumberId payoutId, address beneficiary, uint256 amount) external virtual { }
+    function policyExpired(NftId policyNftId) external {}
 
-    /// @dev determines beneficiary address that will be used in payouts targeting this contract
-    /// returned address will override GIF default where the policy nft holder is treated as beneficiary
-    function getBeneficiary(NftId policyId, NumberId claimId) external virtual view returns (address beneficiary) { 
-        // TODO add implementation
+    /// @dev empty default implementation
+    function claimConfirmed(NftId policyNftId, ClaimId claimId, Amount amount) external {}
+
+    /// @dev empty default implementation
+    function payoutExecuted(NftId policyNftId, PayoutId payoutId, address beneficiary, Amount amount) external {}
+
+    /// @dev returns claim specific beneficiary
+    /// when no such beneficiary is defined the policy specific beneficiary is returned
+    function getBeneficiary(NftId policyNftId, ClaimId claimId) external virtual view returns (address beneficiary) {
+        beneficiary = _getPolicyHolderStorage()._beneficiary[policyNftId][claimId];
+
+        // fallback to claim independent beneficiary
+        if(beneficiary == address(0) && claimId.gtz()) {
+            beneficiary = _getPolicyHolderStorage()._beneficiary[policyNftId][ClaimIdLib.zero()];
+        }
     }
 
     //--- IERC165 functions ---------------// 
@@ -65,12 +76,14 @@ contract PolicyHolder is
         return IERC721Receiver.onERC721Received.selector;
     }
 
-    function _setBeneficiary(address beneficiary) internal {
-
+    /// @dev sets policy specific beneficiary (used when no claim specific beneficiary is defined)
+    function _setBeneficiary(NftId policyNftId, address beneficiary) internal {
+        _setBeneficiary(policyNftId, ClaimIdLib.zero(), beneficiary);
     }
 
-    function _setBeneficiary(NftId policyId, address beneficiary) internal {
-
+    /// @dev sets policy and claim specific beneficiary
+    function _setBeneficiary(NftId policyNftId, ClaimId claimId, address beneficiary) internal {
+        _getPolicyHolderStorage()._beneficiary[policyNftId][claimId] = beneficiary;
     }
 
     function _getPolicyHolderStorage() private pure returns (PolicyHolderStorage storage $) {

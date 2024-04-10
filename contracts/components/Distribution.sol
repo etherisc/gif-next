@@ -140,10 +140,11 @@ abstract contract Distribution is
         // and add it
     {
         DistributionStorage storage $ = _getDistributionStorage();
-        $._distributionService.updateDistributorType(
-            distributorNftId,
-            distributorType,
-            data);
+        // TODO re-enable once implemented
+        // $._distributionService.updateDistributorType(
+        //     distributorNftId,
+        //     distributorType,
+        //     data);
     }
 
     /**

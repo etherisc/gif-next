@@ -1,34 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {AmountLib} from "../../types/Amount.sol";
-import {Seconds} from "../../types/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../types/UFixed.sol";
-import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
-import {ObjectType, DISTRIBUTION, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, BUNDLE, PRICE} from "../../types/ObjectType.sol";
-import {APPLIED, REVOKED, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {Fee, FeeLib} from "../../types/Fee.sol";
-import {ReferralId} from "../../types/Referral.sol";
-import {RiskId} from "../../types/RiskId.sol";
-import {StateId} from "../../types/StateId.sol";
-import {Version, VersionLib} from "../../types/Version.sol";
-import {AmountLib} from "../../types/Amount.sol";
-
-import {TokenHandler} from "../../shared/TokenHandler.sol";
-import {IVersionable} from "../../shared/IVersionable.sol";
-import {Versionable} from "../../shared/Versionable.sol";
-import {IService} from "../../shared/IService.sol";
-import {Service} from "../../shared/Service.sol";
+import {IRisk} from "../module/IRisk.sol";
+import {IService} from "./IApplicationService.sol";
 
 import {IRegistry} from "../../registry/IRegistry.sol";
-
 import {IProductComponent} from "../../components/IProductComponent.sol";
+import {Product} from "../../components/Product.sol";
 import {IPoolComponent} from "../../components/IPoolComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
-import {Product} from "../../components/Product.sol";
-
+import {IInstance} from "../IInstance.sol";
 import {IComponents} from "../module/IComponents.sol";
 import {IPolicy} from "../module/IPolicy.sol";
 import {IRisk} from "../module/IRisk.sol";
@@ -37,16 +18,33 @@ import {IProductService} from "./IProductService.sol";
 import {ITreasury} from "../module/ITreasury.sol";
 import {ISetup} from "../module/ISetup.sol";
 
+import {TokenHandler} from "../../shared/TokenHandler.sol";
+
+import {IVersionable} from "../../shared/IVersionable.sol";
+import {Versionable} from "../../shared/Versionable.sol";
+
+import {Amount, AmountLib} from "../../types/Amount.sol";
+import {Seconds} from "../../types/Seconds.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
+import {UFixed, UFixedLib} from "../../types/UFixed.sol";
+import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
+import {ObjectType, DISTRIBUTION, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, BUNDLE} from "../../types/ObjectType.sol";
+import {APPLIED, REVOKED, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
+import {Fee, FeeLib} from "../../types/Fee.sol";
+import {ReferralId} from "../../types/Referral.sol";
+import {RiskId} from "../../types/RiskId.sol";
+import {StateId} from "../../types/StateId.sol";
+import {Version, VersionLib} from "../../types/Version.sol";
+
 import {ComponentService} from "../base/ComponentService.sol";
-
-import {IInstance} from "../IInstance.sol";
 import {InstanceReader} from "../InstanceReader.sol";
-
 import {IApplicationService} from "./IApplicationService.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 import {IPoolService} from "./IPoolService.sol";
-import {IPricingService} from "./IPricingService.sol";
+import {IService} from "../../shared/IService.sol";
+import {Service} from "../../shared/Service.sol";
 
 
 contract ApplicationService is 
@@ -54,7 +52,6 @@ contract ApplicationService is
     IApplicationService
 {
     IDistributionService internal _distributionService;
-    IPricingService internal _pricingService;
 
     function _initialize(
         address owner, 
@@ -72,8 +69,7 @@ contract ApplicationService is
         initializeService(registryAddress, address(0), owner);
         registerInterface(type(IApplicationService).interfaceId);
 
-        _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
-        _pricingService = IPricingService(_getServiceAddress(PRICE()));
+        _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), getVersion().toMajorPart()));
     }
 
 
@@ -85,7 +81,7 @@ contract ApplicationService is
     function create(
         address applicationOwner,
         RiskId riskId,
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
@@ -95,7 +91,7 @@ contract ApplicationService is
         virtual
         returns (NftId applicationNftId)
     {
-        (NftId productNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         // TODO: add validations (see create bundle in pool service)
 
         applicationNftId = getRegistryService().registerPolicy(
@@ -111,7 +107,7 @@ contract ApplicationService is
         );
 
         // (uint256 premiumAmount,,,,,) = calculatePremium(
-        IPolicy.Premium memory premium = _pricingService.calculatePremium(
+        IPolicy.Premium memory premium = calculatePremium(
             productNftId,
             riskId,
             sumInsuredAmount,
@@ -121,26 +117,27 @@ contract ApplicationService is
             referralId
         );
 
-        IPolicy.PolicyInfo memory policyInfo = IPolicy.PolicyInfo({
-            productNftId:       productNftId,
-            bundleNftId:        bundleNftId,
-            referralId:         referralId,
-            riskId:             riskId,
-            sumInsuredAmount:   sumInsuredAmount,
-            premiumAmount:      premium.premiumAmount,
-            premiumPaidAmount:  0,
-            lifetime:           lifetime,
-            applicationData:    applicationData,
-            policyData:         "",
-            claimsCount:        0,
-            openClaimsCount:    0,
-            payoutAmount:       AmountLib.zero(),
-            activatedAt:        zeroTimestamp(),
-            expiredAt:          zeroTimestamp(),
-            closedAt:           zeroTimestamp()
-        });
+        IPolicy.PolicyInfo memory policyInfo = IPolicy.PolicyInfo(
+            productNftId,
+            bundleNftId,
+            referralId,
+            riskId,
+            sumInsuredAmount,
+            AmountLib.toAmount(premium.premiumAmount),
+            AmountLib.zero(),
+            lifetime,
+            applicationData,
+            "",
+            0,
+            0,
+            AmountLib.zero(),
+            AmountLib.zero(),
+            zeroTimestamp(),
+            zeroTimestamp(),
+            zeroTimestamp()
+        );
         
-        instance.getInstanceStore().createApplication(applicationNftId, policyInfo);
+        instance.createApplication(applicationNftId, policyInfo);
 
         // TODO: add logging
     }
@@ -163,8 +160,8 @@ contract ApplicationService is
         RiskId riskId,
         NftId bundleNftId,
         ReferralId referralId,
-        uint256 sumInsuredAmount,
-        uint256 lifetime,
+        Amount sumInsuredAmount,
+        Seconds lifetime,
         bytes memory applicationData
     )
         external
@@ -177,9 +174,183 @@ contract ApplicationService is
         external
         virtual override
     {
-        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
-        instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
+        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        instance.updateApplicationState(applicationNftId, REVOKED());
     }
 
+    // TODO: maybe move this to a pricing service later
+    function calculatePremium(
+        NftId productNftId,
+        RiskId riskId,
+        Amount sumInsuredAmount,
+        Seconds lifetime,
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        public
+        view
+        virtual override
+        returns (
+            IPolicy.Premium memory premium
+        )
+    {
+        Amount netPremiumAmount = _getAndVerifyProduct(productNftId).calculateNetPremium(
+            sumInsuredAmount,
+            riskId,
+            lifetime,
+            applicationData
+        );
+
+        premium = _getFixedFeeAmounts(
+            netPremiumAmount,
+            _getAndVerifyProduct(productNftId),
+            bundleNftId,
+            referralId
+        );
+
+        (
+            premium
+        ) = _calculateVariableFeeAmounts(
+            premium,
+            _getAndVerifyProduct(productNftId),
+            bundleNftId,
+            referralId
+        );
+    }
+
+
     // internal functions
+    function _getFixedFeeAmounts(
+        Amount netPremiumAmount,
+        Product product,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        internal
+        view
+        returns (
+            IPolicy.Premium memory premium
+        )
+    {
+        InstanceReader instanceReader;
+        {
+            IInstance instance = product.getInstance();
+            instanceReader = instance.getInstanceReader();
+        }
+        
+        NftId poolNftId = product.getPoolNftId();
+        premium = IPolicy.Premium(
+            netPremiumAmount.toInt(), // net premium
+            netPremiumAmount.toInt(), // full premium
+            0, // premium
+            0, 0, 0, 0, // fix fees
+            0, 0, 0, 0, // variable fees
+            0, 0, 0, 0); // distribution owner fee/commission/discount
+
+        {
+            {
+                ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(product.getProductNftId());
+                uint256 t = productSetupInfo.productFee.fixedFee;
+                premium.productFeeFixAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+            {
+                bytes memory componentData = instanceReader.getComponentInfo(poolNftId).data;
+                uint256 t = abi.decode(componentData, (IComponents.PoolInfo)).poolFee.fixedFee;
+                premium.poolFeeFixAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+            {
+                IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+                if(bundleInfo.poolNftId != poolNftId) {
+                    revert ErrorApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+                }
+                uint256 t = bundleInfo.fee.fixedFee;
+                premium.bundleFeeFixAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+            {
+                ISetup.DistributionSetupInfo memory distInto = instanceReader.getDistributionSetupInfo(product.getDistributionNftId());
+                uint256 t = distInto.distributionFee.fixedFee;
+                premium.distributionFeeFixAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+        }
+        
+    }
+
+    function _calculateVariableFeeAmounts(
+        IPolicy.Premium memory premium,
+        Product product,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        internal
+        view
+        returns (
+            IPolicy.Premium memory finalPremium
+        )
+    {
+        InstanceReader instanceReader;
+        {
+            IInstance instance = product.getInstance();
+            instanceReader = instance.getInstanceReader();
+        }
+        
+        NftId poolNftId = product.getPoolNftId();
+        uint256 netPremiumAmount = premium.netPremiumAmount;
+
+        {
+            {
+                ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(product.getProductNftId());
+                uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * productSetupInfo.productFee.fractionalFee).toInt();
+                premium.productFeeVarAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+            {
+                bytes memory componentData = instanceReader.getComponentInfo(poolNftId).data;
+                UFixed poolFractionalFee = abi.decode(componentData, (IComponents.PoolInfo)).poolFee.fractionalFee;
+                uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * poolFractionalFee).toInt();
+                premium.poolFeeVarAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+            {
+                IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+                if(bundleInfo.poolNftId != poolNftId) {
+                    revert ErrorApplicationServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+                }
+                uint256 t = (UFixedLib.toUFixed(netPremiumAmount) * bundleInfo.fee.fractionalFee).toInt();
+                premium.bundleFeeVarAmount = t;
+                premium.fullPremiumAmount += t;
+            }
+            {
+                premium = _distributionService.calculateFeeAmount(
+                    product.getDistributionNftId(),
+                    referralId,
+                    premium
+                );
+            }
+        }
+
+        return premium;
+    }
+
+
+    function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
+        IRegistry.ObjectInfo memory productInfo;
+        (, productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        product = Product(productInfo.objectAddress);
+    }
+
+    function _getAndVerifyProduct(NftId productNftId) internal view returns (Product product) {
+        IRegistry registry = getRegistry();        
+        IRegistry.ObjectInfo memory productInfo = registry.getObjectInfo(productNftId);
+
+        if(productInfo.objectType != PRODUCT()) {
+            revert ErrorApplicationServiceNotProduct(productNftId, productInfo.objectType);
+        }
+
+        product = Product(productInfo.objectAddress);
+    }
 }

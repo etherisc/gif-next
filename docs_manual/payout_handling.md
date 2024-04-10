@@ -11,17 +11,17 @@ The sequence below sketches the small payout flow (payout < retention amount)
 
 ```mermaid
 sequenceDiagram
-  participant customer
+  participant customer as customer (IPolicyHolder)
   participant product
-  participant claimService
   participant poolService
-  participant pool
-  product->>claimService: createPayout()
-  claimService ->> poolService: requestPayout()
+  participant claimService
+  participant pool as pool (IPolicyHolder)
+  product->> poolService: createPayout()
+  poolService ->> claimService: requestPayout()
+  claimService ->> poolService: processPayout()
   poolService -->> pool: verifyPayout() *
-  poolService ->> poolService: processPayout()
+  poolService ->> claimService: payoutProcessedCallback()
   poolService ->> customer: transfer token for payout
-  poolService ->> claimService: payoutExecuted()
   poolService -->> customer: payoutExecutedCallback() **
 ```
 
@@ -38,21 +38,24 @@ The sequence below sketches the call flow for payouts larger than the retention 
 
 ```mermaid
 sequenceDiagram 
-  participant customer
+  participant customer as customer (IPolicyHolder)
   participant product
   participant claimService
   participant poolService
-  participant pool
+  participant pool as pool (IPolicyHolder)
   pool ->> reinsuranceProduct: applyForPolicy()
+ reinsuranceProduct ->> pool: policyActivated()
   product->>claimService: createPayout()
   claimService ->> poolService: requestPayout()
-  poolService ->> pool: pendingPayoutAdded()
+  poolService ->> pool: addPendingPayout()
   pool ->> pool: getReinsurancePolicy()
   pool ->> reinsuranceProduct: claim()
+  reinsuranceProduct ->> pool: claimConfirmed()
   reinsuranceProduct -->> reinsurancePool: createPayout
-  reinsurancePool ->> pool: transfer token for payout
-  reinsurancePool ->> pool: payoutExecutedCallback()
-  pool ->> poolService: processPendingPayout()
-  poolService ->> customer: transfer token for payout
-  poolService ->> claimService: payoutExecuted()
+  reinsurancePool -->> pool: transfer token for payout
+  reinsurancePool ->> pool: payoutExecuted()
+  pool ->> poolService: processPayout()
+  poolService ->> claimService: payoutProcessed()
+  pool -->> customer: transfer token for payout
+  poolService ->> customer: payoutExecuted()
 ```

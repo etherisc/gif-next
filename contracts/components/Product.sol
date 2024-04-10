@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Amount} from "../types/Amount.sol";
+import {Amount, AmountLib} from "../types/Amount.sol";
 import {ClaimId} from "../types/ClaimId.sol";
 import {Component} from "./Component.sol";
 import {Fee} from "../types/Fee.sol";
@@ -12,11 +12,10 @@ import {IApplicationService} from "../instance/service/IApplicationService.sol";
 import {IPolicyService} from "../instance/service/IPolicyService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IClaimService} from "../instance/service/IClaimService.sol";
-import {IPricingService} from "../instance/service/IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, NftIdLib} from "../types/NftId.sol";
 import {PayoutId} from "../types/PayoutId.sol";
-import {PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../types/ObjectType.sol";
+import {PRODUCT, APPLICATION, POLICY, CLAIM } from "../types/ObjectType.sol";
 import {ReferralId} from "../types/Referral.sol";
 import {RiskId, RiskIdLib} from "../types/RiskId.sol";
 import {Seconds} from "../types/Seconds.sol";
@@ -44,7 +43,6 @@ abstract contract Product is
         IApplicationService _applicationService;
         IPolicyService _policyService;
         IClaimService _claimService;
-        IPricingService _pricingService;
         Pool _pool;
         Distribution _distribution;
         Fee _initialProductFee;
@@ -80,7 +78,6 @@ abstract contract Product is
         $._applicationService = IApplicationService(_getServiceAddress(APPLICATION())); 
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
         $._claimService = IClaimService(_getServiceAddress(CLAIM())); 
-        $._pricingService = IPricingService(_getServiceAddress(PRICE()));
         $._pool = Pool(pool);
         $._distribution = Distribution(distribution);
         $._initialProductFee = productFee;
@@ -142,7 +139,7 @@ abstract contract Product is
     function _createApplication(
         address applicationOwner,
         RiskId riskId,
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
@@ -214,7 +211,7 @@ abstract contract Product is
         internal
         returns(ClaimId)
     {
-        return _getProductStorage()._policyService.submitClaim(
+        return _getProductStorage()._claimService.submit(
             policyNftId,
             claimAmount,
             claimData);
@@ -227,7 +224,7 @@ abstract contract Product is
     )
         internal
     {
-        _getProductStorage()._policyService.confirmClaim(
+        _getProductStorage()._claimService.confirm(
             policyNftId,
             claimId,
             confirmedAmount);
@@ -239,7 +236,7 @@ abstract contract Product is
     )
         internal
     {
-        _getProductStorage()._policyService.declineClaim(
+        _getProductStorage()._claimService.decline(
             policyNftId,
             claimId);
     }
@@ -250,7 +247,7 @@ abstract contract Product is
     )
         internal
     {
-        _getProductStorage()._policyService.closeClaim(
+        _getProductStorage()._claimService.close(
             policyNftId,
             claimId);
     }
@@ -264,7 +261,7 @@ abstract contract Product is
         internal
         returns (PayoutId)
     {
-        return _getProductStorage()._policyService.createPayout(
+        return _getProductStorage()._claimService.createPayout(
             policyNftId, 
             claimId, 
             amount, 
@@ -277,13 +274,13 @@ abstract contract Product is
     )
         internal
     {
-        _getProductStorage()._policyService.processPayout(
+        _getProductStorage()._claimService.processPayout(
             policyNftId,
             payoutId);
     }
 
     function calculatePremium(
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         RiskId riskId,
         Seconds lifetime,
         bytes memory applicationData,
@@ -293,9 +290,9 @@ abstract contract Product is
         external 
         view 
         override 
-        returns (uint256 premiumAmount)
+        returns (Amount premiumAmount)
     {
-        IPolicy.Premium memory premium = _getProductStorage()._pricingService.calculatePremium(
+        IPolicy.Premium memory premium = _getProductStorage()._applicationService.calculatePremium(
             getNftId(),
             riskId,
             sumInsuredAmount,
@@ -304,11 +301,12 @@ abstract contract Product is
             bundleNftId,
             referralId
         );
-        premiumAmount = premium.premiumAmount;
+
+        return AmountLib.toAmount(premium.premiumAmount);
     }
 
     function calculateNetPremium(
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         RiskId riskId,
         Seconds lifetime,
         bytes memory applicationData
@@ -316,10 +314,10 @@ abstract contract Product is
         external
         view
         virtual override
-        returns (uint256 netPremiumAmount)
+        returns (Amount netPremiumAmount)
     {
         // default 10% of sum insured
-        return sumInsuredAmount / 10;
+        return AmountLib.toAmount(sumInsuredAmount.toInt() / 10);
     }
 
     function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {

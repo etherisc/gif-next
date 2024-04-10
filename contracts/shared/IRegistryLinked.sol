@@ -8,5 +8,4 @@ interface IRegistryLinked {
     error ErrorNotRegistry(address registryAddress);
 
     function getRegistry() external view returns (IRegistry);
-    function getRegistryAddress() external view returns (address);
 }
