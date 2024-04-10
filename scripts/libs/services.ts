@@ -131,7 +131,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress, 
+                VersionPartLib: libraries.versionPartLibAddress,
+                AmountLib: libraries.amountLibAddress
             }});
     
     const pricingServiceManager = pricingServiceManagerBaseContract as PricingServiceManager;

@@ -189,6 +189,14 @@ library InstanceAuthorizationsLib
         // configure authorization for claim/payout services on instance
         address claimServiceAddress = registry.getServiceAddress(CLAIM(), majorVersion);
         clonedAccessManager.grantRole(CLAIM_SERVICE_ROLE(), claimServiceAddress);
+
+        bytes4[] memory instancePolicyServiceSelectors = new bytes4[](1);
+        instancePolicyServiceSelectors[0] = clonedInstanceStore.updatePolicyClaims.selector;
+        clonedAccessManager.setCoreTargetFunctionRole(
+            "InstanceStore",
+            instancePolicyServiceSelectors, 
+            CLAIM_SERVICE_ROLE());
+
         bytes4[] memory instanceClaimServiceSelectors = new bytes4[](4);
         instanceClaimServiceSelectors[0] = clonedInstanceStore.createClaim.selector;
         instanceClaimServiceSelectors[1] = clonedInstanceStore.updateClaim.selector;

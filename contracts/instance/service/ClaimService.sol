@@ -394,7 +394,7 @@ contract ClaimService is
         )
     {
         NftId productNftId;
-        (productNftId,, instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (productNftId,, instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
         instanceReader = instance.getInstanceReader();
 
         // check caller(product) policy match

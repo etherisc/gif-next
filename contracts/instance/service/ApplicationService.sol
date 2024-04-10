@@ -134,6 +134,7 @@ contract ApplicationService is
             policyData:         "",
             claimsCount:        0,
             openClaimsCount:    0,
+            claimAmount:        AmountLib.zero(),
             payoutAmount:       AmountLib.zero(),
             activatedAt:        zeroTimestamp(),
             expiredAt:          zeroTimestamp(),

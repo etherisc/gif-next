@@ -47,13 +47,6 @@ export async function deployAndRegisterMasterInstance(
         { 
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
-                DistributorTypeLib: libraries.distributorTypeLibAddress,
-                ReferralLib: libraries.referralLibAddress,
-                ClaimIdLib: libraries.claimIdLibAddress,
-                PayoutIdLib: libraries.payoutIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress,
-                RiskIdLib: libraries.riskIdLibAddress,
-                StateIdLib: libraries.stateIdLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
             }
@@ -89,7 +82,11 @@ export async function deployAndRegisterMasterInstance(
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
-                StateIdLib: libraries.stateIdLibAddress
+                StateIdLib: libraries.stateIdLibAddress,
+                ClaimIdLib: libraries.claimIdLibAddress,
+                DistributorTypeLib: libraries.distributorTypeLibAddress,
+                PayoutIdLib: libraries.payoutIdLibAddress,
+                ReferralLib: libraries.referralLibAddress
             }
         }
     );

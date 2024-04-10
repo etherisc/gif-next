@@ -9,7 +9,7 @@ import {Fee} from "../../types/Fee.sol";
 import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
 import {PRODUCT, DISTRIBUTION, PRICE} from "../../types/ObjectType.sol";
-
+import {Amount} from "../../types/Amount.sol";
 import {IRegistry} from "../../registry/IRegistry.sol";
 
 import {IProductComponent} from "../../components/IProductComponent.sol";
@@ -66,7 +66,7 @@ contract PricingService is
     function calculatePremium(
         NftId productNftId,
         RiskId riskId,
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,
@@ -80,7 +80,7 @@ contract PricingService is
         )
     {
         InstanceReader reader;
-        uint256 netPremiumAmount;
+        Amount netPremiumAmount;
 
         {
             // verify product
@@ -167,7 +167,7 @@ contract PricingService is
 
     // internal functions
     function _getFixedFeeAmounts(
-        uint256 netPremiumAmount,
+        Amount netPremiumAmount,
         ISetup.ProductSetupInfo memory productInfo,
         IComponents.PoolInfo memory poolInfo,
         ISetup.DistributionSetupInfo memory distInfo,
@@ -180,8 +180,8 @@ contract PricingService is
         )
     {
         // initial premium amount is the net premium
-        premium.netPremiumAmount = netPremiumAmount;
-        premium.fullPremiumAmount = netPremiumAmount;
+        premium.netPremiumAmount = netPremiumAmount.toInt();
+        premium.fullPremiumAmount = netPremiumAmount.toInt();
 
         uint256 t = productInfo.productFee.fixedFee;
         premium.productFeeFixAmount = t;
