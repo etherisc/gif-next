@@ -27,7 +27,9 @@ abstract contract ComponentService is Service {
     /// @dev modifier to check if caller is a registered service
     modifier onlyService() {
         address caller = msg.sender;
-        require(getRegistry().isRegisteredService(caller), "ERROR_NOT_SERVICE");
+        if(!getRegistry().isRegisteredService(caller)) {
+            revert ErrorComponentServiceSenderNotService(caller);
+        }
         _;
     }
 
