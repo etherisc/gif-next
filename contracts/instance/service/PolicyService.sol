@@ -18,7 +18,7 @@ import {Amount, AmountLib} from "../../types/Amount.sol";
 import {ClaimId, ClaimIdLib} from "../../types/ClaimId.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
-import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM} from "../../types/ObjectType.sol";
+import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../../types/ObjectType.sol";
 import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED, CONFIRMED} from "../../types/StateId.sol";
 import {NftId, NftIdLib} from "../../types/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../../types/PayoutId.sol";
@@ -33,9 +33,9 @@ import {IDistributionService} from "./IDistributionService.sol";
 import {InstanceReader} from "../InstanceReader.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {IPoolService} from "./IPoolService.sol";
+import {IPricingService} from "./IPricingService.sol";
 import {IService} from "../../shared/IService.sol";
 import {Service} from "../../shared/Service.sol";
-
 
 contract PolicyService is
     ComponentService, 
@@ -49,6 +49,7 @@ contract PolicyService is
     IClaimService internal _claimService;
     IDistributionService internal _distributionService;
     IPoolService internal _poolService;
+    IPricingService internal _pricingService;
 
     event LogProductServiceSender(address sender);
 
@@ -72,6 +73,7 @@ contract PolicyService is
         _claimService = IClaimService(getRegistry().getServiceAddress(CLAIM(), majorVersion));
         _applicationService = IApplicationService(getRegistry().getServiceAddress(APPLICATION(), majorVersion));
         _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), majorVersion));
+        _pricingService = IPricingService(getRegistry().getServiceAddress(PRICE(), majorVersion));
 
         registerInterface(type(IPolicyService).interfaceId);
     }
@@ -84,7 +86,7 @@ contract PolicyService is
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
-        (, productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (, productInfo,) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
 
@@ -109,14 +111,16 @@ contract PolicyService is
         virtual override
     {
         // check caller is registered product
-        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         // check policy matches with calling product
         IPolicy.PolicyInfo memory applicationInfo = instanceReader.getPolicyInfo(applicationNftId);
-        
-        if (applicationInfo.productNftId != productNftId) {
-            revert ErrorPolicyServiceProductMismatch(applicationNftId, applicationInfo.productNftId, productNftId);
+        if(applicationInfo.productNftId != productNftId) {
+            revert ErrorPolicyServicePolicyProductMismatch(
+                applicationNftId, 
+                applicationInfo.productNftId, 
+                productNftId);
         }
 
         // check policy is in state applied
@@ -147,7 +151,7 @@ contract PolicyService is
         }
 
         // store updated policy info
-        instance.updatePolicy(applicationNftId, applicationInfo, newPolicyState);
+        instance.getInstanceStore().updatePolicy(applicationNftId, applicationInfo, newPolicyState);
 
         // lock collateral and update pool and bundle book keeping
         // pool retention level: fraction of sum insured that product will cover from pool funds directly
@@ -186,7 +190,7 @@ contract PolicyService is
         virtual
     {
         // check caller is registered product
-        (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
 
@@ -204,7 +208,7 @@ contract PolicyService is
         policyInfo.premiumPaidAmount = policyInfo.premiumPaidAmount + unpaidPremiumAmount;
 
         _bundleService.increaseBalance(instance, policyInfo.bundleNftId, netPremiumAmount);
-        instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         if(activateAt.gtz() && policyInfo.activatedAt.eqz()) {
             activate(policyNftId, activateAt);
@@ -215,7 +219,7 @@ contract PolicyService is
 
     function activate(NftId policyNftId, Timestamp activateAt) public override {
         // check caller is registered product
-        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -227,7 +231,7 @@ contract PolicyService is
         policyInfo.activatedAt = activateAt;
         policyInfo.expiredAt = activateAt.addSeconds(policyInfo.lifetime);
 
-        instance.updatePolicy(policyNftId, policyInfo, ACTIVE());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, ACTIVE());
 
         // TODO: add logging
     }
@@ -249,7 +253,7 @@ contract PolicyService is
         external 
         override
     {
-        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -283,7 +287,7 @@ contract PolicyService is
             policyNftId, 
             policyInfo);
 
-        instance.updatePolicy(policyNftId, policyInfo, CLOSED());
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, CLOSED());
     }
 
 
@@ -302,7 +306,7 @@ contract PolicyService is
 
         NftId productNftId = getRegistry().getObjectInfo(policyNftId).parentNftId;
         IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
-        IPolicy.Premium memory premium = _applicationService.calculatePremium(
+        IPolicy.Premium memory premium = _pricingService.calculatePremium(
             productNftId,
             policyInfo.riskId,
             policyInfo.sumInsuredAmount,

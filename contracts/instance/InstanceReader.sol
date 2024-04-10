@@ -29,6 +29,8 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {ITreasury} from "../instance/module/ITreasury.sol";
 import {TimestampLib} from "../types/Timestamp.sol";
 
+import {InstanceStore} from "./InstanceStore.sol";
+
 
 contract InstanceReader {
 
@@ -45,12 +47,12 @@ contract InstanceReader {
             revert ErrorInstanceReaderAlreadyInitialized();
         }
 
-        if(address(instance) == address(0)) {
+        if(instance == address(0)) {
             revert ErrorInstanceReaderInstanceAddressZero();
         }
 
         _instance = IInstance(instance);
-        _store = IKeyValueStore(instance);
+        _store = _instance.getInstanceStore();
 
         _initialized = true;
     }
@@ -74,7 +76,7 @@ contract InstanceReader {
         view
         returns (StateId state)
     {
-        return _instance.getState(toPolicyKey(policyNftId));
+        return _store.getState(toPolicyKey(policyNftId));
     }
 
     /// @dev returns true iff policy may be closed
@@ -122,7 +124,7 @@ contract InstanceReader {
         view
         returns (StateId state)
     {
-        return _instance.getState(claimId.toKey32(policyNftId));
+        return _store.getState(claimId.toKey32(policyNftId));
     }
 
     function getPayoutInfo(NftId policyNftId, PayoutId payoutId)
@@ -141,7 +143,7 @@ contract InstanceReader {
         view
         returns (StateId state)
     {
-        return _instance.getState(payoutId.toKey32(policyNftId));
+        return _store.getState(payoutId.toKey32(policyNftId));
     }
 
     function getRiskInfo(RiskId riskId)

@@ -109,7 +109,7 @@ contract ClaimService is
 
         // create new claim
         claimId = ClaimIdLib.toClaimId(policyInfo.claimsCount + 1);
-        instance.createClaim(
+        instance.getInstanceStore().createClaim(
             policyNftId, 
             claimId, 
             IPolicy.ClaimInfo(
@@ -124,7 +124,7 @@ contract ClaimService is
         policyInfo.claimsCount += 1;
         policyInfo.openClaimsCount += 1;
         // policy claim amount is only updated when claim is confirmed
-        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogClaimServiceClaimSubmitted(policyNftId, claimId, claimAmount);
     }
@@ -151,7 +151,7 @@ contract ClaimService is
 
         // update and save policy info with instance
         policyInfo.claimAmount = policyInfo.claimAmount.add(confirmedAmount);
-        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
     }
@@ -176,7 +176,7 @@ contract ClaimService is
 
         // update and save policy info with instance
         policyInfo.openClaimsCount -= 1;
-        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogClaimServiceClaimDeclined(policyNftId, claimId);
     }
@@ -215,13 +215,7 @@ contract ClaimService is
         }
 
         claimInfo.closedAt = TimestampLib.blockTimestamp();
-        instance.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
-
-        // update and save policy info with instance
-        policyInfo.openClaimsCount -= 1;
-        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
-
-        emit LogClaimServiceClaimClosed(policyNftId, claimId);
+        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CLOSED());
     }
 
 
@@ -251,7 +245,7 @@ contract ClaimService is
         // create payout info with instance
         uint8 claimNo = claimInfo.payoutsCount + 1;
         payoutId = PayoutIdLib.toPayoutId(claimId, claimNo);
-        instance.createPayout(
+        instance.getInstanceStore().createPayout(
             policyNftId, 
             payoutId, 
             IPolicy.PayoutInfo(
@@ -263,11 +257,11 @@ contract ClaimService is
         // update and save claim info with instance
         claimInfo.payoutsCount += 1;
         claimInfo.openPayoutsCount += 1;
-        instance.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
+        instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
 
         // update and save policy info with instance
         policyInfo.payoutAmount.add(amount);
-        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogClaimServicePayoutCreated(policyNftId, payoutId, amount);
     }
@@ -313,7 +307,7 @@ contract ClaimService is
 
         // update and save policy info with instance
         policyInfo.payoutAmount = policyInfo.payoutAmount.add(payoutAmount);
-        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
+        instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         // inform pool about payout
         _poolService.reduceCollateral(instance, policyNftId, policyInfo, payoutAmount);
@@ -437,7 +431,7 @@ contract ClaimService is
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
-        (, productInfo,) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
+        (, productInfo,) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
 }

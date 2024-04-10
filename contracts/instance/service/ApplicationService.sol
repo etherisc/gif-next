@@ -14,7 +14,7 @@ import {ReferralId} from "../../types/Referral.sol";
 import {RiskId} from "../../types/RiskId.sol";
 import {StateId} from "../../types/StateId.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
-import {AmountLib} from "../../types/Amount.sol";
+import {Amount, AmountLib} from "../../types/Amount.sol";
 
 import {TokenHandler} from "../../shared/TokenHandler.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";

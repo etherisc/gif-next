@@ -18,7 +18,7 @@ import {Fee} from "../../types/Fee.sol";
 
 interface IPolicyService is IService {
 
-    error ErrorPolicyServiceProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
+    error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
 
     error ErrorIPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
