@@ -348,10 +348,7 @@ contract BundleService is
 
         // reduce locked amount by released collateral amount
         bundleInfo.lockedAmount = AmountLib.toAmount(bundleInfo.lockedAmount.toInt() - collateralAmount);
-
         instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
-        
-        _unlinkPolicy(instance, policyNftId);
     }
 
     /// @dev links policy to bundle
@@ -370,28 +367,19 @@ contract BundleService is
         bundleManager.linkPolicy(policyNftId);
     }
 
-        /// @dev unlinks policy from bundle
-    function _unlinkPolicy(IInstance instance, NftId policyNftId) 
-        internal
+    /// @dev unlinks policy from bundle
+    function unlinkPolicy(
+        IInstance instance, 
+        NftId policyNftId
+    ) 
+        external
+        virtual
     {
-        InstanceReader instanceReader = instance.getInstanceReader();
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-
-        // ensure policy has no open claims
-        if (policyInfo.openClaimsCount > 0) {
-            revert BundleManager.ErrorBundleManagerPolicyWithOpenClaims(
-                policyNftId, 
-                policyInfo.openClaimsCount);
-        }
-
         // ensure policy is closeable
-        if ( TimestampLib.blockTimestamp() < policyInfo.expiredAt
-            && policyInfo.payoutAmount.toInt() < policyInfo.sumInsuredAmount)
-        {
-            revert BundleManager.ErrorBundleManagerPolicyNotCloseable(policyNftId);
+        if (!instance.getInstanceReader().policyIsCloseable(policyNftId)) {
+            revert ErrorBundleServicePolicyNotCloseable(policyNftId);
         }
-        
-        BundleManager bundleManager = instance.getBundleManager();
-        bundleManager.unlinkPolicy(policyNftId);
+
+        instance.getBundleManager().unlinkPolicy(policyNftId);
     }
 }

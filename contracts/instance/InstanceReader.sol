@@ -77,6 +77,35 @@ contract InstanceReader {
         return _instance.getState(toPolicyKey(policyNftId));
     }
 
+    /// @dev returns true iff policy may be closed
+    /// a policy can be closed all conditions below are met
+    /// - policy exists
+    /// - has been activated
+    /// - is not yet closed
+    /// - has no open claims
+    /// - claim amount matches sum insured amount or is expired
+    function policyIsCloseable(NftId policyNftId)
+        public
+        view
+        returns (bool isCloseable)
+    {
+        IPolicy.PolicyInfo memory info = getPolicyInfo(policyNftId);
+
+        if (info.productNftId.eqz()) { return false; } // not closeable: policy does not exist (or does not belong to this instance)
+        if (info.activatedAt.eqz()) { return false; } // not closeable: not yet activated
+        if (info.closedAt.gtz()) { return false; } // not closeable: already closed
+        if (info.openClaimsCount > 0) { return false; } // not closeable: has open claims
+
+        // closeable: if sum of claims matches sum insured a policy may be closed prior to the expiry date
+        if (info.claimAmount.toInt() == info.sumInsuredAmount) { return true; }
+
+        // not closeable: not yet expired
+        if (TimestampLib.blockTimestamp() < info.expiredAt) { return false; }
+
+        // all conditionsl to close the policy are met
+        return true; 
+    }
+
     function getClaimInfo(NftId policyNftId, ClaimId claimId)
         public
         view

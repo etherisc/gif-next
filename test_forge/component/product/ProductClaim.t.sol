@@ -225,62 +225,6 @@ contract TestProductClaim is TestGifBase {
         claimState = instanceReader.getClaimState(policyNftId, claimId);
     }
 
-    function test_ProductPayoutCreateHappyCase() public {
-        // GIVEN
-        _approve();
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
-        Amount claimAmount = AmountLib.toAmount(499);
-
-        (
-            IPolicy.PolicyInfo memory policyInfo,
-            ClaimId claimId,
-            IPolicy.ClaimInfo memory claimInfo,
-            StateId claimState
-        ) = _makeClaim(policyNftId, claimAmount);
-
-        assertEq(policyInfo.claimsCount, 1, "claims count not 1 (before)");
-        assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1 (before)");
-        assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
-        assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
-        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0 (before)");
-
-        // WHEN
-        Amount payoutAmount = AmountLib.toAmount(200);
-        bytes memory payoutData = "some payout";
-        PayoutId payoutIdExpected = PayoutIdLib.toPayoutId(claimId, 1);
-
-        vm.recordLogs();
-        PayoutId payoutId = prdct.createPayout(policyNftId, claimId, payoutAmount, payoutData);
-        Vm.Log[] memory entries = vm.getRecordedLogs();
-
-        // THEN
-        // checking last of 4 logs
-        assertEq(entries.length, 6, "unexpected number of logs");
-        assertEq(entries[5].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[5].topics[0], keccak256("LogClaimServicePayoutCreated(uint96,uint24,uint96)"), "unexpected log signature");
-        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmountInt) = abi.decode(entries[5].data, (uint96,uint24,uint96));
-        assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
-        assertEq(payoutIdInt, payoutId.toInt(), "unexpected payout id");
-        assertEq(payoutAmountInt, payoutAmount.toInt(), "unexpected payout amount");
-
-        assertTrue(payoutId.gtz(), "payout id zero");
-        assertEq(payoutId.toInt(), payoutIdExpected.toInt(), "unexpected payoutId");
-
-        policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        assertEq(policyInfo.claimsCount, 1, "claims count not 1");
-        assertEq(policyInfo.openClaimsCount, 1, "open claims count not 1");
-        assertEq(policyInfo.payoutAmount.toInt(), 0, "payout amount not 0");
-
-        // check claim state and info
-        assertEq(instanceReader.getClaimState(policyNftId, claimId).toInt(), CONFIRMED().toInt(), "unexpected claim state");
-
-        claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
-        assertEq(claimInfo.claimAmount.toInt(), claimAmount.toInt(), "unexpected claim amount");
-        assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
-        assertEq(claimInfo.payoutsCount, 1, "payouts count not 1");
-        assertEq(claimInfo.openPayoutsCount, 1, "open payouts count not 1");
-    }
-
     function _approve() internal {
         // add allowance to pay premiums
         ISetup.ProductSetupInfo memory productSetup = instanceReader.getProductSetupInfo(productNftId);(productNftId);

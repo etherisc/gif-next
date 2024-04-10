@@ -150,7 +150,7 @@ contract ClaimService is
         instance.updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
 
         // update and save policy info with instance
-        policyInfo.claimAmount.add(confirmedAmount);
+        policyInfo.claimAmount = policyInfo.claimAmount.add(confirmedAmount);
         instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
@@ -307,10 +307,13 @@ contract ClaimService is
             instance.updateClaim(policyNftId, claimId, claimInfo, CLOSED());
 
             policyInfo.openClaimsCount -= 1;
-            instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
         } else {
             instance.updateClaim(policyNftId, claimId, claimInfo, KEEP_STATE());
         }
+
+        // update and save policy info with instance
+        policyInfo.payoutAmount = policyInfo.payoutAmount.add(payoutAmount);
+        instance.updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         // inform pool about payout
         _poolService.reduceCollateral(instance, policyNftId, policyInfo, payoutAmount);

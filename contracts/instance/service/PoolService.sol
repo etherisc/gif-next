@@ -326,8 +326,13 @@ contract PoolService is
     )
         external
         virtual
+        // TODO add restricted and granting for claim service
     {
-        revert ErrorServiceNotImplemented();
+        _bundleService.releaseCollateral(
+            instance, 
+            policyNftId, 
+            policyInfo.bundleNftId, 
+            payoutAmount.toInt());
     }
 
 
@@ -342,12 +347,15 @@ contract PoolService is
         virtual
         // TODO add restricted and granting for policy service
     {
-        // release collateral from involved bundle
         _bundleService.releaseCollateral(
             instance, 
             policyNftId, 
             policyInfo.bundleNftId, 
-            policyInfo.sumInsuredAmount);
+            policyInfo.sumInsuredAmount - policyInfo.claimAmount.toInt());
+
+        _bundleService.unlinkPolicy(
+            instance, 
+            policyNftId);
     }
 
 

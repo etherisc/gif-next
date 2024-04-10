@@ -24,6 +24,8 @@ interface IBundleService is IService {
     error ErrorBundleServiceBundleUnknown(NftId bundleNftId);
     error ErrorBundleServiceBundlePoolMismatch(NftId expectedPoolNftId, NftId bundlePoolNftId);
 
+    error ErrorBundleServicePolicyNotCloseable(NftId policyNftId);
+
     /// @dev create a new bundle for the specified attributes
     /// may only be called by pool service
     function create(
@@ -85,13 +87,6 @@ interface IBundleService is IService {
         uint256 premium // premium amount after pool fee
     ) external;
 
-    /// @dev updates the bundle's fees of with the provided fee amount
-    function updateBundleFees(
-        IInstance instance,
-        NftId bundleNftId,
-        Amount feeAmount
-    ) external;
-
     /// @dev releases the specified collateral in the bundle
     /// may only be called by pool service
     function releaseCollateral(
@@ -99,6 +94,21 @@ interface IBundleService is IService {
         NftId policyNftId, 
         NftId bundleNftId, 
         uint256 collateralAmount
+    ) external;
+
+    /// @dev unlink policy from bundle
+    /// policy may only be unlinked if policy is closeable
+    /// may only be called by pool service
+    function unlinkPolicy(
+        IInstance instance, 
+        NftId policyNftId
+    ) external;
+
+    /// @dev updates the bundle's fees of with the provided fee amount
+    function updateBundleFees(
+        IInstance instance,
+        NftId bundleNftId,
+        Amount feeAmount
     ) external;
 
     function increaseBalance(IInstance instance, NftId bundleNftId,  uint256 amount) external;

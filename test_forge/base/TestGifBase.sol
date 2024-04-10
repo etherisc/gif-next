@@ -675,7 +675,9 @@ contract TestGifBase is Test {
             UFixedLib.toUFixed(1),
             poolOwner
         );
+
         poolNftId = poolService.register(address(pool));
+        pool.approveTokenHandler(type(uint256).max);
         vm.stopPrank();
     }
 

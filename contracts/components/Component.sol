@@ -20,6 +20,7 @@ import {VersionPart} from "../types/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId, RoleIdLib} from "../types/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../types/Version.sol";
 
 // TODO discuss to inherit from oz accessmanaged
@@ -95,12 +96,26 @@ abstract contract Component is
         registerInterface(type(IComponent).interfaceId);
     }
 
-    function lock() external onlyOwner override {
+    function lock() external onlyOwner {
         IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
     }
     
-    function unlock() external onlyOwner override {
+    function unlock() external onlyOwner {
         IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
+    }
+
+    function approveTokenHandler(uint256 spendingLimitAmount) external onlyOwner {
+        IComponents.ComponentInfo memory info = getComponentInfo();
+
+        if(info.wallet != address(this)) {
+            revert ErrorComponentWalletNotComponent();
+        }
+
+        info.token.approve(
+            address(info.tokenHandler),
+            spendingLimitAmount);
+
+        emit LogComponentTokenHandlerApproved(spendingLimitAmount);
     }
 
     function setWallet(address newWallet)
@@ -195,6 +210,10 @@ abstract contract Component is
 
     function getToken() public view override returns (IERC20Metadata token) {
         return _getComponentStorage()._token;
+    }
+
+    function getTokenHandler() public view returns (TokenHandler tokenHandler) {
+        return getComponentInfo().tokenHandler;
     }
 
     function isNftInterceptor() public view override returns(bool isInterceptor) {
