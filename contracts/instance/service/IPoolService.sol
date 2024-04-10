@@ -15,7 +15,7 @@ import {StateId} from "../../types/StateId.sol";
 
 interface IPoolService is IService {
 
-    event LogPoolServiceMaxCapitalAmountUpdated(NftId poolNftId, uint256 previousMaxCapitalAmount, uint256 currentMaxCapitalAmount);
+    event LogPoolServiceMaxCapitalAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
     event LogPoolServiceBundleOwnerRoleSet(NftId poolNftId, RoleId bundleOwnerRole);
 
     event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
@@ -33,7 +33,7 @@ interface IPoolService is IService {
     function setBundleOwnerRole(RoleId bundleOwnerRole) external;
 
     /// @dev sets the max capital amount for the calling pool
-    function setMaxCapitalAmount(uint256 maxCapitalAmount) external;
+    function setMaxCapitalAmount(Amount maxCapitalAmount) external;
 
     /// @dev set pool sepecific fees
     function setFees(
@@ -53,7 +53,7 @@ interface IPoolService is IService {
         NftId productNftId,
         NftId applicationNftId,
         IPolicy.PolicyInfo memory applicationInfo,
-        uint256 premiumAmount
+        Amount premiumAmount
     ) external;
 
 
@@ -99,7 +99,7 @@ interface IPoolService is IService {
     function closeBundle(NftId bundleNftId) external;
 
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
-    function processSale(NftId bundleNftId, IPolicy.Premium memory premium, uint256 actualAmountTransferred) external;
+    function processSale(NftId bundleNftId, IPolicy.Premium memory premium, Amount actualAmountTransferred) external;
 
     /// @dev increase stakes for bundle
     /// staking fees will be deducted by the pool service from the staking amount
@@ -111,13 +111,4 @@ interface IPoolService is IService {
     /// performance fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
     // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
-
-
-    // /// @dev processes the specified payout
-    // /// this includes moving the payout token to the beneficiary (default: policy holder)
-    // /// function can only be called by product, policy needs to match with calling product
-    // function processPayout(
-    //     NftId policyNftId, 
-    //     PayoutId payoutId
-    // ) external;
 }

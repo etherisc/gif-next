@@ -16,9 +16,9 @@ interface IBundleService is IService {
     event LogBundleServiceBundleActivated(NftId bundleNftId);
     event LogBundleServiceBundleLocked(NftId bundleNftId);
 
-    error ErrorBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
+    error ErrorBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, Amount amount);
     error ErrorBundleServiceBundleNotOpen(NftId bundleNftId, StateId state, Timestamp expiredAt);
-    error ErrorBundleServiceCapacityInsufficient(NftId bundleNftId, uint capacityAmount, uint collateralAmount);
+    error ErrorBundleServiceCapacityInsufficient(NftId bundleNftId, Amount capacityAmount, Amount collateralAmount);
     error ErrorBundleServiceBundleWithOpenPolicies(NftId bundleNftId, uint256 openPoliciesCount);
 
     error ErrorBundleServiceBundleUnknown(NftId bundleNftId);
@@ -83,8 +83,8 @@ interface IBundleService is IService {
         IInstance instanceNftId, 
         NftId policyNftId, 
         NftId bundleNftId, 
-        uint256 collateralAmount, 
-        uint256 premium // premium amount after pool fee
+        Amount collateralAmount, 
+        Amount premiumAmount // premium after pool fee
     ) external;
 
     /// @dev releases the specified collateral in the bundle
@@ -93,7 +93,7 @@ interface IBundleService is IService {
         IInstance instance, 
         NftId policyNftId, 
         NftId bundleNftId, 
-        uint256 collateralAmount
+        Amount collateralAmount
     ) external;
 
     /// @dev unlink policy from bundle
@@ -111,5 +111,8 @@ interface IBundleService is IService {
         Amount feeAmount
     ) external;
 
-    function increaseBalance(IInstance instance, NftId bundleNftId,  uint256 amount) external;
+    function increaseBalance(
+        IInstance instance, 
+        NftId bundleNftId,  
+        Amount amount) external;
 }

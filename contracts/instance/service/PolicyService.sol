@@ -134,7 +134,7 @@ contract PolicyService is
         }
 
         // lock bundle collateral
-        uint256 netPremiumAmount = 0; // > 0 if immediate premium payment 
+        Amount netPremiumAmount = AmountLib.zero(); // > 0 if immediate premium payment 
 
         // optional collection of premium
         if(requirePremiumPayment) {
@@ -143,7 +143,7 @@ contract PolicyService is
                 applicationNftId, 
                 applicationInfo.premiumAmount);
 
-            applicationInfo.premiumPaidAmount += applicationInfo.premiumAmount;
+            applicationInfo.premiumPaidAmount = applicationInfo.premiumPaidAmount + applicationInfo.premiumAmount;
         }
 
         // store updated policy info
@@ -165,30 +165,43 @@ contract PolicyService is
     }
 
 
-    function calculateRequiredCollateral(UFixed collateralizationLevel, uint256 sumInsuredAmount) public pure override returns(uint256 collateralAmount) {
-        UFixed sumInsuredUFixed = UFixedLib.toUFixed(sumInsuredAmount);
-        UFixed collateralUFixed =  collateralizationLevel * sumInsuredUFixed;
-        return collateralUFixed.toInt();
+    function calculateRequiredCollateral(
+        UFixed collateralizationLevel, 
+        Amount sumInsuredAmount
+    )
+        public 
+        pure 
+        virtual 
+        returns(Amount collateralAmount)
+    {
+        UFixed collateralUFixed =  collateralizationLevel * sumInsuredAmount.toUFixed();
+        return AmountLib.toAmount(collateralUFixed.toInt());
     } 
 
-    function collectPremium(NftId policyNftId, Timestamp activateAt) external override {
+    function collectPremium(
+        NftId policyNftId, 
+        Timestamp activateAt
+    )
+        external 
+        virtual
+    {
         // check caller is registered product
         (NftId productNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
 
         if (policyInfo.premiumPaidAmount == policyInfo.premiumAmount) {
-            revert ErrorIPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
+            revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
         }
 
-        uint256 unpaidPremiumAmount = policyInfo.premiumAmount - policyInfo.premiumPaidAmount;
+        Amount unpaidPremiumAmount = policyInfo.premiumAmount - policyInfo.premiumPaidAmount;
 
-        uint256 netPremiumAmount = _processPremiumByTreasury(
+        Amount netPremiumAmount = _processPremiumByTreasury(
                 instance, 
                 policyNftId, 
                 unpaidPremiumAmount);
 
-        policyInfo.premiumPaidAmount += unpaidPremiumAmount;
+        policyInfo.premiumPaidAmount = policyInfo.premiumPaidAmount + unpaidPremiumAmount;
 
         _bundleService.increaseBalance(instance, policyInfo.bundleNftId, netPremiumAmount);
         instance.updatePolicy(policyNftId, policyInfo, KEEP_STATE());
@@ -255,8 +268,8 @@ contract PolicyService is
         }
 
         // TODO consider to allow for underpaid premiums (with the effects of reducing max payouts accordingly)
-        if (policyInfo.premiumAmount != policyInfo.premiumPaidAmount) {
-            revert ErrorIPolicyServicePremiumNotFullyPaid(policyNftId, policyInfo.premiumAmount, policyInfo.premiumPaidAmount);
+        if (!(policyInfo.premiumAmount == policyInfo.premiumPaidAmount)) {
+            revert ErrorPolicyServicePremiumNotFullyPaid(policyNftId, policyInfo.premiumAmount, policyInfo.premiumPaidAmount);
         }
 
         if (policyInfo.openClaimsCount > 0) {
@@ -277,14 +290,14 @@ contract PolicyService is
     function _processPremiumByTreasury(
         IInstance instance,
         NftId policyNftId,
-        uint256 premiumExpectedAmount
+        Amount premiumExpectedAmount
     )
         internal
-        returns (uint256 netPremiumAmount)
+        returns (Amount netPremiumAmount)
     {
         // process token transfer(s)
-        if(premiumExpectedAmount == 0) {
-            return 0;
+        if(premiumExpectedAmount.eqz()) {
+            return AmountLib.zero();
         }
 
         NftId productNftId = getRegistry().getObjectInfo(policyNftId).parentNftId;
@@ -299,11 +312,11 @@ contract PolicyService is
             policyInfo.referralId
             );
 
-        if (premium.premiumAmount != premiumExpectedAmount) {
-            revert ErrorIPolicyServicePremiumMismatch(
+        if (premium.premiumAmount != premiumExpectedAmount.toInt()) {
+            revert ErrorPolicyServicePremiumMismatch(
                 policyNftId, 
                 premiumExpectedAmount, 
-                premium.premiumAmount);
+                AmountLib.toAmount(premium.premiumAmount));
         }
 
         address policyOwner = getRegistry().ownerOf(policyNftId);
@@ -313,12 +326,13 @@ contract PolicyService is
             revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premium.premiumAmount);
         }
 
-        uint256 productFeeAmountToTransfer = premium.productFeeFixAmount + premium.productFeeVarAmount;
-        uint256 distributionFeeAmountToTransfer = premium.distributionFeeFixAmount + premium.distributionFeeVarAmount - premium.discountAmount;
+        Amount productFeeAmountToTransfer = AmountLib.toAmount(premium.productFeeFixAmount + premium.productFeeVarAmount);
+        Amount distributionFeeAmountToTransfer = AmountLib.toAmount(premium.distributionFeeFixAmount + premium.distributionFeeVarAmount - premium.discountAmount);
         uint256 poolFeeAmountToTransfer = premium.poolFeeFixAmount + premium.poolFeeVarAmount;
         uint256 bundleFeeAmountToTransfer = premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
-        uint256 poolAmountToTransfer = premium.netPremiumAmount + poolFeeAmountToTransfer + bundleFeeAmountToTransfer;
-        netPremiumAmount = premium.netPremiumAmount;
+        Amount poolAmountToTransfer = AmountLib.toAmount(premium.netPremiumAmount + poolFeeAmountToTransfer + bundleFeeAmountToTransfer);
+
+        netPremiumAmount = AmountLib.toAmount(premium.netPremiumAmount);
 
         // move product fee to product wallet
         {
@@ -343,12 +357,12 @@ contract PolicyService is
 
         // validate total amount transferred
         {
-            uint256 totalTransferred = distributionFeeAmountToTransfer + poolAmountToTransfer + productFeeAmountToTransfer;
+            Amount totalTransferred = distributionFeeAmountToTransfer + poolAmountToTransfer + productFeeAmountToTransfer;
 
-            if (premium.premiumAmount != totalTransferred) {
+            if (premium.premiumAmount != totalTransferred.toInt()) {
                 revert ErrorPolicyServiceTransferredPremiumMismatch(
                     policyNftId, 
-                    premium.premiumAmount, 
+                    AmountLib.toAmount(premium.premiumAmount), 
                     totalTransferred);
             }
         }

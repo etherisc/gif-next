@@ -22,16 +22,16 @@ interface IPolicyService is IService {
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
 
     error ErrorIPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
-    error ErrorIPolicyServicePremiumAlreadyPaid(NftId policyNftId, uint256 premiumPaidAmount);
+    error ErrorPolicyServicePremiumAlreadyPaid(NftId policyNftId, Amount premiumPaidAmount);
     error ErrorIPolicyServicePolicyNotActivated(NftId policyNftId);
     error ErrorIPolicyServicePolicyAlreadyClosed(NftId policyNftId);
     error ErrorIPolicyServicePolicyNotActive(NftId policyNftId, StateId state);
-    error ErrorIPolicyServicePremiumNotFullyPaid(NftId policyNftId, uint256 premiumAmount, uint256 premiumPaidAmount);
+    error ErrorPolicyServicePremiumNotFullyPaid(NftId policyNftId, Amount premiumAmount, Amount premiumPaidAmount);
     error ErrorIPolicyServiceOpenClaims(NftId policyNftId, uint16 openClaimsCount);
     error ErrorIPolicyServicePolicyHasNotExpired(NftId policyNftId, Timestamp expiredAt);
 
-    error ErrorIPolicyServicePremiumMismatch(NftId policyNftId, uint256 expectedPremiumAmount, uint256 recalculatedPremiumAmount);
-    error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, uint256 expectedPremiumAmount, uint256 transferredPremiumAmount);
+    error ErrorPolicyServicePremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount recalculatedPremiumAmount);
+    error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount transferredPremiumAmount);
 
     /// @dev collateralizes the policy represented by {policyNftId}
     /// sets the policy state to collateralized
@@ -74,7 +74,7 @@ interface IPolicyService is IService {
     // TODO move function to pool service
     function calculateRequiredCollateral(
         UFixed collateralizationLevel, 
-        uint256 sumInsuredAmount
-    ) external pure returns(uint256 collateralAmount);
+        Amount sumInsuredAmount
+    ) external pure returns(Amount collateralAmount);
 
 }

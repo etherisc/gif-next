@@ -75,16 +75,16 @@ contract BundleService is
     function _updatePoolWithStakes(
         IInstance instance,
         NftId poolNftId,
-        uint256 stakingAmount
+        Amount stakingAmount
     )
         internal
         returns (
             TokenHandler tokenHandler,
             address wallet,
-            uint256 netStakingAmount
+            Amount netStakingAmount
         )
     {
-        if(stakingAmount > 0) {
+        if(stakingAmount.gtz()) {
             InstanceReader instanceReader = instance.getInstanceReader();
             IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
 
@@ -92,16 +92,16 @@ contract BundleService is
             wallet = componentInfo.wallet;
 
             IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
-            uint256 poolFeeAmount;
+            Amount poolFeeAmount;
 
             // calculate pool fee and net staking amount
             (poolFeeAmount, netStakingAmount) = FeeLib.calculateFee(poolInfo.stakingFee, stakingAmount);
 
             // update pool balance and fee amount
-            poolInfo.balanceAmount += netStakingAmount;
+            poolInfo.balanceAmount = poolInfo.balanceAmount + netStakingAmount;
 
-            if(poolFeeAmount > 0) {
-                poolInfo.feeAmount += poolFeeAmount;
+            if(poolFeeAmount.gtz()) {
+                poolInfo.feeAmount = poolInfo.feeAmount + poolFeeAmount;
             }
 
             // save updated pool info
@@ -190,8 +190,8 @@ contract BundleService is
         IInstance instance,
         NftId policyNftId, 
         NftId bundleNftId, 
-        uint256 collateralAmount, // required amount to collateralize policy
-        uint256 premiumAmount // premium part that reaches bundle for this policy
+        Amount collateralAmount, // required amount to collateralize policy
+        Amount premiumAmount // premium part that reaches bundle for this policy
     ) 
         external
         onlyService // TODO replace with restricted + appropriate granting
@@ -206,7 +206,7 @@ contract BundleService is
         }
 
         // ensure bundle capacity is sufficent to collateralize policy
-        uint capacity = bundleInfo.capitalAmount.toInt() + premiumAmount - bundleInfo.lockedAmount.toInt();
+        Amount capacity = bundleInfo.capitalAmount + premiumAmount - bundleInfo.lockedAmount;
         if(capacity < collateralAmount) {
             revert ErrorBundleServiceCapacityInsufficient(bundleNftId, capacity, collateralAmount);
         }
@@ -214,7 +214,7 @@ contract BundleService is
         // TODO add more validation
         
         // updated locked amount
-        bundleInfo.lockedAmount = AmountLib.toAmount(bundleInfo.lockedAmount.toInt() + collateralAmount);
+        bundleInfo.lockedAmount = bundleInfo.lockedAmount + collateralAmount;
 
         // update capital and fees when premiums are involved
         _updateBundleWithPremium(instance, bundleNftId, bundleInfo, premiumAmount);
@@ -228,20 +228,20 @@ contract BundleService is
         IInstance instance,
         NftId bundleNftId,
         IBundle.BundleInfo memory bundleInfo,
-        uint256 premiumAmount
+        Amount premiumAmount
     )
         internal
     {
         // update bundle capital and fee amounts
-        if(premiumAmount > 0) {
+        if(premiumAmount.gtz()) {
             // calculate fees and net premium amounts
             (
                 , 
-                uint256 netPremiumAmount
+                Amount netPremiumAmount
             ) = FeeLib.calculateFee(bundleInfo.fee, premiumAmount);
 
             // update bundle info with additional capital
-            bundleInfo.capitalAmount = AmountLib.toAmount(bundleInfo.capitalAmount.toInt() + netPremiumAmount);
+            bundleInfo.capitalAmount = bundleInfo.capitalAmount + netPremiumAmount;
         }
 
         // save updated bundle info
@@ -321,7 +321,7 @@ contract BundleService is
     function increaseBalance(
         IInstance instance,
         NftId bundleNftId, 
-        uint256 premiumAmount
+        Amount premiumAmount
     ) 
         external
         onlyService 
@@ -338,7 +338,7 @@ contract BundleService is
     function releaseCollateral(IInstance instance,
         NftId policyNftId, 
         NftId bundleNftId, 
-        uint256 collateralAmount
+        Amount collateralAmount
     ) 
         external
         onlyService 
@@ -347,7 +347,7 @@ contract BundleService is
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
 
         // reduce locked amount by released collateral amount
-        bundleInfo.lockedAmount = AmountLib.toAmount(bundleInfo.lockedAmount.toInt() - collateralAmount);
+        bundleInfo.lockedAmount = bundleInfo.lockedAmount - collateralAmount;
         instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 

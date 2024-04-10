@@ -182,9 +182,11 @@ contract TestProductClaim is TestGifBase {
         uint256 poolBalanceBefore = prdct.getToken().balanceOf(pool.getWallet());
         uint256 customerBalanceBefore = prdct.getToken().balanceOf(customer);
 
+        // solhint-disable
         console.log("payout amount:", payoutAmountInt);
         console.log("pool balance before: ", poolBalanceBefore);
         console.log("customer balance before: ", customerBalanceBefore);
+        // solhint-enable
 
         // create claim and payout
         (
@@ -252,8 +254,10 @@ contract TestProductClaim is TestGifBase {
         uint256 poolBalanceAfter = prdct.getToken().balanceOf(pool.getWallet());
         uint256 customerBalanceAfter = prdct.getToken().balanceOf(customer);
 
+        // solhint-disable
         console.log("pool balance after: ", poolBalanceAfter);
         console.log("customer balance after: ", customerBalanceAfter);
+        // solhint-enable
 
         // check new token balances
         assertEq(poolBalanceBefore - poolBalanceAfter, payoutAmountInt, "unexpected pool balance after payout");

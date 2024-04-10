@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {Amount, AmountLib} from "./Amount.sol";
 import {UFixed, UFixedLib} from "./UFixed.sol";
 
 struct Fee {
@@ -12,21 +13,21 @@ library FeeLib {
 
     function calculateFee(
         Fee memory fee,
-        uint256 amount
+        Amount amount
     )
         public
         pure
         returns (
-            uint256 feeAmount, 
-            uint256 netAmount
+            Amount feeAmount, 
+            Amount netAmount
         )
     {
         netAmount = amount;
         if(gtz(fee)) {
             UFixed fractionalAmount = 
-                UFixedLib.toUFixed(amount) * fee.fractionalFee;
-            feeAmount = fractionalAmount.toInt() + fee.fixedFee;
-            netAmount -= feeAmount;
+                amount.toUFixed() * fee.fractionalFee;
+            feeAmount = AmountLib.toAmount(fractionalAmount.toInt() + fee.fixedFee);
+            netAmount = netAmount - feeAmount;
         }
     }
 

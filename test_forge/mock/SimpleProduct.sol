@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../../contracts/types/Amount.sol";
+import {Amount, AmountLib} from "../../contracts/types/Amount.sol";
 import {ClaimId} from "../../contracts/types/ClaimId.sol";
 import {Fee} from "../../contracts/types/Fee.sol";
 import {NftId} from "../../contracts/types/NftId.sol";
@@ -114,7 +114,7 @@ contract SimpleProduct is Product {
         return _createApplication(
             applicationOwner,
             riskId,
-            sumInsuredAmount,
+            AmountLib.toAmount(sumInsuredAmount),
             lifetime,
             bundleNftId,
             referralId,

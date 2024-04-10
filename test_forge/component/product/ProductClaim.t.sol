@@ -203,9 +203,6 @@ contract TestProductClaim is TestGifBase {
         assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
         assertEq(keccak256(claimInfo.data), keccak256(claimData), "unexpected claim data");
         assertEq(claimInfo.closedAt.toInt(), block.timestamp, "unexpected closed at");
-
-        // emit LogClaimTestClaimInfo(policyNftId, policyInfo, claimId, claimInfo);
-        // require(false, "ups...");
     }
 
 

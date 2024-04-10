@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {Amount} from "../../types/Amount.sol";
 import {NftId} from "../../types/NftId.sol";
 import {Fee} from "../../types/Fee.sol";
 import {IPolicy} from "../module/IPolicy.sol";
@@ -34,7 +35,7 @@ interface IDistributionService is IService {
                 uint256 discountAmount
             );
     error ErrorIDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
-    error ErrorIDistributionServiceInvalidFeeTransferred(uint256 transferredDistributionFeeAmount, uint256 expectedDistributionFeeAmount);
+    error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
 
     function setFees(
         Fee memory minDistributionOwnerFee,
@@ -61,11 +62,12 @@ interface IDistributionService is IService {
         bytes memory data
     ) external returns (NftId distributorNftId);
 
-    function updateDistributorType(
-        NftId distributorNftId,
-        DistributorType distributorType,
-        bytes memory data
-    ) external;
+    // TODO re-enable and reorganize (service contract too large)
+    // function updateDistributorType(
+    //     NftId distributorNftId,
+    //     DistributorType distributorType,
+    //     bytes memory data
+    // ) external;
 
     function createReferral(
         NftId distributorNftId,
@@ -83,7 +85,7 @@ interface IDistributionService is IService {
         NftId distributionNftId,
         ReferralId referralId,
         IPolicy.Premium memory premium,
-        uint256 transferredDistributionFeeAmount
+        Amount transferredDistributionFeeAmount
     ) external;
 
     function calculateFeeAmount(

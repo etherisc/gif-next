@@ -41,9 +41,9 @@ interface IPolicy {
         NftId bundleNftId;
         ReferralId referralId;
         RiskId riskId;
-        uint256 sumInsuredAmount;
-        uint256 premiumAmount;
-        uint256 premiumPaidAmount; // when lower than premium amount: max payout decreased accordingly
+        Amount sumInsuredAmount;
+        Amount premiumAmount;
+        Amount premiumPaidAmount; // when lower than premium amount: max payout decreased accordingly
         Seconds lifetime;
         bytes applicationData;
         bytes policyData;

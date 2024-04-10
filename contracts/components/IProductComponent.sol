@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount} from "../types/Amount.sol";
 import {Fee} from "../types/Fee.sol";
 import {IComponent} from "./IComponent.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
@@ -19,20 +20,20 @@ interface IProductComponent is IComponent {
     ) external;
 
     function calculatePremium(
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         RiskId riskId,
         Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,
         ReferralId referralId
-    ) external view returns (uint256 premiumAmount);
+    ) external view returns (Amount premiumAmount);
 
     function calculateNetPremium(
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         RiskId riskId,
         Seconds lifetime,
         bytes memory applicationData
-    ) external view returns (uint256 netPremiumAmount);    
+    ) external view returns (Amount netPremiumAmount);    
 
     
     function getPoolNftId() external view returns (NftId poolNftId);

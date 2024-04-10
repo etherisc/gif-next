@@ -7,7 +7,10 @@ type Amount is uint96;
 
 using {
     addAmount as +,
+    subAmount as -,
     eqAmount as ==,
+    ltAmount as <,
+    gtAmount as >,
     AmountLib.eq,
     AmountLib.eqz,
     AmountLib.gtz,
@@ -20,8 +23,20 @@ function addAmount(Amount a, Amount b) pure returns (Amount) {
     return AmountLib.add(a, b);
 }
 
+function subAmount(Amount a, Amount b) pure returns (Amount) {
+    return AmountLib.sub(a, b);
+}
+
 function eqAmount(Amount a, Amount b) pure returns (bool) {
     return AmountLib.eq(a, b);
+}
+
+function ltAmount(Amount a, Amount b) pure returns (bool) {
+    return AmountLib.lt(a, b);
+}
+
+function gtAmount(Amount a, Amount b) pure returns (bool) {
+    return AmountLib.gt(a, b);
 }
 
 library AmountLib {
@@ -56,6 +71,16 @@ library AmountLib {
         return Amount.unwrap(amount1) == Amount.unwrap(amount2);
     }
 
+    /// @dev return true if amount a1 is smaller than a2
+    function lt(Amount a1, Amount a2) public pure returns (bool) {
+        return Amount.unwrap(a1) < Amount.unwrap(a2);
+    }
+
+    /// @dev return true if amount a1 is larger than a2
+    function gt(Amount a1, Amount a2) public pure returns (bool) {
+        return Amount.unwrap(a1) > Amount.unwrap(a2);
+    }
+
     /// @dev return true if amount is larger than 0
     function gtz(Amount amount) public pure returns (bool) {
         return Amount.unwrap(amount) > 0;
@@ -63,6 +88,10 @@ library AmountLib {
 
     function add(Amount a1, Amount a2) public pure returns (Amount) {
         return Amount.wrap(Amount.unwrap(a1) + Amount.unwrap(a2));
+    }
+
+    function sub(Amount a1, Amount a2) public pure returns (Amount) {
+        return Amount.wrap(Amount.unwrap(a1) - Amount.unwrap(a2));
     }
 
     function toInt(Amount amount) public pure returns (uint256) {

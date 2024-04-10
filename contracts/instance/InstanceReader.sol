@@ -97,7 +97,7 @@ contract InstanceReader {
         if (info.openClaimsCount > 0) { return false; } // not closeable: has open claims
 
         // closeable: if sum of claims matches sum insured a policy may be closed prior to the expiry date
-        if (info.claimAmount.toInt() == info.sumInsuredAmount) { return true; }
+        if (info.claimAmount == info.sumInsuredAmount) { return true; }
 
         // not closeable: not yet expired
         if (TimestampLib.blockTimestamp() < info.expiredAt) { return false; }

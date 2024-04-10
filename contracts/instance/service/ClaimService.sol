@@ -100,10 +100,10 @@ contract ClaimService is
         }
 
         // check policy including this claim is still within sum insured
-        if(policyInfo.payoutAmount.toInt() + claimAmount.toInt() > policyInfo.sumInsuredAmount) {
+        if(policyInfo.payoutAmount + claimAmount > policyInfo.sumInsuredAmount) {
             revert ErrorClaimServiceClaimExceedsSumInsured(
                 policyNftId, 
-                AmountLib.toAmount(policyInfo.sumInsuredAmount), 
+                policyInfo.sumInsuredAmount,
                 AmountLib.toAmount(policyInfo.payoutAmount.toInt() + claimAmount.toInt()));
         }
 
@@ -368,8 +368,7 @@ contract ClaimService is
             poolInfo.tokenHandler.transfer(
                 poolInfo.wallet,
                 beneficiary,
-                netPayoutAmount.toInt()
-            );
+                netPayoutAmount);
         }
     }
 
