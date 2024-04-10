@@ -85,9 +85,11 @@ export async function deployAndRegisterMasterInstance(
         [],
         { 
             libraries: {
+                AmountLib: libraries.amountLibAddress,
+                ClaimIdLib: libraries.claimIdLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                ClaimIdLib: libraries.claimIdLibAddress,
+                PayoutIdLib: libraries.payoutIdLibAddress,
                 ReferralLib: libraries.referralLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,

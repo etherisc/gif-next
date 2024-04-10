@@ -69,7 +69,7 @@ abstract contract Pool is
 
     function stake(
         NftId bundleNftId, 
-        uint256 amount
+        Amount amount
     )
         public
         virtual
@@ -82,7 +82,7 @@ abstract contract Pool is
 
     function unstake(
         NftId bundleNftId, 
-        uint256 amount
+        Amount amount
     )
         public
         virtual
@@ -149,7 +149,7 @@ abstract contract Pool is
     }
 
 
-    function setMaxCapitalAmount(uint256 maxCapitalAmount)
+    function setMaxCapitalAmount(Amount maxCapitalAmount)
         public
         virtual
         restricted()
@@ -189,7 +189,7 @@ abstract contract Pool is
         bytes memory applicationData,
         NftId bundleNftId, 
         bytes memory bundleFilter,
-        uint256 collateralizationAmount
+        Amount collateralizationAmount
     )
         public
         virtual
@@ -218,7 +218,7 @@ abstract contract Pool is
         bytes memory applicationData,
         NftId bundleNftId, 
         bytes memory bundleFilter,
-        uint256 collateralizationAmount
+        Amount collateralizationAmount
     )
         public
         view
@@ -279,9 +279,9 @@ abstract contract Pool is
                 IComponents.PoolInfo(
                     NftIdLib.zero(), // will be set when GIF registers the related product
                     PUBLIC_ROLE(), // bundleOwnerRole
-                    type(uint256).max, // maxCapitalAmount,
-                    0, // initial balance amount
-                    0, // initial fee amount
+                    AmountLib.max(), // maxCapitalAmount,
+                    AmountLib.zero(), // initial balance amount
+                    AmountLib.zero(), // initial fee amount
                     isNftInterceptor(), // isInterceptingBundleTransfers
                     false, // isExternallyManaged,
                     false, // isVerifyingApplications,

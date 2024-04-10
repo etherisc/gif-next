@@ -12,5 +12,7 @@ interface IService is
     IVersionable,
     IAccessManaged
 {
+    error ErrorServiceNotImplemented();
+
     function getDomain() external pure returns(ObjectType serviceDomain);
 }

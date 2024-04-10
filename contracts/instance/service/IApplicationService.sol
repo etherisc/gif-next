@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {IPolicy} from "../module/IPolicy.sol";
 import {IService} from "../../shared/IService.sol";
 
+import {Amount} from "../../types/Amount.sol";
 import {NftId} from "../../types/NftId.sol";
 import {ObjectType} from "../../types/ObjectType.sol";
 import {ReferralId} from "../../types/Referral.sol";
@@ -22,7 +23,7 @@ interface IApplicationService is IService {
     function create(
         address applicationOwner,
         RiskId riskId,
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
@@ -37,8 +38,8 @@ interface IApplicationService is IService {
         RiskId riskId,
         NftId bundleNftId,
         ReferralId referralId,
-        uint256 sumInsuredAmount,
-        uint256 lifetime,
+        Amount sumInsuredAmount,
+        Seconds lifetime,
         bytes memory applicationData
     ) external;
 
@@ -64,7 +65,7 @@ interface IApplicationService is IService {
     function calculatePremium(
         NftId productNftId,
         RiskId riskId,
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,

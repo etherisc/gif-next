@@ -8,22 +8,24 @@ Contains the instance service contracts.
 {{BundleServiceManager}}
 {{ClaimServiceManager}}
 {{DistributionServiceManager}}
+{{PolicyServiceManager}}
+{{PoolServiceManager}}
+
+{{ProductServiceManager}}
 {{IApplicationService}}
+{{IBundleService}}
 {{IClaimService}}
+{{IDistributionService}}
+{{IPoolService}}
 {{IPolicyService}}
 {{IProductService}}
-{{PolicyService}}
-{{PoolService}}
-{{ProductService}}
+
 {{ApplicationService}}
 {{BundleService}}
 {{ClaimService}}
 {{DistributionService}}
-{{IBundleService}}
-{{IDistributionService}}
-{{IPoolService}}
-{{PolicyServiceManager}}
-{{PoolServiceManager}}
-{{ProductServiceManager}}
+{{PolicyService}}
+{{PoolService}}
+{{ProductService}}
 
 

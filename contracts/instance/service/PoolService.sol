@@ -118,7 +118,7 @@ contract PoolService is
     }
 
 
-    function setMaxCapitalAmount(uint256 maxCapitalAmount)
+    function setMaxCapitalAmount(Amount maxCapitalAmount)
         external
         virtual
     {
@@ -127,7 +127,7 @@ contract PoolService is
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
         IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
-        uint256 previousMaxCapitalAmount = poolInfo.maxCapitalAmount;
+        Amount previousMaxCapitalAmount = poolInfo.maxCapitalAmount;
 
         poolInfo.maxCapitalAmount = maxCapitalAmount;
         componentInfo.data = abi.encode(poolInfo);
@@ -197,17 +197,21 @@ contract PoolService is
         (NftId poolNftId,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
-        // TODO add implementation that takes care of staking fees
-        Amount stakingAfterFeesAmount = stakingAmount;
+        // pool fee book keeping
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        Amount stakingNetAmount = _processStakingFees(componentInfo, stakingAmount);
 
         bundleNftId = _bundleService.create(
             instance,
             poolNftId,
             owner,
             fee,
-            stakingAfterFeesAmount,
+            stakingNetAmount,
             lifetime,
             filter);
+
+        // collect tokens from bundle owner
+        _transferStakingAmount(componentInfo, owner, stakingAmount);
 
         emit LogPoolServiceBundleCreated(instance.getNftId(), poolNftId, bundleNftId);
     }
@@ -232,7 +236,7 @@ contract PoolService is
     function processSale(
         NftId bundleNftId, 
         IPolicy.Premium memory premium, 
-        uint256 actualAmountTransferred
+        Amount actualAmountTransferred
     ) 
         external
         virtual
@@ -245,9 +249,9 @@ contract PoolService is
 
         Amount poolFeeAmount = AmountLib.toAmount(premium.poolFeeFixAmount + premium.poolFeeVarAmount);
         Amount bundleFeeAmount = AmountLib.toAmount(premium.bundleFeeFixAmount + premium.bundleFeeVarAmount);
-        Amount expectedTransferAmount = AmountLib.toAmount(premium.netPremiumAmount).add(poolFeeAmount).add(bundleFeeAmount);
-        if (! AmountLib.toAmount(actualAmountTransferred).eq(expectedTransferAmount)) {
-            revert ErrorPoolServiceInvalidTransferAmount(expectedTransferAmount, AmountLib.toAmount(actualAmountTransferred));
+        Amount expectedTransferAmount = AmountLib.toAmount(premium.netPremiumAmount) + poolFeeAmount + bundleFeeAmount;
+        if (!(actualAmountTransferred == expectedTransferAmount)) {
+            revert ErrorPoolServiceInvalidTransferAmount(expectedTransferAmount, actualAmountTransferred);
         }
         
         // update pool fee balance
@@ -267,7 +271,7 @@ contract PoolService is
         NftId productNftId,
         NftId applicationNftId,
         IPolicy.PolicyInfo memory applicationInfo,
-        uint256 premiumAmount // premium amount after product and distribution fees
+        Amount premiumAmount // premium amount after product and distribution fees
     )
         external
         virtual
@@ -288,10 +292,10 @@ contract PoolService is
         IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
 
         // TODO add correct required collateral calculation (collateralization level mibht be != 1, retention level might be < 1)
-        uint256 collateralAmount = applicationInfo.sumInsuredAmount;
+        Amount collateralAmount = applicationInfo.sumInsuredAmount;
 
         // TODO add correct net premium calculation (pool fee might be > 0)
-        uint256 premiumAfterPoolFeeAmount = premiumAmount;
+        Amount premiumAfterPoolFeeAmount = premiumAmount;
 
         // lock collateral amount from involvedd bundle
         _bundleService.lockCollateral(
@@ -314,6 +318,24 @@ contract PoolService is
     }
 
 
+    function reduceCollateral(
+        IInstance instance, 
+        NftId policyNftId, 
+        IPolicy.PolicyInfo memory policyInfo,
+        Amount payoutAmount
+    )
+        external
+        virtual
+        // TODO add restricted and granting for claim service
+    {
+        _bundleService.releaseCollateral(
+            instance, 
+            policyNftId, 
+            policyInfo.bundleNftId, 
+            payoutAmount);
+    }
+
+
     /// @dev releases the remaining collateral linked to the specified policy
     /// may only be called by the policy service for unlocked pool components
     function releaseCollateral(
@@ -325,12 +347,57 @@ contract PoolService is
         virtual
         // TODO add restricted and granting for policy service
     {
-        // release collateral from involved bundle
         _bundleService.releaseCollateral(
             instance, 
             policyNftId, 
             policyInfo.bundleNftId, 
-            policyInfo.sumInsuredAmount);
+            policyInfo.sumInsuredAmount - policyInfo.claimAmount);
+
+        _bundleService.unlinkPolicy(
+            instance, 
+            policyNftId);
+    }
+
+
+    function _processStakingFees(
+        IComponents.ComponentInfo memory componentInfo, 
+        Amount stakingAmount
+    )
+        internal
+        returns (Amount stakingNetAmount)
+    {
+        stakingNetAmount = stakingAmount;
+
+        // check if any staking fees apply
+        Fee memory stakingFee = abi.decode(componentInfo.data, (IComponents.PoolInfo)).stakingFee;
+        if (FeeLib.gtz(stakingFee)) {
+            (Amount feeAmount, Amount netAmount) = FeeLib.calculateFee(stakingFee, stakingAmount);
+            stakingNetAmount = netAmount;
+
+            // TODO update fee balance for pool
+        }
+    }
+
+
+    // TODO create (I)TreasuryService that deals with all gif related token transfers
+    /// @dev transfers the specified amount from the bundle owner to the pool's wallet
+    function _transferStakingAmount(
+        IComponents.ComponentInfo memory componentInfo,
+        address bundleOwner,
+        Amount stakingAmount
+    )
+        internal
+    {
+        TokenHandler tokenHandler = componentInfo.tokenHandler;
+        address poolWallet = componentInfo.wallet;
+
+        if(stakingAmount.gtz()) {
+            tokenHandler.transfer(
+                bundleOwner,
+                poolWallet,
+                stakingAmount
+            );
+        }
     }
 
 }

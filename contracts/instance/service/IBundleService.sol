@@ -16,13 +16,15 @@ interface IBundleService is IService {
     event LogBundleServiceBundleActivated(NftId bundleNftId);
     event LogBundleServiceBundleLocked(NftId bundleNftId);
 
-    error ErrorBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, uint256 amount);
+    error ErrorBundleServiceInsufficientAllowance(address bundleOwner, address tokenHandlerAddress, Amount amount);
     error ErrorBundleServiceBundleNotOpen(NftId bundleNftId, StateId state, Timestamp expiredAt);
-    error ErrorBundleServiceCapacityInsufficient(NftId bundleNftId, uint capacityAmount, uint collateralAmount);
+    error ErrorBundleServiceCapacityInsufficient(NftId bundleNftId, Amount capacityAmount, Amount collateralAmount);
     error ErrorBundleServiceBundleWithOpenPolicies(NftId bundleNftId, uint256 openPoliciesCount);
 
     error ErrorBundleServiceBundleUnknown(NftId bundleNftId);
     error ErrorBundleServiceBundlePoolMismatch(NftId expectedPoolNftId, NftId bundlePoolNftId);
+
+    error ErrorBundleServicePolicyNotCloseable(NftId policyNftId);
 
     /// @dev create a new bundle for the specified attributes
     /// may only be called by pool service
@@ -37,6 +39,13 @@ interface IBundleService is IService {
     )
         external 
         returns(NftId bundleNftId); // the nft id of the newly created bundle
+
+
+    /// @dev increase bundle stakes by the specified amount
+    /// may only be called by the bundle owner
+    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+
+    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
 
     /// @dev locks the specified bundle, locked bundles are not available to collateralize new policies
     /// only active bundles may be locked
@@ -74,8 +83,25 @@ interface IBundleService is IService {
         IInstance instanceNftId, 
         NftId policyNftId, 
         NftId bundleNftId, 
-        uint256 collateralAmount, 
-        uint256 premium // premium amount after pool fee
+        Amount collateralAmount, 
+        Amount premiumAmount // premium after pool fee
+    ) external;
+
+    /// @dev releases the specified collateral in the bundle
+    /// may only be called by pool service
+    function releaseCollateral(
+        IInstance instance, 
+        NftId policyNftId, 
+        NftId bundleNftId, 
+        Amount collateralAmount
+    ) external;
+
+    /// @dev unlink policy from bundle
+    /// policy may only be unlinked if policy is closeable
+    /// may only be called by pool service
+    function unlinkPolicy(
+        IInstance instance, 
+        NftId policyNftId
     ) external;
 
     /// @dev updates the bundle's fees of with the provided fee amount
@@ -85,18 +111,8 @@ interface IBundleService is IService {
         Amount feeAmount
     ) external;
 
-    /// @dev releases the specified collateral in the bundle
-    /// may only be called by pool service
-    function releaseCollateral(
+    function increaseBalance(
         IInstance instance, 
-        NftId policyNftId, 
-        NftId bundleNftId, 
-        uint256 collateralAmount
-    ) external;
-
-    function increaseBalance(IInstance instance, NftId bundleNftId,  uint256 amount) external;
-
-    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
-
-    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+        NftId bundleNftId,  
+        Amount amount) external;
 }

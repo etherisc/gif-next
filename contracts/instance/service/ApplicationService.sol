@@ -23,7 +23,7 @@ import {TokenHandler} from "../../shared/TokenHandler.sol";
 import {IVersionable} from "../../shared/IVersionable.sol";
 import {Versionable} from "../../shared/Versionable.sol";
 
-import {AmountLib} from "../../types/Amount.sol";
+import {Amount, AmountLib} from "../../types/Amount.sol";
 import {Seconds} from "../../types/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
@@ -81,7 +81,7 @@ contract ApplicationService is
     function create(
         address applicationOwner,
         RiskId riskId,
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         Seconds lifetime,
         NftId bundleNftId,
         ReferralId referralId,
@@ -123,13 +123,14 @@ contract ApplicationService is
             referralId,
             riskId,
             sumInsuredAmount,
-            premium.premiumAmount,
-            0,
+            AmountLib.toAmount(premium.premiumAmount),
+            AmountLib.zero(),
             lifetime,
             applicationData,
             "",
             0,
             0,
+            AmountLib.zero(),
             AmountLib.zero(),
             zeroTimestamp(),
             zeroTimestamp(),
@@ -159,8 +160,8 @@ contract ApplicationService is
         RiskId riskId,
         NftId bundleNftId,
         ReferralId referralId,
-        uint256 sumInsuredAmount,
-        uint256 lifetime,
+        Amount sumInsuredAmount,
+        Seconds lifetime,
         bytes memory applicationData
     )
         external
@@ -181,7 +182,7 @@ contract ApplicationService is
     function calculatePremium(
         NftId productNftId,
         RiskId riskId,
-        uint256 sumInsuredAmount,
+        Amount sumInsuredAmount,
         Seconds lifetime,
         bytes memory applicationData,
         NftId bundleNftId,
@@ -194,7 +195,7 @@ contract ApplicationService is
             IPolicy.Premium memory premium
         )
     {
-        uint256 netPremiumAmount = _getAndVerifyProduct(productNftId).calculateNetPremium(
+        Amount netPremiumAmount = _getAndVerifyProduct(productNftId).calculateNetPremium(
             sumInsuredAmount,
             riskId,
             lifetime,
@@ -221,7 +222,7 @@ contract ApplicationService is
 
     // internal functions
     function _getFixedFeeAmounts(
-        uint256 netPremiumAmount,
+        Amount netPremiumAmount,
         Product product,
         NftId bundleNftId,
         ReferralId referralId
@@ -240,8 +241,8 @@ contract ApplicationService is
         
         NftId poolNftId = product.getPoolNftId();
         premium = IPolicy.Premium(
-            netPremiumAmount, // net premium
-            netPremiumAmount, // full premium
+            netPremiumAmount.toInt(), // net premium
+            netPremiumAmount.toInt(), // full premium
             0, // premium
             0, 0, 0, 0, // fix fees
             0, 0, 0, 0, // variable fees

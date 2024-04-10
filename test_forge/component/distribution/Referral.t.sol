@@ -134,7 +134,7 @@ contract ReferralTest is ReferralTestBase {
 
         IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
         assertEq(distributorInfo.numPoliciesSold, 1, "numPoliciesSold not 1");
-        assertEq(distributorInfo.sumCommisions, 3, "sumCommisions not 3");
+        assertEq(distributorInfo.commissionAmount.toInt(), 3, "sumCommisions not 3");
 
         ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
         assertEq(distributionSetupInfo.sumDistributionOwnerFees, 11, "sumDistributionOwnerFees not 11");
@@ -219,7 +219,7 @@ contract ReferralTest is ReferralTestBase {
         
         IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
         assertEq(distributorInfo.numPoliciesSold, 2, "numPoliciesSold not 2");
-        assertEq(distributorInfo.sumCommisions, 6, "sumCommisions not 6");
+        assertEq(distributorInfo.commissionAmount.toInt(), 6, "commissionAmount not 6");
 
         ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
         assertEq(distributionSetupInfo.sumDistributionOwnerFees, 22, "sumDistributionOwnerFees not 22");
@@ -271,7 +271,7 @@ contract ReferralTest is ReferralTestBase {
         
         IDistribution.DistributorInfo memory distributorInfo2 = instanceReader.getDistributorInfo(distributorNftId2);
         assertEq(distributorInfo2.numPoliciesSold, 1, "numPoliciesSold not 2");
-        assertEq(distributorInfo2.sumCommisions, 3, "sumCommisions not 6");
+        assertEq(distributorInfo2.commissionAmount.toInt(), 3, "commissionAmount not 3");
 
         distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
         assertEq(distributionSetupInfo.sumDistributionOwnerFees, 33, "sumDistributionOwnerFees not 33");

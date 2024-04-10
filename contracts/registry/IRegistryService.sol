@@ -14,8 +14,6 @@ import {IComponent} from "../components/IComponent.sol";
 
 interface IRegistryService is 
      IService
-     // TODO cleanup
-     // IAccessManaged 
 {
      error SelfRegistration();
      error NotRegistryOwner();

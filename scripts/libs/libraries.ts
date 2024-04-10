@@ -169,6 +169,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         undefined,
         {
             libraries: {
+                AmountLib: amountLibAddress,
                 UFixedLib: uFixedLibAddress,
             }
         });

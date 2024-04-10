@@ -13,6 +13,7 @@ import {ILifecycle} from "../contracts/instance/base/ILifecycle.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
+import {Amount, AmountLib} from "../contracts/types/Amount.sol";
 import {Fee, FeeLib} from "../contracts/types/Fee.sol";
 import {UFixedLib} from "../contracts/types/UFixed.sol";
 import {Seconds, SecondsLib} from "../contracts/types/Seconds.sol";
@@ -107,15 +108,15 @@ contract TestProduct is TestGifBase {
         SimpleProduct dproduct = SimpleProduct(address(product));
         dproduct.createRisk(riskId, data);
 
-        uint256 premium = product.calculatePremium(
-            1000,
+        Amount premium = product.calculatePremium(
+            AmountLib.toAmount(1000),
             riskId,
             SecondsLib.toSeconds(30),
             "",
             bundleNftId,
             ReferralLib.zero()
         );
-        assertEq(premium, 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
+        assertEq(premium.toInt(), 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
     }
 
     function test_Product_createApplication() public {
@@ -147,7 +148,7 @@ contract TestProduct is TestGifBase {
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(eqRiskId(policyInfo.riskId, riskId), "riskId not set");
-        assertEq(policyInfo.sumInsuredAmount, 1000, "sumInsuredAmount not set");
+        assertEq(policyInfo.sumInsuredAmount.toInt(), 1000, "sumInsuredAmount not set");
         assertEq(policyInfo.lifetime.toInt(), 30, "lifetime not set");
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
     }
@@ -190,8 +191,8 @@ contract TestProduct is TestGifBase {
 
         console.log("checking policy info after underwriting");
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        assertEq(policyInfo.sumInsuredAmount, 1000, "sumInsuredAmount not 1000");
-        assertEq(policyInfo.sumInsuredAmount, sumInsuredAmount, "sumInsuredAmount not 1000");
+        assertEq(policyInfo.sumInsuredAmount.toInt(), 1000, "sumInsuredAmount not 1000");
+        assertEq(policyInfo.sumInsuredAmount.toInt(), sumInsuredAmount, "sumInsuredAmount not 1000");
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
@@ -457,10 +458,10 @@ contract TestProduct is TestGifBase {
         Timestamp activationAt = TimestampLib.blockTimestamp();
         vm.expectRevert(
             abi.encodeWithSelector(
-                IPolicyService.ErrorIPolicyServicePremiumMismatch.selector, 
+                IPolicyService.ErrorPolicyServicePremiumMismatch.selector, 
                 policyNftId, 
-                137, 
-                140));
+                AmountLib.toAmount(137), 
+                AmountLib.toAmount(140)));
 
         dproduct.collateralize(
             policyNftId, 
@@ -670,7 +671,6 @@ contract TestProduct is TestGifBase {
 
         ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
         token.approve(address(productSetupInfo.tokenHandler), 1000);
-        // revert("checkApprove");
 
         NftId policyNftId = dproduct.createApplication(
             customer,

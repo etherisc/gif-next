@@ -14,6 +14,7 @@ import {UFixedLib} from "../../../contracts/types/UFixed.sol";
 import {ComponentService} from "../../../contracts/instance/base/ComponentService.sol";
 import {DistributorType} from "../../../contracts/types/DistributorType.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/types/Referral.sol";
+import {AmountLib} from "../../../contracts/types/Amount.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/types/RiskId.sol";
 import {SecondsLib} from "../../../contracts/types/Seconds.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
@@ -37,7 +38,7 @@ contract TestProductService is TestGifBase {
         IPolicy.Premium memory premium = applicationService.calculatePremium(
             productNftId, 
             riskId, 
-            1000, 
+            AmountLib.toAmount(1000), 
             SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
@@ -61,7 +62,7 @@ contract TestProductService is TestGifBase {
         IPolicy.Premium memory premium = applicationService.calculatePremium(
             productNftId, 
             riskId, 
-            1000, 
+            AmountLib.toAmount(1000), 
             SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
@@ -95,7 +96,7 @@ contract TestProductService is TestGifBase {
         IPolicy.Premium memory premium = applicationService.calculatePremium(
             productNftId, 
             riskId, 
-            1000, 
+            AmountLib.toAmount(1000), 
             SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
@@ -129,7 +130,7 @@ contract TestProductService is TestGifBase {
         IPolicy.Premium memory premium = applicationService.calculatePremium(
             productNftId, 
             riskId, 
-            1000, 
+            AmountLib.toAmount(1000), 
             SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
@@ -188,7 +189,7 @@ contract TestProductService is TestGifBase {
         IPolicy.Premium memory premium = applicationService.calculatePremium(
             productNftId, 
             riskId, 
-            1000, 
+            AmountLib.toAmount(1000), 
             SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
@@ -249,7 +250,7 @@ contract TestProductService is TestGifBase {
         IPolicy.Premium memory premium = applicationService.calculatePremium(
             productNftId, 
             riskId, 
-            1000, 
+            AmountLib.toAmount(1000), 
             SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 
@@ -310,7 +311,7 @@ contract TestProductService is TestGifBase {
         IPolicy.Premium memory premium = applicationService.calculatePremium(
             productNftId, 
             riskId, 
-            1000, 
+            AmountLib.toAmount(1000), 
             SecondsLib.toSeconds(300), 
             "", 
             bundleNftId, 

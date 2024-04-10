@@ -21,15 +21,6 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
     )
         internal
     {
-        _create(key32, data);
-    }
-
-    function _create(
-        Key32 key32, 
-        bytes memory data
-    )
-        internal
-    {
         ObjectType objectType = key32.toObjectType();
         require(objectType.gtz(), "ERROR:KVS-010:TYPE_UNDEFINED");
 
@@ -55,16 +46,6 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
     }
 
     function update(
-        Key32 key32, 
-        bytes memory data,
-        StateId state
-    ) 
-        internal
-    {
-        _update(key32, data, state);
-    }
-
-    function _update(
         Key32 key32, 
         bytes memory data,
         StateId state
@@ -101,12 +82,6 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
     function updateData(Key32 key32, bytes memory data) 
         internal
     {
-        _updateData(key32, data);
-    }
-
-    function _updateData(Key32 key32, bytes memory data) 
-        internal
-    {
         Metadata storage metadata = _value[key32].metadata;
         StateId state = metadata.state;
         require(state.gtz(), "ERROR:KVS-030:NOT_EXISTING");
@@ -126,12 +101,6 @@ contract KeyValueStore is Lifecycle, IKeyValueStore {
     }
 
     function updateState(Key32 key32, StateId state)
-        internal
-    {
-        _updateState(key32, state);
-    }
-
-    function _updateState(Key32 key32, StateId state)
         internal
     {
         require(state.gtz(), "ERROR:KVS-040:STATE_UNDEFINED");

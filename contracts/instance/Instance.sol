@@ -67,6 +67,10 @@ contract Instance is
         public 
         initializer()
     {
+        if(authority == address(0)) {
+            revert ErrorInstanceInstanceAccessManagerZero();
+        }
+
         __AccessManaged_init(authority);
         
         IRegistry registry = IRegistry(registryAddress);
@@ -195,6 +199,10 @@ contract Instance is
 
     //--- Policy ------------------------------------------------------------//
     function updatePolicy(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
+        update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
+    }
+
+    function updatePolicyClaims(NftId policyNftId, IPolicy.PolicyInfo memory policy, StateId newState) external restricted() {
         update(_toNftKey32(policyNftId, POLICY()), abi.encode(policy), newState);
     }
 
