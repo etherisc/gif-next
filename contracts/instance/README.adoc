@@ -4,7 +4,6 @@ Contains the instance related contracts.
 
 == Contracts
 
-{{AccessManagerUpgradeableInitializeable}}
 {{Cloneable}}
 {{InstanceAccessManager}}
 {{InstanceService}}
@@ -15,3 +14,5 @@ Contains the instance related contracts.
 {{Instance}}
 {{IInstance}}
 {{InstanceServiceManager}}
+{{InstanceStore}}
+{{InstanceAuthorizationsLib}}

@@ -4,6 +4,7 @@ Contains the shared contracts.
 
 == Contracts
 
+{{AccessManagerUpgradeableInitializeable}}
 {{ContractDeployerLib}}
 {{ERC165}}
 {{INftOwnable}}
@@ -21,3 +22,4 @@ Contains the shared contracts.
 {{TokenHandler}}
 {{UpgradableProxyWithAdmin}}
 {{Versionable}}
+

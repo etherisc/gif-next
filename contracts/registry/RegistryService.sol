@@ -19,7 +19,7 @@ import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE} from "../../contracts/types/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, PRICE} from "../../contracts/types/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
@@ -176,7 +176,7 @@ contract RegistryService is
             FunctionConfig[] memory config
         )
     {
-        config = new FunctionConfig[](8);
+        config = new FunctionConfig[](9);
 
         // order of service registrations MUST be reverse to this array 
         /*config[-1].serviceDomain = STAKE();
@@ -205,15 +205,19 @@ contract RegistryService is
         config[5].selectors = new bytes4[](1);
         config[5].selectors[0] = RegistryService.registerBundle.selector;
 
-        config[6].serviceDomain = DISTRIBUTION();
-        config[6].selectors = new bytes4[](2);
-        config[6].selectors[0] = RegistryService.registerDistribution.selector;
-        config[6].selectors[1] = RegistryService.registerDistributor.selector;
+        // registration of pricing service must preceed registration of application service
+        config[6].serviceDomain = PRICE();
+        config[6].selectors = new bytes4[](0);
 
-        // registerInstance() have no restriction
-        config[7].serviceDomain = INSTANCE();
-        config[7].selectors = new bytes4[](1);
-        config[7].selectors[0] = RegistryService.registerInstance.selector;
+        // registration of distribution service must preceed registration of pricing service
+        config[7].serviceDomain = DISTRIBUTION();
+        config[7].selectors = new bytes4[](2);
+        config[7].selectors[0] = RegistryService.registerDistribution.selector;
+        config[7].selectors[1] = RegistryService.registerDistributor.selector;
+
+        config[8].serviceDomain = INSTANCE();
+        config[8].selectors = new bytes4[](1);
+        config[8].selectors[0] = RegistryService.registerInstance.selector;
     }
 
     // Internal

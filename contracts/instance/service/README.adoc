@@ -10,8 +10,9 @@ Contains the instance service contracts.
 {{DistributionServiceManager}}
 {{PolicyServiceManager}}
 {{PoolServiceManager}}
-
 {{ProductServiceManager}}
+{{PricingServiceManager}}
+
 {{IApplicationService}}
 {{IBundleService}}
 {{IClaimService}}
@@ -19,6 +20,7 @@ Contains the instance service contracts.
 {{IPoolService}}
 {{IPolicyService}}
 {{IProductService}}
+{{IPricingService}}
 
 {{ApplicationService}}
 {{BundleService}}
@@ -27,5 +29,6 @@ Contains the instance service contracts.
 {{PolicyService}}
 {{PoolService}}
 {{ProductService}}
+{{PricingService}}
 
 

@@ -106,7 +106,7 @@ contract BundleService is
 
             // save updated pool info
             componentInfo.data = abi.encode(poolInfo);
-            instance.updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
+            instance.getInstanceStore().updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
         }
     }
 
@@ -139,7 +139,7 @@ contract BundleService is
         );
 
         // create bundle info in instance
-        instance.createBundle(
+        instance.getInstanceStore().createBundle(
             bundleNftId, 
             IBundle.BundleInfo(
                 poolNftId,
@@ -167,21 +167,19 @@ contract BundleService is
         external
         override
     {
-        (NftId poolNftId, IRegistry.ObjectInfo memory info , IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
-
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         if(bundleInfo.poolNftId.eqz()) {
             revert ErrorBundleServiceBundleUnknown(bundleNftId);
         }
 
         if(bundleInfo.poolNftId != poolNftId) {
-            revert ErrorBundleServiceBundlePoolMismatch(poolNftId, bundleInfo.poolNftId );
+            revert ErrorBundleServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
         }
 
         bundleInfo.fee = fee;
-
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
 
@@ -245,7 +243,7 @@ contract BundleService is
         }
 
         // save updated bundle info
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
     function updateBundleFees(
@@ -257,18 +255,17 @@ contract BundleService is
     {
         IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
         bundleInfo.feeAmount = bundleInfo.feeAmount.add(feeAmount);
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
-
 
     function lock(NftId bundleNftId) 
         external
         virtual
     {
-        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
 
         // udpate bundle state
-        instance.updateBundleState(bundleNftId, PAUSED());
+        instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
 
         // update set of active bundles
         BundleManager bundleManager = instance.getBundleManager();
@@ -282,10 +279,10 @@ contract BundleService is
         external
         virtual
     {
-        (,, IInstance instance) = _getAndVerifyComponentInfoAndInstance(POOL());
+        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
 
         // udpate bundle state
-        instance.updateBundleState(bundleNftId, ACTIVE());
+        instance.getInstanceStore().updateBundleState(bundleNftId, ACTIVE());
 
         // update set of active bundles
         BundleManager bundleManager = instance.getBundleManager();
@@ -304,7 +301,7 @@ contract BundleService is
         // TODO add restricted and autz for pool service
     {
         // udpate bundle state
-        instance.updateBundleState(bundleNftId, CLOSED());
+        instance.getInstanceStore().updateBundleState(bundleNftId, CLOSED());
 
         // ensure no open policies attached to bundle
         BundleManager bundleManager = instance.getBundleManager();
@@ -348,7 +345,7 @@ contract BundleService is
 
         // reduce locked amount by released collateral amount
         bundleInfo.lockedAmount = bundleInfo.lockedAmount - collateralAmount;
-        instance.updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
     }
 
     /// @dev links policy to bundle

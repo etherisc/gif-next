@@ -14,13 +14,13 @@ import {zeroNftId} from "../../contracts/types/NftId.sol";
 import {FeeLib} from "../../contracts/types/Fee.sol";
 import {RoleId} from "../../contracts/types/RoleId.sol";
 import {TimestampLib} from "../../contracts/types/Timestamp.sol";
-import {ADMIN_ROLE, PRODUCT_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, INSTANCE_OWNER_ROLE, RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
+import {ADMIN_ROLE, PRODUCT_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_ROLE, RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
+import {AccessManagerUpgradeableInitializeable} from "../../contracts/shared/AccessManagerUpgradeableInitializeable.sol";
 
 import {IComponent} from "../../contracts/components/IComponent.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
@@ -120,11 +120,11 @@ contract TestInstanceAccessManager is TestGifBase {
 
         vm.startPrank(instanceOwner);
         // create special role and special role admin
-        (customRoleId, customRoleAdmin) = instanceAccessManager.createRole("SpecialRole", "SpecialRoleAdmin");
+        (customRoleId, customRoleAdmin) = instance.createRole("SpecialRole", "SpecialRoleAdmin");
         // set special role for product custom product function 
         bytes4[] memory fcts = new bytes4[](1);
         fcts[0] = SimpleProduct.doSomethingSpecial.selector;
-        instanceAccessManager.setTargetFunctionRole(product.getName(), fcts, customRoleId);
+        instance.setTargetFunctionRole(product.getName(), fcts, customRoleId);
         // assign special role to outsider
         instanceAccessManager.grantRole(customRoleAdmin, instanceOwner);
         //instanceAccessManager.grantRole("SpecialRole", outsider);
@@ -166,7 +166,7 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.startPrank(instanceOwner);
         bytes4[] memory fctSelectors = new bytes4[](1);
         fctSelectors[0] = SimpleProduct.doWhenNotLocked.selector;
-        instanceAccessManager.setTargetFunctionRole(product.getName(), fctSelectors, PRODUCT_OWNER_ROLE());
+        instance.setTargetFunctionRole(product.getName(), fctSelectors, PRODUCT_OWNER_ROLE());
         vm.stopPrank();
 
         vm.startPrank(productOwner);
@@ -395,7 +395,7 @@ contract TestInstanceAccessManager is TestGifBase {
             updatedAt: TimestampLib.blockTimestamp(),
             createdAt: TimestampLib.blockTimestamp()
         });
-        vm.startPrank(instanceOwner);    
+        vm.startPrank(address(instance));    
 
         (customRoleId, customRoleAdmin) = instanceAccessManager.createRole("Role1234", "RoleAdmin1234");
 
@@ -463,7 +463,7 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_createRole_withExistingCustomRoleName() public
     {
-        vm.startPrank(instanceOwner);    
+        vm.startPrank(address(instance));    
 
         (customRoleId, customRoleAdmin) = instanceAccessManager.createRole("Role1234", "RoleAdmin1234");
 
@@ -479,7 +479,7 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_createRole_withExistingCustomRoleAdminName() public
     {
-        vm.startPrank(instanceOwner);    
+        vm.startPrank(address(instance));  
 
         (customRoleId, customRoleAdmin) = instanceAccessManager.createRole("Role1234", "RoleAdmin1234");
 
@@ -495,7 +495,7 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_createRole_withEmptyRoleName() public
     {
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
 
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessRoleNameEmpty.selector,
@@ -507,7 +507,9 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_createRole_withEmptyRoleAdminName() public
     {
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
+
+        require(instanceAccessManager.hasRole(INSTANCE_ROLE(), address(instance)));
 
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessRoleNameEmpty.selector,
@@ -604,9 +606,11 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_renounceCustomRole_HappyCase() public
     {
-        vm.startPrank(instanceOwner);    
-
+        vm.startPrank(address(instance));
         (customRoleId, customRoleAdmin) = instanceAccessManager.createRole("Role1234", "RoleAdmin1234");
+        vm.stopPrank();
+
+        vm.startPrank(instanceOwner);   
         assertTrue(instanceAccessManager.grantRole(customRoleAdmin, instanceOwner), "grantRole() by role admin failed #1");
         assertTrue(instanceAccessManager.grantRole(customRoleId, outsider), "grantRole() by role admin failed #2");
         assertTrue(instanceAccessManager.grantRole(customRoleAdmin, productOwner), "grantRole() by role admin failed #3");
@@ -631,9 +635,11 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_renounceCustomRole_byNotMember() public
     {
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
         (customRoleId, customRoleAdmin) = instanceAccessManager.createRole("Role1234", "RoleAdmin1234");
-
+        vm.stopPrank();
+        
+        vm.startPrank(instanceOwner);  
         assertFalse(instanceAccessManager.renounceRole(customRoleId), "renounce custom role by not member succeeded");
         assertFalse(instanceAccessManager.renounceRole(customRoleAdmin), "renounce custom role admin by not member succeeded");
         vm.stopPrank();
@@ -1030,7 +1036,7 @@ contract TestInstanceAccessManager is TestGifBase {
             updatedAt: TimestampLib.blockTimestamp()
         });
 
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
         instanceAccessManager.createTarget(targetAddress, "CustomTarget1234");
         vm.stopPrank();
 
@@ -1057,7 +1063,7 @@ contract TestInstanceAccessManager is TestGifBase {
         IAccessManaged target = new AccessManagedMock(address(ozAccessManager));
         address targetAddress = address(target);
 
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
 
         instanceAccessManager.createTarget(targetAddress, "CustomTarget1234");
 
@@ -1072,7 +1078,7 @@ contract TestInstanceAccessManager is TestGifBase {
 
     function test_InstanceAccessManager_createTarget_withZeroTargetAddress() public
     {
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
         vm.expectRevert();
         instanceAccessManager.createTarget(address(0), "CustomTarget1234");
         vm.stopPrank();
@@ -1086,7 +1092,7 @@ contract TestInstanceAccessManager is TestGifBase {
         IAccessManaged target2 = new AccessManagedMock(address(ozAccessManager));
         address targetAddress2 = address(target2);
 
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
 
         instanceAccessManager.createTarget(targetAddress1, "CustomTarget1234");
 
@@ -1105,7 +1111,7 @@ contract TestInstanceAccessManager is TestGifBase {
         IAccessManaged target = new AccessManagedMock(address(ozAccessManager));
         address targetAddress = address(target);
 
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
 
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessTargetNameEmpty.selector,
@@ -1121,7 +1127,7 @@ contract TestInstanceAccessManager is TestGifBase {
         IAccessManaged target = new AccessManagedMock(address(accessManager));
         address targetAddress = address(target);
 
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
 
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessTargetAuthorityInvalid.selector,
@@ -1134,7 +1140,7 @@ contract TestInstanceAccessManager is TestGifBase {
 
     //--- Set target locked -----------------------------------------------------//
 
-    function test_InstanceAccessManager_setTargetLocked_ToggleCoreTarget() public
+    function test_InstanceAccessManager_setTargetLockedByService_ToggleCoreTarget() public
     {
         vm.startPrank(address(instanceService));
         address targetAddress = instanceAccessManager.getTargetAddress("Instance");
@@ -1143,18 +1149,18 @@ contract TestInstanceAccessManager is TestGifBase {
             IAccess.ErrorIAccessTargetTypeInvalid.selector, 
             targetAddress,
             IAccess.Type.Core));
-        instanceAccessManager.setTargetLocked(targetAddress, true);
+        instanceAccessManager.setTargetLockedByService(targetAddress, true);
 
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessTargetTypeInvalid.selector, 
             targetAddress,
             IAccess.Type.Core));
-        instanceAccessManager.setTargetLocked(targetAddress, false);
+        instanceAccessManager.setTargetLockedByService(targetAddress, false);
 
         vm.stopPrank();
     }
 
-    function test_InstanceAccessManager_setTargetLocked_ToggleGifTarget() public
+    function test_InstanceAccessManager_setTargetLockedByService_ToggleGifTarget() public
     {
         vm.startPrank(instanceOwner);
         IRegisterable gifTarget = new SimpleAccessManagedRegisterableMock(instanceNftId, PRODUCT(), address(ozAccessManager));
@@ -1170,39 +1176,39 @@ contract TestInstanceAccessManager is TestGifBase {
 
         assertEq(instanceAccessManager.getTargetAddress("GifTarget1234"), gifTargetAddress, "unexpected target address");
 
-        instanceAccessManager.setTargetLocked(gifTargetAddress, true);
+        instanceAccessManager.setTargetLockedByService(gifTargetAddress, true);
 
         assertTrue(instanceAccessManager.isTargetLocked(gifTargetAddress), "gif target is not locked");
 
-        instanceAccessManager.setTargetLocked(gifTargetAddress, false);
+        instanceAccessManager.setTargetLockedByService(gifTargetAddress, false);
         vm.stopPrank();
 
         assertFalse(instanceAccessManager.isTargetLocked(gifTargetAddress), "gif target is locked");
     }
 
-    function test_InstanceAccessManager_setTargetLocked_ToggleCustomTargetHappyCase() public
+    function test_InstanceAccessManager_setTargetLockedByService_ToggleCustomTargetHappyCase() public
     {
         IAccessManaged customTarget = new AccessManagedMock(address(ozAccessManager));
         address customTargetAddress = address(customTarget);
 
-        vm.startPrank(instanceOwner);
+        vm.startPrank(address(instance));
         instanceAccessManager.createTarget(customTargetAddress, "CustomTarget1234");
         vm.stopPrank();
 
         assertEq(instanceAccessManager.getTargetAddress("CustomTarget1234"), customTargetAddress, "unexpected target address");
 
         vm.startPrank(address(instanceService));
-        instanceAccessManager.setTargetLocked(customTargetAddress, true);
+        instanceAccessManager.setTargetLockedByService(customTargetAddress, true);
 
         assertTrue(instanceAccessManager.isTargetLocked(customTargetAddress), "custom target is not locked");
 
-        instanceAccessManager.setTargetLocked(customTargetAddress, false);
+        instanceAccessManager.setTargetLockedByService(customTargetAddress, false);
         vm.stopPrank();
 
         assertFalse(instanceAccessManager.isTargetLocked(customTargetAddress), "custom target is locked");
     }
 
-    function test_InstanceAccessManager_setTargetLocked_withNonExitingTarget() public
+    function test_InstanceAccessManager_setTargetLockedByService_withNonExitingTarget() public
     {
         address nonExistingTargetAddress = address(1234567890);
 
@@ -1210,7 +1216,7 @@ contract TestInstanceAccessManager is TestGifBase {
         vm.expectRevert(abi.encodeWithSelector(
             IAccess.ErrorIAccessTargetDoesNotExist.selector, 
             nonExistingTargetAddress));
-        instanceAccessManager.setTargetLocked(nonExistingTargetAddress, true);
+        instanceAccessManager.setTargetLockedByService(nonExistingTargetAddress, true);
         vm.stopPrank();
     }
 

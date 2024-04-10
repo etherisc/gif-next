@@ -1,5 +1,5 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleManager, IRegistry__factory, Instance, InstanceAccessManager, InstanceService__factory, InstanceReader, AccessManagerUpgradeableInitializeable } from "../../typechain-types";
+import { BundleManager, IRegistry__factory, Instance, InstanceAccessManager, InstanceService__factory, InstanceReader, AccessManagerUpgradeableInitializeable, InstanceStore } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -12,6 +12,7 @@ export type InstanceAddresses = {
     instanceAccessManagerAddress: AddressLike,
     instanceReaderAddress: AddressLike,
     instanceBundleManagerAddress: AddressLike,
+    instanceStoreAddress: AddressLike,
     instanceAddress: AddressLike,
     instanceNftId: string,
 }
@@ -45,15 +46,7 @@ export async function deployAndRegisterMasterInstance(
         undefined,
         { 
             libraries: {
-                Key32Lib: libraries.key32LibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                DistributorTypeLib: libraries.distributorTypeLibAddress,
-                ReferralLib: libraries.referralLibAddress,
-                ClaimIdLib: libraries.claimIdLibAddress,
-                PayoutIdLib: libraries.payoutIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress,
-                RiskIdLib: libraries.riskIdLibAddress,
-                StateIdLib: libraries.stateIdLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
             }
@@ -78,6 +71,28 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(() => ozAccessManager.grantRole(0, instanceAccessManagerAddress, 0));
     await executeTx(() => instanceAccessManager.initialize(instanceAddress));
     await executeTx(() => instance.setInstanceAccessManager(instanceAccessManager));
+
+    const { address: instanceStoreAddress, contract: masterInstanceStoreContract } = await deployContract(
+        "InstanceStore",
+        owner,
+        [],
+        { 
+            libraries: {
+                Key32Lib: libraries.key32LibAddress,
+                NftIdLib: libraries.nftIdLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
+                RiskIdLib: libraries.riskIdLibAddress,
+                StateIdLib: libraries.stateIdLibAddress,
+                ClaimIdLib: libraries.claimIdLibAddress,
+                DistributorTypeLib: libraries.distributorTypeLibAddress,
+                PayoutIdLib: libraries.payoutIdLibAddress,
+                ReferralLib: libraries.referralLibAddress
+            }
+        }
+    );
+    const instanceStore = masterInstanceStoreContract as InstanceStore;
+    await executeTx(() => instanceStore.initialize(instanceAddress));
+    await executeTx(() => instance.setInstanceStore(instanceStore));
 
     const { address: instanceReaderAddress, contract: masterReaderBaseContract } = await deployContract(
         "InstanceReader",
@@ -140,6 +155,7 @@ export async function deployAndRegisterMasterInstance(
         instanceAccessManagerAddress: instanceAccessManagerAddress,
         instanceReaderAddress: instanceReaderAddress,
         instanceBundleManagerAddress: bundleManagerAddress,
+        instanceStoreAddress: instanceStoreAddress,
         instanceAddress: instanceAddress,
         instanceNftId: masterInstanceNfdId,
     } as InstanceAddresses;
@@ -189,4 +205,3 @@ export async function cloneInstanceFromRegistry(registryAddress: AddressLike, in
         instanceNftId: clonedInstanceNftId as string,
     } as InstanceAddresses;
 }
-

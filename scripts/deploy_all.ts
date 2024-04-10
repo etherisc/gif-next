@@ -137,6 +137,7 @@ function printAddresses(
     addresses += `uFixedLibAddress: ${libraries.uFixedLibAddress}\n`;
     addresses += `versionLibAddress: ${libraries.versionLibAddress}\n`;
     addresses += `versionPartLibAddress: ${libraries.versionPartLibAddress}\n`;
+    addresses += `instanceAuthorizationsLibAddress: ${libraries.instanceAuthorizationsLibAddress}\n`;
     addresses += `--------\n`;
     addresses += `registryAccessManagerAddress: ${registry.registryAccessManagerAddress}\n`;
     addresses += `releaseManagerAddress: ${registry.releaseManagerAddress}\n`;
@@ -186,6 +187,7 @@ function printAddresses(
     addresses += `masterInstanceAccessManagerAddress: ${masterInstance.instanceAccessManagerAddress}\n`;
     addresses += `masterBundleManagerAddress: ${masterInstance.instanceBundleManagerAddress}\n`;
     addresses += `masterInstanceReaderAddress: ${masterInstance.instanceReaderAddress}\n`;
+    addresses += `masterInstanceStoreAddress: ${masterInstance.instanceStoreAddress}\n`;
     addresses += `--------\n`;
     addresses += `clonedInstanceAddress: ${clonedInstance.instanceAddress}\n`;
     addresses += `clonedInstanceNftId: ${clonedInstance.instanceNftId}\n`;
@@ -219,5 +221,3 @@ main().catch((error) => {
     logger.error(error.stack);
     process.exitCode = 1;
 });
-
-

@@ -13,7 +13,7 @@ import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
 import {Fee, FeeLib} from "../../types/Fee.sol";
 import {PRODUCT_SERVICE_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
 import {KEEP_STATE} from "../../types/StateId.sol";
-import {ObjectType, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR} from "../../types/ObjectType.sol";
+import {ObjectType, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, PRICE} from "../../types/ObjectType.sol";
 import {Version, VersionLib} from "../../types/Version.sol";
 import {RoleId} from "../../types/RoleId.sol";
 
@@ -27,6 +27,7 @@ import {InstanceService} from "../InstanceService.sol";
 import {IComponent} from "../../components/IComponent.sol";
 import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
 import {IDistributionService} from "./IDistributionService.sol";
+import {IPricingService} from "./IPricingService.sol";
 
 import {UFixed, UFixedLib} from "../../types/UFixed.sol";
 import {DistributorType, DistributorTypeLib} from "../../types/DistributorType.sol";
@@ -34,6 +35,7 @@ import {ReferralId, ReferralStatus, ReferralLib} from "../../types/Referral.sol"
 import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
 import {Key32} from "../../types/Key32.sol";
 import {IDistribution} from "../module/IDistribution.sol";
+import {InstanceStore} from "../InstanceStore.sol";
 
 
 contract DistributionService is
@@ -88,7 +90,7 @@ contract DistributionService is
         distribution.linkToRegisteredNftId();
         distributionNftId = distributionInfo.nftId;
 
-        instance.createDistributionSetup(distributionNftId, distribution.getSetupInfo());
+        instance.getInstanceStore().createDistributionSetup(distributionNftId, distribution.getSetupInfo());
         // TODO move to distribution?
         bytes4[][] memory selectors = new bytes4[][](2);
         selectors[0] = new bytes4[](1);
@@ -120,14 +122,14 @@ contract DistributionService is
             revert ErrorIDistributionServiceMinFeeTooHigh(minDistributionOwnerFee.fractionalFee.toInt(), distributionFee.fractionalFee.toInt());
         }
 
-        (NftId distributionNftId, IRegistry.ObjectInfo memory info , IInstance instance) = _getAndVerifyComponentInfoAndInstance(DISTRIBUTION());
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(DISTRIBUTION());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         ISetup.DistributionSetupInfo memory distSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
         distSetupInfo.minDistributionOwnerFee = minDistributionOwnerFee;
         distSetupInfo.distributionFee = distributionFee;
         
-        instance.updateDistributionSetup(distributionNftId, distSetupInfo, KEEP_STATE());
+        instance.getInstanceStore().updateDistributionSetup(distributionNftId, distSetupInfo, KEEP_STATE());
     }
 
     function createDistributorType(
@@ -144,7 +146,7 @@ contract DistributionService is
         external
         returns (DistributorType distributorType)
     {
-        (NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(DISTRIBUTION());
 
         {
             ISetup.DistributionSetupInfo memory setupInfo = instance.getInstanceReader().getDistributionSetupInfo(distributionNftId);
@@ -154,7 +156,7 @@ contract DistributionService is
                 revert ErrorIDistributionServiceMaxDiscountTooHigh(maxDiscountPercentage.toInt(), maxDiscountPercentageLimit.toInt());
             }
         }
-        
+
         distributorType = DistributorTypeLib.toDistributorType(distributionNftId, name);
         IDistribution.DistributorTypeInfo memory info = IDistribution.DistributorTypeInfo(
             name,
@@ -167,7 +169,7 @@ contract DistributionService is
             allowRenewals,
             data);
 
-        instance.createDistributorType(distributorType, info);
+        instance.getInstanceStore().createDistributorType(distributorType, info);
     }
 
 
@@ -180,7 +182,7 @@ contract DistributionService is
         virtual
         returns (NftId distributorNftId)
     {
-        (NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(DISTRIBUTION());
 
         distributorNftId = getRegistryService().registerDistributor(
             IRegistry.ObjectInfo(
@@ -200,7 +202,7 @@ contract DistributionService is
             AmountLib.zero(),
             0);
 
-        instance.createDistributor(distributorNftId, info);
+        instance.getInstanceStore().createDistributor(distributorNftId, info);
     }
 
     // function updateDistributorType(
@@ -232,7 +234,7 @@ contract DistributionService is
         virtual
         returns (ReferralId referralId)
     {
-        (NftId distributionNftId, IInstance instance) = _getAndVerifyCallingDistribution();
+        (NftId distributionNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(DISTRIBUTION());
 
         if (bytes(code).length == 0) {
             revert ErrorIDistributionServiceInvalidReferral(code);
@@ -269,12 +271,12 @@ contract DistributionService is
             data
         );
 
-        instance.createReferral(referralId, info);
+        instance.getInstanceStore().createReferral(referralId, info);
         return referralId;
     }
 
     function processSale(
-        NftId distributionNftId,
+        NftId distributionNftId, // assume always of distribution type
         ReferralId referralId,
         IPolicy.Premium memory premium,
         Amount transferredDistributionFeeAmount
@@ -291,6 +293,7 @@ contract DistributionService is
 
         IInstance instance = _getInstanceForDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
+        InstanceStore store = instance.getInstanceStore();
         IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
         IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
         ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
@@ -305,83 +308,19 @@ contract DistributionService is
 
         if (distributionOwnerFee.gtz()) {
             setupInfo.sumDistributionOwnerFees += distributionOwnerFee.toInt();
-            instance.updateDistributionSetup(distributionNftId, setupInfo, KEEP_STATE());
+            store.updateDistributionSetup(distributionNftId, setupInfo, KEEP_STATE());
         }
 
         if (isReferral) {
             referralInfo.usedReferrals += 1;
-            instance.updateReferral(referralId, referralInfo, KEEP_STATE());
+            store.updateReferral(referralId, referralInfo, KEEP_STATE());
 
             if (commissionAmount.gtz()) {
                 distributorInfo.commissionAmount = distributorInfo.commissionAmount + commissionAmount;
                 distributorInfo.numPoliciesSold += 1;
-                instance.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
+                store.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
             }
         }
-    }
-
-    function calculateFeeAmount(
-        NftId distributionNftId,
-        ReferralId referralId,
-        IPolicy.Premium memory premium
-    )
-        external
-        virtual
-        view 
-        returns (IPolicy.Premium memory finalPremium)
-    {
-        IInstance instance = _getInstanceForDistribution(distributionNftId);
-        InstanceReader reader = instance.getInstanceReader();
-        
-        // first calculate all fixed and variable fees for the distribution - this will defined the fullPremium
-        ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
-        Fee memory distributionFee = setupInfo.distributionFee;
-        Fee memory minDistributionOwnerFee = setupInfo.minDistributionOwnerFee;
-        uint256 distributionFeeVarAmount = (UFixedLib.toUFixed(premium.netPremiumAmount) * distributionFee.fractionalFee).toInt();
-        premium.distributionFeeVarAmount = distributionFeeVarAmount;
-        premium.fullPremiumAmount += distributionFeeVarAmount;
-            
-        // if the referral is not valid, then the distribution owner gets everything
-        if (! referralIsValid(distributionNftId, referralId)) {
-            premium.distributionOwnerFeeFixAmount = premium.distributionFeeFixAmount;
-            premium.distributionOwnerFeeVarAmount = premium.distributionFeeVarAmount;
-            premium.premiumAmount = premium.fullPremiumAmount;
-            return premium;
-        }
-
-        // if the referral is valid, the commission and discount are calculated based in the full premium
-        // the remaing amount goes to the distribution owner
-        {
-            IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
-            IDistribution.DistributorTypeInfo memory distributorTypeInfo = reader.getDistributorTypeInfo(
-                reader.getDistributorInfo(
-                    referralInfo.distributorNftId).distributorType);
-
-            uint256 commissionAmount = UFixedLib.toUFixed(premium.netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
-            premium.commissionAmount = commissionAmount;
-            premium.discountAmount = UFixedLib.toUFixed(premium.fullPremiumAmount).mul(referralInfo.discountPercentage).toInt();
-            premium.distributionOwnerFeeFixAmount = minDistributionOwnerFee.fixedFee;
-            premium.distributionOwnerFeeVarAmount = distributionFeeVarAmount - commissionAmount - premium.discountAmount;
-            premium.premiumAmount = premium.fullPremiumAmount - premium.discountAmount;
-        }
-
-        // sanity check to validate the fee calculation
-        if (
-            premium.distributionOwnerFeeFixAmount < minDistributionOwnerFee.fixedFee
-            || (premium.distributionFeeVarAmount) != (premium.discountAmount + premium.distributionOwnerFeeVarAmount + premium.commissionAmount)
-        )
-        {
-            revert ErrorIDistributionServiceFeeCalculationMismatch(
-                premium.distributionFeeFixAmount,
-                premium.distributionFeeVarAmount,
-                premium.distributionOwnerFeeFixAmount,
-                premium.distributionOwnerFeeVarAmount,
-                premium.commissionAmount,
-                premium.discountAmount
-            );
-        }
-        
-        return premium; 
     }
 
     // TODO: zero should return false
@@ -396,29 +335,6 @@ contract DistributionService is
         isValid = info.expiryAt.eqz() || (info.expiryAt.gtz() && TimestampLib.blockTimestamp() <= info.expiryAt);
         isValid = isValid && info.usedReferrals < info.maxReferrals;
     }
-
-    function _getAndVerifyCallingDistribution()
-        internal
-        view
-        returns(
-            NftId distributionNftId,
-            IInstance instance
-        )
-    {
-        distributionNftId = getRegistry().getNftId(msg.sender);
-        if (distributionNftId.eqz()) {
-            revert ErrorDistributionServiceCallerNotRegistered(msg.sender);
-        }
-
-        IRegistry.ObjectInfo memory info = getRegistry().getObjectInfo(distributionNftId);
-        if(info.objectType != DISTRIBUTION()) {
-            revert ErrorIDistributionServiceCallerNotDistributor(msg.sender);
-        }
-
-        address instanceAddress = getRegistry().getObjectInfo(info.parentNftId).objectAddress;
-        instance = IInstance(instanceAddress);
-    }
-
 
     function _getInstanceForDistribution(NftId distributionNftId)
         internal

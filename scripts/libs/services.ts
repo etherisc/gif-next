@@ -1,7 +1,7 @@
 
 import { AddressLike, Signer, hexlify, resolveAddress } from "ethers";
 import { 
-    ReleaseManager__factory, IRegistryService__factory, 
+    ReleaseManager__factory,
     DistributionService, DistributionServiceManager, DistributionService__factory, 
     InstanceService, InstanceServiceManager, InstanceService__factory, 
     PoolService, PoolServiceManager, PoolService__factory, 
@@ -9,7 +9,8 @@ import {
     ApplicationService, ApplicationServiceManager, ApplicationService__factory, 
     PolicyService, PolicyServiceManager, PolicyService__factory, 
     ClaimService, ClaimServiceManager, ClaimService__factory, 
-    BundleService, BundleServiceManager, BundleService__factory
+    BundleService, BundleServiceManager, BundleService__factory, 
+    PricingService, PricingServiceManager, PricingService__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
@@ -24,10 +25,15 @@ export type ServiceAddresses = {
     instanceService: InstanceService,
     instanceServiceManagerAddress: AddressLike,
 
-    distributionServiceNftId: string,
     distributionServiceAddress: AddressLike,
+    distributionServiceNftId: string,
     distributionService: DistributionService,
     distributionServiceManagerAddress: AddressLike,
+
+    pricingServiceAddress: AddressLike,
+    pricingServiceNftId: string,
+    pricingService: PricingService,
+    pricingServiceManagerAddress: AddressLike,
 
     poolServiceAddress: AddressLike,
     poolServiceNftId: string,
@@ -77,6 +83,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             VersionLib: libraries.versionLibAddress,
             VersionPartLib: libraries.versionPartLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
+            InstanceAuthorizationsLib: libraries.instanceAuthorizationsLibAddress,
         }});
 
     const instanceServiceManager = instanceServiceManagerBaseContract as InstanceServiceManager;
@@ -113,6 +120,29 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const logRegistrationInfoDs = getFieldFromTxRcptLogs(rcptDs!, registry.registry.interface, "LogRegistration", "nftId");
     const distributionServiceNftId = (logRegistrationInfoDs as unknown);
     logger.info(`distributionServiceManager deployed - distributionServiceAddress: ${distributionServiceAddress} distributionServiceManagerAddress: ${distributionServiceManagerAddress} nftId: ${distributionServiceNftId}`);
+
+    logger.info("-------- pricing service --------");
+    const { address: pricingServiceManagerAddress, contract: pricingServiceManagerBaseContract, } = await deployContract(
+        "PricingServiceManager",
+        owner,
+        [registry.registryAddress],
+        { libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                UFixedLib: libraries.uFixedLibAddress,
+                VersionLib: libraries.versionLibAddress, 
+                VersionPartLib: libraries.versionPartLibAddress,
+                AmountLib: libraries.amountLibAddress
+            }});
+    
+    const pricingServiceManager = pricingServiceManagerBaseContract as PricingServiceManager;
+    const pricingServiceAddress = await pricingServiceManager.getPricingService();
+    const pricingService = PricingService__factory.connect(pricingServiceAddress, owner);
+
+    const rcptPrs = await executeTx(async () => await releaseManager.registerService(pricingServiceAddress));
+    const logRegistrationInfoPrs = getFieldFromTxRcptLogs(rcptPrs!, registry.registry.interface, "LogRegistration", "nftId");
+    const pricingServiceNftId = (logRegistrationInfoPrs as unknown);
+    logger.info(`pricingServiceManager deployed - pricingServiceAddress: ${pricingServiceAddress} pricingServiceManagerAddress: ${pricingServiceManagerAddress} nftId: ${pricingServiceNftId}`);
 
     logger.info("-------- bundle service --------");
     const { address: bundleServiceManagerAddress, contract: bundleServiceManagerBaseContract, } = await deployContract(
@@ -217,14 +247,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
-            UFixedLib: libraries.uFixedLibAddress,
             VersionLib: libraries.versionLibAddress, 
             VersionPartLib: libraries.versionPartLibAddress, 
         }});
 
     const applicationServiceManager = applicationServiceManagerBaseContract as ApplicationServiceManager;
     const applicationServiceAddress = await applicationServiceManager.getApplicationService();
-    const applicationService = PolicyService__factory.connect(applicationServiceAddress, owner);
+    const applicationService = ApplicationService__factory.connect(applicationServiceAddress, owner);
 
     const rcptAppl = await executeTx(async () => await releaseManager.registerService(applicationServiceAddress));
     const logRegistrationInfoAppl = getFieldFromTxRcptLogs(rcptAppl!, registry.registry.interface, "LogRegistration", "nftId");
@@ -271,10 +300,17 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         distributionServiceNftId: distributionServiceNftId as string,
         distributionService,
         distributionServiceManagerAddress,
+
+        pricingServiceAddress,
+        pricingServiceNftId: distributionServiceNftId as string,
+        pricingService,
+        pricingServiceManagerAddress,
+
         poolServiceAddress,
         poolServiceNftId: poolServiceNftId as string,
         poolService,
         poolServiceManagerAddress,
+
         productServiceAddress,
         productServiceNftId : productServiceNftId as string,
         productService,
