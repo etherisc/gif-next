@@ -45,18 +45,6 @@ contract Instance is
     AccessManagedUpgradeable,
     Registerable
 {
-/*    error ErrorInstanceInstanceReaderInstanceMismatch(address expectedInstance, address foundInstance);
-
-    error InstanceErrorBundleManagerAlreadySet();
-    error InstanceErrorBundleManagerAuthorityMismatch();
-    error InstanceErrorBundleManagerInstanceMismatch(address expectedInstance, address foundInstance);
-
-    error InstanceErrorAccessManagerAlreadySet();
-    error InstanceErrorAccessManagerAuthorityMismatch();
-
-    error InstanceErrorInstanceStoreAlreadySet();
-    error InstanceErrorInstanceStoreAuthorityMismatch();*/
-
     uint256 public constant GIF_MAJOR_VERSION = 3;
 
     bool private _initialized;
