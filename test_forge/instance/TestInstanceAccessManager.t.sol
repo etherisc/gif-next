@@ -17,10 +17,10 @@ import {TimestampLib} from "../../contracts/types/Timestamp.sol";
 import {ADMIN_ROLE, PRODUCT_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_ROLE, RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
+import {AccessManagerUpgradeableInitializeable} from "../../contracts/shared/AccessManagerUpgradeableInitializeable.sol";
 
 import {IComponent} from "../../contracts/components/IComponent.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";

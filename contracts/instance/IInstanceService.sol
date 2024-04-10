@@ -6,7 +6,7 @@ import {ObjectType} from "../types/ObjectType.sol";
 import {RoleId} from "../types/RoleId.sol";
 import {IService} from "../shared/IService.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {Instance} from "./Instance.sol";
 import {InstanceReader} from "./InstanceReader.sol";

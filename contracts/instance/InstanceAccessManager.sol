@@ -9,7 +9,7 @@ import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTA
 import {TimestampLib} from "../types/Timestamp.sol";
 import {NftId} from "../types/NftId.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 

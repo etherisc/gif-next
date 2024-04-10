@@ -21,6 +21,7 @@ import {Version} from "../../contracts/types/Version.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
+import {AccessManagerUpgradeableInitializeable} from "../../contracts/shared/AccessManagerUpgradeableInitializeable.sol";
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -53,7 +54,6 @@ import {PricingServiceManager} from "../../contracts/instance/service/PricingSer
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "../../contracts/instance/AccessManagerUpgradeableInitializeable.sol";
 import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";

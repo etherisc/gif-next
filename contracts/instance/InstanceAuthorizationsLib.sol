@@ -11,7 +11,7 @@ import {Instance} from "./Instance.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
-import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 
 

@@ -11,6 +11,7 @@ import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTR
 
 import {Service} from "../shared/Service.sol";
 import {IService} from "../shared/IService.sol";
+import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
 
 import {IDistributionComponent} from "../components/IDistributionComponent.sol";
 import {IPoolComponent} from "../components/IPoolComponent.sol";
@@ -26,8 +27,6 @@ import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
-import {InstanceStore} from "./InstanceStore.sol";
-import {AccessManagerUpgradeableInitializeable} from "./AccessManagerUpgradeableInitializeable.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {InstanceAuthorizationsLib} from "./InstanceAuthorizationsLib.sol";
 
