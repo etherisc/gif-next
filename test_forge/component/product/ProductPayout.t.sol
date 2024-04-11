@@ -32,7 +32,7 @@ contract TestProductClaim is TestGifBase {
 
     event LogClaimTestClaimInfo(NftId policyNftId, IPolicy.PolicyInfo policyInfo, ClaimId claimId, IPolicy.ClaimInfo claimInfo);
 
-    uint256 public constant BUNDLE_CAPITAL = 5000;
+    uint256 public constant BUNDLE_CAPITAL = 100000;
     uint256 public constant SUM_INSURED = 1000;
     uint256 public constant CUSTOMER_FUNDS = 400;
     
@@ -141,7 +141,7 @@ contract TestProductClaim is TestGifBase {
             PayoutId payoutId,
             StateId payoutState,
             IPolicy.PayoutInfo memory payoutInfo
-        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData);
+        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
 
         // THEN
         // check policy info
@@ -197,7 +197,7 @@ contract TestProductClaim is TestGifBase {
             PayoutId payoutId
             , // StateId payoutState,
             , // IPolicy.PayoutInfo memory payoutInfo
-        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData);
+        ) = _createClaimAndPayout(policyNftId, claimAmountInt, payoutAmountInt, payoutData, false);
 
         // WHEN
         vm.recordLogs();
@@ -264,12 +264,282 @@ contract TestProductClaim is TestGifBase {
         assertEq(customerBalanceAfter - customerBalanceBefore, payoutAmountInt, "unexpected customer balance after payout");
     }
 
+    function test_ProductPolicyClaimPayoutPartial() public {
+        address newCustomer = makeAddr("customer_test_ProductPolicyClaimPayoutSimple");
+        uint256 sumInsuredAmountInt = 20000;
+        uint256 lifetimeInt = 365 * 24 * 3600;
+        uint256 claimAmountInt = 5000;
+        uint256 payoutAmountInt = 1500;
+
+        StateId claimState;
+        ClaimId claimId;
+        IPolicy.ClaimInfo memory claimInfo;
+        PayoutId payoutId;
+        StateId payoutState;
+        IPolicy.PayoutInfo memory payoutInfo;
+
+        // implicit assigning of policy nft id
+        (
+            claimId,
+            claimState,
+            payoutId,
+            payoutState
+        ) = _createPolicyWithClaimAndPayout(
+            newCustomer,
+            sumInsuredAmountInt,
+            lifetimeInt,
+            claimAmountInt,
+            payoutAmountInt, 
+            true); // process payout
+
+        // check policy
+        {
+            assertTrue(policyNftId.gtz(), "policy nft id zero");
+            assertEq(registry.ownerOf(policyNftId), newCustomer, "unexpected policy holder");
+            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), ACTIVE().toInt(), "unexpected policy state");
+
+            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+            assertEq(policyInfo.claimsCount, 1, "unexpected claims count");
+            assertEq(policyInfo.openClaimsCount, 1, "unexpected open claims count");
+            assertEq(policyInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (policy)");
+            assertEq(policyInfo.payoutAmount.toInt(), payoutAmountInt, "unexpected payout amount (policy)");
+        }
+
+        // check claim
+        {
+            assertEq(claimId.toInt(), 1, "unexpected claim id");
+            assertEq(claimState.toInt(), CONFIRMED().toInt(), "unexpected claim state");
+
+            claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+            assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (claim)");
+            assertEq(claimInfo.paidAmount.toInt(), payoutAmountInt, "unexpected paid amount (claim)");
+            assertEq(claimInfo.payoutsCount, 1, "unexpected payouts count");
+            assertEq(claimInfo.openPayoutsCount, 0, "unexpected open payouts count");
+        }
+
+        // check payout
+        {
+            assertTrue(payoutId.gtz(), "claim id zero");
+            assertEq(payoutId.toClaimId().toInt(), claimId.toInt(), "unexpected payout id claim id link");
+            assertEq(payoutState.toInt(), PAID().toInt(), "unexpected payout state");
+
+            payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+            assertEq(payoutInfo.amount.toInt(), payoutAmountInt, "unexpected amount (payout)");
+            assertEq(payoutInfo.paidAt.toInt(), block.timestamp, "unexpected paid at");
+        }
+    }
+
+    function test_ProductPolicyClaimPayoutFullExpected() public {
+        address newCustomer = makeAddr("customer_test_ProductPolicyClaimPayoutSimple");
+        uint256 sumInsuredAmountInt = 20000;
+        uint256 lifetimeInt = 365 * 24 * 3600;
+        uint256 claimAmountInt = 5000;
+        uint256 payoutAmountInt = claimAmountInt;
+
+        StateId claimState;
+        ClaimId claimId;
+        IPolicy.ClaimInfo memory claimInfo;
+        PayoutId payoutId;
+        StateId payoutState;
+        IPolicy.PayoutInfo memory payoutInfo;
+
+        // implicit assigning of policy nft id
+        (
+            claimId,
+            claimState,
+            payoutId,
+            payoutState
+        ) = _createPolicyWithClaimAndPayout(
+            newCustomer,
+            sumInsuredAmountInt,
+            lifetimeInt,
+            claimAmountInt,
+            payoutAmountInt, 
+            false); // process payout
+
+        // check policy
+        {
+            assertTrue(policyNftId.gtz(), "policy nft id zero");
+            assertEq(registry.ownerOf(policyNftId), newCustomer, "unexpected policy holder");
+            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), ACTIVE().toInt(), "unexpected policy state");
+
+            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+            assertEq(policyInfo.claimsCount, 1, "unexpected claims count");
+            assertEq(policyInfo.openClaimsCount, 1, "unexpected open claims count");
+            assertEq(policyInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (policy)");
+            assertEq(policyInfo.payoutAmount.toInt(), 0, "unexpected payout amount (policy)");
+        }
+
+        // check claim
+        {
+            assertEq(claimId.toInt(), 1, "unexpected claim id");
+            assertEq(claimState.toInt(), CONFIRMED().toInt(), "unexpected claim state");
+
+            claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+            assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (claim)");
+            assertEq(claimInfo.paidAmount.toInt(), 0, "unexpected paid amount (claim)");
+            assertEq(claimInfo.payoutsCount, 1, "unexpected payouts count");
+            assertEq(claimInfo.openPayoutsCount, 1, "unexpected open payouts count");
+        }
+
+        // check payout
+        {
+            assertTrue(payoutId.gtz(), "claim id zero");
+            assertEq(payoutId.toClaimId().toInt(), claimId.toInt(), "unexpected payout id claim id link");
+            assertEq(payoutState.toInt(), EXPECTED().toInt(), "unexpected payout state");
+
+            payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+            assertEq(payoutInfo.amount.toInt(), payoutAmountInt, "unexpected amount (payout)");
+            assertEq(payoutInfo.paidAt.toInt(), 0, "unexpected paid at");
+        }
+    }
+
+    function test_ProductPolicyClaimPayoutFullProcessed() public {
+        address newCustomer = makeAddr("customer_test_ProductPolicyClaimPayoutSimple");
+        uint256 sumInsuredAmountInt = 20000;
+        uint256 lifetimeInt = 365 * 24 * 3600;
+        uint256 claimAmountInt = 5000;
+        uint256 payoutAmountInt = claimAmountInt;
+
+        StateId claimState;
+        ClaimId claimId;
+        IPolicy.ClaimInfo memory claimInfo;
+        PayoutId payoutId;
+        StateId payoutState;
+        IPolicy.PayoutInfo memory payoutInfo;
+
+        // implicit assigning of policy nft id
+        (
+            claimId,
+            claimState,
+            payoutId,
+            payoutState
+        ) = _createPolicyWithClaimAndPayout(
+            newCustomer,
+            sumInsuredAmountInt,
+            lifetimeInt,
+            claimAmountInt,
+            payoutAmountInt, 
+            true); // process payout
+
+        // check policy
+        {
+            assertTrue(policyNftId.gtz(), "policy nft id zero");
+            assertEq(registry.ownerOf(policyNftId), newCustomer, "unexpected policy holder");
+            assertEq(instanceReader.getPolicyState(policyNftId).toInt(), ACTIVE().toInt(), "unexpected policy state");
+
+            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+            assertEq(policyInfo.claimsCount, 1, "unexpected claims count");
+            assertEq(policyInfo.openClaimsCount, 0, "unexpected open claims count");
+            assertEq(policyInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (policy)");
+            assertEq(policyInfo.payoutAmount.toInt(), payoutAmountInt, "unexpected payout amount (policy)");
+        }
+
+        // check claim
+        {
+            assertEq(claimId.toInt(), 1, "unexpected claim id");
+            assertEq(claimState.toInt(), CLOSED().toInt(), "unexpected claim state");
+
+            claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+            assertEq(claimInfo.claimAmount.toInt(), claimAmountInt, "unexpected claim amount (claim)");
+            assertEq(claimInfo.paidAmount.toInt(), payoutAmountInt, "unexpected paid amount (claim)");
+            assertEq(claimInfo.payoutsCount, 1, "unexpected payouts count");
+            assertEq(claimInfo.openPayoutsCount, 0, "unexpected open payouts count");
+        }
+
+        // check payout
+        {
+            assertTrue(payoutId.gtz(), "claim id zero");
+            assertEq(payoutId.toClaimId().toInt(), claimId.toInt(), "unexpected payout id claim id link");
+            assertEq(payoutState.toInt(), PAID().toInt(), "unexpected payout state");
+
+            payoutInfo = instanceReader.getPayoutInfo(policyNftId, payoutId);
+            assertEq(payoutInfo.amount.toInt(), payoutAmountInt, "unexpected amount (payout)");
+            assertEq(payoutInfo.paidAt.toInt(), block.timestamp, "unexpected paid at");
+        }
+    }
+
+    function _createPolicyWithClaimAndPayout(
+        address policyHolder,
+        uint256 sumInsuredAmountInt, 
+        uint256 lifetimeInt,
+        uint256 claimAmountInt, 
+        uint256 payoutAmountInt,
+        bool processPayout
+    )
+        internal
+        returns (
+            ClaimId claimId,
+            StateId claimState,
+            PayoutId payoutId,
+            StateId payoutState
+        )
+
+    {
+        // create application for policy holder
+        policyNftId = prdct.createApplication(
+            policyHolder,
+            riskId,
+            sumInsuredAmountInt,
+            SecondsLib.toSeconds(lifetimeInt),
+            "", // application data
+            bundleNftId,
+            ReferralLib.zero());
+
+        // fund policy holder to pay premium
+        ISetup.ProductSetupInfo memory productSetup = instanceReader.getProductSetupInfo(productNftId);
+        uint256 premiumAmountInt = instanceReader.getPolicyInfo(policyNftId).premiumAmount.toInt();
+
+        // add token allowance to pay premiums
+        vm.startPrank(registryOwner);
+        token.transfer(policyHolder, premiumAmountInt);
+        vm.stopPrank();
+
+        vm.startPrank(policyHolder);
+        token.approve(
+            address(productSetup.tokenHandler), 
+            premiumAmountInt);
+        vm.stopPrank();
+
+        // collateralize policy
+        bool collectPremium = true;
+        Timestamp activateAt = TimestampLib.blockTimestamp();
+
+        vm.startPrank(productOwner);
+        prdct.collateralize(policyNftId, collectPremium, activateAt); 
+        vm.stopPrank();
+
+        // create claim with payout
+        (
+            , // policyInfo
+            claimId,
+            , // claimState
+            , // claimInfo
+            payoutId,
+            , // payoutState
+            // payoutInfo
+        ) = _createClaimAndPayout(
+            policyNftId,
+            claimAmountInt,
+            payoutAmountInt,
+            "",  // payout data
+            processPayout
+        );
+
+        // if (processPayout) {
+        //     prdct.processPayout(policyNftId, payoutId);
+        // }
+
+        claimState = instanceReader.getClaimState(policyNftId, claimId);
+        payoutState = instanceReader.getPayoutState(policyNftId, payoutId);
+    }
 
     function _createClaimAndPayout(
         NftId plcyNftId, 
         uint256 claimAmount, 
         uint256 payoutAmount,
-        bytes memory payoutData
+        bytes memory payoutData,
+        bool processPayout
     )
         internal
         returns (
@@ -295,6 +565,10 @@ contract TestProductClaim is TestGifBase {
             claimId, 
             AmountLib.toAmount(payoutAmount), 
             payoutData);
+
+        if (processPayout) {
+            prdct.processPayout(policyNftId, payoutId);
+        }
 
         // after create payout
         policyInfo = instanceReader.getPolicyInfo(policyNftId);

@@ -150,7 +150,7 @@ contract ClaimService is
         instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
 
         // update and save policy info with instance
-        policyInfo.claimAmount = policyInfo.claimAmount.add(confirmedAmount);
+        policyInfo.claimAmount = policyInfo.claimAmount + confirmedAmount;
         instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogClaimServiceClaimConfirmed(policyNftId, claimId, confirmedAmount);
