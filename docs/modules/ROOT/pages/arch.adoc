@@ -7,12 +7,39 @@ NOTE: This document is under construction
 === General
 
 - Libraries, registry and services are pre-deployed on the chain (by Etherisc) and are owned by the protocol owner
+
+=== Releases
+
+- GIF releases use semantic versioning with major, minor and patch releases
+- For GIF major releases a new master instance and a set of upgradeable service contracts are deployed
+- Smart contract upgradeability is only used for minor and patch releases for a specific major release
+- The GIF registry contract is non-upgradeable and built to be able to handle multiple major releases
+- Most instance contracts are non-upgradeable and hard wired to a specific major release
+
+=== Registry
+
+- Registry registers all relevant and ownable GIF objects like instances, products, policies, etc on a specific chain
+- The global registry on mainnet also contains entries for the chain registries on other chains
 - Registry access is granted through the `RegistryAccessManager`
+- Registry contracts are non-upgradeable
+- Registry should be able to cope with multiple major version upgrades. 
 - Transactional operations (writing) to the registry are done via the `RegistryService`
-- Services and registry are maintained and upgraded by the protocol owner
+- Registry is owned by the protocol owner
+
+=== Services
+
+- Service contracts are upgradeable
+- Service contracts may be upgraded for minor and patch updates
+- Service contracts may not be upgraded for major updates. 
+- For major GIF upgrades a new service contract needs to be deployed and registered
+- Services are maintained and upgraded by the protocol owner
+- Service ownership/maintenance may be delegated to specific service owners in the future
 
 === Instance
 
+- Instance contracts are non upgradable
+- Instance contracts support minor and patch updates of services
+- Instance contracts do not support major updates of services
 - New instances are created by the instancer owner calling `InstanceService.createInstanceClone`
 - Transactional operations (writing) are only via services
 - Read access to the instance is done through the `InstanceReader` and/or services
@@ -31,3 +58,20 @@ NOTE: This document is under construction
 - End users (consumers) interact with the system through components
 - Components must provide all necessary functions for consumer interaction 
 - Components use the instance's `AuthorizationManager` for authorization checks
+
+=== Staking
+
+- Keep track of total value locked (TVL) per instance
+- TVL: amount of tokens locked by active policies
+- Creating policies increase TVL, executing payouts and closing policies decrease TVL
+- TVL in USD may be calculated using price feeds or CEX/DEX exchange rates
+- Staking will initially be supported on instance level (bundle staking too fine grained)
+- A corresponding amount of DIP token shall be staked using a staking rate
+- For the tracking of TVL and related DIP stakes a global dashboard will be provided
+
+Open staking questions
+
+- minimal staking period? eg 3 months 
+- minimal staking extensino period? eg 3 months
+- slashing? not initially
+- upgradeability? likely yes
