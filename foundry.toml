@@ -2,7 +2,6 @@
 src = 'contracts'
 out = 'artifacts_forge'
 libs = ['node_modules', 'lib']
-test = 'test_forge'
 cache_path  = 'cache_forge'
 
 ffi = true
