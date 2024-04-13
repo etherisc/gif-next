@@ -8,7 +8,6 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {IProductService} from "../instance/service/IProductService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";

@@ -27,13 +27,13 @@ import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
 import {IAccess} from "./module/IAccess.sol";
 
-import {IBundleService} from "./service/IBundleService.sol";
-import {IDistributionService} from "./service/IDistributionService.sol";
-import {IPolicyService} from "./service/IPolicyService.sol";
-import {IPoolService} from "./service/IPoolService.sol";
-import {IProductService} from "./service/IProductService.sol";
-import {IPolicyService} from "./service/IPolicyService.sol";
-import {IBundleService} from "./service/IBundleService.sol";
+import {IBundleService} from "../pool/IBundleService.sol";
+import {IDistributionService} from "../distribution/IDistributionService.sol";
+import {IPolicyService} from "../product/IPolicyService.sol";
+import {IPoolService} from "../pool/IPoolService.sol";
+import {IProductService} from "../product/IProductService.sol";
+import {IPolicyService} from "../product/IPolicyService.sol";
+import {IBundleService} from "../pool/IBundleService.sol";
 
 
 

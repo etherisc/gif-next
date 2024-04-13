@@ -33,23 +33,23 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
-import {DistributionService} from "../../contracts/instance/service/DistributionService.sol";
-import {DistributionServiceManager} from "../../contracts/instance/service/DistributionServiceManager.sol";
-import {ProductService} from "../../contracts/instance/service/ProductService.sol";
-import {ProductServiceManager} from "../../contracts/instance/service/ProductServiceManager.sol";
-import {PoolService} from "../../contracts/instance/service/PoolService.sol";
-import {PoolServiceManager} from "../../contracts/instance/service/PoolServiceManager.sol";
+import {DistributionService} from "../../contracts/distribution/DistributionService.sol";
+import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
+import {ProductService} from "../../contracts/product/ProductService.sol";
+import {ProductServiceManager} from "../../contracts/product/ProductServiceManager.sol";
+import {PoolService} from "../../contracts/pool/PoolService.sol";
+import {PoolServiceManager} from "../../contracts/pool/PoolServiceManager.sol";
 
-import {ApplicationService} from "../../contracts/instance/service/ApplicationService.sol";
-import {ApplicationServiceManager} from "../../contracts/instance/service/ApplicationServiceManager.sol";
-import {PolicyService} from "../../contracts/instance/service/PolicyService.sol";
-import {PolicyServiceManager} from "../../contracts/instance/service/PolicyServiceManager.sol";
-import {ClaimService} from "../../contracts/instance/service/ClaimService.sol";
-import {ClaimServiceManager} from "../../contracts/instance/service/ClaimServiceManager.sol";
-import {BundleService} from "../../contracts/instance/service/BundleService.sol";
-import {BundleServiceManager} from "../../contracts/instance/service/BundleServiceManager.sol";
-import {PricingService} from "../../contracts/instance/service/PricingService.sol";
-import {PricingServiceManager} from "../../contracts/instance/service/PricingServiceManager.sol";
+import {ApplicationService} from "../../contracts/product/ApplicationService.sol";
+import {ApplicationServiceManager} from "../../contracts/product/ApplicationServiceManager.sol";
+import {PolicyService} from "../../contracts/product/PolicyService.sol";
+import {PolicyServiceManager} from "../../contracts/product/PolicyServiceManager.sol";
+import {ClaimService} from "../../contracts/product/ClaimService.sol";
+import {ClaimServiceManager} from "../../contracts/product/ClaimServiceManager.sol";
+import {BundleService} from "../../contracts/pool/BundleService.sol";
+import {BundleServiceManager} from "../../contracts/pool/BundleServiceManager.sol";
+import {PricingService} from "../../contracts/product/PricingService.sol";
+import {PricingServiceManager} from "../../contracts/product/PricingServiceManager.sol";
 
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
@@ -61,10 +61,10 @@ import {BundleManager} from "../../contracts/instance/BundleManager.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
-import {Distribution} from "../../contracts/components/Distribution.sol";
-import {Product} from "../../contracts/components/Product.sol";
-import {Pool} from "../../contracts/components/Pool.sol";
-import {USDC} from "../../contracts/test/Usdc.sol";
+import {Distribution} from "../../contracts/distribution/Distribution.sol";
+import {Product} from "../../contracts/product/Product.sol";
+import {Pool} from "../../contracts/pool/Pool.sol";
+import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
 import {SimplePool} from "../mock/SimplePool.sol";
 
@@ -547,12 +547,12 @@ contract TestGifBase is Test {
     }
 
     function _deployAndActivateToken() internal {
-        USDC usdc  = new USDC();
-        address usdcAddress = address(usdc);
-        token = usdc;
+        Usdc Usdc  = new Usdc();
+        address UsdcAddress = address(Usdc);
+        token = Usdc;
 
         // solhint-disable-next-line
-        console.log("token deployed at", usdcAddress);
+        console.log("token deployed at", UsdcAddress);
 
         tokenRegistry.setActive(address(token), registry.getLatestVersion(), true);
     }

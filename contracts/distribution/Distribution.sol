@@ -2,12 +2,12 @@
 pragma solidity ^0.8.19;
 
 import {DISTRIBUTION} from "../type/ObjectType.sol";
-import {IDistributionService} from "../instance/service/IDistributionService.sol";
-import {IProductService} from "../instance/service/IProductService.sol";
+import {IDistributionService} from "./IDistributionService.sol";
+import {IProductService} from "../product/IProductService.sol";
 import {NftId, zeroNftId, NftIdLib, toNftId} from "../type/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
-import {Component} from "./Component.sol";
+import {Component} from "../shared/Component.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";

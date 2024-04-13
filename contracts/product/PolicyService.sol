@@ -1,41 +1,41 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IRegistry} from "../../registry/IRegistry.sol";
-import {Product} from "../../components/Product.sol";
-import {IComponents} from "../module/IComponents.sol";
-import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
-import {IInstance} from "../IInstance.sol";
-import {IPolicy} from "../module/IPolicy.sol";
-import {IPoolComponent} from "../../components/IPoolComponent.sol";
-import {IRisk} from "../module/IRisk.sol";
-import {IBundle} from "../module/IBundle.sol";
-import {ISetup} from "../module/ISetup.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {Product} from "./Product.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
+import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IPoolComponent} from "../pool/IPoolComponent.sol";
+import {IRisk} from "../instance/module/IRisk.sol";
+import {IBundle} from "../instance/module/IBundle.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 
-import {TokenHandler} from "../../shared/TokenHandler.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 
-import {Amount, AmountLib} from "../../types/Amount.sol";
-import {ClaimId, ClaimIdLib} from "../../types/ClaimId.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../types/UFixed.sol";
-import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../../types/ObjectType.sol";
-import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED, CONFIRMED} from "../../types/StateId.sol";
-import {NftId, NftIdLib} from "../../types/NftId.sol";
-import {PayoutId, PayoutIdLib} from "../../types/PayoutId.sol";
-import {StateId} from "../../types/StateId.sol";
-import {VersionPart} from "../../types/Version.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../type/ObjectType.sol";
+import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED, CONFIRMED} from "../type/StateId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
+import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
+import {StateId} from "../type/StateId.sol";
+import {VersionPart} from "../type/Version.sol";
 
-import {ComponentService} from "../base/ComponentService.sol";
+import {ComponentService} from "../shared/ComponentService.sol";
 import {IApplicationService} from "./IApplicationService.sol";
-import {IBundleService} from "./IBundleService.sol";
+import {IBundleService} from "../pool/IBundleService.sol";
 import {IClaimService} from "./IClaimService.sol";
-import {IDistributionService} from "./IDistributionService.sol";
-import {InstanceReader} from "../InstanceReader.sol";
+import {IDistributionService} from "../distribution/IDistributionService.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicyService} from "./IPolicyService.sol";
-import {IPoolService} from "./IPoolService.sol";
+import {IPoolService} from "../pool/IPoolService.sol";
 import {IPricingService} from "./IPricingService.sol";
-import {IService} from "../../shared/IService.sol";
-import {Service} from "../../shared/Service.sol";
+import {IService} from "../shared/IService.sol";
+import {Service} from "../shared/Service.sol";
 
 contract PolicyService is
     ComponentService, 

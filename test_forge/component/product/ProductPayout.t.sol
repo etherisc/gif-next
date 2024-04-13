@@ -4,10 +4,10 @@ pragma solidity 0.8.20;
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
 import {TestGifBase} from "../../base/TestGifBase.sol";
-import {Amount, AmountLib} from "../../../contracts/types/Amount.sol";
-import {NftId, NftIdLib} from "../../../contracts/types/NftId.sol";
-import {ClaimId} from "../../../contracts/types/ClaimId.sol";
-import {PRODUCT_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
+import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
+import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {ClaimId} from "../../../contracts/type/ClaimId.sol";
+import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
@@ -15,18 +15,18 @@ import {ILifecycle} from "../../../contracts/instance/base/ILifecycle.sol";
 import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
-import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
-import {UFixedLib} from "../../../contracts/types/UFixed.sol";
-import {Seconds, SecondsLib} from "../../../contracts/types/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/types/Timestamp.sol";
-import {IPolicyService} from "../../../contracts/instance/service/IPolicyService.sol";
+import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
+import {UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../../../contracts/type/Timestamp.sol";
+import {IPolicyService} from "../../../contracts/product/IPolicyService.sol";
 import {IRisk} from "../../../contracts/instance/module/IRisk.sol";
-import {PayoutId, PayoutIdLib} from "../../../contracts/types/PayoutId.sol";
-import {POLICY} from "../../../contracts/types/ObjectType.sol";
-import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/types/RiskId.sol";
-import {ReferralLib} from "../../../contracts/types/Referral.sol";
-import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID} from "../../../contracts/types/StateId.sol";
-import {StateId} from "../../../contracts/types/StateId.sol";
+import {PayoutId, PayoutIdLib} from "../../../contracts/type/PayoutId.sol";
+import {POLICY} from "../../../contracts/type/ObjectType.sol";
+import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
+import {ReferralLib} from "../../../contracts/type/Referral.sol";
+import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
+import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestProductClaim is TestGifBase {
 

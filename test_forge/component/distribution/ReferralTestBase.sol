@@ -3,14 +3,14 @@ pragma solidity ^0.8.20;
 
 import {TestGifBase} from "../../base/TestGifBase.sol";
 
-import {NftId} from "../../../contracts/types/NftId.sol";
-import {DistributorType} from "../../../contracts/types/DistributorType.sol";
-import {ReferralId} from "../../../contracts/types/Referral.sol";
-import {Timestamp, toTimestamp} from "../../../contracts/types/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../../contracts/types/UFixed.sol";
+import {NftId} from "../../../contracts/type/NftId.sol";
+import {DistributorType} from "../../../contracts/type/DistributorType.sol";
+import {ReferralId} from "../../../contracts/type/Referral.sol";
+import {Timestamp, toTimestamp} from "../../../contracts/type/Timestamp.sol";
+import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
-import {FeeLib} from "../../../contracts/types/Fee.sol";
-import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
+import {FeeLib} from "../../../contracts/type/Fee.sol";
+import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 
 contract ReferralTestBase is TestGifBase {
 

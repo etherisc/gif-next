@@ -27,7 +27,7 @@ import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceMa
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
-import {DistributionServiceManager} from "../../contracts/instance/service/DistributionServiceManager.sol";
+import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
 
 import {RegistryServiceManagerMockWithConfig} from "../mock/RegistryServiceManagerMock.sol";
 

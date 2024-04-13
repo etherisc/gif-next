@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Amount} from "../../types/Amount.sol";
-import {Fee} from "../../types/Fee.sol";
-import {NftId} from "../../types/NftId.sol";
-import {PayoutId} from "../../types/PayoutId.sol";
-import {IBundle} from "../module/IBundle.sol";
-import {IInstance} from "../../instance/IInstance.sol";
-import {IPolicy} from "../module/IPolicy.sol";
-import {IService} from "../../shared/IService.sol";
-import {RoleId} from "../../types/RoleId.sol";
-import {Seconds} from "../../types/Seconds.sol";
-import {StateId} from "../../types/StateId.sol";
+import {Amount} from "../type/Amount.sol";
+import {Fee} from "../type/Fee.sol";
+import {NftId} from "../type/NftId.sol";
+import {PayoutId} from "../type/PayoutId.sol";
+import {IBundle} from "../instance/module/IBundle.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IService} from "../shared/IService.sol";
+import {RoleId} from "../type/RoleId.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {StateId} from "../type/StateId.sol";
 
 interface IPoolService is IService {
 

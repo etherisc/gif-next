@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Amount} from "../../types/Amount.sol";
-import {NftId} from "../../types/NftId.sol";
-import {Fee} from "../../types/Fee.sol";
-import {IService} from "../../shared/IService.sol";
-import {IBundle} from "../module/IBundle.sol";
-import {IInstance} from "../../instance/IInstance.sol";
-import {Seconds} from "../../types/Seconds.sol";
-import {StateId} from "../../types/StateId.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
+import {Amount} from "../type/Amount.sol";
+import {NftId} from "../type/NftId.sol";
+import {Fee} from "../type/Fee.sol";
+import {IService} from "../shared/IService.sol";
+import {IBundle} from "../instance/module/IBundle.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {StateId} from "../type/StateId.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
 interface IBundleService is IService {
 

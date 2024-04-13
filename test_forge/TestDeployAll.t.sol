@@ -3,9 +3,9 @@ pragma solidity 0.8.20;
 
 import {console} from "../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "./base/TestGifBase.sol";
-import {NftId, toNftId, NftIdLib} from "../contracts/types/NftId.sol";
-import {BUNDLE, COMPONENT, POLICY, RISK} from "../contracts/types/ObjectType.sol";
-import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol";
+import {NftId, toNftId, NftIdLib} from "../contracts/type/NftId.sol";
+import {BUNDLE, COMPONENT, POLICY, RISK} from "../contracts/type/ObjectType.sol";
+import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 
 contract TestDeployAll is TestGifBase {
     using NftIdLib for NftId;

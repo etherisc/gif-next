@@ -10,7 +10,7 @@ import {IService} from "../shared/IService.sol";
 import {IRegistry} from "./IRegistry.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IComponent} from "../components/IComponent.sol";
+import {IComponent} from "../shared/IComponent.sol";
 
 interface IRegistryService is 
      IService

@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IPolicy} from "../module/IPolicy.sol";
-import {IService} from "../../shared/IService.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IService} from "../shared/IService.sol";
 
-import {Amount} from "../../types/Amount.sol";
-import {NftId} from "../../types/NftId.sol";
-import {ObjectType} from "../../types/ObjectType.sol";
-import {ReferralId} from "../../types/Referral.sol";
-import {RiskId} from "../../types/RiskId.sol";
-import {Seconds} from "../../types/Seconds.sol";
+import {Amount} from "../type/Amount.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {Seconds} from "../type/Seconds.sol";
 
 /// @dev gif service responsible for creating applications
 /// only product components may call transaction functions

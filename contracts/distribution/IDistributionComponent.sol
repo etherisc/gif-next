@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Fee} from "../type/Fee.sol";
-import {IComponent} from "./IComponent.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {ReferralId, ReferralStatus} from "../type/Referral.sol";
 import {NftId} from "../type/NftId.sol";

@@ -1,26 +1,26 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ACTIVE, APPLIED} from "../../../contracts/types/StateId.sol";
+import {ACTIVE, APPLIED} from "../../../contracts/type/StateId.sol";
 import {console} from "../../../lib/forge-std/src/Test.sol";
-import {Fee, FeeLib} from "../../../contracts/types/Fee.sol";
+import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
-import {NftId, NftIdLib} from "../../../contracts/types/NftId.sol";
-import {POLICY} from "../../../contracts/types/ObjectType.sol";
-import {POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../contracts/types/RoleId.sol";
-import {ReferralId, ReferralLib} from "../../../contracts/types/Referral.sol";
+import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {POLICY} from "../../../contracts/type/ObjectType.sol";
+import {POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
+import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {ReferralTestBase} from "./ReferralTestBase.sol";
-import {RiskId, RiskIdLib} from "../../../contracts/types/RiskId.sol";
-import {Seconds, SecondsLib} from "../../../contracts/types/Seconds.sol";
+import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
+import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
-import {TimestampLib} from "../../../contracts/types/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../../contracts/types/UFixed.sol";
+import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
+import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 
 contract ReferralTest is ReferralTestBase {
     using NftIdLib for NftId;

@@ -34,11 +34,11 @@ import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
 import {ISetup} from "./module/ISetup.sol";
 
-import {IDistributionService} from "./service/IDistributionService.sol";
-import {IPoolService} from "./service/IPoolService.sol";
-import {IProductService} from "./service/IProductService.sol";
-import {IPolicyService} from "./service/IPolicyService.sol";
-import {IBundleService} from "./service/IBundleService.sol";
+import {IDistributionService} from "../distribution/IDistributionService.sol";
+import {IPoolService} from "../pool/IPoolService.sol";
+import {IProductService} from "../product/IProductService.sol";
+import {IPolicyService} from "../product/IPolicyService.sol";
+import {IBundleService} from "../pool/IBundleService.sol";
 
 contract Instance is
     IInstance,

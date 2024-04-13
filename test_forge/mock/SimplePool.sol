@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {AmountLib} from "../../contracts/type/Amount.sol";
 import {Fee} from "../../contracts/type/Fee.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-import {Pool} from "../../contracts/components/Pool.sol";
+import {Pool} from "../../contracts/pool/Pool.sol";
 import {Seconds} from "../../contracts/type/Timestamp.sol";
 import {UFixed} from "../../contracts/type/UFixed.sol";
 

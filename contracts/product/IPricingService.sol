@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Seconds} from "../../types/Seconds.sol";
-import {NftId} from "../../types/NftId.sol";
-import {ReferralId} from "../../types/Referral.sol";
-import {RiskId} from "../../types/RiskId.sol";
-import {Amount} from "../../types/Amount.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {NftId} from "../type/NftId.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {Amount} from "../type/Amount.sol";
 
 import {IService} from "./IApplicationService.sol";
-import {IPolicy} from "../module/IPolicy.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
 
 interface IPricingService is IService
 {

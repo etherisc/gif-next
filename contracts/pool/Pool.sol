@@ -2,11 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {Component} from "./Component.sol";
+import {Component} from "../shared/Component.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
-import {IBundleService} from "../instance/service/IBundleService.sol";
+import {IBundleService} from "./IBundleService.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
-import {IPoolService} from "../instance/service/IPoolService.sol";
+import {IPoolService} from "./IPoolService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {BUNDLE, POOL} from "../type/ObjectType.sol";

@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IInstance} from "../IInstance.sol";
-import {InstanceReader} from "../InstanceReader.sol";
-import {IService} from "../../shared/IService.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
+import {IService} from "../shared/IService.sol";
 
-import {Amount} from "../../types/Amount.sol";
-import {ClaimId} from "../../types/ClaimId.sol";
-import {PayoutId} from "../../types/PayoutId.sol";
-import {NftId} from "../../types/NftId.sol";
-import {StateId} from "../../types/StateId.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
-import {UFixed} from "../../types/UFixed.sol";
-import {Fee} from "../../types/Fee.sol";
+import {Amount} from "../type/Amount.sol";
+import {ClaimId} from "../type/ClaimId.sol";
+import {PayoutId} from "../type/PayoutId.sol";
+import {NftId} from "../type/NftId.sol";
+import {StateId} from "../type/StateId.sol";
+import {Timestamp} from "../type/Timestamp.sol";
+import {UFixed} from "../type/UFixed.sol";
+import {Fee} from "../type/Fee.sol";
 
 /// @dev gif service responsible for creating claims and payouts
 /// only product components may call transaction functions

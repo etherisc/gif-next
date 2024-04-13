@@ -19,7 +19,7 @@ import {ADMIN_ROLE, PRODUCT_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, I
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {AccessManagerUpgradeableInitializeable} from "../../contracts/shared/AccessManagerUpgradeableInitializeable.sol";
 
-import {IComponent} from "../../contracts/components/IComponent.sol";
+import {IComponent} from "../../contracts/shared/IComponent.sol";
 
 import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";

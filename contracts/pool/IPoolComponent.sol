@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
-import {IComponent} from "./IComponent.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";

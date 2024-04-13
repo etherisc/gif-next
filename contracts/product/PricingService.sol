@@ -1,31 +1,31 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Seconds} from "../../types/Seconds.sol";
-import {UFixed, UFixedLib} from "../../types/UFixed.sol";
-import {ObjectType} from "../../types/ObjectType.sol";
-import {NftId} from "../../types/NftId.sol";
-import {Fee} from "../../types/Fee.sol";
-import {ReferralId} from "../../types/Referral.sol";
-import {RiskId} from "../../types/RiskId.sol";
-import {PRODUCT, DISTRIBUTION, PRICE} from "../../types/ObjectType.sol";
-import {Amount} from "../../types/Amount.sol";
-import {IRegistry} from "../../registry/IRegistry.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {NftId} from "../type/NftId.sol";
+import {Fee} from "../type/Fee.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {PRODUCT, DISTRIBUTION, PRICE} from "../type/ObjectType.sol";
+import {Amount} from "../type/Amount.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 
-import {IProductComponent} from "../../components/IProductComponent.sol";
+import {IProductComponent} from "./IProductComponent.sol";
 
-import {IInstance} from "../IInstance.sol";
-import {InstanceReader} from "../InstanceReader.sol";
-import {IComponents} from "../module/IComponents.sol";
-import {IPolicy} from "../module/IPolicy.sol";
-import {IBundle} from "../module/IBundle.sol";
-import {ISetup} from "../module/ISetup.sol";
-import {IDistribution} from "../module/IDistribution.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IBundle} from "../instance/module/IBundle.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
+import {IDistribution} from "../instance/module/IDistribution.sol";
 
-import {ComponentService} from "../base/ComponentService.sol";
+import {ComponentService} from "../shared/ComponentService.sol";
 
 import {IPricingService} from "./IPricingService.sol";
-import {IDistributionService} from "./IDistributionService.sol";
+import {IDistributionService} from "../distribution/IDistributionService.sol";
 
 
 contract PricingService is 

@@ -1,51 +1,51 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {AmountLib} from "../../types/Amount.sol";
-import {Seconds} from "../../types/Seconds.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../types/UFixed.sol";
-import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
-import {ObjectType, DISTRIBUTION, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, BUNDLE, PRICE} from "../../types/ObjectType.sol";
-import {APPLIED, REVOKED, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {Fee, FeeLib} from "../../types/Fee.sol";
-import {ReferralId} from "../../types/Referral.sol";
-import {RiskId} from "../../types/RiskId.sol";
-import {StateId} from "../../types/StateId.sol";
-import {Version, VersionLib} from "../../types/Version.sol";
-import {Amount, AmountLib} from "../../types/Amount.sol";
+import {AmountLib} from "../type/Amount.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
+import {ObjectType, DISTRIBUTION, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, BUNDLE, PRICE} from "../type/ObjectType.sol";
+import {APPLIED, REVOKED, ACTIVE, KEEP_STATE} from "../type/StateId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../type/NftId.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {StateId} from "../type/StateId.sol";
+import {Version, VersionLib} from "../type/Version.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
 
-import {TokenHandler} from "../../shared/TokenHandler.sol";
-import {IVersionable} from "../../shared/IVersionable.sol";
-import {Versionable} from "../../shared/Versionable.sol";
-import {IService} from "../../shared/IService.sol";
-import {Service} from "../../shared/Service.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
+import {IVersionable} from "../shared/IVersionable.sol";
+import {Versionable} from "../shared/Versionable.sol";
+import {IService} from "../shared/IService.sol";
+import {Service} from "../shared/Service.sol";
 
-import {IRegistry} from "../../registry/IRegistry.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 
-import {IProductComponent} from "../../components/IProductComponent.sol";
-import {IPoolComponent} from "../../components/IPoolComponent.sol";
-import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
-import {Product} from "../../components/Product.sol";
+import {IProductComponent} from "./IProductComponent.sol";
+import {IPoolComponent} from "../pool/IPoolComponent.sol";
+import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
+import {Product} from "./Product.sol";
 
-import {IComponents} from "../module/IComponents.sol";
-import {IPolicy} from "../module/IPolicy.sol";
-import {IRisk} from "../module/IRisk.sol";
-import {IBundle} from "../module/IBundle.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IRisk} from "../instance/module/IRisk.sol";
+import {IBundle} from "../instance/module/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
-import {ITreasury} from "../module/ITreasury.sol";
-import {ISetup} from "../module/ISetup.sol";
+import {ITreasury} from "../instance/module/ITreasury.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 
-import {ComponentService} from "../base/ComponentService.sol";
+import {ComponentService} from "../shared/ComponentService.sol";
 
-import {IInstance} from "../IInstance.sol";
-import {InstanceReader} from "../InstanceReader.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 
 import {IApplicationService} from "./IApplicationService.sol";
-import {IBundleService} from "./IBundleService.sol";
-import {IDistributionService} from "./IDistributionService.sol";
-import {IPoolService} from "./IPoolService.sol";
+import {IBundleService} from "../pool/IBundleService.sol";
+import {IDistributionService} from "../distribution/IDistributionService.sol";
+import {IPoolService} from "../pool/IPoolService.sol";
 import {IPricingService} from "./IPricingService.sol";
 
 

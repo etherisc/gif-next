@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Amount} from "../../types/Amount.sol";
-import {NftId} from "../../types/NftId.sol";
-import {Fee} from "../../types/Fee.sol";
-import {IPolicy} from "../module/IPolicy.sol";
-import {IService} from "../../shared/IService.sol";
-import {UFixed} from "../../types/UFixed.sol";
-import {DistributorType} from "../../types/DistributorType.sol";
-import {ReferralId} from "../../types/Referral.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
+import {Amount} from "../type/Amount.sol";
+import {NftId} from "../type/NftId.sol";
+import {Fee} from "../type/Fee.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IService} from "../shared/IService.sol";
+import {UFixed} from "../type/UFixed.sol";
+import {DistributorType} from "../type/DistributorType.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
 
 interface IDistributionService is IService {

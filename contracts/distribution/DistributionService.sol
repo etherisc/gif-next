@@ -1,41 +1,41 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IRegistry} from "../../registry/IRegistry.sol";
-import {IInstance} from "../../instance/IInstance.sol";
-import {InstanceAccessManager} from "../InstanceAccessManager.sol";
-import {InstanceReader} from "../../instance/InstanceReader.sol";
-import {ISetup} from "../../instance/module/ISetup.sol";
-import {IPolicy} from "../module/IPolicy.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
 
-import {Amount, AmountLib} from "../../types/Amount.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {Fee, FeeLib} from "../../types/Fee.sol";
-import {PRODUCT_SERVICE_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../types/RoleId.sol";
-import {KEEP_STATE} from "../../types/StateId.sol";
-import {ObjectType, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, PRICE} from "../../types/ObjectType.sol";
-import {Version, VersionLib} from "../../types/Version.sol";
-import {RoleId} from "../../types/RoleId.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {NftId, NftIdLib, zeroNftId} from "../type/NftId.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
+import {PRODUCT_SERVICE_ROLE, DISTRIBUTION_OWNER_ROLE} from "../type/RoleId.sol";
+import {KEEP_STATE} from "../type/StateId.sol";
+import {ObjectType, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, PRICE} from "../type/ObjectType.sol";
+import {Version, VersionLib} from "../type/Version.sol";
+import {RoleId} from "../type/RoleId.sol";
 
-import {IVersionable} from "../../shared/IVersionable.sol";
-import {Versionable} from "../../shared/Versionable.sol";
+import {IVersionable} from "../shared/IVersionable.sol";
+import {Versionable} from "../shared/Versionable.sol";
 
-import {IService} from "../../shared/IService.sol";
-import {Service} from "../../shared/Service.sol";
-import {ComponentService} from "../base/ComponentService.sol";
-import {InstanceService} from "../InstanceService.sol";
-import {IComponent} from "../../components/IComponent.sol";
-import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
+import {IService} from "../shared/IService.sol";
+import {Service} from "../shared/Service.sol";
+import {ComponentService} from "../shared/ComponentService.sol";
+import {InstanceService} from "../instance/InstanceService.sol";
+import {IComponent} from "../shared/IComponent.sol";
+import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
 import {IDistributionService} from "./IDistributionService.sol";
-import {IPricingService} from "./IPricingService.sol";
+import {IPricingService} from "../product/IPricingService.sol";
 
-import {UFixed, UFixedLib} from "../../types/UFixed.sol";
-import {DistributorType, DistributorTypeLib} from "../../types/DistributorType.sol";
-import {ReferralId, ReferralStatus, ReferralLib} from "../../types/Referral.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
-import {Key32} from "../../types/Key32.sol";
-import {IDistribution} from "../module/IDistribution.sol";
-import {InstanceStore} from "../InstanceStore.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {DistributorType, DistributorTypeLib} from "../type/DistributorType.sol";
+import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {Key32} from "../type/Key32.sol";
+import {IDistribution} from "../instance/module/IDistribution.sol";
+import {InstanceStore} from "../instance/InstanceStore.sol";
 
 
 contract DistributionService is

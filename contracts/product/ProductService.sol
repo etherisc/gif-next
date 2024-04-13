@@ -1,44 +1,44 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IRegistry} from "../../registry/IRegistry.sol";
-import {IProductComponent} from "../../components/IProductComponent.sol";
-import {Product} from "../../components/Product.sol";
-import {IComponent} from "../../components/IComponent.sol";
-import {IPoolComponent} from "../../components/IPoolComponent.sol";
-import {IDistributionComponent} from "../../components/IDistributionComponent.sol";
-import {IInstance} from "../IInstance.sol";
-import {IPolicy} from "../module/IPolicy.sol";
-import {IRisk} from "../module/IRisk.sol";
-import {IBundle} from "../module/IBundle.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IProductComponent} from "./IProductComponent.sol";
+import {Product} from "./Product.sol";
+import {IComponent} from "../shared/IComponent.sol";
+import {IPoolComponent} from "../pool/IPoolComponent.sol";
+import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
+import {IRisk} from "../instance/module/IRisk.sol";
+import {IBundle} from "../instance/module/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
-import {ITreasury} from "../module/ITreasury.sol";
-import {ISetup} from "../module/ISetup.sol";
+import {ITreasury} from "../instance/module/ITreasury.sol";
+import {ISetup} from "../instance/module/ISetup.sol";
 
-import {TokenHandler} from "../../shared/TokenHandler.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 
-import {IVersionable} from "../../shared/IVersionable.sol";
-import {Versionable} from "../../shared/Versionable.sol";
+import {IVersionable} from "../shared/IVersionable.sol";
+import {Versionable} from "../shared/Versionable.sol";
 
-import {Timestamp, zeroTimestamp} from "../../types/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../types/UFixed.sol";
-import {Blocknumber, blockNumber} from "../../types/Blocknumber.sol";
-import {ObjectType, PRODUCT, POOL, POLICY} from "../../types/ObjectType.sol";
-import {APPLIED, ACTIVE, KEEP_STATE} from "../../types/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {Fee, FeeLib} from "../../types/Fee.sol";
-import {ReferralId} from "../../types/Referral.sol";
-import {RiskId} from "../../types/RiskId.sol";
-import {StateId} from "../../types/StateId.sol";
-import {Version, VersionLib} from "../../types/Version.sol";
-import {RoleId, PRODUCT_OWNER_ROLE} from "../../types/RoleId.sol";
+import {Timestamp, zeroTimestamp} from "../type/Timestamp.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
+import {ObjectType, PRODUCT, POOL, POLICY} from "../type/ObjectType.sol";
+import {APPLIED, ACTIVE, KEEP_STATE} from "../type/StateId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../type/NftId.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {StateId} from "../type/StateId.sol";
+import {Version, VersionLib} from "../type/Version.sol";
+import {RoleId, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
 
-import {IService} from "../../shared/IService.sol";
-import {Service} from "../../shared/Service.sol";
-import {ComponentService} from "../base/ComponentService.sol";
+import {IService} from "../shared/IService.sol";
+import {Service} from "../shared/Service.sol";
+import {ComponentService} from "../shared/ComponentService.sol";
 import {IProductService} from "./IProductService.sol";
-import {InstanceReader} from "../InstanceReader.sol";
-import {IPoolService} from "./PoolService.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
+import {IPoolService} from "../pool/PoolService.sol";
 
 // TODO or name this ProtectionService to have Product be something more generic (loan, savings account, ...)
 contract ProductService is ComponentService, IProductService {

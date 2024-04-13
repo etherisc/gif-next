@@ -6,7 +6,7 @@ import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {Fee} from "../../contracts/type/Fee.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {PayoutId} from "../../contracts/type/PayoutId.sol";
-import {Product} from "../../contracts/components/Product.sol";
+import {Product} from "../../contracts/product/Product.sol";
 import {ReferralId} from "../../contracts/type/Referral.sol";
 import {RiskId} from "../../contracts/type/RiskId.sol";
 import {StateId} from "../../contracts/type/StateId.sol";

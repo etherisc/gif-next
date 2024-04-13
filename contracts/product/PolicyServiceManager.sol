@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IVersionable} from "../../shared/IVersionable.sol";
-import {ProxyManager} from "../../shared/ProxyManager.sol";
+import {IVersionable} from "../shared/IVersionable.sol";
+import {ProxyManager} from "../shared/ProxyManager.sol";
 import {PolicyService} from "./PolicyService.sol";
-import {Registry} from "../../registry/Registry.sol";
-import {RegistryService} from "../../registry/RegistryService.sol";
-import {VersionLib} from "../../types/Version.sol";
+import {Registry} from "../registry/Registry.sol";
+import {RegistryService} from "../registry/RegistryService.sol";
+import {VersionLib} from "../type/Version.sol";
 
 contract PolicyServiceManager is ProxyManager {
 

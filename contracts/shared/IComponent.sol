@@ -7,7 +7,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IProductService} from "../instance/service/IProductService.sol";
+import {IProductService} from "../product/IProductService.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 import {NftId} from "../type/NftId.sol";

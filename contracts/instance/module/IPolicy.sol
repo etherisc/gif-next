@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../../types/Amount.sol";
-import {NftId} from "../../types/NftId.sol";
-import {ClaimId} from "../../types/ClaimId.sol";
-import {ReferralId} from "../../types/Referral.sol";
-import {RiskId} from "../../types/RiskId.sol";
-import {Seconds} from "../../types/Seconds.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
+import {Amount} from "../../type/Amount.sol";
+import {NftId} from "../../type/NftId.sol";
+import {ClaimId} from "../../type/ClaimId.sol";
+import {ReferralId} from "../../type/Referral.sol";
+import {RiskId} from "../../type/RiskId.sol";
+import {Seconds} from "../../type/Seconds.sol";
+import {Timestamp} from "../../type/Timestamp.sol";
 
 interface IPolicy {
 

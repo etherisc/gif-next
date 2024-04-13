@@ -1,41 +1,41 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Pool} from "../../components/Pool.sol";
-import {IRegistry} from "../../registry/IRegistry.sol";
-import {IInstance} from "../../instance/IInstance.sol";
-import {IBundle} from "../../instance/module/IBundle.sol";
-import {TokenHandler} from "../../instance/module/ITreasury.sol";
-import {IComponents} from "../module/IComponents.sol";
-import {IPolicy} from "../module/IPolicy.sol";
+import {Pool} from "./Pool.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IBundle} from "../instance/module/IBundle.sol";
+import {TokenHandler} from "../instance/module/ITreasury.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
 
-import {IVersionable} from "../../shared/IVersionable.sol";
-import {Versionable} from "../../shared/Versionable.sol";
-import {INftOwnable} from "../../shared/INftOwnable.sol";
+import {IVersionable} from "../shared/IVersionable.sol";
+import {Versionable} from "../shared/Versionable.sol";
+import {INftOwnable} from "../shared/INftOwnable.sol";
 
-import {Amount, AmountLib} from "../../types/Amount.sol";
-import {Fee, FeeLib} from "../../types/Fee.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../types/NftId.sol";
-import {ObjectType, POOL, BUNDLE} from "../../types/ObjectType.sol";
-import {PUBLIC_ROLE, POOL_OWNER_ROLE, POLICY_SERVICE_ROLE, RoleId} from "../../types/RoleId.sol";
-import {Fee, FeeLib} from "../../types/Fee.sol";
-import {Version, VersionLib} from "../../types/Version.sol";
-import {KEEP_STATE, StateId} from "../../types/StateId.sol";
-import {Seconds} from "../../types/Seconds.sol";
-import {TimestampLib, zeroTimestamp} from "../../types/Timestamp.sol";
-import {Version, VersionLib} from "../../types/Version.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
+import {NftId, NftIdLib, zeroNftId} from "../type/NftId.sol";
+import {ObjectType, POOL, BUNDLE} from "../type/ObjectType.sol";
+import {PUBLIC_ROLE, POOL_OWNER_ROLE, POLICY_SERVICE_ROLE, RoleId} from "../type/RoleId.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
+import {Version, VersionLib} from "../type/Version.sol";
+import {KEEP_STATE, StateId} from "../type/StateId.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {Version, VersionLib} from "../type/Version.sol";
 
-import {IService} from "../../shared/IService.sol";
-import {Service} from "../../shared/Service.sol";
-import {BundleManager} from "../BundleManager.sol";
-import {ComponentService} from "../base/ComponentService.sol";
+import {IService} from "../shared/IService.sol";
+import {Service} from "../shared/Service.sol";
+import {BundleManager} from "../instance/BundleManager.sol";
+import {ComponentService} from "../shared/ComponentService.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IPoolService} from "./IPoolService.sol";
-import {IRegistryService} from "../../registry/IRegistryService.sol";
-import {InstanceService} from "../InstanceService.sol";
-import {InstanceReader} from "../InstanceReader.sol";
-import {IComponent} from "../../components/IComponent.sol";
-import {IPoolComponent} from "../../components/IPoolComponent.sol";
+import {IRegistryService} from "../registry/IRegistryService.sol";
+import {InstanceService} from "../instance/InstanceService.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
+import {IComponent} from "../shared/IComponent.sol";
+import {IPoolComponent} from "./IPoolComponent.sol";
 
 string constant POOL_SERVICE_NAME = "PoolService";
 

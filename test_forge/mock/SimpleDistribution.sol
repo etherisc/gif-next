@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Distribution} from "../../contracts/components/Distribution.sol";
+import {Distribution} from "../../contracts/distribution/Distribution.sol";
 
 import {Fee} from "../../contracts/type/Fee.sol";
 import {NftId} from "../../contracts/type/NftId.sol";

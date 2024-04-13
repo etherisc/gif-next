@@ -8,7 +8,7 @@ import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
 
-import {UsdcMock} from "../mock/UsdcMock.sol";
+import {Usdc} from "../mock/Usdc.sol";
 import {DIP} from "../mock/Dip.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
@@ -21,7 +21,7 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 contract RegistryTokenWhitelisting is RegistryTestBase {
 
     DIP public dip = new DIP();
-    UsdcMock public usdc = new UsdcMock();
+    Usdc public usdc = new Usdc();
 
     VersionPart public majorVersion2 = VersionPartLib.toVersionPart(2);
     VersionPart public majorVersion3 = VersionPartLib.toVersionPart(3);

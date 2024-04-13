@@ -2,13 +2,13 @@
 pragma solidity 0.8.20;
 
 import {TestGifBase} from "./base/TestGifBase.sol";
-import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
-import {DISTRIBUTION_OWNER_ROLE} from "../contracts/types/RoleId.sol";
-import {IComponent} from "../contracts/components/IComponent.sol";
+import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
+import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
+import {IComponent} from "../contracts/shared/IComponent.sol";
 import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {IAccess} from "../contracts/instance/module/IAccess.sol";
-import {Fee, FeeLib} from "../contracts/types/Fee.sol";
-import {UFixedLib} from "../contracts/types/UFixed.sol";
+import {Fee, FeeLib} from "../contracts/type/Fee.sol";
+import {UFixedLib} from "../contracts/type/UFixed.sol";
 import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
 
 contract TestDistribution is TestGifBase {

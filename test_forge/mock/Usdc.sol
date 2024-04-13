@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract UsdcMock is ERC20 {
+contract Usdc is ERC20 {
 
     // https://etherscan.io/token/0xc719d010b63e5bbf2c0551872cd5316ed26acd83#readContract
     string public constant NAME = "Usdc - DUMMY";

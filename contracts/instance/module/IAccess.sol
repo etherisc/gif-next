@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
-import {RoleId} from "../../types/RoleId.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
+import {RoleId} from "../../type/RoleId.sol";
+import {Timestamp} from "../../type/Timestamp.sol";
 
 interface IAccess {
 

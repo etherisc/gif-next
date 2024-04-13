@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IComponent} from "../../components/IComponent.sol";
-import {IRegistry} from "../../registry/IRegistry.sol";
-import {IRegistryService} from "../../registry/IRegistryService.sol";
-import {IInstance} from "../../instance/IInstance.sol";
-import {IAccess} from "../module/IAccess.sol";
-import {ObjectType, INSTANCE, REGISTRY} from "../../types/ObjectType.sol";
-import {NftId} from "../../types/NftId.sol";
-import {RoleId} from "../../types/RoleId.sol";
+import {IComponent} from "./IComponent.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegistryService} from "../registry/IRegistryService.sol";
+import {IInstance} from "../instance/IInstance.sol";
+import {IAccess} from "../instance/module/IAccess.sol";
+import {ObjectType, INSTANCE, REGISTRY} from "../type/ObjectType.sol";
+import {NftId} from "../type/NftId.sol";
+import {RoleId} from "../type/RoleId.sol";
 
-import {Service} from "../../shared/Service.sol";
-import {InstanceService} from "../InstanceService.sol";
-import {InstanceAccessManager} from "../InstanceAccessManager.sol";
+import {Service} from "../shared/Service.sol";
+import {InstanceService} from "../instance/InstanceService.sol";
+import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
 
 abstract contract ComponentService is
     Service

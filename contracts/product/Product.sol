@@ -5,14 +5,14 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {Component} from "./Component.sol";
+import {Component} from "../shared/Component.sol";
 import {Fee} from "../type/Fee.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
-import {IApplicationService} from "../instance/service/IApplicationService.sol";
-import {IPolicyService} from "../instance/service/IPolicyService.sol";
-import {IProductService} from "../instance/service/IProductService.sol";
-import {IClaimService} from "../instance/service/IClaimService.sol";
-import {IPricingService} from "../instance/service/IPricingService.sol";
+import {IApplicationService} from "./IApplicationService.sol";
+import {IPolicyService} from "./IPolicyService.sol";
+import {IProductService} from "./IProductService.sol";
+import {IClaimService} from "./IClaimService.sol";
+import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
@@ -29,8 +29,8 @@ import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {Pool} from "../components/Pool.sol";
-import {Distribution} from "../components/Distribution.sol";
+import {Pool} from "../pool/Pool.sol";
+import {Distribution} from "../distribution/Distribution.sol";
 
 abstract contract Product is
     Component, 

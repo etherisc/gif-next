@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import {Test} from "../../lib/forge-std/src/Test.sol";
-import "../../contracts/types/Blocknumber.sol";
+import "../../contracts/type/Blocknumber.sol";
 
 contract BlocknumberTest is Test {
     using BlocknumberLib for Blocknumber;

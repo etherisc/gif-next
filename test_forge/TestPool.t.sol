@@ -3,22 +3,22 @@ pragma solidity 0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
-import {Fee, FeeLib} from "../contracts/types/Fee.sol";
+import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IKeyValueStore} from "../contracts/instance/base/IKeyValueStore.sol";
 import {ILifecycle} from "../contracts/instance/base/ILifecycle.sol";
-import {Key32} from "../contracts/types/Key32.sol";
-import {NftId, NftIdLib} from "../contracts/types/NftId.sol";
-import {ObjectType, BUNDLE} from "../contracts/types/ObjectType.sol";
-import {Pool} from "../contracts/components/Pool.sol";
-import {POOL_OWNER_ROLE} from "../contracts/types/RoleId.sol";
-import {SecondsLib} from "../contracts/types/Seconds.sol";
+import {Key32} from "../contracts/type/Key32.sol";
+import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
+import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
+import {Pool} from "../contracts/pool/Pool.sol";
+import {POOL_OWNER_ROLE} from "../contracts/type/RoleId.sol";
+import {SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
-import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/types/StateId.sol";
-import {TimestampLib} from "../contracts/types/Timestamp.sol";
+import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
+import {TimestampLib} from "../contracts/type/Timestamp.sol";
 import {TestGifBase} from "./base/TestGifBase.sol";
-import {UFixedLib} from "../contracts/types/UFixed.sol";
+import {UFixedLib} from "../contracts/type/UFixed.sol";
 
 contract TestPool is TestGifBase {
     using NftIdLib for NftId;

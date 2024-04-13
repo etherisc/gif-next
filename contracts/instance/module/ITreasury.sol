@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Fee} from "../../types/Fee.sol";
-import {NftId} from "../../types/NftId.sol";
+import {Fee} from "../../type/Fee.sol";
+import {NftId} from "../../type/NftId.sol";
 import {TokenHandler} from "../../shared/TokenHandler.sol";
 
 interface ITreasury {
