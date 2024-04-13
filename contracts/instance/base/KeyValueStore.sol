@@ -11,7 +11,10 @@ import {Timestamp, TimestampLib} from "../../type/Timestamp.sol";
 import {Lifecycle} from "./Lifecycle.sol";
 import {IKeyValueStore} from "./IKeyValueStore.sol";
 
-contract KeyValueStore is Lifecycle, IKeyValueStore {
+contract KeyValueStore is
+    Lifecycle, 
+    IKeyValueStore
+{
 
     mapping(Key32 key32 => Value value) private _value;
 

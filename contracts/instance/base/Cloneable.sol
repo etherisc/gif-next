@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegistry} from "../../registry/IRegistry.sol";
 
 abstract contract Cloneable is 
     AccessManagedUpgradeable

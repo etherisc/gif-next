@@ -10,7 +10,7 @@ import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId} from "../type/NftId.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
-import {ObjectManager} from "./ObjectManager.sol";
+import {ObjectManager} from "./base/ObjectManager.sol";
 
 contract BundleManager is 
     ObjectManager

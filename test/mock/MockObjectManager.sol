@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {NftId} from "../../contracts/type/NftId.sol";
-import {ObjectManager} from "../../contracts/instance/ObjectManager.sol";
+import {ObjectManager} from "../../contracts/instance/base/ObjectManager.sol";
 
 contract MockObjectManager is ObjectManager {
 
