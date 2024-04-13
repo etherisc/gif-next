@@ -15,16 +15,19 @@ contract InstanceServiceManager is ProxyManager {
 
     /// @dev initializes proxy manager with instance service implementation and deploys instance
     constructor(
-        address registryAddress
-    )
+        address authority, 
+        address registryAddress,
+        bytes32 salt
+    ) 
         ProxyManager(registryAddress)
     {
-        InstanceService instSrv = new InstanceService();
+        InstanceService instSrv = new InstanceService{salt: salt}();
         // bytes memory initCode = type(InstanceService).creationCode;
-        bytes memory data = abi.encode(registryAddress, address(this));
-        IVersionable versionable = deploy(
+        bytes memory data = abi.encode(registryAddress, address(this), authority);
+        IVersionable versionable = deployDetermenistic(
             address(instSrv), 
-            data);
+            data,
+            salt);
 
         _instanceService = InstanceService(address(versionable));
 

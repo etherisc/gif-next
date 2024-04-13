@@ -11,15 +11,18 @@ contract ClaimServiceManager is ProxyManager {
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
-        address registryAddress
-    )
+        address authority, 
+        address registryAddress,
+        bytes32 salt
+    ) 
         ProxyManager(registryAddress)
     {
-        ClaimService svc = new ClaimService();
-        bytes memory data = abi.encode(registryAddress, address(this));
-        IVersionable versionable = deploy(
+        ClaimService svc = new ClaimService{salt: salt}();
+        bytes memory data = abi.encode(registryAddress, address(this), authority);
+        IVersionable versionable = deployDetermenistic(
             address(svc), 
-            data);
+            data,
+            salt);
 
         _claimService = ClaimService(address(versionable));
     }

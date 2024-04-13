@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {Registry} from "./Registry.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
@@ -18,20 +19,25 @@ contract RegistryServiceManager is
     RegistryService private immutable _registryService;
 
     /// @dev initializes proxy manager with registry service implementation and deploys registry
+    //registryServiceManager = new RegistryServiceManager{salt: config.CONFIG_SALT()}(releaseAccessManager, registryAddress, config.CONFIG_SALT());
     constructor(
-        address initialAuthority, // used by implementation 
-        address registryAddress) // used by implementation 
-        ProxyManager(registryAddress)
+        address authority, // used by implementation 
+        address registry, // used by implementation 
+        bytes32 salt
+    ) 
+        ProxyManager(registry)
     {
-        require(initialAuthority > address(0), "RegistryServiceManager: initial authority is 0");
-        require(registryAddress > address(0), "RegistryServiceManager: registry is 0");
+        require(authority > address(0), "RegistryServiceManager: initial authority is 0");
+        require(registry > address(0), "RegistryServiceManager: registry is 0");
         
         // implementation's initializer func `data` argument
-        RegistryService srv = new RegistryService();
-        bytes memory data = abi.encode(registryAddress, initialAuthority);
-        IVersionable versionable = deploy(
+        //RegistryService srv = new RegistryService{salt: salt}();
+        RegistryService srv = new RegistryService{ salt: salt }();
+        bytes memory data = abi.encode(registry, address(this), authority);
+        IVersionable versionable = deployDetermenistic(
             address(srv), 
-            data);
+            data,
+            salt);
 
         _registryService = RegistryService(address(versionable));
 

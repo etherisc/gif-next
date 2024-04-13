@@ -44,10 +44,11 @@ function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId
 function CLAIM_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2420); }
 function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
 function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600); }
+function REGISTRY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2700); }
+function PRICING_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2800); }
 
 function GIF_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
-function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 
-function RELEASE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1700); } 
+function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); }
 
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {

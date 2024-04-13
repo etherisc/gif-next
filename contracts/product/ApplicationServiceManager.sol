@@ -11,15 +11,18 @@ contract ApplicationServiceManager is ProxyManager {
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
-        address registryAddress
-    )
+        address authority, 
+        address registryAddress,
+        bytes32 salt
+    ) 
         ProxyManager(registryAddress)
     {
-        ApplicationService svc = new ApplicationService();
-        bytes memory data = abi.encode(registryAddress, address(this));
-        IVersionable versionable = deploy(
+        ApplicationService svc = new ApplicationService{salt: salt}();
+        bytes memory data = abi.encode(registryAddress, address(this), authority);
+        IVersionable versionable = deployDetermenistic(
             address(svc), 
-            data);
+            data,
+            salt);
 
         _applicationService = ApplicationService(address(versionable));
     }

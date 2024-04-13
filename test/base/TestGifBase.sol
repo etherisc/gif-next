@@ -5,7 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {VersionPartLib} from "../../contracts/type/Version.sol";
+import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
 import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
@@ -22,6 +22,7 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {AccessManagerUpgradeableInitializeable} from "../../contracts/shared/AccessManagerUpgradeableInitializeable.sol";
+import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWithAdmin.sol";
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -68,8 +69,7 @@ import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
 import {SimplePool} from "../mock/SimplePool.sol";
 
-// import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
-// import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
+import {ReleaseConfig} from "./ReleaseConfig.sol";
 
 
 // solhint-disable-next-line max-states-count
@@ -303,7 +303,7 @@ contract TestGifBase is Test {
 
     function _deployRegistryServiceAndRegistry() internal
     {
-        registryAccessManager = new RegistryAccessManager(registryOwner);
+        registryAccessManager = new RegistryAccessManager();
 
         releaseManager = new ReleaseManager(
             registryAccessManager,
@@ -319,18 +319,7 @@ contract TestGifBase is Test {
         // solhint-disable
         tokenRegistry = new TokenRegistry(registryAddress);
 
-        registryAccessManager.initialize(address(releaseManager), address(tokenRegistry));
-
-        registryServiceManager = new RegistryServiceManager(
-            registryAccessManager.authority(),
-            registryAddress
-        );        
-        
-        releaseManager.createNextRelease();
-
-        registryService = registryServiceManager.getRegistryService();
-        releaseManager.registerRegistryService(registryService);
-        registryServiceManager.linkOwnershipToServiceNft();
+        registryAccessManager.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
 
         /* solhint-disable */
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
@@ -350,7 +339,29 @@ contract TestGifBase is Test {
         console.log("token registry deployed at", address(tokenRegistry));
         console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
         console.log("token registry linked owner", tokenRegistry.getOwner());
+        /* solhint-enable */
+    }
 
+    function _deployAndRegisterServices() internal 
+    {
+        ReleaseConfig config = new ReleaseConfig(
+            releaseManager, 
+            registryOwner, 
+            VersionPartLib.toVersionPart(3));
+
+        (
+            address releaseAccessManager, 
+            VersionPart version
+        ) = releaseManager.createNextRelease(config.getConfig());
+
+        bytes32 salt = bytes32(version.toInt());
+
+        // --- registry service ---------------------------------//
+        registryServiceManager = new RegistryServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        registryService = registryServiceManager.getRegistryService();
+        releaseManager.registerService(registryService); 
+
+        // solhint-disable
         console.log("registry service proxy manager deployed at", address(registryServiceManager));
         console.log("registry service proxy manager linked to nft", registryServiceManager.getNftId().toInt());
         console.log("registry service proxy manager owner", registryServiceManager.getOwner());
@@ -359,17 +370,11 @@ contract TestGifBase is Test {
         console.log("registry service nft", registryService.getNftId().toInt());
         console.log("registry service owner", registryService.getOwner());
         console.log("registry service authority", registryService.authority());
-        /* solhint-enable */
-    }
+        // solhint-enable
 
-    function _deployAndRegisterServices() internal 
-    {
         // --- instance service ---------------------------------//
-        // TODO manager can not use releaseManager.registerService() in constructor
-        // because it have no role / have no nft
-        instanceServiceManager = new InstanceServiceManager(address(registry));
+        instanceServiceManager = new InstanceServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         instanceService = instanceServiceManager.getInstanceService();
-        // temporal solution, register in separate tx
         instanceServiceNftId = releaseManager.registerService(instanceService);
 
         // solhint-disable 
@@ -379,7 +384,7 @@ contract TestGifBase is Test {
         // solhint-enable
 
         // --- distribution service ---------------------------------//
-        distributionServiceManager = new DistributionServiceManager(address(registry));
+        distributionServiceManager = new DistributionServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         distributionService = distributionServiceManager.getDistributionService();
         distributionServiceNftId = releaseManager.registerService(distributionService);
 
@@ -390,10 +395,7 @@ contract TestGifBase is Test {
         // solhint-enable
 
         // --- pricing service ---------------------------------//
-        // TODO chicken and egg problem, pricing service needs distribution service to be registered and vice versa
-        // option 1: do not store service references localy, in services
-        // option 2: do not use isValidReferal in  pricing service
-        pricingServiceManager = new PricingServiceManager(address(registry));
+        pricingServiceManager = new PricingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         pricingService = pricingServiceManager.getPricingService();
         pricingServiceNftId = releaseManager.registerService(pricingService);
 
@@ -404,7 +406,7 @@ contract TestGifBase is Test {
         // solhint-enable
 
         // --- bundle service ---------------------------------//
-        bundleServiceManager = new BundleServiceManager(address(registry));
+        bundleServiceManager = new BundleServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         bundleService = bundleServiceManager.getBundleService();
         bundleServiceNftId = releaseManager.registerService(bundleService);
 
@@ -415,7 +417,7 @@ contract TestGifBase is Test {
         // solhint-enable
 
         // --- pool service ---------------------------------//
-        poolServiceManager = new PoolServiceManager(address(registry));
+        poolServiceManager = new PoolServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         poolService = poolServiceManager.getPoolService();
         poolServiceNftId = releaseManager.registerService(poolService);
 
@@ -426,7 +428,7 @@ contract TestGifBase is Test {
         // solhint-enable
 
         // --- product service ---------------------------------//
-        productServiceManager = new ProductServiceManager(address(registry));
+        productServiceManager = new ProductServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         productService = productServiceManager.getProductService();
         productServiceNftId = releaseManager.registerService(productService);
 
@@ -438,7 +440,7 @@ contract TestGifBase is Test {
 
         // MUST follow bundle service registration 
         // --- claim service ---------------------------------//
-        claimServiceManager = new ClaimServiceManager(address(registry));
+        claimServiceManager = new ClaimServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         claimService = claimServiceManager.getClaimService();
         claimServiceNftId = releaseManager.registerService(claimService);
 
@@ -449,7 +451,7 @@ contract TestGifBase is Test {
         // solhint-enable
 
         // --- application service ---------------------------------//
-        applicationServiceManager = new ApplicationServiceManager(address(registry));
+        applicationServiceManager = new ApplicationServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         applicationService = applicationServiceManager.getApplicationService();
         applicationServiceNftId = releaseManager.registerService(applicationService);
 
@@ -460,7 +462,7 @@ contract TestGifBase is Test {
         // solhint-enable
 
         // --- policy service ---------------------------------//
-        policyServiceManager = new PolicyServiceManager(address(registry));
+        policyServiceManager = new PolicyServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         policyService = policyServiceManager.getPolicyService();
         policyServiceNftId = releaseManager.registerService(policyService);
 
@@ -470,7 +472,6 @@ contract TestGifBase is Test {
         console.log("policyService nft id", policyService.getNftId().toInt());
         // solhint-enable
 
-        // activate initial release -> activated upon last service registration
         releaseManager.activateNextRelease();
     }
 

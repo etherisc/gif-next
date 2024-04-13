@@ -9,8 +9,8 @@ import {RegistryServiceMockWithSimpleConfig} from "./RegistryServiceMock.sol";
 
 contract RegistryServiceManagerMockWithHarness is RegistryServiceManager
 {
-    constructor(address initialAuthority, address registry)
-        RegistryServiceManager(initialAuthority, registry)
+    constructor(address initialAuthority, address registry, bytes32 salt)
+        RegistryServiceManager(initialAuthority, registry, salt)
     {
         bytes memory emptyUpgradeData;
 
@@ -24,8 +24,8 @@ contract RegistryServiceManagerMockWithHarness is RegistryServiceManager
 
 contract RegistryServiceManagerMockWithConfig is RegistryServiceManager
 {
-    constructor(address initialAuthority, address registry)
-        RegistryServiceManager(initialAuthority, registry)
+    constructor(address initialAuthority, address registry, bytes32 salt)
+        RegistryServiceManager(initialAuthority, registry, salt)
     {
         bytes memory emptyUpgradeData;
 
