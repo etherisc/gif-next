@@ -14,7 +14,9 @@ import {Service} from "../../shared/Service.sol";
 import {InstanceService} from "../InstanceService.sol";
 import {InstanceAccessManager} from "../InstanceAccessManager.sol";
 
-abstract contract ComponentService is Service {
+abstract contract ComponentService is
+    Service
+{
 
     error ErrorComponentServiceNotComponent(address component);
     error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
