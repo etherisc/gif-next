@@ -44,7 +44,6 @@ interface IRegistryService is
                FunctionConfig[] memory config
           );
 
-     // TODO used by service -> add owner arg 
      function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info); 
 

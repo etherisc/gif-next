@@ -283,6 +283,7 @@ contract DistributionService is
     )
         external
         virtual
+        restricted
     {
         bool isReferral = ! referralId.eqz();
         bool referralValid = referralIsValid(distributionNftId, referralId);

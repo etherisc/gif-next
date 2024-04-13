@@ -122,7 +122,7 @@ contract BundleService is
     )
         external
         override
-        // TODO add restricted and add authz for pool service
+        restricted
         returns(NftId bundleNftId)
     {
         // register bundle with registry
@@ -192,7 +192,7 @@ contract BundleService is
         Amount premiumAmount // premium part that reaches bundle for this policy
     ) 
         external
-        onlyService // TODO replace with restricted + appropriate granting
+        restricted
     {
         InstanceReader instanceReader = instance.getInstanceReader();
         StateId bundleState = instanceReader.getMetadata(bundleNftId.toKey32(BUNDLE())).state;
@@ -298,7 +298,7 @@ contract BundleService is
     ) 
         external
         virtual
-        // TODO add restricted and autz for pool service
+        restricted
     {
         // udpate bundle state
         instance.getInstanceStore().updateBundleState(bundleNftId, CLOSED());
@@ -321,7 +321,7 @@ contract BundleService is
         Amount premiumAmount
     ) 
         external
-        onlyService 
+        restricted
     {
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
@@ -338,7 +338,7 @@ contract BundleService is
         Amount collateralAmount
     ) 
         external
-        onlyService 
+        restricted 
     {
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
@@ -371,6 +371,7 @@ contract BundleService is
     ) 
         external
         virtual
+        restricted
     {
         // ensure policy is closeable
         if (!instance.getInstanceReader().policyIsCloseable(policyNftId)) {

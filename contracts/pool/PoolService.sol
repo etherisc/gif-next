@@ -64,7 +64,19 @@ contract PoolService is
         initializeService(registryAddress, address(0), owner);
 
         _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getVersion().toMajorPart()));
-
+/*
+        // configure in access manager;
+        // call it
+        // TODO but in this case service should know access manager -> better to do role stuff outside of service???
+        accessManager.
+        policyService.poolService.lockCollateral();
+        policyService.poolService.releaseCollateral();
+        // !!! or just save addresses of calling services from config????
+        //     and use common modifier -> on,yServiceAddress(_savedServiceAddresFromConfig/Registry)
+        //     get addresses from registry by domain -> implies registration order -> unidirected graph
+        // for example _> bundle service should already be registered???
+        _policyService = IPolicyService(getRegistry().getServiceAddress(POLICY(), getVersion().toMajorPart()));
+*/
         registerInterface(type(IPoolService).interfaceId);
     }
 
@@ -182,7 +194,6 @@ contract PoolService is
         // TODO add logging
     }
 
-
     function createBundle(
         address owner, // initial bundle owner
         Fee memory fee, // fees deducted from premium that go to bundle owner
@@ -240,6 +251,7 @@ contract PoolService is
     ) 
         external
         virtual
+        restricted
     {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory bundleObjectInfo = registry.getObjectInfo(bundleNftId);
@@ -275,7 +287,7 @@ contract PoolService is
     )
         external
         virtual
-        // TODO add restricted and granting for policy service
+        restricted
     {
         InstanceReader instanceReader = instance.getInstanceReader();
         NftId poolNftId = instanceReader.getProductSetupInfo(productNftId).poolNftId;
@@ -326,7 +338,7 @@ contract PoolService is
     )
         external
         virtual
-        // TODO add restricted and granting for claim service
+        restricted
     {
         _bundleService.releaseCollateral(
             instance, 
@@ -345,7 +357,7 @@ contract PoolService is
     )
         external
         virtual
-        // TODO add restricted and granting for policy service
+        restricted
     {
         _bundleService.releaseCollateral(
             instance, 

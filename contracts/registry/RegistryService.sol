@@ -54,12 +54,12 @@ contract RegistryService is
         virtual override
         initializer()
     {
-        (
-            address registryAddress,
-            address initialAuthority
-        ) = abi.decode(data, (address, address));
+        address initialOwner;
+        address registryAddress;
+        address authority;
+        (registryAddress, initialOwner, authority) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, initialAuthority, owner);
+        initializeService(registryAddress, authority, owner);
 
         registerInterface(type(IRegistryService).interfaceId);
     }
