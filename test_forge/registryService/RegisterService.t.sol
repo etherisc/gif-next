@@ -5,9 +5,9 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/types/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {ObjectType, ObjectTypeLib, zeroObjectType, SERVICE} from "../../contracts/types/ObjectType.sol";
+import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {ObjectType, ObjectTypeLib, zeroObjectType, SERVICE} from "../../contracts/type/ObjectType.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";

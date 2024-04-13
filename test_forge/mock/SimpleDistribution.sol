@@ -3,11 +3,11 @@ pragma solidity ^0.8.20;
 
 import {Distribution} from "../../contracts/components/Distribution.sol";
 
-import {Fee} from "../../contracts/types/Fee.sol";
-import {NftId} from "../../contracts/types/NftId.sol";
-import {ReferralId} from "../../contracts/types/Referral.sol";
-import {Timestamp} from "../../contracts/types/Timestamp.sol";
-import {UFixed} from "../../contracts/types/UFixed.sol";
+import {Fee} from "../../contracts/type/Fee.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
+import {ReferralId} from "../../contracts/type/Referral.sol";
+import {Timestamp} from "../../contracts/type/Timestamp.sol";
+import {UFixed} from "../../contracts/type/UFixed.sol";
 
 contract SimpleDistribution is Distribution {
     

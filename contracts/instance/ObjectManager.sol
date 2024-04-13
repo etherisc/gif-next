@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 import {Cloneable} from "./Cloneable.sol";
 
 import {IInstance} from "./IInstance.sol";
-import {INSTANCE} from "../types/ObjectType.sol";
+import {INSTANCE} from "../type/ObjectType.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {LibNftIdSet} from "../types/NftIdSet.sol";
-import {NftId} from "../types/NftId.sol";
+import {LibNftIdSet} from "../type/NftIdSet.sol";
+import {NftId} from "../type/NftId.sol";
 
 contract ObjectManager is
     Cloneable

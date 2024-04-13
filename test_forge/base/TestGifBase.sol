@@ -5,18 +5,18 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {VersionPartLib} from "../../contracts/types/Version.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
-import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/types/ObjectType.sol";
-import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
+import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
+import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {
     ADMIN_ROLE,
     INSTANCE_OWNER_ROLE,
     PRODUCT_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
-    DISTRIBUTION_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {UFixed, UFixedLib} from "../../contracts/types/UFixed.sol";
-import {Version} from "../../contracts/types/Version.sol";
+    DISTRIBUTION_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
+import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
+import {Version} from "../../contracts/type/Version.sol";
 
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";

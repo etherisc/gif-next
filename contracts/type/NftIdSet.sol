@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {NftId} from "../types/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 
 // based on https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/structs/EnumerableSet.sol
 library LibNftIdSet {

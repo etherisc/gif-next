@@ -45,14 +45,14 @@ pragma solidity ^0.8.19;
 // import {IPricingService} from "./IPricingService.sol";
 
 
-import {Amount} from "../types/Amount.sol";
+import {Amount} from "../type/Amount.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IStakingService} from "./IStakingService.sol";
-import {NftId} from "../types/NftId.sol";
-import {ObjectType, POOL, STAKE} from "../types/ObjectType.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType, POOL, STAKE} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
-import {Timestamp} from "../types/Timestamp.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
 
 contract StakingService is 

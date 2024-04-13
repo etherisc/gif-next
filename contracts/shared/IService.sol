@@ -5,7 +5,7 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 
 import {IRegisterable} from "./IRegisterable.sol";
 import {IVersionable} from "./IVersionable.sol";
-import {ObjectType} from "../types/ObjectType.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 
 interface IService is 
     IRegisterable,

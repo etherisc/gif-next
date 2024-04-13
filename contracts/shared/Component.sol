@@ -14,14 +14,14 @@ import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {NftId} from "../types/NftId.sol";
-import {ObjectType, INSTANCE, PRODUCT} from "../types/ObjectType.sol";
-import {VersionPart} from "../types/Version.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType, INSTANCE, PRODUCT} from "../type/ObjectType.sol";
+import {VersionPart} from "../type/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
-import {RoleId, RoleIdLib} from "../types/RoleId.sol";
+import {RoleId, RoleIdLib} from "../type/RoleId.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {VersionPart} from "../types/Version.sol";
+import {VersionPart} from "../type/Version.sol";
 
 // TODO discuss to inherit from oz accessmanaged
 // then add (Distribution|Pool|Product)Upradeable that also intherit from Versionable

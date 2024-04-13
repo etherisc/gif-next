@@ -10,8 +10,8 @@ import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
-import {NftId} from "../types/NftId.sol";
-import {ObjectType} from "../types/ObjectType.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
 /// @dev component base class

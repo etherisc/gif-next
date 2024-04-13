@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Version, VersionLib} from "../../contracts/types/Version.sol";
+import {Version, VersionLib} from "../../contracts/type/Version.sol";
 import {ContractV01} from "./ContractV01.sol";
 
 contract ContractV02 is ContractV01 {

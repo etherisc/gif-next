@@ -3,16 +3,16 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
-import {Key32} from "../types/Key32.sol";
-import {NftId} from "../types/NftId.sol";
-import {RiskId} from "../types/RiskId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../types/ObjectType.sol";
-import {RoleId, RoleIdLib, eqRoleId, ADMIN_ROLE, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
-import {VersionPart, VersionPartLib} from "../types/Version.sol";
-import {ClaimId} from "../types/ClaimId.sol";
-import {ReferralId} from "../types/Referral.sol";
-import {PayoutId} from "../types/PayoutId.sol";
-import {DistributorType} from "../types/DistributorType.sol";
+import {Key32} from "../type/Key32.sol";
+import {NftId} from "../type/NftId.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
+import {RoleId, RoleIdLib, eqRoleId, ADMIN_ROLE, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
+import {ClaimId} from "../type/ClaimId.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {PayoutId} from "../type/PayoutId.sol";
+import {DistributorType} from "../type/DistributorType.sol";
 
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";

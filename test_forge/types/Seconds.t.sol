@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
-import {Seconds, SecondsLib} from "../../contracts/types/Seconds.sol";
+import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 
 contract SecondsTest is Test {
 

@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {DISTRIBUTION} from "../types/ObjectType.sol";
+import {DISTRIBUTION} from "../type/ObjectType.sol";
 import {IDistributionService} from "../instance/service/IDistributionService.sol";
 import {IProductService} from "../instance/service/IProductService.sol";
-import {NftId, zeroNftId, NftIdLib, toNftId} from "../types/NftId.sol";
-import {ReferralId, ReferralStatus, ReferralLib} from "../types/Referral.sol";
-import {Fee, FeeLib} from "../types/Fee.sol";
+import {NftId, zeroNftId, NftIdLib, toNftId} from "../type/NftId.sol";
+import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
 import {Component} from "./Component.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
@@ -16,9 +16,9 @@ import {ISetup} from "../instance/module/ISetup.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
-import {UFixed} from "../types/UFixed.sol";
-import {DistributorType} from "../types/DistributorType.sol";
-import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
+import {UFixed} from "../type/UFixed.sol";
+import {DistributorType} from "../type/DistributorType.sol";
+import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
 

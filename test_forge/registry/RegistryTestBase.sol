@@ -10,12 +10,12 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {blockBlocknumber} from "../../contracts/types/Blocknumber.sol";
-import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
-import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/types/ObjectType.sol";
+import {blockBlocknumber} from "../../contracts/type/Blocknumber.sol";
+import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
+import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
+import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
+import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
 

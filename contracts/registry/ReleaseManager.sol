@@ -3,11 +3,11 @@ pragma solidity ^0.8.20;
 
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
-import {NftId} from "../types/NftId.sol";
-import {RoleId} from "../types/RoleId.sol";
-import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE} from "../types/ObjectType.sol";
-import {Version, VersionLib, VersionPart, VersionPartLib} from "../types/Version.sol";
-import {Timestamp, TimestampLib} from "../types/Timestamp.sol";
+import {NftId} from "../type/NftId.sol";
+import {RoleId} from "../type/RoleId.sol";
+import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE} from "../type/ObjectType.sol";
+import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
+import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
 import {IService} from "../shared/IService.sol";
 

@@ -5,8 +5,8 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
-import {NftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {ObjectType} from "../../contracts/types/ObjectType.sol";
+import {NftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {ERC165} from "../../contracts/shared/ERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";

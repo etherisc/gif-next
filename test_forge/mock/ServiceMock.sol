@@ -4,9 +4,9 @@ pragma solidity ^0.8.19;
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
-import {NftId} from "../../contracts/types/NftId.sol";
-import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
-import {ObjectType, toObjectType, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/types/ObjectType.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
+import {Version, VersionPart, VersionLib} from "../../contracts/type/Version.sol";
+import {ObjectType, toObjectType, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/type/ObjectType.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {RegisterableMock} from "./RegisterableMock.sol";
 

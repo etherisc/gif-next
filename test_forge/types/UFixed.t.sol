@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import {Test} from "forge-std/Test.sol";
-import {UFixed, UFixedLib} from "../../contracts/types/UFixed.sol";
+import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 
 contract UFixedTest is Test {
     using UFixedLib for UFixed;

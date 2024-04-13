@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../types/Amount.sol";
-import {Fee} from "../types/Fee.sol";
+import {Amount} from "../type/Amount.sol";
+import {Fee} from "../type/Fee.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {NftId} from "../types/NftId.sol";
-import {RoleId} from "../types/RoleId.sol";
-import {Seconds} from "../types/Seconds.sol";
-import {UFixed} from "../types/UFixed.sol";
+import {NftId} from "../type/NftId.sol";
+import {RoleId} from "../type/RoleId.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 /// @dev pool components hold and manage the collateral to cover active policies
 /// pools come in different flavors

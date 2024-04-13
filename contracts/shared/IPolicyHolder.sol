@@ -4,11 +4,11 @@ pragma solidity ^0.8.20;
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 
-import {Amount} from "../types/Amount.sol";
-import {ClaimId} from "../types/ClaimId.sol";
+import {Amount} from "../type/Amount.sol";
+import {ClaimId} from "../type/ClaimId.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
-import {NftId} from "../types/NftId.sol";
-import {PayoutId} from "../types/PayoutId.sol";
+import {NftId} from "../type/NftId.sol";
+import {PayoutId} from "../type/PayoutId.sol";
 
 /// @dev generic interface for contracts that need to hold policies and receive payouts
 /// GIF will notify policy holder contracts for policy creation and payout execution

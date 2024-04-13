@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {NftId} from "../../contracts/types/NftId.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
 import {ObjectManager} from "../../contracts/instance/ObjectManager.sol";
 
 contract MockObjectManager is ObjectManager {

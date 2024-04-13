@@ -4,8 +4,8 @@ pragma solidity 0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {LibNftIdSet} from "../../contracts/types/NftIdSet.sol";
+import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {LibNftIdSet} from "../../contracts/type/NftIdSet.sol";
 import {MockObjectManager} from "../mock/MockObjectManager.sol";
 import {TestGifBase} from "../base/TestGifBase.sol";
 

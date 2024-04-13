@@ -9,12 +9,12 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 //import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {PRODUCT} from "../../contracts/types/ObjectType.sol";
-import {zeroNftId} from "../../contracts/types/NftId.sol";
-import {FeeLib} from "../../contracts/types/Fee.sol";
-import {RoleId} from "../../contracts/types/RoleId.sol";
-import {TimestampLib} from "../../contracts/types/Timestamp.sol";
-import {ADMIN_ROLE, PRODUCT_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_ROLE, RoleId, RoleIdLib} from "../../contracts/types/RoleId.sol";
+import {PRODUCT} from "../../contracts/type/ObjectType.sol";
+import {zeroNftId} from "../../contracts/type/NftId.sol";
+import {FeeLib} from "../../contracts/type/Fee.sol";
+import {RoleId} from "../../contracts/type/RoleId.sol";
+import {TimestampLib} from "../../contracts/type/Timestamp.sol";
+import {ADMIN_ROLE, PRODUCT_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_ROLE, RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {AccessManagerUpgradeableInitializeable} from "../../contracts/shared/AccessManagerUpgradeableInitializeable.sol";

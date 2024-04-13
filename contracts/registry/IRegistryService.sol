@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 // import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
-import {NftId} from "../types/NftId.sol";
-import {ObjectType} from "../types/ObjectType.sol";
-import {RoleId} from "../types/RoleId.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {RoleId} from "../type/RoleId.sol";
 import {IService} from "../shared/IService.sol";
 import {IRegistry} from "./IRegistry.sol";
 

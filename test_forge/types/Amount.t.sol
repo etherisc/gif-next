@@ -2,8 +2,8 @@
 pragma solidity 0.8.20;
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
-import {Amount, AmountLib} from "../../contracts/types/Amount.sol";
-import {UFixed, UFixedLib} from "../../contracts/types/Amount.sol";
+import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
+import {UFixed, UFixedLib} from "../../contracts/type/Amount.sol";
 
 contract AmountTest is Test {
 

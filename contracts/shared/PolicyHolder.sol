@@ -5,12 +5,12 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
-import {Amount} from "../types/Amount.sol";
-import {ClaimId, ClaimIdLib} from "../types/ClaimId.sol";
+import {Amount} from "../type/Amount.sol";
+import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {ERC165} from "./ERC165.sol";
 import {IPolicyHolder} from "./IPolicyHolder.sol";
-import {NftId} from "../types/NftId.sol";
-import {PayoutId} from "../types/PayoutId.sol";
+import {NftId} from "../type/NftId.sol";
+import {PayoutId} from "../type/PayoutId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
 
 /// @dev template implementation for IPolicyHolder

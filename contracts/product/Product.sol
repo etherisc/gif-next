@@ -3,10 +3,10 @@ pragma solidity ^0.8.19;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {Amount, AmountLib} from "../types/Amount.sol";
-import {ClaimId} from "../types/ClaimId.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {ClaimId} from "../type/ClaimId.sol";
 import {Component} from "./Component.sol";
-import {Fee} from "../types/Fee.sol";
+import {Fee} from "../type/Fee.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IApplicationService} from "../instance/service/IApplicationService.sol";
 import {IPolicyService} from "../instance/service/IPolicyService.sol";
@@ -14,14 +14,14 @@ import {IProductService} from "../instance/service/IProductService.sol";
 import {IClaimService} from "../instance/service/IClaimService.sol";
 import {IPricingService} from "../instance/service/IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
-import {NftId, NftIdLib} from "../types/NftId.sol";
-import {PayoutId} from "../types/PayoutId.sol";
-import {PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../types/ObjectType.sol";
-import {ReferralId} from "../types/Referral.sol";
-import {RiskId, RiskIdLib} from "../types/RiskId.sol";
-import {Seconds} from "../types/Seconds.sol";
-import {StateId} from "../types/StateId.sol";
-import {Timestamp} from "../types/Timestamp.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
+import {PayoutId} from "../type/PayoutId.sol";
+import {PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId, RiskIdLib} from "../type/RiskId.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {StateId} from "../type/StateId.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
 import {TokenHandler} from "../shared/TokenHandler.sol";
 

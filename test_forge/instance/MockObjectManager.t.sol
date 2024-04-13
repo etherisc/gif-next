@@ -6,7 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {console} from "../../lib/forge-std/src/Script.sol";
 import {TestGifBase} from "../base/TestGifBase.sol";
-import {NftId, toNftId, NftIdLib} from "../../contracts/types/NftId.sol";
+import {NftId, toNftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {MockAuthority} from "../mock/MockAuthority.sol";
 import {MockObjectManager} from "../mock/MockObjectManager.sol";

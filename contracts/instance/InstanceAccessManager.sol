@@ -5,9 +5,9 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
-import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_ROLE} from "../types/RoleId.sol";
-import {TimestampLib} from "../types/Timestamp.sol";
-import {NftId} from "../types/NftId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
+import {NftId} from "../type/NftId.sol";
 
 import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
 

@@ -6,9 +6,9 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {ObjectType, toObjectType} from "../../contracts/types/ObjectType.sol";
-import {VersionPartLib} from "../../contracts/types/Version.sol";
+import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {ObjectType, toObjectType} from "../../contracts/type/ObjectType.sol";
+import {VersionPartLib} from "../../contracts/type/Version.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";

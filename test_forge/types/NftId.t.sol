@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import {TestGifBase} from "../base/TestGifBase.sol";
-import {NftId, toNftId, zeroNftId, eqNftId, neNftId, NftIdLib} from "../../contracts/types/NftId.sol";
+import {NftId, toNftId, zeroNftId, eqNftId, neNftId, NftIdLib} from "../../contracts/type/NftId.sol";
 
 contract NftIdTest is TestGifBase {
     using NftIdLib for NftId;

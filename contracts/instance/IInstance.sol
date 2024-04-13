@@ -3,16 +3,16 @@ pragma solidity ^0.8.20;
 
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
-import {ClaimId} from "../types/ClaimId.sol";
-import {DistributorType} from "../types/DistributorType.sol";
-import {PayoutId} from "../types/PayoutId.sol";
-import {NftId} from "../types/NftId.sol";
-import {StateId} from "../types/StateId.sol";
-import {ReferralId} from "../types/Referral.sol";
-import {RiskId} from "../types/RiskId.sol";
-import {VersionPart} from "../types/Version.sol";
-import {Key32} from "../types/Key32.sol";
-import {RoleId} from "../types/RoleId.sol";
+import {ClaimId} from "../type/ClaimId.sol";
+import {DistributorType} from "../type/DistributorType.sol";
+import {PayoutId} from "../type/PayoutId.sol";
+import {NftId} from "../type/NftId.sol";
+import {StateId} from "../type/StateId.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {VersionPart} from "../type/Version.sol";
+import {Key32} from "../type/Key32.sol";
+import {RoleId} from "../type/RoleId.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
 

@@ -3,19 +3,19 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
-import {ClaimId} from "../types/ClaimId.sol";
-import {DistributorType} from "../types/DistributorType.sol";
-import {Fee, FeeLib} from "../types/Fee.sol";
-import {Key32} from "../types/Key32.sol";
-import {NftId} from "../types/NftId.sol";
-import {ObjectType, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, TREASURY, BUNDLE} from "../types/ObjectType.sol";
-import {PayoutId} from "../types/PayoutId.sol";
-import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../types/Referral.sol";
+import {ClaimId} from "../type/ClaimId.sol";
+import {DistributorType} from "../type/DistributorType.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
+import {Key32} from "../type/Key32.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, TREASURY, BUNDLE} from "../type/ObjectType.sol";
+import {PayoutId} from "../type/PayoutId.sol";
+import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
 import {Registerable} from "../shared/Registerable.sol";
-import {RiskId} from "../types/RiskId.sol";
-import {UFixed, MathLib, UFixedLib} from "../types/UFixed.sol";
-import {Version} from "../types/Version.sol";
-import {StateId} from "../types/StateId.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {UFixed, MathLib, UFixedLib} from "../type/UFixed.sol";
+import {Version} from "../type/Version.sol";
+import {StateId} from "../type/StateId.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
@@ -27,7 +27,7 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {ITreasury} from "../instance/module/ITreasury.sol";
-import {TimestampLib} from "../types/Timestamp.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
 
 import {InstanceStore} from "./InstanceStore.sol";
 

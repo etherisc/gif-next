@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import {Test} from "../../lib/forge-std/src/Test.sol";
-import {Version, VersionLib, VersionPart, VersionPartLib} from "../../contracts/types/Version.sol";
+import {Version, VersionLib, VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 
 contract VersionTest is Test {
 

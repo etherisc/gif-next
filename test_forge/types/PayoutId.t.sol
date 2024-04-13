@@ -2,11 +2,11 @@
 pragma solidity 0.8.20;
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
-import {ClaimId, ClaimIdLib} from "../../contracts/types/ClaimId.sol";
-import {NftId} from "../../contracts/types/NftId.sol";
-import {ObjectType, POLICY} from "../../contracts/types/ObjectType.sol";
-import {Key32} from "../../contracts/types/Key32.sol";
-import {PayoutId, PayoutIdLib} from "../../contracts/types/PayoutId.sol";
+import {ClaimId, ClaimIdLib} from "../../contracts/type/ClaimId.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
+import {ObjectType, POLICY} from "../../contracts/type/ObjectType.sol";
+import {Key32} from "../../contracts/type/Key32.sol";
+import {PayoutId, PayoutIdLib} from "../../contracts/type/PayoutId.sol";
 
 contract PayoutIdClaimIdTest is Test {
 

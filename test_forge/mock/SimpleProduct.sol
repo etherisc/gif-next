@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount, AmountLib} from "../../contracts/types/Amount.sol";
-import {ClaimId} from "../../contracts/types/ClaimId.sol";
-import {Fee} from "../../contracts/types/Fee.sol";
-import {NftId} from "../../contracts/types/NftId.sol";
-import {PayoutId} from "../../contracts/types/PayoutId.sol";
+import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
+import {ClaimId} from "../../contracts/type/ClaimId.sol";
+import {Fee} from "../../contracts/type/Fee.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
+import {PayoutId} from "../../contracts/type/PayoutId.sol";
 import {Product} from "../../contracts/components/Product.sol";
-import {ReferralId} from "../../contracts/types/Referral.sol";
-import {RiskId} from "../../contracts/types/RiskId.sol";
-import {StateId} from "../../contracts/types/StateId.sol";
-import {Timestamp, Seconds} from "../../contracts/types/Timestamp.sol";
+import {ReferralId} from "../../contracts/type/Referral.sol";
+import {RiskId} from "../../contracts/type/RiskId.sol";
+import {StateId} from "../../contracts/type/StateId.sol";
+import {Timestamp, Seconds} from "../../contracts/type/Timestamp.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 

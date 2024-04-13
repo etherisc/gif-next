@@ -3,19 +3,18 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
-import {Key32, KeyId, Key32Lib} from "../types/Key32.sol";
-import {NftId} from "../types/NftId.sol";
-import {ClaimId} from "../types/ClaimId.sol";
-import {NumberId} from "../types/NumberId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../types/ObjectType.sol";
-import {RiskId, RiskIdLib} from "../types/RiskId.sol";
-import {RoleId, RoleIdLib, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../types/RoleId.sol";
-import {StateId, ACTIVE} from "../types/StateId.sol";
-import {TimestampLib} from "../types/Timestamp.sol";
-import {VersionPart, VersionPartLib} from "../types/Version.sol";
-import {ReferralId} from "../types/Referral.sol";
-import {DistributorType} from "../types/DistributorType.sol";
-import {PayoutId} from "../types/PayoutId.sol";
+import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
+import {NftId} from "../type/NftId.sol";
+import {ClaimId} from "../type/ClaimId.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
+import {RiskId, RiskIdLib} from "../type/RiskId.sol";
+import {RoleId, RoleIdLib, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
+import {StateId, ACTIVE} from "../type/StateId.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {DistributorType} from "../type/DistributorType.sol";
+import {PayoutId} from "../type/PayoutId.sol";
 
 import {IInstance} from "./IInstance.sol";
 import {KeyValueStore} from "./base/KeyValueStore.sol";

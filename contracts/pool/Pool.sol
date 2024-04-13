@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount, AmountLib} from "../types/Amount.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
 import {Component} from "./Component.sol";
-import {Fee, FeeLib} from "../types/Fee.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
 import {IBundleService} from "../instance/service/IBundleService.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {IPoolService} from "../instance/service/IPoolService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {NftId, NftIdLib} from "../types/NftId.sol";
-import {BUNDLE, POOL} from "../types/ObjectType.sol";
-import {RoleId, PUBLIC_ROLE} from "../types/RoleId.sol";
-import {Seconds} from "../types/Seconds.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
+import {BUNDLE, POOL} from "../type/ObjectType.sol";
+import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {Seconds} from "../type/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {UFixed, UFixedLib} from "../types/UFixed.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 abstract contract Pool is
     Component, 

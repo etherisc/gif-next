@@ -8,7 +8,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
-import {NftId, toNftId} from "../../contracts/types/NftId.sol";
+import {NftId, toNftId} from "../../contracts/type/NftId.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -19,7 +19,7 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceUpgradeMock} from "../mock/RegistryServiceUpgradeMock.sol";
-import {Version, VersionLib, VersionPartLib } from "../../contracts/types/Version.sol";
+import {Version, VersionLib, VersionPartLib } from "../../contracts/type/Version.sol";
 
 contract RegistryServiceManagerTest is Test {
 

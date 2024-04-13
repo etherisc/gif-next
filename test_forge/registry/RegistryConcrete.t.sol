@@ -4,9 +4,9 @@ pragma solidity ^0.8.20;
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {VersionLib, Version, VersionPart} from "../../contracts/types/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/types/ObjectType.sol";
+import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
+import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";

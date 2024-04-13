@@ -6,11 +6,11 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
-import {Timestamp, TimestampLib} from "../../contracts/types/Timestamp.sol";
-import {Blocknumber, BlocknumberLib} from "../../contracts/types/Blocknumber.sol";
-import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, TOKEN} from "../../contracts/types/ObjectType.sol";
+import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
+import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
+import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
+import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, TOKEN} from "../../contracts/type/ObjectType.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 

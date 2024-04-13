@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/types/NftId.sol";
-import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../contracts/types/ObjectType.sol";
+import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";

@@ -9,8 +9,8 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegistryLinked} from "../../contracts/shared/IRegistryLinked.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
-import {NftId} from "../../contracts/types/NftId.sol";
-import {VersionPart, VersionPartLib } from "../../contracts/types/Version.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
+import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";

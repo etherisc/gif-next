@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {Fee} from "../types/Fee.sol";
+import {Fee} from "../type/Fee.sol";
 import {IComponent} from "./IComponent.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
-import {ReferralId, ReferralStatus} from "../types/Referral.sol";
-import {NftId} from "../types/NftId.sol";
-import {DistributorType} from "../types/DistributorType.sol";
-import {UFixed} from "../types/UFixed.sol";
-import {Timestamp} from "../types/Timestamp.sol";
+import {ReferralId, ReferralStatus} from "../type/Referral.sol";
+import {NftId} from "../type/NftId.sol";
+import {DistributorType} from "../type/DistributorType.sol";
+import {UFixed} from "../type/UFixed.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
 interface IDistributionComponent is IComponent {
 

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../types/Amount.sol";
-import {Fee} from "../types/Fee.sol";
+import {Amount} from "../type/Amount.sol";
+import {Fee} from "../type/Fee.sol";
 import {IComponent} from "./IComponent.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
-import {NftId} from "../types/NftId.sol";
-import {ReferralId} from "../types/Referral.sol";
-import {RiskId} from "../types/RiskId.sol";
-import {Seconds} from "../types/Seconds.sol";
+import {NftId} from "../type/NftId.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {Seconds} from "../type/Seconds.sol";
 
 interface IProductComponent is IComponent {
 

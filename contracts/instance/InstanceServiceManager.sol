@@ -7,7 +7,7 @@ import {ProxyManager} from "../shared/ProxyManager.sol";
 import {InstanceService} from "./InstanceService.sol";
 import {Registry} from "../registry/Registry.sol";
 import {RegistryService} from "../registry/RegistryService.sol";
-import {REGISTRY} from "../types/ObjectType.sol";
+import {REGISTRY} from "../type/ObjectType.sol";
 
 contract InstanceServiceManager is ProxyManager {
 
