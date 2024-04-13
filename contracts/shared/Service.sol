@@ -4,9 +4,9 @@ pragma solidity ^0.8.19;
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
-import {ObjectType, REGISTRY, SERVICE} from "../types/ObjectType.sol";
-import {NftId, zeroNftId} from "../types/NftId.sol";
-import {Version, VersionPart, VersionLib, VersionPartLib} from "../types/Version.sol";
+import {ObjectType, REGISTRY, SERVICE} from "../type/ObjectType.sol";
+import {NftId, zeroNftId} from "../type/NftId.sol";
+import {Version, VersionPart, VersionLib, VersionPartLib} from "../type/Version.sol";
 
 import {Versionable} from "./Versionable.sol";
 import {IService} from "./IService.sol";

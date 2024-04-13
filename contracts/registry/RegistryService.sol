@@ -7,23 +7,22 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 import {IRegistry} from "./IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 
-import {ContractDeployerLib} from "../shared/ContractDeployerLib.sol";
-import {IComponent} from "../../contracts/components/IComponent.sol";
-import {IPoolComponent} from "../../contracts/components/IPoolComponent.sol";
-import {IProductComponent} from "../../contracts/components/IProductComponent.sol";
-import {IDistributionComponent} from "../../contracts/components/IDistributionComponent.sol";
+import {IComponent} from "../../contracts/shared/IComponent.sol";
+import {IPoolComponent} from "../../contracts/pool/IPoolComponent.sol";
+import {IProductComponent} from "../../contracts/product/IProductComponent.sol";
+import {IDistributionComponent} from "../../contracts/distribution/IDistributionComponent.sol";
 
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 
-import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/types/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, PRICE} from "../../contracts/types/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED} from "../../contracts/types/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/types/NftId.sol";
-import {Fee, FeeLib} from "../../contracts/types/Fee.sol";
-import {Version, VersionPart, VersionLib} from "../../contracts/types/Version.sol";
+import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, PRICE} from "../../contracts/type/ObjectType.sol";
+import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
+import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
+import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
+import {Version, VersionPart, VersionLib} from "../../contracts/type/Version.sol";
 
 import {Service} from "../shared/Service.sol";
 import {IService} from "../shared/IService.sol";

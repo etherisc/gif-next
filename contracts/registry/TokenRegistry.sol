@@ -6,8 +6,8 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "./IRegistry.sol";
-import {VersionPart} from "../types/Version.sol";
-import {REGISTRY} from "../types/ObjectType.sol";
+import {VersionPart} from "../type/Version.sol";
+import {REGISTRY} from "../type/ObjectType.sol";
 import {NftOwnable} from "../shared/NftOwnable.sol";
 
 /// @title contract to register token per GIF major release.

@@ -21,7 +21,6 @@ export type LibraryAddresses = {
     stateIdLibAddress: AddressLike;
     roleIdLibAddress: AddressLike;
     riskIdLibAddress: AddressLike;
-    contractDeployerLibAddress: AddressLike;
     distributorTypeLibAddress: AddressLike;
     referralLibAddress: AddressLike;
     instanceAuthorizationsLibAddress: AddressLike;
@@ -176,12 +175,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
     LIBRARY_ADDRESSES.set("FeeLib", feeLibAddress);
 
-
-    const { address: contractDeployerLibAddress } = await deployContract(
-        "ContractDeployerLib",
-        owner);
-    LIBRARY_ADDRESSES.set("ContractDeployerLib", contractDeployerLibAddress);
-
     const { address: distributorTypeLibAddress } = await deployContract(
         "DistributorTypeLib",
         owner,
@@ -235,7 +228,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         stateIdLibAddress,
         roleIdLibAddress,
         riskIdLibAddress,
-        contractDeployerLibAddress,
         distributorTypeLibAddress,
         referralLibAddress,
         instanceAuthorizationsLibAddress

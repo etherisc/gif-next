@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
-import {NftId, zeroNftId} from "../types/NftId.sol";
+import {NftId, zeroNftId} from "../type/NftId.sol";
 import {NftOwnable} from "../shared/NftOwnable.sol";
-import {ObjectType} from "../types/ObjectType.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegisterable} from "./IRegisterable.sol";

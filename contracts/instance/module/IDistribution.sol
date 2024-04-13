@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../../types/Amount.sol";
-import {DistributorType} from "../../types/DistributorType.sol";
-import {NftId} from "../../types/NftId.sol";
-import {Timestamp} from "../../types/Timestamp.sol";
-import {UFixed} from "../../types/UFixed.sol";
+import {Amount} from "../../type/Amount.sol";
+import {DistributorType} from "../../type/DistributorType.sol";
+import {NftId} from "../../type/NftId.sol";
+import {Timestamp} from "../../type/Timestamp.sol";
+import {UFixed} from "../../type/UFixed.sol";
 
 interface IDistribution {
 

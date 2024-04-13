@@ -2,15 +2,15 @@
 pragma solidity ^0.8.20;
 
 import {IInstance} from "./IInstance.sol";
-import {INSTANCE} from "../types/ObjectType.sol";
+import {INSTANCE} from "../type/ObjectType.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {LibNftIdSet} from "../types/NftIdSet.sol";
-import {NftId} from "../types/NftId.sol";
-import {TimestampLib} from "../types/Timestamp.sol";
+import {LibNftIdSet} from "../type/NftIdSet.sol";
+import {NftId} from "../type/NftId.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
 
-import {ObjectManager} from "./ObjectManager.sol";
+import {ObjectManager} from "./base/ObjectManager.sol";
 
 contract BundleManager is 
     ObjectManager

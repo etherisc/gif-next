@@ -7,7 +7,7 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {RoleId, RoleIdLib,
         GIF_MANAGER_ROLE,
         GIF_ADMIN_ROLE,
-        RELEASE_MANAGER_ROLE} from "../types/RoleId.sol";
+        RELEASE_MANAGER_ROLE} from "../type/RoleId.sol";
 
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";

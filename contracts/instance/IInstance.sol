@@ -3,16 +3,16 @@ pragma solidity ^0.8.20;
 
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
-import {ClaimId} from "../types/ClaimId.sol";
-import {DistributorType} from "../types/DistributorType.sol";
-import {PayoutId} from "../types/PayoutId.sol";
-import {NftId} from "../types/NftId.sol";
-import {StateId} from "../types/StateId.sol";
-import {ReferralId} from "../types/Referral.sol";
-import {RiskId} from "../types/RiskId.sol";
-import {VersionPart} from "../types/Version.sol";
-import {Key32} from "../types/Key32.sol";
-import {RoleId} from "../types/RoleId.sol";
+import {ClaimId} from "../type/ClaimId.sol";
+import {DistributorType} from "../type/DistributorType.sol";
+import {PayoutId} from "../type/PayoutId.sol";
+import {NftId} from "../type/NftId.sol";
+import {StateId} from "../type/StateId.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {VersionPart} from "../type/Version.sol";
+import {Key32} from "../type/Key32.sol";
+import {RoleId} from "../type/RoleId.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
 
@@ -27,13 +27,13 @@ import {IKeyValueStore} from "./base/IKeyValueStore.sol";
 
 import {IAccess} from "./module/IAccess.sol";
 
-import {IBundleService} from "./service/IBundleService.sol";
-import {IDistributionService} from "./service/IDistributionService.sol";
-import {IPolicyService} from "./service/IPolicyService.sol";
-import {IPoolService} from "./service/IPoolService.sol";
-import {IProductService} from "./service/IProductService.sol";
-import {IPolicyService} from "./service/IPolicyService.sol";
-import {IBundleService} from "./service/IBundleService.sol";
+import {IBundleService} from "../pool/IBundleService.sol";
+import {IDistributionService} from "../distribution/IDistributionService.sol";
+import {IPolicyService} from "../product/IPolicyService.sol";
+import {IPoolService} from "../pool/IPoolService.sol";
+import {IProductService} from "../product/IProductService.sol";
+import {IPolicyService} from "../product/IPolicyService.sol";
+import {IBundleService} from "../pool/IBundleService.sol";
 
 
 

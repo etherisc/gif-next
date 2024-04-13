@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {IVersionable} from "./IVersionable.sol";
-import {Version, VersionLib} from "../types/Version.sol";
+import {Version, VersionLib} from "../type/Version.sol";
 
 
 abstract contract Versionable is 

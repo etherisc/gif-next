@@ -3,10 +3,10 @@ pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {NftId} from "../types/NftId.sol";
-import {ObjectType} from "../types/ObjectType.sol";
-import {VersionPart} from "../types/Version.sol";
-import {Timestamp} from "../types/Timestamp.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {VersionPart} from "../type/Version.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
 interface IRegistry is IERC165 {
 
