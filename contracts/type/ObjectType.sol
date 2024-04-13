@@ -8,6 +8,7 @@ using {
     eqObjectType as ==,
     neObjectType as !=,
     ObjectTypeLib.toInt,
+    ObjectTypeLib.eqz,
     ObjectTypeLib.gtz
 } for ObjectType global;
 

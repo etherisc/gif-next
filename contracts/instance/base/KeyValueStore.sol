@@ -25,10 +25,14 @@ contract KeyValueStore is
         internal
     {
         ObjectType objectType = key32.toObjectType();
-        require(objectType.gtz(), "ERROR:KVS-010:TYPE_UNDEFINED");
+        if (objectType.eqz()) {
+            revert ErrorKeyValueStoreTypeUndefined(objectType);
+        }
 
         Metadata storage metadata = _value[key32].metadata;
-        require(metadata.state.eqz(), "ERROR:KVS-012:ALREADY_CREATED");
+        if (metadata.state.gtz()) {
+            revert ErrorKeyValueStoreAlreadyCreated(key32, objectType);
+        }
 
         address createdBy = msg.sender;
         Blocknumber blocknumber = blockBlocknumber();
@@ -55,10 +59,15 @@ contract KeyValueStore is
     ) 
         internal
     {
-        require(state.gtz(), "ERROR:KVS-020:STATE_UNDEFINED");
+        if (state.eqz()) {
+            revert ErrorKeyValueStoreStateZero(key32);
+        }
+
         Metadata storage metadata = _value[key32].metadata;
         StateId stateOld = metadata.state;
-        require(stateOld.gtz(), "ERROR:KVS-021:NOT_EXISTING");
+        if (stateOld.eqz()) {
+            revert ErrorKeyValueStoreNotExisting(key32);
+        }
 
         // update data
         _value[key32].data = data;
@@ -87,7 +96,9 @@ contract KeyValueStore is
     {
         Metadata storage metadata = _value[key32].metadata;
         StateId state = metadata.state;
-        require(state.gtz(), "ERROR:KVS-030:NOT_EXISTING");
+        if (state.eqz()) {
+            revert ErrorKeyValueStoreNotExisting(key32);
+        }
 
         // update data
         _value[key32].data = data;
@@ -106,10 +117,15 @@ contract KeyValueStore is
     function updateState(Key32 key32, StateId state)
         internal
     {
-        require(state.gtz(), "ERROR:KVS-040:STATE_UNDEFINED");
+        if (state.eqz()) {
+            revert ErrorKeyValueStoreStateZero(key32);
+        }
+
         Metadata storage metadata = _value[key32].metadata;
         StateId stateOld = metadata.state;
-        require(stateOld.gtz(), "ERROR:KVS-041:NOT_EXISTING");
+        if (stateOld.eqz()) {
+            revert ErrorKeyValueStoreNotExisting(key32);
+        }
 
         // ensure state transistion is valid
         checkTransition(metadata.objectType, stateOld, state);

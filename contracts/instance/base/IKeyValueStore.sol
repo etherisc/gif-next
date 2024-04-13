@@ -9,8 +9,16 @@ import {StateId} from "../../type/StateId.sol";
 
 import {ILifecycle} from "./ILifecycle.sol";
 
-// TODO remove - internal only?
 interface IKeyValueStore is ILifecycle {
+
+    error ErrorKeyValueStoreTypeUndefined(ObjectType objectType);
+    error ErrorKeyValueStoreAlreadyCreated(Key32 key, ObjectType objectType);
+    error ErrorKeyValueStoreStateZero(Key32 key);
+    error ErrorKeyValueStoreNotExisting(Key32 key);
+
+    event LogInfoCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
+    event LogInfoUpdated(ObjectType objectType, KeyId keyId, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
+    event LogStateUpdated(ObjectType objectType, KeyId keyId, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     struct Value {
         Metadata metadata;
@@ -28,10 +36,6 @@ interface IKeyValueStore is ILifecycle {
         Blocknumber updatedIn;
         Blocknumber createdIn;
     }
-
-    event LogInfoCreated(ObjectType objectType, KeyId keyId, StateId state, address createdBy, address txOrigin);
-    event LogInfoUpdated(ObjectType objectType, KeyId keyId, StateId state, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
-    event LogStateUpdated(ObjectType objectType, KeyId keyId, StateId stateOld, StateId stateNew, address updatedBy, address txOrigin, Blocknumber lastUpdatedIn);
 
     // generic state changing functions
     // function create(Key32 key, bytes memory data) external;
