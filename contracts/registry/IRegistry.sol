@@ -14,20 +14,20 @@ interface IRegistry is IERC165 {
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
     // registerService()
-    error CallerNotReleaseManager();
-    error ServiceAlreadyRegistered(address service);
+    error ErrorRegistryCallerNotReleaseManager();
+    error ErrorRegistryServiceDomainAlreadyRegistered(address service, ObjectType domain);
 
     // register()
-    error CallerNotRegistryService();
-    error ServiceRegistration();
+    error ErrorRegistryCallerNotRegistryService();
+    error ErrorRegistryServiceRegistration();
 
     // registerWithCustomTypes()
-    error CoreTypeRegistration();
+    error ErrorRegistryCoreTypeRegistration();
 
     // _register()
-    error ZeroParentAddress();
-    error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
-    error ContractAlreadyRegistered(address objectAddress);
+    error ErrorRegistryZeroParentAddress();
+    error ErrorRegistryTypesCombinationInvalid(ObjectType objectType, ObjectType parentType);
+    error ErrorRegistryContractAlreadyRegistered(address objectAddress);
 
     struct ObjectInfo {
         NftId nftId;
@@ -41,9 +41,9 @@ interface IRegistry is IERC165 {
     // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
 
     struct ReleaseInfo {
+        address[] addresses;
         ObjectType[] domains;
-        Timestamp createdAt;
-        //Timestamp updatedAt;
+        Timestamp activatedAt;
     }
 
     function registerService(

@@ -48,14 +48,14 @@ contract Registry is
 
     modifier onlyRegistryService() {
         if(!_releaseManager.isActiveRegistryService(msg.sender)) {
-            revert CallerNotRegistryService();
+            revert ErrorRegistryCallerNotRegistryService();
         }
         _;
     }
 
     modifier onlyReleaseManager() {
         if(msg.sender != address(_releaseManager)) {
-            revert CallerNotReleaseManager();
+            revert ErrorRegistryCallerNotReleaseManager();
         }
         _;
     }
@@ -84,7 +84,20 @@ contract Registry is
         onlyReleaseManager
         returns(NftId nftId)
     {
+        address serviceAddress = info.objectAddress;
         /* must be guaranteed by release manager
+        if(serviceAddress == address(0)) {
+            revert();
+        }
+
+        if(version.eqz()) {
+            revert();
+        }
+
+        if(domain.eqz()) {
+            revert();
+        }
+
         if(info.objectType != SERVICE()) {
             revert();
         }
@@ -93,12 +106,12 @@ contract Registry is
         }        
         info.initialOwner == NFT_LOCK_ADDRESS <- if services are access managed
         */
-
+        // TODO check in release manager and store in releaseInfo?
         if(_service[version][domain] > address(0)) {
-            revert ServiceAlreadyRegistered(info.objectAddress);
+            revert ErrorRegistryServiceDomainAlreadyRegistered(serviceAddress, domain);
         }
-
-        _service[version][domain] = info.objectAddress; // nftId;
+        
+        _service[version][domain] = serviceAddress;
 
         nftId = _register(info);
 
@@ -113,23 +126,17 @@ contract Registry is
         ObjectType objectType = info.objectType;
         ObjectType parentType = _info[info.parentNftId].objectType;
 
-        // TODO do not need it here -> SERVICE is no longer part of _coreContractCombinations
-        // no service registrations
-        if(objectType == SERVICE()) {
-            revert ServiceRegistration();
-        }
-
         // only valid core types combinations
         if(info.objectAddress == address(0)) 
         {
             if(_coreObjectCombinations[objectType][parentType] == false) {
-                revert InvalidTypesCombination(objectType, parentType);
+                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
             }
         }
         else
         {
             if(_coreContractCombinations[objectType][parentType] == false) {
-                revert InvalidTypesCombination(objectType, parentType);
+                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
             }
         }
 
@@ -145,7 +152,7 @@ contract Registry is
         ObjectType parentType = _info[info.parentNftId].objectType;
 
         if(_coreTypes[objectType]) {
-            revert CoreTypeRegistration();
+            revert ErrorRegistryCoreTypeRegistration();
         }
 
         if(
@@ -153,7 +160,7 @@ contract Registry is
             parentType == REGISTRY() ||
             parentType == SERVICE()
         ) {
-            revert InvalidTypesCombination(objectType, parentType);
+            revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
         }
 
         _register(info);
@@ -287,7 +294,7 @@ contract Registry is
         // special case: when parentNftId == _chainNft.mint(), check for zero parent address before mint
         // special case: when parentNftId == _chainNft.mint() && objectAddress == initialOwner
         if(parentAddress == address(0)) {
-            revert ZeroParentAddress();
+            revert ErrorRegistryZeroParentAddress();
         }
 
         address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
@@ -302,7 +309,7 @@ contract Registry is
             address contractAddress = info.objectAddress;
 
             if(_nftIdByAddress[contractAddress].gtz()) { 
-                revert ContractAlreadyRegistered(contractAddress);
+                revert ErrorRegistryContractAlreadyRegistered(contractAddress);
             }
 
             _nftIdByAddress[contractAddress] = nftId;
