@@ -47,7 +47,7 @@ interface IPolicy {
         Seconds lifetime;
         // policy application data, no changes after applying for a policy
         bytes applicationData;
-        bytes policyData;
+        bytes processData;
         uint16 claimsCount;
         uint16 openClaimsCount;
         Amount claimAmount; // sum of confirmed claim amounts (max = sum insured amount)

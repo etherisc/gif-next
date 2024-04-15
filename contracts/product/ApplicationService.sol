@@ -131,7 +131,7 @@ contract ApplicationService is
             premiumPaidAmount:  AmountLib.zero(),
             lifetime:           lifetime,
             applicationData:    applicationData,
-            policyData:         "",
+            processData:        "",
             claimsCount:        0,
             openClaimsCount:    0,
             claimAmount:        AmountLib.zero(),
