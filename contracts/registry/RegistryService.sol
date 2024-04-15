@@ -60,7 +60,6 @@ contract RegistryService is
         (registryAddress, initialOwner, authority) = abi.decode(data, (address, address, address));
 
         initializeService(registryAddress, authority, owner);
-
         registerInterface(type(IRegistryService).interfaceId);
     }
 
@@ -72,7 +71,7 @@ contract RegistryService is
         ) 
     {
         if(!instance.supportsInterface(type(IInstance).interfaceId)) {
-            revert NotInstance();
+            revert ErrorRegistryServiceNotInstance(address(instance));
         }
 
         info = _getAndVerifyContractInfo(instance, INSTANCE(), owner);
@@ -90,7 +89,7 @@ contract RegistryService is
     {
         // CAN revert if no ERC165 support -> will revert with empty message 
         if(!product.supportsInterface(type(IProductComponent).interfaceId)) {
-            revert NotProduct();
+            revert ErrorRegistryServiceNotProduct(address(product));
         }
 
         info = _getAndVerifyContractInfo(product, PRODUCT(), owner);
@@ -105,7 +104,7 @@ contract RegistryService is
         ) 
     {
         if(!pool.supportsInterface(type(IPoolComponent).interfaceId)) {
-            revert NotPool();
+            revert ErrorRegistryServiceNotPool(address(pool));
         }
 
         info = _getAndVerifyContractInfo(pool, POOL(), owner);
@@ -120,7 +119,7 @@ contract RegistryService is
         ) 
     {
         if(!distribution.supportsInterface(type(IDistributionComponent).interfaceId)) {
-            revert NotDistribution();
+            revert ErrorRegistryServiceNotDistribution(address(distribution));
         }
 
         info = _getAndVerifyContractInfo(distribution, DISTRIBUTION(), owner);
@@ -142,7 +141,6 @@ contract RegistryService is
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, POLICY());
-
         nftId = getRegistry().register(info);
     }
 
@@ -152,7 +150,6 @@ contract RegistryService is
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, BUNDLE());
-
         nftId = getRegistry().register(info);
     }
 
@@ -162,61 +159,7 @@ contract RegistryService is
         returns(NftId nftId) 
     {
         _verifyObjectInfo(info, STAKE());
-
         nftId = getRegistry().register(info);
-    }
-
-    // from IRegisterable
-
-    function getFunctionConfigs()
-        external
-        pure
-        returns(
-            FunctionConfig[] memory config
-        )
-    {
-        config = new FunctionConfig[](9);
-
-        // order of service registrations MUST be reverse to this array 
-        /*config[-1].serviceDomain = STAKE();
-        config[-1].selector = RegistryService.registerStake.selector;*/
-
-        config[0].serviceDomain = POLICY();
-        config[0].selectors = new bytes4[](0);
-
-        config[1].serviceDomain = APPLICATION();
-        config[1].selectors = new bytes4[](1);
-        config[1].selectors[0] = RegistryService.registerPolicy.selector;
-
-        config[2].serviceDomain = CLAIM();
-        config[2].selectors = new bytes4[](0);
-
-        config[3].serviceDomain = PRODUCT();
-        config[3].selectors = new bytes4[](1);
-        config[3].selectors[0] = RegistryService.registerProduct.selector;
-
-        config[4].serviceDomain = POOL();
-        config[4].selectors = new bytes4[](1);
-        config[4].selectors[0] = RegistryService.registerPool.selector;
-
-        // registration of bundle service must preceed registration of pool service
-        config[5].serviceDomain = BUNDLE();
-        config[5].selectors = new bytes4[](1);
-        config[5].selectors[0] = RegistryService.registerBundle.selector;
-
-        // registration of pricing service must preceed registration of application service
-        config[6].serviceDomain = PRICE();
-        config[6].selectors = new bytes4[](0);
-
-        // registration of distribution service must preceed registration of pricing service
-        config[7].serviceDomain = DISTRIBUTION();
-        config[7].selectors = new bytes4[](2);
-        config[7].selectors[0] = RegistryService.registerDistribution.selector;
-        config[7].selectors[1] = RegistryService.registerDistributor.selector;
-
-        config[8].serviceDomain = INSTANCE();
-        config[8].selectors = new bytes4[](1);
-        config[8].selectors[0] = RegistryService.registerInstance.selector;
     }
 
     // Internal
@@ -236,25 +179,25 @@ contract RegistryService is
         info.objectAddress = address(registerable);
 
         if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
-            revert UnexpectedRegisterableType(expectedType, info.objectType);
+            revert ErrorRegistryServiceRegisterableTypeInvalid(registerable, expectedType, info.objectType);
         }
 
         address owner = info.initialOwner;
 
         if(owner != expectedOwner) { // registerable owner protection
-            revert NotRegisterableOwner(expectedOwner);
+            revert ErrorRegistryServiceRegisterableOwnerInvalid(registerable, expectedOwner, owner);
         }
 
         if(owner == address(registerable)) {
-            revert SelfRegistration();
+            revert ErrorRegistryServiceRegisterableSelfRegistration(registerable);
         }
 
         if(owner == address(0)) {
-            revert RegisterableOwnerIsZero();
+            revert ErrorRegistryServiceRegisterableOwnerZero(registerable);
         }
         
         if(getRegistry().isRegistered(owner)) { 
-            revert RegisterableOwnerIsRegistered();
+            revert ErrorRegistryServiceRegisterableOwnerRegistered(registerable, owner);
         }
     }
 
@@ -269,17 +212,17 @@ contract RegistryService is
         info.objectAddress = address(0);
 
         if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
-            revert UnexpectedRegisterableType(expectedType, info.objectType);
+            revert ErrorRegistryServiceObjectTypeInvalid(expectedType, info.objectType);
         }
 
         address owner = info.initialOwner;
 
         if(owner == address(0)) {
-            revert RegisterableOwnerIsZero();
+            revert ErrorRegistryServiceObjectOwnerZero(info.objectType);
         }
 
         if(getRegistry().isRegistered(owner)) { 
-            revert RegisterableOwnerIsRegistered();
+            revert ErrorRegistryServiceObjectOwnerRegistered(info.objectType, owner);
         }
     }
 }
