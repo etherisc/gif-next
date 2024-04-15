@@ -19,7 +19,7 @@ import {ReleaseManager} from "./ReleaseManager.sol";
         - responsible for setting and granting of REGISTRAR roles
     1) REGISTRAR roles
         - set and granted by RELEASE_MANAGER_ROLE
-        - each has 1 unique member (regular service ver.X) (subject to change)
+        - for each service and major version X there is 1 unique member (the service with version X itself) (subject to change)
         - each set to 1 target (registry service ver.X) and 1 selector (function of registry service ver.X) (subject to change)
     2) GIF_MANAGER_ROLE
         - can have arbitrary number of members

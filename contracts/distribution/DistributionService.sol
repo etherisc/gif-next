@@ -94,6 +94,7 @@ contract DistributionService is
         // TODO move to distribution?
         bytes4[][] memory selectors = new bytes4[][](2);
         selectors[0] = new bytes4[](1);
+        // TODO check if array size should be 1 instead of 2
         selectors[1] = new bytes4[](2);
 
         selectors[0][0] = IDistributionComponent.setFees.selector;

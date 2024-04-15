@@ -61,7 +61,8 @@ contract ReleaseManager is AccessManaged
 
     mapping(VersionPart majorVersion => IRegistry.ReleaseInfo info) _release;
 
-    mapping(VersionPart majorVersion => mapping(ObjectType serviceDomain => bytes4[])) _selectors; // registry service function selector assigned to domain 
+    // registry service function selector assigned to domain 
+    mapping(VersionPart majorVersion => mapping(ObjectType serviceDomain => bytes4[])) _selectors; 
 
     uint _awaitingRegistration; // "services left to register" counter
 
@@ -90,7 +91,9 @@ contract ReleaseManager is AccessManaged
         restricted // GIF_ADMIN_ROLE
     {
         // allow to register new registry service for next version
+        // TODO check/test: assignment to _next likely missing ...
         VersionPartLib.toVersionPart(_next.toInt() + 1);
+
         // disallow registration of regular services for next version while registry service is not registered 
         _awaitingRegistration = 0;
 
@@ -124,9 +127,10 @@ contract ReleaseManager is AccessManaged
         emit LogReleaseActivation(version);
     }
 
-    // TODO deploy proxy and initialize with given implementation instead of using given proxy?
+    // TODO implement reliable way this function can only be called directly after createNextRelease()
     // IMPORTANT: MUST never be possible to create with access/release manager, token registry
-    // callable once per release after release creation, can not register regular services while registry service is not registered
+    // callable once per release after release creation
+    // can not register regular services
     function registerRegistryService(IRegistryService service)
         external
         restricted // GIF_MANAGER_ROLE

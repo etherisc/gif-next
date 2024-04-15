@@ -78,6 +78,7 @@ contract InstanceAccessManager is
         // assume `this` is already a member of ADMIN_ROLE
         EnumerableSet.add(_roleMembers[ADMIN_ROLE()], address(this));
 
+        // grant instance role to instance contract address
         grantRole(INSTANCE_ROLE(), instanceAddress);
         setRoleAdmin(INSTANCE_OWNER_ROLE(), INSTANCE_ROLE());
     }
@@ -93,6 +94,7 @@ contract InstanceAccessManager is
     {
         _createRole(roleId, name, IAccess.Type.Core);
     }
+
     // ADMIN_ROLE
     // assume gif roles can be revoked
     // assume admin is INSTANCE_OWNER_ROLE or INSTANCE_ROLE

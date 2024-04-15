@@ -1,0 +1,59 @@
+@startuml
+
+
+package "Component Templates" {
+    [Product]
+    [Distribution]
+    [Pool]
+
+    [Product] -[hidden]- [Distribution]
+    [Distribution]  -[hidden]-  [Pool]
+}
+
+package "Instance with Components" {
+
+    package "Instance Components" {
+        [Instance]
+        [InstanceStore]
+        [BundleManager]
+        [RiskManager]
+        [InstanceAccessManager]
+        [InstanceReader]
+
+        [Instance] --> [InstanceStore]
+        [Instance] --> [BundleManager]
+        [Instance] --> [RiskManager]
+        [Instance] --> [InstanceAccessManager]
+        [Instance] --> [InstanceReader]
+    }
+
+    package "Product A" {
+        [Product.A]
+        [Distribution.A]
+        [Pool.A]
+
+        [Product.A] --> [Distribution.A]
+        [Product.A] --> [Pool.A]
+        [Product.A] --> [Instance]
+
+        [Distribution.A] --> [Instance]
+        [Pool.A] --> [Instance]
+    }
+
+    package "Product B" {
+        [Product.B]
+        [Distribution.B]
+        [Pool.B]
+
+        [Product.B] --> [Distribution.B]
+        [Product.B] --> [Pool.B]
+        [Product.B] --> [Instance]
+
+        [Distribution.B] --> [Instance]
+        [Pool.B] --> [Instance]
+
+        [Product.B] ..> [Product]
+        [Distribution.B] ..> [Distribution]
+        [Pool.B] ..> [Pool]
+    }
+}

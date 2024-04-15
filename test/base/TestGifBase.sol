@@ -200,7 +200,7 @@ contract TestGifBase is Test {
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
 
-        // deploy registry, nft, services and token
+        // deploy registry, services, master instance and token
         vm.startPrank(registryOwner);
         _deployRegistryServiceAndRegistry();
         _deployAndRegisterServices();
@@ -214,43 +214,10 @@ contract TestGifBase is Test {
         _deployAndActivateToken();
         vm.stopPrank();
 
-        // deploy instance
+        // create an instance (cloned from master instance)
         vm.startPrank(instanceOwner);
         _createInstance();
         vm.stopPrank();
-
-        // // deploy pool
-        // bool poolIsInterceptor = false;
-        // vm.startPrank(poolOwner);
-        // _deployPool(poolIsInterceptor, poolIsVerifying, poolCollateralizationLevel);
-        // vm.stopPrank();
-
-        // // deploy distribution
-        // vm.startPrank(distributionOwner);
-        // _deployDistribution(distributionIsVerifying);
-        // vm.stopPrank();
-
-        // // deploy product
-        // vm.startPrank(productOwner);
-        // _deployProduct();
-        // vm.stopPrank();
-
-        // // fund investor
-        // initialCapitalAmount = initialBundleCapitalization * 10 ** token.decimals();
-
-        // vm.prank(registryOwner);
-        // token.transfer(investor, initialCapitalAmount);
-
-        // // approve capital and create bundle
-        // // TODO registration of components is not going through corresponding services yet -> thus product is registered in Registry but not in Instance -> tokenHandler is 0
-        // vm.startPrank(investor);
-        // token.approve(address(tokenHandler), initialCapitalAmount);
-
-        // _createBundle(
-        //     initialBundleFee,
-        //     initialCapitalAmount,
-        //     bundleLifetime);
-        // vm.stopPrank();
     }
 
     function fundAccount(address account, uint256 amount) public {
@@ -303,6 +270,8 @@ contract TestGifBase is Test {
 
     function _deployRegistryServiceAndRegistry() internal
     {
+        // grants GIF_ADMIN_ROLE to registry owner as registryOwner is transaction sender
+        // grants GIF_MANAGER_ROLE to registry owner via contructor argument
         registryAccessManager = new RegistryAccessManager(registryOwner);
 
         releaseManager = new ReleaseManager(
@@ -326,9 +295,13 @@ contract TestGifBase is Test {
             registryAddress
         );        
         
+        // registry owner as tx sender has GIF_ADMIN_ROLE
         releaseManager.createNextRelease();
 
         registryService = registryServiceManager.getRegistryService();
+
+        // registry owner as tx sender has GIF_ADMIN_ROLE
+        // registry service always needs to be registered first when deploying a new gif release
         releaseManager.registerRegistryService(registryService);
         registryServiceManager.linkOwnershipToServiceNft();
 
@@ -365,11 +338,11 @@ contract TestGifBase is Test {
     function _deployAndRegisterServices() internal 
     {
         // --- instance service ---------------------------------//
-        // TODO manager can not use releaseManager.registerService() in constructor
         // because it have no role / have no nft
         instanceServiceManager = new InstanceServiceManager(address(registry));
         instanceService = instanceServiceManager.getInstanceService();
-        // temporal solution, register in separate tx
+
+        // register instance service with registry
         instanceServiceNftId = releaseManager.registerService(instanceService);
 
         // solhint-disable 
@@ -485,6 +458,7 @@ contract TestGifBase is Test {
             address(masterOzAccessManager),
             address(registry),
             registryOwner);
+
         // MUST be initialized and set before instance reader
         masterInstanceStore = new InstanceStore();
         masterInstanceStore.initialize(address(masterInstance));
@@ -504,6 +478,8 @@ contract TestGifBase is Test {
         masterInstanceAccessManager.initialize(address(masterInstance));
         masterInstance.setInstanceAccessManager(masterInstanceAccessManager);
 
+        // sets master instance address in instance service
+        // instance service is now ready to create cloned instances
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
