@@ -82,7 +82,7 @@ contract ClaimService is
     function submit(
         NftId policyNftId, 
         Amount claimAmount,
-        bytes memory claimData
+        bytes memory claimData // claim submission data
     )
         external
         virtual
@@ -117,7 +117,8 @@ contract ClaimService is
                 AmountLib.zero(), // paidAmount
                 0, // payoutsCount
                 0, // openPayoutsCount
-                claimData,
+                claimData, // claim submission data
+                "", // claim processing data
                 TimestampLib.zero())); // closedAt
 
         // update and save policy info with instance
@@ -133,7 +134,8 @@ contract ClaimService is
     function confirm(
         NftId policyNftId, 
         ClaimId claimId,
-        Amount confirmedAmount
+        Amount confirmedAmount,
+        bytes memory data // claim processing data
     )
         external
         virtual
@@ -147,6 +149,7 @@ contract ClaimService is
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
         claimInfo.claimAmount = confirmedAmount;
+        claimInfo.processData = data;
         instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, CONFIRMED());
 
         // update and save policy info with instance
@@ -158,7 +161,8 @@ contract ClaimService is
 
     function decline(
         NftId policyNftId, 
-        ClaimId claimId
+        ClaimId claimId,
+        bytes memory data // claim processing data
     )
         external
         virtual
@@ -171,6 +175,7 @@ contract ClaimService is
 
         // check/update claim info
         IPolicy.ClaimInfo memory claimInfo = _verifyClaim(instanceReader, policyNftId, claimId, SUBMITTED());
+        claimInfo.processData = data;
         claimInfo.closedAt = TimestampLib.blockTimestamp();
         instance.getInstanceStore().updateClaim(policyNftId, claimId, claimInfo, DECLINED());
 

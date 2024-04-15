@@ -223,25 +223,29 @@ abstract contract Product is
     function _confirmClaim(
         NftId policyNftId,
         ClaimId claimId,
-        Amount confirmedAmount
+        Amount confirmedAmount,
+        bytes memory data
     )
         internal
     {
         _getProductStorage()._claimService.confirm(
             policyNftId,
             claimId,
-            confirmedAmount);
+            confirmedAmount,
+            data);
     }
 
     function _declineClaim(
         NftId policyNftId,
-        ClaimId claimId
+        ClaimId claimId,
+        bytes memory data
     )
         internal
     {
         _getProductStorage()._claimService.decline(
             policyNftId,
-            claimId);
+            claimId,
+            data);
     }
 
     function _closeClaim(

@@ -110,7 +110,7 @@ contract TestProductClaim is TestGifBase {
         assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
         assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
         assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
-        assertEq(keccak256(claimInfo.data), keccak256(claimData), "unexpected claim data");
+        assertEq(keccak256(claimInfo.submissionData), keccak256(claimData), "unexpected claim data");
         assertTrue(claimInfo.closedAt.eqz(), "closed at not 0");
     }
 
@@ -132,7 +132,8 @@ contract TestProductClaim is TestGifBase {
         Amount confirmedAmount = AmountLib.toAmount(450);
 
         vm.recordLogs();
-        prdct.confirmClaim(policyNftId, claimId, confirmedAmount); 
+        string memory processData = "claim good to go";
+        prdct.confirmClaim(policyNftId, claimId, confirmedAmount, bytes(processData)); 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
@@ -157,6 +158,7 @@ contract TestProductClaim is TestGifBase {
         assertEq(claimInfo.claimAmount.toInt(), confirmedAmount.toInt(), "unexpected claim amount");
         assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
         assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
+        assertEq(keccak256(claimInfo.processData), keccak256(bytes(processData)), "unexpected claim process data");
     }
 
 
@@ -176,7 +178,8 @@ contract TestProductClaim is TestGifBase {
         // WHEN
         // emit LogPolicyServiceClaimDeclined(policyNftId, ClaimId.wrap(1));
         vm.recordLogs();
-        prdct.declineClaim(policyNftId, claimId); 
+        string memory processData = "claim invalid";
+        prdct.declineClaim(policyNftId, claimId, bytes(processData)); 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
@@ -201,8 +204,9 @@ contract TestProductClaim is TestGifBase {
         assertEq(claimInfo.paidAmount.toInt(), 0, "paid amount not 0");
         assertEq(claimInfo.payoutsCount, 0, "payouts count not 0");
         assertEq(claimInfo.openPayoutsCount, 0, "open payouts count not 0");
-        assertEq(keccak256(claimInfo.data), keccak256(claimData), "unexpected claim data");
+        assertEq(keccak256(claimInfo.submissionData), keccak256(claimData), "unexpected claim data");
         assertEq(claimInfo.closedAt.toInt(), block.timestamp, "unexpected closed at");
+        assertEq(keccak256(claimInfo.processData), keccak256(bytes(processData)), "unexpected claim process data");
     }
 
 
@@ -216,7 +220,7 @@ contract TestProductClaim is TestGifBase {
     {
         bytes memory claimData = "please pay";
         claimId = prdct.submitClaim(nftId, claimAmount, claimData); 
-        prdct.confirmClaim(nftId, claimId, claimAmount); 
+        prdct.confirmClaim(nftId, claimId, claimAmount, ""); 
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
         claimState = instanceReader.getClaimState(policyNftId, claimId);

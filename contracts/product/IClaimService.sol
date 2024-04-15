@@ -49,14 +49,17 @@ interface IClaimService is
     /// function can only be called by product, policy needs to match with calling product
     function decline(
         NftId policyNftId, 
-        ClaimId claimId) external;
+        ClaimId claimId,
+        bytes memory data // claim processing data
+    ) external;
 
     /// @dev confirms the specified claim and specifies the payout amount
     /// function can only be called by product, policy needs to match with calling product
     function confirm(
         NftId policyNftId, 
         ClaimId claimId,
-        Amount confirmedAmount
+        Amount confirmedAmount,
+        bytes memory data // claim processing data
     ) external;
 
     /// @dev closes the specified claim
