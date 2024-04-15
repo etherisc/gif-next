@@ -344,30 +344,48 @@ contract TestGifBase is Test {
 
     function _deployAndRegisterServices() internal 
     {
+        bytes32 salt = "0x1234";
+        VersionPart version = VersionPartLib.toVersionPart(3);
+
         ReleaseConfig config = new ReleaseConfig(
-            releaseManager, 
-            registryOwner, 
-            VersionPartLib.toVersionPart(3));
+            releaseManager,
+            registryOwner,
+            version,
+            salt);
 
         (
             address releaseAccessManager, 
-            VersionPart version
-        ) = releaseManager.createNextRelease(config.getConfig());
+            VersionPart releaseVersion,
+            bytes32 releaseSalt
+        ) = releaseManager.createNextRelease(config.getConfig(), salt);
 
-        bytes32 salt = bytes32(version.toInt());
+        salt = config.getSalt();
+        version = config.getVersion();
+        assertEq(salt, releaseSalt, "salts are different");
+        assertEq(version.toInt(), releaseVersion.toInt(), "versions are different");
+
+        // solhint-disable
+        console.log("release version", releaseVersion.toInt());
+        console.log("release salt", uint(releaseSalt));
+        console.log("release access manager deployed at", address(releaseAccessManager));
+        // solhint-enable
 
         // --- registry service ---------------------------------//
         registryServiceManager = new RegistryServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         registryService = registryServiceManager.getRegistryService();
+
+        assertEq(config.getAccessManager(), releaseAccessManager, "access manager address mismatch");
+        assertEq(config.getServiceConfig(9).serviceAddress, address(registryService), "registry service address mismatch");
+
         releaseManager.registerService(registryService); 
 
         // solhint-disable
         console.log("registry service proxy manager deployed at", address(registryServiceManager));
-        console.log("registry service proxy manager linked to nft", registryServiceManager.getNftId().toInt());
+        console.log("registry service proxy manager linked to nft id", registryServiceManager.getNftId().toInt());
         console.log("registry service proxy manager owner", registryServiceManager.getOwner());
-
         console.log("registry service deployed at", address(registryService));
-        console.log("registry service nft", registryService.getNftId().toInt());
+        console.log("registry service nft id", registryService.getNftId().toInt());
+        console.log("registry service domain", registryService.getDomain().toInt());
         console.log("registry service owner", registryService.getOwner());
         console.log("registry service authority", registryService.authority());
         // solhint-enable
@@ -378,9 +396,14 @@ contract TestGifBase is Test {
         instanceServiceNftId = releaseManager.registerService(instanceService);
 
         // solhint-disable 
-        console.log("instanceService domain", instanceService.getDomain().toInt());
-        console.log("instanceService deployed at", address(instanceService));
-        console.log("instanceService nft id", instanceService.getNftId().toInt());
+        console.log("instance service proxy manager deployed at", address(instanceServiceManager));
+        console.log("instance service proxy manager linked to nft id", instanceServiceManager.getNftId().toInt());
+        console.log("instance service proxy manager owner", instanceServiceManager.getOwner());
+        console.log("instance service deployed at", address(instanceService));
+        console.log("instance service nft id", instanceService.getNftId().toInt());
+        console.log("instance service domain", instanceService.getDomain().toInt());
+        console.log("instance service owner", instanceService.getOwner());
+        console.log("instance service authority", instanceService.authority());
         // solhint-enable
 
         // --- distribution service ---------------------------------//
@@ -388,10 +411,15 @@ contract TestGifBase is Test {
         distributionService = distributionServiceManager.getDistributionService();
         distributionServiceNftId = releaseManager.registerService(distributionService);
 
-        // solhint-disable 
-        console.log("distributionService domain", distributionService.getDomain().toInt());
-        console.log("distributionService deployed at", address(distributionService));
-        console.log("distributionService nft id", distributionService.getNftId().toInt());
+        // solhint-disable
+        console.log("distribution service proxy manager deployed at", address(distributionServiceManager));
+        console.log("distribution service proxy manager linked to nft id", distributionServiceManager.getNftId().toInt());
+        console.log("distribution service proxy manager owner", distributionServiceManager.getOwner());
+        console.log("distribution service deployed at", address(distributionService));
+        console.log("distribution service nft id", distributionService.getNftId().toInt());
+        console.log("distribution service domain", distributionService.getDomain().toInt());
+        console.log("distribution service owner", distributionService.getOwner());
+        console.log("distribution service authority", distributionService.authority());
         // solhint-enable
 
         // --- pricing service ---------------------------------//
@@ -400,9 +428,14 @@ contract TestGifBase is Test {
         pricingServiceNftId = releaseManager.registerService(pricingService);
 
         // solhint-disable
-        console.log("pricingService domain", pricingService.getDomain().toInt());
-        console.log("pricingService deployed at", address(pricingService));
-        console.log("pricingService nft id", pricingService.getNftId().toInt());
+        console.log("pricing service proxy manager deployed at", address(pricingServiceManager));
+        console.log("pricing service proxy manager linked to nft id", pricingServiceManager.getNftId().toInt());
+        console.log("pricing service proxy manager owner", pricingServiceManager.getOwner());
+        console.log("pricing service deployed at", address(pricingService));
+        console.log("pricing service nft id", pricingService.getNftId().toInt());
+        console.log("pricing service domain", pricingService.getDomain().toInt());
+        console.log("pricing service owner", pricingService.getOwner());
+        console.log("pricing service authority", pricingService.authority());
         // solhint-enable
 
         // --- bundle service ---------------------------------//
@@ -411,9 +444,14 @@ contract TestGifBase is Test {
         bundleServiceNftId = releaseManager.registerService(bundleService);
 
         // solhint-disable
-        console.log("bundleService domain", bundleService.getDomain().toInt());
-        console.log("bundleService deployed at", address(bundleService));
-        console.log("bundleService nft id", bundleService.getNftId().toInt());
+        console.log("bundle service proxy manager deployed at", address(bundleServiceManager));
+        console.log("bundle service proxy manager linked to nft id", bundleServiceManager.getNftId().toInt());
+        console.log("bundle service proxy manager owner", bundleServiceManager.getOwner());
+        console.log("bundle service deployed at", address(bundleService));
+        console.log("bundle service nft id", bundleService.getNftId().toInt());
+        console.log("bundle service domain", bundleService.getDomain().toInt());
+        console.log("bundle service owner", bundleService.getOwner());
+        console.log("bundle service authority", bundleService.authority());
         // solhint-enable
 
         // --- pool service ---------------------------------//
@@ -422,9 +460,14 @@ contract TestGifBase is Test {
         poolServiceNftId = releaseManager.registerService(poolService);
 
         // solhint-disable
-        console.log("poolService domain", poolService.getDomain().toInt());
-        console.log("poolService deployed at", address(poolService));
-        console.log("poolService nft id", poolService.getNftId().toInt());
+        console.log("pool service proxy manager deployed at", address(poolServiceManager));
+        console.log("pool service proxy manager linked to nft id", poolServiceManager.getNftId().toInt());
+        console.log("pool service proxy manager owner", poolServiceManager.getOwner());
+        console.log("pool service deployed at", address(poolService));
+        console.log("pool service nft id", poolService.getNftId().toInt());
+        console.log("pool service domain", poolService.getDomain().toInt());
+        console.log("pool service owner", poolService.getOwner());
+        console.log("pool service authority", poolService.authority());
         // solhint-enable
 
         // --- product service ---------------------------------//
@@ -433,9 +476,14 @@ contract TestGifBase is Test {
         productServiceNftId = releaseManager.registerService(productService);
 
         // solhint-disable
-        console.log("productService domain", productService.getDomain().toInt());
-        console.log("productService deployed at", address(productService));
-        console.log("productService nft id", productService.getNftId().toInt());
+        console.log("product service proxy manager deployed at", address(productServiceManager));
+        console.log("product service proxy manager linked to nft id", productServiceManager.getNftId().toInt());
+        console.log("product service proxy manager owner", productServiceManager.getOwner());
+        console.log("product service deployed at", address(productService));
+        console.log("product service nft id", productService.getNftId().toInt());
+        console.log("product service domain", productService.getDomain().toInt());
+        console.log("product service owner", productService.getOwner());
+        console.log("product service authority", productService.authority());
         // solhint-enable
 
         // MUST follow bundle service registration 
@@ -445,9 +493,14 @@ contract TestGifBase is Test {
         claimServiceNftId = releaseManager.registerService(claimService);
 
         // solhint-disable
-        console.log("claimService domain", claimService.getDomain().toInt());
-        console.log("claimService deployed at", address(claimService));
-        console.log("claimService nft id", claimService.getNftId().toInt());
+        console.log("claim service proxy manager deployed at", address(claimServiceManager));
+        console.log("claim service proxy manager linked to nft id", claimServiceManager.getNftId().toInt());
+        console.log("claim service proxy manager owner", claimServiceManager.getOwner());
+        console.log("claim service deployed at", address(claimService));
+        console.log("claim service nft id", claimService.getNftId().toInt());
+        console.log("claim service domain", claimService.getDomain().toInt());
+        console.log("claim service owner", claimService.getOwner());
+        console.log("claim service authority", claimService.authority());
         // solhint-enable
 
         // --- application service ---------------------------------//
@@ -456,9 +509,14 @@ contract TestGifBase is Test {
         applicationServiceNftId = releaseManager.registerService(applicationService);
 
         // solhint-disable
-        console.log("applicationService domain", applicationService.getDomain().toInt());
-        console.log("applicationService deployed at", address(applicationService));
-        console.log("applicationService nft id", applicationService.getNftId().toInt());
+        console.log("application service proxy manager deployed at", address(applicationServiceManager));
+        console.log("application service proxy manager linked to nft id", applicationServiceManager.getNftId().toInt());
+        console.log("application service proxy manager owner", applicationServiceManager.getOwner());
+        console.log("application service deployed at", address(applicationService));
+        console.log("application service nft id", applicationService.getNftId().toInt());
+        console.log("application service domain", applicationService.getDomain().toInt());
+        console.log("application service owner", applicationService.getOwner());
+        console.log("application service authority", applicationService.authority());
         // solhint-enable
 
         // --- policy service ---------------------------------//
@@ -467,9 +525,14 @@ contract TestGifBase is Test {
         policyServiceNftId = releaseManager.registerService(policyService);
 
         // solhint-disable
-        console.log("policyService domain", policyService.getDomain().toInt());
-        console.log("policyService deployed at", address(policyService));
-        console.log("policyService nft id", policyService.getNftId().toInt());
+        console.log("policy service proxy manager deployed at", address(policyServiceManager));
+        console.log("policy service proxy manager linked to nft id", policyServiceManager.getNftId().toInt());
+        console.log("policy service proxy manager owner", policyServiceManager.getOwner());
+        console.log("policy service deployed at", address(policyService));
+        console.log("policy service nft id", policyService.getNftId().toInt());
+        console.log("policy service domain", policyService.getDomain().toInt());
+        console.log("policy service owner", policyService.getOwner());
+        console.log("policy service authority", policyService.authority());
         // solhint-enable
 
         releaseManager.activateNextRelease();
@@ -535,6 +598,7 @@ contract TestGifBase is Test {
         ozAccessManager = AccessManagerUpgradeableInitializeable(instance.authority());
         instanceReader = instance.getInstanceReader();
         instanceBundleManager = instance.getBundleManager();
+        instanceStore = instance.getInstanceStore();
         
         // solhint-disable
         console.log("cloned instance deployed at", address(instance));

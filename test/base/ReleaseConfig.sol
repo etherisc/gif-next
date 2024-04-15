@@ -69,17 +69,22 @@ contract ReleaseConfig
     address public immutable _registry;
     address public immutable _owner;
     bytes32 public immutable _salt;
+    VersionPart public immutable _version;
 
-    ReleaseManager.SOMEDATATYPE[] internal _config;
+    ReleaseManager.ConfigStruct[] internal _config;
 
-    constructor(ReleaseManager releaseManager, address owner, VersionPart version)
+    constructor(ReleaseManager releaseManager, address owner, VersionPart version, bytes32 salt)
     {
         _releaseManager = address(releaseManager);
         _registry = releaseManager.getRegistry();
         _owner = owner;
-        _salt = bytes32(version.toInt());
+        _version = version;
+        _salt = keccak256(
+            bytes.concat(
+                bytes32(_version.toInt()),
+                salt));
         _accessManager = Clones.predictDeterministicAddress(
-            address(releaseManager._masterReleaseAccessManager()), // implementation
+            address(releaseManager._accessManager().authority()), // implementation
             _salt,
             address(releaseManager)); // deployer
 
@@ -99,21 +104,33 @@ contract ReleaseConfig
         return _config.length;
     }
 
-    function getServiceConfig(uint idx) external view returns(ReleaseManager.SOMEDATATYPE memory) {
+    function getServiceConfig(uint idx) external view returns(ReleaseManager.ConfigStruct memory) {
         return _config[idx];
     }
 
-    function getConfig() external view returns(ReleaseManager.SOMEDATATYPE[] memory) {
+    function getConfig() external view returns(ReleaseManager.ConfigStruct[] memory) {
         return _config;
     }
 
-    function _policyServiceConfig() internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function getAccessManager() external view returns(address) {
+        return _accessManager;
+    }
+
+    function getSalt() external view returns(bytes32) {
+        return _salt;
+    }
+
+    function getVersion() external view returns(VersionPart) {
+        return _version;
+    }
+
+    function _policyServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(PolicyServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(PolicyService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.SOMEDATATYPE(
+        return ReleaseManager.ConfigStruct(
             proxyAddress,
             POLICY_SERVICE_ROLE(),
             POLICY(),
@@ -122,13 +139,13 @@ contract ReleaseConfig
         );
     }
 
-    function _applicationServiceConfig() internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function _applicationServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(ApplicationServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(ApplicationService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.SOMEDATATYPE(
+        return ReleaseManager.ConfigStruct(
             proxyAddress,
             APPLICATION_SERVICE_ROLE(),
             APPLICATION(),
@@ -137,13 +154,13 @@ contract ReleaseConfig
         );
     }
 
-    function _claimServiceConfig() internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function _claimServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(ClaimServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(ClaimService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.SOMEDATATYPE(
+        return ReleaseManager.ConfigStruct(
             proxyAddress,
             CLAIM_SERVICE_ROLE(),
             CLAIM(),
@@ -152,13 +169,13 @@ contract ReleaseConfig
         );
     }
 
-    function _productService()  internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function _productService()  internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(ProductServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(ProductService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.SOMEDATATYPE(
+        return ReleaseManager.ConfigStruct(
             proxyAddress,
             PRODUCT_SERVICE_ROLE(),
             PRODUCT(),
@@ -167,13 +184,13 @@ contract ReleaseConfig
         );
     }
 
-    function _poolServiceConfig() internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function _poolServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(PoolServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(PoolService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.SOMEDATATYPE memory config = ReleaseManager.SOMEDATATYPE(
+        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
             proxyAddress,
             POOL_SERVICE_ROLE(),
             POOL(),
@@ -194,13 +211,13 @@ contract ReleaseConfig
         return config;
     }
 
-    function _bundleServiceConfig() internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function _bundleServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(BundleServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(BundleService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.SOMEDATATYPE memory config = ReleaseManager.SOMEDATATYPE(
+        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
             proxyAddress,
             BUNDLE_SERVICE_ROLE(),
             BUNDLE(),
@@ -223,13 +240,13 @@ contract ReleaseConfig
         return config;
     }
 
-    function _pricingServiceConfig() internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function _pricingServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(PricingServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(PricingService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.SOMEDATATYPE(
+        return ReleaseManager.ConfigStruct(
             proxyAddress,
             PRICING_SERVICE_ROLE(),
             PRICE(),
@@ -238,13 +255,13 @@ contract ReleaseConfig
         );
     }
 
-    function _distributionServiceConfig() internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function _distributionServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(DistributionServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(DistributionService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.SOMEDATATYPE memory config = ReleaseManager.SOMEDATATYPE(
+        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
             proxyAddress,
             DISTRIBUTION_SERVICE_ROLE(),
             DISTRIBUTION(),
@@ -259,13 +276,13 @@ contract ReleaseConfig
         return config;
     }
 
-    function _instanceServiceConfig() internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function _instanceServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(InstanceServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(InstanceService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.SOMEDATATYPE memory config = ReleaseManager.SOMEDATATYPE(
+        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
             proxyAddress,
             INSTANCE_SERVICE_ROLE(),
             INSTANCE(),
@@ -281,13 +298,13 @@ contract ReleaseConfig
         return config;
     }
 
-    function _registryServiceConfig() internal returns(ReleaseManager.SOMEDATATYPE memory)
+    function _registryServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(RegistryServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(RegistryService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.SOMEDATATYPE memory config = ReleaseManager.SOMEDATATYPE(
+        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
             proxyAddress,
             REGISTRY_SERVICE_ROLE(),
             REGISTRY(),
