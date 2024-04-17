@@ -7,7 +7,7 @@ import {IProductService} from "../product/IProductService.sol";
 import {NftId, zeroNftId, NftIdLib, toNftId} from "../type/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
-import {Component} from "../shared/Component.sol";
+import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -23,7 +23,7 @@ import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
 
 abstract contract Distribution is
-    Component,
+    InstanceLinkedComponent,
     IDistributionComponent
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Distribution")) - 1)) & ~bytes32(uint256(0xff));

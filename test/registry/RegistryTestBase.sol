@@ -33,6 +33,7 @@ import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
 
+import {Dip} from "../mock/Dip.sol";
 import {RegistryServiceManagerMockWithConfig} from "../mock/RegistryServiceManagerMock.sol";
 
 
@@ -81,6 +82,8 @@ contract RegistryTestBase is Test, FoundryRandom {
     bytes32 public constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;
 
     uint8 public constant GIF_VERSION = 3;
+
+    IERC20Metadata public dip = new Dip();
 
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
@@ -160,8 +163,9 @@ contract RegistryTestBase is Test, FoundryRandom {
         // deploy staking contract
         address stakingOwner = msg.sender;
         stakingManager = new StakingManager(
+            accessManager.authority(),
             address(registry),
-            accessManager.authority());
+            address(dip));
 
         staking = stakingManager.getStaking();
         releaseManager.registerStaking(

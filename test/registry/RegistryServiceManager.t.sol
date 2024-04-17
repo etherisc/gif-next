@@ -8,6 +8,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
+import {Dip} from "../mock/Dip.sol";
 import {NftId, toNftId} from "../../contracts/type/NftId.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
@@ -38,8 +39,9 @@ contract RegistryServiceManagerTest is Test {
     ChainNft public chainNft;
 
     // staking
-    Staking staking;
-    StakingManager stakingManager;
+    Dip public dip;
+    Staking public staking;
+    StakingManager public stakingManager;
 
     function setUp() public {
 
@@ -60,10 +62,12 @@ contract RegistryServiceManagerTest is Test {
         registryAccessManager.initialize(address(releaseManager), address(tokenRegistry));
 
         // deploy staking contract
+        dip = new Dip();
         address stakingOwner = registryOwner;
         stakingManager = new StakingManager(
+            registryAccessManager.authority(),
             address(registry),
-            registryAccessManager.authority());
+            address(dip));
         staking = stakingManager.getStaking();
 
         releaseManager.registerStaking(

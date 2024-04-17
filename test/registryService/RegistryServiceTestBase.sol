@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
+import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
@@ -26,9 +26,9 @@ import {IService} from "../../contracts/shared/IService.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
+import {Dip} from "../mock/Dip.sol";
 import {ServiceMock} from "../mock/ServiceMock.sol";
 import {RegisterableMock} from "../mock/RegisterableMock.sol";
-import {DIP} from "../mock/Dip.sol";
 
 
 // Helper functions to test IRegistry.ObjectInfo structs 
@@ -84,7 +84,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
     IService componentOwnerService;
 
-    address public contractWithoutIERC165 = address(new DIP());
+    address public contractWithoutIERC165 = address(new Dip());
     address public erc165 = address(new ERC165()); 
 
     RegisterableMock public registerableOwnedByRegistryOwner;

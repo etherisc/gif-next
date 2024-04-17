@@ -3,14 +3,14 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
-import {IComponent} from "../shared/IComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {NftId} from "../type/NftId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {Seconds} from "../type/Seconds.sol";
 
-interface IProductComponent is IComponent {
+interface IProductComponent is IInstanceLinkedComponent {
 
     function getSetupInfo() external view returns (ISetup.ProductSetupInfo memory setupInfo);
 

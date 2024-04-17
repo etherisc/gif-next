@@ -15,7 +15,7 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
-import {DIP} from "../mock/Dip.sol";
+import {Dip} from "../mock/Dip.sol";
 import {NftOwnableMock, NftOwnableMockUninitialized} from "../mock/NftOwnableMock.sol";
 
 import {GifTest} from "../base/GifTest.sol";
@@ -119,7 +119,7 @@ contract NftOwnableTest is GifTest {
     }
 
     function test_NftOwnableInitializeNftOwnableInitializeWithNonRegistry() public {
-        DIP dip = new DIP();
+        Dip dip = new Dip();
         address fakeRegistryAddress = address(dip);
 
         // attempt to initialize with non-registry

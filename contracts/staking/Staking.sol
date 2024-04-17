@@ -8,20 +8,20 @@ import {ObjectType, REGISTRY, STAKING} from "../type/ObjectType.sol";
 import {NftId, zeroNftId} from "../type/NftId.sol";
 import {Version, VersionLib, VersionPartLib} from "../type/Version.sol";
 
+import {Component} from "../shared/Component.sol";
 import {IStaking} from "./IStaking.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {Versionable} from "../shared/Versionable.sol";
-import {Registerable} from "../shared/Registerable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 
 contract Staking is 
-    Registerable,
+    Component,
     Versionable,
-    AccessManagedUpgradeable,
     IStaking
 {
 
+    string public constant CONTRACT_NAME = "Staking";
     uint8 private constant GIF_MAJOR_VERSION = 3;
 
     // from Versionable
@@ -43,22 +43,23 @@ contract Staking is
         initializer
     {
         (
-            address registryAddress,
             address initialAuthority,
+            address registryAddress,
+            address dipTokenAddress,
             address initialOwner
-        ) = abi.decode(data, (address, address, address));
+        ) = abi.decode(data, (address, address, address, address));
 
-        initializeRegisterable(
+        initializeComponent(
+            initialAuthority,
             registryAddress, 
             IRegistry(registryAddress).getNftId(), 
+            CONTRACT_NAME,
+            dipTokenAddress,
             STAKING(), 
             false, // is interceptor
             initialOwner, 
             ""); // data
 
-        __AccessManaged_init(initialAuthority);
-
-        registerInterface(type(IAccessManaged).interfaceId);
         registerInterface(type(IStaking).interfaceId);
     }
 }

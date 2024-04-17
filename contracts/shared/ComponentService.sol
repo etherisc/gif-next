@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {IComponent} from "./IComponent.sol";
+import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -54,7 +54,7 @@ abstract contract ComponentService is
         internal
         view
         returns (
-            IComponent component,
+            IInstanceLinkedComponent component,
             address owner,
             IInstance instance,
             NftId instanceNftId
@@ -64,8 +64,8 @@ abstract contract ComponentService is
         owner = msg.sender;
 
         // check this is a component
-        component = IComponent(componentAddress);
-        if(!component.supportsInterface(type(IComponent).interfaceId)) {
+        component = IInstanceLinkedComponent(componentAddress);
+        if(!component.supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
             revert ErrorComponentServiceNotComponent(componentAddress);
         }
 

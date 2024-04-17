@@ -68,16 +68,13 @@ import {BundleManager} from "../../contracts/instance/BundleManager.sol";
 import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
+import {Dip} from "../mock/Dip.sol";
 import {Distribution} from "../../contracts/distribution/Distribution.sol";
 import {Product} from "../../contracts/product/Product.sol";
 import {Pool} from "../../contracts/pool/Pool.sol";
 import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
 import {SimplePool} from "../mock/SimplePool.sol";
-
-// import {IPolicy} from "../../contracts/instance/module/policy/IPolicy.sol";
-// import {IPool} from "../../contracts/instance/module/pool/IPoolModule.sol";
-
 
 // solhint-disable-next-line max-states-count
 contract GifTest is Test {
@@ -97,6 +94,7 @@ contract GifTest is Test {
     TokenRegistry public tokenRegistry;
 
     IERC20Metadata public token;
+    IERC20Metadata public dip;
 
     InstanceServiceManager public instanceServiceManager;
     InstanceService public instanceService;
@@ -338,10 +336,12 @@ contract GifTest is Test {
         // solhint-enable
 
         // 5) deploy staking contract
+        dip = new Dip();
         address stakingOwner = registryOwner;
         stakingManager = new StakingManager(
+            registryAccessManager.authority(),
             address(registry),
-            registryAccessManager.authority());
+            address(dip));
         staking = stakingManager.getStaking();
 
         // 6) register staking contract
@@ -596,14 +596,14 @@ contract GifTest is Test {
     }
 
     function _deployAndActivateToken() internal {
-        Usdc usdc  = new Usdc();
-        address UsdcAddress = address(usdc);
-        token = usdc;
-
-        // solhint-disable-next-line
-        console.log("token deployed at", UsdcAddress);
+        token = new Usdc();
 
         tokenRegistry.setActive(address(token), registry.getLatestVersion(), true);
+
+        // solhint-disable
+        console.log("token (usdc) deployed at", address(token));
+        console.log("token (dip) deployed at", address(dip));
+        // solhint-enable
     }
 
 

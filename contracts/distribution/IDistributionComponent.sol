@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import {Fee} from "../type/Fee.sol";
-import {IComponent} from "../shared/IComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {ReferralId, ReferralStatus} from "../type/Referral.sol";
 import {NftId} from "../type/NftId.sol";
@@ -10,7 +10,7 @@ import {DistributorType} from "../type/DistributorType.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
-interface IDistributionComponent is IComponent {
+interface IDistributionComponent is IInstanceLinkedComponent {
 
     event LogDistributorUpdated(address to, address caller);
 

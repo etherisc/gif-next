@@ -9,7 +9,7 @@ import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/
 import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
 
 import {Usdc} from "../mock/Usdc.sol";
-import {DIP} from "../mock/Dip.sol";
+import {Dip} from "../mock/Dip.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IService} from "../../contracts/shared/IService.sol";
@@ -20,7 +20,6 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 contract RegistryTokenWhitelisting is RegistryTestBase {
 
-    DIP public dip = new DIP();
     Usdc public usdc = new Usdc();
 
     VersionPart public majorVersion2 = VersionPartLib.toVersionPart(2);

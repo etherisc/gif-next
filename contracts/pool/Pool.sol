@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {Component} from "../shared/Component.sol";
+import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
@@ -16,7 +16,7 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 abstract contract Pool is
-    Component, 
+    InstanceLinkedComponent, 
     IPoolComponent 
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Pool")) - 1)) & ~bytes32(uint256(0xff));

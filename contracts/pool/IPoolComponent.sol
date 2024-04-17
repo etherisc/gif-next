@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
-import {IComponent} from "../shared/IComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -12,7 +12,7 @@ import {UFixed} from "../type/UFixed.sol";
 
 /// @dev pool components hold and manage the collateral to cover active policies
 /// pools come in different flavors
-interface IPoolComponent is IComponent {
+interface IPoolComponent is IInstanceLinkedComponent {
 
     error ErrorPoolNotBundleOwner(NftId bundleNftId, address caller);
     error ErrorPoolNotPoolService(address caller);

@@ -5,7 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {Component} from "../shared/Component.sol";
+import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {Fee} from "../type/Fee.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IApplicationService} from "./IApplicationService.sol";
@@ -33,7 +33,7 @@ import {Pool} from "../pool/Pool.sol";
 import {Distribution} from "../distribution/Distribution.sol";
 
 abstract contract Product is
-    Component, 
+    InstanceLinkedComponent, 
     IProductComponent
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Product")) - 1)) & ~bytes32(uint256(0xff));
