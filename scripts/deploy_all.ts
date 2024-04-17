@@ -144,10 +144,16 @@ function printAddresses(
     addresses += `registryNftId: ${registry.registryNftId}\n`;
     addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
     addresses += `tokenRegistryAddress: ${registry.tokenRegistryAddress}\n`;
+    addresses += `stakingNftId: ${registry.stakingNftId}\n`;
+    addresses += `stakingAddress: ${registry.stakingAddress}\n`;
     addresses += `registryServiceManagerAddress: ${registry.registryServiceManagerAddress}\n`;
     addresses += `registryServiceAddress: ${registry.registryServiceAddress}\n`;
     addresses += `registryServiceNftId: ${registry.registryServiceNftId}\n`;
     addresses += `--------\n`;
+    addresses += `stakingServiceManagerAddress: ${services.stakingServiceManagerAddress}\n`;
+    addresses += `stakingServiceAddress: ${services.stakingServiceAddress}\n`;
+    addresses += `stakingServiceNftId: ${services.stakingServiceNftId}\n`;
+
     addresses += `instanceServiceManagerAddress: ${services.instanceServiceManagerAddress}\n`;
     addresses += `instanceServiceAddress: ${services.instanceServiceAddress}\n`;
     addresses += `instanceServiceNftId: ${services.instanceServiceNftId}\n`;
