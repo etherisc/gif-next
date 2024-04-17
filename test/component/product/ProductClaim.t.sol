@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
@@ -28,7 +28,7 @@ import {ReferralLib} from "../../../contracts/type/Referral.sol";
 import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
-contract TestProductClaim is TestGifBase {
+contract TestProductClaim is GifTest {
 
     event LogClaimTestClaimInfo(NftId policyNftId, IPolicy.PolicyInfo policyInfo, ClaimId claimId, IPolicy.ClaimInfo claimInfo);
 

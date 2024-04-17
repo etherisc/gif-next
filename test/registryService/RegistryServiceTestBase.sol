@@ -117,7 +117,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
             accessManager,
             VersionPartLib.toVersionPart(3));
 
-        registry = IRegistry(releaseManager.getRegistry());
+        registry = IRegistry(releaseManager.getRegistryAddress());
         registryNftId = registry.getNftId(address(registry));
 
         registryServiceManager = new RegistryServiceManager(

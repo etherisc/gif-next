@@ -6,12 +6,12 @@ import {VersionLib} from "../contracts/type/Version.sol";
 import {IVersionable} from "../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../contracts/shared/ProxyManager.sol";
 
-import {TestGifBase} from "./base/TestGifBase.sol";
+import {GifTest} from "./base/GifTest.sol";
 
 import {ContractV01} from "./mock/ContractV01.sol";
 import {ContractV02} from "./mock/ContractV02.sol";
 
-contract ProxyManagerTest is TestGifBase {
+contract ProxyManagerTest is GifTest {
 
     function testProductV01Deploy() public {
         ProxyManager proxyManager = new ProxyManager(address(registry));

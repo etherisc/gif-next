@@ -61,7 +61,7 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
             accessManager,
             VersionPartLib.toVersionPart(3));
 
-        registry = IRegistry(releaseManager.getRegistry());
+        registry = IRegistry(releaseManager.getRegistryAddress());
 
         registryServiceManager = new RegistryServiceManagerMockWithHarness(
             address(accessManager), 

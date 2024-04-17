@@ -5,15 +5,17 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
-import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
-import {IService} from "../shared/IService.sol";
-
+import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "./IRegistry.sol";
-import {Registry} from "./Registry.sol";
 import {IRegistryService} from "./IRegistryService.sol";
+import {IService} from "../shared/IService.sol";
+import {IStaking} from "../staking/IStaking.sol";
+
+import {Registry} from "./Registry.sol";
 import {RegistryAccessManager} from "./RegistryAccessManager.sol";
 
 
@@ -28,6 +30,9 @@ contract ReleaseManager is AccessManaged
     error NotRegistryService();
     error UnexpectedServiceAuthority(address expected, address found);
 
+    // register staking
+    error ErrorReleaseManagerStakingAlreadySet(address stakingAddress);
+
     // registerService
     error NotService();
 
@@ -36,8 +41,10 @@ contract ReleaseManager is AccessManaged
     error ReleaseRegistrationNotFinished();
 
     // _getAndVerifyContractInfo
+    error ErrorReleaseManagerUnexpectedRegisterableAddress(address expected, address actual);
+    error ErrorReleaseManagerIsInterceptorTrue();
     error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
-    error NotRegisterableOwner(address notOwner);
+    error NotRegisterableOwner(address expectedOwner, address actualOwner);
     error SelfRegistration();
     error RegisterableOwnerIsRegistered();
 
@@ -51,9 +58,9 @@ contract ReleaseManager is AccessManaged
     error ConfigSelectorZero(uint configArrayIndex);
     error SelectorAlreadyExists(VersionPart releaseVersion, ObjectType serviceDomain);
 
-
     RegistryAccessManager private immutable _accessManager;
     IRegistry private immutable _registry;
+    IStaking private _staking;
 
     VersionPart immutable _initial;// first active major version    
     VersionPart _latest;// latest active major version
@@ -72,7 +79,8 @@ contract ReleaseManager is AccessManaged
 
     constructor(
         RegistryAccessManager accessManager, 
-        VersionPart initialVersion)
+        VersionPart initialVersion
+    )
         AccessManaged(accessManager.authority())
     {
         require(initialVersion.toInt() > 0, "ReleaseManager: initial version is 0");
@@ -81,8 +89,26 @@ contract ReleaseManager is AccessManaged
 
         _initial = initialVersion;
         _next = initialVersion;
-
         _registry = new Registry();
+    }
+
+    function registerStaking(
+        address stakingAddress,
+        address stakingOwner
+    )
+        external
+        restricted // GIF_ADMIN_ROLE
+        returns(NftId nftId)
+    {
+        // verify staking contract
+        _getAndVerifyContractInfo(stakingAddress, STAKING(), stakingOwner);
+        _staking = IStaking(stakingAddress);
+
+        nftId = _registry.registerStaking(
+            stakingAddress,
+            stakingOwner);
+
+        _staking.linkToRegisteredNftId();
     }
 
     /// @dev skips previous release if was not activated
@@ -148,7 +174,7 @@ contract ReleaseManager is AccessManaged
                 serviceAuthority); 
         }
 
-        IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
+        IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(address(service), SERVICE(), msg.sender);
 
         VersionPart majorVersion = _next;
         ObjectType domain = REGISTRY();
@@ -172,7 +198,7 @@ contract ReleaseManager is AccessManaged
             revert NotService();
         }
 
-        IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(service, SERVICE(), msg.sender);
+        IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(address(service), SERVICE(), msg.sender);
         VersionPart majorVersion = getNextVersion();
         ObjectType domain = _release[majorVersion].domains[_awaitingRegistration];// reversed registration order of services specified in RegistryService config
         _verifyService(service, majorVersion, domain);
@@ -207,9 +233,9 @@ contract ReleaseManager is AccessManaged
         return _valid[version];
     }
 
-    function getRegistry() external view returns(address)
+    function getRegistryAddress() external view returns(address)
     {
-        return (address(_registry));
+        return address(_registry);
     }
 
     function getReleaseInfo(VersionPart version) external view returns(IRegistry.ReleaseInfo memory)
@@ -233,7 +259,7 @@ contract ReleaseManager is AccessManaged
     //--- private functions ----------------------------------------------------//
 
     function _getAndVerifyContractInfo(
-        IService service,
+        address registerableAddress,
         ObjectType expectedType,
         address expectedOwner // assume always valid, can not be 0
     )
@@ -243,9 +269,15 @@ contract ReleaseManager is AccessManaged
             IRegistry.ObjectInfo memory info
         )
     {
-        info = service.getInitialInfo();
-        info.objectAddress = address(service);
-        info.isInterceptor = false; // service is never interceptor, at least now
+        info = IRegisterable(registerableAddress).getInitialInfo();
+
+        if(info.objectAddress != registerableAddress) {
+            revert ErrorReleaseManagerUnexpectedRegisterableAddress(registerableAddress, info.objectAddress);
+        }
+
+        if(info.isInterceptor) {
+            revert ErrorReleaseManagerIsInterceptorTrue();
+        }
 
         if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
             revert UnexpectedRegisterableType(expectedType, info.objectType);
@@ -254,10 +286,10 @@ contract ReleaseManager is AccessManaged
         address owner = info.initialOwner;
 
         if(owner != expectedOwner) { // registerable owner protection
-            revert NotRegisterableOwner(expectedOwner); 
+            revert NotRegisterableOwner(expectedOwner, owner); 
         }
 
-        if(owner == address(service)) {
+        if(owner == address(registerableAddress)) {
             revert SelfRegistration();
         }
         

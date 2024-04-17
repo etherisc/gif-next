@@ -29,6 +29,9 @@ interface IRegistry is IERC165 {
     error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
     error ContractAlreadyRegistered(address objectAddress);
 
+    // _registerStaking()
+    error StakingAlreadyRegistered(address stakingAddress);
+
     struct ObjectInfo {
         NftId nftId;
         NftId parentNftId;
@@ -37,14 +40,18 @@ interface IRegistry is IERC165 {
         address objectAddress;
         address initialOwner;
         bytes data;
-    }// TODO delete nftId and initialOwner(if not used) from struct
-    // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
+    }
 
     struct ReleaseInfo {
         ObjectType[] domains;
         Timestamp createdAt;
         //Timestamp updatedAt;
     }
+
+    function registerStaking(
+        address stakingAddress,
+        address stakingOwner
+    ) external returns(NftId nftId);
 
     function registerService(
         ObjectInfo memory serviceInfo, 
@@ -92,6 +99,8 @@ interface IRegistry is IERC165 {
         ObjectType serviceDomain, 
         VersionPart releaseVersion
     ) external view returns (address serviceAddress);
+
+    function getStakingAddress() external view returns (address staking);
 
     function getReleaseManagerAddress() external view returns (address);
 

@@ -44,7 +44,9 @@ interface IRegistryService is
                FunctionConfig[] memory config
           );
 
-     // TODO used by service -> add owner arg 
+     function registerStaking(IRegisterable staking, address owner)
+          external returns(IRegistry.ObjectInfo memory info); 
+
      function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info); 
 
@@ -62,5 +64,6 @@ interface IRegistryService is
      function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 
      function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
+
 }
 

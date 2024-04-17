@@ -17,10 +17,10 @@ import {SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
 import {TimestampLib} from "../contracts/type/Timestamp.sol";
-import {TestGifBase} from "./base/TestGifBase.sol";
+import {GifTest} from "./base/GifTest.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
 
-contract TestPool is TestGifBase {
+contract TestPool is GifTest {
     using NftIdLib for NftId;
 
     function test_Pool_contractLocations() public {

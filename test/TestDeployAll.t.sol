@@ -2,18 +2,25 @@
 pragma solidity 0.8.20;
 
 import {console} from "../lib/forge-std/src/Script.sol";
-import {TestGifBase} from "./base/TestGifBase.sol";
+import {GifTest} from "./base/GifTest.sol";
+import {IRegistry} from "../contracts/registry/IRegistry.sol";
+import {IStaking} from "../contracts/staking/IStaking.sol";
+import {IStakingService} from "../contracts/staking/IStakingService.sol";
 import {NftId, toNftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {BUNDLE, COMPONENT, POLICY, RISK} from "../contracts/type/ObjectType.sol";
+import {BUNDLE, COMPONENT, POLICY, RISK, SERVICE, STAKING} from "../contracts/type/ObjectType.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 
-contract TestDeployAll is TestGifBase {
+contract TestDeployAll is GifTest {
     using NftIdLib for NftId;
 
     // FIXME: add missing services
-    function testDeployAllOverview() public {
-        assertEq(registry.getObjectCount(), 15, "invalid object count for base setup");
-        
+    function test_deployAllOverview() public {
+        assertEq(registry.getObjectCount(), 17, "invalid object count for base setup");
+
+        // validate instance service
+        assertTrue(registry.getNftId(address(stakingService)).eq(stakingServiceNftId), "staking service nft does not match");
+        assertTrue(address(stakingServiceManager) != address(0), "staking service manager is zero address");
+
         // validate instance service
         assertTrue(registry.getNftId(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");
         assertTrue(address(instanceServiceManager) != address(0), "instance service manager is zero address");
@@ -41,7 +48,7 @@ contract TestDeployAll is TestGifBase {
         assertTrue(address(instanceReader) != address(0), "instance reader is zero address");
     }
 
-    function testDeployAllInstanceOwner() public {
+    function test_deployAllInstanceOwner() public {
         NftId nftId = registry.getNftId(address(instance));
         assertEq(
             registry.ownerOf(nftId),
@@ -50,8 +57,48 @@ contract TestDeployAll is TestGifBase {
         );
     }
 
+    function test_deployAllStakingSetup() public {
+        // staking manager
+        assertEq(stakingManager.getOwner(), staking.getOwner(), "unexpected staking manager owner");
+        assertEq(address(stakingManager.getStaking()), address(staking), "unexpected staking address");
 
-    function testDeployAllInstanceLifecycles() public {
+        // staking
+        assertTrue(staking.supportsInterface(type(IStaking).interfaceId), "not supportint expected interface");
+        assertTrue(registry.getNftId(address(staking)).gtz(), "staking nft id zero");
+        assertEq(staking.getNftId().toInt(), stakingNftId.toInt(), "unexpected staking nft id (1)");
+        assertEq(staking.getNftId().toInt(), registry.getNftId(address(staking)).toInt(), "unexpected staking nft id (2)");
+
+        IRegistry.ObjectInfo memory stakingInfo = registry.getObjectInfo(staking.getNftId());
+        assertEq(stakingInfo.nftId.toInt(), stakingNftId.toInt(), "unexpected staking nft id (3)");
+        assertEq(stakingInfo.parentNftId.toInt(), registryNftId.toInt(), "unexpected parent nft id");
+        assertEq(stakingInfo.objectType.toInt(), STAKING().toInt(), "unexpected object type");
+        assertFalse(stakingInfo.isInterceptor, "staking should not be interceptor");
+        assertEq(stakingInfo.objectAddress, address(staking), "unexpected contract address");
+        assertEq(stakingInfo.initialOwner, registryOwner, "unexpected initial owner");
+
+        // staking service manager
+        assertEq(stakingServiceManager.getOwner(), stakingService.getOwner(), "unexpected staking service manager owner");
+        assertEq(address(stakingServiceManager.getStakingService()), address(stakingService), "unexpected staking service address");
+
+        // staking service
+        assertTrue(stakingService.supportsInterface(type(IStakingService).interfaceId), "not supportint expected interface");
+        assertTrue(registry.getNftId(address(stakingService)).gtz(), "staking service nft id zero");
+        assertEq(stakingService.getNftId().toInt(), stakingServiceNftId.toInt(), "unexpected staking service nft id (1)");
+        assertEq(stakingService.getNftId().toInt(), registry.getNftId(address(stakingService)).toInt(), "unexpected staking service nft id (2)");
+
+        IRegistry.ObjectInfo memory serviceInfo = registry.getObjectInfo(stakingService.getNftId());
+        assertEq(serviceInfo.nftId.toInt(), stakingServiceNftId.toInt(), "unexpected staking service nft id (3)");
+        assertEq(serviceInfo.parentNftId.toInt(), registryNftId.toInt(), "unexpected parent nft id");
+        assertEq(serviceInfo.objectType.toInt(), SERVICE().toInt(), "unexpected object type");
+        assertFalse(serviceInfo.isInterceptor, "staking service should not be interceptor");
+        assertEq(serviceInfo.objectAddress, address(stakingService), "unexpected contract address");
+        assertEq(serviceInfo.initialOwner, registryOwner, "unexpected initial owner");
+
+        // roles
+        // access rights
+    }
+
+    function test_deployAllInstanceLifecycles() public {
         assertTrue(instance.getInstanceStore().hasLifecycle(BUNDLE()), "instance misses bundle lifecycle");
         assertTrue(instance.getInstanceStore().hasLifecycle(COMPONENT()), "instance misses component lifecycle");
         assertTrue(instance.getInstanceStore().hasLifecycle(POLICY()), "instance misses policy lifecycle");

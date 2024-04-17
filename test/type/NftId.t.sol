@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 import {NftId, toNftId, zeroNftId, eqNftId, neNftId, NftIdLib} from "../../contracts/type/NftId.sol";
 
-contract NftIdTest is TestGifBase {
+contract NftIdTest is GifTest {
     using NftIdLib for NftId;
 
     NftId nftId1;

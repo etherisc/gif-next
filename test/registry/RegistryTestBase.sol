@@ -26,6 +26,10 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+
+import {Staking} from "../../contracts/staking/Staking.sol";
+import {StakingManager} from "../../contracts/staking/StakingManager.sol";
+
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
 
@@ -82,7 +86,10 @@ contract RegistryTestBase is Test, FoundryRandom {
     address public outsider = makeAddr("outsider");
 
     RegistryAccessManager accessManager;
+    StakingManager stakingManager;
+    Staking staking;
     ReleaseManager releaseManager;
+
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
     Registry public registry;
@@ -146,13 +153,24 @@ contract RegistryTestBase is Test, FoundryRandom {
             accessManager,
             VersionPartLib.toVersionPart(3));
 
-        address registryAddress = address(releaseManager.getRegistry());
+        address registryAddress = releaseManager.getRegistryAddress();
         registry = Registry(registryAddress);
         registryNftId = registry.getNftId(address(registry));
 
+        // deploy staking contract
+        address stakingOwner = msg.sender;
+        stakingManager = new StakingManager(
+            address(registry),
+            accessManager.authority());
+
+        staking = stakingManager.getStaking();
+        releaseManager.registerStaking(
+            address(staking),
+            stakingOwner);
+
         address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
-        
+
         tokenRegistry = new TokenRegistry(registryAddress);
 
         accessManager.initialize(address(releaseManager), address(tokenRegistry));

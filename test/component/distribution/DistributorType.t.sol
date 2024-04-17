@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Test, Vm, console} from "../../../lib/forge-std/src/Test.sol";
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {Key32} from "../../../contracts/type/Key32.sol";
@@ -13,7 +13,7 @@ import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 
-contract DistributorTypeTest is TestGifBase {
+contract DistributorTypeTest is GifTest {
 
     DistributorType public distributorType;
     string public name;

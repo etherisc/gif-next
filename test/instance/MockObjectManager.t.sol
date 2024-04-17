@@ -5,13 +5,13 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {console} from "../../lib/forge-std/src/Script.sol";
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 import {NftId, toNftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {MockAuthority} from "../mock/MockAuthority.sol";
 import {MockObjectManager} from "../mock/MockObjectManager.sol";
 
-contract MockObjectManagerTest is TestGifBase {
+contract MockObjectManagerTest is GifTest {
 
     MockObjectManager public masterObjectManager;
     MockObjectManager public objectManager;

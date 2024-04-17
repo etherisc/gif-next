@@ -16,6 +16,8 @@ import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceMa
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {Staking} from "../../contracts/staking/Staking.sol";
+import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceUpgradeMock} from "../mock/RegistryServiceUpgradeMock.sol";
@@ -26,7 +28,7 @@ contract RegistryServiceManagerTest is Test {
     address public registryOwner = makeAddr("registryOwner");
     address public registryOwnerNew = makeAddr("registryOwnerNew");
 
-    RegistryAccessManager public accessManager;
+    RegistryAccessManager public registryAccessManager;
     ReleaseManager public releaseManager;
 
     // ProxyManager public proxyManager;
@@ -35,36 +37,48 @@ contract RegistryServiceManagerTest is Test {
     IRegistry public registry;
     ChainNft public chainNft;
 
+    // staking
+    Staking staking;
+    StakingManager stakingManager;
+
     function setUp() public {
 
         vm.startPrank(registryOwner);
-        accessManager = new RegistryAccessManager(registryOwner);
+        registryAccessManager = new RegistryAccessManager(registryOwner);
 
         releaseManager = new ReleaseManager(
-            accessManager,
+            registryAccessManager,
             VersionPartLib.toVersionPart(3));
 
-        address registryAddress = address(releaseManager.getRegistry());
+        address registryAddress = releaseManager.getRegistryAddress();
         registry = Registry(registryAddress);
 
         address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
 
+        TokenRegistry tokenRegistry = new TokenRegistry(registryAddress);
+        registryAccessManager.initialize(address(releaseManager), address(tokenRegistry));
+
+        // deploy staking contract
+        address stakingOwner = registryOwner;
+        stakingManager = new StakingManager(
+            address(registry),
+            registryAccessManager.authority());
+        staking = stakingManager.getStaking();
+
+        releaseManager.registerStaking(
+            address(staking),
+            stakingOwner);
+
         registryServiceManager = new RegistryServiceManager(
-            accessManager.authority(),
+            registryAccessManager.authority(),
             registryAddress
-        );        
-        
+        );
+
         registryService = registryServiceManager.getRegistryService();
         
-        TokenRegistry tokenRegistry = new TokenRegistry(registryAddress);
-        accessManager.initialize(address(releaseManager), address(tokenRegistry));
-
         releaseManager.createNextRelease();
-
         releaseManager.registerRegistryService(registryService);
-
-        // registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
 
         vm.stopPrank();
     }

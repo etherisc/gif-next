@@ -154,20 +154,11 @@ contract RegistryAccessManager is AccessManaged
 
     function _configureAdminRole() private
     {
-        bytes4[] memory functionSelector = new bytes4[](1);
-
-        // for RegistryServiceProxyManager
-        // TODO upgrading with releaseManager.upgrade()->proxy.upgrade()???
-        //functionSelector[0] = RegistryServiceManager.upgrade.selector;
-        //_setTargetFunctionRole(address(this), functionSelector, GIF_ADMIN_ROLE());
-
-        // for TokenRegistry
-
         // for ReleaseManager
-        functionSelector[0] = ReleaseManager.createNextRelease.selector;
-        _setTargetFunctionRole(_releaseManager, functionSelector, GIF_ADMIN_ROLE());
-
-        functionSelector[0] = ReleaseManager.activateNextRelease.selector;
+        bytes4[] memory functionSelector = new bytes4[](3);
+        functionSelector[0] = ReleaseManager.registerStaking.selector;
+        functionSelector[1] = ReleaseManager.createNextRelease.selector;
+        functionSelector[2] = ReleaseManager.activateNextRelease.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, GIF_ADMIN_ROLE());
     }
     

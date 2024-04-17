@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {TestGifBase} from "./base/TestGifBase.sol";
+import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 import {IComponent} from "../contracts/shared/IComponent.sol";
@@ -11,7 +11,7 @@ import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
 import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
 
-contract TestDistribution is TestGifBase {
+contract TestDistribution is GifTest {
     using NftIdLib for NftId;
 
     uint256 public constant INITIAL_BALANCE = 100000;

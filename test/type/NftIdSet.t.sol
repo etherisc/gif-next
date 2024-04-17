@@ -7,9 +7,9 @@ import {Test, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
 import {LibNftIdSet} from "../../contracts/type/NftIdSet.sol";
 import {MockObjectManager} from "../mock/MockObjectManager.sol";
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 
-contract NftIdSetTest is TestGifBase {
+contract NftIdSetTest is GifTest {
 
     LibNftIdSet.Set internal set;
     mapping(NftId setId => LibNftIdSet.Set objects) internal sets;

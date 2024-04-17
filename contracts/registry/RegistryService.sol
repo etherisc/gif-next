@@ -18,7 +18,7 @@ import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, PRICE} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE} from "../../contracts/type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
@@ -64,8 +64,23 @@ contract RegistryService is
         registerInterface(type(IRegistryService).interfaceId);
     }
 
+
+    function registerStaking(IRegisterable staking, address owner)
+        external
+        virtual
+        restricted
+        returns(
+            IRegistry.ObjectInfo memory info
+        )
+    {
+        info = _getAndVerifyContractInfo(staking, STAKING(), owner);
+        info.nftId = getRegistry().register(info);
+    }
+
+
     function registerInstance(IRegisterable instance, address owner)
         external
+        virtual
         restricted
         returns(
             IRegistry.ObjectInfo memory info
@@ -175,7 +190,7 @@ contract RegistryService is
             FunctionConfig[] memory config
         )
     {
-        config = new FunctionConfig[](9);
+        config = new FunctionConfig[](10);
 
         // order of service registrations MUST be reverse to this array 
         /*config[-1].serviceDomain = STAKE();
@@ -217,6 +232,10 @@ contract RegistryService is
         config[8].serviceDomain = INSTANCE();
         config[8].selectors = new bytes4[](1);
         config[8].selectors[0] = RegistryService.registerInstance.selector;
+
+        config[9].serviceDomain = STAKING();
+        config[9].selectors = new bytes4[](1);
+        config[9].selectors[0] = RegistryService.registerStaking.selector;
     }
 
     // Internal
