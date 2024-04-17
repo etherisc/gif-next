@@ -396,8 +396,7 @@ contract GifTest is Test {
     {
         // --- staking service ---------------------------------//
         stakingServiceManager = new StakingServiceManager(
-            address(registry),
-            registry.getStakingAddress());
+            address(registry));
 
         // staking registered with registry in staking service manager
         stakingNftId = staking.getNftId();

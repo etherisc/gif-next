@@ -1,5 +1,5 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryService, RegistryServiceManager, RegistryAccessManager, ReleaseManager, RegistryService__factory, Registry__factory, TokenRegistry } from "../../typechain-types";
+import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryService, RegistryServiceManager, RegistryAccessManager, ReleaseManager, RegistryService__factory, Registry__factory, TokenRegistry, Staking, StakingManager, Staking__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, verifyContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -23,6 +23,10 @@ export type RegistryAddresses = {
 
     tokenRegistryAddress: AddressLike;
     tokenRegistry: TokenRegistry;
+
+    stakingAddress: AddressLike;
+    staking: Staking;
+    stakingNftId: bigint;
 
     registryServiceManagerAddress: AddressLike;
     registryServiceManager: RegistryServiceManager;
@@ -64,7 +68,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         });
     const releaseManager = releaseManagerBaseContract as ReleaseManager;
 
-    const registryAddress = await releaseManager.getRegistry();
+    const registryAddress = await releaseManager.getRegistryAddress();
     const registry = Registry__factory.connect(registryAddress, owner);
     const registryNftId = await registry["getNftId(address)"](registryAddress);
 
@@ -86,6 +90,26 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     await registryAccessManager.initialize(releaseManager, tokenRegistry);
 
     const initialAuthority = await registryAccessManager.authority();
+
+    const { address: stakingManagerAddress, contract: stakingManagerBaseContract, } = await deployContract(
+        "StakingManager",
+        owner,
+        [
+            registryAddress,
+            initialAuthority,
+        ],
+        { libraries: { 
+            NftIdLib: libraries.nftIdLibAddress, 
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress,
+        }});
+
+    const stakingManager = stakingManagerBaseContract as StakingManager;
+    const stakingAddress = await stakingManager.getStaking();
+    const staking = Staking__factory.connect(stakingAddress, owner);
+
+    await releaseManager.registerStaking(staking, owner);
+    const stakingNftId = await registry["getNftId(address)"](stakingAddress);
 
     const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
         "RegistryServiceManager",
@@ -128,23 +152,27 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const regAdr = {
         registryAccessManagerAddress,
         registryAccessManager,
-    
+
         releaseManagerAddress,
         releaseManager,
-    
+
         registryAddress,
         registry,
         registryNftId,
-    
+
         chainNftAddress,
         chainNft,
-    
+
         tokenRegistryAddress,
         tokenRegistry,
-    
+
+        stakingAddress,
+        staking,
+        stakingNftId,
+
         registryServiceManagerAddress,
         registryServiceManager,
-    
+
         registryServiceAddress,
         registryService,
         registryServiceNftId

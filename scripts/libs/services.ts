@@ -3,6 +3,7 @@ import { AddressLike, Signer, hexlify, resolveAddress } from "ethers";
 import { 
     ReleaseManager__factory,
     DistributionService, DistributionServiceManager, DistributionService__factory, 
+    StakingService, StakingServiceManager, StakingService__factory, 
     InstanceService, InstanceServiceManager, InstanceService__factory, 
     PoolService, PoolServiceManager, PoolService__factory, 
     ProductService, ProductServiceManager, ProductService__factory, 
@@ -20,6 +21,11 @@ import { executeTx, getFieldFromTxRcptLogs } from "./transaction";
 // import IRegistry abi
 
 export type ServiceAddresses = {
+    stakingServiceNftId: string,
+    stakingServiceAddress: AddressLike,
+    stakingService: StakingService,
+    stakingServiceManagerAddress: AddressLike,
+
     instanceServiceNftId: string,
     instanceServiceAddress: AddressLike,
     instanceService: InstanceService,
@@ -72,6 +78,27 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     // FIXME temporal solution while registration in InstanceServiceManager constructor is not possible 
     const releaseManager = ReleaseManager__factory.connect(await resolveAddress(registry.releaseManagerAddress), owner);
 
+    logger.info("-------- staking service --------");
+    const { address: stakingServiceManagerAddress, contract: stakingServiceManagerBaseContract, } = await deployContract(
+        "StakingServiceManager",
+        owner,
+        [registry.registryAddress],
+        { libraries: { 
+            NftIdLib: libraries.nftIdLibAddress, 
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
+        }});
+
+    const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
+    const stakingServiceAddress = await stakingServiceManager.getStakingService();
+    const stakingService = StakingService__factory.connect(stakingServiceAddress, owner);
+
+    const rcpt = await executeTx(async () => await releaseManager.registerService(stakingServiceAddress));
+    const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
+    const stakingServiceNfdId = (logRegistrationInfo as unknown);
+    logger.info(`stakingServiceManager deployed - stakingServiceAddress: ${stakingServiceAddress} stakingServiceManagerAddress: ${stakingServiceManagerAddress} nftId: ${stakingServiceNfdId}`);
+
     logger.info("-------- instance service --------");
     const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, } = await deployContract(
         "InstanceServiceManager",
@@ -90,9 +117,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const instanceServiceAddress = await instanceServiceManager.getInstanceService();
     const instanceService = InstanceService__factory.connect(instanceServiceAddress, owner);
 
-    const rcpt = await executeTx(async () => await releaseManager.registerService(instanceServiceAddress));
-    const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
-    const instanceServiceNfdId = (logRegistrationInfo as unknown);
+    const rcptStk = await executeTx(async () => await releaseManager.registerService(instanceServiceAddress));
+    const logRegistrationInfoStk = getFieldFromTxRcptLogs(rcptStk!, registry.registry.interface, "LogRegistration", "nftId");
+    const instanceServiceNfdId = (logRegistrationInfoStk as unknown);
     logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
 
     logger.info("-------- distribution service --------");
@@ -290,12 +317,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info("======== release activated ========");
 
     return {
+        stakingServiceNftId: stakingServiceNfdId as string,
+        stakingServiceAddress: stakingServiceAddress,
+        stakingService: stakingService,
+        stakingServiceManagerAddress: stakingServiceManagerAddress,
+
         instanceServiceNftId: instanceServiceNfdId as string,
         instanceServiceAddress: instanceServiceAddress,
         instanceService: instanceService,
         instanceServiceManagerAddress: instanceServiceManagerAddress,
-        // componentOwnerServiceAddress,
-        // componentOwnerServiceNftId,
+
         distributionServiceAddress,
         distributionServiceNftId: distributionServiceNftId as string,
         distributionService,
