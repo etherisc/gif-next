@@ -40,6 +40,8 @@ import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceTestConfig} from "../registryService/RegistryServiceTestConfig.sol";
 
+import {Dip} from "../mock/Dip.sol";
+
 
 contract RegistryTestBase is TestGifBase, FoundryRandom {
 
@@ -53,8 +55,15 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
     RegistryServiceManagerMock public registryServiceManagerMock;
     RegistryServiceMock public registryServiceMock;
 
+<<<<<<< HEAD
     // TODO cleanup
     // uint8 public constant GIF_VERSION = 3;
+=======
+    IERC20Metadata public dip = new Dip();
+
+    address public registryOwner = makeAddr("registryOwner");
+    address public outsider = makeAddr("outsider");
+>>>>>>> 3f7d50c (split Component into Component and InstanceLinkedComponent, use Component as base for Staking)
 
     // address public registryOwner = makeAddr("registryOwner");
     // address public outsider = makeAddr("outsider");
@@ -123,9 +132,18 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         //     accessManager,
         //     VersionPartLib.toVersionPart(3));
 
+<<<<<<< HEAD
         // address registryAddress = releaseManager.getRegistryAddress();
         // registry = Registry(registryAddress);
         // registryNftId = registry.getNftId(address(registry));
+=======
+        // deploy staking contract
+        address stakingOwner = msg.sender;
+        stakingManager = new StakingManager(
+            accessManager.authority(),
+            address(registry),
+            address(dip));
+>>>>>>> 3f7d50c (split Component into Component and InstanceLinkedComponent, use Component as base for Staking)
 
         // // deploy staking contract
         // address stakingOwner = msg.sender;

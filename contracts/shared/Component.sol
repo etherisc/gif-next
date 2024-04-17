@@ -22,13 +22,10 @@ import {IAccess} from "../instance/module/IAccess.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../type/Version.sol";
 
-// TODO discuss to inherit from oz accessmanaged
-// then add (Distribution|Pool|Product)Upradeable that also intherit from Versionable
-// same pattern as for Service which is also upgradeable
 abstract contract Component is
+    AccessManagedUpgradeable,
     Registerable,
-    IComponent,
-    AccessManagedUpgradeable
+    IComponent
 {
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.component.Component.sol")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant COMPONENT_LOCATION_V1 = 0xffe8d4462baed26a47154f4b8f6db497d2f772496965791d25bd456e342b7f00;
@@ -36,11 +33,8 @@ abstract contract Component is
     struct ComponentStorage {
         string _name; // unique (per instance) component name
         IERC20Metadata _token; // token for this component
-        IInstance _instance; // instance for this component
+        TokenHandler _tokenHandler; // token handler for this component
         address _wallet; // wallet for this component (default = component contract itself)
-        InstanceReader _instanceReader; // instance reader for this component
-        bool _isNftInterceptor; // declares if component is involved in nft transfers
-        NftId _productNftId; // only relevant for components that are linked to a aproduct
     }
 
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
@@ -49,16 +43,10 @@ abstract contract Component is
         }
     }
 
-    modifier onlyChainNft() {
-        if(msg.sender != getRegistry().getChainNftAddress()) {
-            revert ErrorComponentNotChainNft(msg.sender);
-        }
-        _;
-    }
-
     function initializeComponent(
+        address authority,
         address registry,
-        NftId instanceNftId,
+        NftId parentNftId,
         string memory name,
         address token,
         ObjectType componentType,
@@ -70,60 +58,58 @@ abstract contract Component is
         virtual
         onlyInitializing()
     {
-        initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, registryData);
+        initializeRegisterable(registry, parentNftId, componentType, isInterceptor, initialOwner, registryData);
+        __AccessManaged_init(authority);
 
-        // set and check linked instance
-        ComponentStorage storage $ = _getComponentStorage();
-        $._instance = IInstance(
-            getRegistry().getObjectInfo(instanceNftId).objectAddress);
-
-        if(!$._instance.supportsInterface(type(IInstance).interfaceId)) {
-            revert ErrorComponentNotInstance(instanceNftId);
+        if (token == address(0)) {
+            revert ErrorComponentTokenAddressZero();
         }
 
-        // initialize AccessManagedUpgradeable
-        __AccessManaged_init($._instance.authority());
-
         // set component state
+        ComponentStorage storage $ = _getComponentStorage();
         $._name = name;
-        $._isNftInterceptor = isInterceptor;
-        $._instanceReader = $._instance.getInstanceReader();
         $._wallet = address(this);
         $._token = IERC20Metadata(token);
+        $._tokenHandler = new TokenHandler(token);
 
         registerInterface(type(IAccessManaged).interfaceId);
         registerInterface(type(IComponent).interfaceId);
     }
 
-    function lock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
-    }
-    
-    function unlock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
-    }
-
-    function approveTokenHandler(uint256 spendingLimitAmount) external onlyOwner {
-        IComponents.ComponentInfo memory info = getComponentInfo();
-
-        if(info.wallet != address(this)) {
-            revert ErrorComponentWalletNotComponent();
-        }
-
-        info.token.approve(
-            address(info.tokenHandler),
-            spendingLimitAmount);
-
-        emit LogComponentTokenHandlerApproved(spendingLimitAmount);
-    }
-
-    function setWallet(address newWallet)
+    function approveTokenHandler(uint256 spendingLimitAmount)
         external
-        override
+        virtual
+        onlyOwner
+    {
+        ComponentStorage storage $ = _getComponentStorage();
+        approveTokenHandler(address($._token), spendingLimitAmount);
+    }
+
+    function approveTokenHandler(address token, uint256 spendingLimitAmount)
+        public
+        virtual
         onlyOwner
     {
         ComponentStorage storage $ = _getComponentStorage();
 
+        if($._wallet != address(this)) {
+            revert ErrorComponentWalletNotComponent();
+        }
+
+        IERC20Metadata(token).approve(
+            address($._tokenHandler),
+            spendingLimitAmount);
+
+        emit LogComponentTokenHandlerApproved(token, spendingLimitAmount);
+    }
+
+    function setWallet(address newWallet)
+        external
+        virtual
+        override
+        onlyOwner
+    {
+        ComponentStorage storage $ = _getComponentStorage();
         address currentWallet = $._wallet;
         uint256 currentBalance = $._token.balanceOf(currentWallet);
 
@@ -165,90 +151,22 @@ abstract contract Component is
         }
     }
 
-    function setProductNftId(NftId productNftId)
-        external
-        override
-    {
-        ComponentStorage storage $ = _getComponentStorage();
-
-        // verify caller is product service
-        if(msg.sender != _getServiceAddress(PRODUCT())) {
-            revert ErrorComponentNotProductService(msg.sender);
-        }
-
-        // verify component is not yet linked to a product
-        if($._productNftId.gtz()) {
-            revert ErrorComponentProductNftAlreadySet();
-        }
-
-        $._productNftId = productNftId;
-    }
-
-    function nftMint(address to, uint256 tokenId) 
-        external 
-        virtual
-        onlyChainNft
-    {}
-
-    /// @dev callback function for nft transfers
-    /// may only be called by chain nft contract.
-    /// do not override this function to implement business logic for handling transfers
-    /// override internal function _nftTransferFrom instead
-    function nftTransferFrom(address from, address to, uint256 tokenId)
-        external
-        virtual
-        onlyChainNft
-    {
-        _nftTransferFrom(from, to, tokenId);
-    }
-
-    function getWallet() public view override returns (address walletAddress)
+    function getWallet() public view virtual returns (address walletAddress)
     {
         return _getComponentStorage()._wallet;
     }
 
-    function getToken() public view override returns (IERC20Metadata token) {
+    function getToken() public view virtual returns (IERC20Metadata token) {
         return _getComponentStorage()._token;
     }
 
-    function getTokenHandler() public view returns (TokenHandler tokenHandler) {
-        return getComponentInfo().tokenHandler;
-    }
-
-    function isNftInterceptor() public view override returns(bool isInterceptor) {
-        return _getComponentStorage()._isNftInterceptor;
-    }
-
-    function getInstance() public view override returns (IInstance instance) {
-        return _getComponentStorage()._instance;
+    function getTokenHandler() public view virtual returns (TokenHandler tokenHandler) {
+        return _getComponentStorage()._tokenHandler;
     }
 
     function getName() public view override returns(string memory name) {
         return _getComponentStorage()._name;
     }
-
-    function getProductNftId() public view override returns (NftId productNftId) {
-        return _getComponentStorage()._productNftId;
-    }
-
-    function getComponentInfo() public view returns (IComponents.ComponentInfo memory info) {
-        info = _getInstanceReader().getComponentInfo(getNftId());
-
-        // fallback to initial info (wallet is always != address(0))
-        if(info.wallet == address(0)) {
-            info = _getInitialInfo();
-        }
-    }
-
-    /// @dev defines initial component specification
-    /// overwrite this function according to your use case
-    function _getInitialInfo()
-        internal
-        view 
-        virtual
-        returns (IComponents.ComponentInfo memory info)
-    { }
-
 
     /// @dev internal function for nft transfers.
     /// handling logic that deals with nft transfers need to overwrite this function
@@ -256,16 +174,4 @@ abstract contract Component is
         internal
         virtual
     { }
-
-    /// @dev returns reader for linked instance
-    function _getInstanceReader() internal view returns (InstanceReader reader) {
-        return _getComponentStorage()._instanceReader;
-    }
-
-    /// @dev returns the service address for the specified domain
-    /// gets address via lookup from registry using the major version form the linked instance
-    function _getServiceAddress(ObjectType domain) internal view returns (address service) {
-        VersionPart majorVersion = _getComponentStorage()._instance.getMajorVersion();
-        return getRegistry().getServiceAddress(domain, majorVersion);
-    }
 }

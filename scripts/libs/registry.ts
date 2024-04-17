@@ -24,6 +24,8 @@ export type RegistryAddresses = {
     tokenRegistryAddress: AddressLike;
     tokenRegistry: TokenRegistry;
 
+    dipAddress: AddressLike;
+
     stakingAddress: AddressLike;
     staking: Staking;
     stakingNftId: bigint;
@@ -93,15 +95,18 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     await registryAccessManager.initialize(owner, owner, releaseManager, tokenRegistry);
 
     const initialAuthority = await registryAccessManager.authority();
+    const dipAddress = "0xc719d010b63e5bbf2c0551872cd5316ed26acd83";
 
     const { address: stakingManagerAddress, contract: stakingManagerBaseContract, } = await deployContract(
         "StakingManager",
         owner,
         [
-            registryAddress,
             initialAuthority,
+            registryAddress,
+            dipAddress,
         ],
         { libraries: { 
+            AmountLib: libraries.amountLibAddress, 
             NftIdLib: libraries.nftIdLibAddress, 
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
@@ -168,6 +173,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         tokenRegistryAddress,
         tokenRegistry,
 
+        dipAddress,
         stakingAddress,
         staking,
         stakingNftId,

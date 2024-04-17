@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {Product} from "./Product.sol";
-import {IComponent} from "../shared/IComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
 import {IInstance} from "../instance/IInstance.sol";
@@ -75,7 +75,7 @@ contract ProductService is ComponentService, IProductService {
         returns(NftId productNftId)
     {
         (
-            IComponent component,
+            IInstanceLinkedComponent component,
             address owner,
             IInstance instance,
             NftId instanceNftId
@@ -104,8 +104,8 @@ contract ProductService is ComponentService, IProductService {
     {
         // wire distribution and pool components to product component
         ISetup.ProductSetupInfo memory setup = product.getSetupInfo();
-        IComponent distribution = IComponent(getRegistry().getObjectInfo(setup.distributionNftId).objectAddress);
-        IComponent pool = IComponent(getRegistry().getObjectInfo(setup.poolNftId).objectAddress);
+        IInstanceLinkedComponent distribution = IInstanceLinkedComponent(getRegistry().getObjectInfo(setup.distributionNftId).objectAddress);
+        IInstanceLinkedComponent pool = IInstanceLinkedComponent(getRegistry().getObjectInfo(setup.poolNftId).objectAddress);
 
         distribution.setProductNftId(productNftId);
         pool.setProductNftId(productNftId);

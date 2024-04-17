@@ -146,6 +146,7 @@ function printAddresses(
     addresses += `tokenRegistryAddress: ${registry.tokenRegistryAddress}\n`;
     addresses += `stakingNftId: ${registry.stakingNftId}\n`;
     addresses += `stakingAddress: ${registry.stakingAddress}\n`;
+    addresses += `dipAddress: ${registry.dipAddress}\n`;
     addresses += `registryServiceManagerAddress: ${registry.registryServiceManagerAddress}\n`;
     addresses += `registryServiceAddress: ${registry.registryServiceAddress}\n`;
     addresses += `registryServiceNftId: ${registry.registryServiceNftId}\n`;

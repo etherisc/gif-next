@@ -13,8 +13,9 @@ contract StakingManager is
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
+        address initialAuthority,
         address registryAddress,
-        address initialAuthority
+        address dipTokenAddress
     )
         ProxyManager(registryAddress)
     {
@@ -22,8 +23,9 @@ contract StakingManager is
         address initialOwner = msg.sender;
 
         bytes memory data = abi.encode(
-            registryAddress, 
             initialAuthority, 
+            registryAddress, 
+            dipTokenAddress, 
             initialOwner);
 
         IVersionable versionable = deploy(
