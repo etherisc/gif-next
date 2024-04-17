@@ -7,6 +7,7 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {RoleId} from "../type/RoleId.sol";
 
 interface IRegistry is IERC165 {
 
@@ -15,7 +16,8 @@ interface IRegistry is IERC165 {
 
     // registerService()
     error ErrorRegistryCallerNotReleaseManager();
-    error ErrorRegistryServiceDomainAlreadyRegistered(address service, ObjectType domain);
+    error ErrorRegistryDomainZero(address service);
+    error ErrorRegistryDomainAlreadyRegistered(address service, ObjectType domain);
 
     // register()
     error ErrorRegistryCallerNotRegistryService();
@@ -25,7 +27,7 @@ interface IRegistry is IERC165 {
     error ErrorRegistryCoreTypeRegistration();
 
     // _register()
-    error ErrorRegistryZeroParentAddress();
+    error ErrorRegistryParentAddressZero();
     error ErrorRegistryTypesCombinationInvalid(ObjectType objectType, ObjectType parentType);
     error ErrorRegistryContractAlreadyRegistered(address objectAddress);
 
@@ -37,11 +39,18 @@ interface IRegistry is IERC165 {
         address objectAddress;
         address initialOwner;
         bytes data;
-    }// TODO delete nftId and initialOwner(if not used) from struct
-    // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
+    }
+
+    struct ConfigStruct {
+        address serviceAddress;
+        RoleId[] serviceRoles;
+        bytes4[][] selectors;
+        RoleId[] functionRoles;
+    }
 
     struct ReleaseInfo {
-        address[] addresses;
+        VersionPart version;
+        ConfigStruct[] config;
         ObjectType[] domains;
         Timestamp activatedAt;
     }

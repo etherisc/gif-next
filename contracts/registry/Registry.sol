@@ -84,17 +84,13 @@ contract Registry is
         onlyReleaseManager
         returns(NftId nftId)
     {
-        address serviceAddress = info.objectAddress;
+        address service = info.objectAddress;
         /* must be guaranteed by release manager
-        if(serviceAddress == address(0)) {
+        if(service == address(0)) {
             revert();
         }
 
         if(version.eqz()) {
-            revert();
-        }
-
-        if(domain.eqz()) {
             revert();
         }
 
@@ -106,12 +102,16 @@ contract Registry is
         }        
         info.initialOwner == NFT_LOCK_ADDRESS <- if services are access managed
         */
-        // TODO check in release manager and store in releaseInfo?
+
+        if(domain.eqz()) {
+            revert ErrorRegistryDomainZero(service);
+        }
+
         if(_service[version][domain] > address(0)) {
-            revert ErrorRegistryServiceDomainAlreadyRegistered(serviceAddress, domain);
+            revert ErrorRegistryDomainAlreadyRegistered(service, domain);
         }
         
-        _service[version][domain] = serviceAddress;
+        _service[version][domain] = service;
 
         nftId = _register(info);
 
@@ -294,7 +294,7 @@ contract Registry is
         // special case: when parentNftId == _chainNft.mint(), check for zero parent address before mint
         // special case: when parentNftId == _chainNft.mint() && objectAddress == initialOwner
         if(parentAddress == address(0)) {
-            revert ErrorRegistryZeroParentAddress();
+            revert ErrorRegistryParentAddressZero();
         }
 
         address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
