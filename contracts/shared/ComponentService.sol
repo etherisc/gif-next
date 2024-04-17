@@ -26,15 +26,6 @@ abstract contract ComponentService is
     error ErrorComponentServiceSenderNotService(address sender);
     error ErrorComponentServiceComponentTypeInvalid(address component, ObjectType expectedType, ObjectType foundType);
 
-    /// @dev modifier to check if caller is a registered service
-    modifier onlyService() {
-        address caller = msg.sender;
-        if(!getRegistry().isRegisteredService(caller)) {
-            revert ErrorComponentServiceSenderNotService(caller);
-        }
-        _;
-    }
-
     // view functions
 
     function getRegistryService() public view virtual returns (IRegistryService) {

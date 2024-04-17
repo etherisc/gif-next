@@ -52,15 +52,8 @@ contract InstanceService is
         }
         _;
     }
-    // TODO check service domain?
-    // TODO check release version?
-    modifier onlyRegisteredService() {
-        if (! getRegistry().isRegisteredService(msg.sender)) {
-            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
-        }
-        _;
-    }
-    // TODO check release version?
+
+    // TODO check component - service - instance version match
     modifier onlyComponent() {
         if (! getRegistry().isRegisteredComponent(msg.sender)) {
             revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
@@ -214,7 +207,7 @@ contract InstanceService is
         RoleId[] memory roles
     )
         external
-        onlyRegisteredService
+        restricted
     {
         (
             IInstance instance, // or instanceInfo
