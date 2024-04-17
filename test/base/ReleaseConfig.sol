@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
-import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, CAN_CREATE_GIF_TARGET_ROLE} from "../../contracts/type/RoleId.sol";
+import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, STAKING_SERVICE_ROLE, CAN_CREATE_GIF_TARGET_ROLE} from "../../contracts/type/RoleId.sol";
 import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, PRICE} from "../../contracts/type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
@@ -51,6 +51,9 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {PricingServiceManager} from "../../contracts/product/PricingServiceManager.sol";
 import {PricingService} from "../../contracts/product/PricingService.sol";
 
+import {StakingServiceManager} from "../../contracts/staking/StakeingServiceManager.sol";
+import {StakingService} from "../../contracts/staking/StakingService.sol";
+
 import {IInstance} from "../../contracts/instance/IInstance.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -87,7 +90,8 @@ contract ReleaseConfig
             address(releaseManager._accessManager().authority()), // implementation
             _salt,
             address(releaseManager)); // deployer
-/*
+
+        _config.push(_stakingServiceConfig());
         _config.push(_policyServiceConfig());
         _config.push(_applicationServiceConfig());
         _config.push(_claimServiceConfig());
@@ -97,7 +101,7 @@ contract ReleaseConfig
         _config.push(_pricingServiceConfig());
         _config.push(_distributionServiceConfig());
         _config.push(_instanceServiceConfig());
-        _config.push(_registryServiceConfig());*/
+        _config.push(_registryServiceConfig());
     }
 
     function length() external view returns(uint) {
@@ -122,6 +126,23 @@ contract ReleaseConfig
 
     function getVersion() external view returns(VersionPart) {
         return _version;
+    }
+
+    function _stakingServiceConfig() internal returns(IRegistry.ConfigStruct memory config)
+    {
+        address proxyManager = _computeProxyManagerAddress(type(StakingServiceManager).creationCode);
+        address implementation = _computeImplementationAddress(type(StakingService).creationCode, proxyManager);
+        address proxyAddress = _computeProxyAddress(implementation, proxyManager);
+
+        config = IRegistry.ConfigStruct(
+            proxyAddress,
+            new RoleId[](1),
+            //STAKE(),
+            new bytes4[][](0),
+            new RoleId[](0)
+        );
+
+        config.serviceRoles[0] = STAKING_SERVICE_ROLE();
     }
 
     function _policyServiceConfig() internal returns(IRegistry.ConfigStruct memory config)

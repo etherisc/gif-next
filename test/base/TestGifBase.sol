@@ -51,6 +51,8 @@ import {BundleService} from "../../contracts/pool/BundleService.sol";
 import {BundleServiceManager} from "../../contracts/pool/BundleServiceManager.sol";
 import {PricingService} from "../../contracts/product/PricingService.sol";
 import {PricingServiceManager} from "../../contracts/product/PricingServiceManager.sol";
+import {StakingService} from "../../contracts/staking/StakingService.sol";
+import {StakingServiceManager} from "../../contracts/staking/StakeingServiceManager.sol";
 
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
@@ -116,6 +118,9 @@ contract TestGifBase is Test {
     PricingService public pricingService;
     NftId public pricingServiceNftId;
     PricingServiceManager public pricingServiceManager;
+    StakingService public stakingService;
+    NftId public stakingServiceNftId;
+    StakingServiceManager public stakingServiceManager;
 
     BundleServiceManager public bundleServiceManager;
     BundleService public bundleService;
@@ -202,7 +207,7 @@ contract TestGifBase is Test {
 
         // deploy registry, nft, services and token
         vm.startPrank(registryOwner);
-        _deployRegistryServiceAndRegistry();
+        _deployRegistry();
         _deployAndRegisterServices();
         vm.stopPrank();
 
@@ -301,7 +306,7 @@ contract TestGifBase is Test {
         console.log(message, gasDelta);
     }
 
-    function _deployRegistryServiceAndRegistry() internal
+    function _deployRegistry() internal
     {
         registryAccessManager = new RegistryAccessManager();
 
@@ -353,11 +358,13 @@ contract TestGifBase is Test {
             version,
             salt);
 
+        releaseManager.createNextRelease();
+
         (
             address releaseAccessManager, 
             VersionPart releaseVersion,
             bytes32 releaseSalt
-        ) = releaseManager.createNextRelease(config.getConfig(), salt);
+        ) = releaseManager.prepareNextRelease(config.getConfig(), salt);
 
         salt = config.getSalt();
         version = config.getVersion();
@@ -533,6 +540,22 @@ contract TestGifBase is Test {
         console.log("policy service domain", policyService.getDomain().toInt());
         console.log("policy service owner", policyService.getOwner());
         console.log("policy service authority", policyService.authority());
+        // solhint-enable
+
+        // --- stacking service ---------------------------------//
+        stakingServiceManager = new StakingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        stakingService = stakingServiceManager.getStakingService();
+        stakingServiceNftId = releaseManager.registerService(stakingService); 
+
+        // solhint-disable
+        console.log("stacking service proxy manager deployed at", address(stakingServiceManager));
+        console.log("stacking service proxy manager linked to nft id", stakingServiceManager.getNftId().toInt());
+        console.log("stacking service proxy manager owner", stakingServiceManager.getOwner());
+        console.log("stacking service deployed at", address(stakingService));
+        console.log("stacking service nft id", stakingService.getNftId().toInt());
+        console.log("stacking service domain", stakingService.getDomain().toInt());
+        console.log("stacking service owner", stakingService.getOwner());
+        console.log("stacking service authority", stakingService.authority());
         // solhint-enable
 
         releaseManager.activateNextRelease();
