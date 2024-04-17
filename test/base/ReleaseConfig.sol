@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
-import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
+import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, CAN_CREATE_GIF_TARGET_ROLE} from "../../contracts/type/RoleId.sol";
 import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, PRICE} from "../../contracts/type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
@@ -71,7 +71,7 @@ contract ReleaseConfig
     bytes32 public immutable _salt;
     VersionPart public immutable _version;
 
-    ReleaseManager.ConfigStruct[] internal _config;
+    IRegistry.ConfigStruct[] internal _config;
 
     constructor(ReleaseManager releaseManager, address owner, VersionPart version, bytes32 salt)
     {
@@ -87,7 +87,7 @@ contract ReleaseConfig
             address(releaseManager._accessManager().authority()), // implementation
             _salt,
             address(releaseManager)); // deployer
-
+/*
         _config.push(_policyServiceConfig());
         _config.push(_applicationServiceConfig());
         _config.push(_claimServiceConfig());
@@ -97,18 +97,18 @@ contract ReleaseConfig
         _config.push(_pricingServiceConfig());
         _config.push(_distributionServiceConfig());
         _config.push(_instanceServiceConfig());
-        _config.push(_registryServiceConfig());
+        _config.push(_registryServiceConfig());*/
     }
 
     function length() external view returns(uint) {
         return _config.length;
     }
 
-    function getServiceConfig(uint idx) external view returns(ReleaseManager.ConfigStruct memory) {
+    function getServiceConfig(uint idx) external view returns(IRegistry.ConfigStruct memory) {
         return _config[idx];
     }
 
-    function getConfig() external view returns(ReleaseManager.ConfigStruct[] memory) {
+    function getConfig() external view returns(IRegistry.ConfigStruct[] memory) {
         return _config;
     }
 
@@ -124,112 +124,126 @@ contract ReleaseConfig
         return _version;
     }
 
-    function _policyServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
+    function _policyServiceConfig() internal returns(IRegistry.ConfigStruct memory config)
     {
         address proxyManager = _computeProxyManagerAddress(type(PolicyServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(PolicyService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.ConfigStruct(
+        config = IRegistry.ConfigStruct(
             proxyAddress,
-            POLICY_SERVICE_ROLE(),
-            POLICY(),
+            new RoleId[](1),
+            //POLICY(),
             new bytes4[][](0),
             new RoleId[](0)
         );
+
+        config.serviceRoles[0] = POLICY_SERVICE_ROLE();
     }
 
-    function _applicationServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
+    function _applicationServiceConfig() internal returns(IRegistry.ConfigStruct memory config)
     {
         address proxyManager = _computeProxyManagerAddress(type(ApplicationServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(ApplicationService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.ConfigStruct(
+        config = IRegistry.ConfigStruct(
             proxyAddress,
-            APPLICATION_SERVICE_ROLE(),
-            APPLICATION(),
+            new RoleId[](1),
+            //APPLICATION(),
             new bytes4[][](0),
             new RoleId[](0)
         );
+
+        config.serviceRoles[0] = APPLICATION_SERVICE_ROLE();
     }
 
-    function _claimServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
+    function _claimServiceConfig() internal returns(IRegistry.ConfigStruct memory config)
     {
         address proxyManager = _computeProxyManagerAddress(type(ClaimServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(ClaimService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.ConfigStruct(
+        config = IRegistry.ConfigStruct(
             proxyAddress,
-            CLAIM_SERVICE_ROLE(),
-            CLAIM(),
+            new RoleId[](1),
+            //CLAIM(),
             new bytes4[][](0),
             new RoleId[](0)
         );
+
+        config.serviceRoles[0] = CLAIM_SERVICE_ROLE();
     }
 
-    function _productService()  internal returns(ReleaseManager.ConfigStruct memory)
+    function _productService()  internal returns(IRegistry.ConfigStruct memory config)
     {
         address proxyManager = _computeProxyManagerAddress(type(ProductServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(ProductService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.ConfigStruct(
+        config = IRegistry.ConfigStruct(
             proxyAddress,
-            PRODUCT_SERVICE_ROLE(),
-            PRODUCT(),
+            new RoleId[](2),
+            //PRODUCT(),
             new bytes4[][](0),
             new RoleId[](0)
         );
+
+        config.serviceRoles[0] = PRODUCT_SERVICE_ROLE();
+        config.serviceRoles[1] = CAN_CREATE_GIF_TARGET_ROLE();
     }
 
-    function _poolServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
+    function _poolServiceConfig() internal returns(IRegistry.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(PoolServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(PoolService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
+        IRegistry.ConfigStruct memory config = IRegistry.ConfigStruct(
             proxyAddress,
-            POOL_SERVICE_ROLE(),
-            POOL(),
+            new RoleId[](2),
+            //POOL(),
             new bytes4[][](2),
             new RoleId[](2)
         );
 
-        config.roles[0] = POLICY_SERVICE_ROLE();
+        config.serviceRoles[0] = POOL_SERVICE_ROLE();
+        config.serviceRoles[1] = CAN_CREATE_GIF_TARGET_ROLE();
+
+        config.functionRoles[0] = POLICY_SERVICE_ROLE();
         config.selectors[0] = new bytes4[](3);
         config.selectors[0][0] = PoolService.lockCollateral.selector;
         config.selectors[0][1] = PoolService.releaseCollateral.selector;
         config.selectors[0][2] = PoolService.processSale.selector;
 
-        config.roles[1] = CLAIM_SERVICE_ROLE();
+        config.functionRoles[1] = CLAIM_SERVICE_ROLE();
         config.selectors[1] = new bytes4[](1);
         config.selectors[1][0] = PoolService.reduceCollateral.selector;
 
         return config;
     }
 
-    function _bundleServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
+    function _bundleServiceConfig() internal returns(IRegistry.ConfigStruct memory config)
     {
         address proxyManager = _computeProxyManagerAddress(type(BundleServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(BundleService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
+        config = IRegistry.ConfigStruct(
             proxyAddress,
-            BUNDLE_SERVICE_ROLE(),
-            BUNDLE(),
+            new RoleId[](1),
+            //BUNDLE(),
             new bytes4[][](2),
             new RoleId[](2)
         );
 
-        config.roles[0] = POLICY_SERVICE_ROLE();
+        config.serviceRoles[0] = BUNDLE_SERVICE_ROLE();
+
+        config.functionRoles[0] = POLICY_SERVICE_ROLE();
         config.selectors[0] = new bytes4[](1);
         config.selectors[0][0] = BundleService.increaseBalance.selector;
 
-        config.roles[1] = POOL_SERVICE_ROLE();
+        config.functionRoles[1] = POOL_SERVICE_ROLE();
         config.selectors[1] = new bytes4[](5);
         config.selectors[1][0] = BundleService.create.selector;
         config.selectors[1][1] = BundleService.lockCollateral.selector;
@@ -240,57 +254,64 @@ contract ReleaseConfig
         return config;
     }
 
-    function _pricingServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
+    function _pricingServiceConfig() internal returns(IRegistry.ConfigStruct memory config)
     {
         address proxyManager = _computeProxyManagerAddress(type(PricingServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(PricingService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        return ReleaseManager.ConfigStruct(
+        config = IRegistry.ConfigStruct(
             proxyAddress,
-            PRICING_SERVICE_ROLE(),
-            PRICE(),
+            new RoleId[](1),
+            //PRICE(),
             new bytes4[][](0),
             new RoleId[](0)
         );
+
+        config.serviceRoles[0] = PRICING_SERVICE_ROLE();
     }
 
-    function _distributionServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
+    function _distributionServiceConfig() internal returns(IRegistry.ConfigStruct memory)
     {
         address proxyManager = _computeProxyManagerAddress(type(DistributionServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(DistributionService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
+        IRegistry.ConfigStruct memory config = IRegistry.ConfigStruct(
             proxyAddress,
-            DISTRIBUTION_SERVICE_ROLE(),
-            DISTRIBUTION(),
+            new RoleId[](2),
+            //DISTRIBUTION(),
             new bytes4[][](1),
             new RoleId[](1)
         );
 
-        config.roles[0] = POLICY_SERVICE_ROLE();
+        config.serviceRoles[0] = DISTRIBUTION_SERVICE_ROLE();
+        config.serviceRoles[1] = CAN_CREATE_GIF_TARGET_ROLE();
+
+        config.functionRoles[0] = POLICY_SERVICE_ROLE();
         config.selectors[0] = new bytes4[](1);
         config.selectors[0][0] = DistributionService.processSale.selector;
 
         return config;
     }
 
-    function _instanceServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
+    function _instanceServiceConfig() internal returns(IRegistry.ConfigStruct memory config)
     {
         address proxyManager = _computeProxyManagerAddress(type(InstanceServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(InstanceService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
+        config = IRegistry.ConfigStruct(
             proxyAddress,
-            INSTANCE_SERVICE_ROLE(),
-            INSTANCE(),
+            new RoleId[](1),
+            //INSTANCE(),
             new bytes4[][](1),
             new RoleId[](1)
         );
 
-        config.roles[0] = PRODUCT_SERVICE_ROLE();
+        config.serviceRoles[0] = INSTANCE_SERVICE_ROLE();
+
+        config.functionRoles[0] = PRODUCT_SERVICE_ROLE();
         config.selectors[0] = new bytes4[](1);
         // TODO each service can call this function...
         config.selectors[0][0] = InstanceService.createGifTarget.selector;
@@ -298,42 +319,44 @@ contract ReleaseConfig
         return config;
     }
 
-    function _registryServiceConfig() internal returns(ReleaseManager.ConfigStruct memory)
+    function _registryServiceConfig() internal returns(IRegistry.ConfigStruct memory config)
     {
         address proxyManager = _computeProxyManagerAddress(type(RegistryServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(RegistryService).creationCode, proxyManager);
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
-        ReleaseManager.ConfigStruct memory config = ReleaseManager.ConfigStruct(
+        config = IRegistry.ConfigStruct(
             proxyAddress,
-            REGISTRY_SERVICE_ROLE(),
-            REGISTRY(),
+            new RoleId[](1),
+            //REGISTRY(),
             new bytes4[][](6),
             new RoleId[](6)
         );
 
-        config.roles[0] = APPLICATION_SERVICE_ROLE();
+        config.serviceRoles[0] = REGISTRY_SERVICE_ROLE();
+
+        config.functionRoles[0] = APPLICATION_SERVICE_ROLE();
         config.selectors[0] = new bytes4[](1);
         config.selectors[0][0] = RegistryService.registerPolicy.selector;
 
-        config.roles[1] = PRODUCT_SERVICE_ROLE();
+        config.functionRoles[1] = PRODUCT_SERVICE_ROLE();
         config.selectors[1] = new bytes4[](1);
         config.selectors[1][0] = RegistryService.registerProduct.selector;
 
-        config.roles[2] = POOL_SERVICE_ROLE();
+        config.functionRoles[2] = POOL_SERVICE_ROLE();
         config.selectors[2] = new bytes4[](1);
         config.selectors[2][0] = RegistryService.registerPool.selector;
 
-        config.roles[3] = BUNDLE_SERVICE_ROLE();
+        config.functionRoles[3] = BUNDLE_SERVICE_ROLE();
         config.selectors[3] = new bytes4[](1);
         config.selectors[3][0] = RegistryService.registerBundle.selector;
 
-        config.roles[4] = DISTRIBUTION_SERVICE_ROLE();
+        config.functionRoles[4] = DISTRIBUTION_SERVICE_ROLE();
         config.selectors[4] = new bytes4[](2);
         config.selectors[4][0] = RegistryService.registerDistribution.selector;
         config.selectors[4][1] = RegistryService.registerDistributor.selector;
 
-        config.roles[5] = INSTANCE_SERVICE_ROLE();
+        config.functionRoles[5] = INSTANCE_SERVICE_ROLE();
         config.selectors[5] = new bytes4[](1);
         config.selectors[5][0] = RegistryService.registerInstance.selector;
 
