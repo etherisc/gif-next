@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {POOL_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
@@ -9,7 +9,7 @@ import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 
-contract TestPoolService is TestGifBase {
+contract TestPoolService is GifTest {
     using NftIdLib for NftId;
 
     function test_PoolService_register_missingPoolOwnerRole() public {

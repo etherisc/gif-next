@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Script.sol";
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 import {NftId, toNftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {AmountLib} from "../../../contracts/type/Amount.sol";
@@ -22,7 +22,7 @@ import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
-contract TestPricingService is TestGifBase {
+contract TestPricingService is GifTest {
     using NftIdLib for NftId;
 // FIXME: move to PricingService
     function test_PricingService_calculatePremium_noFees() public {

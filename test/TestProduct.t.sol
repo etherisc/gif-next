@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
-import {TestGifBase} from "./base/TestGifBase.sol";
+import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {PRODUCT_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 import {SimpleProduct} from "./mock/SimpleProduct.sol";
@@ -29,7 +29,7 @@ import {DistributorType} from "../contracts/type/DistributorType.sol";
 import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
 import {IPolicyService} from "../contracts/product/IPolicyService.sol";
 
-contract TestProduct is TestGifBase {
+contract TestProduct is GifTest {
     using NftIdLib for NftId;
 
     Seconds public sec30;

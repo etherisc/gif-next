@@ -122,6 +122,20 @@ contract RegistryServiceTestBase is TestGifBase, FoundryRandom {
             bytes4[][][] memory selectors
         ) = config.getConfig();
 
+        // TODO cleanup
+        // registry = IRegistry(releaseManager.getRegistryAddress());
+        // registryNftId = registry.getNftId(address(registry));
+
+        // registryServiceManager = new RegistryServiceManager(
+        //     accessManager.authority(),
+        //     address(registry)
+        // );        
+        
+        // registryService = registryServiceManager.getRegistryService();
+
+        // address tokenRegistry;
+        // accessManager.initialize(address(releaseManager), tokenRegistry);
+
         releaseManager.createNextRelease();
 
         (

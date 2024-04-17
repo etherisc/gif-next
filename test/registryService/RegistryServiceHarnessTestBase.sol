@@ -41,9 +41,13 @@ contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
         _deployRegistryServiceHarness();
     }
 
+<<<<<<< HEAD
     function _deployRegistryServiceHarness() internal 
     {
         bytes32 salt = "0x2222";
+=======
+        registry = IRegistry(releaseManager.getRegistryAddress());
+>>>>>>> c6133b4 (complete initial staking setup, adapt/amend tests, rename TestGifBase to GifTest)
 
         // RegistryServiceManagerMockWithHarness first deploys RegistryService and then upgrades to RegistryServiceHarness
         // thus address is computed with RegistryService bytecode instead of RegistryServiceHarness...

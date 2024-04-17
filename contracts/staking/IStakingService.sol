@@ -3,13 +3,19 @@ pragma solidity ^0.8.19;
 
 import {Amount} from "../type/Amount.sol";
 import {IService} from "../shared/IService.sol";
+import {IStaking} from "./IStaking.sol";
 import {NftId} from "../type/NftId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
 
 interface IStakingService is IService
 {
+
+    error ErrorStakingServiceNotStaking(address stakingAddress);
+    error ErrorStakingServiceNotSupportingIStaking(address stakingAddress);
+
     /// @dev create a new stake with amount DIP to the specified target
     /// returns the id of the newly minted stake nft
     /// permissionless function
@@ -84,19 +90,16 @@ interface IStakingService is IService
         external
         returns (Amount totalValueLocked);
 
-    /// @dev sends total value locked data to the global staking contract.
+    /// @dev sets total value locked data for a target contract on a different chain.
     /// this is done via CCIP (cross chain communication) 
-    function sendTotalValueLockedData(
+    function setTotalValueLocked(
         NftId targetNftId,
-        address token
+        address token,
+        Amount amount
     )
         external;
 
-    /// @dev receives total value locked data from a staking contract on a different chain.
-    /// this is done via CCIP (cross chain communication) 
-    function receiveTotalValueLockedData(
-        NftId targetNftId,
-        address token
-    )
-        external;
+    function getStaking()
+        external
+        returns (IStaking staking);
 }

@@ -30,6 +30,10 @@ function REGISTRY() pure returns (ObjectType) {
     return toObjectType(40);
 }
 
+function STAKING() pure returns (ObjectType) {
+    return toObjectType(45);
+}
+
 function TOKEN() pure returns (ObjectType) {
     return toObjectType(50);
 }

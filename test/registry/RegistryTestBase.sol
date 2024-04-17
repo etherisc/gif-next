@@ -29,6 +29,10 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+
+import {Staking} from "../../contracts/staking/Staking.sol";
+import {StakingManager} from "../../contracts/staking/StakingManager.sol";
+
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 //import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
 
@@ -48,6 +52,23 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
 
     RegistryServiceManagerMock public registryServiceManagerMock;
     RegistryServiceMock public registryServiceMock;
+
+    // TODO cleanup
+    // uint8 public constant GIF_VERSION = 3;
+
+    // address public registryOwner = makeAddr("registryOwner");
+    // address public outsider = makeAddr("outsider");
+
+    // RegistryAccessManager accessManager;
+    // StakingManager stakingManager;
+    // Staking staking;
+    // ReleaseManager releaseManager;
+
+    // RegistryServiceManager public registryServiceManager;
+    // RegistryService public registryService;
+    // Registry public registry;
+    // TokenRegistry public tokenRegistry;
+    // ChainNft public chainNft;
 
     address public _sender; // use with _startPrank(), _stopPrank()
     uint public _nextId; // use with chainNft.calculateId()
@@ -96,6 +117,54 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         _deployRegistry();
 
         _deployRegistryServiceMock();
+
+        // TODO Cleanup
+        // releaseManager = new ReleaseManager(
+        //     accessManager,
+        //     VersionPartLib.toVersionPart(3));
+
+        // address registryAddress = releaseManager.getRegistryAddress();
+        // registry = Registry(registryAddress);
+        // registryNftId = registry.getNftId(address(registry));
+
+        // // deploy staking contract
+        // address stakingOwner = msg.sender;
+        // stakingManager = new StakingManager(
+        //     address(registry),
+        //     accessManager.authority());
+
+        // staking = stakingManager.getStaking();
+        // releaseManager.registerStaking(
+        //     address(staking),
+        //     stakingOwner);
+
+        // address chainNftAddress = registry.getChainNftAddress();
+        // chainNft = ChainNft(chainNftAddress);
+
+        // tokenRegistry = new TokenRegistry(registryAddress);
+
+        // accessManager.initialize(address(releaseManager), address(tokenRegistry));
+
+        // releaseManager.createNextRelease();
+
+        // registryServiceManager = new RegistryServiceManagerMockWithConfig(
+        //     accessManager.authority(),
+        //     address(registry)
+        // );        
+        
+        // registryService = registryServiceManager.getRegistryService();
+
+        // releaseManager.registerRegistryService(registryService);
+
+        // // required in order to activate release
+        // DistributionServiceManager distributionServiceManager = new DistributionServiceManager(address(registry));
+        // IService distributionService = distributionServiceManager.getDistributionService();
+        // releaseManager.registerService(distributionService);
+
+        // releaseManager.activateNextRelease();
+
+        // // registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service nft
+        // tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service nft*/
 
         _stopPrank();
 

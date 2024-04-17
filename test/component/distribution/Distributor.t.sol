@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Test.sol";
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
@@ -16,7 +16,7 @@ import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {Timestamp, toTimestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 
-contract DistributorTest is TestGifBase {
+contract DistributorTest is GifTest {
 
     DistributorType public distributorType;
     string public name;

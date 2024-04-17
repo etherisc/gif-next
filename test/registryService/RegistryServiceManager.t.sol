@@ -16,6 +16,8 @@ import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceMa
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {Staking} from "../../contracts/staking/Staking.sol";
+import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceUpgradeMock} from "../mock/RegistryServiceUpgradeMock.sol";
@@ -33,6 +35,61 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         _deployRegistry();
 
         _deployRegistryService();
+
+        // TODO cleanup
+// =======
+//     RegistryAccessManager public registryAccessManager;
+//     ReleaseManager public releaseManager;
+
+//     // ProxyManager public proxyManager;
+//     RegistryServiceManager public registryServiceManager;
+//     RegistryService public registryService;
+//     IRegistry public registry;
+//     ChainNft public chainNft;
+
+//     // staking
+//     Staking staking;
+//     StakingManager stakingManager;
+
+//     function setUp() public {
+
+//         vm.startPrank(registryOwner);
+//         registryAccessManager = new RegistryAccessManager(registryOwner);
+
+//         releaseManager = new ReleaseManager(
+//             registryAccessManager,
+//             VersionPartLib.toVersionPart(3));
+
+//         address registryAddress = releaseManager.getRegistryAddress();
+//         registry = Registry(registryAddress);
+
+//         address chainNftAddress = registry.getChainNftAddress();
+//         chainNft = ChainNft(chainNftAddress);
+
+//         TokenRegistry tokenRegistry = new TokenRegistry(registryAddress);
+//         registryAccessManager.initialize(address(releaseManager), address(tokenRegistry));
+
+//         // deploy staking contract
+//         address stakingOwner = registryOwner;
+//         stakingManager = new StakingManager(
+//             address(registry),
+//             registryAccessManager.authority());
+//         staking = stakingManager.getStaking();
+
+//         releaseManager.registerStaking(
+//             address(staking),
+//             stakingOwner);
+
+//         registryServiceManager = new RegistryServiceManager(
+//             registryAccessManager.authority(),
+//             registryAddress
+//         );
+
+//         registryService = registryServiceManager.getRegistryService();
+        
+//         releaseManager.createNextRelease();
+//         releaseManager.registerRegistryService(registryService);
+// >>>>>>> c6133b4 (complete initial staking setup, adapt/amend tests, rename TestGifBase to GifTest):test/registry/RegistryServiceManager.t.sol
 
         vm.stopPrank();
     }

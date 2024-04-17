@@ -5,7 +5,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {NftId, toNftId, zeroNftId} from "../type/NftId.sol";
 import {VersionPart} from "../type/Version.sol";
-import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, PRODUCT, DISTRIBUTION, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../type/ObjectType.sol";
+import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, STAKING, PRODUCT, DISTRIBUTION, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../type/ObjectType.sol";
 
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
@@ -26,6 +26,7 @@ contract Registry is
 {
     address public constant NFT_LOCK_ADDRESS = address(0x1);
     uint256 public constant REGISTRY_TOKEN_SEQUENCE_ID = 2;
+    uint256 public constant STAKING_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
 
     mapping(NftId nftId => ObjectInfo info) private _info;
@@ -45,6 +46,7 @@ contract Registry is
     ChainNft private _chainNft;
 
     ReleaseManager private _releaseManager;
+    address private _stakingAddress;
 
     modifier onlyRegistryService() {
         if(!_releaseManager.isActiveRegistryService(msg.sender)) {
@@ -60,8 +62,7 @@ contract Registry is
         _;
     }
 
-    constructor()
-    {
+    constructor() {
         _releaseManager = ReleaseManager(msg.sender);
 
         // deploy NFT 
@@ -73,6 +74,38 @@ contract Registry is
 
         // set object types and object parent relations
         _setupValidCoreTypesAndCombinations();
+    }
+
+
+    function registerStaking(
+        address stakingAddress,
+        address stakingOwner
+    )
+        external
+        onlyReleaseManager
+        returns(NftId stakingNftId)
+    {
+        // staking contract for same chain may only be registered once
+        if (_stakingAddress != address(0)) {
+            revert StakingAlreadyRegistered(_stakingAddress);
+        }
+
+        _stakingAddress = stakingAddress;
+        uint256 stakingId = _chainNft.calculateTokenId(STAKING_TOKEN_SEQUENCE_ID);
+        stakingNftId = toNftId(stakingId);
+
+        _nftIdByAddress[_stakingAddress] = stakingNftId;
+        _info[stakingNftId] = ObjectInfo({
+            nftId: stakingNftId,
+            parentNftId: _registryNftId,
+            objectType: STAKING(),
+            isInterceptor: false,
+            objectAddress: _stakingAddress, 
+            initialOwner: stakingOwner,
+            data: "" 
+        });
+
+        _chainNft.mint(stakingOwner, stakingId);
     }
 
     function registerService(
@@ -240,6 +273,10 @@ contract Registry is
     function isValidRelease(VersionPart version) external view returns (bool)
     {
         return _releaseManager.isValidRelease(version);
+    }
+
+    function getStakingAddress() external view returns (address staking) {
+        return _stakingAddress;
     }
 
     function getServiceAddress(
@@ -449,7 +486,13 @@ contract Registry is
         _coreTypes[ORACLE()] = true;
         _coreTypes[POLICY()] = true;
         _coreTypes[BUNDLE()] = true;
+        _coreTypes[STAKING()] = true;
         _coreTypes[STAKE()] = true;
+        
+        _coreContractCombinations[REGISTRY()][REGISTRY()] = true; // only for global regstry
+        _coreContractCombinations[STAKING()][REGISTRY()] = true; // only for chain staking contract
+        _coreContractCombinations[TOKEN()][REGISTRY()] = true;
+        //_coreContractCombinations[SERVICE()][REGISTRY()] = true;// do not need it here -> registerService() registers exactly this combination
 
         _coreContractCombinations[INSTANCE()][REGISTRY()] = true;
         _coreContractCombinations[PRODUCT()][INSTANCE()] = true;

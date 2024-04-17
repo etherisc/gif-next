@@ -18,9 +18,9 @@ import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessMana
 import {DIP} from "../mock/Dip.sol";
 import {NftOwnableMock, NftOwnableMockUninitialized} from "../mock/NftOwnableMock.sol";
 
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 
-contract NftOwnableTest is TestGifBase {
+contract NftOwnableTest is GifTest {
 
     address public mockOwner = makeAddr("mockOwner");
 

@@ -3,10 +3,13 @@ pragma solidity ^0.8.19;
 
 import {Amount} from "../type/Amount.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegistryService} from "../registry/IRegistryService.sol";
+import {IStaking} from "./IStaking.sol";
 import {IStakingService} from "./IStakingService.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, POOL, STAKE} from "../type/ObjectType.sol";
+import {ObjectType, POOL, REGISTRY, STAKE, STAKING} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
@@ -20,11 +23,11 @@ contract StakingService is
     bytes32 public constant STAKING_SERVICE_LOCATION_V1 = 0x6548005c3f4340f82f348c576c0ff69f7f529cadd5ad41f96aae61abceeaa300;
 
     struct StakingServiceStorage {
-        IPoolService _poolService;
+        IStaking _staking;
     }
 
     function getDomain() public pure override returns(ObjectType) {
-        return STAKE();
+        return STAKING();
     }
 
 
@@ -113,9 +116,10 @@ contract StakingService is
     }
 
 
-    function sendTotalValueLockedData(
+    function setTotalValueLocked(
         NftId targetNftId,
-        address token
+        address token,
+        Amount amount
     )
         external
         virtual
@@ -123,15 +127,12 @@ contract StakingService is
 
     }
 
-
-    function receiveTotalValueLockedData(
-        NftId targetNftId,
-        address token
-    )
+    function getStaking()
         external
         virtual
+        returns (IStaking staking)
     {
-
+        return _getStakingServiceStorage()._staking;
     }
 
 
@@ -144,22 +145,56 @@ contract StakingService is
         initializer()
     {
         (
-            address registryAddress,, 
-            //address managerAddress
-            address authority
-        ) = abi.decode(data, (address, address, address));
+            address registryAddress,
+            address stakingAddress
+        ) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, authority, owner);
+        initializeService(registryAddress, address(0), owner);
 
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        $._poolService = IPoolService(_getServiceAddress(POOL()));
+        $._staking = _registerStaking(stakingAddress);
 
         registerInterface(type(IStakingService).interfaceId);
     }
 
+
+    function _registerStaking(
+        address stakingAddress
+    )
+        internal
+        returns (IStaking staking)
+    {
+        // check if provided staking contract is already registred
+        IRegistry.ObjectInfo memory stakingInfo = getRegistry().getObjectInfo(stakingAddress);
+        if (stakingInfo.nftId.gtz()) {
+            // registered object but wrong type
+            if (stakingInfo.objectType != STAKING()) {
+                revert ErrorStakingServiceNotStaking(stakingAddress);
+            }
+
+            // return correctly registered staking contract
+            return IStaking(stakingAddress);
+        }
+
+        // check that contract implements IStaking
+        if(!IStaking(stakingAddress).supportsInterface(type(IStaking).interfaceId)) {
+            revert ErrorStakingServiceNotSupportingIStaking(stakingAddress);
+        }
+
+        address owner = msg.sender;
+        IRegistryService(
+            _getServiceAddress(REGISTRY())).registerStaking(
+                IRegisterable(stakingAddress),
+                owner);
+
+        return IStaking(stakingAddress);
+    }
+
+
     function _getServiceAddress(ObjectType domain) internal view returns (address) {
         return getRegistry().getServiceAddress(domain, getVersion().toMajorPart());
     }
+
 
     function _getStakingServiceStorage() private pure returns (StakingServiceStorage storage $) {
         assembly {

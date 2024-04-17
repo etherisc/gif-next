@@ -88,29 +88,23 @@ contract RegistryAccessManager is AccessManaged, Initializable
 
     function _setAdminRole() private
     {
-        bytes4[] memory functionSelector = new bytes4[](1);
-
         // for ReleaseManager
-        functionSelector[0] = ReleaseManager.createNextRelease.selector;
-        _setTargetFunctionRole(_releaseManager, functionSelector, GIF_ADMIN_ROLE());
+        bytes4[] memory functionSelector = new bytes4[](3);
+        functionSelector[0] = ReleaseManager.registerStaking.selector;
+        functionSelector[1] = ReleaseManager.createNextRelease.selector;
+        functionSelector[2] = ReleaseManager.activateNextRelease.selector;
 
-        functionSelector[0] = ReleaseManager.activateNextRelease.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, GIF_ADMIN_ROLE());
     }
     
     function _setManagerRole() private 
     {
-        bytes4[] memory functionSelector = new bytes4[](1);
+        bytes4[] memory functionSelector = new bytes4[](3);
 
-        // for TokenRegistry
-        functionSelector[0] = TokenRegistry.setActive.selector;
-        _setTargetFunctionRole(address(_tokenRegistry), functionSelector, GIF_MANAGER_ROLE());
+        functionSelector[0] = TokenRegistry.setActive.selector; // for TokenRegistry
+        functionSelector[1] = ReleaseManager.registerService.selector; // for ReleaseManager
+        functionSelector[2] = ReleaseManager.prepareNextRelease.selector;
 
-        // for ReleaseManager
-        functionSelector[0] = ReleaseManager.registerService.selector;
-        _setTargetFunctionRole(_releaseManager, functionSelector, GIF_MANAGER_ROLE());
-
-        functionSelector[0] = ReleaseManager.prepareNextRelease.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, GIF_MANAGER_ROLE());
     }
 

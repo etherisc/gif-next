@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
@@ -12,7 +12,7 @@ import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 
-contract ReferralTestBase is TestGifBase {
+contract ReferralTestBase is GifTest {
 
     DistributorType public distributorType;
     string public name;

@@ -5,19 +5,20 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
+import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
+import {IRegistry} from "./IRegistry.sol";
+import {IRegistryService} from "./IRegistryService.sol";
+import {IService} from "../shared/IService.sol";
+import {IStaking} from "../staking/IStaking.sol";
 import {NftId} from "../type/NftId.sol";
-import {RoleId, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
-import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
+import {Registry} from "./Registry.sol";
+import {RegistryAccessManager} from "./RegistryAccessManager.sol";
+import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
-import {IService} from "../shared/IService.sol";
-import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
-
-import {IRegistry} from "./IRegistry.sol";
-import {Registry} from "./Registry.sol";
-import {IRegistryService} from "./IRegistryService.sol";
-import {RegistryAccessManager} from "./RegistryAccessManager.sol";
 
     // gif admin is not technical, should sent simple txs
     // foundation creates
@@ -35,11 +36,13 @@ contract ReleaseManager is AccessManaged
     event LogReleaseCreation(VersionPart version, bytes32 salt, AccessManagerUpgradeableInitializeable accessManager); 
     event LogReleaseActivation(VersionPart version);
 
-
     // prepareRelease
     error ErrorReleaseManagerReleaseEmpty();
     error ErrorReleaseManagerReleaseAlreadyCreated(VersionPart version);
     
+    // register staking
+    error ErrorReleaseManagerStakingAlreadySet(address stakingAddress);
+
     // registerService
     error ErrorReleaseManagerNotService(IService service);
     error ErrorReleaseManagerServiceAddressInvalid(IService given, address expected);
@@ -48,6 +51,18 @@ contract ReleaseManager is AccessManaged
     error ErrorReleaseManagerReleaseNotCreated(VersionPart releaseVersion);
     error ErrorReleaseManagerReleaseRegistrationNotFinished(VersionPart releaseVersion, uint awaitingRegistration);
     error ErrorReleaseManagerReleaseAlreadyActivated(VersionPart releaseVersion);
+
+    // TODO cleanup
+    // error ReleaseNotCreated();
+    // error ReleaseRegistrationNotFinished();
+
+    // // _getAndVerifyContractInfo
+    // error ErrorReleaseManagerUnexpectedRegisterableAddress(address expected, address actual);
+    // error ErrorReleaseManagerIsInterceptorTrue();
+    // error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
+    // error NotRegisterableOwner(address expectedOwner, address actualOwner);
+    // error SelfRegistration();
+    // error RegisterableOwnerIsRegistered();
 
     // _verifyService
     error ErrorReleaseManagerServiceReleaseAuthorityMismatch(IService service, address serviceAuthority, address releaseAuthority);
@@ -66,6 +81,7 @@ contract ReleaseManager is AccessManaged
 
     RegistryAccessManager public immutable _accessManager;
     IRegistry public immutable _registry;
+    IStaking private _staking;
 
     mapping(VersionPart version => AccessManagerUpgradeableInitializeable accessManager) internal _releaseAccessManager;
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
@@ -77,9 +93,11 @@ contract ReleaseManager is AccessManaged
 
     uint internal _awaitingRegistration; // "services left to register" counter
 
+
     constructor(
         RegistryAccessManager accessManager, 
-        VersionPart initialVersion)
+        VersionPart initialVersion
+    )
         AccessManaged(accessManager.authority())
     {
         _accessManager = accessManager;
@@ -88,8 +106,9 @@ contract ReleaseManager is AccessManaged
         _registry = new Registry();
     }
 
-    /// @dev skips previous release if it was not activated
-    function createNextRelease() 
+
+    /// @dev skips previous release if was not activated
+    function createNextRelease()
         external
         restricted // GIF_ADMIN_ROLE
         returns(VersionPart version)
@@ -145,6 +164,27 @@ contract ReleaseManager is AccessManaged
         emit LogReleaseCreation(version, releaseSalt, releaseAccessManager);
     }
 
+
+    function registerStaking(
+        address stakingAddress,
+        address stakingOwner
+    )
+        external
+        restricted // GIF_ADMIN_ROLE
+        returns(NftId nftId)
+    {
+        // verify staking contract
+        _getAndVerifyContractInfo(stakingAddress, STAKING(), stakingOwner);
+        _staking = IStaking(stakingAddress);
+
+        nftId = _registry.registerStaking(
+            stakingAddress,
+            stakingOwner);
+
+        _staking.linkToRegisteredNftId();
+    }
+
+
     function registerService(IService service) 
         external
         restricted // GIF_MANAGER_ROLE
@@ -180,6 +220,7 @@ contract ReleaseManager is AccessManaged
         service.linkToRegisteredNftId();
     }
 
+
     function activateNextRelease() 
         external 
         restricted // GIF_ADMIN_ROLE
@@ -210,6 +251,75 @@ contract ReleaseManager is AccessManaged
 
         emit LogReleaseActivation(version);
     }
+
+    // TODO cleanup
+    // // TODO implement reliable way this function can only be called directly after createNextRelease()
+    // // IMPORTANT: MUST never be possible to create with access/release manager, token registry
+    // // callable once per release after release creation
+    // // can not register regular services
+    // function registerRegistryService(IRegistryService service)
+    //     external
+    //     restricted // GIF_MANAGER_ROLE
+    //     returns(NftId nftId)
+    // {
+    //     if(!service.supportsInterface(type(IRegistryService).interfaceId)) {
+    //         revert NotRegistryService();
+    //     }
+
+    //     // TODO unreliable! MUST guarantee the same authority -> how?
+    //     address serviceAuthority = service.authority();
+    //     if(serviceAuthority != authority()) {
+    //         revert UnexpectedServiceAuthority(
+    //             authority(), 
+    //             serviceAuthority); 
+    //     }
+
+    //     IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(address(service), SERVICE(), msg.sender);
+
+    //     VersionPart majorVersion = _next;
+    //     ObjectType domain = REGISTRY();
+    //     _verifyService(service, majorVersion, domain);
+    //     _createRelease(service.getFunctionConfigs());
+        
+    //     nftId = _registry.registerService(info, majorVersion, domain);
+
+    //     // external call
+    //     service.linkToRegisteredNftId();
+    // }
+
+    // // TODO adding service to release -> synchronized with proxy upgrades or simple addServiceToRelease(service, version, selector)?
+    // // TODO removing service from release? -> set _active to false forever, but keep all other records?
+    // function registerService(IService service) 
+    //     external
+    //     restricted // GIF_MANAGER_ROLE
+    //     returns(NftId nftId)
+    // {
+    //     if(!service.supportsInterface(type(IService).interfaceId)) {
+    //         revert NotService();
+    //     }
+
+    //     IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(address(service), SERVICE(), msg.sender);
+    //     VersionPart majorVersion = getNextVersion();
+    //     ObjectType domain = _release[majorVersion].domains[_awaitingRegistration];// reversed registration order of services specified in RegistryService config
+    //     _verifyService(service, majorVersion, domain);
+
+    //     // setup and grant unique role if service does registrations
+    //     bytes4[] memory selectors = _selectors[majorVersion][domain];
+    //     address registryService = _registry.getServiceAddress(REGISTRY(), majorVersion);
+    //     if(selectors.length > 0) {
+    //         _accessManager.setAndGrantUniqueRole(
+    //             address(service), 
+    //             registryService, 
+    //             selectors);
+    //     }
+        
+    //     _awaitingRegistration--;
+
+    //     nftId = _registry.registerService(info, majorVersion, domain);
+
+    //     // external call
+    //     service.linkToRegisteredNftId(); 
+    // }
 
     //--- view functions ----------------------------------------------------//
 
@@ -294,6 +404,7 @@ contract ReleaseManager is AccessManaged
         }
     }
 
+
     function _verifyServiceInfo(
         IService service,
         IRegistry.ObjectInfo memory info,
@@ -328,6 +439,7 @@ contract ReleaseManager is AccessManaged
             revert ErrorReleaseManagerServiceOwnerRegistered(service, owner);
         }
     }
+
 
     function _verifyReleaseAuthorizations(
         address[] memory serviceAddress,

@@ -26,11 +26,10 @@ import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
 import {IAccess} from "../../contracts/instance/module/IAccess.sol";
 
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 import {SimpleProduct, SPECIAL_ROLE_INT} from "../mock/SimpleProduct.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {RegisterableMock, SimpleAccessManagedRegisterableMock} from "../mock/RegisterableMock.sol";
-
 
 
 function eqRoleInfo(IAccess.RoleInfo memory a, IAccess.RoleInfo memory b) pure returns (bool isSame) {
@@ -53,7 +52,7 @@ function eqTargetInfo(IAccess.TargetInfo memory a, IAccess.TargetInfo memory b) 
     );
 }
 
-contract TestInstanceAccessManager is TestGifBase {
+contract TestInstanceAccessManager is GifTest {
 
     uint256 public constant INITIAL_BALANCE = 100000;
     uint256 public constant CUSTOM_ROLE_ID_MIN = 10000;

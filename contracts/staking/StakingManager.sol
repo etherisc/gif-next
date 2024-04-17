@@ -3,40 +3,42 @@ pragma solidity ^0.8.20;
 
 import {IVersionable} from "../shared/IVersionable.sol";
 import {ProxyManager} from "../shared/ProxyManager.sol";
-import {StakingService} from "./StakingService.sol";
+import {Staking} from "./Staking.sol";
 
-contract StakingServiceManager is
+contract StakingManager is
     ProxyManager
 {
 
-    StakingService private _stakingService;
+    Staking private _staking;
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
         address registryAddress,
-        address stakingAddress,
-        bytes32 salt
+        address initialAuthority
     )
         ProxyManager(registryAddress)
     {
-        StakingService svc = new StakingService();
+        Staking stk = new Staking();
+        address initialOwner = msg.sender;
+
         bytes memory data = abi.encode(
             registryAddress, 
-            stakingAddress);
-        IVersionable versionable = deployDetermenistic(
-            address(svc), 
-            data,
-            salt);
+            initialAuthority, 
+            initialOwner);
 
-        _stakingService = StakingService(address(versionable));
+        IVersionable versionable = deploy(
+            address(stk), 
+            data);
+
+        _staking = Staking(address(versionable));
     }
 
     //--- view functions ----------------------------------------------------//
-    function getStakingService()
+    function getStaking()
         external
         view
-        returns (StakingService)
+        returns (Staking)
     {
-        return _stakingService;
+        return _staking;
     }
 }
