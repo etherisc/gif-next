@@ -51,7 +51,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
+            IRegistryService.UnexpectedRegisterableType.selector,
             expectedType,
             objectType));
 
@@ -80,7 +80,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
+            IRegistryService.UnexpectedRegisterableType.selector,
             expectedType,
             objectType));
 
@@ -109,7 +109,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
+            IRegistryService.UnexpectedRegisterableType.selector,
             expectedType,
             objectType));
 
@@ -163,8 +163,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.ErrorRegistryServiceObjectOwnerZero.selector,
-            objectType));
+            IRegistryService.RegisterableOwnerIsZero.selector));
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,
@@ -186,9 +185,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.ErrorRegistryServiceObjectOwnerRegistered.selector,
-            objectType,
-            address(registry)));
+            IRegistryService.RegisterableOwnerIsRegistered.selector));
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,

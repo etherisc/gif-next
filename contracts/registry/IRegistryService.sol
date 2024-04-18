@@ -23,6 +23,7 @@ interface IRegistryService is
      error ErrorRegistryServiceNotPool(address notPool);
      error ErrorRegistryServiceNotDistribution(address notDistribution);
 
+     error ErrorRegistryServiceRegisterableAddressInvalid(IRegisterable registerable, address found);
      error ErrorRegistryServiceRegisterableTypeInvalid(IRegisterable registerable, ObjectType expected, ObjectType found);
      error ErrorRegistryServiceRegisterableOwnerInvalid(IRegisterable registerable, address expected, address found);
      error ErrorRegistryServiceRegisterableOwnerZero(IRegisterable registerable);   

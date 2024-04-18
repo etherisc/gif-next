@@ -21,7 +21,6 @@ interface IRegistry is IERC165 {
 
     // register()
     error ErrorRegistryCallerNotRegistryService();
-    error ErrorRegistryServiceRegistration();
 
     // registerWithCustomTypes()
     error ErrorRegistryCoreTypeRegistration();

@@ -3,12 +3,13 @@ pragma solidity ^0.8.20;
 
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
-import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
+import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
 import {ObjectType, toObjectType} from "../../contracts/type/ObjectType.sol";
-import {VersionPartLib} from "../../contracts/type/Version.sol";
+import {VersionPartLib, VersionPart} from "../../contracts/type/Version.sol";
+import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -19,6 +20,8 @@ import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessMana
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
+
+import {TestGifBase} from "../base/TestGifBase.sol";
 
 
 // Helper functions to test IRegistry.ObjectInfo structs 
@@ -41,34 +44,52 @@ function toBool(uint256 uintVal) pure returns (bool boolVal)
     }
 }
 
-contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
+contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
 
-    address public registryOwner = makeAddr("registryOwner");
     address public registerableOwner = makeAddr("registerableOwner");
-    address public outsider = makeAddr("outsider");
 
-    RegistryServiceManagerMockWithHarness public registryServiceManager;
+    RegistryServiceManagerMockWithHarness public registryServiceManagerWithHarness;
     RegistryServiceHarness public registryServiceHarness;
-    IRegistry public registry;
 
-    function setUp() public virtual
+    function setUp() public virtual override
     {
         vm.startPrank(registryOwner);
 
-        RegistryAccessManager accessManager = new RegistryAccessManager(registryOwner);
+        _deployRegistry();
 
-        ReleaseManager releaseManager = new ReleaseManager(
-            accessManager,
-            VersionPartLib.toVersionPart(3));
+        _deployRegistryServiceHarness();
+    }
 
-        registry = IRegistry(releaseManager.getRegistry());
+    function _deployRegistryServiceHarness() internal {
+    {
+        bytes32 salt = "0x2222";
+        bytes32 releaseSalt = keccak256(
+            bytes.concat(
+                bytes32(uint(3)),
+                salt));
 
-        registryServiceManager = new RegistryServiceManagerMockWithHarness(
-            address(accessManager), 
-            address(registry));
-        vm.stopPrank();
+        IRegistry.ConfigStruct[] memory config = new IRegistry.ConfigStruct[](1);
+        config[0] = IRegistry.ConfigStruct(
+            address(0), // TODO calculate
+            new RoleId[](0),
+            new bytes4[][](0),
+            new RoleId[](0));
 
+        releaseManager.createNextRelease();
+
+        (
+            address releaseAccessManager,
+            VersionPart releaseVersion,
+            bytes32 releaseSalt2
+        ) = releaseManager.prepareNextRelease(config, salt);
+
+        registryServiceManager = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
+            releaseAccessManager,
+            registryAddress,
+            salt);
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManager.getRegistryService()));
+        releaseManager.registerService(registryServiceHarness);
+    }
     }
 
     function _assert_getAndVerifyContractInfo(
@@ -78,28 +99,40 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
         internal
     {
         IRegistry.ObjectInfo memory info = registerable.getInitialInfo();
-        info.objectAddress = address(registerable);
         bool expectRevert = false;
 
-        if(info.objectType != expectedType) {
+        if(info.objectAddress != address(registerable)) {
             vm.expectRevert(abi.encodeWithSelector(
-                IRegistryService.UnexpectedRegisterableType.selector,
+                IRegistryService.ErrorRegistryServiceRegisterableAddressInvalid.selector,
+                address(registerable), 
+                info.objectAddress));
+        } else if(info.objectType != expectedType) {
+            vm.expectRevert(abi.encodeWithSelector(
+                IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
+                info.objectAddress,
                 expectedType,
                 info.objectType));
             expectRevert = true;
         } else if(info.initialOwner != expectedOwner) { 
             vm.expectRevert(abi.encodeWithSelector(
-                IRegistryService.NotRegisterableOwner.selector,
-                expectedOwner));
+                IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
+                info.objectAddress,
+                expectedOwner,
+                info.initialOwner));
             expectRevert = true;
         } else if(info.initialOwner == address(registerable)) {
-            vm.expectRevert(abi.encodeWithSelector(IRegistryService.SelfRegistration.selector));
+            vm.expectRevert(abi.encodeWithSelector(
+                IRegistryService.ErrorRegistryServiceRegisterableSelfRegistration.selector,
+                info.objectAddress));
             expectRevert = true;
         } else if(info.initialOwner == address(0)) {
-            vm.expectRevert(abi.encodeWithSelector(IRegistryService.RegisterableOwnerIsZero.selector));
+            vm.expectRevert(abi.encodeWithSelector(IRegistryService.ErrorRegistryServiceRegisterableOwnerZero.selector,
+            info.objectAddress));
             expectRevert = true;
         }else if(registry.isRegistered(info.initialOwner)) { 
-            vm.expectRevert(abi.encodeWithSelector(IRegistryService.RegisterableOwnerIsRegistered.selector));
+            vm.expectRevert(abi.encodeWithSelector(IRegistryService.ErrorRegistryServiceRegisterableOwnerRegistered.selector,
+            info.objectAddress,
+            info.initialOwner));
             expectRevert = true;
         }
 
@@ -132,15 +165,18 @@ contract RegistryServiceHarnessTestBase is Test, FoundryRandom {
         //} else 
         if(info.objectType != expectedType) {
             vm.expectRevert(abi.encodeWithSelector(
-                IRegistryService.UnexpectedRegisterableType.selector,
+                IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
                 expectedType,
                 info.objectType));
         } else if(info.initialOwner == address(0)) {
             vm.expectRevert(abi.encodeWithSelector(
-                IRegistryService.RegisterableOwnerIsZero.selector));
+                IRegistryService.ErrorRegistryServiceObjectOwnerZero.selector,
+                info.objectType));
         } else if(registry.isRegistered(info.initialOwner)) { 
             vm.expectRevert(abi.encodeWithSelector(
-                IRegistryService.RegisterableOwnerIsRegistered.selector));
+                IRegistryService.ErrorRegistryServiceObjectOwnerRegistered.selector,
+                info.objectType, 
+                info.initialOwner));
         }
 
         registryServiceHarness.exposed_verifyObjectInfo(

@@ -7,15 +7,18 @@ import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.s
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
+import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
-import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
+import {Vm, console} from "../../lib/forge-std/src/Test.sol";
+import {TestGifBase} from "../base/TestGifBase.sol";
+
 import {blockBlocknumber} from "../../contracts/type/Blocknumber.sol";
 import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
+import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
 
@@ -29,7 +32,9 @@ import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessMana
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
 
-import {RegistryServiceManagerMockWithConfig} from "../mock/RegistryServiceManagerMock.sol";
+import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
+import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
+
 
 
 
@@ -67,35 +72,26 @@ function toBool(uint256 uintVal) pure returns (bool boolVal)
     }
 }
 
-contract RegistryTestBase is Test, FoundryRandom {
+contract RegistryTestBase is TestGifBase, FoundryRandom {
 
     // keep indentical to IRegistry events
-    event LogRegistration(IRegistry.ObjectInfo info);
-    event LogServiceRegistration(ObjectType serviceType, VersionPart majorVersion);
+    event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
+    event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
-    address public constant NFT_LOCK_ADDRESS = address(0x1); // SERVICE and TOKEN nfts are minted for
     bytes32 public constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;
 
     uint8 public constant GIF_VERSION = 3;
 
-    address public registryOwner = makeAddr("registryOwner");
-    address public outsider = makeAddr("outsider");
-
-    RegistryAccessManager accessManager;
-    ReleaseManager releaseManager;
-    RegistryServiceManager public registryServiceManager;
-    RegistryService public registryService;
-    Registry public registry;
-    TokenRegistry public tokenRegistry;
-    ChainNft public chainNft;
+    RegistryServiceManagerMock public registryServiceManagerMock;
+    RegistryServiceMock public registryServiceMock;
 
     address public _sender; // use with _startPrank(), _stopPrank()
     uint public _nextId; // use with chainNft.calculateId()
 
     NftId public protocolNftId = toNftId(1101);
     NftId public globalRegistryNftId = toNftId(2101);
-    NftId public registryNftId; // chainId dependent
     NftId public registryServiceNftId = toNftId(33133705);
+
     IRegistry.ObjectInfo public protocolInfo;
     IRegistry.ObjectInfo public globalRegistryInfo; // chainId dependent
     IRegistry.ObjectInfo public registryInfo; // chainId dependent
@@ -136,56 +132,80 @@ contract RegistryTestBase is Test, FoundryRandom {
 
     uint public _servicesCount;
 
-    function setUp() public virtual
+    function setUp() public virtual override
     {
         _startPrank(registryOwner);
 
-        accessManager = new RegistryAccessManager(registryOwner);
+        _deployRegistry();
 
-        releaseManager = new ReleaseManager(
-            accessManager,
-            VersionPartLib.toVersionPart(3));
-
-        address registryAddress = address(releaseManager.getRegistry());
-        registry = Registry(registryAddress);
-        registryNftId = registry.getNftId(address(registry));
-
-        address chainNftAddress = registry.getChainNftAddress();
-        chainNft = ChainNft(chainNftAddress);
-        
-        tokenRegistry = new TokenRegistry(registryAddress);
-
-        accessManager.initialize(address(releaseManager), address(tokenRegistry));
-
-        releaseManager.createNextRelease();
-
-        registryServiceManager = new RegistryServiceManagerMockWithConfig(
-            accessManager.authority(),
-            address(registry)
-        );        
-        
-        registryService = registryServiceManager.getRegistryService();
-
-        releaseManager.registerRegistryService(registryService);
-
-        // required in order to activate release
-        DistributionServiceManager distributionServiceManager = new DistributionServiceManager(address(registry));
-        IService distributionService = distributionServiceManager.getDistributionService();
-        releaseManager.registerService(distributionService);
-
-        releaseManager.activateNextRelease();
-
-        // registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service nft
-        tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service nft*/
+        _deployRegistryServiceMock();
 
         _stopPrank();
 
         // Tests bookeeping
-        _afterRegistryDeploy();
+        _afterDeployment();
+    }
+/*
+    function _deployRegistry() internal
+    {
+        registryAccessManager = new RegistryAccessManager();
+
+        releaseManager = new ReleaseManager(
+            registryAccessManager,
+            VersionPartLib.toVersionPart(3));
+
+        address registryAddress = address(releaseManager.getRegistry());
+        registry = Registry(registryAddress);
+
+        address chainNftAddress = registry.getChainNftAddress();
+        chainNft = ChainNft(chainNftAddress);
+
+        tokenRegistry = new TokenRegistry(registryAddress);
+
+        registryAccessManager.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
+    }
+*/
+
+    function _deployRegistryServiceMock() internal
+    {
+        bytes32 salt = "0x5678";
+        bytes32 releaseSalt = keccak256(
+            bytes.concat(
+                bytes32(uint(3)),
+                salt));
+
+        releaseManager.createNextRelease();
+
+        IRegistry.ConfigStruct[] memory config = new IRegistry.ConfigStruct[](1);
+        config[0] = IRegistry.ConfigStruct(
+                address(0), // TODO calculate
+                new RoleId[](0),
+                new bytes4[][](0),
+                new RoleId[](0)
+        );
+
+        (
+            address releaseAccessManager, 
+            VersionPart releaseVersion,
+            bytes32 releaseSalt2
+        ) = releaseManager.prepareNextRelease(config, salt);
+
+        registryServiceManager = new RegistryServiceManagerMock{salt: releaseSalt}(
+            releaseAccessManager, 
+            registryAddress, 
+            releaseSalt);
+
+        registryServiceMock = RegistryServiceMock(address(registryServiceManager.getRegistryService()));
+
+        releaseManager.registerService(registryService);
+
+        releaseManager.activateNextRelease();
+
+        registryServiceManager.linkOwnershipToServiceNft();
     }
 
     // call right after registry deployment, before checks
-    function _afterRegistryDeploy() internal
+    function _afterDeployment() internal
     {
         // SECTION: Registered entries bookeeping
 
@@ -345,15 +365,18 @@ contract RegistryTestBase is Test, FoundryRandom {
         _addressName[address(registry)] = "Registry";
         _addressName[address(registryService)] = "registryService";
         
-        _errorName[IRegistry.CallerNotRegistryService.selector] = "CallerNotRegistryService"; 
-        _errorName[IRegistry.CallerNotReleaseManager.selector] = "CallerNotReleaseManager"; 
-        _errorName[IRegistry.ServiceRegistration.selector] = "ServiceRegistration";
-        _errorName[IRegistry.ZeroParentAddress.selector] = "ZeroParentAddress"; 
-        _errorName[IRegistry.ContractAlreadyRegistered.selector] = "ContractAlreadyRegistered";
-        _errorName[IRegistry.InvalidTypesCombination.selector] = "InvalidTypesCombination"; 
+        _errorName[IRegistry.ErrorRegistryCallerNotRegistryService.selector] = "ErrorRegistryCallerNotRegistryService"; 
+        _errorName[IRegistry.ErrorRegistryCallerNotReleaseManager.selector] = "ErrorRegistryCallerNotReleaseManager"; 
+        _errorName[IRegistry.ErrorRegistryParentAddressZero.selector] = "ErrorRegistryParentAddressZero"; 
+        _errorName[IRegistry.ErrorRegistryContractAlreadyRegistered.selector] = "ErrorRegistryContractAlreadyRegistered";
+        _errorName[IRegistry.ErrorRegistryTypesCombinationInvalid.selector] = "ErrorRegistryTypesCombinationInvalid";
+        _errorName[IRegistry.ErrorRegistryCoreTypeRegistration.selector] = "ErrorRegistryCoreTypeRegistration";
+        _errorName[IRegistry.ErrorRegistryDomainZero.selector] = "ErrorRegistryDomainZero";
+        _errorName[IRegistry.ErrorRegistryDomainAlreadyRegistered.selector] = "ErrorRegistryDomainAlreadyRegistered";
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }
 
+    // TODO move service part to _afterServiceRegistration_setUp
     function _afterRegistration_setUp(IRegistry.ObjectInfo memory info) internal 
     {
         _nextId++;
@@ -373,20 +396,23 @@ contract RegistryTestBase is Test, FoundryRandom {
 
             EnumerableSet.add(_registeredAddresses, info.objectAddress);
         }
+    }
 
-        if(info.objectType == SERVICE())
-        {
-            _servicesCount++;
+    function _afterServiceRegistration_setUp(IRegistry.ObjectInfo memory info) internal 
+    {
+        _afterRegistration_setUp(info);
 
-            (
-                ObjectType serviceType,
-                VersionPart majorVersion
-            ) = _decodeServiceParameters(info.data);
+        _servicesCount++;
 
-            assert(_service[serviceType][majorVersion].nftId.eqz());
-            _service[serviceType][majorVersion].nftId = nftId;
-            _service[serviceType][majorVersion].address_ = info.objectAddress;
-        }
+        (
+            ObjectType serviceDomain,
+            VersionPart majorVersion
+        ) = _decodeServiceParameters(info.data);
+
+        NftId nftId = info.nftId;
+        assert(_service[serviceDomain][majorVersion].nftId.eqz());
+        _service[serviceDomain][majorVersion].nftId = nftId;
+        _service[serviceDomain][majorVersion].address_ = info.objectAddress;
     }
 
     function _startPrank(address sender_) internal {
@@ -584,7 +610,7 @@ contract RegistryTestBase is Test, FoundryRandom {
 
     function _assert_register(IRegistry.ObjectInfo memory info, bool expectRevert, bytes memory revertMsg) internal returns (NftId nftId)
     {   
-        ObjectType serviceType;
+        ObjectType serviceDomain;
         VersionPart majorVersion;
 
         // solhint-disable no-console
@@ -592,7 +618,7 @@ contract RegistryTestBase is Test, FoundryRandom {
         //_logObjectInfo(info);
         if(info.objectType == SERVICE()) {
             (
-                serviceType,
+                serviceDomain,
                 majorVersion
             ) = _decodeServiceParameters(info.data);
             //console.log("  serviceType: %s", serviceType.toInt());   
@@ -614,18 +640,17 @@ contract RegistryTestBase is Test, FoundryRandom {
         {
             if(info.objectType == SERVICE()) {
                 vm.expectEmit();
-                emit LogServiceRegistration(serviceType, majorVersion);
+                emit LogServiceRegistration(majorVersion, serviceDomain);
             }
             vm.expectEmit();
-            emit LogRegistration(IRegistry.ObjectInfo( 
+            emit LogRegistration(
                 toNftId(chainNft.calculateTokenId(_nextId)), 
                 info.parentNftId, 
                 info.objectType, 
                 info.isInterceptor,
                 info.objectAddress, 
-                info.initialOwner,
-                info.data
-            ));
+                info.initialOwner
+            );
         }
 
         nftId = registry.register(info); 
@@ -636,7 +661,13 @@ contract RegistryTestBase is Test, FoundryRandom {
 
             info.nftId = nftId;
 
-            _afterRegistration_setUp(info);
+            
+            if(info.objectType == SERVICE()) {
+                _afterServiceRegistration_setUp(info);
+            } 
+            else {
+                _afterRegistration_setUp(info);
+            }
 
             _checkNonUpgradeableRegistryGetters();
 
@@ -648,23 +679,70 @@ contract RegistryTestBase is Test, FoundryRandom {
         }
     }
 
-    // TODO do not check service related errors here?
-    function _assert_register_with_default_checks(IRegistry.ObjectInfo memory info) internal returns (NftId nftId)
+    function _assert_register_withChecks(IRegistry.ObjectInfo memory info) internal returns (NftId nftId)
+    {
+        bool expectRevert;
+        bytes memory expectedRevertMsg;
+        NftId parentNftId = info.parentNftId;
+        ObjectType parentType = _info[parentNftId].objectType;
+
+        if(_sender != address(registryService)) 
+        {// auth check
+            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryCallerNotRegistryService.selector);
+            expectRevert = true;
+        } else if(info.objectAddress > address(0)) 
+        {
+            if(_isValidContractTypesCombo[info.objectType][parentType] == false) 
+            {// parent must be registered + object-parent types combo must be valid
+                expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryTypesCombinationInvalid.selector, info.objectType, parentType);
+                expectRevert = true;
+            }
+        } else 
+        {
+            if(_isValidObjectTypesCombo[info.objectType][parentType] == false) 
+            {// state object checks, parent must be registered + object-parent types combo must be valid
+                expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryTypesCombinationInvalid.selector, info.objectType, parentType);
+                expectRevert = true;
+            }
+        }
+
+        if(expectRevert) {
+            nftId = _assert_register(info, expectRevert, expectedRevertMsg);
+        } else {
+            nftId = _assert_internalRegister_withChecks(info);
+        }
+    }
+
+    function _assert_registerService_withChecks(IRegistry.ObjectInfo memory info) internal returns (NftId nftId)
+    {
+        bool expectRevert;
+        bytes memory expectedRevertMsg;
+
+        
+
+        if(_sender != address(releaseManager)) 
+        {// auth check
+            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryCallerNotReleaseManager.selector);
+            expectRevert = true;
+        }
+
+        if(expectRevert) {
+            nftId = _assert_register(info, expectRevert, expectedRevertMsg);
+        } else {
+            nftId = _assert_internalRegister_withChecks(info);
+        }
+    }
+
+    function _assert_internalRegister_withChecks(IRegistry.ObjectInfo memory info) internal returns(NftId nftId)
     {
         bool expectRevert;
         bytes memory expectedRevertMsg;
         NftId parentNftId = info.parentNftId;
         address parentAddress = _info[parentNftId].objectAddress;
-        ObjectType parentType = _info[parentNftId].objectType;
 
-        if(_sender != address(registryService)) 
-        {// auth check
-            expectedRevertMsg = abi.encodeWithSelector(IRegistry.CallerNotRegistryService.selector);
-            expectRevert = true;
-        }
-        else if(parentAddress == address(0)) 
+        if(parentAddress == address(0)) 
         {// special case: MUST NOT register with global registry as parent when not on mainnet (global registry have valid type as parent but 0 address in this case)
-            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ZeroParentAddress.selector);
+            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryParentAddressZero.selector);
             expectRevert = true;
         }
         else if(
@@ -681,43 +759,10 @@ contract RegistryTestBase is Test, FoundryRandom {
         }
         else if(info.objectAddress > address(0))
         {// contract checks
-            if(_isValidContractTypesCombo[info.objectType][parentType] == false) 
-            {// parent must be registered + object-parent types combo must be valid
-                expectedRevertMsg = abi.encodeWithSelector(IRegistry.InvalidTypesCombination.selector, info.objectType, parentType);
+            if(_nftIdByAddress[info.objectAddress] != zeroNftId()) {
+                expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryContractAlreadyRegistered.selector, info.objectAddress);
                 expectRevert = true;
             }
-            else if(_nftIdByAddress[info.objectAddress] != zeroNftId())
-            {
-                expectedRevertMsg = abi.encodeWithSelector(IRegistry.ContractAlreadyRegistered.selector, info.objectAddress);
-                expectRevert = true;
-            }
-            else if(info.objectType == SERVICE()) 
-            {// TODO move service checks to release manager
-                /*(
-                    ObjectType serviceType,
-                    VersionPart majorVersion
-                ) = _decodeServiceParameters(info.data);
-
-                if(
-                    majorVersion.toInt() < GIF_VERSION ||
-                    (majorVersion.toInt() > GIF_VERSION &&
-                    _service[serviceType][VersionLib.toVersionPart(majorVersion.toInt() - 1)].address_ == address(0) )
-                )
-                {// major version >= GIF_VERSION and must increase by 1
-                    expectedRevertMsg = abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, majorVersion);
-                    expectRevert = true;
-                }
-                else if(_service[serviceType][majorVersion].address_ != address(0))
-                {
-                    expectedRevertMsg = abi.encodeWithSelector(IRegistry.ServiceAlreadyRegistered.selector, serviceType, majorVersion);
-                    expectRevert = true;
-                }*/
-            }
-        }
-        else if(_isValidObjectTypesCombo[info.objectType][parentType] == false) 
-        {// state object checks, parent must be registered + object-parent types combo must be valid
-            expectedRevertMsg = abi.encodeWithSelector(IRegistry.InvalidTypesCombination.selector, info.objectType, parentType);
-            expectRevert = true;
         }
         
         nftId = _assert_register(info, expectRevert, expectedRevertMsg);

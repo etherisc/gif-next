@@ -20,51 +20,19 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceUpgradeMock} from "../mock/RegistryServiceUpgradeMock.sol";
 import {Version, VersionLib, VersionPartLib } from "../../contracts/type/Version.sol";
+import {RegistryServiceTestBase} from "./RegistryServiceTestBase.sol";
 
-contract RegistryServiceManagerTest is Test {
+contract RegistryServiceManagerTest is RegistryServiceTestBase {
 
-    address public registryOwner = makeAddr("registryOwner");
     address public registryOwnerNew = makeAddr("registryOwnerNew");
 
-    RegistryAccessManager public accessManager;
-    ReleaseManager public releaseManager;
-
-    // ProxyManager public proxyManager;
-    RegistryServiceManager public registryServiceManager;
-    RegistryService public registryService;
-    IRegistry public registry;
-    ChainNft public chainNft;
-
-    function setUp() public {
+    function setUp() public virtual override {
 
         vm.startPrank(registryOwner);
-        accessManager = new RegistryAccessManager(registryOwner);
 
-        releaseManager = new ReleaseManager(
-            accessManager,
-            VersionPartLib.toVersionPart(3));
+        _deployRegistry();
 
-        address registryAddress = address(releaseManager.getRegistry());
-        registry = Registry(registryAddress);
-
-        address chainNftAddress = registry.getChainNftAddress();
-        chainNft = ChainNft(chainNftAddress);
-
-        registryServiceManager = new RegistryServiceManager(
-            accessManager.authority(),
-            registryAddress
-        );        
-        
-        registryService = registryServiceManager.getRegistryService();
-        
-        TokenRegistry tokenRegistry = new TokenRegistry(registryAddress);
-        accessManager.initialize(address(releaseManager), address(tokenRegistry));
-
-        releaseManager.createNextRelease();
-
-        releaseManager.registerRegistryService(registryService);
-
-        // registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service
+        _deployRegistryService();
 
         vm.stopPrank();
     }

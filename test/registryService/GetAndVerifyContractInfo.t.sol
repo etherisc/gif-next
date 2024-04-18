@@ -62,7 +62,8 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.UnexpectedRegisterableType.selector,
+            IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
+            address(registerable),
             expectedType,
             registerableType));
 
@@ -91,7 +92,8 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.UnexpectedRegisterableType.selector,
+            IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
+            address(registerable),
             expectedType,
             registerableType));
 
@@ -120,7 +122,8 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.UnexpectedRegisterableType.selector,
+            IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
+            address(registerable),
             expectedType,
             registerableType));
 
@@ -170,8 +173,10 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.NotRegisterableOwner.selector,
-            outsider));
+            IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
+            address(registerable),
+            outsider,
+            registerableOwner));
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
@@ -193,8 +198,9 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.NotRegisterableOwner.selector,
-            address(0)));
+            IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
+            address(0),
+            registerableOwner));
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
@@ -216,8 +222,9 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.NotRegisterableOwner.selector,
-            registerableOwner));
+            IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
+            registerableOwner,
+            address(0)));
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
@@ -239,7 +246,8 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.RegisterableOwnerIsZero.selector));
+            IRegistryService.ErrorRegistryServiceRegisterableOwnerZero.selector,
+            address(registerable)));
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
@@ -261,7 +269,9 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.RegisterableOwnerIsRegistered.selector));
+            IRegistryService.ErrorRegistryServiceRegisterableOwnerRegistered.selector,
+            address(registerable),
+            address(registry)));
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
@@ -282,7 +292,8 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
         );     
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.SelfRegistration.selector)); 
+            IRegistryService.ErrorRegistryServiceRegisterableSelfRegistration.selector,
+            address(selfOwnedRegisterable)));
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             selfOwnedRegisterable,

@@ -170,13 +170,16 @@ contract RegistryService is
         address expectedOwner // assume can be 0 when given by other service
     )
         internal
-        // view
+        view
         returns(
             IRegistry.ObjectInfo memory info 
         )
     {
         info = registerable.getInitialInfo();
-        info.objectAddress = address(registerable);
+
+        if(info.objectAddress != address(registerable)) {
+            revert ErrorRegistryServiceRegisterableAddressInvalid(registerable, info.objectAddress);
+        }
 
         if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
             revert ErrorRegistryServiceRegisterableTypeInvalid(registerable, expectedType, info.objectType);
