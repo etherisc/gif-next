@@ -17,7 +17,7 @@ interface IRegistry is IERC165 {
     // registerService()
     error ErrorRegistryCallerNotReleaseManager();
     error ErrorRegistryDomainZero(address service);
-    error ErrorRegistryDomainAlreadyRegistered(address service, ObjectType domain);
+    error ErrorRegistryDomainAlreadyRegistered(address service, VersionPart version, ObjectType domain);
 
     // register()
     error ErrorRegistryCallerNotRegistryService();
@@ -40,16 +40,13 @@ interface IRegistry is IERC165 {
         bytes data;
     }
 
-    struct ConfigStruct {
-        address serviceAddress;
-        RoleId[] serviceRoles;
-        bytes4[][] selectors;
-        RoleId[] functionRoles;
-    }
 
     struct ReleaseInfo {
         VersionPart version;
-        ConfigStruct[] config;
+        address[] addresses;
+        RoleId[][] serviceRoles;
+        RoleId[][] functionRoles;
+        bytes4[][][] selectors;
         ObjectType[] domains;
         Timestamp activatedAt;
     }

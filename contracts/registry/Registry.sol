@@ -108,7 +108,7 @@ contract Registry is
         }
 
         if(_service[version][domain] > address(0)) {
-            revert ErrorRegistryDomainAlreadyRegistered(service, domain);
+            revert ErrorRegistryDomainAlreadyRegistered(service, version, domain);
         }
         
         _service[version][domain] = service;

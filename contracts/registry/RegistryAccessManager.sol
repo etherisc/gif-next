@@ -109,6 +109,9 @@ contract RegistryAccessManager is AccessManaged, Initializable
         // for ReleaseManager
         functionSelector[0] = ReleaseManager.registerService.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, GIF_MANAGER_ROLE());
+
+        functionSelector[0] = ReleaseManager.prepareNextRelease.selector;
+        _setTargetFunctionRole(_releaseManager, functionSelector, GIF_MANAGER_ROLE());
     }
 
     function _setTargetFunctionRole(address target, bytes4[] memory selectors, RoleId roleId) private {
