@@ -10,7 +10,7 @@ import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../con
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
-import {RegistryServiceHarnessTestBase, toBool, eqObjectInfo} from "./RegistryServiceHarnessTestBase.sol";
+import {RegistryServiceHarnessTestBase} from "./RegistryServiceHarnessTestBase.sol";
 
 import {RegisterableMock,
         SelfOwnedRegisterableMock,
@@ -37,11 +37,33 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
                 registerableType,
                 registerableOwner);
 
-        IRegistry.ObjectInfo memory infoFromRegisterable = registerable.getInitialInfo();
-        
-        assertTrue(eqObjectInfo(infoFromRegistryService, infoFromRegisterable), 
+        assertTrue(eqObjectInfo(infoFromRegistryService, registerable.getInitialInfo()), 
             "Info returned by registry service is different from info stored in registerable");
     } 
+
+    function test_withInvalidRegisterableAddress() public 
+    {
+        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+
+        RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
+            toNftId(randomNumber(type(uint96).max)), // nftId
+            toNftId(randomNumber(type(uint96).max)), // parentNftId
+            registerableType,
+            toBool(randomNumber(1)), // isInterceptor
+            registerableOwner, // initialOwner
+            ""
+        );
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IRegistryService.ErrorRegistryServiceRegisterableAddressInvalid.selector,
+            address(registerable),
+            registerable.getInitialInfo().objectAddress));
+
+        IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
+                registerable,
+                registerableType,
+                registerableOwner);
+    }
 
     function test_withRegisterableTypeDifferentFromExpectedType() public 
     {
@@ -133,32 +155,6 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             registerableOwner);       
     }
 
-    function test_withInvalidRegisterableAddressHappyCase() public 
-    {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
-
-        RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
-            toNftId(randomNumber(type(uint96).max)), // nftId
-            toNftId(randomNumber(type(uint96).max)), // parentNftId
-            registerableType,
-            toBool(randomNumber(1)), // isInterceptor
-            registerableOwner, // initialOwner
-            ""
-        );
-
-        IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
-                registerable,
-                registerableType,
-                registerableOwner);
-
-        IRegistry.ObjectInfo memory infoFromRegisterable = registerable.getInitialInfo();
-
-        infoFromRegisterable.objectAddress = address(registerable);
-        
-        assertTrue(eqObjectInfo(infoFromRegistryService, infoFromRegisterable), 
-            "Info returned by registry service is different from info stored in registerable");
-    }
-
     function test_withRegisterableOwnerDifferentFromExpectedOwner() public
     {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
@@ -199,6 +195,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         vm.expectRevert(abi.encodeWithSelector(
             IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
+            address(registerable),
             address(0),
             registerableOwner));
 
@@ -223,6 +220,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
         vm.expectRevert(abi.encodeWithSelector(
             IRegistryService.ErrorRegistryServiceRegisterableOwnerInvalid.selector,
+            address(registerable),
             registerableOwner,
             address(0)));
 

@@ -8,7 +8,7 @@ import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../con
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
-import {RegistryServiceHarnessTestBase, toBool} from "./RegistryServiceHarnessTestBase.sol";
+import {RegistryServiceHarnessTestBase} from "./RegistryServiceHarnessTestBase.sol";
 
 contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 

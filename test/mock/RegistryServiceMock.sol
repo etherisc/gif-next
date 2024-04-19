@@ -44,6 +44,13 @@ contract RegistryServiceMock is Service {
         virtual override
     {}
 
+    function _upgrade(bytes memory data)
+        internal
+        onlyInitializing
+        virtual override
+    // solhint-disable-next-line no-empty-blocks
+    {}
+
     function getVersion()
         public
         pure
@@ -65,23 +72,4 @@ contract RegistryServiceMock is Service {
     {
         return REGISTRY();
     }
-}
-contract RegistryServiceMockWithSimpleConfig is RegistryService
-{
-
-    function getVersion()
-        public
-        pure
-        virtual override (IVersionable, Service)
-        returns(Version)
-    {
-        return VersionLib.toVersion(3, 0, 2);
-    }
-
-    function _upgrade(bytes memory data)
-        internal
-        onlyInitializing
-        override
-    // solhint-disable-next-line no-empty-blocks
-    {}
 }

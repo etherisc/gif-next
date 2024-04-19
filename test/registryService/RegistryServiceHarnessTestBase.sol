@@ -22,27 +22,8 @@ import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceMana
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
 import {TestGifBase} from "../base/TestGifBase.sol";
+import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
-
-// Helper functions to test IRegistry.ObjectInfo structs 
-function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) pure returns (bool isSame) {
-    return (
-        (a.nftId == b.nftId) &&
-        (a.parentNftId == b.parentNftId) &&
-        (a.objectType == b.objectType) &&
-        (a.objectAddress == b.objectAddress) &&
-        (a.initialOwner == b.initialOwner) &&
-        (a.data.length == b.data.length) &&
-        keccak256(a.data) == keccak256(b.data)
-    );
-}
-
-function toBool(uint256 uintVal) pure returns (bool boolVal)
-{
-    assembly {
-        boolVal := uintVal
-    }
-}
 
 contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
 
@@ -60,36 +41,49 @@ contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
         _deployRegistryServiceHarness();
     }
 
-    function _deployRegistryServiceHarness() internal {
+    function _deployRegistryServiceHarness() internal 
     {
         bytes32 salt = "0x2222";
-        bytes32 releaseSalt = keccak256(
-            bytes.concat(
-                bytes32(uint(3)),
-                salt));
 
-        IRegistry.ConfigStruct[] memory config = new IRegistry.ConfigStruct[](1);
-        config[0] = IRegistry.ConfigStruct(
-            address(0), // TODO calculate
-            new RoleId[](0),
-            new bytes4[][](0),
-            new RoleId[](0));
+        // RegistryServiceManagerMockWithHarness first deploys RegistryService and then upgrades to RegistryServiceHarness
+        // thus address is computed with RegistryService bytecode instead of RegistryServiceHarness...
+        RegistryServiceTestConfig config = new RegistryServiceTestConfig(
+            releaseManager,
+            type(RegistryServiceManagerMockWithHarness).creationCode, // proxy manager
+            type(RegistryService).creationCode, // implementation
+            registryOwner,
+            VersionPartLib.toVersionPart(3),
+            salt);
+
+        (
+            address[] memory serviceAddress,
+            RoleId[][] memory serviceRoles,
+            RoleId[][] memory functionRoles,
+            bytes4[][][] memory selectors
+        ) = config.getConfig();
 
         releaseManager.createNextRelease();
 
         (
             address releaseAccessManager,
             VersionPart releaseVersion,
-            bytes32 releaseSalt2
-        ) = releaseManager.prepareNextRelease(config, salt);
+            bytes32 releaseSalt
+        ) = releaseManager.prepareNextRelease(serviceAddress, serviceRoles, functionRoles, selectors, salt);
 
-        registryServiceManager = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
+        assertEq(config._accessManager(), releaseAccessManager, "error: access manager mismatch");
+
+        registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
             releaseAccessManager,
             registryAddress,
-            salt);
-        registryServiceHarness = RegistryServiceHarness(address(registryServiceManager.getRegistryService()));
+            releaseSalt);
+        registryServiceHarness = RegistryServiceHarness(address(registryServiceManagerWithHarness.getRegistryService()));
+
+        assertEq(serviceAddress[0], address(registryServiceHarness), "error: registry service address mismatch");
         releaseManager.registerService(registryServiceHarness);
-    }
+
+        releaseManager.activateNextRelease();
+
+        registryServiceManagerWithHarness.linkOwnershipToServiceNft();
     }
 
     function _assert_getAndVerifyContractInfo(
@@ -106,6 +100,7 @@ contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
                 IRegistryService.ErrorRegistryServiceRegisterableAddressInvalid.selector,
                 address(registerable), 
                 info.objectAddress));
+            expectRevert = true;
         } else if(info.objectType != expectedType) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceRegisterableTypeInvalid.selector,
@@ -147,8 +142,12 @@ contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
                 expectedType,
                 expectedOwner);  
 
+            IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(address(registerable));
+
             assertTrue(eqObjectInfo(info, infoFromRegistryService), 
                 "Info read from registerable is different from info returned by registry service");
+            assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegistryService), 
+                "Info read from registry is different from info returned by registry service");
         }
     }
 

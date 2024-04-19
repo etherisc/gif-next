@@ -33,6 +33,7 @@ import {DIP} from "../mock/Dip.sol";
 
 import {RegistryTestBase} from "../registry/RegistryTestBase.sol";
 import {TestGifBase} from "../base/TestGifBase.sol";
+import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
 
 // Helper functions to test IRegistry.ObjectInfo structs 
@@ -105,32 +106,40 @@ contract RegistryServiceTestBase is TestGifBase, FoundryRandom {
     function _deployRegistryService() internal
     {
         bytes32 salt = "0x1111";
-        bytes32 releaseSalt = keccak256(
-            bytes.concat(
-                bytes32(uint(3)),
-                salt));
 
-        IRegistry.ConfigStruct[] memory config = new IRegistry.ConfigStruct[](1);
-        config[0] = IRegistry.ConfigStruct(
-            address(0), // TODO calculate
-            new RoleId[](0),
-            new bytes4[][](0),
-            new RoleId[](0));
+        RegistryServiceTestConfig config = new RegistryServiceTestConfig(
+            releaseManager,
+            type(RegistryServiceManager).creationCode,
+            type(RegistryService).creationCode, 
+            registryOwner,
+            VersionPartLib.toVersionPart(3),
+            salt);
+
+        (
+            address[] memory serviceAddress,
+            RoleId[][] memory serviceRoles,
+            RoleId[][] memory functionRoles,
+            bytes4[][][] memory selectors
+        ) = config.getConfig();
 
         releaseManager.createNextRelease();
 
         (
             address releaseAccessManager,
             VersionPart releaseVersion,
-            bytes32 releaseSalt2
-        ) = releaseManager.prepareNextRelease(config, salt);
+            bytes32 releaseSalt
+        ) = releaseManager.prepareNextRelease(serviceAddress, serviceRoles, functionRoles, selectors, salt);
 
         registryServiceManager = new RegistryServiceManager{salt: releaseSalt}(
             releaseAccessManager,
             registryAddress,
-            salt);
+            releaseSalt);
         registryService = registryServiceManager.getRegistryService();
         releaseManager.registerService(registryService);
+
+        releaseManager.activateNextRelease();
+        
+        registryServiceManager.linkOwnershipToServiceNft();
     }
 /*
     function _deployAndRegisterServices() internal {
