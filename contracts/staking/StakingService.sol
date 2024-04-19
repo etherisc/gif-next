@@ -143,14 +143,17 @@ contract StakingService is
         virtual override
         initializer()
     {
-        // TODO check this, might no longer be the way, refactor if necessary
-        address registryAddress;
-        (registryAddress,) = abi.decode(data, (address, address));
+        (
+            address registryAddress,, 
+            //address managerAddress
+            address authority
+        ) = abi.decode(data, (address, address, address));
+
+        initializeService(registryAddress, authority, owner);
 
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._poolService = IPoolService(_getServiceAddress(POOL()));
 
-        initializeService(registryAddress, address(0), owner);
         registerInterface(type(IStakingService).interfaceId);
     }
 

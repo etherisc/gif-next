@@ -54,7 +54,7 @@ import {BundleServiceManager} from "../../contracts/pool/BundleServiceManager.so
 import {PricingService} from "../../contracts/product/PricingService.sol";
 import {PricingServiceManager} from "../../contracts/product/PricingServiceManager.sol";
 import {StakingService} from "../../contracts/staking/StakingService.sol";
-import {StakingServiceManager} from "../../contracts/staking/StakeingServiceManager.sol";
+import {StakingServiceManager} from "../../contracts/staking/StakingServiceManager.sol";
 
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";

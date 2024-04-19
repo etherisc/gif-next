@@ -62,12 +62,13 @@ contract ClaimService is
         virtual override
         initializer()
     {
-        // TODO check this, might no longer be the way, refactor if necessary
-        address registryAddress;
-        address initialOwner;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
+        (
+            address registryAddress,, 
+            //address managerAddress
+            address authority
+        ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, address(0), owner);
+        initializeService(registryAddress, authority, owner);
 
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), getVersion().toMajorPart()));
 

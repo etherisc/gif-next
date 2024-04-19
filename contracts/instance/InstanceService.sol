@@ -263,18 +263,18 @@ contract InstanceService is
         virtual override
     {
         (
-            address registryAddress,
-            address initialOwner
-        ) = abi.decode(data, (address, address));
+            address registryAddress,, 
+            //address managerAddress
+            address authority
+        ) = abi.decode(data, (address, address, address));
+
+        initializeService(registryAddress, authority, owner);
 
         _registryService = IRegistryService(
             IRegistry(registryAddress).getServiceAddress(
                 REGISTRY(), 
                 getVersion().toMajorPart()));
 
-        // TODO while InstanceService is not deployed in InstanceServiceManager constructor
-        //      owner is InstanceServiceManager deployer
-        initializeService(registryAddress, address(0), owner);
         registerInterface(type(IInstanceService).interfaceId);
     }
 

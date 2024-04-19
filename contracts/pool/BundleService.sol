@@ -53,12 +53,13 @@ contract BundleService is
         initializer
         virtual override
     {
-        address registryAddress;
-        address initialOwner;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
-        // TODO while PoolService is not deployed in PoolServiceManager constructor
-        //      owner is PoolServiceManager deployer
-        initializeService(registryAddress, address(0), owner);
+        (
+            address registryAddress,, 
+            //address managerAddress
+            address authority
+        ) = abi.decode(data, (address, address, address));
+
+        initializeService(registryAddress, authority, owner);
         registerInterface(type(IBundleService).interfaceId);
     }
 

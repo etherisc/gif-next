@@ -20,7 +20,7 @@ contract StakingServiceManager is
         ProxyManager(registryAddress)
     {
         StakingService svc = new StakingService{salt: salt}();
-        bytes memory data = abi.encode(registryAddress, address(this));
+        bytes memory data = abi.encode(registryAddress, address(this), authority);
         IVersionable versionable = deployDetermenistic(
             address(svc), 
             data,

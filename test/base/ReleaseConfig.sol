@@ -51,7 +51,7 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {PricingServiceManager} from "../../contracts/product/PricingServiceManager.sol";
 import {PricingService} from "../../contracts/product/PricingService.sol";
 
-import {StakingServiceManager} from "../../contracts/staking/StakeingServiceManager.sol";
+import {StakingServiceManager} from "../../contracts/staking/StakingServiceManager.sol";
 import {StakingService} from "../../contracts/staking/StakingService.sol";
 
 import {IInstance} from "../../contracts/instance/IInstance.sol";

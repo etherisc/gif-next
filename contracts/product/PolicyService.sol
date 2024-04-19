@@ -61,11 +61,13 @@ contract PolicyService is
         virtual override
         initializer
     {
-        address registryAddress;
-        address initialOwner;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
+        (
+            address registryAddress,, 
+            //address managerAddress
+            address authority
+        ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, address(0), owner);
+        initializeService(registryAddress, authority, owner);
 
         VersionPart majorVersion = getVersion().toMajorPart();
         _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), majorVersion));
