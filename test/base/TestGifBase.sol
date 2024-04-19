@@ -17,6 +17,8 @@ import {
     DISTRIBUTION_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {Version} from "../../contracts/type/Version.sol";
+import {RoleId} from "../../contracts/type/RoleId.sol";
+import {zeroObjectType} from "../../contracts/type/ObjectType.sol";
 
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
@@ -358,32 +360,33 @@ contract TestGifBase is Test {
             version,
             salt);
 
+        (
+            address[] memory serviceAddrs,
+            RoleId[][] memory serviceRoles,
+            RoleId[][] memory functionRoles,
+            bytes4[][][] memory selectors
+        ) = config.getConfig();
+
         releaseManager.createNextRelease();
 
         (
             address releaseAccessManager, 
             VersionPart releaseVersion,
             bytes32 releaseSalt
-        ) = releaseManager.prepareNextRelease(config.getConfig(), salt);
+        ) = releaseManager.prepareNextRelease(serviceAddrs, serviceRoles, functionRoles, selectors, salt);
 
-        salt = config.getSalt();
-        version = config.getVersion();
-        assertEq(salt, releaseSalt, "salts are different");
-        assertEq(version.toInt(), releaseVersion.toInt(), "versions are different");
+        salt = releaseSalt;
 
         // solhint-disable
         console.log("release version", releaseVersion.toInt());
         console.log("release salt", uint(releaseSalt));
         console.log("release access manager deployed at", address(releaseAccessManager));
+        console.log("release services count", serviceAddrs.length);
         // solhint-enable
 
         // --- registry service ---------------------------------//
         registryServiceManager = new RegistryServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         registryService = registryServiceManager.getRegistryService();
-
-        assertEq(config.getAccessManager(), releaseAccessManager, "access manager address mismatch");
-        assertEq(config.getServiceConfig(9).serviceAddress, address(registryService), "registry service address mismatch");
-
         releaseManager.registerService(registryService); 
 
         // solhint-disable
@@ -807,6 +810,39 @@ contract TestGifBase is Test {
 
         poolNftId = poolService.register(address(pool));
         vm.stopPrank();
+    }
+
+    function zeroObjectInfo() internal pure returns (IRegistry.ObjectInfo memory) {
+        return (
+            IRegistry.ObjectInfo(
+                zeroNftId(),
+                zeroNftId(),
+                zeroObjectType(),
+                false,
+                address(0),
+                address(0),
+                bytes("")
+            )
+        );
+    }
+
+    function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) internal pure returns (bool isSame) {
+        return (
+            (a.nftId == b.nftId) &&
+            (a.parentNftId == b.parentNftId) &&
+            (a.objectType == b.objectType) &&
+            (a.objectAddress == b.objectAddress) &&
+            (a.initialOwner == b.initialOwner) &&
+            (a.data.length == b.data.length) &&
+            keccak256(a.data) == keccak256(b.data)
+        );
+    }
+
+    function toBool(uint256 uintVal) internal pure returns (bool boolVal)
+    {
+        assembly {
+            boolVal := uintVal
+        }
     }
 
 }

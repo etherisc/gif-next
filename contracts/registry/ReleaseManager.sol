@@ -35,9 +35,11 @@ contract ReleaseManager is AccessManaged
     event LogReleaseCreation(VersionPart version, bytes32 salt, AccessManagerUpgradeableInitializeable accessManager); 
     event LogReleaseActivation(VersionPart version);
 
-    // createNextRelease
-    error ErrorReleaseManagerServiceAuthorityInvalid(address service, address expected, address found);
 
+    // prepareRelease
+    error ErrorReleaseManagerReleaseEmpty();
+    error ErrorReleaseManagerReleaseAlreadyCreated(VersionPart version);
+    
     // registerService
     error ErrorReleaseManagerNotService(IService service);
     error ErrorReleaseManagerServiceAddressInvalid(IService given, address expected);
@@ -46,9 +48,6 @@ contract ReleaseManager is AccessManaged
     error ErrorReleaseManagerReleaseNotCreated(VersionPart releaseVersion);
     error ErrorReleaseManagerReleaseRegistrationNotFinished(VersionPart releaseVersion, uint awaitingRegistration);
     error ErrorReleaseManagerReleaseAlreadyActivated(VersionPart releaseVersion);
-
-    // _verifyAndStoreReleaseAddresses
-    error ErrorReleaseManagerReleaseEmpty();
 
     // _verifyService
     error ErrorReleaseManagerServiceReleaseAuthorityMismatch(IService service, address serviceAuthority, address releaseAuthority);
@@ -70,14 +69,13 @@ contract ReleaseManager is AccessManaged
 
     mapping(VersionPart version => AccessManagerUpgradeableInitializeable accessManager) internal _releaseAccessManager;
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
+    mapping(address registryService => bool isActive) internal _active;// have access to registry
 
     VersionPart immutable internal _initial;// first active version    
     VersionPart internal _latest;// latest active version
     VersionPart internal _next;// version to create and activate 
 
     uint internal _awaitingRegistration; // "services left to register" counter
-
-    mapping(address registryService => bool isActive) internal _active;// have access to registry
 
     constructor(
         RegistryAccessManager accessManager, 
@@ -100,22 +98,37 @@ contract ReleaseManager is AccessManaged
         _awaitingRegistration = 0;
     }
 
-    function prepareNextRelease(IRegistry.ConfigStruct[] calldata config, bytes32 salt)
+    function prepareNextRelease(
+        address[] memory addresses, 
+        RoleId[][] memory serviceRoles, 
+        RoleId[][] memory functionRoles, 
+        bytes4[][][] memory selectors, 
+        bytes32 salt
+    )
         external
         restricted // GIF_MANAGER_ROLE
         returns(address releaseAccessManagerAddress, VersionPart version, bytes32 releaseSalt)
     {
-        if(config.length == 0) {
+        if(addresses.length == 0) {
             revert ErrorReleaseManagerReleaseEmpty();
         }
 
-        for(uint idx = 0; idx < config.length; idx++)
-        {
-            _verifyServiceAuthorizations(config[idx]);
+        if(_awaitingRegistration > 0) {
+            revert ErrorReleaseManagerReleaseAlreadyCreated(version);
         }
+
+        _verifyReleaseAuthorizations(addresses, serviceRoles, functionRoles, selectors);
 
         version = getNextVersion();
 
+        _releaseInfo[version].version = version;
+        _releaseInfo[version].addresses = addresses;
+        _releaseInfo[version].serviceRoles = serviceRoles;
+        _releaseInfo[version].functionRoles = functionRoles;
+        _releaseInfo[version].selectors = selectors;
+        _awaitingRegistration = addresses.length;
+
+        version = getNextVersion();
         // ensures unique salt
         releaseSalt = keccak256(
             bytes.concat(
@@ -124,12 +137,10 @@ contract ReleaseManager is AccessManaged
 
         releaseAccessManagerAddress = Clones.cloneDeterministic(_accessManager.authority(), releaseSalt);
         AccessManagerUpgradeableInitializeable releaseAccessManager = AccessManagerUpgradeableInitializeable(releaseAccessManagerAddress);
-        releaseAccessManager.initialize(address(this));
-
+        
         _releaseAccessManager[version] = releaseAccessManager;
-        _releaseInfo[version].version = version;
-        _releaseInfo[version].config = config;
-        _awaitingRegistration = config.length;
+        
+        releaseAccessManager.initialize(address(this));
 
         emit LogReleaseCreation(version, releaseSalt, releaseAccessManager);
     }
@@ -146,16 +157,20 @@ contract ReleaseManager is AccessManaged
         ) = _verifyService(service);
 
         uint serviceIdx = _awaitingRegistration - 1;
-        IRegistry.ConfigStruct memory config = _releaseInfo[version].config[serviceIdx];
-        address serviceAddressInRelease = config.serviceAddress;
-        if(address(service) != serviceAddressInRelease) {
-            revert ErrorReleaseManagerServiceAddressInvalid(service, serviceAddressInRelease);
+        address serviceAddress = _releaseInfo[version].addresses[serviceIdx];
+        if(address(service) != serviceAddress) {
+            revert ErrorReleaseManagerServiceAddressInvalid(service, serviceAddress);
         }
 
-        _setServiceAuthorizations(_releaseAccessManager[version], config);
+        _setServiceAuthorizations(
+            _releaseAccessManager[version],
+            serviceAddress, 
+            _releaseInfo[version].serviceRoles[serviceIdx],
+            _releaseInfo[version].functionRoles[serviceIdx],
+            _releaseInfo[version].selectors[serviceIdx]);
 
         _awaitingRegistration = serviceIdx;
-
+        // checked in registry
         _releaseInfo[version].domains.push(domain);
 
         nftId = _registry.registerService(info, version, domain);
@@ -286,7 +301,7 @@ contract ReleaseManager is AccessManaged
         view
     {
         if(info.objectAddress != address(service)) {
-            revert ErrorReleaseManagerServiceAddressInvalid(service, address(service));
+            revert ErrorReleaseManagerServiceInfoAddressInvalid(service, address(service));
         }
 
         if(info.isInterceptor != false) { // service is never interceptor
@@ -312,15 +327,23 @@ contract ReleaseManager is AccessManaged
         }
     }
 
-    function _verifyServiceAuthorizations(IRegistry.ConfigStruct memory config)
+    function _verifyReleaseAuthorizations(
+        address[] memory serviceAddress,
+        RoleId[][] memory serviceRoles,
+        RoleId[][] memory functionRoles,
+        bytes4[][][] memory selectors
+    )
         internal
         view
     {
-        for(uint idx = 0; idx < config.serviceRoles.length; idx++)
+        for(uint serviceIdx = 0; serviceIdx < serviceAddress.length; serviceIdx++)
         {
-            RoleId role = config.serviceRoles[idx];
-            if(role == ADMIN_ROLE()) {
-                revert ErrorReleaseManagerServiceRoleInvalid(config.serviceAddress, role);
+            for(uint roleIdx = 0; roleIdx < serviceRoles[serviceIdx].length; roleIdx++)
+            {
+                RoleId role = serviceRoles[serviceIdx][roleIdx];
+                if(role == ADMIN_ROLE()) {
+                    revert ErrorReleaseManagerServiceRoleInvalid(serviceAddress[serviceIdx], role);
+                }
             }
         }
         // TODO no duplicate service "domain" role per release
@@ -330,24 +353,27 @@ contract ReleaseManager is AccessManaged
     }
 
     function _setServiceAuthorizations(
-        IAccessManager accessManager, 
-        IRegistry.ConfigStruct memory config
+        IAccessManager accessManager,
+        address serviceAddress,
+        RoleId[] memory serviceRoles,
+        RoleId[] memory functionRoles,
+        bytes4[][] memory selectors
     )
         internal
     {
-        for(uint idx = 0; idx < config.functionRoles.length; idx++)
+        for(uint idx = 0; idx < functionRoles.length; idx++)
         {
             accessManager.setTargetFunctionRole(
-                config.serviceAddress, 
-                config.selectors[idx],
-                config.functionRoles[idx].toInt());
+                serviceAddress, 
+                selectors[idx],
+                functionRoles[idx].toInt());
         }
 
-        for(uint idx = 0; idx < config.serviceRoles.length; idx++)
+        for(uint idx = 0; idx < serviceRoles.length; idx++)
         {
             accessManager.grantRole(
-                config.serviceRoles[idx].toInt(),
-                config.serviceAddress, 
+                serviceRoles[idx].toInt(),
+                serviceAddress, 
                 0);
         }
     }
