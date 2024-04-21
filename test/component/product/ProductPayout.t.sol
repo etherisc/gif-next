@@ -820,7 +820,7 @@ contract TestProductClaim is TestGifBase {
     {
         bytes memory claimData = "please pay";
         claimId = prdct.submitClaim(nftId, claimAmount, claimData); 
-        prdct.confirmClaim(nftId, claimId, claimAmount); 
+        prdct.confirmClaim(nftId, claimId, claimAmount, ""); 
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
         claimState = instanceReader.getClaimState(policyNftId, claimId);

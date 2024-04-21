@@ -74,6 +74,7 @@ contract KeyValueStore is
 
         // update state 
         if(state != KEEP_STATE()) {
+            checkTransition(metadata.objectType, stateOld, state);
             metadata.state = state;
         }
 

@@ -1,0 +1,63 @@
+@startuml
+
+package "Registry Contracts" {
+    [Registry]
+
+    [Registry] --> [ChainNft]
+    [Registry] --> [RegistryAccessManager]
+    [Registry] --> [ReleaseManager]
+    [Registry] --> [TokenRegistry]
+}
+
+package "Service Contracts" {
+    [RegistryService]
+    [StakingService]
+
+    package "Instance Service Contracts" {
+        [InstanceService]
+
+        package "Master Instance Contracts" {
+            [InstanceService]
+        }
+
+        [InstanceService] --> RegistryService
+    }
+
+    package "Distribution Service Contracts" {
+        [DistributionService]
+
+        [DistributionService] --> [RegistryService]
+        [DistributionService] --> [InstanceService]
+    }
+
+    package "Pool Service Contracts" {
+        [PoolService]
+        [BundleService]
+
+        [PoolService] --> [RegistryService]
+        [PoolService] --> [InstanceService]
+        [PoolService] --> [StakingService]
+        [BundleService] --> [RegistryService]
+    } 
+
+    package "Product Service Contracts" {
+        [ProductService]
+        [PricingService]
+        [ApplicationService]
+        [PolicyService]
+        [ClaimService]
+
+        [ProductService] --> [RegistryService]
+        [ProductService] --> [InstanceService]
+        [ApplicationService] --> [RegistryService]
+        [PolicyService] --> [PricingService]
+        [PolicyService] --> [DistributionService]
+        [PolicyService] --> [PoolService]
+        [ClaimService]
+    }
+    
+}
+
+[RegistryService] --> [Registry]
+
+@enduml

@@ -97,6 +97,7 @@ contract Lifecycle is
         _isValidTransition[POLICY()][APPLIED()][REVOKED()] = true;
         _isValidTransition[POLICY()][APPLIED()][DECLINED()] = true;
         _isValidTransition[POLICY()][APPLIED()][COLLATERALIZED()] = true;
+        _isValidTransition[POLICY()][APPLIED()][ACTIVE()] = true;
         _isValidTransition[POLICY()][COLLATERALIZED()][ACTIVE()] = true;
         _isValidTransition[POLICY()][ACTIVE()][CLOSED()] = true;
     }

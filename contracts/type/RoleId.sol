@@ -24,24 +24,64 @@ function ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(type(uin
 function PUBLIC_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(type(uint64).max); }
 
 // general pure free functions
-function DISTRIBUTION_OWNER_ROLE_NAME() pure returns (string memory) { return "DistributionOwnerRole"; }
-function ORACLE_OWNER_ROLE_NAME() pure returns (string memory) { return "OracleOwnerRole"; }
-function POOL_OWNER_ROLE_NAME() pure returns (string memory) { return "PoolOwnerRole"; }
-function PRODUCT_OWNER_ROLE_NAME() pure returns (string memory) { return "ProductOwnerRole"; }
 
+/// @dev cental role for gif release management.
+/// this role is necessary to call ReleaseManager.createNextRelease/activateNextRelease
+/// the actual deployment of a release requires the GIF_MANAGER_ROLE.
+/// GIF_ADMIN_ROLE is the admin of the GIF_MANAGER_ROLE.
+/// only a single holder may hold this role at any time
+function GIF_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
+
+/// @dev role for token whith/blacklisting, deploying and registering the services for a new major release
+/// registering services for a new major release is only possible after a new initial release has been created by the GIF_ADMIN_ROLE
+/// token white/blacklisting is possible for any active release
+function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 
+
+/// @dev role associated with the ReleaseManager contract
+function RELEASE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1700); } 
+
+/// @dev instance specific role to register/own a distribution component
 function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2); }
+
+/// @dev instance specific  role to register/own an oracle component
 function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(3); }
+
+/// @dev instance specific  role to register/own a pool component
 function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(4); }
+
+/// @dev instance specific  role to register/own a product component
 function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(5); }
 
+/// @dev role associated with an instance contract
+/// this role is the admin role for the INSTANCE_OWNER_ROLE
+function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600); }
+
+/// @dev required role to register/own an instance
+/// allows instance specific target, role and access management 
 function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1900); }
+
+/// @dev instance specific role for instance service
 function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
+
+/// @dev instance specific role for distribution service
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
+
+/// @dev instance specific role for pool service
 function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2200); }
+
+/// @dev instance specific role for product service
 function PRODUCT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2300); }
+
+/// @dev instance specific role for application service
 function APPLICATION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2400); }
+
+/// @dev instance specific role for policy service
 function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2410); }
+
+/// @dev instance specific role for claim service
 function CLAIM_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2420); }
+
+/// @dev instance specific role for bundle service
 function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
 function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600); }
 function REGISTRY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2700); }

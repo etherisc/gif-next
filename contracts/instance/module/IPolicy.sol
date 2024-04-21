@@ -45,8 +45,9 @@ interface IPolicy {
         Amount premiumAmount;
         Amount premiumPaidAmount; // when lower than premium amount: max payout decreased accordingly
         Seconds lifetime;
+        // policy application data, no changes after applying for a policy
         bytes applicationData;
-        bytes policyData;
+        bytes processData;
         uint16 claimsCount;
         uint16 openClaimsCount;
         Amount claimAmount; // sum of confirmed claim amounts (max = sum insured amount)
@@ -62,8 +63,8 @@ interface IPolicy {
         Amount paidAmount;
         uint8 payoutsCount;
         uint8 openPayoutsCount;
-        bytes data;
-        // TODO consider to add processData that may include information supporting confirm or decline
+        bytes submissionData; // claim submission data, no changes after submitting the claim
+        bytes processData; // data that may include information supporting confirm or decline
         Timestamp closedAt; // payment of confirmed claim amount (or declinedAt)
     }
 
