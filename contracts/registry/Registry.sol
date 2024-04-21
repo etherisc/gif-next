@@ -251,10 +251,7 @@ contract Registry is
         VersionPart releaseVersion
     ) external view returns (address service)
     {
-        // TODO how can I get service address while release is not validated/activated ?!! -> user will check validity of release on its own
-        //if(_releaseManager.isValidRelease(releaseVersion)) { 
             service =  _service[releaseVersion][serviceDomain]; 
-        //}
     }
 
     function getChainNftAddress() external view override returns (address) {
@@ -444,30 +441,26 @@ contract Registry is
         _coreTypes[PRODUCT()] = true;
         _coreTypes[POOL()] = true;
         _coreTypes[DISTRIBUTION()] = true;
+        _coreTypes[DISTRIBUTOR()] = true;
+        _coreTypes[ORACLE()] = true;
         _coreTypes[POLICY()] = true;
         _coreTypes[BUNDLE()] = true;
         _coreTypes[STAKE()] = true;
-        
-        // registry as parent, ONLY registry owner
-        //_coreContractCombinations[REGISTRY()][REGISTRY()] = true; // only for global regstry
-        _coreContractCombinations[TOKEN()][REGISTRY()] = true;
-        //_coreContractCombinations[SERVICE()][REGISTRY()] = true;// do not need it here -> registerService() registers exactly this combination
 
-        // registry as parent, ONLY approved
         _coreContractCombinations[INSTANCE()][REGISTRY()] = true;
-
-        // instance as parent, ONLY approved
         _coreContractCombinations[PRODUCT()][INSTANCE()] = true;
         _coreContractCombinations[DISTRIBUTION()][INSTANCE()] = true;
         _coreContractCombinations[ORACLE()][INSTANCE()] = true;
         _coreContractCombinations[POOL()][INSTANCE()] = true;
 
+        uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
+        if(registryId == _chainNft.GLOBAL_REGISTRY_ID()) 
+        {// we are global registry
+            _coreObjectCombinations[REGISTRY()][REGISTRY()] = true;
+        }
+
         _coreObjectCombinations[DISTRIBUTOR()][DISTRIBUTION()] = true;
-
-        // product as parent, ONLY approved
         _coreObjectCombinations[POLICY()][PRODUCT()] = true;
-
-        // pool as parent, ONLY approved
         _coreObjectCombinations[BUNDLE()][POOL()] = true;
         _coreObjectCombinations[STAKE()][POOL()] = true;
     }

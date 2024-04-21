@@ -10,9 +10,10 @@ import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {ERC165} from "../../contracts/shared/ERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
+import {ITransferInterceptor} from "../../contracts/registry/ITransferInterceptor.sol";
 
 
-contract RegisterableMock is ERC165, IRegisterable {
+contract RegisterableMock is ERC165, IRegisterable, ITransferInterceptor {
 
     IRegistry.ObjectInfo internal _info;
 
@@ -55,6 +56,14 @@ contract RegisterableMock is ERC165, IRegisterable {
         return _info;
     }
 
+    // from ITransferInterceptor
+    function nftMint(address to, uint256 tokenId) external {
+        // do nothing
+    }
+    function nftTransferFrom(address from, address to, uint256 tokenId) external {
+        // do nothing
+    }
+
     // from INftOwnable
     function linkToRegisteredNftId() external { /*do nothing*/ }
 
@@ -72,7 +81,8 @@ contract SelfOwnedRegisterableMock is RegisterableMock {
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
-        bytes memory data)
+        bytes memory data
+    )
         RegisterableMock(
             nftId,
             parentNftId,
@@ -83,15 +93,17 @@ contract SelfOwnedRegisterableMock is RegisterableMock {
     {}
 }
 
-contract RegisterableMockWithRandomInvalidAddress is RegisterableMock {
+contract RegisterableMockWithInvalidAddress is RegisterableMock {
 
     constructor(
         NftId nftId,
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
+        address objectAddress,
         address initialOwner,
-        bytes memory data)
+        bytes memory data
+    )
         RegisterableMock(
             nftId,
             parentNftId,
@@ -100,14 +112,11 @@ contract RegisterableMockWithRandomInvalidAddress is RegisterableMock {
             initialOwner,
             data) 
     {
-        FoundryRandom rng = new FoundryRandom();
-
-        address invalidAddress = address(uint160(rng.randomNumber(type(uint160).max)));
-        if(invalidAddress == address(this)) {
-            invalidAddress = address(uint160(invalidAddress) + 1);
+        if(objectAddress == address(this)) {
+            objectAddress = address(uint160(objectAddress) + 1);
         }
 
-        _info.objectAddress = invalidAddress;
+        _info.objectAddress = objectAddress;
     }
 }
 
@@ -122,5 +131,6 @@ contract SimpleAccessManagedRegisterableMock is RegisterableMock, AccessManaged 
             msg.sender,
             ""
         )
+    // solhint-disable-next-line no-empty-blocks
     {}
 }

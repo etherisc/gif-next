@@ -12,18 +12,14 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryTestBase} from "./RegistryTestBase.sol";
 
-contract Registry_Concrete_Tests is RegistryTestBase {
+contract RegisterConcreteTest is RegistryTestBase {
 
-    // TODO need to activate release in order to use registry
-    /*
     // previously failing cases 
     function test_register_specificCases() public
     {
-        bytes memory data = abi.encode("TestService", VersionLib.toVersionPart(GIF_VERSION));
-
         _startPrank(0xb6F322D9421ae42BBbB5CC277CE23Dbb08b3aC1f);
 
-        _assert_register_with_default_checks(
+        _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 toNftId(16158753772191290777002328881),
                 toNftId(193),
@@ -32,27 +28,25 @@ contract Registry_Concrete_Tests is RegistryTestBase {
                 0x9c538400FeC769e651E6552221C88A29660f0DE5,
                 0x643A203932303038363435323830353333323539,
                 ""                
-            )
-        );
+            ));
 
         _stopPrank();
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         // parentNftId == _chainNft.mint() && objectAddress == initialOwner
-        _assert_register_with_default_checks(
+        _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 toNftId(3471),
-                toNftId(43133705),
+                toNftId(chainNft.getNextTokenId()),
                 toObjectType(128),
                 false, // isInterceptor
                 0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
                 0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
                 ""              
-            )
-        );
+            ));
 
         // precompile address as owner
-        _assert_register_with_default_checks(
+        _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 toNftId(76658180398758015949026343204),
                 toNftId(17762988911415987093326017078),
@@ -61,11 +55,10 @@ contract Registry_Concrete_Tests is RegistryTestBase {
                 0x85Cf4Fe71daF5271f8a5C1D4E6BB4bc91f792e27,
                 0x0000000000000000000000000000000000000008,
                 ""            
-            )
-        );
+            ));
 
         // initialOwner is cheat codes contract address
-        _assert_register_with_default_checks(
+        _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 toNftId(15842010466351085404296329522),
                 toNftId(16017),
@@ -74,10 +67,9 @@ contract Registry_Concrete_Tests is RegistryTestBase {
                 0x0C168C3a4589B65fFf12444A0c88125a416927DD,
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
                 ""        
-            )
-        );
+            ));
 
-        _assert_register_with_default_checks(
+        _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 toNftId(0),
                 toNftId(162),
@@ -86,10 +78,9 @@ contract Registry_Concrete_Tests is RegistryTestBase {
                 0x733A203078373333613230333037383337333333,
                 0x4e59b44847b379578588920cA78FbF26c0B4956C,
                 ""        
-            )
-        );
+            ));
 
-        _assert_register_with_default_checks(
+        _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 toNftId(133133705),
                 registryNftId,
@@ -97,14 +88,13 @@ contract Registry_Concrete_Tests is RegistryTestBase {
                 false, // isInterceptor
                 0x0000000000000000000000000000000000000001,
                 0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
-                abi.encode("asasas", VersionLib.toVersionPart(GIF_VERSION))
-            )
-        );
+                ""
+            ));
 
         _stopPrank();
         _startPrank(0x0000000000000000000000000000000042966C69);
 
-        _assert_register_with_default_checks(
+        _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 toNftId(22045),
                 toNftId(EnumerableSet.at(_nftIds, 2620112370 % EnumerableSet.length(_nftIds))),
@@ -113,13 +103,12 @@ contract Registry_Concrete_Tests is RegistryTestBase {
                 address(0),
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
                 ""        
-            )
-        );
+            ));
 
         _stopPrank();
         _startPrank(0x000000000000000000000000000000000000185e);
 
-        _assert_register_with_default_checks(
+        _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 toNftId(5764),
                 toNftId(EnumerableSet.at(_nftIds, 1794 % EnumerableSet.length(_nftIds))),
@@ -128,19 +117,18 @@ contract Registry_Concrete_Tests is RegistryTestBase {
                 address(0),
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
                 ""        
-            )
-        );
+            ));
 
         _stopPrank();
         
     }
-
+    // TODO move to Registry.t.sol
     function test_registryOwnerNftTransfer() public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             zeroNftId(), // any nftId
             registryNftId,
-            PRODUCT(),
+            INSTANCE(),
             false,
             address(uint160(randomNumber(type(uint160).max))),
             outsider, // any address capable to receive nft
@@ -152,7 +140,7 @@ contract Registry_Concrete_Tests is RegistryTestBase {
             info.objectAddress = address(uint160(info.objectAddress) + 1);
         }
 
-        bytes memory reason_NotRegistryService = abi.encodeWithSelector(IRegistry.CallerNotRegistryService.selector);
+        bytes memory reason_NotRegistryService = abi.encodeWithSelector(IRegistry.ErrorRegistryCallerNotRegistryService.selector);
 
         // outsider can not register
         _startPrank(outsider);
@@ -172,8 +160,8 @@ contract Registry_Concrete_Tests is RegistryTestBase {
 
         _stopPrank();
 
-        // registryService can register
-        _startPrank(address(registryService));
+        // registryService, still can register
+        _startPrank(address(registryServiceMock));
         _assert_register(info, false, "");
         _stopPrank();
 
@@ -181,35 +169,7 @@ contract Registry_Concrete_Tests is RegistryTestBase {
         _startPrank(outsider);
         _assert_register(info, true, reason_NotRegistryService);
         _stopPrank();
-    }*/
-    // TODO mover to release manager tests
-    /*function test_register_ServiceWithZeroMajorVersion() public
-    {
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            zeroNftId(), // any nftId
-            registryNftId,
-            SERVICE(),
-            false, // isInterceptor            
-            address(uint160(randomNumber(type(uint160).max))),
-            outsider, // initialOwner, any address capable to receive nft
-            ""
-        );
-
-        while(EnumerableSet.contains(_registeredAddresses, info.objectAddress)) 
-        {// guarantee objectAddress is fresh
-            info.objectAddress = address(uint160(info.objectAddress) + 1);
-        }
-
-        _startPrank(address(registryService));
-
-        for(uint8 majorVersion = 0; majorVersion < GIF_VERSION; majorVersion++)
-        {
-            info.data = abi.encode("SomeTestName", VersionLib.toVersionPart(majorVersion));
-            _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, VersionLib.toVersionPart(majorVersion)));
-        }
-
-        _stopPrank();
-    }*/
+    }
 }
 
 

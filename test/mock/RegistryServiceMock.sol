@@ -42,6 +42,7 @@ contract RegistryServiceMock is Service {
         internal
         onlyInitializing
         virtual override
+    // solhint-disable-next-line no-empty-blocks
     {}
 
     function _upgrade(bytes memory data)

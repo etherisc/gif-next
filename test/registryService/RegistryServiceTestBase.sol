@@ -169,10 +169,8 @@ contract RegistryServiceTestBase is TestGifBase, FoundryRandom {
         infoFromRegisterable.nftId = infoFromRegistry.nftId; // initial value is random
         infoFromRegisterable.objectAddress = registeredContract;// registry enforces objectAddress 
 
-        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegistryService), 
-            "Info from registry is different from info in registry service");
-        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegisterable), 
-            "Info from registry is different from info in registered contract");
+        eqObjectInfo(infoFromRegistry, infoFromRegistryService);
+        eqObjectInfo(infoFromRegistry, infoFromRegisterable);
     }
 
     function _assert_registered_object(IRegistry.ObjectInfo memory objectInfo) internal 
@@ -180,8 +178,7 @@ contract RegistryServiceTestBase is TestGifBase, FoundryRandom {
         IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(objectInfo.nftId);
 
         assertEq(infoFromRegistry.objectAddress, address(0), "Object has non zero address");
-        assertTrue(eqObjectInfo(infoFromRegistry, objectInfo), 
-            "Info from registry is different from object info");
+        eqObjectInfo(infoFromRegistry, objectInfo);
     }
 
     /*function _checkRegistryServiceGetters(address implementation, Version version, uint64 initializedVersion, uint256 versionsCount) internal

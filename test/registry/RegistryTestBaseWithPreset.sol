@@ -14,7 +14,7 @@ import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol
 import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -34,20 +34,12 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         _nftIdByType[zeroObjectType()] = zeroNftId(); 
         _nftIdByType[PROTOCOL()] = protocolNftId;
         _nftIdByType[REGISTRY()] = registryNftId; // collision with globalRegistryNftId...have the same type
-        _nftIdByType[SERVICE()] = registryServiceNftId; 
 
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         _register_all_types();
 
         _stopPrank();
-    }
-
-    function _afterRegistration(IRegistry.ObjectInfo memory info) internal virtual override
-    {
-        super._afterRegistration(info);
-        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType already set");
-        _nftIdByType[info.objectType] = info.nftId;
     }
 
     function _register_all_types() internal
@@ -55,18 +47,6 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         IRegistry.ObjectInfo memory info;
 
         // solhint-disable no-console
-        console.log("Registering token");
-
-        info.nftId = toNftId(randomNumber(type(uint96).max));
-        info.parentNftId = _nftIdByType[REGISTRY()];
-        info.objectType = TOKEN();
-        info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
-        info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
-
-        info.nftId = registry.register(info);
-        _afterRegistration(info);
-
-        console.log("Token nftId:", _nftIdByType[TOKEN()].toInt());
         console.log("Registering instance");
 
         info.nftId = toNftId(randomNumber(type(uint96).max));
@@ -75,10 +55,10 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        info.nftId = registry.register(info);
-        _afterRegistration(info);
+        _assert_register(info, false, "");
+        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType[INSTANCE] is already set");
+        _nftIdByType[info.objectType] = info.nftId;
 
-        console.log("Instance nftId: %s", _nftIdByType[INSTANCE()].toInt());
         console.log("Registering product");
 
         info.nftId = toNftId(randomNumber(type(uint96).max));
@@ -87,10 +67,10 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        info.nftId = registry.register(info);
-        _afterRegistration(info);
+        _assert_register(info, false, "");
+        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType[PRODUCT] is already set");
+        _nftIdByType[info.objectType] = info.nftId;
 
-        console.log("Product nftId: %s", _nftIdByType[PRODUCT()].toInt());
         console.log("Registering pool");
 
         info.nftId = toNftId(randomNumber(type(uint96).max));
@@ -99,10 +79,10 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        info.nftId = registry.register(info);
-        _afterRegistration(info);
+        _assert_register(info, false, "");
+        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType[POOL] is already set");
+        _nftIdByType[info.objectType] = info.nftId;
 
-        console.log("Pool nftId: %s", _nftIdByType[POOL()].toInt());
         console.log("Registering oracle");
 
         info.nftId = toNftId(randomNumber(type(uint96).max));
@@ -111,10 +91,10 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        info.nftId = registry.register(info);
-        _afterRegistration(info);
+        _assert_register(info, false, "");
+        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType[ORACLE] is already set");
+        _nftIdByType[info.objectType] = info.nftId;
 
-        console.log("Oracle nftId: %s", _nftIdByType[ORACLE()].toInt());
         console.log("Registering distribution");
 
         info.nftId = toNftId(randomNumber(type(uint96).max));
@@ -123,10 +103,22 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        info.nftId = registry.register(info);
-        _afterRegistration(info);
+        _assert_register(info, false, "");
+        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType[DISTRIBUTION] is already set");
+        _nftIdByType[info.objectType] = info.nftId;
 
-        console.log("Distribution nftId: %s", _nftIdByType[DISTRIBUTION()].toInt());
+        console.log("Registering distributor");
+
+        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.parentNftId = _nftIdByType[DISTRIBUTION()];
+        info.objectType = DISTRIBUTOR();
+        info.objectAddress = address(0);
+        info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
+
+        _assert_register(info, false, "");
+        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType[DISTRIBUTOR] is already set");
+        _nftIdByType[info.objectType] = info.nftId;
+
         console.log("Registering policy");
 
         info.nftId = toNftId(randomNumber(type(uint96).max));
@@ -135,10 +127,10 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.objectAddress = address(0);
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        info.nftId = registry.register(info);
-        _afterRegistration(info);
+        _assert_register(info, false, "");
+        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType[POLICY] is already set");
+        _nftIdByType[info.objectType] = info.nftId;
 
-        console.log("Policy nftId: %s", _nftIdByType[POLICY()].toInt());
         console.log("Registering bundle");   
 
         info.nftId = toNftId(randomNumber(type(uint96).max));
@@ -147,10 +139,10 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.objectAddress = address(0);
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        info.nftId = registry.register(info);
-        _afterRegistration(info);
+        _assert_register(info, false, "");
+        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType[BUNDLE] is already set");
+        _nftIdByType[info.objectType] = info.nftId;
 
-        console.log("Bundle nftId: %s", _nftIdByType[BUNDLE()].toInt());
         console.log("Registering stake");
 
         info.nftId = toNftId(randomNumber(type(uint96).max));
@@ -159,10 +151,9 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         info.objectAddress = address(0);
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        info.nftId = registry.register(info);
-        _afterRegistration(info);
-
-        console.log("Stake nftId: %s\n", _nftIdByType[STAKE()].toInt());
+        _assert_register(info, false, "");
+        assertEq(_nftIdByType[info.objectType].toInt(), 0, "Test error: _nftIdByType[STAKE] is already set");
+        _nftIdByType[info.objectType] = info.nftId;
         // solhint-enable
     }
 }

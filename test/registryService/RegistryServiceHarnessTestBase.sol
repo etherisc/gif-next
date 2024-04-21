@@ -144,10 +144,8 @@ contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
 
             IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(address(registerable));
 
-            assertTrue(eqObjectInfo(info, infoFromRegistryService), 
-                "Info read from registerable is different from info returned by registry service");
-            assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegistryService), 
-                "Info read from registry is different from info returned by registry service");
+            eqObjectInfo(info, infoFromRegistryService);
+            eqObjectInfo(infoFromRegistry, infoFromRegistryService);
         }
     }
 

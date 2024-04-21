@@ -8,7 +8,7 @@ import {ObjectType, toObjectType, ObjectTypeLib} from "../../contracts/type/Obje
 import {RegistryServiceHarnessTestBase} from "./RegistryServiceHarnessTestBase.sol";
 
 import {RegisterableMock,
-        RegisterableMockWithRandomInvalidAddress} from "../mock/RegisterableMock.sol";
+        RegisterableMockWithInvalidAddress} from "../mock/RegisterableMock.sol";
 
 
 contract GetAndVerifyContractInfo_Fuzz_Test is RegistryServiceHarnessTestBase {
@@ -42,14 +42,16 @@ contract GetAndVerifyContractInfo_Fuzz_Test is RegistryServiceHarnessTestBase {
         NftId parentNftId,
         ObjectType objectType,
         bool isInterceptor,
+        address objectAddress,
         address initialOwner,
         bytes memory data) public 
     {
-        RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
+        RegisterableMockWithInvalidAddress registerable = new RegisterableMockWithInvalidAddress(
             nftId,
             parentNftId,
             objectType,
-            isInterceptor, 
+            isInterceptor,
+            objectAddress,
             initialOwner,
             data
         );

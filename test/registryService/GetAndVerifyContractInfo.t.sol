@@ -14,7 +14,7 @@ import {RegistryServiceHarnessTestBase} from "./RegistryServiceHarnessTestBase.s
 
 import {RegisterableMock,
         SelfOwnedRegisterableMock,
-        RegisterableMockWithRandomInvalidAddress} from "../mock/RegisterableMock.sol";
+        RegisterableMockWithInvalidAddress} from "../mock/RegisterableMock.sol";
 
 
 contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
@@ -37,19 +37,19 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
                 registerableType,
                 registerableOwner);
 
-        assertTrue(eqObjectInfo(infoFromRegistryService, registerable.getInitialInfo()), 
-            "Info returned by registry service is different from info stored in registerable");
+        eqObjectInfo(infoFromRegistryService, registerable.getInitialInfo());//, "Info returned by registry service is different from info stored in registerable");
     } 
 
     function test_withInvalidRegisterableAddress() public 
     {
         ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
 
-        RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
+        RegisterableMockWithInvalidAddress registerable = new RegisterableMockWithInvalidAddress(
             toNftId(randomNumber(type(uint96).max)), // nftId
             toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
+            address(uint160(randomNumber(type(uint160).max))),
             registerableOwner, // initialOwner
             ""
         );
