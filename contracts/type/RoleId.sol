@@ -57,6 +57,8 @@ function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600)
 /// allows instance specific target, role and access management 
 function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1900); }
 
+function REGISTRY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1800); }
+
 /// @dev instance specific role for instance service
 function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
 /// @dev role for creating gif target on instance service
