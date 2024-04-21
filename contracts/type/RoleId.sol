@@ -37,9 +37,6 @@ function GIF_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500
 /// token white/blacklisting is possible for any active release
 function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 
 
-/// @dev role associated with the ReleaseManager contract
-function RELEASE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1700); } 
-
 /// @dev instance specific role to register/own a distribution component
 function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2); }
 
@@ -62,6 +59,8 @@ function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId
 
 /// @dev instance specific role for instance service
 function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
+/// @dev role for creating gif target on instance service
+function CAN_CREATE_GIF_TARGET_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1700); }
 
 /// @dev instance specific role for distribution service
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
@@ -83,15 +82,12 @@ function CLAIM_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(
 
 /// @dev instance specific role for bundle service
 function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
-function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600); }
-function REGISTRY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2700); }
+
+/// @dev instance specific role for pricing service
 function PRICING_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2800); }
+
+/// @dev instance specific role for staking service
 function STAKING_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2900); }
-
-function GIF_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
-function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); }
-
-function CAN_CREATE_GIF_TARGET_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1700); }
 
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {
