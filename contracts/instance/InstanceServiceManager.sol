@@ -13,7 +13,7 @@ contract InstanceServiceManager is ProxyManager {
 
     InstanceService private _instanceService;
 
-    /// @dev initializes proxy manager with instance service implementation and deploys instance
+    /// @dev initializes proxy manager with instance service implementation
     constructor(
         address authority, 
         address registryAddress,
@@ -30,19 +30,6 @@ contract InstanceServiceManager is ProxyManager {
             salt);
 
         _instanceService = InstanceService(address(versionable));
-
-        // TODO `this` must have a role or own nft to register service
-        //Registry registry = Registry(registryAddress);
-        //address registryServiceAddress = registry.getServiceAddress(REGISTRY(), _instanceService.getMajorVersion());
-        //RegistryService registryService = RegistryService(registryServiceAddress);
-        //registryService.registerService(_instanceService);
-        // RegistryService registryService = _instanceService.getRegistryService();
-
-        // TODO no nft to link yet
-        // link ownership of instance service manager ot nft owner of instance service
-        //_linkToNftOwnable(
-        //    address(registryAddress),
-        //    address(_instanceService));
     }
 
     //--- view functions ----------------------------------------------------//

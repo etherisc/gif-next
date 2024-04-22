@@ -28,18 +28,6 @@ contract PoolServiceManager is ProxyManager {
             salt);
 
         _poolService = PoolService(address(versionable));
-
-        // TODO `this` must have a role or own nft to register service
-        //Registry registry = Registry(registryAddress);
-        //address registryServiceAddress = registry.getServiceAddress(REGISTRY(), _poolService.getMajorVersion());
-        //RegistryService registryService = RegistryService(registryServiceAddress);
-        //registryService.registerService(_poolService);
-        
-        // TODO no nft to link yet
-        // link ownership of instance service manager ot nft owner of instance service
-        //_linkToNftOwnable(
-        //    address(registryAddress),
-        //    address(_poolService));
     }
 
     //--- view functions ----------------------------------------------------//
