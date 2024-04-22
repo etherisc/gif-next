@@ -408,53 +408,36 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     }
 */
     function testFuzz_registerService_withDuplicateVersonAndDomain(
-        NftId serviceNftId_1,
-        bool isInterceptor_1,
-        address serviceAddress_1,
-        address serviceOwner_1,
-        bytes memory data_1,
-        NftId serviceNftId_2,
-        address serviceAddress_2,
-        address serviceOwner_2,
-        bytes memory data_2,
+        IRegistry.ObjectInfo memory info_1,
+        IRegistry.ObjectInfo memory info_2,
         VersionPart version, 
         ObjectType domain
-    ) public
+    ) 
+        public
     {
         vm.assume(
-            serviceAddress_1 != serviceAddress_2 &&
-            serviceAddress_1 != address(0) &&
-            serviceAddress_2 != address(0) &&
-            address(serviceOwner_1).codehash == 0 && // can receive nft
-            address(serviceOwner_2).codehash == 0 &&
-            address(serviceOwner_1) != address(0) &&
-            address(serviceOwner_2) != address(0) &&
-            !EnumerableSet.contains(_registeredAddresses, serviceAddress_1) &&
-            !EnumerableSet.contains(_registeredAddresses, serviceAddress_2) &&
-            !EnumerableSet.contains(_registeredAddresses, serviceOwner_1) &&
-            !EnumerableSet.contains(_registeredAddresses, serviceOwner_2) &&
+            info_1.objectAddress != info_2.objectAddress &&
+            info_1.objectAddress != address(0) &&
+            info_2.objectAddress != address(0) &&
+            address(info_1.initialOwner).codehash == 0 && // can receive nft
+            address(info_2.initialOwner).codehash == 0 &&
+            address(info_1.initialOwner) != address(0) &&
+            address(info_2.initialOwner) != address(0) &&
+            !EnumerableSet.contains(_registeredAddresses, info_1.objectAddress) &&
+            !EnumerableSet.contains(_registeredAddresses, info_2.objectAddress) &&
+            !EnumerableSet.contains(_registeredAddresses, info_1.initialOwner) &&
+            !EnumerableSet.contains(_registeredAddresses, info_2.initialOwner) &&
+            !(version.toInt() == VERSION.toInt() && domain.toInt() == REGISTRY().toInt()) && // already registered service
             domain.gtz()
         );
 
-        IRegistry.ObjectInfo memory info_1 = IRegistry.ObjectInfo(
-            serviceNftId_1,
-            registryNftId,
-            SERVICE(),
-            false, //test.isInterceptor_1 // TODO make random
-            serviceAddress_1,// not zero and not registered
-            serviceOwner_1, // initialOwner, any address capable to receive nft
-            data_1
-        );
+        info_1.parentNftId = registryNftId;
+        info_1.objectType = SERVICE();
+        info_1.isInterceptor = false;
 
-        IRegistry.ObjectInfo memory info_2 = IRegistry.ObjectInfo(
-            serviceNftId_2,
-            registryNftId,
-            SERVICE(),
-            false, //test.isInterceptor_2 // TODO make random
-            serviceAddress_2,// not zero and not registered
-            serviceOwner_2, // initialOwner, any address capable to receive nft
-            data_2
-        );
+        info_2.parentNftId = registryNftId;
+        info_2.objectType = SERVICE();
+        info_2.isInterceptor = false;
 
         _startPrank(address(releaseManager));
 
@@ -467,14 +450,13 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             true, 
             abi.encodeWithSelector(
                 IRegistry.ErrorRegistryDomainAlreadyRegistered.selector,
-                serviceAddress_2,
+                info_2.objectAddress,
                 version,
                 domain)
         );
 
         _stopPrank();
     }
-
 }
 
 contract RegisterServiceWithPresetFuzzTest is RegistryTestBaseWithPreset, RegisterServiceFuzzTest
