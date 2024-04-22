@@ -158,9 +158,10 @@ contract ReleaseManager is AccessManaged
 
         uint serviceIdx = _awaitingRegistration - 1;
         address serviceAddress = _releaseInfo[version].addresses[serviceIdx];
-        if(address(service) != serviceAddress) {
+        // TODO temp, while typescript addresses computation is not implemented 
+        /*if(address(service) != serviceAddress) {
             revert ErrorReleaseManagerServiceAddressInvalid(service, serviceAddress);
-        }
+        }*/
 
         _setServiceAuthorizations(
             _releaseAccessManager[version],

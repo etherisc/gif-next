@@ -559,9 +559,10 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         }
         else
         {
+            NftId nftId = toNftId(chainNft.calculateTokenId(_nextId));
             vm.expectEmit();
             emit LogRegistration(
-                toNftId(chainNft.calculateTokenId(_nextId)), 
+                nftId,
                 info.parentNftId, 
                 info.objectType, 
                 info.isInterceptor,
