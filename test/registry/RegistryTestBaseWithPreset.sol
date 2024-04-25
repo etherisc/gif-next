@@ -11,7 +11,7 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {blockBlocknumber} from "../../contracts/type/Blocknumber.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
@@ -31,7 +31,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
     {
         super.setUp();
 
-        _nftIdByType[zeroObjectType()] = zeroNftId(); 
+        _nftIdByType[zeroObjectType()] = NftIdLib.zero(); 
         _nftIdByType[PROTOCOL()] = protocolNftId;
         _nftIdByType[REGISTRY()] = registryNftId; // collision with globalRegistryNftId...have the same type
 
@@ -46,10 +46,25 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info;
 
+        // TODO cleanup or reenable
         // solhint-disable no-console
+//         console.log("Registering token");
+
+//         info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
+//         info.parentNftId = _nftIdByType[REGISTRY()];
+//         info.objectType = TOKEN();
+//         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
+//         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
+
+//         info.nftId = registry.register(info);
+//         _afterRegistration_setUp(info);
+//         _nftIdByType[TOKEN()] = info.nftId;
+
+//         console.log("Token nftId:", _nftIdByType[TOKEN()].toInt());
+// >>>>>>> 697ff1d (major refactoring (part 1))
         console.log("Registering instance");
 
-        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = _nftIdByType[REGISTRY()];
         info.objectType = INSTANCE();
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
@@ -61,7 +76,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
         console.log("Registering product");
 
-        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = _nftIdByType[INSTANCE()];
         info.objectType = PRODUCT();
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
@@ -73,7 +88,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
         console.log("Registering pool");
 
-        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = _nftIdByType[INSTANCE()];
         info.objectType = POOL();
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
@@ -85,7 +100,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
         console.log("Registering oracle");
 
-        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = _nftIdByType[INSTANCE()];
         info.objectType = ORACLE();
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
@@ -97,7 +112,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
         console.log("Registering distribution");
 
-        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = _nftIdByType[INSTANCE()];
         info.objectType = DISTRIBUTION();
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
@@ -121,7 +136,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
         console.log("Registering policy");
 
-        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = _nftIdByType[PRODUCT()];
         info.objectType = POLICY();
         info.objectAddress = address(0);
@@ -133,7 +148,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
         console.log("Registering bundle");   
 
-        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = _nftIdByType[POOL()];
         info.objectType = BUNDLE();
         info.objectAddress = address(0);
@@ -145,7 +160,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
         console.log("Registering stake");
 
-        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = _nftIdByType[POOL()];
         info.objectType = STAKE();
         info.objectAddress = address(0);

@@ -106,9 +106,7 @@ interface IPoolComponent is IInstanceLinkedComponent {
         view
         returns (bool isMatching);
 
-    /// @dev returns pool specific infos for this pool
-    /// when registered with an instance the info is obtained from the data stored in the instance
-    /// when not registered the function returns the info from the component contract
-    function getPoolInfo() external view returns (IComponents.PoolInfo memory info);
+    /// @dev returns initial pool specific infos for this pool
+    function getInitialPoolInfo() external view returns (IComponents.PoolInfo memory info);
 
 }

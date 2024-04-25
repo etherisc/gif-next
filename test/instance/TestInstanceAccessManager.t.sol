@@ -10,7 +10,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 //import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {PRODUCT} from "../../contracts/type/ObjectType.sol";
-import {zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftIdLib} from "../../contracts/type/NftId.sol";
 import {FeeLib} from "../../contracts/type/Fee.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {TimestampLib} from "../../contracts/type/Timestamp.sol";
@@ -73,15 +73,14 @@ contract TestInstanceAccessManager is GifTest {
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            productOwner,
             address(token),
             false,
             address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
+            address(distribution)
         );
-        productService.register(address(product));
+
+        product.register();
         SimpleProduct dproduct = SimpleProduct(address(product));
         vm.stopPrank();
 
@@ -106,15 +105,14 @@ contract TestInstanceAccessManager is GifTest {
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            productOwner,
             address(token),
             false,
             address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
+            address(distribution)
         );
-        productService.register(address(product));
+
+        product.register();
         vm.stopPrank();
 
         vm.startPrank(instanceOwner);
@@ -151,15 +149,14 @@ contract TestInstanceAccessManager is GifTest {
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            productOwner,
             address(token),
             false,
             address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
+            address(distribution)
         );
-        productService.register(address(product));
+
+        product.register();
         vm.stopPrank();
 
         vm.startPrank(instanceOwner);
@@ -901,7 +898,7 @@ contract TestInstanceAccessManager is GifTest {
     function test_InstanceAccessManager_createGifTarget_withNotIAccessManagedTarget() public
     {
         IRegisterable gifTarget = new RegisterableMock(
-            zeroNftId(), 
+            NftIdLib.zero(), 
             instanceNftId, 
             PRODUCT(),
             false,

@@ -9,7 +9,7 @@ import {console} from "../../lib/forge-std/src/Test.sol";
 import {RoleId, REGISTRY_SERVICE_ROLE} from "../../contracts/type/RoleId.sol";
 import {ObjectType, REGISTRY, SERVICE} from "../../contracts/type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {Version, VersionPart, VersionLib} from "../../contracts/type/Version.sol";
 

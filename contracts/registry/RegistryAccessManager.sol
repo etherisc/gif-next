@@ -74,6 +74,35 @@ contract RegistryAccessManager is AccessManaged, Initializable
         _setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
     }
 
+
+    // set unique role for target, role forever have 1 member and never revoked
+    function setAndGrantUniqueRole(
+        address account, 
+        address target, 
+        bytes4[] memory selector
+    )
+        external
+        restricted // RELEASE_MANAGER_ROLE
+        returns(RoleId)
+    {
+        // TODO define and add checks
+        RoleId roleId = _getNextRoleId();
+
+        _setTargetFunctionRole(target, selector, roleId);
+        _grantRole(roleId, account, 0);
+    }
+
+    function setTargetFunctionRole(
+        address target, 
+        bytes4[] memory selector,
+        RoleId roleId
+    )
+        external
+        restricted // RELEASE_MANAGER_ROLE
+    {
+        _setTargetFunctionRole(target, selector, roleId);
+    }
+
     /*function transferAdmin(address to)
         external
         restricted // only with GIF_ADMIN_ROLE or nft owner
@@ -106,7 +135,11 @@ contract RegistryAccessManager is AccessManaged, Initializable
         functionSelector[2] = ReleaseManager.prepareNextRelease.selector;
 
         _setTargetFunctionRole(_releaseManager, functionSelector, GIF_MANAGER_ROLE());
+
+        // set admin
+        _setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
     }
+
 
     function _setTargetFunctionRole(address target, bytes4[] memory selectors, RoleId roleId) private {
         AccessManager(authority()).setTargetFunctionRole(target, selectors, roleId.toInt());        

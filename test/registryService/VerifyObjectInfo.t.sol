@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -17,8 +17,8 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
         
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
-            nftId: toNftId(randomNumber(type(uint96).max)),
-            parentNftId: toNftId(randomNumber(type(uint96).max)), 
+            nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
+            parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)), 
             objectType: objectType,
             isInterceptor: toBool(randomNumber(1)), 
             objectAddress: address(0), 
@@ -41,8 +41,8 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         }
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
-            nftId: toNftId(randomNumber(type(uint96).max)),
-            parentNftId: toNftId(randomNumber(type(uint96).max)),
+            nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
+            parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
             isInterceptor: toBool(randomNumber(1)), 
             objectAddress: address(0), 
@@ -70,8 +70,8 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         }
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
-            nftId: toNftId(randomNumber(type(uint96).max)), 
-            parentNftId: toNftId(randomNumber(type(uint96).max)),
+            nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)), 
+            parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0),
@@ -99,8 +99,8 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         }
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
-            nftId: toNftId(randomNumber(type(uint96).max)),
-            parentNftId: toNftId(randomNumber(type(uint96).max)),
+            nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
+            parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0),
@@ -129,8 +129,8 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         }
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
-            nftId: toNftId(randomNumber(type(uint96).max)),
-            parentNftId: toNftId(randomNumber(type(uint96).max)),
+            nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
+            parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: nonZeroObjectAddress,
@@ -153,8 +153,8 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
-            nftId: toNftId(randomNumber(type(uint96).max)),
-            parentNftId: toNftId(randomNumber(type(uint96).max)),
+            nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
+            parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0),
@@ -176,8 +176,8 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
-            nftId: toNftId(randomNumber(type(uint96).max)),
-            parentNftId: toNftId(randomNumber(type(uint96).max)),
+            nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
+            parentNftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
             objectType: objectType,
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0),

@@ -49,7 +49,7 @@ function toBlocknumber(uint256 blocknum) pure returns (Blocknumber) {
 }
 
 function blockBlocknumber() view returns (Blocknumber) {
-    return toBlocknumber(block.number);
+    return BlocknumberLib.currentBlocknumber();
 }
 
 // TODO move to BlocknumberLib and rename to zero()
@@ -64,6 +64,11 @@ function blockNumber() view returns (Blocknumber) {
 }
 
 library BlocknumberLib {
+    /// @dev returns the current Blocknumber
+    function currentBlocknumber() public view returns (Blocknumber) {
+        return Blocknumber.wrap(uint32(block.number));
+    }
+
     /// @dev return true if Blocknumber a is greater than Blocknumber b
     function gt(
         Blocknumber a,

@@ -9,7 +9,7 @@ import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Dip} from "../mock/Dip.sol";
-import {NftId, toNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -67,8 +67,8 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         // solhint-enable
 
         console.log("registered objects", registry.getObjectCount());
-        _logObject("protocol", toNftId(1101));
-        _logObject("globalRegistry", toNftId(2101));
+        _logObject("protocol", NftIdLib.toNftId(1101));
+        _logObject("globalRegistry", NftIdLib.toNftId(2101));
         _logObject("chainRegistry", address(registry));
         _logObject("registryService", address(registryService));
 

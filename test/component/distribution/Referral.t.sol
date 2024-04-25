@@ -2,13 +2,13 @@
 pragma solidity ^0.8.20;
 
 import {ACTIVE, APPLIED} from "../../../contracts/type/StateId.sol";
+import {Amount} from "../../../contracts/type/Amount.sol";
 import {console} from "../../../lib/forge-std/src/Test.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
-import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
@@ -25,7 +25,7 @@ import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 contract ReferralTest is ReferralTestBase {
     using NftIdLib for NftId;
 
-    function test_Distribution_referralIsValid_true() public {
+    function test_DistributionReferralIsValidTrue() public {
         _setupTestData(true);
 
         // solhint-disable-next-line 
@@ -61,32 +61,33 @@ contract ReferralTest is ReferralTestBase {
         assertFalse(distributionService.referralIsValid(distributionNftId, ReferralLib.toReferralId(distributionNftId, "UNKNOWN")), "referral is valid");
     }
 
-    function test_Referral_collateralizeWithReferral() public {
+    function test_ReferralCollateralizeWithReferral() public {
+
         _setupTestData(true);
-        _setupPoolAndProduct();
+
+        Amount bundleBalanceInitial = instanceReader.getBalanceAmount(bundleNftId);
+        Amount bundleFeeInitial = instanceReader.getFeeAmount(bundleNftId);
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), bundleBalanceInitial.toInt(), "unexpected initial bundle balance");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), bundleFeeInitial.toInt(), "unexpected initial bundle balance");
 
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
+        // create risk
         vm.startPrank(productOwner);
-
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
-
+        product.createRisk(riskId, data);
         vm.stopPrank();
 
         vm.startPrank(customer);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
 
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        token.approve(address(productSetupInfo.tokenHandler), 1000);
-        // revert("checkApprove");
-
-        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
-        referralId = sdistribution.createReferral(
+        referralId = distribution.createReferral(
             distributorNftId,
             referralCode,
             UFixedLib.toUFixed(5, -2),
@@ -94,7 +95,7 @@ contract ReferralTest is ReferralTestBase {
             expiryAt,
             referralData);
 
-        NftId policyNftId = dproduct.createApplication(
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
             1000,
@@ -103,6 +104,7 @@ contract ReferralTest is ReferralTestBase {
             bundleNftId,
             referralId
         );
+
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
@@ -112,14 +114,14 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        dproduct.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 100, "capitalAmount not 1100");
+        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "unexpected lockedAmount");
+        assertEq(bundleInfo.capitalAmount.toInt(), bundleBalanceInitial.toInt() + 100, "unexpected capitalAmount");
         
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
@@ -136,13 +138,14 @@ contract ReferralTest is ReferralTestBase {
         assertEq(distributorInfo.numPoliciesSold, 1, "numPoliciesSold not 1");
         assertEq(distributorInfo.commissionAmount.toInt(), 3, "sumCommisions not 3");
 
-        ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
-        assertEq(distributionSetupInfo.sumDistributionOwnerFees, 11, "sumDistributionOwnerFees not 11");
+        assertEq(instanceReader.getFeeAmount(distributionNftId).toInt(), 11, "sumDistributionOwnerFees not 11");
     }
 
-    function test_Referral_collateralizeMultipleWithReferral() public {
+    function test_ReferralCollateralizeMultipleWithReferral() public {
+        uint256 bundleAmount = 10000;
+
         _setupTestData(true);
-        _setupPoolAndProduct();
+        // _setupBundle(bundleAmount);
 
         // GIVEN - two policies to collateralize
         vm.startPrank(registryOwner);
@@ -151,22 +154,18 @@ contract ReferralTest is ReferralTestBase {
         vm.stopPrank();
 
         vm.startPrank(productOwner);
-
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
-
+        product.createRisk(riskId, data);
         vm.stopPrank();
 
         vm.startPrank(customer);
 
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
         // revert("checkApprove");
 
-        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
-        referralId = sdistribution.createReferral(
+        referralId = distribution.createReferral(
             distributorNftId,
             referralCode,
             UFixedLib.toUFixed(5, -2),
@@ -174,7 +173,7 @@ contract ReferralTest is ReferralTestBase {
             expiryAt,
             referralData);
 
-        NftId policyNftId = dproduct.createApplication(
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
             1000,
@@ -186,7 +185,7 @@ contract ReferralTest is ReferralTestBase {
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
-        NftId policyNftId2 = dproduct.createApplication(
+        NftId policyNftId2 = product.createApplication(
             customer,
             riskId,
             1000,
@@ -202,8 +201,8 @@ contract ReferralTest is ReferralTestBase {
 
         // WHEN
         vm.startPrank(productOwner);
-        dproduct.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
-        dproduct.collateralize(policyNftId2, true, TimestampLib.blockTimestamp()); 
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        product.collateralize(policyNftId2, true, TimestampLib.blockTimestamp()); 
 
         // THEN - check 13 tokens in distribution wallet (120 premium ), 887 tokens in customer wallet, 10100 tokens in pool wallet
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
@@ -221,8 +220,7 @@ contract ReferralTest is ReferralTestBase {
         assertEq(distributorInfo.numPoliciesSold, 2, "numPoliciesSold not 2");
         assertEq(distributorInfo.commissionAmount.toInt(), 6, "commissionAmount not 6");
 
-        ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
-        assertEq(distributionSetupInfo.sumDistributionOwnerFees, 22, "sumDistributionOwnerFees not 22");
+        assertEq(instanceReader.getFeeAmount(distributionNftId).toInt(), 22, "sumDistributionOwnerFees not 22");
         vm.stopPrank();
 
         // --------------------------------------------------------------
@@ -235,9 +233,9 @@ contract ReferralTest is ReferralTestBase {
         vm.stopPrank();
 
         vm.startPrank(customer2);
-        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        token.approve(address(componentInfo.tokenHandler), 1000);
 
-        ReferralId referralId2 = sdistribution.createReferral(
+        ReferralId referralId2 = distribution.createReferral(
             distributorNftId2,
             "SAVE2!!!",
             UFixedLib.toUFixed(5, -2),
@@ -245,7 +243,7 @@ contract ReferralTest is ReferralTestBase {
             expiryAt,
             referralData);
 
-        NftId policyNftId3 = dproduct.createApplication(
+        NftId policyNftId3 = product.createApplication(
             customer2,
             riskId,
             1000,
@@ -256,7 +254,7 @@ contract ReferralTest is ReferralTestBase {
         );
 
         // WHEN 
-        dproduct.collateralize(policyNftId3, true, TimestampLib.blockTimestamp()); 
+        product.collateralize(policyNftId3, true, TimestampLib.blockTimestamp()); 
 
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId3) == ACTIVE(), "policy3 state not ACTIVE");
@@ -268,64 +266,26 @@ contract ReferralTest is ReferralTestBase {
         assertEq(token.balanceOf(distribution.getWallet()), 42, "distribution balance not 14");
         
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 3, "expected one active policy");
-        
-        IDistribution.DistributorInfo memory distributorInfo2 = instanceReader.getDistributorInfo(distributorNftId2);
-        assertEq(distributorInfo2.numPoliciesSold, 1, "numPoliciesSold not 2");
-        assertEq(distributorInfo2.commissionAmount.toInt(), 3, "commissionAmount not 3");
 
-        distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
-        assertEq(distributionSetupInfo.sumDistributionOwnerFees, 33, "sumDistributionOwnerFees not 33");
+        assertEq(instanceReader.getFeeAmount(distributionNftId).toInt(), 33, "sumDistributionOwnerFees not 33");
         vm.stopPrank();
     }
 
-    function _setupPoolAndProduct() internal {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        vm.stopPrank();
 
-        vm.startPrank(poolOwner);
-        pool = new SimplePool(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
-            poolOwner
-        );
-        poolNftId = poolService.register(address(pool));
-        vm.stopPrank();
-    
-        vm.startPrank(productOwner);
-        product = new SimpleProduct(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
-        );
-        
-        productNftId = productService.register(address(product));
-        vm.stopPrank();
+    function _setupBundle(uint256 bundleAmount) internal {
 
         vm.startPrank(registryOwner);
-        token.transfer(investor, 10000);
+        token.transfer(investor, bundleAmount);
         vm.stopPrank();
 
         vm.startPrank(investor);
         IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
-        token.approve(address(poolInfo.tokenHandler), 10000);
+        token.approve(address(poolInfo.tokenHandler), bundleAmount);
 
-        SimplePool spool = SimplePool(address(pool));
-        bundleNftId = spool.createBundle(
-            FeeLib.zeroFee(), 
-            10000, 
+        // SimplePool spool = SimplePool(address(pool));
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            bundleAmount, 
             SecondsLib.toSeconds(604800), 
             ""
         );

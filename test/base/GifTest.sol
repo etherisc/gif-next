@@ -6,7 +6,8 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {SecondsLib} from "../../contracts/type/Seconds.sol";
 import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {
@@ -38,6 +39,9 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
+import {IComponents} from "../../contracts/instance/module/IComponents.sol";
+import {ComponentService} from "../../contracts/shared/ComponentService.sol";
+import {ComponentServiceManager} from "../../contracts/shared/ComponentServiceManager.sol";
 import {DistributionService} from "../../contracts/distribution/DistributionService.sol";
 import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
 import {ProductService} from "../../contracts/product/ProductService.sol";
@@ -80,11 +84,15 @@ import {Pool} from "../../contracts/pool/Pool.sol";
 import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
 import {SimplePool} from "../mock/SimplePool.sol";
+import {SimpleProduct} from "../mock/SimpleProduct.sol";
 
 import {ReleaseConfig} from "./ReleaseConfig.sol";
 
 // solhint-disable-next-line max-states-count
 contract GifTest is Test {
+
+    // default customer token balance in full token units, value will be multiplied by 10 ** token.decimals()
+    uint256 DEFAULT_CUSTOMER_FUNDS = 1000;
 
     // in full token units, value will be multiplied by 10 ** token.decimals()
     uint256 constant public DEFAULT_BUNDLE_CAPITALIZATION = 10 ** 5;
@@ -106,14 +114,20 @@ contract GifTest is Test {
     InstanceServiceManager public instanceServiceManager;
     InstanceService public instanceService;
 
-    StakingServiceManager public stakingServiceManager;
-    StakingService public stakingService;
-    NftId public stakingServiceNftId;
+    // TODO cleanpu
+    // StakingServiceManager public stakingServiceManager;
+    // StakingService public stakingService;
+    // NftId public stakingServiceNftId;
     StakingManager public stakingManager;
     Staking public staking;
     NftId public stakingNftId;
 
     NftId public instanceServiceNftId;
+
+    ComponentServiceManager public componentServiceManager;
+    ComponentService public componentService;
+    NftId public componentServiceNftId;
+
     DistributionServiceManager public distributionServiceManager;
     DistributionService public distributionService;
     NftId public distributionServiceNftId;
@@ -160,17 +174,12 @@ contract GifTest is Test {
     NftId public instanceNftId;
     InstanceReader public instanceReader;
 
-    IKeyValueStore public keyValueStore;
-    // TestProduct public product;
-    // TestPool public pool;
-    // TestDistribution public distribution;
-    Distribution public distribution;
+    SimpleDistribution public distribution;
     NftId public distributionNftId;
-    Pool public pool;
+    SimplePool public pool;
     NftId public poolNftId;
-    Product public product;
+    SimpleProduct public product;
     NftId public productNftId;
-    TokenHandler public tokenHandler;
 
     address public registryAddress;
     NftId public registryNftId;
@@ -241,12 +250,6 @@ contract GifTest is Test {
         vm.startPrank(instanceOwner);
         _createInstance();
         vm.stopPrank();
-    }
-
-    function fundAccount(address account, uint256 amount) public {
-        token.transfer(account, amount);
-
-        token.approve(address(tokenHandler), amount);
     }
 
     /// @dev Helper function to assert that a given NftId is equal to the expected NftId.
@@ -484,6 +487,17 @@ contract GifTest is Test {
         console.log("instance service authority", instanceService.authority());
         // solhint-enable
 
+        // --- component service ---------------------------------//
+        componentServiceManager = new ComponentServiceManager(address(registry));
+        componentService = componentServiceManager.getComponentService();
+        componentServiceNftId = releaseManager.registerService(componentService);
+
+        // solhint-disable 
+        console.log("componentService domain", componentService.getDomain().toInt());
+        console.log("componentService deployed at", address(componentService));
+        console.log("componentService nft id", componentService.getNftId().toInt());
+        // solhint-enable
+
         // --- distribution service ---------------------------------//
         distributionServiceManager = new DistributionServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         distributionService = distributionServiceManager.getDistributionService();
@@ -694,6 +708,7 @@ contract GifTest is Test {
         instanceAccessManager = instance.getInstanceAccessManager();
         ozAccessManager = AccessManagerUpgradeableInitializeable(instance.authority());
         instanceReader = instance.getInstanceReader();
+        instanceStore = instance.getInstanceStore();
         instanceBundleManager = instance.getBundleManager();
         instanceStore = instance.getInstanceStore();
         
@@ -727,8 +742,8 @@ contract GifTest is Test {
     // )
     //     internal
     // {
-        // Fee memory stakingFee = FeeLib.zeroFee();
-        // Fee memory performanceFee = FeeLib.zeroFee();
+        // Fee memory stakingFee = FeeLib.zero();
+        // Fee memory performanceFee = FeeLib.zero();
 
         // pool = new TestPool(
         //     address(registry), 
@@ -779,7 +794,7 @@ contract GifTest is Test {
 
 
     // function _deployProduct() internal {
-        // Fee memory processingFee = FeeLib.zeroFee();
+        // Fee memory processingFee = FeeLib.zero();
 
         // product = new TestProduct(
         //     address(registry), 
@@ -826,6 +841,52 @@ contract GifTest is Test {
     // }
 
 
+    function _prepareProduct() internal {
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        vm.stopPrank();
+
+        _prepareDistributionAndPool();
+
+        vm.startPrank(productOwner);
+        product = new SimpleProduct(
+            address(registry),
+            instanceNftId,
+            productOwner,
+            address(token),
+            false,
+            address(pool), 
+            address(distribution)
+        );
+        
+        product.register();
+        productNftId = product.getNftId();
+        vm.stopPrank();
+
+        // solhint-disable
+        console.log("product nft id", productNftId.toInt());
+        console.log("product component at", address(product));
+        // solhint-enable
+
+        vm.startPrank(registryOwner);
+        token.transfer(investor, DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
+        token.transfer(customer, DEFAULT_CUSTOMER_FUNDS * 10**token.decimals());
+        vm.stopPrank();
+
+        vm.startPrank(investor);
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+        token.approve(address(poolComponentInfo.tokenHandler), DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
+
+        bundleNftId = SimplePool(address(pool)).createBundle(
+            FeeLib.zero(), 
+            DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals(), 
+            SecondsLib.toSeconds(DEFAULT_BUNDLE_LIFETIME), 
+            ""
+        );
+        vm.stopPrank();
+    }
+
+
     function _prepareDistributionAndPool() internal {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
@@ -836,13 +897,17 @@ contract GifTest is Test {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
-            address(token),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            distributionOwner
-        );
-        distributionNftId = distributionService.register(address(distribution));
+            distributionOwner,
+            address(token));
+
+        distribution.register();
+        distributionNftId = distribution.getNftId();
         vm.stopPrank();
+
+        // solhint-disable
+        console.log("distribution nft id", distributionNftId.toInt());
+        console.log("distribution component at", address(distribution));
+        // solhint-enable
 
         vm.startPrank(poolOwner);
         pool = new SimplePool(
@@ -856,9 +921,15 @@ contract GifTest is Test {
             poolOwner
         );
 
-        poolNftId = poolService.register(address(pool));
+        pool.register();
+        poolNftId = pool.getNftId();
         pool.approveTokenHandler(type(uint256).max);
         vm.stopPrank();
+
+        // solhint-disable
+        console.log("pool nft id", poolNftId.toInt());
+        console.log("pool component at", address(pool));
+        // solhint-enable
     }
 
 
@@ -878,16 +949,22 @@ contract GifTest is Test {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-
-        poolNftId = poolService.register(address(pool));
+        pool.register();
+        poolNftId = pool.getNftId();
+        pool.approveTokenHandler(type(uint256).max);
         vm.stopPrank();
+
+        // solhint-disable
+        console.log("pool nft id", poolNftId.toInt());
+        console.log("pool component at", address(pool));
+        // solhint-enable
     }
 
     function zeroObjectInfo() internal pure returns (IRegistry.ObjectInfo memory) {
         return (
             IRegistry.ObjectInfo(
-                zeroNftId(),
-                zeroNftId(),
+                NftIdLib.zero(),
+                NftIdLib.zero(),
                 zeroObjectType(),
                 false,
                 address(0),

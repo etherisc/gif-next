@@ -178,20 +178,15 @@ contract DistributorTest is GifTest {
     }
 
     function _prepareDistribution() internal {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        vm.stopPrank();
+        _prepareProduct();
 
         vm.startPrank(distributionOwner);
-        distribution = new SimpleDistribution(
-            address(registry),
-            instanceNftId,
-            address(token),
-            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0),
-            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0),
-            distributionOwner
-        );
-        distributionNftId = distributionService.register(address(distribution));
+        distribution.setFees(
+            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
+            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
+        vm.stopPrank();
+
+        distributionNftId = distribution.getNftId();
     }
 
     function test_DistributorTypeCreateHappyCase() public {

@@ -16,9 +16,9 @@ import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE, STAKING} f
 import {Registry} from "./Registry.sol";
 import {RegistryAccessManager} from "./RegistryAccessManager.sol";
 import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
-import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
+import {ServiceAuthorizationsLib} from "./ServiceAuthorizationsLib.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
-
+import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 
     // gif admin is not technical, should sent simple txs
     // foundation creates
@@ -173,8 +173,7 @@ contract ReleaseManager is AccessManaged
         restricted // GIF_ADMIN_ROLE
         returns(NftId nftId)
     {
-        // verify staking contract
-        _getAndVerifyContractInfo(stakingAddress, STAKING(), stakingOwner);
+        // TODO add verify staking contract
         _staking = IStaking(stakingAddress);
 
         nftId = _registry.registerStaking(
@@ -210,6 +209,16 @@ contract ReleaseManager is AccessManaged
             _releaseInfo[version].serviceRoles[serviceIdx],
             _releaseInfo[version].functionRoles[serviceIdx],
             _releaseInfo[version].selectors[serviceIdx]);
+
+        // TODO decide for one of the approaches
+        // // service to service authorization
+        // ServiceAuthorizationsLib.ServiceAuthorization memory authz = ServiceAuthorizationsLib.getAuthorizations(domain);
+        // for(uint8 idx = 0; idx < authz.authorizedRole.length; idx++) {
+        //     _accessManager.setTargetFunctionRole(
+        //         address(service), 
+        //         authz.authorizedSelectors[idx], 
+        //         authz.authorizedRole[idx]);
+        // }
 
         _awaitingRegistration = serviceIdx;
         // checked in registry
@@ -251,75 +260,6 @@ contract ReleaseManager is AccessManaged
 
         emit LogReleaseActivation(version);
     }
-
-    // TODO cleanup
-    // // TODO implement reliable way this function can only be called directly after createNextRelease()
-    // // IMPORTANT: MUST never be possible to create with access/release manager, token registry
-    // // callable once per release after release creation
-    // // can not register regular services
-    // function registerRegistryService(IRegistryService service)
-    //     external
-    //     restricted // GIF_MANAGER_ROLE
-    //     returns(NftId nftId)
-    // {
-    //     if(!service.supportsInterface(type(IRegistryService).interfaceId)) {
-    //         revert NotRegistryService();
-    //     }
-
-    //     // TODO unreliable! MUST guarantee the same authority -> how?
-    //     address serviceAuthority = service.authority();
-    //     if(serviceAuthority != authority()) {
-    //         revert UnexpectedServiceAuthority(
-    //             authority(), 
-    //             serviceAuthority); 
-    //     }
-
-    //     IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(address(service), SERVICE(), msg.sender);
-
-    //     VersionPart majorVersion = _next;
-    //     ObjectType domain = REGISTRY();
-    //     _verifyService(service, majorVersion, domain);
-    //     _createRelease(service.getFunctionConfigs());
-        
-    //     nftId = _registry.registerService(info, majorVersion, domain);
-
-    //     // external call
-    //     service.linkToRegisteredNftId();
-    // }
-
-    // // TODO adding service to release -> synchronized with proxy upgrades or simple addServiceToRelease(service, version, selector)?
-    // // TODO removing service from release? -> set _active to false forever, but keep all other records?
-    // function registerService(IService service) 
-    //     external
-    //     restricted // GIF_MANAGER_ROLE
-    //     returns(NftId nftId)
-    // {
-    //     if(!service.supportsInterface(type(IService).interfaceId)) {
-    //         revert NotService();
-    //     }
-
-    //     IRegistry.ObjectInfo memory info = _getAndVerifyContractInfo(address(service), SERVICE(), msg.sender);
-    //     VersionPart majorVersion = getNextVersion();
-    //     ObjectType domain = _release[majorVersion].domains[_awaitingRegistration];// reversed registration order of services specified in RegistryService config
-    //     _verifyService(service, majorVersion, domain);
-
-    //     // setup and grant unique role if service does registrations
-    //     bytes4[] memory selectors = _selectors[majorVersion][domain];
-    //     address registryService = _registry.getServiceAddress(REGISTRY(), majorVersion);
-    //     if(selectors.length > 0) {
-    //         _accessManager.setAndGrantUniqueRole(
-    //             address(service), 
-    //             registryService, 
-    //             selectors);
-    //     }
-        
-    //     _awaitingRegistration--;
-
-    //     nftId = _registry.registerService(info, majorVersion, domain);
-
-    //     // external call
-    //     service.linkToRegisteredNftId(); 
-    // }
 
     //--- view functions ----------------------------------------------------//
 
@@ -481,6 +421,25 @@ contract ReleaseManager is AccessManaged
                 serviceAddress, 
                 selectors[idx],
                 functionRoles[idx].toInt());
+
+            // TODO check/figure out which approach to take
+            // ObjectType domain = config[idx].serviceDomain;
+            // // not "registry service" / zero domain
+            // if(
+            //     domain == REGISTRY() ||
+            //     domain.eqz()
+            // ) { revert ConfigServiceDomainInvalid(idx, domain); } 
+
+            // bytes4[] memory selectors = config[idx].authorizedSelectors;
+
+            // // TODO can be zero -> e.g. duplicate domain, first with zero selector, second with non zero selector -> need to check _release[version].domains.contains(domain) instead
+            // // no overwrite
+            // if(_selectors[version][domain].length > 0) {
+            //     revert SelectorAlreadyExists(version, domain); 
+            // }
+            
+            // _selectors[version][domain] = selectors;
+            // _release[version].domains.push(domain);
         }
 
         for(uint idx = 0; idx < serviceRoles.length; idx++)

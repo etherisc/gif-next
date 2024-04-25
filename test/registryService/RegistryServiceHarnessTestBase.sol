@@ -6,7 +6,7 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, toObjectType} from "../../contracts/type/ObjectType.sol";
 import {VersionPartLib, VersionPart} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
@@ -21,11 +21,11 @@ import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
 
-contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
+contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
 
     address public registerableOwner = makeAddr("registerableOwner");
 
@@ -41,13 +41,10 @@ contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
         _deployRegistryServiceHarness();
     }
 
-<<<<<<< HEAD
     function _deployRegistryServiceHarness() internal 
     {
         bytes32 salt = "0x2222";
-=======
         registry = IRegistry(releaseManager.getRegistryAddress());
->>>>>>> c6133b4 (complete initial staking setup, adapt/amend tests, rename TestGifBase to GifTest)
 
         // RegistryServiceManagerMockWithHarness first deploys RegistryService and then upgrades to RegistryServiceHarness
         // thus address is computed with RegistryService bytecode instead of RegistryServiceHarness...

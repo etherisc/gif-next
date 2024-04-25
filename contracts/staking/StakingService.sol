@@ -191,11 +191,6 @@ contract StakingService is
     }
 
 
-    function _getServiceAddress(ObjectType domain) internal view returns (address) {
-        return getRegistry().getServiceAddress(domain, getVersion().toMajorPart());
-    }
-
-
     function _getStakingServiceStorage() private pure returns (StakingServiceStorage storage $) {
         assembly {
             $.slot := STAKING_SERVICE_LOCATION_V1

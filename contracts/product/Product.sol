@@ -6,9 +6,10 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
-import {Fee} from "../type/Fee.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IApplicationService} from "./IApplicationService.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {IProductService} from "./IProductService.sol";
 import {IClaimService} from "./IClaimService.sol";
@@ -16,7 +17,7 @@ import {IPricingService} from "./IPricingService.sol";
 import {IProductComponent} from "./IProductComponent.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
-import {PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
+import {COMPONENT, PRODUCT, APPLICATION, POLICY, CLAIM, PRICE } from "../type/ObjectType.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId, RiskIdLib} from "../type/RiskId.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -27,7 +28,6 @@ import {TokenHandler} from "../shared/TokenHandler.sol";
 
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {Pool} from "../pool/Pool.sol";
 import {Distribution} from "../distribution/Distribution.sol";
@@ -45,33 +45,30 @@ abstract contract Product is
         IPolicyService _policyService;
         IClaimService _claimService;
         IPricingService _pricingService;
-        Pool _pool;
-        Distribution _distribution;
-        Fee _initialProductFee;
-        Fee _initialProcessingFee;
-        TokenHandler _tokenHandler;
+        IComponentService _componentService;
         NftId _poolNftId;
         NftId _distributionNftId;
+        Pool _pool;
+        Distribution _distribution;
     }
 
     function initializeProduct(
         address registry,
         NftId instanceNftId,
+        address initialOwner,
         string memory name,
         address token,
         bool isInterceptor,
         address pool,
         address distribution,
-        Fee memory productFee,
-        Fee memory processingFee,
-        address initialOwner,
-        bytes memory registryData // writeonly data that will saved in the object info record of the registry
+        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
+        bytes memory componentData // writeonly data that will saved in the object info record of the registry
     )
         public
         virtual
         onlyInitializing()
     {
-        initializeComponent(registry, instanceNftId, name, token, PRODUCT(), isInterceptor, initialOwner, registryData);
+        initializeInstanceLinkedComponent(registry, instanceNftId, name, token, PRODUCT(), isInterceptor, initialOwner, registryData, componentData);
 
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
@@ -81,18 +78,25 @@ abstract contract Product is
         $._policyService = IPolicyService(_getServiceAddress(POLICY())); 
         $._claimService = IClaimService(_getServiceAddress(CLAIM())); 
         $._pricingService = IPricingService(_getServiceAddress(PRICE()));
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT()));
         $._pool = Pool(pool);
         $._distribution = Distribution(distribution);
-        $._initialProductFee = productFee;
-        $._initialProcessingFee = processingFee;  
-        $._tokenHandler = new TokenHandler(token);
         $._poolNftId = getRegistry().getNftId(pool);
         $._distributionNftId = getRegistry().getNftId(distribution);
 
         registerInterface(type(IProductComponent).interfaceId);  
     }
 
-    // from product component
+
+    function register()
+        external
+        virtual
+        onlyOwner()
+    {
+        _getProductStorage()._componentService.registerProduct();
+    }
+
+
     function setFees(
         Fee memory productFee,
         Fee memory processingFee
@@ -102,7 +106,7 @@ abstract contract Product is
         restricted()
         override
     {
-        _getProductService().setFees(productFee, processingFee);
+        _getProductStorage()._componentService.setProductFees(productFee, processingFee);
     }
 
     function _createRisk(
@@ -327,8 +331,26 @@ abstract contract Product is
         return AmountLib.toAmount(sumInsuredAmount.toInt() / 10);
     }
 
-    function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {
-        return RiskIdLib.toRiskId(riskName);
+
+    function getInitialProductInfo()
+        public 
+        virtual 
+        view 
+        returns (IComponents.ProductInfo memory poolInfo)
+    {
+        ProductStorage storage $ = _getProductStorage();
+
+        return IComponents.ProductInfo({
+            distributionNftId: $._distributionNftId,
+            poolNftId: $._poolNftId,
+            productFee: FeeLib.zero(),
+            processingFee: FeeLib.zero(),
+            distributionFee: FeeLib.zero(),
+            minDistributionOwnerFee: FeeLib.zero(),
+            poolFee: FeeLib.zero(),
+            stakingFee: FeeLib.zero(),
+            performanceFee: FeeLib.zero()
+        });
     }
 
     function getPoolNftId() external view override returns (NftId poolNftId) {
@@ -339,32 +361,8 @@ abstract contract Product is
         return getRegistry().getNftId(address(_getProductStorage()._distribution));
     }
 
-    function getSetupInfo() public view returns (ISetup.ProductSetupInfo memory setupInfo) {
-        InstanceReader reader = getInstance().getInstanceReader();
-        setupInfo = reader.getProductSetupInfo(getNftId());
-
-        // fallback to initial setup info (wallet is always != address(0))
-        if(setupInfo.wallet == address(0)) {
-            setupInfo = _getInitialSetupInfo();
-        }
-    }
-
-    function _getInitialSetupInfo() internal view returns (ISetup.ProductSetupInfo memory setupInfo) {
-        ProductStorage storage $ = _getProductStorage();
-
-        ISetup.DistributionSetupInfo memory distributionSetupInfo = $._distribution.getSetupInfo();
-        IComponents.PoolInfo memory poolInfo = $._pool.getPoolInfo();
-
-        return ISetup.ProductSetupInfo(
-            getToken(),
-            $._tokenHandler,
-            $._distributionNftId,
-            $._poolNftId,
-            $._initialProductFee,
-            $._initialProcessingFee,
-            false,
-            getWallet()
-        );
+    function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {
+        return RiskIdLib.toRiskId(riskName);
     }
 
     function _getProductStorage() private pure returns (ProductStorage storage $) {

@@ -3,7 +3,6 @@ pragma solidity ^0.8.19;
 
 import {Fee} from "../type/Fee.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
 import {ReferralId, ReferralStatus} from "../type/Referral.sol";
 import {NftId} from "../type/NftId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
@@ -14,11 +13,9 @@ interface IDistributionComponent is IInstanceLinkedComponent {
 
     event LogDistributorUpdated(address to, address caller);
 
-    function getSetupInfo() external view returns (ISetup.DistributionSetupInfo memory setupInfo);
-
     function setFees(
-        Fee memory minDistributionOwnerFee,
-        Fee memory distributionFee
+        Fee memory distributionFee,
+        Fee memory minDistributionOwnerFee
     ) external;
 
     function createDistributorType(
@@ -59,8 +56,6 @@ interface IDistributionComponent is IInstanceLinkedComponent {
     function getDiscountPercentage(
         string memory referralCode
     ) external view returns (UFixed discountPercentage, ReferralStatus status);
-
-    function getDistributionFee() external view returns (Fee memory distibutionFee);
 
     function getReferralId(
         string memory referralCode

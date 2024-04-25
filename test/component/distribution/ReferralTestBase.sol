@@ -35,26 +35,9 @@ contract ReferralTestBase is GifTest {
     Timestamp public expiryAt;
     bytes public referralData;
 
-    function _prepareDistribution() internal {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        vm.stopPrank();
-
-        vm.startPrank(distributionOwner);
-        distribution = new SimpleDistribution(
-            address(registry),
-            instanceNftId,
-            address(token),
-            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0),
-            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0),
-            distributionOwner
-        );
-        distributionNftId = distributionService.register(address(distribution));
-    }
-
     function _setupTestData(bool createDistributor) internal {
         if (address(distribution) == address(0)) {
-            _prepareDistribution();
+            _prepareDistribution();            
         }
 
         name = "Basic";
@@ -91,5 +74,20 @@ contract ReferralTestBase is GifTest {
                 distributorType,
                 distributorData);
         }
+    }
+
+
+    function _prepareDistribution() internal {
+        _prepareProduct();
+
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        vm.stopPrank();
+
+        vm.startPrank(distributionOwner);
+        distribution.setFees(
+            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
+            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
+        vm.stopPrank();
     }
 }

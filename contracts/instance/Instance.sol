@@ -32,7 +32,6 @@ import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
-import {ISetup} from "./module/ISetup.sol";
 
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";

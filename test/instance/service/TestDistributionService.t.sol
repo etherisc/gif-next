@@ -16,11 +16,8 @@ contract TestDistributionService is GifTest {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
-            address(token),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            distributionOwner
-        );
+            distributionOwner,
+            address(token));
         
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -29,7 +26,7 @@ contract TestDistributionService is GifTest {
                 DISTRIBUTION_OWNER_ROLE(), 
                 distributionOwner));
 
-        distributionService.register(address(distribution));
+        distribution.register();
     }
 
     function test_DistributionService_register() public {
@@ -41,13 +38,12 @@ contract TestDistributionService is GifTest {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
-            address(token),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            distributionOwner
+            distributionOwner,
+            address(token)
         );
         
-        NftId nftId = distributionService.register(address(distribution));
+        distribution.register();
+        NftId nftId = distribution.getNftId();
         assertTrue(nftId.gtz(), "nftId is zero");
     }
 
