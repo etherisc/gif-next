@@ -6,7 +6,7 @@ import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165C
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
 
 import {Usdc} from "../mock/Usdc.sol";
 import {Dip} from "../mock/Dip.sol";

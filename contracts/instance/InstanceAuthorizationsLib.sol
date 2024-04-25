@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
-import {INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../type/ObjectType.sol";
+import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, COMPONENT_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
+import {APPLICATION, BUNDLE, CLAIM, COMPONENT, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, REGISTRY} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -29,6 +29,7 @@ library InstanceAuthorizationsLib
     {
         _createCoreAndGifRoles(clonedAccessManager);
         _createCoreTargets(clonedAccessManager, clonedInstance, clonedBundleManager, clonedInstanceStore);
+        _grantComponentServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
         _grantDistributionServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
         _grantPoolServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
         _grantProductServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
@@ -45,6 +46,7 @@ library InstanceAuthorizationsLib
         // default roles controlled by ADMIN_ROLE -> core roles
         // all set/granted only once during cloning (the only exception is INSTANCE_OWNER_ROLE, hooked to instance nft)
         clonedAccessManager.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
+        clonedAccessManager.createCoreRole(COMPONENT_SERVICE_ROLE(), "ComponentServiceRole");
         clonedAccessManager.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
         clonedAccessManager.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
         clonedAccessManager.createCoreRole(APPLICATION_SERVICE_ROLE(), "ApplicationServiceRole");
@@ -52,6 +54,7 @@ library InstanceAuthorizationsLib
         clonedAccessManager.createCoreRole(CLAIM_SERVICE_ROLE(), "ClaimServiceRole");
         clonedAccessManager.createCoreRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole");
         clonedAccessManager.createCoreRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole");
+
         // default roles controlled by INSTANCE_OWNER_ROLE -> gif roles
         clonedAccessManager.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
         clonedAccessManager.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
@@ -71,6 +74,32 @@ library InstanceAuthorizationsLib
         clonedAccessManager.createCoreTarget(address(clonedInstanceStore), "InstanceStore");
     }
 
+    function _grantComponentServiceAuthorizations(
+        InstanceAccessManager clonedAccessManager,
+        InstanceStore clonedInstanceStore,
+        IRegistry registry,
+        VersionPart majorVersion)
+        private
+    {
+        // configure authorization for pool service on instance
+        address componentServiceAddress = registry.getServiceAddress(COMPONENT(), majorVersion);
+        clonedAccessManager.grantRole(COMPONENT_SERVICE_ROLE(), address(componentServiceAddress));
+
+        bytes4[] memory serviceSelectors = new bytes4[](8);
+        serviceSelectors[0] = clonedInstanceStore.createComponent.selector;
+        serviceSelectors[1] = clonedInstanceStore.updateComponent.selector;
+        serviceSelectors[2] = clonedInstanceStore.createPool.selector;
+        serviceSelectors[3] = clonedInstanceStore.createProduct.selector;
+        serviceSelectors[5] = clonedInstanceStore.updateProduct.selector;
+        serviceSelectors[6] = clonedInstanceStore.increaseBalance.selector;
+        serviceSelectors[7] = clonedInstanceStore.increaseFees.selector;
+
+        clonedAccessManager.setCoreTargetFunctionRole(
+            "InstanceStore",
+            serviceSelectors,
+            COMPONENT_SERVICE_ROLE());
+    }
+
     function _grantDistributionServiceAuthorizations(
         InstanceAccessManager clonedAccessManager,
         InstanceStore clonedInstanceStore,
@@ -81,18 +110,18 @@ library InstanceAuthorizationsLib
         // configure authorization for distribution service on instance
         address distributionServiceAddress = registry.getServiceAddress(DISTRIBUTION(), majorVersion);
         clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE(), distributionServiceAddress);
-        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](11);
-        instanceDistributionServiceSelectors[0] = clonedInstanceStore.createDistributionSetup.selector;
-        instanceDistributionServiceSelectors[1] = clonedInstanceStore.updateDistributionSetup.selector;
-        instanceDistributionServiceSelectors[2] = clonedInstanceStore.createDistributorType.selector;
-        instanceDistributionServiceSelectors[3] = clonedInstanceStore.updateDistributorType.selector;
-        instanceDistributionServiceSelectors[4] = clonedInstanceStore.updateDistributorTypeState.selector;
-        instanceDistributionServiceSelectors[5] = clonedInstanceStore.createDistributor.selector;
-        instanceDistributionServiceSelectors[6] = clonedInstanceStore.updateDistributor.selector;
-        instanceDistributionServiceSelectors[7] = clonedInstanceStore.updateDistributorState.selector;
-        instanceDistributionServiceSelectors[8] = clonedInstanceStore.createReferral.selector;
-        instanceDistributionServiceSelectors[9] = clonedInstanceStore.updateReferral.selector;
-        instanceDistributionServiceSelectors[10] = clonedInstanceStore.updateReferralState.selector;
+        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](9);
+        // instanceDistributionServiceSelectors[0] = clonedInstanceStore.createDistributionSetup.selector;
+        // instanceDistributionServiceSelectors[0] = clonedInstanceStore.updateDistributionSetup.selector;
+        instanceDistributionServiceSelectors[0] = clonedInstanceStore.createDistributorType.selector;
+        instanceDistributionServiceSelectors[1] = clonedInstanceStore.updateDistributorType.selector;
+        instanceDistributionServiceSelectors[2] = clonedInstanceStore.updateDistributorTypeState.selector;
+        instanceDistributionServiceSelectors[3] = clonedInstanceStore.createDistributor.selector;
+        instanceDistributionServiceSelectors[4] = clonedInstanceStore.updateDistributor.selector;
+        instanceDistributionServiceSelectors[5] = clonedInstanceStore.updateDistributorState.selector;
+        instanceDistributionServiceSelectors[6] = clonedInstanceStore.createReferral.selector;
+        instanceDistributionServiceSelectors[7] = clonedInstanceStore.updateReferral.selector;
+        instanceDistributionServiceSelectors[8] = clonedInstanceStore.updateReferralState.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "InstanceStore",
             instanceDistributionServiceSelectors,
@@ -109,9 +138,8 @@ library InstanceAuthorizationsLib
         // configure authorization for pool service on instance
         address poolServiceAddress = registry.getServiceAddress(POOL(), majorVersion);
         clonedAccessManager.grantRole(POOL_SERVICE_ROLE(), address(poolServiceAddress));
-        bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
-        instancePoolServiceSelectors[0] = clonedInstanceStore.createPoolSetup.selector;
-        instancePoolServiceSelectors[1] = clonedInstanceStore.updatePoolSetup.selector;
+        bytes4[] memory instancePoolServiceSelectors = new bytes4[](1);
+        instancePoolServiceSelectors[0] = clonedInstanceStore.updatePool.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "InstanceStore",
             instancePoolServiceSelectors,
@@ -128,12 +156,10 @@ library InstanceAuthorizationsLib
         // configure authorization for product service on instance
         address productServiceAddress = registry.getServiceAddress(PRODUCT(), majorVersion);
         clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE(), address(productServiceAddress));
-        bytes4[] memory instanceProductServiceSelectors = new bytes4[](5);
-        instanceProductServiceSelectors[0] = clonedInstanceStore.createProductSetup.selector;
-        instanceProductServiceSelectors[1] = clonedInstanceStore.updateProductSetup.selector;
-        instanceProductServiceSelectors[2] = clonedInstanceStore.createRisk.selector;
-        instanceProductServiceSelectors[3] = clonedInstanceStore.updateRisk.selector;
-        instanceProductServiceSelectors[4] = clonedInstanceStore.updateRiskState.selector;
+        bytes4[] memory instanceProductServiceSelectors = new bytes4[](3);
+        instanceProductServiceSelectors[0] = clonedInstanceStore.createRisk.selector;
+        instanceProductServiceSelectors[1] = clonedInstanceStore.updateRisk.selector;
+        instanceProductServiceSelectors[2] = clonedInstanceStore.updateRiskState.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "InstanceStore",
             instanceProductServiceSelectors,
@@ -219,10 +245,12 @@ library InstanceAuthorizationsLib
         // configure authorization for bundle service on instance
         address bundleServiceAddress = registry.getServiceAddress(BUNDLE(), majorVersion);
         clonedAccessManager.grantRole(BUNDLE_SERVICE_ROLE(), address(bundleServiceAddress));
-        bytes4[] memory instanceBundleServiceSelectors = new bytes4[](3);
+        bytes4[] memory instanceBundleServiceSelectors = new bytes4[](5);
         instanceBundleServiceSelectors[0] = clonedInstanceStore.createBundle.selector;
         instanceBundleServiceSelectors[1] = clonedInstanceStore.updateBundle.selector;
         instanceBundleServiceSelectors[2] = clonedInstanceStore.updateBundleState.selector;
+        instanceBundleServiceSelectors[3] = clonedInstanceStore.increaseLocked.selector;
+        instanceBundleServiceSelectors[4] = clonedInstanceStore.decreaseLocked.selector;
         clonedAccessManager.setCoreTargetFunctionRole(
             "InstanceStore",
             instanceBundleServiceSelectors,

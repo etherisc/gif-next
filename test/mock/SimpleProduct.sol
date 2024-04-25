@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
-import {Fee} from "../../contracts/type/Fee.sol";
+import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {PayoutId} from "../../contracts/type/PayoutId.sol";
 import {Product} from "../../contracts/product/Product.sol";
@@ -19,40 +19,34 @@ contract SimpleProduct is Product {
     constructor(
         address registry,
         NftId instanceNftid,
+        address initialOwner,
         address token,
         bool isInterceptor,
         address pool,
-        address distribution,
-        Fee memory productFee,
-        Fee memory processingFee,
-        address initialOwner
+        address distribution
     )
     {
         initialize(
             registry,
             instanceNftid,
+            initialOwner,
             "SimpleProduct",
             token,
             isInterceptor,
             pool,
-            distribution,
-            productFee,
-            processingFee,
-            initialOwner); 
+            distribution); 
     }
 
 
     function initialize(
         address registry,
         NftId instanceNftid,
+        address initialOwner,
         string memory name,
         address token,
         bool isInterceptor,
         address pool,
-        address distribution,
-        Fee memory productFee,
-        Fee memory processingFee,
-        address initialOwner
+        address distribution
     )
         public
         virtual
@@ -61,14 +55,13 @@ contract SimpleProduct is Product {
         initializeProduct(
             registry,
             instanceNftid,
+            initialOwner,
             name,
             token,
             isInterceptor,
             pool,
             distribution,
-            productFee,
-            processingFee,
-            initialOwner,
+            "",
             ""); 
     }
 

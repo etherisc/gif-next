@@ -54,8 +54,7 @@ function COMPONENT() pure returns (ObjectType) {
     return toObjectType(100);
 }
 
-// TODO replace by PRODUCT_SETUP
-function TREASURY() pure returns (ObjectType) {
+function FEE() pure returns (ObjectType) {
     return toObjectType(101);
 }
 

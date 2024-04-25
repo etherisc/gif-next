@@ -12,7 +12,6 @@ import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {ILifecycle} from "../../../contracts/instance/base/ILifecycle.sol";
-import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
@@ -226,14 +225,12 @@ contract TestProductClaim is GifTest {
         claimState = instanceReader.getClaimState(policyNftId, claimId);
     }
 
+    // add allowance to pay premiums
     function _approve() internal {
-        // add allowance to pay premiums
-        ISetup.ProductSetupInfo memory productSetup = instanceReader.getProductSetupInfo(productNftId);(productNftId);
+        address tokenHandlerAddress = address(instanceReader.getComponentInfo(productNftId).tokenHandler);
 
         vm.startPrank(customer);
-        token.approve(
-            address(productSetup.tokenHandler), 
-            CUSTOMER_FUNDS);
+        token.approve(tokenHandlerAddress, CUSTOMER_FUNDS);
         vm.stopPrank();
     }
 
@@ -257,7 +254,7 @@ contract TestProductClaim is GifTest {
         internal
         returns (NftId)
     {
-        return prdct.createApplication(
+        return product.createApplication(
             customer,
             riskId,
             sumInsuredAmount,
@@ -268,47 +265,51 @@ contract TestProductClaim is GifTest {
     }
 
 
-    function _prepareProduct() internal {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        vm.stopPrank();
+    // function _prepareProduct() internal {
+    //     vm.startPrank(instanceOwner);
+    //     instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+    //     vm.stopPrank();
 
-        _prepareDistributionAndPool();
+    //     _prepareDistributionAndPool();
 
-        vm.startPrank(productOwner);
-        prdct = new SimpleProduct(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
-        );
+    //     vm.startPrank(productOwner);
+    //     product = new SimpleProduct(
+    //         address(registry),
+    //         instanceNftId,
+    //         address(token),
+    //         false,
+    //         address(pool), 
+    //         address(distribution),
+    //         FeeLib.zeroFee(),
+    //         FeeLib.zeroFee(),
+    //         productOwner
+    //     );
         
-        productNftId = productService.register(address(prdct));
-        vm.stopPrank();
+    //     prdct.register();
+    //     productNftId = product.getNftId();
+    //     vm.stopPrank();
 
+    //     // solhint-disable
+    //     console.log("product nft id", productNftId.toInt());
+    //     console.log("product component at", address(product));
+    //     // solhint-enable
 
-        vm.startPrank(registryOwner);
-        token.transfer(investor, BUNDLE_CAPITAL);
-        token.transfer(customer, CUSTOMER_FUNDS);
-        vm.stopPrank();
+    //     vm.startPrank(registryOwner);
+    //     token.transfer(investor, BUNDLE_CAPITAL);
+    //     token.transfer(customer, CUSTOMER_FUNDS);
+    //     vm.stopPrank();
 
-        vm.startPrank(investor);
-        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
-        token.approve(address(poolComponentInfo.tokenHandler), BUNDLE_CAPITAL);
+    //     vm.startPrank(investor);
+    //     IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+    //     token.approve(address(poolComponentInfo.tokenHandler), BUNDLE_CAPITAL);
 
-        // SimplePool spool = SimplePool(address(pool));
-        bundleNftId = SimplePool(address(pool)).createBundle(
-            FeeLib.zeroFee(), 
-            BUNDLE_CAPITAL, 
-            SecondsLib.toSeconds(604800), 
-            ""
-        );
-        vm.stopPrank();
-    }
+    //     bundleNftId = SimplePool(address(pool)).createBundle(
+    //         FeeLib.zeroFee(), 
+    //         BUNDLE_CAPITAL, 
+    //         SecondsLib.toSeconds(604800), 
+    //         ""
+    //     );
+    //     vm.stopPrank();
+    // }
 
 }

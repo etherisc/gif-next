@@ -6,7 +6,7 @@ import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
@@ -47,8 +47,8 @@ function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory
 function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
     return (
         IRegistry.ObjectInfo(
-            zeroNftId(),
-            zeroNftId(),
+            NftIdLib.zero(),
+            NftIdLib.zero(),
             zeroObjectType(),
             false,
             address(0),
@@ -98,7 +98,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         _deployAndRegisterServices();
 
         registerableOwnedByRegistryOwner = new RegisterableMock(
-            zeroNftId(), 
+            NftIdLib.zero(), 
             registryNftId, 
             toObjectType(randomNumber(type(uint8).max)),
             toBool(randomNumber(1)),

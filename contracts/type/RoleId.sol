@@ -61,7 +61,10 @@ function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600)
 function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1900); }
 
 /// @dev instance specific role for instance service
-function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
+function COMPONENT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
+
+/// @dev instance specific role for instance service
+function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2001); }
 
 /// @dev instance specific role for distribution service
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
@@ -83,6 +86,9 @@ function CLAIM_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(
 
 /// @dev instance specific role for bundle service
 function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
+
+/// @dev instance specific role for staking service
+function STAKING_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600); }
 
 // @dev Returns true iff role ids a and b are identical
 function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {

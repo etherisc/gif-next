@@ -80,12 +80,12 @@ interface IBundleService is IService {
     /// the premium (minus bundle fee) is added to the bundle capital
     /// may only be called by pool service
     function lockCollateral(
-        IInstance instanceNftId, 
+        IInstance instance, 
         NftId policyNftId, 
         NftId bundleNftId, 
-        Amount collateralAmount, 
-        Amount premiumAmount // premium after pool fee
+        Amount collateralAmount
     ) external;
+
 
     /// @dev releases the specified collateral in the bundle
     /// may only be called by pool service

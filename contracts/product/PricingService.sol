@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {Amount, AmountLib} from "../type/Amount.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {ObjectType} from "../type/ObjectType.sol";
@@ -9,7 +10,6 @@ import {Fee} from "../type/Fee.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {PRODUCT, DISTRIBUTION, PRICE} from "../type/ObjectType.sol";
-import {Amount} from "../type/Amount.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IProductComponent} from "./IProductComponent.sol";
@@ -19,17 +19,16 @@ import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 
-import {ComponentService} from "../shared/ComponentService.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 
 import {IPricingService} from "./IPricingService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 
 
 contract PricingService is 
-    ComponentService, 
+    ComponentVerifyingService, 
     IPricingService
 {
     using UFixedLib for UFixed;
@@ -85,14 +84,14 @@ contract PricingService is
         {
             // verify product
             (
-                IRegistry.ObjectInfo memory productInfo, 
+                IRegistry.ObjectInfo memory registryInfo, 
                 IInstance instance
-            ) = _getAndVerifyComponentInfoAndInstance(productNftId, PRODUCT());
+            ) = _getAndVerifyComponentInfo(productNftId, PRODUCT());
 
             reader = instance.getInstanceReader();
 
             // calculate net premium
-            netPremiumAmount = IProductComponent(productInfo.objectAddress).calculateNetPremium(
+            netPremiumAmount = IProductComponent(registryInfo.objectAddress).calculateNetPremium(
                 sumInsuredAmount,
                 riskId,
                 lifetime,
@@ -102,46 +101,45 @@ contract PricingService is
 
         {
             // get configurations for all involed objects
-            ISetup.ProductSetupInfo memory productSetup = reader.getProductSetupInfo(productNftId);
-
-            bytes memory componentData = reader.getComponentInfo(productSetup.poolNftId).data;
-            IComponents.PoolInfo memory poolInfo = abi.decode(componentData, (IComponents.PoolInfo));
+            IComponents.ProductInfo memory productInfo = reader.getProductInfo(productNftId);
 
             IBundle.BundleInfo memory bundleInfo = reader.getBundleInfo(bundleNftId);
-            if(bundleInfo.poolNftId != productSetup.poolNftId) {
-                revert ErrorIPricingServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, productSetup.poolNftId);
+            if(bundleInfo.poolNftId != productInfo.poolNftId) {
+                revert ErrorIPricingServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, productInfo.poolNftId);
             }
-
-            NftId distributionNftId = productSetup.distributionNftId;
-            ISetup.DistributionSetupInfo memory distSetup = reader.getDistributionSetupInfo(distributionNftId);
 
             // calculate premium, order is important
             premium = _getFixedFeeAmounts(
                 netPremiumAmount,
-                productSetup,
-                poolInfo,
-                distSetup,
+                productInfo,
                 bundleInfo
             );
 
             premium = _calculateVariableFeeAmounts(
                 premium,
-                productSetup,
-                poolInfo,
-                distSetup,
+                productInfo,
                 bundleInfo
             );
 
             premium = _calculateDistributionOwnerFeeAmount(
                 premium,
-                distSetup,
+                productInfo,
                 referralId,
-                distributionNftId,
                 reader
             );
 
+            premium = _calculateTargetWalletAmounts(premium);
+
             // sanity check to validate the fee calculation
-            if (premium.distributionOwnerFeeFixAmount < distSetup.minDistributionOwnerFee.fixedFee) {
+            if(AmountLib.toAmount(premium.premiumAmount) != 
+                premium.productFeeAmount 
+                + premium.distributionFeeAndCommissionAmount 
+                + premium.poolPremiumAndFeeAmount)
+            {
+                revert ErrorPricingServiceTargetWalletAmountsMismatch();
+            }
+
+            if (premium.distributionOwnerFeeFixAmount < productInfo.minDistributionOwnerFee.fixedFee) {
                 revert ErrorIPricingServiceFeeCalculationMismatch( 
                     premium.distributionFeeFixAmount,
                     premium.distributionFeeVarAmount,
@@ -168,9 +166,7 @@ contract PricingService is
     // internal functions
     function _getFixedFeeAmounts(
         Amount netPremiumAmount,
-        ISetup.ProductSetupInfo memory productInfo,
-        IComponents.PoolInfo memory poolInfo,
-        ISetup.DistributionSetupInfo memory distInfo,
+        IComponents.ProductInfo memory productInfo,
         IBundle.BundleInfo memory bundleInfo
     )
         internal
@@ -187,7 +183,7 @@ contract PricingService is
         premium.productFeeFixAmount = t;
         premium.fullPremiumAmount += t;
 
-        t = poolInfo.poolFee.fixedFee;
+        t = productInfo.poolFee.fixedFee;
         premium.poolFeeFixAmount = t;
         premium.fullPremiumAmount += t;
 
@@ -195,16 +191,14 @@ contract PricingService is
         premium.bundleFeeFixAmount = t;
         premium.fullPremiumAmount += t;
 
-        t = distInfo.distributionFee.fixedFee;
+        t = productInfo.distributionFee.fixedFee;
         premium.distributionFeeFixAmount = t;
         premium.fullPremiumAmount += t;
     }
 
     function _calculateVariableFeeAmounts(
         IPolicy.Premium memory premium,
-        ISetup.ProductSetupInfo memory productInfo,
-        IComponents.PoolInfo memory poolInfo,
-        ISetup.DistributionSetupInfo memory distInfo,
+        IComponents.ProductInfo memory productInfo,
         IBundle.BundleInfo memory bundleInfo
     )
         internal
@@ -219,7 +213,7 @@ contract PricingService is
         premium.productFeeVarAmount = t;
         premium.fullPremiumAmount += t;
 
-        t = (netPremiumAmount * poolInfo.poolFee.fractionalFee).toInt();
+        t = (netPremiumAmount * productInfo.poolFee.fractionalFee).toInt();
         premium.poolFeeVarAmount = t;
         premium.fullPremiumAmount += t;
 
@@ -227,7 +221,7 @@ contract PricingService is
         premium.bundleFeeVarAmount = t;
         premium.fullPremiumAmount += t;
 
-        t = (netPremiumAmount * distInfo.distributionFee.fractionalFee).toInt();
+        t = (netPremiumAmount * productInfo.distributionFee.fractionalFee).toInt();
         premium.distributionFeeVarAmount = t;
         premium.fullPremiumAmount += t;
 
@@ -236,24 +230,25 @@ contract PricingService is
 
     function _calculateDistributionOwnerFeeAmount(
         IPolicy.Premium memory premium,
-        ISetup.DistributionSetupInfo memory distInfo,
+        IComponents.ProductInfo memory productInfo,
+        // ISetup.DistributionSetupInfo memory distInfo,
         ReferralId referralId,
-        NftId distributionNftId,
         InstanceReader reader
     )
         internal
         view 
         returns (IPolicy.Premium memory finalPremium)
     {
+
         // if the referral is not valid, then the distribution owner gets everything
-        if (! _distributionService.referralIsValid(distributionNftId, referralId)) {
+        if (! _distributionService.referralIsValid(productInfo.distributionNftId, referralId)) {
             premium.distributionOwnerFeeFixAmount = premium.distributionFeeFixAmount;
             premium.distributionOwnerFeeVarAmount = premium.distributionFeeVarAmount;
             premium.premiumAmount = premium.fullPremiumAmount;
             return premium;
         }
 
-        Fee memory minDistributionOwnerFee = distInfo.minDistributionOwnerFee;
+        Fee memory minDistributionOwnerFee = productInfo.minDistributionOwnerFee;
 
         // if the referral is valid, the the commission and discount are calculated based in the full premium
         // the remaing amount goes to the distribution owner
@@ -265,11 +260,41 @@ contract PricingService is
             uint256 commissionAmount = UFixedLib.toUFixed(premium.netPremiumAmount).mul(distributorTypeInfo.commissionPercentage).toInt();
             premium.commissionAmount = commissionAmount;
             premium.discountAmount = UFixedLib.toUFixed(premium.fullPremiumAmount).mul(referralInfo.discountPercentage).toInt();
-            premium.distributionOwnerFeeFixAmount = distInfo.minDistributionOwnerFee.fixedFee;
+            premium.distributionOwnerFeeFixAmount = minDistributionOwnerFee.fixedFee;
             premium.distributionOwnerFeeVarAmount = premium.distributionFeeVarAmount - commissionAmount - premium.discountAmount;
             premium.premiumAmount = premium.fullPremiumAmount - premium.discountAmount;
         }
 
         return premium; 
     }
+
+
+    function _calculateTargetWalletAmounts(
+        IPolicy.Premium memory premium
+    )
+        internal
+        virtual
+        view
+        returns (
+            IPolicy.Premium memory premiumWithTargetWalletAmounts
+        )
+    {
+        // fees for product owner
+        premium.productFeeAmount = AmountLib.toAmount(
+            premium.productFeeFixAmount + premium.productFeeVarAmount);
+
+        // fees for distribution owner + distributor commission
+        premium.distributionFeeAndCommissionAmount = AmountLib.toAmount(
+            premium.distributionFeeFixAmount + premium.distributionOwnerFeeVarAmount 
+            + premium.commissionAmount);
+
+        // net premium + fees for pool owner + bundle owner
+        premium.poolPremiumAndFeeAmount = AmountLib.toAmount(
+            premium.netPremiumAmount 
+            + premium.poolFeeFixAmount + premium.poolFeeVarAmount 
+            + premium.bundleFeeFixAmount + premium.bundleFeeVarAmount);
+
+        premiumWithTargetWalletAmounts = premium;
+    }
+
 }

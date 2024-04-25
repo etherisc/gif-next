@@ -12,6 +12,8 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 
 interface IPricingService is IService
 {
+
+    error ErrorPricingServiceTargetWalletAmountsMismatch();
     error ErrorIPricingServiceBundlePoolMismatch(NftId bundleNftId, NftId bundlePoolNftId, NftId poolNftId);
     error ErrorIPricingServiceFeeCalculationMismatch(
                 uint256 distributionFeeFixAmount,

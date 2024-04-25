@@ -205,7 +205,6 @@ contract InstanceService is
     }
 
 
-    // all gif targets MUST be childs of instanceNftId
     function createGifTarget(
         NftId instanceNftId,
         address targetAddress,
@@ -214,7 +213,51 @@ contract InstanceService is
         RoleId[] memory roles
     )
         external
-        onlyRegisteredService
+        virtual
+        restricted()
+    {
+        _createGifTarget(
+            instanceNftId,
+            targetAddress,
+            targetName,
+            roles,
+            selectors
+        );
+    }
+
+
+    function createComponentTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        bytes4[][] memory selectors,
+        RoleId[] memory roles
+    )
+        external
+        virtual
+        // TODO re-enable once role - contract association is fixed
+        // restricted()
+    {
+        _createGifTarget(
+            instanceNftId,
+            targetAddress,
+            targetName,
+            roles,
+            selectors
+        );
+    }
+
+
+    /// all gif targets MUST be children of instanceNftId
+    function _createGifTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        RoleId[] memory roles,
+        bytes4[][] memory selectors
+    )
+        internal
+        virtual
     {
         (
             IInstance instance, // or instanceInfo
@@ -226,8 +269,7 @@ contract InstanceService is
         // set proposed target config
         // TODO restriction: gif targets are set only once and only here?
         //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
-        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++)
-        {
+        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++) {
             accessManager.setCoreTargetFunctionRole(targetName, selectors[roleIdx], roles[roleIdx]);
         }
     }

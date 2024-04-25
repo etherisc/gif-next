@@ -12,7 +12,7 @@ import {Key32} from "../contracts/type/Key32.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
 import {Pool} from "../contracts/pool/Pool.sol";
-import {POOL_OWNER_ROLE} from "../contracts/type/RoleId.sol";
+import {POOL_OWNER_ROLE, PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
 import {SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
@@ -21,9 +21,8 @@ import {GifTest} from "./base/GifTest.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
 
 contract TestPool is GifTest {
-    using NftIdLib for NftId;
 
-    function test_Pool_contractLocations() public {
+    function test_PoolContractLocations() public {
         pool = new SimplePool(
             address(registry),
             instanceNftId,
@@ -55,7 +54,7 @@ contract TestPool is GifTest {
         // solhint-enable
     }
 
-    function test_Pool_setupInfo() public {
+    function test_PoolComponentAndPoolInfo() public {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
         vm.stopPrank();
@@ -72,17 +71,44 @@ contract TestPool is GifTest {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-        
-        NftId poolNftId = poolService.register(address(pool));
-        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
 
-        // check nftid
-        assertTrue(poolInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
+        pool.register();
+        NftId poolNftId = pool.getNftId();
+
+        // solhint-disable
+        console.log("pool nft id: ", poolNftId.toInt());
+        console.log("pool deployed at: ", address(pool));
+        // solhint-enable
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+        // solhint-disable
+        console.log("pool name: ", componentInfo.name);
+        console.log("pool token: ", componentInfo.token.symbol());
+        console.log("pool token handler at: ", address(componentInfo.tokenHandler));
+        console.log("pool wallet: ", componentInfo.wallet);
+        // solhint-enable
+
+        // check pool
+        assertTrue(pool.getNftId().gtz(), "pool nft id zero");
+        assertEq(pool.getName(), "SimplePool", "unexpected pool name (1)");
+        assertEq(address(pool.getToken()), address(token), "unexpected token address (1)");
+
+        // check token
+        assertEq(componentInfo.name, "SimplePool", "unexpected pool name (2)");
+        assertEq(address(componentInfo.token), address(token), "unexpected token address (2)");
 
         // check token handler
         assertTrue(address(componentInfo.tokenHandler) != address(0), "token handler zero");
         assertEq(address(componentInfo.tokenHandler.getToken()), address(pool.getToken()), "unexpected token for token handler");
+
+        // check wallet
+        assertEq(componentInfo.wallet, address(pool), "unexpected wallet address");
+
+        IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
+
+        // check nftid
+        assertTrue(poolInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
+        assertEq(poolInfo.bundleOwnerRole.toInt(), PUBLIC_ROLE().toInt(), "unexpected bundle owner role");
 
         // check fees
         Fee memory poolFee = poolInfo.poolFee;
@@ -94,54 +120,53 @@ contract TestPool is GifTest {
         assertEq(stakingFee.fixedFee, 0, "staking fee not 0");
         assertEq(performanceFee.fractionalFee.toInt(), 0, "performance fee not 0");
         assertEq(performanceFee.fixedFee, 0, "performance fee not 0");
+
+        // check pool balance
+        assertTrue(instanceReader.getBalanceAmount(poolNftId).eqz(), "initial pool balance not zero");
+        assertTrue(instanceReader.getFeeAmount(poolNftId).eqz(), "initial pool fee not zero");
     }
 
 
-    function test_Pool_setFees() public {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        vm.stopPrank();
+    function test_PoolSetFees() public {
+        // GIVEN
+        _prepareProduct(); // includes pool and product
 
-        vm.startPrank(poolOwner);
+        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
 
-        pool = new SimplePool(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
-            poolOwner
-        );
+        Fee memory poolFee = productInfo.poolFee;
+        assertEq(poolFee.fractionalFee.toInt(), 0, "pool fee not 0 (fractional)");
+        assertEq(poolFee.fixedFee, 0, "pool fee not 0 (fixed)");
 
-        console.log(poolOwner, "poolOwner");
-        console.log(pool.getOwner());
+        Fee memory stakingFee = productInfo.stakingFee;
+        assertEq(stakingFee.fractionalFee.toInt(), 0, "staking fee not 0 (fractional)");
+        assertEq(stakingFee.fixedFee, 0, "staking fee not 0 (fixed)");
 
-        NftId poolNftId = poolService.register(address(pool));
+        Fee memory performanceFee = productInfo.performanceFee;
+        assertEq(performanceFee.fractionalFee.toInt(), 0, "performance fee not 0 (fractional)");
+        assertEq(performanceFee.fixedFee, 0, "performance fee fee not 0 (fixed)");
 
         Fee memory newPoolFee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
         Fee memory newStakingFee = FeeLib.toFee(UFixedLib.toUFixed(333,0), 444);
         Fee memory newPerformanceFee = FeeLib.toFee(UFixedLib.toUFixed(555,0), 666);
-        pool.setFees(newPoolFee, newStakingFee, newPerformanceFee);
 
+        vm.startPrank(poolOwner);
+        pool.setFees(newPoolFee, newStakingFee, newPerformanceFee);
         vm.stopPrank();
 
-        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
+        productInfo = instanceReader.getProductInfo(productNftId);
+        poolFee = productInfo.poolFee;
+        stakingFee = productInfo.stakingFee;
+        performanceFee = productInfo.performanceFee;
 
-        Fee memory poolFee = poolInfo.poolFee;
-        Fee memory stakingFee = poolInfo.stakingFee;
-        Fee memory performanceFee = poolInfo.performanceFee;
-        assertEq(poolFee.fractionalFee.toInt(), 111, "pool fee not 111");
-        assertEq(poolFee.fixedFee, 222, "pool fee not 222");
-        assertEq(stakingFee.fractionalFee.toInt(), 333, "staking fee not 333");
-        assertEq(stakingFee.fixedFee, 444, "staking fee not 444");
-        assertEq(performanceFee.fractionalFee.toInt(), 555, "performance fee not 555");
-        assertEq(performanceFee.fixedFee, 666, "performance fee not 666");
+        assertEq(poolFee.fractionalFee.toInt(), 111, "pool fee not 111 (fractional)");
+        assertEq(poolFee.fixedFee, 222, "pool fee not 222 (fixed)");
+        assertEq(stakingFee.fractionalFee.toInt(), 333, "staking fee not 333 (fractional)");
+        assertEq(stakingFee.fixedFee, 444, "staking fee not 444 (fixed)");
+        assertEq(performanceFee.fractionalFee.toInt(), 555, "performance fee not 555 (fractional)");
+        assertEq(performanceFee.fixedFee, 666, "performance fee not 666 (fixed)");
     }
 
-    function test_Pool_createBundle() public {
+    function test_PoolCreateBundle() public {
         // GIVEN
         _fundInvestor();
 
@@ -162,7 +187,8 @@ contract TestPool is GifTest {
             poolOwner
         );
         
-        poolNftId = poolService.register(address(pool));
+        pool.register();
+        poolNftId = pool.getNftId();
         vm.stopPrank();
 
         vm.startPrank(investor);
@@ -172,7 +198,7 @@ contract TestPool is GifTest {
         // WHEN
         SimplePool spool = SimplePool(address(pool));
         bundleNftId = spool.createBundle(
-            FeeLib.zeroFee(), 
+            FeeLib.zero(), 
             10000, 
             SecondsLib.toSeconds(604800), 
             ""
@@ -185,9 +211,9 @@ contract TestPool is GifTest {
         assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet balance not 10000");
 
         assertEq(instanceBundleManager.bundles(poolNftId), 1, "expected only 1 bundle");
-        assertTrue(instanceBundleManager.getBundleNftId(poolNftId, 0).eq(bundleNftId), "bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleManager.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
         assertEq(instanceBundleManager.activeBundles(poolNftId), 1, "expected one active bundle");
-        assertTrue(instanceBundleManager.getActiveBundleNftId(poolNftId, 0).eq(bundleNftId), "active bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleManager.getActiveBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "active bundle nft id in bundle manager not equal to bundle nft id");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(
@@ -340,7 +366,7 @@ contract TestPool is GifTest {
 
         SimplePool spool = SimplePool(address(pool));
         NftId bundleNftId = spool.createBundle(
-            FeeLib.zeroFee(), 
+            FeeLib.zero(), 
             10000, 
             SecondsLib.toSeconds(604800), 
             ""
@@ -364,8 +390,8 @@ contract TestPool is GifTest {
 
         // WHEN
         SimplePool spool = SimplePool(address(pool));
-        return spool.createBundle(
-            FeeLib.zeroFee(), 
+        bundleNftId = spool.createBundle(
+            FeeLib.zero(), 
             10000, 
             SecondsLib.toSeconds(604800), 
             ""

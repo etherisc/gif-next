@@ -37,12 +37,11 @@ contract DistributorTypeTest is GifTest {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
-            address(token),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            distributionOwner
-        );
-        distributionNftId = distributionService.register(address(distribution));
+            distributionOwner,
+            address(token));
+
+        distribution.register();
+        distributionNftId = distribution.getNftId();
     }
 
     function testGifSetupDistributorTypeCreate() public {

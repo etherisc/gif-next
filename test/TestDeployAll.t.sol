@@ -6,7 +6,7 @@ import {GifTest} from "./base/GifTest.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {IStaking} from "../contracts/staking/IStaking.sol";
 import {IStakingService} from "../contracts/staking/IStakingService.sol";
-import {NftId, toNftId, NftIdLib} from "../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {BUNDLE, COMPONENT, POLICY, RISK, SERVICE, STAKING} from "../contracts/type/ObjectType.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 
@@ -15,7 +15,7 @@ contract TestDeployAll is GifTest {
 
     // FIXME: add missing services
     function test_deployAllOverview() public {
-        assertEq(registry.getObjectCount(), 17, "invalid object count for base setup");
+        assertEq(registry.getObjectCount(), 18, "invalid object count for base setup");
 
         // validate instance service
         assertTrue(registry.getNftId(address(stakingService)).eq(stakingServiceNftId), "staking service nft does not match");
@@ -72,7 +72,7 @@ contract TestDeployAll is GifTest {
     //         instance.getNftId(),
     //         "registry and instance nft id differ"
     //     );
-    //     assertNftId(nftId, toNftId(93133705), "instance getNftId not 93133705");
+    //     assertNftId(nftId, NftIdLib.toNftId(93133705), "instance getNftId not 93133705");
     // }
 
     // function testDeployAllProductOwner() public {
@@ -103,7 +103,7 @@ contract TestDeployAll is GifTest {
     //         distribution.getNftId(),
     //         "registry and distribution nft id differ"
     //     );
-    //     assertNftId(nftId, toNftId(113133705), "distribution getNftId not 113133705");
+    //     assertNftId(nftId, NftIdLib.toNftId(113133705), "distribution getNftId not 113133705");
     // }
 
     // function testDeployAllProductNftId() public {
@@ -113,7 +113,7 @@ contract TestDeployAll is GifTest {
     //         product.getNftId(),
     //         "registry and product nft id differ"
     //     );
-    //     assertNftId(nftId, toNftId(123133705), "product getNftId not 123133705");
+    //     assertNftId(nftId, NftIdLib.toNftId(123133705), "product getNftId not 123133705");
     // }
 
     // function testDeployAllProductPoolDistributionLink() public {
@@ -134,6 +134,6 @@ contract TestDeployAll is GifTest {
     // function testDeployAllPoolNftId() public {
     //     NftId nftId = registry.getNftId(address(pool));
     //     assertNftId(nftId, pool.getNftId(), "registry and pool nft id differ");
-    //     assertNftId(nftId, toNftId(103133705), "pool getNftId not 103133705");
+    //     assertNftId(nftId, NftIdLib.toNftId(103133705), "pool getNftId not 103133705");
     // }
 }

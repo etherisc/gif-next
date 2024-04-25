@@ -9,6 +9,7 @@ using {
     addAmount as +,
     subAmount as -,
     eqAmount as ==,
+    nqAmount as !=,
     ltAmount as <,
     gtAmount as >,
     AmountLib.eq,
@@ -29,6 +30,10 @@ function subAmount(Amount a, Amount b) pure returns (Amount) {
 
 function eqAmount(Amount a, Amount b) pure returns (bool) {
     return AmountLib.eq(a, b);
+}
+
+function nqAmount(Amount a, Amount b) pure returns (bool) {
+    return !AmountLib.eq(a, b);
 }
 
 function ltAmount(Amount a, Amount b) pure returns (bool) {

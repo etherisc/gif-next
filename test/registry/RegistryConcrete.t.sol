@@ -5,7 +5,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -25,8 +25,8 @@ contract Registry_Concrete_Tests is RegistryTestBase {
 
         _assert_register_with_default_checks(
             IRegistry.ObjectInfo(
-                toNftId(16158753772191290777002328881),
-                toNftId(193),
+                NftIdLib.toNftId(16158753772191290777002328881),
+                NftIdLib.toNftId(193),
                 toObjectType(160),
                 false, // isInterceptor
                 0x9c538400FeC769e651E6552221C88A29660f0DE5,
@@ -41,8 +41,8 @@ contract Registry_Concrete_Tests is RegistryTestBase {
         // parentNftId == _chainNft.mint() && objectAddress == initialOwner
         _assert_register_with_default_checks(
             IRegistry.ObjectInfo(
-                toNftId(3471),
-                toNftId(43133705),
+                NftIdLib.toNftId(3471),
+                NftIdLib.toNftId(43133705),
                 toObjectType(128),
                 false, // isInterceptor
                 0x6AB133Ce3481A06313b4e0B1bb810BCD670853a4,
@@ -54,8 +54,8 @@ contract Registry_Concrete_Tests is RegistryTestBase {
         // precompile address as owner
         _assert_register_with_default_checks(
             IRegistry.ObjectInfo(
-                toNftId(76658180398758015949026343204),
-                toNftId(17762988911415987093326017078),
+                NftIdLib.toNftId(76658180398758015949026343204),
+                NftIdLib.toNftId(17762988911415987093326017078),
                 toObjectType(21),
                 false, // isInterceptor
                 0x85Cf4Fe71daF5271f8a5C1D4E6BB4bc91f792e27,
@@ -67,8 +67,8 @@ contract Registry_Concrete_Tests is RegistryTestBase {
         // initialOwner is cheat codes contract address
         _assert_register_with_default_checks(
             IRegistry.ObjectInfo(
-                toNftId(15842010466351085404296329522),
-                toNftId(16017),
+                NftIdLib.toNftId(15842010466351085404296329522),
+                NftIdLib.toNftId(16017),
                 toObjectType(19),
                 false, // isInterceptor
                 0x0C168C3a4589B65fFf12444A0c88125a416927DD,
@@ -79,8 +79,8 @@ contract Registry_Concrete_Tests is RegistryTestBase {
 
         _assert_register_with_default_checks(
             IRegistry.ObjectInfo(
-                toNftId(0),
-                toNftId(162),
+                NftIdLib.toNftId(0),
+                NftIdLib.toNftId(162),
                 toObjectType(0),
                 false, // isInterceptor
                 0x733A203078373333613230333037383337333333,
@@ -91,7 +91,7 @@ contract Registry_Concrete_Tests is RegistryTestBase {
 
         _assert_register_with_default_checks(
             IRegistry.ObjectInfo(
-                toNftId(133133705),
+                NftIdLib.toNftId(133133705),
                 registryNftId,
                 SERVICE(),
                 false, // isInterceptor
@@ -106,8 +106,8 @@ contract Registry_Concrete_Tests is RegistryTestBase {
 
         _assert_register_with_default_checks(
             IRegistry.ObjectInfo(
-                toNftId(22045),
-                toNftId(EnumerableSet.at(_nftIds, 2620112370 % EnumerableSet.length(_nftIds))),
+                NftIdLib.toNftId(22045),
+                NftIdLib.toNftId(EnumerableSet.at(_nftIds, 2620112370 % EnumerableSet.length(_nftIds))),
                 _types[199 % _types.length],
                 false, // isInterceptor
                 address(0),
@@ -121,8 +121,8 @@ contract Registry_Concrete_Tests is RegistryTestBase {
 
         _assert_register_with_default_checks(
             IRegistry.ObjectInfo(
-                toNftId(5764),
-                toNftId(EnumerableSet.at(_nftIds, 1794 % EnumerableSet.length(_nftIds))),
+                NftIdLib.toNftId(5764),
+                NftIdLib.toNftId(EnumerableSet.at(_nftIds, 1794 % EnumerableSet.length(_nftIds))),
                 _types[167 % _types.length],
                 false,
                 address(0),
@@ -138,7 +138,7 @@ contract Registry_Concrete_Tests is RegistryTestBase {
     function test_registryOwnerNftTransfer() public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            zeroNftId(), // any nftId
+            NftIdLib.zero(), // any nftId
             registryNftId,
             PRODUCT(),
             false,
@@ -186,7 +186,7 @@ contract Registry_Concrete_Tests is RegistryTestBase {
     /*function test_register_ServiceWithZeroMajorVersion() public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            zeroNftId(), // any nftId
+            NftIdLib.zero(), // any nftId
             registryNftId,
             SERVICE(),
             false, // isInterceptor            

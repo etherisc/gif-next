@@ -5,7 +5,7 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {ObjectType, REGISTRY, STAKING} from "../type/ObjectType.sol";
-import {NftId, zeroNftId} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {Version, VersionLib, VersionPartLib} from "../type/Version.sol";
 
 import {Component} from "../shared/Component.sol";
@@ -58,7 +58,8 @@ contract Staking is
             STAKING(), 
             false, // is interceptor
             initialOwner, 
-            ""); // data
+            "", // registry data
+            ""); // component data
 
         registerInterface(type(IStaking).interfaceId);
     }

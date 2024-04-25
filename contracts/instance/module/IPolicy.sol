@@ -12,6 +12,12 @@ import {Timestamp} from "../../type/Timestamp.sol";
 interface IPolicy {
 
     struct Premium {
+        // premium splitting per target wallet
+        Amount productFeeAmount;
+        Amount distributionFeeAndCommissionAmount;
+        Amount poolPremiumAndFeeAmount;
+
+        // detailed positions
         // this is the net premium calculated by the product 
         uint256 netPremiumAmount;
         // fullPremium = netPremium + all fixed amounts + all variable amounts (excl commission and minDistribtuionOwnerFee variable part)
@@ -42,8 +48,8 @@ interface IPolicy {
         ReferralId referralId;
         RiskId riskId;
         Amount sumInsuredAmount;
-        Amount premiumAmount;
-        Amount premiumPaidAmount; // when lower than premium amount: max payout decreased accordingly
+        Amount premiumAmount; // expected premium at application time
+        Amount premiumPaidAmount; // actual paid premium (might differ when eg referral has expired)
         Seconds lifetime;
         // policy application data, no changes after applying for a policy
         bytes applicationData;

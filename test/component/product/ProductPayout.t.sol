@@ -12,7 +12,6 @@ import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {ILifecycle} from "../../../contracts/instance/base/ILifecycle.sol";
-import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
@@ -43,7 +42,7 @@ contract TestProductClaim is GifTest {
     function setUp() public override {
         super.setUp();
 
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         // create risk
         vm.startPrank(productOwner);
@@ -722,7 +721,6 @@ contract TestProductClaim is GifTest {
             ReferralLib.zero());
 
         // fund policy holder to pay premium
-        ISetup.ProductSetupInfo memory productSetup = instanceReader.getProductSetupInfo(productNftId);
         uint256 premiumAmountInt = instanceReader.getPolicyInfo(policyNftId).premiumAmount.toInt();
 
         // add token allowance to pay premiums
@@ -731,9 +729,8 @@ contract TestProductClaim is GifTest {
         vm.stopPrank();
 
         vm.startPrank(policyHolder);
-        token.approve(
-            address(productSetup.tokenHandler), 
-            premiumAmountInt);
+        address tokenHandlerAddress = address(instanceReader.getComponentInfo(productNftId).tokenHandler);
+        token.approve(tokenHandlerAddress, premiumAmountInt);
         vm.stopPrank();
 
         // collateralize policy
@@ -826,14 +823,11 @@ contract TestProductClaim is GifTest {
         claimState = instanceReader.getClaimState(policyNftId, claimId);
     }
 
+    // add allowance to pay premiums
     function _approve() internal {
-        // add allowance to pay premiums
-        ISetup.ProductSetupInfo memory productSetup = instanceReader.getProductSetupInfo(productNftId);(productNftId);
-
         vm.startPrank(customer);
-        token.approve(
-            address(productSetup.tokenHandler), 
-            CUSTOMER_FUNDS);
+        address tokenHandlerAddress = address(instanceReader.getComponentInfo(productNftId).tokenHandler);
+        token.approve(tokenHandlerAddress, CUSTOMER_FUNDS);
         vm.stopPrank();
     }
 
@@ -868,7 +862,7 @@ contract TestProductClaim is GifTest {
     }
 
 
-    function _prepareProduct() internal {
+    function _prepareProductLocal() internal {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();
@@ -879,16 +873,15 @@ contract TestProductClaim is GifTest {
         prdct = new SimpleProduct(
             address(registry),
             instanceNftId,
+            productOwner,
             address(token),
             false,
             address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
+            address(distribution)
         );
         
-        productNftId = productService.register(address(prdct));
+        prdct.register();
+        productNftId = prdct.getNftId();
         vm.stopPrank();
 
 
@@ -903,7 +896,7 @@ contract TestProductClaim is GifTest {
 
         // SimplePool spool = SimplePool(address(pool));
         bundleNftId = SimplePool(address(pool)).createBundle(
-            FeeLib.zeroFee(), 
+            FeeLib.zero(), 
             BUNDLE_CAPITAL, 
             SecondsLib.toSeconds(604800), 
             ""

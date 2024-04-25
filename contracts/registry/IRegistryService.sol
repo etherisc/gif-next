@@ -11,6 +11,8 @@ import {IRegistry} from "./IRegistry.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IComponent} from "../shared/IComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+
 
 interface IRegistryService is 
      IService
@@ -20,6 +22,7 @@ interface IRegistryService is
 
      error NotService();
      error NotInstance();
+     error NotComponent();
      error NotProduct();
      error NotPool();
      error NotDistribution();
@@ -31,10 +34,14 @@ interface IRegistryService is
      error InvalidInitialOwner(address initialOwner);
      error InvalidAddress(address registerableAddress);
 
-     struct FunctionConfig
-     {
+     struct ServiceAuthorization {
+          ObjectType[] authorizedDomain;
+          bytes4[][] authorizedSelectors;
+     }
+
+     struct FunctionConfig {
           ObjectType serviceDomain;
-          bytes4[] selectors;
+          bytes4[] authorizedSelectors;
      }
 
      function getFunctionConfigs()
@@ -49,6 +56,9 @@ interface IRegistryService is
 
      function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info); 
+
+     function registerComponent(IComponent component, ObjectType objectType, address owner)
+          external returns(IRegistry.ObjectInfo memory info);
 
      function registerProduct(IComponent product, address owner)
           external returns(IRegistry.ObjectInfo memory info);

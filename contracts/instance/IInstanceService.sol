@@ -61,6 +61,14 @@ interface IInstanceService is IService {
             NftId instanceNftId
         );
 
+    function createComponentTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        bytes4[][] memory selectors,
+        RoleId[] memory roles
+    ) external;
+
     function createGifTarget(
         NftId instanceNftId,
         address targetAddress,

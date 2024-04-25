@@ -8,8 +8,9 @@ import {IBundleService} from "./IBundleService.sol";
 import {IPoolComponent} from "./IPoolComponent.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {BUNDLE, POOL} from "../type/ObjectType.sol";
+import {BUNDLE, COMPONENT, POOL} from "../type/ObjectType.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -23,6 +24,7 @@ abstract contract Pool is
     bytes32 public constant POOL_STORAGE_LOCATION_V1 = 0x25e3e51823fbfffb988e0a2744bb93722d9f3e906c07cc0a9e77884c46c58300;
 
     struct PoolStorage {
+        IComponentService _componentService;
         IPoolService _poolService;
         IBundleService _bundleService;
     }
@@ -51,19 +53,30 @@ abstract contract Pool is
         address token,
         bool isInterceptingNftTransfers,
         address initialOwner,
-        bytes memory registryData // writeonly data that will saved in the object info record of the registry
+        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
+        bytes memory componentData // component specifidc data 
     )
         public
         virtual
         onlyInitializing()
     {
-        initializeComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, registryData);
+        initializeInstanceLinkedComponent(registry, instanceNftId, name, token, POOL(), isInterceptingNftTransfers, initialOwner, registryData, componentData);
 
         PoolStorage storage $ = _getPoolStorage();
         $._poolService = IPoolService(_getServiceAddress(POOL())); 
         $._bundleService = IBundleService(_getServiceAddress(BUNDLE()));
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
         registerInterface(type(IPoolComponent).interfaceId);
+    }
+
+
+    function register()
+        external
+        virtual
+        onlyOwner()
+    {
+        _getPoolStorage()._componentService.registerPool();
     }
 
 
@@ -179,7 +192,7 @@ abstract contract Pool is
         restricted()
         onlyOwner()
     {
-        _getPoolStorage()._poolService.setFees(poolFee, stakingFee, performanceFee);
+        _getPoolStorage()._componentService.setPoolFees(poolFee, stakingFee, performanceFee);
     }
 
 
@@ -229,8 +242,25 @@ abstract contract Pool is
     }
 
 
-    function getPoolInfo() external view returns (IComponents.PoolInfo memory poolInfo) {
-        poolInfo = abi.decode(getComponentInfo().data, (IComponents.PoolInfo));
+    function getInitialPoolInfo()
+        public 
+        virtual 
+        view 
+        returns (IComponents.PoolInfo memory poolInfo)
+    {
+        return IComponents.PoolInfo(
+            NftIdLib.zero(), // will be set when GIF registers the related product
+            PUBLIC_ROLE(), // bundleOwnerRole
+            AmountLib.max(), // maxCapitalAmount,
+            isNftInterceptor(), // isInterceptingBundleTransfers
+            false, // isExternallyManaged,
+            false, // isVerifyingApplications,
+            UFixedLib.toUFixed(1), // collateralizationLevel,
+            UFixedLib.toUFixed(1), // retentionLevel,
+            FeeLib.zero(), // initialPoolFee,
+            FeeLib.zero(), // initialStakingFee,
+            FeeLib.zero() // initialPerformanceFee,
+        );
     }
 
     // Internals
@@ -258,39 +288,6 @@ abstract contract Pool is
     // TODO remove function once this is no longer used to produce contract locations on the fly ...
     function getContractLocation(bytes memory name) external pure returns (bytes32 hash) {
         return keccak256(abi.encode(uint256(keccak256(name)) - 1)) & ~bytes32(uint256(0xff));
-    }
-
-    /// @dev defines initial pool specification
-    /// overwrite this function according to your use case
-    function _getInitialInfo()
-        internal
-        view 
-        virtual override
-        returns (IComponents.ComponentInfo memory info)
-    {
-        return IComponents.ComponentInfo(
-            getName(),
-            getToken(),
-            TokenHandler(address(0)), // will be created by GIF service during registration
-            address(this), // contract is its own wallet
-            AmountLib.zero(), // balance amount
-            AmountLib.zero(), // fee amount
-            abi.encode(
-                IComponents.PoolInfo(
-                    NftIdLib.zero(), // will be set when GIF registers the related product
-                    PUBLIC_ROLE(), // bundleOwnerRole
-                    AmountLib.max(), // maxCapitalAmount,
-                    AmountLib.zero(), // initial balance amount
-                    AmountLib.zero(), // initial fee amount
-                    isNftInterceptor(), // isInterceptingBundleTransfers
-                    false, // isExternallyManaged,
-                    false, // isVerifyingApplications,
-                    UFixedLib.toUFixed(1), // collateralizationLevel,
-                    UFixedLib.toUFixed(1), // retentionLevel,
-                    FeeLib.zeroFee(), // initialPoolFee,
-                    FeeLib.zeroFee(), // initialStakingFee,
-                    FeeLib.zeroFee() // initialPerformanceFee,
-                )));
     }
 
 

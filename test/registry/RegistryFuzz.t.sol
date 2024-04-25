@@ -5,7 +5,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -166,7 +166,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             objectAddress,
@@ -182,7 +182,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             objectAddress,
@@ -198,7 +198,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -214,7 +214,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -230,7 +230,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             objectAddress,
@@ -246,7 +246,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             objectAddress,
@@ -262,7 +262,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -278,7 +278,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -353,7 +353,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             address(0),
@@ -368,7 +368,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             address(0),
@@ -383,7 +383,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             address(0),
@@ -398,7 +398,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             address(0),
@@ -417,7 +417,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
         );
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            zeroNftId(), // any nftId
+            NftIdLib.zero(), // any nftId
             registryNftId,
             SERVICE(),
             isInterceptor,
@@ -450,7 +450,7 @@ contract Registry_Fuzz_Tests is RegistryTestBase
         );
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            zeroNftId(), // any nftId
+            NftIdLib.zero(), // any nftId
             registryNftId,
             SERVICE(),
             isInterceptor,

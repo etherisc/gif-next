@@ -32,7 +32,7 @@ contract TestPoolService is GifTest {
                 POOL_OWNER_ROLE(), 
                 poolOwner));
 
-        poolService.register(address(pool));
+        pool.register();
     }
 
     function test_PoolService_register() public {
@@ -52,7 +52,8 @@ contract TestPoolService is GifTest {
             poolOwner
         );
         
-        NftId nftId = poolService.register(address(pool));
+        pool.register();
+        NftId nftId = pool.getNftId();
         assertTrue(nftId.gtz(), "nftId is zero");
     }
 }

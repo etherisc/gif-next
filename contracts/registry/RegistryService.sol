@@ -18,9 +18,9 @@ import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE} from "../../contracts/type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {Version, VersionPart, VersionLib} from "../../contracts/type/Version.sol";
 
@@ -60,7 +60,6 @@ contract RegistryService is
         ) = abi.decode(data, (address, address));
 
         initializeService(registryAddress, initialAuthority, owner);
-
         registerInterface(type(IRegistryService).interfaceId);
     }
 
@@ -109,6 +108,26 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(product, PRODUCT(), owner);
+        info.nftId = getRegistry().register(info);
+    }
+
+    function registerComponent(
+        IComponent component, 
+        ObjectType objectType,
+        address initialOwner
+    )
+        external
+        restricted
+        returns(
+            IRegistry.ObjectInfo memory info
+        ) 
+    {
+        // CAN revert if no ERC165 support -> will revert with empty message 
+        if(!component.supportsInterface(type(IComponent).interfaceId)) {
+            revert NotComponent();
+        }
+
+        info = _getAndVerifyContractInfo(component, objectType, initialOwner);
         info.nftId = getRegistry().register(info);
     }
 
@@ -190,52 +209,56 @@ contract RegistryService is
             FunctionConfig[] memory config
         )
     {
-        config = new FunctionConfig[](10);
+        config = new FunctionConfig[](11);
 
         // order of service registrations MUST be reverse to this array 
         /*config[-1].serviceDomain = STAKE();
         config[-1].selector = RegistryService.registerStake.selector;*/
 
         config[0].serviceDomain = POLICY();
-        config[0].selectors = new bytes4[](0);
+        config[0].authorizedSelectors = new bytes4[](0);
 
         config[1].serviceDomain = APPLICATION();
-        config[1].selectors = new bytes4[](1);
-        config[1].selectors[0] = RegistryService.registerPolicy.selector;
+        config[1].authorizedSelectors = new bytes4[](1);
+        config[1].authorizedSelectors[0] = RegistryService.registerPolicy.selector;
 
         config[2].serviceDomain = CLAIM();
-        config[2].selectors = new bytes4[](0);
+        config[2].authorizedSelectors = new bytes4[](0);
 
         config[3].serviceDomain = PRODUCT();
-        config[3].selectors = new bytes4[](1);
-        config[3].selectors[0] = RegistryService.registerProduct.selector;
+        config[3].authorizedSelectors = new bytes4[](1);
+        config[3].authorizedSelectors[0] = RegistryService.registerProduct.selector;
 
         config[4].serviceDomain = POOL();
-        config[4].selectors = new bytes4[](1);
-        config[4].selectors[0] = RegistryService.registerPool.selector;
+        config[4].authorizedSelectors = new bytes4[](1);
+        config[4].authorizedSelectors[0] = RegistryService.registerPool.selector;
 
         // registration of bundle service must preceed registration of pool service
         config[5].serviceDomain = BUNDLE();
-        config[5].selectors = new bytes4[](1);
-        config[5].selectors[0] = RegistryService.registerBundle.selector;
+        config[5].authorizedSelectors = new bytes4[](1);
+        config[5].authorizedSelectors[0] = RegistryService.registerBundle.selector;
 
         // registration of pricing service must preceed registration of application service
         config[6].serviceDomain = PRICE();
-        config[6].selectors = new bytes4[](0);
+        config[6].authorizedSelectors = new bytes4[](0);
 
         // registration of distribution service must preceed registration of pricing service
         config[7].serviceDomain = DISTRIBUTION();
-        config[7].selectors = new bytes4[](2);
-        config[7].selectors[0] = RegistryService.registerDistribution.selector;
-        config[7].selectors[1] = RegistryService.registerDistributor.selector;
+        config[7].authorizedSelectors = new bytes4[](2);
+        config[7].authorizedSelectors[0] = RegistryService.registerDistribution.selector;
+        config[7].authorizedSelectors[1] = RegistryService.registerDistributor.selector;
 
-        config[8].serviceDomain = INSTANCE();
-        config[8].selectors = new bytes4[](1);
-        config[8].selectors[0] = RegistryService.registerInstance.selector;
+        config[8].serviceDomain = COMPONENT();
+        config[8].authorizedSelectors = new bytes4[](1);
+        config[8].authorizedSelectors[0] = RegistryService.registerComponent.selector;
 
-        config[9].serviceDomain = STAKING();
-        config[9].selectors = new bytes4[](1);
-        config[9].selectors[0] = RegistryService.registerStaking.selector;
+        config[9].serviceDomain = INSTANCE();
+        config[9].authorizedSelectors = new bytes4[](1);
+        config[9].authorizedSelectors[0] = RegistryService.registerInstance.selector;
+
+        config[10].serviceDomain = STAKING();
+        config[10].authorizedSelectors = new bytes4[](1);
+        config[10].authorizedSelectors[0] = RegistryService.registerStaking.selector;
     }
 
     // Internal

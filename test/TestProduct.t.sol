@@ -10,7 +10,6 @@ import {SimpleProduct} from "./mock/SimpleProduct.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {ILifecycle} from "../contracts/instance/base/ILifecycle.sol";
-import {ISetup} from "../contracts/instance/module/ISetup.sol";
 import {IPolicy} from "../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
@@ -34,50 +33,51 @@ contract TestProduct is GifTest {
 
     Seconds public sec30;
 
+    mapping(address account => uint previousBalance) public pb;
+
     function setUp() public override {
         super.setUp();
         sec30 = SecondsLib.toSeconds(30);
     }
 
-    function test_Product_setupInfo() public {
-        _prepareProduct();
-
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
+    function test_ProductSetupInfo() public {
+        _prepareProductLocal();
 
         // check nft id (components -> product)
         uint256 productNftIdInt = product.getNftId().toInt();
         assertTrue(productNftIdInt > 0, "product nft zero");
-        assertEq(product.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (product)");
         assertEq(distribution.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (distribution)");
         assertEq(pool.getProductNftId().toInt(), productNftIdInt, "unexpected product nft (pool)");
-        
-        // check nft id links (product -> components)
-        assertEq(productSetupInfo.distributionNftId.toInt(), distribution.getNftId().toInt(), "unexpected distribution nft id");
-        assertEq(productSetupInfo.poolNftId.toInt(), pool.getNftId().toInt(), "unexpected distribution nft id");
 
         // check token handler
-        assertTrue(address(productSetupInfo.tokenHandler) != address(0), "token handler zero");
-        assertEq(address(productSetupInfo.tokenHandler.getToken()), address(distribution.getToken()), "unexpected token for token handler");
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        assertTrue(address(componentInfo.tokenHandler) != address(0), "token handler zero");
+        assertEq(address(componentInfo.tokenHandler.getToken()), address(token), "unexpected token for token handler");
+
+        // check nft id links (product -> components)
+        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        assertEq(productInfo.distributionNftId.toInt(), distribution.getNftId().toInt(), "unexpected distribution nft id");
+        assertEq(productInfo.poolNftId.toInt(), pool.getNftId().toInt(), "unexpected pool nft id");
 
         // check fees
-        Fee memory productFee = productSetupInfo.productFee;
+        Fee memory productFee = productInfo.productFee;
         assertEq(productFee.fractionalFee.toInt(), 0, "product fee not 0");
         assertEq(productFee.fixedFee, 0, "product fee not 0");
-        Fee memory processingFee = productSetupInfo.processingFee;
+        Fee memory processingFee = productInfo.processingFee;
         assertEq(processingFee.fractionalFee.toInt(), 0, "processing fee not 0");
         assertEq(processingFee.fixedFee, 0, "processing fee not 0");
     }
 
 
-    function test_Product_SetFees() public {
-        _prepareProduct();
+    function test_ProductSetFees() public {
+        _prepareProductLocal();
         vm.startPrank(productOwner);
 
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        Fee memory productFee = productSetupInfo.productFee;
+        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        Fee memory productFee = productInfo.productFee;
         assertEq(productFee.fractionalFee.toInt(), 0, "product fee not 0");
         assertEq(productFee.fixedFee, 0, "product fee not 0");
-        Fee memory processingFee = productSetupInfo.processingFee;
+        Fee memory processingFee = productInfo.processingFee;
         assertEq(processingFee.fractionalFee.toInt(), 0, "processing fee not 0");
         assertEq(processingFee.fixedFee, 0, "processing fee not 0");
         
@@ -85,25 +85,25 @@ contract TestProduct is GifTest {
         Fee memory newProcessingFee = FeeLib.toFee(UFixedLib.toUFixed(789,0), 101112);
         product.setFees(newProductFee, newProcessingFee);
 
-        productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        productFee = productSetupInfo.productFee;
+        productInfo = instanceReader.getProductInfo(productNftId);
+        productFee = productInfo.productFee;
         assertEq(productFee.fractionalFee.toInt(), 123, "product fee not 123");
         assertEq(productFee.fixedFee, 456, "product fee not 456");
 
-        processingFee = productSetupInfo.processingFee;
+        processingFee = productInfo.processingFee;
         assertEq(processingFee.fractionalFee.toInt(), 789, "processing fee not 789");
         assertEq(processingFee.fixedFee, 101112, "processing fee not 101112");
 
         vm.stopPrank();
     }
 
-    function test_Product_calculatePremium() public {
-        _prepareProduct();  
+    function test_ProductCalculatePremium() public {
+        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
@@ -121,13 +121,13 @@ contract TestProduct is GifTest {
         assertEq(premium.toInt(), 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
     }
 
-    function test_Product_createApplication() public {
-        _prepareProduct();
+    function test_ProductCreateApplication() public {
+        _prepareProductLocal();
 
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
@@ -155,38 +155,45 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
     }
 
-    function test_Product_collateralizeWithoutPayment() public {
+    function test_ProductCollateralizeWithoutPayment() public {
         // GIVEN
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
+        // set test specific fees
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
+        // create test specific risk
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        product.createRisk(riskId, data);
 
+        // crete application
         uint sumInsuredAmount = 1000;
-        NftId policyNftId = dproduct.createApplication(
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
             sumInsuredAmount,
-            SecondsLib.toSeconds(30),
-            "",
+            lifetime,
+            applicationData,
             bundleNftId,
-            ReferralLib.zero()
+            referralId
         );
+
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
-
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
-        // WHEN
+        vm.stopPrank();
+
+        // WHEN - collateralize application
         bool requirePremiumPayment = false;
-        dproduct.collateralize(policyNftId, requirePremiumPayment, TimestampLib.blockTimestamp()); 
+        product.collateralize(policyNftId, requirePremiumPayment, TimestampLib.blockTimestamp()); 
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
@@ -199,82 +206,118 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
-        console.log("checking bundle info after underwriting");
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.capitalAmount.toInt(), 10000, "capitalAmount not 10000");
+        console.log("checking bundle amounts after underwriting");
+        (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount");
+        assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount");
+        assertEq(feeAmount.toInt(), 0, "unexpected bundle fee amount");
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
-    function test_Product_collateralizeWithPayment() public {
+    function test_ProductCollateralizeWithPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
-
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
-
+        product.createRisk(riskId, data);
         vm.stopPrank();
 
         vm.startPrank(customer);
 
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
         // revert("checkApprove");
 
-        NftId policyNftId = dproduct.createApplication(
+        // crete application
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
-            1000,
-            SecondsLib.toSeconds(30),
-            "",
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
             bundleNftId,
-            ReferralLib.zero()
+            referralId
         );
+
+        vm.stopPrank();
+
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
-
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
-        vm.stopPrank();
+        // calculate expected premium/fee amounts
+        IPolicy.Premium memory ep = pricingService.calculatePremium(
+            productNftId, 
+            riskId, 
+            AmountLib.toAmount(sumInsuredAmount), 
+            lifetime, 
+            applicationData, 
+            bundleNftId, 
+            referralId);
+
+        // recored token balances before collateralization
+        pb[product.getWallet()] = token.balanceOf(product.getWallet());
+        pb[distribution.getWallet()] = token.balanceOf(distribution.getWallet());
+        pb[customer] = token.balanceOf(customer);
+        pb[pool.getWallet()] = token.balanceOf(pool.getWallet());
 
         // WHEN
         vm.startPrank(productOwner);
-        bool collectPremiumAmount = true;
-        dproduct.collateralize(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
+
+        // solhint-disable-next-line 
+        console.log("before collateralization of", policyNftId.toInt());
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+
+        // solhint-disable-next-line 
+        console.log("after collateralization");
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
 
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.feeAmount.toInt(), 10, "feeAmount not 10");
-        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 100 - 10, "capitalAmount not 1100");
-        
+        // solhint-disable-next-line 
+        console.log("checking bundle amounts after underwriting");
+        (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
+        uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
+        uint netPremium = ep.netPremiumAmount;
+
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount");
+        assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount");
+        assertEq(feeAmount.toInt(), bundleFee, "unexpected bundle fee amount");
+
+        // solhint-disable-next-line 
+        console.log("checking pool amounts after underwriting");
+        (Amount poolAmount,, Amount poolFeeAmount) = instanceStore.getAmounts(bundleNftId);
+        assertEq(poolFeeAmount.toInt(), 10, "unexpected pool fee amount");
+
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
-        assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
-        assertEq(token.balanceOf(distribution.getWallet()), 10, "distibution balance not 10");
-        assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
-        assertEq(token.balanceOf(pool.getWallet()), 10120, "pool balance not 10120"); // 10000 + 100 (net premium) + 10 (pool fee) + 10 (bundle fee)
-
-        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
-        assertEq(poolComponentInfo.feeAmount.toInt(), 10, "pool fee amount not 10");
+        // solhint-disable-next-line 
+        console.log("checking token balances after underwriting");
+        assertEq(token.balanceOf(product.getWallet()) - pb[product.getWallet()], 10, "unexpected product balance");
+        assertEq(token.balanceOf(distribution.getWallet()) - pb[distribution.getWallet()], 10, "unexpected distibution balance");
+        assertEq(token.balanceOf(customer), pb[customer] - ep.premiumAmount, "unexpected customer balance");
+        assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], 120, "unexpected pool balance"); // 100 (net premium) + 10 (pool fee) + 10 (bundle fee)
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
@@ -286,13 +329,13 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         // set product fees and create risk
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
@@ -336,8 +379,8 @@ contract TestProduct is GifTest {
 
         vm.startPrank(customer);
 
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
         // revert("checkApprove");
 
         NftId policyNftId = dproduct.createApplication(
@@ -370,7 +413,7 @@ contract TestProduct is GifTest {
         assertEq(token.balanceOf(address(customer)), 863, "customer balance not 863");
 
         IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
-        assertEq(poolComponentInfo.feeAmount.toInt(), 10, "pool fee amount not 10");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 10, "pool fee amount not 10");
     }
 
     function test_Product_collateralizeWithReferralExpired() public {
@@ -379,13 +422,13 @@ contract TestProduct is GifTest {
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         // set product fees and create risk
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
@@ -430,8 +473,8 @@ contract TestProduct is GifTest {
 
         vm.startPrank(customer);
 
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
 
         NftId policyNftId = dproduct.createApplication(
             customer,
@@ -474,12 +517,12 @@ contract TestProduct is GifTest {
 /*  FIX ME
     function test_collateralize_reverts_on_locked_bundle() public {
         // GIVEN
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
@@ -523,24 +566,24 @@ contract TestProduct is GifTest {
     }
 */
 
-    function test_activate() public {
+    function test_ProductPolicyActivate() public {
         // GIVEN
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        product.createRisk(riskId, data);
 
-        NftId policyNftId = dproduct.createApplication(
+        uint sumInsuredAmount = 1000;
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
-            1000,
+            sumInsuredAmount,
             SecondsLib.toSeconds(30),
             "",
             bundleNftId,
@@ -552,20 +595,23 @@ contract TestProduct is GifTest {
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         // WHEN
-        dproduct.collateralize(policyNftId, false, zeroTimestamp()); 
+        product.collateralize(policyNftId, false, zeroTimestamp()); 
 
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
+        console.log("checking bundle amounts after collateralizaion");
+        (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount");
+        assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount");
+        assertEq(feeAmount.toInt(), 0, "unexpected bundle fee amount");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.eqz(), "activatedAt set");
         assertTrue(policyInfo.expiredAt.eqz(), "expiredAt set");
         
         // another WHEN
-        dproduct.activate(policyNftId, TimestampLib.blockTimestamp());
+        product.activate(policyNftId, TimestampLib.blockTimestamp());
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
 
         // and THEN
@@ -575,143 +621,210 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
     }
 
-    function test_Product_collectPremium() public {
+    function test_ProductPolicyCollectPremium() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        product.createRisk(riskId, data);
 
         vm.stopPrank();
         vm.startPrank(customer);
         
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
 
-        NftId policyNftId = dproduct.createApplication(
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
-            1000,
-            SecondsLib.toSeconds(30),
-            "",
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
             bundleNftId,
-            ReferralLib.zero()
+            referralId
         );
 
         vm.stopPrank();
+
+        // calculate expected premium/fee amounts
+        IPolicy.Premium memory ep = pricingService.calculatePremium(
+            productNftId, 
+            riskId, 
+            AmountLib.toAmount(sumInsuredAmount), 
+            lifetime, 
+            applicationData, 
+            bundleNftId, 
+            referralId);
+
+        // recored token balances before collateralization
+        pb[product.getWallet()] = token.balanceOf(product.getWallet());
+        pb[distribution.getWallet()] = token.balanceOf(distribution.getWallet());
+        pb[customer] = token.balanceOf(customer);
+        pb[pool.getWallet()] = token.balanceOf(pool.getWallet());
+
         vm.startPrank(productOwner);
 
-        dproduct.collateralize(policyNftId, false, zeroTimestamp()); 
+        product.collateralize(policyNftId, false, zeroTimestamp()); 
         
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == COLLATERALIZED(), "state not COLLATERALIZED");
         
-        IBundle.BundleInfo memory bundleInfoBefore = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfoBefore.lockedAmount.toInt(), 1000, "lockedAmount not 1000 (before)");
-        assertEq(bundleInfoBefore.capitalAmount.toInt(), 10000, "capitalAmount not 10000 (before)");
+        // solhint-disable-next-line 
+        console.log("checking bundle amounts after underwriting (before premium collection)");
+        (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount (before)");
+        assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount (before)");
+        assertEq(feeAmount.toInt(), 0, "unexpected bundle fee amount (before)");
 
-        assertEq(token.balanceOf(product.getWallet()), 0, "product balance not 0 (before)");
-        assertEq(token.balanceOf(address(customer)), 1000, "customer balance not 1000 (before)");
-        assertEq(token.balanceOf(pool.getWallet()), 10000, "pool balance not 10000 (before)");
+        assertEq(token.balanceOf(product.getWallet()) - pb[product.getWallet()], 0, "unexpected product balance (before)");
+        assertEq(token.balanceOf(customer), pb[customer], "unexpected customer balance (before)");
+        assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], 0, "unexpecte pool balance (before)");
+
+        pb[product.getWallet()] = token.balanceOf(product.getWallet());
+        pb[distribution.getWallet()] = token.balanceOf(distribution.getWallet());
+        pb[customer] = token.balanceOf(customer);
+        pb[pool.getWallet()] = token.balanceOf(pool.getWallet());
 
         // WHEN
-        dproduct.collectPremium(policyNftId, TimestampLib.blockTimestamp());
+        product.collectPremium(policyNftId, TimestampLib.blockTimestamp());
         
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
 
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount.toInt(), 1000, "lockedAmount not 1000");
-        assertEq(bundleInfo.feeAmount.toInt(), 10, "feeAmount not 10");
-        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 100 - 10, "capitalAmount not 1100");
+        // solhint-disable-next-line 
+        console.log("checking bundle amounts after underwriting (after premium collection)");
+        (amount, lockedAmount, feeAmount) = instanceStore.getAmounts(bundleNftId);
+        uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
+        uint netPremium = ep.netPremiumAmount;
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount (after)");
+        assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount (after)");
+        assertEq(feeAmount.toInt(), bundleFee, "unexpected bundle fee amount (after)");
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
-        assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
-        assertEq(token.balanceOf(distribution.getWallet()), 10, "distibution balance not 10");
-        assertEq(token.balanceOf(address(customer)), 860, "customer balance not 860");
-        assertEq(token.balanceOf(pool.getWallet()), 10120, "pool balance not 10120");
+        assertEq(token.balanceOf(product.getWallet()) - pb[product.getWallet()], ep.productFeeAmount.toInt(), "unexpected product balance (after)");
+        assertEq(token.balanceOf(distribution.getWallet()) - pb[distribution.getWallet()], ep.distributionFeeAndCommissionAmount.toInt(), "unexpected distribution balance (after)");
+        assertEq(pb[customer] - token.balanceOf(customer), ep.premiumAmount, "unexpected customer balance (after)");
+        assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], ep.poolPremiumAndFeeAmount.toInt(), "unexpecte pool balance (after)");
     }
 
-    function test_Product_close() public {
+    function test_ProductPolicyClose() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         vm.startPrank(productOwner);
 
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zeroFee());
+        product.setFees(productFee, FeeLib.zero());
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        product.createRisk(riskId, data);
 
         vm.stopPrank();
 
         vm.startPrank(customer);
 
-        ISetup.ProductSetupInfo memory productSetupInfo = instanceReader.getProductSetupInfo(productNftId);
-        token.approve(address(productSetupInfo.tokenHandler), 1000);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
 
-        NftId policyNftId = dproduct.createApplication(
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
-            1000,
-            SecondsLib.toSeconds(30),
-            "",
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
             bundleNftId,
-            ReferralLib.zero()
+            referralId
         );
+
         vm.stopPrank();
 
+        // calculate expected premium/fee amounts
+        IPolicy.Premium memory ep = pricingService.calculatePremium(
+            productNftId, 
+            riskId, 
+            AmountLib.toAmount(sumInsuredAmount), 
+            lifetime, 
+            applicationData, 
+            bundleNftId, 
+            referralId);
+
+        // recored token balances before collateralization
+        pb[product.getWallet()] = token.balanceOf(product.getWallet());
+        pb[distribution.getWallet()] = token.balanceOf(distribution.getWallet());
+        pb[customer] = token.balanceOf(customer);
+        pb[pool.getWallet()] = token.balanceOf(pool.getWallet());
+
         vm.startPrank(productOwner);
-        dproduct.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+
+        // solhint-disable-next-line 
+        console.log("before collateralization of", policyNftId.toInt());
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
 
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
 
         // WHEN
         vm.warp(100); // warp 100 seconds
-        dproduct.close(policyNftId);
+        // solhint-disable-next-line 
+        console.log("before close");
+        product.close(policyNftId);
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == CLOSED(), "policy state not CLOSE");
 
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-        assertEq(bundleInfo.lockedAmount.toInt(), 0, "lockedAmount not 1000");
-        assertEq(bundleInfo.feeAmount.toInt(), 10, "feeAmount not 10");
-        assertEq(bundleInfo.capitalAmount.toInt(), 10000 + 100 - 10, "capitalAmount not 1100");
-        
+        console.log("checking bundle amounts after collateralizaion");
+        (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
+        uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
+        uint netPremium = ep.netPremiumAmount;
+
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount");
+        assertEq(lockedAmount.toInt(), 0, "unexpected locked amount");
+        assertEq(feeAmount.toInt(), bundleFee, "unexpected bundle fee amount");
+
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertTrue(policyInfo.closedAt.gtz(), "expiredAt not set");
         
-        assertEq(token.balanceOf(address(pool)), 10120, "pool balance not 10120"); // 100 (netPremium) + 10 (poolFee) + 10 (bundleFee)
+        assertEq(token.balanceOf(address(pool)) - pb[address(pool)], 120, "pool balance not 10120"); // 100 (netPremium) + 10 (poolFee) + 10 (bundleFee)
 
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 0, "expected no active policy");
     }
 
     function test_createRisk() public {
-        _prepareProduct();
+        _prepareProductLocal();
         vm.startPrank(productOwner);
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -728,7 +841,7 @@ contract TestProduct is GifTest {
     }
 
     function test_updateRisk() public {
-        _prepareProduct();
+        _prepareProductLocal();
         vm.startPrank(productOwner);
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -750,53 +863,41 @@ contract TestProduct is GifTest {
         assertEq(riskInfo.data, newData, "data not updated to new data");
     }
 
-    function _prepareProduct() internal {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-        vm.stopPrank();
+    function _prepareProductLocal() internal {
+        _prepareProductLocal(DEFAULT_BUNDLE_CAPITALIZATION);
+    }
 
-        _prepareDistributionAndPool();
-
-        vm.startPrank(productOwner);
-        product = new SimpleProduct(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
-        );
-        
-        productNftId = productService.register(address(product));
-        vm.stopPrank();
+    function _prepareProductLocal(uint bundleCapital) internal {
+        _prepareProduct();
 
         vm.startPrank(distributionOwner);
         Fee memory distributionFee = FeeLib.toFee(UFixedLib.zero(), 10);
         Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        distribution.setFees(minDistributionOwnerFee, distributionFee);
+        distribution.setFees(
+            distributionFee, 
+            minDistributionOwnerFee);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
         Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        pool.setFees(poolFee, FeeLib.zeroFee(), FeeLib.zeroFee());
+        pool.setFees(
+            poolFee, 
+            FeeLib.zero(), 
+            FeeLib.zero());
         vm.stopPrank();
 
         vm.startPrank(registryOwner);
-        token.transfer(investor, 10000);
+        token.transfer(investor, bundleCapital);
         vm.stopPrank();
 
         vm.startPrank(investor);
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        token.approve(address(componentInfo.tokenHandler), 10000);
+        token.approve(address(componentInfo.tokenHandler), bundleCapital);
 
         Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        SimplePool spool = SimplePool(address(pool));
-        bundleNftId = spool.createBundle(
+        bundleNftId = pool.createBundle(
             bundleFee, 
-            10000, 
+            bundleCapital, 
             SecondsLib.toSeconds(604800), 
             ""
         );

@@ -6,7 +6,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {console} from "../../lib/forge-std/src/Script.sol";
 import {GifTest} from "../base/GifTest.sol";
-import {NftId, toNftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {MockAuthority} from "../mock/MockAuthority.sol";
 import {MockObjectManager} from "../mock/MockObjectManager.sol";
@@ -55,8 +55,8 @@ contract MockObjectManagerTest is GifTest {
         assertEq(objectManager.authority(), instance.authority(), "unexpected authority");
         assertEq(address(objectManager.getRegistry()), address(registry), "unexpected registry");
 
-        NftId fakeComponentNftId = toNftId(13);
-        NftId fakeObjectNftId = toNftId(17);
+        NftId fakeComponentNftId = NftIdLib.toNftId(13);
+        NftId fakeObjectNftId = NftIdLib.toNftId(17);
         assertEq(objectManager.objects(fakeComponentNftId), 0, "> 0 objects");
         assertFalse(objectManager.contains(fakeComponentNftId, fakeObjectNftId), "contains fake object");
     }
@@ -64,8 +64,8 @@ contract MockObjectManagerTest is GifTest {
 
     function test_MockObjectManagerAddObjectHappyCase1() public {
 
-        NftId componentNftId = toNftId(1);
-        NftId objectNftId = toNftId(42);
+        NftId componentNftId = NftIdLib.toNftId(1);
+        NftId objectNftId = NftIdLib.toNftId(42);
 
         objectManager.add(componentNftId, objectNftId);
 
@@ -81,8 +81,8 @@ contract MockObjectManagerTest is GifTest {
 
     function test_MockObjectManagerAddAndDeactivateSingle() public {
 
-        NftId componentNftId = toNftId(1);
-        NftId objectNftId = toNftId(42);
+        NftId componentNftId = NftIdLib.toNftId(1);
+        NftId objectNftId = NftIdLib.toNftId(42);
 
         objectManager.add(componentNftId, objectNftId);
         objectManager.deactivate(componentNftId, objectNftId);
@@ -98,13 +98,13 @@ contract MockObjectManagerTest is GifTest {
 
     function test_MockObjectManagerAddManyAndDeactivateSome() public {
 
-        NftId componentNftId = toNftId(1);
-        NftId objectNftId10 = toNftId(10);
-        NftId objectNftId11 = toNftId(11);
-        NftId objectNftId12 = toNftId(12);
-        NftId objectNftId13 = toNftId(13);
-        NftId objectNftId14 = toNftId(14);
-        NftId objectNftId15 = toNftId(15);
+        NftId componentNftId = NftIdLib.toNftId(1);
+        NftId objectNftId10 = NftIdLib.toNftId(10);
+        NftId objectNftId11 = NftIdLib.toNftId(11);
+        NftId objectNftId12 = NftIdLib.toNftId(12);
+        NftId objectNftId13 = NftIdLib.toNftId(13);
+        NftId objectNftId14 = NftIdLib.toNftId(14);
+        NftId objectNftId15 = NftIdLib.toNftId(15);
 
         objectManager.add(componentNftId, objectNftId10);
         objectManager.add(componentNftId, objectNftId11);

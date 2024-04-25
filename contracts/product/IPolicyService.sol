@@ -20,6 +20,10 @@ interface IPolicyService is IService {
 
     error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
+    error ErrorPolicyServicePolicyStateNotCollateralizedOrApplied(NftId applicationNftId);
+
+    error ErrorPolicyServiceBalanceInsufficient(address policyOwner, uint256 premiumAmount, uint256 balance);
+    error ErrorPolicyServiceAllowanceInsufficient(address policyOwner, address tokenHandler, uint256 premiumAmount, uint256 allowance);
 
     error ErrorIPolicyServiceInsufficientAllowance(address customer, address tokenHandlerAddress, uint256 amount);
     error ErrorPolicyServicePremiumAlreadyPaid(NftId policyNftId, Amount premiumPaidAmount);
@@ -69,12 +73,5 @@ interface IPolicyService is IService {
     /// a policy can only be closed when it has been expired. in addition, it must not have any open claims
     /// this function can only be called by a product. the policy needs to match with the calling product
     function close(NftId policyNftId) external;
-
-
-    // TODO move function to pool service
-    function calculateRequiredCollateral(
-        UFixed collateralizationLevel, 
-        Amount sumInsuredAmount
-    ) external pure returns(Amount collateralAmount);
 
 }

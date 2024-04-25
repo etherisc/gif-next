@@ -3,10 +3,11 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
+import {Amount} from "../type/Amount.sol";
 import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, FEE, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
 import {RiskId, RiskIdLib} from "../type/RiskId.sol";
 import {RoleId, RoleIdLib, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
 import {StateId, ACTIVE} from "../type/StateId.sol";
@@ -16,6 +17,7 @@ import {ReferralId} from "../type/Referral.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 
+import {BalanceStore} from "./base/BalanceStore.sol";
 import {IInstance} from "./IInstance.sol";
 import {KeyValueStore} from "./base/KeyValueStore.sol";
 import {IKeyValueStore} from "./base/KeyValueStore.sol";
@@ -25,11 +27,12 @@ import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
-import {ISetup} from "./module/ISetup.sol";
 
 
-// TODO combine with instance reader?
-contract InstanceStore is AccessManagedUpgradeable, KeyValueStore
+contract InstanceStore is
+    AccessManagedUpgradeable, 
+    KeyValueStore,
+    BalanceStore
 {
     function initialize(address instance)
         public 
@@ -40,42 +43,60 @@ contract InstanceStore is AccessManagedUpgradeable, KeyValueStore
         initializeLifecycle();
     }
 
-    //--- ProductSetup ------------------------------------------------------//
-    function createProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup) external restricted() {
-        create(_toNftKey32(productNftId, PRODUCT()), abi.encode(setup));
+    //--- Component ---------------------------------------------------------//
+    function createComponent(
+        NftId componentNftId, 
+        IComponents.ComponentInfo memory componentInfo
+    )
+        external 
+        restricted()
+    {
+        _registerTarget(componentNftId);
+        create(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo));
     }
 
-    function updateProductSetup(NftId productNftId, ISetup.ProductSetupInfo memory setup, StateId newState) external restricted() {
-        update(_toNftKey32(productNftId, PRODUCT()), abi.encode(setup), newState);
+    function updateComponent(
+        NftId componentNftId, 
+        IComponents.ComponentInfo memory componentInfo,
+        StateId newState
+    )
+        external 
+        restricted()
+    {
+        update(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo), newState);
+    }
+
+    //--- ProductSetup ------------------------------------------------------//
+
+    function createProduct(NftId productNftId, IComponents.ProductInfo memory info) external restricted() {
+        create(_toNftKey32(productNftId, PRODUCT()), abi.encode(info));
+    }
+
+    function updateProduct(NftId productNftId, IComponents.ProductInfo memory info, StateId newState) external restricted() {
+        update(_toNftKey32(productNftId, PRODUCT()), abi.encode(info), newState);
     }
 
     function updateProductSetupState(NftId productNftId, StateId newState) external restricted() {
         updateState(_toNftKey32(productNftId, PRODUCT()), newState);
     }
 
-    //--- DistributionSetup ------------------------------------------------------//
-    function createDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup) external restricted() {
-        create(_toNftKey32(distributionNftId, DISTRIBUTION()), abi.encode(setup));
-    }
-
-    function updateDistributionSetup(NftId distributionNftId, ISetup.DistributionSetupInfo memory setup, StateId newState) external restricted() {
-        update(_toNftKey32(distributionNftId, DISTRIBUTION()), abi.encode(setup), newState);
-    }
-
-    function updateDistributionSetupState(NftId distributionNftId, StateId newState) external restricted() {
-        updateState(_toNftKey32(distributionNftId, DISTRIBUTION()), newState);
-    }
-
     //--- PoolSetup ------------------------------------------------------//
-    function createPoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info) external restricted() {
+
+    function createPool(
+        NftId poolNftId, 
+        IComponents.PoolInfo memory info
+    )
+        external 
+        restricted()
+    {
         create(_toNftKey32(poolNftId, POOL()), abi.encode(info));
     }
 
-    function updatePoolSetup(NftId poolNftId, IComponents.ComponentInfo memory info, StateId newState) external restricted() {
+    function updatePool(NftId poolNftId, IComponents.PoolInfo memory info, StateId newState) external restricted() {
         update(_toNftKey32(poolNftId, POOL()), abi.encode(info), newState);
     }
 
-    function updatePoolSetupState(NftId poolNftId, StateId newState) external restricted() {
+    function updatePoolState(NftId poolNftId, StateId newState) external restricted() {
         updateState(_toNftKey32(poolNftId, POOL()), newState);
     }
 
@@ -120,6 +141,7 @@ contract InstanceStore is AccessManagedUpgradeable, KeyValueStore
 
     //--- Bundle ------------------------------------------------------------//
     function createBundle(NftId bundleNftId, IBundle.BundleInfo memory bundle) external restricted() {
+        _registerTarget(bundleNftId);
         create(_toNftKey32(bundleNftId, BUNDLE()), abi.encode(bundle));
     }
 
@@ -194,6 +216,32 @@ contract InstanceStore is AccessManagedUpgradeable, KeyValueStore
 
     function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
         updateState(_toPayoutKey32(policyNftId, payoutId), newState);
+    }
+
+    //--- balance and fee management functions ------------------------------//
+
+    function increaseFees(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+        return _increaseFees(targetNftId, amount);
+    }
+
+    function decreaseFees(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+        return _decreaseFees(targetNftId, amount);
+    }
+
+    function increaseLocked(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+        return _increaseLocked(targetNftId, amount);
+    }
+
+    function decreaseLocked(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+        return _decreaseLocked(targetNftId, amount);
+    }
+
+    function increaseBalance(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+        return _increaseBalance(targetNftId, amount);
+    }
+
+    function decreaseBalance(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+        return _decreaseBalance(targetNftId, amount);
     }
 
     //--- internal view/pure functions --------------------------------------//

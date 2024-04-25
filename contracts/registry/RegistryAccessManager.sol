@@ -109,19 +109,23 @@ contract RegistryAccessManager is AccessManaged
         onlyInitialized
         returns(RoleId)
     {
-        // TODO questionable check...
-        // target is not part of `runtime`
-        //if(
-        //    target == address(this) ||
-        //    target == address(_accessManager) || 
-        //    target == _releaseManager || 
-        //    target == _tokenRegistry)
-        //{ return TargetInvalid(); }
-
+        // TODO define and add checks
         RoleId roleId = _getNextRoleId();
 
         _setTargetFunctionRole(target, selector, roleId);
         _grantRole(roleId, account, 0);
+    }
+
+    function setTargetFunctionRole(
+        address target, 
+        bytes4[] memory selector,
+        RoleId roleId
+    )
+        external
+        restricted // RELEASE_MANAGER_ROLE
+        onlyInitialized
+    {
+        _setTargetFunctionRole(target, selector, roleId);
     }
 
     /*function transferAdmin(address to)
@@ -183,9 +187,11 @@ contract RegistryAccessManager is AccessManaged
 
     function _configureReleaseManagerRole() private
     {
-        bytes4[] memory functionSelector = new bytes4[](1);
+        bytes4[] memory functionSelector = new bytes4[](2);
 
         functionSelector[0] = RegistryAccessManager.setAndGrantUniqueRole.selector;
+        functionSelector[1] = RegistryAccessManager.setTargetFunctionRole.selector;
+
         _setTargetFunctionRole(address(this), functionSelector, RELEASE_MANAGER_ROLE());
     }
 

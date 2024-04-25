@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
-import {NftId, toNftId, zeroNftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
 import {VersionPart} from "../type/Version.sol";
 import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, STAKING, PRODUCT, DISTRIBUTION, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../type/ObjectType.sol";
 
@@ -92,7 +92,7 @@ contract Registry is
 
         _stakingAddress = stakingAddress;
         uint256 stakingId = _chainNft.calculateTokenId(STAKING_TOKEN_SEQUENCE_ID);
-        stakingNftId = toNftId(stakingId);
+        stakingNftId = NftIdLib.toNftId(stakingId);
 
         _nftIdByAddress[_stakingAddress] = stakingNftId;
         _info[stakingNftId] = ObjectInfo({
@@ -329,7 +329,7 @@ contract Registry is
 
         address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
         uint256 tokenId = _chainNft.getNextTokenId();
-        nftId = toNftId(tokenId);
+        nftId = NftIdLib.toNftId(tokenId);
 
         info.nftId = nftId;
         _info[nftId] = info;
@@ -389,11 +389,11 @@ contract Registry is
         private
     {
         uint256 protocolId = _chainNft.PROTOCOL_NFT_ID();
-        NftId protocolNftId = toNftId(protocolId);
+        NftId protocolNftId = NftIdLib.toNftId(protocolId);
 
         _info[protocolNftId] = ObjectInfo({
             nftId: protocolNftId,
-            parentNftId: zeroNftId(),
+            parentNftId: NftIdLib.zero(),
             objectType: PROTOCOL(),
             isInterceptor: false, 
             objectAddress: address(0),
@@ -410,17 +410,17 @@ contract Registry is
         private
     {
         uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
-        NftId registryNftId = toNftId(registryId);
+        NftId registryNftId = NftIdLib.toNftId(registryId);
         NftId parentNftId;
 
         if(registryId != _chainNft.GLOBAL_REGISTRY_ID()) 
         {// we're not the global registry
             _registerGlobalRegistry();
-            parentNftId = toNftId(_chainNft.GLOBAL_REGISTRY_ID());
+            parentNftId = NftIdLib.toNftId(_chainNft.GLOBAL_REGISTRY_ID());
         }
         else 
         {// we are global registry
-            parentNftId = toNftId(_chainNft.PROTOCOL_NFT_ID());
+            parentNftId = NftIdLib.toNftId(_chainNft.PROTOCOL_NFT_ID());
         }
 
         _info[registryNftId] = ObjectInfo({
@@ -443,11 +443,11 @@ contract Registry is
         private
     {
         uint256 globalRegistryId = _chainNft.GLOBAL_REGISTRY_ID();
-        NftId globalRegistryNftId = toNftId(globalRegistryId);
+        NftId globalRegistryNftId = NftIdLib.toNftId(globalRegistryId);
 
         _info[globalRegistryNftId] = ObjectInfo({
             nftId: globalRegistryNftId,
-            parentNftId: toNftId(_chainNft.PROTOCOL_NFT_ID()),
+            parentNftId: NftIdLib.toNftId(_chainNft.PROTOCOL_NFT_ID()),
             objectType: REGISTRY(),
             isInterceptor: false,
             objectAddress: address(0),

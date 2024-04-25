@@ -17,7 +17,7 @@ import {IStaking} from "../staking/IStaking.sol";
 
 import {Registry} from "./Registry.sol";
 import {RegistryAccessManager} from "./RegistryAccessManager.sol";
-
+import {ServiceAuthorizationsLib} from "./ServiceAuthorizationsLib.sol";
 
 contract ReleaseManager is AccessManaged
 {
@@ -213,6 +213,15 @@ contract ReleaseManager is AccessManaged
                 selectors);
         }
         
+        // service to service authorization
+        ServiceAuthorizationsLib.ServiceAuthorization memory authz = ServiceAuthorizationsLib.getAuthorizations(domain);
+        for(uint8 idx = 0; idx < authz.authorizedRole.length; idx++) {
+            _accessManager.setTargetFunctionRole(
+                address(service), 
+                authz.authorizedSelectors[idx], 
+                authz.authorizedRole[idx]);
+        }
+
         _awaitingRegistration--;
 
         nftId = _registry.registerService(info, majorVersion, domain);
@@ -340,7 +349,7 @@ contract ReleaseManager is AccessManaged
                 domain.eqz()
             ) { revert ConfigServiceDomainInvalid(idx, domain); } 
 
-            bytes4[] memory selectors = config[idx].selectors;
+            bytes4[] memory selectors = config[idx].authorizedSelectors;
 
             // TODO can be zero -> e.g. duplicate domain, first with zero selector, second with non zero selector -> need to check _release[version].domains.contains(domain) instead
             // no overwrite
