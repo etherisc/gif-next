@@ -1,5 +1,5 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryAccessManager, ReleaseManager, Registry__factory, Staking, Staking__factory, StakingManager, TokenRegistry } from "../../typechain-types";
+import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryService, RegistryServiceManager, RegistryAccessManager, ReleaseManager, RegistryService__factory, Registry__factory, TokenRegistry, Staking, StakingManager, Staking__factory, ServiceAuthorizationsLib__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, verifyContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -67,7 +67,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 ObjectTypeLib: libraries.objectTypeLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
-                RoleIdLib: libraries.roleIdLibAddress,
+                ServiceAuthorizationsLib: libraries.serviceAuthorizationsLibAddress,
             }
         });
     const releaseManager = releaseManagerBaseContract as ReleaseManager;

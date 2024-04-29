@@ -220,11 +220,19 @@ contract InstanceStore is
 
     //--- balance and fee management functions ------------------------------//
 
-    function increaseFees(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+    function increaseBalance(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+        return _increaseBalance(targetNftId, amount);
+    }
+
+    function decreaseBalance(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+        return _decreaseBalance(targetNftId, amount);
+    }
+
+    function increaseFees(NftId targetNftId, Amount amount) external restricted() returns (Amount newFeeBalance) {
         return _increaseFees(targetNftId, amount);
     }
 
-    function decreaseFees(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
+    function decreaseFees(NftId targetNftId, Amount amount) external restricted() returns (Amount newFeeBalance) {
         return _decreaseFees(targetNftId, amount);
     }
 
@@ -234,14 +242,6 @@ contract InstanceStore is
 
     function decreaseLocked(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
         return _decreaseLocked(targetNftId, amount);
-    }
-
-    function increaseBalance(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
-        return _increaseBalance(targetNftId, amount);
-    }
-
-    function decreaseBalance(NftId targetNftId, Amount amount) external restricted() returns (Amount newBalance) {
-        return _decreaseBalance(targetNftId, amount);
     }
 
     //--- internal view/pure functions --------------------------------------//

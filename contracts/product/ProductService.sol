@@ -12,7 +12,6 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
-import {ITreasury} from "../instance/module/ITreasury.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 
 import {TokenHandler} from "../shared/TokenHandler.sol";

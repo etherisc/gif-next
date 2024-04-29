@@ -5,7 +5,6 @@ import {Pool} from "./Pool.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
-import {TokenHandler} from "../instance/module/ITreasury.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 
@@ -23,6 +22,7 @@ import {Version, VersionLib} from "../type/Version.sol";
 import {KEEP_STATE, StateId} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {Version, VersionLib} from "../type/Version.sol";
 
@@ -198,7 +198,8 @@ contract PoolService is
         view
         returns (Fee memory stakingFee)
     {
-        return instanceReader.getPoolInfo(poolNftId).stakingFee;
+        NftId productNftId = instanceReader.getPoolInfo(poolNftId).productNftId;
+        return instanceReader.getPoolInfo(productNftId).stakingFee;
     }
 
     function closeBundle(NftId bundleNftId)
@@ -233,36 +234,22 @@ contract PoolService is
 
         Amount poolFeeAmount = AmountLib.toAmount(premium.poolFeeFixAmount + premium.poolFeeVarAmount);
         Amount bundleFeeAmount = AmountLib.toAmount(premium.bundleFeeFixAmount + premium.bundleFeeVarAmount);
-        Amount expectedTransferAmount = AmountLib.toAmount(premium.netPremiumAmount) + poolFeeAmount + bundleFeeAmount;
+        Amount bundleNetAmount = AmountLib.toAmount(premium.netPremiumAmount);
 
-        // TODO extend with bundle balance update, test and cleanup
         InstanceStore instanceStore = instance.getInstanceStore();
         _componentService.increasePoolBalance(
             instanceStore,
             poolObjectInfo.nftId,
-            expectedTransferAmount, 
+            bundleNetAmount + bundleFeeAmount, 
             poolFeeAmount);
 
         _componentService.increaseBundleBalance(
             instanceStore,
-            poolObjectInfo.nftId,
-            expectedTransferAmount - poolFeeAmount, 
+            bundleObjectInfo.nftId,
+            bundleNetAmount, 
             bundleFeeAmount);
-
-        // update pool fee balance
-        // if (poolFeeAmount.gtz()) {
-        //     IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolObjectInfo.nftId);
-
-
-            // TODO cleanup
-            // poolComponentInfo.feeAmount = poolComponentInfo.feeAmount.add(poolFeeAmount);
-            // instance.getInstanceStore().updatePoolSetup(poolObjectInfo.nftId, poolComponentInfo, KEEP_STATE());
-        // }
-
-        // if (bundleFeeAmount.gtz()) {
-        //     _bundleService.updateBundleFees(instance, bundleNftId, bundleFeeAmount);
-        // }
     }
+
 
     function lockCollateral(
         IInstance instance, 
@@ -300,19 +287,6 @@ contract PoolService is
 
         }
     }
-
-    //     // TODO move this to separate place so it can be called at the end of PolicyService.collateralize
-    //     // also verify/confirm application by pool if necessary
-    //     // if(poolInfo.isVerifyingApplications) {
-    //     //     address poolAddress = getRegistry().getObjectInfo(poolNftId).objectAddress;
-    //     //     IPoolComponent(poolAddress).verifyApplication(
-    //     //         applicationNftId, 
-    //     //         applicationInfo.applicationData, 
-    //     //         bundleNftId,
-    //     //         bundleInfo.filter,
-    //     //         collateralAmount);
-    //     // }
-    // }
 
 
     function reduceCollateral(

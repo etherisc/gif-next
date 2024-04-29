@@ -61,6 +61,8 @@ export async function deployAndRegisterMasterInstance(
         [],
         { 
             libraries: {
+                AmountLib: libraries.amountLibAddress,
+                BlocknumberLib: libraries.blockNumberLibAddress,
                 Key32Lib: libraries.key32LibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,

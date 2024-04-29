@@ -10,6 +10,7 @@ import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROL
 import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IService} from "../shared/IService.sol";
 import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
 
@@ -126,6 +127,46 @@ contract InstanceService is
             address(clonedBundleManager), 
             address(clonedInstanceReader), 
             clonedInstanceNftId);
+    }
+
+
+    function setComponentLocked(bool locked)
+        external
+        virtual
+        onlyComponent()
+    {
+        // checks
+        address componentAddress = msg.sender;
+
+        if (!IInstanceLinkedComponent(componentAddress).supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
+            revert ErrorInstanceServiceComponentNotInstanceLinked(componentAddress);
+        }
+
+        IRegistry registry = getRegistry();
+        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
+
+        if (instanceNftId.eqz()) {
+            revert ErrorInstanceServiceComponentNotRegistered(componentAddress);
+        }
+
+        IInstance instance = IInstance(
+            registry.getObjectInfo(
+                instanceNftId).objectAddress);
+
+        // interaction
+        instance.getInstanceAccessManager().setTargetLockedByService(
+            componentAddress, 
+            locked);
+    }
+
+
+    function getMasterInstanceReader() external view returns (address) {
+        return _masterInstanceReader;
+    }
+
+    // From IService
+    function getDomain() public pure override returns(ObjectType) {
+        return INSTANCE();
     }
 
     function setAndRegisterMasterInstance(address instanceAddress)
@@ -265,34 +306,6 @@ contract InstanceService is
         for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++) {
             accessManager.setCoreTargetFunctionRole(targetName, selectors[roleIdx], roles[roleIdx]);
         }
-    }
-
-
-    // TODO called by component, but target can be component helper...so needs target name
-    // TODO check that targetName associated with component...how???
-    function setComponentLocked(bool locked) onlyComponent external {
-
-        address componentAddress = msg.sender;
-        IRegistry registry = getRegistry();
-        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
-
-        IInstance instance = IInstance(
-            registry.getObjectInfo(
-                instanceNftId).objectAddress);
-
-        instance.getInstanceAccessManager().setTargetLockedByService(
-            componentAddress, 
-            locked);
-    }
-
-
-    function getMasterInstanceReader() external view returns (address) {
-        return _masterInstanceReader;
-    }
-
-    // From IService
-    function getDomain() public pure override returns(ObjectType) {
-        return INSTANCE();
     }
     
     /// @dev top level initializer

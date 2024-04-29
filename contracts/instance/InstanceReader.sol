@@ -26,7 +26,6 @@ import {IInstance} from "./IInstance.sol";
 import {IKeyValueStore} from "../instance/base/IKeyValueStore.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
-import {ITreasury} from "../instance/module/ITreasury.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
 import {InstanceStore} from "./InstanceStore.sol";

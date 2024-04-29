@@ -157,35 +157,7 @@ contract PolicyService is
 
         // optional collection of premium
         if(requirePremiumPayment) {
-
-            // // calculate premium details
-            // IPolicy.Premium memory premium = _pricingService.calculatePremium(
-            //     applicationInfo.productNftId,
-            //     applicationInfo.riskId,
-            //     applicationInfo.sumInsuredAmount,
-            //     applicationInfo.lifetime,
-            //     applicationInfo.applicationData,
-            //     applicationInfo.bundleNftId,
-            //     applicationInfo.referralId);
-
-            // // update financials for product, distribution, pool and bundle
-            // _updateFinancials(
-            //     instance,
-            //     productNftId,
-            //     applicationInfo.bundleNftId,
-            //     premium);
-
-            // // token transfer and callacks to distribution and pool service
-            // Amount premiumPaidAmount = _collectAndTransferPremium(
-            //     instance, 
-            //     instanceReader,
-            //     productNftId,
-            //     applicationNftId, 
-            //     applicationInfo.bundleNftId,
-            //     applicationInfo.referralId,
-            //     premium);
-
-            Amount premiumPaidAmount = _collectPremium(
+            Amount premiumPaidAmount = _calculateAndCollectPremium(
                 instance,
                 applicationNftId,
                 applicationInfo);
@@ -202,152 +174,6 @@ contract PolicyService is
         // TODO add calling pool contract if it needs to validate application
 
         // TODO: add logging
-    }
-
-
-    function _collectPremium(
-        IInstance instance,
-        NftId applicationNftId,
-        IPolicy.PolicyInfo memory applicationInfo
-    )
-        internal
-        virtual
-        returns (
-            Amount premiumPaidAmount
-        )
-    {
-        NftId productNftId = applicationInfo.productNftId;
-
-        // calculate premium details
-        IPolicy.Premium memory premium = _pricingService.calculatePremium(
-            productNftId,
-            applicationInfo.riskId,
-            applicationInfo.sumInsuredAmount,
-            applicationInfo.lifetime,
-            applicationInfo.applicationData,
-            applicationInfo.bundleNftId,
-            applicationInfo.referralId);
-
-        // update financials for product, distribution, pool and bundle
-        _updateFinancials(
-            instance,
-            productNftId,
-            applicationInfo.bundleNftId,
-            premium);
-
-        // token transfer and callacks to distribution and pool service
-        premiumPaidAmount = _collectAndTransferPremium(
-            instance, 
-            instance.getInstanceReader(),
-            productNftId,
-            applicationNftId, 
-            applicationInfo.bundleNftId,
-            applicationInfo.referralId,
-            premium);
-    }
-
-
-    function _collectAndTransferPremium(
-        IInstance instance,
-        InstanceReader instanceReader,
-        NftId productNftId,
-        NftId policyNftId,
-        NftId bundleNftId,
-        ReferralId referralId,
-        IPolicy.Premium memory premium
-    )
-        internal
-        virtual
-        returns (Amount premiumPaidAmount)
-    {
-        address policyOwner = getRegistry().ownerOf(policyNftId);
-        uint256 premiumAmount = premium.premiumAmount;
-
-        emit LogDebug(21, "before _getTokenHandlerAndWallets");
-        // get token handler and target wallets
-        (
-            TokenHandler tokenHandler,
-            NftId distributionNftId,
-            address productWallet,
-            address distributionWallet,
-            address poolWallet
-        ) = _getTokenHandlerAndWallets(
-            instanceReader, 
-            productNftId);
-
-        emit LogDebug(22, "before check balance");
-        // check balance
-        uint256 balance = tokenHandler.getToken().balanceOf(policyOwner);
-        if (balance < premiumAmount) {
-            revert ErrorPolicyServiceBalanceInsufficient(policyOwner, premiumAmount, balance);
-        }
-
-        emit LogDebug(23, "before check allowance");
-        // check allowance
-        uint256 allowance = tokenHandler.getToken().allowance(policyOwner, address(tokenHandler));
-        if (allowance < premiumAmount) {
-            revert ErrorPolicyServiceAllowanceInsufficient(policyOwner, address(tokenHandler), premiumAmount, allowance);
-        }
-
-        // transfer funds and inform distribution and pool
-        {
-            emit LogDebug(24, "before transfer to product wallet");
-            // move product fee to product wallet
-            tokenHandler.transfer(policyOwner, productWallet, premium.productFeeAmount);
-
-            emit LogDebug(25, "before transfer to distribution wallet");
-            // move distribution fee to distribution wallet and do distribution callback 
-            tokenHandler.transfer(policyOwner, distributionWallet, premium.distributionFeeAndCommissionAmount);
-            _distributionService.processSale(
-                distributionNftId, 
-                referralId, 
-                premium);
-
-            emit LogDebug(26, "before transfer to pool wallet");
-            // move net premium, pool fee and bundle fee to pool wallet and do pool callback
-            tokenHandler.transfer(policyOwner, poolWallet, premium.poolPremiumAndFeeAmount);
-            _poolService.processSale(
-                bundleNftId, 
-                premium);
-        }
-
-        emit LogDebug(27, "before end of _collectAndTransferPremium");
-        return AmountLib.toAmount(premium.premiumAmount);
-    }
-
-
-    function _updateFinancials(
-        IInstance instance,
-        NftId productNftId,
-        NftId bundleNftId,
-        IPolicy.Premium memory premium
-    )
-        internal
-        virtual
-    {
-        // fees
-        Amount productFeeAmount = AmountLib.toAmount(
-            premium.productFeeVarAmount + premium.productFeeFixAmount);
-
-        Amount distributionFeeAmount = AmountLib.toAmount(
-            premium.productFeeVarAmount + premium.productFeeFixAmount);
-
-        Amount poolFeeAmount = AmountLib.toAmount(
-            premium.poolFeeFixAmount + premium.poolFeeVarAmount);
-
-        Amount bundleFeeAmount = AmountLib.toAmount(
-            premium.bundleFeeFixAmount + premium.bundleFeeVarAmount);
-
-        // balances
-        Amount bundleBalanceAmount = AmountLib.toAmount(premium.netPremiumAmount) + bundleFeeAmount;
-        Amount poolBalanceAmount = bundleBalanceAmount + poolFeeAmount;
-
-        InstanceStore instanceStore = instance.getInstanceStore();
-        IComponents.ProductInfo memory productInfo = instance.getInstanceReader().getProductInfo(productNftId);
-        _componentService.increaseProductFees(instanceStore, productNftId, productFeeAmount);
-        _componentService.increaseDistributionFees(instanceStore, productInfo.distributionNftId, distributionFeeAmount);
-        _componentService.increasePoolBalance(instanceStore, productInfo.poolNftId, poolBalanceAmount, poolFeeAmount);
-        _componentService.increaseBundleBalance(instanceStore, bundleNftId, bundleBalanceAmount, bundleFeeAmount);
     }
 
 
@@ -375,7 +201,7 @@ contract PolicyService is
             revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
         }
 
-        policyInfo.premiumPaidAmount = _collectPremium(
+        policyInfo.premiumPaidAmount = _calculateAndCollectPremium(
                 instance,
                 policyNftId,
                 policyInfo);
@@ -463,111 +289,185 @@ contract PolicyService is
     }
 
 
-    function _processPremium(
+    function _calculateAndCollectPremium(
         IInstance instance,
-        NftId policyNftId,
-        Amount premiumExpectedAmount
-    )
-        internal
-        returns (Amount netPremiumAmount)
-    {
-        // process token transfer(s)
-        if(premiumExpectedAmount.eqz()) {
-            return AmountLib.zero();
-        }
-
-        NftId productNftId = getRegistry().getObjectInfo(policyNftId).parentNftId;
-        IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
-        IPolicy.Premium memory premium = _pricingService.calculatePremium(
-            productNftId,
-            policyInfo.riskId,
-            policyInfo.sumInsuredAmount,
-            policyInfo.lifetime,
-            policyInfo.applicationData,
-            policyInfo.bundleNftId,
-            policyInfo.referralId);
-
-        if (premium.premiumAmount != premiumExpectedAmount.toInt()) {
-            revert ErrorPolicyServicePremiumMismatch(
-                policyNftId, 
-                premiumExpectedAmount, 
-                AmountLib.toAmount(premium.premiumAmount));
-        }
-
-        address policyOwner = getRegistry().ownerOf(policyNftId);
-        (
-            TokenHandler tokenHandler,
-            NftId distributionNftId,
-            address productWallet,
-            address distributionWallet,
-            address poolWallet
-        ) = _getTokenHandlerAndWallets(
-            instance.getInstanceReader(), 
-            productNftId);
-
-        if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premium.premiumAmount) {
-            revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premium.premiumAmount);
-        }
-
-        Amount productFeeAmountToTransfer = AmountLib.toAmount(premium.productFeeFixAmount + premium.productFeeVarAmount);
-        Amount distributionFeeAmountToTransfer = AmountLib.toAmount(premium.distributionFeeFixAmount + premium.distributionFeeVarAmount - premium.discountAmount);
-        Amount poolAmountToTransfer = AmountLib.toAmount(
-            premium.netPremiumAmount 
-            + premium.poolFeeFixAmount + premium.poolFeeVarAmount 
-            + premium.bundleFeeFixAmount + premium.bundleFeeVarAmount);
-
-        netPremiumAmount = AmountLib.toAmount(premium.netPremiumAmount);
-
-        // transfer funds
-        {
-            // move product fee to product wallet
-            tokenHandler.transfer(policyOwner, productWallet, productFeeAmountToTransfer);
-
-            // move distribution fee to distribution wallet
-            tokenHandler.transfer(policyOwner, distributionWallet, distributionFeeAmountToTransfer);
-            _distributionService.processSale(distributionNftId, policyInfo.referralId, premium);
-
-            // move netpremium, bundleFee and poolFee to pool wallet
-            tokenHandler.transfer(policyOwner, poolWallet, poolAmountToTransfer);
-            _poolService.processSale(policyInfo.bundleNftId, premium);
-        }
-
-        // validate total amount transferred
-        {
-            Amount totalTransferred = distributionFeeAmountToTransfer + poolAmountToTransfer + productFeeAmountToTransfer;
-
-            if (premium.premiumAmount != totalTransferred.toInt()) {
-                revert ErrorPolicyServiceTransferredPremiumMismatch(
-                    policyNftId, 
-                    AmountLib.toAmount(premium.premiumAmount), 
-                    totalTransferred);
-            }
-        }
-
-        // TODO: add logging
-    }
-
-    function _getTokenHandlerAndWallets(
-        InstanceReader instanceReader,
-        NftId productNftId
+        NftId applicationNftId,
+        IPolicy.PolicyInfo memory applicationInfo
     )
         internal
         virtual
-        view returns (
-            TokenHandler tokenHandler,
-            NftId distributionNftId,
-            address productWallet,
-            address distributionWallet,
-            address poolWallet
+        returns (
+            Amount premiumPaidAmount
         )
     {
-        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
-        tokenHandler = componentInfo.tokenHandler;
-        productWallet = componentInfo.wallet;
+        NftId productNftId = applicationInfo.productNftId;
 
+        // calculate premium details
+        IPolicy.Premium memory premium = _pricingService.calculatePremium(
+            productNftId,
+            applicationInfo.riskId,
+            applicationInfo.sumInsuredAmount,
+            applicationInfo.lifetime,
+            applicationInfo.applicationData,
+            applicationInfo.bundleNftId,
+            applicationInfo.referralId);
+
+
+        // update financials and transfer premium tokens
+        premiumPaidAmount = _processAndCollect(
+            instance, 
+            productNftId,
+            applicationNftId, 
+            applicationInfo.premiumAmount,
+            applicationInfo.bundleNftId,
+            applicationInfo.referralId,
+            premium);
+    }
+
+
+    function _processAndCollect(
+        IInstance instance,
+        NftId productNftId,
+        NftId policyNftId,
+        Amount premiumExpectedAmount,
+        NftId bundleNftId,
+        ReferralId referralId,
+        IPolicy.Premium memory premium
+    )
+        internal
+        virtual
+        returns (Amount premiumPaidAmount)
+    {
+        InstanceReader instanceReader = instance.getInstanceReader();
+        TokenHandler tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
+        address policyHolder = getRegistry().ownerOf(policyNftId);
+        premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
+
+        _checkPremiumBalanceAndAllowance(
+            tokenHandler, 
+            policyHolder, 
+            premiumExpectedAmount,
+            premiumPaidAmount);
+
+        _processSaleAndTransferFunds(
+            instanceReader, 
+            instance.getInstanceStore(), 
+            tokenHandler, 
+            policyHolder, 
+            productNftId, 
+            bundleNftId, 
+            referralId, 
+            premium);
+    }
+
+
+    function _checkPremiumBalanceAndAllowance(
+        TokenHandler tokenHandler, 
+        address policyHolder, 
+        Amount premiumExpectedAmount,
+        Amount premiumPaidAmount
+    )
+        internal
+        virtual
+        view
+    {
+        // TODO decide how to handle this properly
+        // not clear if this is the best way to handle this
+        if (premiumExpectedAmount < premiumPaidAmount) {
+            revert ErrorPolicyServicePremiumHigherThanExpected(premiumExpectedAmount, premiumPaidAmount);
+        }
+
+        uint256 premiumAmount = premiumPaidAmount.toInt();
+        uint256 balance = tokenHandler.getToken().balanceOf(policyHolder);
+        uint256 allowance = tokenHandler.getToken().allowance(policyHolder, address(tokenHandler));
+    
+        if (balance < premiumAmount) {
+            revert ErrorPolicyServiceBalanceInsufficient(policyHolder, premiumAmount, balance);
+        }
+
+        if (allowance < premiumAmount) {
+            revert ErrorPolicyServiceAllowanceInsufficient(policyHolder, address(tokenHandler), premiumAmount, allowance);
+        }
+    }
+
+
+    function _processSaleAndTransferFunds(
+        InstanceReader instanceReader,
+        InstanceStore instanceStore,
+        TokenHandler tokenHandler,
+        address policyHolder,
+        NftId productNftId,
+        NftId bundleNftId,
+        ReferralId referralId,
+        IPolicy.Premium memory premium
+    )
+        internal
+        virtual
+    {
+        (
+            NftId distributionNftId,
+            address distributionWallet,
+            address poolWallet,
+            address productWallet
+        ) = _getDistributionNftAndWallets(
+            instanceReader, 
+            productNftId);
+
+        // update product fees, distribution and pool fees 
+        _componentService.increaseProductFees(
+            instanceStore, 
+            productNftId, 
+            AmountLib.toAmount(premium.productFeeVarAmount + premium.productFeeFixAmount));
+
+        // update distribution fees and distributor commission and pool fees 
+        _distributionService.processSale(
+            distributionNftId, 
+            referralId, 
+            premium);
+
+        // update pool and bundle fees 
+        _poolService.processSale(
+            bundleNftId, 
+            premium);
+
+        // transfer premium amounts to target wallets
+        tokenHandler.transfer(policyHolder, productWallet, premium.productFeeAmount);
+        tokenHandler.transfer(policyHolder, distributionWallet, premium.distributionFeeAndCommissionAmount);
+        tokenHandler.transfer(policyHolder, poolWallet, premium.poolPremiumAndFeeAmount);
+    }
+
+
+    function _getTokenHandlerAndProductWallet(
+        InstanceReader instanceReader,
+        NftId productNftId
+    )
+        internal 
+        virtual
+        view 
+        returns (
+            TokenHandler tokenHandler
+        )
+    {
+        tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
+    }
+
+    function _getDistributionNftAndWallets(
+        InstanceReader instanceReader,
+        NftId productNftId
+    )
+        internal 
+        virtual
+        view returns (
+            NftId distributionNftId,
+            address distributionWallet,
+            address poolWallet,
+            address productWallet
+        )
+    {
         IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
         distributionNftId = productInfo.distributionNftId;
         distributionWallet = instanceReader.getComponentInfo(distributionNftId).wallet;
         poolWallet = instanceReader.getComponentInfo(productInfo.poolNftId).wallet;
+        productWallet = instanceReader.getComponentInfo(productNftId).wallet;
     }
 }

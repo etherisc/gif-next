@@ -7,7 +7,6 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {TokenHandler} from "../instance/module/ITreasury.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {IVersionable} from "../shared/IVersionable.sol";
@@ -132,9 +131,6 @@ contract BundleService is
                 poolNftId,
                 bundleFee,
                 filter,
-                stakingAmount,
-                AmountLib.zero(),
-                AmountLib.zero(),
                 lifetime,
                 TimestampLib.blockTimestamp().addSeconds(lifetime),
                 zeroTimestamp()));
@@ -195,43 +191,6 @@ contract BundleService is
     }
 
 
-    function _updateBundleWithPremium(
-        IInstance instance,
-        NftId bundleNftId,
-        IBundle.BundleInfo memory bundleInfo,
-        Amount premiumAmount
-    )
-        internal
-    {
-        // update bundle capital and fee amounts
-        if(premiumAmount.gtz()) {
-            // calculate fees and net premium amounts
-            (
-                , 
-                Amount netPremiumAmount
-            ) = FeeLib.calculateFee(bundleInfo.fee, premiumAmount);
-
-            // update bundle info with additional capital
-            bundleInfo.capitalAmount = bundleInfo.capitalAmount + netPremiumAmount;
-        }
-
-        // save updated bundle info
-        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
-    }
-
-    function updateBundleFees(
-        IInstance instance,
-        NftId bundleNftId,
-        Amount feeAmount
-    )
-        external
-        virtual
-    {
-        IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
-        bundleInfo.feeAmount = bundleInfo.feeAmount.add(feeAmount);
-        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
-    }
-
     function lock(NftId bundleNftId) 
         external
         virtual
@@ -288,24 +247,6 @@ contract BundleService is
         bundleManager.lock(bundleNftId);
     }
 
-
-    function increaseBalance(
-        IInstance instance,
-        NftId bundleNftId, 
-        Amount premiumAmount
-    ) 
-        external
-        virtual
-        restricted()
-    {
-        InstanceReader instanceReader = instance.getInstanceReader();
-        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-
-        // update capital and fees when premiums are involved
-        _updateBundleWithPremium(instance, bundleNftId, bundleInfo, premiumAmount);
-
-        // TODO add logging (?)
-    }
 
     function releaseCollateral(
         IInstance instance,

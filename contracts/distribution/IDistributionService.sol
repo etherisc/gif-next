@@ -29,12 +29,6 @@ interface IDistributionService is IService {
     error ErrorIDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
     error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
 
-    // TODO cleanup
-    // function setFees(
-    //     Fee memory minDistributionOwnerFee,
-    //     Fee memory distributionFee
-    // ) external;
-    
     function createDistributorType(
         string memory name,
         UFixed minDiscountPercentage,

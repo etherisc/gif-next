@@ -103,16 +103,4 @@ interface IBundleService is IService {
         IInstance instance, 
         NftId policyNftId
     ) external;
-
-    /// @dev updates the bundle's fees of with the provided fee amount
-    function updateBundleFees(
-        IInstance instance,
-        NftId bundleNftId,
-        Amount feeAmount
-    ) external;
-
-    function increaseBalance(
-        IInstance instance, 
-        NftId bundleNftId,  
-        Amount amount) external;
 }

@@ -4,6 +4,7 @@ pragma solidity ^0.8.19;
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
@@ -15,7 +16,7 @@ import {NftId, NftIdLib} from "../type/NftId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {PRODUCT_SERVICE_ROLE, DISTRIBUTION_OWNER_ROLE} from "../type/RoleId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
-import {ObjectType, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
 import {Version, VersionLib} from "../type/Version.sol";
 import {RoleId} from "../type/RoleId.sol";
 
@@ -50,6 +51,7 @@ contract DistributionService is
     using FeeLib for Fee;
     using ReferralLib for ReferralId;
 
+    IComponentService private _componentService;
     IInstanceService private _instanceService;
     IRegistryService private _registryService;
     
@@ -68,6 +70,7 @@ contract DistributionService is
         //      owner is DistributionServiceManager deployer
         initializeService(registryAddress, address(0), owner);
 
+        _componentService = IComponentService(_getServiceAddress(COMPONENT()));
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
         _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
 
@@ -78,68 +81,6 @@ contract DistributionService is
         return DISTRIBUTION();
     }
 
-    // TODO cleanup
-    // function register(address distributionAddress) 
-    //     external
-    //     returns(NftId distributionNftId)
-    // {
-    //     (
-    //         IComponent component,
-    //         address owner,
-    //         IInstance instance,
-    //         NftId instanceNftId
-    //     ) = _checkComponentForRegistration(
-    //         distributionAddress,
-    //         DISTRIBUTION(),
-    //         DISTRIBUTION_OWNER_ROLE());
-
-    //     IRegistry.ObjectInfo memory distributionInfo = _registryService.registerDistribution(component, owner);
-    //     IDistributionComponent distribution = IDistributionComponent(distributionAddress);
-    //     distribution.linkToRegisteredNftId();
-    //     distributionNftId = distributionInfo.nftId;
-
-    //     instance.getInstanceStore().createDistributionSetup(distributionNftId, distribution.getSetupInfo());
-    //     // TODO move to distribution?
-    //     bytes4[][] memory selectors = new bytes4[][](2);
-    //     selectors[0] = new bytes4[](1);
-    //     // TODO check if array size should be 1 instead of 2
-    //     selectors[1] = new bytes4[](2);
-
-    //     selectors[0][0] = IDistributionComponent.setFees.selector;
-    //     selectors[1][0] = IDistributionComponent.processRenewal.selector;
-
-    //     RoleId[] memory roles = new RoleId[](2);
-    //     roles[0] = DISTRIBUTION_OWNER_ROLE();
-    //     roles[1] = PRODUCT_SERVICE_ROLE();
-
-    //     _instanceService.createGifTarget(
-    //         instanceNftId, 
-    //         distributionAddress, 
-    //         distribution.getName(), 
-    //         selectors, 
-    //         roles);
-    // }
-
-    // function setFees(
-    //     Fee memory minDistributionOwnerFee,
-    //     Fee memory distributionFee
-    // )
-    //     external
-    //     override
-    // {
-    //     if (minDistributionOwnerFee.fractionalFee > distributionFee.fractionalFee) {
-    //         revert ErrorIDistributionServiceMinFeeTooHigh(minDistributionOwnerFee.fractionalFee.toInt(), distributionFee.fractionalFee.toInt());
-    //     }
-
-    //     (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
-    //     InstanceReader instanceReader = instance.getInstanceReader();
-
-    //     ISetup.DistributionSetupInfo memory distSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
-    //     distSetupInfo.minDistributionOwnerFee = minDistributionOwnerFee;
-    //     distSetupInfo.distributionFee = distributionFee;
-        
-    //     instance.getInstanceStore().updateDistributionSetup(distributionNftId, distSetupInfo, KEEP_STATE());
-    // }
 
     function createDistributorType(
         string memory name,
@@ -286,6 +227,7 @@ contract DistributionService is
         return referralId;
     }
 
+
     function processSale(
         NftId distributionNftId, // assume always of distribution type
         ReferralId referralId,
@@ -295,43 +237,43 @@ contract DistributionService is
         virtual
         restricted
     {
-        bool isReferral = ! referralId.eqz();
-        bool referralValid = referralIsValid(distributionNftId, referralId);
-
-        if (isReferral && ! referralValid) {
-            revert ErrorIDistributionServiceReferralInvalid(distributionNftId, referralId);
-        }
-
         IInstance instance = _getInstanceForDistribution(distributionNftId);
         InstanceReader reader = instance.getInstanceReader();
         InstanceStore store = instance.getInstanceStore();
-        IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
-        IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
-        
+
+        // get distribution owner fee amount
         Amount distributionOwnerFee = AmountLib.toAmount(premium.distributionOwnerFeeFixAmount + premium.distributionOwnerFeeVarAmount);
-        Amount commissionAmount = AmountLib.toAmount(premium.commissionAmount);
 
-        // TODO fix/refactor to new setup
-        // ISetup.DistributionSetupInfo memory setupInfo = reader.getDistributionSetupInfo(distributionNftId);
-        // if (distributionOwnerFee.gtz()) {
-        //     setupInfo.sumDistributionOwnerFees += distributionOwnerFee.toInt();
-        //     store.updateDistributionSetup(distributionNftId, setupInfo, KEEP_STATE());
-        // }
+        // update referral/distributor info if applicable
+        if (referralIsValid(distributionNftId, referralId)) {
 
-        if (isReferral && referralValid) {
+            // increase distribution balance by commission amount and distribution owner fee
+            Amount commissionAmount = AmountLib.toAmount(premium.commissionAmount);
+            _componentService.increaseDistributionBalance(store, distributionNftId, commissionAmount, distributionOwnerFee);
+
+            // update book keeping for referral info
+            IDistribution.ReferralInfo memory referralInfo = reader.getReferralInfo(referralId);
             referralInfo.usedReferrals += 1;
             store.updateReferral(referralId, referralInfo, KEEP_STATE());
 
-            if (commissionAmount.gtz()) {
-                distributorInfo.commissionAmount = distributorInfo.commissionAmount + commissionAmount;
-                distributorInfo.numPoliciesSold += 1;
-                store.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
-            }
+            // update book keeping for distributor info
+            IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
+            // TODO refactor sum of commission amount into a fee balance for distributors
+            distributorInfo.commissionAmount = distributorInfo.commissionAmount + commissionAmount;
+            distributorInfo.numPoliciesSold += 1;
+            store.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
+        } else {
+
+            // increase distribution balance by distribution owner fee
+            _componentService.increaseDistributionBalance(store, distributionNftId, AmountLib.zero(), distributionOwnerFee);
         }
     }
 
-    // TODO: zero should return false
     function referralIsValid(NftId distributionNftId, ReferralId referralId) public view returns (bool isValid) {
+        if (distributionNftId.eqz() || referralId.eqz()) {
+            return false;
+        }
+
         IInstance instance = _getInstanceForDistribution(distributionNftId);
         IDistribution.ReferralInfo memory info = instance.getInstanceReader().getReferralInfo(referralId);
 

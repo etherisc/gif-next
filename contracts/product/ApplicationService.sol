@@ -34,7 +34,6 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
-import {ITreasury} from "../instance/module/ITreasury.sol";
 
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 
@@ -202,6 +201,8 @@ contract ApplicationService is
             closedAt:           zeroTimestamp()
         });
 
+        // TODO consider to provide this amount externally
+        // actual calculation is done 2nd time anyway for premium collection
         // calculate premium amount
         applicationInfo.premiumAmount = _calculatePremiumAmount(applicationInfo);
 

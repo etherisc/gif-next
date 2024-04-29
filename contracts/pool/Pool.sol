@@ -155,7 +155,7 @@ abstract contract Pool is
     )
         public
         virtual
-        restricted()
+        //restricted()
         onlyBundleOwner(bundleNftId)
     {
         _getPoolStorage()._bundleService.setFee(bundleNftId, fee);

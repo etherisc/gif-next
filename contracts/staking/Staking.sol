@@ -61,6 +61,9 @@ contract Staking is
             "", // registry data
             ""); // component data
 
+        // create the staking token handler
+        _createAndSetTokenHandler();
+
         registerInterface(type(IStaking).interfaceId);
     }
 }

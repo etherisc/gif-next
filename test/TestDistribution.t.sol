@@ -7,6 +7,7 @@ import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 import {IComponent} from "../contracts/shared/IComponent.sol";
+import {IComponentService} from "../contracts/shared/IComponentService.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IAccess} from "../contracts/instance/module/IAccess.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
@@ -98,17 +99,26 @@ contract TestDistribution is GifTest {
 
     function test_Component_setWallet_same_address() public {
         // GIVEN
-        _prepareDistribution();
+        _prepareProduct();
+
+        vm.startPrank(distributionOwner);
 
         address externallyOwnerWallet = makeAddr("externallyOwnerWallet");
-        distribution.setWallet(externallyOwnerWallet);
-        assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not externallyOwnerWallet");
 
-        // THEN
-        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentWalletAddressIsSameAsCurrent.selector));
-
-        // WHEN
+        // WHEN (1)
         distribution.setWallet(externallyOwnerWallet);
+
+        // THEN (1)
+        assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not externallyOwnerWallet (1)");
+        assertEq(instanceReader.getComponentInfo(distributionNftId).wallet, externallyOwnerWallet, "wallet not externallyOwnerWallet (2)");
+
+        // THEN (2)
+        vm.expectRevert(abi.encodeWithSelector(IComponentService.ErrorComponentServiceWalletAddressIsSameAsCurrent.selector));
+
+        // WHEN (2)
+        distribution.setWallet(externallyOwnerWallet);
+
+        vm.stopPrank();
     }
 
     function test_Component_setWallet_to_another_extowned() public {

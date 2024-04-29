@@ -15,6 +15,8 @@ import {InstanceStore} from "./InstanceStore.sol";
 
 interface IInstanceService is IService {
 
+    error ErrorInstanceServiceComponentNotInstanceLinked(address component);
+
     error ErrorInstanceServiceMasterInstanceAlreadySet();
     error ErrorInstanceServiceMasterOzAccessManagerAlreadySet();
     error ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet();

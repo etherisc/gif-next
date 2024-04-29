@@ -148,7 +148,7 @@ library ServiceAuthorizationsLib {
 
           authz.authorizedRole[1] = DISTRIBUTION_SERVICE_ROLE();
           authz.authorizedSelectors[1] = new bytes4[](1);
-          authz.authorizedSelectors[1][0] = ComponentService.increaseDistributionFees.selector;
+          authz.authorizedSelectors[1][0] = ComponentService.increaseDistributionBalance.selector;
 
           authz.authorizedRole[2] = POOL_SERVICE_ROLE();
           authz.authorizedSelectors[2] = new bytes4[](1);

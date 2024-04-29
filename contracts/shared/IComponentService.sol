@@ -13,7 +13,6 @@ import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IProductService} from "../product/IProductService.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IService} from "../shared/IService.sol";
-import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -24,7 +23,11 @@ import {UFixed} from "../type/UFixed.sol";
 interface IComponentService is 
     IService
 {
+    error ErrorComponentServiceNewWalletAddressZero();
+    error ErrorComponentServiceWalletAddressZero();
+    error ErrorComponentServiceWalletAddressIsSameAsCurrent();
 
+    event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
     event LogComponentServiceProductFeesUpdated(NftId productNftId);
     event LogComponentServiceDistributionFeesUpdated(NftId distributionNftId);
     event LogComponentServicePoolFeesUpdated(NftId poolNftId);
@@ -39,9 +42,11 @@ interface IComponentService is
 
     //-------- component ----------------------------------------------------//
 
+    /// @dev sets the components associated wallet address
+    function setWallet(address newWallet) external;
+
     /// @dev locks the component associated with the caller
     function lock() external;
-
 
     /// @dev unlocks the component associated with the caller
     function unlock() external;
@@ -65,8 +70,8 @@ interface IComponentService is
         Fee memory minDistributionOwnerFee // min fee required by distribution owner (not including commissions for distributors)
     ) external;
 
-    function increaseDistributionFees(InstanceStore instanceStore, NftId distributionNftId, Amount feeAmount) external;
-    function decreaseDistributionFees(InstanceStore instanceStore, NftId distributionNftId, Amount feeAmount) external;
+    function increaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
+    function decreaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
 
     //-------- pool ---------------------------------------------------------//
     function registerPool() external;

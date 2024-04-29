@@ -22,7 +22,9 @@ interface IComponent is
     ITransferInterceptor
 {
     error ErrorComponentNotChainNft(address caller);
+
     error ErrorComponentTokenAddressZero();
+    error ErrorComponentNameLengthZero();
     error ErrorComponentWalletAddressZero();
     error ErrorComponentWalletAddressIsSameAsCurrent();
     error ErrorComponentWalletAllowanceTooSmall(address oldWallet, address newWallet, uint256 allowance, uint256 balance);
@@ -59,6 +61,13 @@ interface IComponent is
 
     /// @dev returns true iff this compoent intercepts nft minting and transfers for objects registered by this component
     function isNftInterceptor() external view returns(bool isInterceptor);
+
+    /// @dev returns true iff this component is registered with the registry
+    function isRegistered() external view returns (bool);
+
+    /// @dev returns the component infos for this component
+    /// for a non registered component the function returns getInitialComponentInfo()
+    function getComponentInfo() external view returns (IComponents.ComponentInfo memory info);
 
     /// @dev returns the iniital component infos for this component
     function getInitialComponentInfo() external view returns (IComponents.ComponentInfo memory info);

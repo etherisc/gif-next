@@ -40,7 +40,7 @@ contract TestProduct is GifTest {
         sec30 = SecondsLib.toSeconds(30);
     }
 
-    function test_ProductSetupInfo() public {
+    function test_productSetupInfo() public {
         _prepareProductLocal();
 
         // check nft id (components -> product)
@@ -69,7 +69,7 @@ contract TestProduct is GifTest {
     }
 
 
-    function test_ProductSetFees() public {
+    function test_productSetFees() public {
         _prepareProductLocal();
         vm.startPrank(productOwner);
 
@@ -97,7 +97,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
     }
 
-    function test_ProductCalculatePremium() public {
+    function test_productCalculatePremium() public {
         _prepareProductLocal();  
 
         vm.startPrank(productOwner);
@@ -110,18 +110,30 @@ contract TestProduct is GifTest {
         SimpleProduct dproduct = SimpleProduct(address(product));
         dproduct.createRisk(riskId, data);
 
-        Amount premium = product.calculatePremium(
-            AmountLib.toAmount(1000),
+        Amount sumInsured = AmountLib.toAmount(1000);
+        Seconds  lifetime = SecondsLib.toSeconds(30);
+        IPolicy.Premium memory premiumExpected = pricingService.calculatePremium(
+            productNftId,
             riskId,
-            SecondsLib.toSeconds(30),
+            sumInsured,
+            lifetime,
             "",
             bundleNftId,
-            ReferralLib.zero()
-        );
-        assertEq(premium.toInt(), 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
+            ReferralLib.zero());
+
+        Amount premium = product.calculatePremium(
+            sumInsured, 
+            riskId, 
+            lifetime, 
+            "", 
+            bundleNftId, 
+            ReferralLib.zero());
+
+        assertEq(premiumExpected.premiumAmount, 140, "premium not 140 (100 + 10 + 10 + 10 + 10)");
+        assertEq(premium.toInt(), premiumExpected.premiumAmount, "unexpected premium amount");
     }
 
-    function test_ProductCreateApplication() public {
+    function test_productCreateApplication() public {
         _prepareProductLocal();
 
         vm.startPrank(productOwner);
@@ -155,7 +167,7 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.bundleNftId.eq(bundleNftId), "bundleNftId not set");        
     }
 
-    function test_ProductCollateralizeWithoutPayment() public {
+    function test_productCollateralizeWithoutPayment() public {
         // GIVEN
         _prepareProductLocal();  
 
@@ -208,7 +220,7 @@ contract TestProduct is GifTest {
 
         console.log("checking bundle amounts after underwriting");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
-        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount");
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount (1)");
         assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount");
         assertEq(feeAmount.toInt(), 0, "unexpected bundle fee amount");
 
@@ -216,7 +228,7 @@ contract TestProduct is GifTest {
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
-    function test_ProductCollateralizeWithPayment() public {
+    function test_productCollateralizeWithPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -286,9 +298,6 @@ contract TestProduct is GifTest {
         console.log("before collateralization of", policyNftId.toInt());
         product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
 
-        // solhint-disable-next-line 
-        console.log("after collateralization");
-
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
 
@@ -298,7 +307,7 @@ contract TestProduct is GifTest {
         uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
         uint netPremium = ep.netPremiumAmount;
 
-        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount");
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount (2)");
         assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount");
         assertEq(feeAmount.toInt(), bundleFee, "unexpected bundle fee amount");
 
@@ -323,7 +332,7 @@ contract TestProduct is GifTest {
         assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
-    function test_Product_withReferralCollateralizeWithPayment() public {
+    function test_productWithReferralCollateralizeWithPayment() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -339,16 +348,15 @@ contract TestProduct is GifTest {
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        product.createRisk(riskId, data);
 
         vm.stopPrank();
 
         // configure distribution fee and referral
         vm.startPrank(distributionOwner);
-        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
         Fee memory distributionFee = FeeLib.toFee(UFixedLib.toUFixed(1, -1), 0);
-        distribution.setFees(minDistributionOwnerFee, distributionFee);
+        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
+        distribution.setFees(distributionFee, minDistributionOwnerFee);
 
         DistributorType distributorType = distribution.createDistributorType(
             "Gold",
@@ -365,9 +373,8 @@ contract TestProduct is GifTest {
             customer2,
             distributorType,
             "");
-        
-        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
-        ReferralId referralId = sdistribution.createReferral(
+
+        ReferralId referralId = distribution.createReferral(
             distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(2, -2),
@@ -383,15 +390,18 @@ contract TestProduct is GifTest {
         token.approve(address(componentInfo.tokenHandler), 1000);
         // revert("checkApprove");
 
-        NftId policyNftId = dproduct.createApplication(
+        uint sumInsured = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
-            1000,
-            SecondsLib.toSeconds(30),
+            sumInsured,
+            lifetime,
             "",
             bundleNftId,
             referralId
         );
+
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
         assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
@@ -399,24 +409,53 @@ contract TestProduct is GifTest {
         
         vm.stopPrank();
 
+        // remember customer balance before collateralizaion and premium payment
+        // solhint-disable
+        console.log("product fee (before)", instanceReader.getFeeAmount(productNftId).toInt());
+        console.log("distribution fee (before)", instanceReader.getFeeAmount(distributionNftId).toInt());
+        console.log("pool fee (before)", instanceReader.getFeeAmount(poolNftId).toInt());
+        console.log("bundle fee (before)", instanceReader.getFeeAmount(bundleNftId).toInt());
+        // solhint-enable
+
+        pb[customer] = token.balanceOf(customer);
+
+        // calculate premium
+        IPolicy.Premium memory premiumExpected = pricingService.calculatePremium(
+            productNftId,
+            riskId,
+            AmountLib.toAmount(sumInsured),
+            lifetime,
+            "",
+            bundleNftId,
+            referralId);
+
+        assertEq(premiumExpected.premiumAmount, 137, "unexpected premium amount");
+    
         // WHEN
         vm.startPrank(productOwner);
         bool collectPremiumAmount = true;
         Timestamp activateAt = TimestampLib.blockTimestamp();
-        dproduct.collateralize(policyNftId, collectPremiumAmount, activateAt);(policyNftId, collectPremiumAmount, TimestampLib.blockTimestamp()); 
+        product.collateralize(policyNftId, collectPremiumAmount, activateAt);
 
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not UNDERWRITTEN");
 
         assertEq(token.balanceOf(product.getWallet()), 10, "product balance not 10");
         assertEq(token.balanceOf(distribution.getWallet()), 7, "distibution balance not 7");
-        assertEq(token.balanceOf(address(customer)), 863, "customer balance not 863");
+        assertEq(pb[customer] - token.balanceOf(customer), premiumExpected.premiumAmount, "customer balance not 863");
+
+        // solhint-disable
+        console.log("product fee (after)", instanceReader.getFeeAmount(productNftId).toInt());
+        console.log("distribution fee (after)", instanceReader.getFeeAmount(distributionNftId).toInt());
+        console.log("pool fee (after)", instanceReader.getFeeAmount(poolNftId).toInt());
+        console.log("bundle fee (after)", instanceReader.getFeeAmount(bundleNftId).toInt());
+        // solhint-enable
 
         IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
         assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 10, "pool fee amount not 10");
     }
 
-    function test_Product_collateralizeWithReferralExpired() public {
+    function test_productCollateralizeWithReferralExpired() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -432,16 +471,15 @@ contract TestProduct is GifTest {
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        product.createRisk(riskId, data);
 
         vm.stopPrank();
 
         // configure distribution fee and referral
         vm.startPrank(distributionOwner);
-        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
         Fee memory distributionFee = FeeLib.toFee(UFixedLib.toUFixed(1, -1), 0);
-        distribution.setFees(minDistributionOwnerFee, distributionFee);
+        Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
+        distribution.setFees(distributionFee, minDistributionOwnerFee);
 
         DistributorType distributorType = distribution.createDistributorType(
             "Gold",
@@ -459,9 +497,8 @@ contract TestProduct is GifTest {
             distributorType,
             "");
         
-        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
         // create short lived referral
-        ReferralId referralId = sdistribution.createReferral(
+        ReferralId referralId = distribution.createReferral(
             distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(2, -2),
@@ -476,7 +513,7 @@ contract TestProduct is GifTest {
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
         token.approve(address(componentInfo.tokenHandler), 1000);
 
-        NftId policyNftId = dproduct.createApplication(
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
             1000,
@@ -503,19 +540,18 @@ contract TestProduct is GifTest {
         Timestamp activationAt = TimestampLib.blockTimestamp();
         vm.expectRevert(
             abi.encodeWithSelector(
-                IPolicyService.ErrorPolicyServicePremiumMismatch.selector, 
-                policyNftId, 
+                IPolicyService.ErrorPolicyServicePremiumHigherThanExpected.selector, 
                 AmountLib.toAmount(137), 
                 AmountLib.toAmount(140)));
 
-        dproduct.collateralize(
+        product.collateralize(
             policyNftId, 
             collectPremiumAmount, 
             activationAt);
     }
 
-/*  FIX ME
-    function test_collateralize_reverts_on_locked_bundle() public {
+
+    function test_productCollateralizeRevertsOnLockedBundle() public {
         // GIVEN
         _prepareProductLocal();  
 
@@ -526,13 +562,12 @@ contract TestProduct is GifTest {
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        SimpleProduct dproduct = SimpleProduct(address(product));
-        dproduct.createRisk(riskId, data);
+        product.createRisk(riskId, data);
 
         vm.stopPrank();
 
         vm.startPrank(customer);
-        NftId policyNftId = dproduct.createApplication(
+        NftId policyNftId = product.createApplication(
             customer,
             riskId,
             1000,
@@ -546,27 +581,27 @@ contract TestProduct is GifTest {
 
         vm.stopPrank();
 
-        assertTrue(instance.getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        assertEq(instanceReader.getPolicyState(policyNftId).toInt(), APPLIED().toInt(), "unexpected policy state (not APPLIED)");
+
         vm.startPrank(investor);
-        SimplePool spool = SimplePool(address(pool));
-        spool.lockBundle(bundleNftId);
+        pool.lockBundle(bundleNftId);
 
         Timestamp timeNow = TimestampLib.blockTimestamp();
 
         // THEN - WHEN - try collateralize on locked bundle
         vm.expectRevert();
-        dproduct.collateralize(policyNftId, false, timeNow); 
+        product.collateralize(policyNftId, false, timeNow); 
 
         // WHEN - unlock bundle and try collateralize again
         pool.unlockBundle(bundleNftId);
-        dproduct.collateralize(policyNftId, false, timeNow);
+        product.collateralize(policyNftId, false, timeNow);
 
         // THEN
-        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
+        assertEq(instanceReader.getPolicyState(policyNftId).toInt(), ACTIVE().toInt(), "unexpected policy state (not ACTIVE)");
     }
-*/
 
-    function test_ProductPolicyActivate() public {
+
+    function test_productPolicyActivate() public {
         // GIVEN
         _prepareProductLocal();  
 
@@ -602,7 +637,7 @@ contract TestProduct is GifTest {
 
         console.log("checking bundle amounts after collateralizaion");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
-        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount");
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount (3)");
         assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount");
         assertEq(feeAmount.toInt(), 0, "unexpected bundle fee amount");
 
@@ -621,7 +656,7 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
     }
 
-    function test_ProductPolicyCollectPremium() public {
+    function test_productPolicyCollectPremium() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -730,7 +765,7 @@ contract TestProduct is GifTest {
         assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], ep.poolPremiumAndFeeAmount.toInt(), "unexpecte pool balance (after)");
     }
 
-    function test_ProductPolicyClose() public {
+    function test_productPolicyClose() public {
         // GIVEN
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -811,7 +846,7 @@ contract TestProduct is GifTest {
         uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
         uint netPremium = ep.netPremiumAmount;
 
-        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount");
+        assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION + netPremium + bundleFee, "unexpected bundle amount (4)");
         assertEq(lockedAmount.toInt(), 0, "unexpected locked amount");
         assertEq(feeAmount.toInt(), bundleFee, "unexpected bundle fee amount");
 
@@ -823,7 +858,7 @@ contract TestProduct is GifTest {
         assertEq(instanceBundleManager.activePolicies(bundleNftId), 0, "expected no active policy");
     }
 
-    function test_createRisk() public {
+    function test_productCreateRisk() public {
         _prepareProductLocal();
         vm.startPrank(productOwner);
 
@@ -840,7 +875,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
     }
 
-    function test_updateRisk() public {
+    function test_productUpdateRisk() public {
         _prepareProductLocal();
         vm.startPrank(productOwner);
 
@@ -882,8 +917,8 @@ contract TestProduct is GifTest {
         Fee memory poolFee = FeeLib.toFee(UFixedLib.zero(), 10);
         pool.setFees(
             poolFee, 
-            FeeLib.zero(), 
-            FeeLib.zero());
+            FeeLib.zero(), // staking fees
+            FeeLib.zero()); // performance fees
         vm.stopPrank();
 
         vm.startPrank(registryOwner);
