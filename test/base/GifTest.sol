@@ -74,7 +74,7 @@ import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessMana
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
-import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
+import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
 import {Dip} from "../mock/Dip.sol";

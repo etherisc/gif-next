@@ -11,7 +11,7 @@ import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../../../contracts/instance/base/ILifecycle.sol";
+import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";

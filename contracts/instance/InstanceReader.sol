@@ -23,7 +23,7 @@ import {IBundle} from "../instance/module/IBundle.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IInstance} from "./IInstance.sol";
-import {IKeyValueStore} from "../instance/base/IKeyValueStore.sol";
+import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {TimestampLib} from "../type/Timestamp.sol";

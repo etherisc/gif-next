@@ -19,8 +19,8 @@ import {PayoutId} from "../type/PayoutId.sol";
 
 import {BalanceStore} from "./base/BalanceStore.sol";
 import {IInstance} from "./IInstance.sol";
-import {KeyValueStore} from "./base/KeyValueStore.sol";
-import {IKeyValueStore} from "./base/KeyValueStore.sol";
+import {KeyValueStore} from "../shared/KeyValueStore.sol";
+import {IKeyValueStore} from "../shared/KeyValueStore.sol";
 
 import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";

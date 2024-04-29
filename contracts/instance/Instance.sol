@@ -25,7 +25,7 @@ import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 
-import {KeyValueStore} from "./base/KeyValueStore.sol";
+import {KeyValueStore} from "../shared/KeyValueStore.sol";
 
 import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";
