@@ -15,7 +15,6 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
-import {ITreasury} from "../instance/module/ITreasury.sol";
 
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
@@ -434,11 +433,4 @@ contract ClaimService is
         // get claim info
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
     }
-
-    // TODO cleanup
-    // function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
-    //     IRegistry.ObjectInfo memory productInfo;
-    //     (, productInfo,) = _getAndVerifyActiveComponent(PRODUCT());
-    //     product = Product(productInfo.objectAddress);
-    // }
 }

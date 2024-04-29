@@ -165,6 +165,7 @@ contract StakingService is
         returns (IStaking staking)
     {
         // check if provided staking contract is already registred
+        // staking contract may have been already registered by a previous major relase
         IRegistry.ObjectInfo memory stakingInfo = getRegistry().getObjectInfo(stakingAddress);
         if (stakingInfo.nftId.gtz()) {
             // registered object but wrong type

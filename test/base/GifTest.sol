@@ -726,8 +726,11 @@ contract GifTest is Test {
     //     console.log("bundle nft id", bundleNftId.toInt());
     // }
 
-
     function _prepareProduct() internal {
+        _prepareProduct(true);
+    }
+
+    function _prepareProduct(bool createBundle) internal {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();
@@ -759,17 +762,19 @@ contract GifTest is Test {
         token.transfer(customer, DEFAULT_CUSTOMER_FUNDS * 10**token.decimals());
         vm.stopPrank();
 
-        vm.startPrank(investor);
-        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
-        token.approve(address(poolComponentInfo.tokenHandler), DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
+        if (createBundle) {
+            vm.startPrank(investor);
+            IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+            token.approve(address(poolComponentInfo.tokenHandler), DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
 
-        bundleNftId = SimplePool(address(pool)).createBundle(
-            FeeLib.zero(), 
-            DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals(), 
-            SecondsLib.toSeconds(DEFAULT_BUNDLE_LIFETIME), 
-            ""
-        );
-        vm.stopPrank();
+            bundleNftId = SimplePool(address(pool)).createBundle(
+                FeeLib.zero(), 
+                DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals(), 
+                SecondsLib.toSeconds(DEFAULT_BUNDLE_LIFETIME), 
+                ""
+            );
+            vm.stopPrank();
+        }
     }
 
 

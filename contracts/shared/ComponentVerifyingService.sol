@@ -5,7 +5,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {Service} from "../shared/Service.sol";
 
 
@@ -51,6 +51,7 @@ abstract contract ComponentVerifyingService is
         ObjectType expectedType // assume always of `component` type
     )
         internal
+        virtual
         view
         returns(
             IRegistry.ObjectInfo memory info, 
@@ -60,12 +61,27 @@ abstract contract ComponentVerifyingService is
         IRegistry registry = getRegistry();
         info = registry.getObjectInfo(componentNftId);
 
-        // ensure component is of expected type
-        if(info.objectType != expectedType) {
-            revert ErrorComponentVerifyingServiceComponentTypeInvalid(
-                componentNftId,
-                expectedType,
-                info.objectType);
+        // if not COMPONENT require exact match
+        if(expectedType != COMPONENT()) {
+            // ensure component is of expected type
+            if(info.objectType != expectedType) {
+                revert ErrorComponentVerifyingServiceComponentTypeInvalid(
+                    componentNftId,
+                    expectedType,
+                    info.objectType);
+            }
+        } else {
+            if(!(info.objectType == PRODUCT()
+                || info.objectType == POOL()
+                || info.objectType == DISTRIBUTION()
+                || info.objectType == ORACLE()
+            ))
+            {
+                revert ErrorComponentVerifyingServiceComponentTypeInvalid(
+                    componentNftId,
+                    expectedType,
+                    info.objectType);
+            }
         }
 
         instance = _getInstance(info.parentNftId);

@@ -33,6 +33,7 @@ abstract contract Component is
     struct ComponentStorage {
         string _name; // unique (per instance) component name
         IERC20Metadata _token; // token for this component
+        TokenHandler _tokenHandler;
         address _wallet;
         bool _isInterceptor;
         bytes _data;
@@ -76,10 +77,15 @@ abstract contract Component is
             revert ErrorComponentTokenAddressZero();
         }
 
+        if (bytes(name).length == 0) {
+            revert ErrorComponentNameLengthZero();
+        }
+
         // set component state
         ComponentStorage storage $ = _getComponentStorage();
         $._name = name;
         $._token = IERC20Metadata(token);
+        $._tokenHandler = TokenHandler(address(0));
         $._wallet = address(this);
         $._isInterceptor = isInterceptor;
         $._data = componentData;
@@ -94,8 +100,7 @@ abstract contract Component is
         virtual
         onlyOwner
     {
-        ComponentStorage storage $ = _getComponentStorage();
-        approveTokenHandler(address($._token), spendingLimitAmount);
+        approveTokenHandler(address(getToken()), spendingLimitAmount);
     }
 
     function approveTokenHandler(address token, uint256 spendingLimitAmount)
@@ -107,12 +112,11 @@ abstract contract Component is
             revert ErrorComponentWalletNotComponent();
         }
 
-        // TODO fix this
-        // getToken().approve(
-        //     address(getTokenHandler()),
-        //     spendingLimitAmount);
+        IERC20Metadata(token).approve(
+            address(getTokenHandler()),
+            spendingLimitAmount);
 
-        // emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount);
+        emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount);
     }
 
     function setWallet(address newWallet)
@@ -121,25 +125,17 @@ abstract contract Component is
         override
         onlyOwner
     {
-        ComponentStorage storage $ = _getComponentStorage();
-        address currentWallet = $._wallet;
-        uint256 currentBalance = $._token.balanceOf(currentWallet);
-
         // checks
-        if (newWallet == address(0)) {
-            revert ErrorComponentWalletAddressZero();
-        }
-
-        if (newWallet == currentWallet) {
-            revert ErrorComponentWalletAddressIsSameAsCurrent();
-        }
+        address currentWallet = getWallet();
+        IERC20Metadata token = getToken();
+        uint256 currentBalance = token.balanceOf(currentWallet);
 
         if (currentBalance > 0) {
             if (currentWallet == address(this)) {
                 // move tokens from component smart contract to external wallet
             } else {
                 // move tokens from external wallet to component smart contract or another external wallet
-                uint256 allowance = $._token.allowance(currentWallet, address(this));
+                uint256 allowance = token.allowance(currentWallet, address(this));
                 if (allowance < currentBalance) {
                     revert ErrorComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
                 }
@@ -147,18 +143,17 @@ abstract contract Component is
         }
 
         // effects
-        $._wallet = newWallet;
-        emit LogComponentWalletAddressChanged(currentWallet, newWallet);
+        _setWallet(newWallet);
 
         // interactions
         if (currentBalance > 0) {
             // transfer tokens from current wallet to new wallet
             if (currentWallet == address(this)) {
                 // transferFrom requires self allowance too
-                $._token.approve(address(this), currentBalance);
+                token.approve(address(this), currentBalance);
             }
             
-            SafeERC20.safeTransferFrom($._token, currentWallet, newWallet, currentBalance);
+            SafeERC20.safeTransferFrom(token, currentWallet, newWallet, currentBalance);
             emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
         }
     }
@@ -185,41 +180,48 @@ abstract contract Component is
     }
 
 
-    // TODO obtain this from instance store if available
-    function getWallet() public view virtual returns (address walletAddress)
-    {
-        return _getComponentStorage()._wallet;
+    function getWallet() public view virtual returns (address walletAddress) {
+        return getComponentInfo().wallet;
     }
 
-    function getTokenHandler() external virtual view returns (TokenHandler tokenHandler) {
-    }
-
-    function isNftInterceptor() public view virtual returns(bool isInterceptor) {
-        return _getComponentStorage()._isInterceptor;
+    function getTokenHandler() public virtual view returns (TokenHandler tokenHandler) {
+        return getComponentInfo().tokenHandler;
     }
 
     function getToken() public view virtual returns (IERC20Metadata token) {
-        return _getComponentStorage()._token;
+        return getComponentInfo().token;
     }
 
     function getName() public view override returns(string memory name) {
-        return _getComponentStorage()._name;
+        return getComponentInfo().name;
     }
 
+    function getComponentInfo() public virtual view returns (IComponents.ComponentInfo memory info) {
+        if (isRegistered()) {
+            return _getComponentInfo();
+        } else {
+            return getInitialComponentInfo();
+        }
+    }
 
     /// @dev defines initial component specification
     /// overwrite this function according to your use case
     function getInitialComponentInfo() public virtual view returns (IComponents.ComponentInfo memory info) {
-        ComponentStorage storage $ = _getComponentStorage();
+        return _getComponentInfo();
+    }
 
-        return IComponents.ComponentInfo(
-            $._name,
-            NftIdLib.zero(),
-            $._token,
-            TokenHandler(address(0)),
-            address(this), // initial wallet address
-            $._data // user specific component data
-        );
+
+    function isNftInterceptor() public virtual view returns(bool isInterceptor) {
+        if (isRegistered()) {
+            return getRegistry().getObjectInfo(address(this)).isInterceptor;
+        } else {
+            return _getComponentStorage()._isInterceptor;
+        }
+    }
+
+
+    function isRegistered() public virtual view returns (bool) {
+        return getRegistry().getNftId(address(this)).gtz();
     }
 
 
@@ -236,4 +238,49 @@ abstract contract Component is
         internal
         virtual
     { }
+
+
+    /// @dev depending on the source of the component information this function needs to be overwritten. 
+    /// eg for instance linked components that externally store this information with the instance store contract
+    function _setWallet(address newWallet) internal virtual {
+        ComponentStorage storage $ = _getComponentStorage();
+        address currentWallet = $._wallet;
+
+        if (newWallet == address(0)) {
+            revert ErrorComponentWalletAddressZero();
+        }
+
+        if (newWallet == currentWallet) {
+            revert ErrorComponentWalletAddressIsSameAsCurrent();
+        }
+
+        $._wallet = newWallet;
+        emit LogComponentWalletAddressChanged(currentWallet, newWallet);
+
+    }
+
+    /// @dev for component contracts that hold its own component information 
+    /// this function creates and sets a token hanlder for the components tokens
+    function _createAndSetTokenHandler()
+        internal
+    {
+        ComponentStorage storage $ = _getComponentStorage();
+        $._tokenHandler = new TokenHandler(address($._token));
+    }
+
+    /// @dev depending on the source of the component information this function needs to be overwritten. 
+    /// eg for instance linked components that externally store this information with the instance store contract
+    function _getComponentInfo() internal virtual view returns (IComponents.ComponentInfo memory info) {
+        ComponentStorage storage $ = _getComponentStorage();
+
+        return IComponents.ComponentInfo({
+            name: $._name,
+            productNftId: NftIdLib.zero(),
+            token: $._token,
+            tokenHandler: $._tokenHandler,
+            wallet: $._wallet, // initial wallet address
+            data: $._data // user specific component data
+        });
+    }
+
 }

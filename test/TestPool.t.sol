@@ -168,41 +168,23 @@ contract TestPool is GifTest {
 
     function test_PoolCreateBundle() public {
         // GIVEN
+        _prepareProduct(false);
         _fundInvestor();
 
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        vm.stopPrank();
-
-        vm.startPrank(poolOwner);
-
-        pool = new SimplePool(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
-            poolOwner
-        );
-        
-        pool.register();
-        poolNftId = pool.getNftId();
-        vm.stopPrank();
-
-        vm.startPrank(investor);
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        token.approve(address(componentInfo.tokenHandler), 10000);
 
         // WHEN
-        SimplePool spool = SimplePool(address(pool));
-        bundleNftId = spool.createBundle(
+        // SimplePool spool = SimplePool(address(pool));
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 10000);
+
+        bundleNftId = pool.createBundle(
             FeeLib.zero(), 
             10000, 
             SecondsLib.toSeconds(604800), 
             ""
         );
+        vm.stopPrank();
 
         // THEN
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
@@ -225,7 +207,7 @@ contract TestPool is GifTest {
 
     function test_PoolBundleInitialState() public {
         // GIVEN
-        _preparePool();
+        _prepareProduct(false);
         _fundInvestor();
 
         // WHEN
@@ -250,7 +232,7 @@ contract TestPool is GifTest {
 
     function test_PoolBundleLockUnlockLockHappyCase() public {
         // GIVEN
-        _preparePool();
+        _prepareProduct(false);
         _fundInvestor();
 
         // WHEN lock bundle
@@ -303,7 +285,7 @@ contract TestPool is GifTest {
 
     function test_PoolBundleLockTwiceAttempt() public {
         // GIVEN
-        _preparePool();
+        _prepareProduct();
         _fundInvestor();
 
         bundleNftId = _createBundle();
@@ -335,62 +317,31 @@ contract TestPool is GifTest {
     }
 
 
-    // FIX ME
-    /*function test_Pool_setBundleFee() public {
-        _fundInvestor();
+    function test_PoolSetBundleFee() public {
+        // GIVEN
+        _prepareProduct();
 
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        vm.stopPrank();
-
-        vm.startPrank(poolOwner);
-
-        pool = new SimplePool(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
-            poolOwner
-        );
-
-        NftId poolNftId = poolService.register(address(pool));
-
-        vm.stopPrank();
-        vm.startPrank(investor);
-
-        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
-        token.approve(address(componentInfo.tokenHandler), 10000);
-
-        SimplePool spool = SimplePool(address(pool));
-        NftId bundleNftId = spool.createBundle(
-            FeeLib.zero(), 
-            10000, 
-            SecondsLib.toSeconds(604800), 
-            ""
-        );
-
+        // WHEN
         Fee memory fee = FeeLib.toFee(UFixedLib.toUFixed(111,0), 222);
-        spool.setBundleFee(bundleNftId, fee);
+        vm.startPrank(investor);
+        pool.setBundleFee(bundleNftId, fee);
+        vm.stopPrank();
 
+        // THEN
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         Fee memory bundleFee = bundleInfo.fee;
         assertEq(bundleFee.fractionalFee.toInt(), 111, "bundle fee not 111");
         assertEq(bundleFee.fixedFee, 222, "bundle fee not 222");
 
         vm.stopPrank();
-    }*/
+    }
 
     function _createBundle() internal returns (NftId bundleNftId) {
         vm.startPrank(investor);
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
         token.approve(address(componentInfo.tokenHandler), 10000);
 
-        // WHEN
-        SimplePool spool = SimplePool(address(pool));
-        bundleNftId = spool.createBundle(
+        bundleNftId = pool.createBundle(
             FeeLib.zero(), 
             10000, 
             SecondsLib.toSeconds(604800), 

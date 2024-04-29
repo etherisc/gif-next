@@ -7,6 +7,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {Component} from "./Component.sol";
+import {IComponentService} from "./IComponentService.sol";
 import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
@@ -15,7 +16,7 @@ import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, INSTANCE, PRODUCT} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, INSTANCE} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
@@ -87,6 +88,12 @@ abstract contract InstanceLinkedComponent is
         registerInterface(type(IInstanceLinkedComponent).interfaceId);
     }
 
+    /// @dev for instance linked components the wallet address stored in the instance store.
+    /// updating needs to go throug component service
+    function _setWallet(address newWallet) internal virtual override onlyOwner {
+        IComponentService(_getServiceAddress(COMPONENT())).setWallet(newWallet);
+    }
+
     function lock() external onlyOwner {
         IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
     }
@@ -104,13 +111,22 @@ abstract contract InstanceLinkedComponent is
     }
 
 
-    function getComponentInfo() public virtual view returns (IComponents.ComponentInfo memory info) {
-        info = _getInstanceReader().getComponentInfo(getNftId());
+    function _getComponentInfo() internal virtual override view returns (IComponents.ComponentInfo memory info) {
+        NftId componentNftId = getRegistry().getNftId(address(this));
 
-        // fallback to initial info (wallet is always != address(0))
-        if(info.wallet == address(0)) {
-            return getInitialComponentInfo();
+        // if registered, attempt to return component info via instance reader
+        if (componentNftId.gtz()) {
+            // component registerd with registry
+            info = _getInstanceReader().getComponentInfo(getNftId());
+
+            // check if also registered with instance
+            if (info.wallet != address(0)) {
+                return info;
+            }
         }
+
+        // return data from component contract if not yet registered
+        return super._getComponentInfo();
     }
 
 

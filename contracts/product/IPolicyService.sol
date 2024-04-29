@@ -22,6 +22,7 @@ interface IPolicyService is IService {
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
     error ErrorPolicyServicePolicyStateNotCollateralizedOrApplied(NftId applicationNftId);
 
+    error ErrorPolicyServicePremiumHigherThanExpected(Amount premiumExpectedAmount, Amount premiumToBePaidAmount);
     error ErrorPolicyServiceBalanceInsufficient(address policyOwner, uint256 premiumAmount, uint256 balance);
     error ErrorPolicyServiceAllowanceInsufficient(address policyOwner, address tokenHandler, uint256 premiumAmount, uint256 allowance);
 

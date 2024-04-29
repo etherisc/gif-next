@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Amount} from "../type/Amount.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
@@ -37,6 +37,9 @@ contract ComponentService is
     error ErrorComponentServiceSenderNotService(address sender);
     error ErrorComponentServiceComponentTypeInvalid(address component, ObjectType expectedType, ObjectType foundType);
 
+    bool private constant INCREASE = true;
+    bool private constant DECREASE = false;
+
     IRegistryService private _registryService;
     IInstanceService private _instanceService;
 
@@ -68,6 +71,28 @@ contract ComponentService is
 
     //-------- component ----------------------------------------------------//
 
+    function setWallet(address newWallet) external virtual {
+        (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
+        address currentWallet = info.wallet;
+
+        if (newWallet == address(0)) {
+            revert ErrorComponentServiceNewWalletAddressZero();
+        }
+
+        if (currentWallet == address(0)) {
+            revert ErrorComponentServiceWalletAddressZero();
+        }
+
+        if (newWallet == currentWallet) {
+            revert ErrorComponentServiceWalletAddressIsSameAsCurrent();
+        }
+
+        info.wallet = newWallet;
+        instance.getInstanceStore().updateComponent(componentNftId, info, KEEP_STATE());
+        emit LogComponentServiceWalletAddressChanged(componentNftId, currentWallet, newWallet);
+    }
+
     // TODO implement
     function lock() external virtual {}
 
@@ -87,8 +112,7 @@ contract ComponentService is
 
         // authorizaion for distribution owner
         roles[0] = PRODUCT_OWNER_ROLE();
-        selectors[0] = new bytes4[](1);
-        selectors[0][0] = IProductComponent.setFees.selector;
+        selectors[0] = _createSelectors(IProductComponent.setFees.selector);
 
         // register/create component setup
         (
@@ -125,30 +149,14 @@ contract ComponentService is
 
         // update product fee if required
         if(!FeeLib.eq(productInfo.productFee, productFee)) {
-            emit LogComponentServiceUpdateFee(
-                productNftId, 
-                "ProductFee",
-                productInfo.productFee.fractionalFee,
-                productInfo.productFee.fixedFee,
-                productFee.fractionalFee,
-                productFee.fixedFee
-            );
-
+            _logUpdateFee(productNftId, "ProductFee", productInfo.productFee, productFee);
             productInfo.productFee = productFee;
             feesChanged = true;
         }
 
         // update processing fee if required
         if(!FeeLib.eq(productInfo.processingFee, processingFee)) {
-            emit LogComponentServiceUpdateFee(
-                productNftId, 
-                "ProcessingFee",
-                productInfo.processingFee.fractionalFee,
-                productInfo.processingFee.fixedFee,
-                processingFee.fractionalFee,
-                processingFee.fixedFee
-            );
-
+            _logUpdateFee(productNftId, "ProcessingFee", productInfo.processingFee, processingFee);
             productInfo.processingFee = processingFee;
             feesChanged = true;
         }
@@ -170,10 +178,18 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
-        if(feeAmount.gtz()) { instanceStore.increaseFees(productNftId, feeAmount); }
+        _changeTargetBalance(INCREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
     }
 
-    function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external virtual restricted() {}
+
+    function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount)
+        external 
+        virtual 
+        // TODO re-enable once role granting is stable and fixed
+        // restricted()
+    {
+        _changeTargetBalance(DECREASE, instanceStore, productNftId, AmountLib.zero(), feeAmount);
+    }
 
     //-------- distribution -------------------------------------------------//
 
@@ -188,13 +204,11 @@ contract ComponentService is
 
         // authorizaion for distribution owner
         roles[0] = DISTRIBUTION_OWNER_ROLE();
-        selectors[0] = new bytes4[](1);
-        selectors[0][0] = IDistributionComponent.setFees.selector;
+        selectors[0] = _createSelectors(IDistributionComponent.setFees.selector);
 
         // authorizaion for product service
         roles[1] = PRODUCT_SERVICE_ROLE();
-        selectors[1] = new bytes4[](1);
-        selectors[1][0] = IDistributionComponent.processRenewal.selector;
+        selectors[1] = _createSelectors(IDistributionComponent.processRenewal.selector);
 
         // register/create component info
         _register(
@@ -214,37 +228,20 @@ contract ComponentService is
         virtual
     {
         (NftId distributionNftId,, IInstance instance) = _getAndVerifyActiveComponent(DISTRIBUTION());
-        InstanceReader instanceReader = instance.getInstanceReader();
-        NftId productNftId = instanceReader.getComponentInfo(distributionNftId).productNftId;
-        IComponents.ProductInfo memory productInfo = instance.getInstanceReader().getProductInfo(productNftId);
+        (NftId productNftId, IComponents.ProductInfo memory productInfo) = _getLinkedProductInfo(
+            instance.getInstanceReader(), distributionNftId);
         bool feesChanged = false;
 
         // update distributino fee if required
         if(!FeeLib.eq(productInfo.distributionFee, distributionFee)) {
-            emit LogComponentServiceUpdateFee(
-                productNftId, 
-                "DistributionFee",
-                productInfo.distributionFee.fractionalFee,
-                productInfo.distributionFee.fixedFee,
-                distributionFee.fractionalFee,
-                distributionFee.fixedFee
-            );
-
+            _logUpdateFee(productNftId, "DistributionFee", productInfo.distributionFee, distributionFee);
             productInfo.distributionFee = distributionFee;
             feesChanged = true;
         }
 
         // update min distribution owner fee if required
         if(!FeeLib.eq(productInfo.minDistributionOwnerFee, minDistributionOwnerFee)) {
-            emit LogComponentServiceUpdateFee(
-                productNftId, 
-                "MinDistributionOwnerFee",
-                productInfo.minDistributionOwnerFee.fractionalFee,
-                productInfo.minDistributionOwnerFee.fixedFee,
-                minDistributionOwnerFee.fractionalFee,
-                minDistributionOwnerFee.fixedFee
-            );
-
+            _logUpdateFee(productNftId, "MinDistributionOwnerFee", productInfo.minDistributionOwnerFee, minDistributionOwnerFee);
             productInfo.minDistributionOwnerFee = minDistributionOwnerFee;
             feesChanged = true;
         }
@@ -255,10 +252,10 @@ contract ComponentService is
         }
     }
 
-
-    function increaseDistributionFees(
+    function increaseDistributionBalance(
         InstanceStore instanceStore, 
         NftId distributionNftId, 
+        Amount amount,
         Amount feeAmount
     )
         external
@@ -266,13 +263,14 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
-        if(feeAmount.gtz()) { instanceStore.increaseFees(distributionNftId, feeAmount); }
+        _changeTargetBalance(INCREASE, instanceStore, distributionNftId, amount, feeAmount);
     }
 
 
-    function decreaseDistributionFees(
+    function decreaseDistributionBalance(
         InstanceStore instanceStore, 
         NftId distributionNftId, 
+        Amount amount,
         Amount feeAmount
     )
         external
@@ -280,7 +278,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
-
+        _changeTargetBalance(DECREASE, instanceStore, distributionNftId, amount, feeAmount);
     }
 
     //-------- pool ---------------------------------------------------------//
@@ -296,13 +294,11 @@ contract ComponentService is
 
         // authorizaion for distribution owner
         roles[0] = POOL_OWNER_ROLE();
-        selectors[0] = new bytes4[](1);
-        selectors[0][0] = IPoolComponent.setFees.selector;
+        selectors[0] = _createSelectors(IPoolComponent.setFees.selector);
 
         // authorizaion for product service
         roles[1] = POLICY_SERVICE_ROLE();
-        selectors[1] = new bytes4[](1);
-        selectors[1][0] = IPoolComponent.verifyApplication.selector;
+        selectors[1] = _createSelectors(IPoolComponent.verifyApplication.selector);
 
         // register/create component setup
         (
@@ -332,52 +328,27 @@ contract ComponentService is
         virtual
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-        InstanceReader instanceReader = instance.getInstanceReader();
-        NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
-        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        (NftId productNftId, IComponents.ProductInfo memory productInfo) = _getLinkedProductInfo(
+            instance.getInstanceReader(), poolNftId);
         bool feesChanged = false;
 
         // update pool fee if required
         if(!FeeLib.eq(productInfo.poolFee, poolFee)) {
-            emit LogComponentServiceUpdateFee(
-                productNftId, 
-                "PoolFee",
-                productInfo.poolFee.fractionalFee,
-                productInfo.poolFee.fixedFee,
-                poolFee.fractionalFee,
-                poolFee.fixedFee
-            );
-
+            _logUpdateFee(productNftId, "PoolFee", productInfo.poolFee, poolFee);
             productInfo.poolFee = poolFee;
             feesChanged = true;
         }
 
         // update staking fee if required
         if(!FeeLib.eq(productInfo.stakingFee, stakingFee)) {
-            emit LogComponentServiceUpdateFee(
-                productNftId, 
-                "StakingFee",
-                productInfo.stakingFee.fractionalFee,
-                productInfo.stakingFee.fixedFee,
-                stakingFee.fractionalFee,
-                stakingFee.fixedFee
-            );
-
+            _logUpdateFee(productNftId, "StakingFee", productInfo.stakingFee, stakingFee);
             productInfo.stakingFee = stakingFee;
             feesChanged = true;
         }
 
         // update performance fee if required
         if(!FeeLib.eq(productInfo.performanceFee, performanceFee)) {
-            emit LogComponentServiceUpdateFee(
-                productNftId, 
-                "PerformanceFee",
-                productInfo.performanceFee.fractionalFee,
-                productInfo.performanceFee.fixedFee,
-                performanceFee.fractionalFee,
-                performanceFee.fixedFee
-            );
-
+            _logUpdateFee(productNftId, "PerformanceFee", productInfo.performanceFee, performanceFee);
             productInfo.performanceFee = performanceFee;
             feesChanged = true;
         }
@@ -399,8 +370,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
-        if(amount.gtz()) { instanceStore.increaseBalance(poolNftId, amount); }
-        if(feeAmount.gtz()) { instanceStore.increaseFees(poolNftId, feeAmount); }
+        _changeTargetBalance(INCREASE, instanceStore, poolNftId, amount, feeAmount);
     }
 
     function decreasePoolBalance(
@@ -414,8 +384,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
-        if(amount.gtz()) { instanceStore.decreaseBalance(poolNftId, amount); }
-        if(feeAmount.gtz()) { instanceStore.decreaseFees(poolNftId, feeAmount); }
+        _changeTargetBalance(DECREASE, instanceStore, poolNftId, amount, feeAmount);
     }
 
     //-------- bundle -------------------------------------------------------//
@@ -431,8 +400,7 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
-        if(amount.gtz()) { instanceStore.increaseBalance(bundleNftId, amount); }
-        if(feeAmount.gtz()) { instanceStore.increaseFees(bundleNftId, feeAmount); }
+        _changeTargetBalance(INCREASE, instanceStore, bundleNftId, amount, feeAmount);
     }
 
     function decreaseBundleBalance(
@@ -446,12 +414,32 @@ contract ComponentService is
         // TODO re-enable once role granting is stable and fixed
         // restricted()
     {
-        if(amount.gtz()) { instanceStore.decreaseBalance(bundleNftId, amount); }
-        if(feeAmount.gtz()) { instanceStore.decreaseFees(bundleNftId, feeAmount); }
+        _changeTargetBalance(DECREASE, instanceStore, bundleNftId, amount, feeAmount);
     }
 
 
     //-------- internal functions ------------------------------------------//
+
+    function _changeTargetBalance(
+        bool increase,
+        InstanceStore instanceStore, 
+        NftId targetNftId, 
+        Amount amount, 
+        Amount feeAmount
+    )
+        internal
+        virtual
+    {
+        Amount totalAmount = amount + feeAmount;
+
+        if(increase) {
+            if(totalAmount.gtz()) { instanceStore.increaseBalance(targetNftId, totalAmount); }
+            if(feeAmount.gtz()) { instanceStore.increaseFees(targetNftId, feeAmount); }
+        } else {
+            if(totalAmount.gtz()) { instanceStore.decreaseBalance(targetNftId, totalAmount); }
+            if(feeAmount.gtz()) { instanceStore.decreaseFees(targetNftId, feeAmount); }
+        }
+    }
 
     /// @dev registers the component represented by the provided address
     function _register(
@@ -521,6 +509,43 @@ contract ComponentService is
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(componentNftId);
         componentInfo.productNftId = productNftId;
         instanceStore.updateComponent(componentNftId, componentInfo, KEEP_STATE());
+    }
+
+
+    function _logUpdateFee(NftId productNftId, string memory name, Fee memory feeBefore, Fee memory feeAfter)
+        internal
+        virtual
+    {
+        emit LogComponentServiceUpdateFee(
+            productNftId, 
+            name,
+            feeBefore.fractionalFee,
+            feeBefore.fixedFee,
+            feeAfter.fractionalFee,
+            feeAfter.fixedFee
+        );
+    }
+
+
+    function _createSelectors(bytes4 selector) internal view returns (bytes4[] memory selectors) {
+        selectors = new bytes4[](1);
+        selectors[0] = selector;
+    }
+
+
+    function _getLinkedProductInfo(
+        InstanceReader instanceReader, 
+        NftId componentNftId
+    )
+        internal
+        view 
+        returns(
+            NftId productNftId, 
+            IComponents.ProductInfo memory info
+        )
+    {
+        productNftId = instanceReader.getComponentInfo(componentNftId).productNftId;
+        info = instanceReader.getProductInfo(productNftId);
     }
 
 

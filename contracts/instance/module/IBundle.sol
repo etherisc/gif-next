@@ -13,10 +13,7 @@ interface IBundle {
         NftId poolNftId;
         Fee fee; // bundle fee on net premium amounts
         bytes filter; // required conditions for applications to be considered for collateralization by this bundle
-        Amount capitalAmount; // net stakings + net premiums - payouts
-        Amount lockedAmount; // capital amount linked to collateralizaion of non-closed policies (<= capital amount)
-        Amount feeAmount; // accumulated fee amount
-        Seconds lifetime;
+        Seconds lifetime; // lifetime of bundle after creation
         Timestamp expiredAt; // no new policies starting with this timestamp
         Timestamp closedAt; // no open policies, locked amount = 0
     }

@@ -43,8 +43,4 @@ interface IInstanceLinkedComponent is
     /// this is only relevant for pool and distribution components
     function getProductNftId() external view returns (NftId productNftId);
 
-    /// @dev returns the component info from the instance store
-    /// if the component is not yet registered with the instance the function returns getInitialComponentInfo.
-    function getComponentInfo() external view returns (IComponents.ComponentInfo memory info);
-
 }

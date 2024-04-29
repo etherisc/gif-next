@@ -5,6 +5,7 @@ import {
     DistributionService, DistributionServiceManager, DistributionService__factory, 
     StakingService, StakingServiceManager, StakingService__factory, 
     InstanceService, InstanceServiceManager, InstanceService__factory, 
+    ComponentService, ComponentServiceManager, ComponentService__factory, 
     PoolService, PoolServiceManager, PoolService__factory, 
     ProductService, ProductServiceManager, ProductService__factory, 
     ApplicationService, ApplicationServiceManager, ApplicationService__factory, 
@@ -30,6 +31,11 @@ export type ServiceAddresses = {
     instanceServiceAddress: AddressLike,
     instanceService: InstanceService,
     instanceServiceManagerAddress: AddressLike,
+
+    componentServiceNftId: string,
+    componentServiceAddress: AddressLike,
+    componentService: ComponentService,
+    componentServiceManagerAddress: AddressLike,
 
     distributionServiceAddress: AddressLike,
     distributionServiceNftId: string,
@@ -117,10 +123,34 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const instanceServiceAddress = await instanceServiceManager.getInstanceService();
     const instanceService = InstanceService__factory.connect(instanceServiceAddress, owner);
 
-    const rcptStk = await executeTx(async () => await releaseManager.registerService(instanceServiceAddress));
-    const logRegistrationInfoStk = getFieldFromTxRcptLogs(rcptStk!, registry.registry.interface, "LogRegistration", "nftId");
-    const instanceServiceNfdId = (logRegistrationInfoStk as unknown);
+    const rcptInst = await executeTx(async () => await releaseManager.registerService(instanceServiceAddress));
+    const logRegistrationInfoInst = getFieldFromTxRcptLogs(rcptInst!, registry.registry.interface, "LogRegistration", "nftId");
+    const instanceServiceNfdId = (logRegistrationInfoInst as unknown);
     logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
+
+    logger.info("-------- component service --------");
+    const { address: componentServiceManagerAddress, contract: componentServiceManagerBaseContract, } = await deployContract(
+        "ComponentServiceManager",
+        owner,
+        [registry.registryAddress],
+        { libraries: { 
+            AmountLib: libraries.amountLibAddress,
+            FeeLib: libraries.feeLibAddress,
+            NftIdLib: libraries.nftIdLibAddress, 
+            RoleIdLib: libraries.roleIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
+        }});
+
+    const componentServiceManager = componentServiceManagerBaseContract as ComponentServiceManager;
+    const componentServiceAddress = await componentServiceManager.getComponentService();
+    const componentService = ComponentService__factory.connect(componentServiceAddress, owner);
+
+    const rcptCmpt = await executeTx(async () => await releaseManager.registerService(componentServiceAddress));
+    const logRegistrationInfoCmpt = getFieldFromTxRcptLogs(rcptCmpt!, registry.registry.interface, "LogRegistration", "nftId");
+    const componentServiceNftId = (logRegistrationInfoCmpt as unknown);
+    logger.info(`componentServiceManager deployed - componentServiceAddress: ${componentServiceAddress} componentServiceManagerAddress: ${componentServiceManagerAddress} nftId: ${componentServiceNftId}`);
 
     logger.info("-------- distribution service --------");
     const { address: distributionServiceManagerAddress, contract: distributionServiceManagerBaseContract, } = await deployContract(
@@ -132,7 +162,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ReferralLib: libraries.referralLibAddress,
-                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -178,7 +207,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         [registry.registryAddress],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
-                FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -225,7 +253,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         [registry.registryAddress],
         { libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
-                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress, 
@@ -296,7 +323,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
-            UFixedLib: libraries.uFixedLibAddress,
             VersionLib: libraries.versionLibAddress, 
             VersionPartLib: libraries.versionPartLibAddress, 
         }});
@@ -326,6 +352,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         instanceServiceAddress: instanceServiceAddress,
         instanceService: instanceService,
         instanceServiceManagerAddress: instanceServiceManagerAddress,
+
+        componentServiceNftId: componentServiceNftId as string,
+        componentServiceAddress: componentServiceAddress,
+        componentService: componentService,
+        componentServiceManagerAddress: componentServiceManagerAddress,
 
         distributionServiceAddress,
         distributionServiceNftId: distributionServiceNftId as string,

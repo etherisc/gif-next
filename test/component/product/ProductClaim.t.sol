@@ -35,7 +35,6 @@ contract TestProductClaim is GifTest {
     uint256 public constant SUM_INSURED = 1000;
     uint256 public constant CUSTOMER_FUNDS = 400;
     
-    SimpleProduct public prdct;
     RiskId public riskId;
     NftId public policyNftId;
 
@@ -47,7 +46,7 @@ contract TestProductClaim is GifTest {
         // create risk
         vm.startPrank(productOwner);
         riskId = RiskIdLib.toRiskId("Risk_1");
-        prdct.createRisk(riskId, "");
+        product.createRisk(riskId, "");
         vm.stopPrank();
 
         // create application
@@ -62,6 +61,7 @@ contract TestProductClaim is GifTest {
     event LogPolicyServiceClaimConfirmed(NftId policyNftId, ClaimId claimId, Amount confirmedAmount);
     event LogClaimServicePayoutCreated(NftId policyNftId, PayoutId payoutId, Amount amount);
     event LogClaimServicePayoutProcessed(NftId policyNftId, PayoutId payoutId, Amount amount);
+
 
     function test_ProductClaimSubmitHappyCase() public {
         // GIVEN
@@ -79,7 +79,7 @@ contract TestProductClaim is GifTest {
         bytes memory claimData = "please pay";
 
         vm.recordLogs();
-        ClaimId claimId = prdct.submitClaim(policyNftId, claimAmount, claimData); 
+        ClaimId claimId = product.submitClaim(policyNftId, claimAmount, claimData); 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
@@ -120,7 +120,7 @@ contract TestProductClaim is GifTest {
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
         Amount claimAmount = AmountLib.toAmount(499);
         bytes memory claimData = "please pay";
-        ClaimId claimId = prdct.submitClaim(policyNftId, claimAmount, claimData); 
+        ClaimId claimId = product.submitClaim(policyNftId, claimAmount, claimData); 
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.claimsCount, 1, "claims count not 1 (before)");
@@ -132,7 +132,7 @@ contract TestProductClaim is GifTest {
 
         vm.recordLogs();
         string memory processData = "claim good to go";
-        prdct.confirmClaim(policyNftId, claimId, confirmedAmount, bytes(processData)); 
+        product.confirmClaim(policyNftId, claimId, confirmedAmount, bytes(processData)); 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
@@ -167,7 +167,7 @@ contract TestProductClaim is GifTest {
         _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
         Amount claimAmount = AmountLib.toAmount(499);
         bytes memory claimData = "please pay";
-        ClaimId claimId = prdct.submitClaim(policyNftId, claimAmount, claimData); 
+        ClaimId claimId = product.submitClaim(policyNftId, claimAmount, claimData); 
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.claimsCount, 1, "claims count not 1 (before)");
@@ -178,7 +178,7 @@ contract TestProductClaim is GifTest {
         // emit LogPolicyServiceClaimDeclined(policyNftId, ClaimId.wrap(1));
         vm.recordLogs();
         string memory processData = "claim invalid";
-        prdct.declineClaim(policyNftId, claimId, bytes(processData)); 
+        product.declineClaim(policyNftId, claimId, bytes(processData)); 
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
         // THEN
@@ -218,8 +218,8 @@ contract TestProductClaim is GifTest {
             StateId claimState)
     {
         bytes memory claimData = "please pay";
-        claimId = prdct.submitClaim(nftId, claimAmount, claimData); 
-        prdct.confirmClaim(nftId, claimId, claimAmount, ""); 
+        claimId = product.submitClaim(nftId, claimAmount, claimData); 
+        product.confirmClaim(nftId, claimId, claimAmount, ""); 
         policyInfo = instanceReader.getPolicyInfo(policyNftId);
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
         claimState = instanceReader.getClaimState(policyNftId, claimId);
@@ -242,7 +242,7 @@ contract TestProductClaim is GifTest {
         internal
     {
         vm.startPrank(productOwner);
-        prdct.collateralize(nftId, collectPremium, activateAt); 
+        product.collateralize(nftId, collectPremium, activateAt); 
         vm.stopPrank();
     }
 
@@ -263,53 +263,5 @@ contract TestProductClaim is GifTest {
             bundleNftId,
             ReferralLib.zero());
     }
-
-
-    // function _prepareProduct() internal {
-    //     vm.startPrank(instanceOwner);
-    //     instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
-    //     vm.stopPrank();
-
-    //     _prepareDistributionAndPool();
-
-    //     vm.startPrank(productOwner);
-    //     product = new SimpleProduct(
-    //         address(registry),
-    //         instanceNftId,
-    //         address(token),
-    //         false,
-    //         address(pool), 
-    //         address(distribution),
-    //         FeeLib.zeroFee(),
-    //         FeeLib.zeroFee(),
-    //         productOwner
-    //     );
-        
-    //     prdct.register();
-    //     productNftId = product.getNftId();
-    //     vm.stopPrank();
-
-    //     // solhint-disable
-    //     console.log("product nft id", productNftId.toInt());
-    //     console.log("product component at", address(product));
-    //     // solhint-enable
-
-    //     vm.startPrank(registryOwner);
-    //     token.transfer(investor, BUNDLE_CAPITAL);
-    //     token.transfer(customer, CUSTOMER_FUNDS);
-    //     vm.stopPrank();
-
-    //     vm.startPrank(investor);
-    //     IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
-    //     token.approve(address(poolComponentInfo.tokenHandler), BUNDLE_CAPITAL);
-
-    //     bundleNftId = SimplePool(address(pool)).createBundle(
-    //         FeeLib.zeroFee(), 
-    //         BUNDLE_CAPITAL, 
-    //         SecondsLib.toSeconds(604800), 
-    //         ""
-    //     );
-    //     vm.stopPrank();
-    // }
 
 }
