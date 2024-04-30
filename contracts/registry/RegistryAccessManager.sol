@@ -135,13 +135,17 @@ contract RegistryAccessManager is AccessManaged, Initializable
     
     function _setManagerRole() private 
     {
-        bytes4[] memory functionSelector = new bytes4[](3);
+        bytes4[] memory functionSelector = new bytes4[](2);
 
-        functionSelector[0] = TokenRegistry.setActive.selector; // for TokenRegistry
-        functionSelector[1] = ReleaseManager.registerService.selector; // for ReleaseManager
-        functionSelector[2] = ReleaseManager.prepareNextRelease.selector;
-
+        functionSelector[0] = ReleaseManager.registerService.selector; // for ReleaseManager
+        functionSelector[1] = ReleaseManager.prepareNextRelease.selector;
         _setTargetFunctionRole(_releaseManager, functionSelector, GIF_MANAGER_ROLE());
+
+        // for TokenRegistry
+        bytes4[] memory functionSelector2 = new bytes4[](2);
+        functionSelector2[0] = TokenRegistry.setActive.selector;
+        functionSelector2[1] = TokenRegistry.setActiveForVersion.selector;
+        _setTargetFunctionRole(address(_tokenRegistry), functionSelector2, GIF_MANAGER_ROLE());
     }
 
 
