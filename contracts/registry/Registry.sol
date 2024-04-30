@@ -10,6 +10,7 @@ import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, STAKING
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
+import {TokenRegistry} from "./TokenRegistry.sol";
 
 // IMPORTANT
 // Each NFT minted by registry is accosiated with:
@@ -46,6 +47,7 @@ contract Registry is
     ChainNft private _chainNft;
 
     ReleaseManager private _releaseManager;
+    address private _tokenRegistryAddress;
     address private _stakingAddress;
 
     modifier onlyRegistryService() {
@@ -74,6 +76,24 @@ contract Registry is
 
         // set object types and object parent relations
         _setupValidCoreTypesAndCombinations();
+    }
+
+
+    function setTokenRegistry(
+        address tokenRegistry
+    )
+        external
+        onlyReleaseManager
+    {
+        if (_tokenRegistryAddress != address(0)) {
+            revert TokenRegistryAlreadySet(tokenRegistry);
+        }
+
+        if (address(tokenRegistry) == address(0)) {
+            revert TokenRegistryZero();
+        }
+
+        _tokenRegistryAddress = tokenRegistry;
     }
 
 
@@ -277,6 +297,10 @@ contract Registry is
 
     function getStakingAddress() external view returns (address staking) {
         return _stakingAddress;
+    }
+
+    function getTokenRegistryAddress() external view returns (address tokenRegistry) {
+        return _tokenRegistryAddress;
     }
 
     function getServiceAddress(
