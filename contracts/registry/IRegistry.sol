@@ -24,6 +24,10 @@ interface IRegistry is IERC165 {
     // registerWithCustomTypes()
     error CoreTypeRegistration();
 
+    // setTokenRegistry()
+    error TokenRegistryZero();
+    error TokenRegistryAlreadySet(address tokenRegistry);
+
     // _register()
     error ZeroParentAddress();
     error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
@@ -47,11 +51,6 @@ interface IRegistry is IERC165 {
         Timestamp createdAt;
         //Timestamp updatedAt;
     }
-
-    function registerStaking(
-        address stakingAddress,
-        address stakingOwner
-    ) external returns(NftId nftId);
 
     function registerService(
         ObjectInfo memory serviceInfo, 
@@ -101,6 +100,8 @@ interface IRegistry is IERC165 {
     ) external view returns (address serviceAddress);
 
     function getStakingAddress() external view returns (address staking);
+
+    function getTokenRegistryAddress() external view returns (address);
 
     function getReleaseManagerAddress() external view returns (address);
 

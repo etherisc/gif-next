@@ -15,12 +15,13 @@ import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
-import {RegistryTestBase} from "./RegistryTestBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
-contract RegistryTokenWhitelisting is RegistryTestBase {
+contract RegistryTokenWhitelisting is GifTest {
 
-    Usdc public usdc = new Usdc();
+    uint256 public chainId = block.chainid;
+    Usdc public usdc2 = new Usdc();
 
     VersionPart public majorVersion2 = VersionPartLib.toVersionPart(2);
     VersionPart public majorVersion3 = VersionPartLib.toVersionPart(3);
@@ -31,140 +32,163 @@ contract RegistryTokenWhitelisting is RegistryTestBase {
     bool whitelist = true;
     bool blacklist = false;
 
-    function setUp() public virtual override {
-        super.setUp();
-    
-        vm.prank(address(registryOwner));
-        tokenRegistry.setActive(address(usdc), majorVersion3, blacklist);
+    function test_tokenRegistrySetup() public {
+
+        assertEq(tokenRegistry.getOwner(), registryOwner, "unexpected owner for token registry");
+        assertEq(address(tokenRegistry.getRegistry()), address(registry), "unexpected registry address");
+        assertEq(registry.getTokenRegistryAddress(), address(tokenRegistry), "unexpected token registry address");
+
+        assertEq(tokenRegistry.tokens(), 2, "unexpected number of registered tokens");
+
+        assertTrue(tokenRegistry.isRegistered(chainId, address(dip)), "dip not registered");
+        assertFalse(tokenRegistry.isRegistered(chainId, address(usdc2)), "usdc2 registered");
+
+        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseManager.getLatestVersion()), "dip active in current relase");
+        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), releaseManager.getLatestVersion()), "usdc2 active in current relase");
     }
 
-// TODO refactor
-/*
-    function test_registryTokenInitial() public {
-        assertFalse(tokenRegistry.isRegistered(address(dip)), "dip is registered");
-        assertTrue(tokenRegistry.isRegistered(address(usdc)), "usdc not registered");
 
-        assertFalse(tokenRegistry.isActive(address(dip), registry.getLatestVersion()), "dip active in current relase");
-        assertFalse(tokenRegistry.isActive(address(usdc), registry.getLatestVersion()), "usdc active in current relase");
-    }
+    function test_tokenRegistryWhitelistHappyCase() public {
 
-    function test_registryTokenWhitelistHappyCase() public {
-
-        vm.prank(address(releaseManager));
-        tokenRegistry.setActive(address(usdc), majorVersion3, whitelist);
-
-        assertFalse(tokenRegistry.isRegistered(address(dip)), "dip is registered");
-        assertTrue(tokenRegistry.isRegistered(address(usdc)), "usdc not registered");
-
-        assertTrue(tokenRegistry.isActive(address(usdc), registry.getMajorVersion()), "usdc not whitelisted in current relase");
-        assertFalse(tokenRegistry.isActive(address(registryService), registry.getMajorVersion()), "registry service active in current relase");
-        assertFalse(tokenRegistry.isActive(address(dip), registry.getMajorVersion()), "dip whitelisted in current relase");
-    }
-
-    function test_registryTokenWhitelistTwoReleasesHappyCase() public {
-
-        vm.prank(registryOwner);
-        tokenRegistry.setActive(address(usdc), majorVersion3, whitelist);
-
-        assertFalse(tokenRegistry.isRegistered(address(dip)), "dip is registered");
-        assertTrue(tokenRegistry.isRegistered(address(usdc)), "usdc not registered");
-
-        assertTrue(tokenRegistry.isActive(address(usdc), majorVersion3), "usdc not whitelisted in version 3");
-        assertFalse(tokenRegistry.isActive(address(usdc), majorVersion4), "usdc whitelisted in version 4");
-
-        vm.startPrank(registryOwner);
-        registry.setMajorVersion(majorVersion4);
-        tokenRegistry.setActive(address(usdc), majorVersion4, whitelist);
+        vm.startPrank(address(registryOwner));
+        tokenRegistry.registerToken(address(usdc2));
+        tokenRegistry.setActive(chainId, address(usdc2), majorVersion3, whitelist);
         vm.stopPrank();
 
-        assertTrue(tokenRegistry.isActive(address(usdc), majorVersion3), "usdc not whitelisted in version 3");
-        assertTrue(tokenRegistry.isActive(address(usdc), majorVersion4), "usdc not whitelisted in version 4");
+        assertTrue(tokenRegistry.isRegistered(chainId, address(dip)), "dip not registered");
+        assertTrue(tokenRegistry.isRegistered(chainId, address(usdc2)), "usdc2 not registered");
+
+        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseManager.getLatestVersion()), "dip not whitelisted in current relase");
+        assertTrue(tokenRegistry.isActive(chainId, address(usdc2), releaseManager.getLatestVersion()), "usdc2 not whitelisted in current relase");
+        assertFalse(tokenRegistry.isActive(chainId, address(registryService), releaseManager.getLatestVersion()), "registry service active in current relase");
     }
 
-    function test_registryTokenWhitelistNotToken() public {
+
+    function test_tokenRegistryWhitelistTwoReleasesHappyCase() public {
+
+        vm.startPrank(address(registryOwner));
+        tokenRegistry.registerToken(address(usdc2));
+        tokenRegistry.setActive(chainId, address(usdc2), majorVersion3, whitelist);
+        vm.stopPrank();
+
+        assertTrue(tokenRegistry.isRegistered(chainId, address(dip)), "dip is registered");
+        assertTrue(tokenRegistry.isRegistered(chainId, address(usdc2)), "usdc2 not registered");
+
+        assertTrue(tokenRegistry.isActive(chainId, address(usdc2), majorVersion3), "usdc2 not whitelisted in version 3");
+        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), majorVersion4), "usdc2 whitelisted in version 4");
+
+        vm.startPrank(registryOwner);
+        bool enforceVersionCheck = false;
+        tokenRegistry.setActiveWithVersionCheck(chainId, address(usdc2), majorVersion4, whitelist, enforceVersionCheck);
+        vm.stopPrank();
+
+        assertTrue(tokenRegistry.isActive(chainId, address(usdc2), majorVersion3), "usdc2 not whitelisted in version 3");
+        assertTrue(tokenRegistry.isActive(chainId, address(usdc2), majorVersion4), "usdc2 not whitelisted in version 4");
+    }
+
+
+    function test_tokenRegistryBlacklistHappyCase() public {
+        vm.startPrank(address(registryOwner));
+
+        tokenRegistry.registerToken(address(usdc2));
+        tokenRegistry.setActive(chainId, address(usdc2), majorVersion3, whitelist);
+
+        assertTrue(tokenRegistry.isActive(chainId, address(usdc2), majorVersion3), "usdc2 not whitelisted in version 3");
+
+        tokenRegistry.setActive(chainId, address(usdc2), majorVersion3, blacklist);
+
+        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), majorVersion3), "usdc2 not blacklisted in version 3");
+
+        vm.stopPrank();
+    }
+
+
+    function test_tokenRegistryWhitelistNotToken() public {
         vm.expectRevert(
-            abi.encodeWithSelector(TokenRegistry.NotToken.selector,
+            abi.encodeWithSelector(TokenRegistry.ErrorTokenRegistryTokenNotErc20.selector,
+                chainId,
                 address(registryService)));
 
-        vm.prank(address(registryOwner));
-        tokenRegistry.setActive(address(registryService), majorVersion3, whitelist);
+        vm.startPrank(address(registryOwner));
+        tokenRegistry.registerToken(address(registryService));
+        vm.stopPrank();
     }
 
-    function test_registryTokenWhitelistNotContract() public {
+
+    function test_tokenRegistryWhitelistNotRegistered() public {
         vm.expectRevert(
-            abi.encodeWithSelector(TokenRegistry.NotContract.selector,
+            abi.encodeWithSelector(TokenRegistry.ErrorTokenRegistryTokenNotRegistered.selector,
+                chainId,
+                address(usdc2)));
+
+        vm.startPrank(address(registryOwner));
+        tokenRegistry.setActive(chainId, address(usdc2), majorVersion4, whitelist);
+        vm.stopPrank();
+    }
+
+
+    function test_tokenRegistryWhitelistNotContract() public {
+        vm.expectRevert(
+            abi.encodeWithSelector(TokenRegistry.ErrorTokenRegistryTokenNotContract.selector,
+                chainId,
                 address(outsider)));
 
         vm.prank(address(registryOwner));
-        tokenRegistry.setActive(outsider, majorVersion3, whitelist);
+        tokenRegistry.registerToken(outsider);
     }
 
-    function test_registryTokenWhitelistInvalidRelease() public {
+
+    function test_tokenRegistryWhitelistInvalidRelease() public {
 
         // attempt to whitelist for version 2 (too low)
         vm.expectRevert(
-            abi.encodeWithSelector(TokenRegistry.TokenMajorVersionInvalid.selector,
+            abi.encodeWithSelector(
+                TokenRegistry.ErrorTokenRegistryMajorVersionInvalid.selector,
                 majorVersion2));
+
         vm.prank(registryOwner);
-        tokenRegistry.setActive(address(usdc), majorVersion2, whitelist);
+        tokenRegistry.setActive(chainId, address(dip), majorVersion2, whitelist);
 
         // attempt to whitelist for version 4 (too high)
         vm.expectRevert(
-            abi.encodeWithSelector(TokenRegistry.TokenMajorVersionInvalid.selector,
+            abi.encodeWithSelector(
+                TokenRegistry.ErrorTokenRegistryMajorVersionInvalid.selector,
                 majorVersion4));
         vm.prank(registryOwner);
-        tokenRegistry.setActive(address(usdc), majorVersion4, whitelist);
+        tokenRegistry.setActive(chainId, address(dip), majorVersion4, whitelist);
 
-        // increase max version from 3 to 4
-        vm.prank(registryOwner);
-        registry.setMajorVersion(majorVersion4);
-
-        assertEq(registry.getMajorVersionMax().toInt(), 4, "unexpected max version");
-
-        // redo all checks from above
-
-        // attempt to whitelist for version 2 (too low)
-        vm.expectRevert(
-            abi.encodeWithSelector(TokenRegistry.TokenMajorVersionInvalid.selector,
-                majorVersion2));
-        vm.prank(registryOwner);
-        tokenRegistry.setActive(address(usdc), majorVersion2, whitelist);
-
-
-        // attempt to whitelist for version 4 (now ok)
-        vm.prank(registryOwner);
-        tokenRegistry.setActive(address(usdc), majorVersion4, whitelist);
-
-        // attempt to whitelist for version 5 (too high)
-        vm.expectRevert(
-            abi.encodeWithSelector(TokenRegistry.TokenMajorVersionInvalid.selector,
-                majorVersion5));
-        vm.prank(registryOwner);
-        tokenRegistry.setActive(address(usdc), majorVersion5, whitelist);
     }
 
-    function test_registryTokenBlacklistHappyCase() public {
+    function test_tokenRegistryWhitelistingNotOwner() public {
 
-        vm.prank(address(registryOwner));
-        tokenRegistry.setActive(address(usdc), majorVersion3, whitelist);
+        vm.startPrank(outsider);
 
-        assertTrue(tokenRegistry.isActive(address(usdc), majorVersion3), "usdc not whitelisted in version 3");
-
-        vm.prank(address(registryOwner));
-        tokenRegistry.setActive(address(usdc), majorVersion3, blacklist);
-
-        assertFalse(tokenRegistry.isActive(address(usdc), majorVersion3), "usdc not blacklisted in version 3");
-    }
-
-    function test_registryTokenWhitelistingNotOwner() public {
-
+        // check onlyOwner for register
         vm.expectRevert(
-            abi.encodeWithSelector(INftOwnable.ErrorNotOwner.selector, 
+            abi.encodeWithSelector(
+                INftOwnable.ErrorNftOwnableNotOwner.selector, 
                 outsider));
-        vm.prank(outsider);
-        tokenRegistry.setActive(address(usdc), majorVersion3, blacklist);
+
+        tokenRegistry.registerToken(address(usdc2));
+
+        // check onlyOwner for setActive
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                INftOwnable.ErrorNftOwnableNotOwner.selector, 
+                outsider));
+
+        tokenRegistry.setActive(chainId, address(dip), majorVersion4, whitelist);
+
+        // check onlyOwner for setActive
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                INftOwnable.ErrorNftOwnableNotOwner.selector, 
+                outsider));
+
+        tokenRegistry.setActiveWithVersionCheck(chainId, address(dip), majorVersion4, whitelist, false);
+
+        vm.stopPrank();
     }
 
-*/
 }
 

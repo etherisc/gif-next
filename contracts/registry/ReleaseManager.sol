@@ -18,6 +18,7 @@ import {IStaking} from "../staking/IStaking.sol";
 import {Registry} from "./Registry.sol";
 import {RegistryAccessManager} from "./RegistryAccessManager.sol";
 import {ServiceAuthorizationsLib} from "./ServiceAuthorizationsLib.sol";
+import {TokenRegistry} from "./TokenRegistry.sol";
 
 contract ReleaseManager is AccessManaged
 {
@@ -59,7 +60,8 @@ contract ReleaseManager is AccessManaged
     error SelectorAlreadyExists(VersionPart releaseVersion, ObjectType serviceDomain);
 
     RegistryAccessManager private immutable _accessManager;
-    IRegistry private immutable _registry;
+    Registry private immutable _registry;
+    TokenRegistry private immutable _tokenRegistry;
     IStaking private _staking;
 
     VersionPart immutable _initial;// first active major version    
@@ -89,7 +91,11 @@ contract ReleaseManager is AccessManaged
 
         _initial = initialVersion;
         _next = initialVersion;
+
         _registry = new Registry();
+        _tokenRegistry = new TokenRegistry(address(_registry));
+
+        _registry.setTokenRegistry(address(_tokenRegistry));
     }
 
     function registerStaking(
