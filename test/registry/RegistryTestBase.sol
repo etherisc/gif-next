@@ -101,6 +101,7 @@ contract RegistryTestBase is Test, FoundryRandom {
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
     Registry public registry;
+    address public registryAddress;
     TokenRegistry public tokenRegistry;
     ChainNft public chainNft;
 
@@ -147,70 +148,160 @@ contract RegistryTestBase is Test, FoundryRandom {
 
     uint public _servicesCount;
 
-    function setUp() public virtual override
+
+    function setUp() public virtual
     {
+        bytes32 salt = "0x1234";
+
         _startPrank(registryOwner);
 
         _deployRegistry();
 
         _deployRegistryServiceMock();
 
-        // deploy staking contract
-        address stakingOwner = msg.sender;
-        stakingManager = new StakingManager(
-            accessManager.authority(),
-            address(registry),
-            address(dip));
+        // // deploy staking contract
+        // address stakingOwner = msg.sender;
+        // stakingManager = new StakingManager(
+        //     accessManager.authority(),
+        //     address(registry),
+        //     address(dip));
 
-        staking = stakingManager.getStaking();
-        releaseManager.registerStaking(
-            address(staking),
-            stakingOwner);
+        // staking = stakingManager.getStaking();
+        // releaseManager.registerStaking(
+        //     address(staking),
+        //     stakingOwner);
 
-<<<<<<< HEAD
         // address chainNftAddress = registry.getChainNftAddress();
         // chainNft = ChainNft(chainNftAddress);
 
-        // tokenRegistry = new TokenRegistry(registryAddress);
-=======
-        address chainNftAddress = registry.getChainNftAddress();
-        chainNft = ChainNft(chainNftAddress);
-        tokenRegistry = TokenRegistry(registry.getTokenRegistryAddress());
->>>>>>> 371140e (refactor token registry, re-enable token registry tests)
+        tokenRegistry = new TokenRegistry(registryAddress);
 
-        // accessManager.initialize(address(releaseManager), address(tokenRegistry));
+        accessManager.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
 
-        // releaseManager.createNextRelease();
+        releaseManager.createNextRelease();
 
-        // registryServiceManager = new RegistryServiceManagerMockWithConfig(
-        //     accessManager.authority(),
-        //     address(registry)
-        // );        
+        registryServiceManager = new RegistryServiceManagerMock{salt: salt}(
+            accessManager.authority(),
+            address(registry),
+            salt);        
         
         // registryService = registryServiceManager.getRegistryService();
 
         // releaseManager.registerRegistryService(registryService);
 
-        // // required in order to activate release
+        // required in order to activate release
         // DistributionServiceManager distributionServiceManager = new DistributionServiceManager(address(registry));
         // IService distributionService = distributionServiceManager.getDistributionService();
         // releaseManager.registerService(distributionService);
 
-        // releaseManager.activateNextRelease();
+        releaseManager.activateNextRelease();
 
-<<<<<<< HEAD
-        // // registryServiceManager.linkToNftOwnable(registryAddress);// links to registry service nft
-        // tokenRegistry.linkToNftOwnable(registryAddress);// links to registry service nft*/
-=======
-        // links to registry service nft
-        tokenRegistry.linkToRegistryService();
->>>>>>> 371140e (refactor token registry, re-enable token registry tests)
+        tokenRegistry.linkToRegistryService(); // links to registry service nft
 
         _stopPrank();
 
         // Tests bookeeping
         _afterDeployment();
     }
+
+
+
+    function _deployRegistry() internal
+    {
+        // 1) registry access manager
+        // grants GIF_ADMIN_ROLE to registry owner as registryOwner is transaction sender
+        // grants GIF_MANAGER_ROLE to registry owner via contructor argument
+        accessManager = new RegistryAccessManager();
+
+        // solhint-disable
+        console.log("registry owner", registryOwner);
+        console.log("registry access manager deployed:", address(accessManager));
+        console.log("registry access manager authority", accessManager.authority());
+        // solhint-enable
+
+        // 2) release manager (registry/chain nft)
+        releaseManager = new ReleaseManager(
+            accessManager,
+            VersionPartLib.toVersionPart(3));
+
+        registryAddress = releaseManager.getRegistryAddress();
+        registry = Registry(registry);
+
+        registryNftId = registry.getNftId(address(registry));
+        address chainNftAddress = registry.getChainNftAddress();
+        chainNft = ChainNft(chainNftAddress);
+        tokenRegistry = TokenRegistry(registry.getTokenRegistryAddress());
+
+        // solhint-disable
+        console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
+        console.log("global registry nft id", chainNft.GLOBAL_REGISTRY_ID());
+
+        console.log("registry nft id", registry.getNftId(address(registry)).toInt());
+        console.log("registry deployed at", address(registry));
+        console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
+        console.log("registry owner (opt 2)", registry.getOwner());
+
+        console.log("release manager deployed at", address(releaseManager));
+        console.log("release manager authority", releaseManager.authority());
+        // solhint-enable
+
+        // 3) initialize access rights for registry access manager
+        accessManager.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
+
+        // solhint-disable
+        console.log("token registry deployed at", address(tokenRegistry));
+        console.log("registry access manager initialized", address(accessManager));
+        // solhint-enable
+
+        // // 4) deploy staking contract
+        // dip = new Dip();
+        // address stakingOwner = registryOwner;
+        // stakingManager = new StakingManager(
+        //     registryAccessManager.authority(),
+        //     address(registry),
+        //     address(dip));
+        // staking = stakingManager.getStaking();
+
+        // // 5) register staking contract
+        // stakingNftId = releaseManager.registerStaking(
+        //     address(staking),
+        //     stakingOwner);
+
+        // // solhint-disable
+        // console.log("stakingManager deployed at", address(stakingManager));
+        // console.log("staking deployed at", address(staking));
+
+        // console.log("staking nft id", registry.getNftId(address(staking)).toInt());
+        // console.log("staking deployed at", address(staking));
+        // console.log("staking owner (opt 1)", registry.ownerOf(address(staking)));
+        // console.log("staking owner (opt 2)", staking.getOwner());
+        // // solhint-enable
+
+        // // 6) deploy registry service
+        // registryServiceManager = new RegistryServiceManager(
+        //     registryAccessManager.authority(),
+        //     registryAddress
+        // );        
+        // registryService = registryServiceManager.getRegistryService();
+        
+        // // 7) create first gif release
+        // // registry owner has GIF_ADMIN_ROLE
+        // releaseManager.createNextRelease();
+
+        // // 8) start gif release deploy with registration of registry service
+        // // registry service always needs to be registered first when deploying a new gif release
+        // releaseManager.registerRegistryService(registryService);
+        // registryServiceManager.linkOwnershipToServiceNft();
+
+        // tokenRegistry.linkToRegistryService();
+
+        /* solhint-disable */
+        console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
+        console.log("token registry linked owner", tokenRegistry.getOwner());
+        /* solhint-enable */
+    }
+
+
 
     function _deployRegistryServiceMock() internal
     {

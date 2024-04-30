@@ -5,7 +5,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
-import {NftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -23,8 +23,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(10017),
-                toNftId(353073667),
+                NftIdLib.toNftId(10017),
+                NftIdLib.toNftId(353073667),
                 toObjectType(35),
                 false, // isInterceptor
                 address(2072),
@@ -44,8 +44,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(10017),
-                toNftId(353073667),
+                NftIdLib.toNftId(10017),
+                NftIdLib.toNftId(353073667),
                 toObjectType(35),
                 false, // isInterceptor
                 address(0),
@@ -65,8 +65,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(7505),
-                toNftId(11674931516840186165219379815826254658548193973),
+                NftIdLib.toNftId(7505),
+                NftIdLib.toNftId(11674931516840186165219379815826254658548193973),
                 toObjectType(173),
                 false, // isInterceptor
                 address(7148),
@@ -86,8 +86,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(12537),
-                toNftId(6191),
+                NftIdLib.toNftId(12537),
+                NftIdLib.toNftId(6191),
                 toObjectType(100),
                 false, // isInterceptor
                 address(16382),
@@ -107,8 +107,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(3590),
-                toNftId(158),
+                NftIdLib.toNftId(3590),
+                NftIdLib.toNftId(158),
                 toObjectType(220),
                 false, // isInterceptor
                 address(0x0000000000000000000000000000000000001eF1),

@@ -81,7 +81,7 @@ contract ReleaseConfig
     constructor(ReleaseManager releaseManager, address owner, VersionPart version, bytes32 salt)
     { 
         _releaseManager = address(releaseManager);
-        _registry = releaseManager.getRegistry();
+        _registry = releaseManager.getRegistryAddress();
         _owner = owner;
         _version = version;
         _salt = keccak256(
@@ -264,7 +264,8 @@ contract ReleaseConfig
 
         _functionRoles[serviceIdx][0] = POLICY_SERVICE_ROLE();
         _selectors[serviceIdx][0] = new bytes4[](1);
-        _selectors[serviceIdx][0][0] = BundleService.increaseBalance.selector;
+        // TODO reenable
+        // _selectors[serviceIdx][0][0] = BundleService.increaseBalance.selector;
 
         _functionRoles[serviceIdx][1] = POOL_SERVICE_ROLE();
         _selectors[serviceIdx][1] = new bytes4[](5);

@@ -141,6 +141,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const rcptRs = await executeTx(async () => await releaseManager.registerService(registryServiceAddress));
     const logRegistrationInfoRs = getFieldFromTxRcptLogs(rcptRs!, registry.registry.interface, "LogRegistration", "nftId");
     const registryServiceNfdId = (logRegistrationInfoRs as unknown);
+
+    await tokenRegistry.linkToRegistryService();
+
     logger.info(`registryServiceManager deployed - registryServiceAddress: ${registryServiceAddress} registryServiceManagerAddress: ${registryServiceManagerAddress} nftId: ${registryServiceNfdId}`);
 
 

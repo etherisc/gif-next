@@ -17,8 +17,8 @@ import {Registry} from "./Registry.sol";
 import {RegistryAccessManager} from "./RegistryAccessManager.sol";
 import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
 import {ServiceAuthorizationsLib} from "./ServiceAuthorizationsLib.sol";
-<<<<<<< HEAD
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
+import {TokenRegistry} from "./TokenRegistry.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 
     // gif admin is not technical, should sent simple txs
@@ -29,9 +29,6 @@ import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.
 // TODO add function to deactivate releases
 // TODO in next pr add getVersion() to releaseAccessManager only, set in initialize()
 // TODO in next pr make single base for registry access manager, release access manager and instance access manager
-=======
-import {TokenRegistry} from "./TokenRegistry.sol";
->>>>>>> 371140e (refactor token registry, re-enable token registry tests)
 
 contract ReleaseManager is AccessManaged
 {
@@ -72,7 +69,6 @@ contract ReleaseManager is AccessManaged
     error ErrorReleaseManagerServiceReleaseAuthorityMismatch(IService service, address serviceAuthority, address releaseAuthority);
     error ErrorReleaseManagerServiceReleaseVersionMismatch(IService service, VersionPart serviceVersion, VersionPart releaseVersion);
 
-<<<<<<< HEAD
     // _verifyServiceInfo
     error ErrorReleaseManagerServiceInfoAddressInvalid(IService service, address expected);
     error ErrorReleaseManagerServiceInfoInterceptorInvalid(IService service, bool isInterceptor);
@@ -85,12 +81,8 @@ contract ReleaseManager is AccessManaged
     error ErrorReleaseManagerServiceRoleInvalid(address service, RoleId role);
 
     RegistryAccessManager public immutable _accessManager;
-    IRegistry public immutable _registry;
-=======
-    RegistryAccessManager private immutable _accessManager;
-    Registry private immutable _registry;
+    Registry public immutable _registry;
     TokenRegistry private immutable _tokenRegistry;
->>>>>>> 371140e (refactor token registry, re-enable token registry tests)
     IStaking private _staking;
 
     mapping(VersionPart version => AccessManagerUpgradeableInitializeable accessManager) internal _releaseAccessManager;
@@ -139,8 +131,12 @@ contract ReleaseManager is AccessManaged
         bytes32 salt
     )
         external
-        restricted // GIF_MANAGER_ROLE
-        returns(address releaseAccessManagerAddress, VersionPart version, bytes32 releaseSalt)
+        restricted() // GIF_MANAGER_ROLE
+        returns(
+            address releaseAccessManagerAddress, 
+            VersionPart version, 
+            bytes32 releaseSalt
+        )
     {
         if(addresses.length == 0) {
             revert ErrorReleaseManagerReleaseEmpty();
@@ -293,7 +289,7 @@ contract ReleaseManager is AccessManaged
         return _releaseInfo[version].activatedAt.gtz();
     }
 
-    function getRegistry() external view returns(address) {
+    function getRegistryAddress() external view returns(address) {
         return (address(_registry));
     }
 

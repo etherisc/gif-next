@@ -124,7 +124,7 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
 
         console.log("Registering distributor");
 
-        info.nftId = toNftId(randomNumber(type(uint96).max));
+        info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
         info.parentNftId = _nftIdByType[DISTRIBUTION()];
         info.objectType = DISTRIBUTOR();
         info.objectAddress = address(0);

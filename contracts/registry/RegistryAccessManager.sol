@@ -18,12 +18,12 @@ import {ReleaseManager} from "./ReleaseManager.sol";
         - can have arbitrary number of members
         - responsible for services registrations
         - responsible for token registration and activation
+
     2) GIF_ADMIN_ROLE
         - admin of GIF_MANAGER_ROLE
         - MUST have 1 member at any time
         - granted/revoked ONLY in transferAdminRole() -> consider lock out situations!!!
         - responsible for creation and activation of releases
-
 */
 
 contract RegistryAccessManager is AccessManaged, Initializable
@@ -49,7 +49,12 @@ contract RegistryAccessManager is AccessManaged, Initializable
         setAuthority(address(accessManager));
     }
 
-    function initialize(address admin, address manager, address releaseManager, address tokenRegistry)
+    function initialize(
+        address admin, 
+        address manager, 
+        address releaseManager, 
+        address tokenRegistry
+    )
         external
         initializer
     {
@@ -57,6 +62,7 @@ contract RegistryAccessManager is AccessManaged, Initializable
         if(IAccessManaged(releaseManager).authority() != authority()) {
             revert ErrorRegistryAccessManagerReleaseManagerAuthorityMismatch();
         }
+
         if(tokenRegistry == address(0)) {
             revert ErrorRegistryAccessManagerTokenRegistryZero();
         }
@@ -71,6 +77,7 @@ contract RegistryAccessManager is AccessManaged, Initializable
         _grantRole(GIF_ADMIN_ROLE(), admin, 0);
         _grantRole(GIF_MANAGER_ROLE(), manager, 0);
 
+        // set admin
         _setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
     }
 
@@ -135,9 +142,6 @@ contract RegistryAccessManager is AccessManaged, Initializable
         functionSelector[2] = ReleaseManager.prepareNextRelease.selector;
 
         _setTargetFunctionRole(_releaseManager, functionSelector, GIF_MANAGER_ROLE());
-
-        // set admin
-        _setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
     }
 
 

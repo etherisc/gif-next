@@ -13,6 +13,13 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryTestBase} from "./RegistryTestBase.sol";
 import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
+
+
+function toBool(uint256 value) pure returns (bool) {
+    return value > 0;
+}
+
+
 contract RegisterServiceContinousTests is RegistryTestBase 
 {
     uint constant ITTERATIONS = 150;

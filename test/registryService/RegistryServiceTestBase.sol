@@ -6,7 +6,7 @@ import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {NftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";

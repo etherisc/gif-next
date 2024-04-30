@@ -39,7 +39,7 @@ contract RegistryServiceManager is
         
         // implementation's initializer func `data` argument
         RegistryService srv = new RegistryService{ salt: salt }();
-        bytes memory data = abi.encode(registry, address(this), authority);
+        bytes memory data = abi.encode(registry, authority);
         IVersionable versionable = deployDetermenistic(
             address(srv), 
             data,

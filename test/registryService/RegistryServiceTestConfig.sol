@@ -57,7 +57,7 @@ contract RegistryServiceTestConfig
         bytes32 salt)
     { 
         _releaseManager = address(releaseManager);
-        _registry = releaseManager.getRegistry();
+        _registry = releaseManager.getRegistryAddress();
         _owner = owner;
         _version = version;
         _salt = keccak256(
