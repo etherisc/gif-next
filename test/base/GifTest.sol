@@ -610,13 +610,13 @@ contract GifTest is Test {
     function _deployRegisterAndActivateToken() internal {
         token = new Usdc();
 
-        // usdc
-        tokenRegistry.registerToken(address(token));
-        tokenRegistry.setActive(block.chainid, address(token), registry.getLatestVersion(), true);
-
         // dip
         tokenRegistry.registerToken(address(dip));
-        tokenRegistry.setActive(block.chainid, address(dip), registry.getLatestVersion(), true);
+        tokenRegistry.setActiveForVersion(block.chainid, address(dip), registry.getLatestVersion(), true);
+
+        // usdc
+        tokenRegistry.registerToken(address(token));
+        tokenRegistry.setActiveForVersion(block.chainid, address(token), registry.getLatestVersion(), true);
 
         // solhint-disable
         console.log("token (usdc) deployed at", address(token));

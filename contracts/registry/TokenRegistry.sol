@@ -15,8 +15,13 @@ contract TokenRegistry is
     NftOwnable
 {
     event LogTokenRegistryTokenRegistered(uint256 chainId, address token, uint256 decimals, string symbol);
+    event LogTokenRegistryTokenGlobalStateSet(uint256 chainId, address token, bool active);
     event LogTokenRegistryTokenStateSet(uint256 chainId, address token, VersionPart majorVersion, bool active);
 
+    error ErrorTokenRegistryChainIdZero();
+    error ErrorTokenRegistryTokenAddressZero();
+
+    error ErrorTokenRegistryNotRemoteToken(uint256 chainId, address token);
     error ErrorTokenRegistryTokenAlreadyRegistered(uint256 chainId, address token);
     error ErrorTokenRegistryTokenNotContract(uint256 chainId, address token);
     error ErrorTokenRegistryTokenNotErc20(uint256 chainId, address token);
@@ -29,11 +34,20 @@ contract TokenRegistry is
         address token;
         uint8 decimals;
         string symbol;
+        bool active;
     }
 
     TokenInfo [] internal _token;
-    mapping(uint256 chainId => mapping(address token => bool registered)) internal _registered;
+    mapping(uint256 chainId => mapping(address token => TokenInfo info)) internal _tokenInfo;
     mapping(uint256 chainId => mapping(address token => mapping(VersionPart majorVersion => bool isActive))) internal _active;
+
+    /// @dev enforces msg.sender is owner of nft (or initial owner of nft ownable)
+    modifier onlyRegisteredToken(uint256 chainId, address token) {
+        if (!isRegistered(chainId, token)) {
+            revert ErrorTokenRegistryTokenNotRegistered(chainId, token);
+        }
+        _;
+    }
 
     constructor(
         address registry
@@ -61,15 +75,14 @@ contract TokenRegistry is
     }
 
 
+    /// @dev register an onchain token.
+    /// this function verifies that the provided token address is a contract that implements
+    /// the non optional erc20 view functions.
     function registerToken(address token)
         external
         onlyOwner
     {
         uint256 chainId = block.chainid;
-
-        if (_registered[chainId][token]) {
-            revert ErrorTokenRegistryTokenAlreadyRegistered(chainId, token);
-        }
 
         // MUST be contract
         if(token.code.length == 0) {
@@ -86,10 +99,46 @@ contract TokenRegistry is
     }
 
 
+    /// @dev register the remote token with the provided attributes.
+    /// this function may not be used for tokens when chainId == block.chainid.
+    function registerRemoteToken(
+        uint256 chainId,
+        address token,
+        uint8 decimals,
+        string memory symbol
+    )
+        external
+        onlyOwner
+    {
+        if (chainId == block.chainid) {
+            revert ErrorTokenRegistryNotRemoteToken(chainId, token);
+        }
+
+        _registerToken(chainId, token, decimals, symbol);
+    }
+
+
+    /// @dev set active flag on token itself.
+    /// when setting a token to active=false isActive will return false
+    /// regardless of release specific active value.
+    function setActive(
+        uint256 chainId, 
+        address token, 
+        bool active
+    )
+        external
+        onlyOwner
+        onlyRegisteredToken(chainId, token)
+    {
+        _tokenInfo[chainId][token].active = active;
+        emit LogTokenRegistryTokenGlobalStateSet(chainId, token, active);
+    }
+
+
     /// @dev token state is informative, registry have no clue about used tokens
     // component owner is responsible for token selection and operations
     // service MUST deny registration of component with inactive token 
-    function setActive(
+    function setActiveForVersion(
         uint256 chainId, 
         address token, 
         VersionPart majorVersion, 
@@ -111,12 +160,8 @@ contract TokenRegistry is
     )
         public
         onlyOwner
+        onlyRegisteredToken(chainId, token)
     {
-        // verify that token is registered
-        if (!_registered[chainId][token]) {
-            revert ErrorTokenRegistryTokenNotRegistered(chainId, token);
-        }
-
         // verify valid major version
         if(enforceVersionCheck) {
             uint256 version = majorVersion.toInt();
@@ -130,19 +175,32 @@ contract TokenRegistry is
         emit LogTokenRegistryTokenStateSet(chainId, token, majorVersion, active);
     }
 
+    /// @dev returns the number of registered tokens
     function tokens() external view returns (uint256) {
         return _token.length;
     }
 
-    function getToken(uint256 idx) external view returns (TokenInfo memory tokenInfo) {
+    /// @dev returns the token info for the specified index position [0 .. tokens() - 1].
+    function getTokenInfo(uint256 idx) external view returns (TokenInfo memory tokenInfo) {
         return _token[idx];
     }
 
-    function isRegistered(uint256 chainId, address token) external view returns (bool) {
-        return _registered[chainId][token];
+    /// @dev returns the token info for the specified token coordinates.
+    function getTokenInfo(uint256 chainId, address token) external view returns (TokenInfo memory tokenInfo) {
+        return _tokenInfo[chainId][token];
     }
 
+    /// @dev returns true iff the specified token has been registered for this TokenRegistry contract.
+    function isRegistered(uint256 chainId, address token) public view returns (bool) {
+        return _tokenInfo[chainId][token].chainId > 0;
+    }
+
+    /// @dev returns true iff both the token is active for the specfied version and the global token state is active
     function isActive(uint256 chainId, address token, VersionPart majorVersion) external view returns (bool) {
+        if(!_tokenInfo[chainId][token].active) {
+            return false;
+        }
+
         return _active[chainId][token][majorVersion];
     }
 
@@ -170,17 +228,33 @@ contract TokenRegistry is
         return true;
     }
 
-    /// @dev some sanity checks to prevent unintended registration
+    /// @dev some sanity checks to prevent unintended registration:
+    /// - token not yet registered
+    /// - chainId not zero
+    /// - token address not zero
     function _registerToken(uint256 chainId, address token, uint8 decimals, string memory symbol) internal {
 
-        _registered[chainId][token] = true;
-        _token.push(
-            TokenInfo({
+        if (isRegistered(chainId, token)) {
+            revert ErrorTokenRegistryTokenAlreadyRegistered(chainId, token);
+        }
+
+        if(chainId == 0) {
+            revert ErrorTokenRegistryChainIdZero();
+        }
+
+        if(token == address(0)) {
+            revert ErrorTokenRegistryTokenAddressZero();
+        }
+
+        TokenInfo memory tokenInfo = TokenInfo({
             chainId: chainId,
             token: token,
             decimals: decimals,
-            symbol: symbol})
-        );
+            symbol: symbol,
+            active: true});
+
+        _tokenInfo[chainId][token] = tokenInfo;
+        _token.push(tokenInfo);
 
         emit LogTokenRegistryTokenRegistered(chainId, token, decimals, symbol);
     }
