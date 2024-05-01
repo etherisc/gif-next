@@ -7,42 +7,87 @@ import {GifTest} from "../base/GifTest.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IStaking} from "../../contracts/staking/IStaking.sol";
 import {IStakingService} from "../../contracts/staking/IStakingService.sol";
-import {ObjectType, SERVICE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
+import {ObjectType, INSTANCE, PROTOCOL, SERVICE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 contract Staking is GifTest {
 
     function test_stakingInfoToConsole() public {
         // solhint-disable
-        console.log("staking address: ", address(staking));
-        console.log("staking nft id: ", staking.getNftId().toInt());
-        console.log("staking name: ", staking.getName());
+        console.log("staking address:", address(staking));
+        console.log("staking nft id:", staking.getNftId().toInt());
+        console.log("staking name:", staking.getName());
 
         (VersionPart major, VersionPart minor, VersionPart patch) = staking.getVersion().toVersionParts();
-        console.log("staking version (major): ", major.toInt());
-        console.log("staking version (minor): ", minor.toInt());
-        console.log("staking version (patch): ", patch.toInt());
+        console.log("staking version (major):", major.toInt());
+        console.log("staking version (minor):", minor.toInt());
+        console.log("staking version (patch):", patch.toInt());
 
-        console.log("staking wallet: ", staking.getWallet());
-        console.log("staking token handler: ", address(staking.getTokenHandler()));
-        console.log("staking token handler token: ", address(staking.getTokenHandler().getToken()));
+        console.log("staking wallet:", staking.getWallet());
+        console.log("staking token handler:", address(staking.getTokenHandler()));
+        console.log("staking token handler token:", address(staking.getTokenHandler().getToken()));
 
-        console.log("staking token address: ", address(staking.getToken()));
-        console.log("staking token symbol: ", staking.getToken().symbol());
-        console.log("staking token decimals: ", staking.getToken().decimals());
+        console.log("staking token address:", address(staking.getToken()));
+        console.log("staking token symbol:", staking.getToken().symbol());
+        console.log("staking token decimals:", staking.getToken().decimals());
+
+        console.log("staking targets:", staking.targets());
+        console.log("staking target nft [0]:", staking.getTargetNftId(0).toInt());
+        console.log("staking targets (active):", staking.targets());
+        console.log("staking target nft (active) [0]:", staking.getActiveTargetNftId(0).toInt());
         // solhint-enable
     }
 
 
-    function test_stakingComponentSetup() public {
+    function test_stakingVersionWalletAndTokenSetup() public {
+        // check link to registry
+        assertEq(address(staking.getRegistry()), address(registry), "unexpected registry address");
+
+        // check link to registry
+        assertEq(staking.getTokenRegistryAddress(), registry.getTokenRegistryAddress(), "unexpected token registry address");
+
+        // check version
         (VersionPart major, VersionPart minor, VersionPart patch) = staking.getVersion().toVersionParts();
         assertEq(major.toInt(), 3, "unexpected staking major version");
         assertEq(minor.toInt(), 0, "unexpected staking minor version");
         assertEq(patch.toInt(), 0, "unexpected staking patch version");
 
+        // check wallet and (dip) token handler
         assertEq(staking.getWallet(), address(staking), "unexpected staking wallet");
         assertEq(address(staking.getToken()), address(dip), "unexpected staking token");
         assertEq(address(staking.getTokenHandler().getToken()), address(dip), "unexpected staking token handler token");
+    }
+
+
+    function test_stakingInitialTargetSetup() public {
+        // check protocol target
+        uint256 protocolNftIdInt = 1101;
+        assertEq(staking.targets(), 2, "unexpected number of initial targets");
+        assertEq(staking.activeTargets(), 2, "unexpected number of initial active targets");
+        assertEq(staking.getTargetNftId(0).toInt(), protocolNftIdInt, "unexpected protocol nft id (all)");
+        assertEq(staking.getActiveTargetNftId(0).toInt(), protocolNftIdInt, "unexpected protocol nft id (active)");
+
+        // check protocol target
+        NftId protocolNftId = staking.getTargetNftId(0);
+        assertTrue(staking.isTarget(protocolNftId), "protocol not target");
+        assertTrue(staking.isActive(protocolNftId), "protocol target not active");
+
+        IStaking.TargetInfo memory targetInfo = staking.getTargetInfo(protocolNftId);
+        assertEq(targetInfo.objectType.toInt(), PROTOCOL().toInt(), "unexpected protocol object type");
+        assertEq(targetInfo.chainId, 1, "unexpected protocol chain id");
+        assertEq(targetInfo.createdAt.toInt(), block.timestamp, "unexpected protocol target created at");
+
+        // check instance target
+        assertEq(staking.getTargetNftId(1).toInt(), instanceNftId.toInt(), "unexpected instance nft id (all)");
+        assertEq(staking.getActiveTargetNftId(1).toInt(), instanceNftId.toInt(), "unexpected instance nft id (active)");
+        assertTrue(staking.isTarget(instanceNftId), "instance not target");
+        assertTrue(staking.isActive(instanceNftId), "instance target not active");
+
+        IStaking.TargetInfo memory instanceTargetInfo = staking.getTargetInfo(instanceNftId);
+        assertEq(instanceTargetInfo.objectType.toInt(), INSTANCE().toInt(), "unexpected instance object type");
+        assertEq(instanceTargetInfo.chainId, block.chainid, "unexpected instance chain id");
+        assertEq(instanceTargetInfo.createdAt.toInt(), block.timestamp, "unexpected instance target created at");
     }
 
 
@@ -57,6 +102,7 @@ contract Staking is GifTest {
         assertEq(staking.getNftId().toInt(), stakingNftId.toInt(), "unexpected staking nft id (1)");
         assertEq(staking.getNftId().toInt(), registry.getNftId(address(staking)).toInt(), "unexpected staking nft id (2)");
 
+        // staking registry entry
         IRegistry.ObjectInfo memory stakingInfo = registry.getObjectInfo(staking.getNftId());
         assertEq(stakingInfo.nftId.toInt(), stakingNftId.toInt(), "unexpected staking nft id (3)");
         assertEq(stakingInfo.parentNftId.toInt(), registryNftId.toInt(), "unexpected parent nft id");

@@ -8,7 +8,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
-import {Dip} from "../mock/Dip.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
@@ -46,11 +46,14 @@ contract RegistryServiceManagerTest is Test {
     function setUp() public {
 
         vm.startPrank(registryOwner);
+        dip = new Dip();
+
         registryAccessManager = new RegistryAccessManager(registryOwner);
 
         releaseManager = new ReleaseManager(
             registryAccessManager,
-            VersionPartLib.toVersionPart(3));
+            VersionPartLib.toVersionPart(3),
+            address(dip));
 
         address registryAddress = releaseManager.getRegistryAddress();
         registry = Registry(registryAddress);
@@ -58,16 +61,14 @@ contract RegistryServiceManagerTest is Test {
         address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
 
-        TokenRegistry tokenRegistry = new TokenRegistry(registryAddress);
+        TokenRegistry tokenRegistry = TokenRegistry(registry.getTokenRegistryAddress());
         registryAccessManager.initialize(address(releaseManager), address(tokenRegistry));
 
         // deploy staking contract
-        dip = new Dip();
         address stakingOwner = registryOwner;
         stakingManager = new StakingManager(
             registryAccessManager.authority(),
-            address(registry),
-            address(dip));
+            address(registry));
         staking = stakingManager.getStaking();
 
         releaseManager.registerStaking(

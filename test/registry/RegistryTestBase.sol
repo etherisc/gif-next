@@ -33,7 +33,7 @@ import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
 
-import {Dip} from "../mock/Dip.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {RegistryServiceManagerMockWithConfig} from "../mock/RegistryServiceManagerMock.sol";
 
 
@@ -154,7 +154,8 @@ contract RegistryTestBase is Test, FoundryRandom {
 
         releaseManager = new ReleaseManager(
             accessManager,
-            VersionPartLib.toVersionPart(3));
+            VersionPartLib.toVersionPart(3),
+            address(dip));
 
         address registryAddress = releaseManager.getRegistryAddress();
         registry = Registry(registryAddress);
@@ -164,8 +165,7 @@ contract RegistryTestBase is Test, FoundryRandom {
         address stakingOwner = msg.sender;
         stakingManager = new StakingManager(
             accessManager.authority(),
-            address(registry),
-            address(dip));
+            address(registry));
 
         staking = stakingManager.getStaking();
         releaseManager.registerStaking(

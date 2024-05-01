@@ -81,7 +81,8 @@ contract ReleaseManager is AccessManaged
 
     constructor(
         RegistryAccessManager accessManager, 
-        VersionPart initialVersion
+        VersionPart initialVersion,
+        address dipTokenAddress
     )
         AccessManaged(accessManager.authority())
     {
@@ -93,7 +94,9 @@ contract ReleaseManager is AccessManaged
         _next = initialVersion;
 
         _registry = new Registry();
-        _tokenRegistry = new TokenRegistry(address(_registry));
+        _tokenRegistry = new TokenRegistry(
+            address(_registry),
+            dipTokenAddress);
 
         _registry.setTokenRegistry(address(_tokenRegistry));
     }

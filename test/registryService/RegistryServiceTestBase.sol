@@ -26,7 +26,7 @@ import {IService} from "../../contracts/shared/IService.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
-import {Dip} from "../mock/Dip.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {ServiceMock} from "../mock/ServiceMock.sol";
 import {RegisterableMock} from "../mock/RegisterableMock.sol";
 
@@ -86,6 +86,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
     address public contractWithoutIERC165 = address(new Dip());
     address public erc165 = address(new ERC165()); 
+    Dip public dip = new Dip();
 
     RegisterableMock public registerableOwnedByRegistryOwner;
 
@@ -115,7 +116,8 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
         releaseManager = new ReleaseManager(
             accessManager,
-            VersionPartLib.toVersionPart(3));
+            VersionPartLib.toVersionPart(3),
+            address(dip));
 
         registry = IRegistry(releaseManager.getRegistryAddress());
         registryNftId = registry.getNftId(address(registry));

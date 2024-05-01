@@ -215,6 +215,7 @@ contract RegistryService is
         /*config[-1].serviceDomain = STAKE();
         config[-1].selector = RegistryService.registerStake.selector;*/
 
+
         config[0].serviceDomain = POLICY();
         config[0].authorizedSelectors = new bytes4[](0);
 

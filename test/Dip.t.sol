@@ -2,7 +2,7 @@
 pragma solidity 0.8.20;
 
 import {Test} from "../lib/forge-std/src/Test.sol";
-import {Dip} from "./mock/Dip.sol";
+import {Dip} from "../contracts/mock/Dip.sol";
 
 contract DipTest is Test {
     Dip public dip;
