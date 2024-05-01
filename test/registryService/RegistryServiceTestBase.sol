@@ -27,7 +27,7 @@ import {IService} from "../../contracts/shared/IService.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
-import {Dip} from "../mock/Dip.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {ServiceMock} from "../mock/ServiceMock.sol";
 import {RegisterableMock} from "../mock/RegisterableMock.sol";
 

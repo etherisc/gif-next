@@ -7,7 +7,7 @@ import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStri
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
-import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
@@ -20,6 +20,7 @@ import {IProductComponent} from "../product/IProductComponent.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
+import {IStakingService} from "../staking/IStakingService.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 
 import {Instance} from "./Instance.sol";
@@ -40,6 +41,8 @@ contract InstanceService is
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
 
     IRegistryService internal _registryService;
+    IStakingService internal _stakingService;
+
     address internal _masterOzAccessManager;
     address internal _masterInstanceAccessManager;
     address internal _masterInstance;
@@ -116,8 +119,12 @@ contract InstanceService is
 
         clonedOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
 
+        // register new instance with registry
         IRegistry.ObjectInfo memory info = _registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
+
+        // create corresponding staking target
+        _stakingService.createInstanceTarget(clonedInstanceNftId);
 
         emit LogInstanceCloned(
             address(clonedOzAccessManager), 
@@ -325,10 +332,8 @@ contract InstanceService is
 
         initializeService(registryAddress, authority, owner);
 
-        _registryService = IRegistryService(
-            IRegistry(registryAddress).getServiceAddress(
-                REGISTRY(), 
-                getVersion().toMajorPart()));
+        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        _stakingService = IStakingService(_getServiceAddress(STAKING()));
 
         registerInterface(type(IInstanceService).interfaceId);
     }

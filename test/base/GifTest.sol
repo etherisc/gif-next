@@ -77,7 +77,7 @@ import {BundleManager} from "../../contracts/instance/BundleManager.sol";
 import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
-import {Dip} from "../mock/Dip.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {Distribution} from "../../contracts/distribution/Distribution.sol";
 import {Product} from "../../contracts/product/Product.sol";
 import {Pool} from "../../contracts/pool/Pool.sol";
@@ -232,6 +232,11 @@ contract GifTest is Test {
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
 
+        // deploy dip
+        vm.startPrank(registryOwner);
+        dip = new Dip();
+        vm.stopPrank();
+
         // deploy registry, services, master instance and token
         vm.startPrank(registryOwner);
         _deployRegistry();
@@ -296,7 +301,7 @@ contract GifTest is Test {
 
     function _deployRegistry() internal
     {
-        // 1) registry access manager
+        // 1) deploy registry access manager
         // grants GIF_ADMIN_ROLE to registry owner as registryOwner is transaction sender
         // grants GIF_MANAGER_ROLE to registry owner via contructor argument
         registryAccessManager = new RegistryAccessManager();
@@ -313,10 +318,14 @@ contract GifTest is Test {
         console.log("registry access manager authority", registryAccessManager.authority());
         // solhint-enable
 
-        // 2) release manager (registry/chain nft)
+        // 2) deploy release manager (registry/chain nft)
+        // internally deploys the registry
+        // internally deploys the token registry
+        // bi-directionally links registry and token registry
         releaseManager = new ReleaseManager(
             registryAccessManager,
-            VersionPartLib.toVersionPart(3));
+            VersionPartLib.toVersionPart(3),
+            address(dip));
 
         registryAddress = releaseManager.getRegistryAddress();
         registry = Registry(registryAddress);
@@ -325,6 +334,8 @@ contract GifTest is Test {
         address chainNftAddress = registry.getChainNftAddress();
         chainNft = ChainNft(chainNftAddress);
         tokenRegistry = TokenRegistry(registry.getTokenRegistryAddress());
+
+        assertEq(address(tokenRegistry.getDipToken()), address(dip), "unexpected dip address");
 
         // solhint-disable
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
@@ -348,12 +359,10 @@ contract GifTest is Test {
         // solhint-enable
 
         // 4) deploy staking contract
-        dip = new Dip();
         address stakingOwner = registryOwner;
         stakingManager = new StakingManager(
             registryAccessManager.authority(),
-            address(registry),
-            address(dip));
+            address(registry));
         staking = stakingManager.getStaking();
 
         // 5) register staking contract
@@ -683,10 +692,6 @@ contract GifTest is Test {
 
     function _deployRegisterAndActivateToken() internal {
         token = new Usdc();
-
-        // dip
-        tokenRegistry.registerToken(address(dip));
-        tokenRegistry.setActiveForVersion(block.chainid, address(dip), registry.getLatestVersion(), true);
 
         // usdc
         tokenRegistry.registerToken(address(token));

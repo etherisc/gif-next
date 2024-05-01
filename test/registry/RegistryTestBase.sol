@@ -38,8 +38,7 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceTestConfig} from "../registryService/RegistryServiceTestConfig.sol";
-
-import {Dip} from "../mock/Dip.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
 
 
 // Helper functions to test IRegistry.ObjectInfo structs 
@@ -174,7 +173,7 @@ contract RegistryTestBase is Test, FoundryRandom {
         // address chainNftAddress = registry.getChainNftAddress();
         // chainNft = ChainNft(chainNftAddress);
 
-        tokenRegistry = new TokenRegistry(registryAddress);
+        tokenRegistry = new TokenRegistry(registryAddress, address(dip));
 
         accessManager.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
 
@@ -222,7 +221,8 @@ contract RegistryTestBase is Test, FoundryRandom {
         // 2) release manager (registry/chain nft)
         releaseManager = new ReleaseManager(
             accessManager,
-            VersionPartLib.toVersionPart(3));
+            VersionPartLib.toVersionPart(3),
+            address(dip));
 
         registryAddress = releaseManager.getRegistryAddress();
         registry = Registry(registry);

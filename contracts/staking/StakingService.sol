@@ -31,6 +31,15 @@ contract StakingService is
     }
 
 
+    function createInstanceTarget(NftId targetNftId)
+        external
+        virtual
+        // restricted // TODO re-enable once services have stable roles
+    {
+        _getStakingServiceStorage()._staking.registerInstanceTarget(targetNftId);
+    }
+
+
     function create(
         NftId targetNftId,
         Amount amount
@@ -183,10 +192,9 @@ contract StakingService is
         }
 
         address owner = msg.sender;
-        IRegistryService(
-            _getServiceAddress(REGISTRY())).registerStaking(
-                IRegisterable(stakingAddress),
-                owner);
+        IRegistryService(_getServiceAddress(REGISTRY())).registerStaking(
+            IRegisterable(stakingAddress),
+            owner);
 
         return IStaking(stakingAddress);
     }

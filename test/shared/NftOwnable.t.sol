@@ -15,7 +15,7 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
-import {Dip} from "../mock/Dip.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {NftOwnableMock, NftOwnableMockUninitialized} from "../mock/NftOwnableMock.sol";
 
 import {GifTest} from "../base/GifTest.sol";

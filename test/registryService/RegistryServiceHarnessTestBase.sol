@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
+import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 
@@ -11,6 +11,7 @@ import {ObjectType, toObjectType} from "../../contracts/type/ObjectType.sol";
 import {VersionPartLib, VersionPart} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";

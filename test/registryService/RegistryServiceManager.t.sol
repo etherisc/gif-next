@@ -8,7 +8,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
-import {Dip} from "../mock/Dip.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
@@ -38,12 +38,10 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         _deployRegistryService();
 
         // deploy staking contract
-        dip = new Dip();
         address stakingOwner = registryOwner;
         stakingManager = new StakingManager(
             registryAccessManager.authority(),
-            address(registry),
-            address(dip));
+            address(registry));
         staking = stakingManager.getStaking();
 
         vm.stopPrank();

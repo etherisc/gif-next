@@ -16,6 +16,15 @@ interface IStaking is
     IVersionable
 {
 
+    event LogStakingTargetAdded(NftId targetNftId, ObjectType objectType, uint256 chainId);
+
+    error ErrorStakingTargetAlreadyRegistered(NftId targetNftId);
+    error ErrorStakingTargetNftIdZero();
+    error ErrorStakingTargetTypeNotSupported(NftId targetNftId, ObjectType objectType);
+    error ErrorStakingTargetUnexpectedObjectType(NftId targetNftId, ObjectType expectedObjectType, ObjectType actualObjectType);
+    error ErrorStakingTargetNotFound(NftId targetNftId);
+    error ErrorStakingTargetTokenNotFound(NftId targetNftId, uint256 chainId, address token);
+
     // info for individual stake
     struct StakeInfo {
         NftId targetNftId;
@@ -26,10 +35,9 @@ interface IStaking is
     }
 
     struct TargetInfo {
-        NftId targetNftid;
         ObjectType objectType;
         uint256 chainId;
-        address token;
+        Timestamp createdAt;
     }
 
     // rate management 
@@ -41,7 +49,7 @@ interface IStaking is
     function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external;
 
     // target management
-    function registerTarget(NftId targetNftId) external;
+    function registerInstanceTarget(NftId targetNftId) external;
     function increaseTvl(NftId targetNftId, address token, Amount amount) external;
     function decreaseTvl(NftId targetNftId, address token, Amount amount) external;
 
@@ -58,16 +66,27 @@ interface IStaking is
     function claimRewards(NftId stakeNftId) external;
 
     // view and pure functions (staking reader?)
+    function isTargetTypeSupported(ObjectType objectType) external view returns (bool isSupported);
+
+    function targets() external view returns (uint256);
+    function getTargetNftId(uint256 idx) external view returns (NftId targetNftId);
+    function isTarget(NftId targetNftId) external view returns (bool);
+
+    function activeTargets() external view returns (uint256);
+    function getActiveTargetNftId(uint256 idx) external view returns (NftId targetNftId);
+    function isActive(NftId targetNftId) external view returns (bool);
+
+    function getTargetInfo(NftId targetNftId) external view returns (TargetInfo memory targetInfo);
+    function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount);
+    function getStakedAmount(NftId targetNftId) external view returns (Amount stakeAmount);
+
     function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate);
 
     function getRewardRate(NftId targetNftId) external view returns (UFixed rewardRate);
     function getRewardReserves(NftId targetNftId) external view returns (Amount rewardReserveAmount);
 
     function getStakeInfo() external view returns (NftId stakeNftId);
-    function getTargetInfo() external view returns (NftId stakeNftId);
 
-    function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount);
-    function getStakedAmount(NftId targetNftId) external view returns (Amount stakeAmount);
 
     function calculateRewardIncrementAmount(
         NftId targetNftId,

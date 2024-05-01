@@ -16,6 +16,10 @@ interface IStakingService is IService
     error ErrorStakingServiceNotStaking(address stakingAddress);
     error ErrorStakingServiceNotSupportingIStaking(address stakingAddress);
 
+    /// @dev creates/registers an on-chain instance staking target.
+    /// function granted to instance service
+    function createInstanceTarget(NftId targetNftId) external;
+
     /// @dev create a new stake with amount DIP to the specified target
     /// returns the id of the newly minted stake nft
     /// permissionless function

@@ -9,7 +9,7 @@ import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/
 import {NftId} from "../../contracts/type/NftId.sol";
 
 import {Usdc} from "../mock/Usdc.sol";
-import {Dip} from "../mock/Dip.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IService} from "../../contracts/shared/IService.sol";
