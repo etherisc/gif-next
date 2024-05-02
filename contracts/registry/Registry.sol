@@ -196,10 +196,6 @@ contract Registry is
         return _chainNft.totalSupply();
     }
 
-    function getReleaseManagerAddress() external view returns (address) {
-        return address(_releaseManager);
-    }
-
     function getNftId() external view returns (NftId nftId) {
         return _registryNftId;
     }
@@ -252,6 +248,14 @@ contract Registry is
     ) external view returns (address service)
     {
             service =  _service[releaseVersion][serviceDomain]; 
+    }
+
+    function getReleaseAccessManagerAddress(VersionPart version) external view returns (address) {
+        return address(_releaseManager.getReleaseAccessManager(version));
+    }
+
+    function getReleaseManagerAddress() external view returns (address) {
+        return address(_releaseManager);
     }
 
     function getChainNftAddress() external view override returns (address) {

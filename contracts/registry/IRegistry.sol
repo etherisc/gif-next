@@ -100,6 +100,8 @@ interface IRegistry is IERC165 {
 
     function getReleaseManagerAddress() external view returns (address);
 
+    function getReleaseAccessManagerAddress(VersionPart version) external view returns (address);
+
     function getChainNftAddress() external view returns (address);
 
     function getOwner() external view returns (address);
