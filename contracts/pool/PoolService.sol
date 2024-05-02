@@ -65,20 +65,6 @@ contract PoolService is
         initializeService(registryAddress, authority, owner);
         _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getVersion().toMajorPart()));
         registerInterface(type(IPoolService).interfaceId);
-/*
-        // configure in access manager;
-        // call it
-        // TODO but in this case service should know access manager -> better to do role stuff outside of service???
-        accessManager.
-        policyService.poolService.lockCollateral();
-        policyService.poolService.releaseCollateral();
-        // !!! or just save addresses of calling services from config????
-        //     and use common modifier -> on,yServiceAddress(_savedServiceAddresFromConfig/Registry)
-        //     get addresses from registry by domain -> implies registration order -> unidirected graph
-        // for example _> bundle service should already be registered???
-        _policyService = IPolicyService(getRegistry().getServiceAddress(POLICY(), getVersion().toMajorPart()));
-*/
-        registerInterface(type(IPoolService).interfaceId);
     }
 
     function getDomain() public pure override returns(ObjectType) {
@@ -135,6 +121,7 @@ contract PoolService is
         external
         virtual
     {
+        /*
         (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
@@ -147,6 +134,7 @@ contract PoolService is
         instance.getInstanceStore().updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
 
         emit LogPoolServiceMaxCapitalAmountUpdated(poolNftId, previousMaxCapitalAmount, maxCapitalAmount);
+        */
     }
 
     function setBundleOwnerRole(RoleId bundleOwnerRole)
