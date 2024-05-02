@@ -423,13 +423,25 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             address(info_2.initialOwner).codehash == 0 &&
             address(info_1.initialOwner) != address(0) &&
             address(info_2.initialOwner) != address(0) &&
-            !EnumerableSet.contains(_registeredAddresses, info_1.objectAddress) &&
-            !EnumerableSet.contains(_registeredAddresses, info_2.objectAddress) &&
-            !EnumerableSet.contains(_registeredAddresses, info_1.initialOwner) &&
-            !EnumerableSet.contains(_registeredAddresses, info_2.initialOwner) &&
             !(version.toInt() == VERSION.toInt() && domain.toInt() == REGISTRY().toInt()) && // already registered service
             domain.gtz()
         );
+
+        while(EnumerableSet.contains(_registeredAddresses, info_1.objectAddress)) {
+            info_1.objectAddress = address((uint160(info_1.objectAddress) + 1));
+        }
+
+        while(EnumerableSet.contains(_registeredAddresses, info_1.initialOwner)) {
+            info_1.initialOwner = address((uint160(info_1.initialOwner) + 1));
+        }
+
+        while(EnumerableSet.contains(_registeredAddresses, info_2.objectAddress)) {
+            info_2.objectAddress = address((uint160(info_2.objectAddress) + 1));
+        }
+
+        while(EnumerableSet.contains(_registeredAddresses, info_2.initialOwner)) {
+            info_2.initialOwner = address((uint160(info_2.initialOwner) + 1));
+        }
 
         info_1.parentNftId = registryNftId;
         info_1.objectType = SERVICE();
