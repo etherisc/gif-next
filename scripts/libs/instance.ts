@@ -55,23 +55,6 @@ export async function deployAndRegisterMasterInstance(
     const instance = masterInstanceBaseContract as Instance;
     await executeTx(() => instance.initialize(ozAccessManagerAddress, registry.registryAddress, resolveAddress(owner)));
 
-    const { address: instanceAccessManagerAddress, contract: instanceAccessManagerBaseContract } = await deployContract(
-        "InstanceAccessManager",
-        owner,
-        [],
-        {
-            libraries: {
-                RoleIdLib: libraries.roleIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-            }
-        }
-    );
-    const instanceAccessManager = instanceAccessManagerBaseContract as InstanceAccessManager;
-    // grant admin role to master instance access manager
-    await executeTx(() => ozAccessManager.grantRole(0, instanceAccessManagerAddress, 0));
-    await executeTx(() => instanceAccessManager.initialize(instanceAddress));
-    await executeTx(() => instance.setInstanceAccessManager(instanceAccessManager));
-
     const { address: instanceStoreAddress, contract: masterInstanceStoreContract } = await deployContract(
         "InstanceStore",
         owner,
@@ -130,6 +113,23 @@ export async function deployAndRegisterMasterInstance(
     const bundleManager = bundleManagerBaseContrat as BundleManager;
     await executeTx(() => bundleManager["initialize(address)"](instanceAddress));
     await executeTx(() => instance.setBundleManager(bundleManagerAddress));
+
+    const { address: instanceAccessManagerAddress, contract: instanceAccessManagerBaseContract } = await deployContract(
+        "InstanceAccessManager",
+        owner,
+        [],
+        {
+            libraries: {
+                RoleIdLib: libraries.roleIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+            }
+        }
+    );
+    const instanceAccessManager = instanceAccessManagerBaseContract as InstanceAccessManager;
+    // grant admin role to master instance access manager
+    await executeTx(() => ozAccessManager.grantRole(0, instanceAccessManagerAddress, 0));
+    await executeTx(() => instanceAccessManager.initialize(instanceAddress));
+    await executeTx(() => instance.setInstanceAccessManager(instanceAccessManager));
 
     logger.debug(`setting master addresses into instance service and registering master instance`);
     const rcpt = await executeTx(() => services.instanceService.setAndRegisterMasterInstance(instanceAddress));

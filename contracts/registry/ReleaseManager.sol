@@ -165,7 +165,8 @@ contract ReleaseManager is AccessManaged
 
         _setServiceAuthorizations(
             _releaseAccessManager[version],
-            serviceAddress, 
+            // TODO temp, while typescript addresses computation is not implemented
+            address(service),//serviceAddress, 
             _releaseInfo[version].serviceRoles[serviceIdx],
             _releaseInfo[version].functionRoles[serviceIdx],
             _releaseInfo[version].selectors[serviceIdx]);
