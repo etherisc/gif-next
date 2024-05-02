@@ -52,15 +52,8 @@ contract InstanceService is
         }
         _;
     }
-    // TODO check service domain?
-    // TODO check release version?
-    modifier onlyRegisteredService() {
-        if (! getRegistry().isRegisteredService(msg.sender)) {
-            revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
-        }
-        _;
-    }
-    // TODO check release version?
+
+    // TODO check component - service - instance version match
     modifier onlyComponent() {
         if (! getRegistry().isRegisteredComponent(msg.sender)) {
             revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
@@ -214,7 +207,7 @@ contract InstanceService is
         RoleId[] memory roles
     )
         external
-        onlyRegisteredService
+        restricted
     {
         (
             IInstance instance, // or instanceInfo
@@ -270,18 +263,18 @@ contract InstanceService is
         virtual override
     {
         (
-            address registryAddress,
-            address initialOwner
-        ) = abi.decode(data, (address, address));
+            address registryAddress,, 
+            //address managerAddress
+            address authority
+        ) = abi.decode(data, (address, address, address));
+
+        initializeService(registryAddress, authority, owner);
 
         _registryService = IRegistryService(
             IRegistry(registryAddress).getServiceAddress(
                 REGISTRY(), 
                 getVersion().toMajorPart()));
 
-        // TODO while InstanceService is not deployed in InstanceServiceManager constructor
-        //      owner is InstanceServiceManager deployer
-        initializeService(registryAddress, address(0), owner);
         registerInterface(type(IInstanceService).interfaceId);
     }
 

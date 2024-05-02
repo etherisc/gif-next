@@ -58,12 +58,13 @@ contract DistributionService is
         initializer
         virtual override
     {
-        address initialOwner;
-        address registryAddress;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
-        // TODO while DistributionService is not deployed in DistributionServiceManager constructor
-        //      owner is DistributionServiceManager deployer
-        initializeService(registryAddress, address(0), owner);
+        (
+            address registryAddress,, 
+            //address managerAddress
+            address authority
+        ) = abi.decode(data, (address, address, address));
+
+        initializeService(registryAddress, authority, owner);
         registerInterface(type(IDistributionService).interfaceId);
     }
 
@@ -284,6 +285,7 @@ contract DistributionService is
     )
         external
         virtual
+        restricted
     {
         bool isReferral = ! referralId.eqz();
         bool referralValid = referralIsValid(distributionNftId, referralId);

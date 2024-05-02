@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
+import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
 import {IVersionable} from "./IVersionable.sol";
@@ -68,6 +69,31 @@ contract ProxyManager is
         address initialProxyAdminOwner = address(this); // used by proxy
         
         _proxy = new UpgradableProxyWithAdmin(
+            initialImplementation,
+            initialProxyAdminOwner,
+            getDeployData(currentProxyOwner, initializationData)
+        );
+
+        versionable = IVersionable(address(_proxy));
+        _updateVersionHistory(versionable.getVersion(), initialImplementation, currentProxyOwner);
+
+        emit LogProxyManagerVersionableDeployed(address(_proxy), initialImplementation);
+    }
+
+    function deployDetermenistic(address initialImplementation, bytes memory initializationData, bytes32 salt)
+        public
+        virtual
+        onlyOwner()
+        returns (IVersionable versionable)
+    {
+        if (_versions.length > 0) {
+            revert ErrorProxyManagerAlreadyDeployed();
+        }
+
+        address currentProxyOwner = getOwner();
+        address initialProxyAdminOwner = address(this);
+
+        _proxy = new UpgradableProxyWithAdmin{salt: salt}(
             initialImplementation,
             initialProxyAdminOwner,
             getDeployData(currentProxyOwner, initializationData)

@@ -53,12 +53,13 @@ contract BundleService is
         initializer
         virtual override
     {
-        address registryAddress;
-        address initialOwner;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
-        // TODO while PoolService is not deployed in PoolServiceManager constructor
-        //      owner is PoolServiceManager deployer
-        initializeService(registryAddress, address(0), owner);
+        (
+            address registryAddress,, 
+            //address managerAddress
+            address authority
+        ) = abi.decode(data, (address, address, address));
+
+        initializeService(registryAddress, authority, owner);
         registerInterface(type(IBundleService).interfaceId);
     }
 
@@ -122,7 +123,7 @@ contract BundleService is
     )
         external
         override
-        // TODO add restricted and add authz for pool service
+        restricted
         returns(NftId bundleNftId)
     {
         // register bundle with registry
@@ -192,7 +193,7 @@ contract BundleService is
         Amount premiumAmount // premium part that reaches bundle for this policy
     ) 
         external
-        onlyService // TODO replace with restricted + appropriate granting
+        restricted
     {
         InstanceReader instanceReader = instance.getInstanceReader();
         StateId bundleState = instanceReader.getMetadata(bundleNftId.toKey32(BUNDLE())).state;
@@ -298,7 +299,7 @@ contract BundleService is
     ) 
         external
         virtual
-        // TODO add restricted and autz for pool service
+        restricted
     {
         // udpate bundle state
         instance.getInstanceStore().updateBundleState(bundleNftId, CLOSED());
@@ -321,7 +322,7 @@ contract BundleService is
         Amount premiumAmount
     ) 
         external
-        onlyService 
+        restricted
     {
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
@@ -338,7 +339,7 @@ contract BundleService is
         Amount collateralAmount
     ) 
         external
-        onlyService 
+        restricted 
     {
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
@@ -371,6 +372,7 @@ contract BundleService is
     ) 
         external
         virtual
+        restricted
     {
         // ensure policy is closeable
         if (!instance.getInstanceReader().policyIsCloseable(policyNftId)) {

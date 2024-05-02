@@ -12,7 +12,7 @@ contract TestDeployAll is TestGifBase {
 
     // FIXME: add missing services
     function testDeployAllOverview() public {
-        assertEq(registry.getObjectCount(), 15, "invalid object count for base setup");
+        assertEq(registry.getObjectCount(), 16, "invalid object count for base setup");
         
         // validate instance service
         assertTrue(registry.getNftId(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");

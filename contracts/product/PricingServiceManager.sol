@@ -12,31 +12,22 @@ contract PricingServiceManager is ProxyManager {
 
     PricingService private _pricingService;
 
-    /// @dev initializes proxy manager with distribution service implementation and deploys instance
+    /// @dev initializes proxy manager with pricing service implementation and deploys instance
     constructor(
-        address registryAddress
+        address authority, 
+        address registryAddress,
+        bytes32 salt
     )
         ProxyManager(registryAddress)
     {
-        PricingService pricingSrv = new PricingService();
-        bytes memory data = abi.encode(registryAddress, address(this));
-        IVersionable versionable = deploy(
+        PricingService pricingSrv = new PricingService{salt: salt}();
+        bytes memory data = abi.encode(registryAddress, address(this), authority);
+        IVersionable versionable = deployDetermenistic(
             address(pricingSrv), 
-            data);
+            data,
+            salt);
 
         _pricingService = PricingService(address(versionable));
-        
-        // TODO `thi` must have a role or own nft to register service
-        //Registry registry = Registry(registryAddress);
-        //address registryServiceAddress = registry.getServiceAddress(REGISTRY(), _distributionService.getMajorVersion());
-        //RegistryService registryService = RegistryService(registryServiceAddress);
-        //registryService.registerService(_distributionService);
-        
-        // TODO no nft to link yet
-        // link ownership of instance service manager ot nft owner of instance service
-        //_linkToNftOwnable(
-        //    address(registryAddress),
-        //    address(_distributionService));
     }
 
     //--- view functions ----------------------------------------------------//

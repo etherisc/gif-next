@@ -5,12 +5,13 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 
-import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
+import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
 import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, TOKEN} from "../../contracts/type/ObjectType.sol";
+import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 
@@ -29,6 +30,10 @@ import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {ServiceMock} from "../mock/ServiceMock.sol";
 import {RegisterableMock} from "../mock/RegisterableMock.sol";
 import {DIP} from "../mock/Dip.sol";
+
+import {RegistryTestBase} from "../registry/RegistryTestBase.sol";
+import {TestGifBase} from "../base/TestGifBase.sol";
+import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
 
 // Helper functions to test IRegistry.ObjectInfo structs 
@@ -65,21 +70,10 @@ function toBool(uint256 uintVal) pure returns (bool boolVal)
     }
 }
 
-contract RegistryServiceTestBase is Test, FoundryRandom {
+contract RegistryServiceTestBase is TestGifBase, FoundryRandom {
 
-    address public constant NFT_LOCK_ADDRESS = address(0x1);
-
-    address public registryOwner = makeAddr("registryOwner");// owns all services
-    address public outsider = makeAddr("outsider");
     address public EOA = makeAddr("EOA");
 
-    RegistryAccessManager accessManager;
-    ReleaseManager releaseManager;
-    RegistryServiceManager public registryServiceManager;
-    RegistryService public registryService;
-    IRegistry public registry;
-
-    NftId public registryNftId;
     NftId public registryServiceNftId;
 
     IService componentOwnerService;
@@ -89,13 +83,13 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
 
     RegisterableMock public registerableOwnedByRegistryOwner;
 
-    function setUp() public virtual
+    function setUp() public virtual override
     {
         vm.startPrank(registryOwner);
 
-        _deployRegistryServiceAndRegistry();
+        _deployRegistry();
 
-        _deployAndRegisterServices();
+        _deployRegistryService();
 
         registerableOwnedByRegistryOwner = new RegisterableMock(
             zeroNftId(), 
@@ -109,39 +103,49 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         vm.stopPrank();
     }
 
-    function _deployRegistryServiceAndRegistry() internal
+    function _deployRegistryService() internal
     {
-        accessManager = new RegistryAccessManager(registryOwner);
+        bytes32 salt = "0x1111";
 
-        releaseManager = new ReleaseManager(
-            accessManager,
-            VersionPartLib.toVersionPart(3));
+        RegistryServiceTestConfig config = new RegistryServiceTestConfig(
+            releaseManager,
+            type(RegistryServiceManager).creationCode,
+            type(RegistryService).creationCode, 
+            registryOwner,
+            VersionPartLib.toVersionPart(3),
+            salt);
 
-        registry = IRegistry(releaseManager.getRegistry());
-        registryNftId = registry.getNftId(address(registry));
-
-        registryServiceManager = new RegistryServiceManager(
-            accessManager.authority(),
-            address(registry)
-        );        
-        
-        registryService = registryServiceManager.getRegistryService();
-
-        address tokenRegistry;
-        accessManager.initialize(address(releaseManager), tokenRegistry);
+        (
+            address[] memory serviceAddress,
+            RoleId[][] memory serviceRoles,
+            RoleId[][] memory functionRoles,
+            bytes4[][][] memory selectors
+        ) = config.getConfig();
 
         releaseManager.createNextRelease();
 
-        registryServiceNftId = registry.getNftId(address(registryService));
+        (
+            address releaseAccessManager,
+            VersionPart releaseVersion,
+            bytes32 releaseSalt
+        ) = releaseManager.prepareNextRelease(serviceAddress, serviceRoles, functionRoles, selectors, salt);
 
-        // registryServiceManager.linkToNftOwnable(address(registry));// links to registry service
+        registryServiceManager = new RegistryServiceManager{salt: releaseSalt}(
+            releaseAccessManager,
+            registryAddress,
+            releaseSalt);
+        registryService = registryServiceManager.getRegistryService();
+        releaseManager.registerService(registryService);
+
+        releaseManager.activateNextRelease();
+        
+        registryServiceManager.linkOwnershipToServiceNft();
     }
-
-    function _deployAndRegisterServices() internal
-    {
+/*
+    function _deployAndRegisterServices() internal {
         releaseManager.registerService(componentOwnerService);
     }
-
+*/
     function _assert_registered_token(address token, NftId nftIdFromRegistryService) internal
     {
         IRegistry.ObjectInfo memory info = registry.getObjectInfo(token);
@@ -165,10 +169,8 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         infoFromRegisterable.nftId = infoFromRegistry.nftId; // initial value is random
         infoFromRegisterable.objectAddress = registeredContract;// registry enforces objectAddress 
 
-        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegistryService), 
-            "Info from registry is different from info in registry service");
-        assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegisterable), 
-            "Info from registry is different from info in registered contract");
+        eqObjectInfo(infoFromRegistry, infoFromRegistryService);
+        eqObjectInfo(infoFromRegistry, infoFromRegisterable);
     }
 
     function _assert_registered_object(IRegistry.ObjectInfo memory objectInfo) internal 
@@ -176,8 +178,7 @@ contract RegistryServiceTestBase is Test, FoundryRandom {
         IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(objectInfo.nftId);
 
         assertEq(infoFromRegistry.objectAddress, address(0), "Object has non zero address");
-        assertTrue(eqObjectInfo(infoFromRegistry, objectInfo), 
-            "Info from registry is different from object info");
+        eqObjectInfo(infoFromRegistry, objectInfo);
     }
 
     /*function _checkRegistryServiceGetters(address implementation, Version version, uint64 initializedVersion, uint256 versionsCount) internal

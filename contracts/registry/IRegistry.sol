@@ -7,6 +7,7 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {RoleId} from "../type/RoleId.sol";
 
 interface IRegistry is IERC165 {
 
@@ -14,20 +15,20 @@ interface IRegistry is IERC165 {
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
     // registerService()
-    error CallerNotReleaseManager();
-    error ServiceAlreadyRegistered(address service);
+    error ErrorRegistryCallerNotReleaseManager();
+    error ErrorRegistryDomainZero(address service);
+    error ErrorRegistryDomainAlreadyRegistered(address service, VersionPart version, ObjectType domain);
 
     // register()
-    error CallerNotRegistryService();
-    error ServiceRegistration();
+    error ErrorRegistryCallerNotRegistryService();
 
     // registerWithCustomTypes()
-    error CoreTypeRegistration();
+    error ErrorRegistryCoreTypeRegistration();
 
     // _register()
-    error ZeroParentAddress();
-    error InvalidTypesCombination(ObjectType objectType, ObjectType parentType);
-    error ContractAlreadyRegistered(address objectAddress);
+    error ErrorRegistryParentAddressZero();
+    error ErrorRegistryTypesCombinationInvalid(ObjectType objectType, ObjectType parentType);
+    error ErrorRegistryContractAlreadyRegistered(address objectAddress);
 
     struct ObjectInfo {
         NftId nftId;
@@ -37,13 +38,17 @@ interface IRegistry is IERC165 {
         address objectAddress;
         address initialOwner;
         bytes data;
-    }// TODO delete nftId and initialOwner(if not used) from struct
-    // TODO strong disagree, keep nftId there (lets keep get object info return object consistent)
+    }
+
 
     struct ReleaseInfo {
+        VersionPart version;
+        address[] addresses;
+        RoleId[][] serviceRoles;
+        RoleId[][] functionRoles;
+        bytes4[][][] selectors;
         ObjectType[] domains;
-        Timestamp createdAt;
-        //Timestamp updatedAt;
+        Timestamp activatedAt;
     }
 
     function registerService(
@@ -94,6 +99,8 @@ interface IRegistry is IERC165 {
     ) external view returns (address serviceAddress);
 
     function getReleaseManagerAddress() external view returns (address);
+
+    function getReleaseAccessManagerAddress(VersionPart version) external view returns (address);
 
     function getChainNftAddress() external view returns (address);
 

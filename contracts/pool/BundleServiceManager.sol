@@ -14,29 +14,20 @@ contract BundleServiceManager is ProxyManager {
 
     /// @dev initializes proxy manager with pool service implementation 
     constructor(
-        address registryAddress
-    )
+        address authority, 
+        address registryAddress,
+        bytes32 salt
+    ) 
         ProxyManager(registryAddress)
     {
-        BundleService bundleSrv = new BundleService();
-        bytes memory data = abi.encode(registryAddress, address(this));
-        IVersionable versionable = deploy(
+        BundleService bundleSrv = new BundleService{salt: salt}();
+        bytes memory data = abi.encode(registryAddress, address(this), authority);
+        IVersionable versionable = deployDetermenistic(
             address(bundleSrv), 
-            data);
+            data,
+            salt);
 
         _bundleService = BundleService(address(versionable));
-
-        // TODO `this` must have a role or own nft to register service
-        //Registry registry = Registry(registryAddress);
-        //address registryServiceAddress = registry.getServiceAddress(REGISTRY(), _bundleService.getMajorVersion());
-        //RegistryService registryService = RegistryService(registryServiceAddress); 
-        //registryService.registerService(_poolService);
-        
-        // TODO no nft to link yet
-        // link ownership of instance service manager ot nft owner of instance service
-        //_linkToNftOwnable(
-        //    address(registryAddress),
-        //    address(_poolService));
     }
 
     //--- view functions ----------------------------------------------------//

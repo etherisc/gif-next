@@ -8,7 +8,7 @@ import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../con
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
-import {RegistryServiceHarnessTestBase, toBool} from "./RegistryServiceHarnessTestBase.sol";
+import {RegistryServiceHarnessTestBase} from "./RegistryServiceHarnessTestBase.sol";
 
 contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
@@ -51,7 +51,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.UnexpectedRegisterableType.selector,
+            IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
             expectedType,
             objectType));
 
@@ -80,7 +80,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.UnexpectedRegisterableType.selector,
+            IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
             expectedType,
             objectType));
 
@@ -109,7 +109,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.UnexpectedRegisterableType.selector,
+            IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
             expectedType,
             objectType));
 
@@ -163,7 +163,8 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.RegisterableOwnerIsZero.selector));
+            IRegistryService.ErrorRegistryServiceObjectOwnerZero.selector,
+            objectType));
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,
@@ -185,7 +186,9 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
         });
 
         vm.expectRevert(abi.encodeWithSelector(
-            IRegistryService.RegisterableOwnerIsRegistered.selector));
+            IRegistryService.ErrorRegistryServiceObjectOwnerRegistered.selector,
+            objectType,
+            address(registry)));
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,

@@ -4,33 +4,33 @@ pragma solidity ^0.8.20;
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryServiceHarness} from "../registryService/RegistryServiceHarness.sol";
-import {RegistryServiceMockWithSimpleConfig} from "./RegistryServiceMock.sol";
+import {RegistryServiceMock} from "./RegistryServiceMock.sol";
 
 
-contract RegistryServiceManagerMockWithHarness is RegistryServiceManager
+contract RegistryServiceManagerMock is RegistryServiceManager
 {
-    constructor(address initialAuthority, address registry)
-        RegistryServiceManager(initialAuthority, registry)
+    constructor(address initialAuthority, address registry, bytes32 salt)
+        RegistryServiceManager(initialAuthority, registry, salt)
     {
         bytes memory emptyUpgradeData;
 
         upgrade(
-            address(new RegistryServiceHarness()),
+            address(new RegistryServiceMock()),
             emptyUpgradeData
         );
     }
 }
 
 
-contract RegistryServiceManagerMockWithConfig is RegistryServiceManager
+contract RegistryServiceManagerMockWithHarness is RegistryServiceManager
 {
-    constructor(address initialAuthority, address registry)
-        RegistryServiceManager(initialAuthority, registry)
+    constructor(address initialAuthority, address registry, bytes32 salt)
+        RegistryServiceManager(initialAuthority, registry, salt)
     {
         bytes memory emptyUpgradeData;
 
         upgrade(
-            address(new RegistryServiceMockWithSimpleConfig()),
+            address(new RegistryServiceHarness()),
             emptyUpgradeData
         );
     }

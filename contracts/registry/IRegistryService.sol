@@ -15,36 +15,28 @@ import {IComponent} from "../shared/IComponent.sol";
 interface IRegistryService is 
      IService
 {
-     error SelfRegistration();
-     error NotRegistryOwner();
+     error ErrorRegistryServiceNotRegistryOwner();
 
-     error NotService();
-     error NotInstance();
-     error NotProduct();
-     error NotPool();
-     error NotDistribution();
+     error ErrorRegistryServiceNotService(address notService);
+     error ErrorRegistryServiceNotInstance(address notInstance);
+     error ErrorRegistryServiceNotProduct(address notProduct);
+     error ErrorRegistryServiceNotPool(address notPool);
+     error ErrorRegistryServiceNotDistribution(address notDistribution);
 
-     error UnexpectedRegisterableType(ObjectType expected, ObjectType found);
-     error NotRegisterableOwner(address expectedOwner);
-     error RegisterableOwnerIsZero();   
-     error RegisterableOwnerIsRegistered();
-     error InvalidInitialOwner(address initialOwner);
-     error InvalidAddress(address registerableAddress);
+     error ErrorRegistryServiceRegisterableAddressInvalid(IRegisterable registerable, address found);
+     error ErrorRegistryServiceRegisterableTypeInvalid(IRegisterable registerable, ObjectType expected, ObjectType found);
+     error ErrorRegistryServiceRegisterableOwnerInvalid(IRegisterable registerable, address expected, address found);
+     error ErrorRegistryServiceRegisterableOwnerZero(IRegisterable registerable);   
+     error ErrorRegistryServiceRegisterableOwnerRegistered(IRegisterable registerable, address owner);
+     error ErrorRegistryServiceRegisterableSelfRegistration(IRegisterable registerable);
 
-     struct FunctionConfig
-     {
-          ObjectType serviceDomain;
-          bytes4[] selectors;
-     }
+     error ErrorRegistryServiceObjectTypeInvalid(ObjectType expected, ObjectType found);
+     error ErrorRegistryServiceObjectOwnerRegistered(ObjectType objectType, address owner);
+     error ErrorRegistryServiceObjectOwnerZero(ObjectType objectType);
 
-     function getFunctionConfigs()
-          external
-          pure
-          returns(
-               FunctionConfig[] memory config
-          );
+     error ErrorRegistryServiceInvalidInitialOwner(address initialOwner);
+     error ErrorRegistryServiceInvalidAddress(address registerableAddress);
 
-     // TODO used by service -> add owner arg 
      function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info); 
 

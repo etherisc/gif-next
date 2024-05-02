@@ -56,15 +56,14 @@ contract PoolService is
         initializer
         virtual override
     {
-        address registryAddress;
-        address initialOwner;
-        (registryAddress, initialOwner) = abi.decode(data, (address, address));
-        // TODO while PoolService is not deployed in PoolServiceManager constructor
-        //      owner is PoolServiceManager deployer
-        initializeService(registryAddress, address(0), owner);
+        (
+            address registryAddress,, 
+            //address managerAddress
+            address authority
+        ) = abi.decode(data, (address, address, address));
 
+        initializeService(registryAddress, authority, owner);
         _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), getVersion().toMajorPart()));
-
         registerInterface(type(IPoolService).interfaceId);
     }
 
@@ -122,6 +121,7 @@ contract PoolService is
         external
         virtual
     {
+        /*
         (NftId poolNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
@@ -134,6 +134,7 @@ contract PoolService is
         instance.getInstanceStore().updatePoolSetup(poolNftId, componentInfo, KEEP_STATE());
 
         emit LogPoolServiceMaxCapitalAmountUpdated(poolNftId, previousMaxCapitalAmount, maxCapitalAmount);
+        */
     }
 
     function setBundleOwnerRole(RoleId bundleOwnerRole)
@@ -181,7 +182,6 @@ contract PoolService is
 
         // TODO add logging
     }
-
 
     function createBundle(
         address owner, // initial bundle owner
@@ -240,6 +240,7 @@ contract PoolService is
     ) 
         external
         virtual
+        restricted
     {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory bundleObjectInfo = registry.getObjectInfo(bundleNftId);
@@ -275,7 +276,7 @@ contract PoolService is
     )
         external
         virtual
-        // TODO add restricted and granting for policy service
+        restricted
     {
         InstanceReader instanceReader = instance.getInstanceReader();
         NftId poolNftId = instanceReader.getProductSetupInfo(productNftId).poolNftId;
@@ -326,7 +327,7 @@ contract PoolService is
     )
         external
         virtual
-        // TODO add restricted and granting for claim service
+        restricted
     {
         _bundleService.releaseCollateral(
             instance, 
@@ -345,7 +346,7 @@ contract PoolService is
     )
         external
         virtual
-        // TODO add restricted and granting for policy service
+        restricted
     {
         _bundleService.releaseCollateral(
             instance, 

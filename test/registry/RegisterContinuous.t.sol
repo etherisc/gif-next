@@ -10,16 +10,26 @@ import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGIS
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
-import {RegistryTestBase, toBool} from "./RegistryTestBase.sol";
+import {RegistryTestBase} from "./RegistryTestBase.sol";
 import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
-contract Registry_Continous_Tests is RegistryTestBase 
+contract RegisterContinousTest is RegistryTestBase 
 {
-
     uint constant ITTERATIONS = 150;
 
-// TODO refactor
-/*
+    function test_continuous_register(IRegistry.ObjectInfo memory info) public
+    {
+        vm.assume(
+            info.initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D && // gives error (Invalid data) only during fuzzing when minting nft to foundry's cheatcodes contract
+            info.initialOwner != 0x4e59b44847b379578588920cA78FbF26c0B4956C // Deterministic Deployment Proxy, on nft transfer callback tries Create2Deployer::create2()
+        );
+
+        // TODO register contracts with IInterceptor interface support
+        info.isInterceptor = false;
+
+        _assert_register_withChecks(info);
+    }
+
     // nftId - always random
     // parenNftId - random
     // objectType random
@@ -28,11 +38,11 @@ contract Registry_Continous_Tests is RegistryTestBase
     // initialOwner - random
     function test_continuous_register_000000() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(randomNumber(type(uint96).max)),
@@ -40,15 +50,10 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     address(uint160(randomNumber(type(uint160).max))),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
@@ -56,11 +61,11 @@ contract Registry_Continous_Tests is RegistryTestBase
     // initialOwner - from address set
     function test_continuous_register_000001() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(randomNumber(type(uint96).max)),
@@ -68,26 +73,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_000010() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(randomNumber(type(uint96).max)),
@@ -95,26 +95,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     address(uint160(randomNumber(type(uint160).max))),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_000011() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(randomNumber(type(uint96).max)),
@@ -122,26 +117,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_001000() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(randomNumber(type(uint96).max)),
@@ -149,26 +139,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     address(uint160(randomNumber(type(uint160).max))),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_001001() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(randomNumber(type(uint96).max)),
@@ -176,26 +161,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_001010() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(randomNumber(type(uint96).max)),
@@ -203,26 +183,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     address(uint160(randomNumber(type(uint160).max))),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_001011() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(randomNumber(type(uint96).max)),
@@ -230,26 +205,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_010000() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
@@ -257,26 +227,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     address(uint160(randomNumber(type(uint160).max))),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_010001() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
@@ -284,26 +249,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
     
     function test_continuous_register_010010() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
@@ -311,26 +271,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     address(uint160(randomNumber(type(uint160).max))),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_010011() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
@@ -338,26 +293,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_011000() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
@@ -365,26 +315,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     address(uint160(randomNumber(type(uint160).max))),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_011001() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
@@ -392,26 +337,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_011010() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
@@ -419,26 +359,21 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     address(uint160(randomNumber(type(uint160).max))),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""           
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_011011() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
@@ -446,114 +381,24 @@ contract Registry_Continous_Tests is RegistryTestBase
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
 
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
-
         _stopPrank();
     }
-
-    function test_continuous_register_ServiceNewVersion() public
-    {
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            zeroNftId(), // any nftId
-            registryNftId,
-            SERVICE(),
-            false, // isInterceptor
-            address(uint160(randomNumber(type(uint160).max))),
-            outsider, // initialOwner, any address capable to receive nft
-            ""
-        );  
-
-        string memory serviceName = "SomeTestName";
-
-        // TODO refactor
-        // services may only be registered for major version == registry.getMajorVersionMax()
-        // before servies can be registered for next major version registry.setMajorVersionMax needs to be called to increase major version max
-
-        uint256 testVersionMax = type(uint8).max / 4; // because of `out of gas` error
-        uint256 majorVersion = registry.getMajorVersion().toInt();
-
-        while(majorVersion < testVersionMax)
-        {
-            while(EnumerableSet.contains(_registeredAddresses, info.objectAddress)) 
-            {// guarantee objectAddress is fresh
-                info.objectAddress = address(uint160(info.objectAddress) + 1);
-            }
-            // try register incredibly new version 
-            info.data = abi.encode(serviceName, VersionLib.toVersionPart(type(uint8).max - majorVersion));
-
-            _startPrank(address(registryService));
-
-            _assert_register(
-                info, 
-                true, // expectRevert
-                abi.encodeWithSelector(
-                    IRegistry.InvalidServiceVersion.selector, 
-                    VersionLib.toVersionPart(type(uint8).max - majorVersion))
-            );
-
-            // try register next version 
-            info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion + 1));
-
-            _assert_register(
-                info, 
-                true, // expectRevert
-                abi.encodeWithSelector(
-                    IRegistry.InvalidServiceVersion.selector, 
-                    VersionLib.toVersionPart(majorVersion + 1))
-            );
-
-            info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion - 1));
-
-            // try to register previous version
-            _assert_register(
-                info, 
-                true, // expectRevert
-                abi.encodeWithSelector(
-                    IRegistry.InvalidServiceVersion.selector, 
-                    VersionLib.toVersionPart(majorVersion - 1))
-            );
-
-            // register with current GIF major version 
-            info.data = abi.encode(serviceName, VersionLib.toVersionPart(majorVersion));
-
-            _assert_register(info, false, "");
-
-            _stopPrank();
-            _startPrank(registryOwner);
-
-            // increase GIF major version
-            majorVersion++;
-            registry.setMajorVersion(VersionLib.toVersionPart(majorVersion));
-            
-
-            _stopPrank();
-        }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
-
-        _stopPrank();
-    }*/
 }
 
-contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Registry_Continous_Tests
+contract RegisterWithPresetContinuousTest is RegistryTestBaseWithPreset, RegisterContinousTest
 {
     function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
     {
         RegistryTestBaseWithPreset.setUp();
     }
+
 // TODO refactor
-/*
+
     // nftId - always random
     // parentNftId - from preset,
     // types - from types set
@@ -562,12 +407,12 @@ contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Regi
     // initialOwner - random
     function test_continuous_register_0P1000() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
 
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     _nftIdByType[_types[randomNumber(type(uint256).max) % _types.length]],
@@ -575,27 +420,22 @@ contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Regi
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     address(uint160(randomNumber(type(uint160).max))),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
-
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
 
         _stopPrank();
     }
 
     function test_continuous_register_0P1011() public
     {
-        _startPrank(address(registryService));
+        _startPrank(address(registryServiceMock));
 
         for(uint idx = 0; idx < ITTERATIONS; idx++)
         {
 
-            _assert_register_with_default_checks(
+            test_continuous_register(
                 IRegistry.ObjectInfo(
                     toNftId(randomNumber(type(uint96).max)),
                     _nftIdByType[_types[randomNumber(type(uint256).max) % _types.length]],
@@ -603,17 +443,12 @@ contract RegistryWithPreset_Continuous_Tests is RegistryTestBaseWithPreset, Regi
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
-                    abi.encode(_nextServiceName(), VersionLib.toVersionPart(GIF_VERSION))                  
+                    ""                  
                 )
             );
         }
 
-        // solhint-disable no-console
-        console.log("Registered nfts count %s", EnumerableSet.length(_nftIds) - 1);
-        console.log("Registered services count %s\n", _servicesCount);
-        // solhint-enable
-
         _stopPrank();
     }
-*/
+
 }

@@ -14,32 +14,20 @@ contract ProductServiceManager is ProxyManager {
 
     /// @dev initializes proxy manager with product service implementation 
     constructor(
-        address registryAddress
-    )
+        address authority, 
+        address registryAddress,
+        bytes32 salt
+    ) 
         ProxyManager(registryAddress)
     {
-        ProductService svc = new ProductService();
-        bytes memory data = abi.encode(registryAddress, address(this));
-        IVersionable versionable = deploy(
+        ProductService svc = new ProductService{salt: salt}();
+        bytes memory data = abi.encode(registryAddress, address(this), authority);
+        IVersionable versionable = deployDetermenistic(
             address(svc), 
-            data);
+            data,
+            salt);
 
         _productService = ProductService(address(versionable));
-
-        // Registry registry = Registry(registryAddress);
-        // address registryServiceAddress = registry.getServiceAddress("RegistryService", VersionLib.toVersion(3, 0, 0).toMajorPart());
-        // RegistryService registryService = RegistryService(registryServiceAddress);
-        // TODO this must have a role or own nft to register service
-        //registryService.registerService(_productService);
-        
-        // TODO no nft to link yet
-        // link ownership of instance service manager ot nft owner of instance service
-        //_linkToNftOwnable(
-        //    address(registryAddress),
-        //    address(_productService));
-
-        // implies that after this constructor call only upgrade functionality is available
-        // _isDeployed = true;
     }
 
     //--- view functions ----------------------------------------------------//
