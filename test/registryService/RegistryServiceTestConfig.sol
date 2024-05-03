@@ -68,7 +68,7 @@ contract RegistryServiceTestConfig
                 bytes32(_version.toInt()),
                 salt));
         _accessManager = Clones.predictDeterministicAddress(
-            address(releaseManager.getReleaseAdmin(version)), // implementation
+            address(releaseManager.getReleaseAccessManager(version)), // implementation
             _salt,
             address(releaseManager)); // deployer
 

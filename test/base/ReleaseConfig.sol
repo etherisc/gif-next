@@ -117,7 +117,7 @@ contract ReleaseConfig
                 bytes32(_version.toInt()),
                 salt));
         _releaseAdmin = Clones.predictDeterministicAddress(
-            address(releaseManager.getReleaseAdmin(version)), //.authority()), // implementation
+            address(releaseManager.getReleaseAccessManager(version)), // implementation
             _salt,
             address(releaseManager)); // deployer
 

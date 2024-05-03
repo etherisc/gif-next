@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
-import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {IAccessManagerExtended} from "./IAccessManagerExtended.sol";
@@ -12,8 +11,9 @@ import {AccessManagerCustom} from "./AccessManagerCustom.sol";
 
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
+
+// IMPORTANT: check role/target for existance before using return value of getter
 contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
-    using ShortStrings for ShortString;
     using EnumerableSet for EnumerableSet.AddressSet;
 
     string constant private ADMIN_ROLE_NAME = "Admin";
@@ -76,7 +76,7 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         return $._targetAddressForName[name] != address(0);
     }
 
-    function getTargetAddressByName(string memory name) public view returns(address targetAddress) {
+    function getTargetAddress(string memory name) public view returns(address targetAddress) {
         AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
         return $._targetAddressForName[name];
     }
@@ -107,7 +107,7 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
     }
 
     // TODO returns ADMIN_ROLE id for non existent name
-    function getRoleIdByName(string memory name) public view returns (uint64 roleId) {
+    function getRoleId(string memory name) public view returns (uint64 roleId) {
         AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
         return $._roleIdForName[name];
     }
@@ -180,7 +180,7 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         if(isRoleNameExists(name)) {
             revert AccessManagerRoleNameAlreadyExists(
                 roleId, 
-                getRoleIdByName(name), 
+                getRoleId(name), 
                 name);
         }
 
@@ -189,6 +189,7 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
             name: name,
             //rtype: rtype,
             createdAt: TimestampLib.blockTimestamp()
+            // disableAt: 0;
         });
 
         $._roleIdForName[name] = roleId;
@@ -243,7 +244,8 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
     function setRoleAdmin(uint64 roleId, uint64 admin) 
         public 
         override (AccessManagerCustom, IAccessManager)
-        roleExists(roleId) 
+        roleExists(roleId)
+        roleExists(admin)
     {
         super.setRoleAdmin(roleId, admin);
     }
@@ -272,10 +274,7 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         public
         onlyAuthorized
     {
-        // virtual funtion
         name = _validateTarget(target, name);
-
-        // same for each implememtation
         _createTarget(target, name);//, IAccess.Type.Custom);
     }
 
@@ -434,13 +433,13 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
 
         // Restricted to ADMIN with no delay beside any execution delay the caller may have
         if (
-            selector == this.createRole.selector ||
             selector == this.labelRole.selector ||
             selector == this.setRoleAdmin.selector ||
             selector == this.setRoleGuardian.selector ||
             selector == this.setGrantDelay.selector ||
-            selector == this.createTarget.selector ||
-            selector == this.setTargetAdminDelay.selector
+            selector == this.setTargetAdminDelay.selector ||
+            selector == this.createRole.selector ||
+            selector == this.createTarget.selector
         ) {
             return (true, ADMIN_ROLE, 0);
         }

@@ -42,17 +42,19 @@ contract TokenRegistry is
 
 
     /// @dev link ownership of token registry to nft owner of registry service
+    // TODO see linkToProxy() in ProxyManager, implement similar, decide which nft token registry must be linked to 
     // TODO latter registry service will get new release, new address, new nft, TokenRegistry will not catch that -> use AccessManaged only for services
+    /*
     function linkToNftOwnable(address registryAddress) 
         external
         onlyOwner
     {
         IRegistry registry = IRegistry(registryAddress);
-        // TODO use _latest instead of _initial -> but _latest is 0 before first release activation
         address registryServiceAddress = registry.getServiceAddress(REGISTRY(), registry.getNextVersion());
 
         _linkToNftOwnable(registryServiceAddress);
     }
+    */
 
     /// @dev token state is informative, registry have no clue about used tokens
     // component owner is responsible for token selection and operations
@@ -69,7 +71,7 @@ contract TokenRegistry is
         // verify valid major version
         // ensure major version increments is one
         uint256 version = majorVersion.toInt();
-        if (!getRegistry().isValidRelease(majorVersion)) {
+        if (!getRegistry().isActiveRelease(majorVersion)) {
             revert TokenMajorVersionInvalid(majorVersion);
         }
 

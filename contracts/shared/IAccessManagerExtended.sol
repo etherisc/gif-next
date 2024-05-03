@@ -49,7 +49,7 @@ interface IAccessManagerExtended is IAccessManager {
     function getRoleId(uint256 idx) external view returns (uint64 roleId);
 
     // TODO returns ADMIN_ROLE id for non existent name
-    function getRoleIdByName(string memory name) external view returns (uint64 roleId);
+    function getRoleId(string memory name) external view returns (uint64 roleId);
 
     function getRoles() external view returns (uint256 numberOfRoles);
 
@@ -60,7 +60,7 @@ interface IAccessManagerExtended is IAccessManager {
 
     function isTargetExists(address target) external view returns (bool);
 
-    function getTargetAddressByName(string memory name) external view returns(address targetAddress);
+    function getTargetAddress(string memory name) external view returns(address targetAddress);
 
     function getTargetInfo(address target) external view returns (TargetInfo memory);
 
