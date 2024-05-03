@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
 import {NftId} from "../type/NftId.sol";
@@ -12,27 +11,23 @@ import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
 import {IService} from "../shared/IService.sol";
-import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerExtendedWithDisableInitializeable} from "../shared/AccessManagerExtendedWithDisableInitializeable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
 import {Registry} from "./Registry.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {RegistryAccessManager} from "./RegistryAccessManager.sol";
 
-    // gif admin is not technical, should sent simple txs
-    // foundation creates
-    // other guy deployes
-    // other guy checks (can precompute addresses and compare with what deployed)
-    // foundation activates
-// TODO add function to deactivate releases
-// TODO in next pr add getVersion() to releaseAccessManager only, set in initialize()
-// TODO in next pr make single base for registry access manager, release access manager and instance access manager
 
 contract ReleaseManager is AccessManaged
 {
     using ObjectTypeLib for ObjectType;
 
-    event LogReleaseCreation(VersionPart version, bytes32 salt, AccessManagerUpgradeableInitializeable accessManager); 
+    event LogReleaseCreation(
+        VersionPart version, 
+        bytes32 salt, 
+        AccessManagerExtendedWithDisableInitializeable releaseAccessManager
+    ); 
     event LogReleaseActivation(VersionPart version);
 
 
@@ -64,10 +59,11 @@ contract ReleaseManager is AccessManaged
     // _verifyServiceAuthorizations
     error ErrorReleaseManagerServiceRoleInvalid(address service, RoleId role);
 
-    RegistryAccessManager public immutable _accessManager;
+    RegistryAdmin public immutable _accessManager;
+    address public immutable _releaseAccessManagerCodeAddress;
     IRegistry public immutable _registry;
 
-    mapping(VersionPart version => AccessManagerUpgradeableInitializeable accessManager) internal _releaseAccessManager;
+    mapping(VersionPart version => AccessManagerExtendedWithDisableInitializeable accessManager) internal _releaseAccessManager;
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
     mapping(address registryService => bool isActive) internal _active;// have access to registry
 
@@ -86,6 +82,10 @@ contract ReleaseManager is AccessManaged
         _initial = initialVersion;
         _next = VersionPartLib.toVersionPart(initialVersion.toInt() - 1);
         _registry = new Registry();
+
+        AccessManagerExtendedWithDisableInitializeable releaseAccessManager = new AccessManagerExtendedWithDisableInitializeable();
+        releaseAccessManager.initialize(address(0x1), VersionLib.toVersionPart(0));
+        _releaseAccessManagerCodeAddress = address(releaseAccessManager);
     }
 
     /// @dev skips previous release if it was not activated
@@ -99,9 +99,12 @@ contract ReleaseManager is AccessManaged
     }
 
     function prepareNextRelease(
-        address[] memory addresses, 
-        RoleId[][] memory serviceRoles, 
-        RoleId[][] memory functionRoles, 
+        address[] memory addresses,
+        string[] memory names, 
+        RoleId[][] memory serviceRoles,
+        string[][] memory serviceRoleNames,
+        RoleId[][] memory functionRoles,
+        string[][] memory functionRoleNames,
         bytes4[][][] memory selectors, 
         bytes32 salt
     )
@@ -123,8 +126,11 @@ contract ReleaseManager is AccessManaged
 
         _releaseInfo[version].version = version;
         _releaseInfo[version].addresses = addresses;
+        _releaseInfo[version].names = names;
         _releaseInfo[version].serviceRoles = serviceRoles;
+        _releaseInfo[version].serviceRoleNames = serviceRoleNames;
         _releaseInfo[version].functionRoles = functionRoles;
+        _releaseInfo[version].functionRoleNames = functionRoleNames;
         _releaseInfo[version].selectors = selectors;
         _awaitingRegistration = addresses.length;
 
@@ -135,12 +141,11 @@ contract ReleaseManager is AccessManaged
                 bytes32(version.toInt()),
                 salt));
 
-        releaseAccessManagerAddress = Clones.cloneDeterministic(_accessManager.authority(), releaseSalt);
-        AccessManagerUpgradeableInitializeable releaseAccessManager = AccessManagerUpgradeableInitializeable(releaseAccessManagerAddress);
-        
+        releaseAccessManagerAddress = Clones.cloneDeterministic(_releaseAccessManagerCodeAddress, releaseSalt);
+        AccessManagerExtendedWithDisableInitializeable releaseAccessManager = AccessManagerExtendedWithDisableInitializeable(releaseAccessManagerAddress);
+        releaseAccessManager.initialize(address(this), version);
+
         _releaseAccessManager[version] = releaseAccessManager;
-        
-        releaseAccessManager.initialize(address(this));
 
         emit LogReleaseCreation(version, releaseSalt, releaseAccessManager);
     }
@@ -167,13 +172,15 @@ contract ReleaseManager is AccessManaged
             _releaseAccessManager[version],
             // TODO temp, while typescript addresses computation is not implemented
             address(service),//serviceAddress, 
+            _releaseInfo[version].names[serviceIdx], 
             _releaseInfo[version].serviceRoles[serviceIdx],
+            _releaseInfo[version].serviceRoleNames[serviceIdx],
             _releaseInfo[version].functionRoles[serviceIdx],
+            _releaseInfo[version].functionRoleNames[serviceIdx],
             _releaseInfo[version].selectors[serviceIdx]);
 
         _awaitingRegistration = serviceIdx;
-        // checked in registry
-        _releaseInfo[version].domains.push(domain);
+        _releaseInfo[version].domains.push(domain);// checked in registry
 
         nftId = _registry.registerService(info, version, domain);
 
@@ -225,11 +232,13 @@ contract ReleaseManager is AccessManaged
         return _active[service];
     }
 
-    function isValidRelease(VersionPart version) external view returns(bool) {
-        return _releaseInfo[version].activatedAt.gtz();
+    function isActiveRelease(VersionPart version) external view returns(bool) {
+        return _releaseInfo[version].disabledAt.gtz() ? false : _releaseInfo[version].activatedAt.gtz();
     }
 
-    function getRegistry() external view returns(address) {
+
+    function getRegistry() external view returns(address) 
+    {
         return (address(_registry));
     }
 
@@ -355,28 +364,46 @@ contract ReleaseManager is AccessManaged
     }
 
     function _setServiceAuthorizations(
-        IAccessManager accessManager,
+        AccessManagerExtendedWithDisableInitializeable accessManager, // release access manager
         address serviceAddress,
+        string memory serviceName,
         RoleId[] memory serviceRoles,
+        string[] memory serviceRoleNames,
         RoleId[] memory functionRoles,
+        string[] memory functionRoleNames,
         bytes4[][] memory selectors
     )
         internal
     {
+        accessManager.createTarget(serviceAddress, serviceName);
+
         for(uint idx = 0; idx < functionRoles.length; idx++)
         {
+            uint64 roleInt = functionRoles[idx].toInt();
+
+            if(!accessManager.isRoleExists(roleInt)) {
+                accessManager.createRole(roleInt, functionRoleNames[idx]);
+            }
+
             accessManager.setTargetFunctionRole(
                 serviceAddress, 
                 selectors[idx],
-                functionRoles[idx].toInt());
+                roleInt);
         }
-
+    
         for(uint idx = 0; idx < serviceRoles.length; idx++)
         {
+            uint64 roleInt = serviceRoles[idx].toInt();
+
+            if(!accessManager.isRoleExists(roleInt)) {
+                accessManager.createRole(roleInt, serviceRoleNames[idx]);
+            }
+
             accessManager.grantRole(
                 serviceRoles[idx].toInt(),
                 serviceAddress, 
                 0);
         }
+    
     }
 }

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
-import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, STAKING_SERVICE_ROLE, CAN_CREATE_GIF_TARGET_ROLE} from "../../contracts/type/RoleId.sol";
+import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, STAKING_SERVICE_ROLE, CAN_CREATE_GIF_TARGET__ROLE} from "../../contracts/type/RoleId.sol";
 import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, PRICE} from "../../contracts/type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
@@ -67,15 +67,43 @@ import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 // deployment size > 800kb
 contract ReleaseConfig
 {
+    string constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
+    string constant POLICY_SERVICE_ROLE_NAME = "PolicyServiceRole";
+    string constant APPLICATION_SERVICE_ROLE_NAME = "ApplicationServiceRole";
+    string constant CLAIM_SERVICE_ROLE_NAME = "ClaimServiceRole";
+    string constant PRODUCT_SERVICE_ROLE_NAME = "ProductServiceRole";
+    string constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
+    string constant BUNDLE_SERVICE_ROLE_NAME = "BundleServiceRole";
+    string constant PRICING_SERVICE_ROLE_NAME = "PricingServiceRole";
+    string constant DISTRIBUTION_SERVICE_ROLE_NAME = "DistributionServiceRole";
+    string constant INSTANCE_SERVICE_ROLE_NAME = "InstanceServiceRole";
+    string constant REGISTRY_SERVICE_ROLE_NAME = "RegistryServiceRole";
+    string constant CAN_CREATE_GIF_TARGET__ROLE_NAME = "CanCreateGifTargetRole";
+
+    string constant STAKING_SERVICE_NAME = "StakingService";
+    string constant POLICY_SERVICE_NAME = "PolicyService";
+    string constant APPLICATION_SERVICE_NAME = "ApplicationService";
+    string constant CLAIM_SERVICE_NAME = "ClaimService";
+    string constant PRODUCT_SERVICE_NAME = "ProductService";
+    string constant POOL_SERVICE_NAME = "PoolService";
+    string constant BUNDLE_SERVICE_NAME = "BundleService";
+    string constant PRICING_SERVICE_NAME = "PricingService";
+    string constant DISTRIBUTION_SERVICE_NAME = "DistributionService";
+    string constant INSTANCE_SERVICE_NAME = "InstanceService";
+    string constant REGISTRY_SERVICE_NAME = "RegistryService";
+
     VersionPart public immutable _version;
     address public immutable _releaseManager;
-    address public immutable _accessManager;// release access manager
+    address public immutable _releaseAdmin;
     address public immutable _registry;
     address public immutable _owner;
     bytes32 public immutable _salt;
     address[] internal _addresses;
+    string[] internal _names;
     RoleId[][] internal _serviceRoles;
+    string[][] internal _serviceRoleNames;
     RoleId[][] internal _functionRoles;
+    string[][] internal _functionRoleNames;
     bytes4[][][] internal _selectors;
 
     constructor(ReleaseManager releaseManager, address owner, VersionPart version, bytes32 salt)
@@ -88,8 +116,8 @@ contract ReleaseConfig
             bytes.concat(
                 bytes32(_version.toInt()),
                 salt));
-        _accessManager = Clones.predictDeterministicAddress(
-            address(releaseManager._accessManager().authority()), // implementation
+        _releaseAdmin = Clones.predictDeterministicAddress(
+            address(releaseManager.getReleaseAdmin(version)), //.authority()), // implementation
             _salt,
             address(releaseManager)); // deployer
 
@@ -115,33 +143,45 @@ contract ReleaseConfig
         external 
         view 
         returns(
-            address serviceAddress, 
-            RoleId[] memory, 
-            RoleId[] memory, 
+            address serviceAddress,
+            string memory,
+            RoleId[] memory,
+            string[] memory,
+            RoleId[] memory,
+            string[] memory, 
             bytes4[][] memory
         )
     {
         return(
-            _addresses[serviceIdx], 
-            _serviceRoles[serviceIdx], 
-            _functionRoles[serviceIdx], 
+            _addresses[serviceIdx],
+            _names[serviceIdx],
+            _serviceRoles[serviceIdx],
+            _serviceRoleNames[serviceIdx],
+            _functionRoles[serviceIdx],
+            _functionRoleNames[serviceIdx],
             _selectors[serviceIdx]
         );
     }
 
-    function getConfig() 
+    function getConfig()
         external 
         view returns(
-            address[] memory, 
-            RoleId[][] memory, 
-            RoleId[][] memory, 
+            address[] memory,
+            string[] memory,
+            RoleId[][] memory,
+            string[][] memory,
+            RoleId[][] memory,
+            string[][] memory,
             bytes4[][][] memory
         )
     {
         return (
-            _addresses, 
-            _serviceRoles, 
+            _addresses,
+            _names,
+            _serviceRoles,
+            _serviceRoleNames,
             _functionRoles, 
+            _functionRoleNames,
             _selectors
         );
     }
@@ -153,12 +193,17 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(STAKING_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](1));
+        _serviceRoleNames.push(new string[](1));
         _functionRoles.push(new RoleId[](0));
+        _functionRoleNames.push(new string[](0));
         _selectors.push(new bytes4[][](0));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = STAKING_SERVICE_ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = STAKING_SERVICE_ROLE_NAME;
     }
 
     function _pushPolicyServiceConfig() internal
@@ -168,12 +213,17 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(POLICY_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](1));
+        _serviceRoleNames.push(new string[](1));
         _functionRoles.push(new RoleId[](0));
+        _functionRoleNames.push(new string[](0));
         _selectors.push(new bytes4[][](0));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = POLICY_SERVICE_ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = POLICY_SERVICE_ROLE_NAME;
     }
 
     function _pushApplicationServiceConfig() internal
@@ -183,12 +233,17 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(APPLICATION_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](1));
+        _serviceRoleNames.push(new string[](1));
         _functionRoles.push(new RoleId[](0));
+        _functionRoleNames.push(new string[](0));
         _selectors.push(new bytes4[][](0));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = APPLICATION_SERVICE_ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = APPLICATION_SERVICE_ROLE_NAME;
     }
 
     function _pushClaimServiceConfig() internal
@@ -198,12 +253,17 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(CLAIM_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](1));
+        _serviceRoleNames.push(new string[](1));
         _functionRoles.push(new RoleId[](0));
+        _functionRoleNames.push(new string[](0));
         _selectors.push(new bytes4[][](0));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = CLAIM_SERVICE_ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = CLAIM_SERVICE_ROLE_NAME;
     }
 
     function _pushProductServiceConfig() internal
@@ -213,13 +273,19 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(PRODUCT_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](2));
+        _serviceRoleNames.push(new string[](2));
         _functionRoles.push(new RoleId[](0));
+        _functionRoleNames.push(new string[](0));
         _selectors.push(new bytes4[][](0));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = PRODUCT_SERVICE_ROLE();
-        _serviceRoles[serviceIdx][1] = CAN_CREATE_GIF_TARGET_ROLE();
+        _serviceRoles[serviceIdx][1] = CAN_CREATE_GIF_TARGET__ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = PRODUCT_SERVICE_ROLE_NAME;
+        _serviceRoleNames[serviceIdx][1] = CAN_CREATE_GIF_TARGET__ROLE_NAME;
     }
 
     function _pushPoolServiceConfig() internal
@@ -229,13 +295,22 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(POOL_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](2));
+        _serviceRoleNames.push(new string[](2));
         _functionRoles.push(new RoleId[](2));
+        _functionRoleNames.push(new string[](2));
         _selectors.push(new bytes4[][](2));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = POOL_SERVICE_ROLE();
-        _serviceRoles[serviceIdx][1] = CAN_CREATE_GIF_TARGET_ROLE();
+        _serviceRoles[serviceIdx][1] = CAN_CREATE_GIF_TARGET__ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = POOL_SERVICE_ROLE_NAME;
+        _serviceRoleNames[serviceIdx][1] = CAN_CREATE_GIF_TARGET__ROLE_NAME;
+
+        _functionRoleNames[serviceIdx][0] = POLICY_SERVICE_ROLE_NAME;
+        _functionRoleNames[serviceIdx][1] = CLAIM_SERVICE_ROLE_NAME;
 
         _functionRoles[serviceIdx][0] = POLICY_SERVICE_ROLE();
         _selectors[serviceIdx][0] = new bytes4[](3);
@@ -255,12 +330,20 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(BUNDLE_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](1));
+        _serviceRoleNames.push(new string[](1));
         _functionRoles.push(new RoleId[](2));
+        _functionRoleNames.push(new string[](2));
         _selectors.push(new bytes4[][](2));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = BUNDLE_SERVICE_ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = BUNDLE_SERVICE_ROLE_NAME;
+
+        _functionRoleNames[serviceIdx][0] = POLICY_SERVICE_ROLE_NAME;
+        _functionRoleNames[serviceIdx][1] = POOL_SERVICE_ROLE_NAME;
 
         _functionRoles[serviceIdx][0] = POLICY_SERVICE_ROLE();
         _selectors[serviceIdx][0] = new bytes4[](1);
@@ -282,12 +365,17 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(PRICING_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](1));
+        _serviceRoleNames.push(new string[](1));
         _functionRoles.push(new RoleId[](0));
+        _functionRoleNames.push(new string[](0));
         _selectors.push(new bytes4[][](0));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = PRICING_SERVICE_ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = PRICING_SERVICE_ROLE_NAME;
     }
 
     function _pushDistributionServiceConfig() internal
@@ -297,13 +385,21 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(DISTRIBUTION_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](2));
+        _serviceRoleNames.push(new string[](2));
         _functionRoles.push(new RoleId[](1));
+        _functionRoleNames.push(new string[](1));
         _selectors.push(new bytes4[][](1));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = DISTRIBUTION_SERVICE_ROLE();
-        _serviceRoles[serviceIdx][1] = CAN_CREATE_GIF_TARGET_ROLE();
+        _serviceRoles[serviceIdx][1] = CAN_CREATE_GIF_TARGET__ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = DISTRIBUTION_SERVICE_ROLE_NAME;
+        _serviceRoleNames[serviceIdx][1] = CAN_CREATE_GIF_TARGET__ROLE_NAME;
+
+        _functionRoleNames[serviceIdx][0] = POLICY_SERVICE_ROLE_NAME;
 
         _functionRoles[serviceIdx][0] = POLICY_SERVICE_ROLE();
         _selectors[serviceIdx][0] = new bytes4[](1);
@@ -317,14 +413,21 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(INSTANCE_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](1));
+        _serviceRoleNames.push(new string[](1));
         _functionRoles.push(new RoleId[](1));
+        _functionRoleNames.push(new string[](1));
         _selectors.push(new bytes4[][](1));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = INSTANCE_SERVICE_ROLE();
 
-        _functionRoles[serviceIdx][0] = CAN_CREATE_GIF_TARGET_ROLE();
+        _serviceRoleNames[serviceIdx][0] = INSTANCE_SERVICE_ROLE_NAME;
+
+        _functionRoleNames[serviceIdx][0] = CAN_CREATE_GIF_TARGET__ROLE_NAME;
+
+        _functionRoles[serviceIdx][0] = CAN_CREATE_GIF_TARGET__ROLE();
         _selectors[serviceIdx][0] = new bytes4[](1);
         _selectors[serviceIdx][0][0] = InstanceService.createGifTarget.selector;
     }
@@ -336,12 +439,25 @@ contract ReleaseConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push(REGISTRY_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](1));
+        _serviceRoleNames.push(new string[](1));
         _functionRoles.push(new RoleId[](6));
+        _functionRoleNames.push(new string[](6));
         _selectors.push(new bytes4[][](6));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = REGISTRY_SERVICE_ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = REGISTRY_SERVICE_ROLE_NAME;
+
+        _functionRoleNames[serviceIdx][0] = APPLICATION_SERVICE_ROLE_NAME;
+        _functionRoleNames[serviceIdx][1] = PRODUCT_SERVICE_ROLE_NAME;
+        _functionRoleNames[serviceIdx][2] = POOL_SERVICE_ROLE_NAME;
+        _functionRoleNames[serviceIdx][3] = BUNDLE_SERVICE_ROLE_NAME;
+        _functionRoleNames[serviceIdx][4] = DISTRIBUTION_SERVICE_ROLE_NAME;
+        _functionRoleNames[serviceIdx][5] = INSTANCE_SERVICE_ROLE_NAME;
+        
 
         _functionRoles[serviceIdx][0] = APPLICATION_SERVICE_ROLE();
         _selectors[serviceIdx][0] = new bytes4[](1);
@@ -372,7 +488,7 @@ contract ReleaseConfig
     function _computeProxyManagerAddress(bytes memory creationCode) internal view returns(address) {
         bytes memory initCode = abi.encodePacked(
             creationCode, 
-            abi.encode(_accessManager, _registry, _salt));
+            abi.encode(_releaseAdmin, _registry, _salt));
         return Create2.computeAddress(_salt, keccak256(initCode), _owner);
     }
 
@@ -385,7 +501,7 @@ contract ReleaseConfig
         bytes memory data = abi.encode(
             _registry, 
             proxyManager, 
-            _accessManager);
+            _releaseAdmin);
 
         data = abi.encodeWithSelector(
             IVersionable.initializeVersionable.selector,

@@ -23,7 +23,7 @@ import {zeroObjectType} from "../../contracts/type/ObjectType.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
-import {AccessManagerUpgradeableInitializeable} from "../../contracts/shared/AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerExtendedInitializeable} from "../../contracts/shared/AccessManagerExtendedInitializeable.sol";
 import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWithAdmin.sol";
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -128,7 +128,7 @@ contract TestGifBase is Test {
     BundleService public bundleService;
     NftId public bundleServiceNftId;
 
-    AccessManagerUpgradeableInitializeable public masterOzAccessManager;
+    AccessManagerExtendedInitializeable public masterOzAccessManager;
     InstanceAccessManager public masterInstanceAccessManager;
     BundleManager public masterBundleManager;
     InstanceStore public masterInstanceStore;
@@ -136,7 +136,7 @@ contract TestGifBase is Test {
     NftId public masterInstanceNftId;
     InstanceReader public masterInstanceReader;
 
-    AccessManagerUpgradeableInitializeable public ozAccessManager;
+    AccessManagerExtendedInitializeable public instanceOzAccessManager;
     InstanceAccessManager public instanceAccessManager;
     BundleManager public instanceBundleManager;
     InstanceStore public instanceStore;
@@ -217,7 +217,7 @@ contract TestGifBase is Test {
         _deployMasterInstance();
         vm.stopPrank();
 
-        vm.startPrank(address(registryOwner)); 
+        vm.startPrank(registryOwner); 
         _deployAndActivateToken();
         vm.stopPrank();
 
@@ -318,19 +318,21 @@ contract TestGifBase is Test {
 
     function _deployAndRegisterServices() internal 
     {
-        bytes32 salt = "0x1234";
         VersionPart version = VersionPartLib.toVersionPart(3);
 
         ReleaseConfig config = new ReleaseConfig(
             releaseManager,
             registryOwner,
             version,
-            salt);
+            "0x1234");
 
         (
             address[] memory serviceAddrs,
+            string[] memory serviceNames,
             RoleId[][] memory serviceRoles,
+            string[][] memory serviceRoleNames,
             RoleId[][] memory functionRoles,
+            string[][] memory functionRoleNames,
             bytes4[][][] memory selectors
         ) = config.getConfig();
 
@@ -339,14 +341,22 @@ contract TestGifBase is Test {
         (
             address releaseAccessManager, 
             VersionPart releaseVersion,
-            bytes32 releaseSalt
-        ) = releaseManager.prepareNextRelease(serviceAddrs, serviceRoles, functionRoles, selectors, salt);
+            bytes32 salt
+        ) = releaseManager.prepareNextRelease(
+            serviceAddrs, 
+            serviceNames, 
+            serviceRoles, 
+            serviceRoleNames, 
+            functionRoles,
+            functionRoleNames,
+            selectors, 
+            "0x1234");
 
-        salt = releaseSalt;
+        //salt = releaseSalt;
 
         // solhint-disable
         console.log("release version", releaseVersion.toInt());
-        console.log("release salt", uint(releaseSalt));
+        console.log("release salt", uint(salt));
         console.log("release access manager deployed at", address(releaseAccessManager));
         console.log("release services count", serviceAddrs.length);
         // solhint-enable
@@ -354,7 +364,7 @@ contract TestGifBase is Test {
         // --- registry service ---------------------------------//
         registryServiceManager = new RegistryServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         registryService = registryServiceManager.getRegistryService();
-        releaseManager.registerService(registryService); 
+        releaseManager.registerService(registryService);
 
         // solhint-disable
         console.log("registry service proxy manager deployed at", address(registryServiceManager));
@@ -502,20 +512,15 @@ contract TestGifBase is Test {
         policyServiceNftId = releaseManager.registerService(policyService);
 
         // solhint-disable
-        console.log("policy service proxy manager deployed at", address(policyServiceManager));
-        console.log("policy service proxy manager linked to nft id", policyServiceManager.getNftId().toInt());
-        console.log("policy service proxy manager owner", policyServiceManager.getOwner());
-        console.log("policy service deployed at", address(policyService));
-        console.log("policy service nft id", policyService.getNftId().toInt());
-        console.log("policy service domain", policyService.getDomain().toInt());
-        console.log("policy service owner", policyService.getOwner());
-        console.log("policy service authority", policyService.authority());
+        console.log("policyService domain", policyService.getDomain().toInt());
+        console.log("policyService deployed at", address(policyService));
+        console.log("policyService nft id", policyService.getNftId().toInt());
         // solhint-enable
 
         // --- stacking service ---------------------------------//
         stakingServiceManager = new StakingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         stakingService = stakingServiceManager.getStakingService();
-        stakingServiceNftId = releaseManager.registerService(stakingService); 
+        stakingServiceNftId = releaseManager.registerService(stakingService);
 
         // solhint-disable
         console.log("stacking service proxy manager deployed at", address(stakingServiceManager));
@@ -533,7 +538,7 @@ contract TestGifBase is Test {
 
     function _deployMasterInstance() internal 
     {
-        masterOzAccessManager = new AccessManagerUpgradeableInitializeable();
+        masterOzAccessManager = new AccessManagerExtendedInitializeable();
         // grants registryOwner ADMIN_ROLE
         masterOzAccessManager.initialize(registryOwner);
         
@@ -547,7 +552,6 @@ contract TestGifBase is Test {
         masterInstanceStore = new InstanceStore();
         masterInstanceStore.initialize(address(masterInstance));
         masterInstance.setInstanceStore(masterInstanceStore);
-        assert(masterInstance.getInstanceStore() == masterInstanceStore);
 
         masterInstanceReader = new InstanceReader();
         masterInstanceReader.initialize(address(masterInstance));
@@ -569,7 +573,7 @@ contract TestGifBase is Test {
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 
         // revoke ADMIN_ROLE from all members
-        masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(masterInstanceAccessManager));
+        masterOzAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin));
         masterOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
 
         // solhint-disable
@@ -591,7 +595,7 @@ contract TestGifBase is Test {
         ) = instanceService.createInstanceClone();
 
         instanceAccessManager = instance.getInstanceAccessManager();
-        ozAccessManager = AccessManagerUpgradeableInitializeable(instance.authority());
+        instanceOzAccessManager = AccessManagerExtendedInitializeable(instance.authority());
         instanceReader = instance.getInstanceReader();
         instanceBundleManager = instance.getBundleManager();
         instanceStore = instance.getInstanceStore();
@@ -599,7 +603,7 @@ contract TestGifBase is Test {
         // solhint-disable
         console.log("cloned instance deployed at", address(instance));
         console.log("cloned instance nft id", instanceNftId.toInt());
-        console.log("cloned oz access manager deployed at", address(ozAccessManager));
+        console.log("cloned oz access manager deployed at", address(instanceOzAccessManager));
         console.log("cloned instance access manager deployed at", address(instanceAccessManager));
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle manager deployed at", address(instanceBundleManager));
@@ -727,8 +731,8 @@ contract TestGifBase is Test {
 
     function _prepareDistributionAndPool() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceOzAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
@@ -763,7 +767,7 @@ contract TestGifBase is Test {
 
     function _preparePool() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
