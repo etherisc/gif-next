@@ -8,7 +8,7 @@ import {NftId} from "../type/NftId.sol";
 import {RoleId, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE} from "../type/ObjectType.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
-import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 
 import {IService} from "../shared/IService.sol";
 import {AccessManagerExtendedWithDisableInitializeable} from "../shared/AccessManagerExtendedWithDisableInitializeable.sol";
@@ -44,6 +44,10 @@ contract ReleaseManager is AccessManaged
     error ErrorReleaseManagerReleaseRegistrationNotFinished(VersionPart releaseVersion, uint awaitingRegistration);
     error ErrorReleaseManagerReleaseAlreadyActivated(VersionPart releaseVersion);
 
+    // disableRelease
+    error ErrorReleaseManagerReleaseNotActivated(VersionPart releaseVersion);
+    error ErrorReleaseManagerReleaseAlreadyDisabled(VersionPart releaseVersion);
+
     // _verifyService
     error ErrorReleaseManagerServiceReleaseAuthorityMismatch(IService service, address serviceAuthority, address releaseAuthority);
     error ErrorReleaseManagerServiceReleaseVersionMismatch(IService service, VersionPart serviceVersion, VersionPart releaseVersion);
@@ -59,7 +63,7 @@ contract ReleaseManager is AccessManaged
     // _verifyServiceAuthorizations
     error ErrorReleaseManagerServiceRoleInvalid(address service, RoleId role);
 
-    RegistryAdmin public immutable _accessManager;
+    RegistryAdmin public immutable _admin;
     address public immutable _releaseAccessManagerCodeAddress;
     IRegistry public immutable _registry;
 
@@ -74,11 +78,11 @@ contract ReleaseManager is AccessManaged
     uint internal _awaitingRegistration; // "services left to register" counter
 
     constructor(
-        RegistryAccessManager accessManager, 
+        RegistryAdmin admin, 
         VersionPart initialVersion)
-        AccessManaged(accessManager.authority())
+        AccessManaged(admin.authority())
     {
-        _accessManager = accessManager;
+        _admin = admin;
         _initial = initialVersion;
         _next = VersionPartLib.toVersionPart(initialVersion.toInt() - 1);
         _registry = new Registry();
@@ -222,6 +226,54 @@ contract ReleaseManager is AccessManaged
 
         emit LogReleaseActivation(version);
     }
+    
+    // TODO rename activatedAt to createdAt
+    // consider lastActivatedAt
+    function disableRelease(VersionPart version)
+        external
+        restricted // GIF_ADMIN_ROLE
+    {
+        // release was activated
+        if(_releaseInfo[version].activatedAt.eqz()) {
+            revert ErrorReleaseManagerReleaseNotActivated(version);
+        }
+
+        // release not disabled already
+        if(_releaseInfo[version].disabledAt.gtz()) {
+            revert ErrorReleaseManagerReleaseAlreadyDisabled(version);
+        }
+
+        // disable release access manager
+        _releaseAccessManager[version].disable();
+        
+        // disable registry service
+        address registryServiceAddress = _registry.getServiceAddress(REGISTRY(), version);
+        _active[registryServiceAddress] = false;
+
+        _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp();
+    }
+    // TODO consider reenable delay (few month), after expiration can not enable back
+    // after expiration release is not maintained in case of error:
+    // 1). we will not emeregency shutdown because of no fixing will be done -> right
+    // 2). we can shutdown but it never be enabled afterwards
+    function enableRelease(VersionPart version)
+        external
+        restricted // GIF_ADMIN_ROLE
+    {
+        // release not disabled already
+        if(_releaseInfo[version].disabledAt.eqz()) {
+            //revert ErrorReleaseManagerReleaseAlreadyDisabled(version);
+        }
+
+        // disable release access manager
+        _releaseAccessManager[version].enable();
+        
+        // disable registry service
+        address registryServiceAddress = _registry.getServiceAddress(REGISTRY(), version);
+        _active[registryServiceAddress] = true;
+
+        _releaseInfo[version].disabledAt = zeroTimestamp();
+    }
 
     //--- view functions ----------------------------------------------------//
 
@@ -263,7 +315,7 @@ contract ReleaseManager is AccessManaged
         return _initial;
     }
 
-    function getReleaseAccessManager(VersionPart version) external view returns(AccessManagerUpgradeableInitializeable) {
+    function getReleaseAccessManager(VersionPart version) external view returns(AccessManagerExtendedWithDisableInitializeable) {
         return _releaseAccessManager[version];
     }
 
