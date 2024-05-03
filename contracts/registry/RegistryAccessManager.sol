@@ -1,14 +1,12 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 
 import {RoleId, RoleIdLib, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
@@ -26,29 +24,33 @@ import {ReleaseManager} from "./ReleaseManager.sol";
 
 */
 
-contract RegistryAccessManager is AccessManaged, Initializable
+contract RegistryAccessManager is AccessManaged, Initializable 
 {
     error ErrorRegistryAccessManagerReleaseManagerAuthorityMismatch();
     error ErrorRegistryAccessManagerTokenRegistryZero();
+
+    string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
+    string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
+
+    string public constant RELEASE_MANAGER_TARGET_NAME = "ReleaseManager";
+    //string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
 
     uint64 public constant UNIQUE_ROLE_ID_MIN = 1000000;
     
     address private _releaseManager;
     address private _tokenRegistry;
 
-    uint64 private _idNext; // role id
-
-
-    // IMPORTNAT: this.authority() must be valid before initialize() function....
-    // -> have constructor and initializer function
+    // IMPORTNAT: this.authority() must be valid before initialize() function
+    // -> have both, constructor and initializer
     constructor()
         AccessManaged(msg.sender)
     {
-        AccessManagerUpgradeableInitializeable accessManager = new AccessManagerUpgradeableInitializeable();
+        AccessManagerExtendedInitializeable accessManager = new AccessManagerExtendedInitializeable();
         accessManager.initialize(address(this));
         setAuthority(address(accessManager));
     }
 
+    /// @dev any body can call this function
     function initialize(address admin, address manager, address releaseManager, address tokenRegistry)
         external
         initializer
@@ -63,7 +65,12 @@ contract RegistryAccessManager is AccessManaged, Initializable
 
         _releaseManager = releaseManager;
         _tokenRegistry = tokenRegistry;
-        _idNext = UNIQUE_ROLE_ID_MIN;
+
+        _createRole(GIF_ADMIN_ROLE(), GIF_ADMIN_ROLE_NAME);
+        _createRole(GIF_MANAGER_ROLE(), GIF_MANAGER_ROLE_NAME);
+
+        _createTarget(_releaseManager, RELEASE_MANAGER_TARGET_NAME);
+        //_createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME);
 
         _setAdminRole();
         _setManagerRole();
@@ -73,7 +80,7 @@ contract RegistryAccessManager is AccessManaged, Initializable
 
         _setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
     }
-
+    // in instance access mamanger it done differently -> instance have role and calls instance access manager revoke()/grant()
     /*function transferAdmin(address to)
         external
         restricted // only with GIF_ADMIN_ROLE or nft owner
@@ -103,8 +110,8 @@ contract RegistryAccessManager is AccessManaged, Initializable
         bytes4[] memory functionSelector = new bytes4[](1);
 
         // for TokenRegistry
-        functionSelector[0] = TokenRegistry.setActive.selector;
-        _setTargetFunctionRole(address(_tokenRegistry), functionSelector, GIF_MANAGER_ROLE());
+        //functionSelector[0] = TokenRegistry.setActive.selector;
+        //_setTargetFunctionRole(_tokenRegistry, functionSelector, GIF_MANAGER_ROLE());
 
         // for ReleaseManager
         functionSelector[0] = ReleaseManager.registerService.selector;
@@ -115,18 +122,22 @@ contract RegistryAccessManager is AccessManaged, Initializable
     }
 
     function _setTargetFunctionRole(address target, bytes4[] memory selectors, RoleId roleId) private {
-        AccessManager(authority()).setTargetFunctionRole(target, selectors, roleId.toInt());        
+        AccessManagerUpgradeableInitializeableExtended(authority()).setTargetFunctionRole(target, selectors, roleId.toInt());        
     }
 
     function _setRoleAdmin(RoleId roleId, RoleId adminRoleId) private {
-        AccessManager(authority()).setRoleAdmin(roleId.toInt(), adminRoleId.toInt());
+        AccessManagerUpgradeableInitializeableExtended(authority()).setRoleAdmin(roleId.toInt(), adminRoleId.toInt());
     }
 
     function _grantRole(RoleId roleId, address account, uint32 executionDelay) private {
-        AccessManager(authority()).grantRole(roleId.toInt(), account, executionDelay);
+        AccessManagerUpgradeableInitializeableExtended(authority()).grantRole(roleId.toInt(), account, executionDelay);
     }
 
-    function _getNextRoleId() private returns(RoleId roleId) {
-        roleId = RoleIdLib.toRoleId(_idNext++);
+    function _createRole(RoleId roleId, string memory roleName) private {
+        AccessManagerUpgradeableInitializeableExtended(authority()).createRole(roleId.toInt(), roleName);
+    }
+
+    function _createTarget(address target, string memory targetName) private {
+        AccessManagerUpgradeableInitializeableExtended(authority()).createTarget(target, targetName);
     }
 }
