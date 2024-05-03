@@ -12,6 +12,7 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UpgradableProxyWithAdmin} from "./UpgradableProxyWithAdmin.sol";
 import {Version, VersionLib} from "../type/Version.sol";
+import {NftId} from "../type/NftId.sol";
 
 /// @dev manages proxy deployments for upgradable contracs of type IVersionable
 contract ProxyManager is
@@ -130,6 +131,10 @@ contract ProxyManager is
 
         emit LogProxyManagerVersionableUpgraded(address(_proxy), newImplementation);
 
+    }
+
+    function linkToProxy() public returns (NftId) {
+        return linkToNftOwnable(address(_proxy));
     }
 
     function getDeployData(address proxyOwner, bytes memory deployData) public pure returns (bytes memory data) {

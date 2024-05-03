@@ -365,6 +365,7 @@ contract TestGifBase is Test {
         registryServiceManager = new RegistryServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         registryService = registryServiceManager.getRegistryService();
         releaseManager.registerService(registryService);
+        registryServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("registry service proxy manager deployed at", address(registryServiceManager));
@@ -381,6 +382,7 @@ contract TestGifBase is Test {
         instanceServiceManager = new InstanceServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         instanceService = instanceServiceManager.getInstanceService();
         instanceServiceNftId = releaseManager.registerService(instanceService);
+        instanceServiceManager.linkToProxy();
 
         // solhint-disable 
         console.log("instance service proxy manager deployed at", address(instanceServiceManager));
@@ -397,6 +399,7 @@ contract TestGifBase is Test {
         distributionServiceManager = new DistributionServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         distributionService = distributionServiceManager.getDistributionService();
         distributionServiceNftId = releaseManager.registerService(distributionService);
+        distributionServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("distribution service proxy manager deployed at", address(distributionServiceManager));
@@ -413,6 +416,7 @@ contract TestGifBase is Test {
         pricingServiceManager = new PricingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         pricingService = pricingServiceManager.getPricingService();
         pricingServiceNftId = releaseManager.registerService(pricingService);
+        pricingServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("pricing service proxy manager deployed at", address(pricingServiceManager));
@@ -429,6 +433,7 @@ contract TestGifBase is Test {
         bundleServiceManager = new BundleServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         bundleService = bundleServiceManager.getBundleService();
         bundleServiceNftId = releaseManager.registerService(bundleService);
+        bundleServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("bundle service proxy manager deployed at", address(bundleServiceManager));
@@ -445,6 +450,7 @@ contract TestGifBase is Test {
         poolServiceManager = new PoolServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         poolService = poolServiceManager.getPoolService();
         poolServiceNftId = releaseManager.registerService(poolService);
+        poolServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("pool service proxy manager deployed at", address(poolServiceManager));
@@ -461,6 +467,7 @@ contract TestGifBase is Test {
         productServiceManager = new ProductServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         productService = productServiceManager.getProductService();
         productServiceNftId = releaseManager.registerService(productService);
+        productServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("product service proxy manager deployed at", address(productServiceManager));
@@ -478,6 +485,7 @@ contract TestGifBase is Test {
         claimServiceManager = new ClaimServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         claimService = claimServiceManager.getClaimService();
         claimServiceNftId = releaseManager.registerService(claimService);
+        claimServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("claim service proxy manager deployed at", address(claimServiceManager));
@@ -494,6 +502,7 @@ contract TestGifBase is Test {
         applicationServiceManager = new ApplicationServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         applicationService = applicationServiceManager.getApplicationService();
         applicationServiceNftId = releaseManager.registerService(applicationService);
+        applicationServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("application service proxy manager deployed at", address(applicationServiceManager));
@@ -510,6 +519,7 @@ contract TestGifBase is Test {
         policyServiceManager = new PolicyServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         policyService = policyServiceManager.getPolicyService();
         policyServiceNftId = releaseManager.registerService(policyService);
+        policyServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("policyService domain", policyService.getDomain().toInt());
@@ -521,6 +531,7 @@ contract TestGifBase is Test {
         stakingServiceManager = new StakingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         stakingService = stakingServiceManager.getStakingService();
         stakingServiceNftId = releaseManager.registerService(stakingService);
+        stakingServiceManager.linkToProxy();
 
         // solhint-disable
         console.log("stacking service proxy manager deployed at", address(stakingServiceManager));

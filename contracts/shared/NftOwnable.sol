@@ -6,7 +6,7 @@ import {INftOwnable} from "./INftOwnable.sol";
 import {NftId} from "../type/NftId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
 
-contract NftOwnable is
+abstract contract NftOwnable is
     ERC165,
     RegistryLinked,
     INftOwnable
@@ -57,19 +57,18 @@ contract NftOwnable is
         public
         virtual
     {
-        NftOwnableStorage storage $ = _getNftOwnableStorage();
+        _linkToNftOwnable(address(this));
+    }
 
-        if ($._nftId.gtz()) {
-            revert ErrorNftOwnableAlreadyLinked($._nftId);
-        }
-
-        address contractAddress = address(this);
-
-        if (!getRegistry().isRegistered(contractAddress)) {
-            revert ErrorNftOwnableContractNotRegistered(contractAddress);
-        }
-
-        $._nftId = getRegistry().getNftId(contractAddress);
+    /// @dev links this contract to nft associated with provided address
+    function linkToNftOwnable(
+        address nftOwnableAddress
+    )
+        public
+        onlyOwner
+        returns (NftId)
+    {
+        return _linkToNftOwnable(nftOwnableAddress);
     }
 
     function getNftId() public view virtual override returns (NftId) {
