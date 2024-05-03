@@ -44,8 +44,11 @@ contract RegistryServiceTestConfig
     address public immutable _owner;
     bytes32 public immutable _salt;
     address[] internal _addresses;
+    string[] internal _names;
     RoleId[][] internal _serviceRoles;
+    string[][] internal _serviceRoleNames;
     RoleId[][] internal _functionRoles;
+    string[][] internal _functionRoleNames;
     bytes4[][][] internal _selectors;
 
     constructor(
@@ -65,7 +68,7 @@ contract RegistryServiceTestConfig
                 bytes32(_version.toInt()),
                 salt));
         _accessManager = Clones.predictDeterministicAddress(
-            address(releaseManager._accessManager().authority()), // implementation
+            address(releaseManager.getReleaseAdmin(version)), // implementation
             _salt,
             address(releaseManager)); // deployer
 
@@ -80,16 +83,22 @@ contract RegistryServiceTestConfig
         external 
         view 
         returns(
-            address serviceAddress, 
+            address serviceAddress,
+            string memory serviceName,
             RoleId[] memory, 
+            string[] memory,
             RoleId[] memory, 
+            string[] memory,
             bytes4[][] memory
         )
     {
         return(
-            _addresses[serviceIdx], 
-            _serviceRoles[serviceIdx], 
+            _addresses[serviceIdx],
+            _names[serviceIdx],
+            _serviceRoles[serviceIdx],
+            _serviceRoleNames[serviceIdx], 
             _functionRoles[serviceIdx], 
+            _functionRoleNames[serviceIdx],
             _selectors[serviceIdx]
         );
     }
@@ -97,16 +106,22 @@ contract RegistryServiceTestConfig
     function getConfig() 
         external 
         view returns(
-            address[] memory, 
+            address[] memory,
+            string[] memory,
+            RoleId[][] memory,
+            string[][] memory,
             RoleId[][] memory, 
-            RoleId[][] memory, 
+            string[][] memory,
             bytes4[][][] memory
         )
     {
         return (
-            _addresses, 
+            _addresses,
+            _names, 
             _serviceRoles, 
+            _serviceRoleNames,
             _functionRoles, 
+            _functionRoleNames,
             _selectors
         );
     }
@@ -118,12 +133,17 @@ contract RegistryServiceTestConfig
         address proxyAddress = _computeProxyAddress(implementation, proxyManager);
 
         _addresses.push(proxyAddress);
+        _names.push("RegistryService");
         _serviceRoles.push(new RoleId[](1));
+        _serviceRoleNames.push(new string[](1));
         _functionRoles.push(new RoleId[](0));
+        _functionRoleNames.push(new string[](0));
         _selectors.push(new bytes4[][](0));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = REGISTRY_SERVICE_ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = "REGISTRY_SERVICE_ROLE";
     }
 
     function _computeProxyManagerAddress(bytes memory creationCode) internal view returns(address) {

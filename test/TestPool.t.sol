@@ -57,7 +57,7 @@ contract TestPool is TestGifBase {
 
     function test_Pool_setupInfo() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
@@ -99,7 +99,7 @@ contract TestPool is TestGifBase {
 
     function test_Pool_setFees() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
@@ -146,7 +146,7 @@ contract TestPool is TestGifBase {
         _fundInvestor();
 
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
@@ -314,7 +314,7 @@ contract TestPool is TestGifBase {
         _fundInvestor();
 
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceAdmin.grantRole(POOL_OWNER_ROLE(), poolOwner);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);

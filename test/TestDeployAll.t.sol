@@ -32,12 +32,12 @@ contract TestDeployAll is TestGifBase {
 
         // validate master instance
         assertTrue(registry.getNftId(address(masterInstance)).eq(masterInstanceNftId), "master instance nft does not match");
-        assertTrue(address(masterInstanceAccessManager) != address(0), "master instance access manager is zero address");
+        assertTrue(address(masterInstanceAdmin) != address(0), "master instance admin is zero address");
         assertTrue(address(masterInstanceReader) != address(0), "master instance reader is zero address");
 
         // validate created (cloned) instance
         assertTrue(registry.getNftId(address(instance)).eq(instanceNftId), "instance nft does not match");
-        assertTrue(address(instanceAccessManager) != address(0), "instance access manager is zero address");
+        assertTrue(address(instanceAdmin) != address(0), "instance admin is zero address");
         assertTrue(address(instanceReader) != address(0), "instance reader is zero address");
     }
 

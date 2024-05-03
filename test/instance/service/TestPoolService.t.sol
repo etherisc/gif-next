@@ -37,7 +37,7 @@ contract TestPoolService is TestGifBase {
 
     function test_PoolService_register() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);

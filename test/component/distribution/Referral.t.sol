@@ -280,8 +280,8 @@ contract ReferralTest is ReferralTestBase {
 
     function _setupPoolAndProduct() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instanceOzAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);

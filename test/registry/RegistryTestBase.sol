@@ -28,7 +28,7 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
-import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 //import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
 
@@ -105,45 +105,56 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
 
     function _deployRegistryServiceMock() internal
     {
-        bytes32 salt = "0x5678";
+        //bytes32 salt = "0x5678";
+        {
+            // RegistryServiceManagerMock first deploys RegistryService and then upgrades it to RegistryServiceMock
+            // thus address is computed with RegistryService bytecode instead of RegistryServiceMock...
+            RegistryServiceTestConfig config = new RegistryServiceTestConfig(
+                releaseManager,
+                type(RegistryServiceManagerMock).creationCode, // proxy manager
+                type(RegistryService).creationCode, // implementation
+                registryOwner,
+                VersionPartLib.toVersionPart(3),
+                "0x5678");//salt);
 
-        // RegistryServiceManagerMock first deploys RegistryService and then upgrades to RegistryServiceMock
-        // thus address is computed with RegistryService bytecode instead of RegistryServiceMock...
-        RegistryServiceTestConfig config = new RegistryServiceTestConfig(
-            releaseManager,
-            type(RegistryServiceManagerMock).creationCode, // proxy manager
-            type(RegistryService).creationCode, // implementation
-            registryOwner,
-            VersionPartLib.toVersionPart(3),
-            salt);
+            (
+                address[] memory serviceAddresses,
+                string[] memory serviceNames,
+                RoleId[][] memory serviceRoles,
+                string[][] memory serviceRoleNames,
+                RoleId[][] memory functionRoles,
+                string[][] memory functionRoleNames,
+                bytes4[][][] memory selectors
+            ) = config.getConfig();
 
-        (
-            address[] memory serviceAddress,
-            RoleId[][] memory serviceRoles,
-            RoleId[][] memory functionRoles,
-            bytes4[][][] memory selectors
-        ) = config.getConfig();
+            releaseManager.createNextRelease();
 
-        releaseManager.createNextRelease();
+            (
+                address releaseAccessManager,
+                VersionPart releaseVersion,
+                bytes32 releaseSalt
+            ) = releaseManager.prepareNextRelease(
+                serviceAddresses, 
+                serviceNames, 
+                serviceRoles, 
+                serviceRoleNames, 
+                functionRoles,
+                functionRoleNames,
+                selectors, 
+                "0x5678");//salt);
 
-        (
-            address releaseAccessManager,
-            VersionPart releaseVersion,
-            bytes32 releaseSalt
-        ) = releaseManager.prepareNextRelease(serviceAddress, serviceRoles, functionRoles, selectors, salt);
-
-        registryServiceManagerMock = new RegistryServiceManagerMock{salt: releaseSalt}(
-            releaseAccessManager, 
-            registryAddress, 
-            releaseSalt);
-
+            registryServiceManagerMock = new RegistryServiceManagerMock{salt: releaseSalt}(
+                releaseAccessManager, 
+                registryAddress, 
+                releaseSalt);
+        }
         registryServiceMock = RegistryServiceMock(address(registryServiceManagerMock.getRegistryService()));
 
         releaseManager.registerService(registryServiceMock);
 
         releaseManager.activateNextRelease();
 
-        registryServiceManagerMock.linkOwnershipToServiceNft();
+        registryServiceManagerMock.linkToProxy();
     }
 
     // call right after registry deployment, before checks
@@ -559,10 +570,10 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         }
         else
         {
-            nftId = toNftId(chainNft.calculateTokenId(_nextId));
+            NftId expectedNftId = toNftId(chainNft.calculateTokenId(_nextId));
             vm.expectEmit();
             emit LogRegistration(
-                nftId,
+                expectedNftId,
                 info.parentNftId, 
                 info.objectType, 
                 info.isInterceptor,
@@ -631,7 +642,7 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         }
     }
 
-    function _registerServiceChecks(IRegistry.ObjectInfo memory info, VersionPart version, ObjectType domain) internal returns (bool expectRevert, bytes memory expectedRevertMsg)
+    function _registerServiceChecks(IRegistry.ObjectInfo memory info, VersionPart version, ObjectType domain) internal view returns (bool expectRevert, bytes memory expectedRevertMsg) 
     {
         if(_sender != address(releaseManager)) 
         {// auth check
@@ -652,7 +663,7 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         } 
     }
 
-    function _registerChecks(IRegistry.ObjectInfo memory info) internal returns (bool expectRevert, bytes memory expectedRevertMsg)
+    function _registerChecks(IRegistry.ObjectInfo memory info) internal view returns (bool expectRevert, bytes memory expectedRevertMsg)
     {
         NftId parentNftId = info.parentNftId;
         ObjectType parentType = _info[parentNftId].objectType;
@@ -678,7 +689,7 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         }
     }
 
-    function _internalRegisterChecks(IRegistry.ObjectInfo memory info) internal returns (bool expectRevert, bytes memory expectedRevertMsg)
+    function _internalRegisterChecks(IRegistry.ObjectInfo memory info) internal view returns (bool expectRevert, bytes memory expectedRevertMsg)
     {
         NftId parentNftId = info.parentNftId;
         address parentAddress = _info[parentNftId].objectAddress;

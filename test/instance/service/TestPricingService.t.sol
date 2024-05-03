@@ -343,9 +343,9 @@ contract TestPricingService is TestGifBase {
         Fee memory productFee
     ) internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        instanceOzAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instanceOzAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
         vm.stopPrank();
 
         // -- setup distribution

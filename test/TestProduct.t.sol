@@ -752,7 +752,7 @@ contract TestProduct is TestGifBase {
 
     function _prepareProduct() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        instanceOzAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
         vm.stopPrank();
 
         _prepareDistributionAndPool();
