@@ -15,7 +15,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {IAccess} from "./module/IAccess.sol";
 
-contract InstanceAccessManager is
+contract InstanceAdmin is
     AccessManagedUpgradeable
 {
     using RoleIdLib for RoleId;
@@ -23,7 +23,7 @@ contract InstanceAccessManager is
     string public constant INSTANCE_ROLE_NAME = "InstanceRole";
     string public constant INSTANCE_OWNER_ROLE_NAME = "InstanceOwnerRole";
 
-    string public constant INSTANCE_ACCESS_MANAGER_TARGET_NAME = "InstanceAccessManager";
+    string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
     uint32 public constant EXECUTION_DELAY = 0;
@@ -56,10 +56,10 @@ contract InstanceAccessManager is
         _createRole(INSTANCE_OWNER_ROLE(), INSTANCE_OWNER_ROLE_NAME, IAccess.Type.Core);
         _grantRole(INSTANCE_ROLE(), address(instance));
 
-        _createTarget(address(this), INSTANCE_ACCESS_MANAGER_TARGET_NAME, IAccess.Type.Core);
-        bytes4[] memory instanceAccessManagerInstanceSelectors = new bytes4[](1);
-        instanceAccessManagerInstanceSelectors[0] = this.transferInstanceOwnerRole.selector;
-        _setTargetFunctionRole(address(this), instanceAccessManagerInstanceSelectors, INSTANCE_ROLE());                
+        _createTarget(address(this), INSTANCE_ADMIN_TARGET_NAME, IAccess.Type.Core);
+        bytes4[] memory instanceAdminInstanceSelectors = new bytes4[](1);
+        instanceAdminInstanceSelectors[0] = this.transferInstanceOwnerRole.selector;
+        _setTargetFunctionRole(address(this), instanceAdminInstanceSelectors, INSTANCE_ROLE());                
     }
 
     //--- Role ------------------------------------------------------//
@@ -118,7 +118,7 @@ contract InstanceAccessManager is
         (bool hasRole, uint executionDelay) = _accessManager.hasRole(INSTANCE_ROLE().toInt(), address(_instance));
         assert(hasRole);
         assert(executionDelay == 0);
-        assert(_accessManager.getRoleAccessManager(INSTANCE_OWNER_ROLE().toInt()) == ADMIN_ROLE().toInt());
+        assert(_accessManager.getRoleAdmin(INSTANCE_OWNER_ROLE().toInt()) == ADMIN_ROLE().toInt());
         if(from != address(0)) { // nft transfer
             assert(_accessManager.getRoleMembers(INSTANCE_OWNER_ROLE().toInt()) == 1);
         } else { // nft minting 
@@ -269,6 +269,7 @@ contract InstanceAccessManager is
 
         _roleType[roleId] = rtype;
         _accessManager.createRole(roleId.toInt(), name);
+        //emit LogRoleCreation(roleId, name, rtype);
     }
 
     function _validateRole(RoleId roleId, IAccess.Type rtype)
@@ -305,7 +306,7 @@ contract InstanceAccessManager is
             revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, IAccess.Type.Core);
         }
 
-        _accessManager.setRoleAccessManager(roleId.toInt(), admin.toInt());
+        _accessManager.setRoleAdmin(roleId.toInt(), admin.toInt());
     }
 
     function _getNextCustomRoleId() 
@@ -328,7 +329,7 @@ contract InstanceAccessManager is
         _validateTarget(target, ttype);
         _targetType[target] = ttype;
         _accessManager.createTarget(target, name);
-
+        //emit LogTargetCreation(target, name, ttype, isLocked);
     }
 
     function _validateTarget(address target, IAccess.Type ttype) 

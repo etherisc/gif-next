@@ -16,16 +16,15 @@ import {DistributorType} from "../type/DistributorType.sol";
 
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
+import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IInstance} from "./IInstance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
-import {InstanceAccessManager} from "./InstanceAccessManager.sol";
+import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceStore} from "./InstanceStore.sol";
-
-import {KeyValueStore} from "./base/KeyValueStore.sol";
 
 import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";
@@ -49,7 +48,7 @@ contract Instance is
 
     bool private _initialized;
 
-    InstanceAccessManager internal _accessManager;
+    InstanceAdmin internal _instanceAdmin;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
     InstanceStore internal _instanceStore;
@@ -66,7 +65,7 @@ contract Instance is
         initializer()
     {
         if(authority == address(0)) {
-            revert ErrorInstanceInstanceAccessManagerZero();
+            revert ErrorInstanceInstanceAdminZero();
         }
 
         __AccessManaged_init(authority);
@@ -84,21 +83,21 @@ contract Instance is
         restricted // INSTANCE_OWNER_ROLE
         returns (RoleId roleId, RoleId admin)
     {
-        (roleId, admin) = _accessManager.createRole(roleName, adminName);
+        (roleId, admin) = _instanceAdmin.createRole(roleName, adminName);
     }
 
     function grantRole(RoleId roleId, address account) 
         external 
         restricted // INSTANCE_OWNER_ROLE
     {
-        _accessManager.grantRole(roleId, account);
+        AccessManagerExtendedInitializeable(authority()).grantRole(roleId.toInt(), account, 0);
     }
 
     function revokeRole(RoleId roleId, address account) 
         external 
         restricted // INSTANCE_OWNER_ROLE
     {
-        _accessManager.revokeRole(roleId, account);
+        AccessManagerExtendedInitializeable(authority()).revokeRole(roleId.toInt(), account);
     }
 
     //--- Targets ------------------------------------------------------------//
@@ -107,7 +106,7 @@ contract Instance is
         external 
         restricted // INSTANCE_OWNER_ROLE
     {
-        _accessManager.createTarget(target, name);
+        _instanceAdmin.createTarget(target, name);
     }
 
     function setTargetFunctionRole(
@@ -118,38 +117,40 @@ contract Instance is
         external 
         restricted // INSTANCE_OWNER_ROLE
     {
-        _accessManager.setTargetFunctionRole(targetName, selectors, roleId);
+        _instanceAdmin.setTargetFunctionRole(targetName, selectors, roleId);
     }
 
     function setTargetLocked(address target, bool locked)
         external 
         restricted // INSTANCE_OWNER_ROLE
     {
-        _accessManager.setTargetLockedByInstance(target, locked);
+        _instanceAdmin.setTargetLockedByInstance(target, locked);
     }
 
     //--- ITransferInterceptor ------------------------------------------------------------//
-
+    // TODO interception of child components nfts
     function nftMint(address to, uint256 tokenId) external onlyChainNft {
-        assert(_accessManager.roleMembers(INSTANCE_OWNER_ROLE()) == 0);// temp
-        assert(_accessManager.grantRole(INSTANCE_OWNER_ROLE(), to) == true);
+        _instanceAdmin.transferInstanceOwnerRole(address(0), to);
     }
 
     function nftTransferFrom(address from, address to, uint256 tokenId) external onlyChainNft {
-        assert(_accessManager.revokeRole(INSTANCE_OWNER_ROLE(), from) == true);
-        assert(_accessManager.grantRole(INSTANCE_OWNER_ROLE(), to) == true);
+        _instanceAdmin.transferInstanceOwnerRole(from, to);
     }
+
+    //function nftBurn(address from, uint256 tokenId) external onlyChainNft {
+        //_instanceAdmin.transferInstanceOwnerRole(from, address(0));
+    //}
 
     //--- initial setup functions -------------------------------------------//
 
-    function setInstanceAccessManager(InstanceAccessManager accessManager) external restricted {
-        if(address(_accessManager) != address(0)) {
-            revert ErrorInstanceInstanceAccessManagerAlreadySet(address(_accessManager));
+    function setInstanceAdmin(InstanceAdmin accessManager) external restricted {
+        if(address(_instanceAdmin) != address(0)) {
+            revert ErrorInstanceInstanceAdminAlreadySet(address(_instanceAdmin));
         }
         if(accessManager.authority() != authority()) {
-            revert ErrorInstanceInstanceAccessManagerAuthorityMismatch(authority());
+            revert ErrorInstanceInstanceAdminAuthorityMismatch(authority());
         }
-        _accessManager = accessManager;      
+        _instanceAdmin = accessManager;      
     }
     
     function setBundleManager(BundleManager bundleManager) external restricted() {
@@ -183,8 +184,8 @@ contract Instance is
         return _bundleManager;
     }
 
-    function getInstanceAccessManager() external view returns (InstanceAccessManager) {
-        return _accessManager;
+    function getInstanceAdmin() external view returns (InstanceAdmin) {
+        return _instanceAdmin;
     }
 
     function setInstanceStore(InstanceStore instanceStore) external restricted {

@@ -30,6 +30,7 @@ interface IRegistryService is
      error ErrorRegistryServiceRegisterableOwnerRegistered(IRegisterable registerable, address owner);
      error ErrorRegistryServiceRegisterableSelfRegistration(IRegisterable registerable);
 
+     error ErrorRegistryServiceObjectAddressNotZero(ObjectType objectType);
      error ErrorRegistryServiceObjectTypeInvalid(ObjectType expected, ObjectType found);
      error ErrorRegistryServiceObjectOwnerRegistered(ObjectType objectType, address owner);
      error ErrorRegistryServiceObjectOwnerZero(ObjectType objectType);

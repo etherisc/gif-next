@@ -16,7 +16,7 @@ import {AccessManagerExtendedWithDisableInitializeable} from "../shared/AccessMa
 import {IRegistry} from "./IRegistry.sol";
 import {Registry} from "./Registry.sol";
 import {IRegistryService} from "./IRegistryService.sol";
-import {RegistryAccessManager} from "./RegistryAccessManager.sol";
+import {RegistryAdmin} from "./RegistryAdmin.sol";
 
 
 contract ReleaseManager is AccessManaged
@@ -160,6 +160,11 @@ contract ReleaseManager is AccessManaged
             ObjectType domain,
             VersionPart version
         ) = _verifyService(service);
+
+        if(_awaitingRegistration == 0) {
+            // TODO either release is not created or registration is finished
+            revert ErrorReleaseManagerReleaseRegistrationNotFinished(version, _awaitingRegistration);
+        }
 
         uint serviceIdx = _awaitingRegistration - 1;
         address serviceAddress = _releaseInfo[version].addresses[serviceIdx];

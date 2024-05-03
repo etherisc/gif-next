@@ -29,7 +29,7 @@ import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWi
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -59,7 +59,7 @@ import {StakingServiceManager} from "../../contracts/staking/StakingServiceManag
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 
-import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
+import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
@@ -85,7 +85,7 @@ contract TestGifBase is Test {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    RegistryAccessManager registryAccessManager;
+    RegistryAdmin registryAdmin;
     ReleaseManager public releaseManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
@@ -129,7 +129,7 @@ contract TestGifBase is Test {
     NftId public bundleServiceNftId;
 
     AccessManagerExtendedInitializeable public masterOzAccessManager;
-    InstanceAccessManager public masterInstanceAccessManager;
+    InstanceAdmin public masterInstanceAdmin;
     BundleManager public masterBundleManager;
     InstanceStore public masterInstanceStore;
     Instance public masterInstance;
@@ -137,7 +137,7 @@ contract TestGifBase is Test {
     InstanceReader public masterInstanceReader;
 
     AccessManagerExtendedInitializeable public instanceOzAccessManager;
-    InstanceAccessManager public instanceAccessManager;
+    InstanceAdmin public instanceAdmin;
     BundleManager public instanceBundleManager;
     InstanceStore public instanceStore;
     Instance public instance;
@@ -277,10 +277,10 @@ contract TestGifBase is Test {
 
     function _deployRegistry() internal
     {
-        registryAccessManager = new RegistryAccessManager();
+        registryAdmin = new RegistryAdmin();
 
         releaseManager = new ReleaseManager(
-            registryAccessManager,
+            registryAdmin,
             VersionPartLib.toVersionPart(3));
 
         registryAddress = address(releaseManager.getRegistry());
@@ -293,7 +293,7 @@ contract TestGifBase is Test {
         // solhint-disable
         tokenRegistry = new TokenRegistry(registryAddress);
 
-        registryAccessManager.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
+        registryAdmin.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
 
         /* solhint-disable */
         console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
@@ -304,8 +304,8 @@ contract TestGifBase is Test {
         console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
         console.log("registry owner (opt 2)", registry.getOwner());
 
-        console.log("registry access manager deployed at", address(registryAccessManager));
-        console.log("registry access manager authority", registryAccessManager.authority());
+        console.log("registry admin deployed at", address(registryAdmin));
+        console.log("registry admin authority", registryAdmin.authority());
 
         console.log("release manager deployed at", address(releaseManager));
         console.log("release manager authority", releaseManager.authority());
@@ -561,10 +561,10 @@ contract TestGifBase is Test {
         masterBundleManager.initialize(address(masterInstance));
         masterInstance.setBundleManager(masterBundleManager);
 
-        masterInstanceAccessManager = new InstanceAccessManager();
-        masterOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAccessManager), 0);
-        masterInstanceAccessManager.initialize(address(masterInstance));
-        masterInstance.setInstanceAccessManager(masterInstanceAccessManager);
+        masterInstanceAdmin = new InstanceAdmin();
+        masterOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin), 0);
+        masterInstanceAdmin.initialize(address(masterInstance));
+        masterInstance.setInstanceAdmin(masterInstanceAdmin);
 
         // sets master instance address in instance service
         // instance service is now ready to create cloned instances
@@ -580,7 +580,7 @@ contract TestGifBase is Test {
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
         console.log("master oz access manager deployed at", address(masterOzAccessManager));
-        console.log("master instance access manager deployed at", address(masterInstanceAccessManager));
+        console.log("master instance admin deployed at", address(masterInstanceAdmin));
         console.log("master instance reader deployed at", address(masterInstanceReader));
         console.log("master bundle manager deployed at", address(masterBundleManager));
         console.log("master instance store deployed at", address(masterInstanceStore));
@@ -594,7 +594,7 @@ contract TestGifBase is Test {
             instanceNftId
         ) = instanceService.createInstanceClone();
 
-        instanceAccessManager = instance.getInstanceAccessManager();
+        instanceAdmin = instance.getInstanceAdmin();
         instanceOzAccessManager = AccessManagerExtendedInitializeable(instance.authority());
         instanceReader = instance.getInstanceReader();
         instanceBundleManager = instance.getBundleManager();
@@ -604,7 +604,7 @@ contract TestGifBase is Test {
         console.log("cloned instance deployed at", address(instance));
         console.log("cloned instance nft id", instanceNftId.toInt());
         console.log("cloned oz access manager deployed at", address(instanceOzAccessManager));
-        console.log("cloned instance access manager deployed at", address(instanceAccessManager));
+        console.log("cloned instance admin deployed at", address(instanceAdmin));
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle manager deployed at", address(instanceBundleManager));
         console.log("cloned instance store deployed at", address(instanceStore));

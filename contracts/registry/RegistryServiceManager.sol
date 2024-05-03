@@ -37,8 +37,8 @@ contract RegistryServiceManager is
             revert ErrorRegistryAccessManagerRegistryZero();
         }
         
-        // implementation's initializer func `data` argument
         RegistryService srv = new RegistryService{ salt: salt }();
+        // implementation's initializer func `data` argument
         bytes memory data = abi.encode(registry, address(this), authority);
         IVersionable versionable = deployDetermenistic(
             address(srv), 
@@ -46,18 +46,6 @@ contract RegistryServiceManager is
             salt);
 
         _registryService = RegistryService(address(versionable));
-
-//        _linkToNftOwnable(address(_registryService));
-    }
-
-    // // from IRegisterable
-
-    // // IMPORTANT: registry here and in constructor MUST be the same
-    function linkOwnershipToServiceNft()
-        public
-        onlyOwner
-    {
-        _linkToNftOwnable(address(_registryService));
     }
 
     //--- view functions ----------------------------------------------------//

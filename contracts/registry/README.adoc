@@ -8,7 +8,7 @@ Contains the registry related contracts.
 {{IRegistryService}}
 {{IRegistry}}
 {{ITransferInterceptor}}
-{{RegistryAccessManager}}
+{{RegistryAdmin}}
 {{RegistryServiceManager}}
 {{RegistryService}}
 {{Registry}}

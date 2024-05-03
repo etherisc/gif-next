@@ -1,5 +1,5 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleManager, IRegistry__factory, Instance, InstanceAccessManager, InstanceService__factory, InstanceReader, AccessManagerUpgradeableInitializeable, InstanceStore } from "../../typechain-types";
+import { BundleManager, IRegistry__factory, Instance, InstanceAdmin, InstanceService__factory, InstanceReader, AccessManagerUpgradeableInitializeable, InstanceStore } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -9,7 +9,7 @@ import { ServiceAddresses } from "./services";
 
 export type InstanceAddresses = {
     ozAccessManagerAddress: AddressLike,
-    instanceAccessManagerAddress: AddressLike,
+    InstanceAdminAddress: AddressLike,
     instanceReaderAddress: AddressLike,
     instanceBundleManagerAddress: AddressLike,
     instanceStoreAddress: AddressLike,
@@ -114,8 +114,8 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(() => bundleManager["initialize(address)"](instanceAddress));
     await executeTx(() => instance.setBundleManager(bundleManagerAddress));
 
-    const { address: instanceAccessManagerAddress, contract: instanceAccessManagerBaseContract } = await deployContract(
-        "InstanceAccessManager",
+    const { address: InstanceAdminAddress, contract: InstanceAdminBaseContract } = await deployContract(
+        "InstanceAdmin",
         owner,
         [],
         {
@@ -125,11 +125,11 @@ export async function deployAndRegisterMasterInstance(
             }
         }
     );
-    const instanceAccessManager = instanceAccessManagerBaseContract as InstanceAccessManager;
+    const InstanceAdmin = InstanceAdminBaseContract as InstanceAdmin;
     // grant admin role to master instance access manager
-    await executeTx(() => ozAccessManager.grantRole(0, instanceAccessManagerAddress, 0));
-    await executeTx(() => instanceAccessManager.initialize(instanceAddress));
-    await executeTx(() => instance.setInstanceAccessManager(instanceAccessManager));
+    await executeTx(() => ozAccessManager.grantRole(0, InstanceAdminAddress, 0));
+    await executeTx(() => InstanceAdmin.initialize(instanceAddress));
+    await executeTx(() => instance.setInstanceAdmin(InstanceAdmin));
 
     logger.debug(`setting master addresses into instance service and registering master instance`);
     const rcpt = await executeTx(() => services.instanceService.setAndRegisterMasterInstance(instanceAddress));
@@ -141,7 +141,7 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(() => registry.chainNft.transferFrom(resolveAddress(owner), MASTER_INSTANCE_OWNER, BigInt(masterInstanceNfdId as string)));
 
     // revoke admin role for master instance access manager
-    await executeTx(() => instanceAccessManager.revokeRole(0, instanceAccessManagerAddress));   
+    await executeTx(() => InstanceAdmin.revokeRole(0, InstanceAdminAddress));   
     // revoke admin role for protocol owner
     await executeTx(() => ozAccessManager.renounceRole(0, owner));
 
@@ -152,7 +152,7 @@ export async function deployAndRegisterMasterInstance(
 
     return {
         ozAccessManagerAddress: ozAccessManagerAddress,
-        instanceAccessManagerAddress: instanceAccessManagerAddress,
+        InstanceAdminAddress: InstanceAdminAddress,
         instanceReaderAddress: instanceReaderAddress,
         instanceBundleManagerAddress: bundleManagerAddress,
         instanceStoreAddress: instanceStoreAddress,
@@ -168,7 +168,7 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
     logger.debug(`cloning instance ${masterInstance.instanceAddress} ...`);
     const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
     const clonedOzAccessManagerAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedOzAccessManager");
-    const clonedInstanceAccessManagerAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAccessManager");
+    const clonedInstanceAdminAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAdmin");
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstance");
     const clonedBundleManagerAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedBundleManager");
     const clonedInstanceReaderAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceReader");
@@ -180,7 +180,7 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
     
     return {
         ozAccessManagerAddress: clonedOzAccessManagerAddress,
-        instanceAccessManagerAddress: clonedInstanceAccessManagerAddress,
+        InstanceAdminAddress: clonedInstanceAdminAddress,
         instanceAddress: clonedInstanceAddress,
         instanceBundleManagerAddress: clonedBundleManagerAddress,
         instanceReaderAddress: clonedInstanceReaderAddress,

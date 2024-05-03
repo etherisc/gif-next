@@ -211,8 +211,9 @@ contract RegistryService is
         internal
         view
     {
-        // enforce instead of check
-        info.objectAddress = address(0);
+        if(info.objectAddress > address(0)) {
+            revert ErrorRegistryServiceObjectAddressNotZero(info.objectType);
+        }
 
         if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
             revert ErrorRegistryServiceObjectTypeInvalid(expectedType, info.objectType);

@@ -11,7 +11,7 @@ import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTR
 
 import {Service} from "../shared/Service.sol";
 import {IService} from "../shared/IService.sol";
-import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 
 import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
@@ -23,7 +23,7 @@ import {ChainNft} from "../registry/ChainNft.sol";
 
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
-import {InstanceAccessManager} from "./InstanceAccessManager.sol";
+import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
@@ -40,7 +40,7 @@ contract InstanceService is
 
     IRegistryService internal _registryService;
     address internal _masterOzAccessManager;
-    address internal _masterInstanceAccessManager;
+    address internal _masterInstanceAdmin;
     address internal _masterInstance;
     address internal _masterInstanceReader;
     address internal _masterInstanceBundleManager;
@@ -69,12 +69,11 @@ contract InstanceService is
         )
     {
         address instanceOwner = msg.sender;
-        AccessManagerUpgradeableInitializeable clonedOzAccessManager = AccessManagerUpgradeableInitializeable(
+        AccessManagerExtendedInitializeable clonedOzAccessManager = AccessManagerExtendedInitializeable(
             Clones.clone(_masterOzAccessManager));
 
         // initially grants ADMIN_ROLE to this (being the instance service). 
         // This will allow the instance service to bootstrap the authorizations of the instance.
-        // Instance service will not use oz access manager directlly but through instance access manager instead
         // Instance service will renounce ADMIN_ROLE when bootstraping is finished
         clonedOzAccessManager.initialize(address(this));
 
@@ -96,16 +95,17 @@ contract InstanceService is
         clonedBundleManager.initialize(address(clonedInstance));
         clonedInstance.setBundleManager(clonedBundleManager);
 
-        InstanceAccessManager clonedInstanceAccessManager = InstanceAccessManager(Clones.clone(_masterInstanceAccessManager));
-        clonedOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAccessManager), 0);
-        clonedInstanceAccessManager.initialize(address(clonedInstance));
-        clonedInstance.setInstanceAccessManager(clonedInstanceAccessManager);
+        InstanceAdmin clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
+        clonedOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAdmin), 0);
+        clonedInstanceAdmin.initialize(address(clonedInstance));
+        clonedInstance.setInstanceAdmin(clonedInstanceAdmin);
 
         // TODO amend setters with instance specific , policy manager ...
 
         // TODO library does external calls -> but it is registry and access manager -> find out is it best practice
         InstanceAuthorizationsLib.grantInitialAuthorizations(
-            clonedInstanceAccessManager, 
+            clonedOzAccessManager, 
+            clonedInstanceAdmin, 
             clonedInstance, 
             clonedBundleManager, 
             clonedInstanceStore, 
@@ -120,7 +120,7 @@ contract InstanceService is
 
         emit LogInstanceCloned(
             address(clonedOzAccessManager), 
-            address(clonedInstanceAccessManager), 
+            address(clonedInstanceAdmin), 
             address(clonedInstance),
             address(clonedInstanceStore),
             address(clonedBundleManager), 
@@ -135,14 +135,14 @@ contract InstanceService is
     {
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
         if(_masterOzAccessManager != address(0)) { revert ErrorInstanceServiceMasterOzAccessManagerAlreadySet(); }
-        if(_masterInstanceAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
+        if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
         if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
 
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
-        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
-        address instanceAccessManagerAddress = address(instanceAccessManager);
+        InstanceAdmin InstanceAdmin = instance.getInstanceAdmin();
+        address InstanceAdminAddress = address(InstanceAdmin);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
         BundleManager bundleManager = instance.getBundleManager();
@@ -150,19 +150,19 @@ contract InstanceService is
         InstanceStore instanceStore = instance.getInstanceStore();
         address instanceStoreAddress = address(instanceStore);
 
-        if(instanceAccessManagerAddress == address(0)) { revert ErrorInstanceServiceInstanceAccessManagerZero(); }
+        if(InstanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
         if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
         if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
         
-        if(instance.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(bundleManager.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
-        if(instanceStore.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
+        if(instance.authority() != InstanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
+        if(bundleManager.authority() != InstanceAdmin.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
+        if(instanceStore.authority() != InstanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
         _masterOzAccessManager = instance.authority();
-        _masterInstanceAccessManager = instanceAccessManagerAddress;
+        _masterInstanceAdmin = InstanceAdminAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
         _masterInstanceBundleManager = bundleManagerAddress;
@@ -214,7 +214,7 @@ contract InstanceService is
             // or targetInfo
         ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
 
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
+        InstanceAdmin accessManager = instance.getInstanceAdmin();
         accessManager.createGifTarget(targetAddress, targetName);
         // set proposed target config
         // TODO restriction: gif targets are set only once and only here?
@@ -225,9 +225,6 @@ contract InstanceService is
         }
     }
 
-
-    // TODO called by component, but target can be component helper...so needs target name
-    // TODO check that targetName associated with component...how???
     function setComponentLocked(bool locked) onlyComponent external {
 
         address componentAddress = msg.sender;
@@ -238,7 +235,7 @@ contract InstanceService is
             registry.getObjectInfo(
                 instanceNftId).objectAddress);
 
-        instance.getInstanceAccessManager().setTargetLockedByService(
+        instance.getInstanceAdmin().setTargetLockedByService(
             componentAddress, 
             locked);
     }

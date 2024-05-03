@@ -24,10 +24,10 @@ import {ReleaseManager} from "./ReleaseManager.sol";
 
 */
 
-contract RegistryAccessManager is AccessManaged, Initializable 
+contract RegistryAdmin is AccessManaged, Initializable 
 {
-    error ErrorRegistryAccessManagerReleaseManagerAuthorityMismatch();
-    error ErrorRegistryAccessManagerTokenRegistryZero();
+    error ErrorRegistryAdminReleaseManagerAuthorityMismatch();
+    error ErrorRegistryAdminTokenRegistryZero();
 
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
@@ -56,11 +56,11 @@ contract RegistryAccessManager is AccessManaged, Initializable
         initializer
     {
         // validate input
-        if(IAccessManaged(releaseManager).authority() != authority()) {
-            revert ErrorRegistryAccessManagerReleaseManagerAuthorityMismatch();
+        if(AccessManaged(releaseManager).authority() != authority()) {
+            revert ErrorRegistryAdminReleaseManagerAuthorityMismatch();
         }
         if(tokenRegistry == address(0)) {
-            revert ErrorRegistryAccessManagerTokenRegistryZero();
+            revert ErrorRegistryAdminTokenRegistryZero();
         }
 
         _releaseManager = releaseManager;
@@ -72,8 +72,8 @@ contract RegistryAccessManager is AccessManaged, Initializable
         _createTarget(_releaseManager, RELEASE_MANAGER_TARGET_NAME);
         //_createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME);
 
-        _setAdminRole();
-        _setManagerRole();
+        _setGifAdminRole();
+        _setGifManagerRole();
 
         _grantRole(GIF_ADMIN_ROLE(), admin, 0);
         _grantRole(GIF_MANAGER_ROLE(), manager, 0);
@@ -93,7 +93,7 @@ contract RegistryAccessManager is AccessManaged, Initializable
 
     //--- private functions -------------------------------------------------//
 
-    function _setAdminRole() private
+    function _setGifAdminRole() private
     {
         bytes4[] memory functionSelector = new bytes4[](1);
 
@@ -105,7 +105,7 @@ contract RegistryAccessManager is AccessManaged, Initializable
         _setTargetFunctionRole(_releaseManager, functionSelector, GIF_ADMIN_ROLE());
     }
     
-    function _setManagerRole() private 
+    function _setGifManagerRole() private 
     {
         bytes4[] memory functionSelector = new bytes4[](1);
 
@@ -122,22 +122,22 @@ contract RegistryAccessManager is AccessManaged, Initializable
     }
 
     function _setTargetFunctionRole(address target, bytes4[] memory selectors, RoleId roleId) private {
-        AccessManagerUpgradeableInitializeableExtended(authority()).setTargetFunctionRole(target, selectors, roleId.toInt());        
+        AccessManagerExtendedInitializeable(authority()).setTargetFunctionRole(target, selectors, roleId.toInt());        
     }
 
     function _setRoleAdmin(RoleId roleId, RoleId adminRoleId) private {
-        AccessManagerUpgradeableInitializeableExtended(authority()).setRoleAdmin(roleId.toInt(), adminRoleId.toInt());
+        AccessManagerExtendedInitializeable(authority()).setRoleAdmin(roleId.toInt(), adminRoleId.toInt());
     }
 
     function _grantRole(RoleId roleId, address account, uint32 executionDelay) private {
-        AccessManagerUpgradeableInitializeableExtended(authority()).grantRole(roleId.toInt(), account, executionDelay);
+        AccessManagerExtendedInitializeable(authority()).grantRole(roleId.toInt(), account, executionDelay);
     }
 
     function _createRole(RoleId roleId, string memory roleName) private {
-        AccessManagerUpgradeableInitializeableExtended(authority()).createRole(roleId.toInt(), roleName);
+        AccessManagerExtendedInitializeable(authority()).createRole(roleId.toInt(), roleName);
     }
 
     function _createTarget(address target, string memory targetName) private {
-        AccessManagerUpgradeableInitializeableExtended(authority()).createTarget(target, targetName);
+        AccessManagerExtendedInitializeable(authority()).createTarget(target, targetName);
     }
 }

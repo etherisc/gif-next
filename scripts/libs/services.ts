@@ -358,7 +358,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const rcptAppl = await executeTx(async () => await releaseManager.registerService(applicationServiceAddress));
     const logRegistrationInfoAppl = getFieldFromTxRcptLogs(rcptAppl!, registry.registry.interface, "LogRegistration", "nftId");
     const applicationServiceNftId = (logRegistrationInfoAppl as unknown);
-    logger.info(`applicaionServiceManager deployed - applicaionServiceAddress: ${applicationServiceAddress} policyServiceManagerAddress: ${applicationServiceManagerAddress} nftId: ${applicationServiceNftId}`);
+    logger.info(`applicationServiceManager deployed - applicationServiceAddress: ${applicationServiceAddress} policyServiceManagerAddress: ${applicationServiceManagerAddress} nftId: ${applicationServiceNftId}`);
 
     logger.info("-------- policy service --------");
     const { address: policyServiceManagerAddress, contract: policyServiceManagerBaseContract, } = await deployContract(

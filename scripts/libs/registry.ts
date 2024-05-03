@@ -1,5 +1,5 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryAccessManager, ReleaseManager, Registry__factory, TokenRegistry } from "../../typechain-types";
+import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, registryAdmin, ReleaseManager, Registry__factory, TokenRegistry } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, verifyContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -8,8 +8,8 @@ import { getFieldFromTxRcptLogs, executeTx } from "./transaction";
 
 export type RegistryAddresses = {
 
-    registryAccessManagerAddress : AddressLike;
-    registryAccessManager: RegistryAccessManager;
+    registryAdminAddress : AddressLike;
+    registryAdmin: registryAdmin;
 
     releaseManagerAddress : AddressLike;
     releaseManager: ReleaseManager;
@@ -28,8 +28,8 @@ export type RegistryAddresses = {
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
     logger.info("======== Starting deployment of registry ========");
     
-    const { address: registryAccessManagerAddress, contract: registryAccessManagerBaseContract } = await deployContract(
-        "RegistryAccessManager",
+    const { address: registryAdminAddress, contract: registryAdminBaseContract } = await deployContract(
+        "registryAdmin",
         owner,
         [],
         {
@@ -37,13 +37,13 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 RoleIdLib: libraries.roleIdLibAddress,
             }
         });
-    const registryAccessManager = registryAccessManagerBaseContract as RegistryAccessManager;
+    const registryAdmin = registryAdminBaseContract as registryAdmin;
 
     const { address: releaseManagerAddress, contract: releaseManagerBaseContract } = await deployContract(
         "ReleaseManager",
         owner,
         [
-            registryAccessManager,
+            registryAdmin,
             3 //initialVersion
         ], 
         {
@@ -78,17 +78,17 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const tokenRegistry = tokenRegistryBaseContract as TokenRegistry;
 
     logger.info("Initializing registry access manager");
-    await registryAccessManager.initialize(owner, owner, releaseManager, tokenRegistry);
+    await registryAdmin.initialize(owner, owner, releaseManager, tokenRegistry);
 
-    logger.info(`RegistryAccessManager deployeqd at ${registryAccessManager}`);
+    logger.info(`registryAdmin deployeqd at ${registryAdmin}`);
     logger.info(`ReleaseManager deployed at ${releaseManager}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);
     logger.info(`TokenRegistry deployed at ${tokenRegistryAddress}`);
 
     const regAdr = {
-        registryAccessManagerAddress,
-        registryAccessManager,
+        registryAdminAddress,
+        registryAdmin,
     
         releaseManagerAddress,
         releaseManager,

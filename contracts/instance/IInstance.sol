@@ -18,7 +18,7 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
-import {InstanceAccessManager} from "./InstanceAccessManager.sol";
+import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
@@ -42,9 +42,9 @@ interface IInstance is
     ITransferInterceptor, 
     IAccessManaged
 {
-    error ErrorInstanceInstanceAccessManagerZero();
-    error ErrorInstanceInstanceAccessManagerAlreadySet(address instanceAccessManager);
-    error ErrorInstanceInstanceAccessManagerAuthorityMismatch(address instanceAuthority);
+    error ErrorInstanceInstanceAdminZero();
+    error ErrorInstanceInstanceAdminAlreadySet(address InstanceAdmin);
+    error ErrorInstanceInstanceAdminAuthorityMismatch(address instanceAuthority);
 
     error ErrorInstanceBundleManagerAlreadySet(address instanceBundleManager);
     error ErrorInstanceBundleManagerInstanceMismatch(address instance);
@@ -72,6 +72,6 @@ interface IInstance is
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleManager() external view returns (BundleManager);
-    function getInstanceAccessManager() external view returns (InstanceAccessManager);
+    function getInstanceAdmin() external view returns (InstanceAdmin);
     function getInstanceStore() external view returns (InstanceStore);
 }

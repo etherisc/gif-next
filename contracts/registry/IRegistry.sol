@@ -44,11 +44,15 @@ interface IRegistry is IERC165 {
     struct ReleaseInfo {
         VersionPart version;
         address[] addresses;
+        string[] names;
         RoleId[][] serviceRoles;
+        string[][] serviceRoleNames;
         RoleId[][] functionRoles;
+        string[][] functionRoleNames;
         bytes4[][][] selectors;
         ObjectType[] domains;
         Timestamp activatedAt;
+        Timestamp disabledAt;
     }
 
     function registerService(
@@ -91,7 +95,7 @@ interface IRegistry is IERC165 {
 
     function isRegisteredComponent(address object) external view returns (bool);
 
-    function isValidRelease(VersionPart version) external view returns (bool);
+    function isActiveRelease(VersionPart version) external view returns (bool);
 
     function getServiceAddress(
         ObjectType serviceDomain, 

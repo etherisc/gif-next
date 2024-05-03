@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {InstanceAccessManager} from "../instance/InstanceAccessManager.sol";
+import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {ISetup} from "../instance/module/ISetup.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";

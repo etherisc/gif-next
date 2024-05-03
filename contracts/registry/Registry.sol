@@ -172,13 +172,7 @@ contract Registry is
         return _releaseManager.getInitialVersion();
     }
 
-    // TODO make distinction between active an not yet active version
-    // need to be thought trough, not yet clear if necessary
-    // need to answer question: what is the latest version during the upgrade process?
-    // likely setting up a new gif version does not fit into a single tx
-    // in this case we might want to have a period where the latest version is
-    // in the process of being set up while the latest active version is 1 major release smaller
-    /// @dev latest GIF major version (might not yet be active)
+    /// @dev next GIF release version to be released
     function getNextVersion() external view returns (VersionPart) {
         return _releaseManager.getNextVersion();
     }
@@ -237,9 +231,9 @@ contract Registry is
         return _info[objectParentNftId].objectType == INSTANCE();
     }
 
-    function isValidRelease(VersionPart version) external view returns (bool)
+    function isActiveRelease(VersionPart version) external view returns (bool)
     {
-        return _releaseManager.isValidRelease(version);
+        return _releaseManager.isActiveRelease(version);
     }
 
     function getServiceAddress(
