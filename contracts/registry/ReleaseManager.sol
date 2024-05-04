@@ -138,7 +138,6 @@ contract ReleaseManager is AccessManaged
         _releaseInfo[version].selectors = selectors;
         _awaitingRegistration = addresses.length;
 
-        version = getNextVersion();
         // ensures unique salt
         releaseSalt = keccak256(
             bytes.concat(
@@ -409,7 +408,7 @@ contract ReleaseManager is AccessManaged
             for(uint roleIdx = 0; roleIdx < serviceRoles[serviceIdx].length; roleIdx++)
             {
                 RoleId role = serviceRoles[serviceIdx][roleIdx];
-                if(role == ADMIN_ROLE()) {
+                if(role == ADMIN_ROLE() || role == PUBLIC_ROLE()) {
                     revert ErrorReleaseManagerServiceRoleInvalid(serviceAddress[serviceIdx], role);
                 }
             }

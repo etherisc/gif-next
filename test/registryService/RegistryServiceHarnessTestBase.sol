@@ -81,7 +81,7 @@ contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
             selectors, 
             "0x2222");//salt);
 
-        assertEq(config._accessManager(), releaseAccessManager, "error: access manager mismatch");
+        assertEq(config._releaseAccessManager(), releaseAccessManager, "error: access manager mismatch");
 
         registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
             releaseAccessManager,

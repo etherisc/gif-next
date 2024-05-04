@@ -73,7 +73,7 @@ import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
 import {SimplePool} from "../mock/SimplePool.sol";
 
-import {ReleaseConfig} from "./ReleaseConfig.sol";
+import {TestGifBaseConfig} from "./TestGifBaseConfig.sol";
 
 
 // solhint-disable-next-line max-states-count
@@ -320,7 +320,7 @@ contract TestGifBase is Test {
     {
         VersionPart version = VersionPartLib.toVersionPart(3);
 
-        ReleaseConfig config = new ReleaseConfig(
+        TestGifBaseConfig config = new TestGifBaseConfig(
             releaseManager,
             registryOwner,
             version,
