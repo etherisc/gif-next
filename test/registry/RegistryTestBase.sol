@@ -412,23 +412,23 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
     function _checkRegistryGetters() internal
     {
         // solhint-disable-next-line
-        console.log("Checking all IRegistry getters");
+        //console.log("Checking all IRegistry getters");
 
         // check getters without args
-        console.log("   checking getters without args");
+        //console.log("   checking getters without args");
         assertEq(registry.getChainNftAddress(), address(chainNft), "getChainNft() returned unexpected value");
         assertEq(registry.getObjectCount(), EnumerableSet.length(_nftIds) - 1, "getObjectCount() returned unexpected value");// -1 because of zeroNftId in the set
         //assertEq(registry.getOwner(), registryOwner, "getOwner() returned unexpected value");
 
         // check for zero address
-        console.log("   checking with 0 address");        
+        //console.log("   checking with 0 address");        
         assertEq(registry.getNftId( address(0) ).toInt(), zeroNftId().toInt(), "getNftId(0) returned unexpected value");        
         eqObjectInfo(registry.getObjectInfo( address(0) ), zeroObjectInfo());//, "getObjectInfo(0) returned unexpected value");
         assertFalse(registry.isRegistered( address(0) ), "isRegistered(0) returned unexpected value");
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, zeroNftId()));
         registry.ownerOf(address(0));
         // check for zeroNftId    
-        console.log("   checking with 0 nftId"); 
+        //console.log("   checking with 0 nftId"); 
         eqObjectInfo( registry.getObjectInfo( zeroNftId() ), zeroObjectInfo());//, "getObjectInfo(zeroNftId) returned unexpected value");
         assertFalse(registry.isRegistered( zeroNftId() ), "isRegistered(zeroNftId) returned unexpected value");
         vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, zeroNftId()));
@@ -439,7 +439,7 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         ObjectType domain;
 
         // check for random non registered nftId
-        console.log("   checking with random not registered nftId"); 
+        //console.log("   checking with random not registered nftId"); 
         NftId unknownNftId;
         do {
             unknownNftId = toNftId(randomNumber(type(uint96).max));
@@ -471,7 +471,7 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
                 owner = chainNft.ownerOf(nftId.toInt());
             }
 
-            console.log("   checking with nftId from set, nftId: ", nftId.toInt());
+            //console.log("   checking with nftId from set, nftId: ", nftId.toInt());
             _assert_registry_getters(
                 nftId, 
                 _info[nftId],
@@ -515,7 +515,7 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         // solhint-enable
 
         // check "by nftId getters"
-        console.log("       checking by nftId getters");
+        //console.log("       checking by nftId getters");
         eqObjectInfo(registry.getObjectInfo(nftId) , expectedInfo);//, "getObjectInfo(nftId) returned unexpected value");
         if(expectedOwner > address(0)) { // expect registered
             assertTrue(registry.isRegistered(nftId), "isRegistered(nftId) returned unexpected value #1");
@@ -528,7 +528,7 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         }
 
         // check "by address getters"
-        console.log("       checking by address getters");
+        //console.log("       checking by address getters");
         if(expectedInfo.objectAddress > address(0)) 
         {// expect contract
             assertEq(registry.getNftId(expectedInfo.objectAddress).toInt(), nftId.toInt(), "getNftId(address) returned unexpected value");
@@ -597,9 +597,9 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
             _checkRegistryGetters();
 
             // solhint-disable-next-line
-            console.log("Registered:"); 
-            _logObjectInfo(info);
-            console.log("");
+            //console.log("Registered:"); 
+            //_logObjectInfo(info);
+            //console.log("");
             // solhint-enable
         }
     }
@@ -635,9 +635,9 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
             _checkRegistryGetters();
 
             // solhint-disable-next-line
-            console.log("Registered:"); 
-            _logObjectInfo(info);
-            console.log("");
+            //console.log("Registered:"); 
+            //_logObjectInfo(info);
+            //console.log("");
             // solhint-enable
         }
     }
@@ -723,23 +723,23 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         bool expectRevert;
         bytes memory expectedRevertMsg;
 
-        console.log("   Doing registerService() function checks");
+        //console.log("   Doing registerService() function checks");
         (expectRevert, expectedRevertMsg) = _registerServiceChecks(info, version, domain);
 
         if(expectRevert) {
-            console.log("       expectRevert : ", expectRevert);
-            console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
-            console.log("   Skipping _register checks due to expected revert");
+            //console.log("       expectRevert : ", expectRevert);
+            //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+            //console.log("   Skipping _register checks due to expected revert");
         } else {
-            console.log("   Doing _register() function checks");// TODO log on/off flag
+            //console.log("   Doing _register() function checks");// TODO log on/off flag
             (expectRevert, expectedRevertMsg) = _internalRegisterChecks(info);
             if(expectRevert) {
-                console.log("       expectRevert : ", expectRevert);
-                console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+                //console.log("       expectRevert : ", expectRevert);
+                //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
             }
         }
 
-        console.log("   Calling _registerService()"); 
+        //console.log("   Calling _registerService()"); 
         nftId = _assert_registerService(info, version, domain, expectRevert, expectedRevertMsg);
     }
 
@@ -748,23 +748,23 @@ contract RegistryTestBase is TestGifBase, FoundryRandom {
         bool expectRevert;
         bytes memory expectedRevertMsg;
 
-        console.log("   Doing register() function checks");
+        //console.log("   Doing register() function checks");
         (expectRevert, expectedRevertMsg) = _registerChecks(info);
 
         if(expectRevert) {
-            console.log("       expectRevert : ", expectRevert);
-            console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
-            console.log("   Skipping _register checks due to expected revert");
+            //console.log("       expectRevert : ", expectRevert);
+            //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+            //console.log("   Skipping _register checks due to expected revert");
         } else {
-            console.log("   Doing _register() function checks");// TODO log on/off flag
+            //console.log("   Doing _register() function checks");// TODO log on/off flag
             (expectRevert, expectedRevertMsg) = _internalRegisterChecks(info);
             if(expectRevert) {
-                console.log("       expectRevert : ", expectRevert);
-                console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+                //console.log("       expectRevert : ", expectRevert);
+                //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
             }
         }
 
-        console.log("   Calling register()");
+        //console.log("   Calling register()");
         nftId = _assert_register(info, expectRevert, expectedRevertMsg);
     }
 }
