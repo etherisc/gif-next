@@ -57,9 +57,12 @@ interface IAccessManagerExtended is IAccessManager {
 
     function getRoleInfo(uint64 roleId) external view returns (RoleInfo memory);
 
+    function isRoleNameExists(string memory name) external view returns (bool);
 
     function isTargetExists(address target) external view returns (bool);
 
+    function isTargetNameExists(string memory name) external view returns (bool);
+    
     function getTargetAddress(string memory name) external view returns(address targetAddress);
 
     function getTargetInfo(address target) external view returns (TargetInfo memory);
