@@ -1,9 +1,8 @@
 
 import { AddressLike, BytesLike, Signer, resolveAddress, AbiCoder, keccak256, hexlify, Interface, solidityPacked, solidityPackedKeccak256, getCreate2Address, defaultAbiCoder, id, concat, Typed, BigNumberish } from "ethers";
 import { logger } from "../logger";
-import { UpgradableProxyWithAdmin__factory, IVersionable__factory, ReleaseManager__factory, ReleaseManager, PoolService__factory, PoolServiceManager__factory, BundleService__factory, DistributionService__factory, InstanceService__factory, RegistryService__factory } from "../../typechain-types";
+import { PoolService__factory, BundleService__factory, DistributionService__factory, InstanceService__factory, RegistryService__factory } from "../../typechain-types";
 import { RegistryAddresses } from "./registry";
-import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 
 
@@ -72,6 +71,37 @@ export const roles = {
     PRICING_SERVICE_ROLE: 2800
 };
 
+export const roleNames = {
+    INSTANCE_OWNER_ROLE_NAME: "InstanceOwnerRole",
+    INSTANCE_SERVICE_ROLE_NAME: "InstanceServiceRole",
+    DISTRIBUTION_SERVICE_ROLE_NAME: "DistributionServiceRole",
+    POOL_SERVICE_ROLE_NAME: "PoolServiceRole",
+    PRODUCT_SERVICE_ROLE_NAME: "ProductServiceRole",
+    APPLICATION_SERVICE_ROLE_NAME: "ApplicationServiceRole",
+    POLICY_SERVICE_ROLE_NAME: "PolicyServiceRole",
+    CLAIM_SERVICE_ROLE_NAME: "ClaimServiceRole",
+    BUNDLE_SERVICE_ROLE_NAME: "BundleServiceRole",
+    INSTANCE_ROLE_NAME: "InstanceRole",
+    REGISTRY_SERVICE_ROLE_NAME: "RegistryServiceRole",
+    STAKING_SERVICE_ROLE_NAME: "StakingServiceRole",
+    CAN_CREATE_GIF_TARGET_ROLE_NAME: "CanCreateGifTargetRole",
+    PRICING_SERVICE_ROLE_NAME: "PricingServiceRole"
+};
+
+export const serviceNames = {
+    INSTANCE_SERVICE_NAME: "InstanceService",
+    DISTRIBUTION_SERVICE_NAME: "DistributionService",
+    POOL_SERVICE_NAME: "PoolService",
+    PRODUCT_SERVICE_NAME: "ProductService",
+    APPLICATION_SERVICE_NAME: "ApplicationService",
+    POLICY_SERVICE_NAME: "PolicyService",
+    CLAIM_SERVICE_NAME: "ClaimService",
+    BUNDLE_SERVICE_NAME: "BundleService",
+    PRICING_SERVICE_NAME: "PricingService",
+    STAKING_SERVICE_NAME: "StakingService",
+    REGISTRY_SERVICE_NAME: "RegistryService"
+};
+
 export const domains = {
     REGISTRY: 40,
     SERVICE: 60,
@@ -90,8 +120,11 @@ export const domains = {
 
 export type ReleaseConfig = {
     addresses: AddressLike[],
+    names: string[],
     serviceRoles: BigNumberish[][],
+    serviceRoleNames: string[][],
     functionRoles: BigNumberish[][],
+    functionRoleNames: string[][],
     selectors: BytesLike[][][] 
 }; 
 
@@ -115,44 +148,44 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             releaseAddresses.instanceServiceAddress,
             releaseAddresses.registryServiceAddress
         ],
+        names: [
+            serviceNames.STAKING_SERVICE_NAME,
+            serviceNames.POLICY_SERVICE_NAME,
+            serviceNames.APPLICATION_SERVICE_NAME,
+            serviceNames.CLAIM_SERVICE_NAME,
+            serviceNames.PRODUCT_SERVICE_NAME,
+            serviceNames.POOL_SERVICE_NAME,
+            serviceNames.BUNDLE_SERVICE_NAME,
+            serviceNames.PRICING_SERVICE_NAME,
+            serviceNames.DISTRIBUTION_SERVICE_NAME,
+            serviceNames.INSTANCE_SERVICE_NAME,
+            serviceNames.REGISTRY_SERVICE_NAME
+        ],
         serviceRoles: [
-            [
-                roles.STAKING_SERVICE_ROLE
-            ],
-            [
-                roles.POLICY_SERVICE_ROLE
-            ],
-            [
-                roles.APPLICATION_SERVICE_ROLE
-            ],
-            [
-                roles.CLAIM_SERVICE_ROLE
-            ],
-            [
-                roles.PRODUCT_SERVICE_ROLE,
-                roles.CAN_CREATE_GIF_TARGET_ROLE
-            ],
-            [
-                roles.POOL_SERVICE_ROLE,
-                roles.CAN_CREATE_GIF_TARGET_ROLE
-            ],
-            [
-                roles.BUNDLE_SERVICE_ROLE,
-                roles.CAN_CREATE_GIF_TARGET_ROLE
-            ],
-            [
-                roles.PRICING_SERVICE_ROLE
-            ],
-            [
-                roles.DISTRIBUTION_SERVICE_ROLE,
-                roles.CAN_CREATE_GIF_TARGET_ROLE
-            ],
-            [
-                roles.INSTANCE_SERVICE_ROLE,
-            ],
-            [
-                roles.REGISTRY_SERVICE_ROLE
-            ]
+            [roles.STAKING_SERVICE_ROLE],
+            [roles.POLICY_SERVICE_ROLE],
+            [roles.APPLICATION_SERVICE_ROLE],
+            [roles.CLAIM_SERVICE_ROLE],
+            [roles.PRODUCT_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
+            [roles.POOL_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
+            [roles.BUNDLE_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
+            [roles.PRICING_SERVICE_ROLE],
+            [roles.DISTRIBUTION_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
+            [roles.INSTANCE_SERVICE_ROLE],
+            [roles.REGISTRY_SERVICE_ROLE]
+        ],
+        serviceRoleNames: [
+            [roleNames.STAKING_SERVICE_ROLE_NAME],
+            [roleNames.POLICY_SERVICE_ROLE_NAME],
+            [roleNames.APPLICATION_SERVICE_ROLE_NAME],
+            [roleNames.CLAIM_SERVICE_ROLE_NAME],
+            [roleNames.PRODUCT_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
+            [roleNames.POOL_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
+            [roleNames.BUNDLE_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
+            [roleNames.PRICING_SERVICE_ROLE_NAME],
+            [roleNames.DISTRIBUTION_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
+            [roleNames.INSTANCE_SERVICE_ROLE_NAME],
+            [roleNames.REGISTRY_SERVICE_ROLE_NAME]
         ],
         functionRoles: [
             [],  // staking
@@ -174,6 +207,27 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
                 roles.DISTRIBUTION_SERVICE_ROLE,
                 roles.INSTANCE_SERVICE_ROLE
             ] 
+        ],
+        functionRoleNames: [
+            [], // staking
+            [], // policy
+            [], // application
+            [], // claim
+            [], // product
+            [roleNames.POLICY_SERVICE_ROLE_NAME, roleNames.CLAIM_SERVICE_ROLE_NAME], // pool
+            [roleNames.POLICY_SERVICE_ROLE_NAME, roleNames.POOL_SERVICE_ROLE_NAME], // bundle
+            [], // pricing
+            [roleNames.POLICY_SERVICE_ROLE_NAME], // distribution
+            [roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME], // instance
+            [ // registry
+                //roleNames.STAKING_SERVICE_ROLE_NAME,
+                roleNames.APPLICATION_SERVICE_ROLE_NAME,
+                roleNames.PRODUCT_SERVICE_ROLE_NAME,
+                roleNames.POOL_SERVICE_ROLE_NAME,
+                roleNames.BUNDLE_SERVICE_ROLE_NAME,
+                roleNames.DISTRIBUTION_SERVICE_ROLE_NAME,
+                roleNames.INSTANCE_SERVICE_ROLE_NAME
+            ]
         ],
         selectors: [
             [], // staking

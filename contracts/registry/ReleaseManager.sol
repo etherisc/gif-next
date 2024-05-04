@@ -26,7 +26,7 @@ contract ReleaseManager is AccessManaged
     event LogReleaseCreation(
         VersionPart version, 
         bytes32 salt, 
-        AccessManagerExtendedWithDisableInitializeable releaseAccessManager
+        address releaseAccessManager
     ); 
     event LogReleaseActivation(VersionPart version);
 
@@ -79,17 +79,15 @@ contract ReleaseManager is AccessManaged
 
     constructor(
         RegistryAdmin admin, 
-        VersionPart initialVersion)
+        VersionPart initialVersion,
+        AccessManagerExtendedWithDisableInitializeable masterReleaseAccessManager)
         AccessManaged(admin.authority())
     {
         _admin = admin;
         _initial = initialVersion;
         _next = VersionPartLib.toVersionPart(initialVersion.toInt() - 1);
         _registry = new Registry();
-
-        AccessManagerExtendedWithDisableInitializeable releaseAccessManager = new AccessManagerExtendedWithDisableInitializeable();
-        releaseAccessManager.initialize(address(0x1), VersionLib.toVersionPart(0));
-        _releaseAccessManagerCodeAddress = address(releaseAccessManager);
+        _releaseAccessManagerCodeAddress = address(masterReleaseAccessManager);
     }
 
     /// @dev skips previous release if it was not activated
@@ -150,7 +148,7 @@ contract ReleaseManager is AccessManaged
 
         _releaseAccessManager[version] = releaseAccessManager;
 
-        emit LogReleaseCreation(version, releaseSalt, releaseAccessManager);
+        emit LogReleaseCreation(version, releaseSalt, releaseAccessManagerAddress);
     }
 
     function registerService(IService service) 

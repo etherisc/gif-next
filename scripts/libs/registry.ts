@@ -1,5 +1,5 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, registryAdmin, ReleaseManager, Registry__factory, TokenRegistry } from "../../typechain-types";
+import { ChainNft, ChainNft__factory, IVersionable__factory, Registry, RegistryAdmin, ReleaseManager, Registry__factory, TokenRegistry, AccessManagerExtendedWithDisableInitializeable } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, verifyContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -9,7 +9,7 @@ import { getFieldFromTxRcptLogs, executeTx } from "./transaction";
 export type RegistryAddresses = {
 
     registryAdminAddress : AddressLike;
-    registryAdmin: registryAdmin;
+    registryAdmin: RegistryAdmin;
 
     releaseManagerAddress : AddressLike;
     releaseManager: ReleaseManager;
@@ -29,22 +29,36 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     logger.info("======== Starting deployment of registry ========");
     
     const { address: registryAdminAddress, contract: registryAdminBaseContract } = await deployContract(
-        "registryAdmin",
+        "RegistryAdmin",
         owner,
         [],
         {
             libraries: {
                 RoleIdLib: libraries.roleIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress
             }
         });
-    const registryAdmin = registryAdminBaseContract as registryAdmin;
+    const registryAdmin = registryAdminBaseContract as RegistryAdmin;
+
+    const { address: masterReleaseAccessManagerAddress, contract: masterReleaseAccessManagerBaseContract } = await deployContract(
+        "AccessManagerExtendedWithDisableInitializeable",
+        owner,
+        [],
+        {
+            libraries: {
+                TimestampLib: libraries.timestampLibAddress
+            }
+        });
+    const masterReleaseAccessManager = masterReleaseAccessManagerBaseContract as AccessManagerExtendedWithDisableInitializeable;
+    await masterReleaseAccessManager.initialize("0x0000000000000000000000000000000000000001", 0);
 
     const { address: releaseManagerAddress, contract: releaseManagerBaseContract } = await deployContract(
         "ReleaseManager",
         owner,
         [
             registryAdmin,
-            3 //initialVersion
+            3, //initialVersion
+            masterReleaseAccessManager
         ], 
         {
             libraries: {
@@ -80,8 +94,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     logger.info("Initializing registry access manager");
     await registryAdmin.initialize(owner, owner, releaseManager, tokenRegistry);
 
-    logger.info(`registryAdmin deployeqd at ${registryAdmin}`);
+    logger.info(`RegistryAdmin deployed at ${registryAdmin}`);
     logger.info(`ReleaseManager deployed at ${releaseManager}`);
+    logger.info(`master release AccessManager deployed at ${masterReleaseAccessManagerAddress}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);
     logger.info(`TokenRegistry deployed at ${tokenRegistryAddress}`);

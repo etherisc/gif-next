@@ -5,7 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {VersionPart, VersionLib} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
 import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
@@ -23,8 +23,9 @@ import {zeroObjectType} from "../../contracts/type/ObjectType.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
-import {AccessManagerExtendedInitializeable} from "../../contracts/shared/AccessManagerExtendedInitializeable.sol";
 import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWithAdmin.sol";
+import {AccessManagerExtendedInitializeable} from "../../contracts/shared/AccessManagerExtendedInitializeable.sol";
+import {AccessManagerExtendedWithDisableInitializeable} from "../../contracts/shared/AccessManagerExtendedWithDisableInitializeable.sol";
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -279,9 +280,13 @@ contract TestGifBase is Test {
     {
         registryAdmin = new RegistryAdmin();
 
+        AccessManagerExtendedWithDisableInitializeable masterReleaseAccessManager = new AccessManagerExtendedWithDisableInitializeable();
+        masterReleaseAccessManager.initialize(address(0x1), VersionLib.toVersionPart(0));
+
         releaseManager = new ReleaseManager(
             registryAdmin,
-            VersionPartLib.toVersionPart(3));
+            VersionLib.toVersionPart(3),
+            masterReleaseAccessManager);
 
         registryAddress = address(releaseManager.getRegistry());
         registry = Registry(registryAddress);
@@ -318,7 +323,7 @@ contract TestGifBase is Test {
 
     function _deployAndRegisterServices() internal 
     {
-        VersionPart version = VersionPartLib.toVersionPart(3);
+        VersionPart version = VersionLib.toVersionPart(3);
 
         TestGifBaseConfig config = new TestGifBaseConfig(
             releaseManager,
