@@ -68,6 +68,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
+                SecondsLib: libraries.secondsLibAddress
             }
         });
     const releaseManager = releaseManagerBaseContract as ReleaseManager;
