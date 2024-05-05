@@ -214,14 +214,14 @@ contract InstanceService is
             // or targetInfo
         ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
 
-        InstanceAdmin accessManager = instance.getInstanceAdmin();
-        accessManager.createGifTarget(targetAddress, targetName);
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+        instanceAdmin.createGifTarget(targetAddress, targetName);
         // set proposed target config
         // TODO restriction: gif targets are set only once and only here?
         //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
         for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++)
         {
-            accessManager.setCoreTargetFunctionRole(targetName, selectors[roleIdx], roles[roleIdx]);
+            instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);
         }
     }
 

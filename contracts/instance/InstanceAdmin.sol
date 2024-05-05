@@ -34,6 +34,7 @@ contract InstanceAdmin is
 
     AccessManagerExtendedInitializeable internal _accessManager;
     IInstance _instance;
+    NftId _instanceNftId;
     IRegistry internal _registry;
 
     // instance owner role is granted upon instance nft minting in callback function
@@ -48,6 +49,7 @@ contract InstanceAdmin is
 
         _accessManager = AccessManagerExtendedInitializeable(authority);
         _instance = instance;
+        _instanceNftId = instance.getNftId();
         _registry = registry;
         _idNext = CUSTOM_ROLE_ID_MIN;
 
@@ -67,25 +69,19 @@ contract InstanceAdmin is
     // assume all core roles are known at deployment time
     // assume core roles are set and granted only during instance cloning
     // assume core roles are never revoked -> core roles admin is never active after intialization
-    function createCoreRole(RoleId roleId, string memory name)
-        external
-        restricted()
-    {
+    function createCoreRole(RoleId roleId, string memory name) external restricted() {
         _createRole(roleId, name, IAccess.Type.Core);
     }
 
     // ADMIN_ROLE
     // assume gif roles can be revoked
     // assume admin is INSTANCE_OWNER_ROLE or INSTANCE_ROLE
-    function createGifRole(RoleId roleId, string memory name, RoleId admin) 
-        external
-        restricted()
-    {
+    function createGifRole(RoleId roleId, string memory name, RoleId admin) external restricted() {
         _createRole(roleId, name, IAccess.Type.Gif);
         _setRoleAdmin(roleId, admin);
     }
 
-    // INSTANCE_OWNER_ROLE
+    // INSTANCE_ROLE
     // TODO specify how many owners role can have -> many roles MUST have exactly 1 member?
     function createRole(string memory roleName, string memory adminName)
         external
@@ -104,25 +100,20 @@ contract InstanceAdmin is
     // ADMIN_ROLE
     // assume used by instance service only during instance cloning
     // assume used only by this.createRole(), this.createGifRole() afterwards
-    function setRoleAdmin(RoleId roleId, RoleId admin) 
-        public 
-        restricted()
-    {
+    function setRoleAdmin(RoleId roleId, RoleId admin) public restricted() {
         _setRoleAdmin(roleId, admin);
     }
 
     // INSTANCE_ROLE
     function transferInstanceOwnerRole(address from, address to) external restricted() {
         // temp pre transfer checks
-        assert(_accessManager.getRoleMembers(INSTANCE_ROLE().toInt()) == 1);
-        (bool hasRole, uint executionDelay) = _accessManager.hasRole(INSTANCE_ROLE().toInt(), address(_instance));
-        assert(hasRole);
-        assert(executionDelay == 0);
-        assert(_accessManager.getRoleAdmin(INSTANCE_OWNER_ROLE().toInt()) == ADMIN_ROLE().toInt());
+        assert(_getRoleMembers(INSTANCE_ROLE()) == 1);
+        assert(_hasRole(INSTANCE_ROLE(), address(_instance)));
+        assert(_getRoleAdmin(INSTANCE_OWNER_ROLE()).toInt() == ADMIN_ROLE().toInt());
         if(from != address(0)) { // nft transfer
-            assert(_accessManager.getRoleMembers(INSTANCE_OWNER_ROLE().toInt()) == 1);
+            assert(_getRoleMembers(INSTANCE_OWNER_ROLE()) == 1);
         } else { // nft minting 
-            assert(_accessManager.getRoleMembers(INSTANCE_OWNER_ROLE().toInt()) == 0);            
+            assert(_getRoleMembers(INSTANCE_OWNER_ROLE()) == 0);            
         }
 
         // transfer
@@ -133,18 +124,8 @@ contract InstanceAdmin is
         }
 
         // temp post transfer checks
-        assert(_accessManager.getRoleMembers(INSTANCE_OWNER_ROLE().toInt()) == 1);// temp
-        (hasRole, executionDelay) = _accessManager.hasRole(INSTANCE_OWNER_ROLE().toInt(), to);
-        assert(hasRole);
-        assert(executionDelay == 0);
-    }
-
-    function hasRole(RoleId roleId, address account) 
-        external 
-        view 
-        returns (bool accountHasRole) 
-    {
-        (accountHasRole, ) = _accessManager.hasRole(roleId.toInt(), account);
+        assert(_getRoleMembers(INSTANCE_OWNER_ROLE()) == 1);// temp
+        assert(_hasRole(INSTANCE_OWNER_ROLE(), to));
     }
 
     //--- Target ------------------------------------------------------//
@@ -153,38 +134,39 @@ contract InstanceAdmin is
     function createCoreTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, IAccess.Type.Core);
     }
+
     // INSTANCE_SERVICE_ROLE
-    // TODO check for instance mismatch?
     function createGifTarget(address target, string memory name) external restricted() 
     {
         if(!_registry.isRegistered(target)) {
             revert IAccess.ErrorIAccessTargetNotRegistered(target);
         }
 
+        NftId targetParentNftId = _registry.getObjectInfo(target).parentNftId;
+        if(targetParentNftId != _instanceNftId) {
+            revert IAccess.ErrorIAccessTargetInstanceMismatch(target, targetParentNftId, _instanceNftId);
+        }
+
         _createTarget(target, name, IAccess.Type.Gif);
     }
-    // INSTANCE_OWNER_ROLE
+
+    // INSTANCE_ROLE
     // assume custom target.authority() is constant -> target MUST not be used with different instance access manager
     // assume custom target can not be registered as component -> each service which is doing component registration MUST register a gif target
     // assume custom target can not be registered as instance or service -> why?
     // TODO check target associated with instance owner or instance or instance components or components helpers
-    function createTarget(address target, string memory name) external restricted() 
-    {
+    function createTarget(address target, string memory name) external restricted() {
         _createTarget(target, name, IAccess.Type.Custom);
     }
 
     // TODO instance owner locks component instead of revoking it access to the instance...
-    function setTargetLockedByService(address target, bool locked)
-        external 
-        restricted // INSTANCE_SERVICE_ROLE
-    {
+    // INSTANCE_SERVICE_ROLE
+    function setTargetLockedByService(address target, bool locked) external restricted {
         _setTargetLocked(target, locked);
     }
 
-    function setTargetLockedByInstance(address target, bool locked)
-        external
-        restricted // INSTANCE_ROLE
-    {
+    // INSTANCE_ROLE
+    function setTargetLockedByInstance(address target, bool locked) external restricted {
         _setTargetLocked(target, locked);
     }
 
@@ -200,7 +182,7 @@ contract InstanceAdmin is
     // INSTANCE_SERVICE_ROLE if used not only during initilization, works with:
     //      core roles for core targets
     //      gif roles for gif targets
-    function setCoreTargetFunctionRole(
+    function setTargetFunctionRoleByService(
         string memory targetName,
         bytes4[] calldata selectors,
         RoleId roleId
@@ -223,13 +205,13 @@ contract InstanceAdmin is
         _setTargetFunctionRole(target, selectors, roleId);
     }
 
-    // INSTANCE_OWNER_ROLE
+    // INSTANCE_ROLE
     // gif role for gif target
     // gif role for custom target
     // custom role for gif target -> need to prohibit
     // custom role for custom target
     // TODO instance owner can mess with gif target (component) -> e.g. set custom role for function intendent to work with gif role
-    function setTargetFunctionRole(
+    function setTargetFunctionRoleByInstance(
         string memory targetName,
         bytes4[] calldata selectors,
         RoleId roleId// string memory roleName
@@ -253,28 +235,15 @@ contract InstanceAdmin is
         _setTargetFunctionRole(target, selectors, roleId);
     }
 
-    function _setTargetFunctionRole(address target, bytes4[] memory selectors, RoleId roleId) internal {
-        _accessManager.setTargetFunctionRole(target, selectors, roleId.toInt());
-    }
-
-    function isTargetLocked(address target) public view returns (bool locked) {
-        return _accessManager.isTargetClosed(target);
-    }
-
     //--- Role internal view/pure functions --------------------------------------//
-    function _createRole(RoleId roleId, string memory name, IAccess.Type rtype) 
-        internal
-    {
+    function _createRole(RoleId roleId, string memory name, IAccess.Type rtype) internal {
         _validateRole(roleId, rtype);
 
         _roleType[roleId] = rtype;
         _accessManager.createRole(roleId.toInt(), name);
-        //emit LogRoleCreation(roleId, name, rtype);
     }
 
-    function _validateRole(RoleId roleId, IAccess.Type rtype)
-        internal
-        view
+    function _validateRole(RoleId roleId, IAccess.Type rtype) internal view
     {
         uint roleIdInt = roleId.toInt();
         if(rtype == IAccess.Type.Custom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
@@ -294,10 +263,7 @@ contract InstanceAdmin is
         _accessManager.grantRole(roleId.toInt(), account, EXECUTION_DELAY);
     }
 
-    function _revokeRole(RoleId roleId, address member)
-        internal
-        returns(bool revoked)
-    {
+    function _revokeRole(RoleId roleId, address member) internal {
         _accessManager.revokeRole(roleId.toInt(), member);
     }
 
@@ -309,10 +275,21 @@ contract InstanceAdmin is
         _accessManager.setRoleAdmin(roleId.toInt(), admin.toInt());
     }
 
-    function _getNextCustomRoleId() 
-        internal 
-        returns(RoleId roleId, RoleId admin) 
-    {
+    function _getRoleAdmin(RoleId roleId) internal view returns (RoleId admin) {
+        return RoleIdLib.toRoleId(_accessManager.getRoleAdmin(roleId.toInt()));
+    }
+
+    function _hasRole(RoleId roleId, address account) internal view returns (bool accountHasRole) {
+        uint32 executionDelay;
+        (accountHasRole, executionDelay) = _accessManager.hasRole(roleId.toInt(), account);
+        assert(executionDelay == 0);
+    }
+
+    function _getRoleMembers(RoleId roleId) internal view returns (uint) {
+        return _accessManager.getRoleMembers(roleId.toInt());
+    }
+
+    function _getNextCustomRoleId() internal returns(RoleId roleId, RoleId admin) {
         uint64 roleIdInt = _idNext;
         uint64 adminInt = roleIdInt + 1;
 
@@ -329,7 +306,6 @@ contract InstanceAdmin is
         _validateTarget(target, ttype);
         _targetType[target] = ttype;
         _accessManager.createTarget(target, name);
-        //emit LogTargetCreation(target, name, ttype, isLocked);
     }
 
     function _validateTarget(address target, IAccess.Type ttype) 
@@ -342,13 +318,14 @@ contract InstanceAdmin is
     {
         IAccess.Type targetType = _targetType[target];
 
-        if(
-            targetType == IAccess.Type.NotInitialized ||
-            targetType == IAccess.Type.Core
-        ) {
+        if(targetType == IAccess.Type.Core) {
             revert IAccess.ErrorIAccessTargetTypeInvalid(target, targetType);
         }
 
         _accessManager.setTargetClosed(target, locked);
+    }
+
+    function _setTargetFunctionRole(address target, bytes4[] memory selectors, RoleId roleId) internal {
+        _accessManager.setTargetFunctionRole(target, selectors, roleId.toInt());
     }
 }

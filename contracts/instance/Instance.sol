@@ -117,7 +117,7 @@ contract Instance is
         external 
         restricted // INSTANCE_OWNER_ROLE
     {
-        _instanceAdmin.setTargetFunctionRole(targetName, selectors, roleId);
+        _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
     }
 
     function setTargetLocked(address target, bool locked)
@@ -186,6 +186,10 @@ contract Instance is
 
     function getInstanceAdmin() external view returns (InstanceAdmin) {
         return _instanceAdmin;
+    }
+
+    function getInstanceAccessManager() external view returns (AccessManagerExtendedInitializeable) {
+        return AccessManagerExtendedInitializeable(authority());
     }
 
     function setInstanceStore(InstanceStore instanceStore) external restricted {

@@ -75,7 +75,8 @@ abstract contract ComponentService is
         // check instance has assigned required role to owner
         instanceNftId = componentInfo.parentNftId;
         instance = _getInstance(instanceNftId);
-        if(!instance.getInstanceAdmin().hasRole(requiredRole, owner)) {
+        (bool hasRole,) = instance.getInstanceAccessManager().hasRole(requiredRole.toInt(), owner);
+        if(!hasRole) {
             revert ErrorComponentServiceExpectedRoleMissing(instanceNftId, requiredRole, owner);
         }
     }
@@ -96,7 +97,7 @@ abstract contract ComponentService is
         (componentInfo, instance) = _getAndVerifyComponentInfoAndInstance(componentNftId, expectedType);
 
         // locked component can not call services
-        if (instance.getInstanceAdmin().isTargetLocked(componentInfo.objectAddress)) {
+        if(instance.getInstanceAccessManager().isTargetClosed(componentInfo.objectAddress)) {
             revert IAccess.ErrorIAccessTargetLocked(componentInfo.objectAddress);
         }
     }

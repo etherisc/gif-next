@@ -95,7 +95,7 @@ library InstanceAuthorizationsLib
         instanceDistributionServiceSelectors[8] = instanceStore.createReferral.selector;
         instanceDistributionServiceSelectors[9] = instanceStore.updateReferral.selector;
         instanceDistributionServiceSelectors[10] = instanceStore.updateReferralState.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceDistributionServiceSelectors,
             DISTRIBUTION_SERVICE_ROLE());
@@ -115,7 +115,7 @@ library InstanceAuthorizationsLib
         bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
         instancePoolServiceSelectors[0] = instanceStore.createPoolSetup.selector;
         instancePoolServiceSelectors[1] = instanceStore.updatePoolSetup.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instancePoolServiceSelectors,
             POOL_SERVICE_ROLE());
@@ -138,7 +138,7 @@ library InstanceAuthorizationsLib
         instanceProductServiceSelectors[2] = instanceStore.createRisk.selector;
         instanceProductServiceSelectors[3] = instanceStore.updateRisk.selector;
         instanceProductServiceSelectors[4] = instanceStore.updateRiskState.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceProductServiceSelectors,
             PRODUCT_SERVICE_ROLE());
@@ -159,7 +159,7 @@ library InstanceAuthorizationsLib
         instanceApplicationServiceSelectors[0] = instanceStore.createApplication.selector;
         instanceApplicationServiceSelectors[1] = instanceStore.updateApplication.selector;
         instanceApplicationServiceSelectors[2] = instanceStore.updateApplicationState.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceApplicationServiceSelectors,
             APPLICATION_SERVICE_ROLE());
@@ -179,7 +179,7 @@ library InstanceAuthorizationsLib
         bytes4[] memory instancePolicyServiceSelectors = new bytes4[](2);
         instancePolicyServiceSelectors[0] = instanceStore.updatePolicy.selector;
         instancePolicyServiceSelectors[1] = instanceStore.updatePolicyState.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instancePolicyServiceSelectors,
             POLICY_SERVICE_ROLE());
@@ -199,7 +199,7 @@ library InstanceAuthorizationsLib
 
         bytes4[] memory instancePolicyServiceSelectors = new bytes4[](1);
         instancePolicyServiceSelectors[0] = instanceStore.updatePolicyClaims.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instancePolicyServiceSelectors, 
             CLAIM_SERVICE_ROLE());
@@ -209,7 +209,7 @@ library InstanceAuthorizationsLib
         instanceClaimServiceSelectors[1] = instanceStore.updateClaim.selector;
         instanceClaimServiceSelectors[2] = instanceStore.createPayout.selector;
         instanceClaimServiceSelectors[3] = instanceStore.updatePayout.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceClaimServiceSelectors, 
             CLAIM_SERVICE_ROLE());
@@ -231,7 +231,7 @@ library InstanceAuthorizationsLib
         instanceBundleServiceSelectors[0] = instanceStore.createBundle.selector;
         instanceBundleServiceSelectors[1] = instanceStore.updateBundle.selector;
         instanceBundleServiceSelectors[2] = instanceStore.updateBundleState.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceBundleServiceSelectors,
             BUNDLE_SERVICE_ROLE());
@@ -243,7 +243,7 @@ library InstanceAuthorizationsLib
         bundleManagerBundleServiceSelectors[2] = bundleManager.add.selector;
         bundleManagerBundleServiceSelectors[3] = bundleManager.lock.selector;
         bundleManagerBundleServiceSelectors[4] = bundleManager.unlock.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "BundleManager",
             bundleManagerBundleServiceSelectors,
             BUNDLE_SERVICE_ROLE());
@@ -262,7 +262,7 @@ library InstanceAuthorizationsLib
         accessManager.grantRole(INSTANCE_SERVICE_ROLE().toInt(), instanceServiceAddress, 0);
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
         instanceInstanceServiceSelectors[0] = instance.setInstanceReader.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "Instance",
             instanceInstanceServiceSelectors,
             INSTANCE_SERVICE_ROLE());
@@ -271,8 +271,8 @@ library InstanceAuthorizationsLib
         bytes4[] memory instanceAdminInstanceServiceSelectors = new bytes4[](3);
         instanceAdminInstanceServiceSelectors[0] = instanceAdmin.createGifTarget.selector;
         instanceAdminInstanceServiceSelectors[1] = instanceAdmin.setTargetLockedByService.selector;
-        instanceAdminInstanceServiceSelectors[2] = instanceAdmin.setCoreTargetFunctionRole.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdminInstanceServiceSelectors[2] = instanceAdmin.setTargetFunctionRoleByService.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceAdmin",
             instanceAdminInstanceServiceSelectors,
             INSTANCE_SERVICE_ROLE());
@@ -290,9 +290,9 @@ library InstanceAuthorizationsLib
         bytes4[] memory instanceAdminInstanceSelectors = new bytes4[](4);
         instanceAdminInstanceSelectors[0] = instanceAdmin.createRole.selector;
         instanceAdminInstanceSelectors[1] = instanceAdmin.createTarget.selector;
-        instanceAdminInstanceSelectors[2] = instanceAdmin.setTargetFunctionRole.selector;
+        instanceAdminInstanceSelectors[2] = instanceAdmin.setTargetFunctionRoleByInstance.selector;
         instanceAdminInstanceSelectors[3] = instanceAdmin.setTargetLockedByInstance.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceAdmin",
             instanceAdminInstanceSelectors,
             INSTANCE_ROLE());
@@ -312,7 +312,7 @@ library InstanceAuthorizationsLib
         instanceInstanceOwnerSelectors[1] = instance.createTarget.selector;
         instanceInstanceOwnerSelectors[2] = instance.setTargetFunctionRole.selector;
         instanceInstanceOwnerSelectors[3] = instance.setTargetLocked.selector;
-        instanceAdmin.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "Instance",
             instanceInstanceOwnerSelectors,
             INSTANCE_OWNER_ROLE());

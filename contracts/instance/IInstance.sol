@@ -14,6 +14,7 @@ import {VersionPart} from "../type/Version.sol";
 import {Key32} from "../type/Key32.sol";
 import {RoleId} from "../type/RoleId.sol";
 
+import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
@@ -74,4 +75,5 @@ interface IInstance is
     function getBundleManager() external view returns (BundleManager);
     function getInstanceAdmin() external view returns (InstanceAdmin);
     function getInstanceStore() external view returns (InstanceStore);
+    function getInstanceAccessManager() external view returns (AccessManagerExtendedInitializeable);
 }
