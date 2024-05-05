@@ -3,12 +3,14 @@ pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {NftId} from "../type/NftId.sol";
 import {RoleId, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {ObjectType, ObjectTypeLib, zeroObjectType, REGISTRY, SERVICE} from "../type/ObjectType.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {Timestamp, TimestampLib, zeroTimestamp, ltTimestamp} from "../type/Timestamp.sol";
+import {Seconds, SecondsLib} from "../type/Seconds.sol";
 
 import {IService} from "../shared/IService.sol";
 import {AccessManagerExtendedWithDisableInitializeable} from "../shared/AccessManagerExtendedWithDisableInitializeable.sol";
@@ -22,6 +24,7 @@ import {RegistryAdmin} from "./RegistryAdmin.sol";
 contract ReleaseManager is AccessManaged
 {
     using ObjectTypeLib for ObjectType;
+    using TimestampLib for Timestamp;
 
     event LogReleaseCreation(
         VersionPart version, 
@@ -63,13 +66,15 @@ contract ReleaseManager is AccessManaged
     // _verifyServiceAuthorizations
     error ErrorReleaseManagerServiceRoleInvalid(address service, RoleId role);
 
+    Seconds public constant MIN_DISABLE_DELAY = Seconds.wrap(60 * 24 * 365); // 1 year
+
     RegistryAdmin public immutable _admin;
     address public immutable _releaseAccessManagerCodeAddress;
     IRegistry public immutable _registry;
 
     mapping(VersionPart version => AccessManagerExtendedWithDisableInitializeable accessManager) internal _releaseAccessManager;
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
-    mapping(address registryService => bool isActive) internal _active;// have access to registry
+    mapping(address registryService => VersionPart version) _releaseVersionByAddress;
 
     VersionPart immutable internal _initial;// first active version    
     VersionPart internal _latest;// latest active version
@@ -218,15 +223,13 @@ contract ReleaseManager is AccessManaged
 
         _latest = version;
 
-        _active[service] = true;
+        _releaseVersionByAddress[service] = version;
         _releaseInfo[version].activatedAt = TimestampLib.blockTimestamp();
 
         emit LogReleaseActivation(version);
     }
-    
-    // TODO rename activatedAt to createdAt
-    // consider lastActivatedAt
-    function disableRelease(VersionPart version)
+
+    function disableRelease(VersionPart version, Seconds disableDelay)
         external
         restricted // GIF_ADMIN_ROLE
     {
@@ -240,35 +243,25 @@ contract ReleaseManager is AccessManaged
             revert ErrorReleaseManagerReleaseAlreadyDisabled(version);
         }
 
-        // disable release access manager
-        _releaseAccessManager[version].disable();
-        
-        // disable registry service
-        address registryServiceAddress = _registry.getServiceAddress(REGISTRY(), version);
-        _active[registryServiceAddress] = false;
+        disableDelay = SecondsLib.toSeconds(Math.max(disableDelay.toInt(), MIN_DISABLE_DELAY.toInt()));
 
-        _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp();
+        _releaseAccessManager[version].disable(disableDelay);
+
+        _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp().addSeconds(disableDelay);
     }
-    // TODO consider reenable delay (few month), after expiration can not enable back
-    // after expiration release is not maintained in case of error:
-    // 1). we will not emeregency shutdown because of no fixing will be done -> right
-    // 2). we can shutdown but it never be enabled afterwards
+    
     function enableRelease(VersionPart version)
         external
         restricted // GIF_ADMIN_ROLE
     {
-        // release not disabled already
-        if(_releaseInfo[version].disabledAt.eqz()) {
-            //revert ErrorReleaseManagerReleaseAlreadyDisabled(version);
-        }
+        // release was disabled
+        //if(_releaseInfo[version].disabledAt.eqz()) {
+        //    revert ErrorReleaseManagerReleaseAlreadyEnabled(version);
+        //}
 
-        // disable release access manager
+        // reverts if disable delay expired
         _releaseAccessManager[version].enable();
         
-        // disable registry service
-        address registryServiceAddress = _registry.getServiceAddress(REGISTRY(), version);
-        _active[registryServiceAddress] = true;
-
         _releaseInfo[version].disabledAt = zeroTimestamp();
     }
 
@@ -283,11 +276,14 @@ contract ReleaseManager is AccessManaged
     }
 
     function isActiveRegistryService(address service) external view returns(bool) {
-        return _active[service];
+        VersionPart version = _releaseVersionByAddress[service];
+        return isActiveRelease(version);
     }
 
-    function isActiveRelease(VersionPart version) external view returns(bool) {
-        return _releaseInfo[version].disabledAt.gtz() ? false : _releaseInfo[version].activatedAt.gtz();
+    function isActiveRelease(VersionPart version) public view returns(bool) {
+        if(_releaseInfo[version].activatedAt.eqz()) { return false; } 
+        if(_releaseInfo[version].disabledAt.eqz()) { return true; } 
+        return ltTimestamp(TimestampLib.blockTimestamp(), _releaseInfo[version].disabledAt);
     }
 
 

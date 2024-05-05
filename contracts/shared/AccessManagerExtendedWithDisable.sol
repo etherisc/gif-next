@@ -6,6 +6,8 @@ pragma solidity ^0.8.20;
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 
 import {VersionPart} from "../type/Version.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {Seconds, SecondsLib} from "../type/Seconds.sol";
 
 import {IAccessManagerExtendedWithDisable} from "./IAccessManagerExtendedWithDisable.sol";
 import {AccessManagerExtended} from "./AccessManagerExtended.sol";
@@ -17,7 +19,7 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
     /// @custom:storage-location erc7201:etherisc.storage.ReleaseAccessManager
     struct AccessManagerExtendedWithDisableStorage {
         VersionPart _version;
-        bool _disabled; // disable restricted functions for all targets
+        Timestamp _disabledAt;
     }
 
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.AccessManagerExtendedWithDisable")) - 1)) & ~bytes32(uint256(0xff));
@@ -46,9 +48,10 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
     )
         public view 
         virtual override (AccessManagerCustom, IAccessManager)
-        returns (bool immediate, uint32 delay) {
+        returns (bool immediate, uint32 delay)
+    {
         AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
-        if($._disabled) {
+        if($._disabledAt.gtz() && TimestampLib.blockTimestamp() > $._disabledAt) {
             revert AccessManagerDisabled();
         }
         return super.canCall(caller, target, selector);
@@ -61,18 +64,21 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
 
     // ===================================== ACCESS MANAGER MODE MANAGEMENT ============================================
 
-    // TODO GIF_MANAGER_ROLE -> releaseManager.disableRelease() -> releaseAccessManager.disable() -> wrong
-    // GIF_MANAGER_ROLE -> releaseManager.disableRelease() - will retire release with delay, after expiration will also disable it forever?
-    // GIF_MANAGER_ROLE -> releaseAccessManager.disable() - emergency shutdown, upgrades, etc. will disable temporary right away whithout any delay
     /// inheritdoc IAccessManagerExtended
-    function disable() external onlyAuthorized {
+    function disable(Seconds delay) external onlyAuthorized {
         AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
-        $._disabled = true;
+        if($._disabledAt.gtz()) {
+            revert AccessManagerDisabled();
+        }
+        $._disabledAt = TimestampLib.blockTimestamp().addSeconds(delay);
     }
     /// inheritdoc IAccessManagerExtended
     function enable() external onlyAuthorized {
         AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
-        $._disabled = false;
+        if(TimestampLib.blockTimestamp() > $._disabledAt) {
+            revert AccessManagerDisabled();
+        }
+        $._disabledAt = zeroTimestamp();
     }
 
 
@@ -88,13 +94,13 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
 
         // Restricted to ADMIN with no delay beside any execution delay the caller may have
         if (
-            selector == this.createRole.selector ||
             selector == this.labelRole.selector ||
             selector == this.setRoleAdmin.selector ||
             selector == this.setRoleGuardian.selector ||
             selector == this.setGrantDelay.selector ||
-            selector == this.createTarget.selector ||
             selector == this.setTargetAdminDelay.selector ||
+            selector == this.createRole.selector ||
+            selector == this.createTarget.selector ||
             selector == this.enable.selector || 
             selector == this.disable.selector
         ) {
