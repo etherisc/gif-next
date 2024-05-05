@@ -19,7 +19,7 @@ import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
 import { executeTx, getFieldFromTxRcptLogs } from "./transaction";
-import { getReleaseConfig } from "./release";
+import { getReleaseConfig, createRelease } from "./release";
 
 
 export type ServiceAddresses = {
@@ -81,47 +81,23 @@ export type ServiceAddresses = {
 
 export async function deployAndRegisterServices(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses): Promise<ServiceAddresses> 
 {
-    logger.info("======== Computing release addresses ========");
+    logger.info("======== Creating release ========");    
     //const salt = zeroPadBytes("0x03", 32);
     const salt: BytesLike = id(`0x5678`);
-
-    // compute release config
     const config = await getReleaseConfig(owner, registry, libraries, salt);
-
-    logger.info("======== Creating release ========");
-    const releaseManagerAddress = await resolveAddress(registry.releaseManagerAddress);
-    const releaseManager = ReleaseManager__factory.connect(releaseManagerAddress, owner);
-    await releaseManager.createNextRelease();
-
-    const rcpt = await executeTx(async () =>  releaseManager.prepareNextRelease(
-        config.addresses,
-        config.names,
-        config.serviceRoles,
-        config.serviceRoleNames,
-        config.functionRoles,
-        config.functionRoleNames,
-        config.selectors,
-        salt
-    ));
-
-    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "version");
-    const releaseVersion = (logCreationInfo as unknown);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "salt");
-    const releaseSalt = (logCreationInfo as BytesLike);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "releaseAccessManager");
-    const releaseAccessManager = (logCreationInfo as AddressLike);
-    logger.info(`Release created - version: ${releaseVersion} salt: ${releaseSalt} access manager: ${releaseAccessManager}`);
+    const release = await createRelease(owner, registry, config, salt);
+    logger.info(`Release created - version: ${release.version} salt: ${release.salt} access manager: ${release.accessManager}`);
 
     logger.info("======== Starting deployment of services ========");
-
+    const releaseManager = await registry.releaseManager.connect(owner);
     logger.info("-------- regtistry service --------");
     const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
         "RegistryServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager, // release access manager address it self can be a salt like value
             registry.registryAddress,
-            salt
+            release.salt
         ],
         {
             libraries: {
@@ -146,9 +122,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "InstanceServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: { 
             NftIdLib: libraries.nftIdLibAddress, 
@@ -174,9 +150,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "DistributionServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
@@ -205,9 +181,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "PricingServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
@@ -233,9 +209,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "BundleServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
@@ -261,9 +237,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "PoolServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
@@ -290,9 +266,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "ProductServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
@@ -317,9 +293,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "ClaimServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
@@ -347,9 +323,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "ApplicationServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
@@ -374,9 +350,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "PolicyServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
@@ -403,9 +379,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "StakingServiceManager",
         owner,
         [
-            releaseAccessManager,
+            release.accessManager,
             registry.registryAddress,
-            salt
+            release.salt
         ],
         { libraries: {
             NftIdLib: libraries.nftIdLibAddress,

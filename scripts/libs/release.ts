@@ -1,9 +1,10 @@
 
 import { AddressLike, BytesLike, Signer, resolveAddress, AbiCoder, keccak256, hexlify, Interface, solidityPacked, solidityPackedKeccak256, getCreate2Address, defaultAbiCoder, id, concat, Typed, BigNumberish } from "ethers";
 import { logger } from "../logger";
-import { PoolService__factory, BundleService__factory, DistributionService__factory, InstanceService__factory, RegistryService__factory } from "../../typechain-types";
+import { PoolService__factory, BundleService__factory, DistributionService__factory, InstanceService__factory, RegistryService__factory, ReleaseManager__factory } from "../../typechain-types";
 import { RegistryAddresses } from "./registry";
 import { LibraryAddresses } from "./libraries";
+import { executeTx, getFieldFromTxRcptLogs } from "./transaction";
 
 
 export type ReleaseAddresses = {
@@ -126,27 +127,68 @@ export type ReleaseConfig = {
     functionRoles: BigNumberish[][],
     functionRoleNames: string[][],
     selectors: BytesLike[][][] 
-}; 
+};
+
+export type Release = {
+    version: BigNumberish,
+    salt: BytesLike,
+    accessManager: AddressLike
+    config: ReleaseConfig
+};
+
+// TODO implement release addresses computation
+export async function computeReleaseAddresses(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike): Promise<ReleaseAddresses> {
+
+    const releaseAddresses: ReleaseAddresses = {
+        registryServiceAddress: "0x0000000000000000000000000000000000000001",
+        registryServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        instanceServiceAddress: "0x0000000000000000000000000000000000000001",
+        instanceServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        distributionServiceAddress: "0x0000000000000000000000000000000000000001",
+        distributionServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        poolServiceAddress: "0x0000000000000000000000000000000000000001",
+        poolServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        productServiceAddress: "0x0000000000000000000000000000000000000001",
+        productServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        applicationServiceAddress: "0x0000000000000000000000000000000000000001",
+        applicationServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        policyServiceAddress: "0x0000000000000000000000000000000000000001",
+        policyServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        claimServiceAddress: "0x0000000000000000000000000000000000000001",
+        claimServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        bundleServiceAddress: "0x0000000000000000000000000000000000000001",
+        bundleServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        pricingServiceAddress: "0x0000000000000000000000000000000000000001",
+        pricingServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        stakingServiceAddress: "0x0000000000000000000000000000000000000001",
+        stakingServiceManagerAddress: "0x0000000000000000000000000000000000000001"
+    };
+
+    logReleaseAddresses(releaseAddresses);
+
+    return releaseAddresses;
+}
+
 
 export async function getReleaseConfig(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike): Promise<ReleaseConfig>
 {
-    const releaseAddresses = await computeReleaseAddresses(owner, registry, libraries, salt);
+    const serviceAddresses = await computeReleaseAddresses(owner, registry, libraries, salt);
 
     // prepare config
     const config: ReleaseConfig =
     {
         addresses: [
-            releaseAddresses.stakingServiceAddress,
-            releaseAddresses.policyServiceAddress,
-            releaseAddresses.applicationServiceAddress,
-            releaseAddresses.claimServiceAddress,
-            releaseAddresses.productServiceAddress,
-            releaseAddresses.poolServiceAddress,
-            releaseAddresses.bundleServiceAddress,
-            releaseAddresses.pricingServiceAddress,
-            releaseAddresses.distributionServiceAddress,
-            releaseAddresses.instanceServiceAddress,
-            releaseAddresses.registryServiceAddress
+            serviceAddresses.stakingServiceAddress,
+            serviceAddresses.policyServiceAddress,
+            serviceAddresses.applicationServiceAddress,
+            serviceAddresses.claimServiceAddress,
+            serviceAddresses.productServiceAddress,
+            serviceAddresses.poolServiceAddress,
+            serviceAddresses.bundleServiceAddress,
+            serviceAddresses.pricingServiceAddress,
+            serviceAddresses.distributionServiceAddress,
+            serviceAddresses.instanceServiceAddress,
+            serviceAddresses.registryServiceAddress
         ],
         names: [
             serviceNames.STAKING_SERVICE_NAME,
@@ -273,35 +315,36 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
 
     return config;
 }
-// TODO implement release addresses computation
-export async function computeReleaseAddresses(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike): Promise<ReleaseAddresses> {
 
-    const releaseAddresses: ReleaseAddresses = {
-        registryServiceAddress: "0x0000000000000000000000000000000000000001",
-        registryServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        instanceServiceAddress: "0x0000000000000000000000000000000000000001",
-        instanceServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        distributionServiceAddress: "0x0000000000000000000000000000000000000001",
-        distributionServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        poolServiceAddress: "0x0000000000000000000000000000000000000001",
-        poolServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        productServiceAddress: "0x0000000000000000000000000000000000000001",
-        productServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        applicationServiceAddress: "0x0000000000000000000000000000000000000001",
-        applicationServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        policyServiceAddress: "0x0000000000000000000000000000000000000001",
-        policyServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        claimServiceAddress: "0x0000000000000000000000000000000000000001",
-        claimServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        bundleServiceAddress: "0x0000000000000000000000000000000000000001",
-        bundleServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        pricingServiceAddress: "0x0000000000000000000000000000000000000001",
-        pricingServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        stakingServiceAddress: "0x0000000000000000000000000000000000000001",
-        stakingServiceManagerAddress: "0x0000000000000000000000000000000000000001"
+export async function createRelease(owner: Signer, registry: RegistryAddresses, config: ReleaseConfig, salt: BytesLike): Promise<Release>
+{
+    const releaseManager = await registry.releaseManager.connect(owner);
+    await releaseManager.createNextRelease();
+
+    const rcpt = await executeTx(async () =>  releaseManager.prepareNextRelease(
+        config.addresses,
+        config.names,
+        config.serviceRoles,
+        config.serviceRoleNames,
+        config.functionRoles,
+        config.functionRoleNames,
+        config.selectors,
+        salt
+    ));
+
+    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "version");
+    const releaseVersion = (logCreationInfo as BigNumberish);
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "salt");
+    const releaseSalt = (logCreationInfo as BytesLike);
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "releaseAccessManager");
+    const releaseAccessManager = (logCreationInfo as AddressLike);
+
+    const release: Release = {
+        version: releaseVersion,
+        salt: releaseSalt,
+        accessManager: releaseAccessManager,
+        config: config
     };
-
-    logReleaseAddresses(releaseAddresses);
-
-    return releaseAddresses;
+    
+    return release;
 }
