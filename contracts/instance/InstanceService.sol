@@ -39,7 +39,7 @@ contract InstanceService is
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
 
     IRegistryService internal _registryService;
-    address internal _masterOzAccessManager;
+    address internal _masterAccessManager;
     address internal _masterInstanceAdmin;
     address internal _masterInstance;
     address internal _masterInstanceReader;
@@ -70,7 +70,7 @@ contract InstanceService is
     {
         address instanceOwner = msg.sender;
         AccessManagerExtendedInitializeable clonedOzAccessManager = AccessManagerExtendedInitializeable(
-            Clones.clone(_masterOzAccessManager));
+            Clones.clone(_masterAccessManager));
 
         // initially grants ADMIN_ROLE to this (being the instance service). 
         // This will allow the instance service to bootstrap the authorizations of the instance.
@@ -134,7 +134,7 @@ contract InstanceService is
             returns(NftId masterInstanceNftId)
     {
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
-        if(_masterOzAccessManager != address(0)) { revert ErrorInstanceServiceMasterOzAccessManagerAlreadySet(); }
+        if(_masterAccessManager != address(0)) { revert ErrorInstanceServiceMasterOzAccessManagerAlreadySet(); }
         if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
         if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
 
@@ -161,7 +161,7 @@ contract InstanceService is
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
-        _masterOzAccessManager = instance.authority();
+        _masterAccessManager = instance.authority();
         _masterInstanceAdmin = InstanceAdminAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
@@ -173,7 +173,7 @@ contract InstanceService is
         masterInstanceNftId = info.nftId;
     }
 
-    function setMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
+    function upgradeMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
         if(_masterInstanceReader == address(0)) { revert ErrorInstanceServiceMasterInstanceReaderNotSet(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderAddressZero(); }
         if(instanceReaderAddress == _masterInstanceReader) { revert ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader(); }
@@ -209,6 +209,7 @@ contract InstanceService is
         external
         restricted
     {
+        // TODO instanceAdmin will check target instance match anyway
         (
             IInstance instance, // or instanceInfo
             // or targetInfo

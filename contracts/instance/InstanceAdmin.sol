@@ -33,8 +33,7 @@ contract InstanceAdmin is
     uint64 _idNext;
 
     AccessManagerExtendedInitializeable internal _accessManager;
-    IInstance _instance;
-    NftId _instanceNftId;
+    address _instance;
     IRegistry internal _registry;
 
     // instance owner role is granted upon instance nft minting in callback function
@@ -48,8 +47,7 @@ contract InstanceAdmin is
         __AccessManaged_init(authority);
 
         _accessManager = AccessManagerExtendedInitializeable(authority);
-        _instance = instance;
-        _instanceNftId = instance.getNftId();
+        _instance = instanceAddress;
         _registry = registry;
         _idNext = CUSTOM_ROLE_ID_MIN;
 
@@ -108,7 +106,7 @@ contract InstanceAdmin is
     function transferInstanceOwnerRole(address from, address to) external restricted() {
         // temp pre transfer checks
         assert(_getRoleMembers(INSTANCE_ROLE()) == 1);
-        assert(_hasRole(INSTANCE_ROLE(), address(_instance)));
+        assert(_hasRole(INSTANCE_ROLE(), _instance));
         assert(_getRoleAdmin(INSTANCE_OWNER_ROLE()).toInt() == ADMIN_ROLE().toInt());
         if(from != address(0)) { // nft transfer
             assert(_getRoleMembers(INSTANCE_OWNER_ROLE()) == 1);
@@ -143,8 +141,9 @@ contract InstanceAdmin is
         }
 
         NftId targetParentNftId = _registry.getObjectInfo(target).parentNftId;
-        if(targetParentNftId != _instanceNftId) {
-            revert IAccess.ErrorIAccessTargetInstanceMismatch(target, targetParentNftId, _instanceNftId);
+        NftId instanceNftId = _registry.getObjectInfo(_instance).nftId;
+        if(targetParentNftId != instanceNftId) {
+            revert IAccess.ErrorIAccessTargetInstanceMismatch(target, targetParentNftId, instanceNftId);
         }
 
         _createTarget(target, name, IAccess.Type.Gif);
