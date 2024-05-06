@@ -126,14 +126,14 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             registry.registryAddress,
             salt
         ],
-        {
-            libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
+        { libraries: { 
+                NftIdLib: libraries.nftIdLibAddress, 
+                TargetManagerLib: libraries.targetManagerLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
-                VersionPartLib: libraries.versionPartLibAddress
-            }
-        });
+                VersionPartLib: libraries.versionPartLibAddress,
+            }});
+
     const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
     const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
@@ -148,28 +148,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
 
     await registryServiceManager.linkOwnershipToServiceNft();
-
-    // TODO cleanup
-    // logger.info("-------- staking service --------");
-    // const { address: stakingServiceManagerAddress, contract: stakingServiceManagerBaseContract, } = await deployContract(
-    //     "StakingServiceManager",
-    //     owner,
-    //     [registry.registryAddress],
-    //     { libraries: { 
-    //         NftIdLib: libraries.nftIdLibAddress, 
-    //         TimestampLib: libraries.timestampLibAddress,
-    //         VersionLib: libraries.versionLibAddress,
-    //         VersionPartLib: libraries.versionPartLibAddress,
-    //     }});
-
-    // const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
-    // const stakingServiceAddress = await stakingServiceManager.getStakingService();
-    // const stakingService = StakingService__factory.connect(stakingServiceAddress, owner);
-
-    // const rcpt = await executeTx(async () => await releaseManager.registerService(stakingServiceAddress));
-    // const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
-    // const stakingServiceNfdId = (logRegistrationInfo as unknown);
-    // logger.info(`stakingServiceManager deployed - stakingServiceAddress: ${stakingServiceAddress} stakingServiceManagerAddress: ${stakingServiceManagerAddress} nftId: ${stakingServiceNfdId}`);
 
     logger.info("-------- instance service --------");
     const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, } = await deployContract(
@@ -187,6 +165,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             VersionPartLib: libraries.versionPartLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
             InstanceAuthorizationsLib: libraries.instanceAuthorizationsLibAddress,
+            TargetManagerLib: libraries.targetManagerLibAddress,
         }});
 
     const instanceServiceManager = instanceServiceManagerBaseContract as InstanceServiceManager;

@@ -346,51 +346,63 @@ contract Registry is
         returns(NftId nftId)
     {
         ObjectType objectType = info.objectType;
+        bool isInterceptor = info.isInterceptor;
+        address objectAddress = info.objectAddress;
+        address owner = info.initialOwner;
+
         NftId parentNftId = info.parentNftId;
         ObjectInfo memory parentInfo = _info[parentNftId];
         ObjectType parentType = parentInfo.objectType; // see function header
         address parentAddress = parentInfo.objectAddress;
 
         // parent is contract -> need to check? -> check before minting
+        // special case: staking: to protocol possible as well
         // special case: global registry nft as parent when not on mainnet -> global registry address is 0
         // special case: when parentNftId == _chainNft.mint(), check for zero parent address before mint
         // special case: when parentNftId == _chainNft.mint() && objectAddress == initialOwner
-        if(parentAddress == address(0)) {
-            revert ErrorRegistryParentAddressZero();
+        if(objectType != STAKE()) {
+            if(parentAddress == address(0)) {
+                revert ZeroParentAddress();
+            }
         }
 
-        address interceptor = _getInterceptor(info.isInterceptor, info.objectAddress, parentInfo.isInterceptor, parentAddress);
+        address interceptorAddress = _getInterceptor(
+            isInterceptor, 
+            objectType, 
+            objectAddress, 
+            parentInfo.isInterceptor, 
+            parentAddress);
+
         uint256 tokenId = _chainNft.getNextTokenId();
         nftId = NftIdLib.toNftId(tokenId);
-
         info.nftId = nftId;
         _info[nftId] = info;
 
-        if(info.objectAddress > address(0)) 
-        {
-            address contractAddress = info.objectAddress;
-
-            if(_nftIdByAddress[contractAddress].gtz()) { 
-                revert ErrorRegistryContractAlreadyRegistered(contractAddress);
+        if(objectAddress > address(0)) {
+            if(_nftIdByAddress[objectAddress].gtz()) { 
+                revert ContractAlreadyRegistered(objectAddress);
             }
 
-            _nftIdByAddress[contractAddress] = nftId;
+            _nftIdByAddress[objectAddress] = nftId;
         }
 
-        emit LogRegistration(nftId, parentNftId, objectType, info.isInterceptor, info.objectAddress, info.initialOwner);
+        emit LogRegistration(nftId, parentNftId, objectType, isInterceptor, objectAddress, owner);
 
         // calls nft receiver(1) and interceptor(2)
         uint256 mintedTokenId = _chainNft.mint(
-            info.initialOwner,
-            interceptor,
+            owner,
+            interceptorAddress,
             EMPTY_URI);
-        assert(mintedTokenId == tokenId);
-        
+
+        assert(mintedTokenId == tokenId);        
     }
 
     /// @dev obtain interceptor address for this nft if applicable, address(0) otherwise
+    /// special case: STAKES (parent may be any type) -> no intercept call
+    /// default case: 
     function _getInterceptor(
         bool isInterceptor, 
+        ObjectType objectType,
         address objectAddress,
         bool parentIsInterceptor,
         address parentObjectAddress
@@ -399,6 +411,11 @@ contract Registry is
         view 
         returns (address interceptor) 
     {
+        // no intercepting calls for stakes
+        if (objectType == STAKE()) {
+            return address(0);
+        }
+
         if (objectAddress == address(0)) {
             if (parentIsInterceptor) {
                 return parentObjectAddress;
@@ -533,6 +550,9 @@ contract Registry is
         _coreObjectCombinations[DISTRIBUTOR()][DISTRIBUTION()] = true;
         _coreObjectCombinations[POLICY()][PRODUCT()] = true;
         _coreObjectCombinations[BUNDLE()][POOL()] = true;
-        _coreObjectCombinations[STAKE()][POOL()] = true;
+
+        // staking
+        _coreObjectCombinations[STAKE()][PROTOCOL()] = true;
+        _coreObjectCombinations[STAKE()][INSTANCE()] = true;
     }
 }

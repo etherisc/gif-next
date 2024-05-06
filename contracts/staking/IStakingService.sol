@@ -8,17 +8,28 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 
 interface IStakingService is IService
 {
 
+    event LogStakingServiceNewStakeCreated(NftId stakeNftId, address stakeOwner, NftId targetNftId, Amount dipAmount);
+
     error ErrorStakingServiceNotStaking(address stakingAddress);
     error ErrorStakingServiceNotSupportingIStaking(address stakingAddress);
 
+    error ErrorStakingServiceZeroTargetNftId();
+    error ErrorStakingServiceNotTargetNftId(NftId targetNftId);
+    error ErrorStakingServiceNotActiveTargetNftId(NftId targetNftId);
+
     /// @dev creates/registers an on-chain instance staking target.
     /// function granted to instance service
-    function createInstanceTarget(NftId targetNftId) external;
+    function createInstanceTarget(
+        NftId targetNftId,
+        Seconds initialLockingPeriod,
+        UFixed initialRewardRate
+    ) external;
 
     /// @dev create a new stake with amount DIP to the specified target
     /// returns the id of the newly minted stake nft
@@ -94,6 +105,7 @@ interface IStakingService is IService
         external
         returns (Amount totalValueLocked);
 
+
     /// @dev sets total value locked data for a target contract on a different chain.
     /// this is done via CCIP (cross chain communication) 
     function setTotalValueLocked(
@@ -102,6 +114,7 @@ interface IStakingService is IService
         Amount amount
     )
         external;
+
 
     function getStaking()
         external

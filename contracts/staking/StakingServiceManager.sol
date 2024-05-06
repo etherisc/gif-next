@@ -30,6 +30,7 @@ contract StakingServiceManager is
             salt);
 
         _stakingService = StakingService(address(versionable));
+        _stakingService.registerProtocolTarget();
     }
 
     //--- view functions ----------------------------------------------------//

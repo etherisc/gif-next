@@ -110,10 +110,13 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             registryAddress,
         ],
         { libraries: { 
+            TargetManagerLib: libraries.targetManagerLibAddress, 
             AmountLib: libraries.amountLibAddress, 
+            BlocknumberLib: libraries.blockNumberLibAddress, 
             Key32Lib: libraries.key32LibAddress, 
             LibNftIdSet: libraries.libNftIdSetAddress,
             NftIdLib: libraries.nftIdLibAddress, 
+            ObjectTypeLib: libraries.objectTypeLibAddress, 
             StateIdLib: libraries.stateIdLibAddress, 
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,

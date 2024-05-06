@@ -40,8 +40,8 @@ interface IRegistryService is
      error ErrorRegistryServiceInvalidInitialOwner(address initialOwner);
      error ErrorRegistryServiceInvalidAddress(address registerableAddress);
 
-     function registerStaking(IRegisterable staking, address owner)
-          external returns(IRegistry.ObjectInfo memory info); 
+     function registerStake(IRegistry.ObjectInfo memory info)
+          external returns(NftId nftId); 
 
      function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info); 

@@ -54,7 +54,7 @@ contract BalanceStore {
         feeAmount = _feeAmount[targetNftId];
     }
 
-    function _registerTarget(NftId targetNftId) internal {
+    function _registerBalanceTarget(NftId targetNftId) internal {
         if (_isRegistered[targetNftId]) {
             revert ErrorBalanceStoreTargetAlreadyRegistered(targetNftId);
         }

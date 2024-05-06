@@ -1,27 +1,35 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
-
-import {ObjectType, STAKING, INSTANCE, PROTOCOL} from "../type/ObjectType.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
-import {Version, VersionLib, VersionPartLib} from "../type/Version.sol";
-
-import {Amount} from "../type/Amount.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 import {Component} from "../shared/Component.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "./IStaking.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
+import {Key32} from "../type/Key32.sol";
 import {KeyValueStore} from "../shared/KeyValueStore.sol";
+import {KEEP_STATE} from "../type/StateId.sol";
 import {LibNftIdSet} from "../type/NftIdSet.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftIdSetManager} from "../shared/NftIdSetManager.sol";
+import {ObjectType, INSTANCE, PROTOCOL, STAKE, STAKING, TARGET} from "../type/ObjectType.sol";
+import {Seconds, SecondsLib} from "../type/Seconds.sol";
+import {StakingReader} from "./StakingReader.sol";
+import {TargetManagerLib} from "./TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
+import {Version, VersionLib} from "../type/Version.sol";
 import {Versionable} from "../shared/Versionable.sol";
 
-import {IRegistry} from "../registry/IRegistry.sol";
-
+// TODO split staking
+// candidate clusters
+// - strake management
+// - target management
+// - reward calculation
+// - read access
 contract Staking is 
     KeyValueStore,
     Component,
@@ -35,18 +43,27 @@ contract Staking is
     bytes32 public constant STAKING_LOCATION_V1 = 0xafe8d4462b2ed26a47154f4b8f6d1497d2f772496965791d25bd456e342b7f00;
 
     struct StakingStorage {
-        LibNftIdSet.Set _targets;
-        LibNftIdSet.Set _activeTargets;
+        IRegistryService _registryService;
         TokenRegistry _tokenRegistry;
+        StakingReader _reader;
 
-        mapping(NftId targetNftId => UFixed rewardRate) _rewardRate;
-        mapping(NftId targetNftId => Amount reserveAmount) _rewardReserveAmount;
+        NftIdSetManager _targetManager;
+
         mapping(uint256 chainId => mapping(address token => UFixed stakingRate)) _stakingRate;
 
-        mapping(NftId targetNftId => TargetInfo info) _targetInfo;
         mapping(NftId targetNftId => Amount stakedAmount) _stakedAmount;
         mapping(NftId targetNftId => mapping(address token => Amount tvlAmount)) _tvlAmount;
     }
+
+
+    modifier onlyNftOwner(NftId nftId) {
+        // TODO deal with special case protocol target (=owner = registry service owner)
+        if(msg.sender != getRegistry().ownerOf(nftId)) {
+            revert ErrorStakingNotNftOwner(nftId);
+        }
+        _;
+    }
+
 
     // from Versionable
     function getVersion()
@@ -57,6 +74,21 @@ contract Staking is
     {
         return VersionLib.toVersion(GIF_MAJOR_VERSION,0,0);
     }
+
+
+    // set/update staking reader
+    function setStakingReader(StakingReader stakingReader)
+        external
+        virtual
+        onlyOwner
+    {
+        if(stakingReader.getStaking() != IStaking(this)) {
+            revert ErrorStakingStakingReaderStakingMismatch(address(stakingReader.getStaking()));
+        }
+
+        _getStakingStorage()._reader = stakingReader;
+    }
+
 
     // rate management 
     function setStakingRate(uint256 chainId, address token, UFixed stakingRate)
@@ -92,16 +124,66 @@ contract Staking is
     }
 
     // target management
-    function registerInstanceTarget(NftId targetNftId)
+
+    function registerTarget(
+        NftId targetNftId,
+        ObjectType expectedObjectType,
+        uint256 chainId,
+        Seconds initialLockingPeriod,
+        UFixed initialRewardRate
+    )
         external
         virtual
-        // restricted // instance service access
+        // restricted // staking service access
     {
-        _registerTarget(
-            targetNftId,
-            INSTANCE(),
-            block.chainid);
+        TargetManagerLib.checkTargetParameters(
+            getRegistry(), 
+            getStakingReader(),
+            targetNftId, 
+            expectedObjectType, 
+            initialLockingPeriod, 
+            initialRewardRate);
+
+        // record target info
+        _create(
+            targetNftId.toKey32(TARGET()),
+            abi.encode(
+                TargetInfo({
+                    objectType: expectedObjectType,
+                    chainId: chainId,
+                    lockingPeriod: initialLockingPeriod,
+                    rewardRate: initialRewardRate,
+                    rewardReserveAmount: AmountLib.zero()
+                })));
+
+        // add target nft id to all/active sets
+        _getStakingStorage()._targetManager.add(targetNftId);
+
+        emit LogStakingTargetAdded(targetNftId, expectedObjectType, chainId);
     }
+
+
+    function setLockingPeriod(
+        NftId targetNftId, 
+        Seconds lockingPeriod
+    )
+        external
+        virtual
+        onlyNftOwner(targetNftId)
+    {
+        (
+            Key32 targetKey,
+            bytes memory targetData
+        ) = TargetManagerLib.updateLockingPeriod(
+            this,
+            targetNftId,
+            lockingPeriod);
+
+        _update(targetKey, targetData, KEEP_STATE());
+
+        emit LogStakingLockingPeriodSet(targetNftId, lockingPeriod);
+    }
+
 
     function increaseTvl(NftId targetNftId, address token, Amount amount)
         external
@@ -137,7 +219,30 @@ contract Staking is
     }
 
     // staking functions
-    function createStake(NftId targetNftId, Amount dipAmount) external returns(NftId stakeNftId) {}
+    function create(
+        NftId stakeNftId, 
+        NftId targetNftId, 
+        Amount dipAmount
+    )
+        external
+        virtual
+    {
+        Timestamp currentTime = TimestampLib.blockTimestamp();
+        Timestamp lockedUntil = currentTime.addSeconds(
+            _getStakingStorage()._reader.getTargetInfo(targetNftId).lockingPeriod);
+
+        _create(
+            stakeNftId.toKey32(STAKE()),
+            abi.encode(
+                StakeInfo({
+                    stakeAmount: dipAmount,
+                    rewardAmount: AmountLib.zero(),
+                    lockedUntil: lockedUntil,
+                    rewardsUpdatedAt: currentTime
+                })));
+    }
+
+
     function stake(NftId stakeNftId, Amount dipAmount) external {}
     function restakeRewards(NftId stakeNftId) external {}
     function restakeToNewTarget(NftId stakeNftId, NftId newTarget) external {}
@@ -146,56 +251,18 @@ contract Staking is
     function claimRewards(NftId stakeNftId) external {}
 
 
-    // view and pure functions (staking reader?)
-    function isTargetTypeSupported(ObjectType objectType) public pure returns (bool isSupported) {
-        if(objectType == PROTOCOL()) { return true; }
-        if(objectType == INSTANCE()) { return true; }
+    // view functions
 
-        return false;
+    function getStakingReader() public view returns (StakingReader reader) {
+        return _getStakingStorage()._reader;
     }
-
 
     function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate) {
         return _getStakingStorage()._stakingRate[chainId][token];
     }
 
-    function getRewardRate(NftId targetNftId) external view returns (UFixed rewardRate) {
-        return _getStakingStorage()._rewardRate[targetNftId];
-    }
-
-    function getRewardReserves(NftId targetNftId) external view returns (Amount rewardReserveAmount)  {
-        return _getStakingStorage()._rewardReserveAmount[targetNftId];
-    }
-
-
-    function getStakeInfo() external view returns (NftId stakeNftId) {}
-
-    function targets() external view returns (uint256) {
-        return LibNftIdSet.size(_getStakingStorage()._targets);
-    }
-
-    function getTargetNftId(uint256 idx) external view returns (NftId targetNftId) {
-        return LibNftIdSet.getElementAt(_getStakingStorage()._targets, idx);
-    }
-
-    function activeTargets() external view returns (uint256) {
-        return LibNftIdSet.size(_getStakingStorage()._activeTargets);
-    }
-
-    function getActiveTargetNftId(uint256 idx) external view returns (NftId targetNftId) {
-        return LibNftIdSet.getElementAt(_getStakingStorage()._activeTargets, idx);
-    }
-
-    function isTarget(NftId targetNftId) public view returns (bool) {
-        return LibNftIdSet.contains(_getStakingStorage()._targets, targetNftId);
-    }
-
-    function isActive(NftId targetNftId) public view returns (bool) {
-        return LibNftIdSet.contains(_getStakingStorage()._activeTargets, targetNftId);
-    }
-
-    function getTargetInfo(NftId targetNftId) external view returns (TargetInfo memory info) {
-        return _getStakingStorage()._targetInfo[targetNftId];
+    function getTargetManager() external view returns (NftIdSetManager targetManager) {
+        return _getStakingStorage()._targetManager;
     }
 
     function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount) {
@@ -234,8 +301,10 @@ contract Staking is
         (
             address initialAuthority,
             address registryAddress,
+            address targetManagerAddress,
+            address stakingReaderAddress,
             address initialOwner
-        ) = abi.decode(data, (address, address, address));
+        ) = abi.decode(data, (address, address, address, address, address));
 
         IRegistry registry = IRegistry(registryAddress);
         TokenRegistry tokenRegistry = TokenRegistry(registry.getTokenRegistryAddress());
@@ -253,86 +322,20 @@ contract Staking is
             "", // registry data
             ""); // component data
 
-        // set token registry
-        _getStakingStorage()._tokenRegistry = TokenRegistry(
+        _createAndSetTokenHandler();
+
+        // wiring to external contracts
+        StakingStorage storage $ = _getStakingStorage();
+        $._targetManager = NftIdSetManager(targetManagerAddress);
+        $._reader = StakingReader(stakingReaderAddress);
+        $._tokenRegistry = TokenRegistry(
             address(tokenRegistry));
 
-        // execute additional setup steps
-        _createAndSetTokenHandler();
-        _registerProtocolTarget();
+        // wiring to staking
+        $._targetManager.setOwner(address(this));
+        $._reader.setStaking(address(this));
 
         registerInterface(type(IStaking).interfaceId);
-    }
-
-
-    function _registerTarget(
-        NftId targetNftId,
-        ObjectType expectedObjectType,
-        uint256 chainId
-    )
-        internal
-    {
-        StakingStorage storage $ = _getStakingStorage();
-
-        // target nft id must not be zero
-        if (targetNftId.eqz()) {
-            revert ErrorStakingTargetNftIdZero();
-        }
-
-        // only accept "new" targets to be registered
-        if (isTarget(targetNftId)) {
-            revert ErrorStakingTargetAlreadyRegistered(targetNftId);
-        }
-
-        // target object type must be allowed
-        if (!isTargetTypeSupported(expectedObjectType)) {
-            revert ErrorStakingTargetTypeNotSupported(targetNftId, expectedObjectType);
-        }
-
-        // target nft id must be known and registered with the expected object type
-        IRegistry registry = getRegistry();
-        if (!registry.isRegistered(targetNftId)) {
-            revert ErrorStakingTargetNotFound(targetNftId);
-        } else {
-            // check that expected object type matches with registered object type
-            ObjectType actualObjectType = registry.getObjectInfo(targetNftId).objectType;
-            if (actualObjectType != expectedObjectType) {
-                revert ErrorStakingTargetUnexpectedObjectType(targetNftId, expectedObjectType, actualObjectType);
-            }
-        }
-
-        // record target info
-        $._targetInfo[targetNftId] = TargetInfo({
-            objectType: expectedObjectType,
-            chainId: chainId,
-            createdAt: TimestampLib.blockTimestamp()
-        });
-
-        // add target nft id to all/active sets
-        LibNftIdSet.add($._targets, targetNftId);
-        LibNftIdSet.add($._activeTargets, targetNftId);
-
-        emit LogStakingTargetAdded(targetNftId, expectedObjectType, chainId);
-    }
-
-
-    function _setTokenRegistry() internal {
-        StakingStorage storage $ = _getStakingStorage();
-
-        $._tokenRegistry = TokenRegistry(
-            getRegistry().getTokenRegistryAddress());
-    }
-
-
-    function _registerProtocolTarget() internal {
-        uint256 protocolId = ChainNft(
-            getRegistry().getChainNftAddress()).PROTOCOL_NFT_ID();
-
-        NftId protocolNftId = NftIdLib.toNftId(protocolId);
-        _registerTarget(
-            protocolNftId,
-            PROTOCOL(),
-            1); // protocol is registered on mainnet
     }
 
 

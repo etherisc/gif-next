@@ -4,8 +4,12 @@ pragma solidity ^0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
+import {BundleManager} from "./BundleManager.sol";
+import {ChainNft} from "../registry/ChainNft.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {SecondsLib} from "../type/Seconds.sol";
+import {UFixedLib} from "../type/UFixed.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
@@ -21,14 +25,13 @@ import {IProductComponent} from "../product/IProductComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
-import {ChainNft} from "../registry/ChainNft.sol";
+import {TargetManagerLib} from "../staking/TargetManagerLib.sol";
 
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
-import {BundleManager} from "./BundleManager.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {InstanceAuthorizationsLib} from "./InstanceAuthorizationsLib.sol";
 
@@ -124,7 +127,10 @@ contract InstanceService is
         clonedInstanceNftId = info.nftId;
 
         // create corresponding staking target
-        _stakingService.createInstanceTarget(clonedInstanceNftId);
+        _stakingService.createInstanceTarget(
+            clonedInstanceNftId,
+            TargetManagerLib.getDefaultLockingPeriod(),
+            TargetManagerLib.getDefaultRewardRate());
 
         emit LogInstanceCloned(
             address(clonedOzAccessManager), 
