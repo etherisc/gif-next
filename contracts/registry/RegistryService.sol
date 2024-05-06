@@ -258,8 +258,9 @@ contract RegistryService is
         config[9].authorizedSelectors[0] = RegistryService.registerInstance.selector;
 
         config[10].serviceDomain = STAKING();
-        config[10].authorizedSelectors = new bytes4[](1);
+        config[10].authorizedSelectors = new bytes4[](2);
         config[10].authorizedSelectors[0] = RegistryService.registerStaking.selector;
+        config[10].authorizedSelectors[1] = RegistryService.registerStake.selector;
     }
 
     // Internal

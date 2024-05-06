@@ -28,6 +28,7 @@ contract StakingServiceManager is
             data);
 
         _stakingService = StakingService(address(versionable));
+        _stakingService.registerProtocolTarget();
     }
 
     //--- view functions ----------------------------------------------------//

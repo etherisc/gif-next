@@ -25,6 +25,7 @@ export type LibraryAddresses = {
     referralLibAddress: AddressLike;
     instanceAuthorizationsLibAddress: AddressLike;
     serviceAuthorizationsLibAddress: AddressLike;
+    targetManagerLibAddress: AddressLike;
 }
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
@@ -117,6 +118,19 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         "SecondsLib",
         owner);
     LIBRARY_ADDRESSES.set("SecondsLib", secondsLibAddress);
+
+    const { address: targetManagerLibAddress } = await deployContract(
+        "TargetManagerLib",
+        owner, 
+        undefined,
+        {
+            libraries: {
+                NftIdLib: nftIdLibAddress,
+                SecondsLib: secondsLibAddress,
+                UFixedLib: uFixedLibAddress,
+            }
+        });
+    LIBRARY_ADDRESSES.set("TargetManagerLib", targetManagerLibAddress);
 
     const { address: timestampLibAddress } = await deployContract(
         "TimestampLib",
@@ -244,6 +258,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         referralLibAddress,
         instanceAuthorizationsLibAddress,
         serviceAuthorizationsLibAddress,
+        targetManagerLibAddress,
     };
     
 }

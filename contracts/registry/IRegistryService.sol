@@ -20,6 +20,8 @@ interface IRegistryService is
      error SelfRegistration();
      error NotRegistryOwner();
 
+     error NotStake();
+
      error NotService();
      error NotInstance();
      error NotComponent();
@@ -51,8 +53,8 @@ interface IRegistryService is
                FunctionConfig[] memory config
           );
 
-     function registerStaking(IRegisterable staking, address owner)
-          external returns(IRegistry.ObjectInfo memory info); 
+     function registerStake(IRegistry.ObjectInfo memory info)
+          external returns(NftId nftId); 
 
      function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info); 

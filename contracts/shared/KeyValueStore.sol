@@ -18,7 +18,7 @@ contract KeyValueStore is
 
     mapping(Key32 key32 => Value value) private _value;
 
-    function create(
+    function _create(
         Key32 key32, 
         bytes memory data
     )
@@ -52,95 +52,56 @@ contract KeyValueStore is
         emit LogInfoCreated(key32.toObjectType(), key32.toKeyId(), initialState, createdBy, tx.origin);
     }
 
-    function update(
+
+    function _update(
         Key32 key32, 
         bytes memory data,
         StateId state
     ) 
         internal
     {
+        // update state
+        Blocknumber lastUpdatedIn = _updateState(key32, state);
+
+        // update data
+        _value[key32].data = data;
+
+        // solhint-disable-next-line avoid-tx-origin
+        emit LogInfoUpdated(key32.toObjectType(), key32.toKeyId(), state, msg.sender, tx.origin, lastUpdatedIn);
+    }
+
+
+    function _updateState(
+        Key32 key32, 
+        StateId state
+    )
+        internal
+        returns (Blocknumber lastUpdatedIn)
+    {
         if (state.eqz()) {
             revert ErrorKeyValueStoreStateZero(key32);
         }
 
         Metadata storage metadata = _value[key32].metadata;
         StateId stateOld = metadata.state;
+        lastUpdatedIn = metadata.updatedIn;
+
         if (stateOld.eqz()) {
             revert ErrorKeyValueStoreNotExisting(key32);
         }
-
-        // update data
-        _value[key32].data = data;
 
         // update state 
         if(state != KEEP_STATE()) {
             checkTransition(metadata.objectType, stateOld, state);
             metadata.state = state;
+
+            // solhint-disable-next-line avoid-tx-origin
+            emit LogStateUpdated(key32.toObjectType(), key32.toKeyId(), stateOld, state, msg.sender, tx.origin, lastUpdatedIn);
         }
-
-        // update reest of metadata
-        address updatedBy = msg.sender;
-        Blocknumber lastUpdatedIn = metadata.updatedIn;
-
-        metadata.updatedBy = updatedBy;
-        metadata.updatedIn = blockBlocknumber();
-
-        // create log entries
-        // solhint-disable avoid-tx-origin
-        emit LogStateUpdated(key32.toObjectType(), key32.toKeyId(), stateOld, state, updatedBy, tx.origin, lastUpdatedIn);
-        emit LogInfoUpdated(key32.toObjectType(), key32.toKeyId(), state, updatedBy, tx.origin, lastUpdatedIn);
-        // solhing-enable
-    }
-
-    function updateData(Key32 key32, bytes memory data) 
-        internal
-    {
-        Metadata storage metadata = _value[key32].metadata;
-        StateId state = metadata.state;
-        if (state.eqz()) {
-            revert ErrorKeyValueStoreNotExisting(key32);
-        }
-
-        // update data
-        _value[key32].data = data;
 
         // update metadata
-        address updatedBy = msg.sender;
-        Blocknumber lastUpdatedIn = metadata.updatedIn;
-        metadata.updatedBy = updatedBy;
+        metadata.updatedBy = msg.sender;
         metadata.updatedIn = blockBlocknumber();
-
-        // create log entry
-        // solhint-disable-next-line avoid-tx-origin
-        emit LogInfoUpdated(key32.toObjectType(), key32.toKeyId(), state, updatedBy, tx.origin, lastUpdatedIn);
-    }
-
-    function updateState(Key32 key32, StateId state)
-        internal
-    {
-        if (state.eqz()) {
-            revert ErrorKeyValueStoreStateZero(key32);
-        }
-
-        Metadata storage metadata = _value[key32].metadata;
-        StateId stateOld = metadata.state;
-        if (stateOld.eqz()) {
-            revert ErrorKeyValueStoreNotExisting(key32);
-        }
-
-        // ensure state transistion is valid
-        checkTransition(metadata.objectType, stateOld, state);
-
-        // update metadata (and state)
-        address updatedBy = msg.sender;
-        Blocknumber lastUpdatedIn = metadata.updatedIn;
-        metadata.state = state;
-        metadata.updatedBy = updatedBy;
-        metadata.updatedIn = blockBlocknumber();
-
-        // create log entry
-        // solhint-disable-next-line avoid-tx-origin
-        emit LogStateUpdated(key32.toObjectType(), key32.toKeyId(), stateOld, state, updatedBy, tx.origin, lastUpdatedIn);
     }
 
     function exists(Key32 key32) public view returns (bool) {

@@ -61,6 +61,7 @@ import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 
 import {Staking} from "../../contracts/staking/Staking.sol";
+import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {StakingService} from "../../contracts/staking/StakingService.sol";
 import {StakingServiceManager} from "../../contracts/staking/StakingServiceManager.sol";
@@ -112,6 +113,7 @@ contract GifTest is Test {
     NftId public stakingServiceNftId;
     StakingManager public stakingManager;
     Staking public staking;
+    StakingReader public stakingReader;
     NftId public stakingNftId;
 
     NftId public instanceServiceNftId;
@@ -177,6 +179,7 @@ contract GifTest is Test {
 
     address constant public NFT_LOCK_ADDRESS = address(0x1);
     address public registryOwner = makeAddr("registryOwner");
+    address public stakingOwner = registryOwner;
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
     address public poolOwner = makeAddr("poolOwner");
@@ -184,6 +187,8 @@ contract GifTest is Test {
     address public customer = makeAddr("customer");
     address public customer2 = makeAddr("customer2");
     address public investor = makeAddr("investor");
+    address public staker = makeAddr("staker");
+    address public staker2 = makeAddr("staker2");
     address public outsider = makeAddr("outsider");
 
     uint8 initialProductFeePercentage = 2;
@@ -347,20 +352,22 @@ contract GifTest is Test {
         // solhint-enable
 
         // 4) deploy staking contract
-        address stakingOwner = registryOwner;
+        stakingOwner = registryOwner;
         stakingManager = new StakingManager(
             registryAccessManager.authority(),
             address(registry));
         staking = stakingManager.getStaking();
+        stakingReader = staking.getStakingReader();
+
+        // solhint-disable
+        console.log("stakingManager deployed at", address(stakingManager));
+        console.log("staking deployed at", address(staking));
+        console.log("staking reader deployed at", address(stakingReader));
 
         // 5) register staking contract
         stakingNftId = releaseManager.registerStaking(
             address(staking),
             stakingOwner);
-
-        // solhint-disable
-        console.log("stakingManager deployed at", address(stakingManager));
-        console.log("staking deployed at", address(staking));
 
         console.log("staking nft id", registry.getNftId(address(staking)).toInt());
         console.log("staking deployed at", address(staking));
