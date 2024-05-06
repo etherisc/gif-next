@@ -40,7 +40,7 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
     }
 
     // =================================================== GETTERS ====================================================
-    // TODO should functions with onlyAuthorized revert too if disabled???
+
     function canCall(
         address caller,
         address target,
@@ -51,7 +51,7 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
         returns (bool immediate, uint32 delay)
     {
         AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
-        if($._disabledAt.gtz() && TimestampLib.blockTimestamp() > $._disabledAt) {
+        if(isDisabled()) {
             revert AccessManagerDisabled();
         }
         return super.canCall(caller, target, selector);
@@ -60,6 +60,11 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
     function getVersion() public view returns (VersionPart) {
         AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
         return $._version;
+    }
+
+    function isDisabled() public view returns (bool) {
+        AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
+        return $._disabledAt.gtz() && TimestampLib.blockTimestamp() > $._disabledAt;
     }
 
     // ===================================== ACCESS MANAGER MODE MANAGEMENT ============================================
@@ -75,7 +80,7 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
     /// inheritdoc IAccessManagerExtended
     function enable() external onlyAuthorized {
         AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
-        if(TimestampLib.blockTimestamp() > $._disabledAt) {
+        if(isDisabled()) {
             revert AccessManagerDisabled();
         }
         $._disabledAt = zeroTimestamp();
@@ -83,6 +88,7 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
 
 
     // ========================= INTERNAL ==============================
+
     function _getAdminRestrictions(
         bytes calldata data
     ) internal virtual override view returns (bool restricted, uint64 roleAdminId, uint32 executionDelay) {

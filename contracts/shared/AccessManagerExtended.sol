@@ -23,7 +23,7 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
     struct AccessManagerExtendedStorage {
         mapping(address target => TargetInfo info) _targetInfo;
         mapping(string name => address target) _targetAddressForName;
-        address[] _targetAddresses;// can not have duplicate element
+        address[] _targetAddresses;
 
         mapping(uint64 roleId => RoleInfo) _roleInfo;
         mapping(uint64 roleId => EnumerableSet.AddressSet roleMembers) _roleMembers;
@@ -316,11 +316,11 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         virtual
         returns (string memory)
     {
-        address authority = IAccessManaged(target).authority();
-
         if(target == address(0)) {
             revert AccessManagerTargetAddressZero();
         }
+
+        address authority = IAccessManaged(target).authority();
 
         if(authority != address(this)) {
             revert AccessManagerTargetAuthorityInvalid(target, authority);

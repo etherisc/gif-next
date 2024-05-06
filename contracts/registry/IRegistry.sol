@@ -43,6 +43,7 @@ interface IRegistry is IERC165 {
 
     struct ReleaseInfo {
         VersionPart version;
+        bytes32 salt;
         address[] addresses;
         string[] names;
         RoleId[][] serviceRoles;

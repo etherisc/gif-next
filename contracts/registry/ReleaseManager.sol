@@ -35,7 +35,6 @@ contract ReleaseManager is AccessManaged
 
 
     // prepareRelease
-    error ErrorReleaseManagerReleaseEmpty();
     error ErrorReleaseManagerReleaseAlreadyCreated(VersionPart version);
     
     // registerService
@@ -64,6 +63,7 @@ contract ReleaseManager is AccessManaged
     error ErrorReleaseManagerServiceOwnerRegistered(IService service, address owner);
 
     // _verifyServiceAuthorizations
+    error ErrorReleaseManagerReleaseEmpty();
     error ErrorReleaseManagerServiceRoleInvalid(address service, RoleId role);
 
     Seconds public constant MIN_DISABLE_DELAY = Seconds.wrap(60 * 24 * 365); // 1 year
@@ -119,27 +119,9 @@ contract ReleaseManager is AccessManaged
         restricted // GIF_MANAGER_ROLE
         returns(address releaseAccessManagerAddress, VersionPart version, bytes32 releaseSalt)
     {
-        if(addresses.length == 0) {
-            revert ErrorReleaseManagerReleaseEmpty();
-        }
-
-        if(_awaitingRegistration > 0) {
-            revert ErrorReleaseManagerReleaseAlreadyCreated(version);
-        }
-
         _verifyReleaseAuthorizations(addresses, serviceRoles, functionRoles, selectors);
 
         version = getNextVersion();
-
-        _releaseInfo[version].version = version;
-        _releaseInfo[version].addresses = addresses;
-        _releaseInfo[version].names = names;
-        _releaseInfo[version].serviceRoles = serviceRoles;
-        _releaseInfo[version].serviceRoleNames = serviceRoleNames;
-        _releaseInfo[version].functionRoles = functionRoles;
-        _releaseInfo[version].functionRoleNames = functionRoleNames;
-        _releaseInfo[version].selectors = selectors;
-        _awaitingRegistration = addresses.length;
 
         // ensures unique salt
         releaseSalt = keccak256(
@@ -150,6 +132,21 @@ contract ReleaseManager is AccessManaged
         releaseAccessManagerAddress = Clones.cloneDeterministic(_releaseAccessManagerCodeAddress, releaseSalt);
         AccessManagerExtendedWithDisableInitializeable releaseAccessManager = AccessManagerExtendedWithDisableInitializeable(releaseAccessManagerAddress);
         releaseAccessManager.initialize(address(this), version);
+
+        if(_awaitingRegistration > 0) {
+            revert ErrorReleaseManagerReleaseAlreadyCreated(version);
+        }
+
+        _releaseInfo[version].version = version;
+        _releaseInfo[version].salt = releaseSalt;
+        _releaseInfo[version].addresses = addresses;
+        _releaseInfo[version].names = names;
+        _releaseInfo[version].serviceRoles = serviceRoles;
+        _releaseInfo[version].serviceRoleNames = serviceRoleNames;
+        _releaseInfo[version].functionRoles = functionRoles;
+        _releaseInfo[version].functionRoleNames = functionRoleNames;
+        _releaseInfo[version].selectors = selectors;
+        _awaitingRegistration = addresses.length;
 
         _releaseAccessManager[version] = releaseAccessManager;
 
@@ -169,6 +166,7 @@ contract ReleaseManager is AccessManaged
 
         if(_awaitingRegistration == 0) {
             // TODO either release is not created or registration is finished
+            //      or just let it panic on underflow?
             revert ErrorReleaseManagerReleaseRegistrationNotFinished(version, _awaitingRegistration);
         }
 
@@ -229,6 +227,7 @@ contract ReleaseManager is AccessManaged
         emit LogReleaseActivation(version);
     }
 
+    // release becomes disabled after delay expiration (can be reenabled before that)
     function disableRelease(VersionPart version, Seconds disableDelay)
         external
         restricted // GIF_ADMIN_ROLE
@@ -397,6 +396,10 @@ contract ReleaseManager is AccessManaged
         internal
         view
     {
+        if(serviceAddress.length == 0) {
+            revert ErrorReleaseManagerReleaseEmpty();
+        }
+
         for(uint serviceIdx = 0; serviceIdx < serviceAddress.length; serviceIdx++)
         {
             for(uint roleIdx = 0; roleIdx < serviceRoles[serviceIdx].length; roleIdx++)

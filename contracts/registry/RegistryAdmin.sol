@@ -34,8 +34,6 @@ contract RegistryAdmin is AccessManaged, Initializable
 
     string public constant RELEASE_MANAGER_TARGET_NAME = "ReleaseManager";
     //string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
-
-    uint64 public constant UNIQUE_ROLE_ID_MIN = 1000000;
     
     address private _releaseManager;
     address private _tokenRegistry;
@@ -80,7 +78,7 @@ contract RegistryAdmin is AccessManaged, Initializable
 
         _setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
     }
-    // in instance access mamanger it done differently -> instance have role and calls instance access manager revoke()/grant()
+    
     /*function transferAdmin(address to)
         external
         restricted // only with GIF_ADMIN_ROLE or nft owner

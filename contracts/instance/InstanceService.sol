@@ -69,17 +69,17 @@ contract InstanceService is
         )
     {
         address instanceOwner = msg.sender;
-        AccessManagerExtendedInitializeable clonedOzAccessManager = AccessManagerExtendedInitializeable(
+        AccessManagerExtendedInitializeable clonedAccessManager = AccessManagerExtendedInitializeable(
             Clones.clone(_masterAccessManager));
 
         // initially grants ADMIN_ROLE to this (being the instance service). 
         // This will allow the instance service to bootstrap the authorizations of the instance.
         // Instance service will renounce ADMIN_ROLE when bootstraping is finished
-        clonedOzAccessManager.initialize(address(this));
+        clonedAccessManager.initialize(address(this));
 
         clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(
-            address(clonedOzAccessManager),
+            address(clonedAccessManager),
             address(getRegistry()), 
             instanceOwner);
         // initialize and set before instance reader
@@ -96,7 +96,7 @@ contract InstanceService is
         clonedInstance.setBundleManager(clonedBundleManager);
 
         InstanceAdmin clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
-        clonedOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAdmin), 0);
+        clonedAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAdmin), 0);
         clonedInstanceAdmin.initialize(address(clonedInstance));
         clonedInstance.setInstanceAdmin(clonedInstanceAdmin);
 
@@ -104,7 +104,7 @@ contract InstanceService is
 
         // TODO library does external calls -> but it is registry and access manager -> find out is it best practice
         InstanceAuthorizationsLib.grantInitialAuthorizations(
-            clonedOzAccessManager, 
+            clonedAccessManager, 
             clonedInstanceAdmin, 
             clonedInstance, 
             clonedBundleManager, 
@@ -113,13 +113,13 @@ contract InstanceService is
             getRegistry(),
             getVersion().toMajorPart());
 
-        clonedOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
+        clonedAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
 
         IRegistry.ObjectInfo memory info = _registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
 
         emit LogInstanceCloned(
-            address(clonedOzAccessManager), 
+            address(clonedAccessManager), 
             address(clonedInstanceAdmin), 
             address(clonedInstance),
             address(clonedInstanceStore),
