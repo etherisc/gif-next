@@ -14,6 +14,10 @@ using {
 
 // general pure free functions
 
+function RELEASE() pure returns (ObjectType) {
+    return toObjectType(1);
+}
+
 function PROTOCOL() pure returns (ObjectType) {
     return toObjectType(10);
 }

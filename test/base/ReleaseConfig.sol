@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
-import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, STAKING_SERVICE_ROLE, CAN_CREATE_GIF_TARGET_ROLE} from "../../contracts/type/RoleId.sol";
+import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, COMPONENT_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, STAKING_SERVICE_ROLE, CAN_CREATE_GIF_TARGET_ROLE} from "../../contracts/type/RoleId.sol";
 import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, PRICE} from "../../contracts/type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
@@ -41,6 +41,9 @@ import {BundleServiceManager} from "../../contracts/pool/BundleServiceManager.so
 
 import {DistributionService} from "../../contracts/distribution/DistributionService.sol";
 import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
+
+import {ComponentService} from "../../contracts/shared/ComponentService.sol";
+import {ComponentServiceManager} from "../../contracts/shared/ComponentServiceManager.sol";
 
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";  
@@ -88,13 +91,13 @@ contract ReleaseConfig
             bytes.concat(
                 bytes32(_version.toInt()),
                 salt));
+
         _accessManager = Clones.predictDeterministicAddress(
             address(releaseManager._accessManager().authority()), // implementation
             _salt,
             address(releaseManager)); // deployer
 
         // order is important
-        _pushStakingServiceConfig();
         _pushPolicyServiceConfig();
         _pushApplicationServiceConfig();
         _pushClaimServiceConfig();
@@ -103,7 +106,9 @@ contract ReleaseConfig
         _pushBundleServiceConfig();
         _pushPricingServiceConfig();
         _pushDistributionServiceConfig();
+        _pushComponentServiceConfig();
         _pushInstanceServiceConfig();
+        _pushStakingServiceConfig();
         _pushRegistryServiceConfig();
     }
 
@@ -311,6 +316,21 @@ contract ReleaseConfig
         _selectors[serviceIdx][0][0] = DistributionService.processSale.selector;
     }
 
+    function _pushComponentServiceConfig() internal
+    {
+        address proxyManager = _computeProxyManagerAddress(type(ComponentServiceManager).creationCode);
+        address implementation = _computeImplementationAddress(type(ComponentService).creationCode, proxyManager);
+        address proxyAddress = _computeProxyAddress(implementation, proxyManager);
+
+        _addresses.push(proxyAddress);
+        _serviceRoles.push(new RoleId[](1));
+        _functionRoles.push(new RoleId[](0));
+        _selectors.push(new bytes4[][](0));
+        uint serviceIdx = _addresses.length - 1;
+
+        _serviceRoles[serviceIdx][0] = COMPONENT_SERVICE_ROLE();
+    }
+
     function _pushInstanceServiceConfig() internal
     {
         address proxyManager = _computeProxyManagerAddress(type(InstanceServiceManager).creationCode);
@@ -338,8 +358,8 @@ contract ReleaseConfig
 
         _addresses.push(proxyAddress);
         _serviceRoles.push(new RoleId[](1));
-        _functionRoles.push(new RoleId[](6));
-        _selectors.push(new bytes4[][](6));
+        _functionRoles.push(new RoleId[](8));
+        _selectors.push(new bytes4[][](8));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = REGISTRY_SERVICE_ROLE();
@@ -368,6 +388,14 @@ contract ReleaseConfig
         _functionRoles[serviceIdx][5] = INSTANCE_SERVICE_ROLE();
         _selectors[serviceIdx][5] = new bytes4[](1);
         _selectors[serviceIdx][5][0] = RegistryService.registerInstance.selector;
+
+        _functionRoles[serviceIdx][6] = COMPONENT_SERVICE_ROLE();
+        _selectors[serviceIdx][6] = new bytes4[](1);
+        _selectors[serviceIdx][6][0] = RegistryService.registerComponent.selector;
+
+        _functionRoles[serviceIdx][7] = STAKING_SERVICE_ROLE();
+        _selectors[serviceIdx][7] = new bytes4[](1);
+        _selectors[serviceIdx][7][0] = RegistryService.registerStake.selector;
     }
 
     function _computeProxyManagerAddress(bytes memory creationCode) internal view returns(address) {

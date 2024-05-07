@@ -362,7 +362,7 @@ contract Registry is
         // special case: when parentNftId == _chainNft.mint() && objectAddress == initialOwner
         if(objectType != STAKE()) {
             if(parentAddress == address(0)) {
-                revert ZeroParentAddress();
+                revert ErrorRegistryParentAddressZero();
             }
         }
 
@@ -380,7 +380,7 @@ contract Registry is
 
         if(objectAddress > address(0)) {
             if(_nftIdByAddress[objectAddress].gtz()) { 
-                revert ContractAlreadyRegistered(objectAddress);
+                revert ErrorRegistryContractAlreadyRegistered(objectAddress);
             }
 
             _nftIdByAddress[objectAddress] = nftId;

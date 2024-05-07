@@ -53,6 +53,8 @@ contract StakingService is
             TargetManagerLib.getDefaultRewardRate());
     }
 
+    // TODO cleanup
+    event LogDebug(uint256 id, string message);
 
     function createInstanceTarget(
         NftId targetNftId,
@@ -63,6 +65,8 @@ contract StakingService is
         virtual
         // restricted // TODO re-enable once services have stable roles
     {
+        emit LogDebug(1, "before chainid");
+
         uint256 chainId = block.chainid;
         _getStakingServiceStorage()._staking.registerTarget(
             targetNftId,

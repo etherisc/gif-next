@@ -66,7 +66,7 @@ function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRole
 function CAN_CREATE_GIF_TARGET_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1700); }
 
 /// @dev role for registering gif components
-function COMPONENT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
+function COMPONENT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2001); }
 
 /// @dev instance specific role for distribution service
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
