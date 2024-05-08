@@ -153,17 +153,13 @@ contract RegistryTestBase is Test, FoundryRandom {
         bytes32 salt = "0x1234";
 
         _startPrank(registryOwner);
-
         _deployRegistry();
-
         _deployRegistryServiceMock();
-
         _stopPrank();
 
         // Tests bookeeping
         _afterDeployment();
     }
-
 
 
     function _deployRegistry() internal

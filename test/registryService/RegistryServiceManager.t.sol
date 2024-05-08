@@ -29,23 +29,23 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
 
     address public registryOwnerNew = makeAddr("registryOwnerNew");
 
-    function setUp() public virtual override {
+    // function setUp() public virtual override {
 
-        vm.startPrank(registryOwner);
+    //     vm.startPrank(registryOwner);
 
-        _deployRegistry();
+    //     _deployRegistry();
 
-        _deployRegistryService();
+    //     _deployRegistryService();
 
-        // deploy staking contract
-        address stakingOwner = registryOwner;
-        stakingManager = new StakingManager(
-            registryAccessManager.authority(),
-            address(registry));
-        staking = stakingManager.getStaking();
+    //     // deploy staking contract
+    //     address stakingOwner = registryOwner;
+    //     stakingManager = new StakingManager(
+    //         registryAccessManager.authority(),
+    //         address(registry));
+    //     staking = stakingManager.getStaking();
 
-        vm.stopPrank();
-    }
+    //     vm.stopPrank();
+    // }
 
     function test_deployedRegistryAndRegistryService() public {
 

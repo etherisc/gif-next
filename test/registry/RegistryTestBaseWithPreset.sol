@@ -46,22 +46,6 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info;
 
-        // TODO cleanup or reenable
-        // solhint-disable no-console
-//         console.log("Registering token");
-
-//         info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
-//         info.parentNftId = _nftIdByType[REGISTRY()];
-//         info.objectType = TOKEN();
-//         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
-//         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
-
-//         info.nftId = registry.register(info);
-//         _afterRegistration_setUp(info);
-//         _nftIdByType[TOKEN()] = info.nftId;
-
-//         console.log("Token nftId:", _nftIdByType[TOKEN()].toInt());
-// >>>>>>> 697ff1d (major refactoring (part 1))
         console.log("Registering instance");
 
         info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));

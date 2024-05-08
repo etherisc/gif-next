@@ -81,28 +81,6 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
     address public contractWithoutIERC165 = address(new Dip());
     address public erc165 = address(new ERC165()); 
 
-    RegisterableMock public registerableOwnedByRegistryOwner;
-
-    function setUp() public virtual override
-    {
-        vm.startPrank(registryOwner);
-
-        _deployRegistry();
-
-        _deployRegistryService();
-
-        registerableOwnedByRegistryOwner = new RegisterableMock(
-            NftIdLib.zero(), 
-            registryNftId, 
-            toObjectType(randomNumber(type(uint8).max)),
-            toBool(randomNumber(1)),
-            registryOwner, 
-            ""
-        );
-
-        vm.stopPrank();
-    }
-
     function _deployRegistryService() internal
     {
         bytes32 salt = "0x1111";

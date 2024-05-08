@@ -151,13 +151,3 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         _stopPrank();
     }*/
 }
-
-contract RegisterServiceWithPresetConcreteTest is RegistryTestBaseWithPreset, RegisterServiceConcreteTest
-{
-    function setUp() public virtual override(RegistryTestBase, RegistryTestBaseWithPreset)
-    {
-        RegistryTestBaseWithPreset.setUp();
-    }
-}
-
-

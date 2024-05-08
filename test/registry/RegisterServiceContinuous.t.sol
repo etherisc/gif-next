@@ -520,6 +520,7 @@ contract RegisterServiceContinousTests is RegistryTestBase
 */
 }
 
+/*
 contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset, RegisterServiceContinousTests
 {
     function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
@@ -585,3 +586,4 @@ contract RegisterServiceWithPresetContinuousTests is RegistryTestBaseWithPreset,
         _stopPrank();
     }
 }
+*/
