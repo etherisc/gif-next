@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {Amount} from "../type/Amount.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
@@ -16,6 +18,7 @@ import {Service} from "../shared/Service.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 
@@ -30,6 +33,8 @@ contract StakingService is
     struct StakingServiceStorage {
         RegistryService _registryService;
         IStaking _staking;
+        IERC20Metadata _dip;
+        TokenHandler _tokenHandler;
     }
 
     function getDomain() public pure override returns(ObjectType) {
@@ -53,8 +58,6 @@ contract StakingService is
             TargetManagerLib.getDefaultRewardRate());
     }
 
-    // TODO cleanup
-    event LogDebug(uint256 id, string message);
 
     function createInstanceTarget(
         NftId targetNftId,
@@ -65,8 +68,6 @@ contract StakingService is
         virtual
         // restricted // TODO re-enable once services have stable roles
     {
-        emit LogDebug(1, "before chainid");
-
         uint256 chainId = block.chainid;
         _getStakingServiceStorage()._staking.registerTarget(
             targetNftId,
@@ -110,11 +111,18 @@ contract StakingService is
             revert ErrorStakingServiceNotActiveTargetNftId(targetNftId);
         }
 
-        // check balance and allowance
-        //TODO implement
+        // check balance
+        uint256 amount = dipAmount.toInt();
+        uint256 dipBalance = $._dip.balanceOf(stakeOwner);
+        if (dipBalance < amount) {
+            revert ErrorStakingServiceDipBalanceInsufficient(targetNftId, amount, dipBalance);
+        }
 
-        // collect staked dip amount
-        //TODO implement
+        // check allowance
+        uint256 dipAllowance = $._dip.allowance(stakeOwner, address($._tokenHandler));
+        if (dipAllowance < amount) {
+            revert ErrorStakingServiceDipAllowanceInsufficient(targetNftId, address($._tokenHandler), amount, dipAllowance);
+        }
 
         // register new stake object with registry
         stakeNftId = $._registryService.registerStake(
@@ -132,6 +140,12 @@ contract StakingService is
         $._staking.create(
             stakeNftId, 
             targetNftId,
+            dipAmount);
+
+        // collect staked dip
+        $._tokenHandler.transfer(
+            stakeOwner,
+            $._staking.getWallet(),
             dipAmount);
 
         emit LogStakingServiceNewStakeCreated(stakeNftId, stakeOwner, targetNftId, dipAmount);
@@ -221,6 +235,24 @@ contract StakingService is
     }
 
 
+    function getDipToken()
+        external
+        virtual
+        returns (IERC20Metadata dip)
+    {
+        return _getStakingServiceStorage()._dip;
+    }
+
+
+    function getTokenHandler()
+        external
+        virtual
+        returns (TokenHandler tokenHandler)
+    {
+        return _getStakingServiceStorage()._tokenHandler;
+    }
+
+
     function getStaking()
         external
         virtual
@@ -248,6 +280,8 @@ contract StakingService is
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._registryService = RegistryService(_getServiceAddress(REGISTRY()));
         $._staking = _registerStaking(stakingAddress);
+        $._dip = $._staking.getToken();
+        $._tokenHandler = $._staking.getTokenHandler();
 
         registerInterface(type(IStakingService).interfaceId);
     }

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {Amount} from "../type/Amount.sol";
 import {IService} from "../shared/IService.sol";
 import {IStaking} from "./IStaking.sol";
@@ -8,6 +10,7 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Timestamp} from "../type/Timestamp.sol";
+import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 
@@ -19,9 +22,12 @@ interface IStakingService is IService
     error ErrorStakingServiceNotStaking(address stakingAddress);
     error ErrorStakingServiceNotSupportingIStaking(address stakingAddress);
 
+    // create
     error ErrorStakingServiceZeroTargetNftId();
     error ErrorStakingServiceNotTargetNftId(NftId targetNftId);
     error ErrorStakingServiceNotActiveTargetNftId(NftId targetNftId);
+    error ErrorStakingServiceDipBalanceInsufficient(NftId targetNftId, uint256 amount, uint256 balance);
+    error ErrorStakingServiceDipAllowanceInsufficient(NftId targetNftId, address tokenHandler, uint256 amount, uint256 allowance);
 
     /// @dev creates/registers an on-chain instance staking target.
     /// function granted to instance service
@@ -115,6 +121,13 @@ interface IStakingService is IService
     )
         external;
 
+    function getDipToken()
+        external
+        returns (IERC20Metadata dip);
+
+    function getTokenHandler()
+        external
+        returns (TokenHandler tokenHandler);
 
     function getStaking()
         external

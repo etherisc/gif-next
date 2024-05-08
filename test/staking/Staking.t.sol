@@ -13,6 +13,7 @@ import {ObjectType, INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../con
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
+import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 
@@ -139,18 +140,38 @@ contract Staking is GifTest {
         assertEq(serviceInfo.initialOwner, registryOwner, "unexpected initial owner");
     }
 
+
     function test_stakingCreateProtocolStake() public {
 
         NftId protocolNftId = stakingReader.getTargetNftId(0);
         Amount dipAmount = AmountLib.toAmount(5000 * 10**dip.decimals());
 
+        // fund staker
+        vm.startPrank(registryOwner);
+        dip.transfer(staker, dipAmount.toInt());
+        vm.stopPrank();
+
+        // check balances before staking
+        assertTrue(staker != staking.getWallet(), "staker and staking wallet the same");
+        assertEq(dip.balanceOf(staker), dipAmount.toInt(), "staker: unexpected dip balance");
+        assertEq(dip.balanceOf(staking.getWallet()), 0, "staking wallet: unexpected dip balance");
+
         vm.startPrank(staker);
 
+        // create allowance for staking token handler
+        TokenHandler tokenHandler = stakingService.getTokenHandler();
+        dip.approve(address(tokenHandler), dipAmount.toInt());
+
+        // create stake
         NftId stakeNftId = stakingService.create(
             protocolNftId, 
             dipAmount);
 
         vm.stopPrank();
+
+        // check balances after staking
+        assertEq(dip.balanceOf(staker), 0, "staker: unexpected dip balance (after staking)");
+        assertEq(dip.balanceOf(staking.getWallet()), dipAmount.toInt(), "staking wallet: unexpected dip balance (after staking)");
 
         // check ownership
         assertTrue(stakeNftId.gtz(), "stake nft id zero");
@@ -185,13 +206,31 @@ contract Staking is GifTest {
 
         Amount dipAmount = AmountLib.toAmount(3000 * 10**dip.decimals());
 
+        // fund staker
+        vm.startPrank(registryOwner);
+        dip.transfer(staker2, dipAmount.toInt());
+        vm.stopPrank();
+
+        // check balances after staking
+        assertEq(dip.balanceOf(staker2), dipAmount.toInt(), "staker2: unexpected dip balance (before staking)");
+        assertEq(dip.balanceOf(staking.getWallet()), 0, "staking wallet: unexpected dip balance (before staking)");
+
         vm.startPrank(staker2);
 
+        // create allowance for staking token handler
+        TokenHandler tokenHandler = stakingService.getTokenHandler();
+        dip.approve(address(tokenHandler), dipAmount.toInt());
+
+        // create instance stake
         NftId stakeNftId = stakingService.create(
             instanceNftId, 
             dipAmount);
 
         vm.stopPrank();
+
+        // check balances after staking
+        assertEq(dip.balanceOf(staker2), 0, "staker: unexpected dip balance (after staking)");
+        assertEq(dip.balanceOf(staking.getWallet()), dipAmount.toInt(), "staking wallet: unexpected dip balance (after staking)");
 
         // check ownership
         assertTrue(stakeNftId.gtz(), "stake nft id zero");
