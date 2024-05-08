@@ -9,7 +9,6 @@ import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "./IStaking.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {Key32} from "../type/Key32.sol";
-import {KeyValueStore} from "../shared/KeyValueStore.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
@@ -17,6 +16,7 @@ import {NftIdSetManager} from "../shared/NftIdSetManager.sol";
 import {ObjectType, INSTANCE, PROTOCOL, STAKE, STAKING, TARGET} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakingReader} from "./StakingReader.sol";
+import {StakingStore} from "./StakingStore.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {TokenRegistry} from "../registry/TokenRegistry.sol";
@@ -24,14 +24,7 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {Version, VersionLib} from "../type/Version.sol";
 import {Versionable} from "../shared/Versionable.sol";
 
-// TODO split staking
-// candidate clusters
-// - strake management
-// - target management
-// - reward calculation
-// - read access
 contract Staking is 
-    KeyValueStore,
     Component,
     Versionable,
     IStaking
@@ -45,9 +38,8 @@ contract Staking is
     struct StakingStorage {
         IRegistryService _registryService;
         TokenRegistry _tokenRegistry;
+        StakingStore _store;
         StakingReader _reader;
-
-        NftIdSetManager _targetManager;
 
         mapping(uint256 chainId => mapping(address token => UFixed stakingRate)) _stakingRate;
 
@@ -100,28 +92,6 @@ contract Staking is
     }
 
     // reward management 
-    function setRewardRate(NftId targetNftId, UFixed rewardRate)
-        external
-        virtual
-        // onlyNftOwner(targetNftId)
-    {
-        
-    }
-
-    function refillRewardReserves(NftId targetNftId, Amount dipAmount)
-        external
-        virtual
-    {
-
-    }
-
-    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount)
-        external
-        virtual
-        // onlyNftOwner(targetNftId)
-    {
-        
-    }
 
     // target management
 
@@ -138,26 +108,20 @@ contract Staking is
     {
         TargetManagerLib.checkTargetParameters(
             getRegistry(), 
-            getStakingReader(),
+            _getStakingStorage()._reader,
             targetNftId, 
             expectedObjectType, 
             initialLockingPeriod, 
             initialRewardRate);
 
-        // record target info
-        _create(
-            targetNftId.toKey32(TARGET()),
-            abi.encode(
-                TargetInfo({
-                    objectType: expectedObjectType,
-                    chainId: chainId,
-                    lockingPeriod: initialLockingPeriod,
-                    rewardRate: initialRewardRate,
-                    rewardReserveAmount: AmountLib.zero()
-                })));
-
-        // add target nft id to all/active sets
-        _getStakingStorage()._targetManager.add(targetNftId);
+        _getStakingStorage()._store.createTarget(
+            targetNftId,
+            TargetInfo({
+                objectType: expectedObjectType,
+                chainId: chainId,
+                lockingPeriod: initialLockingPeriod,
+                rewardRate: initialRewardRate,
+                rewardReserveAmount: AmountLib.zero()}));
 
         emit LogStakingTargetAdded(targetNftId, expectedObjectType, chainId);
     }
@@ -172,16 +136,51 @@ contract Staking is
         onlyNftOwner(targetNftId)
     {
         (
-            Key32 targetKey,
-            bytes memory targetData
+            Seconds oldLockingPeriod,
+            TargetInfo memory targetInfo
         ) = TargetManagerLib.updateLockingPeriod(
             this,
             targetNftId,
             lockingPeriod);
+        
+        _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
 
-        _update(targetKey, targetData, KEEP_STATE());
+        emit LogStakingLockingPeriodSet(targetNftId, oldLockingPeriod, lockingPeriod);
+    }
 
-        emit LogStakingLockingPeriodSet(targetNftId, lockingPeriod);
+
+    function setRewardRate(NftId targetNftId, UFixed rewardRate)
+        external
+        virtual
+        onlyNftOwner(targetNftId)
+    {
+        (
+            UFixed oldRewardRate,
+            TargetInfo memory targetInfo
+        ) = TargetManagerLib.updateRewardRate(
+            this,
+            targetNftId,
+            rewardRate);
+        
+        _getStakingStorage()._store.updateTarget(targetNftId, targetInfo);
+
+        emit LogStakingRewardRateSet(targetNftId, oldRewardRate, rewardRate);
+    }
+
+
+    function refillRewardReserves(NftId targetNftId, Amount dipAmount)
+        external
+        virtual
+    {
+
+    }
+
+    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount)
+        external
+        virtual
+        // onlyNftOwner(targetNftId)
+    {
+        
     }
 
 
@@ -218,7 +217,7 @@ contract Staking is
         
     }
 
-    // staking functions
+    //--- staking functions -----------------------------------------//
     function create(
         NftId stakeNftId, 
         NftId targetNftId, 
@@ -227,26 +226,26 @@ contract Staking is
         external
         virtual
     {
-        Timestamp currentTime = TimestampLib.blockTimestamp();
-        Timestamp lockedUntil = currentTime.addSeconds(
-            _getStakingStorage()._reader.getTargetInfo(targetNftId).lockingPeriod);
-
-        _create(
-            stakeNftId.toKey32(STAKE()),
-            abi.encode(
-                StakeInfo({
-                    stakeAmount: dipAmount,
-                    rewardAmount: AmountLib.zero(),
-                    lockedUntil: lockedUntil,
-                    rewardsUpdatedAt: currentTime
-                })));
+        _getStakingStorage()._store.create(
+            stakeNftId, 
+            targetNftId, 
+            dipAmount);
     }
 
 
     function stake(NftId stakeNftId, Amount dipAmount) external {}
     function restakeRewards(NftId stakeNftId) external {}
     function restakeToNewTarget(NftId stakeNftId, NftId newTarget) external {}
-    function unstake(NftId stakeNftId) external {}
+
+
+    function unstake(NftId stakeNftId)
+        external
+        virtual
+        onlyNftOwner(stakeNftId)
+    {
+    }
+
+
     function unstake(NftId stakeNftId, Amount dipAmount) external {}
     function claimRewards(NftId stakeNftId) external {}
 
@@ -257,12 +256,12 @@ contract Staking is
         return _getStakingStorage()._reader;
     }
 
-    function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate) {
-        return _getStakingStorage()._stakingRate[chainId][token];
+    function getStakingStore() external view returns (StakingStore stakingStore) {
+        return _getStakingStorage()._store;
     }
 
-    function getTargetManager() external view returns (NftIdSetManager targetManager) {
-        return _getStakingStorage()._targetManager;
+    function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate) {
+        return _getStakingStorage()._stakingRate[chainId][token];
     }
 
     function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount) {
@@ -301,7 +300,7 @@ contract Staking is
         (
             address initialAuthority,
             address registryAddress,
-            address targetManagerAddress,
+            address stakingStoreAddress,
             address stakingReaderAddress,
             address initialOwner
         ) = abi.decode(data, (address, address, address, address, address));
@@ -326,14 +325,15 @@ contract Staking is
 
         // wiring to external contracts
         StakingStorage storage $ = _getStakingStorage();
-        $._targetManager = NftIdSetManager(targetManagerAddress);
+        $._store = StakingStore(stakingStoreAddress);
         $._reader = StakingReader(stakingReaderAddress);
         $._tokenRegistry = TokenRegistry(
             address(tokenRegistry));
 
         // wiring to staking
-        $._targetManager.setOwner(address(this));
-        $._reader.setStaking(address(this));
+        $._reader.setStakingDependencies(
+            address(this),
+            address($._store));
 
         registerInterface(type(IStaking).interfaceId);
     }

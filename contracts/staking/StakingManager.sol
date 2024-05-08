@@ -6,6 +6,7 @@ import {NftIdSetManager} from "../shared/NftIdSetManager.sol";
 import {ProxyManager} from "../shared/ProxyManager.sol";
 import {Staking} from "./Staking.sol";
 import {StakingReader} from "./StakingReader.sol";
+import {StakingStore} from "./StakingStore.sol";
 
 contract StakingManager is
     ProxyManager
@@ -23,14 +24,14 @@ contract StakingManager is
         Staking stk = new Staking();
         address stakingImplemenataion = address(stk);
 
-        NftIdSetManager targetManager = new NftIdSetManager();
         StakingReader stakingReader = new StakingReader();
+        StakingStore stakingStore = new StakingStore(initialAuthority, registryAddress, address(stakingReader));
         address initialOwner = msg.sender;
 
         bytes memory data = abi.encode(
             initialAuthority, 
             registryAddress, 
-            address(targetManager),
+            address(stakingStore),
             address(stakingReader),
             initialOwner);
 

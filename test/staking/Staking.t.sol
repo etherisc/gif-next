@@ -14,6 +14,7 @@ import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
+import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 
@@ -202,6 +203,7 @@ contract Staking is GifTest {
         assertEq(stakeInfo.rewardsUpdatedAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected rewards updated at");
     }
 
+
     function test_stakingCreateInstanceStake() public {
 
         Amount dipAmount = AmountLib.toAmount(3000 * 10**dip.decimals());
@@ -304,6 +306,54 @@ contract Staking is GifTest {
 
         targetInfo = stakingReader.getTargetInfo(instanceNftId);
         assertEq(targetInfo.lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period after setting");
+    }
+
+
+    function test_stakingSetRewardRateHappyCase() public {
+        IStaking.TargetInfo memory targetInfo = stakingReader.getTargetInfo(instanceNftId);
+
+        assertEq(registry.ownerOf(instanceNftId), instanceOwner, "unexpected instance owner");
+        assertEq(_times1000(targetInfo.rewardRate), _times1000(TargetManagerLib.getDefaultRewardRate()), "unexpected reward rate");
+
+        vm.startPrank(instanceOwner);
+
+        UFixed newRewardRate = UFixedLib.toUFixed(75, -3);
+        staking.setRewardRate(
+            instanceNftId, 
+            newRewardRate);
+
+        vm.stopPrank();
+
+        targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        assertEq(_times1000(targetInfo.rewardRate), _times1000(newRewardRate), "unexpected reward rate (updated)");
+    }
+
+
+    function test_stakingSetRewardRateNotTargetOwner() public {
+        IStaking.TargetInfo memory targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        UFixed newRewardRate = UFixedLib.toUFixed(75, -3);
+
+        vm.startPrank(staker);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IStaking.ErrorStakingNotNftOwner.selector,
+                instanceNftId));
+
+        staking.setRewardRate(
+            instanceNftId, 
+            newRewardRate);
+
+        vm.stopPrank();
+
+        // verify reward rate did not change
+        targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        assertEq(_times1000(targetInfo.rewardRate), _times1000(TargetManagerLib.getDefaultRewardRate()), "unexpected reward rate");
+    }
+
+
+    function _times1000(UFixed value) internal pure returns (uint256) {
+        return (UFixedLib.toUFixed(1000) * value).toInt();
     }
 
 }

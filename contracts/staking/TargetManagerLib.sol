@@ -23,10 +23,9 @@ library TargetManagerLib {
     )
         external
         returns (
-            Key32 targetKey,
-            bytes memory targetData
+            Seconds oldLockingPeriod,
+            IStaking.TargetInfo memory targetInfo
         )
-
     {
         StakingReader reader = staking.getStakingReader();
 
@@ -37,11 +36,33 @@ library TargetManagerLib {
 
         checkLockingPeriod(targetNftId, lockingPeriod);
 
-        IStaking.TargetInfo memory info = reader.getTargetInfo(targetNftId);
-        info.lockingPeriod = lockingPeriod;
+        targetInfo = reader.getTargetInfo(targetNftId);
+        targetInfo.lockingPeriod = lockingPeriod;
+    }
 
-        targetKey = toTargetKey(targetNftId);
-        targetData = abi.encode(info);
+
+    function updateRewardRate(
+        IStaking staking,
+        NftId targetNftId, 
+        UFixed rewardRate
+    )
+        external
+        returns (
+            UFixed oldRewardRate,
+            IStaking.TargetInfo memory targetInfo
+        )
+    {
+        StakingReader reader = staking.getStakingReader();
+
+        // check target exists
+        if(!reader.isTarget(targetNftId)) {
+            revert IStaking.ErrorStakingTargetNotFound(targetNftId);
+        }
+
+        checkRewardRate(targetNftId, rewardRate);
+
+        targetInfo = reader.getTargetInfo(targetNftId);
+        targetInfo.rewardRate = rewardRate;
     }
 
 
