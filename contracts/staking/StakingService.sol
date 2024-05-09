@@ -15,6 +15,7 @@ import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, INSTANCE, PROTOCOL, REGISTRY, STAKE, STAKING} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {Service} from "../shared/Service.sol";
+import {StakeManagerLib} from "./StakeManagerLib.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {TargetManagerLib} from "./TargetManagerLib.sol";
 import {Timestamp} from "../type/Timestamp.sol";
@@ -37,6 +38,13 @@ contract StakingService is
         TokenHandler _tokenHandler;
     }
 
+    modifier onlyNftOwner(NftId nftId) {
+        if(msg.sender != getRegistry().ownerOf(nftId)) {
+            revert ErrorStakingServiceNotNftOwner(nftId, getRegistry().ownerOf(nftId), msg.sender);
+        }
+        _;
+    }
+
     function getDomain() public pure override returns(ObjectType) {
         return STAKING();
     }
@@ -56,6 +64,8 @@ contract StakingService is
             1, // protocol is registered on mainnet
             TargetManagerLib.getDefaultLockingPeriod(),
             TargetManagerLib.getDefaultRewardRate());
+
+        emit LogStakingServiceProtocolTargetRegistered(protocolNftId);
     }
 
 
@@ -75,6 +85,27 @@ contract StakingService is
             chainId,
             initialLockingPeriod,
             initialRewardRate);
+
+        emit LogStakingServiceInstanceTargetRegistered(targetNftId, chainId);
+    }
+
+    function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod)
+        external
+        virtual
+        onlyNftOwner(targetNftId)
+    {
+        _getStakingServiceStorage()._staking.setLockingPeriod(
+            targetNftId, lockingPeriod);
+    }
+
+    function setRewardRate(NftId targetNftId, UFixed rewardRate)
+        external
+        virtual
+        onlyNftOwner(targetNftId)
+    {
+        _getStakingServiceStorage()._staking.setRewardRate(
+            targetNftId, rewardRate);
+
     }
 
 
@@ -90,6 +121,7 @@ contract StakingService is
     )
         external
         virtual
+        // restricted // TODO re-enable once services have stable roles
         returns (
             NftId stakeNftId
         )
@@ -98,31 +130,9 @@ contract StakingService is
         StakingReader stakingReader = $._staking.getStakingReader();
         address stakeOwner = msg.sender;
 
-        // check target nft id
-        if (targetNftId.eqz()) {
-            revert ErrorStakingServiceZeroTargetNftId();
-        }
-
-        if (!stakingReader.isTarget(targetNftId)) {
-            revert ErrorStakingServiceNotTargetNftId(targetNftId);
-        }
-
-        if (!stakingReader.isActive(targetNftId)) {
-            revert ErrorStakingServiceNotActiveTargetNftId(targetNftId);
-        }
-
-        // check balance
-        uint256 amount = dipAmount.toInt();
-        uint256 dipBalance = $._dip.balanceOf(stakeOwner);
-        if (dipBalance < amount) {
-            revert ErrorStakingServiceDipBalanceInsufficient(targetNftId, amount, dipBalance);
-        }
-
-        // check allowance
-        uint256 dipAllowance = $._dip.allowance(stakeOwner, address($._tokenHandler));
-        if (dipAllowance < amount) {
-            revert ErrorStakingServiceDipAllowanceInsufficient(targetNftId, address($._tokenHandler), amount, dipAllowance);
-        }
+        StakeManagerLib.checkActiveTarget(
+            stakingReader,
+            targetNftId);
 
         // register new stake object with registry
         stakeNftId = $._registryService.registerStake(
@@ -135,32 +145,77 @@ contract StakingService is
                 initialOwner: stakeOwner,
                 data: ""
             }));
-        
-        // create stake info in staking
-        $._staking.create(
+
+        // create stake info with staking
+        $._staking.registerStake(
             stakeNftId, 
             targetNftId,
             dipAmount);
 
-        // collect staked dip
-        $._tokenHandler.transfer(
+        // collect staked dip by staking
+        $._staking.collectDipAmount(
             stakeOwner,
-            $._staking.getWallet(),
             dipAmount);
 
-        emit LogStakingServiceNewStakeCreated(stakeNftId, stakeOwner, targetNftId, dipAmount);
+        emit LogStakingServiceStakeCreated(stakeNftId, targetNftId, stakeOwner, dipAmount);
     }
 
 
     function stake(
         NftId stakeNftId,
-        Amount amount
+        Amount dipAmount
     )
         external
         virtual
+        // restricted // TODO re-enable once services have stable roles
+        onlyNftOwner(stakeNftId)
     {
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        StakingReader stakingReader = $._staking.getStakingReader();
+        address stakeOwner = msg.sender;
 
+        // add additional staked dips by staking
+        $._staking.stake(
+            stakeNftId, 
+            dipAmount);
+
+        // collect staked dip by staking
+        $._staking.collectDipAmount(
+            stakeOwner,
+            dipAmount);
+
+        emit LogStakingServiceStakeIncreased(stakeNftId, stakeOwner, dipAmount);
     }
+
+
+    function restake(
+        NftId stakeNftId
+    )
+        external
+        virtual
+        // restricted // TODO re-enable once services have stable roles
+        onlyNftOwner(stakeNftId)
+    {
+        // restake all rewards as additional stakes
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        $._staking.restake(stakeNftId);
+    }
+
+
+    function restakeToNewTarget(
+        NftId stakeNftId,
+        NftId newTargetNftId
+    )
+        external
+        virtual
+        // restricted // TODO re-enable once services have stable roles
+        onlyNftOwner(stakeNftId)
+        returns (
+            NftId newStakeNftId
+        )
+    {
+        // TODO implement
+    } 
 
 
     function unstake(
@@ -169,29 +224,6 @@ contract StakingService is
     )
         external
         virtual
-    {
-
-    }
-
-    function close(
-        NftId stakeNftId
-    )
-        external
-        virtual
-    {
-
-    }
-
-    function reStake(
-        NftId stakeNftId,
-        NftId newTargetNftId
-    )
-        external
-        virtual
-        returns (
-            NftId newStakeNftId,
-            Timestamp unlockedAt
-        )
     {
 
     }

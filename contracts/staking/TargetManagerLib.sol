@@ -22,6 +22,7 @@ library TargetManagerLib {
         Seconds lockingPeriod
     )
         external
+        view
         returns (
             Seconds oldLockingPeriod,
             IStaking.TargetInfo memory targetInfo
@@ -37,6 +38,8 @@ library TargetManagerLib {
         checkLockingPeriod(targetNftId, lockingPeriod);
 
         targetInfo = reader.getTargetInfo(targetNftId);
+        oldLockingPeriod = targetInfo.lockingPeriod;
+
         targetInfo.lockingPeriod = lockingPeriod;
     }
 
@@ -47,6 +50,7 @@ library TargetManagerLib {
         UFixed rewardRate
     )
         external
+        view
         returns (
             UFixed oldRewardRate,
             IStaking.TargetInfo memory targetInfo
@@ -62,6 +66,8 @@ library TargetManagerLib {
         checkRewardRate(targetNftId, rewardRate);
 
         targetInfo = reader.getTargetInfo(targetNftId);
+        oldRewardRate = targetInfo.rewardRate;
+
         targetInfo.rewardRate = rewardRate;
     }
 
@@ -75,6 +81,7 @@ library TargetManagerLib {
         UFixed initialRewardRate
     )
         external
+        view
     {
         // target nft id must not be zero
         if (targetNftId.eqz()) {
@@ -107,7 +114,11 @@ library TargetManagerLib {
     }
 
 
-    function isTargetTypeSupported(ObjectType objectType) public pure returns (bool isSupported) {
+    function isTargetTypeSupported(ObjectType objectType)
+        public 
+        pure 
+        returns (bool isSupported)
+    {
         if(objectType == PROTOCOL()) { return true; }
         if(objectType == INSTANCE()) { return true; }
 
@@ -115,7 +126,10 @@ library TargetManagerLib {
     }
 
 
-    function checkLockingPeriod(NftId targetNftId, Seconds lockingPeriod) internal view {
+    function checkLockingPeriod(NftId targetNftId, Seconds lockingPeriod)
+        public 
+        pure
+    {
         // check locking period is > 0
         if (lockingPeriod.eqz()) {
             revert IStaking.ErrorStakingLockingPeriodZero(targetNftId);
@@ -128,7 +142,10 @@ library TargetManagerLib {
     }
 
 
-    function checkRewardRate(NftId targetNftId, UFixed rewardRate) internal view {
+    function checkRewardRate(NftId targetNftId, UFixed rewardRate)
+        public
+        pure
+    {
         // check reward rate <= max reward rate
         if (rewardRate > getMaxRewardRate()) {
             revert IStaking.ErrorStakingRewardRateTooHigh(targetNftId, getMaxRewardRate(), rewardRate);

@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Amount} from "../type/Amount.sol";
 import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IComponent} from "../shared/IComponent.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 import {IStaking} from "../staking/IStaking.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {NftId} from "../type/NftId.sol";
@@ -19,10 +20,13 @@ contract StakingReader {
     error ErrorStakingReaderDependenciesAlreadySet();
     error ErrorStakingReaderStakingStoreAlreadySet(address stakingStore);
 
+    IRegistry private _registry;
     IStaking private _staking;
     StakingStore private _store;
 
+
     function setStakingDependencies(
+        address registryAddress,
         address stakingAddress,
         address stakingStoreAddress
     )
@@ -32,6 +36,7 @@ contract StakingReader {
             revert ErrorStakingReaderDependenciesAlreadySet();
         }
 
+        _registry = IRegistry(registryAddress);
         _staking = IStaking(stakingAddress);
         _store = StakingStore(stakingStoreAddress);
     }
@@ -88,6 +93,39 @@ contract StakingReader {
         }
     }
 
+
+    function getStakeBalance(NftId nftId) external view returns (Amount balanceAmount) { 
+        return _store.getStakeBalance(nftId); 
+    }
+
+
+    function getRewardBalance(NftId nftId) external view returns (Amount rewardAmount) {
+        return _store.getRewardBalance(nftId); 
+    }
+
+
+    function getBalanceUpdatedAt(NftId nftId) external view returns (Timestamp updatedAt) {
+        return _store.getBalanceUpdatedAt(nftId); 
+    }
+
+
+    function getRewardCalculationInput(NftId stakeNftId) 
+        external
+        view
+        returns (
+            UFixed rewardRate,
+            Amount stakeAmount,
+            Timestamp lastUpdatedAt
+        )
+    {
+        NftId targetNftId = _registry.getObjectInfo(stakeNftId).parentNftId;
+        rewardRate = getTargetInfo(targetNftId).rewardRate;
+
+        (
+            stakeAmount,
+            lastUpdatedAt
+        ) = _store.getBalanceAndLastUpdatedAt(stakeNftId);
+    }
 
     // function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount);
     // function getStakedAmount(NftId targetNftId) external view returns (Amount stakeAmount);

@@ -188,19 +188,18 @@ contract Staking is GifTest {
         assertEq(objectInfo.initialOwner, staker, "unexpected initial stake owner");
         assertEq(bytes(objectInfo.data).length, 0, "unexpected data size");
 
-        // check stake info (staking entry)
-        IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
-        assertEq(stakeInfo.stakeAmount.toInt(), dipAmount.toInt(), "unexpected stake amount");
-        assertEq(stakeInfo.rewardAmount.toInt(), 0, "unexpected reward amount");
-
         Seconds lockingPeriod = stakingReader.getTargetInfo(protocolNftId).lockingPeriod;
         assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
 
+        // check stake balance
+        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount");
+        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount");
+        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at");
+
+        // check state info
+        IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
         assertTrue(stakeInfo.lockedUntil.gtz(), "locked until zero");
         assertEq(stakeInfo.lockedUntil.toInt(), TimestampLib.blockTimestamp().toInt() + lockingPeriod.toInt(), "unexpected locked until");
-
-        assertTrue(stakeInfo.rewardsUpdatedAt.gtz(), "rewards updated at zero");
-        assertEq(stakeInfo.rewardsUpdatedAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected rewards updated at");
     }
 
 
@@ -248,19 +247,18 @@ contract Staking is GifTest {
         assertEq(objectInfo.initialOwner, staker2, "unexpected initial stake owner");
         assertEq(bytes(objectInfo.data).length, 0, "unexpected data size");
 
-        // check stake info (staking entry)
-        IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
-        assertEq(stakeInfo.stakeAmount.toInt(), dipAmount.toInt(), "unexpected stake amount");
-        assertEq(stakeInfo.rewardAmount.toInt(), 0, "unexpected reward amount");
-
         Seconds lockingPeriod = stakingReader.getTargetInfo(instanceNftId).lockingPeriod;
         assertEq(lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
 
+        // check stake balance
+        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount");
+        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount");
+        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at");
+
+        // check state info
+        IStaking.StakeInfo memory stakeInfo = stakingReader.getStakeInfo(stakeNftId);
         assertTrue(stakeInfo.lockedUntil.gtz(), "locked until zero");
         assertEq(stakeInfo.lockedUntil.toInt(), TimestampLib.blockTimestamp().toInt() + lockingPeriod.toInt(), "unexpected locked until");
-
-        assertTrue(stakeInfo.rewardsUpdatedAt.gtz(), "rewards updated at zero");
-        assertEq(stakeInfo.rewardsUpdatedAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected rewards updated at");
     }
 
 
@@ -272,7 +270,7 @@ contract Staking is GifTest {
         vm.startPrank(instanceOwner);
 
         Seconds newLockingPeriod = SecondsLib.toSeconds(14 * 24 * 3600);
-        staking.setLockingPeriod(
+        stakingService.setLockingPeriod(
             instanceNftId, 
             newLockingPeriod);
 
@@ -295,10 +293,12 @@ contract Staking is GifTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IStaking.ErrorStakingNotNftOwner.selector,
-                instanceNftId));
+                IStakingService.ErrorStakingServiceNotNftOwner.selector,
+                instanceNftId,
+                instanceOwner, // expected owner
+                staker)); // attempting owner
 
-        staking.setLockingPeriod(
+        stakingService.setLockingPeriod(
             instanceNftId, 
             newLockingPeriod);
 
@@ -318,7 +318,7 @@ contract Staking is GifTest {
         vm.startPrank(instanceOwner);
 
         UFixed newRewardRate = UFixedLib.toUFixed(75, -3);
-        staking.setRewardRate(
+        stakingService.setRewardRate(
             instanceNftId, 
             newRewardRate);
 
@@ -337,10 +337,12 @@ contract Staking is GifTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IStaking.ErrorStakingNotNftOwner.selector,
-                instanceNftId));
+                IStakingService.ErrorStakingServiceNotNftOwner.selector,
+                instanceNftId,
+                instanceOwner, // expected owner
+                staker)); // attempting owner
 
-        staking.setRewardRate(
+        stakingService.setRewardRate(
             instanceNftId, 
             newRewardRate);
 

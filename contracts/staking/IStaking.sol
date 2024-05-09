@@ -18,12 +18,22 @@ interface IStaking is
     IVersionable
 {
 
-    event LogStakingTargetAdded(NftId targetNftId, ObjectType objectType, uint256 chainId);
-    event LogStakingLockingPeriodSet(NftId targetNftId, Seconds oldLockingDuration, Seconds lockingDuration);
+    // target parameters
+    event LogStakingLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
     event LogStakingRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
 
-    error ErrorStakingStakingReaderStakingMismatch(address stakingByStakingReader);
+    // modifiers
+    error ErrorStakingNotStake(NftId stakeNftId);
+    error ErrorStakingNotTarget(NftId targetNftId);
+
+    error ErrorStakingNotStakingOwner();
     error ErrorStakingNotNftOwner(NftId nftId);
+
+    // check dip balance and allowance
+    error ErrorStakingDipBalanceInsufficient(address owner, uint256 amount, uint256 dipBalance);
+    error ErrorStakingDipAllowanceInsufficient(address owner, address tokenHandler, uint256 amount, uint256 dipAllowance);
+
+    error ErrorStakingStakingReaderStakingMismatch(address stakingByStakingReader);
     error ErrorStakingTargetAlreadyRegistered(NftId targetNftId);
     error ErrorStakingTargetNftIdZero();
     error ErrorStakingTargetTypeNotSupported(NftId targetNftId, ObjectType objectType);
@@ -34,12 +44,12 @@ interface IStaking is
     error ErrorStakingTargetNotFound(NftId targetNftId);
     error ErrorStakingTargetTokenNotFound(NftId targetNftId, uint256 chainId, address token);
 
+    error ErrorStakingTargetNotActive(NftId targetNftId);
+    error ErrorStakingStakeAmountZero(NftId targetNftId);
+
     // info for individual stake
     struct StakeInfo {
-        Amount stakeAmount;
-        Amount rewardAmount;
         Timestamp lockedUntil;
-        Timestamp rewardsUpdatedAt;
     }
 
     struct TargetInfo {
@@ -47,7 +57,6 @@ interface IStaking is
         uint256 chainId;
         Seconds lockingPeriod;
         UFixed rewardRate;
-        Amount rewardReserveAmount;
     }
 
     // rate management 
@@ -64,9 +73,7 @@ interface IStaking is
         UFixed initialRewardRate
     ) external;
 
-
     /// @dev set the stake locking period to the specified duration.
-    /// permissioned: only the owner of the specified target may set the locking period
     function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod) external;
 
     function setRewardRate(NftId targetNftId, UFixed rewardRate) external;
@@ -80,18 +87,42 @@ interface IStaking is
 
     // staking functions
 
-    /// @dev creates/stores a new stake info object
+    /// @dev register a new stake info object
     /// permissioned: only staking service may call this function.
-    function create(NftId stakeNftId, NftId targetNftId, Amount dipAmount) external;
+    function registerStake(NftId stakeNftId, NftId targetNftId, Amount dipAmount) external;
 
+    /// @dev increase the staked dip by dipAmount for the specified stake
     function stake(NftId stakeNftId, Amount dipAmount) external;
-    function restakeRewards(NftId stakeNftId) external;
-    function restakeToNewTarget(NftId stakeNftId, NftId newTarget) external;
-    function unstake(NftId stakeNftId) external;
-    function unstake(NftId stakeNftId, Amount dipAmount) external;  
-    function claimRewards(NftId stakeNftId) external;
 
-    // view and pure functions (staking reader?)
+    /// @dev restakes the dips to a new target.
+    /// the sum of the staked dips and the accumulated rewards will be restaked.
+    function restake(NftId stakeNftId) external;
+
+    /// @dev retuns the specified amount of dips to the holder of the specified stake nft.
+    /// if dipAmount is set to Amount.max() all staked dips and all rewards are transferred to 
+    function unstake(NftId stakeNftId)
+        external
+        returns (
+            Amount unstakedAmount,
+            Amount rewardsClaimedAmount
+        );
+
+    /// @dev transfers all rewards accumulated so far to the holder of the specified stake nft.
+    function claimRewards(NftId stakeNftId)
+        external
+        returns (
+            Amount rewardsClaimedAmount
+        );
+
+    //--- helper functions --------------------------------------------------//
+
+    /// @dev transfers the specified amount of dips from the from address to the staking wallet.
+    function collectDipAmount(address from, Amount dipAmount) external;
+
+    /// @dev transfers the specified amount of dips from the staking wallet to the to addess.
+    function transferDipAmount(address to, Amount dipAmount) external;
+
+    //--- view and pure functions -------------------------------------------//
 
     function getStakingStore() external view returns (StakingStore stakingStore);
     function getStakingReader() external view returns (StakingReader reader);

@@ -43,8 +43,9 @@ contract Registry is
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) private _coreObjectCombinations;
 
-    NftId immutable _registryNftId;
-    ChainNft immutable _chainNft;
+    NftId private _protocolNftId;
+    NftId private _registryNftId;
+    ChainNft private _chainNft;
 
     ReleaseManager immutable _releaseManager;
     address private _tokenRegistryAddress;
@@ -253,6 +254,10 @@ contract Registry is
         return _registryNftId;
     }
 
+    function getProtocolNftId() external view returns (NftId nftId) {
+        return _protocolNftId;
+    }
+
     function getNftId(address object) external view returns (NftId id) {
         return _nftIdByAddress[object];
     }
@@ -438,10 +443,10 @@ contract Registry is
         private
     {
         uint256 protocolId = _chainNft.PROTOCOL_NFT_ID();
-        NftId protocolNftId = NftIdLib.toNftId(protocolId);
+        _protocolNftId = NftIdLib.toNftId(protocolId);
 
-        _info[protocolNftId] = ObjectInfo({
-            nftId: protocolNftId,
+        _info[_protocolNftId] = ObjectInfo({
+            nftId: _protocolNftId,
             parentNftId: NftIdLib.zero(),
             objectType: PROTOCOL(),
             isInterceptor: false, 
@@ -460,7 +465,7 @@ contract Registry is
         returns (NftId registryNftId)
     {
         uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
-        registryNftId = NftIdLib.toNftId(registryId);
+        _registryNftId = NftIdLib.toNftId(registryId);
         NftId parentNftId;
 
         if(registryId != _chainNft.GLOBAL_REGISTRY_ID()) 
@@ -470,11 +475,11 @@ contract Registry is
         }
         else 
         {// we are global registry
-            parentNftId = NftIdLib.toNftId(_chainNft.PROTOCOL_NFT_ID());
+            parentNftId = _protocolNftId;
         }
 
-        _info[registryNftId] = ObjectInfo({
-            nftId: registryNftId,
+        _info[_registryNftId] = ObjectInfo({
+            nftId: _registryNftId,
             parentNftId: parentNftId,
             objectType: REGISTRY(),
             isInterceptor: false,
@@ -482,8 +487,8 @@ contract Registry is
             initialOwner: NFT_LOCK_ADDRESS,
             data: "" 
         });
-        _nftIdByAddress[address(this)] = registryNftId;
 
+        _nftIdByAddress[address(this)] = _registryNftId;
         _chainNft.mint(NFT_LOCK_ADDRESS, registryId);
     }
 

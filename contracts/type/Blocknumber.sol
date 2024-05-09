@@ -10,7 +10,9 @@ using {
     lteBlocknumber as <=,
     eqBlocknumber as ==,
     neBlocknumber as !=,
-    BlocknumberLib.toInt
+    BlocknumberLib.toInt,
+    BlocknumberLib.eqz,
+    BlocknumberLib.gtz
 } for Blocknumber global;
 
 /// @dev return true if Blocknumber a is greater than Blocknumber b
@@ -67,6 +69,16 @@ library BlocknumberLib {
     /// @dev returns the current Blocknumber
     function currentBlocknumber() public view returns (Blocknumber) {
         return Blocknumber.wrap(uint32(block.number));
+    }
+
+    /// @dev return true iff blocknumber is 0
+    function eqz(Blocknumber blocknumber) public pure returns (bool) {
+        return Blocknumber.unwrap(blocknumber) == 0;
+    }
+
+    /// @dev return true iff blocknumber is 0
+    function gtz(Blocknumber blocknumber) public pure returns (bool) {
+        return Blocknumber.unwrap(blocknumber) > 0;
     }
 
     /// @dev return true if Blocknumber a is greater than Blocknumber b
