@@ -17,29 +17,7 @@ contract RegisterFuzzTest is RegistryTestBase
 {    
     function testFuzz_register(address sender, IRegistry.ObjectInfo memory info) public
     {
-        // solhint-disable no-console
-        vm.assume(
-            info.initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D && // gives error (Invalid data) only during fuzzing when minting nft to foundry's cheatcodes contract
-            info.initialOwner != 0x4e59b44847b379578588920cA78FbF26c0B4956C // Deterministic Deployment Proxy, on nft transfer callback tries Create2Deployer::create2()
-        );
-
-
-        // TODO register contracts with IInterceptor interface support
-        info.isInterceptor = false;
-
-        _startPrank(sender);
-
-        _assert_register_withChecks(info);
-
-        _stopPrank();
-
-        if(sender != address(registryServiceMock)) {
-            _startPrank(address(registryServiceMock));
-
-            _assert_register_withChecks(info);
-
-            _stopPrank();
-        }
+        _register_testFunction(sender, info);
     }
 
     // nftId - always random
@@ -60,7 +38,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -76,7 +54,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -92,7 +70,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -108,7 +86,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -124,7 +102,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -140,7 +118,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -156,7 +134,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -172,7 +150,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -188,7 +166,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -204,7 +182,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -220,7 +198,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -236,7 +214,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -252,7 +230,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -268,7 +246,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     
@@ -284,10 +262,10 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
-    function testFuzz_register_zeroObjectAddress(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
+    function testFuzz_register_withZeroObjectAddress(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -299,7 +277,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress_00001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
@@ -314,7 +292,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress_00010(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
@@ -329,7 +307,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress_00011(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
@@ -344,7 +322,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress_00100(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
@@ -359,7 +337,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress_00101(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
@@ -374,7 +352,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress_00110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
@@ -389,7 +367,7 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress_00111(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
@@ -404,77 +382,44 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_register(sender, info);
+        _register_testFunction(sender, info);
+    }
+}
+
+contract RegisterWithPresetFuzzTest is RegistryTestBaseWithPreset, RegisterFuzzTest
+{
+    function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
+    {
+        RegistryTestBaseWithPreset.setUp();
     }
 
-    // TODO cleanup or reactivate
-//     function testFuzz_register_Service(bool isInterceptor, address serviceAddress, string memory serviceName, VersionPart majorVersion) public
-//     {
-//         vm.assume(
-//             serviceAddress != address(0) &&
-//             EnumerableSet.contains(_registeredAddresses, serviceAddress) == false
-//         );
+    function testFuzz_register_00P1000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _nftIdByType[_types[parentIdx % _types.length]],
+            _types[objectTypeIdx % _types.length],
+            isInterceptor,
+            objectAddress,
+            initialOwner,
+            data
+        );
 
-//         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-//             NftIdLib.zero(), // any nftId
-//             registryNftId,
-//             SERVICE(),
-//             isInterceptor,
-//             serviceAddress,// not zero and not registered
-//             outsider, // initialOwner, any address capable to receive nft
-//             abi.encode(serviceName, majorVersion)
-//         );  
+        _register_testFunction(sender, info);
+    }
 
-//         _startPrank(address(registryService));
+    function testFuzz_register_withZeroObjectAddress_00P100(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _nftIdByType[_types[parentIdx % _types.length]],
+            _types[objectTypeIdx % _types.length],
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
 
-//         if(majorVersion.toInt() != GIF_VERSION) {   
-//             _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, majorVersion));    
-//         }
-
-//         info.data = abi.encode(serviceName, VersionLib.toVersionPart(GIF_VERSION));
-
-//         _assert_register(info, false, "");
-
-//         _stopPrank();
-//     }
-
-//     function testFuzz_register_ServiceWithDuplicateName(bool isInterceptor, address serviceAddress, address serviceAddress_2, string memory serviceName) public
-//     {
-//         vm.assume(
-//             serviceAddress != address(0) &&
-//             serviceAddress != serviceAddress_2 &&
-//             EnumerableSet.contains(_registeredAddresses, serviceAddress) == false &&
-//             serviceAddress_2 != address(0) && 
-//             EnumerableSet.contains(_registeredAddresses, serviceAddress_2) == false
-//         );
-
-//         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-//             NftIdLib.zero(), // any nftId
-//             registryNftId,
-//             SERVICE(),
-//             isInterceptor,
-//             serviceAddress,// not zero and not registered
-//             outsider, // initialOwner, any address capable to receive nft
-//             abi.encode(serviceName, VersionLib.toVersionPart(GIF_VERSION))
-//         );  
-
-//         _startPrank(address(registryService));
-
-//         _assert_register(info, false, "");
-
-//         info.objectAddress = serviceAddress_2;
-
-//         _assert_register(info, true, abi.encodeWithSelector(IRegistry.ServiceAlreadyRegistered.selector, serviceName, VersionLib.toVersionPart(GIF_VERSION)));
-
-//         // TODO remove or refactor registration attempts for invalid versions
-//         // info.data = abi.encode(serviceName, VersionLib.toVersionPart(255));
-
-//         // _assert_register(info, true, abi.encodeWithSelector(IRegistry.InvalidServiceVersion.selector, VersionLib.toVersionPart(255)));
-
-//         // info.data = abi.encode(serviceName, VersionLib.toVersionPart(GIF_VERSION + 1));
-
-//         // _assert_register(info, false, "");
-
-//         _stopPrank();
-//     }*/
+        _register_testFunction(sender, info);
+    }
 }

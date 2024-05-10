@@ -242,10 +242,6 @@ contract TestPool is GifTest {
         IKeyValueStore.Metadata memory metadata = instanceReader.getMetadata(bundleKey);
         assertEq(metadata.state.toInt(), ACTIVE().toInt(), "bundle state not active");
 
-        // stop some active prank ... 
-        // TODO find out from where and remove this "hack"
-        vm.stopPrank();
-
         vm.prank(investor);
         pool.lockBundle(bundleNftId);
 
@@ -294,10 +290,6 @@ contract TestPool is GifTest {
         IKeyValueStore.Metadata memory metadata = instanceReader.getMetadata(bundleKey);
         assertEq(metadata.state.toInt(), ACTIVE().toInt(), "bundle state not active");
 
-        // stop some active prank ... 
-        // TODO find out from where and remove this "hack"
-        vm.stopPrank();
-
         vm.prank(investor);
         pool.lockBundle(bundleNftId);
 
@@ -332,8 +324,6 @@ contract TestPool is GifTest {
         Fee memory bundleFee = bundleInfo.fee;
         assertEq(bundleFee.fractionalFee.toInt(), 111, "bundle fee not 111");
         assertEq(bundleFee.fixedFee, 222, "bundle fee not 222");
-
-        vm.stopPrank();
     }
 
     function _createBundle() internal returns (NftId bundleNftId) {

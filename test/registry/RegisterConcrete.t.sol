@@ -5,7 +5,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib, toNftId} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -123,7 +123,28 @@ contract RegisterConcreteTest is RegistryTestBase {
         
     }
 
-    // TODO move to Registry.t.sol
+    function test_register_specificCase_2() public
+    {
+        //args=[0x0000000000000000000000000000000000000000, 0, 3, 45, false, 0x0000000000000000000000000000000000000001, 0x0000000000000000000000000000000000000001, 0x]] 
+        //testFuzz_register_0010000(address,uint96,uint256,uint8,bool,address,address,bytes)
+
+        address sender = address(0x0000000000000000000000000000000000000000);
+
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            NftIdLib.toNftId(0),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, 3 % EnumerableSet.length(_nftIds))),
+            toObjectType(45),
+            false,
+            address(0x0000000000000000000000000000000000000001),
+            address(0x0000000000000000000000000000000000000001),
+            "0x000000000000000000000000000000000000000000000000000000000000285d"
+        );
+
+        _register_testFunction(sender, info);
+
+    }
+
+    // TODO move to RegistryService.t.sol
     function test_registryOwnerNftTransfer() public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(

@@ -35,7 +35,12 @@ contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
 
     function setUp() public virtual override
     {
+        // solhint-disable-next-line
+        console.log("tx origin", tx.origin);
+
         vm.startPrank(registryOwner);
+
+        dip = new Dip();
 
         _deployRegistry();
 

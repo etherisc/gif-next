@@ -413,7 +413,6 @@ contract ReleaseConfig
     function _computeProxyAddress(address implementation, address proxyManager) internal view returns(address) {
         bytes memory data = abi.encode(
             _registry, 
-            proxyManager, 
             _accessManager);
 
         data = abi.encodeWithSelector(

@@ -27,6 +27,11 @@ function neNftId(NftId a, NftId b) pure returns (bool isDifferent) {
     return NftId.unwrap(a) != NftId.unwrap(b);
 }
 
+// @dev Converts the uint256 to a NftId.
+function toNftId(uint256 id) pure returns (NftId) {
+    return NftId.wrap(uint96(id));
+}
+
 // library functions that operate on user defined type
 library NftIdLib {
 
