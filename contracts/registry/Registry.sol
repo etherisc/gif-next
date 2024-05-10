@@ -43,10 +43,10 @@ contract Registry is
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) private _coreObjectCombinations;
 
-    NftId private _registryNftId;
-    ChainNft private _chainNft;
+    NftId immutable _registryNftId;
+    ChainNft immutable _chainNft;
 
-    ReleaseManager private _releaseManager;
+    ReleaseManager immutable _releaseManager;
     address private _tokenRegistryAddress;
     address private _stakingAddress;
 
@@ -72,7 +72,7 @@ contract Registry is
 
         // initial registry setup
         _registerProtocol();
-        _registerRegistry();
+        _registryNftId = _registerRegistry();
 
         // set object types and object parent relations
         _setupValidCoreTypesAndCombinations();
@@ -457,9 +457,10 @@ contract Registry is
     /// might also register the global registry when not on mainnet
     function _registerRegistry() 
         private
+        returns (NftId registryNftId)
     {
         uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
-        NftId registryNftId = NftIdLib.toNftId(registryId);
+        registryNftId = NftIdLib.toNftId(registryId);
         NftId parentNftId;
 
         if(registryId != _chainNft.GLOBAL_REGISTRY_ID()) 
@@ -482,7 +483,6 @@ contract Registry is
             data: "" 
         });
         _nftIdByAddress[address(this)] = registryNftId;
-        _registryNftId = registryNftId;
 
         _chainNft.mint(NFT_LOCK_ADDRESS, registryId);
     }
@@ -529,23 +529,28 @@ contract Registry is
         _coreTypes[BUNDLE()] = true;
         _coreTypes[STAKING()] = true;
         _coreTypes[STAKE()] = true;
-        
-        _coreContractCombinations[REGISTRY()][REGISTRY()] = true; // only for global regstry
+
+        uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
+        if(registryId == _chainNft.GLOBAL_REGISTRY_ID()) {
+            // we are global registry
+            // object is registry from different chain
+            // parent is global registry, this contract
+            _coreContractCombinations[REGISTRY()][REGISTRY()] = true; // only for global regstry
+            //_coreObjectCombinations[REGISTRY()][REGISTRY()] = true;
+        } else {
+            // we are not global registry
+            // object is local registry, this contract
+            // parent is global registry, object with 0 address or registry from mainnet???
+        }
         _coreContractCombinations[STAKING()][REGISTRY()] = true; // only for chain staking contract
         _coreContractCombinations[TOKEN()][REGISTRY()] = true;
         //_coreContractCombinations[SERVICE()][REGISTRY()] = true;// do not need it here -> registerService() registers exactly this combination
-
         _coreContractCombinations[INSTANCE()][REGISTRY()] = true;
+
         _coreContractCombinations[PRODUCT()][INSTANCE()] = true;
         _coreContractCombinations[DISTRIBUTION()][INSTANCE()] = true;
         _coreContractCombinations[ORACLE()][INSTANCE()] = true;
         _coreContractCombinations[POOL()][INSTANCE()] = true;
-
-        uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
-        if(registryId == _chainNft.GLOBAL_REGISTRY_ID()) 
-        {// we are global registry
-            _coreObjectCombinations[REGISTRY()][REGISTRY()] = true;
-        }
 
         _coreObjectCombinations[DISTRIBUTOR()][DISTRIBUTION()] = true;
         _coreObjectCombinations[POLICY()][PRODUCT()] = true;
