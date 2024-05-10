@@ -24,6 +24,7 @@ interface IStakingService is IService
 
     event LogStakingServiceStakeCreated(NftId stakeNftId, NftId targetNftId, address owner, Amount stakedAmount);
     event LogStakingServiceStakeIncreased(NftId stakeNftId, address owner, Amount stakedAmount);
+    event LogStakingServiceRewardsUpdated(NftId stakeNftId);
 
     // modifiers
     error ErrorStakingServiceNotNftOwner(NftId nftId, address expectedOwner, address owner);
@@ -104,6 +105,12 @@ interface IStakingService is IService
     function unstake(
         NftId stakeNftId,
         Amount amount
+    )
+        external;
+
+    /// @dev updates the reward balance of the stake using the current reward rate.
+    function updateRewards(
+        NftId stakeNftId
     )
         external;
 

@@ -229,6 +229,21 @@ contract StakingService is
     }
 
 
+    function updateRewards(
+        NftId stakeNftId
+    )
+        external
+        // unpermissioned, anybody may call this function
+        // TODO consider to add restricted (just to be able to disable function when target is disabled)
+    {
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        $._staking.updateRewards(stakeNftId);
+
+        emit LogStakingServiceRewardsUpdated(stakeNftId);
+    }
+
+
+
     function increaseTotalValueLocked(
         NftId targetNftId,
         address token,

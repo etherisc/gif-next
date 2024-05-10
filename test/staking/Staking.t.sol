@@ -11,6 +11,7 @@ import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {ObjectType, INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
+import {StakeManagerLib} from "../../contracts/staking/StakeManagerLib.sol";
 import {TargetManagerLib} from "../../contracts/staking/TargetManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
@@ -145,12 +146,7 @@ contract Staking is GifTest {
     function test_stakingCreateProtocolStake() public {
 
         NftId protocolNftId = stakingReader.getTargetNftId(0);
-        Amount dipAmount = AmountLib.toAmount(5000 * 10**dip.decimals());
-
-        // fund staker
-        vm.startPrank(registryOwner);
-        dip.transfer(staker, dipAmount.toInt());
-        vm.stopPrank();
+        (TokenHandler tokenHandler, Amount dipAmount) = _prepareStaker(staker, 5000);
 
         // check balances before staking
         assertTrue(staker != staking.getWallet(), "staker and staking wallet the same");
@@ -158,10 +154,6 @@ contract Staking is GifTest {
         assertEq(dip.balanceOf(staking.getWallet()), 0, "staking wallet: unexpected dip balance");
 
         vm.startPrank(staker);
-
-        // create allowance for staking token handler
-        TokenHandler tokenHandler = stakingService.getTokenHandler();
-        dip.approve(address(tokenHandler), dipAmount.toInt());
 
         // create stake
         NftId stakeNftId = stakingService.create(
@@ -205,22 +197,13 @@ contract Staking is GifTest {
 
     function test_stakingCreateInstanceStake() public {
 
-        Amount dipAmount = AmountLib.toAmount(3000 * 10**dip.decimals());
-
-        // fund staker
-        vm.startPrank(registryOwner);
-        dip.transfer(staker2, dipAmount.toInt());
-        vm.stopPrank();
+        (TokenHandler tokenHandler, Amount dipAmount) = _prepareStaker(staker2, 3000);
 
         // check balances after staking
         assertEq(dip.balanceOf(staker2), dipAmount.toInt(), "staker2: unexpected dip balance (before staking)");
         assertEq(dip.balanceOf(staking.getWallet()), 0, "staking wallet: unexpected dip balance (before staking)");
 
         vm.startPrank(staker2);
-
-        // create allowance for staking token handler
-        TokenHandler tokenHandler = stakingService.getTokenHandler();
-        dip.approve(address(tokenHandler), dipAmount.toInt());
 
         // create instance stake
         NftId stakeNftId = stakingService.create(
@@ -353,9 +336,126 @@ contract Staking is GifTest {
         assertEq(_times1000(targetInfo.rewardRate), _times1000(TargetManagerLib.getDefaultRewardRate()), "unexpected reward rate");
     }
 
+    function test_stakingUpdateRewardsAfterOneYear() public {
+
+        (
+            TokenHandler tokenHandler,
+            Amount dipAmount,
+            NftId stakeNftId
+        ) = _prepareStake(staker, instanceNftId, 1000);
+
+        // record time at stake creation
+        uint256 lastUpdateAt = block.timestamp;
+
+        // wait a year
+        _wait(SecondsLib.oneYear());
+
+        // check one year passed
+        assertEq(block.timestamp - SecondsLib.oneYear().toInt(), lastUpdateAt, "unexpected year duration");
+
+        // check reward calculations after one year
+        UFixed rewardRate = stakingReader.getTargetInfo(instanceNftId).rewardRate;
+        Amount rewardIncrease = StakeManagerLib.calculateRewardIncrease(
+            stakingReader,
+            stakeNftId);
+        
+        Amount expectedRewardIncrease = StakeManagerLib.calculateRewardAmount(
+            rewardRate,
+            SecondsLib.oneYear(),
+            dipAmount);
+
+        assertEq(expectedRewardIncrease.toInt(), 50 * 10**dip.decimals(), "unexpected 'expected' reward increase");
+        assertTrue(rewardIncrease.gtz(), "reward increase zero");
+        assertEq(rewardIncrease.toInt(), expectedRewardIncrease.toInt(), "unexpected rewared increase");
+
+        // check stake/rewards balance (before calling update rewards)
+        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount (before)");
+        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), 0, "unexpected reward amount (before)");
+        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), lastUpdateAt, "unexpected last updated at (before)");
+
+        // update rewards (unpermissioned)
+        stakingService.updateRewards(stakeNftId);
+
+        // check stake/rewards balance (after calling update rewards)
+        uint256 lastUpdateNow = block.timestamp;
+        assertEq(stakingReader.getStakeBalance(stakeNftId).toInt(), dipAmount.toInt(), "unexpected stake amount (after)");
+        assertEq(stakingReader.getRewardBalance(stakeNftId).toInt(), expectedRewardIncrease.toInt(), "unexpected reward amount (after)");
+        assertEq(stakingReader.getBalanceUpdatedAt(stakeNftId).toInt(), block.timestamp, "unexpected last updated at (after)");
+    }
+
+
+    function _prepareStake(
+        address myStaker, 
+        NftId myTargetNftId,
+        uint256 myStakeAmount
+    )
+        internal
+        returns(
+            TokenHandler tokenHandler,
+            Amount dipAmount,
+            NftId stakeNftId
+        )
+    {
+        (tokenHandler, dipAmount) = _prepareStaker(myStaker, myStakeAmount);
+
+        vm.startPrank(myStaker);
+        stakeNftId = stakingService.create(
+            myTargetNftId, 
+            dipAmount);
+        vm.stopPrank();
+    }
+
+
+    function _prepareStaker(
+        address myStaker, 
+        uint256 myStakeAmount
+    )
+        internal
+        returns(
+            TokenHandler tokenHandler,
+            Amount dipAmount
+        )
+    {
+        return _prepareStaker(myStaker, myStakeAmount, true, true);
+    }
+
+
+    function _prepareStaker(
+        address myStaker, 
+        uint256 myStakeAmount,
+        bool withFunding,
+        bool withApproval
+    )
+        internal
+        returns(
+            TokenHandler tokenHandler,
+            Amount dipAmount
+        )
+    {
+        TokenHandler tokenHandler = stakingService.getTokenHandler();
+        dipAmount = AmountLib.toAmount(myStakeAmount * 10**dip.decimals());
+
+        if (withFunding) {
+            vm.startPrank(registryOwner);
+            dip.transfer(myStaker, dipAmount.toInt());
+            vm.stopPrank();
+        }
+
+        if (withApproval) {
+            vm.startPrank(myStaker);
+            dip.approve(address(tokenHandler), dipAmount.toInt());
+            vm.stopPrank();
+        }
+    }
+
 
     function _times1000(UFixed value) internal pure returns (uint256) {
         return (UFixedLib.toUFixed(1000) * value).toInt();
+    }
+
+
+    function _wait(Seconds secondsToWait) internal {
+        vm.warp(block.timestamp + secondsToWait.toInt());
     }
 
 }

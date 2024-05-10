@@ -26,6 +26,14 @@ library SecondsLib {
         return Seconds.wrap(_max());
     }
 
+    function oneDay() public pure returns (Seconds duration) {
+        return Seconds.wrap(24 * 3600);
+    }
+
+    function oneYear() public pure returns (Seconds duration) {
+        return Seconds.wrap(365 * 24 * 3600);
+    }
+
     /// @dev converts the uint duration into Seconds
     /// function reverts if duration is exceeding max Seconds value
     function toSeconds(uint256 duration) public pure returns (Seconds) {

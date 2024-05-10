@@ -96,10 +96,12 @@ interface IStaking is
 
     /// @dev restakes the dips to a new target.
     /// the sum of the staked dips and the accumulated rewards will be restaked.
+    /// permissioned: only staking service may call this function.
     function restake(NftId stakeNftId) external;
 
     /// @dev retuns the specified amount of dips to the holder of the specified stake nft.
     /// if dipAmount is set to Amount.max() all staked dips and all rewards are transferred to 
+    /// permissioned: only staking service may call this function.
     function unstake(NftId stakeNftId)
         external
         returns (
@@ -107,7 +109,14 @@ interface IStaking is
             Amount rewardsClaimedAmount
         );
 
+    /// @dev update stake rewards for current time.
+    /// may be called before an announement of a decrease of a reward rate reduction.
+    /// calling this functions ensures that reward balance is updated using the current (higher) reward rate.
+    /// unpermissioned.
+    function updateRewards(NftId stakeNftId) external;
+
     /// @dev transfers all rewards accumulated so far to the holder of the specified stake nft.
+    /// permissioned: only staking service may call this function.
     function claimRewards(NftId stakeNftId)
         external
         returns (

@@ -20,10 +20,10 @@ contract RewardCalculation is GifTest {
 
     function test_rewardCalculationConsoleLog() public {
         // solhint-disable
-        console.log("getYearDuration()", StakeManagerLib.getYearDuration().toInt());
+        console.log("getYearDuration()", SecondsLib.oneYear().toInt());
         console.log("356 * 24 * 3600", 356 * 24 * 3600);
 
-        Seconds halfYear = SecondsLib.toSeconds(StakeManagerLib.getYearDuration().toInt() / 2);
+        Seconds halfYear = SecondsLib.toSeconds(SecondsLib.oneYear().toInt() / 2);
         console.log("halfYear", halfYear.toInt());
         UFixed halfYearFraction = StakeManagerLib.getYearFraction(halfYear);
         console.log("getYearFraction(halfYear)", _times1000(halfYearFraction));
@@ -36,7 +36,7 @@ contract RewardCalculation is GifTest {
     function test_rewardCalculationGetYearFraction() public {
 
         // check for 1 year
-        Seconds yearDuration = StakeManagerLib.getYearDuration();
+        Seconds yearDuration = SecondsLib.oneYear();
         uint256 yearDurationInt = yearDuration.toInt();
         assertEq(yearDurationInt, 365 * 24 * 3600, "unexpected year duration");
 
@@ -76,7 +76,7 @@ contract RewardCalculation is GifTest {
 
         // check for 1 year
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
-        Seconds yearDuration = StakeManagerLib.getYearDuration();
+        Seconds yearDuration = SecondsLib.oneYear();
         Amount thousand = AmountLib.toAmount(1000);
 
         // staking 1000 for 1 year with 10% apr -> reward amount 100
@@ -93,7 +93,7 @@ contract RewardCalculation is GifTest {
 
         // check for 1 year
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
-        Seconds yearDuration = StakeManagerLib.getYearDuration();
+        Seconds yearDuration = SecondsLib.oneYear();
         Amount thousand = AmountLib.toAmount(1000);
 
         // 20% reward rate
@@ -112,7 +112,7 @@ contract RewardCalculation is GifTest {
 
         // check for 1 year
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
-        Seconds yearDuration = StakeManagerLib.getYearDuration();
+        Seconds yearDuration = SecondsLib.oneYear();
         uint256 yearDurationInt = yearDuration.toInt();
         Amount thousand = AmountLib.toAmount(1000);
 
@@ -142,7 +142,7 @@ contract RewardCalculation is GifTest {
 
         // check for 1 year
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
-        Seconds yearDuration = StakeManagerLib.getYearDuration();
+        Seconds yearDuration = SecondsLib.oneYear();
         uint256 yearDurationInt = yearDuration.toInt();
         Amount thousand = AmountLib.toAmount(1000);
 
@@ -171,7 +171,7 @@ contract RewardCalculation is GifTest {
     function test_rewardCalculationCalculateRewardZero() public {
 
         UFixed tenPercentAPR = UFixedLib.toUFixed(1, -1); 
-        Seconds yearDuration = StakeManagerLib.getYearDuration();
+        Seconds yearDuration = SecondsLib.oneYear();
         Amount thousand = AmountLib.toAmount(1000);
 
         // 0% reward rate

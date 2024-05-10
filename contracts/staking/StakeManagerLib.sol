@@ -19,9 +19,6 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 library StakeManagerLib {
 
-    uint256 public constant YEAR_DAYS = 365;
-    uint256 public constant YEAR_SECONDS = YEAR_DAYS * 24 * 3600;
-
     function checkActiveTarget(
         StakingReader stakingReader,
         NftId targetNftId
@@ -153,12 +150,7 @@ library StakeManagerLib {
 
 
     function getYearFraction(Seconds duration) public pure returns (UFixed yearFraction) {
-        return UFixedLib.toUFixed(duration.toInt()) / UFixedLib.toUFixed(YEAR_SECONDS);
-    }
-
-
-    function getYearDuration() public pure returns (Seconds duration) {
-        return SecondsLib.toSeconds(YEAR_SECONDS);
+        return UFixedLib.toUFixed(duration.toInt()) / UFixedLib.toUFixed(SecondsLib.oneYear().toInt());
     }
 
 }
