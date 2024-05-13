@@ -197,68 +197,6 @@ contract RegistryService is
         nftId = getRegistry().register(info);
     }
 
-    // from IRegisterable
-
-    // TODO cleanup
-    // function getFunctionConfigs()
-    //     external
-    //     pure
-    //     returns(
-    //         FunctionConfig[] memory config
-    //     )
-    // {
-    //     config = new FunctionConfig[](11);
-
-    //     // order of service registrations MUST be reverse to this array 
-    //     /*config[-1].serviceDomain = STAKE();
-    //     config[-1].selector = RegistryService.registerStake.selector;*/
-
-    //     config[0].serviceDomain = POLICY();
-    //     config[0].authorizedSelectors = new bytes4[](0);
-
-    //     config[1].serviceDomain = APPLICATION();
-    //     config[1].authorizedSelectors = new bytes4[](1);
-    //     config[1].authorizedSelectors[0] = RegistryService.registerPolicy.selector;
-
-    //     config[2].serviceDomain = CLAIM();
-    //     config[2].authorizedSelectors = new bytes4[](0);
-
-    //     config[3].serviceDomain = PRODUCT();
-    //     config[3].authorizedSelectors = new bytes4[](1);
-    //     config[3].authorizedSelectors[0] = RegistryService.registerProduct.selector;
-
-    //     config[4].serviceDomain = POOL();
-    //     config[4].authorizedSelectors = new bytes4[](1);
-    //     config[4].authorizedSelectors[0] = RegistryService.registerPool.selector;
-
-    //     // registration of bundle service must preceed registration of pool service
-    //     config[5].serviceDomain = BUNDLE();
-    //     config[5].authorizedSelectors = new bytes4[](1);
-    //     config[5].authorizedSelectors[0] = RegistryService.registerBundle.selector;
-
-    //     // registration of pricing service must preceed registration of application service
-    //     config[6].serviceDomain = PRICE();
-    //     config[6].authorizedSelectors = new bytes4[](0);
-
-    //     // registration of distribution service must preceed registration of pricing service
-    //     config[7].serviceDomain = DISTRIBUTION();
-    //     config[7].authorizedSelectors = new bytes4[](2);
-    //     config[7].authorizedSelectors[0] = RegistryService.registerDistribution.selector;
-    //     config[7].authorizedSelectors[1] = RegistryService.registerDistributor.selector;
-
-    //     config[8].serviceDomain = COMPONENT();
-    //     config[8].authorizedSelectors = new bytes4[](1);
-    //     config[8].authorizedSelectors[0] = RegistryService.registerComponent.selector;
-
-    //     config[9].serviceDomain = INSTANCE();
-    //     config[9].authorizedSelectors = new bytes4[](1);
-    //     config[9].authorizedSelectors[0] = RegistryService.registerInstance.selector;
-
-    //     config[10].serviceDomain = STAKING();
-    //     config[10].authorizedSelectors = new bytes4[](1);
-    //     config[10].authorizedSelectors[0] = RegistryService.registerStaking.selector;
-    // }
-
     // Internal
 
     function _getAndVerifyContractInfo(

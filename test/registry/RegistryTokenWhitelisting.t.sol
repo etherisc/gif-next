@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
@@ -34,7 +35,6 @@ contract RegistryTokenWhitelisting is GifTest {
 
     function test_tokenRegistrySetup() public {
 
-        assertEq(tokenRegistry.getOwner(), registryOwner, "unexpected owner for token registry");
         assertEq(address(tokenRegistry.getRegistry()), address(registry), "unexpected registry address");
         assertEq(registry.getTokenRegistryAddress(), address(tokenRegistry), "unexpected token registry address");
 
@@ -283,26 +283,26 @@ contract RegistryTokenWhitelisting is GifTest {
 
         vm.startPrank(outsider);
 
-        // check onlyOwner for register
+        // check restricted for register
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNftOwnableNotOwner.selector, 
+                IAccessManaged.AccessManagedUnauthorized.selector, 
                 outsider));
 
         tokenRegistry.registerToken(address(usdc2));
 
-        // check onlyOwner for setActive
+        // check restricted for setActive
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNftOwnableNotOwner.selector, 
+                IAccessManaged.AccessManagedUnauthorized.selector, 
                 outsider));
 
         tokenRegistry.setActiveForVersion(chainId, address(dip), majorVersion4, whitelist);
 
-        // check onlyOwner for setActive
+        // check restricted for setActive
         vm.expectRevert(
             abi.encodeWithSelector(
-                INftOwnable.ErrorNftOwnableNotOwner.selector, 
+                IAccessManaged.AccessManagedUnauthorized.selector, 
                 outsider));
 
         tokenRegistry.setActiveWithVersionCheck(chainId, address(dip), majorVersion4, whitelist, false);

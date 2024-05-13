@@ -69,8 +69,8 @@ contract StakingStore is
         _registry = IRegistry(registryAddress);
         _reader = StakingReader(stakingReaderAddress);
         _targetManager = new NftIdSetManager();
-        _targetManager.setOwner(address(this));
     }
+
 
     //--- target specific functions ------------------------------------//
 

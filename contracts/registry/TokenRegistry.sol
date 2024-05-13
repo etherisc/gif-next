@@ -1,19 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "./IRegistry.sol";
-import {NftOwnable} from "../shared/NftOwnable.sol";
+import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
 import {REGISTRY} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 
 /// @title contract to register token per GIF major release.
 contract TokenRegistry is
-    NftOwnable
+    AccessManaged,
+    IRegistryLinked
 {
     event LogTokenRegistryTokenRegistered(uint256 chainId, address token, uint256 decimals, string symbol);
     event LogTokenRegistryTokenGlobalStateSet(uint256 chainId, address token, bool active);
@@ -42,6 +44,7 @@ contract TokenRegistry is
     mapping(uint256 chainId => mapping(address token => mapping(VersionPart majorVersion => bool isActive))) internal _active;
     TokenInfo [] internal _token;
 
+    IRegistry internal _registry;
     ReleaseManager internal _releaseManager;
     IERC20Metadata internal _dipToken;
 
@@ -54,62 +57,70 @@ contract TokenRegistry is
     }
 
     constructor(
+        address initialAuthority,
         address registry,
         address dipToken
     )
+        AccessManaged(initialAuthority)
     { 
-        initialize(registry, dipToken);
-    }
-
-    function initialize(
-        address registry,
-        address dipToken
-    )
-        public
-        initializer()
-    {
-        initializeNftOwnable(msg.sender, registry);
-
-        // initialize release manager
-        _releaseManager = ReleaseManager(msg.sender);
-
         // set dip token
+        _registry = IRegistry(registry);
         _dipToken = IERC20Metadata(dipToken);
 
         // register dip token
         uint256 chainId = block.chainid;
         _registerToken(
             chainId, 
-            dipToken, 
+            address(_dipToken), 
             _dipToken.decimals(), 
             _dipToken.symbol());
-
-        // activation of dip token needs to take place outside of the
-        // token registry constructor call
     }
 
+    // TODO cleanup
+    // function initialize(
+    //     address initialOwner
+    // )
+    //     public
+    //     initializer()
+    // {
+    //     initializeNftOwnable(initialOwner, _registryAddress);
 
-    /// @dev link token registry ownership to nft owner of registry service and register dip token.
-    function linkToRegistryService() 
-        external
-    {
-        // link token registry ownership to registry service
-        address registryService = getRegistry().getServiceAddress(
-                REGISTRY(), 
-                _releaseManager.getInitialVersion());
-        _linkToNftOwnable(registryService);
+    //     // initialize release manager
+    //     _releaseManager = ReleaseManager(msg.sender);
 
-        // activate dip for initial gif version
-        // as token registry is created in constructor of release manager
-        // release manager can not yet be called in constructor of token registry
-        uint256 chainId = block.chainid;
-        address dipToken = address(_dipToken);
-        VersionPart majorVersion = _releaseManager.getInitialVersion();
-        bool active = true;
-        _active[chainId][dipToken][majorVersion] = active;
 
-        emit LogTokenRegistryTokenStateSet(chainId, dipToken, majorVersion, active);
-    }
+    //     // register dip token
+    //     uint256 chainId = block.chainid;
+    //     _registerToken(
+    //         chainId, 
+    //         address(_dipToken), 
+    //         _dipToken.decimals(), 
+    //         _dipToken.symbol());
+    // }
+
+
+    // /// @dev link token registry ownership to nft owner of registry service and register dip token.
+    // function linkToRegistryService() 
+    //     external
+    // {
+    //     // link token registry ownership to registry service
+    //     address registryService = getRegistry().getServiceAddress(
+    //             REGISTRY(), 
+    //             _releaseManager.getInitialVersion());
+
+    //     _linkToNftOwnable(registryService);
+
+    //     // activate dip for initial gif version
+    //     // as token registry is created in constructor of release manager
+    //     // release manager can not yet be called in constructor of token registry
+    //     uint256 chainId = block.chainid;
+    //     address dipToken = address(_dipToken);
+    //     VersionPart majorVersion = _releaseManager.getInitialVersion();
+    //     bool active = true;
+    //     _active[chainId][dipToken][majorVersion] = active;
+
+    //     emit LogTokenRegistryTokenStateSet(chainId, dipToken, majorVersion, active);
+    // }
 
 
     /// @dev register an onchain token.
@@ -117,7 +128,7 @@ contract TokenRegistry is
     /// the non optional erc20 view functions.
     function registerToken(address tokenAddress)
         external
-        onlyOwner
+        restricted()
     {
         IERC20Metadata token = _verifyOnchainToken(tokenAddress);
         _registerToken(block.chainid, tokenAddress, token.decimals(), token.symbol());
@@ -133,7 +144,7 @@ contract TokenRegistry is
         string memory symbol
     )
         external
-        onlyOwner
+        restricted()
     {
         if (chainId == block.chainid) {
             revert ErrorTokenRegistryNotRemoteToken(chainId, token);
@@ -152,7 +163,7 @@ contract TokenRegistry is
         bool active
     )
         external
-        onlyOwner
+        restricted()
         onlyRegisteredToken(chainId, token)
     {
         _tokenInfo[chainId][token].active = active;
@@ -171,9 +182,11 @@ contract TokenRegistry is
         VersionPart majorVersion, 
         bool active
     )
-        public
+        external
+        restricted()
+        onlyRegisteredToken(chainId, token)
     {
-        setActiveWithVersionCheck(chainId, token, majorVersion, active, true);
+        _setActiveWithVersionCheck(chainId, token, majorVersion, active, true);
     }
 
 
@@ -187,9 +200,22 @@ contract TokenRegistry is
         bool active,
         bool enforceVersionCheck
     )
-        public
-        onlyOwner
+        external
+        restricted()
         onlyRegisteredToken(chainId, token)
+    {
+        _setActiveWithVersionCheck(chainId, token, majorVersion, active, enforceVersionCheck);
+    }
+
+
+    function _setActiveWithVersionCheck(
+        uint256 chainId, 
+        address token, 
+        VersionPart majorVersion, 
+        bool active,
+        bool enforceVersionCheck
+    )
+        internal
     {
         // verify valid major version
         if(enforceVersionCheck) {
@@ -237,6 +263,15 @@ contract TokenRegistry is
 
         return _active[chainId][token][majorVersion];
     }
+
+    //--- IRegistryLinked --------------------------------------------------//
+
+    /// @dev returns the dip token for this chain
+    function getRegistry() public view returns (IRegistry) {
+        return _registry;
+    }
+
+    //--- internal functions ------------------------------------------------//
 
 
     /// @dev checks if provided token address refers to a smart contract that implements 

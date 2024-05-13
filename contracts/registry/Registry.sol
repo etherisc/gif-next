@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 import {NftId, NftIdLib} from "../type/NftId.sol";
@@ -9,6 +10,7 @@ import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, STAKING
 
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
+import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 
@@ -23,6 +25,7 @@ import {TokenRegistry} from "./TokenRegistry.sol";
 // 4) state object by regular service (POLICY, BUNDLE, STAKE)
 
 contract Registry is
+    Initializable,
     IRegistry
 {
     address public constant NFT_LOCK_ADDRESS = address(0x1);
@@ -43,13 +46,16 @@ contract Registry is
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) private _coreObjectCombinations;
 
-    NftId private _protocolNftId;
-    NftId private _registryNftId;
     ChainNft private _chainNft;
 
-    ReleaseManager immutable _releaseManager;
+    address private _initializeOwner;
     address private _tokenRegistryAddress;
     address private _stakingAddress;
+    ReleaseManager private _releaseManager;
+
+    NftId private _protocolNftId;
+    NftId private _registryNftId;
+
 
     modifier onlyRegistryService() {
         if(!_releaseManager.isActiveRegistryService(msg.sender)) {
@@ -58,6 +64,7 @@ contract Registry is
         _;
     }
 
+
     modifier onlyReleaseManager() {
         if(msg.sender != address(_releaseManager)) {
             revert ErrorRegistryCallerNotReleaseManager();
@@ -65,8 +72,10 @@ contract Registry is
         _;
     }
 
+
     constructor() {
-        _releaseManager = ReleaseManager(msg.sender);
+        // register deployer
+        _initializeOwner = msg.sender;
 
         // deploy NFT 
         _chainNft = new ChainNft(address(this));
@@ -80,31 +89,29 @@ contract Registry is
     }
 
 
-    function setTokenRegistry(
+    /// @dev wires release manager (as caller) and token to registry (this contract).
+    /// MUST be called by release manager.
+    function initialize(
+        address releaseManager,
         address tokenRegistry
     )
         external
-        onlyReleaseManager
+        initializer()
     {
-        if (_tokenRegistryAddress != address(0)) {
-            revert TokenRegistryAlreadySet(tokenRegistry);
+        if (msg.sender != _initializeOwner) {
+            revert ErrorRegistryCallerNotInitializeOwner(_initializeOwner, msg.sender);
         }
 
-        if (address(tokenRegistry) == address(0)) {
-            revert TokenRegistryZero();
-        }
-
+        _releaseManager = ReleaseManager(releaseManager);
         _tokenRegistryAddress = tokenRegistry;
     }
 
 
     function registerStaking(
-        address stakingAddress,
-        address stakingOwner
+        address stakingAddress
     )
         external
-        onlyReleaseManager
-        returns(NftId stakingNftId)
+        onlyReleaseManager()
     {
         // staking contract for same chain may only be registered once
         if (_stakingAddress != address(0)) {
@@ -112,8 +119,10 @@ contract Registry is
         }
 
         _stakingAddress = stakingAddress;
+
+        address stakingOwner = IRegisterable(stakingAddress).getOwner();
         uint256 stakingId = _chainNft.calculateTokenId(STAKING_TOKEN_SEQUENCE_ID);
-        stakingNftId = NftIdLib.toNftId(stakingId);
+        NftId stakingNftId = NftIdLib.toNftId(stakingId);
 
         _nftIdByAddress[_stakingAddress] = stakingNftId;
         _info[stakingNftId] = ObjectInfo({
@@ -128,6 +137,7 @@ contract Registry is
 
         _chainNft.mint(stakingOwner, stakingId);
     }
+
 
     function registerService(
         ObjectInfo memory info, 

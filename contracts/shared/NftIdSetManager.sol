@@ -22,12 +22,8 @@ contract NftIdSetManager {
         _;
     }
 
-    function setOwner(address owner) external {
-        if(_owner != address(0)) {
-            revert ErrorNftIdSetManagerOwnerAlreadySet(_owner);
-        }
-
-        _owner = owner;
+    constructor() {
+        _owner = msg.sender;
     }
 
     function add(NftId objectNftId) external onlyOwner {

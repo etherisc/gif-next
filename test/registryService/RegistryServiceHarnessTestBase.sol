@@ -22,6 +22,7 @@ import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
+import {GifDeployer} from "../base/GifDeployer.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
@@ -40,9 +41,7 @@ contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
 
         vm.startPrank(registryOwner);
 
-        dip = new Dip();
-
-        _deployRegistry();
+        _deployCore();
 
         _deployRegistryServiceHarness();
     }

@@ -452,8 +452,8 @@ contract Staking is
         (
             address initialAuthority,
             address registryAddress,
-            address stakingStoreAddress,
             address stakingReaderAddress,
+            address stakingStoreAddress,
             address initialOwner
         ) = abi.decode(data, (address, address, address, address, address));
 
@@ -485,9 +485,9 @@ contract Staking is
 
         // wiring to staking
         $._reader.setStakingDependencies(
-            address(registryAddress),
+            registryAddress,
             address(this),
-            address($._store));
+            stakingStoreAddress);
 
         registerInterface(type(IStaking).interfaceId);
     }

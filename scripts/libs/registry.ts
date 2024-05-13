@@ -76,12 +76,12 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         ], 
         {
             libraries: {
-                TimestampLib: libraries.timestampLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
-                ServiceAuthorizationsLib: libraries.serviceAuthorizationsLibAddress,
             }
         });
     const releaseManager = releaseManagerBaseContract as ReleaseManager;

@@ -5,6 +5,7 @@ import {Amount} from "../type/Amount.sol";
 import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IStaking} from "../staking/IStaking.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {NftId} from "../type/NftId.sol";
@@ -15,7 +16,9 @@ import {StakingStore} from "./StakingStore.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 import {UFixed} from "../type/UFixed.sol";
 
-contract StakingReader {
+contract StakingReader is
+    IRegistryLinked
+{
 
     error ErrorStakingReaderDependenciesAlreadySet();
     error ErrorStakingReaderStakingStoreAlreadySet(address stakingStore);
@@ -41,7 +44,11 @@ contract StakingReader {
         _store = StakingStore(stakingStoreAddress);
     }
 
-    // view and pure functions (staking reader?)
+    // view and pure functions 
+
+    function getRegistry() external view returns (IRegistry registry) {
+        return _registry;
+    }
 
     function getStaking() external view returns (IStaking staking) {
         return _staking;

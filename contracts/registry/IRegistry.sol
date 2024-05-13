@@ -14,6 +14,9 @@ interface IRegistry is IERC165 {
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
+    // initialize()
+    error ErrorRegistryCallerNotInitializeOwner(address owner, address caller);
+
     // registerService()
     error ErrorRegistryCallerNotReleaseManager();
     error ErrorRegistryDomainZero(address service);
@@ -77,10 +80,6 @@ interface IRegistry is IERC165 {
 
     function getObjectCount() external view returns (uint256);
 
-    function getNftId() external view returns (NftId nftId);
-
-    function getProtocolNftId() external view returns (NftId protocolNftId);
-
     function getNftId(address objectAddress) external view returns (NftId nftId);
 
     function ownerOf(NftId nftId) external view returns (address);
@@ -106,15 +105,21 @@ interface IRegistry is IERC165 {
         VersionPart releaseVersion
     ) external view returns (address serviceAddress);
 
-    function getStakingAddress() external view returns (address staking);
+    function getProtocolNftId() external view returns (NftId protocolNftId);
 
-    function getTokenRegistryAddress() external view returns (address);
+    function getNftId() external view returns (NftId nftId);
+
+    function getOwner() external view returns (address);
+
+    // TODO refactor the address getters below to contract getters
+    function getChainNftAddress() external view returns (address);
 
     function getReleaseManagerAddress() external view returns (address);
 
     function getReleaseAccessManagerAddress(VersionPart version) external view returns (address);
 
-    function getChainNftAddress() external view returns (address);
+    function getStakingAddress() external view returns (address staking);
 
-    function getOwner() external view returns (address);
+    function getTokenRegistryAddress() external view returns (address);
+
 }

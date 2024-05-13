@@ -3,15 +3,17 @@ pragma solidity ^0.8.20;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 
 import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
 import {ILifecycle} from "../shared/ILifecycle.sol";
+import {INftOwnable} from "../shared/INftOwnable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "./IRegistry.sol";
+import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {IService} from "../shared/IService.sol";
-import {IStaking} from "../staking/IStaking.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, ObjectTypeLib, zeroObjectType, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {Registry} from "./Registry.sol";
@@ -34,12 +36,18 @@ import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.
 
 contract ReleaseManager is
     AccessManaged,
+    Initializable,
     ILifecycle
 {
     using ObjectTypeLib for ObjectType;
 
+    uint256 public constant INITIAL_GIF_VERSION = 3;
+
     event LogReleaseCreation(VersionPart version, bytes32 salt, AccessManagerUpgradeableInitializeable accessManager); 
     event LogReleaseActivation(VersionPart version);
+
+    // constructor
+    error ErrorReleaseManagerNotRegistry(address registry);
 
     // createNextRelease
     error ErrorReleaseManagerReleaseCreationDisallowed(StateId currentStateId);
@@ -80,8 +88,8 @@ contract ReleaseManager is
 
     RegistryAccessManager public immutable _accessManager;
     Registry public immutable _registry;
-    TokenRegistry private immutable _tokenRegistry;
-    IStaking private _staking;
+    IRegisterable private _staking;
+    address private _stakingOwner;
 
     mapping(VersionPart version => AccessManagerUpgradeableInitializeable accessManager) internal _releaseAccessManager;
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
@@ -94,25 +102,40 @@ contract ReleaseManager is
 
     uint256 internal _awaitingRegistration; // "services left to register" counter
 
-
+    // deployer of this contract must be gif admin
     constructor(
-        RegistryAccessManager accessManager, 
-        VersionPart initialVersion,
-        address dipTokenAddress
+        address gifAdmin,
+        address gifManager,
+        address registry
     )
-        AccessManaged(accessManager.authority())
+        AccessManaged(msg.sender)
     {
-        _accessManager = accessManager;
-        _initial = initialVersion;
-        _next = VersionPartLib.toVersionPart(initialVersion.toInt() - 1);
+        if(!_isRegistry(registry)) {
+            revert ErrorReleaseManagerNotRegistry(registry);
+        }
+
+        _registry = Registry(registry);
+        _accessManager = new RegistryAccessManager(
+            gifAdmin,
+            gifManager);
+
+        setAuthority(address(_accessManager.authority()));
+
+        _initial = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION);
+        _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
         _state = getInitialState(RELEASE());
+    }
 
-        _registry = new Registry();
-        _tokenRegistry = new TokenRegistry(
-            address(_registry),
-            dipTokenAddress);
 
-        _registry.setTokenRegistry(address(_tokenRegistry));
+    function registerStaking(
+        address stakingAddress
+    )
+        external
+        restricted() // GIF_ADMIN_ROLE
+    {
+        INftOwnable staking = INftOwnable(stakingAddress);
+        _registry.registerStaking(stakingAddress);
+        staking.linkToRegisteredNftId();
     }
 
 
@@ -120,7 +143,7 @@ contract ReleaseManager is
     /// sets release manager into state SCHEDULED
     function createNextRelease()
         external
-        restricted // GIF_ADMIN_ROLE
+        restricted() // GIF_ADMIN_ROLE
         returns(VersionPart version)
     {
         if (!isValidTransition(RELEASE(), _state, SCHEDULED())) {
@@ -187,25 +210,6 @@ contract ReleaseManager is
         releaseAccessManager.initialize(address(this));
 
         emit LogReleaseCreation(version, releaseSalt, releaseAccessManager);
-    }
-
-
-    function registerStaking(
-        address stakingAddress,
-        address stakingOwner
-    )
-        external
-        restricted // GIF_ADMIN_ROLE
-        returns(NftId nftId)
-    {
-        // TODO add verify staking contract
-        _staking = IStaking(stakingAddress);
-
-        nftId = _registry.registerStaking(
-            stakingAddress,
-            stakingOwner);
-
-        _staking.linkToRegisteredNftId();
     }
 
 
@@ -347,6 +351,16 @@ contract ReleaseManager is
 
     function getReleaseAccessManager(VersionPart version) external view returns(AccessManagerUpgradeableInitializeable) {
         return _releaseAccessManager[version];
+    }
+
+    function getRegistryAccessManager() external view returns (RegistryAccessManager) {
+        return _accessManager;
+    }
+
+    //--- IRegistryLinked ------------------------------------------------------//
+
+    function getRegistry() external view returns (IRegistry) {
+        return _registry;
     }
 
     //--- ILifecycle -----------------------------------------------------------//
@@ -526,5 +540,21 @@ contract ReleaseManager is
                 serviceAddress, 
                 0);
         }
+    }
+
+    // returns true iff a the address passes some simple proxy tests.
+    function _isRegistry(address registryAddress) internal view returns (bool) {
+
+        // zero address is certainly not registry
+        if (registryAddress == address(0)) {
+            return false;
+        }
+
+        // check if contract returns a zero nft id for its own address
+        if (IRegistry(registryAddress).getNftId(registryAddress).eqz()) {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -39,7 +39,7 @@ import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceTestConfig} from "../registryService/RegistryServiceTestConfig.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
-
+import {GifDeployer} from "../base/GifDeployer.sol";
 
 // Helper functions to test IRegistry.ObjectInfo structs 
 function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) pure returns (bool isSame) {
@@ -75,7 +75,7 @@ function toBool(uint256 uintVal) pure returns (bool boolVal)
     }
 }
 
-contract RegistryTestBase is Test, FoundryRandom {
+contract RegistryTestBase is GifDeployer, FoundryRandom {
 
     // keep indentical to IRegistry events
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
@@ -151,71 +151,31 @@ contract RegistryTestBase is Test, FoundryRandom {
     function setUp() public virtual
     {
         bytes32 salt = "0x1234";
+        address gifAdmin = registryOwner;
+        address gifManager = registryOwner;
+        address stakingOwner = registryOwner;
 
         _startPrank(registryOwner);
-        _deployRegistry();
+
+        (
+            dip,
+            registry,
+            tokenRegistry,
+            releaseManager,
+            accessManager,
+            stakingManager,
+            staking
+        ) = deployCore(
+            gifAdmin,
+            gifManager,
+            stakingOwner);
+
         _deployRegistryServiceMock();
         _stopPrank();
 
         // Tests bookeeping
         _afterDeployment();
     }
-
-
-    function _deployRegistry() internal
-    {
-        // 1) registry access manager
-        // grants GIF_ADMIN_ROLE to registry owner as registryOwner is transaction sender
-        // grants GIF_MANAGER_ROLE to registry owner via contructor argument
-        accessManager = new RegistryAccessManager();
-
-        // solhint-disable
-        console.log("registry owner", registryOwner);
-        console.log("registry access manager deployed:", address(accessManager));
-        console.log("registry access manager authority", accessManager.authority());
-        // solhint-enable
-
-        // 2) release manager (registry/chain nft)
-        releaseManager = new ReleaseManager(
-            accessManager,
-            VersionPartLib.toVersionPart(3),
-            address(dip));
-
-        registryAddress = releaseManager.getRegistryAddress();
-        registry = Registry(registryAddress);
-
-        registryNftId = registry.getNftId(address(registry));
-        address chainNftAddress = registry.getChainNftAddress();
-        chainNft = ChainNft(chainNftAddress);
-        tokenRegistry = TokenRegistry(registry.getTokenRegistryAddress());
-
-        // solhint-disable
-        console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
-        console.log("global registry nft id", chainNft.GLOBAL_REGISTRY_ID());
-
-        console.log("registry nft id", registry.getNftId(address(registry)).toInt());
-        console.log("registry deployed at", address(registry));
-        console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
-        console.log("registry owner (opt 2)", registry.getOwner());
-
-        console.log("release manager deployed at", address(releaseManager));
-        console.log("release manager authority", releaseManager.authority());
-        // solhint-enable
-
-        // 3) initialize access rights for registry access manager
-        accessManager.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
-
-        // solhint-disable
-        console.log("token registry deployed at", address(tokenRegistry));
-        console.log("registry access manager initialized", address(accessManager));
-        // solhint-enable
-
-        /* solhint-disable */
-        console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
-        console.log("token registry linked owner", tokenRegistry.getOwner());
-        /* solhint-enable */
-    }
-
 
 
     function _deployRegistryServiceMock() internal
@@ -258,7 +218,8 @@ contract RegistryTestBase is Test, FoundryRandom {
 
         releaseManager.activateNextRelease();
 
-        tokenRegistry.linkToRegistryService(); // links to registry service nft
+        // TODO cleanup
+        // tokenRegistry.linkToRegistryService(); // links to registry service nft
 
         registryServiceManagerMock.linkOwnershipToServiceNft();
 

@@ -88,10 +88,11 @@ import {SimplePool} from "../mock/SimplePool.sol";
 import {SimpleProduct} from "../mock/SimpleProduct.sol";
 import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 
+import {GifDeployer} from "./GifDeployer.sol";
 import {ReleaseConfig} from "./ReleaseConfig.sol";
 
 // solhint-disable-next-line max-states-count
-contract GifTest is Test {
+contract GifTest is GifDeployer {
 
     // default customer token balance in full token units, value will be multiplied by 10 ** token.decimals()
     uint256 DEFAULT_CUSTOMER_FUNDS = 1000;
@@ -238,14 +239,9 @@ contract GifTest is Test {
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
 
-        // deploy dip
-        vm.startPrank(registryOwner);
-        dip = new Dip();
-        vm.stopPrank();
-
         // deploy registry, services, master instance and token
         vm.startPrank(registryOwner);
-        _deployRegistry();
+        _deployCore();
         _deployAndRegisterServices();
         vm.stopPrank();
 
@@ -305,84 +301,38 @@ contract GifTest is Test {
         console.log(message, gasDelta);
     }
 
-    function _deployRegistry() internal
+    function _deployCore()
+        internal
     {
-        // 1) deploy registry access manager
-        // grants GIF_ADMIN_ROLE to registry owner as registryOwner is transaction sender
-        // grants GIF_MANAGER_ROLE to registry owner via contructor argument
-        registryAccessManager = new RegistryAccessManager();
+        address gifAdmin = registryOwner;
+        address gifManager = registryOwner;
 
-        // TODO reenable
-        // (bool isAdmin,) = registryAccessManager.getAccessManager().hasRole(GIF_ADMIN_ROLE().toInt(), registryOwner);
-        // require(isAdmin, "gif admin role missing");
-        // (bool isManager,) = registryAccessManager.getAccessManager().hasRole(GIF_MANAGER_ROLE().toInt(), registryOwner);
-        // require(isManager, "gif manager role missing");
+        (
+            dip,
+            registry,
+            tokenRegistry,
+            releaseManager,
+            registryAccessManager,
+            stakingManager,
+            staking
+        ) = deployCore(
+            gifAdmin,
+            gifManager,
+            stakingOwner);
+
+        _setUpDependingItems();
 
         // solhint-disable
+        console.log("registry deployed at", address(registry));
         console.log("registry owner", registryOwner);
+
+        console.log("token registry deployed at", address(tokenRegistry));
+        console.log("release manager deployed at", address(releaseManager));
+
         console.log("registry access manager deployed:", address(registryAccessManager));
         console.log("registry access manager authority", registryAccessManager.authority());
-        // solhint-enable
 
-        // 2) deploy release manager (registry/chain nft)
-        // internally deploys the registry
-        // internally deploys the token registry
-        // bi-directionally links registry and token registry
-        releaseManager = new ReleaseManager(
-            registryAccessManager,
-            VersionPartLib.toVersionPart(3),
-            address(dip));
-
-        assertEq(releaseManager.getState().toInt(), INITIAL().toInt(), "unexpected initial state for releaseManager");
-
-        registryAddress = releaseManager.getRegistryAddress();
-        registry = Registry(registryAddress);
-
-        registryNftId = registry.getNftId(address(registry));
-        address chainNftAddress = registry.getChainNftAddress();
-        chainNft = ChainNft(chainNftAddress);
-        tokenRegistry = TokenRegistry(registry.getTokenRegistryAddress());
-
-        assertEq(address(tokenRegistry.getDipToken()), address(dip), "unexpected dip address");
-
-        // solhint-disable
-        console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
-        console.log("global registry nft id", chainNft.GLOBAL_REGISTRY_ID());
-
-        console.log("registry nft id", registry.getNftId(address(registry)).toInt());
-        console.log("registry deployed at", address(registry));
-        console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
-        console.log("registry owner (opt 2)", registry.getOwner());
-
-        console.log("release manager deployed at", address(releaseManager));
-        console.log("release manager authority", releaseManager.authority());
-        // solhint-enable
-
-        // 3) initialize access rights for registry access manager
-        registryAccessManager.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
-
-        // solhint-disable
-        console.log("token registry deployed at", address(tokenRegistry));
-        console.log("registry access manager initialized", address(registryAccessManager));
-        // solhint-enable
-
-        // 4) deploy staking contract
-        stakingOwner = registryOwner;
-        stakingManager = new StakingManager(
-            registryAccessManager.authority(),
-            address(registry));
-        staking = stakingManager.getStaking();
-        stakingReader = staking.getStakingReader();
-
-        // solhint-disable
-        console.log("stakingManager deployed at", address(stakingManager));
-        console.log("staking deployed at", address(staking));
-        console.log("staking reader deployed at", address(stakingReader));
-
-        // 5) register staking contract
-        stakingNftId = releaseManager.registerStaking(
-            address(staking),
-            stakingOwner);
+        console.log("staking manager deployed at", address(stakingManager));
 
         console.log("staking nft id", registry.getNftId(address(staking)).toInt());
         console.log("staking deployed at", address(staking));
@@ -390,6 +340,18 @@ contract GifTest is Test {
         console.log("staking owner (opt 2)", staking.getOwner());
         // solhint-enable
     }
+
+
+    function _setUpDependingItems() internal {
+        registryAddress = address(registry);
+
+        chainNft = ChainNft(registry.getChainNftAddress());
+        registryNftId = registry.getNftId(registryAddress);
+
+        stakingNftId = registry.getNftId(address(staking));
+        stakingReader = staking.getStakingReader();
+    }
+
 
     function _deployAndRegisterServices() internal 
     {
@@ -433,7 +395,7 @@ contract GifTest is Test {
         // solhint-disable
         console.log("release version", releaseVersion.toInt());
         console.log("release salt", uint(releaseSalt));
-        console.log("release access manager deployed at", address(releaseAccessManager));
+        console.log("release access manager deployed at", releaseAccessManager);
         console.log("release services count", serviceAddrs.length);
         console.log("release services remaining (before service registration)", releaseManager.getRemainingServicesToRegister());
         // solhint-enable
@@ -441,12 +403,13 @@ contract GifTest is Test {
         // --- registry service ---------------------------------//
         registryServiceManager = new RegistryServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         registryService = registryServiceManager.getRegistryService();
-        releaseManager.registerService(registryService); 
+        releaseManager.registerService(registryService);
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
-        // after registry service is available
-        tokenRegistry.linkToRegistryService();
+        // TODO cleanup
+        // // after registry service is available
+        // tokenRegistry.linkToRegistryService();
 
         // solhint-disable
         console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
@@ -459,8 +422,9 @@ contract GifTest is Test {
         console.log("registry service owner", registryService.getOwner());
         console.log("registry service authority", registryService.authority());
 
-        console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
-        console.log("token registry linked owner", tokenRegistry.getOwner());
+        // TODO cleanup
+        // console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
+        // console.log("token registry linked owner", tokenRegistry.getOwner());
         // solhint-enable
 
         // --- staking service ----------------------------------//
@@ -670,6 +634,12 @@ contract GifTest is Test {
 
         releaseManager.activateNextRelease();
 
+        // activate dip for new release
+        tokenRegistry.setActiveForVersion(
+            block.chainid, 
+            address(dip), 
+            registry.getLatestVersion(), true);
+
         assertEq(releaseManager.getState().toInt(), ACTIVE().toInt(), "unexpected state for releaseManager after activateNextRelease");
     }
 
@@ -755,7 +725,10 @@ contract GifTest is Test {
 
         // usdc
         tokenRegistry.registerToken(address(token));
-        tokenRegistry.setActiveForVersion(block.chainid, address(token), registry.getLatestVersion(), true);
+        tokenRegistry.setActiveForVersion(
+            block.chainid, 
+            address(token), 
+            registry.getLatestVersion(), true);
 
         // solhint-disable
         console.log("token (usdc) deployed at", address(token));

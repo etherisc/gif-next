@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {IVersionable} from "../shared/IVersionable.sol";
-import {NftIdSetManager} from "../shared/NftIdSetManager.sol";
 import {ProxyManager} from "../shared/ProxyManager.sol";
+import {ReleaseManager} from "../registry/ReleaseManager.sol";
 import {Staking} from "./Staking.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
@@ -12,37 +12,44 @@ contract StakingManager is
     ProxyManager
 {
 
+    error ErrorStakingManagerNotReleaseManager(address sender);
+
     Staking private _staking;
+    address private _initialImplementation;
+    bytes private _initializationData;
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
-        address initialAuthority,
-        address registryAddress
+        address registry,
+        address initialOwner
     )
-        ProxyManager(registryAddress)
+        ProxyManager(registry)
     {
-        Staking stk = new Staking();
-        address stakingImplemenataion = address(stk);
+        ReleaseManager releaseManager = ReleaseManager(
+            getRegistry().getReleaseManagerAddress());
+        address authority = releaseManager.authority();
 
+        Staking stakingImplementation = new Staking();
         StakingReader stakingReader = new StakingReader();
-        StakingStore stakingStore = new StakingStore(initialAuthority, registryAddress, address(stakingReader));
-        address initialOwner = msg.sender;
+        StakingStore stakingStore = new StakingStore(authority, registry, address(stakingReader));
 
-        bytes memory data = abi.encode(
-            initialAuthority, 
-            registryAddress, 
-            address(stakingStore),
+        _initialImplementation = address(stakingImplementation);
+        _initializationData = abi.encode(
+            authority,
+            registry,
             address(stakingReader),
+            address(stakingStore),
             initialOwner);
 
         IVersionable versionable = deploy(
-            stakingImplemenataion, 
-            data);
+            _initialImplementation, 
+            _initializationData);
 
         _staking = Staking(address(versionable));
     }
 
     //--- view functions ----------------------------------------------------//
+
     function getStaking()
         external
         view
