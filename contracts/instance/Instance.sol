@@ -25,14 +25,13 @@ import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 
-import {KeyValueStore} from "./base/KeyValueStore.sol";
+import {KeyValueStore} from "../shared/KeyValueStore.sol";
 
 import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
 import {IPolicy} from "./module/IPolicy.sol";
 import {IRisk} from "./module/IRisk.sol";
-import {ISetup} from "./module/ISetup.sol";
 
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";

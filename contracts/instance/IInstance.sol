@@ -23,7 +23,7 @@ import {BundleManager} from "./BundleManager.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 
-import {IKeyValueStore} from "./base/IKeyValueStore.sol";
+import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 
 import {IAccess} from "./module/IAccess.sol";
 

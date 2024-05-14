@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
@@ -12,7 +12,7 @@ import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 
-contract ReferralTestBase is TestGifBase {
+contract ReferralTestBase is GifTest {
 
     DistributorType public distributorType;
     string public name;
@@ -35,26 +35,9 @@ contract ReferralTestBase is TestGifBase {
     Timestamp public expiryAt;
     bytes public referralData;
 
-    function _prepareDistribution() internal {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        vm.stopPrank();
-
-        vm.startPrank(distributionOwner);
-        distribution = new SimpleDistribution(
-            address(registry),
-            instanceNftId,
-            address(token),
-            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0),
-            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0),
-            distributionOwner
-        );
-        distributionNftId = distributionService.register(address(distribution));
-    }
-
     function _setupTestData(bool createDistributor) internal {
         if (address(distribution) == address(0)) {
-            _prepareDistribution();
+            _prepareDistribution();            
         }
 
         name = "Basic";
@@ -91,5 +74,20 @@ contract ReferralTestBase is TestGifBase {
                 distributorType,
                 distributorData);
         }
+    }
+
+
+    function _prepareDistribution() internal {
+        _prepareProduct();
+
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        vm.stopPrank();
+
+        vm.startPrank(distributionOwner);
+        distribution.setFees(
+            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
+            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
+        vm.stopPrank();
     }
 }

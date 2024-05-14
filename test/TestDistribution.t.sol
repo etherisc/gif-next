@@ -1,65 +1,72 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {TestGifBase} from "./base/TestGifBase.sol";
+import {console} from "../lib/forge-std/src/Test.sol";
+
+import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
 import {IComponent} from "../contracts/shared/IComponent.sol";
-import {ISetup} from "../contracts/instance/module/ISetup.sol";
+import {IComponentService} from "../contracts/shared/IComponentService.sol";
+import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IAccess} from "../contracts/instance/module/IAccess.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
 import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
 
-contract TestDistribution is TestGifBase {
+contract TestDistribution is GifTest {
     using NftIdLib for NftId;
 
     uint256 public constant INITIAL_BALANCE = 100000;
 
-    function test_Distribution_setupInfo() public {
+    function test_DistributionComponentInfo() public {
         // GIVEN
         _prepareDistribution();
-
-        ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(distributionNftId);
 
         // check nft id
-        assertTrue(distributionSetupInfo.productNftId.eqz(), "product nft not zero");
+        assertTrue(componentInfo.productNftId.eqz(), "product nft not zero");
+
+        // check wallet
+        assertEq(componentInfo.wallet, address(distribution), "unexpected wallet address");
 
         // check token handler
-        assertTrue(address(distributionSetupInfo.tokenHandler) != address(0), "token handler zero");
-        assertEq(address(distributionSetupInfo.tokenHandler.getToken()), address(distribution.getToken()), "unexpected token for token handler");
-
-        // check fees
-        Fee memory distributionFee = distributionSetupInfo.distributionFee;
-        assertEq(distributionFee.fractionalFee.toInt(), 0, "distribution fee not 0");
-        assertEq(distributionFee.fixedFee, 0, "distribution fee not 0");
+        assertTrue(address(componentInfo.tokenHandler) != address(0), "token handler zero");
+        assertEq(address(componentInfo.tokenHandler.getToken()), address(distribution.getToken()), "unexpected token for token handler");
     }
 
 
-    function test_Distribution_SetFees() public {
+    function test_DistributionSetFees() public {
         // GIVEN
-        _prepareDistribution();
+        _prepareProduct(); // includes pool and product
 
-        ISetup.DistributionSetupInfo memory distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
-        Fee memory distributionFee = distributionSetupInfo.distributionFee;
-        assertEq(distributionFee.fractionalFee.toInt(), 0, "distribution fee not 0");
-        assertEq(distributionFee.fixedFee, 0, "distribution fee not 0");
+        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+
+        Fee memory distributionFee = productInfo.distributionFee;
+        assertEq(distributionFee.fractionalFee.toInt(), 0, "distribution fee not 0 (fractional)");
+        assertEq(distributionFee.fixedFee, 0, "distribution fee not 0 (fixed)");
+
+        Fee memory minDistributionOwnerFee = productInfo.minDistributionOwnerFee;
+        assertEq(minDistributionOwnerFee.fractionalFee.toInt(), 0, "min distribution owner fee not 0 (fractional)");
+        assertEq(minDistributionOwnerFee.fixedFee, 0, "min distribution owner fee fee not 0 (fixed)");
         
         Fee memory newMinDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(12,0), 34);
         Fee memory newDistributionFee = FeeLib.toFee(UFixedLib.toUFixed(123,0), 456);
 
         // WHEN
-        distribution.setFees(newMinDistributionOwnerFee, newDistributionFee);
+        vm.startPrank(distributionOwner);
+        distribution.setFees(newDistributionFee, newMinDistributionOwnerFee);
+        vm.stopPrank();
 
         // THEN
-        distributionSetupInfo = instanceReader.getDistributionSetupInfo(distributionNftId);
-        distributionFee = distributionSetupInfo.distributionFee;
-        assertEq(distributionFee.fractionalFee.toInt(), 123, "distribution fee not 123");
-        assertEq(distributionFee.fixedFee, 456, "distribution fee not 456");
+        productInfo = instanceReader.getProductInfo(productNftId);
+        distributionFee = productInfo.distributionFee;
+        assertEq(distributionFee.fractionalFee.toInt(), 123, "unexpected distribution fee (fractional))");
+        assertEq(distributionFee.fixedFee, 456, "unexpected distribution fee not (fixed)");
 
-        Fee memory minDistributionOwnerFee = distributionSetupInfo.minDistributionOwnerFee;
-        assertEq(minDistributionOwnerFee.fractionalFee.toInt(), 12, "min distribution owner fee not 0");
-        assertEq(minDistributionOwnerFee.fixedFee, 34, "min distribution owner fee not 0");
+        minDistributionOwnerFee = productInfo.minDistributionOwnerFee;
+        assertEq(minDistributionOwnerFee.fractionalFee.toInt(), 12, "unexpected min distribution owner fee (fractional)");
+        assertEq(minDistributionOwnerFee.fixedFee, 34, "unexpected min distribution owner fee not 0 (fixed)");
     }
 
     function test_Component_setWallet_to_extowned() public {
@@ -92,17 +99,26 @@ contract TestDistribution is TestGifBase {
 
     function test_Component_setWallet_same_address() public {
         // GIVEN
-        _prepareDistribution();
+        _prepareProduct();
+
+        vm.startPrank(distributionOwner);
 
         address externallyOwnerWallet = makeAddr("externallyOwnerWallet");
-        distribution.setWallet(externallyOwnerWallet);
-        assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not externallyOwnerWallet");
 
-        // THEN
-        vm.expectRevert(abi.encodeWithSelector(IComponent.ErrorComponentWalletAddressIsSameAsCurrent.selector));
-
-        // WHEN
+        // WHEN (1)
         distribution.setWallet(externallyOwnerWallet);
+
+        // THEN (1)
+        assertEq(distribution.getWallet(), externallyOwnerWallet, "wallet not externallyOwnerWallet (1)");
+        assertEq(instanceReader.getComponentInfo(distributionNftId).wallet, externallyOwnerWallet, "wallet not externallyOwnerWallet (2)");
+
+        // THEN (2)
+        vm.expectRevert(abi.encodeWithSelector(IComponentService.ErrorComponentServiceWalletAddressIsSameAsCurrent.selector));
+
+        // WHEN (2)
+        distribution.setWallet(externallyOwnerWallet);
+
+        vm.stopPrank();
     }
 
     function test_Component_setWallet_to_another_extowned() public {
@@ -272,13 +288,19 @@ contract TestDistribution is TestGifBase {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
-            address(token),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            distributionOwner
-        );
+            distributionOwner,
+            address(token));
+
+        // solhint-disable
+        console.log("distribution deployed at: ", address(distribution));
+        // solhint-disable
         
-        distributionNftId = distributionService.register(address(distribution));
+        distribution.register();
+        distributionNftId = distribution.getNftId();
+
+        // solhint-disable
+        console.log("distribution nft id: ", distribution.getNftId().toInt());
+        // solhint-disable
     }
 
 }

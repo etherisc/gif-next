@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
-import {NftId, zeroNftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
 import {NftOwnable} from "../shared/NftOwnable.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 
@@ -64,7 +64,7 @@ contract Registerable is
         }
 
         info = IRegistry.ObjectInfo(
-            zeroNftId(),
+            NftIdLib.zero(),
             $._parentNftId,
             $._objectType,
             $._isInterceptor,

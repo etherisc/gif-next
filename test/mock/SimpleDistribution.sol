@@ -14,30 +14,24 @@ contract SimpleDistribution is Distribution {
     constructor(
         address registry,
         NftId instanceNftId,
-        address token,
-        Fee memory minDistributionOwnerFee,
-        Fee memory distributionFee,
-        address initialOwner
+        address initialOwner,
+        address token
     ) 
     {
         initialize(
             registry,
             instanceNftId,
+            initialOwner,
             "SimpleDistribution",
-            token,
-            minDistributionOwnerFee,
-            distributionFee,
-            initialOwner);
+            token);
     }
 
     function initialize(
         address registry,
         NftId instanceNftId,
+        address initialOwner,
         string memory name,
-        address token,
-        Fee memory minDistributionOwnerFee,
-        Fee memory distributionFee,
-        address initialOwner
+        address token
     )
         public
         virtual
@@ -46,13 +40,11 @@ contract SimpleDistribution is Distribution {
         initializeDistribution(
             registry,
             instanceNftId,
+            initialOwner,
             name,
             token,
-            minDistributionOwnerFee,
-            distributionFee,
-            initialOwner,
-            ""
-        );
+            "",
+            "");
     }
 
     /**

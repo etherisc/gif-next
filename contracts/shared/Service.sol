@@ -5,7 +5,7 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {ObjectType, REGISTRY, SERVICE} from "../type/ObjectType.sol";
-import {NftId, zeroNftId} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {Version, VersionPart, VersionLib, VersionPartLib} from "../type/Version.sol";
 
 import {Versionable} from "./Versionable.sol";
@@ -68,5 +68,10 @@ abstract contract Service is
 
         registerInterface(type(IAccessManaged).interfaceId);
         registerInterface(type(IService).interfaceId);
+    }
+
+
+    function _getServiceAddress(ObjectType domain) internal view returns (address) {
+        return getRegistry().getServiceAddress(domain, getVersion().toMajorPart());
     }
 }

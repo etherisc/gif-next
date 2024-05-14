@@ -4,12 +4,17 @@ pragma solidity ^0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
+import {BundleManager} from "./BundleManager.sol";
+import {ChainNft} from "../registry/ChainNft.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {SecondsLib} from "../type/Seconds.sol";
+import {UFixedLib} from "../type/UFixed.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
-import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IService} from "../shared/IService.sol";
 import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
 
@@ -19,14 +24,14 @@ import {IProductComponent} from "../product/IProductComponent.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
-import {ChainNft} from "../registry/ChainNft.sol";
+import {IStakingService} from "../staking/IStakingService.sol";
+import {TargetManagerLib} from "../staking/TargetManagerLib.sol";
 
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
 import {InstanceAccessManager} from "./InstanceAccessManager.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
-import {BundleManager} from "./BundleManager.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {InstanceAuthorizationsLib} from "./InstanceAuthorizationsLib.sol";
 
@@ -39,6 +44,8 @@ contract InstanceService is
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
 
     IRegistryService internal _registryService;
+    IStakingService internal _stakingService;
+
     address internal _masterOzAccessManager;
     address internal _masterInstanceAccessManager;
     address internal _masterInstance;
@@ -115,8 +122,15 @@ contract InstanceService is
 
         clonedOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
 
+        // register new instance with registry
         IRegistry.ObjectInfo memory info = _registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
+
+        // create corresponding staking target
+        _stakingService.createInstanceTarget(
+            clonedInstanceNftId,
+            TargetManagerLib.getDefaultLockingPeriod(),
+            TargetManagerLib.getDefaultRewardRate());
 
         emit LogInstanceCloned(
             address(clonedOzAccessManager), 
@@ -126,6 +140,46 @@ contract InstanceService is
             address(clonedBundleManager), 
             address(clonedInstanceReader), 
             clonedInstanceNftId);
+    }
+
+
+    function setComponentLocked(bool locked)
+        external
+        virtual
+        onlyComponent()
+    {
+        // checks
+        address componentAddress = msg.sender;
+
+        if (!IInstanceLinkedComponent(componentAddress).supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
+            revert ErrorInstanceServiceComponentNotInstanceLinked(componentAddress);
+        }
+
+        IRegistry registry = getRegistry();
+        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
+
+        if (instanceNftId.eqz()) {
+            revert ErrorInstanceServiceComponentNotRegistered(componentAddress);
+        }
+
+        IInstance instance = IInstance(
+            registry.getObjectInfo(
+                instanceNftId).objectAddress);
+
+        // interaction
+        instance.getInstanceAccessManager().setTargetLockedByService(
+            componentAddress, 
+            locked);
+    }
+
+
+    function getMasterInstanceReader() external view returns (address) {
+        return _masterInstanceReader;
+    }
+
+    // From IService
+    function getDomain() public pure override returns(ObjectType) {
+        return INSTANCE();
     }
 
     function setAndRegisterMasterInstance(address instanceAddress)
@@ -198,7 +252,6 @@ contract InstanceService is
     }
 
 
-    // all gif targets MUST be childs of instanceNftId
     function createGifTarget(
         NftId instanceNftId,
         address targetAddress,
@@ -207,7 +260,51 @@ contract InstanceService is
         RoleId[] memory roles
     )
         external
-        restricted
+        virtual
+        restricted()
+    {
+        _createGifTarget(
+            instanceNftId,
+            targetAddress,
+            targetName,
+            roles,
+            selectors
+        );
+    }
+
+
+    function createComponentTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        bytes4[][] memory selectors,
+        RoleId[] memory roles
+    )
+        external
+        virtual
+        // TODO re-enable once role - contract association is fixed
+        // restricted()
+    {
+        _createGifTarget(
+            instanceNftId,
+            targetAddress,
+            targetName,
+            roles,
+            selectors
+        );
+    }
+
+
+    /// all gif targets MUST be children of instanceNftId
+    function _createGifTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        RoleId[] memory roles,
+        bytes4[][] memory selectors
+    )
+        internal
+        virtual
     {
         (
             IInstance instance, // or instanceInfo
@@ -219,38 +316,9 @@ contract InstanceService is
         // set proposed target config
         // TODO restriction: gif targets are set only once and only here?
         //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
-        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++)
-        {
+        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++) {
             accessManager.setCoreTargetFunctionRole(targetName, selectors[roleIdx], roles[roleIdx]);
         }
-    }
-
-
-    // TODO called by component, but target can be component helper...so needs target name
-    // TODO check that targetName associated with component...how???
-    function setComponentLocked(bool locked) onlyComponent external {
-
-        address componentAddress = msg.sender;
-        IRegistry registry = getRegistry();
-        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
-
-        IInstance instance = IInstance(
-            registry.getObjectInfo(
-                instanceNftId).objectAddress);
-
-        instance.getInstanceAccessManager().setTargetLockedByService(
-            componentAddress, 
-            locked);
-    }
-
-
-    function getMasterInstanceReader() external view returns (address) {
-        return _masterInstanceReader;
-    }
-
-    // From IService
-    function getDomain() public pure override returns(ObjectType) {
-        return INSTANCE();
     }
     
     /// @dev top level initializer
@@ -270,10 +338,8 @@ contract InstanceService is
 
         initializeService(registryAddress, authority, owner);
 
-        _registryService = IRegistryService(
-            IRegistry(registryAddress).getServiceAddress(
-                REGISTRY(), 
-                getVersion().toMajorPart()));
+        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        _stakingService = IStakingService(_getServiceAddress(STAKING()));
 
         registerInterface(type(IInstanceService).interfaceId);
     }

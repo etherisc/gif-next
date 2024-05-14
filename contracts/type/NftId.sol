@@ -18,18 +18,6 @@ using {
     NftIdLib.toKey32
 } for NftId global;
 
-// general pure free functions
-/// @dev Converts the uint256 to a NftId.
-function toNftId(uint256 id) pure returns (NftId) {
-    return NftId.wrap(uint96(id));
-}
-
-// TODO move to NftIdLib and rename to zero()
-/// @dev Return the NftId zero (0)
-function zeroNftId() pure returns (NftId) {
-    return NftId.wrap(0);
-}
-
 // pure free functions for operators
 function eqNftId(NftId a, NftId b) pure returns (bool isSame) {
     return NftId.unwrap(a) == NftId.unwrap(b);
@@ -39,6 +27,11 @@ function neNftId(NftId a, NftId b) pure returns (bool isDifferent) {
     return NftId.unwrap(a) != NftId.unwrap(b);
 }
 
+// @dev Converts the uint256 to a NftId.
+function toNftId(uint256 id) pure returns (NftId) {
+    return NftId.wrap(uint96(id));
+}
+
 // library functions that operate on user defined type
 library NftIdLib {
 
@@ -46,6 +39,11 @@ library NftIdLib {
     /// is never a valid nft id and implies a non-initialized value
     function zero() public pure returns (NftId) {
         return NftId.wrap(0);
+    }
+
+    /// @dev Converts the uint256 to a NftId.
+    function toNftId(uint256 id) public pure returns (NftId) {
+        return NftId.wrap(uint96(id));
     }
 
     /// @dev Converts the NftId to a uint256.

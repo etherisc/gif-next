@@ -3,7 +3,7 @@ pragma solidity 0.8.20;
 
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {ClaimId} from "../../../contracts/type/ClaimId.sol";
@@ -11,8 +11,7 @@ import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
-import {ILifecycle} from "../../../contracts/instance/base/ILifecycle.sol";
-import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
+import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
@@ -28,7 +27,7 @@ import {ReferralLib} from "../../../contracts/type/Referral.sol";
 import {SUBMITTED, ACTIVE, COLLATERALIZED, CONFIRMED, DECLINED, CLOSED, EXPECTED, PAID} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
-contract TestProductClaim is TestGifBase {
+contract TestProductClaim is GifTest {
 
     event LogClaimTestClaimInfo(NftId policyNftId, IPolicy.PolicyInfo policyInfo, ClaimId claimId, IPolicy.ClaimInfo claimInfo);
 
@@ -43,7 +42,7 @@ contract TestProductClaim is TestGifBase {
     function setUp() public override {
         super.setUp();
 
-        _prepareProduct();  
+        _prepareProductLocal();  
 
         // create risk
         vm.startPrank(productOwner);
@@ -95,10 +94,10 @@ contract TestProductClaim is TestGifBase {
 
         // THEN
         // checking last of 4 logs
-        assertEq(entries.length, 6, "unexpected number of logs");
-        assertEq(entries[5].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[5].topics[0], keccak256("LogClaimServicePayoutCreated(uint96,uint24,uint96)"), "unexpected log signature");
-        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmountInt) = abi.decode(entries[5].data, (uint96,uint24,uint96));
+        assertEq(entries.length, 4, "unexpected number of logs");
+        assertEq(entries[3].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[3].topics[0], keccak256("LogClaimServicePayoutCreated(uint96,uint24,uint96)"), "unexpected log signature");
+        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmountInt) = abi.decode(entries[3].data, (uint96,uint24,uint96));
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
         assertEq(payoutIdInt, payoutId.toInt(), "unexpected payout id");
         assertEq(payoutAmountInt, payoutAmount.toInt(), "unexpected payout amount");
@@ -204,12 +203,20 @@ contract TestProductClaim is TestGifBase {
         prdct.processPayout(policyNftId, payoutId);
         Vm.Log[] memory entries = vm.getRecordedLogs();
 
+        // search for right index
+        // solhint-disable
+        console.log("logs", entries.length);
+        for(uint i = 0; i < entries.length; i++) {
+            console.log(i, vm.toString(entries[i].topics[0]), vm.toString(keccak256("LogClaimServicePayoutProcessed(uint96,uint24,uint96,address,uint96)")));
+        }
+        // solhint-enable
+
         // THEN
-        // checking last of 10 logs
-        assertEq(entries.length, 10, "unexpected number of logs");
-        assertEq(entries[9].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[9].topics[0], keccak256("LogClaimServicePayoutProcessed(uint96,uint24,uint96,address,uint96)"), "unexpected log signature");
-        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmntInt) = abi.decode(entries[9].data, (uint96,uint24,uint96));
+        // checking last of 7 logs
+        assertEq(entries.length, 7, "unexpected number of logs");
+        assertEq(entries[6].emitter, address(claimService), "unexpected emitter");
+        assertEq(entries[6].topics[0], keccak256("LogClaimServicePayoutProcessed(uint96,uint24,uint96,address,uint96)"), "unexpected log signature");
+        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmntInt) = abi.decode(entries[6].data, (uint96,uint24,uint96));
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
         assertEq(payoutIdInt, payoutId.toInt(), "unexpected payout id");
         assertEq(payoutAmntInt, payoutAmountInt, "unexpected payout amount");
@@ -722,7 +729,6 @@ contract TestProductClaim is TestGifBase {
             ReferralLib.zero());
 
         // fund policy holder to pay premium
-        ISetup.ProductSetupInfo memory productSetup = instanceReader.getProductSetupInfo(productNftId);
         uint256 premiumAmountInt = instanceReader.getPolicyInfo(policyNftId).premiumAmount.toInt();
 
         // add token allowance to pay premiums
@@ -731,9 +737,8 @@ contract TestProductClaim is TestGifBase {
         vm.stopPrank();
 
         vm.startPrank(policyHolder);
-        token.approve(
-            address(productSetup.tokenHandler), 
-            premiumAmountInt);
+        address tokenHandlerAddress = address(instanceReader.getComponentInfo(productNftId).tokenHandler);
+        token.approve(tokenHandlerAddress, premiumAmountInt);
         vm.stopPrank();
 
         // collateralize policy
@@ -826,14 +831,11 @@ contract TestProductClaim is TestGifBase {
         claimState = instanceReader.getClaimState(policyNftId, claimId);
     }
 
+    // add allowance to pay premiums
     function _approve() internal {
-        // add allowance to pay premiums
-        ISetup.ProductSetupInfo memory productSetup = instanceReader.getProductSetupInfo(productNftId);(productNftId);
-
         vm.startPrank(customer);
-        token.approve(
-            address(productSetup.tokenHandler), 
-            CUSTOMER_FUNDS);
+        address tokenHandlerAddress = address(instanceReader.getComponentInfo(productNftId).tokenHandler);
+        token.approve(tokenHandlerAddress, CUSTOMER_FUNDS);
         vm.stopPrank();
     }
 
@@ -868,7 +870,7 @@ contract TestProductClaim is TestGifBase {
     }
 
 
-    function _prepareProduct() internal {
+    function _prepareProductLocal() internal {
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();
@@ -879,16 +881,15 @@ contract TestProductClaim is TestGifBase {
         prdct = new SimpleProduct(
             address(registry),
             instanceNftId,
+            productOwner,
             address(token),
             false,
             address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
+            address(distribution)
         );
         
-        productNftId = productService.register(address(prdct));
+        prdct.register();
+        productNftId = prdct.getNftId();
         vm.stopPrank();
 
 
@@ -903,7 +904,7 @@ contract TestProductClaim is TestGifBase {
 
         // SimplePool spool = SimplePool(address(pool));
         bundleNftId = SimplePool(address(pool)).createBundle(
-            FeeLib.zeroFee(), 
+            FeeLib.zero(), 
             BUNDLE_CAPITAL, 
             SecondsLib.toSeconds(604800), 
             ""

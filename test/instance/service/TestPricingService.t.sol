@@ -2,14 +2,13 @@
 pragma solidity 0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Script.sol";
-import {TestGifBase} from "../../base/TestGifBase.sol";
-import {NftId, toNftId, NftIdLib} from "../../../contracts/type/NftId.sol";
+import {GifTest} from "../../base/GifTest.sol";
+import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {AmountLib} from "../../../contracts/type/Amount.sol";
 import {Pool} from "../../../contracts/pool/Pool.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {IRegistry} from "../../../contracts/registry/IRegistry.sol";
-import {ISetup} from "../../../contracts/instance/module/ISetup.sol";
 import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
 import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
@@ -22,16 +21,16 @@ import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
-contract TestPricingService is TestGifBase {
+contract TestPricingService is GifTest {
     using NftIdLib for NftId;
 // FIXME: move to PricingService
     function test_PricingService_calculatePremium_noFees() public {
         _createAndRegisterDistributionPoolProductWithFees(
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee()
+            FeeLib.zero(),
+            FeeLib.zero(),
+            FeeLib.zero(),
+            FeeLib.zero(),
+            FeeLib.zero()
         );
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
@@ -50,10 +49,10 @@ contract TestPricingService is TestGifBase {
     }
 
 
-    function test_PricingService_calculatePremium_onlyFixedFees() public {
+    function test_PricingServiceCalculatePremiumOnlyFixedFees() public {
         _createAndRegisterDistributionPoolProductWithFees(
-            FeeLib.toFee(UFixedLib.zero(), 2),
             FeeLib.toFee(UFixedLib.zero(), 10),
+            FeeLib.toFee(UFixedLib.zero(), 2),
             FeeLib.toFee(UFixedLib.zero(), 10),
             FeeLib.toFee(UFixedLib.zero(), 10),
             FeeLib.toFee(UFixedLib.zero(), 10)
@@ -118,10 +117,10 @@ contract TestPricingService is TestGifBase {
         assertEq(premium.distributionOwnerFeeVarAmount, 5, "distributionOwnerFeeVarAmount invalid");
     }
 
-    function test_PricingService_calculatePremium_FixedAndVariableFees() public {
+    function test_PricingServiceCalculatePremiumFixedAndVariableFees() public {
         _createAndRegisterDistributionPoolProductWithFees(
-            FeeLib.toFee(UFixedLib.toUFixed(5, -2), 2),
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 3),
+            FeeLib.toFee(UFixedLib.toUFixed(5, -2), 2),
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 4),
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 5),
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 6)
@@ -152,10 +151,10 @@ contract TestPricingService is TestGifBase {
         assertEq(premium.distributionOwnerFeeVarAmount, 5, "distributionOwnerFeeVarAmount invalid");
     }
 
-    function test_PricingService_calculatePremium_onlyVariableFeesWithReferral() public {
+    function test_PricingService_calculatePremiumOnlyVariableFeesWithReferral() public {
         _createAndRegisterDistributionPoolProductWithFees(
-            FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(30, -2), 0),
+            FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0)
@@ -213,10 +212,10 @@ contract TestPricingService is TestGifBase {
         assertEq(premium.distributionOwnerFeeVarAmount, 9, "distributionOwnerFeeVarAmount invalid");
     }
 
-    function test_PricingService_calculatePremium_onlyVariableFeesWithReferralNoDiscount() public {
+    function test_PricingService_calculatePremiumOnlyVariableFeesWithReferralNoDiscount() public {
         _createAndRegisterDistributionPoolProductWithFees(
-            FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(30, -2), 0),
+            FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0)
@@ -274,10 +273,10 @@ contract TestPricingService is TestGifBase {
         assertEq(premium.distributionOwnerFeeVarAmount, 25, "distributionOwnerFeeVarAmount invalid");
     }
 
-    function test_PricingService_calculatePremium_variableAndFixedFeesWithReferral() public {
+    function test_PricingService_calculatePremiumVariableAndFixedFeesWithReferral() public {
         _createAndRegisterDistributionPoolProductWithFees(
-            FeeLib.toFee(UFixedLib.toUFixed(2, -2), 5),
             FeeLib.toFee(UFixedLib.toUFixed(30, -2), 10),
+            FeeLib.toFee(UFixedLib.toUFixed(2, -2), 5),
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 10),
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 10),
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 10)
@@ -336,48 +335,38 @@ contract TestPricingService is TestGifBase {
     }
 
     function _createAndRegisterDistributionPoolProductWithFees(
-        Fee memory minDistributionOwnerFee,
         Fee memory distributionFee,
+        Fee memory minDistributionOwnerFee,
         Fee memory poolFee,
         Fee memory bundleFee,
         Fee memory productFee
     ) internal {
+        _prepareProduct();
+
         vm.startPrank(instanceOwner);
         instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
         instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
         instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();
 
-        // -- setup distribution
+        // -- set various fees
         vm.startPrank(distributionOwner);
-        distribution = new SimpleDistribution(
-            address(registry),
-            instanceNftId,
-            address(token),
-            minDistributionOwnerFee,
-            distributionFee,
-            distributionOwner
-        );
-        distributionNftId = distributionService.register(address(distribution));
+        distribution.setFees(
+            distributionFee, 
+            minDistributionOwnerFee); // staking fee
         vm.stopPrank();
 
-        // -- setup pool
         vm.startPrank(poolOwner);
-        pool = new SimplePool(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
-            poolOwner
-        );
-        poolNftId = poolService.register(address(pool));
         pool.setFees(
             poolFee, 
-            FeeLib.zeroFee(), 
-            FeeLib.zeroFee());
+            FeeLib.zero(), // staking fee
+            FeeLib.zero()); // performance fee
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+        product.setFees(
+            productFee, 
+            FeeLib.zero()); // processing fee
         vm.stopPrank();
 
         // -- create bundle on pool
@@ -390,30 +379,12 @@ contract TestPricingService is TestGifBase {
             address(instanceReader.getComponentInfo(poolNftId).tokenHandler), 
             10000);
 
-        SimplePool spool = SimplePool(address(pool));
-        bundleNftId = spool.createBundle(
+        bundleNftId = pool.createBundle(
             bundleFee, 
             10000, 
             SecondsLib.toSeconds(604800), 
             ""
         );
-        vm.stopPrank();
-
-        // -- setup product
-        vm.startPrank(productOwner);
-        product = new SimpleProduct(
-            address(registry),
-            instanceNftId,
-            address(token),
-            false,
-            address(pool), 
-            address(distribution), 
-            productFee,
-            FeeLib.zeroFee(),
-            productOwner
-        );
-
-        productNftId = productService.register(address(product));
         vm.stopPrank();
     }
 }

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {ComponentService} from "../../../contracts/shared/ComponentService.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 
-contract TestDistributionService is TestGifBase {
+contract TestDistributionService is GifTest {
     using NftIdLib for NftId;
 
     function test_DistributionService_register_missingDistributionOwnerRole() public {
@@ -16,11 +16,8 @@ contract TestDistributionService is TestGifBase {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
-            address(token),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            distributionOwner
-        );
+            distributionOwner,
+            address(token));
         
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -29,7 +26,7 @@ contract TestDistributionService is TestGifBase {
                 DISTRIBUTION_OWNER_ROLE(), 
                 distributionOwner));
 
-        distributionService.register(address(distribution));
+        distribution.register();
     }
 
     function test_DistributionService_register() public {
@@ -41,13 +38,12 @@ contract TestDistributionService is TestGifBase {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
-            address(token),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            distributionOwner
+            distributionOwner,
+            address(token)
         );
         
-        NftId nftId = distributionService.register(address(distribution));
+        distribution.register();
+        NftId nftId = distribution.getNftId();
         assertTrue(nftId.gtz(), "nftId is zero");
     }
 

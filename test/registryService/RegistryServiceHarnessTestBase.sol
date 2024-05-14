@@ -1,16 +1,17 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
+import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, toObjectType} from "../../contracts/type/ObjectType.sol";
 import {VersionPartLib, VersionPart} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -21,11 +22,12 @@ import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifDeployer} from "../base/GifDeployer.sol";
+import {GifTest} from "../base/GifTest.sol";
 import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
 
-contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
+contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
 
     address public registerableOwner = makeAddr("registerableOwner");
 
@@ -34,9 +36,12 @@ contract RegistryServiceHarnessTestBase is TestGifBase, FoundryRandom {
 
     function setUp() public virtual override
     {
+        // solhint-disable-next-line
+        console.log("tx origin", tx.origin);
+
         vm.startPrank(registryOwner);
 
-        _deployRegistry();
+        _deployCore();
 
         _deployRegistryServiceHarness();
     }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
 import {ObjectType, toObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";

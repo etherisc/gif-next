@@ -6,9 +6,9 @@ import {Seconds} from "../type/Seconds.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
-import {ObjectType, DISTRIBUTION, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, BUNDLE, PRICE} from "../type/ObjectType.sol";
+import {ObjectType, DISTRIBUTION, INSTANCE, PRODUCT, POOL, REGISTRY, APPLICATION, POLICY, BUNDLE, PRICE} from "../type/ObjectType.sol";
 import {APPLIED, REVOKED, ACTIVE, KEEP_STATE} from "../type/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
@@ -34,10 +34,8 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
-import {ITreasury} from "../instance/module/ITreasury.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
 
-import {ComponentService} from "../shared/ComponentService.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
@@ -47,14 +45,16 @@ import {IBundleService} from "../pool/IBundleService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IPricingService} from "./IPricingService.sol";
+import {IRegistryService} from "../registry/IRegistryService.sol";
 
 
 contract ApplicationService is 
-    ComponentService, 
+    ComponentVerifyingService, 
     IApplicationService
 {
-    IDistributionService internal _distributionService;
-    IPricingService internal _pricingService;
+    IDistributionService private _distributionService;
+    IPricingService private _pricingService;
+    IRegistryService private _registryService;
 
     function _initialize(
         address owner, 
@@ -70,16 +70,86 @@ contract ApplicationService is
             address authority
         ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, authority, owner);
-        registerInterface(type(IApplicationService).interfaceId);
+        initializeService(registryAddress, address(0), owner);
 
         _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
         _pricingService = IPricingService(_getServiceAddress(PRICE()));
+        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+
+        registerInterface(type(IApplicationService).interfaceId);
     }
 
 
     function getDomain() public pure override returns(ObjectType) {
         return APPLICATION();
+    }
+
+
+    function _checkLinkedpplicationParameters(
+        InstanceReader instanceReader,
+        NftId productNftId,
+        RiskId rirskId,
+        ReferralId referralId,
+        NftId bundleNftId
+    )
+        internal
+        virtual
+        view
+    {
+        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+
+        // TODO check riskId with product
+
+        // TODO check referral with distribution
+
+        // check bundle with pool
+        NftId productPoolNftId = productInfo.poolNftId;
+        NftId bundlePoolNftId = instanceReader.getBundleInfo(bundleNftId).poolNftId;
+        if(bundlePoolNftId != productPoolNftId) {
+            revert ErrorApplicationServiceBundlePoolMismatch(bundleNftId, productPoolNftId, bundlePoolNftId);
+        }
+    }
+
+
+    function _registerApplication(
+        NftId productNftId,
+        address applicationOwner
+    )
+        internal
+        virtual
+        returns (NftId applicationNftId)
+    {
+        IRegistry.ObjectInfo memory objectInfo = IRegistry.ObjectInfo(
+            NftIdLib.zero(),
+            productNftId,
+            POLICY(),
+            false, // intercepting property for policies is defined on product
+            address(0),
+            applicationOwner,
+            "");
+
+        applicationNftId = _registryService.registerPolicy(objectInfo);
+    }
+
+
+    function _calculatePremiumAmount(
+        IPolicy.PolicyInfo memory info
+    )
+        internal
+        virtual
+        view
+        returns (Amount premiumAmount)
+    {
+        return AmountLib.toAmount(
+            _pricingService.calculatePremium(
+                info.productNftId,
+                info.riskId,
+                info.sumInsuredAmount,
+                info.lifetime,
+                info.applicationData,
+                info.bundleNftId,
+                info.referralId
+            ).premiumAmount);
     }
 
 
@@ -96,39 +166,28 @@ contract ApplicationService is
         virtual
         returns (NftId applicationNftId)
     {
-        (NftId productNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
-        // TODO: add validations (see create bundle in pool service)
+        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
 
-        applicationNftId = getRegistryService().registerPolicy(
-            IRegistry.ObjectInfo(
-                zeroNftId(),
-                productNftId,
-                POLICY(),
-                false, // intercepting property for policies is defined on product
-                address(0),
-                applicationOwner,
-                ""
-            )
-        );
-
-        // (uint256 premiumAmount,,,,,) = calculatePremium(
-        IPolicy.Premium memory premium = _pricingService.calculatePremium(
+        // check if provided references are valid and linked to calling product contract
+        InstanceReader instanceReader = instance.getInstanceReader();
+        _checkLinkedpplicationParameters(
+            instanceReader,
             productNftId,
             riskId,
-            sumInsuredAmount,
-            lifetime,
-            applicationData,
-            bundleNftId,
-            referralId
-        );
+            referralId,
+            bundleNftId);
 
-        IPolicy.PolicyInfo memory policyInfo = IPolicy.PolicyInfo({
+        // register application with registry
+        applicationNftId = _registerApplication(productNftId, applicationOwner);
+
+        // create policy info for application
+        IPolicy.PolicyInfo memory applicationInfo = IPolicy.PolicyInfo({
             productNftId:       productNftId,
             bundleNftId:        bundleNftId,
             referralId:         referralId,
             riskId:             riskId,
             sumInsuredAmount:   sumInsuredAmount,
-            premiumAmount:      AmountLib.toAmount(premium.premiumAmount),
+            premiumAmount:      AmountLib.zero(),
             premiumPaidAmount:  AmountLib.zero(),
             lifetime:           lifetime,
             applicationData:    applicationData,
@@ -141,8 +200,16 @@ contract ApplicationService is
             expiredAt:          zeroTimestamp(),
             closedAt:           zeroTimestamp()
         });
-        
-        instance.getInstanceStore().createApplication(applicationNftId, policyInfo);
+
+        // TODO consider to provide this amount externally
+        // actual calculation is done 2nd time anyway for premium collection
+        // calculate premium amount
+        applicationInfo.premiumAmount = _calculatePremiumAmount(applicationInfo);
+
+        // register application with instance
+        instance.getInstanceStore().createApplication(
+            applicationNftId, 
+            applicationInfo);
 
         // TODO: add logging
     }
@@ -179,7 +246,7 @@ contract ApplicationService is
         external
         virtual override
     {
-        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         instance.getInstanceStore().updateApplicationState(applicationNftId, REVOKED());
     }
 

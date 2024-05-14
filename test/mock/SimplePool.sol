@@ -59,6 +59,7 @@ contract SimplePool is Pool {
             // collateralizationLevel,
             // retentionLevel,
             initialOwner,
+            "",
             "");
     }
 

@@ -10,7 +10,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 //import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {PRODUCT} from "../../contracts/type/ObjectType.sol";
-import {zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftIdLib} from "../../contracts/type/NftId.sol";
 import {FeeLib} from "../../contracts/type/Fee.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {TimestampLib} from "../../contracts/type/Timestamp.sol";
@@ -26,11 +26,10 @@ import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
 import {IAccess} from "../../contracts/instance/module/IAccess.sol";
 
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 import {SimpleProduct, SPECIAL_ROLE_INT} from "../mock/SimpleProduct.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {RegisterableMock, SimpleAccessManagedRegisterableMock} from "../mock/RegisterableMock.sol";
-
 
 
 function eqRoleInfo(IAccess.RoleInfo memory a, IAccess.RoleInfo memory b) pure returns (bool isSame) {
@@ -53,7 +52,7 @@ function eqTargetInfo(IAccess.TargetInfo memory a, IAccess.TargetInfo memory b) 
     );
 }
 
-contract TestInstanceAccessManager is TestGifBase {
+contract TestInstanceAccessManager is GifTest {
 
     uint256 public constant INITIAL_BALANCE = 100000;
     uint256 public constant CUSTOM_ROLE_ID_MIN = 10000;
@@ -74,15 +73,14 @@ contract TestInstanceAccessManager is TestGifBase {
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            productOwner,
             address(token),
             false,
             address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
+            address(distribution)
         );
-        productService.register(address(product));
+
+        product.register();
         SimpleProduct dproduct = SimpleProduct(address(product));
         vm.stopPrank();
 
@@ -107,15 +105,14 @@ contract TestInstanceAccessManager is TestGifBase {
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            productOwner,
             address(token),
             false,
             address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
+            address(distribution)
         );
-        productService.register(address(product));
+
+        product.register();
         vm.stopPrank();
 
         vm.startPrank(instanceOwner);
@@ -152,15 +149,14 @@ contract TestInstanceAccessManager is TestGifBase {
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            productOwner,
             address(token),
             false,
             address(pool), 
-            address(distribution),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            productOwner
+            address(distribution)
         );
-        productService.register(address(product));
+
+        product.register();
         vm.stopPrank();
 
         vm.startPrank(instanceOwner);
@@ -902,7 +898,7 @@ contract TestInstanceAccessManager is TestGifBase {
     function test_InstanceAccessManager_createGifTarget_withNotIAccessManagedTarget() public
     {
         IRegisterable gifTarget = new RegisterableMock(
-            zeroNftId(), 
+            NftIdLib.zero(), 
             instanceNftId, 
             PRODUCT(),
             false,

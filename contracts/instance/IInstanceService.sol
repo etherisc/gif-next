@@ -15,6 +15,8 @@ import {InstanceStore} from "./InstanceStore.sol";
 
 interface IInstanceService is IService {
 
+    error ErrorInstanceServiceComponentNotInstanceLinked(address component);
+
     error ErrorInstanceServiceMasterInstanceAlreadySet();
     error ErrorInstanceServiceMasterOzAccessManagerAlreadySet();
     error ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet();
@@ -60,6 +62,14 @@ interface IInstanceService is IService {
             Instance clonedInstance,
             NftId instanceNftId
         );
+
+    function createComponentTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        bytes4[][] memory selectors,
+        RoleId[] memory roles
+    ) external;
 
     function createGifTarget(
         NftId instanceNftId,

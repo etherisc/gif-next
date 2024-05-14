@@ -14,6 +14,10 @@ using {
 
 // general pure free functions
 
+function RELEASE() pure returns (ObjectType) {
+    return toObjectType(1);
+}
+
 function PROTOCOL() pure returns (ObjectType) {
     return toObjectType(10);
 }
@@ -28,6 +32,10 @@ function TARGET() pure returns (ObjectType) {
 
 function REGISTRY() pure returns (ObjectType) {
     return toObjectType(40);
+}
+
+function STAKING() pure returns (ObjectType) {
+    return toObjectType(45);
 }
 
 function TOKEN() pure returns (ObjectType) {
@@ -50,8 +58,7 @@ function COMPONENT() pure returns (ObjectType) {
     return toObjectType(100);
 }
 
-// TODO replace by PRODUCT_SETUP
-function TREASURY() pure returns (ObjectType) {
+function FEE() pure returns (ObjectType) {
     return toObjectType(101);
 }
 

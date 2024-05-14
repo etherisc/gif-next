@@ -2,13 +2,13 @@
 pragma solidity 0.8.20;
 
 import {Test} from "../lib/forge-std/src/Test.sol";
-import {DIP} from "./mock/Dip.sol";
+import {Dip} from "../contracts/mock/Dip.sol";
 
 contract DipTest is Test {
-    DIP public dip;
+    Dip public dip;
 
     function setUp() public {
-        dip = new DIP();
+        dip = new Dip();
     }
 
     function testDecimals() public {

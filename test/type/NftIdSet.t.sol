@@ -4,12 +4,12 @@ pragma solidity 0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {LibNftIdSet} from "../../contracts/type/NftIdSet.sol";
 import {MockObjectManager} from "../mock/MockObjectManager.sol";
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 
-contract NftIdSetTest is TestGifBase {
+contract NftIdSetTest is GifTest {
 
     LibNftIdSet.Set internal set;
     mapping(NftId setId => LibNftIdSet.Set objects) internal sets;
@@ -26,7 +26,7 @@ contract NftIdSetTest is TestGifBase {
     }
 
     function test_addToSetHappyCase() public {
-        NftId id = toNftId(42);
+        NftId id = NftIdLib.toNftId(42);
 
         assertEq(LibNftIdSet.size(set), 0, "set size not 0");
         assertFalse(LibNftIdSet.contains(set, id), "id in empty set");
@@ -38,8 +38,8 @@ contract NftIdSetTest is TestGifBase {
     }
 
     function test_addToSetsHappyCase() public {
-        NftId setId = toNftId(7);
-        NftId objectId = toNftId(42);
+        NftId setId = NftIdLib.toNftId(7);
+        NftId objectId = NftIdLib.toNftId(42);
 
         assertEq(LibNftIdSet.size(sets[setId]), 0, "set size not 0");
         assertFalse(LibNftIdSet.contains(sets[setId], objectId), "id in empty set");
@@ -51,8 +51,8 @@ contract NftIdSetTest is TestGifBase {
     }
 
     function test_addToObjectManagerHappyCase() public {
-        NftId setId = toNftId(7);
-        NftId objectId = toNftId(42);
+        NftId setId = NftIdLib.toNftId(7);
+        NftId objectId = NftIdLib.toNftId(42);
 
         assertEq(objectManager.objects(setId), 0, "set size not 0");
         assertFalse(objectManager.contains(setId, objectId), "id in empty set");
