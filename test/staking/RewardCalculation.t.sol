@@ -1,15 +1,11 @@
-// SPDX-License-Identifier: APACHE-2.0
-pragma solidity 0.8.20;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.20;
 
 import {console} from "../../lib/forge-std/src/Test.sol";
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {GifTest} from "../base/GifTest.sol";
-// import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-// import {IStaking} from "../../contracts/staking/IStaking.sol";
-// import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-// import {ObjectType, INSTANCE, PROTOCOL, SERVICE, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
 import {StakeManagerLib} from "../../contracts/staking/StakeManagerLib.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";

@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: APACHE-2.0
-pragma solidity 0.8.20;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.20;
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 import {Seconds, SecondsLib} from "../../contracts/type/Seconds.sol";
