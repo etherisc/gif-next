@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: APACHE-2.0
-pragma solidity 0.8.20;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.20;
 
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
