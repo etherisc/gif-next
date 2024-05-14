@@ -20,23 +20,28 @@ contract StakingManager is
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
-        address registry,
+        address registryAddress,
+        address stakingStoreAddress,
         address initialOwner
     )
-        ProxyManager(registry)
+        ProxyManager(registryAddress)
     {
-        ReleaseManager releaseManager = ReleaseManager(
-            getRegistry().getReleaseManagerAddress());
-        address authority = releaseManager.authority();
+        // TODO cleanup
+        // ReleaseManager releaseManager = ReleaseManager(
+        //     getRegistry().getReleaseManagerAddress());
+        // address authority = releaseManager.authority();
 
         Staking stakingImplementation = new Staking();
-        StakingReader stakingReader = new StakingReader();
-        StakingStore stakingStore = new StakingStore(authority, registry, address(stakingReader));
+        // stakingStoreAddress
+        // StakingStore stakingStore = new StakingStore(authority, registryAddress, address(stakingReader));
+        StakingStore stakingStore = StakingStore(stakingStoreAddress);
+        StakingReader stakingReader = stakingStore.getStakingReader();
+        address authority = stakingStore.authority();
 
         _initialImplementation = address(stakingImplementation);
         _initializationData = abi.encode(
             authority,
-            registry,
+            registryAddress,
             address(stakingReader),
             address(stakingStore),
             initialOwner);

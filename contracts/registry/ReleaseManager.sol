@@ -61,6 +61,7 @@ contract ReleaseManager is
     error ErrorReleaseManagerStakingAlreadySet(address stakingAddress);
 
     // registerService
+    error ErrorReleaseManagerNoServiceRegistrationExpected();
     error ErrorReleaseManagerServiceRegistrationDisallowed(StateId currentStateId);
     error ErrorReleaseManagerNotService(IService service);
     error ErrorReleaseManagerServiceAddressInvalid(IService given, address expected);
@@ -228,7 +229,9 @@ contract ReleaseManager is
             VersionPart version
         ) = _verifyService(service);
 
-        require(_awaitingRegistration > 0, "_awaitingRegistration == 0");
+        if (_awaitingRegistration == 0) {
+            revert ErrorReleaseManagerNoServiceRegistrationExpected();
+        }
 
         uint serviceIdx = _awaitingRegistration - 1;
         address serviceAddress = _releaseInfo[version].addresses[serviceIdx];

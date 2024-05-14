@@ -11,6 +11,7 @@ import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessMana
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
+import {StakingStore} from "../../contracts/staking/StakingStore.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 contract GifDeployer is Test {
@@ -61,12 +62,19 @@ contract GifDeployer is Test {
             address(releaseManager),
             address(tokenRegistry));
 
-        // 7) deploy staking manager / staking
+        // 7) deploy staking store
+        StakingStore stakingStore = new StakingStore(
+            registryAccessManager.authority(),
+            address(registry)
+        );
+
+        // 8) deploy staking manager / staking
         stakingManager = new StakingManager(
             address(registry),
+            address(stakingStore),
             stakingOwner);
 
-        // 8) register staking with registry (via release manager)
+        // 9) register staking with registry (via release manager)
         staking = stakingManager.getStaking();
         releaseManager.registerStaking(address(staking));
     }

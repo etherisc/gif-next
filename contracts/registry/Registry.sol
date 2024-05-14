@@ -82,7 +82,7 @@ contract Registry is
 
         // initial registry setup
         _registerProtocol();
-        _registryNftId = _registerRegistry();
+        _registerRegistry();
 
         // set object types and object parent relations
         _setupValidCoreTypesAndCombinations();

@@ -61,13 +61,12 @@ contract StakingStore is
 
     constructor(
         address initialAuthority,
-        address registryAddress,
-        address stakingReaderAddress
+        address registryAddress
     )
         AccessManaged(initialAuthority)
     {
         _registry = IRegistry(registryAddress);
-        _reader = StakingReader(stakingReaderAddress);
+        _reader = new StakingReader();
         _targetManager = new NftIdSetManager();
     }
 
@@ -285,6 +284,10 @@ contract StakingStore is
     }
 
     //--- view functions -----------------------------------------------//
+
+    function getStakingReader() external view returns (StakingReader stakingReader){
+        return _reader;
+    }
 
     function getTargetManager() external view returns (NftIdSetManager targetManager){
         return _targetManager;

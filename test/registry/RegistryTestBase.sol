@@ -16,7 +16,7 @@ import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts
 import {NftId, NftIdLib, toNftId} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
@@ -87,7 +87,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     RegistryServiceManagerMock public registryServiceManagerMock;
     RegistryServiceMock public registryServiceMock;
 
-    IERC20Metadata public dip = new Dip();
+    IERC20Metadata public dip;
 
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
@@ -110,11 +110,13 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     NftId public protocolNftId = NftIdLib.toNftId(1101);
     NftId public globalRegistryNftId = NftIdLib.toNftId(2101);
     NftId public registryNftId; // chainId dependent
-    NftId public registryServiceNftId = NftIdLib.toNftId(33133705);
+    NftId public registryServiceNftId ; // chainId dependent
+    NftId public stakingNftId;
 
     IRegistry.ObjectInfo public protocolInfo;
     IRegistry.ObjectInfo public globalRegistryInfo; // chainId dependent
     IRegistry.ObjectInfo public registryInfo; // chainId dependent
+    IRegistry.ObjectInfo public stakingInfo; // chainId dependent
     IRegistry.ObjectInfo public registryServiceInfo;
 
     // test sets
@@ -169,6 +171,11 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             gifAdmin,
             gifManager,
             stakingOwner);
+        
+        chainNft = ChainNft(registry.getChainNftAddress());
+        registryNftId = registry.getNftId(address(registry));
+        registryAddress = address(registry);
+        stakingNftId = registry.getNftId(address(staking));
 
         _deployRegistryServiceMock();
         _stopPrank();
@@ -217,9 +224,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         releaseManager.registerService(registryServiceMock);
 
         releaseManager.activateNextRelease();
-
-        // TODO cleanup
-        // tokenRegistry.linkToRegistryService(); // links to registry service nft
 
         registryServiceManagerMock.linkOwnershipToServiceNft();
 
@@ -282,6 +286,16 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             );
         }
 
+        stakingInfo = IRegistry.ObjectInfo(
+            stakingNftId,
+            registryNftId,
+            STAKING(),
+            false,
+            address(staking), // must be without erc721 receiver support?
+            registry.NFT_LOCK_ADDRESS(),
+            ""
+        );
+
         registryServiceInfo = IRegistry.ObjectInfo(
             registryServiceNftId,
             registryNftId,
@@ -292,6 +306,11 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             ""
         );
 
+        // protocol 1101
+        // gloabal registry 2101
+        // local registry 2xxxx
+        // local staking 3xxx
+        // local registry service 4xxx
         _nextId = 5; // starting nft index after deployment
 
         // special case: need 0 in _nftIds[] set, assume registry always have zeroObjectInfo registered as NftIdLib.zero
@@ -299,9 +318,11 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _info[protocolNftId] = protocolInfo;
         _info[globalRegistryNftId] = globalRegistryInfo;
         _info[registryNftId] = registryInfo;
+        _info[stakingNftId] = stakingInfo;
         _info[registryServiceNftId] = registryServiceInfo; 
 
         _nftIdByAddress[address(registry)] = registryNftId;
+        _nftIdByAddress[address(staking)] = stakingNftId;
         _nftIdByAddress[address(registryServiceMock)] = registryServiceNftId;
 
         _service[VERSION][REGISTRY()] = address(registryServiceMock);
@@ -312,10 +333,12 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         // special case: need 0 in _nftIds[] set, assume registry always have NftIdLib.zero but is not (and can not be) registered
         EnumerableSet.add(_nftIds, NftIdLib.zero().toInt());
+
         // registered nfts
         EnumerableSet.add(_nftIds, protocolNftId.toInt());
         EnumerableSet.add(_nftIds, globalRegistryNftId.toInt());
         EnumerableSet.add(_nftIds, registryNftId.toInt());
+        EnumerableSet.add(_nftIds, stakingNftId.toInt());
         EnumerableSet.add(_nftIds, registryServiceNftId.toInt());
 
         // 0 is in the set because _addresses is not used for getters checks
@@ -327,6 +350,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         EnumerableSet.add(_registeredAddresses, address(registryServiceMock));
         EnumerableSet.add(_registeredAddresses, address(registry));
+        EnumerableSet.add(_registeredAddresses, address(staking));
 
         _types.push(zeroObjectType());
         _types.push(PROTOCOL());
@@ -388,6 +412,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _addressName[registryOwner] = "registryOwner";
         _addressName[outsider] = "outsider";
         _addressName[address(registry)] = "Registry";
+        _addressName[address(staking)] = "Staking";
         _addressName[address(registryServiceMock)] = "registryServiceMock";
         
         _errorName[IRegistry.ErrorRegistryCallerNotRegistryService.selector] = "ErrorRegistryCallerNotRegistryService"; 
