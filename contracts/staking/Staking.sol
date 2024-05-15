@@ -204,7 +204,8 @@ contract Staking is
         returns (Amount newBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
-        UFixed stakingRate = $._reader.getStakingRate(targetNftId, token);
+        uint chainId = $._reader.getTargetInfo(targetNftId).chainId;
+        UFixed stakingRate = $._reader.getStakingRate(token, chainId);
         newBalance = $._store.increaseTotalValueLocked(targetNftId, stakingRate, token, amount);
     }
 
@@ -216,7 +217,8 @@ contract Staking is
         returns (Amount newBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
-        UFixed stakingRate = $._reader.getStakingRate(targetNftId, token);
+        uint chainId = $._reader.getTargetInfo(targetNftId).chainId;
+        UFixed stakingRate = $._reader.getStakingRate(token, chainId);
         newBalance = $._store.decreaseTotalValueLocked(targetNftId, stakingRate, token, amount);
     }
 

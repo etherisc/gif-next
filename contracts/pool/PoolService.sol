@@ -318,6 +318,12 @@ contract PoolService is
             policyNftId, 
             policyInfo.bundleNftId, 
             payoutAmount);
+
+        // update value locked with staking service
+        _staking.decreaseTotalValueLocked(
+            instance.getNftId(),
+            token,
+            payoutAmount);
     }
 
 
@@ -333,15 +339,23 @@ contract PoolService is
         virtual
         restricted
     {
+        Amount remainingCollateralAmount = policyInfo.sumInsuredAmount - policyInfo.claimAmount;
+
         _bundleService.releaseCollateral(
             instance, 
             policyNftId, 
             policyInfo.bundleNftId, 
-            policyInfo.sumInsuredAmount - policyInfo.claimAmount);
+            remainingCollateralAmount);
 
         _bundleService.unlinkPolicy(
             instance, 
             policyNftId);
+
+        // update value locked with staking service
+        _staking.decreaseTotalValueLocked(
+            instance.getNftId(),
+            token,
+            remainingCollateralAmount);
     }
 
 

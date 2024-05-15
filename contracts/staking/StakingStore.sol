@@ -141,8 +141,7 @@ contract StakingStore is
         ) = _getAndVerifyTvl(targetNftId, token);
 
         newBalance = oldBalance + amount;
-        Amount newDipBalance = AmountLib.toAmount((
-            stakingRate * newBalance.toUFixed()).toInt());
+        Amount newDipBalance = newBalance.multiplyWith(stakingRate);
 
         // update new tvl balances
         _tvlBalance[targetNftId][token] = newBalance;

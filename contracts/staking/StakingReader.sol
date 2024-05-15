@@ -54,8 +54,8 @@ contract StakingReader is
     }
 
     function getStakingRate(
-        NftId targetNftId, 
-        address token
+        address token,
+        uint256 chainId
     )
         public
         virtual
@@ -155,8 +155,6 @@ contract StakingReader is
 
     // function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount);
     // function getStakedAmount(NftId targetNftId) external view returns (Amount stakeAmount);
-
-    // function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate);
 
     // function calculateRewardIncrementAmount(
     //     NftId targetNftId,

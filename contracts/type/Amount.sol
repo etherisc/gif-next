@@ -17,7 +17,8 @@ using {
     AmountLib.gtz,
     AmountLib.toInt,
     AmountLib.add,
-    AmountLib.toUFixed
+    AmountLib.toUFixed,
+    AmountLib.multiplyWith
 } for Amount global;
 
 function addAmount(Amount a, Amount b) pure returns (Amount) {
@@ -105,6 +106,10 @@ library AmountLib {
 
     function toUFixed(Amount amount) public pure returns (UFixed) {
         return UFixedLib.toUFixed(Amount.unwrap(amount));
+    }
+
+    function multiplyWith(Amount amount, UFixed factor) public pure returns (Amount) {
+        return toAmount((factor * UFixedLib.toUFixed(Amount.unwrap(amount))).toInt());
     }
 
     function _max() internal pure returns (uint96) {

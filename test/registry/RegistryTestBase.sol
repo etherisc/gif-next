@@ -709,9 +709,10 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         {
             // TODO figure out why this doesn't work
             // "log != expected log" with NftIdLib.toNftId()...
-            // vm.expectEmit(address(registry));
+            NftId expectedNftId = NftIdLib.toNftId(chainNft.calculateTokenId(_nextId));
+            vm.expectEmit(address(registry));
             emit LogRegistration(
-                NftIdLib.toNftId(chainNft.calculateTokenId(_nextId)), 
+                expectedNftId, 
                 info.parentNftId, 
                 info.objectType, 
                 info.isInterceptor,
