@@ -137,6 +137,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         undefined,
         {
             libraries: {
+                AmountLib: amountLibAddress,
                 NftIdLib: nftIdLibAddress,
                 SecondsLib: secondsLibAddress,
                 UFixedLib: uFixedLibAddress,

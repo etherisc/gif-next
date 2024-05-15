@@ -174,6 +174,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 ObjectTypeLib: libraries.objectTypeLibAddress, 
                 StateIdLib: libraries.stateIdLibAddress, 
                 TimestampLib: libraries.timestampLibAddress,
+                UFixedLib: libraries.uFixedLibAddress,
             }
         });
 

@@ -53,18 +53,8 @@ contract StakingReader is
         return _staking;
     }
 
-    function getStakingRate(
-        address token,
-        uint256 chainId
-    )
-        public
-        virtual
-        view
-        returns (UFixed stakingRate)
-    {
-        // TODO obtain true staking rate
-        // this is a hack using a fixed rate of 10:1 (eg 1 token -> 10 dip)
-        stakingRate = UFixedLib.toUFixed(1, -1);
+    function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate) { 
+        return _store.getStakingRate(chainId, token); 
     }
 
 

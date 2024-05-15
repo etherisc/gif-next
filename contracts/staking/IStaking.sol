@@ -17,6 +17,8 @@ interface IStaking is
     IComponent,
     IVersionable
 {
+    // staking rate
+    event LogStakingStakingRateSet(uint256 chainId, address token, UFixed oldStakingRate, UFixed newStakingRate);
 
     // target parameters
     event LogStakingLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
@@ -28,6 +30,9 @@ interface IStaking is
 
     error ErrorStakingNotStakingOwner();
     error ErrorStakingNotNftOwner(NftId nftId);
+
+    // staking rate
+    error ErrorStakingTokenNotRegistered(uint256 chainId, address token);
 
     // check dip balance and allowance
     error ErrorStakingDipBalanceInsufficient(address owner, uint256 amount, uint256 dipBalance);
@@ -59,7 +64,10 @@ interface IStaking is
         UFixed rewardRate;
     }
 
-    // rate management 
+    // staking rate management 
+
+    /// @dev sets the rate that converts 1 token of total value locked into the
+    /// the required staked dip amount to back up the locked token value
     function setStakingRate(uint256 chainId, address token, UFixed stakingRate) external;
 
 

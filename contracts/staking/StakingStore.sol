@@ -57,6 +57,9 @@ contract StakingStore is
     NftIdSetManager private _targetManager;
     StakingReader private _reader;
 
+    // staking rate
+    mapping(uint256 chainId => mapping(address token => UFixed stakingRate)) private _stakingRate;
+
     // stake and reward balance
     mapping(NftId nftId => Amount stakes) private _stakeBalance;
     mapping(NftId nftId => Amount rewards) private _rewardBalance;
@@ -83,9 +86,15 @@ contract StakingStore is
     }
 
 
-    //--- target specific functions ------------------------------------//
+    //--- staking rate specific functions -----------------------------------//
 
-    uint256 public counter = 0;
+    function setStakingRate(uint256 chainId, address token, UFixed stakingRate)
+        external
+    {
+        _stakingRate[chainId][token] = stakingRate;
+    }
+
+    //--- target specific functions -----------------------------------------//
 
     function createTarget(
         NftId targetNftId,
@@ -93,13 +102,6 @@ contract StakingStore is
     )
         external
     {
-        if (targetNftId != NftIdLib.toNftId(1101)) { 
-            counter += 1; 
-            if (counter == 2) {
-                require(false, "protocol registration 2nd time");
-            }
-        }
-
         _create(
             targetNftId.toKey32(TARGET()),
             abi.encode(targetInfo));
@@ -383,9 +385,9 @@ contract StakingStore is
         return _targetManager;
     }
 
-    function exists(NftId stakeNftId) external view returns (bool) {
-        return exists(stakeNftId.toKey32(STAKE()));
-    }
+    function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate) { return _stakingRate[chainId][token]; }
+
+    function exists(NftId stakeNftId) external view returns (bool) { return exists(stakeNftId.toKey32(STAKE())); }
 
     function getTotalValueLocked(NftId nftId, address token) external view returns (Amount tvlBalanceAmount) { return _tvlBalance[nftId][token]; }
     function getRequiredStakeBalance(NftId nftId) external view returns (Amount requiredAmount) { return _tvlRequiredDip[nftId]; }

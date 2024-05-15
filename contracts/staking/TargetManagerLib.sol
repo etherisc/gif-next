@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Component} from "../shared/Component.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -150,6 +152,32 @@ library TargetManagerLib {
         if (rewardRate > getMaxRewardRate()) {
             revert IStaking.ErrorStakingRewardRateTooHigh(targetNftId, getMaxRewardRate(), rewardRate);
         }
+    }
+
+
+    function calculateRequiredDipAmount(
+        Amount tokenAmount,
+        UFixed stakingRate
+    )
+        public
+        view
+        returns (Amount dipAmount)
+    {
+        dipAmount = tokenAmount.multiplyWith(stakingRate);
+    }
+
+
+    function calculateStakingRate(
+        IERC20Metadata dipToken,
+        IERC20Metadata token,
+        UFixed requiredDipPerToken
+    )
+        public
+        view
+        returns (UFixed stakingRate)
+    {
+        UFixed decimalsFactor = UFixedLib.toUFixed(1, int8(dipToken.decimals() - token.decimals()));
+        stakingRate = requiredDipPerToken * decimalsFactor;
     }
 
 

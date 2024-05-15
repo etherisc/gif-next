@@ -32,6 +32,7 @@ contract TvlCalculation is GifTest {
     NftId public policyNftId;
     address public tokenAddress;
     address public stakingStoreAddress;
+    UFixed public stakingRate;
 
 
     function test_tvlCalculationInitialState() public {
@@ -119,7 +120,7 @@ contract TvlCalculation is GifTest {
             "unexpected instance tvl(usdc) (after collateralization)");
 
         // check required staking balance after collateralizaion
-        UFixed stakingRate = stakingReader.getStakingRate(address(token), block.chainid);
+        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
 
         assertTrue(stakingRate.gtz(), "staking rate zero");
@@ -150,7 +151,7 @@ contract TvlCalculation is GifTest {
             "unexpected instance tvl(usdc) (after policy creation)");
 
         // check required staking balance after policy creation
-        UFixed stakingRate = stakingReader.getStakingRate(address(token), block.chainid);
+        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
 
         assertTrue(stakingRate.gtz(), "staking rate zero");
@@ -215,7 +216,7 @@ contract TvlCalculation is GifTest {
             "unexpected instance tvl(usdc) (after collateralization)");
 
         // check required staking balance 2 policies
-        UFixed stakingRate = stakingReader.getStakingRate(address(token), block.chainid);
+        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
 
         assertTrue(stakingRate.gtz(), "staking rate zero");
@@ -293,7 +294,7 @@ contract TvlCalculation is GifTest {
             "unexpected instance tvl(usdc) (after payout creation)");
 
         // check required staking balance after policy closing
-        UFixed stakingRate = stakingReader.getStakingRate(address(token), block.chainid);
+        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
         assertEq(
             stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
@@ -346,6 +347,10 @@ contract TvlCalculation is GifTest {
 
         tokenAddress = address(token);
         stakingStoreAddress = address(staking.getStakingStore());
+
+        // for every usdc token 10 dip tokens must be staked
+        stakingRate = UFixedLib.toUFixed(1, int8(dip.decimals() - token.decimals() + 1));
+        staking.getStakingStore().setStakingRate(block.chainid, tokenAddress, stakingRate);
     }
 
 

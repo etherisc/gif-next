@@ -42,13 +42,6 @@ contract Staking is
         TokenRegistry _tokenRegistry;
         StakingStore _store;
         StakingReader _reader;
-
-        mapping(uint256 chainId => mapping(address token => UFixed stakingRate)) _stakingRate;
-
-    // TODO cleanup
-        // mapping(NftId targetNftId => Amount stakedAmount) _stakedAmount;
-        // mapping(NftId targetNftId => mapping(address token => Amount tvlAmount)) _tvlAmount;
-
         NftId _protocolNftId;
     }
 
@@ -99,7 +92,16 @@ contract Staking is
         virtual
         onlyOwner
     {
+        StakingStorage storage $ = _getStakingStorage();
+        
+        if (!$._tokenRegistry.isRegistered(chainId, token)) {
+            revert ErrorStakingTokenNotRegistered(chainId, token);
+        }
 
+        UFixed oldStakingRate = $._store.getStakingRate(chainId, token);
+        $._store.setStakingRate(chainId, token, stakingRate);
+
+        emit LogStakingStakingRateSet(chainId, token, oldStakingRate, stakingRate);
     }
 
     // reward management 
@@ -205,7 +207,7 @@ contract Staking is
     {
         StakingStorage storage $ = _getStakingStorage();
         uint chainId = $._reader.getTargetInfo(targetNftId).chainId;
-        UFixed stakingRate = $._reader.getStakingRate(token, chainId);
+        UFixed stakingRate = $._reader.getStakingRate(chainId, token);
         newBalance = $._store.increaseTotalValueLocked(targetNftId, stakingRate, token, amount);
     }
 
@@ -218,7 +220,7 @@ contract Staking is
     {
         StakingStorage storage $ = _getStakingStorage();
         uint chainId = $._reader.getTargetInfo(targetNftId).chainId;
-        UFixed stakingRate = $._reader.getStakingRate(token, chainId);
+        UFixed stakingRate = $._reader.getStakingRate(chainId, token);
         newBalance = $._store.decreaseTotalValueLocked(targetNftId, stakingRate, token, amount);
     }
 
