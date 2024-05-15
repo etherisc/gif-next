@@ -35,6 +35,9 @@ contract StakingStore is
     KeyValueStore
 {
 
+    event LogStakingStoreTotalValueLockedIncreased(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdatedIn);
+    event LogStakingStoreTotalValueLockedDecreased(NftId targetNftId, address token, Amount amount, Amount newBalance, Blocknumber lastUpdatedIn);
+
     event LogStakingStoreStakesIncreased(NftId nftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn);
     event LogStakingStoreStakesDecreased(NftId nftId, Amount addedAmount, Amount newBalance, Blocknumber lastUpdatedIn);
 
@@ -48,17 +51,24 @@ contract StakingStore is
     error ErrorStakingStoreBalanceNotInitialized(NftId nftId);
 
     // update balance
-    // TODO _registry is not used
+    error ErrorStakingStoreTvlBalanceNotInitialized(NftId nftId);
+
     IRegistry private _registry;
     NftIdSetManager private _targetManager;
     StakingReader private _reader;
 
+    // stake and reward balance
     mapping(NftId nftId => Amount stakes) private _stakeBalance;
     mapping(NftId nftId => Amount rewards) private _rewardBalance;
 
-    // TODO check if this is made redundant by *Info struct updates
     mapping(NftId nftId => Timestamp lastUpdatedAt) private _lastUpdatedAt;
     mapping(NftId nftId => Blocknumber lastUpdatedIn) private _lastUpdatedIn;
+
+    // total value locked balance
+    mapping(NftId nftId => mapping(address token => Amount tvl)) private _tvlBalance;
+    mapping(NftId nftId => mapping(address token => Amount tvlInDip)) private _tvlInDip;
+    mapping(NftId nftId => Amount tvlRequiredDip) private _tvlRequiredDip;
+    mapping(NftId nftId => Blocknumber lastUpdatedIn) private _tvlLastUpdatedIn;
 
 
     constructor(IRegistry registry, StakingReader reader)
@@ -75,17 +85,29 @@ contract StakingStore is
 
     //--- target specific functions ------------------------------------//
 
+    uint256 public counter = 0;
+
     function createTarget(
         NftId targetNftId,
         IStaking.TargetInfo memory targetInfo
     )
         external
     {
+        if (targetNftId != NftIdLib.toNftId(1101)) { 
+            counter += 1; 
+            if (counter == 2) {
+                require(false, "protocol registration 2nd time");
+            }
+        }
+
         _create(
             targetNftId.toKey32(TARGET()),
             abi.encode(targetInfo));
 
+        // initialize tvl and stake balance
+        _tvlLastUpdatedIn[targetNftId]= BlocknumberLib.currentBlocknumber();
         _createBalance(targetNftId, AmountLib.zero());
+
         _targetManager.add(targetNftId);
     }
 
@@ -99,6 +121,73 @@ contract StakingStore is
         _update(
             targetNftId.toKey32(TARGET()), 
             abi.encode(targetInfo), KEEP_STATE());
+    }
+
+    //--- tvl specific functions -------------------------------------//
+
+    function increaseTotalValueLocked(
+        NftId targetNftId,
+        UFixed stakingRate,
+        address token,
+        Amount amount
+    )
+        external
+        returns (Amount newBalance)
+    {
+        (
+            Blocknumber tvlLastUpdatedIn,
+            Amount oldBalance,
+            Amount oldDipBalance
+        ) = _getAndVerifyTvl(targetNftId, token);
+
+        newBalance = oldBalance + amount;
+        Amount newDipBalance = AmountLib.toAmount((
+            stakingRate * newBalance.toUFixed()).toInt());
+
+        // update new tvl balances
+        _tvlBalance[targetNftId][token] = newBalance;
+        _tvlInDip[targetNftId][token] = newDipBalance;
+
+        // update new amount of required dip
+        _tvlRequiredDip[targetNftId] = _tvlRequiredDip[targetNftId] - oldDipBalance + newDipBalance;
+
+        // update last updated in
+        _tvlLastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+
+        emit LogStakingStoreTotalValueLockedIncreased(targetNftId, token, amount, newBalance, tvlLastUpdatedIn);
+    }
+
+
+    function decreaseTotalValueLocked(
+        NftId targetNftId,
+        UFixed stakingRate,
+        address token,
+        Amount amount
+    )
+        external
+        returns (Amount newBalance)
+    {
+        (
+            Blocknumber tvlLastUpdatedIn,
+            Amount oldBalance,
+            Amount oldDipBalance
+        ) = _getAndVerifyTvl(targetNftId, token);
+
+        newBalance = oldBalance - amount;
+        Amount newDipBalance = AmountLib.toAmount((
+            stakingRate * newBalance.toUFixed()).toInt());
+
+        // update new tvl balances
+        _tvlBalance[targetNftId][token] = newBalance;
+        _tvlInDip[targetNftId][token] = newDipBalance;
+
+        // update new amount of required dip
+        _tvlRequiredDip[targetNftId] = _tvlRequiredDip[targetNftId] - oldDipBalance + newDipBalance;
+
+        // update last updated in
+        _tvlLastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+
+        emit LogStakingStoreTotalValueLockedDecreased(targetNftId, token, amount, newBalance, tvlLastUpdatedIn);
     }
 
     //--- stake specific functions -------------------------------------//
@@ -133,7 +222,7 @@ contract StakingStore is
 
 
     function increaseBalance(NftId nftId, Amount amount, Amount rewardIncrementAmount)
-        external
+        public
     {
         Blocknumber lastUpdatedIn = _lastUpdatedIn[nftId];
         bool updated = false;
@@ -299,6 +388,9 @@ contract StakingStore is
         return exists(stakeNftId.toKey32(STAKE()));
     }
 
+    function getTotalValueLocked(NftId nftId, address token) external view returns (Amount tvlBalanceAmount) { return _tvlBalance[nftId][token]; }
+    function getRequiredStakeBalance(NftId nftId) external view returns (Amount requiredAmount) { return _tvlRequiredDip[nftId]; }
+
     function getStakeBalance(NftId nftId) external view returns (Amount balanceAmount) { return _stakeBalance[nftId]; }
     function getRewardBalance(NftId nftId) external view returns (Amount rewardAmount) { return _rewardBalance[nftId]; }
     function getBalanceUpdatedAt(NftId nftId) external view returns (Timestamp updatedAt) { return _lastUpdatedAt[nftId]; }
@@ -317,11 +409,36 @@ contract StakingStore is
 
     //--- private functions -------------------------------------------//
 
+
+    function _getAndVerifyTvl(
+        NftId targetNftId,
+        address token
+    )
+        internal
+        view
+        returns (
+            Blocknumber tvlLastUpdatedIn,
+            Amount oldBalance,
+            Amount oldDipBalance
+        )
+    {
+        tvlLastUpdatedIn = _tvlLastUpdatedIn[targetNftId];
+
+        if (tvlLastUpdatedIn.eqz()) {
+            revert ErrorStakingStoreTvlBalanceNotInitialized(targetNftId);
+        }
+
+        oldBalance = _tvlBalance[targetNftId][token];
+        oldDipBalance = _tvlInDip[targetNftId][token];
+    }
+
+
     function _createBalance(NftId nftId, Amount amount) private {
         if (_lastUpdatedIn[nftId].gtz()) {
             revert ErrorStakingStoreBalanceAlreadyInitialized(nftId);
         }
 
+        // stake and reward balance
         _stakeBalance[nftId] = amount;
         _rewardBalance[nftId] = AmountLib.zero();
 

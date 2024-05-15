@@ -108,35 +108,12 @@ interface IStakingService is IService
     )
         external;
 
+
     /// @dev updates the reward balance of the stake using the current reward rate.
     function updateRewards(
         NftId stakeNftId
     )
         external;
-
-
-    /// @dev increases the total value locked amount for the specified target by the provided token amount.
-    /// function is called when a new policy is collateralized
-    /// function restricted to the pool service
-    function increaseTotalValueLocked(
-        NftId targetNftId,
-        address token,
-        Amount amount
-    )
-        external
-        returns (Amount totalValueLocked);
-
-
-    /// @dev decreases the total value locked amount for the specified target by the provided token amount.
-    /// function is called when a new policy is closed or payouts are executed
-    /// function restricted to the pool service
-    function decreaseTotalValueLocked(
-        NftId targetNftId,
-        address token,
-        Amount amount
-    )
-        external
-        returns (Amount totalValueLocked);
 
 
     /// @dev sets total value locked data for a target contract on a different chain.

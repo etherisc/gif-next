@@ -20,16 +20,11 @@ using {
 
 // pure free functions for operators
 function eqNftId(NftId a, NftId b) pure returns (bool isSame) {
-    return NftId.unwrap(a) == NftId.unwrap(b);
+    return NftIdLib.eq(a, b);
 }
 
 function neNftId(NftId a, NftId b) pure returns (bool isDifferent) {
-    return NftId.unwrap(a) != NftId.unwrap(b);
-}
-
-// @dev Converts the uint256 to a NftId.
-function toNftId(uint256 id) pure returns (NftId) {
-    return NftId.wrap(uint96(id));
+    return NftIdLib.ne(a, b);
 }
 
 // library functions that operate on user defined type
@@ -63,7 +58,12 @@ library NftIdLib {
 
     /// @dev Returns true if the values are equal (==).
     function eq(NftId a, NftId b) public pure returns (bool isSame) {
-        return eqNftId(a, b);
+        return NftId.unwrap(a) == NftId.unwrap(b);
+    }
+
+    /// @dev Returns true if the values are not equal (!=).
+    function ne(NftId a, NftId b) public pure returns (bool isSame) {
+        return NftId.unwrap(a) != NftId.unwrap(b);
     }
 
     /// @dev Returns the key32 value for the specified nft id and object type.

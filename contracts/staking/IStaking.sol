@@ -73,15 +73,27 @@ interface IStaking is
         UFixed initialRewardRate
     ) external;
 
+
     /// @dev set the stake locking period to the specified duration.
     function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod) external;
 
-    function setRewardRate(NftId targetNftId, UFixed rewardRate) external;
-    function refillRewardReserves(NftId targetNftId, Amount dipAmount) external;
-    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external;
 
-    function increaseTvl(NftId targetNftId, address token, Amount amount) external;
-    function decreaseTvl(NftId targetNftId, address token, Amount amount) external;
+    function setRewardRate(NftId targetNftId, UFixed rewardRate) external;
+    function refillRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+
+
+    /// @dev increases the total value locked amount for the specified target by the provided token amount.
+    /// function is called when a new policy is collateralized.
+    /// function restricted to the pool service.
+    function increaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external returns (Amount newBalance);
+
+
+    /// @dev decreases the total value locked amount for the specified target by the provided token amount.
+    /// function is called when a new policy is closed or payouts are executed.
+    /// function restricted to the pool service.
+    function decreaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external returns (Amount newBalance);
+
 
     function updateRemoteTvl(NftId targetNftId, address token, Amount amount) external;
 
@@ -135,18 +147,4 @@ interface IStaking is
 
     function getStakingStore() external view returns (StakingStore stakingStore);
     function getStakingReader() external view returns (StakingReader reader);
-
-    // function getStakeInfo(NftId stakeNftId) external view returns (StakeInfo memory stakeInfo);
-    // function getTargetInfo(NftId targetNftId) external view returns (TargetInfo memory targetInfo);
-
-    function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount);
-    function getStakedAmount(NftId targetNftId) external view returns (Amount stakeAmount);
-
-    function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate);
-
-    function calculateRewardIncrementAmount(
-        NftId targetNftId,
-        Timestamp rewardsLastUpdatedAt
-    ) external view returns (Amount rewardIncrementAmount);
-
 }

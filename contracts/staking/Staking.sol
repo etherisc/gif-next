@@ -45,8 +45,9 @@ contract Staking is
 
         mapping(uint256 chainId => mapping(address token => UFixed stakingRate)) _stakingRate;
 
-        mapping(NftId targetNftId => Amount stakedAmount) _stakedAmount;
-        mapping(NftId targetNftId => mapping(address token => Amount tvlAmount)) _tvlAmount;
+    // TODO cleanup
+        // mapping(NftId targetNftId => Amount stakedAmount) _stakedAmount;
+        // mapping(NftId targetNftId => mapping(address token => Amount tvlAmount)) _tvlAmount;
 
         NftId _protocolNftId;
     }
@@ -181,6 +182,7 @@ contract Staking is
     function refillRewardReserves(NftId targetNftId, Amount dipAmount)
         external
         virtual
+        returns (Amount newBalance)
     {
 
     }
@@ -189,25 +191,33 @@ contract Staking is
         external
         virtual
         // onlyNftOwner(targetNftId)
-    {
-        
-    }
-
-
-    function increaseTvl(NftId targetNftId, address token, Amount amount)
-        external
-        virtual
-        // restricted // service to service access
+        returns (Amount newBalance)
     {
 
     }
 
-    function decreaseTvl(NftId targetNftId, address token, Amount amount)
+
+    function increaseTotalValueLocked(NftId targetNftId, address token, Amount amount)
         external
         virtual
-        // restricted // service to service access
+        // restricted() // only pool service
+        returns (Amount newBalance)
     {
+        StakingStorage storage $ = _getStakingStorage();
+        UFixed stakingRate = $._reader.getStakingRate(targetNftId, token);
+        newBalance = $._store.increaseTotalValueLocked(targetNftId, stakingRate, token, amount);
+    }
 
+
+    function decreaseTotalValueLocked(NftId targetNftId, address token, Amount amount)
+        external
+        virtual
+        // restricted() // only pool service
+        returns (Amount newBalance)
+    {
+        StakingStorage storage $ = _getStakingStorage();
+        UFixed stakingRate = $._reader.getStakingRate(targetNftId, token);
+        newBalance = $._store.decreaseTotalValueLocked(targetNftId, stakingRate, token, amount);
     }
 
 
@@ -411,32 +421,8 @@ contract Staking is
         return _getStakingStorage()._store;
     }
 
-    function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate) {
-        return _getStakingStorage()._stakingRate[chainId][token];
-    }
-
-    function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount) {
-        return _getStakingStorage()._tvlAmount[targetNftId][token];
-    }
-
-    function getStakedAmount(NftId targetNftId) external view returns (Amount stakeAmount) {
-        return _getStakingStorage()._stakedAmount[targetNftId];
-    }
-
     function getTokenRegistryAddress() external view returns (address tokenRegistry) {
         return address(_getStakingStorage()._tokenRegistry);
-    }
-
-    function calculateRewardIncrementAmount(
-        NftId targetNftId,
-        Timestamp rewardsLastUpdatedAt
-    )
-        public 
-        virtual
-        view 
-        returns (Amount rewardIncrementAmount)
-    {
-
     }
 
     //--- internal functions ------------------------------------------------//

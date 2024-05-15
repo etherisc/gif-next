@@ -15,7 +15,7 @@ import {ObjectType, STAKE, TARGET} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StakingStore} from "./StakingStore.sol";
 import {Timestamp} from "../type/Timestamp.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 contract StakingReader is
     IRegistryLinked,
@@ -51,6 +51,20 @@ contract StakingReader is
 
     function getStaking() external view returns (IStaking staking) {
         return _staking;
+    }
+
+    function getStakingRate(
+        NftId targetNftId, 
+        address token
+    )
+        public
+        virtual
+        view
+        returns (UFixed stakingRate)
+    {
+        // TODO obtain true staking rate
+        // this is a hack using a fixed rate of 10:1 (eg 1 token -> 10 dip)
+        stakingRate = UFixedLib.toUFixed(1, -1);
     }
 
 
@@ -109,11 +123,17 @@ contract StakingReader is
         return _store.getRewardBalance(nftId); 
     }
 
-
     function getBalanceUpdatedAt(NftId nftId) external view returns (Timestamp updatedAt) {
         return _store.getBalanceUpdatedAt(nftId); 
     }
 
+    function getTotalValueLocked(NftId nftId, address token) external view returns (Amount totalValueLocked) {
+        return _store.getTotalValueLocked(nftId, token); 
+    }
+
+    function getRequiredStakeBalance(NftId nftId) external view returns (Amount requiredStakedAmount) {
+        return _store.getRequiredStakeBalance(nftId); 
+    }
 
     function getRewardCalculationInput(NftId stakeNftId) 
         external

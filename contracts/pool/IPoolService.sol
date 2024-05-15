@@ -48,6 +48,7 @@ interface IPoolService is IService {
     /// may only be called by the policy service for unlocked pool components
     function lockCollateral(
         IInstance instance, 
+        address token,
         NftId productNftId,
         NftId applicationNftId,
         NftId bundleNftId,
@@ -64,6 +65,7 @@ interface IPoolService is IService {
     /// may only be called by the policy service for unlocked pool components
     function releaseCollateral(
         IInstance instance, 
+        address token,
         NftId policyNftId, 
         IPolicy.PolicyInfo memory policyInfo
     ) external;
@@ -74,6 +76,7 @@ interface IPoolService is IService {
     /// may only be called by the claim service for unlocked pool components
     function reduceCollateral(
         IInstance instance, 
+        address token,
         NftId policyNftId, 
         IPolicy.PolicyInfo memory policyInfo,
         Amount payoutAmount

@@ -89,6 +89,7 @@ contract StakingService is
         emit LogStakingServiceInstanceTargetRegistered(targetNftId, chainId);
     }
 
+
     function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod)
         external
         virtual
@@ -97,6 +98,7 @@ contract StakingService is
         _getStakingServiceStorage()._staking.setLockingPeriod(
             targetNftId, lockingPeriod);
     }
+
 
     function setRewardRate(NftId targetNftId, UFixed rewardRate)
         external
@@ -240,33 +242,6 @@ contract StakingService is
         $._staking.updateRewards(stakeNftId);
 
         emit LogStakingServiceRewardsUpdated(stakeNftId);
-    }
-
-
-
-    function increaseTotalValueLocked(
-        NftId targetNftId,
-        address token,
-        Amount amount
-    )
-        external
-        virtual
-        returns (Amount totalValueLocked)
-    {
-
-    }
-
-
-    function decreaseTotalValueLocked(
-        NftId targetNftId,
-        address token,
-        Amount amount
-    )
-        external
-        virtual
-        returns (Amount totalValueLocked)
-    {
-
     }
 
 

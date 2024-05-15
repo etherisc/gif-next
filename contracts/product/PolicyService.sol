@@ -143,6 +143,7 @@ contract PolicyService is
             Amount totalCollateralAmount
         ) = _poolService.lockCollateral(
             instance,
+            address(instanceReader.getComponentInfo(productNftId).token),
             productNftId,
             applicationNftId,
             applicationInfo.bundleNftId,
@@ -282,6 +283,7 @@ contract PolicyService is
 
         _poolService.releaseCollateral(
             instance, 
+            address(instanceReader.getComponentInfo(policyInfo.productNftId).token),
             policyNftId, 
             policyInfo);
 
