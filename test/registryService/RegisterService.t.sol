@@ -6,7 +6,7 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, zeroObjectType, SERVICE} from "../../contracts/type/ObjectType.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
@@ -31,7 +31,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_callByAddressWithAdminRoleHappyCase() public
     {
         ServiceMock service = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
             registryNftId, 
             toBool(randomNumber(1)), // isInterceptor
             registryOwner);
@@ -51,7 +51,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     {
         // address without any role
         ServiceMock service = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId, 
             toBool(randomNumber(1)), // isInterceptor
             outsider);
@@ -65,7 +65,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
 
         // address with different role (component registrar role)
         service = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId, 
             toBool(randomNumber(1)), // isInterceptor
             address(componentOwnerService));
@@ -125,7 +125,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_withIServiceHappyCase() public
     {
         ServiceMock service = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId, 
             toBool(randomNumber(1)), // isInterceptor
             registryOwner);
@@ -143,7 +143,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_withInvalidType() public 
     {
         ServiceMockWithRandomInvalidType service = new ServiceMockWithRandomInvalidType(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor
             registryOwner
@@ -162,7 +162,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_withInvalidAddressHappyCase() public 
     {
         ServiceMockWithRandomInvalidAddress service = new ServiceMockWithRandomInvalidAddress(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor 
             registryOwner
@@ -181,7 +181,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_whenCallerIsNotInitialOwner() public
     {
         ServiceMock service = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor
             outsider
@@ -199,7 +199,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_withZeroInitialOwner() public
     {
         ServiceMock service = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor 
             address(0)
@@ -217,7 +217,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     //function test_withRegisteredInitialOwner() public
     //{
     //    ServiceMock service = new ServiceMock(
-    //        toNftId(randomNumber(type(uint96).max)), // nftId 
+    //        NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
     //        registryNftId,
     //        toBool(randomNumber(1)), // isInterceptor 
     //        address(registry)
@@ -235,7 +235,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_whenParentIsNotRegistry() public
     {
         // ServiceMock service = new ServiceMock(
-        //     toNftId(randomNumber(type(uint96).max)), // nftId 
+        //     NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
         //     registryServiceNftId,
         //     toBool(randomNumber(1)), // isInterceptor 
         //     registryOwner
@@ -254,7 +254,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_whenServiceIsAlreadyRegistered() public
     {
         ServiceMock service = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId, 
             toBool(randomNumber(1)), // isInterceptor 
             registryOwner);
@@ -280,7 +280,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_withTooOldVersion() public
     {
         ServiceMockOldVersion service = new ServiceMockOldVersion(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor 
             registryOwner
@@ -298,7 +298,7 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_withTooNewVersion() public
     {
         ServiceMockNewVersion service = new ServiceMockNewVersion(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor 
             registryOwner
@@ -316,14 +316,14 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_withDuplicateName() public 
     {
         ServiceMock service = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor 
             registryOwner
         );  
 
         ServiceMock serviceWithDuplicateName = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor 
             registryOwner
@@ -350,14 +350,14 @@ contract RegisterServiceTest is RegistryServiceTestBase {
     function test_withNextVersionHappyCase() public
     {
         ServiceMock service = new ServiceMock(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor 
             registryOwner
         );  
 
         ServiceMockNewVersion serviceWithNextVersion = new ServiceMockNewVersion(
-            toNftId(randomNumber(type(uint96).max)), // nftId 
+            NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId 
             registryNftId,
             toBool(randomNumber(1)), // isInterceptor 
             registryOwner            

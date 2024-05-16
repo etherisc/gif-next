@@ -10,7 +10,9 @@ using {
     lteBlocknumber as <=,
     eqBlocknumber as ==,
     neBlocknumber as !=,
-    BlocknumberLib.toInt
+    BlocknumberLib.toInt,
+    BlocknumberLib.eqz,
+    BlocknumberLib.gtz
 } for Blocknumber global;
 
 /// @dev return true if Blocknumber a is greater than Blocknumber b
@@ -49,7 +51,7 @@ function toBlocknumber(uint256 blocknum) pure returns (Blocknumber) {
 }
 
 function blockBlocknumber() view returns (Blocknumber) {
-    return toBlocknumber(block.number);
+    return BlocknumberLib.currentBlocknumber();
 }
 
 // TODO move to BlocknumberLib and rename to zero()
@@ -64,6 +66,21 @@ function blockNumber() view returns (Blocknumber) {
 }
 
 library BlocknumberLib {
+    /// @dev returns the current Blocknumber
+    function currentBlocknumber() public view returns (Blocknumber) {
+        return Blocknumber.wrap(uint32(block.number));
+    }
+
+    /// @dev return true iff blocknumber is 0
+    function eqz(Blocknumber blocknumber) public pure returns (bool) {
+        return Blocknumber.unwrap(blocknumber) == 0;
+    }
+
+    /// @dev return true iff blocknumber is 0
+    function gtz(Blocknumber blocknumber) public pure returns (bool) {
+        return Blocknumber.unwrap(blocknumber) > 0;
+    }
+
     /// @dev return true if Blocknumber a is greater than Blocknumber b
     function gt(
         Blocknumber a,

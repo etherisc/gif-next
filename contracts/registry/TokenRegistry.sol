@@ -1,118 +1,358 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {IRegistry} from "./IRegistry.sol";
-import {VersionPart} from "../type/Version.sol";
 import {REGISTRY} from "../type/ObjectType.sol";
-import {NftOwnable} from "../shared/NftOwnable.sol";
+import {VersionPart} from "../type/Version.sol";
+
+import {IRegisterable} from "../shared/IRegisterable.sol";
+
+import {IRegistry} from "./IRegistry.sol";
+import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+import {ReleaseManager} from "./ReleaseManager.sol";
+import {RegistryAdmin} from "./RegistryAdmin.sol";
+
 
 /// @title contract to register token per GIF major release.
 contract TokenRegistry is
-    NftOwnable
+    AccessManaged,
+    IRegistryLinked
 {
-    event LogRegistered(address token, string symbol, uint256 decimals);
-    event LogTokenStateSet(address token, VersionPart majorVersion, bool active);
+    event LogTokenRegistryTokenRegistered(uint256 chainId, address token, uint256 decimals, string symbol);
+    event LogTokenRegistryTokenGlobalStateSet(uint256 chainId, address token, bool active);
+    event LogTokenRegistryTokenStateSet(uint256 chainId, address token, VersionPart majorVersion, bool active);
 
-    error NotContract(address account);
-    error NotToken(address account);
-    error TokenDecimalsZero();
-    error TokenMajorVersionInvalid(VersionPart majorVersion);
+    error ErrorTokenRegistryChainIdZero();
+    error ErrorTokenRegistryTokenAddressZero();
 
-    address [] internal _token;
-    mapping(address token => bool registered) internal _registered;
-    mapping(address token => mapping(VersionPart majorVersion => bool isActive)) internal _active;
+    error ErrorTokenRegistryNotRemoteToken(uint256 chainId, address token);
+    error ErrorTokenRegistryTokenAlreadyRegistered(uint256 chainId, address token);
+    error ErrorTokenRegistryTokenNotContract(uint256 chainId, address token);
+    error ErrorTokenRegistryTokenNotErc20(uint256 chainId, address token);
 
-    constructor(
-        address registry
+    error ErrorTokenRegistryTokenNotRegistered(uint256 chainId, address token);
+    error ErrorTokenRegistryMajorVersionInvalid(VersionPart majorVersion);
+
+    struct TokenInfo {
+        uint256 chainId;
+        address token;
+        uint8 decimals;
+        string symbol;
+        bool active;
+    }
+
+    mapping(uint256 chainId => mapping(address token => TokenInfo info)) internal _tokenInfo;
+    mapping(uint256 chainId => mapping(address token => mapping(VersionPart majorVersion => bool isActive))) internal _active;
+    TokenInfo [] internal _token;
+
+    IRegistry internal _registry;
+    ReleaseManager internal _releaseManager;
+    IERC20Metadata internal _dipToken;
+
+    /// @dev enforces msg.sender is owner of nft (or initial owner of nft ownable)
+    modifier onlyRegisteredToken(uint256 chainId, address token) {
+        if (!isRegistered(chainId, token)) {
+            revert ErrorTokenRegistryTokenNotRegistered(chainId, token);
+        }
+        _;
+    }
+
+    constructor(IRegistry registry)
+        AccessManaged(msg.sender)
+    {
+        // set authority
+        address authority = RegistryAdmin(registry.getRegistryAdminAddress()).authority();
+        setAuthority(authority);
+        
+        // set dip token
+        _registry = IRegistry(registry);
+        _dipToken = IERC20Metadata(_registry.getDipTokenAddress());
+
+        // register dip token
+        uint256 chainId = block.chainid;
+        _registerToken(
+            chainId, 
+            address(_dipToken), 
+            _dipToken.decimals(), 
+            _dipToken.symbol());
+    }
+
+    // TODO cleanup
+    // function initialize(
+    //     address initialOwner
+    // )
+    //     public
+    //     initializer()
+    // {
+    //     initializeNftOwnable(initialOwner, _registryAddress);
+
+    //     // initialize release manager
+    //     _releaseManager = ReleaseManager(msg.sender);
+
+
+    //     // register dip token
+    //     uint256 chainId = block.chainid;
+    //     _registerToken(
+    //         chainId, 
+    //         address(_dipToken), 
+    //         _dipToken.decimals(), 
+    //         _dipToken.symbol());
+    // }
+
+
+    // /// @dev link token registry ownership to nft owner of registry service and register dip token.
+    // function linkToRegistryService() 
+    //     external
+    // {
+    //     // link token registry ownership to registry service
+    //     address registryService = getRegistry().getServiceAddress(
+    //             REGISTRY(), 
+    //             _releaseManager.getInitialVersion());
+
+    //     _linkToNftOwnable(registryService);
+
+    //     // activate dip for initial gif version
+    //     // as token registry is created in constructor of release manager
+    //     // release manager can not yet be called in constructor of token registry
+    //     uint256 chainId = block.chainid;
+    //     address dipToken = address(_dipToken);
+    //     VersionPart majorVersion = _releaseManager.getInitialVersion();
+    //     bool active = true;
+    //     _active[chainId][dipToken][majorVersion] = active;
+
+    //     emit LogTokenRegistryTokenStateSet(chainId, dipToken, majorVersion, active);
+    // }
+
+
+    /// @dev register an onchain token.
+    /// this function verifies that the provided token address is a contract that implements
+    /// the non optional erc20 view functions.
+    function registerToken(address tokenAddress)
+        external
+        restricted()
+    {
+        IERC20Metadata token = _verifyOnchainToken(tokenAddress);
+        _registerToken(block.chainid, tokenAddress, token.decimals(), token.symbol());
+    }
+
+
+    /// @dev register the remote token with the provided attributes.
+    /// this function may not be used for tokens when chainId == block.chainid.
+    function registerRemoteToken(
+        uint256 chainId,
+        address token,
+        uint8 decimals,
+        string memory symbol
     )
-    { 
-        initialize(registry);
-    }
-
-    function initialize(address registry)
-        public
-        initializer()
-    {
-        initializeNftOwnable(msg.sender, registry);
-    }
-
-
-    /// @dev link ownership of token registry to nft owner of registry service
-    // TODO see linkToProxy() in ProxyManager, implement similar, decide which nft token registry must be linked to 
-    // TODO latter registry service will get new release, new address, new nft, TokenRegistry will not catch that -> use AccessManaged only for services
-    /*
-    function linkToNftOwnable(address registryAddress) 
         external
-        onlyOwner
+        restricted()
     {
-        IRegistry registry = IRegistry(registryAddress);
-        address registryServiceAddress = registry.getServiceAddress(REGISTRY(), registry.getNextVersion());
-
-        _linkToNftOwnable(registryServiceAddress);
-    }
-    */
-
-    /// @dev token state is informative, registry have no clue about used tokens
-    // component owner is responsible for token selection and operations
-    // service MUST deny registration of component with inactive token 
-    function setActive(address token, VersionPart majorVersion, bool active)
-        external
-        onlyOwner
-    {
-        // verify that token is registered
-        if (!_registered[token]) {
-            _registerToken(token);
+        if (chainId == block.chainid) {
+            revert ErrorTokenRegistryNotRemoteToken(chainId, token);
         }
 
+        _registerToken(chainId, token, decimals, symbol);
+    }
+
+
+    /// @dev set active flag on token itself.
+    /// when setting a token to active=false isActive will return false
+    /// regardless of release specific active value.
+    function setActive(
+        uint256 chainId, 
+        address token, 
+        bool active
+    )
+        external
+        restricted()
+        onlyRegisteredToken(chainId, token)
+    {
+        _tokenInfo[chainId][token].active = active;
+        emit LogTokenRegistryTokenGlobalStateSet(chainId, token, active);
+    }
+
+
+    /// @dev sets active state for specified token and major version.
+    /// internally calls setActiveWithVersionCheck() with enforcing version check.
+    /// token state is informative, registry have no clue about used tokens
+    /// component owner is responsible for token selection and operations
+    /// service MUST deny registration of component with inactive token.
+    function setActiveForVersion(
+        uint256 chainId, 
+        address token, 
+        VersionPart majorVersion, 
+        bool active
+    )
+        external
+        restricted()
+        onlyRegisteredToken(chainId, token)
+    {
+        _setActiveWithVersionCheck(chainId, token, majorVersion, active, true);
+    }
+
+
+    /// @dev as setActiveForVersion() with the option to skip the version check.
+    /// enforcing the version check checks if the provided major version with the release manager. 
+    /// the function reverts if the provided majorVersion is unknown to the release manager.
+    function setActiveWithVersionCheck(
+        uint256 chainId, 
+        address token, 
+        VersionPart majorVersion, 
+        bool active,
+        bool enforceVersionCheck
+    )
+        external
+        restricted()
+        onlyRegisteredToken(chainId, token)
+    {
+        _setActiveWithVersionCheck(chainId, token, majorVersion, active, enforceVersionCheck);
+    }
+
+
+    function _setActiveWithVersionCheck(
+        uint256 chainId, 
+        address token, 
+        VersionPart majorVersion, 
+        bool active,
+        bool enforceVersionCheck
+    )
+        internal
+    {
         // verify valid major version
-        // ensure major version increments is one
-        uint256 version = majorVersion.toInt();
-        if (!getRegistry().isActiveRelease(majorVersion)) {
-            revert TokenMajorVersionInvalid(majorVersion);
+        if(enforceVersionCheck) {
+            uint256 version = majorVersion.toInt();
+            if (!getRegistry().isActiveRelease(majorVersion)) {
+                revert ErrorTokenRegistryMajorVersionInvalid(majorVersion);
+            }
         }
 
-        _active[token][majorVersion] = active;
+        _active[chainId][token][majorVersion] = active;
 
-        emit LogTokenStateSet(token, majorVersion, active);
+        emit LogTokenRegistryTokenStateSet(chainId, token, majorVersion, active);
     }
 
+    /// @dev returns the dip token for this chain
+    function getDipToken() external view returns (IERC20Metadata dipToken) {
+        return _dipToken;
+    }
+
+    /// @dev returns the number of registered tokens
     function tokens() external view returns (uint256) {
         return _token.length;
     }
 
-    function getToken(uint256 idx) external view returns (IERC20Metadata token) {
-        return IERC20Metadata(_token[idx]);
+    /// @dev returns the token info for the specified index position [0 .. tokens() - 1].
+    function getTokenInfo(uint256 idx) external view returns (TokenInfo memory tokenInfo) {
+        return _token[idx];
     }
 
-    function isRegistered(address token) external view returns (bool) {
-        return _registered[token];
+    /// @dev returns the token info for the specified token coordinates.
+    function getTokenInfo(uint256 chainId, address token) external view returns (TokenInfo memory tokenInfo) {
+        return _tokenInfo[chainId][token];
     }
 
-    function isActive(address token, VersionPart majorVersion) external view returns (bool) {
-        return _active[token][majorVersion];
+    /// @dev returns true iff the specified token has been registered for this TokenRegistry contract.
+    function isRegistered(uint256 chainId, address token) public view returns (bool) {
+        return _tokenInfo[chainId][token].chainId > 0;
     }
 
-    /// @dev some sanity checks to prevent unintended registration
-    function _registerToken(address token) internal {
+    /// @dev returns true iff both the token is active for the specfied version and the global token state is active
+    function isActive(uint256 chainId, address token, VersionPart majorVersion) external view returns (bool) {
+        if(!_tokenInfo[chainId][token].active) {
+            return false;
+        }
+
+        return _active[chainId][token][majorVersion];
+    }
+
+    //--- IRegistryLinked --------------------------------------------------//
+
+    /// @dev returns the dip token for this chain
+    function getRegistry() public view returns (IRegistry) {
+        return _registry;
+    }
+
+    //--- internal functions ------------------------------------------------//
+
+
+    /// @dev checks if provided token address refers to a smart contract that implements 
+    /// erc20 functionality (via its non-optional functions)
+    function _verifyOnchainToken(address tokenAddress)
+        internal
+        virtual
+        view
+        returns (IERC20Metadata token)
+    {
+        token = IERC20Metadata(tokenAddress);
+        uint256 chainId = block.chainid;
 
         // MUST be contract
-        if(token.code.length == 0) {
-            revert NotContract(token);
+        if(tokenAddress.code.length == 0) {
+            revert ErrorTokenRegistryTokenNotContract(chainId, tokenAddress);
         }
 
-        // MUST have decimals > 0 (indicator that this is in fact an erc20 token)
-        IERC20Metadata erc20 = IERC20Metadata(token);
-        if(erc20.decimals() == 0) {
-            revert TokenDecimalsZero();
+        // MUST implement required erc20 view functions
+        if(!_implementsErc20Functions(token)) {
+            revert ErrorTokenRegistryTokenNotErc20(chainId, tokenAddress);
+        }
+    }
+
+
+    /// @dev checks availability of non-optional view functions
+    /// https://eips.ethereum.org/EIPS/eip-20#methods
+    function _implementsErc20Functions(IERC20Metadata token) internal view returns (bool implementsErc20Functions) {
+        try token.totalSupply() returns (uint256) {
+            // so far so goood
+        } catch {
+            return false;
         }
 
-        _registered[token] = true;
-        _token.push(token);
+        try token.balanceOf(address(1)) returns (uint256) {
+            // so far so goood
+        } catch {
+            return false;
+        }
 
-        emit LogRegistered(token, erc20.symbol(), erc20.decimals());
+        try token.allowance(address(1), address(2)) returns (uint256) {
+            // so far so goood
+        } catch {
+            return false;
+        }
+
+        return true;
+    }
+
+    /// @dev some sanity checks to prevent unintended registration:
+    /// - token not yet registered
+    /// - chainId not zero
+    /// - token address not zero
+    function _registerToken(uint256 chainId, address token, uint8 decimals, string memory symbol) internal {
+
+        if (isRegistered(chainId, token)) {
+            revert ErrorTokenRegistryTokenAlreadyRegistered(chainId, token);
+        }
+
+        if(chainId == 0) {
+            revert ErrorTokenRegistryChainIdZero();
+        }
+
+        if(token == address(0)) {
+            revert ErrorTokenRegistryTokenAddressZero();
+        }
+
+        TokenInfo memory tokenInfo = TokenInfo({
+            chainId: chainId,
+            token: token,
+            decimals: decimals,
+            symbol: symbol,
+            active: true});
+
+        _tokenInfo[chainId][token] = tokenInfo;
+        _token.push(tokenInfo);
+
+        emit LogTokenRegistryTokenRegistered(chainId, token, decimals, symbol);
     }
 }

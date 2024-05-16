@@ -279,6 +279,7 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
     }
 
     /// inheritdoc IAccessManager
+    // TODO must not allow "target = this" -> access manager as target created at the begining
     function _createTarget(address target, string memory name) private//, IAccess.Type ttype) private 
     {
         AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
@@ -303,7 +304,7 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         });
 
         $._targetAddressForName[name] = target;
-        // must revert on duplicate address
+        // must revert / panic on duplicate address -> -1 check then
         $._targetAddresses.push(target);
 
         emit LogTargetCreation(target, name);//, ttype);
@@ -319,12 +320,12 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         if(target == address(0)) {
             revert AccessManagerTargetAddressZero();
         }
+        // panic if not contract
+        //address authority = IAccessManaged(target).authority();
 
-        address authority = IAccessManaged(target).authority();
-
-        if(authority != address(this)) {
-            revert AccessManagerTargetAuthorityInvalid(target, authority);
-        }
+        //if(authority != address(this)) {
+        //    revert AccessManagerTargetAuthorityInvalid(target, authority);
+        //}
 
         if(bytes(name).length == 0) {
             revert AccessManagerTargetNameEmpty(target);

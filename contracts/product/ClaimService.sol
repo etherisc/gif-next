@@ -15,8 +15,6 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IProductService} from "./IProductService.sol";
-import {ITreasury} from "../instance/module/ITreasury.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
 
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
@@ -29,7 +27,7 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
 import {ObjectType, INSTANCE, PRODUCT, POOL, APPLICATION, POLICY, CLAIM, BUNDLE} from "../type/ObjectType.sol";
 import {SUBMITTED, ACTIVE, KEEP_STATE, DECLINED, CONFIRMED, CLOSED, PAID} from "../type/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {RiskId} from "../type/RiskId.sol";
@@ -38,7 +36,7 @@ import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {Version, VersionLib} from "../type/Version.sol";
 
-import {ComponentService} from "../shared/ComponentService.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 import {IClaimService} from "./IClaimService.sol";
@@ -48,7 +46,7 @@ import {Service} from "../shared/Service.sol";
 
 
 contract ClaimService is 
-    ComponentService, 
+    ComponentVerifyingService, 
     IClaimService
 {
 
@@ -350,7 +348,6 @@ contract ClaimService is
 
         if(payoutAmount.gtz()) {
             NftId productNftId = policyInfo.productNftId;
-            ISetup.ProductSetupInfo memory setupInfo = instanceReader.getProductSetupInfo(productNftId);
 
             // get pool component info from policy or product
             NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
@@ -359,7 +356,8 @@ contract ClaimService is
             netPayoutAmount = payoutAmount;
             beneficiary = _getBeneficiary(policyNftId, payoutInfo.claimId);
 
-            if(FeeLib.gtz(setupInfo.processingFee)) {
+            IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+            if(FeeLib.gtz(productInfo.processingFee)) {
                 // TODO calculate net payout and processing fees
                 // TODO transfer processing fees to product wallet
                 // TODO inform product to update fee book keeping
@@ -393,6 +391,8 @@ contract ClaimService is
         NftId policyNftId
     )
         internal
+        view
+        virtual
         returns (
             IInstance instance,
             InstanceReader instanceReader,
@@ -400,7 +400,7 @@ contract ClaimService is
         )
     {
         NftId productNftId;
-        (productNftId,, instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
+        (productNftId,, instance) = _getAndVerifyActiveComponent(PRODUCT());
         instanceReader = instance.getInstanceReader();
 
         // check caller(product) policy match
@@ -433,11 +433,5 @@ contract ClaimService is
 
         // get claim info
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
-    }
-
-    function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
-        IRegistry.ObjectInfo memory productInfo;
-        (, productInfo,) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
-        product = Product(productInfo.objectAddress);
     }
 }

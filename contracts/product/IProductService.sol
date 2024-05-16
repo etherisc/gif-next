@@ -13,13 +13,6 @@ import {UFixed} from "../type/UFixed.sol";
 import {Fee} from "../type/Fee.sol";
 
 interface IProductService is IService {
-    
-    function register(address productAddress) external returns(NftId);
-
-    function setFees(
-        Fee memory productFee,
-        Fee memory processingFee
-    ) external;
 
     function createRisk(
         RiskId riskId,

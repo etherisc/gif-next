@@ -47,7 +47,7 @@ sequenceDiagram
  reinsuranceProduct ->> pool: policyActivated()
   product->>claimService: createPayout()
   claimService ->> poolService: requestPayout()
-  poolService ->> pool: addPendingPayout()
+  poolService ->> pool: requestPayout()
   pool ->> pool: getReinsurancePolicy()
   pool ->> reinsuranceProduct: claim()
   reinsuranceProduct ->> pool: claimConfirmed()

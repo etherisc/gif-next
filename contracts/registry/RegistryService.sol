@@ -15,12 +15,11 @@ import {IDistributionComponent} from "../../contracts/distribution/IDistribution
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
-import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
-import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, PRICE} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE} from "../../contracts/type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED} from "../../contracts/type/StateId.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {Version, VersionPart, VersionLib} from "../../contracts/type/Version.sol";
 
@@ -54,17 +53,32 @@ contract RegistryService is
         virtual override
         initializer()
     {
-        address initialOwner;
-        address registryAddress;
-        address authority;
-        (registryAddress, initialOwner, authority) = abi.decode(data, (address, address, address));
+        (
+            address registryAddress,
+            address initialAuthority
+        ) = abi.decode(data, (address, address));
 
-        initializeService(registryAddress, authority, owner);
+        initializeService(registryAddress, initialAuthority, owner);
         registerInterface(type(IRegistryService).interfaceId);
     }
 
+
+    function registerStaking(IRegisterable staking, address owner)
+        external
+        virtual
+        restricted()
+        returns(
+            IRegistry.ObjectInfo memory info
+        )
+    {
+        info = _getAndVerifyContractInfo(staking, STAKING(), owner);
+        info.nftId = getRegistry().register(info);
+    }
+
+
     function registerInstance(IRegisterable instance, address owner)
         external
+        virtual
         restricted
         returns(
             IRegistry.ObjectInfo memory info
@@ -93,6 +107,26 @@ contract RegistryService is
         }
 
         info = _getAndVerifyContractInfo(product, PRODUCT(), owner);
+        info.nftId = getRegistry().register(info);
+    }
+
+    function registerComponent(
+        IComponent component, 
+        ObjectType objectType,
+        address initialOwner
+    )
+        external
+        restricted
+        returns(
+            IRegistry.ObjectInfo memory info
+        ) 
+    {
+        // CAN revert if no ERC165 support -> will revert with empty message 
+        if(!component.supportsInterface(type(IComponent).interfaceId)) {
+            revert ErrorRegistryServiceNotComponent(address(component));
+        }
+
+        info = _getAndVerifyContractInfo(component, objectType, initialOwner);
         info.nftId = getRegistry().register(info);
     }
 

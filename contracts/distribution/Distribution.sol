@@ -1,19 +1,17 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.19;
 
-import {DISTRIBUTION} from "../type/ObjectType.sol";
+import {COMPONENT, DISTRIBUTION} from "../type/ObjectType.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 import {IProductService} from "../product/IProductService.sol";
-import {NftId, zeroNftId, NftIdLib, toNftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
-import {Component} from "../shared/Component.sol";
+import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
-import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -23,16 +21,14 @@ import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
 
 abstract contract Distribution is
-    Component,
+    InstanceLinkedComponent,
     IDistributionComponent
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Distribution")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant DISTRIBUTION_STORAGE_LOCATION_V1 = 0xaab7c5ea03d290056d6c060e0833d3ebcbe647f7694616a2ec52738a64b2f900;
 
     struct DistributionStorage {
-        Fee _minDistributionOwnerFee;
-        Fee _distributionFee;
-        TokenHandler _tokenHandler;
+        IComponentService _componentService;
         IDistributionService _distributionService;
         mapping(address distributor => NftId distributorNftId) _distributorNftId;
     }
@@ -42,45 +38,47 @@ abstract contract Distribution is
     function initializeDistribution(
         address registry,
         NftId instanceNftId,
+        address initialOwner,
         string memory name,
         address token,
-        Fee memory minDistributionOwnerFee,
-        Fee memory distributionFee,
-        address initialOwner,
-        bytes memory registryData // writeonly data that will saved in the object info record of the registry
+        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
+        bytes memory componentData // component specifidc data 
     )
         public
         virtual
         onlyInitializing()
     {
-        initializeComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, registryData);
+        initializeInstanceLinkedComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, registryData, componentData);
 
         DistributionStorage storage $ = _getDistributionStorage();
-        // TODO add validation
-        $._minDistributionOwnerFee = minDistributionOwnerFee;
-        $._distributionFee = distributionFee;
-        $._tokenHandler = new TokenHandler(token);
         $._distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION())); 
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
 
         registerInterface(type(IDistributionComponent).interfaceId);
     }
 
+    function register()
+        external
+        virtual
+        onlyOwner()
+    {
+        _getDistributionStorage()._componentService.registerDistribution();
+    }
+
     function setFees(
-        Fee memory minDistributionOwnerFee,
-        Fee memory distributionFee
+        Fee memory distributionFee,
+        Fee memory minDistributionOwnerFee
     )
         external
         override
-        onlyOwner
+        onlyOwner()
         restricted()
     {
-        _getDistributionStorage()._distributionService.setFees(minDistributionOwnerFee, distributionFee);
+        _getDistributionStorage()._componentService.setDistributionFees(
+            distributionFee, 
+            minDistributionOwnerFee);
     }
 
-    function getDistributionFee() external view returns (Fee memory distributionFee) {
-        DistributionStorage storage $ = _getDistributionStorage();
-        return $._distributionFee;
-    }
 
     function createDistributorType(
         string memory name,
@@ -240,35 +238,13 @@ abstract contract Distribution is
         // default is no action
     }
 
-    function getSetupInfo() public view returns (ISetup.DistributionSetupInfo memory setupInfo) {
-        InstanceReader reader = getInstance().getInstanceReader();
-        setupInfo = reader.getDistributionSetupInfo(getNftId());
-
-        // fallback to initial setup info (wallet is always != address(0))
-        if(setupInfo.wallet == address(0)) {
-            setupInfo = _getInitialSetupInfo();
-        }
-    }
-
-    function _getInitialSetupInfo() internal view returns (ISetup.DistributionSetupInfo memory setupInfo) {
-        DistributionStorage storage $ = _getDistributionStorage();
-        return ISetup.DistributionSetupInfo(
-            zeroNftId(),
-            $._tokenHandler,
-            $._minDistributionOwnerFee,
-            $._distributionFee,
-            address(this),
-            0
-        );
-    }
-
 
     function _nftTransferFrom(address from, address to, uint256 tokenId) internal virtual override {
         // keep track of distributor nft owner
         emit LogDistributorUpdated(to, msg.sender);
         DistributionStorage storage $ = _getDistributionStorage();
-        $._distributorNftId[from] = zeroNftId();
-        $._distributorNftId[to] = toNftId(tokenId);
+        $._distributorNftId[from] = NftIdLib.zero();
+        $._distributorNftId[to] = NftIdLib.toNftId(tokenId);
     }
     
 

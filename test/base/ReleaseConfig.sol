@@ -30,7 +30,7 @@ contract ReleaseConfig
     constructor(ReleaseManager releaseManager, address owner, VersionPart version, bytes32 salt)
     { 
         _releaseManager = address(releaseManager);
-        _registry = releaseManager.getRegistry();
+        _registry = address(releaseManager.getRegistry());
         _owner = owner;
         _version = version;
         _salt = keccak256(
@@ -109,7 +109,6 @@ contract ReleaseConfig
     function _computeProxyAddress(address implementation, address proxyManager) internal view returns(address) {
         bytes memory data = abi.encode(
             _registry, 
-            proxyManager, 
             _releaseAccessManager);
 
         data = abi.encodeWithSelector(

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
-import {INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../type/ObjectType.sol";
+import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, COMPONENT_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
+import {APPLICATION, BUNDLE, CLAIM, COMPONENT, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, REGISTRY} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -30,6 +30,7 @@ library InstanceAuthorizationsLib
     {
         _createRoles(instanceAdmin);
         _createTargets(instanceAdmin, instance, bundleManager, instanceStore);
+        _grantComponentServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
         _grantDistributionServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
         _grantPoolServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
         _grantProductServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
@@ -46,6 +47,7 @@ library InstanceAuthorizationsLib
         // default roles controlled by ADMIN_ROLE -> core roles
         // all set/granted only once during cloning (the only exception is INSTANCE_OWNER_ROLE, hooked to instance nft)
         instanceAdmin.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
+        instanceAdmin.createCoreRole(COMPONENT_SERVICE_ROLE(), "ComponentServiceRole");
         instanceAdmin.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
         instanceAdmin.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
         instanceAdmin.createCoreRole(APPLICATION_SERVICE_ROLE(), "ApplicationServiceRole");
@@ -53,6 +55,7 @@ library InstanceAuthorizationsLib
         instanceAdmin.createCoreRole(CLAIM_SERVICE_ROLE(), "ClaimServiceRole");
         instanceAdmin.createCoreRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole");
         instanceAdmin.createCoreRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole");
+
         // default roles controlled by INSTANCE_OWNER_ROLE -> gif roles
         instanceAdmin.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
         instanceAdmin.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
@@ -72,6 +75,33 @@ library InstanceAuthorizationsLib
         instanceAdmin.createCoreTarget(address(instanceStore), "InstanceStore");
     }
 
+    function _grantComponentServiceAuthorizations(
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
+        IRegistry registry,
+        VersionPart majorVersion)
+        private
+    {
+        // configure authorization for component service on instance store
+        address componentServiceAddress = registry.getServiceAddress(COMPONENT(), majorVersion);
+        accessManager.grantRole(COMPONENT_SERVICE_ROLE().toInt(), componentServiceAddress, 0);
+
+        bytes4[] memory serviceSelectors = new bytes4[](8);
+        serviceSelectors[0] = instanceStore.createComponent.selector;
+        serviceSelectors[1] = instanceStore.updateComponent.selector;
+        serviceSelectors[2] = instanceStore.createPool.selector;
+        serviceSelectors[3] = instanceStore.createProduct.selector;
+        serviceSelectors[5] = instanceStore.updateProduct.selector;
+        serviceSelectors[6] = instanceStore.increaseBalance.selector;
+        serviceSelectors[7] = instanceStore.increaseFees.selector;
+
+        instanceAdmin.setTargetFunctionRoleByService(
+            "InstanceStore",
+            serviceSelectors,
+            COMPONENT_SERVICE_ROLE());
+    }
+
     function _grantDistributionServiceAuthorizations(
         AccessManagerExtendedInitializeable accessManager,
         InstanceAdmin instanceAdmin,
@@ -83,18 +113,18 @@ library InstanceAuthorizationsLib
         // configure authorization for distribution service on instance
         address distributionServiceAddress = registry.getServiceAddress(DISTRIBUTION(), majorVersion);
         accessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), distributionServiceAddress, 0);
-        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](11);
-        instanceDistributionServiceSelectors[0] = instanceStore.createDistributionSetup.selector;
-        instanceDistributionServiceSelectors[1] = instanceStore.updateDistributionSetup.selector;
-        instanceDistributionServiceSelectors[2] = instanceStore.createDistributorType.selector;
-        instanceDistributionServiceSelectors[3] = instanceStore.updateDistributorType.selector;
-        instanceDistributionServiceSelectors[4] = instanceStore.updateDistributorTypeState.selector;
-        instanceDistributionServiceSelectors[5] = instanceStore.createDistributor.selector;
-        instanceDistributionServiceSelectors[6] = instanceStore.updateDistributor.selector;
-        instanceDistributionServiceSelectors[7] = instanceStore.updateDistributorState.selector;
-        instanceDistributionServiceSelectors[8] = instanceStore.createReferral.selector;
-        instanceDistributionServiceSelectors[9] = instanceStore.updateReferral.selector;
-        instanceDistributionServiceSelectors[10] = instanceStore.updateReferralState.selector;
+        bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](9);
+        //instanceDistributionServiceSelectors[0] = instanceStore.createDistributionSetup.selector;
+        //instanceDistributionServiceSelectors[1] = instanceStore.updateDistributionSetup.selector;
+        instanceDistributionServiceSelectors[0] = instanceStore.createDistributorType.selector;
+        instanceDistributionServiceSelectors[1] = instanceStore.updateDistributorType.selector;
+        instanceDistributionServiceSelectors[2] = instanceStore.updateDistributorTypeState.selector;
+        instanceDistributionServiceSelectors[3] = instanceStore.createDistributor.selector;
+        instanceDistributionServiceSelectors[4] = instanceStore.updateDistributor.selector;
+        instanceDistributionServiceSelectors[5] = instanceStore.updateDistributorState.selector;
+        instanceDistributionServiceSelectors[6] = instanceStore.createReferral.selector;
+        instanceDistributionServiceSelectors[7] = instanceStore.updateReferral.selector;
+        instanceDistributionServiceSelectors[8] = instanceStore.updateReferralState.selector;
         instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceDistributionServiceSelectors,
@@ -112,9 +142,8 @@ library InstanceAuthorizationsLib
         // configure authorization for pool service on instance
         address poolServiceAddress = registry.getServiceAddress(POOL(), majorVersion);
         accessManager.grantRole(POOL_SERVICE_ROLE().toInt(), address(poolServiceAddress), 0);
-        bytes4[] memory instancePoolServiceSelectors = new bytes4[](4);
-        instancePoolServiceSelectors[0] = instanceStore.createPoolSetup.selector;
-        instancePoolServiceSelectors[1] = instanceStore.updatePoolSetup.selector;
+        bytes4[] memory instancePoolServiceSelectors = new bytes4[](1); // TODO works with (4)
+        instancePoolServiceSelectors[0] = instanceStore.updatePool.selector;
         instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instancePoolServiceSelectors,
@@ -131,13 +160,11 @@ library InstanceAuthorizationsLib
     {
         // configure authorization for product service on instance
         address productServiceAddress = registry.getServiceAddress(PRODUCT(), majorVersion);
-        accessManager.grantRole(PRODUCT_SERVICE_ROLE().toInt(), address(productServiceAddress), 0);
-        bytes4[] memory instanceProductServiceSelectors = new bytes4[](5);
-        instanceProductServiceSelectors[0] = instanceStore.createProductSetup.selector;
-        instanceProductServiceSelectors[1] = instanceStore.updateProductSetup.selector;
-        instanceProductServiceSelectors[2] = instanceStore.createRisk.selector;
-        instanceProductServiceSelectors[3] = instanceStore.updateRisk.selector;
-        instanceProductServiceSelectors[4] = instanceStore.updateRiskState.selector;
+        accessManager.grantRole(PRODUCT_SERVICE_ROLE().toInt(), productServiceAddress, 0);
+        bytes4[] memory instanceProductServiceSelectors = new bytes4[](3);
+        instanceProductServiceSelectors[0] = instanceStore.createRisk.selector;
+        instanceProductServiceSelectors[1] = instanceStore.updateRisk.selector;
+        instanceProductServiceSelectors[2] = instanceStore.updateRiskState.selector;
         instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceProductServiceSelectors,
@@ -226,11 +253,13 @@ library InstanceAuthorizationsLib
     {
         // configure authorization for bundle service on instance
         address bundleServiceAddress = registry.getServiceAddress(BUNDLE(), majorVersion);
-        accessManager.grantRole(BUNDLE_SERVICE_ROLE().toInt(), address(bundleServiceAddress), 0);
-        bytes4[] memory instanceBundleServiceSelectors = new bytes4[](3);
+        accessManager.grantRole(BUNDLE_SERVICE_ROLE().toInt(), bundleServiceAddress, 0);
+        bytes4[] memory instanceBundleServiceSelectors = new bytes4[](5);
         instanceBundleServiceSelectors[0] = instanceStore.createBundle.selector;
         instanceBundleServiceSelectors[1] = instanceStore.updateBundle.selector;
         instanceBundleServiceSelectors[2] = instanceStore.updateBundleState.selector;
+        instanceBundleServiceSelectors[3] = instanceStore.increaseLocked.selector;
+        instanceBundleServiceSelectors[4] = instanceStore.decreaseLocked.selector;
         instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceBundleServiceSelectors,

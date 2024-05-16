@@ -5,7 +5,7 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
-import {NftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {ERC165} from "../../contracts/shared/ERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
@@ -65,7 +65,7 @@ contract RegisterableMock is ERC165, IRegisterable, ITransferInterceptor {
     }
 
     // from INftOwnable
-    function linkToRegisteredNftId() external { /*do nothing*/ }
+    function linkToRegisteredNftId() external returns (NftId) { /*do nothing*/ }
 
     // from INftOwnable, DO NOT USE
     function getRegistry() external view returns (IRegistry) { revert(); }
@@ -124,7 +124,7 @@ contract SimpleAccessManagedRegisterableMock is RegisterableMock, AccessManaged 
     constructor(NftId parentNftId, ObjectType objectType, address authority)
         AccessManaged(authority)
         RegisterableMock(
-            zeroNftId(),
+            NftIdLib.zero(),
             parentNftId,
             objectType,
             false,

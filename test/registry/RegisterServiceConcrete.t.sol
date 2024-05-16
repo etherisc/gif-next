@@ -5,7 +5,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib, toNftId} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -23,8 +23,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(10017),
-                toNftId(353073667),
+                NftIdLib.toNftId(10017),
+                NftIdLib.toNftId(353073667),
                 toObjectType(35),
                 false, // isInterceptor
                 address(2072),
@@ -44,8 +44,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(10017),
-                toNftId(353073667),
+                NftIdLib.toNftId(10017),
+                NftIdLib.toNftId(353073667),
                 toObjectType(35),
                 false, // isInterceptor
                 address(0),
@@ -65,8 +65,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(7505),
-                toNftId(11674931516840186165219379815826254658548193973),
+                NftIdLib.toNftId(7505),
+                NftIdLib.toNftId(11674931516840186165219379815826254658548193973),
                 toObjectType(173),
                 false, // isInterceptor
                 address(7148),
@@ -86,8 +86,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(12537),
-                toNftId(6191),
+                NftIdLib.toNftId(12537),
+                NftIdLib.toNftId(6191),
                 toObjectType(100),
                 false, // isInterceptor
                 address(16382),
@@ -107,8 +107,8 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _assert_registerService_withChecks(
             IRegistry.ObjectInfo(
-                toNftId(3590),
-                toNftId(158),
+                NftIdLib.toNftId(3590),
+                NftIdLib.toNftId(158),
                 toObjectType(220),
                 false, // isInterceptor
                 address(0x0000000000000000000000000000000000001eF1),
@@ -120,6 +120,50 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         );
 
         _stopPrank();
+    }
+
+    function test_registerService_specificCases_6() public
+    {
+        // args=[0x0000000000000000000000000000000000001262, 11159 [1.115e4], 2099035519 [2.099e9], 148, true, 0x000000000000000000000000000000007e273289, 804448731 [8.044e8], 0x00000000000000000000000000000000000000000000000000000000000026a3, 115, 250]] 
+        // testFuzz_registerService_0011001(address,uint96,uint256,uint8,bool,address,uint256,bytes,uint8,uint8) (runs: 2, μ: 73578, ~: 73578)
+
+        _startPrank(address(releaseManager));
+
+        _assert_registerService_withChecks(IRegistry.ObjectInfo(
+            NftIdLib.toNftId(11159),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, 2099035519 % EnumerableSet.length(_nftIds))),
+            SERVICE(),//_types[148 % _types.length],
+            false,
+            address(0x000000000000000000000000000000007e273289),
+            EnumerableSet.at(_addresses, 804448731 % EnumerableSet.length(_addresses)),
+            "0x00000000000000000000000000000000000000000000000000000000000026a3"),
+            VersionLib.toVersionPart(115),
+            toObjectType(250)
+        );
+
+        _stopPrank();
+    }
+    
+    function test_registerService_specificCases_7() public
+    {
+        //args=[0x0000000000000000000000000000000000000000, 0, 3, 45, false, 0x0000000000000000000000000000000000000001, 0x0000000000000000000000000000000000000001, 0x]] 
+        //testFuzz_register_0010000(address,uint96,uint256,uint8,bool,address,address,bytes)
+
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            NftIdLib.toNftId(14642),
+            NftIdLib.toNftId(43133705),
+            SERVICE(),
+            false,
+            address(0x00000000000000000000000000000000000034dD),
+            EnumerableSet.at(_addresses, 7194 % EnumerableSet.length(_addresses)),// address(uint160(uint(7194))),//EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            "0x000000000000000000000000000000000000000000000000000000000000285d"
+        );
+
+        VersionPart version = VersionLib.toVersionPart(115);
+        ObjectType domain = toObjectType(250);
+        address sender = address(0x000000000000000000000000000000005FA4428e);
+
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     // TODO move to release manager tests
@@ -151,13 +195,3 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         _stopPrank();
     }*/
 }
-
-contract RegisterServiceWithPresetConcreteTest is RegistryTestBaseWithPreset, RegisterServiceConcreteTest
-{
-    function setUp() public virtual override(RegistryTestBase, RegistryTestBaseWithPreset)
-    {
-        RegistryTestBaseWithPreset.setUp();
-    }
-}
-
-

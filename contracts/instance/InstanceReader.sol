@@ -3,15 +3,15 @@ pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {Amount} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, TREASURY, BUNDLE} from "../type/ObjectType.sol";
+import {ObjectType, COMPONENT, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, FEE, BUNDLE} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
-import {Registerable} from "../shared/Registerable.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {UFixed, MathLib, UFixedLib} from "../type/UFixed.sol";
 import {Version} from "../type/Version.sol";
@@ -22,11 +22,9 @@ import {IBundle} from "../instance/module/IBundle.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IInstance} from "./IInstance.sol";
-import {IKeyValueStore} from "../instance/base/IKeyValueStore.sol";
+import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
-import {ITreasury} from "../instance/module/ITreasury.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
 import {InstanceStore} from "./InstanceStore.sol";
@@ -40,7 +38,7 @@ contract InstanceReader {
     bool private _initialized;
 
     IInstance internal _instance;
-    IKeyValueStore internal _store;
+    InstanceStore internal _store;
 
     function initialize(address instance) public {
         if(_initialized) {
@@ -157,30 +155,19 @@ contract InstanceReader {
         }
     }
 
-    function getTokenHandler(NftId productNftId)
+    function getTokenHandler(NftId componentNftId)
         public
         view
         returns (address tokenHandler)
     {
-        bytes memory data = _store.getData(toTreasuryKey(productNftId));
+        bytes memory data = _store.getData(toComponentKey(componentNftId));
 
         if (data.length > 0) {
-            ITreasury.TreasuryInfo memory info = abi.decode(data, (ITreasury.TreasuryInfo));
+            IComponents.ComponentInfo memory info = abi.decode(data, (IComponents.ComponentInfo));
             return address(info.tokenHandler);
         }
     }
 
-    function getTreasuryInfo(NftId productNftId)
-        public 
-        view 
-        returns (ITreasury.TreasuryInfo memory info)
-    {
-        bytes memory data = _store.getData(toTreasuryKey(productNftId));
-        if (data.length > 0) {
-            return abi.decode(data, (ITreasury.TreasuryInfo));
-        }
-    }
-    
     function getBundleInfo(NftId bundleNftId)
         public 
         view 
@@ -214,37 +201,48 @@ contract InstanceReader {
         }
     }
 
-    function getDistributionSetupInfo(NftId distributionNftId)
-        public
-        view
-        returns (ISetup.DistributionSetupInfo memory info)
-    {
-        bytes memory data = _store.getData(toDistributionKey(distributionNftId));
-        if (data.length > 0) {
-            return abi.decode(data, (ISetup.DistributionSetupInfo));
-        }
+    function getBalanceAmount(NftId targetNftId) external returns (Amount) { 
+        return _store.getBalanceAmount(targetNftId);
     }
 
-    // TODO consider to replace by component type specific getXyzInfo
-    function getComponentInfo(NftId poolNftId)
+    function getLockedAmount(NftId targetNftId) external returns (Amount) { 
+        return _store.getLockedAmount(targetNftId);
+    }
+
+    function getFeeAmount(NftId targetNftId) external returns (Amount) { 
+        return _store.getFeeAmount(targetNftId);
+    }
+
+    function getComponentInfo(NftId componentNftId)
         public
         view
         returns (IComponents.ComponentInfo memory info)
     {
-        bytes memory data = _store.getData(toPoolKey(poolNftId));
+        bytes memory data = _store.getData(toComponentKey(componentNftId));
         if (data.length > 0) {
             return abi.decode(data, (IComponents.ComponentInfo));
         }
     }
 
-    function getProductSetupInfo(NftId productNftId)
+    function getProductInfo(NftId productNftId)
         public
         view
-        returns (ISetup.ProductSetupInfo memory info)
+        returns (IComponents.ProductInfo memory info)
     {
         bytes memory data = _store.getData(toProductKey(productNftId));
         if (data.length > 0) {
-            return abi.decode(data, (ISetup.ProductSetupInfo));
+            return abi.decode(data, (IComponents.ProductInfo));
+        }
+    }
+
+    function getPoolInfo(NftId poolNftId)
+        public
+        view
+        returns (IComponents.PoolInfo memory info)
+    {
+        bytes memory data = _store.getData(toPoolKey(poolNftId));
+        if (data.length > 0) {
+            return abi.decode(data, (IComponents.PoolInfo));
         }
     }
 
@@ -319,11 +317,6 @@ contract InstanceReader {
     }
 
 
-    function toTreasuryKey(NftId productNftId) public pure returns (Key32) { 
-        return productNftId.toKey32(TREASURY());
-    }
-
-
     function toPolicyKey(NftId policyNftId) public pure returns (Key32) { 
         return policyNftId.toKey32(POLICY());
     }
@@ -333,12 +326,16 @@ contract InstanceReader {
         return distributorNftId.toKey32(DISTRIBUTOR());
     }
 
-    function toDistributionKey(NftId distributionNftId) public pure returns (Key32) { 
-        return distributionNftId.toKey32(DISTRIBUTION());
-    }
-
     function toBundleKey(NftId poolNftId) public pure returns (Key32) { 
         return poolNftId.toKey32(BUNDLE());
+    }
+
+    function toComponentKey(NftId componentNftId) public pure returns (Key32) { 
+        return componentNftId.toKey32(COMPONENT());
+    }
+
+    function toDistributionKey(NftId distributionNftId) public pure returns (Key32) { 
+        return distributionNftId.toKey32(DISTRIBUTION());
     }
 
     function toPoolKey(NftId poolNftId) public pure returns (Key32) { 

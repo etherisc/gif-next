@@ -7,11 +7,13 @@ import {NftId} from "../type/NftId.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IInstance} from "../instance/IInstance.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IService} from "../shared/IService.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StateId} from "../type/StateId.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 interface IPoolService is IService {
 
@@ -22,11 +24,7 @@ interface IPoolService is IService {
     event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
 
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
-    error ErrorPoolServiceBundlePoolMismatch(NftId bundlePoolNftId, NftId productPoolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
-
-    /// @dev registers a new pool with the registry service
-    function register(address poolAddress) external returns(NftId);
 
     /// @dev defines the required role for bundle owners for the calling pool
     /// default implementation returns PUBLIC ROLE
@@ -52,9 +50,14 @@ interface IPoolService is IService {
         IInstance instance, 
         NftId productNftId,
         NftId applicationNftId,
-        IPolicy.PolicyInfo memory applicationInfo,
-        Amount premiumAmount
-    ) external;
+        NftId bundleNftId,
+        Amount sumInsuredAmount // premium amount after product and distribution fees
+    )
+        external
+        returns (
+            Amount localCollateralAmount,
+            Amount totalCollateralAmount
+        );
 
 
     /// @dev releases the remaining collateral linked to the specified policy
@@ -98,8 +101,9 @@ interface IPoolService is IService {
     /// may only be called by registered and unlocked pool components
     function closeBundle(NftId bundleNftId) external;
 
+
     /// @dev processes the sale of a bundle and track the pool fee and bundle fee amounts
-    function processSale(NftId bundleNftId, IPolicy.Premium memory premium, Amount actualAmountTransferred) external;
+    function processSale(NftId bundleNftId, IPolicy.Premium memory premium) external;
 
     /// @dev increase stakes for bundle
     /// staking fees will be deducted by the pool service from the staking amount
@@ -111,4 +115,33 @@ interface IPoolService is IService {
     /// performance fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
     // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+
+
+    /// @dev calulate required collateral for the provided parameters
+    function calculateRequiredCollateral(
+        InstanceReader instanceReader,
+        NftId productNftId, 
+        Amount sumInsuredAmount
+    )
+        external
+        view 
+        returns(
+            Amount localCollateralAmount,
+            Amount totalCollateralAmount
+        );
+
+
+    /// @dev calulate required collateral for the provided parameters
+    function calculateRequiredCollateral(
+        UFixed collateralizationLevel, 
+        UFixed retentionLevel, 
+        Amount sumInsuredAmount
+    )
+        external
+        pure 
+        returns(
+            Amount localCollateralAmount,
+            Amount totalCollateralAmount
+        );
+
 }

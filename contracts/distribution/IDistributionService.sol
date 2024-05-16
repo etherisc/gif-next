@@ -29,11 +29,6 @@ interface IDistributionService is IService {
     error ErrorIDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
     error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
 
-    function setFees(
-        Fee memory minDistributionOwnerFee,
-        Fee memory distributionFee
-    ) external;
-    
     function createDistributorType(
         string memory name,
         UFixed minDiscountPercentage,
@@ -76,8 +71,7 @@ interface IDistributionService is IService {
     function processSale(
         NftId distributionNftId,
         ReferralId referralId,
-        IPolicy.Premium memory premium,
-        Amount transferredDistributionFeeAmount
+        IPolicy.Premium memory premium
     ) external;
 
     function referralIsValid(

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {console} from "../../../lib/forge-std/src/Test.sol";
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
@@ -16,7 +16,7 @@ import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {Timestamp, toTimestamp, TimestampLib} from "../../../contracts/type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
 
-contract DistributorTest is TestGifBase {
+contract DistributorTest is GifTest {
 
     DistributorType public distributorType;
     string public name;
@@ -178,20 +178,15 @@ contract DistributorTest is TestGifBase {
     }
 
     function _prepareDistribution() internal {
-        vm.startPrank(instanceOwner);
-        instanceOzAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
-        vm.stopPrank();
+        _prepareProduct();
 
         vm.startPrank(distributionOwner);
-        distribution = new SimpleDistribution(
-            address(registry),
-            instanceNftId,
-            address(token),
-            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0),
-            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0),
-            distributionOwner
-        );
-        distributionNftId = distributionService.register(address(distribution));
+        distribution.setFees(
+            FeeLib.toFee(UFixedLib.toUFixed(2,-1), 0), 
+            FeeLib.toFee(UFixedLib.toUFixed(5,-2), 0));
+        vm.stopPrank();
+
+        distributionNftId = distribution.getNftId();
     }
 
     function test_DistributorTypeCreateHappyCase() public {

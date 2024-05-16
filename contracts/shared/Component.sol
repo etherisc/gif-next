@@ -13,7 +13,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {NftId} from "../type/NftId.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, INSTANCE, PRODUCT} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 import {Registerable} from "../shared/Registerable.sol";
@@ -22,13 +22,10 @@ import {IAccess} from "../instance/module/IAccess.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {VersionPart} from "../type/Version.sol";
 
-// TODO discuss to inherit from oz accessmanaged
-// then add (Distribution|Pool|Product)Upradeable that also intherit from Versionable
-// same pattern as for Service which is also upgradeable
 abstract contract Component is
+    AccessManagedUpgradeable,
     Registerable,
-    IComponent,
-    AccessManagedUpgradeable
+    IComponent
 {
     // keccak256(abi.encode(uint256(keccak256("gif-next.contracts.component.Component.sol")) - 1)) & ~bytes32(uint256(0xff));
     bytes32 public constant COMPONENT_LOCATION_V1 = 0xffe8d4462baed26a47154f4b8f6db497d2f772496965791d25bd456e342b7f00;
@@ -36,18 +33,12 @@ abstract contract Component is
     struct ComponentStorage {
         string _name; // unique (per instance) component name
         IERC20Metadata _token; // token for this component
-        IInstance _instance; // instance for this component
-        address _wallet; // wallet for this component (default = component contract itself)
-        InstanceReader _instanceReader; // instance reader for this component
-        bool _isNftInterceptor; // declares if component is involved in nft transfers
-        NftId _productNftId; // only relevant for components that are linked to a aproduct
+        TokenHandler _tokenHandler;
+        address _wallet;
+        bool _isInterceptor;
+        bytes _data;
     }
 
-    function _getComponentStorage() private pure returns (ComponentStorage storage $) {
-        assembly {
-            $.slot := COMPONENT_LOCATION_V1
-        }
-    }
 
     modifier onlyChainNft() {
         if(msg.sender != getRegistry().getChainNftAddress()) {
@@ -56,92 +47,95 @@ abstract contract Component is
         _;
     }
 
+
+    function _getComponentStorage() private pure returns (ComponentStorage storage $) {
+        assembly {
+            $.slot := COMPONENT_LOCATION_V1
+        }
+    }
+
     function initializeComponent(
+        address authority,
         address registry,
-        NftId instanceNftId,
+        NftId parentNftId,
         string memory name,
         address token,
         ObjectType componentType,
         bool isInterceptor,
         address initialOwner,
-        bytes memory registryData // writeonly data that will saved in the object info record of the registry
+        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
+        bytes memory componentData // other component specific data
     )
         public
         virtual
         onlyInitializing()
     {
-        initializeRegisterable(registry, instanceNftId, componentType, isInterceptor, initialOwner, registryData);
+        initializeRegisterable(registry, parentNftId, componentType, isInterceptor, initialOwner, registryData);
+        __AccessManaged_init(authority);
 
-        // set and check linked instance
-        ComponentStorage storage $ = _getComponentStorage();
-        $._instance = IInstance(
-            getRegistry().getObjectInfo(instanceNftId).objectAddress);
-
-        if(!$._instance.supportsInterface(type(IInstance).interfaceId)) {
-            revert ErrorComponentNotInstance(instanceNftId);
+        if (token == address(0)) {
+            revert ErrorComponentTokenAddressZero();
         }
 
-        // initialize AccessManagedUpgradeable
-        __AccessManaged_init($._instance.authority());
+        if (bytes(name).length == 0) {
+            revert ErrorComponentNameLengthZero();
+        }
 
         // set component state
+        ComponentStorage storage $ = _getComponentStorage();
         $._name = name;
-        $._isNftInterceptor = isInterceptor;
-        $._instanceReader = $._instance.getInstanceReader();
-        $._wallet = address(this);
         $._token = IERC20Metadata(token);
+        $._tokenHandler = TokenHandler(address(0));
+        $._wallet = address(this);
+        $._isInterceptor = isInterceptor;
+        $._data = componentData;
 
         registerInterface(type(IAccessManaged).interfaceId);
         registerInterface(type(IComponent).interfaceId);
     }
 
-    function lock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
-    }
-    
-    function unlock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
+
+    function approveTokenHandler(uint256 spendingLimitAmount)
+        external
+        virtual
+        onlyOwner
+    {
+        approveTokenHandler(address(getToken()), spendingLimitAmount);
     }
 
-    function approveTokenHandler(uint256 spendingLimitAmount) external onlyOwner {
-        IComponents.ComponentInfo memory info = getComponentInfo();
-
-        if(info.wallet != address(this)) {
+    function approveTokenHandler(address token, uint256 spendingLimitAmount)
+        public
+        virtual
+        onlyOwner
+    {
+        if(getWallet() != address(this)) {
             revert ErrorComponentWalletNotComponent();
         }
 
-        info.token.approve(
-            address(info.tokenHandler),
+        IERC20Metadata(token).approve(
+            address(getTokenHandler()),
             spendingLimitAmount);
 
-        emit LogComponentTokenHandlerApproved(spendingLimitAmount);
+        emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount);
     }
 
     function setWallet(address newWallet)
         external
+        virtual
         override
         onlyOwner
     {
-        ComponentStorage storage $ = _getComponentStorage();
-
-        address currentWallet = $._wallet;
-        uint256 currentBalance = $._token.balanceOf(currentWallet);
-
         // checks
-        if (newWallet == address(0)) {
-            revert ErrorComponentWalletAddressZero();
-        }
-
-        if (newWallet == currentWallet) {
-            revert ErrorComponentWalletAddressIsSameAsCurrent();
-        }
+        address currentWallet = getWallet();
+        IERC20Metadata token = getToken();
+        uint256 currentBalance = token.balanceOf(currentWallet);
 
         if (currentBalance > 0) {
             if (currentWallet == address(this)) {
                 // move tokens from component smart contract to external wallet
             } else {
                 // move tokens from external wallet to component smart contract or another external wallet
-                uint256 allowance = $._token.allowance(currentWallet, address(this));
+                uint256 allowance = token.allowance(currentWallet, address(this));
                 if (allowance < currentBalance) {
                     revert ErrorComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
                 }
@@ -149,106 +143,94 @@ abstract contract Component is
         }
 
         // effects
-        $._wallet = newWallet;
-        emit LogComponentWalletAddressChanged(currentWallet, newWallet);
+        _setWallet(newWallet);
 
         // interactions
         if (currentBalance > 0) {
             // transfer tokens from current wallet to new wallet
             if (currentWallet == address(this)) {
                 // transferFrom requires self allowance too
-                $._token.approve(address(this), currentBalance);
+                token.approve(address(this), currentBalance);
             }
             
-            SafeERC20.safeTransferFrom($._token, currentWallet, newWallet, currentBalance);
+            SafeERC20.safeTransferFrom(token, currentWallet, newWallet, currentBalance);
             emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
         }
     }
 
-    function setProductNftId(NftId productNftId)
-        external
-        override
-    {
-        ComponentStorage storage $ = _getComponentStorage();
 
-        // verify caller is product service
-        if(msg.sender != _getServiceAddress(PRODUCT())) {
-            revert ErrorComponentNotProductService(msg.sender);
-        }
-
-        // verify component is not yet linked to a product
-        if($._productNftId.gtz()) {
-            revert ErrorComponentProductNftAlreadySet();
-        }
-
-        $._productNftId = productNftId;
-    }
-
+    /// @dev callback function for nft mints
+    /// may only be called by chain nft contract.
+    /// override internal function _nftMint to implement custom behaviour
     function nftMint(address to, uint256 tokenId) 
         external 
-        virtual
         onlyChainNft
-    {}
+    {
+        _nftMint(to, tokenId);
+    }
 
     /// @dev callback function for nft transfers
     /// may only be called by chain nft contract.
-    /// do not override this function to implement business logic for handling transfers
-    /// override internal function _nftTransferFrom instead
+    /// override internal function _nftTransferFrom to implement custom behaviour
     function nftTransferFrom(address from, address to, uint256 tokenId)
         external
-        virtual
         onlyChainNft
     {
         _nftTransferFrom(from, to, tokenId);
     }
 
-    function getWallet() public view override returns (address walletAddress)
-    {
-        return _getComponentStorage()._wallet;
+
+    function getWallet() public view virtual returns (address walletAddress) {
+        return getComponentInfo().wallet;
     }
 
-    function getToken() public view override returns (IERC20Metadata token) {
-        return _getComponentStorage()._token;
-    }
-
-    function getTokenHandler() public view returns (TokenHandler tokenHandler) {
+    function getTokenHandler() public virtual view returns (TokenHandler tokenHandler) {
         return getComponentInfo().tokenHandler;
     }
 
-    function isNftInterceptor() public view override returns(bool isInterceptor) {
-        return _getComponentStorage()._isNftInterceptor;
-    }
-
-    function getInstance() public view override returns (IInstance instance) {
-        return _getComponentStorage()._instance;
+    function getToken() public view virtual returns (IERC20Metadata token) {
+        return getComponentInfo().token;
     }
 
     function getName() public view override returns(string memory name) {
-        return _getComponentStorage()._name;
+        return getComponentInfo().name;
     }
 
-    function getProductNftId() public view override returns (NftId productNftId) {
-        return _getComponentStorage()._productNftId;
-    }
-
-    function getComponentInfo() public view returns (IComponents.ComponentInfo memory info) {
-        info = _getInstanceReader().getComponentInfo(getNftId());
-
-        // fallback to initial info (wallet is always != address(0))
-        if(info.wallet == address(0)) {
-            info = _getInitialInfo();
+    function getComponentInfo() public virtual view returns (IComponents.ComponentInfo memory info) {
+        if (isRegistered()) {
+            return _getComponentInfo();
+        } else {
+            return getInitialComponentInfo();
         }
     }
 
     /// @dev defines initial component specification
     /// overwrite this function according to your use case
-    function _getInitialInfo()
-        internal
-        view 
-        virtual
-        returns (IComponents.ComponentInfo memory info)
-    { }
+    function getInitialComponentInfo() public virtual view returns (IComponents.ComponentInfo memory info) {
+        return _getComponentInfo();
+    }
 
+
+    function isNftInterceptor() public virtual view returns(bool isInterceptor) {
+        if (isRegistered()) {
+            return getRegistry().getObjectInfo(address(this)).isInterceptor;
+        } else {
+            return _getComponentStorage()._isInterceptor;
+        }
+    }
+
+
+    function isRegistered() public virtual view returns (bool) {
+        return getRegistry().getNftId(address(this)).gtz();
+    }
+
+
+    /// @dev internal function for nft transfers.
+    /// handling logic that deals with nft transfers need to overwrite this function
+    function _nftMint(address to, uint256 tokenId)
+        internal
+        virtual
+    { }
 
     /// @dev internal function for nft transfers.
     /// handling logic that deals with nft transfers need to overwrite this function
@@ -257,15 +239,48 @@ abstract contract Component is
         virtual
     { }
 
-    /// @dev returns reader for linked instance
-    function _getInstanceReader() internal view returns (InstanceReader reader) {
-        return _getComponentStorage()._instanceReader;
+
+    /// @dev depending on the source of the component information this function needs to be overwritten. 
+    /// eg for instance linked components that externally store this information with the instance store contract
+    function _setWallet(address newWallet) internal virtual {
+        ComponentStorage storage $ = _getComponentStorage();
+        address currentWallet = $._wallet;
+
+        if (newWallet == address(0)) {
+            revert ErrorComponentWalletAddressZero();
+        }
+
+        if (newWallet == currentWallet) {
+            revert ErrorComponentWalletAddressIsSameAsCurrent();
+        }
+
+        $._wallet = newWallet;
+        emit LogComponentWalletAddressChanged(currentWallet, newWallet);
+
     }
 
-    /// @dev returns the service address for the specified domain
-    /// gets address via lookup from registry using the major version form the linked instance
-    function _getServiceAddress(ObjectType domain) internal view returns (address service) {
-        VersionPart majorVersion = _getComponentStorage()._instance.getMajorVersion();
-        return getRegistry().getServiceAddress(domain, majorVersion);
+    /// @dev for component contracts that hold its own component information 
+    /// this function creates and sets a token hanlder for the components tokens
+    function _createAndSetTokenHandler()
+        internal
+    {
+        ComponentStorage storage $ = _getComponentStorage();
+        $._tokenHandler = new TokenHandler(address($._token));
     }
+
+    /// @dev depending on the source of the component information this function needs to be overwritten. 
+    /// eg for instance linked components that externally store this information with the instance store contract
+    function _getComponentInfo() internal virtual view returns (IComponents.ComponentInfo memory info) {
+        ComponentStorage storage $ = _getComponentStorage();
+
+        return IComponents.ComponentInfo({
+            name: $._name,
+            productNftId: NftIdLib.zero(),
+            token: $._token,
+            tokenHandler: $._tokenHandler,
+            wallet: $._wallet, // initial wallet address
+            data: $._data // user specific component data
+        });
+    }
+
 }

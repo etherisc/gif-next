@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
 import {IVersionable} from "./IVersionable.sol";
@@ -134,7 +133,7 @@ contract ProxyManager is
     }
 
     function linkToProxy() public returns (NftId) {
-        return linkToNftOwnable(address(_proxy));
+        return _linkToNftOwnable(address(_proxy));
     }
 
     function getDeployData(address proxyOwner, bytes memory deployData) public pure returns (bytes memory data) {

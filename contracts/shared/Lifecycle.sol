@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
-import {NftId} from "../../type/NftId.sol";
-import {ObjectType, COMPONENT, BUNDLE, POLICY, RISK, CLAIM, PAYOUT} from "../../type/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID} from "../../type/StateId.sol";
+import {NftId} from "../type/NftId.sol";
+import {ObjectType, COMPONENT, BUNDLE, POLICY, RISK, CLAIM, PAYOUT} from "../type/ObjectType.sol";
+import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID} from "../type/StateId.sol";
 import {ILifecycle} from "./ILifecycle.sol";
 
 contract Lifecycle is

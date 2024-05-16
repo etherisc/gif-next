@@ -8,7 +8,8 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
-import {NftId, toNftId} from "../../contracts/type/NftId.sol";
+import {Dip} from "../../contracts/mock/Dip.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {INftOwnable} from "../../contracts/shared/INftOwnable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -16,6 +17,8 @@ import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceMa
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
+import {Staking} from "../../contracts/staking/Staking.sol";
+import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
 import {RegistryServiceUpgradeMock} from "../mock/RegistryServiceUpgradeMock.sol";
@@ -26,16 +29,23 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
 
     address public registryOwnerNew = makeAddr("registryOwnerNew");
 
-    function setUp() public virtual override {
+    // function setUp() public virtual override {
 
-        vm.startPrank(registryOwner);
+    //     vm.startPrank(registryOwner);
 
-        _deployRegistry();
+    //     _deployRegistry();
 
-        _deployRegistryService();
+    //     _deployRegistryService();
 
-        vm.stopPrank();
-    }
+    //     // deploy staking contract
+    //     address stakingOwner = registryOwner;
+    //     stakingManager = new StakingManager(
+    //         registryAccessManager.authority(),
+    //         address(registry));
+    //     staking = stakingManager.getStaking();
+
+    //     vm.stopPrank();
+    // }
 
     function test_deployedRegistryAndRegistryService() public {
 
@@ -55,8 +65,8 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         // solhint-enable
 
         console.log("registered objects", registry.getObjectCount());
-        _logObject("protocol", toNftId(1101));
-        _logObject("globalRegistry", toNftId(2101));
+        _logObject("protocol", NftIdLib.toNftId(1101));
+        _logObject("globalRegistry", NftIdLib.toNftId(2101));
         _logObject("chainRegistry", address(registry));
         _logObject("registryService", address(registryService));
 

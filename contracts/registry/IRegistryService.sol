@@ -11,6 +11,8 @@ import {IRegistry} from "./IRegistry.sol";
 
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IComponent} from "../shared/IComponent.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+
 
 interface IRegistryService is 
      IService
@@ -19,6 +21,7 @@ interface IRegistryService is
 
      error ErrorRegistryServiceNotService(address notService);
      error ErrorRegistryServiceNotInstance(address notInstance);
+     error ErrorRegistryServiceNotComponent(address notComponent);
      error ErrorRegistryServiceNotProduct(address notProduct);
      error ErrorRegistryServiceNotPool(address notPool);
      error ErrorRegistryServiceNotDistribution(address notDistribution);
@@ -38,8 +41,14 @@ interface IRegistryService is
      error ErrorRegistryServiceInvalidInitialOwner(address initialOwner);
      error ErrorRegistryServiceInvalidAddress(address registerableAddress);
 
+     function registerStake(IRegistry.ObjectInfo memory info)
+          external returns(NftId nftId); 
+
      function registerInstance(IRegisterable instance, address owner)
           external returns(IRegistry.ObjectInfo memory info); 
+
+     function registerComponent(IComponent component, ObjectType objectType, address owner)
+          external returns(IRegistry.ObjectInfo memory info);
 
      function registerProduct(IComponent product, address owner)
           external returns(IRegistry.ObjectInfo memory info);
@@ -55,5 +64,6 @@ interface IRegistryService is
      function registerPolicy(IRegistry.ObjectInfo memory info) external returns(NftId nftId);
 
      function registerBundle(IRegistry.ObjectInfo memory info) external returns(NftId nftId); 
+
 }
 

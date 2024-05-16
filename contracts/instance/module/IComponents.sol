@@ -14,21 +14,32 @@ interface IComponents {
 
     struct ComponentInfo {
         string name; // component name (needs to be unique per instance)
+        NftId productNftId;
         IERC20Metadata token;
         TokenHandler tokenHandler;
         address wallet;
-        Amount balanceAmount; // calculated balance (may not necessarily match withg wallet balance)
-        Amount feeAmount; // accumulated fees belonging to component owner
         bytes data; // will hold component type specific additional info (eg encoded pool info)
     }
+
+
+    struct ProductInfo {
+        NftId distributionNftId;
+        NftId poolNftId;
+        Fee productFee; // product fee on net premium
+        Fee processingFee; // product fee on payout amounts        
+        Fee distributionFee; // distribution fee for sales that do not include commissions
+        Fee minDistributionOwnerFee; // min fee required by distribution owner (not including commissions for distributors)
+        Fee poolFee; // pool fee on net premium
+        Fee stakingFee; // pool fee on staked capital from investor
+        Fee performanceFee; // pool fee on profits from capital investors
+    }
+
 
     struct PoolInfo {
         NftId productNftId; // the nft of the product this pool is linked to
         RoleId bundleOwnerRole; // the required role for bundle owners
         // TODO maxCapitalAmount -> maxBalanceAmount
         Amount maxCapitalAmount; // max capital amount allowed for pool
-        Amount balanceAmount; // current pool balance (accounting view)
-        Amount feeAmount; // accumulated fee amount
         bool isInterceptingBundleTransfers; // intercepts nft transfers for bundles
         bool isExternallyManaged; // funding bundles is restricted to book keeping, actual funds may be provided as needed to support payouts
         bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 

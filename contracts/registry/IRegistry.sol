@@ -76,8 +76,6 @@ interface IRegistry is IERC165 {
 
     function getObjectCount() external view returns (uint256);
 
-    function getNftId() external view returns (NftId nftId);
-
     function getNftId(address objectAddress) external view returns (NftId nftId);
 
     function ownerOf(NftId nftId) external view returns (address);
@@ -103,11 +101,26 @@ interface IRegistry is IERC165 {
         VersionPart releaseVersion
     ) external view returns (address serviceAddress);
 
+    function getProtocolNftId() external view returns (NftId protocolNftId);
+
+    function getNftId() external view returns (NftId nftId);
+
+    function getOwner() external view returns (address);
+
+    // TODO refactor the address getters below to contract getters
+    function getChainNftAddress() external view returns (address);
+
     function getReleaseManagerAddress() external view returns (address);
 
     function getReleaseAccessManagerAddress(VersionPart version) external view returns (address);
 
-    function getChainNftAddress() external view returns (address);
+    function getStakingAddress() external view returns (address);
 
-    function getOwner() external view returns (address);
+    function getTokenRegistryAddress() external view returns (address);
+
+    function getRegistryAdminAddress() external view returns (address);
+
+    function getDipTokenAddress() external view returns (address);
+
+    function getAuthority() external view returns (address);
 }

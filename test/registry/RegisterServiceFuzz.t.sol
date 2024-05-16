@@ -5,7 +5,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -17,29 +17,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
 {
     function testFuzz_registerService(address sender, IRegistry.ObjectInfo memory info, VersionPart version, ObjectType domain) public
     {
-        vm.assume(
-            info.initialOwner != 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D && // gives error (Invalid data) only during fuzzing when minting nft to foundry's cheatcodes contract
-            info.initialOwner != 0x4e59b44847b379578588920cA78FbF26c0B4956C // Deterministic Deployment Proxy, on nft transfer callback tries Create2Deployer::create2()
-        );
-
-        // TODO register contracts with IInterceptor interface support
-        info.isInterceptor = false;
-        // release manager guarantees
-        info.objectType = SERVICE();
-
-        _startPrank(sender);
-
-        _assert_registerService_withChecks(info, version, domain);
-
-        _stopPrank();
-
-        if(sender != address(releaseManager)) {
-            _startPrank(address(releaseManager));
-
-            _assert_registerService_withChecks(info, version ,domain);
-
-            _stopPrank();
-        }
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     // nftId - always random
@@ -48,7 +26,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     // isInterceptor - always random
     // objectAddress - random
     // initialOwner - set of addresses (actors + registered + initial owners)
-    function testFuzz_registerService_000000100(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_registerService_0000001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -60,7 +38,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
 
@@ -76,7 +54,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -92,7 +70,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -108,7 +86,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -124,7 +102,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -140,7 +118,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -156,7 +134,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -164,7 +142,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             objectAddress,
@@ -172,7 +150,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -180,7 +158,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             objectAddress,
@@ -188,7 +166,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -196,7 +174,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -204,7 +182,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -212,7 +190,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             objectType,
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -220,7 +198,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -228,7 +206,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             objectAddress,
@@ -236,7 +214,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -244,7 +222,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             objectAddress,
@@ -252,7 +230,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -260,7 +238,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -268,7 +246,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     
@@ -276,7 +254,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             _types[objectTypeIdx % _types.length],
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -284,7 +262,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     function testFuzz_registerService_withValidType(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
@@ -299,7 +277,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     function testFuzz_registerService_withValidType_00001(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, address objectAddress, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
@@ -314,7 +292,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     function testFuzz_registerService_withValidType_00010(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
@@ -329,7 +307,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     function testFuzz_registerService_withValidType_00011(address sender, NftId nftId, NftId parentNftId, bool isInterceptor, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
@@ -344,14 +322,14 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     function testFuzz_registerService_withValidType_00100(address sender, NftId nftId, uint parentIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             SERVICE(),
             isInterceptor,
             objectAddress,
@@ -359,14 +337,14 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     function testFuzz_registerService_withValidType_00101(address sender, NftId nftId, uint parentIdx, bool isInterceptor, address objectAddress, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             SERVICE(),
             isInterceptor,
             objectAddress,
@@ -374,14 +352,14 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     function testFuzz_registerService_withValidType_00110(address sender, NftId nftId, uint parentIdx, bool isInterceptor, uint objectAddressIdx, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             SERVICE(),
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -389,14 +367,14 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
     function testFuzz_registerService_withValidType_00111(address sender, NftId nftId, uint parentIdx, bool isInterceptor, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
             SERVICE(),
             isInterceptor,
             EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
@@ -404,10 +382,12 @@ contract RegisterServiceFuzzTest is RegistryTestBase
             data
         );
 
-        testFuzz_registerService(sender, info, version, domain);
+        _registerService_testFunction(sender, info, version, domain);
     }
 
-    function testFuzz_registerService_withDuplicateVersionAndDomain(
+    // TODO rename and fix, current implementation fails frequently with error message below
+    // [FAIL. Reason: The `vm.assume` cheatcode rejected too many inputs (100 allowed)] 
+    function XtestFuzz_registerService_withDuplicateVersionAndDomain(
         IRegistry.ObjectInfo memory info_1,
         IRegistry.ObjectInfo memory info_2,
         VersionPart version, 
@@ -476,5 +456,35 @@ contract RegisterServiceWithPresetFuzzTest is RegistryTestBaseWithPreset, Regist
     function setUp() public virtual override(RegistryTestBaseWithPreset, RegistryTestBase)
     {
         RegistryTestBaseWithPreset.setUp();
+    }
+
+    function testFuzz_registerService_00P1000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _nftIdByType[_types[parentIdx % _types.length]],
+            _types[objectTypeIdx % _types.length],
+            isInterceptor,
+            objectAddress,
+            initialOwner,
+            data
+        );
+
+        _registerService_testFunction(sender, info, version, domain);
+    }
+
+    function testFuzz_registerService_withValidType_00P011(address sender, NftId nftId, uint parentIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _nftIdByType[_types[parentIdx % _types.length]],
+            SERVICE(),
+            isInterceptor,
+            objectAddress,
+            initialOwner,
+            data
+        );
+
+        _registerService_testFunction(sender, info, version, domain);
     }
 }

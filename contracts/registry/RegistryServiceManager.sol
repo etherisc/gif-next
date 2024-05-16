@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {Registry} from "./Registry.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
@@ -38,8 +37,7 @@ contract RegistryServiceManager is
         }
         
         RegistryService srv = new RegistryService{ salt: salt }();
-        // implementation's initializer func `data` argument
-        bytes memory data = abi.encode(registry, address(this), authority);
+        bytes memory data = abi.encode(registry, authority);
         IVersionable versionable = deployDetermenistic(
             address(srv), 
             data,

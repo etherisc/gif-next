@@ -12,11 +12,11 @@ contract NftOwnableMock is NftOwnable {
     function initialize(address registry) public initializer() {
         initializeNftOwnable(msg.sender, registry);
     }
-/*
+
     function linkToNftOwnable(address nftOwnableAddress) external {
         _linkToNftOwnable(nftOwnableAddress);
     }
-*/
+
 }
 
 

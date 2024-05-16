@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: APACHE-2.0
 pragma solidity 0.8.20;
 
-import {TestGifBase} from "../base/TestGifBase.sol";
-import {NftId, toNftId, zeroNftId, eqNftId, neNftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {GifTest} from "../base/GifTest.sol";
+import {NftId, eqNftId, neNftId, NftIdLib} from "../../contracts/type/NftId.sol";
 
-contract NftIdTest is TestGifBase {
+contract NftIdTest is GifTest {
     using NftIdLib for NftId;
 
     NftId nftId1;
@@ -12,14 +12,14 @@ contract NftIdTest is TestGifBase {
     NftId NftIdZero;
 
     function setUp() public override {
-        nftId1 = toNftId(23133705);
-        nftId2 = toNftId(43133705);
-        NftIdZero = toNftId(0);
+        nftId1 = NftIdLib.toNftId(23133705);
+        nftId2 = NftIdLib.toNftId(43133705);
+        NftIdZero = NftIdLib.zero();
     }
 
     function test_toNftId() public {
-        assertNftId(nftId1, toNftId(23133705), "nft id not equl to 23133705");
-        assertNftId(nftId2, toNftId(43133705), "nft id not equl to 43133705");
+        assertNftId(nftId1, NftIdLib.toNftId(23133705), "nft id not equl to 23133705");
+        assertNftId(nftId2, NftIdLib.toNftId(43133705), "nft id not equl to 43133705");
     }
 
     function test_zeroNftId() public {

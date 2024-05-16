@@ -10,7 +10,6 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
-import {ISetup} from "../instance/module/ISetup.sol";
 
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
@@ -18,19 +17,22 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
-import {ObjectType, APPLICATION, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../type/ObjectType.sol";
+import {ObjectType, APPLICATION, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../type/ObjectType.sol";
 import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED, CONFIRMED} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
+import {ReferralId} from "../type/Referral.sol";
 import {StateId} from "../type/StateId.sol";
 import {VersionPart} from "../type/Version.sol";
 
-import {ComponentService} from "../shared/ComponentService.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {IApplicationService} from "./IApplicationService.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 import {IClaimService} from "./IClaimService.sol";
+import {IComponentService} from "../shared/IComponentService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
+import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IPricingService} from "./IPricingService.sol";
@@ -38,13 +40,14 @@ import {IService} from "../shared/IService.sol";
 import {Service} from "../shared/Service.sol";
 
 contract PolicyService is
-    ComponentService, 
+    ComponentVerifyingService, 
     IPolicyService
 {
     using NftIdLib for NftId;
     using TimestampLib for Timestamp;
 
     IApplicationService internal _applicationService;
+    IComponentService internal _componentService;
     IBundleService internal _bundleService;
     IClaimService internal _claimService;
     IDistributionService internal _distributionService;
@@ -70,10 +73,11 @@ contract PolicyService is
         initializeService(registryAddress, authority, owner);
 
         VersionPart majorVersion = getVersion().toMajorPart();
-        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), majorVersion));
-        _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), majorVersion));
-        _claimService = IClaimService(getRegistry().getServiceAddress(CLAIM(), majorVersion));
         _applicationService = IApplicationService(getRegistry().getServiceAddress(APPLICATION(), majorVersion));
+        _bundleService = IBundleService(getRegistry().getServiceAddress(BUNDLE(), majorVersion));
+        _componentService = IComponentService(getRegistry().getServiceAddress(COMPONENT(), majorVersion));
+        _claimService = IClaimService(getRegistry().getServiceAddress(CLAIM(), majorVersion));
+        _poolService = IPoolService(getRegistry().getServiceAddress(POOL(), majorVersion));
         _distributionService = IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), majorVersion));
         _pricingService = IPricingService(getRegistry().getServiceAddress(PRICE(), majorVersion));
 
@@ -88,7 +92,7 @@ contract PolicyService is
 
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
-        (, productInfo,) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
+        (, productInfo,) = _getAndVerifyActiveComponent(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
 
@@ -102,6 +106,7 @@ contract PolicyService is
         revert();
     }
 
+    event LogDebug(uint idx, string message);
 
     /// @dev underwites application which includes the locking of the required collateral from the pool.
     function collateralize(
@@ -113,8 +118,13 @@ contract PolicyService is
         virtual override
     {
         // check caller is registered product
-        (NftId productNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
+
+        // check policy is in state applied
+        if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
+            revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
+        }
 
         // check policy matches with calling product
         IPolicy.PolicyInfo memory applicationInfo = instanceReader.getPolicyInfo(applicationNftId);
@@ -124,13 +134,19 @@ contract PolicyService is
                 applicationInfo.productNftId, 
                 productNftId);
         }
-
-        // check policy is in state applied
-        if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
-            revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
-        }
         
         StateId newPolicyState = COLLATERALIZED();
+
+        // actual collateralizaion
+        (
+            Amount localCollateralAmount,
+            Amount totalCollateralAmount
+        ) = _poolService.lockCollateral(
+            instance,
+            productNftId,
+            applicationNftId,
+            applicationInfo.bundleNftId,
+            applicationInfo.sumInsuredAmount);
 
         // optional activation of policy
         if(activateAt > zeroTimestamp()) {
@@ -139,50 +155,27 @@ contract PolicyService is
             applicationInfo.expiredAt = activateAt.addSeconds(applicationInfo.lifetime);
         }
 
-        // lock bundle collateral
-        Amount netPremiumAmount = AmountLib.zero(); // > 0 if immediate premium payment 
-
         // optional collection of premium
         if(requirePremiumPayment) {
-            netPremiumAmount = _processPremiumByTreasury(
-                instance, 
-                applicationNftId, 
-                applicationInfo.premiumAmount);
+            Amount premiumPaidAmount = _calculateAndCollectPremium(
+                instance,
+                applicationNftId,
+                applicationInfo);
 
-            applicationInfo.premiumPaidAmount = applicationInfo.premiumPaidAmount + applicationInfo.premiumAmount;
+            applicationInfo.premiumPaidAmount = premiumPaidAmount;
         }
 
         // store updated policy info
-        instance.getInstanceStore().updatePolicy(applicationNftId, applicationInfo, newPolicyState);
-
-        // lock collateral and update pool and bundle book keeping
-        // pool retention level: fraction of sum insured that product will cover from pool funds directly
-        // eg retention level 30%, payouts up to 30% of the sum insured will be made from the product's pool directly
-        // for the remaining 70% the pool owns a policy that will cover claims that exceed the 30% of the sum insured
-        // might also call pool component (for isVerifyingApplications pools)
-        _poolService.lockCollateral(
-            instance,
-            productNftId,
+        instance.getInstanceStore().updatePolicy(
             applicationNftId, 
-            applicationInfo,
-            netPremiumAmount); // for pool book keeping (fee + additional capital)
+            applicationInfo, 
+            newPolicyState);
+
+        // TODO add calling pool contract if it needs to validate application
 
         // TODO: add logging
     }
 
-
-    function calculateRequiredCollateral(
-        UFixed collateralizationLevel, 
-        Amount sumInsuredAmount
-    )
-        public 
-        pure 
-        virtual 
-        returns(Amount collateralAmount)
-    {
-        UFixed collateralUFixed =  collateralizationLevel * sumInsuredAmount.toUFixed();
-        return AmountLib.toAmount(collateralUFixed.toInt());
-    } 
 
     function collectPremium(
         NftId policyNftId, 
@@ -192,24 +185,27 @@ contract PolicyService is
         virtual
     {
         // check caller is registered product
-        (NftId productNftId,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
+        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
+        StateId stateId = instanceReader.getPolicyState(policyNftId);
+
+        // check policy is in state collateralized or active
+        if (!(stateId == COLLATERALIZED() || stateId == ACTIVE())) {
+            revert ErrorPolicyServicePolicyStateNotCollateralizedOrApplied(policyNftId);
+        }
+
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
 
-        if (policyInfo.premiumPaidAmount == policyInfo.premiumAmount) {
+        // check if premium is already collected
+        if (policyInfo.premiumPaidAmount.gtz()) {
             revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
         }
 
-        Amount unpaidPremiumAmount = policyInfo.premiumAmount - policyInfo.premiumPaidAmount;
+        policyInfo.premiumPaidAmount = _calculateAndCollectPremium(
+                instance,
+                policyNftId,
+                policyInfo);
 
-        Amount netPremiumAmount = _processPremiumByTreasury(
-                instance, 
-                policyNftId, 
-                unpaidPremiumAmount);
-
-        policyInfo.premiumPaidAmount = policyInfo.premiumPaidAmount + unpaidPremiumAmount;
-
-        _bundleService.increaseBalance(instance, policyInfo.bundleNftId, netPremiumAmount);
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         if(activateAt.gtz() && policyInfo.activatedAt.eqz()) {
@@ -221,7 +217,7 @@ contract PolicyService is
 
     function activate(NftId policyNftId, Timestamp activateAt) public override {
         // check caller is registered product
-        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -255,7 +251,7 @@ contract PolicyService is
         external 
         override
     {
-        (,, IInstance instance) = _getAndVerifyCallingComponentAndInstance(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -293,86 +289,185 @@ contract PolicyService is
     }
 
 
-    function _processPremiumByTreasury(
+    function _calculateAndCollectPremium(
         IInstance instance,
-        NftId policyNftId,
-        Amount premiumExpectedAmount
+        NftId applicationNftId,
+        IPolicy.PolicyInfo memory applicationInfo
     )
         internal
-        returns (Amount netPremiumAmount)
+        virtual
+        returns (
+            Amount premiumPaidAmount
+        )
     {
-        // process token transfer(s)
-        if(premiumExpectedAmount.eqz()) {
-            return AmountLib.zero();
-        }
+        NftId productNftId = applicationInfo.productNftId;
 
-        NftId productNftId = getRegistry().getObjectInfo(policyNftId).parentNftId;
-        IPolicy.PolicyInfo memory policyInfo = instance.getInstanceReader().getPolicyInfo(policyNftId);
+        // calculate premium details
         IPolicy.Premium memory premium = _pricingService.calculatePremium(
             productNftId,
-            policyInfo.riskId,
-            policyInfo.sumInsuredAmount,
-            policyInfo.lifetime,
-            policyInfo.applicationData,
-            policyInfo.bundleNftId,
-            policyInfo.referralId
-            );
+            applicationInfo.riskId,
+            applicationInfo.sumInsuredAmount,
+            applicationInfo.lifetime,
+            applicationInfo.applicationData,
+            applicationInfo.bundleNftId,
+            applicationInfo.referralId);
 
-        if (premium.premiumAmount != premiumExpectedAmount.toInt()) {
-            revert ErrorPolicyServicePremiumMismatch(
-                policyNftId, 
-                premiumExpectedAmount, 
-                AmountLib.toAmount(premium.premiumAmount));
+
+        // update financials and transfer premium tokens
+        premiumPaidAmount = _processAndCollect(
+            instance, 
+            productNftId,
+            applicationNftId, 
+            applicationInfo.premiumAmount,
+            applicationInfo.bundleNftId,
+            applicationInfo.referralId,
+            premium);
+    }
+
+
+    function _processAndCollect(
+        IInstance instance,
+        NftId productNftId,
+        NftId policyNftId,
+        Amount premiumExpectedAmount,
+        NftId bundleNftId,
+        ReferralId referralId,
+        IPolicy.Premium memory premium
+    )
+        internal
+        virtual
+        returns (Amount premiumPaidAmount)
+    {
+        InstanceReader instanceReader = instance.getInstanceReader();
+        TokenHandler tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
+        address policyHolder = getRegistry().ownerOf(policyNftId);
+        premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
+
+        _checkPremiumBalanceAndAllowance(
+            tokenHandler, 
+            policyHolder, 
+            premiumExpectedAmount,
+            premiumPaidAmount);
+
+        _processSaleAndTransferFunds(
+            instanceReader, 
+            instance.getInstanceStore(), 
+            tokenHandler, 
+            policyHolder, 
+            productNftId, 
+            bundleNftId, 
+            referralId, 
+            premium);
+    }
+
+
+    function _checkPremiumBalanceAndAllowance(
+        TokenHandler tokenHandler, 
+        address policyHolder, 
+        Amount premiumExpectedAmount,
+        Amount premiumPaidAmount
+    )
+        internal
+        virtual
+        view
+    {
+        // TODO decide how to handle this properly
+        // not clear if this is the best way to handle this
+        if (premiumExpectedAmount < premiumPaidAmount) {
+            revert ErrorPolicyServicePremiumHigherThanExpected(premiumExpectedAmount, premiumPaidAmount);
         }
 
-        address policyOwner = getRegistry().ownerOf(policyNftId);
-        ISetup.ProductSetupInfo memory productSetupInfo = instance.getInstanceReader().getProductSetupInfo(productNftId);
-        TokenHandler tokenHandler = productSetupInfo.tokenHandler;
-        if (tokenHandler.getToken().allowance(policyOwner, address(tokenHandler)) < premium.premiumAmount) {
-            revert ErrorIPolicyServiceInsufficientAllowance(policyOwner, address(tokenHandler), premium.premiumAmount);
+        uint256 premiumAmount = premiumPaidAmount.toInt();
+        uint256 balance = tokenHandler.getToken().balanceOf(policyHolder);
+        uint256 allowance = tokenHandler.getToken().allowance(policyHolder, address(tokenHandler));
+    
+        if (balance < premiumAmount) {
+            revert ErrorPolicyServiceBalanceInsufficient(policyHolder, premiumAmount, balance);
         }
 
-        Amount productFeeAmountToTransfer = AmountLib.toAmount(premium.productFeeFixAmount + premium.productFeeVarAmount);
-        Amount distributionFeeAmountToTransfer = AmountLib.toAmount(premium.distributionFeeFixAmount + premium.distributionFeeVarAmount - premium.discountAmount);
-        uint256 poolFeeAmountToTransfer = premium.poolFeeFixAmount + premium.poolFeeVarAmount;
-        uint256 bundleFeeAmountToTransfer = premium.bundleFeeFixAmount + premium.bundleFeeVarAmount;
-        Amount poolAmountToTransfer = AmountLib.toAmount(premium.netPremiumAmount + poolFeeAmountToTransfer + bundleFeeAmountToTransfer);
-
-        netPremiumAmount = AmountLib.toAmount(premium.netPremiumAmount);
-
-        // move product fee to product wallet
-        {
-            address productWallet = productSetupInfo.wallet;
-            tokenHandler.transfer(policyOwner, productWallet, productFeeAmountToTransfer);
+        if (allowance < premiumAmount) {
+            revert ErrorPolicyServiceAllowanceInsufficient(policyHolder, address(tokenHandler), premiumAmount, allowance);
         }
+    }
 
-        // move distribution fee to distribution wallet
-        {
-            ISetup.DistributionSetupInfo memory distributionSetupInfo = instance.getInstanceReader().getDistributionSetupInfo(productSetupInfo.distributionNftId);
-            address distributionWallet = distributionSetupInfo.wallet;
-            tokenHandler.transfer(policyOwner, distributionWallet, distributionFeeAmountToTransfer);
-            _distributionService.processSale(productSetupInfo.distributionNftId, policyInfo.referralId, premium, distributionFeeAmountToTransfer);
-        }
-        
-        // move netpremium, bundleFee and poolFee to pool wallet
-        {
-            address poolWallet = instance.getInstanceReader().getComponentInfo(productSetupInfo.poolNftId).wallet;
-            tokenHandler.transfer(policyOwner, poolWallet, poolAmountToTransfer);
-            _poolService.processSale(policyInfo.bundleNftId, premium, poolAmountToTransfer);
-        }
 
-        // validate total amount transferred
-        {
-            Amount totalTransferred = distributionFeeAmountToTransfer + poolAmountToTransfer + productFeeAmountToTransfer;
+    function _processSaleAndTransferFunds(
+        InstanceReader instanceReader,
+        InstanceStore instanceStore,
+        TokenHandler tokenHandler,
+        address policyHolder,
+        NftId productNftId,
+        NftId bundleNftId,
+        ReferralId referralId,
+        IPolicy.Premium memory premium
+    )
+        internal
+        virtual
+    {
+        (
+            NftId distributionNftId,
+            address distributionWallet,
+            address poolWallet,
+            address productWallet
+        ) = _getDistributionNftAndWallets(
+            instanceReader, 
+            productNftId);
 
-            if (premium.premiumAmount != totalTransferred.toInt()) {
-                revert ErrorPolicyServiceTransferredPremiumMismatch(
-                    policyNftId, 
-                    AmountLib.toAmount(premium.premiumAmount), 
-                    totalTransferred);
-            }
-        }
+        // update product fees, distribution and pool fees 
+        _componentService.increaseProductFees(
+            instanceStore, 
+            productNftId, 
+            AmountLib.toAmount(premium.productFeeVarAmount + premium.productFeeFixAmount));
 
-        // TODO: add logging
+        // update distribution fees and distributor commission and pool fees 
+        _distributionService.processSale(
+            distributionNftId, 
+            referralId, 
+            premium);
+
+        // update pool and bundle fees 
+        _poolService.processSale(
+            bundleNftId, 
+            premium);
+
+        // transfer premium amounts to target wallets
+        tokenHandler.transfer(policyHolder, productWallet, premium.productFeeAmount);
+        tokenHandler.transfer(policyHolder, distributionWallet, premium.distributionFeeAndCommissionAmount);
+        tokenHandler.transfer(policyHolder, poolWallet, premium.poolPremiumAndFeeAmount);
+    }
+
+
+    function _getTokenHandlerAndProductWallet(
+        InstanceReader instanceReader,
+        NftId productNftId
+    )
+        internal 
+        virtual
+        view 
+        returns (
+            TokenHandler tokenHandler
+        )
+    {
+        tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
+    }
+
+    function _getDistributionNftAndWallets(
+        InstanceReader instanceReader,
+        NftId productNftId
+    )
+        internal 
+        virtual
+        view returns (
+            NftId distributionNftId,
+            address distributionWallet,
+            address poolWallet,
+            address productWallet
+        )
+    {
+        IComponents.ProductInfo memory productInfo = instanceReader.getProductInfo(productNftId);
+        distributionNftId = productInfo.distributionNftId;
+        distributionWallet = instanceReader.getComponentInfo(distributionNftId).wallet;
+        poolWallet = instanceReader.getComponentInfo(productInfo.poolNftId).wallet;
+        productWallet = instanceReader.getComponentInfo(productNftId).wallet;
     }
 }

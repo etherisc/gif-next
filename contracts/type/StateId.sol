@@ -14,6 +14,23 @@ using {
 } for StateId global;
 
 // general pure free functions
+
+function INITIAL() pure returns (StateId) {
+    return toStateId(1);
+}
+
+function SCHEDULED() pure returns (StateId) {
+    return toStateId(2);
+}
+
+function DEPLOYING() pure returns (StateId) {
+    return toStateId(3);
+}
+
+function ACTIVE() pure returns (StateId) {
+    return toStateId(4);
+}
+
 function APPLIED() pure returns (StateId) {
     return toStateId(10);
 }
@@ -40,10 +57,6 @@ function CONFIRMED() pure returns (StateId) {
 
 function EXPECTED() pure returns (StateId) {
     return toStateId(60);
-}
-
-function ACTIVE() pure returns (StateId) {
-    return toStateId(100);
 }
 
 function PAUSED() pure returns (StateId) {

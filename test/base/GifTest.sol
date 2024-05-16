@@ -5,11 +5,14 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {VersionPart, VersionLib} from "../../contracts/type/Version.sol";
-import {NftId, NftIdLib, zeroNftId} from "../../contracts/type/NftId.sol";
+import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
+import {SecondsLib} from "../../contracts/type/Seconds.sol";
 import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {
+    GIF_MANAGER_ROLE,
+    GIF_ADMIN_ROLE,
     ADMIN_ROLE,
     INSTANCE_OWNER_ROLE,
     PRODUCT_OWNER_ROLE, 
@@ -19,13 +22,15 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {Version} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {zeroObjectType} from "../../contracts/type/ObjectType.sol";
+import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 
+import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
-import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWithAdmin.sol";
 import {AccessManagerExtendedInitializeable} from "../../contracts/shared/AccessManagerExtendedInitializeable.sol";
 import {AccessManagerExtendedWithDisableInitializeable} from "../../contracts/shared/AccessManagerExtendedWithDisableInitializeable.sol";
+import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWithAdmin.sol";
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -37,6 +42,9 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
+import {IComponents} from "../../contracts/instance/module/IComponents.sol";
+import {ComponentService} from "../../contracts/shared/ComponentService.sol";
+import {ComponentServiceManager} from "../../contracts/shared/ComponentServiceManager.sol";
 import {DistributionService} from "../../contracts/distribution/DistributionService.sol";
 import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
 import {ProductService} from "../../contracts/product/ProductService.sol";
@@ -60,25 +68,35 @@ import {StakingServiceManager} from "../../contracts/staking/StakingServiceManag
 import {InstanceService} from "../../contracts/instance/InstanceService.sol";
 import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceManager.sol";
 
+import {Staking} from "../../contracts/staking/Staking.sol";
+import {StakingReader} from "../../contracts/staking/StakingReader.sol";
+import {StakingManager} from "../../contracts/staking/StakingManager.sol";
+import {StakingService} from "../../contracts/staking/StakingService.sol";
+import {StakingServiceManager} from "../../contracts/staking/StakingServiceManager.sol";
+
 import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
-import {IKeyValueStore} from "../../contracts/instance/base/IKeyValueStore.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {Distribution} from "../../contracts/distribution/Distribution.sol";
 import {Product} from "../../contracts/product/Product.sol";
 import {Pool} from "../../contracts/pool/Pool.sol";
 import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
 import {SimplePool} from "../mock/SimplePool.sol";
+import {SimpleProduct} from "../mock/SimpleProduct.sol";
 
-import {TestGifBaseConfig} from "./TestGifBaseConfig.sol";
-
+import {GifDeployer} from "./GifDeployer.sol";
+import {GifTestReleaseConfig} from "./GifTestReleaseConfig.sol";
 
 // solhint-disable-next-line max-states-count
-contract TestGifBase is Test {
+contract GifTest is GifDeployer {
+
+    // default customer token balance in full token units, value will be multiplied by 10 ** token.decimals()
+    uint256 DEFAULT_CUSTOMER_FUNDS = 1000;
 
     // in full token units, value will be multiplied by 10 ** token.decimals()
     uint256 constant public DEFAULT_BUNDLE_CAPITALIZATION = 10 ** 5;
@@ -95,10 +113,26 @@ contract TestGifBase is Test {
     TokenRegistry public tokenRegistry;
 
     IERC20Metadata public token;
+    IERC20Metadata public dip;
 
     InstanceServiceManager public instanceServiceManager;
     InstanceService public instanceService;
+
+    // TODO cleanpu
+    // StakingServiceManager public stakingServiceManager;
+    // StakingService public stakingService;
+    // NftId public stakingServiceNftId;
+    StakingManager public stakingManager;
+    Staking public staking;
+    StakingReader public stakingReader;
+    NftId public stakingNftId;
+
     NftId public instanceServiceNftId;
+
+    ComponentServiceManager public componentServiceManager;
+    ComponentService public componentService;
+    NftId public componentServiceNftId;
+
     DistributionServiceManager public distributionServiceManager;
     DistributionService public distributionService;
     NftId public distributionServiceNftId;
@@ -129,7 +163,7 @@ contract TestGifBase is Test {
     BundleService public bundleService;
     NftId public bundleServiceNftId;
 
-    AccessManagerExtendedInitializeable public masterOzAccessManager;
+    AccessManagerExtendedInitializeable public masterInstanceAccessManager;
     InstanceAdmin public masterInstanceAdmin;
     BundleManager public masterBundleManager;
     InstanceStore public masterInstanceStore;
@@ -137,7 +171,7 @@ contract TestGifBase is Test {
     NftId public masterInstanceNftId;
     InstanceReader public masterInstanceReader;
 
-    AccessManagerExtendedInitializeable public instanceOzAccessManager;
+    AccessManagerExtendedInitializeable public instanceAccessManager;
     InstanceAdmin public instanceAdmin;
     BundleManager public instanceBundleManager;
     InstanceStore public instanceStore;
@@ -145,17 +179,12 @@ contract TestGifBase is Test {
     NftId public instanceNftId;
     InstanceReader public instanceReader;
 
-    IKeyValueStore public keyValueStore;
-    // TestProduct public product;
-    // TestPool public pool;
-    // TestDistribution public distribution;
-    Distribution public distribution;
+    SimpleDistribution public distribution;
     NftId public distributionNftId;
-    Pool public pool;
+    SimplePool public pool;
     NftId public poolNftId;
-    Product public product;
+    SimpleProduct public product;
     NftId public productNftId;
-    TokenHandler public tokenHandler;
 
     address public registryAddress;
     NftId public registryNftId;
@@ -164,6 +193,7 @@ contract TestGifBase is Test {
 
     address constant public NFT_LOCK_ADDRESS = address(0x1);
     address public registryOwner = makeAddr("registryOwner");
+    address public stakingOwner = registryOwner;
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
     address public poolOwner = makeAddr("poolOwner");
@@ -171,6 +201,8 @@ contract TestGifBase is Test {
     address public customer = makeAddr("customer");
     address public customer2 = makeAddr("customer2");
     address public investor = makeAddr("investor");
+    address public staker = makeAddr("staker");
+    address public staker2 = makeAddr("staker2");
     address public outsider = makeAddr("outsider");
 
     uint8 initialProductFeePercentage = 2;
@@ -210,7 +242,7 @@ contract TestGifBase is Test {
 
         // deploy registry, services, master instance and token
         vm.startPrank(registryOwner);
-        _deployRegistry();
+        _deployCore();
         _deployAndRegisterServices();
         vm.stopPrank();
 
@@ -218,20 +250,14 @@ contract TestGifBase is Test {
         _deployMasterInstance();
         vm.stopPrank();
 
-        vm.startPrank(registryOwner); 
-        _deployAndActivateToken();
+        vm.startPrank(address(registryOwner)); 
+        _deployRegisterAndActivateToken();
         vm.stopPrank();
 
         // create an instance (cloned from master instance)
         vm.startPrank(instanceOwner);
         _createInstance();
         vm.stopPrank();
-    }
-
-    function fundAccount(address account, uint256 amount) public {
-        token.transfer(account, amount);
-
-        token.approve(address(tokenHandler), amount);
     }
 
     /// @dev Helper function to assert that a given NftId is equal to the expected NftId.
@@ -276,56 +302,63 @@ contract TestGifBase is Test {
         console.log(message, gasDelta);
     }
 
-    function _deployRegistry() internal
+    function _deployCore()
+        internal
     {
-        registryAdmin = new RegistryAdmin();
+        address gifAdmin = registryOwner;
+        address gifManager = registryOwner;
 
-        AccessManagerExtendedWithDisableInitializeable masterReleaseAccessManager = new AccessManagerExtendedWithDisableInitializeable();
-        masterReleaseAccessManager.initialize(address(0x1), VersionLib.toVersionPart(0));
-
-        releaseManager = new ReleaseManager(
+        (
+            dip,
+            registry,
+            tokenRegistry,
+            releaseManager,
             registryAdmin,
-            VersionLib.toVersionPart(3),
-            masterReleaseAccessManager);
+            stakingManager,
+            staking
+        ) = deployCore(
+            gifAdmin,
+            gifManager,
+            stakingOwner);
 
-        registryAddress = address(releaseManager.getRegistry());
-        registry = Registry(registryAddress);
-        registryNftId = registry.getNftId(address(registry)); 
-
-        address chainNftAddress = registry.getChainNftAddress();
-        chainNft = ChainNft(chainNftAddress);
+        _setUpDependingItems();
 
         // solhint-disable
-        tokenRegistry = new TokenRegistry(registryAddress);
-
-        registryAdmin.initialize(registryOwner, registryOwner, address(releaseManager), address(tokenRegistry));
-
-        /* solhint-disable */
-        console.log("protocol nft id", chainNft.PROTOCOL_NFT_ID());
-        console.log("global registry nft id", chainNft.GLOBAL_REGISTRY_ID());
-        console.log("registry nft id", registry.getNftId(address(registry)).toInt());
-
         console.log("registry deployed at", address(registry));
-        console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
-        console.log("registry owner (opt 2)", registry.getOwner());
-
-        console.log("registry admin deployed at", address(registryAdmin));
-        console.log("registry admin authority", registryAdmin.authority());
-
-        console.log("release manager deployed at", address(releaseManager));
-        console.log("release manager authority", releaseManager.authority());
+        console.log("registry owner", registryOwner);
 
         console.log("token registry deployed at", address(tokenRegistry));
-        console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
-        console.log("token registry linked owner", tokenRegistry.getOwner());
-        /* solhint-enable */
+        console.log("release manager deployed at", address(releaseManager));
+
+        console.log("registry access manager deployed:", address(registryAdmin));
+        console.log("registry access manager authority", registryAdmin.authority());
+
+        console.log("staking manager deployed at", address(stakingManager));
+
+        console.log("staking nft id", registry.getNftId(address(staking)).toInt());
+        console.log("staking deployed at", address(staking));
+        console.log("staking owner (opt 1)", registry.ownerOf(address(staking)));
+        console.log("staking owner (opt 2)", staking.getOwner());
+        // solhint-enable
     }
+
+
+    function _setUpDependingItems() internal {
+        registryAddress = address(registry);
+
+        chainNft = ChainNft(registry.getChainNftAddress());
+        registryNftId = registry.getNftId(registryAddress);
+
+        stakingNftId = registry.getNftId(address(staking));
+        stakingReader = staking.getStakingReader();
+    }
+
 
     function _deployAndRegisterServices() internal 
     {
-        VersionPart version = VersionLib.toVersionPart(3);
+        VersionPart version = VersionPartLib.toVersionPart(3);
 
-        TestGifBaseConfig config = new TestGifBaseConfig(
+        GifTestReleaseConfig config = new GifTestReleaseConfig(
             releaseManager,
             registryOwner,
             version,
@@ -341,7 +374,11 @@ contract TestGifBase is Test {
             bytes4[][][] memory selectors
         ) = config.getConfig();
 
+        assertEq(releaseManager.getState().toInt(), INITIAL().toInt(), "unexpected initial state for releaseManager");
+
         releaseManager.createNextRelease();
+
+        assertEq(releaseManager.getState().toInt(), SCHEDULED().toInt(), "unexpected state for releaseManager after createNextRelease");
 
         (
             address releaseAccessManager, 
@@ -357,13 +394,16 @@ contract TestGifBase is Test {
             selectors, 
             "0x1234");
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after prepareNextRelease");
+
         //salt = releaseSalt;
 
         // solhint-disable
         console.log("release version", releaseVersion.toInt());
         console.log("release salt", uint(salt));
-        console.log("release access manager deployed at", address(releaseAccessManager));
+        console.log("release access manager deployed at", releaseAccessManager);
         console.log("release services count", serviceAddrs.length);
+        console.log("release services remaining (before service registration)", releaseManager.getRemainingServicesToRegister());
         // solhint-enable
 
         // --- registry service ---------------------------------//
@@ -372,7 +412,14 @@ contract TestGifBase is Test {
         releaseManager.registerService(registryService);
         registryServiceManager.linkToProxy();
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
+        // TODO cleanup
+        // // after registry service is available
+        // tokenRegistry.linkToRegistryService();
+
         // solhint-disable
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
         console.log("registry service proxy manager deployed at", address(registryServiceManager));
         console.log("registry service proxy manager linked to nft id", registryServiceManager.getNftId().toInt());
         console.log("registry service proxy manager owner", registryServiceManager.getOwner());
@@ -381,6 +428,30 @@ contract TestGifBase is Test {
         console.log("registry service domain", registryService.getDomain().toInt());
         console.log("registry service owner", registryService.getOwner());
         console.log("registry service authority", registryService.authority());
+
+        // TODO cleanup
+        // console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
+        // console.log("token registry linked owner", tokenRegistry.getOwner());
+        // solhint-enable
+
+        // --- staking service ----------------------------------//
+        stakingServiceManager = new StakingServiceManager{salt: salt}(registryAddress, salt);
+        stakingService = stakingServiceManager.getStakingService();
+        stakingServiceNftId = releaseManager.registerService(stakingService);
+        stakingServiceManager.linkToProxy();
+
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
+        // solhint-disable
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
+        console.log("staking service proxy manager deployed at", address(stakingServiceManager));
+        console.log("staking service proxy manager linked to nft id", stakingServiceManager.getNftId().toInt());
+        console.log("staking service proxy manager owner", stakingServiceManager.getOwner());
+        console.log("staking service deployed at", address(stakingService));
+        console.log("staking service nft id", stakingService.getNftId().toInt());
+        console.log("staking service domain", stakingService.getDomain().toInt());
+        console.log("staking service owner", stakingService.getOwner());
+        console.log("staking service authority", stakingService.authority());
         // solhint-enable
 
         // --- instance service ---------------------------------//
@@ -389,7 +460,10 @@ contract TestGifBase is Test {
         instanceServiceNftId = releaseManager.registerService(instanceService);
         instanceServiceManager.linkToProxy();
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
         // solhint-disable 
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
         console.log("instance service proxy manager deployed at", address(instanceServiceManager));
         console.log("instance service proxy manager linked to nft id", instanceServiceManager.getNftId().toInt());
         console.log("instance service proxy manager owner", instanceServiceManager.getOwner());
@@ -400,13 +474,31 @@ contract TestGifBase is Test {
         console.log("instance service authority", instanceService.authority());
         // solhint-enable
 
+        // --- component service ---------------------------------//
+        componentServiceManager = new ComponentServiceManager(address(registry));
+        componentService = componentServiceManager.getComponentService();
+        componentServiceNftId = releaseManager.registerService(componentService);
+        componentServiceManager.linkToProxy();
+
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
+        // solhint-disable 
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
+        console.log("component service domain", componentService.getDomain().toInt());
+        console.log("component service deployed at", address(componentService));
+        console.log("component service nft id", componentService.getNftId().toInt());
+        // solhint-enable
+
         // --- distribution service ---------------------------------//
         distributionServiceManager = new DistributionServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         distributionService = distributionServiceManager.getDistributionService();
         distributionServiceNftId = releaseManager.registerService(distributionService);
         distributionServiceManager.linkToProxy();
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
         // solhint-disable
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
         console.log("distribution service proxy manager deployed at", address(distributionServiceManager));
         console.log("distribution service proxy manager linked to nft id", distributionServiceManager.getNftId().toInt());
         console.log("distribution service proxy manager owner", distributionServiceManager.getOwner());
@@ -423,7 +515,10 @@ contract TestGifBase is Test {
         pricingServiceNftId = releaseManager.registerService(pricingService);
         pricingServiceManager.linkToProxy();
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
         // solhint-disable
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
         console.log("pricing service proxy manager deployed at", address(pricingServiceManager));
         console.log("pricing service proxy manager linked to nft id", pricingServiceManager.getNftId().toInt());
         console.log("pricing service proxy manager owner", pricingServiceManager.getOwner());
@@ -440,7 +535,10 @@ contract TestGifBase is Test {
         bundleServiceNftId = releaseManager.registerService(bundleService);
         bundleServiceManager.linkToProxy();
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
         // solhint-disable
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
         console.log("bundle service proxy manager deployed at", address(bundleServiceManager));
         console.log("bundle service proxy manager linked to nft id", bundleServiceManager.getNftId().toInt());
         console.log("bundle service proxy manager owner", bundleServiceManager.getOwner());
@@ -457,7 +555,10 @@ contract TestGifBase is Test {
         poolServiceNftId = releaseManager.registerService(poolService);
         poolServiceManager.linkToProxy();
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
         // solhint-disable
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
         console.log("pool service proxy manager deployed at", address(poolServiceManager));
         console.log("pool service proxy manager linked to nft id", poolServiceManager.getNftId().toInt());
         console.log("pool service proxy manager owner", poolServiceManager.getOwner());
@@ -474,7 +575,10 @@ contract TestGifBase is Test {
         productServiceNftId = releaseManager.registerService(productService);
         productServiceManager.linkToProxy();
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
         // solhint-disable
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
         console.log("product service proxy manager deployed at", address(productServiceManager));
         console.log("product service proxy manager linked to nft id", productServiceManager.getNftId().toInt());
         console.log("product service proxy manager owner", productServiceManager.getOwner());
@@ -492,7 +596,10 @@ contract TestGifBase is Test {
         claimServiceNftId = releaseManager.registerService(claimService);
         claimServiceManager.linkToProxy();
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
         // solhint-disable
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
         console.log("claim service proxy manager deployed at", address(claimServiceManager));
         console.log("claim service proxy manager linked to nft id", claimServiceManager.getNftId().toInt());
         console.log("claim service proxy manager owner", claimServiceManager.getOwner());
@@ -509,7 +616,10 @@ contract TestGifBase is Test {
         applicationServiceNftId = releaseManager.registerService(applicationService);
         applicationServiceManager.linkToProxy();
 
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
         // solhint-disable
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
         console.log("application service proxy manager deployed at", address(applicationServiceManager));
         console.log("application service proxy manager linked to nft id", applicationServiceManager.getNftId().toInt());
         console.log("application service proxy manager owner", applicationServiceManager.getOwner());
@@ -526,41 +636,40 @@ contract TestGifBase is Test {
         policyServiceNftId = releaseManager.registerService(policyService);
         policyServiceManager.linkToProxy();
 
-        // solhint-disable
-        console.log("policyService domain", policyService.getDomain().toInt());
-        console.log("policyService deployed at", address(policyService));
-        console.log("policyService nft id", policyService.getNftId().toInt());
-        // solhint-enable
-
-        // --- stacking service ---------------------------------//
-        stakingServiceManager = new StakingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
-        stakingService = stakingServiceManager.getStakingService();
-        stakingServiceNftId = releaseManager.registerService(stakingService);
-        stakingServiceManager.linkToProxy();
+        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
         // solhint-disable
-        console.log("stacking service proxy manager deployed at", address(stakingServiceManager));
-        console.log("stacking service proxy manager linked to nft id", stakingServiceManager.getNftId().toInt());
-        console.log("stacking service proxy manager owner", stakingServiceManager.getOwner());
-        console.log("stacking service deployed at", address(stakingService));
-        console.log("stacking service nft id", stakingService.getNftId().toInt());
-        console.log("stacking service domain", stakingService.getDomain().toInt());
-        console.log("stacking service owner", stakingService.getOwner());
-        console.log("stacking service authority", stakingService.authority());
+        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
+        console.log("policy service proxy manager deployed at", address(policyServiceManager));
+        console.log("policy service proxy manager linked to nft id", policyServiceManager.getNftId().toInt());
+        console.log("policy service proxy manager owner", policyServiceManager.getOwner());
+        console.log("policy service deployed at", address(policyService));
+        console.log("policy service nft id", policyService.getNftId().toInt());
+        console.log("policy service domain", policyService.getDomain().toInt());
+        console.log("policy service owner", policyService.getOwner());
+        console.log("policy service authority", policyService.authority());
         // solhint-enable
 
         releaseManager.activateNextRelease();
+
+        // activate dip for new release
+        tokenRegistry.setActiveForVersion(
+            block.chainid, 
+            address(dip), 
+            registry.getLatestVersion(), true);
+
+        assertEq(releaseManager.getState().toInt(), ACTIVE().toInt(), "unexpected state for releaseManager after activateNextRelease");
     }
 
     function _deployMasterInstance() internal 
     {
-        masterOzAccessManager = new AccessManagerExtendedInitializeable();
+        masterInstanceAccessManager = new AccessManagerExtendedInitializeable();
         // grants registryOwner ADMIN_ROLE
-        masterOzAccessManager.initialize(registryOwner);
+        masterInstanceAccessManager.initialize(registryOwner);
         
         masterInstance = new Instance();
         masterInstance.initialize(
-            address(masterOzAccessManager),
+            address(masterInstanceAccessManager),
             address(registry),
             registryOwner);
 
@@ -568,6 +677,7 @@ contract TestGifBase is Test {
         masterInstanceStore = new InstanceStore();
         masterInstanceStore.initialize(address(masterInstance));
         masterInstance.setInstanceStore(masterInstanceStore);
+        assert(masterInstance.getInstanceStore() == masterInstanceStore);
 
         masterInstanceReader = new InstanceReader();
         masterInstanceReader.initialize(address(masterInstance));
@@ -578,7 +688,7 @@ contract TestGifBase is Test {
         masterInstance.setBundleManager(masterBundleManager);
 
         masterInstanceAdmin = new InstanceAdmin();
-        masterOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin), 0);
+        masterInstanceAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin), 0);
         masterInstanceAdmin.initialize(address(masterInstance));
         masterInstance.setInstanceAdmin(masterInstanceAdmin);
 
@@ -586,17 +696,18 @@ contract TestGifBase is Test {
         // instance service is now ready to create cloned instances
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
+        // lock master instance nft
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 
         // revoke ADMIN_ROLE from all members
-        masterOzAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin));
-        masterOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
+        masterInstanceAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin));
+        masterInstanceAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
-        console.log("master oz access manager deployed at", address(masterOzAccessManager));
-        console.log("master instance admin deployed at", address(masterInstanceAdmin));
+        console.log("master oz access manager deployed at", address(masterInstanceAccessManager));
+        console.log("master instance access manager deployed at", address(masterInstanceAdmin));
         console.log("master instance reader deployed at", address(masterInstanceReader));
         console.log("master bundle manager deployed at", address(masterBundleManager));
         console.log("master instance store deployed at", address(masterInstanceStore));
@@ -611,31 +722,37 @@ contract TestGifBase is Test {
         ) = instanceService.createInstanceClone();
 
         instanceAdmin = instance.getInstanceAdmin();
-        instanceOzAccessManager = AccessManagerExtendedInitializeable(instance.authority());
+        instanceAccessManager = AccessManagerExtendedInitializeable(instance.authority());
         instanceReader = instance.getInstanceReader();
+        instanceStore = instance.getInstanceStore();
         instanceBundleManager = instance.getBundleManager();
         instanceStore = instance.getInstanceStore();
         
         // solhint-disable
         console.log("cloned instance deployed at", address(instance));
         console.log("cloned instance nft id", instanceNftId.toInt());
-        console.log("cloned oz access manager deployed at", address(instanceOzAccessManager));
-        console.log("cloned instance admin deployed at", address(instanceAdmin));
+        console.log("cloned oz access manager deployed at", address(instanceAccessManager));
+        console.log("cloned instance access manager deployed at", address(instanceAdmin));
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle manager deployed at", address(instanceBundleManager));
         console.log("cloned instance store deployed at", address(instanceStore));
         // solhint-enable
     }
 
-    function _deployAndActivateToken() internal {
-        Usdc Usdc  = new Usdc();
-        address UsdcAddress = address(Usdc);
-        token = Usdc;
+    function _deployRegisterAndActivateToken() internal {
+        token = new Usdc();
 
-        // solhint-disable-next-line
-        console.log("token deployed at", UsdcAddress);
+        // usdc
+        tokenRegistry.registerToken(address(token));
+        tokenRegistry.setActiveForVersion(
+            block.chainid, 
+            address(token), 
+            registry.getLatestVersion(), true);
 
-        tokenRegistry.setActive(address(token), registry.getLatestVersion(), true);
+        // solhint-disable
+        console.log("token (usdc) deployed at", address(token));
+        console.log("token (dip) deployed at", address(dip));
+        // solhint-enable
     }
 
 
@@ -646,8 +763,8 @@ contract TestGifBase is Test {
     // )
     //     internal
     // {
-        // Fee memory stakingFee = FeeLib.zeroFee();
-        // Fee memory performanceFee = FeeLib.zeroFee();
+        // Fee memory stakingFee = FeeLib.zero();
+        // Fee memory performanceFee = FeeLib.zero();
 
         // pool = new TestPool(
         //     address(registry), 
@@ -698,7 +815,7 @@ contract TestGifBase is Test {
 
 
     // function _deployProduct() internal {
-        // Fee memory processingFee = FeeLib.zeroFee();
+        // Fee memory processingFee = FeeLib.zero();
 
         // product = new TestProduct(
         //     address(registry), 
@@ -744,24 +861,79 @@ contract TestGifBase is Test {
     //     console.log("bundle nft id", bundleNftId.toInt());
     // }
 
+    function _prepareProduct() internal {
+        _prepareProduct(true);
+    }
+
+    function _prepareProduct(bool createBundle) internal {
+        vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
+        vm.stopPrank();
+
+        _prepareDistributionAndPool();
+
+        vm.startPrank(productOwner);
+        product = new SimpleProduct(
+            address(registry),
+            instanceNftId,
+            productOwner,
+            address(token),
+            false,
+            address(pool), 
+            address(distribution)
+        );
+        
+        product.register();
+        productNftId = product.getNftId();
+        vm.stopPrank();
+
+        // solhint-disable
+        console.log("product nft id", productNftId.toInt());
+        console.log("product component at", address(product));
+        // solhint-enable
+
+        vm.startPrank(registryOwner);
+        token.transfer(investor, DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
+        token.transfer(customer, DEFAULT_CUSTOMER_FUNDS * 10**token.decimals());
+        vm.stopPrank();
+
+        if (createBundle) {
+            vm.startPrank(investor);
+            IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+            token.approve(address(poolComponentInfo.tokenHandler), DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
+
+            bundleNftId = SimplePool(address(pool)).createBundle(
+                FeeLib.zero(), 
+                DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals(), 
+                SecondsLib.toSeconds(DEFAULT_BUNDLE_LIFETIME), 
+                ""
+            );
+            vm.stopPrank();
+        }
+    }
+
 
     function _prepareDistributionAndPool() internal {
         vm.startPrank(instanceOwner);
-        instanceOzAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
-        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
-            address(token),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            distributionOwner
-        );
-        distributionNftId = distributionService.register(address(distribution));
+            distributionOwner,
+            address(token));
+
+        distribution.register();
+        distributionNftId = distribution.getNftId();
         vm.stopPrank();
+
+        // solhint-disable
+        console.log("distribution nft id", distributionNftId.toInt());
+        console.log("distribution component at", address(distribution));
+        // solhint-enable
 
         vm.startPrank(poolOwner);
         pool = new SimplePool(
@@ -775,15 +947,21 @@ contract TestGifBase is Test {
             poolOwner
         );
 
-        poolNftId = poolService.register(address(pool));
+        pool.register();
+        poolNftId = pool.getNftId();
         pool.approveTokenHandler(type(uint256).max);
         vm.stopPrank();
+
+        // solhint-disable
+        console.log("pool nft id", poolNftId.toInt());
+        console.log("pool component at", address(pool));
+        // solhint-enable
     }
 
 
     function _preparePool() internal {
         vm.startPrank(instanceOwner);
-        instanceOzAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
@@ -797,16 +975,22 @@ contract TestGifBase is Test {
             UFixedLib.toUFixed(1),
             poolOwner
         );
-
-        poolNftId = poolService.register(address(pool));
+        pool.register();
+        poolNftId = pool.getNftId();
+        pool.approveTokenHandler(type(uint256).max);
         vm.stopPrank();
+
+        // solhint-disable
+        console.log("pool nft id", poolNftId.toInt());
+        console.log("pool component at", address(pool));
+        // solhint-enable
     }
 
     function zeroObjectInfo() internal pure returns (IRegistry.ObjectInfo memory) {
         return (
             IRegistry.ObjectInfo(
-                zeroNftId(),
-                zeroNftId(),
+                NftIdLib.zero(),
+                NftIdLib.zero(),
                 zeroObjectType(),
                 false,
                 address(0),

@@ -2,11 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
+import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {NftId, toNftId, zeroNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
@@ -27,12 +27,12 @@ import {IService} from "../../contracts/shared/IService.sol";
 
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 
+import {Dip} from "../../contracts/mock/Dip.sol";
 import {ServiceMock} from "../mock/ServiceMock.sol";
 import {RegisterableMock} from "../mock/RegisterableMock.sol";
-import {DIP} from "../mock/Dip.sol";
 
 import {RegistryTestBase} from "../registry/RegistryTestBase.sol";
-import {TestGifBase} from "../base/TestGifBase.sol";
+import {GifTest} from "../base/GifTest.sol";
 import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
 
@@ -52,8 +52,8 @@ function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory
 function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
     return (
         IRegistry.ObjectInfo(
-            zeroNftId(),
-            zeroNftId(),
+            NftIdLib.zero(),
+            NftIdLib.zero(),
             zeroObjectType(),
             false,
             address(0),
@@ -70,7 +70,7 @@ function toBool(uint256 uintVal) pure returns (bool boolVal)
     }
 }
 
-contract RegistryServiceTestBase is TestGifBase, FoundryRandom {
+contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
     address public EOA = makeAddr("EOA");
 
@@ -78,30 +78,8 @@ contract RegistryServiceTestBase is TestGifBase, FoundryRandom {
 
     IService componentOwnerService;
 
-    address public contractWithoutIERC165 = address(new DIP());
+    address public contractWithoutIERC165 = address(new Dip());
     address public erc165 = address(new ERC165()); 
-
-    RegisterableMock public registerableOwnedByRegistryOwner;
-
-    function setUp() public virtual override
-    {
-        vm.startPrank(registryOwner);
-
-        _deployRegistry();
-
-        _deployRegistryService();
-
-        registerableOwnedByRegistryOwner = new RegisterableMock(
-            zeroNftId(), 
-            registryNftId, 
-            toObjectType(randomNumber(type(uint8).max)),
-            toBool(randomNumber(1)),
-            registryOwner, 
-            ""
-        );
-
-        vm.stopPrank();
-    }
 
     function _deployRegistryService() internal
     {

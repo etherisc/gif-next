@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Test, Vm, console} from "../../../lib/forge-std/src/Test.sol";
-import {TestGifBase} from "../../base/TestGifBase.sol";
+import {GifTest} from "../../base/GifTest.sol";
 
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {Key32} from "../../../contracts/type/Key32.sol";
@@ -13,7 +13,7 @@ import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
 import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 
-contract DistributorTypeTest is TestGifBase {
+contract DistributorTypeTest is GifTest {
 
     DistributorType public distributorType;
     string public name;
@@ -30,19 +30,18 @@ contract DistributorTypeTest is TestGifBase {
 
     function _prepareDistribution() internal {
         vm.startPrank(instanceOwner);
-        instanceOzAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
-            address(token),
-            FeeLib.zeroFee(),
-            FeeLib.zeroFee(),
-            distributionOwner
-        );
-        distributionNftId = distributionService.register(address(distribution));
+            distributionOwner,
+            address(token));
+
+        distribution.register();
+        distributionNftId = distribution.getNftId();
     }
 
     function testGifSetupDistributorTypeCreate() public {
