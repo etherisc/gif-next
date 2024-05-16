@@ -1,5 +1,5 @@
-// SPDX-License-Identifier: APACHE-2.0
-pragma solidity 0.8.20;
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.20;
 
 import {Test} from "forge-std/Test.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
