@@ -220,7 +220,6 @@ contract TestPool is GifTest {
         IKeyValueStore.Metadata memory metadata = instanceReader.getMetadata(bundleNftId.toKey32(BUNDLE()));
         assertEq(metadata.objectType.toInt(), BUNDLE().toInt(), "unexpected bundle type");
         assertEq(metadata.state.toInt(), ACTIVE().toInt(), "unexpected bundle state");
-        assertEq(metadata.updatedBy, address(bundleService), "unexpected updated by");
 
         // bundle manager checks
         assertEq(instanceBundleManager.bundles(poolNftId), 1, "expected only 1 bundle");

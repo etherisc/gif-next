@@ -135,11 +135,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             release.salt
         ],
         { libraries: {
+            AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
             VersionPartLib: libraries.versionPartLibAddress,
-            StakeManagerLib: libraries.stakeManagerLibAddress,
             TargetManagerLib: libraries.targetManagerLibAddress,
         }});
 

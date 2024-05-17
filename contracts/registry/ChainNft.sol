@@ -15,6 +15,7 @@ contract ChainNft is ERC721Enumerable {
     uint256 public constant PROTOCOL_NFT_ID = 1101;
     uint256 public constant GLOBAL_REGISTRY_ID = 2101;
 
+    // TODO rename errors to error pattern: CallerNotRegistry -> ErrorCallerNotRegistry etc.
     // custom errors
     error CallerNotRegistry(address caller);
     error RegistryAddressZero();

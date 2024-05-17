@@ -4,14 +4,10 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {Amount} from "../type/Amount.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {IInstance} from "../instance/IInstance.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IProductService} from "../product/IProductService.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
-import {NftId} from "../type/NftId.sol";
-import {ObjectType} from "../type/ObjectType.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
 /// @dev component base class
@@ -32,12 +28,12 @@ interface IComponent is
 
     event LogComponentWalletAddressChanged(address oldWallet, address newWallet);
     event LogComponentWalletTokensTransferred(address from, address to, uint256 amount);
-    event LogComponentTokenHandlerApproved(address token, uint256 limit);
+    event LogComponentTokenHandlerApproved(address token, Amount limit);
 
     /// @dev approves token hanlder to spend up to the specified amount of tokens
     /// reverts if component wallet is not component itself
     /// only component owner (nft holder) is authorizes to call this function
-    function approveTokenHandler(uint256 spendingLimitAmount) external;
+    function approveTokenHandler(Amount spendingLimitAmount) external;
 
     /// @dev sets the wallet address for the component
     /// if the current wallet has tokens, these will be transferred

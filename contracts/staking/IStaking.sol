@@ -17,6 +17,8 @@ interface IStaking is
     IComponent,
     IVersionable
 {
+    // staking rate
+    event LogStakingStakingRateSet(uint256 chainId, address token, UFixed oldStakingRate, UFixed newStakingRate);
 
     // target parameters
     event LogStakingLockingPeriodSet(NftId targetNftId, Seconds oldLockingPeriod, Seconds lockingPeriod);
@@ -28,6 +30,9 @@ interface IStaking is
 
     error ErrorStakingNotStakingOwner();
     error ErrorStakingNotNftOwner(NftId nftId);
+
+    // staking rate
+    error ErrorStakingTokenNotRegistered(uint256 chainId, address token);
 
     // check dip balance and allowance
     error ErrorStakingDipBalanceInsufficient(address owner, uint256 amount, uint256 dipBalance);
@@ -59,7 +64,10 @@ interface IStaking is
         UFixed rewardRate;
     }
 
-    // rate management 
+    // staking rate management 
+
+    /// @dev sets the rate that converts 1 token of total value locked into the
+    /// the required staked dip amount to back up the locked token value
     function setStakingRate(uint256 chainId, address token, UFixed stakingRate) external;
 
 
@@ -73,31 +81,53 @@ interface IStaking is
         UFixed initialRewardRate
     ) external;
 
+
     /// @dev set the stake locking period to the specified duration.
+    /// permissioned: only the staking service may call this function
     function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod) external;
 
+    /// @dev update the target specific reward rate.
+    /// permissioned: only the staking service may call this function
     function setRewardRate(NftId targetNftId, UFixed rewardRate) external;
-    function refillRewardReserves(NftId targetNftId, Amount dipAmount) external;
-    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external;
 
-    function increaseTvl(NftId targetNftId, address token, Amount amount) external;
-    function decreaseTvl(NftId targetNftId, address token, Amount amount) external;
+    /// @dev (re)fills the staking reward reserves for the specified target
+    /// unpermissioned: anybody may fill up staking reward reserves
+    function refillRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+
+    /// @dev defunds the staking reward reserves for the specified target
+    /// permissioned: only the staking service may call this function
+    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+
+
+    /// @dev increases the total value locked amount for the specified target by the provided token amount.
+    /// function is called when a new policy is collateralized.
+    /// function restricted to the pool service.
+    function increaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external returns (Amount newBalance);
+
+
+    /// @dev decreases the total value locked amount for the specified target by the provided token amount.
+    /// function is called when a new policy is closed or payouts are executed.
+    /// function restricted to the pool service.
+    function decreaseTotalValueLocked(NftId targetNftId, address token, Amount amount) external returns (Amount newBalance);
+
 
     function updateRemoteTvl(NftId targetNftId, address token, Amount amount) external;
 
     // staking functions
 
-    /// @dev register a new stake info object
+    /// @dev creat a new stake info object
     /// permissioned: only staking service may call this function.
-    function registerStake(NftId stakeNftId, NftId targetNftId, Amount dipAmount) external;
+    function createStake(NftId stakeNftId, NftId targetNftId, Amount dipAmount) external;
 
-    /// @dev increase the staked dip by dipAmount for the specified stake
-    function stake(NftId stakeNftId, Amount dipAmount) external;
+    /// @dev increase the staked dip by dipAmount for the specified stake.
+    /// staking rewards are updated and added to the staked dips as well.
+    /// the function returns the new total amount of staked dips.
+    function stake(NftId stakeNftId, Amount dipAmount) external returns (Amount stakeBalance);
 
     /// @dev restakes the dips to a new target.
     /// the sum of the staked dips and the accumulated rewards will be restaked.
     /// permissioned: only staking service may call this function.
-    function restake(NftId stakeNftId) external;
+    function restake(NftId stakeNftId, NftId newTargetNftId) external returns (NftId newStakeNftId);
 
     /// @dev retuns the specified amount of dips to the holder of the specified stake nft.
     /// if dipAmount is set to Amount.max() all staked dips and all rewards are transferred to 
@@ -135,18 +165,4 @@ interface IStaking is
 
     function getStakingStore() external view returns (StakingStore stakingStore);
     function getStakingReader() external view returns (StakingReader reader);
-
-    // function getStakeInfo(NftId stakeNftId) external view returns (StakeInfo memory stakeInfo);
-    // function getTargetInfo(NftId targetNftId) external view returns (TargetInfo memory targetInfo);
-
-    function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount);
-    function getStakedAmount(NftId targetNftId) external view returns (Amount stakeAmount);
-
-    function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate);
-
-    function calculateRewardIncrementAmount(
-        NftId targetNftId,
-        Timestamp rewardsLastUpdatedAt
-    ) external view returns (Amount rewardIncrementAmount);
-
 }

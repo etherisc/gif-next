@@ -79,52 +79,6 @@ contract TokenRegistry is
             _dipToken.symbol());
     }
 
-    // TODO cleanup
-    // function initialize(
-    //     address initialOwner
-    // )
-    //     public
-    //     initializer()
-    // {
-    //     initializeNftOwnable(initialOwner, _registryAddress);
-
-    //     // initialize release manager
-    //     _releaseManager = ReleaseManager(msg.sender);
-
-
-    //     // register dip token
-    //     uint256 chainId = block.chainid;
-    //     _registerToken(
-    //         chainId, 
-    //         address(_dipToken), 
-    //         _dipToken.decimals(), 
-    //         _dipToken.symbol());
-    // }
-
-
-    // /// @dev link token registry ownership to nft owner of registry service and register dip token.
-    // function linkToRegistryService() 
-    //     external
-    // {
-    //     // link token registry ownership to registry service
-    //     address registryService = getRegistry().getServiceAddress(
-    //             REGISTRY(), 
-    //             _releaseManager.getInitialVersion());
-
-    //     _linkToNftOwnable(registryService);
-
-    //     // activate dip for initial gif version
-    //     // as token registry is created in constructor of release manager
-    //     // release manager can not yet be called in constructor of token registry
-    //     uint256 chainId = block.chainid;
-    //     address dipToken = address(_dipToken);
-    //     VersionPart majorVersion = _releaseManager.getInitialVersion();
-    //     bool active = true;
-    //     _active[chainId][dipToken][majorVersion] = active;
-
-    //     emit LogTokenRegistryTokenStateSet(chainId, dipToken, majorVersion, active);
-    // }
-
 
     /// @dev register an onchain token.
     /// this function verifies that the provided token address is a contract that implements

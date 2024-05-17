@@ -13,7 +13,7 @@ import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 
 import {blockBlocknumber} from "../../contracts/type/Blocknumber.sol";
 import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
-import {NftId, NftIdLib, toNftId} from "../../contracts/type/NftId.sol";
+import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
 import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
@@ -517,6 +517,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     {
         // solhint-disable-next-line
         //console.log("Checking all IRegistry getters");
+        NftId zero = NftIdLib.zero();
 
         // check getters without args
         //console.log("   checking getters without args");
@@ -526,20 +527,20 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         // check for zero address
         //console.log("   checking with 0 address");        
-        assertEq(registry.getNftId( address(0) ).toInt(), NftIdLib.zero().toInt(), "getNftId(0) returned unexpected value");        
+        assertEq(registry.getNftId( address(0) ).toInt(), zero.toInt(), "getNftId(0) returned unexpected value");        
         eqObjectInfo(registry.getObjectInfo( address(0) ), zeroObjectInfo());
 
         assertFalse(registry.isRegistered( address(0) ), "isRegistered(0) returned unexpected value");
-        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, NftIdLib.zero()));
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, zero.toInt()));
         registry.ownerOf(address(0));
+
         // check for zeroNftId    
         //console.log("   checking with 0 nftId"); 
-        eqObjectInfo( registry.getObjectInfo( NftIdLib.zero() ), zeroObjectInfo());
-        assertFalse(registry.isRegistered( NftIdLib.zero() ), "isRegistered(zeroNftId) returned unexpected value");
-        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, NftIdLib.zero()));
-        registry.ownerOf(toNftId(0));
-        // TODO no revert with NftIdLib.zero()...
-        //registry.ownerOf(NftIdLib.zero());
+        eqObjectInfo(registry.getObjectInfo(zero), zeroObjectInfo());
+        assertFalse(registry.isRegistered(zero), "isRegistered(zero) returned unexpected value");
+
+        vm.expectRevert(abi.encodeWithSelector(IERC721Errors.ERC721NonexistentToken.selector, zero));
+        registry.ownerOf(zero);
         
         //_assert_registry_getters(NftIdLib.zero(), zeroObjectInfo(), address(0)); // _nftIds[] and _info[] have this combinaion
 
@@ -664,10 +665,10 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
         else
         {
-            NftId expectedNftId = toNftId(chainNft.calculateTokenId(_nextId));
-            vm.expectEmit();
+            NftId expectedTokenId = NftIdLib.toNftId(chainNft.calculateTokenId(_nextId));
+            vm.expectEmit(address(registry));
             emit LogRegistration(
-                expectedNftId,
+                expectedTokenId,
                 info.parentNftId, 
                 info.objectType, 
                 info.isInterceptor,
@@ -706,10 +707,12 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
         else
         {
+            // TODO figure out why this doesn't work
+            // "log != expected log" with NftIdLib.toNftId()...
+            NftId expectedNftId = NftIdLib.toNftId(chainNft.calculateTokenId(_nextId));
             vm.expectEmit(address(registry));
             emit LogRegistration(
-                // TODO "log != expected log" with NftIdLib.toNftId()...
-                toNftId(chainNft.calculateTokenId(_nextId)), 
+                expectedNftId, 
                 info.parentNftId, 
                 info.objectType, 
                 info.isInterceptor,
@@ -793,7 +796,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         {// special case: MUST NOT register with global registry as parent when not on mainnet (global registry have valid type as parent but 0 address in this case)
                 expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryParentAddressZero.selector);
                 expectRevert = true;
-        } else if(info.objectAddress > address(0) && _nftIdByAddress[info.objectAddress] != toNftId(0))
+        } else if(info.objectAddress > address(0) && _nftIdByAddress[info.objectAddress] != NftIdLib.zero())
         {// contract checks
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryContractAlreadyRegistered.selector, info.objectAddress);
             expectRevert = true;

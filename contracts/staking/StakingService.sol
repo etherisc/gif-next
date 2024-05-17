@@ -89,6 +89,7 @@ contract StakingService is
         emit LogStakingServiceInstanceTargetRegistered(targetNftId, chainId);
     }
 
+
     function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod)
         external
         virtual
@@ -98,6 +99,7 @@ contract StakingService is
             targetNftId, lockingPeriod);
     }
 
+
     function setRewardRate(NftId targetNftId, UFixed rewardRate)
         external
         virtual
@@ -106,6 +108,48 @@ contract StakingService is
         _getStakingServiceStorage()._staking.setRewardRate(
             targetNftId, rewardRate);
 
+    }
+
+
+    function refillRewardReserves(NftId targetNftId, Amount dipAmount)
+        external
+        virtual
+        returns (Amount newBalance)
+    {
+        address rewardProvider = msg.sender;
+
+        // update reward reserve book keeping
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        newBalance = $._staking.refillRewardReserves(targetNftId, dipAmount);
+
+        // collect reward dip from provider
+        $._staking.collectDipAmount(
+            rewardProvider,
+            dipAmount);
+
+        emit LogStakingServiceRewardReservesIncreased(targetNftId, rewardProvider, dipAmount, newBalance);
+    }
+
+
+    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount)
+        external
+        virtual
+        onlyNftOwner(targetNftId)
+        returns (Amount newBalance)
+    {
+        // modifyier checks that sender is owner
+        address targetOwner = msg.sender;
+
+        // update reward reserve book keeping
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        newBalance = $._staking.withdrawRewardReserves(targetNftId, dipAmount);
+
+        // transfer withdrawal amount to target owner
+        $._staking.transferDipAmount(
+            targetOwner,
+            dipAmount);
+
+        emit LogStakingServiceRewardReservesDecreased(targetNftId, targetOwner, dipAmount, newBalance);
     }
 
 
@@ -127,13 +171,9 @@ contract StakingService is
         )
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        StakingReader stakingReader = $._staking.getStakingReader();
         address stakeOwner = msg.sender;
 
-        StakeManagerLib.checkActiveTarget(
-            stakingReader,
-            targetNftId);
-
+        // target nft id checks are performed in $._staking.createStake() below
         // register new stake object with registry
         stakeNftId = $._registryService.registerStake(
             IRegistry.ObjectInfo({
@@ -147,7 +187,7 @@ contract StakingService is
             }));
 
         // create stake info with staking
-        $._staking.registerStake(
+        $._staking.createStake(
             stakeNftId, 
             targetNftId,
             dipAmount);
@@ -171,34 +211,21 @@ contract StakingService is
         onlyNftOwner(stakeNftId)
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        StakingReader stakingReader = $._staking.getStakingReader();
         address stakeOwner = msg.sender;
 
-        // add additional staked dips by staking
-        $._staking.stake(
+        // add additional staked dips by staking 
+        Amount stakeBalance = $._staking.stake(
             stakeNftId, 
             dipAmount);
 
         // collect staked dip by staking
-        $._staking.collectDipAmount(
-            stakeOwner,
-            dipAmount);
+        if (dipAmount.gtz()) {
+            $._staking.collectDipAmount(
+                stakeOwner,
+                dipAmount);
+        }
 
-        emit LogStakingServiceStakeIncreased(stakeNftId, stakeOwner, dipAmount);
-    }
-
-
-    function restake(
-        NftId stakeNftId
-    )
-        external
-        virtual
-        // restricted // TODO re-enable once services have stable roles
-        onlyNftOwner(stakeNftId)
-    {
-        // restake all rewards as additional stakes
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        $._staking.restake(stakeNftId);
+        emit LogStakingServiceStakeIncreased(stakeNftId, stakeOwner, dipAmount, stakeBalance);
     }
 
 
@@ -214,27 +241,16 @@ contract StakingService is
             NftId newStakeNftId
         )
     {
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
         // TODO implement
     } 
-
-
-    function unstake(
-        NftId stakeNftId,
-        Amount amount
-    )
-        external
-        virtual
-    {
-
-    }
 
 
     function updateRewards(
         NftId stakeNftId
     )
         external
-        // unpermissioned, anybody may call this function
-        // TODO consider to add restricted (just to be able to disable function when target is disabled)
+        // restricted // TODO re-enable once services have stable roles
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._staking.updateRewards(stakeNftId);
@@ -243,30 +259,44 @@ contract StakingService is
     }
 
 
-
-    function increaseTotalValueLocked(
-        NftId targetNftId,
-        address token,
-        Amount amount
-    )
+    function claimRewards(NftId stakeNftId)
         external
         virtual
-        returns (Amount totalValueLocked)
+        // restricted // TODO re-enable once services have stable roles
+        onlyNftOwner(stakeNftId)
     {
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        address stakeOwner = msg.sender;
 
+        Amount rewardsClaimedAmount = $._staking.claimRewards(stakeNftId);
+        $._staking.transferDipAmount(
+            stakeOwner,
+            rewardsClaimedAmount);
+
+        emit LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount);
     }
 
 
-    function decreaseTotalValueLocked(
-        NftId targetNftId,
-        address token,
-        Amount amount
-    )
+    function unstake(NftId stakeNftId)
         external
         virtual
-        returns (Amount totalValueLocked)
+        // restricted // TODO re-enable once services have stable roles
+        onlyNftOwner(stakeNftId)
     {
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        address stakeOwner = msg.sender;
 
+        (
+            Amount unstakedAmount,
+            Amount rewardsClaimedAmount
+        ) = $._staking.unstake(stakeNftId);
+
+        Amount totalAmount = unstakedAmount + rewardsClaimedAmount;
+        $._staking.transferDipAmount(
+            stakeOwner,
+            totalAmount);
+
+        emit LogStakingServiceUnstaked(stakeNftId, stakeOwner, totalAmount);
     }
 
 

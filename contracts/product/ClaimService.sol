@@ -314,7 +314,12 @@ contract ClaimService is
         instance.getInstanceStore().updatePolicyClaims(policyNftId, policyInfo, KEEP_STATE());
 
         // inform pool about payout
-        _poolService.reduceCollateral(instance, policyNftId, policyInfo, payoutAmount);
+        _poolService.reduceCollateral(
+            instance, 
+            address(instanceReader.getComponentInfo(policyInfo.productNftId).token),
+            policyNftId, 
+            policyInfo, 
+            payoutAmount);
 
         // transfer payout token and fee
         (

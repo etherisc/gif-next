@@ -15,7 +15,7 @@ import {INftOwnable} from "../shared/INftOwnable.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, POOL, BUNDLE, COMPONENT, INSTANCE, REGISTRY} from "../type/ObjectType.sol";
+import {ObjectType, POOL, BUNDLE, COMPONENT, INSTANCE, REGISTRY, STAKING} from "../type/ObjectType.sol";
 import {PUBLIC_ROLE, POOL_OWNER_ROLE, POLICY_SERVICE_ROLE, RoleId} from "../type/RoleId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {Version, VersionLib} from "../type/Version.sol";
@@ -35,6 +35,7 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPoolService} from "./IPoolService.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
+import {IStaking} from "../staking/IStaking.sol";
 import {InstanceService} from "../instance/InstanceService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
@@ -54,6 +55,8 @@ contract PoolService is
     IComponentService internal _componentService;
     IInstanceService private _instanceService;
     IRegistryService private _registryService;
+
+    IStaking private _staking;
 
     function _initialize(
         address owner, 
@@ -75,6 +78,8 @@ contract PoolService is
         _bundleService = IBundleService(_getServiceAddress(BUNDLE()));
         _instanceService = IInstanceService(_getServiceAddress(INSTANCE()));
         _componentService = IComponentService(_getServiceAddress(COMPONENT()));
+
+        _staking = IStaking(getRegistry().getStakingAddress());
 
         registerInterface(type(IPoolService).interfaceId);
     }
@@ -218,6 +223,7 @@ contract PoolService is
         emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId);
     }
 
+
     function processSale(
         NftId bundleNftId, 
         IPolicy.Premium memory premium 
@@ -253,6 +259,7 @@ contract PoolService is
 
     function lockCollateral(
         IInstance instance, 
+        address token,
         NftId productNftId,
         NftId applicationNftId,
         NftId bundleNftId,
@@ -281,6 +288,12 @@ contract PoolService is
             bundleNftId,
             localCollateralAmount);
 
+        // update value locked with staking service
+        _staking.increaseTotalValueLocked(
+            instance.getNftId(),
+            token,
+            totalCollateralAmount);
+
         // hierarhical riskpool setup
         // TODO loop in with pool component to guarantee availability of external capital
         if(totalCollateralAmount > localCollateralAmount) {
@@ -291,6 +304,7 @@ contract PoolService is
 
     function reduceCollateral(
         IInstance instance, 
+        address token,
         NftId policyNftId, 
         IPolicy.PolicyInfo memory policyInfo,
         Amount payoutAmount
@@ -304,6 +318,12 @@ contract PoolService is
             policyNftId, 
             policyInfo.bundleNftId, 
             payoutAmount);
+
+        // update value locked with staking service
+        _staking.decreaseTotalValueLocked(
+            instance.getNftId(),
+            token,
+            payoutAmount);
     }
 
 
@@ -311,6 +331,7 @@ contract PoolService is
     /// may only be called by the policy service for unlocked pool components
     function releaseCollateral(
         IInstance instance, 
+        address token,
         NftId policyNftId, 
         IPolicy.PolicyInfo memory policyInfo
     )
@@ -318,15 +339,23 @@ contract PoolService is
         virtual
         restricted
     {
+        Amount remainingCollateralAmount = policyInfo.sumInsuredAmount - policyInfo.claimAmount;
+
         _bundleService.releaseCollateral(
             instance, 
             policyNftId, 
             policyInfo.bundleNftId, 
-            policyInfo.sumInsuredAmount - policyInfo.claimAmount);
+            remainingCollateralAmount);
 
         _bundleService.unlinkPolicy(
             instance, 
             policyNftId);
+
+        // update value locked with staking service
+        _staking.decreaseTotalValueLocked(
+            instance.getNftId(),
+            token,
+            remainingCollateralAmount);
     }
 
 

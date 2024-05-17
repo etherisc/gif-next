@@ -122,6 +122,7 @@ export async function deployAndRegisterMasterInstance(
         [],
         {
             libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress
             }
         }
