@@ -1,64 +1,61 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
+import {NftId} from "../type/NftId.sol";
+import {RoleId, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {ObjectType, ObjectTypeLib, zeroObjectType, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
+import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
+import {Timestamp, TimestampLib, zeroTimestamp, ltTimestamp} from "../type/Timestamp.sol";
+import {Seconds, SecondsLib} from "../type/Seconds.sol";
+import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../type/StateId.sol";
+import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
+
+import {IService} from "../shared/IService.sol";
+import {AccessManagerExtendedWithDisableInitializeable} from "../shared/AccessManagerExtendedWithDisableInitializeable.sol";
 import {ILifecycle} from "../shared/ILifecycle.sol";
 import {INftOwnable} from "../shared/INftOwnable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
+
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IRegistryService} from "./IRegistryService.sol";
-import {IService} from "../shared/IService.sol";
-import {NftId} from "../type/NftId.sol";
-import {ObjectType, ObjectTypeLib, zeroObjectType, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
+import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {Registry} from "./Registry.sol";
-import {RegistryAccessManager} from "./RegistryAccessManager.sol";
-import {RoleId, ADMIN_ROLE} from "../type/RoleId.sol";
-import {ServiceAuthorizationsLib} from "./ServiceAuthorizationsLib.sol";
-import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../type/StateId.sol";
-import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
-import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
+import {ServiceAuthorizationsLib} from "./ServiceAuthorizationsLib.sol";
 
-    // gif admin is not technical, should sent simple txs
-    // foundation creates
-    // other guy deployes
-    // other guy checks (can precompute addresses and compare with what deployed)
-    // foundation activates
-// TODO add function to deactivate releases
-// TODO in next pr add getVersion() to releaseAccessManager only, set in initialize()
-// TODO in next pr make single base for registry access manager, release access manager and instance access manager
 
-contract ReleaseManager is
-    AccessManaged,
-    Initializable,
-    ILifecycle
+contract ReleaseManager is 
+    AccessManaged, 
+    ILifecycle, 
+    IRegistryLinked
 {
     using ObjectTypeLib for ObjectType;
 
     uint256 public constant INITIAL_GIF_VERSION = 3;
 
-    event LogReleaseCreation(VersionPart version, bytes32 salt, AccessManagerUpgradeableInitializeable accessManager); 
+    event LogReleaseCreation(VersionPart version, bytes32 salt, AccessManagerExtendedWithDisableInitializeable accessManager); 
     event LogReleaseActivation(VersionPart version);
 
     // constructor
-    error ErrorReleaseManagerNotRegistry(address registry);
+    error ErrorReleaseManagerNotRegistry(Registry registry);
 
     // createNextRelease
     error ErrorReleaseManagerReleaseCreationDisallowed(StateId currentStateId);
 
     // prepareRelease
     error ErrorReleaseManagerReleasePreparationDisallowed(StateId currentStateId);
-    error ErrorReleaseManagerReleaseEmpty();
-    error ErrorReleaseManagerReleaseAlreadyCreated(VersionPart version);
+    error ErrorReleaseManagerReleaseAlreadyPrepared(VersionPart version);
     
     // register staking
-    error ErrorReleaseManagerStakingAlreadySet(address stakingAddress);
+    //error ErrorReleaseManagerStakingAlreadySet(address stakingAddress);
 
     // registerService
     error ErrorReleaseManagerNoServiceRegistrationExpected();
@@ -67,10 +64,14 @@ contract ReleaseManager is
     error ErrorReleaseManagerServiceAddressInvalid(IService given, address expected);
 
     // activateNextRelease
-    error ErrorReleaseManagerActivationDisallowed(StateId currentStateId);
+    error ErrorReleaseManagerReleaseActivationDisallowed(StateId currentStateId);
     error ErrorReleaseManagerReleaseNotCreated(VersionPart releaseVersion);
     error ErrorReleaseManagerReleaseRegistrationNotFinished(VersionPart releaseVersion, uint awaitingRegistration);
     error ErrorReleaseManagerReleaseAlreadyActivated(VersionPart releaseVersion);
+
+    // disableRelease
+    error ErrorReleaseManagerReleaseNotActivated(VersionPart releaseVersion);
+    error ErrorReleaseManagerReleaseAlreadyDisabled(VersionPart releaseVersion);
 
     // _verifyService
     error ErrorReleaseManagerServiceReleaseAuthorityMismatch(IService service, address serviceAuthority, address releaseAuthority);
@@ -84,17 +85,21 @@ contract ReleaseManager is
     error ErrorReleaseManagerServiceSelfRegistration(IService service);
     error ErrorReleaseManagerServiceOwnerRegistered(IService service, address owner);
 
-    // _verifyServiceAuthorizations
-    error ErrorReleaseManagerServiceRoleInvalid(address service, RoleId role);
+    // _verifyReleaseAuthorizations
+    error ErrorReleaseManagerReleaseEmpty();
+    error ErrorReleaseManagerReleaseServiceRoleInvalid(uint serviceIdx, address service, RoleId role);
 
-    RegistryAccessManager public immutable _accessManager;
+    Seconds public constant MIN_DISABLE_DELAY = Seconds.wrap(60 * 24 * 365); // 1 year
+
+    RegistryAdmin public immutable _admin;
+    address public immutable _releaseAccessManagerCodeAddress;
     Registry public immutable _registry;
     IRegisterable private _staking;
     address private _stakingOwner;
 
-    mapping(VersionPart version => AccessManagerUpgradeableInitializeable accessManager) internal _releaseAccessManager;
+    mapping(VersionPart version => AccessManagerExtendedWithDisableInitializeable accessManager) internal _releaseAccessManager;
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
-    mapping(address registryService => bool isActive) internal _active;// have access to registry
+    mapping(address registryService => VersionPart version) _releaseVersionByAddress;
 
     VersionPart immutable internal _initial;// first active version    
     VersionPart internal _latest; // latest active version
@@ -104,48 +109,34 @@ contract ReleaseManager is
     uint256 internal _awaitingRegistration; // "services left to register" counter
 
     // deployer of this contract must be gif admin
-    constructor(
-        address gifAdmin,
-        address gifManager,
-        address registry
-    )
+    constructor(Registry registry)
         AccessManaged(msg.sender)
     {
-        if(!_isRegistry(registry)) {
+        // TODO move this part to RegistryLinked constructor
+        if(!_isRegistry(address(registry))) {
             revert ErrorReleaseManagerNotRegistry(registry);
         }
 
-        _registry = Registry(registry);
-        _accessManager = new RegistryAccessManager(
-            gifAdmin,
-            gifManager);
-
-        setAuthority(address(_accessManager.authority()));
+        _registry = registry;
+        setAuthority(_registry.getAuthority());
+        _admin = RegistryAdmin(_registry.getRegistryAdminAddress());
 
         _initial = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION);
         _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
         _state = getInitialState(RELEASE());
+        
+        AccessManagerExtendedWithDisableInitializeable masterReleaseAccessManager = new AccessManagerExtendedWithDisableInitializeable();
+        masterReleaseAccessManager.initialize(_registry.NFT_LOCK_ADDRESS(), VersionLib.toVersionPart(0));
+        //masterReleaseAccessManager.disable();
+        _releaseAccessManagerCodeAddress = address(masterReleaseAccessManager);
     }
-
-
-    function registerStaking(
-        address stakingAddress
-    )
-        external
-        restricted() // GIF_ADMIN_ROLE
-    {
-        INftOwnable staking = INftOwnable(stakingAddress);
-        _registry.registerStaking(stakingAddress);
-        staking.linkToRegisteredNftId();
-    }
-
 
     /// @dev skips previous release if was not activated
     /// sets release manager into state SCHEDULED
     function createNextRelease()
         external
         restricted() // GIF_ADMIN_ROLE
-        returns(VersionPart version)
+        returns(VersionPart)
     {
         if (!isValidTransition(RELEASE(), _state, SCHEDULED())) {
             revert ErrorReleaseManagerReleaseCreationDisallowed(_state);
@@ -154,13 +145,18 @@ contract ReleaseManager is
         _next = VersionPartLib.toVersionPart(_next.toInt() + 1);
         _awaitingRegistration = 0;
         _state = SCHEDULED();
+
+        return _next;
     }
 
-
+    // TODO order of events
     function prepareNextRelease(
-        address[] memory addresses, 
-        RoleId[][] memory serviceRoles, 
-        RoleId[][] memory functionRoles, 
+        address[] memory addresses,
+        string[] memory names, 
+        RoleId[][] memory serviceRoles,
+        string[][] memory serviceRoleNames,
+        RoleId[][] memory functionRoles,
+        string[][] memory functionRoleNames,
         bytes4[][][] memory selectors, 
         bytes32 salt
     )
@@ -172,43 +168,40 @@ contract ReleaseManager is
             bytes32 releaseSalt
         )
     {
-        if (!isValidTransition(RELEASE(), _state, DEPLOYING())) {
-            revert ErrorReleaseManagerReleasePreparationDisallowed(_state);
-        }
-
-        if(addresses.length == 0) {
-            revert ErrorReleaseManagerReleaseEmpty();
-        }
-
-        if(_awaitingRegistration > 0) {
-            revert ErrorReleaseManagerReleaseAlreadyCreated(version);
-        }
-
-        _verifyReleaseAuthorizations(addresses, serviceRoles, functionRoles, selectors);
-
         version = getNextVersion();
 
-        _releaseInfo[version].version = version;
-        _releaseInfo[version].addresses = addresses;
-        _releaseInfo[version].serviceRoles = serviceRoles;
-        _releaseInfo[version].functionRoles = functionRoles;
-        _releaseInfo[version].selectors = selectors;
-        _awaitingRegistration = addresses.length;
-        _state = DEPLOYING();
-
-        version = getNextVersion();
         // ensures unique salt
         releaseSalt = keccak256(
             bytes.concat(
                 bytes32(version.toInt()),
                 salt));
 
-        releaseAccessManagerAddress = Clones.cloneDeterministic(_accessManager.authority(), releaseSalt);
-        AccessManagerUpgradeableInitializeable releaseAccessManager = AccessManagerUpgradeableInitializeable(releaseAccessManagerAddress);
-        
+        releaseAccessManagerAddress = Clones.cloneDeterministic(_releaseAccessManagerCodeAddress, releaseSalt);
+        AccessManagerExtendedWithDisableInitializeable releaseAccessManager = AccessManagerExtendedWithDisableInitializeable(releaseAccessManagerAddress);
+        releaseAccessManager.initialize(address(this), version);
+
+        if (!isValidTransition(RELEASE(), _state, DEPLOYING())) {
+            revert ErrorReleaseManagerReleasePreparationDisallowed(_state);
+        }
+
+        _verifyReleaseAuthorizations(addresses, serviceRoles, functionRoles, selectors);
+
+        if(_awaitingRegistration > 0) {
+            revert ErrorReleaseManagerReleaseAlreadyPrepared(version);
+        }
+        // TODO instead of copying just set ServiceAuthorizationsLib for release and array of domains???
+        _releaseInfo[version].version = version;
+        _releaseInfo[version].salt = releaseSalt;
+        _releaseInfo[version].addresses = addresses;
+        _releaseInfo[version].names = names;
+        _releaseInfo[version].serviceRoles = serviceRoles;
+        _releaseInfo[version].serviceRoleNames = serviceRoleNames;
+        _releaseInfo[version].functionRoles = functionRoles;
+        _releaseInfo[version].functionRoleNames = functionRoleNames;
+        _releaseInfo[version].selectors = selectors;
+        _awaitingRegistration = addresses.length;
+        _state = DEPLOYING();        
         _releaseAccessManager[version] = releaseAccessManager;
-        
-        releaseAccessManager.initialize(address(this));
 
         emit LogReleaseCreation(version, releaseSalt, releaseAccessManager);
     }
@@ -229,6 +222,7 @@ contract ReleaseManager is
             VersionPart version
         ) = _verifyService(service);
 
+        // redundant with state var
         if (_awaitingRegistration == 0) {
             revert ErrorReleaseManagerNoServiceRegistrationExpected();
         }
@@ -244,8 +238,11 @@ contract ReleaseManager is
             _releaseAccessManager[version],
             // TODO temp, while typescript addresses computation is not implemented
             address(service),//serviceAddress, 
+            _releaseInfo[version].names[serviceIdx], 
             _releaseInfo[version].serviceRoles[serviceIdx],
+            _releaseInfo[version].serviceRoleNames[serviceIdx],
             _releaseInfo[version].functionRoles[serviceIdx],
+            _releaseInfo[version].functionRoleNames[serviceIdx],
             _releaseInfo[version].selectors[serviceIdx]);
 
         // TODO decide for one of the approaches
@@ -259,6 +256,7 @@ contract ReleaseManager is
         // }
 
         _awaitingRegistration = serviceIdx;
+        // TODO end state depends on (_awaitingRegistration == 0)
         _state = DEPLOYING();
 
         // checked in registry
@@ -275,7 +273,7 @@ contract ReleaseManager is
         restricted // GIF_ADMIN_ROLE
     {
         if (!isValidTransition(RELEASE(), _state, ACTIVE())) {
-            revert ErrorReleaseManagerActivationDisallowed(_state);
+            revert ErrorReleaseManagerReleaseActivationDisallowed(_state);
         }
 
         VersionPart version = _next;
@@ -300,10 +298,47 @@ contract ReleaseManager is
         _latest = version;
         _state = ACTIVE();
 
-        _active[service] = true;
+        _releaseVersionByAddress[service] = version;
         _releaseInfo[version].activatedAt = TimestampLib.blockTimestamp();
 
         emit LogReleaseActivation(version);
+    }
+
+    // release becomes disabled after delay expiration (can be reenabled before that)
+    function disableRelease(VersionPart version, Seconds disableDelay)
+        external
+        restricted // GIF_ADMIN_ROLE
+    {
+        // release was activated
+        if(_releaseInfo[version].activatedAt.eqz()) {
+            revert ErrorReleaseManagerReleaseNotActivated(version);
+        }
+
+        // release not disabled already
+        if(_releaseInfo[version].disabledAt.gtz()) {
+            revert ErrorReleaseManagerReleaseAlreadyDisabled(version);
+        }
+
+        disableDelay = SecondsLib.toSeconds(Math.max(disableDelay.toInt(), MIN_DISABLE_DELAY.toInt()));
+
+        _releaseAccessManager[version].disable(disableDelay);
+
+        _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp().addSeconds(disableDelay);
+    }
+    
+    function enableRelease(VersionPart version)
+        external
+        restricted // GIF_ADMIN_ROLE
+    {
+        // release was disabled
+        //if(_releaseInfo[version].disabledAt.eqz()) {
+        //    revert ErrorReleaseManagerReleaseAlreadyEnabled(version);
+        //}
+
+        // reverts if disable delay expired
+        _releaseAccessManager[version].enable();
+        
+        _releaseInfo[version].disabledAt = zeroTimestamp();
     }
 
     //--- view functions ----------------------------------------------------//
@@ -317,15 +352,12 @@ contract ReleaseManager is
     }
 
     function isActiveRegistryService(address service) external view returns(bool) {
-        return _active[service];
+        VersionPart version = _releaseVersionByAddress[service];
+        return isActiveRelease(version);
     }
 
-    function isValidRelease(VersionPart version) external view returns(bool) {
+    function isActiveRelease(VersionPart version) public view returns(bool) {
         return _releaseInfo[version].activatedAt.gtz();
-    }
-
-    function getRegistryAddress() external view returns(address) {
-        return (address(_registry));
     }
 
     function getReleaseInfo(VersionPart version) external view returns(IRegistry.ReleaseInfo memory) {
@@ -352,12 +384,12 @@ contract ReleaseManager is
         return _awaitingRegistration;
     }
 
-    function getReleaseAccessManager(VersionPart version) external view returns(AccessManagerUpgradeableInitializeable) {
+    function getReleaseAccessManager(VersionPart version) external view returns(AccessManagerExtendedWithDisableInitializeable) {
         return _releaseAccessManager[version];
     }
-
-    function getRegistryAccessManager() external view returns (RegistryAccessManager) {
-        return _accessManager;
+    // TODO tokenr registry knows nothing about adfmin, only registry
+    function getRegistryAdmin() external view returns (address) {
+        return address(_admin);
     }
 
     //--- IRegistryLinked ------------------------------------------------------//
@@ -368,9 +400,9 @@ contract ReleaseManager is
 
     //--- ILifecycle -----------------------------------------------------------//
 
-    function hasLifecycle(ObjectType objectType) external view returns (bool) { return objectType == RELEASE(); }
+    function hasLifecycle(ObjectType objectType) external pure returns (bool) { return objectType == RELEASE(); }
 
-    function getInitialState(ObjectType objectType) public view returns (StateId stateId) { 
+    function getInitialState(ObjectType objectType) public pure returns (StateId stateId) { 
         if (objectType == RELEASE()) {
             stateId = INITIAL();
         }
@@ -382,7 +414,7 @@ contract ReleaseManager is
         StateId toId
     )
         public 
-        view 
+        pure 
         returns (bool isValid)
     {
         if (objectType != RELEASE()) { return false; }
@@ -400,6 +432,7 @@ contract ReleaseManager is
 
     function _verifyService(IService service)
         internal
+        view
         returns(
             IRegistry.ObjectInfo memory serviceInfo,
             ObjectType serviceDomain, 
@@ -481,15 +514,19 @@ contract ReleaseManager is
         bytes4[][][] memory selectors
     )
         internal
-        view
+        pure
     {
+        if(serviceAddress.length == 0) {
+            revert ErrorReleaseManagerReleaseEmpty();
+        }
+
         for(uint serviceIdx = 0; serviceIdx < serviceAddress.length; serviceIdx++)
         {
             for(uint roleIdx = 0; roleIdx < serviceRoles[serviceIdx].length; roleIdx++)
             {
                 RoleId role = serviceRoles[serviceIdx][roleIdx];
-                if(role == ADMIN_ROLE()) {
-                    revert ErrorReleaseManagerServiceRoleInvalid(serviceAddress[serviceIdx], role);
+                if(role == ADMIN_ROLE() || role == PUBLIC_ROLE()) {
+                    revert ErrorReleaseManagerReleaseServiceRoleInvalid(serviceIdx, serviceAddress[serviceIdx], role);
                 }
             }
         }
@@ -501,43 +538,41 @@ contract ReleaseManager is
     }
 
     function _setServiceAuthorizations(
-        IAccessManager accessManager,
+        AccessManagerExtendedWithDisableInitializeable accessManager, // release access manager
         address serviceAddress,
+        string memory serviceName,
         RoleId[] memory serviceRoles,
+        string[] memory serviceRoleNames,
         RoleId[] memory functionRoles,
+        string[] memory functionRoleNames,
         bytes4[][] memory selectors
     )
         internal
     {
+        accessManager.createTarget(serviceAddress, serviceName);
+
         for(uint idx = 0; idx < functionRoles.length; idx++)
         {
+            uint64 roleInt = functionRoles[idx].toInt();
+
+            if(!accessManager.isRoleExists(roleInt)) {
+                accessManager.createRole(roleInt, functionRoleNames[idx]);
+            }
+
             accessManager.setTargetFunctionRole(
                 serviceAddress, 
                 selectors[idx],
                 functionRoles[idx].toInt());
-
-            // TODO check/figure out which approach to take
-            // ObjectType domain = config[idx].serviceDomain;
-            // // not "registry service" / zero domain
-            // if(
-            //     domain == REGISTRY() ||
-            //     domain.eqz()
-            // ) { revert ConfigServiceDomainInvalid(idx, domain); } 
-
-            // bytes4[] memory selectors = config[idx].authorizedSelectors;
-
-            // // TODO can be zero -> e.g. duplicate domain, first with zero selector, second with non zero selector -> need to check _release[version].domains.contains(domain) instead
-            // // no overwrite
-            // if(_selectors[version][domain].length > 0) {
-            //     revert SelectorAlreadyExists(version, domain); 
-            // }
-            
-            // _selectors[version][domain] = selectors;
-            // _release[version].domains.push(domain);
         }
-
+    
         for(uint idx = 0; idx < serviceRoles.length; idx++)
         {
+            uint64 roleInt = serviceRoles[idx].toInt();
+
+            if(!accessManager.isRoleExists(roleInt)) {
+                accessManager.createRole(roleInt, serviceRoleNames[idx]);
+            }
+
             accessManager.grantRole(
                 serviceRoles[idx].toInt(),
                 serviceAddress, 
@@ -552,7 +587,8 @@ contract ReleaseManager is
         if (registryAddress == address(0)) {
             return false;
         }
-
+        // TODO try catch and return false in case of revert
+        // a just panic
         // check if contract returns a zero nft id for its own address
         if (IRegistry(registryAddress).getNftId(registryAddress).eqz()) {
             return false;

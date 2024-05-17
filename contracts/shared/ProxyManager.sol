@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
 import {IVersionable} from "./IVersionable.sol";
@@ -12,6 +11,7 @@ import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.s
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UpgradableProxyWithAdmin} from "./UpgradableProxyWithAdmin.sol";
 import {Version, VersionLib} from "../type/Version.sol";
+import {NftId} from "../type/NftId.sol";
 
 /// @dev manages proxy deployments for upgradable contracs of type IVersionable
 contract ProxyManager is
@@ -132,6 +132,10 @@ contract ProxyManager is
 
     }
 
+    function linkToProxy() public returns (NftId) {
+        return _linkToNftOwnable(address(_proxy));
+    }
+
     function getDeployData(address proxyOwner, bytes memory deployData) public pure returns (bytes memory data) {
         return abi.encodeWithSelector(
             IVersionable.initializeVersionable.selector, 
@@ -145,7 +149,7 @@ contract ProxyManager is
             upgradeData);
     }
 
-    function getProxy() public returns (UpgradableProxyWithAdmin) {
+    function getProxy() public view returns (UpgradableProxyWithAdmin) {
         return _proxy;
     }
 

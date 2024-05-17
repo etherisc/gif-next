@@ -9,20 +9,20 @@ contract TestInstanceService is GifTest {
 
     uint256 public constant INITIAL_BALANCE = 100000;
 
-    function test_setMasterInstanceReader() public {
+    function test_upgradeMasterInstanceReader() public {
         // GIVEN
         vm.startPrank(registryOwner);
         InstanceReader newMasterInstanceReader = new InstanceReader();
         newMasterInstanceReader.initialize(address(masterInstance));
         
         // WHEN
-        instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
+        instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
 
         // THEN
         assertEq(address(newMasterInstanceReader), instanceService.getMasterInstanceReader(), "master instance reader not set");
     }
 
-    function test_setMasterInstanceReader_not_master_instance() public {
+    function test_upgradeMasterInstanceReader_not_master_instance() public {
         // GIVEN
         vm.startPrank(registryOwner);
         InstanceReader newMasterInstanceReader = new InstanceReader();
@@ -34,10 +34,10 @@ contract TestInstanceService is GifTest {
                 IInstanceService.ErrorInstanceServiceInstanceReaderInstanceMismatch.selector));
 
         // WHEN
-        instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
+        instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
     }
     
-    function test_setMasterInstanceReader_same_reader() public {
+    function test_upgradeMasterInstanceReader_same_reader() public {
         // GIVEN
         vm.startPrank(registryOwner);
 
@@ -47,7 +47,7 @@ contract TestInstanceService is GifTest {
                 IInstanceService.ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader.selector));
 
         // WHEN
-        instanceService.setMasterInstanceReader(address(masterInstanceReader));
+        instanceService.upgradeMasterInstanceReader(address(masterInstanceReader));
     }
 
     function test_upgradeInstanceReader() public {
@@ -55,7 +55,7 @@ contract TestInstanceService is GifTest {
         vm.startPrank(registryOwner);
         InstanceReader newMasterInstanceReader = new InstanceReader();
         newMasterInstanceReader.initialize(address(masterInstance));
-        instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
+        instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();
         
         address oldInstanceReaderAddress = address(instance.getInstanceReader());
@@ -73,7 +73,7 @@ contract TestInstanceService is GifTest {
         vm.startPrank(registryOwner);
         InstanceReader newMasterInstanceReader = new InstanceReader();
         newMasterInstanceReader.initialize(address(masterInstance));
-        instanceService.setMasterInstanceReader(address(newMasterInstanceReader));
+        instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();
         
         // THEN

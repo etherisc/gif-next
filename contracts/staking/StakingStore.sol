@@ -27,6 +27,8 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {Version, VersionLib} from "../type/Version.sol";
 import {Versionable} from "../shared/Versionable.sol";
 
+import {RegistryAdmin} from "../registry/RegistryAdmin.sol";
+
 
 contract StakingStore is 
     AccessManaged,
@@ -46,7 +48,7 @@ contract StakingStore is
     error ErrorStakingStoreBalanceNotInitialized(NftId nftId);
 
     // update balance
-
+    // TODO _registry is not used
     IRegistry private _registry;
     NftIdSetManager private _targetManager;
     StakingReader private _reader;
@@ -59,14 +61,14 @@ contract StakingStore is
     mapping(NftId nftId => Blocknumber lastUpdatedIn) private _lastUpdatedIn;
 
 
-    constructor(
-        address initialAuthority,
-        address registryAddress
-    )
-        AccessManaged(initialAuthority)
+    constructor(IRegistry registry, StakingReader reader)
+        AccessManaged(msg.sender)
     {
-        _registry = IRegistry(registryAddress);
-        _reader = new StakingReader();
+        _registry = registry; //TODO if keeps registry -> RegistryLinked and checks registry address
+        address authority = _registry.getAuthority();
+        setAuthority(authority);
+        
+        _reader = reader;
         _targetManager = new NftIdSetManager();
     }
 

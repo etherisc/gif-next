@@ -15,7 +15,7 @@ import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 
-import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
@@ -83,7 +83,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
     function _deployRegistryService() internal
     {
-        bytes32 salt = "0x1111";
+        //bytes32 salt = "0x1111";
 
         RegistryServiceTestConfig config = new RegistryServiceTestConfig(
             releaseManager,
@@ -91,28 +91,17 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             type(RegistryService).creationCode, 
             registryOwner,
             VersionPartLib.toVersionPart(3),
-            salt);
+            "0x1111");//salt);
 
         (
-            address[] memory serviceAddress,
+            address[] memory serviceAddresses,
+            string[] memory serviceNames,
             RoleId[][] memory serviceRoles,
+            string[][] memory serviceRoleNames,
             RoleId[][] memory functionRoles,
+            string[][] memory functionRoleNames,
             bytes4[][][] memory selectors
         ) = config.getConfig();
-
-        // TODO cleanup
-        // registry = IRegistry(releaseManager.getRegistryAddress());
-        // registryNftId = registry.getNftId(address(registry));
-
-        // registryServiceManager = new RegistryServiceManager(
-        //     accessManager.authority(),
-        //     address(registry)
-        // );        
-        
-        // registryService = registryServiceManager.getRegistryService();
-
-        // address tokenRegistry;
-        // accessManager.initialize(address(releaseManager), tokenRegistry);
 
         releaseManager.createNextRelease();
 
@@ -120,7 +109,15 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             address releaseAccessManager,
             VersionPart releaseVersion,
             bytes32 releaseSalt
-        ) = releaseManager.prepareNextRelease(serviceAddress, serviceRoles, functionRoles, selectors, salt);
+        ) = releaseManager.prepareNextRelease(
+            serviceAddresses, 
+            serviceNames, 
+            serviceRoles, 
+            serviceRoleNames,
+            functionRoles,
+            functionRoleNames,
+            selectors, 
+            "0x1111");//salt);
 
         registryServiceManager = new RegistryServiceManager{salt: releaseSalt}(
             releaseAccessManager,
@@ -131,7 +128,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
         releaseManager.activateNextRelease();
         
-        registryServiceManager.linkOwnershipToServiceNft();
+        registryServiceManager.linkToProxy();
     }
 /*
     function _deployAndRegisterServices() internal {

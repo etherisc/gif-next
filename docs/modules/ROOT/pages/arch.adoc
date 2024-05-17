@@ -20,7 +20,7 @@ NOTE: This document is under construction
 
 - Registry registers all relevant and ownable GIF objects like instances, products, policies, etc on a specific chain
 - The global registry on mainnet also contains entries for the chain registries on other chains
-- Registry access is granted through the `RegistryAccessManager`
+- Registry access is granted through the `RegistryAdmin`
 - Registry contracts are non-upgradeable
 - Registry should be able to cope with multiple major version upgrades. 
 - Transactional operations (writing) to the registry are done via the `RegistryService`

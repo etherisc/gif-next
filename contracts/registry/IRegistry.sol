@@ -14,9 +14,6 @@ interface IRegistry is IERC165 {
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
-    // initialize()
-    error ErrorRegistryCallerNotInitializeOwner(address owner, address caller);
-
     // registerService()
     error ErrorRegistryCallerNotReleaseManager();
     error ErrorRegistryDomainZero(address service);
@@ -28,17 +25,10 @@ interface IRegistry is IERC165 {
     // registerWithCustomTypes()
     error ErrorRegistryCoreTypeRegistration();
 
-    // setTokenRegistry()
-    error TokenRegistryZero();
-    error TokenRegistryAlreadySet(address tokenRegistry);
-
     // _register()
     error ErrorRegistryParentAddressZero();
     error ErrorRegistryTypesCombinationInvalid(ObjectType objectType, ObjectType parentType);
     error ErrorRegistryContractAlreadyRegistered(address objectAddress);
-
-    // _registerStaking()
-    error StakingAlreadyRegistered(address stakingAddress);
 
     struct ObjectInfo {
         NftId nftId;
@@ -50,14 +40,20 @@ interface IRegistry is IERC165 {
         bytes data;
     }
 
+
     struct ReleaseInfo {
         VersionPart version;
+        bytes32 salt;
         address[] addresses;
+        string[] names;
         RoleId[][] serviceRoles;
+        string[][] serviceRoleNames;
         RoleId[][] functionRoles;
+        string[][] functionRoleNames;
         bytes4[][][] selectors;
         ObjectType[] domains;
         Timestamp activatedAt;
+        Timestamp disabledAt;
     }
 
     function registerService(
@@ -98,7 +94,7 @@ interface IRegistry is IERC165 {
 
     function isRegisteredComponent(address object) external view returns (bool);
 
-    function isValidRelease(VersionPart version) external view returns (bool);
+    function isActiveRelease(VersionPart version) external view returns (bool);
 
     function getServiceAddress(
         ObjectType serviceDomain, 
@@ -118,8 +114,13 @@ interface IRegistry is IERC165 {
 
     function getReleaseAccessManagerAddress(VersionPart version) external view returns (address);
 
-    function getStakingAddress() external view returns (address staking);
+    function getStakingAddress() external view returns (address);
 
     function getTokenRegistryAddress() external view returns (address);
 
+    function getRegistryAdminAddress() external view returns (address);
+
+    function getDipTokenAddress() external view returns (address);
+
+    function getAuthority() external view returns (address);
 }

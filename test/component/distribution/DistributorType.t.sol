@@ -30,7 +30,7 @@ contract DistributorTypeTest is GifTest {
 
     function _prepareDistribution() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);

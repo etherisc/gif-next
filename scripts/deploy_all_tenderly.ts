@@ -7,13 +7,20 @@ import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry"
 import { logger } from "./logger";
 import { InstanceAddresses, MASTER_INSTANCE_OWNER, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
 import { ServiceAddresses, authorizeServices, deployAndRegisterServices } from "./libs/services";
+import 
 
 
 async function main() {
-    logger.info("deploying new GIF instance...");
-    const { protocolOwner, masterInstanceOwner, instanceOwner } = await getNamedAccounts();
+
+    deploy_all();
+
+    // verify deployment on tenderly virtual devnet
+    // take list of deployed contracts from regular deployment script
+    // verify each contract an a list
+    logger.info("Verifing GIF deployemnt with tenderly...");
 
     // deploy protocol contracts
+    // ideally libraries consist of all info needed for libraries verification
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
     const services = await deployAndRegisterServices(protocolOwner, registry, libraries);
@@ -138,31 +145,19 @@ function printAddresses(
     addresses += `versionPartLibAddress: ${libraries.versionPartLibAddress}\n`;
     addresses += `instanceAuthorizationsLibAddress: ${libraries.instanceAuthorizationsLibAddress}\n`;
     addresses += `--------\n`;
-    addresses += `registryAdminAddress: ${registry.registryAdminAddress}\n`;
+    addresses += `registryAccessManagerAddress: ${registry.registryAccessManagerAddress}\n`;
     addresses += `releaseManagerAddress: ${registry.releaseManagerAddress}\n`;
     addresses += `registryAddress: ${registry.registryAddress}\n`;
     addresses += `registryNftId: ${registry.registryNftId}\n`;
     addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
     addresses += `tokenRegistryAddress: ${registry.tokenRegistryAddress}\n`;
-    addresses += `stakingNftId: ${registry.stakingNftId}\n`;
-    addresses += `stakingAddress: ${registry.stakingAddress}\n`;
-    addresses += `dipAddress: ${registry.dipAddress}\n`;
+    addresses += `registryServiceManagerAddress: ${registry.registryServiceManagerAddress}\n`;
+    addresses += `registryServiceAddress: ${registry.registryServiceAddress}\n`;
+    addresses += `registryServiceNftId: ${registry.registryServiceNftId}\n`;
     addresses += `--------\n`;
-    addresses += `registryServiceManagerAddress: ${services.registryServiceManagerAddress}\n`;
-    addresses += `registryServiceAddress: ${services.registryServiceAddress}\n`;
-    addresses += `registryServiceNftId: ${services.registryServiceNftId}\n`;
-
-    addresses += `stakingServiceManagerAddress: ${services.stakingServiceManagerAddress}\n`;
-    addresses += `stakingServiceAddress: ${services.stakingServiceAddress}\n`;
-    addresses += `stakingServiceNftId: ${services.stakingServiceNftId}\n`;
-
     addresses += `instanceServiceManagerAddress: ${services.instanceServiceManagerAddress}\n`;
     addresses += `instanceServiceAddress: ${services.instanceServiceAddress}\n`;
     addresses += `instanceServiceNftId: ${services.instanceServiceNftId}\n`;
-
-    addresses += `componentServiceManagerAddress: ${services.componentServiceManagerAddress}\n`;
-    addresses += `componentServiceAddress: ${services.componentServiceAddress}\n`;
-    addresses += `componentServiceNftId: ${services.componentServiceNftId}\n`;
 
     addresses += `distributionServiceManagerAddress: ${services.distributionServiceManagerAddress}\n`;
     addresses += `distributionServiceAddress: ${services.distributionServiceAddress}\n`;
@@ -194,16 +189,16 @@ function printAddresses(
     addresses += `--------\n`;
     addresses += `masterInstanceAddress: ${masterInstance.instanceAddress}\n`;
     addresses += `masterInstanceNftId: ${masterInstance.instanceNftId}\n`;
-    addresses += `masterInstanceAccessManagerAddress: ${masterInstance.accessManagerAddress}\n`;
-    addresses += `masterInstanceAdminAddress: ${masterInstance.instanceAdminAddress}\n`;
+    addresses += `masterOzAccessManagerAddress: ${masterInstance.ozAccessManagerAddress}\n`;
+    addresses += `masterInstanceAccessManagerAddress: ${masterInstance.instanceAccessManagerAddress}\n`;
     addresses += `masterBundleManagerAddress: ${masterInstance.instanceBundleManagerAddress}\n`;
     addresses += `masterInstanceReaderAddress: ${masterInstance.instanceReaderAddress}\n`;
     addresses += `masterInstanceStoreAddress: ${masterInstance.instanceStoreAddress}\n`;
     addresses += `--------\n`;
     addresses += `clonedInstanceAddress: ${clonedInstance.instanceAddress}\n`;
     addresses += `clonedInstanceNftId: ${clonedInstance.instanceNftId}\n`;
-    addresses += `clonedInstanceAccessManagerAddress: ${clonedInstance.accessManagerAddress}\n`;
-    addresses += `clonedInstanceAdminAddress: ${clonedInstance.instanceAdminAddress}\n`;
+    addresses += `clonedOzAccessManagerAddress: ${clonedInstance.ozAccessManagerAddress}\n`;
+    addresses += `clonedInstanceAccessManagerAddress: ${clonedInstance.instanceAccessManagerAddress}\n`;
     addresses += `clonedBundleManagerAddress: ${clonedInstance.instanceBundleManagerAddress}\n`;
     addresses += `clonedInstanceReaderAddress: ${clonedInstance.instanceReaderAddress}\n`;
     addresses += `--------\n`;

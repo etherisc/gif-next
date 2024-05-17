@@ -17,7 +17,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
-import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
@@ -48,7 +48,7 @@ contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
 
     function _deployRegistryServiceHarness() internal 
     {
-        bytes32 salt = "0x2222";
+        //bytes32 salt = "0x2222";
 
         // RegistryServiceManagerMockWithHarness first deploys RegistryService and then upgrades to RegistryServiceHarness
         // thus address is computed with RegistryService bytecode instead of RegistryServiceHarness...
@@ -58,12 +58,15 @@ contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
             type(RegistryService).creationCode, // implementation
             registryOwner,
             VersionPartLib.toVersionPart(3),
-            salt);
+            "0x2222");
 
         (
-            address[] memory serviceAddress,
+            address[] memory serviceAddresses,
+            string[] memory serviceNames,
             RoleId[][] memory serviceRoles,
+            string[][] memory serviceRoleNames,
             RoleId[][] memory functionRoles,
+            string[][] memory functionRoleNames,
             bytes4[][][] memory selectors
         ) = config.getConfig();
 
@@ -73,9 +76,17 @@ contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
             address releaseAccessManager,
             VersionPart releaseVersion,
             bytes32 releaseSalt
-        ) = releaseManager.prepareNextRelease(serviceAddress, serviceRoles, functionRoles, selectors, salt);
+        ) = releaseManager.prepareNextRelease(
+            serviceAddresses, 
+            serviceNames, 
+            serviceRoles, 
+            serviceRoleNames, 
+            functionRoles, 
+            functionRoleNames,
+            selectors, 
+            "0x2222");//salt);
 
-        assertEq(config._accessManager(), releaseAccessManager, "error: access manager mismatch");
+        assertEq(config._releaseAccessManager(), releaseAccessManager, "error: access manager mismatch");
 
         registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
             releaseAccessManager,
@@ -83,12 +94,12 @@ contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
             releaseSalt);
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManagerWithHarness.getRegistryService()));
 
-        assertEq(serviceAddress[0], address(registryServiceHarness), "error: registry service address mismatch");
+        assertEq(serviceAddresses[0], address(registryServiceHarness), "error: registry service address mismatch");
         releaseManager.registerService(registryServiceHarness);
 
         releaseManager.activateNextRelease();
 
-        registryServiceManagerWithHarness.linkOwnershipToServiceNft();
+        registryServiceManagerWithHarness.linkToProxy();
     }
 
     function _assert_getAndVerifyContractInfo(
@@ -159,13 +170,11 @@ contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
         ObjectType expectedType)
         internal
     {
-        //if(info.objectAddress > address(0)) {
-        //    vm.expectRevert(abi.encodeWithSelector(
-        //        IRegistryService.UnexpectedRegisterableAddress.selector,
-        //        address(0), 
-        //        info.objectAddress));
-        //} else 
-        if(info.objectType != expectedType) {
+        if(info.objectAddress > address(0)) {
+            vm.expectRevert(abi.encodeWithSelector(
+                IRegistryService.ErrorRegistryServiceObjectAddressNotZero.selector,
+                info.objectType));
+        } else if(info.objectType != expectedType) {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceObjectTypeInvalid.selector,
                 expectedType,

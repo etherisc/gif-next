@@ -318,11 +318,12 @@ contract StakingService is
         initializer()
     {
         (
+            address authority,
             address registryAddress,
             address stakingAddress
-        ) = abi.decode(data, (address, address));
+        ) = abi.decode(data, (address, address, address));
 
-        initializeService(registryAddress, address(0), owner);
+        initializeService(registryAddress, authority, owner);
 
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._registryService = RegistryService(_getServiceAddress(REGISTRY()));

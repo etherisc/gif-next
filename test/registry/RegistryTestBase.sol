@@ -27,7 +27,7 @@ import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
-import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
@@ -81,7 +81,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
-    bytes32 public constant EOA_CODEHASH = 0xC5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470;
     VersionPart public constant VERSION = VersionPart.wrap(3);
 
     RegistryServiceManagerMock public registryServiceManagerMock;
@@ -92,7 +91,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
 
-    RegistryAccessManager accessManager;
+    RegistryAdmin registryAdmin;
     StakingManager stakingManager;
     Staking staking;
     ReleaseManager releaseManager;
@@ -164,7 +163,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             registry,
             tokenRegistry,
             releaseManager,
-            accessManager,
+            registryAdmin,
             stakingManager,
             staking
         ) = deployCore(
@@ -187,45 +186,56 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
     function _deployRegistryServiceMock() internal
     {
-        bytes32 salt = "0x5678";
+        //bytes32 salt = "0x5678";
+        {
+            // RegistryServiceManagerMock first deploys RegistryService and then upgrades it to RegistryServiceMock
+            // thus address is computed with RegistryService bytecode instead of RegistryServiceMock...
+            RegistryServiceTestConfig config = new RegistryServiceTestConfig(
+                releaseManager,
+                type(RegistryServiceManagerMock).creationCode, // proxy manager
+                type(RegistryService).creationCode, // implementation
+                registryOwner,
+                VersionPartLib.toVersionPart(3),
+                "0x5678");//salt);
 
-        // RegistryServiceManagerMock first deploys RegistryService and then upgrades to RegistryServiceMock
-        // thus address is computed with RegistryService bytecode instead of RegistryServiceMock...
-        RegistryServiceTestConfig config = new RegistryServiceTestConfig(
-            releaseManager,
-            type(RegistryServiceManagerMock).creationCode, // proxy manager
-            type(RegistryService).creationCode, // implementation
-            registryOwner,
-            VersionPartLib.toVersionPart(3),
-            salt);
+            (
+                address[] memory serviceAddresses,
+                string[] memory serviceNames,
+                RoleId[][] memory serviceRoles,
+                string[][] memory serviceRoleNames,
+                RoleId[][] memory functionRoles,
+                string[][] memory functionRoleNames,
+                bytes4[][][] memory selectors
+            ) = config.getConfig();
 
-        (
-            address[] memory serviceAddress,
-            RoleId[][] memory serviceRoles,
-            RoleId[][] memory functionRoles,
-            bytes4[][][] memory selectors
-        ) = config.getConfig();
+            releaseManager.createNextRelease();
 
-        releaseManager.createNextRelease();
+            (
+                address releaseAccessManager,
+                VersionPart releaseVersion,
+                bytes32 releaseSalt
+            ) = releaseManager.prepareNextRelease(
+                serviceAddresses, 
+                serviceNames, 
+                serviceRoles, 
+                serviceRoleNames, 
+                functionRoles,
+                functionRoleNames,
+                selectors, 
+                "0x5678");//salt);
 
-        (
-            address releaseAccessManager,
-            VersionPart releaseVersion,
-            bytes32 releaseSalt
-        ) = releaseManager.prepareNextRelease(serviceAddress, serviceRoles, functionRoles, selectors, salt);
-
-        registryServiceManagerMock = new RegistryServiceManagerMock{salt: releaseSalt}(
-            releaseAccessManager, 
-            registryAddress, 
-            releaseSalt);
-
+            registryServiceManagerMock = new RegistryServiceManagerMock{salt: releaseSalt}(
+                releaseAccessManager, 
+                registryAddress, 
+                releaseSalt);
+        }
         registryServiceMock = RegistryServiceMock(address(registryServiceManagerMock.getRegistryService()));
 
         releaseManager.registerService(registryServiceMock);
 
         releaseManager.activateNextRelease();
 
-        registryServiceManagerMock.linkOwnershipToServiceNft();
+        registryServiceManagerMock.linkToProxy();
 
         registryServiceNftId = registry.getNftId(address(registryServiceMock));
     }
@@ -654,10 +664,10 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
         else
         {
-            vm.expectEmit(address(registry));
+            NftId expectedNftId = toNftId(chainNft.calculateTokenId(_nextId));
+            vm.expectEmit();
             emit LogRegistration(
-                // TODO "log != expected log" with NftIdLib.toNftId()...
-                toNftId(chainNft.calculateTokenId(_nextId)),
+                expectedNftId,
                 info.parentNftId, 
                 info.objectType, 
                 info.isInterceptor,
@@ -812,10 +822,10 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         } else {
             //console.log("   Doing _register() function checks");// TODO log on/off flag
             (expectRevert, expectedRevertMsg) = _internalRegisterChecks(info);
-            //if(expectRevert) {
-            //    console.log("       expectRevert : ", expectRevert);
-            //    console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
-            //}
+            if(expectRevert) {
+                //console.log("       expectRevert : ", expectRevert);
+                //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+            }
         }
 
         //console.log("   Calling _registerService()"); 
@@ -837,10 +847,10 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         } else {
             //console.log("   Doing _register() function checks");// TODO log on/off flag
             (expectRevert, expectedRevertMsg) = _internalRegisterChecks(info);
-            //if(expectRevert) {
-            //    console.log("       expectRevert : ", expectRevert);
-            //    console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
-            //}
+            if(expectRevert) {
+                //console.log("       expectRevert : ", expectRevert);
+                //console.log("       revert reason:", _errorName[bytes4(expectedRevertMsg)]);
+            }
         }
 
         //console.log("   Calling register()");

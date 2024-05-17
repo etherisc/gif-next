@@ -14,6 +14,7 @@ contract StakingServiceManager is
 
     /// @dev initializes proxy manager with service implementation 
     constructor(
+        address authority,
         address registryAddress,
         bytes32 salt
     )
@@ -21,9 +22,9 @@ contract StakingServiceManager is
     {
         StakingService svc = new StakingService();
         bytes memory data = abi.encode(
+            authority, 
             registryAddress, 
             IRegistry(registryAddress).getStakingAddress());
-
         IVersionable versionable = deployDetermenistic(
             address(svc), 
             data,

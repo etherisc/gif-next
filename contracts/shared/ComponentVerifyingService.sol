@@ -36,7 +36,7 @@ abstract contract ComponentVerifyingService is
         (componentInfo, instance) = _getAndVerifyComponentInfo(componentNftId, expectedType);
 
         // ensure component is not locked
-        if (instance.getInstanceAccessManager().isTargetLocked(componentInfo.objectAddress)) {
+        if (instance.getInstanceAccessManager().isTargetClosed(componentInfo.objectAddress)) {
             revert ErrorComponentVerifyingServiceComponentIsLocked(componentNftId);
         }
     }

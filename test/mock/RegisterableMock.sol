@@ -65,7 +65,7 @@ contract RegisterableMock is ERC165, IRegisterable, ITransferInterceptor {
     }
 
     // from INftOwnable
-    function linkToRegisteredNftId() external { /*do nothing*/ }
+    function linkToRegisteredNftId() external returns (NftId) { /*do nothing*/ }
 
     // from INftOwnable, DO NOT USE
     function getRegistry() external view returns (IRegistry) { revert(); }

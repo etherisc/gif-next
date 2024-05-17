@@ -4,7 +4,7 @@ package "Registry Contracts" {
     [Registry]
 
     [Registry] --> [ChainNft]
-    [Registry] --> [RegistryAccessManager]
+    [Registry] --> [RegistryAdmin]
     [Registry] --> [ReleaseManager]
     [Registry] --> [TokenRegistry]
 }

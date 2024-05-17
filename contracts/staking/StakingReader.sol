@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Amount} from "../type/Amount.sol";
 import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IComponent} from "../shared/IComponent.sol";
+import {InitializableCustom} from "../shared/InitializableCustom.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IStaking} from "../staking/IStaking.sol";
@@ -17,28 +18,26 @@ import {Timestamp} from "../type/Timestamp.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 contract StakingReader is
-    IRegistryLinked
+    IRegistryLinked,
+    InitializableCustom
 {
 
     error ErrorStakingReaderDependenciesAlreadySet();
-    error ErrorStakingReaderStakingStoreAlreadySet(address stakingStore);
 
     IRegistry private _registry;
     IStaking private _staking;
     StakingStore private _store;
 
+    constructor() InitializableCustom() {}
 
-    function setStakingDependencies(
+    function initialize(
         address registryAddress,
         address stakingAddress,
         address stakingStoreAddress
     )
         external
+        initializer
     {
-        if (address(_staking) != address(0)) {
-            revert ErrorStakingReaderDependenciesAlreadySet();
-        }
-
         _registry = IRegistry(registryAddress);
         _staking = IStaking(stakingAddress);
         _store = StakingStore(stakingStoreAddress);

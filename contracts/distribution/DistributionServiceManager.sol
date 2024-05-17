@@ -28,18 +28,6 @@ contract DistributionServiceManager is ProxyManager {
             salt);
 
         _distributionService = DistributionService(address(versionable));
-        
-        // TODO `thi` must have a role or own nft to register service
-        //Registry registry = Registry(registryAddress);
-        //address registryServiceAddress = registry.getServiceAddress(REGISTRY(), _distributionService.getMajorVersion());
-        //RegistryService registryService = RegistryService(registryServiceAddress);
-        //registryService.registerService(_distributionService);
-        
-        // TODO no nft to link yet
-        // link ownership of instance service manager ot nft owner of instance service
-        //_linkToNftOwnable(
-        //    address(registryAddress),
-        //    address(_distributionService));
     }
 
     //--- view functions ----------------------------------------------------//

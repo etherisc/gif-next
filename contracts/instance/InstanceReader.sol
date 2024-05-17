@@ -12,7 +12,6 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, FEE, BUNDLE} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
-import {Registerable} from "../shared/Registerable.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {UFixed, MathLib, UFixedLib} from "../type/UFixed.sol";
 import {Version} from "../type/Version.sol";
@@ -202,15 +201,15 @@ contract InstanceReader {
         }
     }
 
-    function getBalanceAmount(NftId targetNftId) external returns (Amount) { 
+    function getBalanceAmount(NftId targetNftId) external view returns (Amount) { 
         return _store.getBalanceAmount(targetNftId);
     }
 
-    function getLockedAmount(NftId targetNftId) external returns (Amount) { 
+    function getLockedAmount(NftId targetNftId) external view returns (Amount) { 
         return _store.getLockedAmount(targetNftId);
     }
 
-    function getFeeAmount(NftId targetNftId) external returns (Amount) { 
+    function getFeeAmount(NftId targetNftId) external view returns (Amount) { 
         return _store.getFeeAmount(targetNftId);
     }
 

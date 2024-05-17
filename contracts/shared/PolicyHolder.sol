@@ -12,11 +12,12 @@ import {IPolicyHolder} from "./IPolicyHolder.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
+import {IRegistry} from "../registry/IRegistry.sol";
 
 /// @dev template implementation for IPolicyHolder
 contract PolicyHolder is
     ERC165,
-    RegistryLinked,
+    RegistryLinked, // TODO need upgradeable version
     IPolicyHolder
 {
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.PolicyHolder")) - 1)) & ~bytes32(uint256(0xff));

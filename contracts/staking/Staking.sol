@@ -450,19 +450,19 @@ contract Staking is
         initializer
     {
         (
-            address initialAuthority,
             address registryAddress,
-            address stakingReaderAddress,
+            address tokenRegistryAddress,
             address stakingStoreAddress,
             address initialOwner
-        ) = abi.decode(data, (address, address, address, address, address));
+        ) = abi.decode(data, (address, address, address, address));
 
+        // only admin(authority) and dip token address are set in registry at this point
         IRegistry registry = IRegistry(registryAddress);
-        TokenRegistry tokenRegistry = TokenRegistry(registry.getTokenRegistryAddress());
-        address dipTokenAddress = address(tokenRegistry.getDipToken());
+        address dipTokenAddress = registry.getDipTokenAddress();
+        address authority = registry.getAuthority();
 
         initializeComponent(
-            initialAuthority,
+            authority,
             registryAddress, 
             registry.getNftId(), 
             CONTRACT_NAME,
@@ -475,19 +475,13 @@ contract Staking is
 
         _createAndSetTokenHandler();
 
+
         // wiring to external contracts
         StakingStorage storage $ = _getStakingStorage();
         $._protocolNftId = getRegistry().getProtocolNftId();
         $._store = StakingStore(stakingStoreAddress);
-        $._reader = StakingReader(stakingReaderAddress);
-        $._tokenRegistry = TokenRegistry(
-            address(tokenRegistry));
-
-        // wiring to staking
-        $._reader.setStakingDependencies(
-            registryAddress,
-            address(this),
-            stakingStoreAddress);
+        $._reader = StakingStore(stakingStoreAddress).getStakingReader();
+        $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
 
         registerInterface(type(IStaking).interfaceId);
     }

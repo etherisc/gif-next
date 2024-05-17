@@ -16,7 +16,7 @@ import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, POLICY, 
 import {Service} from "../shared/Service.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IService} from "../shared/IService.sol";
-import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 
 import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
@@ -29,7 +29,7 @@ import {TargetManagerLib} from "../staking/TargetManagerLib.sol";
 
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
-import {InstanceAccessManager} from "./InstanceAccessManager.sol";
+import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
@@ -46,8 +46,8 @@ contract InstanceService is
     IRegistryService internal _registryService;
     IStakingService internal _stakingService;
 
-    address internal _masterOzAccessManager;
-    address internal _masterInstanceAccessManager;
+    address internal _masterAccessManager;
+    address internal _masterInstanceAdmin;
     address internal _masterInstance;
     address internal _masterInstanceReader;
     address internal _masterInstanceBundleManager;
@@ -76,18 +76,17 @@ contract InstanceService is
         )
     {
         address instanceOwner = msg.sender;
-        AccessManagerUpgradeableInitializeable clonedOzAccessManager = AccessManagerUpgradeableInitializeable(
-            Clones.clone(_masterOzAccessManager));
+        AccessManagerExtendedInitializeable clonedAccessManager = AccessManagerExtendedInitializeable(
+            Clones.clone(_masterAccessManager));
 
         // initially grants ADMIN_ROLE to this (being the instance service). 
         // This will allow the instance service to bootstrap the authorizations of the instance.
-        // Instance service will not use oz access manager directlly but through instance access manager instead
         // Instance service will renounce ADMIN_ROLE when bootstraping is finished
-        clonedOzAccessManager.initialize(address(this));
+        clonedAccessManager.initialize(address(this));
 
         clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(
-            address(clonedOzAccessManager),
+            address(clonedAccessManager),
             address(getRegistry()), 
             instanceOwner);
         // initialize and set before instance reader
@@ -103,16 +102,17 @@ contract InstanceService is
         clonedBundleManager.initialize(address(clonedInstance));
         clonedInstance.setBundleManager(clonedBundleManager);
 
-        InstanceAccessManager clonedInstanceAccessManager = InstanceAccessManager(Clones.clone(_masterInstanceAccessManager));
-        clonedOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAccessManager), 0);
-        clonedInstanceAccessManager.initialize(address(clonedInstance));
-        clonedInstance.setInstanceAccessManager(clonedInstanceAccessManager);
+        InstanceAdmin clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
+        clonedAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAdmin), 0);
+        clonedInstanceAdmin.initialize(address(clonedInstance));
+        clonedInstance.setInstanceAdmin(clonedInstanceAdmin);
 
         // TODO amend setters with instance specific , policy manager ...
 
         // TODO library does external calls -> but it is registry and access manager -> find out is it best practice
         InstanceAuthorizationsLib.grantInitialAuthorizations(
-            clonedInstanceAccessManager, 
+            clonedAccessManager, 
+            clonedInstanceAdmin, 
             clonedInstance, 
             clonedBundleManager, 
             clonedInstanceStore, 
@@ -120,7 +120,7 @@ contract InstanceService is
             getRegistry(),
             getVersion().toMajorPart());
 
-        clonedOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
+        clonedAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
 
         // register new instance with registry
         IRegistry.ObjectInfo memory info = _registryService.registerInstance(clonedInstance, instanceOwner);
@@ -133,15 +133,14 @@ contract InstanceService is
             TargetManagerLib.getDefaultRewardRate());
 
         emit LogInstanceCloned(
-            address(clonedOzAccessManager), 
-            address(clonedInstanceAccessManager), 
+            address(clonedAccessManager), 
+            address(clonedInstanceAdmin), 
             address(clonedInstance),
             address(clonedInstanceStore),
             address(clonedBundleManager), 
             address(clonedInstanceReader), 
             clonedInstanceNftId);
     }
-
 
     function setComponentLocked(bool locked)
         external
@@ -158,16 +157,12 @@ contract InstanceService is
         IRegistry registry = getRegistry();
         NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
 
-        if (instanceNftId.eqz()) {
-            revert ErrorInstanceServiceComponentNotRegistered(componentAddress);
-        }
-
         IInstance instance = IInstance(
             registry.getObjectInfo(
                 instanceNftId).objectAddress);
 
-        // interaction
-        instance.getInstanceAccessManager().setTargetLockedByService(
+        // no revert in case already locked
+        instance.getInstanceAdmin().setTargetLockedByService(
             componentAddress, 
             locked);
     }
@@ -188,15 +183,15 @@ contract InstanceService is
             returns(NftId masterInstanceNftId)
     {
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
-        if(_masterOzAccessManager != address(0)) { revert ErrorInstanceServiceMasterOzAccessManagerAlreadySet(); }
-        if(_masterInstanceAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
+        if(_masterAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
+        if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
         if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
 
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
-        InstanceAccessManager instanceAccessManager = instance.getInstanceAccessManager();
-        address instanceAccessManagerAddress = address(instanceAccessManager);
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+        address instanceAdminAddress = address(instanceAdmin);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
         BundleManager bundleManager = instance.getBundleManager();
@@ -204,19 +199,19 @@ contract InstanceService is
         InstanceStore instanceStore = instance.getInstanceStore();
         address instanceStoreAddress = address(instanceStore);
 
-        if(instanceAccessManagerAddress == address(0)) { revert ErrorInstanceServiceInstanceAccessManagerZero(); }
+        if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
         if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
         if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
         
-        if(instance.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(bundleManager.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
-        if(instanceStore.authority() != instanceAccessManager.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
+        if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
+        if(bundleManager.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
+        if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
-        _masterOzAccessManager = instance.authority();
-        _masterInstanceAccessManager = instanceAccessManagerAddress;
+        _masterAccessManager = instance.authority();
+        _masterInstanceAdmin = instanceAdminAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
         _masterInstanceBundleManager = bundleManagerAddress;
@@ -227,7 +222,7 @@ contract InstanceService is
         masterInstanceNftId = info.nftId;
     }
 
-    function setMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
+    function upgradeMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
         if(_masterInstanceReader == address(0)) { revert ErrorInstanceServiceMasterInstanceReaderNotSet(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderAddressZero(); }
         if(instanceReaderAddress == _masterInstanceReader) { revert ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader(); }
@@ -282,8 +277,7 @@ contract InstanceService is
     )
         external
         virtual
-        // TODO re-enable once role - contract association is fixed
-        // restricted()
+        restricted()
     {
         _createGifTarget(
             instanceNftId,
@@ -306,18 +300,19 @@ contract InstanceService is
         internal
         virtual
     {
+        // TODO instanceAdmin will check target instance match anyway
         (
             IInstance instance, // or instanceInfo
             // or targetInfo
         ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
 
-        InstanceAccessManager accessManager = instance.getInstanceAccessManager();
-        accessManager.createGifTarget(targetAddress, targetName);
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+        instanceAdmin.createGifTarget(targetAddress, targetName);
         // set proposed target config
         // TODO restriction: gif targets are set only once and only here?
         //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
         for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++) {
-            accessManager.setCoreTargetFunctionRole(targetName, selectors[roleIdx], roles[roleIdx]);
+            instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);
         }
     }
     

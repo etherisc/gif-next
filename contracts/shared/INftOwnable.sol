@@ -16,7 +16,7 @@ interface INftOwnable is
     error ErrorNftOwnableAlreadyLinked(NftId nftId);
     error ErrorNftOwnableContractNotRegistered(address contractAddress);
 
-    function linkToRegisteredNftId() external;
+    function linkToRegisteredNftId() external returns (NftId);
 
     function getNftId() external view returns (NftId);
     function getOwner() external view returns (address);

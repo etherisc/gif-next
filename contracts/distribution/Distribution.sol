@@ -12,8 +12,6 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IDistributionComponent} from "./IDistributionComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
-import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {UFixed} from "../type/UFixed.sol";
@@ -251,7 +249,7 @@ abstract contract Distribution is
     
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
-    function isVerifying() external view returns (bool verifying) {
+    function isVerifying() external pure returns (bool verifying) {
         return true;
     }
 

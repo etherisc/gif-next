@@ -15,7 +15,7 @@ import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
-import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";

@@ -526,7 +526,7 @@ contract ComponentService is
     }
 
 
-    function _createSelectors(bytes4 selector) internal view returns (bytes4[] memory selectors) {
+    function _createSelectors(bytes4 selector) internal pure returns (bytes4[] memory selectors) {
         selectors = new bytes4[](1);
         selectors[0] = selector;
     }
@@ -560,18 +560,13 @@ contract ComponentService is
         RoleId requiredRole
     )
         internal
-        // view
+        view
         returns (
             IInstance instance,
             IInstanceLinkedComponent component,
             address owner
         )
     {
-        // check component has not already been registered
-        if (getRegistry().getNftId(componentAddress).gtz()) {
-            revert ErrorComponentServiceAlreadyRegistered(componentAddress);
-        }
-
         // check this is a component
         component = IInstanceLinkedComponent(componentAddress);
         if(!component.supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
@@ -584,11 +579,17 @@ contract ComponentService is
             revert ErrorComponentServiceInvalidType(componentAddress, requiredType, info.objectType);
         }
 
+        // check component has not already been registered
+        if (getRegistry().getNftId(componentAddress).gtz()) {
+            revert ErrorComponentServiceAlreadyRegistered(componentAddress);
+        }
+
         // check instance has assigned required role to inital owner
         instance = _getInstance(info.parentNftId);
         owner = info.initialOwner;
 
-        if(!instance.getInstanceAccessManager().hasRole(requiredRole, owner)) {
+        (bool hasRole,) = instance.getInstanceAccessManager().hasRole(requiredRole.toInt(), owner);
+        if(!hasRole) {
             revert ErrorComponentServiceExpectedRoleMissing(info.parentNftId, requiredRole, owner);
         }
     }

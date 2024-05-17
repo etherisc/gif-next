@@ -11,7 +11,7 @@ import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../contracts/type/RoleId.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {NftId} from "../contracts/type/NftId.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
-import {RegistryAccessManager} from "../contracts/registry/RegistryAccessManager.sol";
+import {RegistryAdmin} from "../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../contracts/registry/ReleaseManager.sol";
 import {REGISTRY, STAKING} from "../contracts/type/ObjectType.sol";
 import {Staking} from "../contracts/staking/Staking.sol";
@@ -30,7 +30,7 @@ contract GifDeployerTest is GifDeployer {
     Registry public registry;
     TokenRegistry public tokenRegistry;
     ReleaseManager public releaseManager;
-    RegistryAccessManager public registryAccessManager;
+    RegistryAdmin public registryAdmin;
     StakingManager public stakingManager;
     Staking public staking;
 
@@ -91,46 +91,46 @@ contract GifDeployerTest is GifDeployer {
         assertTrue(address(releaseManager) != address(0), "release manager address zero");
 
         // check authority
-        assertEq(releaseManager.authority(), registryAccessManager.authority(), "unexpected release manager authority");
+        assertEq(releaseManager.authority(), registryAdmin.authority(), "unexpected release manager authority");
 
         // check linked contracts
-        assertEq(releaseManager.getRegistryAddress(), address(registry), "unexpected registry address");
+        assertEq(address(releaseManager.getRegistry()), address(registry), "unexpected registry address");
         assertEq(releaseManager.getInitialVersion().toInt(), gifV3.toInt(), "unexpected initial gif version");
-        assertEq(address(releaseManager.getRegistryAccessManager()), address(registryAccessManager), "unexpected registry address");
+        assertEq(address(releaseManager.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
     }
 
 
     function test_deployerCoreRegistryAccessManager() public {
-        assertTrue(address(registryAccessManager) != address(0), "registry access manager address zero");
-        assertTrue(registryAccessManager.authority() != address(0), "registry access manager authority address zero");
+        assertTrue(address(registryAdmin) != address(0), "registry admin manager address zero");
+        assertTrue(registryAdmin.authority() != address(0), "registry admin manager authority address zero");
 
         // check authority
-        assertEq(registryAccessManager.authority(), registryAccessManager.authority(), "unexpected release manager authority");
+        assertEq(registryAdmin.authority(), registryAdmin.authority(), "unexpected release manager authority");
 
         // check initial roles assignments
-        assertTrue(registryAccessManager.hasRole(gifAdmin, GIF_ADMIN_ROLE()), "registry owner not admin");
-        assertTrue(registryAccessManager.hasRole(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
+        assertTrue(registryAdmin.hasRole(gifAdmin, GIF_ADMIN_ROLE()), "registry owner not admin");
+        assertTrue(registryAdmin.hasRole(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
 
         // check sample admin access
-        assertTrue(registryAccessManager.canCall(
+        assertTrue(registryAdmin.canCall(
                 gifAdmin, 
                 address(releaseManager),
                 ReleaseManager.createNextRelease.selector), 
             "gif manager cannot call registerToken");
 
         // check sample manager access
-        assertTrue(registryAccessManager.canCall(
+        assertTrue(registryAdmin.canCall(
                 gifManager, 
                 address(tokenRegistry),
                 TokenRegistry.registerToken.selector), 
             "gif manager cannot call registerToken");
 
         // check linked contracts
-        assertEq(releaseManager.getRegistryAddress(), address(registry), "unexpected registry address");
+        assertEq(address(releaseManager.getRegistry()), address(registry), "unexpected registry address");
         assertEq(releaseManager.getInitialVersion().toInt(), gifV3.toInt(), "unexpected initial gif version");
-        assertEq(address(releaseManager.getRegistryAccessManager()), address(registryAccessManager), "unexpected registry address");
+        assertEq(address(releaseManager.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
     }
@@ -160,7 +160,7 @@ contract GifDeployerTest is GifDeployer {
         assertEq(registry.ownerOf(address(staking)), stakingOwner, "unexpected staking owner (via registry)");
 
         // check authority
-        assertEq(staking.authority(), registryAccessManager.authority(), "unexpected staking authority");
+        assertEq(staking.authority(), registryAdmin.authority(), "unexpected staking authority");
 
         // check info
         IRegistry.ObjectInfo memory info = registry.getObjectInfo(stakingNftId);
@@ -188,7 +188,7 @@ contract GifDeployerTest is GifDeployer {
         StakingStore store = StakingStore(staking.getStakingStore());
 
         // check authority
-        assertEq(store.authority(), registryAccessManager.authority(), "unexpected staking store authority");
+        assertEq(store.authority(), registryAdmin.authority(), "unexpected staking store authority");
     }
 
 
@@ -199,7 +199,7 @@ contract GifDeployerTest is GifDeployer {
             registry,
             tokenRegistry,
             releaseManager,
-            registryAccessManager,
+            registryAdmin,
             stakingManager,
             staking
         ) = deployCore(

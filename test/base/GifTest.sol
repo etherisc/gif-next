@@ -22,17 +22,20 @@ import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {Version} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {zeroObjectType} from "../../contracts/type/ObjectType.sol";
+import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 
+import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
-import {AccessManagerUpgradeableInitializeable} from "../../contracts/shared/AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerExtendedInitializeable} from "../../contracts/shared/AccessManagerExtendedInitializeable.sol";
+import {AccessManagerExtendedWithDisableInitializeable} from "../../contracts/shared/AccessManagerExtendedWithDisableInitializeable.sol";
 import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWithAdmin.sol";
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -71,11 +74,10 @@ import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {StakingService} from "../../contracts/staking/StakingService.sol";
 import {StakingServiceManager} from "../../contracts/staking/StakingServiceManager.sol";
 
-import {InstanceAccessManager} from "../../contracts/instance/InstanceAccessManager.sol";
+import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
-import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
 import {Dip} from "../../contracts/mock/Dip.sol";
@@ -86,10 +88,9 @@ import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
 import {SimplePool} from "../mock/SimplePool.sol";
 import {SimpleProduct} from "../mock/SimpleProduct.sol";
-import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 
 import {GifDeployer} from "./GifDeployer.sol";
-import {ReleaseConfig} from "./ReleaseConfig.sol";
+import {GifTestReleaseConfig} from "./GifTestReleaseConfig.sol";
 
 // solhint-disable-next-line max-states-count
 contract GifTest is GifDeployer {
@@ -103,7 +104,7 @@ contract GifTest is GifDeployer {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    RegistryAccessManager registryAccessManager;
+    RegistryAdmin registryAdmin;
     ReleaseManager public releaseManager;
     RegistryServiceManager public registryServiceManager;
     RegistryService public registryService;
@@ -162,16 +163,16 @@ contract GifTest is GifDeployer {
     BundleService public bundleService;
     NftId public bundleServiceNftId;
 
-    AccessManagerUpgradeableInitializeable public masterOzAccessManager;
-    InstanceAccessManager public masterInstanceAccessManager;
+    AccessManagerExtendedInitializeable public masterInstanceAccessManager;
+    InstanceAdmin public masterInstanceAdmin;
     BundleManager public masterBundleManager;
     InstanceStore public masterInstanceStore;
     Instance public masterInstance;
     NftId public masterInstanceNftId;
     InstanceReader public masterInstanceReader;
 
-    AccessManagerUpgradeableInitializeable public ozAccessManager;
-    InstanceAccessManager public instanceAccessManager;
+    AccessManagerExtendedInitializeable public instanceAccessManager;
+    InstanceAdmin public instanceAdmin;
     BundleManager public instanceBundleManager;
     InstanceStore public instanceStore;
     Instance public instance;
@@ -312,7 +313,7 @@ contract GifTest is GifDeployer {
             registry,
             tokenRegistry,
             releaseManager,
-            registryAccessManager,
+            registryAdmin,
             stakingManager,
             staking
         ) = deployCore(
@@ -329,8 +330,8 @@ contract GifTest is GifDeployer {
         console.log("token registry deployed at", address(tokenRegistry));
         console.log("release manager deployed at", address(releaseManager));
 
-        console.log("registry access manager deployed:", address(registryAccessManager));
-        console.log("registry access manager authority", registryAccessManager.authority());
+        console.log("registry access manager deployed:", address(registryAdmin));
+        console.log("registry access manager authority", registryAdmin.authority());
 
         console.log("staking manager deployed at", address(stakingManager));
 
@@ -355,19 +356,21 @@ contract GifTest is GifDeployer {
 
     function _deployAndRegisterServices() internal 
     {
-        bytes32 salt = "0x1234";
         VersionPart version = VersionPartLib.toVersionPart(3);
 
-        ReleaseConfig config = new ReleaseConfig(
+        GifTestReleaseConfig config = new GifTestReleaseConfig(
             releaseManager,
             registryOwner,
             version,
-            salt);
+            "0x1234");
 
         (
             address[] memory serviceAddrs,
+            string[] memory serviceNames,
             RoleId[][] memory serviceRoles,
+            string[][] memory serviceRoleNames,
             RoleId[][] memory functionRoles,
+            string[][] memory functionRoleNames,
             bytes4[][][] memory selectors
         ) = config.getConfig();
 
@@ -380,21 +383,24 @@ contract GifTest is GifDeployer {
         (
             address releaseAccessManager, 
             VersionPart releaseVersion,
-            bytes32 releaseSalt
+            bytes32 salt
         ) = releaseManager.prepareNextRelease(
             serviceAddrs, 
+            serviceNames, 
             serviceRoles, 
+            serviceRoleNames, 
             functionRoles,
+            functionRoleNames,
             selectors, 
-            salt);
+            "0x1234");
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after prepareNextRelease");
 
-        salt = releaseSalt;
+        //salt = releaseSalt;
 
         // solhint-disable
         console.log("release version", releaseVersion.toInt());
-        console.log("release salt", uint(releaseSalt));
+        console.log("release salt", uint(salt));
         console.log("release access manager deployed at", releaseAccessManager);
         console.log("release services count", serviceAddrs.length);
         console.log("release services remaining (before service registration)", releaseManager.getRemainingServicesToRegister());
@@ -404,6 +410,7 @@ contract GifTest is GifDeployer {
         registryServiceManager = new RegistryServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         registryService = registryServiceManager.getRegistryService();
         releaseManager.registerService(registryService);
+        registryServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -428,9 +435,10 @@ contract GifTest is GifDeployer {
         // solhint-enable
 
         // --- staking service ----------------------------------//
-        stakingServiceManager = new StakingServiceManager{salt: salt}(registryAddress, salt);
+        stakingServiceManager = new StakingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         stakingService = stakingServiceManager.getStakingService();
-        stakingServiceNftId = releaseManager.registerService(stakingService); 
+        stakingServiceNftId = releaseManager.registerService(stakingService);
+        stakingServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -450,6 +458,7 @@ contract GifTest is GifDeployer {
         instanceServiceManager = new InstanceServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         instanceService = instanceServiceManager.getInstanceService();
         instanceServiceNftId = releaseManager.registerService(instanceService);
+        instanceServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -469,6 +478,7 @@ contract GifTest is GifDeployer {
         componentServiceManager = new ComponentServiceManager(address(registry));
         componentService = componentServiceManager.getComponentService();
         componentServiceNftId = releaseManager.registerService(componentService);
+        componentServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -483,6 +493,7 @@ contract GifTest is GifDeployer {
         distributionServiceManager = new DistributionServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         distributionService = distributionServiceManager.getDistributionService();
         distributionServiceNftId = releaseManager.registerService(distributionService);
+        distributionServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -502,6 +513,7 @@ contract GifTest is GifDeployer {
         pricingServiceManager = new PricingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         pricingService = pricingServiceManager.getPricingService();
         pricingServiceNftId = releaseManager.registerService(pricingService);
+        pricingServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -521,6 +533,7 @@ contract GifTest is GifDeployer {
         bundleServiceManager = new BundleServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         bundleService = bundleServiceManager.getBundleService();
         bundleServiceNftId = releaseManager.registerService(bundleService);
+        bundleServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -540,6 +553,7 @@ contract GifTest is GifDeployer {
         poolServiceManager = new PoolServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         poolService = poolServiceManager.getPoolService();
         poolServiceNftId = releaseManager.registerService(poolService);
+        poolServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -559,6 +573,7 @@ contract GifTest is GifDeployer {
         productServiceManager = new ProductServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         productService = productServiceManager.getProductService();
         productServiceNftId = releaseManager.registerService(productService);
+        productServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -579,6 +594,7 @@ contract GifTest is GifDeployer {
         claimServiceManager = new ClaimServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         claimService = claimServiceManager.getClaimService();
         claimServiceNftId = releaseManager.registerService(claimService);
+        claimServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -598,6 +614,7 @@ contract GifTest is GifDeployer {
         applicationServiceManager = new ApplicationServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         applicationService = applicationServiceManager.getApplicationService();
         applicationServiceNftId = releaseManager.registerService(applicationService);
+        applicationServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -617,6 +634,7 @@ contract GifTest is GifDeployer {
         policyServiceManager = new PolicyServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         policyService = policyServiceManager.getPolicyService();
         policyServiceNftId = releaseManager.registerService(policyService);
+        policyServiceManager.linkToProxy();
 
         assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
 
@@ -645,13 +663,13 @@ contract GifTest is GifDeployer {
 
     function _deployMasterInstance() internal 
     {
-        masterOzAccessManager = new AccessManagerUpgradeableInitializeable();
+        masterInstanceAccessManager = new AccessManagerExtendedInitializeable();
         // grants registryOwner ADMIN_ROLE
-        masterOzAccessManager.initialize(registryOwner);
+        masterInstanceAccessManager.initialize(registryOwner);
         
         masterInstance = new Instance();
         masterInstance.initialize(
-            address(masterOzAccessManager),
+            address(masterInstanceAccessManager),
             address(registry),
             registryOwner);
 
@@ -669,26 +687,27 @@ contract GifTest is GifDeployer {
         masterBundleManager.initialize(address(masterInstance));
         masterInstance.setBundleManager(masterBundleManager);
 
-        masterInstanceAccessManager = new InstanceAccessManager();
-        masterOzAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAccessManager), 0);
-        masterInstanceAccessManager.initialize(address(masterInstance));
-        masterInstance.setInstanceAccessManager(masterInstanceAccessManager);
+        masterInstanceAdmin = new InstanceAdmin();
+        masterInstanceAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin), 0);
+        masterInstanceAdmin.initialize(address(masterInstance));
+        masterInstance.setInstanceAdmin(masterInstanceAdmin);
 
         // sets master instance address in instance service
         // instance service is now ready to create cloned instances
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
+        // lock master instance nft
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 
         // revoke ADMIN_ROLE from all members
-        masterInstanceAccessManager.revokeRole(ADMIN_ROLE(), address(masterInstanceAccessManager));
-        masterOzAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
+        masterInstanceAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin));
+        masterInstanceAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
-        console.log("master oz access manager deployed at", address(masterOzAccessManager));
-        console.log("master instance access manager deployed at", address(masterInstanceAccessManager));
+        console.log("master oz access manager deployed at", address(masterInstanceAccessManager));
+        console.log("master instance access manager deployed at", address(masterInstanceAdmin));
         console.log("master instance reader deployed at", address(masterInstanceReader));
         console.log("master bundle manager deployed at", address(masterBundleManager));
         console.log("master instance store deployed at", address(masterInstanceStore));
@@ -702,8 +721,8 @@ contract GifTest is GifDeployer {
             instanceNftId
         ) = instanceService.createInstanceClone();
 
-        instanceAccessManager = instance.getInstanceAccessManager();
-        ozAccessManager = AccessManagerUpgradeableInitializeable(instance.authority());
+        instanceAdmin = instance.getInstanceAdmin();
+        instanceAccessManager = AccessManagerExtendedInitializeable(instance.authority());
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
         instanceBundleManager = instance.getBundleManager();
@@ -712,8 +731,8 @@ contract GifTest is GifDeployer {
         // solhint-disable
         console.log("cloned instance deployed at", address(instance));
         console.log("cloned instance nft id", instanceNftId.toInt());
-        console.log("cloned oz access manager deployed at", address(ozAccessManager));
-        console.log("cloned instance access manager deployed at", address(instanceAccessManager));
+        console.log("cloned oz access manager deployed at", address(instanceAccessManager));
+        console.log("cloned instance access manager deployed at", address(instanceAdmin));
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle manager deployed at", address(instanceBundleManager));
         console.log("cloned instance store deployed at", address(instanceStore));
@@ -848,7 +867,7 @@ contract GifTest is GifDeployer {
 
     function _prepareProduct(bool createBundle) internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
         vm.stopPrank();
 
         _prepareDistributionAndPool();
@@ -896,8 +915,8 @@ contract GifTest is GifDeployer {
 
     function _prepareDistributionAndPool() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
@@ -942,7 +961,7 @@ contract GifTest is GifDeployer {
 
     function _preparePool() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);

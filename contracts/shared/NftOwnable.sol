@@ -56,20 +56,9 @@ contract NftOwnable is
     function linkToRegisteredNftId()
         public
         virtual
+        returns (NftId nftId)
     {
-        NftOwnableStorage storage $ = _getNftOwnableStorage();
-
-        if ($._nftId.gtz()) {
-            revert ErrorNftOwnableAlreadyLinked($._nftId);
-        }
-
-        address contractAddress = address(this);
-
-        if (!getRegistry().isRegistered(contractAddress)) {
-            revert ErrorNftOwnableContractNotRegistered(contractAddress);
-        }
-
-        $._nftId = getRegistry().getNftId(contractAddress);
+        return _linkToNftOwnable(address(this));
     }
 
     function getNftId() public view virtual override returns (NftId) {

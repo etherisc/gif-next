@@ -6,8 +6,7 @@ import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {IService} from "../shared/IService.sol";
 
-import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
-import {InstanceAccessManager} from "./InstanceAccessManager.sol";
+import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {Instance} from "./Instance.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
@@ -18,8 +17,8 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceComponentNotInstanceLinked(address component);
 
     error ErrorInstanceServiceMasterInstanceAlreadySet();
-    error ErrorInstanceServiceMasterOzAccessManagerAlreadySet();
     error ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet();
+    error ErrorInstanceServiceMasterInstanceAdminAlreadySet();
     error ErrorInstanceServiceMasterBundleManagerAlreadySet();
     error ErrorInstanceServiceInstanceAddressZero();
 
@@ -28,7 +27,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch();
 
-    error ErrorInstanceServiceInstanceAccessManagerZero();
+    error ErrorInstanceServiceInstanceAdminZero();
     error ErrorInstanceServiceInstanceReaderZero();
     error ErrorInstanceServiceBundleManagerZero();
     error ErrorInstanceServiceInstanceStoreZero();
@@ -40,7 +39,6 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceStoreAuthorityMismatch();
 
     error ErrorInstanceServiceRequestUnauhorized(address caller);
-    error ErrorInstanceServiceNotInstanceOwner(address caller, NftId instanceNftId);
     error ErrorInstanceServiceNotInstance(NftId nftId);
     error ErrorInstanceServiceComponentNotRegistered(address componentAddress);
     error ErrorInstanceServiceInstanceComponentMismatch(NftId instanceNftId, NftId componentNftId);

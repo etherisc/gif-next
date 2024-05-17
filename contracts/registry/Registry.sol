@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
+import {InitializableCustom} from "../shared/InitializableCustom.sol";
 
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -13,6 +15,7 @@ import {IRegistry} from "./IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
+import {RegistryAdmin} from "./RegistryAdmin.sol";
 
 // IMPORTANT
 // Each NFT minted by registry is accosiated with:
@@ -25,10 +28,10 @@ import {TokenRegistry} from "./TokenRegistry.sol";
 // 4) state object by regular service (POLICY, BUNDLE, STAKE)
 
 contract Registry is
-    Initializable,
+    InitializableCustom,
     IRegistry
 {
-    address public constant NFT_LOCK_ADDRESS = address(0x1);
+    address public NFT_LOCK_ADDRESS = address(0x1);
     uint256 public constant REGISTRY_TOKEN_SEQUENCE_ID = 2;
     uint256 public constant STAKING_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
@@ -46,16 +49,17 @@ contract Registry is
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) private _coreObjectCombinations;
 
-    ChainNft private _chainNft;
+    RegistryAdmin public immutable _admin;
+    IERC20Metadata public immutable _dipToken;
+    ChainNft public immutable _chainNft;
 
-    address private _initializeOwner;
-    address private _tokenRegistryAddress;
-    address private _stakingAddress;
-    ReleaseManager private _releaseManager;
+    NftId public immutable _protocolNftId;
+    NftId public immutable _registryNftId;
+    NftId public _stakingNftId;
 
-    NftId private _protocolNftId;
-    NftId private _registryNftId;
-
+    address public _tokenRegistryAddress;
+    address public _stakingAddress;
+    ReleaseManager public _releaseManager;
 
     modifier onlyRegistryService() {
         if(!_releaseManager.isActiveRegistryService(msg.sender)) {
@@ -73,71 +77,42 @@ contract Registry is
     }
 
 
-    constructor() {
-        // register deployer
-        _initializeOwner = msg.sender;
-
+    constructor(
+        RegistryAdmin admin, 
+        IERC20Metadata dipToken
+    ) 
+        InitializableCustom() 
+    {
+        _admin = admin;
+        _dipToken = dipToken;
         // deploy NFT 
         _chainNft = new ChainNft(address(this));
 
         // initial registry setup
-        _registerProtocol();
-        _registerRegistry();
+        _protocolNftId = _registerProtocol();
+        _registryNftId = _registerRegistry();
 
         // set object types and object parent relations
         _setupValidCoreTypesAndCombinations();
     }
 
 
-    /// @dev wires release manager (as caller) and token to registry (this contract).
+    /// @dev wires release manager and token to registry (this contract).
     /// MUST be called by release manager.
     function initialize(
         address releaseManager,
-        address tokenRegistry
+        address tokenRegistry,
+        address staking
     )
         external
         initializer()
     {
-        if (msg.sender != _initializeOwner) {
-            revert ErrorRegistryCallerNotInitializeOwner(_initializeOwner, msg.sender);
-        }
-
         _releaseManager = ReleaseManager(releaseManager);
         _tokenRegistryAddress = tokenRegistry;
+        _stakingAddress = staking;
+
+        _stakingNftId = _registerStaking();
     }
-
-
-    function registerStaking(
-        address stakingAddress
-    )
-        external
-        onlyReleaseManager()
-    {
-        // staking contract for same chain may only be registered once
-        if (_stakingAddress != address(0)) {
-            revert StakingAlreadyRegistered(_stakingAddress);
-        }
-
-        _stakingAddress = stakingAddress;
-
-        address stakingOwner = IRegisterable(stakingAddress).getOwner();
-        uint256 stakingId = _chainNft.calculateTokenId(STAKING_TOKEN_SEQUENCE_ID);
-        NftId stakingNftId = NftIdLib.toNftId(stakingId);
-
-        _nftIdByAddress[_stakingAddress] = stakingNftId;
-        _info[stakingNftId] = ObjectInfo({
-            nftId: stakingNftId,
-            parentNftId: _registryNftId,
-            objectType: STAKING(),
-            isInterceptor: false,
-            objectAddress: _stakingAddress, 
-            initialOwner: stakingOwner,
-            data: "" 
-        });
-
-        _chainNft.mint(stakingOwner, stakingId);
-    }
-
 
     function registerService(
         ObjectInfo memory info, 
@@ -236,13 +211,7 @@ contract Registry is
         return _releaseManager.getInitialVersion();
     }
 
-    // TODO make distinction between active an not yet active version
-    // need to be thought trough, not yet clear if necessary
-    // need to answer question: what is the latest version during the upgrade process?
-    // likely setting up a new gif version does not fit into a single tx
-    // in this case we might want to have a period where the latest version is
-    // in the process of being set up while the latest active version is 1 major release smaller
-    /// @dev latest GIF major version (might not yet be active)
+    /// @dev next GIF release version to be released
     function getNextVersion() external view returns (VersionPart) {
         return _releaseManager.getNextVersion();
     }
@@ -305,12 +274,14 @@ contract Registry is
         return _info[objectParentNftId].objectType == INSTANCE();
     }
 
-    function isValidRelease(VersionPart version) external view returns (bool)
+    function isActiveRelease(VersionPart version) external view returns (bool)
     {
-        return _releaseManager.isValidRelease(version);
+        return _releaseManager.isActiveRelease(version);
     }
 
     function getStakingAddress() external view returns (address staking) {
+        //return getObjectInfo(_stakingNftId).objectAddress;
+        //return _info[_stakingNftId].objectAddress;
         return _stakingAddress;
     }
 
@@ -323,7 +294,7 @@ contract Registry is
         VersionPart releaseVersion
     ) external view returns (address service)
     {
-            service =  _service[releaseVersion][serviceDomain]; 
+        service =  _service[releaseVersion][serviceDomain]; 
     }
 
     function getReleaseAccessManagerAddress(VersionPart version) external view returns (address) {
@@ -336,6 +307,18 @@ contract Registry is
 
     function getChainNftAddress() external view override returns (address) {
         return address(_chainNft);
+    }
+
+    function getDipTokenAddress() external view override returns (address) {
+        return address(_dipToken);
+    }
+
+    function getRegistryAdminAddress() external view returns (address) {
+        return address(_admin);
+    }
+
+    function getAuthority() external view returns (address) {
+        return _admin.authority();
     }
 
     function getOwner() public view returns (address owner) {
@@ -423,7 +406,7 @@ contract Registry is
         address parentObjectAddress
     )
         internal 
-        view 
+        pure 
         returns (address interceptor) 
     {
         // no intercepting calls for stakes
@@ -451,12 +434,13 @@ contract Registry is
     /// @dev protocol registration used to anchor the dip ecosystem relations
     function _registerProtocol() 
         private
+        returns (NftId protocolNftId)
     {
         uint256 protocolId = _chainNft.PROTOCOL_NFT_ID();
-        _protocolNftId = NftIdLib.toNftId(protocolId);
+        protocolNftId = NftIdLib.toNftId(protocolId);
 
-        _info[_protocolNftId] = ObjectInfo({
-            nftId: _protocolNftId,
+        _info[protocolNftId] = ObjectInfo({
+            nftId: protocolNftId,
             parentNftId: NftIdLib.zero(),
             objectType: PROTOCOL(),
             isInterceptor: false, 
@@ -475,7 +459,7 @@ contract Registry is
         returns (NftId registryNftId)
     {
         uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
-        _registryNftId = NftIdLib.toNftId(registryId);
+        registryNftId = NftIdLib.toNftId(registryId);
         NftId parentNftId;
 
         if(registryId != _chainNft.GLOBAL_REGISTRY_ID()) 
@@ -488,8 +472,8 @@ contract Registry is
             parentNftId = _protocolNftId;
         }
 
-        _info[_registryNftId] = ObjectInfo({
-            nftId: _registryNftId,
+        _info[registryNftId] = ObjectInfo({
+            nftId: registryNftId,
             parentNftId: parentNftId,
             objectType: REGISTRY(),
             isInterceptor: false,
@@ -498,7 +482,7 @@ contract Registry is
             data: "" 
         });
 
-        _nftIdByAddress[address(this)] = _registryNftId;
+        _nftIdByAddress[address(this)] = registryNftId;
         _chainNft.mint(NFT_LOCK_ADDRESS, registryId);
     }
 
@@ -520,6 +504,29 @@ contract Registry is
         });
 
         _chainNft.mint(NFT_LOCK_ADDRESS, globalRegistryId);
+    }
+    // depends on _registryNftId and _stakingAddress
+    function _registerStaking()
+        private
+        returns (NftId stakingNftId)
+    {
+        address stakingOwner = IRegisterable(_stakingAddress).getOwner();
+        uint256 stakingId = _chainNft.calculateTokenId(STAKING_TOKEN_SEQUENCE_ID);
+        stakingNftId = NftIdLib.toNftId(stakingId);
+
+        _info[stakingNftId] = ObjectInfo({
+            nftId: stakingNftId,
+            parentNftId: _registryNftId,
+            objectType: STAKING(),
+            isInterceptor: false,
+            objectAddress: _stakingAddress, 
+            initialOwner: stakingOwner,
+            data: "" 
+        });
+
+        _nftIdByAddress[_stakingAddress] = stakingNftId;
+        // reverts if nftId was already minted
+        _chainNft.mint(stakingOwner, stakingId);
     }
 
     /// @dev defines which object - parent types relations are allowed to register

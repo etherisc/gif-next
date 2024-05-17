@@ -16,6 +16,7 @@ contract NftOwnableMock is NftOwnable {
     function linkToNftOwnable(address nftOwnableAddress) external {
         _linkToNftOwnable(nftOwnableAddress);
     }
+
 }
 
 
@@ -30,8 +31,9 @@ contract NftOwnableMockUninitialized is NftOwnable {
     {
         initializeNftOwnable(initialOwner, registry);
     }
-
+/*
     function linkToNftOwnable(address nftOwnableAddress) external {
         _linkToNftOwnable(nftOwnableAddress);
     }
+*/
 }

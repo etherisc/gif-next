@@ -7,10 +7,11 @@ import {Test, console} from "../../lib/forge-std/src/Test.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../../contracts/type/RoleId.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
-import {RegistryAccessManager} from "../../contracts/registry/RegistryAccessManager.sol";
+import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
+import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingStore} from "../../contracts/staking/StakingStore.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
@@ -27,7 +28,7 @@ contract GifDeployer is Test {
             Registry registry,
             TokenRegistry tokenRegistry,
             ReleaseManager releaseManager,
-            RegistryAccessManager registryAccessManager,
+            RegistryAdmin registryAdmin,
             StakingManager stakingManager,
             Staking staking
         )
@@ -35,47 +36,49 @@ contract GifDeployer is Test {
         // 1) deploy dip token
         dip = new Dip();
 
-        // 2) deploy registry
-        registry = new Registry();
+        // 2) deploy registry admin
+        registryAdmin = new RegistryAdmin();
 
-        // 3) deploy release manager
-        releaseManager = new ReleaseManager(
-            gifAdmin,
-            gifManager,
-            address(registry));
+        // 3) deploy registry
+        registry = new Registry(registryAdmin, dip);
 
-        registryAccessManager = releaseManager.getRegistryAccessManager();
+        // 4) deploy release manager
+        releaseManager = new ReleaseManager(registry);
 
-        // 4) deploy token registry
-        tokenRegistry = new TokenRegistry(
-            registryAccessManager.authority(),
-            address(registry),
-            address(dip));
+        // 5) deploy token registry
+        tokenRegistry = new TokenRegistry(registry);
 
-        // 5) grant gif manager role access to token registry
-        registryAccessManager.setTokenRegistry(
-            address(tokenRegistry));
-
-        // 6) initialize registry with links to 
-        // relase manager and token registry
-        registry.initialize(
-            address(releaseManager),
-            address(tokenRegistry));
+        // 6) deploy staking reader
+        StakingReader stakingReader = new StakingReader();
 
         // 7) deploy staking store
-        StakingStore stakingStore = new StakingStore(
-            registryAccessManager.authority(),
-            address(registry)
-        );
+        StakingStore stakingStore = new StakingStore(registry, stakingReader);
 
-        // 8) deploy staking manager / staking
+        // 8) deploy staking manager and staking component
         stakingManager = new StakingManager(
             address(registry),
+            address(tokenRegistry),
             address(stakingStore),
             stakingOwner);
-
-        // 9) register staking with registry (via release manager)
         staking = stakingManager.getStaking();
-        releaseManager.registerStaking(address(staking));
+
+        // 9) initialize instance reader
+        stakingReader.initialize(
+            address(registry),
+            address(staking),
+            address(stakingStore));
+
+        // 10) intialize registry and register staking component
+        registry.initialize(
+            address(releaseManager),
+            address(tokenRegistry),
+            address(staking));
+        staking.linkToRegisteredNftId();
+
+        // 11) initialize registry admin
+        registryAdmin.initialize(
+            registry,
+            gifAdmin,
+            gifManager);
     }
 }

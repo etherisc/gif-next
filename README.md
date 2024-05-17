@@ -460,13 +460,14 @@ contracts
     ComponentService.sol
   instance
     Instance.sol
-    InstanceAccessManager.sol
+    InstanceAdmin.sol
     InstanceReader.sol
     InstanceService.sol
     InstanceServiceManager.sol
   registry
     ChainNft.sol
     Registry.sol
+    RegistryAdmin.sol
     RegistryService.sol
     RegistryServiceManager.sol
   shared

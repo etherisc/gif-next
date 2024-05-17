@@ -5,7 +5,7 @@ Contains the instance related contracts.
 == Contracts
 
 {{Cloneable}}
-{{InstanceAccessManager}}
+{{InstanceAdmin}}
 {{InstanceService}}
 {{ObjectManager}}
 {{BundleManager}}

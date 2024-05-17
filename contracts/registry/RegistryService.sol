@@ -15,7 +15,6 @@ import {IDistributionComponent} from "../../contracts/distribution/IDistribution
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {Versionable} from "../../contracts/shared/Versionable.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
-import {Registerable} from "../../contracts/shared/Registerable.sol";
 
 import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
 import {ObjectType, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE} from "../../contracts/type/ObjectType.sol";
@@ -246,8 +245,9 @@ contract RegistryService is
         internal
         view
     {
-        // enforce instead of check
-        info.objectAddress = address(0);
+        if(info.objectAddress > address(0)) {
+            revert ErrorRegistryServiceObjectAddressNotZero(info.objectType);
+        }
 
         if(info.objectType != expectedType) {// type is checked in registry anyway...but service logic may depend on expected value
             revert ErrorRegistryServiceObjectTypeInvalid(expectedType, info.objectType);

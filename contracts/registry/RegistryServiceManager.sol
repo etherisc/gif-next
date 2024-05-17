@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 
 import {Registry} from "./Registry.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
@@ -37,7 +36,6 @@ contract RegistryServiceManager is
             revert ErrorRegistryAccessManagerRegistryZero();
         }
         
-        // implementation's initializer func `data` argument
         RegistryService srv = new RegistryService{ salt: salt }();
         bytes memory data = abi.encode(registry, authority);
         IVersionable versionable = deployDetermenistic(
@@ -46,18 +44,6 @@ contract RegistryServiceManager is
             salt);
 
         _registryService = RegistryService(address(versionable));
-
-//        _linkToNftOwnable(address(_registryService));
-    }
-
-    // // from IRegisterable
-
-    // // IMPORTANT: registry here and in constructor MUST be the same
-    function linkOwnershipToServiceNft()
-        public
-        onlyOwner
-    {
-        _linkToNftOwnable(address(_registryService));
     }
 
     //--- view functions ----------------------------------------------------//

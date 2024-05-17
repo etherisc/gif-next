@@ -31,7 +31,7 @@ contract TestDistributionService is GifTest {
 
     function test_DistributionService_register() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);

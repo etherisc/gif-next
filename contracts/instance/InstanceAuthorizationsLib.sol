@@ -8,315 +8,328 @@ import {VersionPart} from "../type/Version.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 
 import {Instance} from "./Instance.sol";
-import {InstanceAccessManager} from "./InstanceAccessManager.sol";
+import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {BundleManager} from "./BundleManager.sol";
-import {AccessManagerUpgradeableInitializeable} from "../shared/AccessManagerUpgradeableInitializeable.sol";
+import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 
 
 library InstanceAuthorizationsLib
 {
     function grantInitialAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        Instance clonedInstance,
-        BundleManager clonedBundleManager,
-        InstanceStore clonedInstanceStore,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        Instance instance,
+        BundleManager bundleManager,
+        InstanceStore instanceStore,
         address instanceOwner,
         IRegistry registry,
         VersionPart majorVersion)
             external
     {
-        _createCoreAndGifRoles(clonedAccessManager);
-        _createCoreTargets(clonedAccessManager, clonedInstance, clonedBundleManager, clonedInstanceStore);
-        _grantComponentServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
-        _grantDistributionServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
-        _grantPoolServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
-        _grantProductServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
-        _grantApplicationServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
-        _grantPolicyServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
-        _grantClaimServiceAuthorizations(clonedAccessManager, clonedInstanceStore, registry, majorVersion);
-        _grantBundleServiceAuthorizations(clonedAccessManager, clonedInstanceStore, clonedBundleManager, registry, majorVersion);
-        _grantInstanceServiceAuthorizations(clonedAccessManager, clonedInstance, registry, majorVersion);
-        _grantInstanceAuthorizations(clonedAccessManager, registry, majorVersion);
-        _grantInstanceOwnerAuthorizations(clonedAccessManager, clonedInstance, registry, majorVersion);
+        _createRoles(instanceAdmin);
+        _createTargets(instanceAdmin, instance, bundleManager, instanceStore);
+        _grantComponentServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
+        _grantDistributionServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
+        _grantPoolServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
+        _grantProductServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
+        _grantApplicationServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
+        _grantPolicyServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
+        _grantClaimServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
+        _grantBundleServiceAuthorizations(accessManager, instanceAdmin, instanceStore, bundleManager, registry, majorVersion);
+        _grantInstanceServiceAuthorizations(accessManager, instanceAdmin, instance, registry, majorVersion);
+        _grantInstanceAuthorizations(accessManager, instanceAdmin, instance, registry, majorVersion);
+        _grantInstanceOwnerAuthorizations(instanceAdmin, instance, registry, majorVersion);
     }
 
-    function _createCoreAndGifRoles(InstanceAccessManager clonedAccessManager) private {
+    function _createRoles(InstanceAdmin instanceAdmin) private {
         // default roles controlled by ADMIN_ROLE -> core roles
         // all set/granted only once during cloning (the only exception is INSTANCE_OWNER_ROLE, hooked to instance nft)
-        clonedAccessManager.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
-        clonedAccessManager.createCoreRole(COMPONENT_SERVICE_ROLE(), "ComponentServiceRole");
-        clonedAccessManager.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
-        clonedAccessManager.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
-        clonedAccessManager.createCoreRole(APPLICATION_SERVICE_ROLE(), "ApplicationServiceRole");
-        clonedAccessManager.createCoreRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole");
-        clonedAccessManager.createCoreRole(CLAIM_SERVICE_ROLE(), "ClaimServiceRole");
-        clonedAccessManager.createCoreRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole");
-        clonedAccessManager.createCoreRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole");
+        instanceAdmin.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
+        instanceAdmin.createCoreRole(COMPONENT_SERVICE_ROLE(), "ComponentServiceRole");
+        instanceAdmin.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
+        instanceAdmin.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
+        instanceAdmin.createCoreRole(APPLICATION_SERVICE_ROLE(), "ApplicationServiceRole");
+        instanceAdmin.createCoreRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole");
+        instanceAdmin.createCoreRole(CLAIM_SERVICE_ROLE(), "ClaimServiceRole");
+        instanceAdmin.createCoreRole(POLICY_SERVICE_ROLE(), "PolicyServiceRole");
+        instanceAdmin.createCoreRole(BUNDLE_SERVICE_ROLE(), "BundleServiceRole");
 
         // default roles controlled by INSTANCE_OWNER_ROLE -> gif roles
-        clonedAccessManager.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
-        clonedAccessManager.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
-        clonedAccessManager.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", INSTANCE_OWNER_ROLE());
+        instanceAdmin.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
+        instanceAdmin.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
+        instanceAdmin.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", INSTANCE_OWNER_ROLE());
     }
 
-    function _createCoreTargets(
-        InstanceAccessManager clonedAccessManager,
-        Instance clonedInstance,
-        BundleManager clonedBundleManager,
-        InstanceStore clonedInstanceStore)
+    function _createTargets(
+        InstanceAdmin instanceAdmin,
+        Instance instance,
+        BundleManager bundleManager,
+        InstanceStore instanceStore)
         private
     {
-        clonedAccessManager.createCoreTarget(address(clonedAccessManager), "InstanceAccessManager");// TODO create in instance access manager initializer?
-        clonedAccessManager.createCoreTarget(address(clonedInstance), "Instance");// TODO create in instance access manager initializer?
-        clonedAccessManager.createCoreTarget(address(clonedBundleManager), "BundleManager");
-        clonedAccessManager.createCoreTarget(address(clonedInstanceStore), "InstanceStore");
+        instanceAdmin.createCoreTarget(address(instance), "Instance");
+        //instanceAdmin.createCoreTarget(address(instanceAdmin), "InstanceAdmin");
+        instanceAdmin.createCoreTarget(address(bundleManager), "BundleManager");
+        instanceAdmin.createCoreTarget(address(instanceStore), "InstanceStore");
     }
 
     function _grantComponentServiceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        InstanceStore clonedInstanceStore,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
-        // configure authorization for pool service on instance
+        // configure authorization for component service on instance store
         address componentServiceAddress = registry.getServiceAddress(COMPONENT(), majorVersion);
-        clonedAccessManager.grantRole(COMPONENT_SERVICE_ROLE(), address(componentServiceAddress));
+        accessManager.grantRole(COMPONENT_SERVICE_ROLE().toInt(), componentServiceAddress, 0);
 
         bytes4[] memory serviceSelectors = new bytes4[](8);
-        serviceSelectors[0] = clonedInstanceStore.createComponent.selector;
-        serviceSelectors[1] = clonedInstanceStore.updateComponent.selector;
-        serviceSelectors[2] = clonedInstanceStore.createPool.selector;
-        serviceSelectors[3] = clonedInstanceStore.createProduct.selector;
-        serviceSelectors[5] = clonedInstanceStore.updateProduct.selector;
-        serviceSelectors[6] = clonedInstanceStore.increaseBalance.selector;
-        serviceSelectors[7] = clonedInstanceStore.increaseFees.selector;
+        serviceSelectors[0] = instanceStore.createComponent.selector;
+        serviceSelectors[1] = instanceStore.updateComponent.selector;
+        serviceSelectors[2] = instanceStore.createPool.selector;
+        serviceSelectors[3] = instanceStore.createProduct.selector;
+        serviceSelectors[5] = instanceStore.updateProduct.selector;
+        serviceSelectors[6] = instanceStore.increaseBalance.selector;
+        serviceSelectors[7] = instanceStore.increaseFees.selector;
 
-        clonedAccessManager.setCoreTargetFunctionRole(
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             serviceSelectors,
             COMPONENT_SERVICE_ROLE());
     }
 
     function _grantDistributionServiceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        InstanceStore clonedInstanceStore,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
         // configure authorization for distribution service on instance
         address distributionServiceAddress = registry.getServiceAddress(DISTRIBUTION(), majorVersion);
-        clonedAccessManager.grantRole(DISTRIBUTION_SERVICE_ROLE(), distributionServiceAddress);
+        accessManager.grantRole(DISTRIBUTION_SERVICE_ROLE().toInt(), distributionServiceAddress, 0);
         bytes4[] memory instanceDistributionServiceSelectors = new bytes4[](9);
-        // instanceDistributionServiceSelectors[0] = clonedInstanceStore.createDistributionSetup.selector;
-        // instanceDistributionServiceSelectors[0] = clonedInstanceStore.updateDistributionSetup.selector;
-        instanceDistributionServiceSelectors[0] = clonedInstanceStore.createDistributorType.selector;
-        instanceDistributionServiceSelectors[1] = clonedInstanceStore.updateDistributorType.selector;
-        instanceDistributionServiceSelectors[2] = clonedInstanceStore.updateDistributorTypeState.selector;
-        instanceDistributionServiceSelectors[3] = clonedInstanceStore.createDistributor.selector;
-        instanceDistributionServiceSelectors[4] = clonedInstanceStore.updateDistributor.selector;
-        instanceDistributionServiceSelectors[5] = clonedInstanceStore.updateDistributorState.selector;
-        instanceDistributionServiceSelectors[6] = clonedInstanceStore.createReferral.selector;
-        instanceDistributionServiceSelectors[7] = clonedInstanceStore.updateReferral.selector;
-        instanceDistributionServiceSelectors[8] = clonedInstanceStore.updateReferralState.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        //instanceDistributionServiceSelectors[0] = instanceStore.createDistributionSetup.selector;
+        //instanceDistributionServiceSelectors[1] = instanceStore.updateDistributionSetup.selector;
+        instanceDistributionServiceSelectors[0] = instanceStore.createDistributorType.selector;
+        instanceDistributionServiceSelectors[1] = instanceStore.updateDistributorType.selector;
+        instanceDistributionServiceSelectors[2] = instanceStore.updateDistributorTypeState.selector;
+        instanceDistributionServiceSelectors[3] = instanceStore.createDistributor.selector;
+        instanceDistributionServiceSelectors[4] = instanceStore.updateDistributor.selector;
+        instanceDistributionServiceSelectors[5] = instanceStore.updateDistributorState.selector;
+        instanceDistributionServiceSelectors[6] = instanceStore.createReferral.selector;
+        instanceDistributionServiceSelectors[7] = instanceStore.updateReferral.selector;
+        instanceDistributionServiceSelectors[8] = instanceStore.updateReferralState.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceDistributionServiceSelectors,
             DISTRIBUTION_SERVICE_ROLE());
     }
 
     function _grantPoolServiceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        InstanceStore clonedInstanceStore,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
         // configure authorization for pool service on instance
         address poolServiceAddress = registry.getServiceAddress(POOL(), majorVersion);
-        clonedAccessManager.grantRole(POOL_SERVICE_ROLE(), address(poolServiceAddress));
-        bytes4[] memory instancePoolServiceSelectors = new bytes4[](1);
-        instancePoolServiceSelectors[0] = clonedInstanceStore.updatePool.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        accessManager.grantRole(POOL_SERVICE_ROLE().toInt(), address(poolServiceAddress), 0);
+        bytes4[] memory instancePoolServiceSelectors = new bytes4[](1); // TODO works with (4)
+        instancePoolServiceSelectors[0] = instanceStore.updatePool.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instancePoolServiceSelectors,
             POOL_SERVICE_ROLE());
     }
 
     function _grantProductServiceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        InstanceStore clonedInstanceStore,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
         // configure authorization for product service on instance
         address productServiceAddress = registry.getServiceAddress(PRODUCT(), majorVersion);
-        clonedAccessManager.grantRole(PRODUCT_SERVICE_ROLE(), address(productServiceAddress));
+        accessManager.grantRole(PRODUCT_SERVICE_ROLE().toInt(), productServiceAddress, 0);
         bytes4[] memory instanceProductServiceSelectors = new bytes4[](3);
-        instanceProductServiceSelectors[0] = clonedInstanceStore.createRisk.selector;
-        instanceProductServiceSelectors[1] = clonedInstanceStore.updateRisk.selector;
-        instanceProductServiceSelectors[2] = clonedInstanceStore.updateRiskState.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        instanceProductServiceSelectors[0] = instanceStore.createRisk.selector;
+        instanceProductServiceSelectors[1] = instanceStore.updateRisk.selector;
+        instanceProductServiceSelectors[2] = instanceStore.updateRiskState.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceProductServiceSelectors,
             PRODUCT_SERVICE_ROLE());
     }
 
     function _grantApplicationServiceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        InstanceStore clonedInstanceStore,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
         // configure authorization for application services on instance
         address applicationServiceAddress = registry.getServiceAddress(APPLICATION(), majorVersion);
-        clonedAccessManager.grantRole(APPLICATION_SERVICE_ROLE(), applicationServiceAddress);
+        accessManager.grantRole(APPLICATION_SERVICE_ROLE().toInt(), applicationServiceAddress, 0);
         bytes4[] memory instanceApplicationServiceSelectors = new bytes4[](3);
-        instanceApplicationServiceSelectors[0] = clonedInstanceStore.createApplication.selector;
-        instanceApplicationServiceSelectors[1] = clonedInstanceStore.updateApplication.selector;
-        instanceApplicationServiceSelectors[2] = clonedInstanceStore.updateApplicationState.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        instanceApplicationServiceSelectors[0] = instanceStore.createApplication.selector;
+        instanceApplicationServiceSelectors[1] = instanceStore.updateApplication.selector;
+        instanceApplicationServiceSelectors[2] = instanceStore.updateApplicationState.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceApplicationServiceSelectors,
             APPLICATION_SERVICE_ROLE());
     }
 
     function _grantPolicyServiceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        InstanceStore clonedInstanceStore,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
         // configure authorization for policy services on instance
         address policyServiceAddress = registry.getServiceAddress(POLICY(), majorVersion);
-        clonedAccessManager.grantRole(POLICY_SERVICE_ROLE(), policyServiceAddress);
+        accessManager.grantRole(POLICY_SERVICE_ROLE().toInt(), policyServiceAddress, 0);
         bytes4[] memory instancePolicyServiceSelectors = new bytes4[](2);
-        instancePolicyServiceSelectors[0] = clonedInstanceStore.updatePolicy.selector;
-        instancePolicyServiceSelectors[1] = clonedInstanceStore.updatePolicyState.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        instancePolicyServiceSelectors[0] = instanceStore.updatePolicy.selector;
+        instancePolicyServiceSelectors[1] = instanceStore.updatePolicyState.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instancePolicyServiceSelectors,
             POLICY_SERVICE_ROLE());
     }
 
     function _grantClaimServiceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        InstanceStore clonedInstanceStore,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
         // configure authorization for claim/payout services on instance
         address claimServiceAddress = registry.getServiceAddress(CLAIM(), majorVersion);
-        clonedAccessManager.grantRole(CLAIM_SERVICE_ROLE(), claimServiceAddress);
+        accessManager.grantRole(CLAIM_SERVICE_ROLE().toInt(), claimServiceAddress, 0);
 
         bytes4[] memory instancePolicyServiceSelectors = new bytes4[](1);
-        instancePolicyServiceSelectors[0] = clonedInstanceStore.updatePolicyClaims.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        instancePolicyServiceSelectors[0] = instanceStore.updatePolicyClaims.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instancePolicyServiceSelectors, 
             CLAIM_SERVICE_ROLE());
 
         bytes4[] memory instanceClaimServiceSelectors = new bytes4[](4);
-        instanceClaimServiceSelectors[0] = clonedInstanceStore.createClaim.selector;
-        instanceClaimServiceSelectors[1] = clonedInstanceStore.updateClaim.selector;
-        instanceClaimServiceSelectors[2] = clonedInstanceStore.createPayout.selector;
-        instanceClaimServiceSelectors[3] = clonedInstanceStore.updatePayout.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        instanceClaimServiceSelectors[0] = instanceStore.createClaim.selector;
+        instanceClaimServiceSelectors[1] = instanceStore.updateClaim.selector;
+        instanceClaimServiceSelectors[2] = instanceStore.createPayout.selector;
+        instanceClaimServiceSelectors[3] = instanceStore.updatePayout.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceClaimServiceSelectors, 
             CLAIM_SERVICE_ROLE());
     }
 
     function _grantBundleServiceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        InstanceStore clonedInstanceStore,
-        BundleManager clonedBundleManager,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
+        BundleManager bundleManager,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
         // configure authorization for bundle service on instance
         address bundleServiceAddress = registry.getServiceAddress(BUNDLE(), majorVersion);
-        clonedAccessManager.grantRole(BUNDLE_SERVICE_ROLE(), address(bundleServiceAddress));
+        accessManager.grantRole(BUNDLE_SERVICE_ROLE().toInt(), bundleServiceAddress, 0);
         bytes4[] memory instanceBundleServiceSelectors = new bytes4[](5);
-        instanceBundleServiceSelectors[0] = clonedInstanceStore.createBundle.selector;
-        instanceBundleServiceSelectors[1] = clonedInstanceStore.updateBundle.selector;
-        instanceBundleServiceSelectors[2] = clonedInstanceStore.updateBundleState.selector;
-        instanceBundleServiceSelectors[3] = clonedInstanceStore.increaseLocked.selector;
-        instanceBundleServiceSelectors[4] = clonedInstanceStore.decreaseLocked.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        instanceBundleServiceSelectors[0] = instanceStore.createBundle.selector;
+        instanceBundleServiceSelectors[1] = instanceStore.updateBundle.selector;
+        instanceBundleServiceSelectors[2] = instanceStore.updateBundleState.selector;
+        instanceBundleServiceSelectors[3] = instanceStore.increaseLocked.selector;
+        instanceBundleServiceSelectors[4] = instanceStore.decreaseLocked.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "InstanceStore",
             instanceBundleServiceSelectors,
             BUNDLE_SERVICE_ROLE());
 
         // configure authorization for bundle service on bundle manager
         bytes4[] memory bundleManagerBundleServiceSelectors = new bytes4[](5);
-        bundleManagerBundleServiceSelectors[0] = clonedBundleManager.linkPolicy.selector;
-        bundleManagerBundleServiceSelectors[1] = clonedBundleManager.unlinkPolicy.selector;
-        bundleManagerBundleServiceSelectors[2] = clonedBundleManager.add.selector;
-        bundleManagerBundleServiceSelectors[3] = clonedBundleManager.lock.selector;
-        bundleManagerBundleServiceSelectors[4] = clonedBundleManager.unlock.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        bundleManagerBundleServiceSelectors[0] = bundleManager.linkPolicy.selector;
+        bundleManagerBundleServiceSelectors[1] = bundleManager.unlinkPolicy.selector;
+        bundleManagerBundleServiceSelectors[2] = bundleManager.add.selector;
+        bundleManagerBundleServiceSelectors[3] = bundleManager.lock.selector;
+        bundleManagerBundleServiceSelectors[4] = bundleManager.unlock.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "BundleManager",
             bundleManagerBundleServiceSelectors,
             BUNDLE_SERVICE_ROLE());
     }
 
     function _grantInstanceServiceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        Instance clonedInstance,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        Instance instance,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
         // configure authorization for instance service on instance
         address instanceServiceAddress = registry.getServiceAddress(INSTANCE(), majorVersion);
-        clonedAccessManager.grantRole(INSTANCE_SERVICE_ROLE(), instanceServiceAddress);
+        accessManager.grantRole(INSTANCE_SERVICE_ROLE().toInt(), instanceServiceAddress, 0);
         bytes4[] memory instanceInstanceServiceSelectors = new bytes4[](1);
-        instanceInstanceServiceSelectors[0] = clonedInstance.setInstanceReader.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        instanceInstanceServiceSelectors[0] = instance.setInstanceReader.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "Instance",
             instanceInstanceServiceSelectors,
             INSTANCE_SERVICE_ROLE());
 
         // configure authorizations for instance service on instance access manager
-        bytes4[] memory accessManagerInstanceServiceSelectors = new bytes4[](3);
-        accessManagerInstanceServiceSelectors[0] = clonedAccessManager.createGifTarget.selector;
-        accessManagerInstanceServiceSelectors[1] = clonedAccessManager.setTargetLockedByService.selector;
-        accessManagerInstanceServiceSelectors[2] = clonedAccessManager.setCoreTargetFunctionRole.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
-            "InstanceAccessManager",
-            accessManagerInstanceServiceSelectors,
+        bytes4[] memory instanceAdminInstanceServiceSelectors = new bytes4[](3);
+        instanceAdminInstanceServiceSelectors[0] = instanceAdmin.createGifTarget.selector;
+        instanceAdminInstanceServiceSelectors[1] = instanceAdmin.setTargetLockedByService.selector;
+        instanceAdminInstanceServiceSelectors[2] = instanceAdmin.setTargetFunctionRoleByService.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
+            "InstanceAdmin",
+            instanceAdminInstanceServiceSelectors,
             INSTANCE_SERVICE_ROLE());
     }
 
     function _grantInstanceAuthorizations(
-        InstanceAccessManager clonedAccessManager,
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        Instance instance,
         IRegistry registry,
         VersionPart majorVersion)
         private
     {
-        bytes4[] memory accessManagerInstanceSelectors = new bytes4[](4);
-        accessManagerInstanceSelectors[0] = clonedAccessManager.createRole.selector;
-        accessManagerInstanceSelectors[1] = clonedAccessManager.createTarget.selector;
-        accessManagerInstanceSelectors[2] = clonedAccessManager.setTargetFunctionRole.selector;
-        accessManagerInstanceSelectors[3] = clonedAccessManager.setTargetLockedByInstance.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
-            "InstanceAccessManager",
-            accessManagerInstanceSelectors,
+        // configure authorizations for instance on instance admin
+        bytes4[] memory instanceAdminInstanceSelectors = new bytes4[](4);
+        instanceAdminInstanceSelectors[0] = instanceAdmin.createRole.selector;
+        instanceAdminInstanceSelectors[1] = instanceAdmin.createTarget.selector;
+        instanceAdminInstanceSelectors[2] = instanceAdmin.setTargetFunctionRoleByInstance.selector;
+        instanceAdminInstanceSelectors[3] = instanceAdmin.setTargetLockedByInstance.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
+            "InstanceAdmin",
+            instanceAdminInstanceSelectors,
             INSTANCE_ROLE());
     }
 
     function _grantInstanceOwnerAuthorizations(
-        InstanceAccessManager clonedAccessManager,
-        Instance clonedInstance,
+        InstanceAdmin instanceAdmin,
+        Instance instance,
         IRegistry registry,
         VersionPart majorVersion) 
         private 
@@ -324,11 +337,11 @@ library InstanceAuthorizationsLib
         // configure authorization for instance owner on instance access manager
         // instance owner role is granted/revoked ONLY by INSTANCE_ROLE
         bytes4[] memory instanceInstanceOwnerSelectors = new bytes4[](4);
-        instanceInstanceOwnerSelectors[0] = clonedInstance.createRole.selector;
-        instanceInstanceOwnerSelectors[1] = clonedInstance.createTarget.selector;
-        instanceInstanceOwnerSelectors[2] = clonedInstance.setTargetFunctionRole.selector;
-        instanceInstanceOwnerSelectors[3] = clonedInstance.setTargetLocked.selector;
-        clonedAccessManager.setCoreTargetFunctionRole(
+        instanceInstanceOwnerSelectors[0] = instance.createRole.selector;
+        instanceInstanceOwnerSelectors[1] = instance.createTarget.selector;
+        instanceInstanceOwnerSelectors[2] = instance.setTargetFunctionRole.selector;
+        instanceInstanceOwnerSelectors[3] = instance.setTargetLocked.selector;
+        instanceAdmin.setTargetFunctionRoleByService(
             "Instance",
             instanceInstanceOwnerSelectors,
             INSTANCE_OWNER_ROLE());

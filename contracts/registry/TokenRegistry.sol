@@ -5,12 +5,16 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
 
+import {REGISTRY} from "../type/ObjectType.sol";
+import {VersionPart} from "../type/Version.sol";
+
 import {IRegisterable} from "../shared/IRegisterable.sol";
+
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
-import {REGISTRY} from "../type/ObjectType.sol";
-import {VersionPart} from "../type/Version.sol";
+import {RegistryAdmin} from "./RegistryAdmin.sol";
+
 
 /// @title contract to register token per GIF major release.
 contract TokenRegistry is
@@ -56,16 +60,16 @@ contract TokenRegistry is
         _;
     }
 
-    constructor(
-        address initialAuthority,
-        address registry,
-        address dipToken
-    )
-        AccessManaged(initialAuthority)
-    { 
+    constructor(IRegistry registry)
+        AccessManaged(msg.sender)
+    {
+        // set authority
+        address authority = RegistryAdmin(registry.getRegistryAdminAddress()).authority();
+        setAuthority(authority);
+        
         // set dip token
         _registry = IRegistry(registry);
-        _dipToken = IERC20Metadata(dipToken);
+        _dipToken = IERC20Metadata(_registry.getDipTokenAddress());
 
         // register dip token
         uint256 chainId = block.chainid;
@@ -220,7 +224,7 @@ contract TokenRegistry is
         // verify valid major version
         if(enforceVersionCheck) {
             uint256 version = majorVersion.toInt();
-            if (!getRegistry().isValidRelease(majorVersion)) {
+            if (!getRegistry().isActiveRelease(majorVersion)) {
                 revert ErrorTokenRegistryMajorVersionInvalid(majorVersion);
             }
         }

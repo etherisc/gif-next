@@ -56,7 +56,7 @@ contract TestPool is GifTest {
 
     function test_PoolComponentAndPoolInfo() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);

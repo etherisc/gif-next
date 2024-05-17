@@ -344,9 +344,9 @@ contract TestPricingService is GifTest {
         _prepareProduct();
 
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE(), poolOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
         vm.stopPrank();
 
         // -- set various fees
