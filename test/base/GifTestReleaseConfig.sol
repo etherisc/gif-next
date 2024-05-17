@@ -325,9 +325,9 @@ contract GifTestReleaseConfig is ReleaseConfig
         _names.push(INSTANCE_SERVICE_NAME);
         _serviceRoles.push(new RoleId[](1));
         _serviceRoleNames.push(new string[](1));
-        _functionRoles.push(new RoleId[](1));
-        _functionRoleNames.push(new string[](1));
-        _selectors.push(new bytes4[][](1));
+        _functionRoles.push(new RoleId[](2));
+        _functionRoleNames.push(new string[](2));
+        _selectors.push(new bytes4[][](2));
         uint serviceIdx = _addresses.length - 1;
 
         _serviceRoles[serviceIdx][0] = INSTANCE_SERVICE_ROLE();
@@ -335,13 +335,18 @@ contract GifTestReleaseConfig is ReleaseConfig
         _serviceRoleNames[serviceIdx][0] = INSTANCE_SERVICE_ROLE_NAME;
 
         _functionRoleNames[serviceIdx][0] = CAN_CREATE_GIF_TARGET__ROLE_NAME;
+        _functionRoleNames[serviceIdx][1] = COMPONENT_SERVICE_ROLE_NAME;
 
         _functionRoles[serviceIdx][0] = CAN_CREATE_GIF_TARGET__ROLE();
         _selectors[serviceIdx][0] = new bytes4[](1);
         _selectors[serviceIdx][0][0] = InstanceService.createGifTarget.selector;
+
+        _functionRoles[serviceIdx][1] = COMPONENT_SERVICE_ROLE(); // CAN_CREATE_COMPONENT_TARGET__ROLE()
+        _selectors[serviceIdx][1] = new bytes4[](1);
+        _selectors[serviceIdx][1][0] = InstanceService.createComponentTarget.selector;
     }
 
-   function _pushStakingServiceConfig() internal
+    function _pushStakingServiceConfig() internal
     {
         address proxyManager = _computeProxyManagerAddress(type(StakingServiceManager).creationCode);
         address implementation = _computeImplementationAddress(type(StakingService).creationCode, proxyManager);

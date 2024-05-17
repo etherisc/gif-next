@@ -131,16 +131,6 @@ contract RegistryAdmin is
         _setTargetFunctionRole(address(tokenRegistry), functionSelector, GIF_MANAGER_ROLE());
     }*/
 
-    // can't create release manager as target in constructor
-    /*function createTarget(
-        address target, 
-        string memory name
-    )
-        external
-        restricted // RELEASE_MANAGER_ROLE
-    {
-        _createTarget(target, name);
-    }*/
 
     function setTargetFunctionRole(
         address target, 
@@ -191,12 +181,6 @@ contract RegistryAdmin is
 
     function _setGifAdminRole() private
     {
-        // for this contract
-        //bytes4[] memory functionSelector = new bytes4[](1);
-        //functionSelector[0] = RegistryAdmin.setTokenRegistry.selector;
-
-        //_setTargetFunctionRole(address(this), functionSelector, GIF_ADMIN_ROLE());
-
         // for ReleaseManager
         bytes4[] memory functionSelector2 = new bytes4[](2);
         //functionSelector2[0] = ReleaseManager.registerStaking.selector;

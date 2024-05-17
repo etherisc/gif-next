@@ -435,7 +435,7 @@ contract GifTest is GifDeployer {
         // solhint-enable
 
         // --- staking service ----------------------------------//
-        stakingServiceManager = new StakingServiceManager{salt: salt}(registryAddress, salt);
+        stakingServiceManager = new StakingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         stakingService = stakingServiceManager.getStakingService();
         stakingServiceNftId = releaseManager.registerService(stakingService);
         stakingServiceManager.linkToProxy();

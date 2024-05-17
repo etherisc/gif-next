@@ -567,11 +567,6 @@ contract ComponentService is
             address owner
         )
     {
-        // check component has not already been registered
-        if (getRegistry().getNftId(componentAddress).gtz()) {
-            revert ErrorComponentServiceAlreadyRegistered(componentAddress);
-        }
-
         // check this is a component
         component = IInstanceLinkedComponent(componentAddress);
         if(!component.supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
@@ -582,6 +577,11 @@ contract ComponentService is
         IRegistry.ObjectInfo memory info = component.getInitialInfo();
         if(info.objectType != requiredType) {
             revert ErrorComponentServiceInvalidType(componentAddress, requiredType, info.objectType);
+        }
+
+        // check component has not already been registered
+        if (getRegistry().getNftId(componentAddress).gtz()) {
+            revert ErrorComponentServiceAlreadyRegistered(componentAddress);
         }
 
         // check instance has assigned required role to inital owner

@@ -8,7 +8,7 @@ pragma solidity ^0.8.20;
  * 1. name is InitializableCustom
  * 2. no longer abstract
  * 3. have $._initializeOwner
- * 4. have constructor, sets _initializeOwner 
+ * 4. have constructor where sets _initializeOwner 
  * 5. initializer() in addition checks for _initializeOwner
  * 6. reinitializer() is deleted
  */

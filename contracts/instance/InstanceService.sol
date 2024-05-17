@@ -4,12 +4,17 @@ pragma solidity ^0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
+import {BundleManager} from "./BundleManager.sol";
+import {ChainNft} from "../registry/ChainNft.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {SecondsLib} from "../type/Seconds.sol";
+import {UFixedLib} from "../type/UFixed.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
-import {ObjectType, INSTANCE, BUNDLE, APPLICATION, POLICY, CLAIM, PRODUCT, DISTRIBUTION, REGISTRY, POOL} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IService} from "../shared/IService.sol";
 import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 
@@ -19,14 +24,14 @@ import {IProductComponent} from "../product/IProductComponent.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
-import {ChainNft} from "../registry/ChainNft.sol";
+import {IStakingService} from "../staking/IStakingService.sol";
+import {TargetManagerLib} from "../staking/TargetManagerLib.sol";
 
 import {Instance} from "./Instance.sol";
 import {IInstance} from "./IInstance.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
-import {BundleManager} from "./BundleManager.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {InstanceAuthorizationsLib} from "./InstanceAuthorizationsLib.sol";
 
@@ -39,6 +44,8 @@ contract InstanceService is
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
 
     IRegistryService internal _registryService;
+    IStakingService internal _stakingService;
+
     address internal _masterAccessManager;
     address internal _masterInstanceAdmin;
     address internal _masterInstance;
@@ -115,8 +122,15 @@ contract InstanceService is
 
         clonedAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
 
+        // register new instance with registry
         IRegistry.ObjectInfo memory info = _registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
+
+        // create corresponding staking target
+        _stakingService.createInstanceTarget(
+            clonedInstanceNftId,
+            TargetManagerLib.getDefaultLockingPeriod(),
+            TargetManagerLib.getDefaultRewardRate());
 
         emit LogInstanceCloned(
             address(clonedAccessManager), 
@@ -128,21 +142,56 @@ contract InstanceService is
             clonedInstanceNftId);
     }
 
+    function setComponentLocked(bool locked)
+        external
+        virtual
+        onlyComponent()
+    {
+        // checks
+        address componentAddress = msg.sender;
+
+        if (!IInstanceLinkedComponent(componentAddress).supportsInterface(type(IInstanceLinkedComponent).interfaceId)) {
+            revert ErrorInstanceServiceComponentNotInstanceLinked(componentAddress);
+        }
+
+        IRegistry registry = getRegistry();
+        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
+
+        IInstance instance = IInstance(
+            registry.getObjectInfo(
+                instanceNftId).objectAddress);
+
+        // no revert in case already locked
+        instance.getInstanceAdmin().setTargetLockedByService(
+            componentAddress, 
+            locked);
+    }
+
+
+    function getMasterInstanceReader() external view returns (address) {
+        return _masterInstanceReader;
+    }
+
+    // From IService
+    function getDomain() public pure override returns(ObjectType) {
+        return INSTANCE();
+    }
+
     function setAndRegisterMasterInstance(address instanceAddress)
             external 
             onlyOwner 
             returns(NftId masterInstanceNftId)
     {
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
-        if(_masterAccessManager != address(0)) { revert ErrorInstanceServiceMasterOzAccessManagerAlreadySet(); }
+        if(_masterAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
         if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
         if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
 
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
-        InstanceAdmin InstanceAdmin = instance.getInstanceAdmin();
-        address InstanceAdminAddress = address(InstanceAdmin);
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+        address instanceAdminAddress = address(instanceAdmin);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
         BundleManager bundleManager = instance.getBundleManager();
@@ -150,19 +199,19 @@ contract InstanceService is
         InstanceStore instanceStore = instance.getInstanceStore();
         address instanceStoreAddress = address(instanceStore);
 
-        if(InstanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
+        if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
         if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
         if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
         
-        if(instance.authority() != InstanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(bundleManager.authority() != InstanceAdmin.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
-        if(instanceStore.authority() != InstanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
+        if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
+        if(bundleManager.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
+        if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
         _masterAccessManager = instance.authority();
-        _masterInstanceAdmin = InstanceAdminAddress;
+        _masterInstanceAdmin = instanceAdminAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
         _masterInstanceBundleManager = bundleManagerAddress;
@@ -198,7 +247,6 @@ contract InstanceService is
     }
 
 
-    // all gif targets MUST be childs of instanceNftId
     function createGifTarget(
         NftId instanceNftId,
         address targetAddress,
@@ -207,7 +255,50 @@ contract InstanceService is
         RoleId[] memory roles
     )
         external
-        restricted
+        virtual
+        restricted()
+    {
+        _createGifTarget(
+            instanceNftId,
+            targetAddress,
+            targetName,
+            roles,
+            selectors
+        );
+    }
+
+
+    function createComponentTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        bytes4[][] memory selectors,
+        RoleId[] memory roles
+    )
+        external
+        virtual
+        restricted()
+    {
+        _createGifTarget(
+            instanceNftId,
+            targetAddress,
+            targetName,
+            roles,
+            selectors
+        );
+    }
+
+
+    /// all gif targets MUST be children of instanceNftId
+    function _createGifTarget(
+        NftId instanceNftId,
+        address targetAddress,
+        string memory targetName,
+        RoleId[] memory roles,
+        bytes4[][] memory selectors
+    )
+        internal
+        virtual
     {
         // TODO instanceAdmin will check target instance match anyway
         (
@@ -220,35 +311,9 @@ contract InstanceService is
         // set proposed target config
         // TODO restriction: gif targets are set only once and only here?
         //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
-        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++)
-        {
+        for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++) {
             instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);
         }
-    }
-
-    function setComponentLocked(bool locked) onlyComponent external {
-
-        address componentAddress = msg.sender;
-        IRegistry registry = getRegistry();
-        NftId instanceNftId = registry.getObjectInfo(componentAddress).parentNftId;
-
-        IInstance instance = IInstance(
-            registry.getObjectInfo(
-                instanceNftId).objectAddress);
-
-        instance.getInstanceAdmin().setTargetLockedByService(
-            componentAddress, 
-            locked);
-    }
-
-
-    function getMasterInstanceReader() external view returns (address) {
-        return _masterInstanceReader;
-    }
-
-    // From IService
-    function getDomain() public pure override returns(ObjectType) {
-        return INSTANCE();
     }
     
     /// @dev top level initializer
@@ -268,10 +333,8 @@ contract InstanceService is
 
         initializeService(registryAddress, authority, owner);
 
-        _registryService = IRegistryService(
-            IRegistry(registryAddress).getServiceAddress(
-                REGISTRY(), 
-                getVersion().toMajorPart()));
+        _registryService = IRegistryService(_getServiceAddress(REGISTRY()));
+        _stakingService = IStakingService(_getServiceAddress(STAKING()));
 
         registerInterface(type(IInstanceService).interfaceId);
     }
