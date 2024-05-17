@@ -149,7 +149,7 @@ contract ProxyManager is
             upgradeData);
     }
 
-    function getProxy() public returns (UpgradableProxyWithAdmin) {
+    function getProxy() public view returns (UpgradableProxyWithAdmin) {
         return _proxy;
     }
 

@@ -249,7 +249,7 @@ abstract contract Distribution is
     
 
     /// @dev returns true iff the component needs to be called when selling/renewing policis
-    function isVerifying() external view returns (bool verifying) {
+    function isVerifying() external pure returns (bool verifying) {
         return true;
     }
 

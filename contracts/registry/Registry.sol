@@ -286,7 +286,6 @@ contract Registry is
     }
 
     function getTokenRegistryAddress() external view returns (address tokenRegistry) {
-        require(_tokenRegistryAddress != address(0), "TokenRegistry address is zero");
         return _tokenRegistryAddress;
     }
 
@@ -407,7 +406,7 @@ contract Registry is
         address parentObjectAddress
     )
         internal 
-        view 
+        pure 
         returns (address interceptor) 
     {
         // no intercepting calls for stakes

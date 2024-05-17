@@ -242,7 +242,7 @@ contract InstanceAdmin is
         _accessManager.createRole(roleId.toInt(), name);
     }
 
-    function _validateRole(RoleId roleId, IAccess.Type rtype) internal view
+    function _validateRole(RoleId roleId, IAccess.Type rtype) internal pure
     {
         uint roleIdInt = roleId.toInt();
         if(rtype == IAccess.Type.Custom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
@@ -312,7 +312,8 @@ contract InstanceAdmin is
         view 
     {}
 
-    // IMPORTANT: instance access manager MUST be of Core type -> otherwise can be locked forever
+    // IMPORTANT: instance admin MUST be of Core type -> otherwise can be locked forever
+    // TODO: consider locking gif targets in a separate function?
     function _setTargetLocked(address target, bool locked) internal
     {
         IAccess.Type targetType = _targetType[target];

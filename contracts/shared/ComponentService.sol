@@ -526,7 +526,7 @@ contract ComponentService is
     }
 
 
-    function _createSelectors(bytes4 selector) internal view returns (bytes4[] memory selectors) {
+    function _createSelectors(bytes4 selector) internal pure returns (bytes4[] memory selectors) {
         selectors = new bytes4[](1);
         selectors[0] = selector;
     }
@@ -560,7 +560,7 @@ contract ComponentService is
         RoleId requiredRole
     )
         internal
-        // view
+        view
         returns (
             IInstance instance,
             IInstanceLinkedComponent component,

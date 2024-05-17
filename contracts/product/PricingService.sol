@@ -171,7 +171,7 @@ contract PricingService is
         IBundle.BundleInfo memory bundleInfo
     )
         internal
-        view
+        pure
         returns (
             IPolicy.Premium memory premium
         )
@@ -203,7 +203,7 @@ contract PricingService is
         IBundle.BundleInfo memory bundleInfo
     )
         internal
-        view
+        pure
         returns (
             IPolicy.Premium memory intermadiatePremium
         )

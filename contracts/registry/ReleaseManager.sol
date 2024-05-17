@@ -136,7 +136,7 @@ contract ReleaseManager is
     function createNextRelease()
         external
         restricted() // GIF_ADMIN_ROLE
-        returns(VersionPart version)
+        returns(VersionPart)
     {
         if (!isValidTransition(RELEASE(), _state, SCHEDULED())) {
             revert ErrorReleaseManagerReleaseCreationDisallowed(_state);
@@ -145,6 +145,8 @@ contract ReleaseManager is
         _next = VersionPartLib.toVersionPart(_next.toInt() + 1);
         _awaitingRegistration = 0;
         _state = SCHEDULED();
+
+        return _next;
     }
 
     // TODO order of events
@@ -187,7 +189,7 @@ contract ReleaseManager is
         if(_awaitingRegistration > 0) {
             revert ErrorReleaseManagerReleaseAlreadyPrepared(version);
         }
-
+        // TODO instead of copying just set ServiceAuthorizationsLib for release and array of domains???
         _releaseInfo[version].version = version;
         _releaseInfo[version].salt = releaseSalt;
         _releaseInfo[version].addresses = addresses;
@@ -398,9 +400,9 @@ contract ReleaseManager is
 
     //--- ILifecycle -----------------------------------------------------------//
 
-    function hasLifecycle(ObjectType objectType) external view returns (bool) { return objectType == RELEASE(); }
+    function hasLifecycle(ObjectType objectType) external pure returns (bool) { return objectType == RELEASE(); }
 
-    function getInitialState(ObjectType objectType) public view returns (StateId stateId) { 
+    function getInitialState(ObjectType objectType) public pure returns (StateId stateId) { 
         if (objectType == RELEASE()) {
             stateId = INITIAL();
         }
@@ -412,7 +414,7 @@ contract ReleaseManager is
         StateId toId
     )
         public 
-        view 
+        pure 
         returns (bool isValid)
     {
         if (objectType != RELEASE()) { return false; }
@@ -430,6 +432,7 @@ contract ReleaseManager is
 
     function _verifyService(IService service)
         internal
+        view
         returns(
             IRegistry.ObjectInfo memory serviceInfo,
             ObjectType serviceDomain, 
@@ -511,7 +514,7 @@ contract ReleaseManager is
         bytes4[][][] memory selectors
     )
         internal
-        view
+        pure
     {
         if(serviceAddress.length == 0) {
             revert ErrorReleaseManagerReleaseEmpty();

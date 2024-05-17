@@ -201,15 +201,15 @@ contract InstanceReader {
         }
     }
 
-    function getBalanceAmount(NftId targetNftId) external returns (Amount) { 
+    function getBalanceAmount(NftId targetNftId) external view returns (Amount) { 
         return _store.getBalanceAmount(targetNftId);
     }
 
-    function getLockedAmount(NftId targetNftId) external returns (Amount) { 
+    function getLockedAmount(NftId targetNftId) external view returns (Amount) { 
         return _store.getLockedAmount(targetNftId);
     }
 
-    function getFeeAmount(NftId targetNftId) external returns (Amount) { 
+    function getFeeAmount(NftId targetNftId) external view returns (Amount) { 
         return _store.getFeeAmount(targetNftId);
     }
 

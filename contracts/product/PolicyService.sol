@@ -185,7 +185,7 @@ contract PolicyService is
         virtual
     {
         // check caller is registered product
-        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
         StateId stateId = instanceReader.getPolicyState(policyNftId);
 
