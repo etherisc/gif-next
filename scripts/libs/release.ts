@@ -10,8 +10,12 @@ import { executeTx, getFieldFromTxRcptLogs } from "./transaction";
 export type ReleaseAddresses = {
     registryServiceAddress: AddressLike,
     registryServiceManagerAddress: AddressLike,
+    stakingServiceAddress: AddressLike,
+    stakingServiceManagerAddress: AddressLike
     instanceServiceAddress: AddressLike,
     instanceServiceManagerAddress: AddressLike,
+    componentServiceAddress: AddressLike,
+    componentServiceManagerAddress: AddressLike,
     distributionServiceAddress: AddressLike,
     distributionServiceManagerAddress: AddressLike,
     poolServiceAddress: AddressLike,
@@ -28,15 +32,17 @@ export type ReleaseAddresses = {
     bundleServiceManagerAddress: AddressLike,
     pricingServiceAddress: AddressLike,
     pricingServiceManagerAddress: AddressLike,
-    stakingServiceAddress: AddressLike,
-    stakingServiceManagerAddress: AddressLike
 };
 
 function logReleaseAddresses(release: ReleaseAddresses): void {
     logger.info(`registryServiceAddress: ${release.registryServiceAddress}`);
     logger.info(`registryServiceManagerAddress: ${release.registryServiceManagerAddress}`);
+    logger.info(`stakingServiceAddress: ${release.stakingServiceAddress}`);
+    logger.info(`stakingServiceManagerAddress: ${release.stakingServiceManagerAddress}`);
     logger.info(`instanceServiceAddress: ${release.instanceServiceAddress}`);
     logger.info(`instanceServiceManagerAddress: ${release.instanceServiceManagerAddress}`);
+    logger.info(`componentServiceAddress: ${release.componentServiceAddress}`);
+    logger.info(`componentServiceManagerAddress: ${release.componentServiceManagerAddress}`);
     logger.info(`distributionServiceAddress: ${release.distributionServiceAddress}`);
     logger.info(`distributionServiceManagerAddress: ${release.distributionServiceManagerAddress}`);
     logger.info(`poolServiceAddress: ${release.poolServiceAddress}`);
@@ -51,13 +57,12 @@ function logReleaseAddresses(release: ReleaseAddresses): void {
     logger.info(`claimServiceManagerAddress: ${release.claimServiceManagerAddress}`);
     logger.info(`bundleServiceAddress: ${release.bundleServiceAddress}`);
     logger.info(`bundleServiceManagerAddress: ${release.bundleServiceManagerAddress}`);
-    logger.info(`stakingServiceAddress: ${release.stakingServiceAddress}`);
-    logger.info(`stakingServiceManagerAddress: ${release.stakingServiceManagerAddress}`);
 }
 
 export const roles = {
     INSTANCE_OWNER_ROLE: 1900,
     INSTANCE_SERVICE_ROLE: 2000,
+    COMPONENT_SERVICE_ROLE: 2001,
     DISTRIBUTION_SERVICE_ROLE: 2100,
     POOL_SERVICE_ROLE: 2200,
     PRODUCT_SERVICE_ROLE: 2300,
@@ -76,6 +81,7 @@ export const roleNames = {
     INSTANCE_OWNER_ROLE_NAME: "InstanceOwnerRole",
     INSTANCE_SERVICE_ROLE_NAME: "InstanceServiceRole",
     DISTRIBUTION_SERVICE_ROLE_NAME: "DistributionServiceRole",
+    COMPONENT_SERVICE_ROLE_NAME: "ComponentServiceRole",
     POOL_SERVICE_ROLE_NAME: "PoolServiceRole",
     PRODUCT_SERVICE_ROLE_NAME: "ProductServiceRole",
     APPLICATION_SERVICE_ROLE_NAME: "ApplicationServiceRole",
@@ -99,6 +105,7 @@ export const serviceNames = {
     CLAIM_SERVICE_NAME: "ClaimService",
     BUNDLE_SERVICE_NAME: "BundleService",
     PRICING_SERVICE_NAME: "PricingService",
+    COMPONENT_SERVICE_NAME: "ComponentService",
     STAKING_SERVICE_NAME: "StakingService",
     REGISTRY_SERVICE_NAME: "RegistryService"
 };
@@ -142,8 +149,12 @@ export async function computeReleaseAddresses(owner: Signer, registry: RegistryA
     const releaseAddresses: ReleaseAddresses = {
         registryServiceAddress: "0x0000000000000000000000000000000000000001",
         registryServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        stakingServiceAddress: "0x0000000000000000000000000000000000000001",
+        stakingServiceManagerAddress: "0x0000000000000000000000000000000000000001",
         instanceServiceAddress: "0x0000000000000000000000000000000000000001",
         instanceServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        componentServiceAddress: "0x0000000000000000000000000000000000000001",
+        componentServiceManagerAddress: "0x0000000000000000000000000000000000000001",
         distributionServiceAddress: "0x0000000000000000000000000000000000000001",
         distributionServiceManagerAddress: "0x0000000000000000000000000000000000000001",
         poolServiceAddress: "0x0000000000000000000000000000000000000001",
@@ -160,8 +171,6 @@ export async function computeReleaseAddresses(owner: Signer, registry: RegistryA
         bundleServiceManagerAddress: "0x0000000000000000000000000000000000000001",
         pricingServiceAddress: "0x0000000000000000000000000000000000000001",
         pricingServiceManagerAddress: "0x0000000000000000000000000000000000000001",
-        stakingServiceAddress: "0x0000000000000000000000000000000000000001",
-        stakingServiceManagerAddress: "0x0000000000000000000000000000000000000001"
     };
 
     logReleaseAddresses(releaseAddresses);
@@ -178,7 +187,6 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
     const config: ReleaseConfig =
     {
         addresses: [
-            serviceAddresses.stakingServiceAddress,
             serviceAddresses.policyServiceAddress,
             serviceAddresses.applicationServiceAddress,
             serviceAddresses.claimServiceAddress,
@@ -187,11 +195,12 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             serviceAddresses.bundleServiceAddress,
             serviceAddresses.pricingServiceAddress,
             serviceAddresses.distributionServiceAddress,
+            serviceAddresses.componentServiceAddress,
             serviceAddresses.instanceServiceAddress,
+            serviceAddresses.stakingServiceAddress,
             serviceAddresses.registryServiceAddress
         ],
         names: [
-            serviceNames.STAKING_SERVICE_NAME,
             serviceNames.POLICY_SERVICE_NAME,
             serviceNames.APPLICATION_SERVICE_NAME,
             serviceNames.CLAIM_SERVICE_NAME,
@@ -200,11 +209,12 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             serviceNames.BUNDLE_SERVICE_NAME,
             serviceNames.PRICING_SERVICE_NAME,
             serviceNames.DISTRIBUTION_SERVICE_NAME,
+            serviceNames.COMPONENT_SERVICE_NAME,
             serviceNames.INSTANCE_SERVICE_NAME,
+            serviceNames.STAKING_SERVICE_NAME,
             serviceNames.REGISTRY_SERVICE_NAME
         ],
         serviceRoles: [
-            [roles.STAKING_SERVICE_ROLE],
             [roles.POLICY_SERVICE_ROLE],
             [roles.APPLICATION_SERVICE_ROLE],
             [roles.CLAIM_SERVICE_ROLE],
@@ -213,11 +223,12 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [roles.BUNDLE_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
             [roles.PRICING_SERVICE_ROLE],
             [roles.DISTRIBUTION_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
+            [roles.COMPONENT_SERVICE_ROLE],
             [roles.INSTANCE_SERVICE_ROLE],
+            [roles.STAKING_SERVICE_ROLE],
             [roles.REGISTRY_SERVICE_ROLE]
         ],
         serviceRoleNames: [
-            [roleNames.STAKING_SERVICE_ROLE_NAME],
             [roleNames.POLICY_SERVICE_ROLE_NAME],
             [roleNames.APPLICATION_SERVICE_ROLE_NAME],
             [roleNames.CLAIM_SERVICE_ROLE_NAME],
@@ -226,11 +237,12 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [roleNames.BUNDLE_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
             [roleNames.PRICING_SERVICE_ROLE_NAME],
             [roleNames.DISTRIBUTION_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
+            [roleNames.COMPONENT_SERVICE_ROLE_NAME],
             [roleNames.INSTANCE_SERVICE_ROLE_NAME],
+            [roleNames.STAKING_SERVICE_ROLE_NAME],
             [roleNames.REGISTRY_SERVICE_ROLE_NAME]
         ],
         functionRoles: [
-            [],  // staking
             [],  // policy
             [],  // application
             [],  // claim
@@ -239,19 +251,21 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [roles.POLICY_SERVICE_ROLE, roles.POOL_SERVICE_ROLE],  // bundle
             [], // pricing
             [roles.POLICY_SERVICE_ROLE], // distribution
+            [], // component
             [roles.CAN_CREATE_GIF_TARGET_ROLE], // instance
+            [],  // staking
             [ // registry
-                //roles.STAKING_SERVICE_ROLE,
                 roles.APPLICATION_SERVICE_ROLE,
                 roles.PRODUCT_SERVICE_ROLE,
                 roles.POOL_SERVICE_ROLE,
                 roles.BUNDLE_SERVICE_ROLE,
                 roles.DISTRIBUTION_SERVICE_ROLE,
-                roles.INSTANCE_SERVICE_ROLE
+                roles.COMPONENT_SERVICE_ROLE,
+                roles.INSTANCE_SERVICE_ROLE,
+                roles.STAKING_SERVICE_ROLE
             ] 
         ],
         functionRoleNames: [
-            [], // staking
             [], // policy
             [], // application
             [], // claim
@@ -260,19 +274,21 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [roleNames.POLICY_SERVICE_ROLE_NAME, roleNames.POOL_SERVICE_ROLE_NAME], // bundle
             [], // pricing
             [roleNames.POLICY_SERVICE_ROLE_NAME], // distribution
+            [], // component
             [roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME], // instance
+            [], // staking
             [ // registry
-                //roleNames.STAKING_SERVICE_ROLE_NAME,
                 roleNames.APPLICATION_SERVICE_ROLE_NAME,
                 roleNames.PRODUCT_SERVICE_ROLE_NAME,
                 roleNames.POOL_SERVICE_ROLE_NAME,
                 roleNames.BUNDLE_SERVICE_ROLE_NAME,
                 roleNames.DISTRIBUTION_SERVICE_ROLE_NAME,
-                roleNames.INSTANCE_SERVICE_ROLE_NAME
+                roleNames.COMPONENT_SERVICE_ROLE_NAME,
+                roleNames.INSTANCE_SERVICE_ROLE_NAME,
+                roleNames.STAKING_SERVICE_ROLE_NAME,
             ]
         ],
         selectors: [
-            [], // staking
             [], // policy
             [], // application
             [], // claim
@@ -286,7 +302,7 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
                 [PoolService__factory.createInterface().getFunction("reduceCollateral").selector]
             ],
             [
-                [BundleService__factory.createInterface().getFunction("increaseBalance").selector],
+                [],//[BundleService__factory.createInterface().getFunction("increaseBalance").selector],
                 [
                     BundleService__factory.createInterface().getFunction("create").selector,
                     BundleService__factory.createInterface().getFunction("lockCollateral").selector,
@@ -299,16 +315,20 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [
                 [DistributionService__factory.createInterface().getFunction("processSale").selector]
             ],
+            [], // component
             [
                 [InstanceService__factory.createInterface().getFunction("createGifTarget").selector]
             ],
+            [], // staking
             [
                 [RegistryService__factory.createInterface().getFunction("registerPolicy").selector],
                 [RegistryService__factory.createInterface().getFunction("registerProduct").selector],
                 [RegistryService__factory.createInterface().getFunction("registerPool").selector],
                 [RegistryService__factory.createInterface().getFunction("registerBundle").selector],
                 [RegistryService__factory.createInterface().getFunction("registerDistribution").selector],
-                [RegistryService__factory.createInterface().getFunction("registerInstance").selector]
+                [RegistryService__factory.createInterface().getFunction("registerComponent").selector],                
+                [RegistryService__factory.createInterface().getFunction("registerInstance").selector],
+                [RegistryService__factory.createInterface().getFunction("registerStaking").selector]
             ]
         ]
     };
@@ -336,7 +356,7 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
     const releaseVersion = (logCreationInfo as BigNumberish);
     logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "salt");
     const releaseSalt = (logCreationInfo as BytesLike);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "releaseAccessManager");
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "accessManager");
     const releaseAccessManager = (logCreationInfo as AddressLike);
 
     const release: Release = {

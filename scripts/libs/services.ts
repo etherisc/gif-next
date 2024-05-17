@@ -39,55 +39,55 @@ export type ServiceAddresses = {
     componentService: ComponentService,
     componentServiceManagerAddress: AddressLike,
 
-    distributionServiceAddress: AddressLike,
     distributionServiceNftId: string,
+    distributionServiceAddress: AddressLike,
     distributionService: DistributionService,
     distributionServiceManagerAddress: AddressLike,
 
-    pricingServiceAddress: AddressLike,
     pricingServiceNftId: string,
+    pricingServiceAddress: AddressLike,
     pricingService: PricingService,
     pricingServiceManagerAddress: AddressLike,
 
-    poolServiceAddress: AddressLike,
     poolServiceNftId: string,
+    poolServiceAddress: AddressLike,
     poolService: PoolService,
     poolServiceManagerAddress: AddressLike,
 
-    productServiceAddress: AddressLike,
     productServiceNftId: string,
+    productServiceAddress: AddressLike,
     productService: ProductService,
     productServiceManagerAddress: AddressLike,
 
-    applicationServiceAddress: AddressLike,
     applicationServiceNftId : string,
+    applicationServiceAddress: AddressLike,
     applicationService: ApplicationService,
     applicationServiceManagerAddress: AddressLike
 
-    policyServiceAddress: AddressLike,
     policyServiceNftId : string,
+    policyServiceAddress: AddressLike,
     policyService: PolicyService,
     policyServiceManagerAddress: AddressLike
 
-    claimServiceAddress: AddressLike,
     claimServiceNftId : string,
+    claimServiceAddress: AddressLike,
     claimService: ClaimService,
     claimServiceManagerAddress: AddressLike
 
-    bundleServiceAddress: AddressLike,
     bundleServiceNftId : string,
+    bundleServiceAddress: AddressLike,
     bundleService: BundleService,
     bundleServiceManagerAddress: AddressLike
 
-    stakingServiceAddress: AddressLike,
     stakingServiceNftId : string,
+    stakingServiceAddress: AddressLike,
     stakingService: StakingService,
     stakingServiceManagerAddress: AddressLike
 }
 
 export async function deployAndRegisterServices(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses): Promise<ServiceAddresses> 
 {
-    logger.info("======== Creating release ========");    
+    logger.info("======== Starting release creation ========");
     //const salt = zeroPadBytes("0x03", 32);
     const salt: BytesLike = id(`0x5678`);
     const config = await getReleaseConfig(owner, registry, libraries, salt);
@@ -107,7 +107,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: { 
                 NftIdLib: libraries.nftIdLibAddress, 
-                TargetManagerLib: libraries.targetManagerLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
@@ -121,9 +120,38 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const logRegistrationInfoRs = getFieldFromTxRcptLogs(rcptRs!, registry.registry.interface, "LogRegistration", "nftId");
     const registryServiceNfdId = (logRegistrationInfoRs as unknown);
 
-    await tokenRegistry.linkToRegistryService();
+    // is not NftOwnable
+    //await registry.tokenRegistry.linkToRegistryService();
 
     logger.info(`registryServiceManager deployed - registryServiceAddress: ${registryServiceAddress} registryServiceManagerAddress: ${registryServiceManagerAddress} nftId: ${registryServiceNfdId}`);
+
+    logger.info("-------- staking service --------");
+    const { address: stakingServiceManagerAddress, contract: stakingServiceManagerBaseContract, } = await deployContract(
+        "StakingServiceManager",
+        owner,
+        [
+            release.accessManager,
+            registry.registryAddress,
+            release.salt
+        ],
+        { libraries: {
+            NftIdLib: libraries.nftIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            VersionLib: libraries.versionLibAddress, 
+            VersionPartLib: libraries.versionPartLibAddress,
+            StakeManagerLib: libraries.stakeManagerLibAddress,
+            TargetManagerLib: libraries.targetManagerLibAddress,
+        }});
+
+    const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
+    const stakingServiceAddress = await stakingServiceManager.getStakingService();
+    const stakingService = StakingService__factory.connect(stakingServiceAddress, owner);
+
+    const rcptStk = await executeTx(async () => await releaseManager.registerService(stakingServiceAddress));
+    const logRegistrationInfoStk = getFieldFromTxRcptLogs(rcptStk!, registry.registry.interface, "LogRegistration", "nftId");
+    const stakingServiceNftId = (logRegistrationInfoStk as unknown);
+    await stakingServiceManager.linkToProxy();
+    logger.info(`stakingServiceManager deployed - stakingServiceAddress: ${stakingServiceAddress} stakingServiceManagerAddress: ${stakingServiceManagerAddress} nftId: ${stakingServiceNftId}`);
 
     logger.info("-------- instance service --------");
     const { address: instanceServiceManagerAddress, contract: instanceServiceManagerBaseContract, } = await deployContract(
@@ -401,33 +429,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const policyServiceNftId = (logRegistrationInfoPol as unknown);
     await policyServiceManager.linkToProxy();
     logger.info(`policyServiceManager deployed - policyServiceAddress: ${policyServiceAddress} policyServiceManagerAddress: ${policyServiceManagerAddress} nftId: ${policyServiceNftId}`);
-
-
-    logger.info("-------- staking service --------");
-    const { address: stakingServiceManagerAddress, contract: stakingServiceManagerBaseContract, } = await deployContract(
-        "StakingServiceManager",
-        owner,
-        [
-            release.accessManager,
-            registry.registryAddress,
-            release.salt
-        ],
-        { libraries: {
-            NftIdLib: libraries.nftIdLibAddress,
-            TimestampLib: libraries.timestampLibAddress,
-            VersionLib: libraries.versionLibAddress, 
-            VersionPartLib: libraries.versionPartLibAddress, 
-        }});
-
-    const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
-    const stakingServiceAddress = await stakingServiceManager.getStakingService();
-    const stakingService = StakingService__factory.connect(stakingServiceAddress, owner);
-
-    const rcptStk = await executeTx(async () => await releaseManager.registerService(stakingServiceAddress));
-    const logRegistrationInfoStk = getFieldFromTxRcptLogs(rcptStk!, registry.registry.interface, "LogRegistration", "nftId");
-    const stakingServiceNftId = (logRegistrationInfoStk as unknown);
-    await stakingServiceManager.linkToProxy();
-    logger.info(`stakingServiceManager deployed - stakingServiceAddress: ${stakingServiceAddress} stakingServiceManagerAddress: ${stakingServiceManagerAddress} nftId: ${stakingServiceNftId}`);
     
     logger.info("======== Finished deployment of services ========");
 
@@ -451,49 +452,49 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         componentService: componentService,
         componentServiceManagerAddress: componentServiceManagerAddress,
 
-        distributionServiceAddress,
         distributionServiceNftId: distributionServiceNftId as string,
-        distributionService,
-        distributionServiceManagerAddress,
+        distributionServiceAddress: distributionServiceAddress,
+        distributionService: distributionService,
+        distributionServiceManagerAddress: distributionServiceManagerAddress,
 
-        pricingServiceAddress,
         pricingServiceNftId: distributionServiceNftId as string,
-        pricingService,
-        pricingServiceManagerAddress,
+        pricingServiceAddress: pricingServiceAddress,
+        pricingService: pricingService,
+        pricingServiceManagerAddress: pricingServiceManagerAddress,
 
-        poolServiceAddress,
         poolServiceNftId: poolServiceNftId as string,
-        poolService,
-        poolServiceManagerAddress,
+        poolServiceAddress: poolServiceAddress,
+        poolService: poolService,
+        poolServiceManagerAddress: poolServiceManagerAddress,
 
-        productServiceAddress,
-        productServiceNftId : productServiceNftId as string,
-        productService,
-        productServiceManagerAddress,
+        productServiceNftId: productServiceNftId as string,
+        productServiceAddress: productServiceAddress,
+        productService: productService,
+        productServiceManagerAddress: productServiceManagerAddress,
 
-        applicationServiceAddress,
-        applicationServiceNftId : applicationServiceNftId as string,
-        applicationService,
-        applicationServiceManagerAddress,
+        applicationServiceNftId: applicationServiceNftId as string,
+        applicationServiceAddress: applicationServiceAddress,
+        applicationService: applicationService,
+        applicationServiceManagerAddress: applicationServiceManagerAddress,
 
-        policyServiceAddress,
-        policyServiceNftId : policyServiceNftId as string,
-        policyService,
-        policyServiceManagerAddress,
+        policyServiceNftId: policyServiceNftId as string,
+        policyServiceAddress: policyServiceAddress,
+        policyService: policyService,
+        policyServiceManagerAddress: policyServiceManagerAddress,
 
-        claimServiceAddress,
-        claimServiceNftId : claimServiceNftId as string,
-        claimService,
-        claimServiceManagerAddress,
+        claimServiceNftId: claimServiceNftId as string,
+        claimServiceAddress: claimServiceAddress,
+        claimService: claimService,
+        claimServiceManagerAddress: claimServiceManagerAddress,
 
-        bundleServiceAddress,
-        bundleServiceNftId : bundleServiceNftId as string,
-        bundleService,
-        bundleServiceManagerAddress,
+        bundleServiceNftId: bundleServiceNftId as string,
+        bundleServiceAddress: bundleServiceAddress,
+        bundleService: bundleService,
+        bundleServiceManagerAddress: bundleServiceManagerAddress,
 
-        stakingServiceAddress,
-        stakingServiceNftId : stakingServiceNftId as string,
-        stakingService,
-        stakingServiceManagerAddress
+        stakingServiceNftId: stakingServiceNftId as string,
+        stakingServiceAddress: stakingServiceAddress,
+        stakingService: stakingService,
+        stakingServiceManagerAddress: stakingServiceManagerAddress
     };
 }
