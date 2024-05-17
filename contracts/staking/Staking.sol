@@ -381,6 +381,9 @@ contract Staking is
             stakeNftId,
             targetNftId, 
             AmountLib.max());
+
+        // update reward reserves
+        $._store.decreaseReserves(targetNftId, rewardsClaimedAmount);
     }
 
 
@@ -409,6 +412,9 @@ contract Staking is
             targetNftId,
             AmountLib.max(), // unstake all stakes
             AmountLib.max()); // claim all rewards
+
+        // update reward reserves
+        $._store.decreaseReserves(targetNftId, rewardsClaimedAmount);
     }
 
 

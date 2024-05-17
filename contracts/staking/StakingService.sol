@@ -267,7 +267,13 @@ contract StakingService is
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         address stakeOwner = msg.sender;
-        // TODO implement
+
+        Amount rewardsClaimedAmount = $._staking.claimRewards(stakeNftId);
+        $._staking.transferDipAmount(
+            stakeOwner,
+            rewardsClaimedAmount);
+
+        emit LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount);
     }
 
 
