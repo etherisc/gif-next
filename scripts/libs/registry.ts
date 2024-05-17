@@ -91,10 +91,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: registryAddress, contract: registryBaseContract } = await deployContract(
         "Registry",
         owner, // GIF_ADMIN_ROLE
-        [
-            registryAdminAddress,
-            dipAddress,
-        ], 
+        [registryAdminAddress], 
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
@@ -132,7 +129,10 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: tokenRegistryAddress, contract: tokenRegistryBaseContract } = await deployContract(
         "TokenRegistry",
         owner,
-        [registryAddress],
+        [
+            registryAddress,
+            dipAddress//dipMainnetAddress
+        ],
         {
             libraries: {
                 VersionPartLib: libraries.versionPartLibAddress,
@@ -146,7 +146,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: stakingReaderAddress, contract: stakingReaderBaseContract } = await deployContract(
         "StakingReader",
         owner,
-        [], // TODO use registryAddress here
+        [registryAddress],
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
@@ -206,12 +206,10 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const staking = Staking__factory.connect(stakingAddress, owner);
     const stakingNftId = await registry["getNftId(address)"](stakingAddress);
 
-    await stakingReader.initialize(registryAddress, stakingAddress, stakingStoreAddress);
+    await stakingReader.initialize(stakingAddress, stakingStoreAddress);
 
     await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress);
 
-    const gifAdmin = await owner.getAddress();
-    const gifManager = await owner.getAddress();
     await registryAdmin.initialize(registry, owner, owner);
 
     await verifyRegistryComponents(registryAddress, owner)

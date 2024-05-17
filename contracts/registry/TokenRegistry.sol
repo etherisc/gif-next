@@ -60,16 +60,15 @@ contract TokenRegistry is
         _;
     }
 
-    constructor(IRegistry registry)
+    constructor(IRegistry registry, IERC20Metadata dipToken)
         AccessManaged(msg.sender)
     {
         // set authority
         address authority = RegistryAdmin(registry.getRegistryAdminAddress()).authority();
         setAuthority(authority);
         
-        // set dip token
-        _registry = IRegistry(registry);
-        _dipToken = IERC20Metadata(_registry.getDipTokenAddress());
+        _registry = registry;
+        _dipToken = dipToken;
 
         // register dip token
         uint256 chainId = block.chainid;
@@ -266,6 +265,10 @@ contract TokenRegistry is
         }
 
         return _active[chainId][token][majorVersion];
+    }
+
+    function getDipTokenAddress() external view returns (address) {
+        return address(_dipToken);
     }
 
     //--- IRegistryLinked --------------------------------------------------//

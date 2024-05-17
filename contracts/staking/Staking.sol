@@ -453,13 +453,14 @@ contract Staking is
             address registryAddress,
             address tokenRegistryAddress,
             address stakingStoreAddress,
-            address initialOwner
+            address stakingOwner
         ) = abi.decode(data, (address, address, address, address));
 
         // only admin(authority) and dip token address are set in registry at this point
         IRegistry registry = IRegistry(registryAddress);
-        address dipTokenAddress = registry.getDipTokenAddress();
         address authority = registry.getAuthority();
+        TokenRegistry tokenRegistry = TokenRegistry(tokenRegistryAddress);
+        address dipTokenAddress = tokenRegistry.getDipTokenAddress();
 
         initializeComponent(
             authority,
@@ -469,7 +470,7 @@ contract Staking is
             dipTokenAddress,
             STAKING(), 
             false, // is interceptor
-            initialOwner, 
+            stakingOwner, 
             "", // registry data
             ""); // component data
 

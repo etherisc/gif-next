@@ -50,7 +50,6 @@ contract Registry is
             ObjectType parentType => bool)) private _coreObjectCombinations;
 
     RegistryAdmin public immutable _admin;
-    IERC20Metadata public immutable _dipToken;
     ChainNft public immutable _chainNft;
 
     NftId public immutable _protocolNftId;
@@ -77,14 +76,10 @@ contract Registry is
     }
 
 
-    constructor(
-        RegistryAdmin admin, 
-        IERC20Metadata dipToken
-    ) 
+    constructor(RegistryAdmin admin) 
         InitializableCustom() 
     {
         _admin = admin;
-        _dipToken = dipToken;
         // deploy NFT 
         _chainNft = new ChainNft(address(this));
 
@@ -307,10 +302,6 @@ contract Registry is
 
     function getChainNftAddress() external view override returns (address) {
         return address(_chainNft);
-    }
-
-    function getDipTokenAddress() external view override returns (address) {
-        return address(_dipToken);
     }
 
     function getRegistryAdminAddress() external view returns (address) {

@@ -28,17 +28,17 @@ contract StakingReader is
     IStaking private _staking;
     StakingStore private _store;
 
-    constructor() InitializableCustom() {}
+    constructor(IRegistry registry) InitializableCustom() {
+        _registry = registry;
+    }
 
     function initialize(
-        address registryAddress,
         address stakingAddress,
         address stakingStoreAddress
     )
         external
         initializer
     {
-        _registry = IRegistry(registryAddress);
         _staking = IStaking(stakingAddress);
         _store = StakingStore(stakingStoreAddress);
     }

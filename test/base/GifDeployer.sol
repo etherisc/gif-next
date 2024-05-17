@@ -40,16 +40,16 @@ contract GifDeployer is Test {
         registryAdmin = new RegistryAdmin();
 
         // 3) deploy registry
-        registry = new Registry(registryAdmin, dip);
+        registry = new Registry(registryAdmin);
 
         // 4) deploy release manager
         releaseManager = new ReleaseManager(registry);
 
         // 5) deploy token registry
-        tokenRegistry = new TokenRegistry(registry);
+        tokenRegistry = new TokenRegistry(registry, dip);
 
         // 6) deploy staking reader
-        StakingReader stakingReader = new StakingReader();
+        StakingReader stakingReader = new StakingReader(registry);
 
         // 7) deploy staking store
         StakingStore stakingStore = new StakingStore(registry, stakingReader);
@@ -64,7 +64,6 @@ contract GifDeployer is Test {
 
         // 9) initialize instance reader
         stakingReader.initialize(
-            address(registry),
             address(staking),
             address(stakingStore));
 

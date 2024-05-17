@@ -120,7 +120,5 @@ interface IRegistry is IERC165 {
 
     function getRegistryAdminAddress() external view returns (address);
 
-    function getDipTokenAddress() external view returns (address);
-
     function getAuthority() external view returns (address);
 }
