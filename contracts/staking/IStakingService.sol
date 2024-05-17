@@ -22,9 +22,13 @@ interface IStakingService is IService
     event LogStakingServiceLockingPeriodSet(NftId targetNftId, Seconds oldLockingDuration, Seconds lockingDuration);
     event LogStakingServiceRewardRateSet(NftId targetNftId, UFixed oldRewardRate, UFixed rewardRate);
 
+    event LogStakingServiceRewardReservesIncreased(NftId targetNftId, address rewardProvider, Amount dipAmount, Amount newBalance);
+    event LogStakingServiceRewardReservesDecreased(NftId targetNftId, address targetOwner, Amount dipAmount, Amount newBalance);
+
     event LogStakingServiceStakeCreated(NftId stakeNftId, NftId targetNftId, address owner, Amount stakedAmount);
-    event LogStakingServiceStakeIncreased(NftId stakeNftId, address owner, Amount stakedAmount);
+    event LogStakingServiceStakeIncreased(NftId stakeNftId, address owner, Amount stakedAmount, Amount stakeBalance);
     event LogStakingServiceRewardsUpdated(NftId stakeNftId);
+    event LogStakingServiceUnstaked(NftId stakeNftId, address stakeOwner, Amount totalAmount);
 
     // modifiers
     error ErrorStakingServiceNotNftOwner(NftId nftId, address expectedOwner, address owner);
@@ -54,6 +58,14 @@ interface IStakingService is IService
     /// permissioned: only the owner of the specified target may set the locking period
     function setRewardRate(NftId targetNftId, UFixed rewardRate) external;
 
+    /// @dev (re)fills the staking reward reserves for the specified target
+    /// unpermissioned: anybody may fill up staking reward reserves
+    function refillRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+
+    /// @dev defunds the staking reward reserves for the specified target
+    /// permissioned: only the target owner may call this function
+    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+
     /// @dev create a new stake with amount DIP to the specified target
     /// returns the id of the newly minted stake nft
     /// permissionless function
@@ -68,20 +80,11 @@ interface IStakingService is IService
 
 
     /// @dev increase an existing stake by amount DIP
-    /// updates the staking reward amount
+    /// updates and restakes the staking reward amount
     /// function restricted to the current stake owner
     function stake(
         NftId stakeNftId,
         Amount amount
-    )
-        external;
-
-
-    /// @dev re-stakes the current staked DIP as well as all accumulated rewards to the new stake target.
-    /// all related stakes and all accumulated reward DIP are transferred to the current stake holder
-    /// function restricted to the current stake owner
-    function restake(
-        NftId stakeNftId
     )
         external;
 
@@ -99,18 +102,23 @@ interface IStakingService is IService
         );
 
 
-    /// @dev decrease an existing stake by amount DIP
-    /// updates the staking reward amount
-    /// function restricted to the current stake owner
-    function unstake(
-        NftId stakeNftId,
-        Amount amount
+    /// @dev updates the reward balance of the stake using the current reward rate.
+    function updateRewards(
+        NftId stakeNftId
     )
         external;
 
 
-    /// @dev updates the reward balance of the stake using the current reward rate.
-    function updateRewards(
+    /// @dev claims all available rewards.
+    function claimRewards(
+        NftId stakeNftId
+    )
+        external;
+
+
+    /// @dev unstakes all dips (stakes and rewards) of an existing stake.
+    /// function restricted to the current stake owner
+    function unstake(
         NftId stakeNftId
     )
         external;

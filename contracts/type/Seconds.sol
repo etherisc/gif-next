@@ -4,11 +4,16 @@ pragma solidity ^0.8.20;
 type Seconds is uint40;
 
 using {
+    SecondsEq as ==,
     SecondsGt as >,
     SecondsLib.eqz,
     SecondsLib.gtz,
     SecondsLib.toInt
 } for Seconds global;
+
+function SecondsEq(Seconds duration1, Seconds duration2) pure returns (bool) {
+    return SecondsLib.eq(duration1, duration2);
+}
 
 function SecondsGt(Seconds duration1, Seconds duration2) pure returns (bool) {
     return SecondsLib.gt(duration1, duration2);
@@ -53,6 +58,11 @@ library SecondsLib {
     /// @dev return true if duration is larger than 0
     function gtz(Seconds duration) public pure returns (bool) {
         return Seconds.unwrap(duration) > 0;
+    }
+
+    /// @dev return true iff duration1 and duration2 are the same
+    function eq(Seconds duration1, Seconds duration2) public pure returns (bool) {
+        return Seconds.unwrap(duration1) == Seconds.unwrap(duration2);
     }
 
     /// @dev return true if duration1 is larger than duration2

@@ -34,14 +34,12 @@ contract KeyValueStore is
             revert ErrorKeyValueStoreAlreadyCreated(key32, objectType);
         }
 
-        address createdBy = msg.sender;
         Blocknumber blocknumber = blockBlocknumber();
         StateId initialState = hasLifecycle(objectType) ? getInitialState(objectType) : ACTIVE();
 
         // set metadata
         metadata.objectType = objectType;
         metadata.state = initialState;
-        metadata.updatedBy = createdBy;
         metadata.updatedIn = blocknumber;
         metadata.createdIn = blocknumber;
 
@@ -49,7 +47,7 @@ contract KeyValueStore is
         _value[key32].data = data;
 
         // solhint-disable-next-line avoid-tx-origin
-        emit LogInfoCreated(key32.toObjectType(), key32.toKeyId(), initialState, createdBy, tx.origin);
+        emit LogInfoCreated(key32.toObjectType(), key32.toKeyId(), initialState, msg.sender, tx.origin);
     }
 
 
@@ -100,7 +98,6 @@ contract KeyValueStore is
         }
 
         // update metadata
-        metadata.updatedBy = msg.sender;
         metadata.updatedIn = blockBlocknumber();
     }
 

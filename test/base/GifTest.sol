@@ -5,6 +5,7 @@ import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IER
 
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
+import {AmountLib} from "../../contracts/type/Amount.sol";
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
@@ -949,7 +950,7 @@ contract GifTest is GifDeployer {
 
         pool.register();
         poolNftId = pool.getNftId();
-        pool.approveTokenHandler(type(uint256).max);
+        pool.approveTokenHandler(AmountLib.max());
         vm.stopPrank();
 
         // solhint-disable
@@ -977,7 +978,7 @@ contract GifTest is GifDeployer {
         );
         pool.register();
         poolNftId = pool.getNftId();
-        pool.approveTokenHandler(type(uint256).max);
+        pool.approveTokenHandler(AmountLib.max());
         vm.stopPrank();
 
         // solhint-disable

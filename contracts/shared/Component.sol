@@ -6,21 +6,13 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+import {Amount} from "../type/Amount.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
-import {IInstance} from "../instance/IInstance.sol";
-import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
-import {InstanceReader} from "../instance/InstanceReader.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ObjectType, INSTANCE, PRODUCT} from "../type/ObjectType.sol";
-import {VersionPart} from "../type/Version.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
-import {RoleId, RoleIdLib} from "../type/RoleId.sol";
-import {IAccess} from "../instance/module/IAccess.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {VersionPart} from "../type/Version.sol";
 
 abstract contract Component is
     AccessManagedUpgradeable,
@@ -95,7 +87,7 @@ abstract contract Component is
     }
 
 
-    function approveTokenHandler(uint256 spendingLimitAmount)
+    function approveTokenHandler(Amount spendingLimitAmount)
         external
         virtual
         onlyOwner
@@ -103,7 +95,7 @@ abstract contract Component is
         approveTokenHandler(address(getToken()), spendingLimitAmount);
     }
 
-    function approveTokenHandler(address token, uint256 spendingLimitAmount)
+    function approveTokenHandler(address token, Amount spendingLimitAmount)
         public
         virtual
         onlyOwner
@@ -114,7 +106,7 @@ abstract contract Component is
 
         IERC20Metadata(token).approve(
             address(getTokenHandler()),
-            spendingLimitAmount);
+            spendingLimitAmount.toInt());
 
         emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount);
     }

@@ -83,11 +83,19 @@ interface IStaking is
 
 
     /// @dev set the stake locking period to the specified duration.
+    /// permissioned: only the staking service may call this function
     function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod) external;
 
-
+    /// @dev update the target specific reward rate.
+    /// permissioned: only the staking service may call this function
     function setRewardRate(NftId targetNftId, UFixed rewardRate) external;
+
+    /// @dev (re)fills the staking reward reserves for the specified target
+    /// unpermissioned: anybody may fill up staking reward reserves
     function refillRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+
+    /// @dev defunds the staking reward reserves for the specified target
+    /// permissioned: only the staking service may call this function
     function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
 
 
@@ -107,17 +115,19 @@ interface IStaking is
 
     // staking functions
 
-    /// @dev register a new stake info object
+    /// @dev creat a new stake info object
     /// permissioned: only staking service may call this function.
-    function registerStake(NftId stakeNftId, NftId targetNftId, Amount dipAmount) external;
+    function createStake(NftId stakeNftId, NftId targetNftId, Amount dipAmount) external;
 
-    /// @dev increase the staked dip by dipAmount for the specified stake
-    function stake(NftId stakeNftId, Amount dipAmount) external;
+    /// @dev increase the staked dip by dipAmount for the specified stake.
+    /// staking rewards are updated and added to the staked dips as well.
+    /// the function returns the new total amount of staked dips.
+    function stake(NftId stakeNftId, Amount dipAmount) external returns (Amount stakeBalance);
 
     /// @dev restakes the dips to a new target.
     /// the sum of the staked dips and the accumulated rewards will be restaked.
     /// permissioned: only staking service may call this function.
-    function restake(NftId stakeNftId) external;
+    function restake(NftId stakeNftId, NftId newTargetNftId) external returns (NftId newStakeNftId);
 
     /// @dev retuns the specified amount of dips to the holder of the specified stake nft.
     /// if dipAmount is set to Amount.max() all staked dips and all rewards are transferred to 

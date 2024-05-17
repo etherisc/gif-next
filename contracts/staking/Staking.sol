@@ -144,7 +144,7 @@ contract Staking is
         external
         virtual
         // TODO add restricted // only staking service
-        onlyTarget(targetNftId) // maybe duplicate check
+        onlyTarget(targetNftId)
     {
         (
             Seconds oldLockingPeriod,
@@ -165,7 +165,8 @@ contract Staking is
     function setRewardRate(NftId targetNftId, UFixed rewardRate)
         external
         virtual
-        onlyTarget(targetNftId) // maybe duplicate check
+        // TODO add restricted // only staking service
+        onlyTarget(targetNftId)
     {
         (
             UFixed oldRewardRate,
@@ -184,18 +185,25 @@ contract Staking is
     function refillRewardReserves(NftId targetNftId, Amount dipAmount)
         external
         virtual
+        // TODO add restricted // only for target locking
         returns (Amount newBalance)
     {
-
+        // update book keeping of reward reserves
+        StakingStorage storage $ = _getStakingStorage();
+        newBalance = $._store.increaseReserves(targetNftId, dipAmount);
     }
+
 
     function withdrawRewardReserves(NftId targetNftId, Amount dipAmount)
         external
         virtual
+        // TODO add restricted // only staking service
         // onlyNftOwner(targetNftId)
         returns (Amount newBalance)
     {
-
+        // update book keeping of reward reserves
+        StakingStorage storage $ = _getStakingStorage();
+        newBalance = $._store.decreaseReserves(targetNftId, dipAmount);
     }
 
 
@@ -243,62 +251,104 @@ contract Staking is
 
     //--- staking functions -------------------------------------------------//
 
-    function registerStake(
+    function createStake(
         NftId stakeNftId, 
         NftId targetNftId, 
-        Amount dipAmount
+        Amount stakeAmount
     )
         external
         virtual
         // TODO add restricted() // only staking service
     {
-        Timestamp lockedUntil = StakeManagerLib.checkStakeParameters(
-            _getStakingStorage()._reader,
+        StakingStorage storage $ = _getStakingStorage();
+        Timestamp lockedUntil = StakeManagerLib.checkCreateParameters(
+            $._reader,
             targetNftId,
-            dipAmount);
+            stakeAmount);
 
-        _getStakingStorage()._store.create(
+        // create new stake
+        $._store.create(
             stakeNftId, 
             StakeInfo({
-                lockedUntil: lockedUntil}),
-            dipAmount);
+                lockedUntil: lockedUntil}));
+        
+        // update target stake balance
+        $._store.increaseStake(
+            stakeNftId,
+            targetNftId, 
+            stakeAmount);
     }
 
 
-    function stake(NftId stakeNftId, Amount dipAmount)
+    function stake(
+        NftId stakeNftId, 
+        Amount stakeAmount
+    )
         external
         virtual
         // TODO add restricted() // only staking service
         onlyStake(stakeNftId)
+        returns (Amount stakeBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
-        Amount rewardIncrement = StakeManagerLib.calculateRewardIncrease(
+
+        // check that target is active for staking
+        (
+            UFixed rewardRate,
+            Seconds lockingPeriod
+        ) = StakeManagerLib.checkStakeParameters(
             $._reader, 
-            stakeNftId);
+            stakeNftId);        
 
-        $._store.increaseBalance(
-            stakeNftId, 
-            dipAmount,
-            rewardIncrement);
-    }
-
-
-    function restake(NftId stakeNftId)
-        external
-        virtual
-        // TODO add restricted() // only staking service
-        onlyStake(stakeNftId)
-    {
-        // TODO add check that target is active and allows additional staking amount
-        StakingStorage storage $ = _getStakingStorage();
-        Amount rewardIncrement = StakeManagerLib.calculateRewardIncrease(
+        // calculate new rewards (if any)
+        (
+            Amount rewardIncrementAmount, 
+            Amount currentTotalDipAmount
+        ) = StakeManagerLib.calculateRewardIncrease(
             $._reader, 
-            stakeNftId);
+            stakeNftId,
+            rewardRate);
+
+        stakeBalance = currentTotalDipAmount + stakeAmount;
+
+        // TODO check that additional dip, rewards and rewards increment 
+        // are still ok with max target staking amount
+        NftId targetNftId = getRegistry().getObjectInfo(stakeNftId).parentNftId;
 
         $._store.restakeRewards(
             stakeNftId, 
-            rewardIncrement);
+            targetNftId, 
+            rewardIncrementAmount);
+
+        $._store.increaseStake(
+            stakeNftId, 
+            targetNftId, 
+            stakeAmount);
+
+        // update locked until with target locking period
+        $._store.update(
+            stakeNftId, 
+            StakeInfo({
+                lockedUntil: TimestampLib.blockTimestamp().addSeconds(
+                    lockingPeriod)}));
     }
+
+
+    function restake(
+        NftId stakeNftId, 
+        NftId newTargetNftId
+    )
+        external
+        virtual
+        // TODO add restricted() // only staking service
+        onlyStake(stakeNftId)
+        returns (NftId newStakeNftId)
+    {
+        // TODO add check that allows additional staking amount
+        StakingStorage storage $ = _getStakingStorage();
+
+        // TODO implement
+   }
 
 
     function updateRewards(NftId stakeNftId)
@@ -324,11 +374,12 @@ contract Staking is
         StakingStorage storage $ = _getStakingStorage();
 
         // update rewards since last update
-        _updateRewards($._reader, $._store, stakeNftId);
+        NftId targetNftId = _updateRewards($._reader, $._store, stakeNftId);
 
         // unstake all available rewards
         rewardsClaimedAmount = $._store.claimUpTo(
             stakeNftId,
+            targetNftId, 
             AmountLib.max());
     }
 
@@ -347,7 +398,7 @@ contract Staking is
         StakingStorage storage $ = _getStakingStorage();
 
         // update rewards since last update
-        _updateRewards($._reader, $._store, stakeNftId);
+        NftId targetNftId = _updateRewards($._reader, $._store, stakeNftId);
 
         // unstake all available dips
         (
@@ -355,6 +406,7 @@ contract Staking is
             rewardsClaimedAmount
         ) = $._store.unstakeUpTo(
             stakeNftId,
+            targetNftId,
             AmountLib.max(), // unstake all stakes
             AmountLib.max()); // claim all rewards
     }
@@ -368,13 +420,19 @@ contract Staking is
     )
         internal
         virtual
+        returns (NftId targetNftId)
     {
-        Amount rewardIncrement = StakeManagerLib.calculateRewardIncrease(
+        UFixed rewardRate;
+
+        (targetNftId, rewardRate) = reader.getTargetRewardRate(stakeNftId);
+        (Amount rewardIncrement, ) = StakeManagerLib.calculateRewardIncrease(
             reader, 
-            stakeNftId);
+            stakeNftId,
+            rewardRate);
 
         store.updateRewards(
             stakeNftId, 
+            targetNftId,
             rewardIncrement);
     }
 

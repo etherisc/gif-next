@@ -87,6 +87,15 @@ library AmountLib {
         return Amount.unwrap(a1) > Amount.unwrap(a2);
     }
 
+    /// @dev return minimum of a1 and a2.
+    function min(Amount a1, Amount a2) public pure returns (Amount) {
+        if (Amount.unwrap(a1) < Amount.unwrap(a2)) {
+            return a1;
+        }
+
+        return a2;
+    }
+
     /// @dev return true if amount is larger than 0
     function gtz(Amount amount) public pure returns (bool) {
         return Amount.unwrap(amount) > 0;

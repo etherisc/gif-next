@@ -32,7 +32,7 @@ interface IKeyValueStore is ILifecycle {
         // eg account outside gif objects that initiated the tx
         // implies the caller needs to be propagated through all calls up to key values store itself
         // to always have the instance address there doesn't seem to make sense
-        address updatedBy;
+        // address updatedBy;
         Blocknumber updatedIn;
         Blocknumber createdIn;
     }

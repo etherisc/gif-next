@@ -19,26 +19,8 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 library StakeManagerLib {
 
-    function checkActiveTarget(
-        StakingReader stakingReader,
-        NftId targetNftId
-    )
-        public
-        view
-    {
-        // target nft id must be registered
-        if (!stakingReader.isTarget(targetNftId)) {
-            revert IStaking.ErrorStakingNotTarget(targetNftId);
-        }
 
-        // only accept stakes for active targets
-        if (!stakingReader.isActive(targetNftId)) {
-            revert IStaking.ErrorStakingTargetNotActive(targetNftId);
-        }
-    }
-
-
-    function checkStakeParameters(
+    function checkCreateParameters(
         StakingReader stakingReader,
         NftId targetNftId, 
         Amount dipAmount
@@ -49,6 +31,46 @@ library StakeManagerLib {
             Timestamp lockedUntil
         )
     {
+        Seconds lockingPeriod = checkTarget(stakingReader, targetNftId);
+        checkDipAmount(stakingReader, targetNftId, dipAmount);
+
+        Timestamp currentTime = TimestampLib.blockTimestamp();
+        lockedUntil = currentTime.addSeconds(lockingPeriod);
+    }
+
+
+    function checkStakeParameters(
+        StakingReader stakingReader,
+        NftId stakeNftId
+    )
+        public
+        view
+        returns (
+            UFixed rewardRate,
+            Seconds lockingPeriod
+        )
+    {
+        NftId targetNftId = stakingReader.getTargetNftId(stakeNftId);
+
+        // only accept stakes for active targets
+        if (!stakingReader.isActive(targetNftId)) {
+            revert IStaking.ErrorStakingTargetNotActive(targetNftId);
+        }
+
+        IStaking.TargetInfo memory info = stakingReader.getTargetInfo(targetNftId);
+        rewardRate = info.rewardRate;
+        lockingPeriod = info.lockingPeriod;
+    }
+
+
+    function checkTarget(
+        StakingReader stakingReader,
+        NftId targetNftId
+    )
+        public
+        view
+        returns (Seconds lockingPeriod)
+    {
         // target nft id must be registered
         if (!stakingReader.isTarget(targetNftId)) {
             revert IStaking.ErrorStakingNotTarget(targetNftId);
@@ -59,15 +81,12 @@ library StakeManagerLib {
             revert IStaking.ErrorStakingTargetNotActive(targetNftId);
         }
 
-        checkDipAmount(targetNftId, dipAmount);
-
-        Timestamp currentTime = TimestampLib.blockTimestamp();
-        lockedUntil = currentTime.addSeconds(
-            stakingReader.getTargetInfo(targetNftId).lockingPeriod);
+        lockingPeriod = stakingReader.getTargetInfo(targetNftId).lockingPeriod;
     }
 
 
     function checkDipAmount(
+        StakingReader stakingReader,
         NftId targetNftId, 
         Amount dipAmount
     )
@@ -109,17 +128,21 @@ library StakeManagerLib {
 
     function calculateRewardIncrease(
         StakingReader stakingReader,
-        NftId stakeNftId
+        NftId stakeNftId,
+        UFixed rewardRate
     )
         public
         view
-        returns (Amount rewardIncreaseAmount)
+        returns (
+            Amount rewardIncreaseAmount,
+            Amount totalDipAmount
+        )
     {
         (
-            UFixed rewardRate,
             Amount stakeAmount,
+            Amount rewardAmount,
             Timestamp lastUpdatedAt
-        ) = stakingReader.getRewardCalculationInput(stakeNftId);
+        ) = stakingReader.getStakeBalances(stakeNftId);
 
         Seconds duration = SecondsLib.toSeconds(
             block.timestamp - lastUpdatedAt.toInt());
@@ -128,6 +151,8 @@ library StakeManagerLib {
             rewardRate,
             duration,
             stakeAmount);
+
+        totalDipAmount = stakeAmount + rewardAmount + rewardIncreaseAmount;
     }
 
 
@@ -142,10 +167,8 @@ library StakeManagerLib {
             Amount rewardAmount
         )
     {
-        UFixed yearFraction = getYearFraction(duration);
-        UFixed rewardRateFraction = yearFraction * rewardRate;
-        UFixed amountUFixed = rewardRateFraction * stakeAmount.toUFixed();
-        rewardAmount = AmountLib.toAmount(amountUFixed.toInt());
+        UFixed rewardRateFraction = getYearFraction(duration) * rewardRate;
+        rewardAmount = stakeAmount.multiplyWith(rewardRateFraction);
     }
 
 

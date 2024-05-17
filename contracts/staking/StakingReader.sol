@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
+import {Blocknumber}  from "../type/Blocknumber.sol";
 import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {InitializableCustom} from "../shared/InitializableCustom.sol";
@@ -88,6 +89,11 @@ contract StakingReader is
     }
 
 
+    function getTargetNftId(NftId stakeNftId) public view returns (NftId targetNftId) {
+        return _registry.getObjectInfo(stakeNftId).parentNftId;
+    }
+
+
     function getTargetInfo(NftId targetNftId) public view returns (IStaking.TargetInfo memory info) {
         bytes memory data = _store.getData(targetNftId.toKey32(TARGET()));
         if (data.length > 0) {
@@ -104,10 +110,26 @@ contract StakingReader is
     }
 
 
+    /// @dev get the reward rate that applies to the specified stake nft id.
+    function getTargetRewardRate(NftId stakeNftId) external view returns (NftId targetNftId, UFixed rewardRate) {
+        targetNftId = getTargetNftId(stakeNftId);
+        rewardRate = getTargetInfo(targetNftId).rewardRate;
+    }
+
+
+    /// @dev get the reward rate for the specified target nft id.
+    function getRewardRate(NftId targetNftId) external view returns (UFixed rewardRate) {
+        return getTargetInfo(targetNftId).rewardRate;
+    }
+
+    /// @dev returns the current reward reserve balance for the specified target.
+    function getReserveBalance(NftId targetNftId) external view returns (Amount rewardReserveBalance) {
+        return _store.getReserveBalance(targetNftId); 
+    }
+
     function getStakeBalance(NftId nftId) external view returns (Amount balanceAmount) { 
         return _store.getStakeBalance(nftId); 
     }
-
 
     function getRewardBalance(NftId nftId) external view returns (Amount rewardAmount) {
         return _store.getRewardBalance(nftId); 
@@ -115,6 +137,10 @@ contract StakingReader is
 
     function getBalanceUpdatedAt(NftId nftId) external view returns (Timestamp updatedAt) {
         return _store.getBalanceUpdatedAt(nftId); 
+    }
+
+    function getBalanceUpdatedIn(NftId nftId) external view returns (Blocknumber blocknumber) {
+        return _store.getBalanceUpdatedIn(nftId); 
     }
 
     function getTotalValueLocked(NftId nftId, address token) external view returns (Amount totalValueLocked) {
@@ -125,30 +151,37 @@ contract StakingReader is
         return _store.getRequiredStakeBalance(nftId); 
     }
 
-    function getRewardCalculationInput(NftId stakeNftId) 
+    function getTargetBalances(NftId stakeNftId) 
+        public
+        view
+        returns (
+            Amount balanceAmount,
+            Amount stakeAmount,
+            Amount rewardAmount,
+            Blocknumber lastUpdatedIn
+        )
+    {
+        (
+            balanceAmount,
+            stakeAmount,
+            rewardAmount,
+            lastUpdatedIn
+        ) = _store.getTargetBalances(stakeNftId);
+    }
+
+    function getStakeBalances(NftId stakeNftId) 
         external
         view
         returns (
-            UFixed rewardRate,
             Amount stakeAmount,
+            Amount rewardAmount,
             Timestamp lastUpdatedAt
         )
     {
-        NftId targetNftId = _registry.getObjectInfo(stakeNftId).parentNftId;
-        rewardRate = getTargetInfo(targetNftId).rewardRate;
-
         (
             stakeAmount,
+            rewardAmount,
             lastUpdatedAt
-        ) = _store.getBalanceAndLastUpdatedAt(stakeNftId);
+        ) = _store.getStakeBalances(stakeNftId);
     }
-
-    // function getTvlAmount(NftId targetNftId, address token) external view returns (Amount tvlAmount);
-    // function getStakedAmount(NftId targetNftId) external view returns (Amount stakeAmount);
-
-    // function calculateRewardIncrementAmount(
-    //     NftId targetNftId,
-    //     Timestamp rewardsLastUpdatedAt
-    // ) external view returns (Amount rewardIncrementAmount);
-
 }
