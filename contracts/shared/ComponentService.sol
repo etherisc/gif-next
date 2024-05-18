@@ -10,8 +10,8 @@ import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, POOL, PRODUCT} from "../type/ObjectType.sol";
-import {RoleId, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, POLICY_SERVICE_ROLE, PRODUCT_SERVICE_ROLE} from "../type/RoleId.sol";
+import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
+import {RoleId, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, POLICY_SERVICE_ROLE, PRODUCT_SERVICE_ROLE} from "../type/RoleId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
@@ -280,9 +280,31 @@ contract ComponentService is
         _changeTargetBalance(DECREASE, instanceStore, distributionNftId, amount, feeAmount);
     }
 
+    //-------- oracle -------------------------------------------------------//
+
+    function registerOracle()
+        external
+        virtual
+    {
+        address contractAddress = msg.sender;
+        RoleId[] memory roles = new RoleId[](0);
+        bytes4[][] memory selectors = new bytes4[][](0);
+
+        // register/create component setup
+        (
+            , // instance reader
+            InstanceStore instanceStore, 
+            NftId componentNftId
+        ) = _register(
+            contractAddress,
+            ORACLE(),
+            ORACLE_OWNER_ROLE(),
+            roles,
+            selectors);            
+    }
+
     //-------- pool ---------------------------------------------------------//
 
-    /// @dev registers the sending component as a distribution component
     function registerPool()
         external
         virtual
@@ -291,7 +313,7 @@ contract ComponentService is
         RoleId[] memory roles = new RoleId[](2);
         bytes4[][] memory selectors = new bytes4[][](2);
 
-        // authorizaion for distribution owner
+        // authorizaion for pool owner
         roles[0] = POOL_OWNER_ROLE();
         selectors[0] = _createSelectors(IPoolComponent.setFees.selector);
 

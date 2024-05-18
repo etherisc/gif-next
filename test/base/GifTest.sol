@@ -26,6 +26,7 @@ import {zeroObjectType} from "../../contracts/type/ObjectType.sol";
 import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 
 import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
+import {IService} from "../../contracts/shared/IService.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
@@ -48,6 +49,8 @@ import {ComponentService} from "../../contracts/shared/ComponentService.sol";
 import {ComponentServiceManager} from "../../contracts/shared/ComponentServiceManager.sol";
 import {DistributionService} from "../../contracts/distribution/DistributionService.sol";
 import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
+import {OracleService} from "../../contracts/oracle/OracleService.sol";
+import {OracleServiceManager} from "../../contracts/oracle/OracleServiceManager.sol";
 import {ProductService} from "../../contracts/product/ProductService.sol";
 import {ProductServiceManager} from "../../contracts/product/ProductServiceManager.sol";
 import {PoolService} from "../../contracts/pool/PoolService.sol";
@@ -105,29 +108,30 @@ contract GifTest is GifDeployer {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
+    IERC20Metadata public dip;
+    IERC20Metadata public token;
+
     RegistryAdmin registryAdmin;
-    ReleaseManager public releaseManager;
-    RegistryServiceManager public registryServiceManager;
-    RegistryService public registryService;
     Registry public registry;
     ChainNft public chainNft;
+    ReleaseManager public releaseManager;
     TokenRegistry public tokenRegistry;
 
-    IERC20Metadata public token;
-    IERC20Metadata public dip;
-
-    InstanceServiceManager public instanceServiceManager;
-    InstanceService public instanceService;
-
-    // TODO cleanpu
-    // StakingServiceManager public stakingServiceManager;
-    // StakingService public stakingService;
-    // NftId public stakingServiceNftId;
     StakingManager public stakingManager;
     Staking public staking;
     StakingReader public stakingReader;
     NftId public stakingNftId;
 
+    RegistryServiceManager public registryServiceManager;
+    RegistryService public registryService;
+    NftId public registryServiceNftId;
+
+    StakingServiceManager public stakingServiceManager;
+    StakingService public stakingService;
+    NftId public stakingServiceNftId;
+
+    InstanceServiceManager public instanceServiceManager;
+    InstanceService public instanceService;
     NftId public instanceServiceNftId;
 
     ComponentServiceManager public componentServiceManager;
@@ -137,9 +141,15 @@ contract GifTest is GifDeployer {
     DistributionServiceManager public distributionServiceManager;
     DistributionService public distributionService;
     NftId public distributionServiceNftId;
+
+    OracleServiceManager public oracleServiceManager;
+    OracleService public oracleService;
+    NftId public oracleServiceNftId;
+
     ProductServiceManager public productServiceManager;
     ProductService public productService;
     NftId public productServiceNftId;
+
     PoolServiceManager public poolServiceManager;
     PoolService public poolService;
     NftId public poolServiceNftId;
@@ -147,18 +157,18 @@ contract GifTest is GifDeployer {
     ApplicationServiceManager public applicationServiceManager;
     ApplicationService public applicationService;
     NftId public applicationServiceNftId;
+
     PolicyServiceManager public policyServiceManager;
     PolicyService public policyService;
     NftId public policyServiceNftId;
+
     ClaimServiceManager public claimServiceManager;
     ClaimService public claimService;
     NftId public claimServiceNftId;
+
     PricingService public pricingService;
-    NftId public pricingServiceNftId;
     PricingServiceManager public pricingServiceManager;
-    StakingService public stakingService;
-    NftId public stakingServiceNftId;
-    StakingServiceManager public stakingServiceManager;
+    NftId public pricingServiceNftId;
 
     BundleServiceManager public bundleServiceManager;
     BundleService public bundleService;
@@ -407,250 +417,60 @@ contract GifTest is GifDeployer {
         console.log("release services remaining (before service registration)", releaseManager.getRemainingServicesToRegister());
         // solhint-enable
 
-        // --- registry service ---------------------------------//
+        // --- register services --------------------------------------------//
         registryServiceManager = new RegistryServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         registryService = registryServiceManager.getRegistryService();
-        releaseManager.registerService(registryService);
-        registryServiceManager.linkToProxy();
+        registryServiceNftId = _registerService("registry", releaseManager, registryServiceManager, registryService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // TODO cleanup
-        // // after registry service is available
-        // tokenRegistry.linkToRegistryService();
-
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("registry service proxy manager deployed at", address(registryServiceManager));
-        console.log("registry service proxy manager linked to nft id", registryServiceManager.getNftId().toInt());
-        console.log("registry service proxy manager owner", registryServiceManager.getOwner());
-        console.log("registry service deployed at", address(registryService));
-        console.log("registry service nft id", registryService.getNftId().toInt());
-        console.log("registry service domain", registryService.getDomain().toInt());
-        console.log("registry service owner", registryService.getOwner());
-        console.log("registry service authority", registryService.authority());
-
-        // TODO cleanup
-        // console.log("token registry linked to nft", tokenRegistry.getNftId().toInt());
-        // console.log("token registry linked owner", tokenRegistry.getOwner());
-        // solhint-enable
-
-        // --- staking service ----------------------------------//
         stakingServiceManager = new StakingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         stakingService = stakingServiceManager.getStakingService();
-        stakingServiceNftId = releaseManager.registerService(stakingService);
-        stakingServiceManager.linkToProxy();
+        stakingServiceNftId = _registerService("staking", releaseManager, stakingServiceManager, stakingService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("staking service proxy manager deployed at", address(stakingServiceManager));
-        console.log("staking service proxy manager linked to nft id", stakingServiceManager.getNftId().toInt());
-        console.log("staking service proxy manager owner", stakingServiceManager.getOwner());
-        console.log("staking service deployed at", address(stakingService));
-        console.log("staking service nft id", stakingService.getNftId().toInt());
-        console.log("staking service domain", stakingService.getDomain().toInt());
-        console.log("staking service owner", stakingService.getOwner());
-        console.log("staking service authority", stakingService.authority());
-        // solhint-enable
-
-        // --- instance service ---------------------------------//
         instanceServiceManager = new InstanceServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         instanceService = instanceServiceManager.getInstanceService();
-        instanceServiceNftId = releaseManager.registerService(instanceService);
-        instanceServiceManager.linkToProxy();
+        instanceServiceNftId = _registerService("instance", releaseManager, instanceServiceManager, instanceService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable 
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("instance service proxy manager deployed at", address(instanceServiceManager));
-        console.log("instance service proxy manager linked to nft id", instanceServiceManager.getNftId().toInt());
-        console.log("instance service proxy manager owner", instanceServiceManager.getOwner());
-        console.log("instance service deployed at", address(instanceService));
-        console.log("instance service nft id", instanceService.getNftId().toInt());
-        console.log("instance service domain", instanceService.getDomain().toInt());
-        console.log("instance service owner", instanceService.getOwner());
-        console.log("instance service authority", instanceService.authority());
-        // solhint-enable
-
-        // --- component service ---------------------------------//
         componentServiceManager = new ComponentServiceManager(address(registry));
         componentService = componentServiceManager.getComponentService();
-        componentServiceNftId = releaseManager.registerService(componentService);
-        componentServiceManager.linkToProxy();
+        componentServiceNftId = _registerService("component", releaseManager, componentServiceManager, componentService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable 
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("component service domain", componentService.getDomain().toInt());
-        console.log("component service deployed at", address(componentService));
-        console.log("component service nft id", componentService.getNftId().toInt());
-        // solhint-enable
-
-        // --- distribution service ---------------------------------//
         distributionServiceManager = new DistributionServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         distributionService = distributionServiceManager.getDistributionService();
-        distributionServiceNftId = releaseManager.registerService(distributionService);
-        distributionServiceManager.linkToProxy();
+        distributionServiceNftId = _registerService("distribution", releaseManager, distributionServiceManager, distributionService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("distribution service proxy manager deployed at", address(distributionServiceManager));
-        console.log("distribution service proxy manager linked to nft id", distributionServiceManager.getNftId().toInt());
-        console.log("distribution service proxy manager owner", distributionServiceManager.getOwner());
-        console.log("distribution service deployed at", address(distributionService));
-        console.log("distribution service nft id", distributionService.getNftId().toInt());
-        console.log("distribution service domain", distributionService.getDomain().toInt());
-        console.log("distribution service owner", distributionService.getOwner());
-        console.log("distribution service authority", distributionService.authority());
-        // solhint-enable
-
-        // --- pricing service ---------------------------------//
         pricingServiceManager = new PricingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         pricingService = pricingServiceManager.getPricingService();
-        pricingServiceNftId = releaseManager.registerService(pricingService);
-        pricingServiceManager.linkToProxy();
+        pricingServiceNftId = _registerService("pricing", releaseManager, pricingServiceManager, pricingService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("pricing service proxy manager deployed at", address(pricingServiceManager));
-        console.log("pricing service proxy manager linked to nft id", pricingServiceManager.getNftId().toInt());
-        console.log("pricing service proxy manager owner", pricingServiceManager.getOwner());
-        console.log("pricing service deployed at", address(pricingService));
-        console.log("pricing service nft id", pricingService.getNftId().toInt());
-        console.log("pricing service domain", pricingService.getDomain().toInt());
-        console.log("pricing service owner", pricingService.getOwner());
-        console.log("pricing service authority", pricingService.authority());
-        // solhint-enable
-
-        // --- bundle service ---------------------------------//
         bundleServiceManager = new BundleServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         bundleService = bundleServiceManager.getBundleService();
-        bundleServiceNftId = releaseManager.registerService(bundleService);
-        bundleServiceManager.linkToProxy();
+        bundleServiceNftId = _registerService("bundle", releaseManager, bundleServiceManager, bundleService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("bundle service proxy manager deployed at", address(bundleServiceManager));
-        console.log("bundle service proxy manager linked to nft id", bundleServiceManager.getNftId().toInt());
-        console.log("bundle service proxy manager owner", bundleServiceManager.getOwner());
-        console.log("bundle service deployed at", address(bundleService));
-        console.log("bundle service nft id", bundleService.getNftId().toInt());
-        console.log("bundle service domain", bundleService.getDomain().toInt());
-        console.log("bundle service owner", bundleService.getOwner());
-        console.log("bundle service authority", bundleService.authority());
-        // solhint-enable
-
-        // --- pool service ---------------------------------//
         poolServiceManager = new PoolServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         poolService = poolServiceManager.getPoolService();
-        poolServiceNftId = releaseManager.registerService(poolService);
-        poolServiceManager.linkToProxy();
+        poolServiceNftId = _registerService("pool", releaseManager, poolServiceManager, poolService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+        oracleServiceManager = new OracleServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        oracleService = oracleServiceManager.getOracleService();
+        oracleServiceNftId = _registerService("oracle", releaseManager, oracleServiceManager, oracleService);
 
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("pool service proxy manager deployed at", address(poolServiceManager));
-        console.log("pool service proxy manager linked to nft id", poolServiceManager.getNftId().toInt());
-        console.log("pool service proxy manager owner", poolServiceManager.getOwner());
-        console.log("pool service deployed at", address(poolService));
-        console.log("pool service nft id", poolService.getNftId().toInt());
-        console.log("pool service domain", poolService.getDomain().toInt());
-        console.log("pool service owner", poolService.getOwner());
-        console.log("pool service authority", poolService.authority());
-        // solhint-enable
-
-        // --- product service ---------------------------------//
         productServiceManager = new ProductServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         productService = productServiceManager.getProductService();
-        productServiceNftId = releaseManager.registerService(productService);
-        productServiceManager.linkToProxy();
+        productServiceNftId = _registerService("product", releaseManager, productServiceManager, productService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("product service proxy manager deployed at", address(productServiceManager));
-        console.log("product service proxy manager linked to nft id", productServiceManager.getNftId().toInt());
-        console.log("product service proxy manager owner", productServiceManager.getOwner());
-        console.log("product service deployed at", address(productService));
-        console.log("product service nft id", productService.getNftId().toInt());
-        console.log("product service domain", productService.getDomain().toInt());
-        console.log("product service owner", productService.getOwner());
-        console.log("product service authority", productService.authority());
-        // solhint-enable
-
-        // MUST follow bundle service registration 
-        // --- claim service ---------------------------------//
         claimServiceManager = new ClaimServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         claimService = claimServiceManager.getClaimService();
-        claimServiceNftId = releaseManager.registerService(claimService);
-        claimServiceManager.linkToProxy();
+        claimServiceNftId = _registerService("claim", releaseManager, claimServiceManager, claimService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("claim service proxy manager deployed at", address(claimServiceManager));
-        console.log("claim service proxy manager linked to nft id", claimServiceManager.getNftId().toInt());
-        console.log("claim service proxy manager owner", claimServiceManager.getOwner());
-        console.log("claim service deployed at", address(claimService));
-        console.log("claim service nft id", claimService.getNftId().toInt());
-        console.log("claim service domain", claimService.getDomain().toInt());
-        console.log("claim service owner", claimService.getOwner());
-        console.log("claim service authority", claimService.authority());
-        // solhint-enable
-
-        // --- application service ---------------------------------//
         applicationServiceManager = new ApplicationServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         applicationService = applicationServiceManager.getApplicationService();
-        applicationServiceNftId = releaseManager.registerService(applicationService);
-        applicationServiceManager.linkToProxy();
+        applicationServiceNftId = _registerService("application", releaseManager, applicationServiceManager, applicationService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("application service proxy manager deployed at", address(applicationServiceManager));
-        console.log("application service proxy manager linked to nft id", applicationServiceManager.getNftId().toInt());
-        console.log("application service proxy manager owner", applicationServiceManager.getOwner());
-        console.log("application service deployed at", address(applicationService));
-        console.log("application service nft id", applicationService.getNftId().toInt());
-        console.log("application service domain", applicationService.getDomain().toInt());
-        console.log("application service owner", applicationService.getOwner());
-        console.log("application service authority", applicationService.authority());
-        // solhint-enable
-
-        // --- policy service ---------------------------------//
         policyServiceManager = new PolicyServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
         policyService = policyServiceManager.getPolicyService();
-        policyServiceNftId = releaseManager.registerService(policyService);
-        policyServiceManager.linkToProxy();
+        policyServiceNftId = _registerService("policy", releaseManager, policyServiceManager, policyService);
 
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-
-        // solhint-disable
-        console.log("release services remaining", releaseManager.getRemainingServicesToRegister());
-        console.log("policy service proxy manager deployed at", address(policyServiceManager));
-        console.log("policy service proxy manager linked to nft id", policyServiceManager.getNftId().toInt());
-        console.log("policy service proxy manager owner", policyServiceManager.getOwner());
-        console.log("policy service deployed at", address(policyService));
-        console.log("policy service nft id", policyService.getNftId().toInt());
-        console.log("policy service domain", policyService.getDomain().toInt());
-        console.log("policy service owner", policyService.getOwner());
-        console.log("policy service authority", policyService.authority());
-        // solhint-enable
-
+        //--- all services deployed, activate relase ------------------------//
         releaseManager.activateNextRelease();
 
         // activate dip for new release
@@ -660,6 +480,33 @@ contract GifTest is GifDeployer {
             registry.getLatestVersion(), true);
 
         assertEq(releaseManager.getState().toInt(), ACTIVE().toInt(), "unexpected state for releaseManager after activateNextRelease");
+    }
+
+    function _registerService(
+        string memory _domain,
+        ReleaseManager _releaseManager,
+        ProxyManager _serviceManager,
+        IService _service
+    )
+        internal
+        returns (NftId serviceNftId)
+    {
+        serviceNftId = _releaseManager.registerService(_service);
+        _serviceManager.linkToProxy();
+
+        assertEq(_releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+
+        // solhint-disable
+        console.log("---", _domain, "registered ----------------------------");
+        console.log(_domain, "service proxy manager deployed at", address(_serviceManager));
+        console.log(_domain, "service proxy manager linked to nft id", registryServiceManager.getNftId().toInt());
+        console.log(_domain, "service proxy manager owner", registryServiceManager.getOwner());
+        console.log(_domain, "service deployed at", address(_service));
+        console.log(_domain, "service nft id", registryService.getNftId().toInt());
+        console.log(_domain, "service domain", registryService.getDomain().toInt());
+        console.log(_domain, "service owner", registryService.getOwner());
+        console.log(_domain, "service authority", registryService.authority());
+        console.log("release services remaining", _releaseManager.getRemainingServicesToRegister());
     }
 
     function _deployMasterInstance() internal 

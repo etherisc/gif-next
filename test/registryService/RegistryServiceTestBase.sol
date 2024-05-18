@@ -74,8 +74,6 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
     address public EOA = makeAddr("EOA");
 
-    NftId public registryServiceNftId;
-
     IService componentOwnerService;
 
     address public contractWithoutIERC165 = address(new Dip());

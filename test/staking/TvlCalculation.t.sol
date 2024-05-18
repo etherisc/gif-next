@@ -403,7 +403,7 @@ contract TvlCalculation is GifTest {
         Amount sumInsuredAmount
     )
         internal
-        returns (NftId policyNftId)
+        returns (NftId plicyNftId)
     {
         Seconds lifetime = SecondsLib.toSeconds(LIFETIME);
         return _createPolicy(policyHolder, sumInsuredAmount, lifetime);
@@ -416,10 +416,10 @@ contract TvlCalculation is GifTest {
         Seconds lifetime
     )
         internal
-        returns (NftId policyNftId)
+        returns (NftId plicyNftId)
     {
-        policyNftId = _createApplication(policyHolder, sumInsuredAmount, lifetime);
-        _collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        plicyNftId = _createApplication(policyHolder, sumInsuredAmount, lifetime);
+        _collateralize(plicyNftId, true, TimestampLib.blockTimestamp());
     }
 
 

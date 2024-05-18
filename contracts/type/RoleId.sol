@@ -71,6 +71,9 @@ function COMPONENT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRol
 /// @dev instance specific role for distribution service
 function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
 
+/// @dev instance specific role for oracle service
+function ORACLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2150); }
+
 /// @dev instance specific role for pool service
 function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2200); }
 

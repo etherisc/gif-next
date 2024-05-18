@@ -52,6 +52,8 @@ interface IComponentService is
     function unlock() external;
 
     //-------- product ------------------------------------------------------//
+
+    /// @dev registers the sending component as a product component
     function registerProduct() external;
 
     function setProductFees(
@@ -63,6 +65,8 @@ interface IComponentService is
     function decreaseProductFees(InstanceStore instanceStore, NftId productNftId, Amount feeAmount) external;
 
     //-------- distribution -------------------------------------------------//
+
+    /// @dev registers the sending component as a distribution component
     function registerDistribution() external;
 
     function setDistributionFees(
@@ -73,7 +77,14 @@ interface IComponentService is
     function increaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
     function decreaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
 
+    //-------- oracle -------------------------------------------------------//
+
+    /// @dev registers the sending component as an oracle component
+    function registerOracle() external;
+
     //-------- pool ---------------------------------------------------------//
+
+    /// @dev registers the sending component as a pool component
     function registerPool() external;
 
     function setPoolFees(
