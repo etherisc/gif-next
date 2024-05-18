@@ -7,7 +7,7 @@ import {Amount} from "../type/Amount.sol";
 import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, FEE, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
 import {RiskId, RiskIdLib} from "../type/RiskId.sol";
 import {RoleId, RoleIdLib, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
 import {StateId, ACTIVE} from "../type/StateId.sol";
@@ -21,6 +21,7 @@ import {BalanceStore} from "./base/BalanceStore.sol";
 import {IInstance} from "./IInstance.sol";
 import {KeyValueStore} from "../shared/KeyValueStore.sol";
 import {IKeyValueStore} from "../shared/KeyValueStore.sol";
+import {ObjectCounter} from "./base/ObjectCounter.sol";
 
 import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";
@@ -31,8 +32,9 @@ import {IRisk} from "./module/IRisk.sol";
 
 contract InstanceStore is
     AccessManagedUpgradeable, 
+    BalanceStore,
     KeyValueStore,
-    BalanceStore
+    ObjectCounter
 {
     function initialize(address instance)
         public 

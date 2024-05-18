@@ -24,16 +24,13 @@ abstract contract Oracle is
     InstanceLinkedComponent,
     IOracleComponent
 {
-    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Distribution")) - 1)) & ~bytes32(uint256(0xff));
-    bytes32 public constant DISTRIBUTION_STORAGE_LOCATION_V1 = 0xaab7c5ea03d290056d6c060e0833d3ebcbe647f7694616a2ec52738a64b2f900;
+    // keccak256(abi.encode(uint256(keccak256("etherisc.storage.Oracle")) - 1)) & ~bytes32(uint256(0xff));
+    bytes32 public constant ORACLE_STORAGE_LOCATION_V1 = 0xaab7c0ea03d290e56d6c060e0733d3ebcbe647f7694616a2ec52738a64b2f900;
 
     struct OracleStorage {
         IComponentService _componentService;
         IOracleService _oracleService;
-        mapping(address distributor => NftId distributorNftId) _distributorNftId;
     }
-
-    error ErrorDistributionAlreadyDistributor(address distributor, NftId distributorNftId);
 
     function initializeDistribution(
         address registry,
@@ -65,188 +62,9 @@ abstract contract Oracle is
         _getOracleStorage()._componentService.registerOracle();
     }
 
-    function setFees(
-        Fee memory distributionFee,
-        Fee memory minDistributionOwnerFee
-    )
-        external
-        override
-        onlyOwner()
-        restricted()
-    {
-        _getOracleStorage()._componentService.setDistributionFees(
-            distributionFee, 
-            minDistributionOwnerFee);
-    }
-
-
-    function createDistributorType(
-        string memory name,
-        UFixed minDiscountPercentage,
-        UFixed maxDiscountPercentage,
-        UFixed commissionPercentage,
-        uint32 maxReferralCount,
-        uint32 maxReferralLifetime,
-        bool allowSelfReferrals,
-        bool allowRenewals,
-        bytes memory data
-    )
-        public
-        returns (DistributorType distributorType)
-    {
-        OracleStorage storage $ = _getOracleStorage();
-        distributorType = $._oracleService.createDistributorType(
-            name,
-            minDiscountPercentage,
-            maxDiscountPercentage,
-            commissionPercentage,
-            maxReferralCount,
-            maxReferralLifetime,
-            allowSelfReferrals,
-            allowRenewals,
-            data);
-    }
-
-    function createDistributor(
-        address distributor,
-        DistributorType distributorType,
-        bytes memory data
-    )
-        public
-        returns(NftId distributorNftId)
-    {
-        OracleStorage storage $ = _getOracleStorage();
-        if($._distributorNftId[distributor].gtz()) {
-            revert ErrorDistributionAlreadyDistributor(distributor, $._distributorNftId[distributor]);
-        }
-
-        distributorNftId = $._oracleService.createDistributor(
-            distributor,
-            distributorType,
-            data);
-
-        $._distributorNftId[distributor] = distributorNftId;
-    }
-
-    function updateDistributorType(
-        NftId distributorNftId,
-        DistributorType distributorType,
-        bytes memory data
-    )
-        public
-        // TODO figure out what we need for authz
-        // and add it
-    {
-        OracleStorage storage $ = _getOracleStorage();
-        // TODO re-enable once implemented
-        // $._oracleService.updateDistributorType(
-        //     distributorNftId,
-        //     distributorType,
-        //     data);
-    }
-
-    /**
-     * @dev lets distributors create referral codes.
-     * referral codes need to be unique
-     */
-    function _createReferral(
-        NftId distributorNftId,
-        string memory code,
-        UFixed discountPercentage,
-        uint32 maxReferrals,
-        Timestamp expiryAt,
-        bytes memory data
-    )
-        internal
-        returns (ReferralId referralId)
-    {
-        OracleStorage storage $ = _getOracleStorage();
-        referralId = $._oracleService.createReferral(
-            distributorNftId,
-            code,
-            discountPercentage,
-            maxReferrals,
-            expiryAt,
-            data);
-    }
-
-    function isDistributor(address candidate)
-        public
-        view
-        returns (bool)
-    {
-        OracleStorage storage $ = _getOracleStorage();
-        return $._distributorNftId[candidate].gtz();
-    }
-
-    function getDistributorNftId(address distributor)
-        public
-        view
-        returns (NftId distributorNftId)
-    {
-        OracleStorage storage $ = _getOracleStorage();
-        return $._distributorNftId[distributor];
-    }
-
-    function getDiscountPercentage(string memory referralCode)
-        external
-        view
-        returns (
-            UFixed discountPercentage, 
-            ReferralStatus status
-        )
-    {
-        ReferralId referralId = getReferralId(referralCode);
-        return _getInstanceReader().getDiscountPercentage(referralId);
-    }
-
-
-    function getReferralId(
-        string memory referralCode
-    )
-        public
-        view 
-        returns (ReferralId referralId)
-    {
-        return ReferralLib.toReferralId(
-            getNftId(), 
-            referralCode);      
-    }
-
-    function calculateRenewalFeeAmount(
-        ReferralId referralId,
-        uint256 netPremiumAmount
-    )
-        external
-        view
-        virtual override
-        returns (uint256 feeAmount)
-    {
-        // default is no fees
-        return 0 * netPremiumAmount;
-    }
-
-    function processRenewal(
-        ReferralId referralId,
-        uint256 feeAmount
-    )
-        external
-        onlyOwner
-        restricted()
-        virtual override
-    {
-        // default is no action
-    }
-    
-
-    /// @dev returns true iff the component needs to be called when selling/renewing policis
-    function isVerifying() external pure returns (bool verifying) {
-        return true;
-    }
-
     function _getOracleStorage() private pure returns (OracleStorage storage $) {
         assembly {
-            $.slot := DISTRIBUTION_STORAGE_LOCATION_V1
+            $.slot := ORACLE_STORAGE_LOCATION_V1
         }
     }
 }

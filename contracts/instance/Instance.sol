@@ -128,7 +128,17 @@ contract Instance is
         _instanceAdmin.setTargetLockedByInstance(target, locked);
     }
 
-    //--- ITransferInterceptor ------------------------------------------------------------//
+    //--- Oracle Requests ---------------------------------------------------//
+
+    function createNextRequestId() 
+        external 
+        restricted // INSTANCE_OWNER_ROLE
+    {
+
+    }
+
+    //--- ITransferInterceptor ----------------------------------------------//
+
     // TODO interception of child components nfts
     function nftMint(address to, uint256 tokenId) external onlyChainNft {
         _instanceAdmin.transferInstanceOwnerRole(address(0), to);

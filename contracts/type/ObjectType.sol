@@ -58,12 +58,16 @@ function COMPONENT() pure returns (ObjectType) {
     return toObjectType(100);
 }
 
-function FEE() pure returns (ObjectType) {
-    return toObjectType(101);
-}
+// function FEE() pure returns (ObjectType) {
+//     return toObjectType(101);
+// }
 
 function PRODUCT_SETUP() pure returns (ObjectType) {
     return toObjectType(101);
+}
+
+function REQUEST() pure returns (ObjectType) {
+    return toObjectType(105);
 }
 
 function PRODUCT() pure returns (ObjectType) {

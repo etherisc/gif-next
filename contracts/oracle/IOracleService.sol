@@ -13,69 +13,24 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 
 interface IOracleService is IService {
-    error ErrorDistributionServiceCallerNotRegistered(address caller);
-    error ErrorIDistributionServiceParentNftIdNotInstance(NftId nftId, NftId parentNftId);
-    error ErrorIDistributionServiceCallerNotDistributor(address caller);
-    error ErrorIDistributionServiceInvalidReferralId(ReferralId referralId);
-    error ErrorIDistributionServiceMaxReferralsExceeded(uint256 maxReferrals);
-    error ErrorIDistributionServiceDiscountTooLow(uint256 minDiscountPercentage, uint256 discountPercentage);
-    error ErrorIDistributionServiceDiscountTooHigh(uint256 maxDiscountPercentage, uint256 discountPercentage);
-    error ErrorIDistributionServiceExpiryTooLong(uint256 maxReferralLifetime, uint256 expiryAt);
-    error ErrorIDistributionServiceInvalidReferral(string code);
-    error ErrorIDistributionServiceExpirationInvalid(Timestamp expiryAt);
-    error ErrorIDistributionServiceCommissionTooHigh(uint256 commissionPercentage, uint256 maxCommissionPercentage);
-    error ErrorIDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
-    error ErrorIDistributionServiceMaxDiscountTooHigh(uint256 maxDiscountPercentage, uint256 limit);
-    error ErrorIDistributionServiceReferralInvalid(NftId distributionNftId, ReferralId referralId);
-    error ErrorDistributionServiceInvalidFeeTransferred(Amount transferredDistributionFeeAmount, Amount expectedDistributionFeeAmount);
 
-    function createDistributorType(
-        string memory name,
-        UFixed minDiscountPercentage,
-        UFixed maxDiscountPercentage,
-        UFixed commissionPercentage,
-        uint32 maxReferralCount,
-        uint32 maxReferralLifetime,
-        bool allowSelfReferrals,
-        bool allowRenewals,
-        bytes memory data
-    )
-        external
-        returns (DistributorType distributorType);
+    /// @dev send an oracle request to the specified oracle component.
+    /// permissioned: only registered components may send requests to oracles.
+    function request(
+        NftId oracleNftId,
+        bytes calldata requestData,
+        string calldata callbackMethodName // TODO consider to replace with method signature
+    ) external returns (uint256 requestId);
 
-    function createDistributor(
-        address distributor,
-        DistributorType distributorType,
-        bytes memory data
-    ) external returns (NftId distributorNftId);
-
-    // TODO re-enable and reorganize (service contract too large)
-    // function updateDistributorType(
-    //     NftId distributorNftId,
-    //     DistributorType distributorType,
-    //     bytes memory data
-    // ) external;
-
-    function createReferral(
-        NftId distributorNftId,
-        string memory code,
-        UFixed discountPercentage,
-        uint32 maxReferrals,
-        Timestamp expiryAt,
-        bytes memory data
-    )
-        external
-        returns (ReferralId referralId);
-
-    /// @dev callback from product service when selling a policy for a specific referralId
-    function processSale(
-        NftId distributionNftId,
-        ReferralId referralId,
-        IPolicy.Premium memory premium
+    /// @dev respond to oracle request by oracle compnent.
+    /// persmissioned: only the oracle component linked to the request id may call this method
+    function respond(
+        uint256 requestId,
+        bytes calldata responseData
     ) external;
 
-    function referralIsValid(
-        NftId distributorNftId,
-        ReferralId referralId
-    ) external view returns (bool isValid);
+    /// @dev notify the oracle component that the specified request has become invalid
+    /// permissioned: only the originator of the request may cancel a request
+    function cancel(uint256 requestId) external;
+
 }
