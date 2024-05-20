@@ -10,6 +10,7 @@ import {ClaimId} from "../../../contracts/type/ClaimId.sol";
 import {PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 import {SimplePool} from "../../mock/SimplePool.sol";
+import {SimpleOracle} from "../../mock/SimpleOracle.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {ILifecycle} from "../../../contracts/shared/ILifecycle.sol";
 import {IOracle} from "../../../contracts/oracle/IOracle.sol";
@@ -31,7 +32,9 @@ import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestOracle is GifTest {
 
-    event LogClaimTestClaimInfo(NftId policyNftId, IPolicy.PolicyInfo policyInfo, ClaimId claimId, IPolicy.ClaimInfo claimInfo);
+    // from SimpleOracle
+    event LogSimpleOracleRequestReceived(RequestId requestId, NftId requesterId, bool synchronous, string requestText);
+    event LogSimpleOracleCancellingReceived(RequestId requestId);
 
     uint256 public constant BUNDLE_CAPITAL = 5000;
     uint256 public constant SUM_INSURED = 1000;
@@ -54,11 +57,22 @@ contract TestOracle is GifTest {
         Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
             SecondsLib.oneYear());
 
+        // check that oracle component has received oracle request
+        RequestId expectedRequestId = RequestIdLib.toRequestId(1);
+        vm.expectEmit(address(oracle));
+        emit LogSimpleOracleRequestReceived(
+            expectedRequestId, 
+            productNftId,
+            false,
+            requestText);
+
         // WHEN
-        RequestId requestId = product.createOracleTextRequest(
+        bool synchronous = false;
+        RequestId requestId = product.createOracleRequest(
             oracleNftId, 
             requestText,
-            expiryAt);
+            expiryAt,
+            synchronous);
 
         // THEN
         console.log("requestId", requestId.toInt());
@@ -67,11 +81,14 @@ contract TestOracle is GifTest {
 
         // check request info
         IOracle.RequestInfo memory request = instanceReader.getRequestInfo(requestId);
-        bytes memory requestData = abi.encode(requestText);
+        bytes memory expectedRequestData = abi.encode(SimpleOracle.SimpleRequest(
+            synchronous,
+            requestText));
+
         assertEq(request.requesterNftId.toInt(), productNftId.toInt(), "requester not product");
-        assertEq(request.callbackMethodName, "fulfillOracleTextRequest", "unexpected callback name");
+        assertEq(request.callbackMethodName, "fulfillOracleRequestAsync", "unexpected callback name");
         assertEq(request.oracleNftId.toInt(), oracleNftId.toInt(), "unexpected oracle nft id");
-        assertEq(request.requestData, requestData, "unexpected request data");
+        assertEq(request.requestData, expectedRequestData, "unexpected request data");
         assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
         assertFalse(request.isCancelled, "request cancelled");
 
@@ -88,22 +105,32 @@ contract TestOracle is GifTest {
         Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
             SecondsLib.oneYear());
 
-        RequestId requestId = product.createOracleTextRequest(
+        bool synchronous = false;
+        RequestId requestId = product.createOracleRequest(
             oracleNftId, 
             requestText,
-            expiryAt);
+            expiryAt,
+            synchronous);
+
+        // check that oracle component has received the cancelling
+        vm.expectEmit(address(oracle));
+        emit LogSimpleOracleCancellingReceived(
+            requestId);
 
         // WHEN
-        product.cancelOracleTextRequest(requestId);
+        product.cancelOracleRequest(requestId);
 
         // THEN
         // check request info
         IOracle.RequestInfo memory request = instanceReader.getRequestInfo(requestId);
-        bytes memory requestData = abi.encode(requestText);
+        bytes memory expectedRequestData = abi.encode(SimpleOracle.SimpleRequest(
+            synchronous,
+            requestText));
+
         assertEq(request.requesterNftId.toInt(), productNftId.toInt(), "requester not product");
-        assertEq(request.callbackMethodName, "fulfillOracleTextRequest", "unexpected callback name");
+        assertEq(request.callbackMethodName, "fulfillOracleRequestAsync", "unexpected callback name");
         assertEq(request.oracleNftId.toInt(), oracleNftId.toInt(), "unexpected oracle nft id");
-        assertEq(request.requestData, requestData, "unexpected request data");
+        assertEq(request.requestData, expectedRequestData, "unexpected request data");
         assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
         assertTrue(request.isCancelled, "request not cancelled");
 

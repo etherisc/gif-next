@@ -78,9 +78,20 @@ abstract contract Oracle is
     )
         external
         virtual
-        restricted() // only oracle service
+        // restricted() // TODO enable: only oracle service
     {
         _request(requestId, requesterId, requestData, expiryAt);
+    }
+
+
+    function cancel(
+        RequestId requestId
+    )
+        external
+        virtual
+        // restricted() // TODO enable: only oracle service
+    {
+        _cancel(requestId);
     }
 
 
@@ -100,12 +111,24 @@ abstract contract Oracle is
     }
 
 
+    /// @dev internal function for cancelling requests.
+    /// empty implementation.
+    /// overwrite this function to implement use case specific cancelling
+    function _cancel(
+        RequestId requestId
+    )
+        internal
+        virtual
+    {
+    }
+
+
     /// @dev internal function for handling oracle responses.
     /// use this function in use case specific external/public functions
     /// to handle use case specific response handling.
     function _respond(
         RequestId requestId,
-        bytes calldata responseData
+        bytes memory responseData
     )
         internal
         virtual

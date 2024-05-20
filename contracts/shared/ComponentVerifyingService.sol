@@ -33,12 +33,10 @@ abstract contract ComponentVerifyingService is
         )
     {
         componentNftId = getRegistry().getNftId(msg.sender);
-        (componentInfo, instance) = _getAndVerifyComponentInfo(componentNftId, expectedType);
-
-        // ensure component is not locked
-        if (instance.getInstanceAccessManager().isTargetClosed(componentInfo.objectAddress)) {
-            revert ErrorComponentVerifyingServiceComponentIsLocked(componentNftId);
-        }
+        (componentInfo, instance) = _getAndVerifyComponentInfo(
+            componentNftId, 
+            expectedType,
+            true); // only active
     }
 
 
@@ -48,7 +46,8 @@ abstract contract ComponentVerifyingService is
     /// - the component has the wrong object type
     function _getAndVerifyComponentInfo(
         NftId componentNftId,
-        ObjectType expectedType // assume always of `component` type
+        ObjectType expectedType, // assume always of `component` type
+        bool onlyActive
     )
         internal
         virtual
@@ -85,6 +84,13 @@ abstract contract ComponentVerifyingService is
         }
 
         instance = _getInstance(info.parentNftId);
+
+        // ensure component is not locked
+        if (onlyActive) {
+            if (instance.getInstanceAccessManager().isTargetClosed(info.objectAddress)) {
+                revert ErrorComponentVerifyingServiceComponentIsLocked(componentNftId);
+            }
+        }
     }
 
 

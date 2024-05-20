@@ -12,6 +12,7 @@ import {Product} from "../../contracts/product/Product.sol";
 import {ReferralId} from "../../contracts/type/Referral.sol";
 import {RequestId} from "../../contracts/type/RequestId.sol";
 import {RiskId} from "../../contracts/type/RiskId.sol";
+import {SimpleOracle} from "./SimpleOracle.sol";
 import {StateId} from "../../contracts/type/StateId.sol";
 import {Timestamp, Seconds} from "../../contracts/type/Timestamp.sol";
 
@@ -19,7 +20,8 @@ uint64 constant SPECIAL_ROLE_INT = 11111;
 
 contract SimpleProduct is Product {
 
-    event LogSimpleProductRequestFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
+    event LogSimpleProductRequestAsyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
+    event LogSimpleProductRequestSyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
 
     IOracleService private _oracleService;
 
@@ -200,25 +202,36 @@ contract SimpleProduct is Product {
         _processPayout(policyNftId, payoutId);
     }
 
-    function createOracleTextRequest(
+    function createOracleRequest(
         NftId oracleNftId,
         string memory requestText,
-        Timestamp expiryAt
+        Timestamp expiryAt,
+        bool synchronous
     )
         public
         // restricted()
         returns (RequestId)
     {
-        bytes memory requestData = abi.encode(requestText);
+        bytes memory requestData = abi.encode(SimpleOracle.SimpleRequest(
+            synchronous,
+            requestText));
 
-        return _oracleService.request(
-            oracleNftId, 
-            requestData, 
-            expiryAt, 
-            "fulfillOracleTextRequest");
+        if (synchronous) {
+            return _oracleService.request(
+                oracleNftId, 
+                requestData, 
+                expiryAt, 
+                "fulfillOracleRequestSync");
+        } else {
+            return _oracleService.request(
+                oracleNftId, 
+                requestData, 
+                expiryAt, 
+                "fulfillOracleRequestAsync");
+        }
     }
 
-    function cancelOracleTextRequest(
+    function cancelOracleRequest(
         RequestId requestId
     )
         public
@@ -227,7 +240,7 @@ contract SimpleProduct is Product {
         _oracleService.cancel(requestId);
     }
 
-    function fulfillOracleTextRequest(
+    function fulfillOracleRequestSync(
         RequestId requestId,
         bytes memory responseData
     )
@@ -235,7 +248,18 @@ contract SimpleProduct is Product {
         // restricted() // only oracle service
     {
         string memory responseText = abi.decode(responseData, (string));
-        emit LogSimpleProductRequestFulfilled(requestId, responseText, responseData.length);
+        emit LogSimpleProductRequestSyncFulfilled(requestId, responseText, responseData.length);
+    }
+
+    function fulfillOracleRequestAsync(
+        RequestId requestId,
+        bytes memory responseData
+    )
+        public
+        // restricted() // only oracle service
+    {
+        string memory responseText = abi.decode(responseData, (string));
+        emit LogSimpleProductRequestAsyncFulfilled(requestId, responseText, responseData.length);
     }
 
     function doSomethingSpecial() 

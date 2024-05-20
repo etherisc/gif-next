@@ -51,7 +51,7 @@ contract OracleService is
         NftId oracleNftId,
         bytes calldata requestData,
         Timestamp expiryAt,
-        string calldata callbackMethodName // TODO consider to replace with method signature
+        string calldata callbackMethodName
     )
         external 
         virtual 
@@ -66,11 +66,30 @@ contract OracleService is
             IInstance instance
         ) = _getAndVerifyActiveComponent(COMPONENT());
 
-        // TODO add checks
         // oracleNftId exists and is active oracle
-        // expiriyAt > 0
-        // callbackMethodName.length > 0
+        (
+            IRegistry.ObjectInfo memory oracleInfo, 
+        ) = _getAndVerifyComponentInfo(
+            oracleNftId, 
+            ORACLE(), 
+            true); // only active
 
+        // check that requester and oracle share same instance
+        if (componentInfo.parentNftId != oracleInfo.parentNftId) {
+            revert ErrorOracleServiceInstanceMismatch(componentInfo.parentNftId, oracleInfo.parentNftId);
+        }
+
+        // check expiriyAt >= now
+        if (expiryAt < TimestampLib.blockTimestamp()) {
+            revert ErrorOracleServiceExpiryInThePast(TimestampLib.blockTimestamp(), expiryAt);
+        }
+
+        // check callbackMethodName.length > 0
+        if (bytes(callbackMethodName).length == 0) {
+            revert ErrorOracleServiceCallbackMethodNameEmpty();
+        }
+
+        // create request info
         IOracle.RequestInfo memory request = IOracle.RequestInfo({
             requesterNftId: componentNftId,
             callbackMethodName: callbackMethodName,
@@ -82,9 +101,15 @@ contract OracleService is
             isCancelled: false
         });
 
+        // store request with instance
         requestId = instance.getInstanceStore().createRequest(request);
 
-        // TODO add call to oracle component
+        // call oracle component
+        IOracleComponent(oracleInfo.objectAddress).request(
+            requestId, 
+            componentNftId, 
+            requestData, 
+            expiryAt);
 
         emit LogOracleServiceRequestCreated(requestId, componentNftId, oracleNftId, expiryAt);
     }
@@ -136,6 +161,11 @@ contract OracleService is
         request.isCancelled = true;
 
         instance.getInstanceStore().updateRequest(requestId, request, CANCELLED());
+
+        // call oracle component
+        // TODO add check that component is active?
+        address oracleAddress = getRegistry().getObjectInfo(request.oracleNftId).objectAddress;
+        IOracleComponent(oracleAddress).cancel(requestId);
 
         emit LogOracleRequestCancelled(requestId, requesterNftId);
     }
