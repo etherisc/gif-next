@@ -16,6 +16,8 @@ export type ReleaseAddresses = {
     instanceServiceManagerAddress: AddressLike,
     componentServiceAddress: AddressLike,
     componentServiceManagerAddress: AddressLike,
+    oracleServiceAddress: AddressLike,
+    oracleServiceManagerAddress: AddressLike,
     distributionServiceAddress: AddressLike,
     distributionServiceManagerAddress: AddressLike,
     poolServiceAddress: AddressLike,
@@ -43,6 +45,8 @@ function logReleaseAddresses(release: ReleaseAddresses): void {
     logger.info(`instanceServiceManagerAddress: ${release.instanceServiceManagerAddress}`);
     logger.info(`componentServiceAddress: ${release.componentServiceAddress}`);
     logger.info(`componentServiceManagerAddress: ${release.componentServiceManagerAddress}`);
+    logger.info(`oracleServiceAddress: ${release.oracleServiceAddress}`);
+    logger.info(`oracleServiceManagerAddress: ${release.oracleServiceManagerAddress}`);
     logger.info(`distributionServiceAddress: ${release.distributionServiceAddress}`);
     logger.info(`distributionServiceManagerAddress: ${release.distributionServiceManagerAddress}`);
     logger.info(`poolServiceAddress: ${release.poolServiceAddress}`);
@@ -63,6 +67,7 @@ export const roles = {
     INSTANCE_OWNER_ROLE: 1900,
     INSTANCE_SERVICE_ROLE: 2000,
     COMPONENT_SERVICE_ROLE: 2001,
+    ORACLE_SERVICE_ROLE: 2005,
     DISTRIBUTION_SERVICE_ROLE: 2100,
     POOL_SERVICE_ROLE: 2200,
     PRODUCT_SERVICE_ROLE: 2300,
@@ -82,6 +87,7 @@ export const roleNames = {
     INSTANCE_SERVICE_ROLE_NAME: "InstanceServiceRole",
     DISTRIBUTION_SERVICE_ROLE_NAME: "DistributionServiceRole",
     COMPONENT_SERVICE_ROLE_NAME: "ComponentServiceRole",
+    ORACLE_SERVICE_ROLE_NAME: "OracleServiceRole",
     POOL_SERVICE_ROLE_NAME: "PoolServiceRole",
     PRODUCT_SERVICE_ROLE_NAME: "ProductServiceRole",
     APPLICATION_SERVICE_ROLE_NAME: "ApplicationServiceRole",
@@ -105,6 +111,7 @@ export const serviceNames = {
     CLAIM_SERVICE_NAME: "ClaimService",
     BUNDLE_SERVICE_NAME: "BundleService",
     PRICING_SERVICE_NAME: "PricingService",
+    ORACLE_SERVICE_NAME: "OracleService",
     COMPONENT_SERVICE_NAME: "ComponentService",
     STAKING_SERVICE_NAME: "StakingService",
     REGISTRY_SERVICE_NAME: "RegistryService"
@@ -155,6 +162,8 @@ export async function computeReleaseAddresses(owner: Signer, registry: RegistryA
         instanceServiceManagerAddress: "0x0000000000000000000000000000000000000001",
         componentServiceAddress: "0x0000000000000000000000000000000000000001",
         componentServiceManagerAddress: "0x0000000000000000000000000000000000000001",
+        oracleServiceAddress: "0x0000000000000000000000000000000000000001",
+        oracleServiceManagerAddress: "0x0000000000000000000000000000000000000001",
         distributionServiceAddress: "0x0000000000000000000000000000000000000001",
         distributionServiceManagerAddress: "0x0000000000000000000000000000000000000001",
         poolServiceAddress: "0x0000000000000000000000000000000000000001",
@@ -195,6 +204,7 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             serviceAddresses.bundleServiceAddress,
             serviceAddresses.pricingServiceAddress,
             serviceAddresses.distributionServiceAddress,
+            serviceAddresses.oracleServiceAddress,
             serviceAddresses.componentServiceAddress,
             serviceAddresses.instanceServiceAddress,
             serviceAddresses.stakingServiceAddress,
@@ -209,6 +219,7 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             serviceNames.BUNDLE_SERVICE_NAME,
             serviceNames.PRICING_SERVICE_NAME,
             serviceNames.DISTRIBUTION_SERVICE_NAME,
+            serviceNames.ORACLE_SERVICE_NAME,
             serviceNames.COMPONENT_SERVICE_NAME,
             serviceNames.INSTANCE_SERVICE_NAME,
             serviceNames.STAKING_SERVICE_NAME,
@@ -223,6 +234,7 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [roles.BUNDLE_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
             [roles.PRICING_SERVICE_ROLE],
             [roles.DISTRIBUTION_SERVICE_ROLE, roles.CAN_CREATE_GIF_TARGET_ROLE],
+            [roles.ORACLE_SERVICE_ROLE],
             [roles.COMPONENT_SERVICE_ROLE],
             [roles.INSTANCE_SERVICE_ROLE],
             [roles.STAKING_SERVICE_ROLE],
@@ -237,6 +249,7 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [roleNames.BUNDLE_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
             [roleNames.PRICING_SERVICE_ROLE_NAME],
             [roleNames.DISTRIBUTION_SERVICE_ROLE_NAME, roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME],
+            [roleNames.ORACLE_SERVICE_ROLE_NAME],
             [roleNames.COMPONENT_SERVICE_ROLE_NAME],
             [roleNames.INSTANCE_SERVICE_ROLE_NAME],
             [roleNames.STAKING_SERVICE_ROLE_NAME],
@@ -251,6 +264,7 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [roles.POLICY_SERVICE_ROLE, roles.POOL_SERVICE_ROLE],  // bundle
             [], // pricing
             [roles.POLICY_SERVICE_ROLE], // distribution
+            [], // oracle
             [], // component
             [roles.CAN_CREATE_GIF_TARGET_ROLE], // instance
             [],  // staking
@@ -274,6 +288,7 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [roleNames.POLICY_SERVICE_ROLE_NAME, roleNames.POOL_SERVICE_ROLE_NAME], // bundle
             [], // pricing
             [roleNames.POLICY_SERVICE_ROLE_NAME], // distribution
+            [], // oracle
             [], // component
             [roleNames.CAN_CREATE_GIF_TARGET_ROLE_NAME], // instance
             [], // staking
@@ -315,6 +330,7 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
             [
                 [DistributionService__factory.createInterface().getFunction("processSale").selector]
             ],
+            [], // oracle
             [], // component
             [
                 [InstanceService__factory.createInterface().getFunction("createGifTarget").selector]

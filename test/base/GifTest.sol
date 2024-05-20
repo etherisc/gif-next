@@ -9,7 +9,7 @@ import {AmountLib} from "../../contracts/type/Amount.sol";
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
-import {REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
+import {ObjectTypeLib, REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {
     GIF_MANAGER_ROLE,
@@ -17,12 +17,12 @@ import {
     ADMIN_ROLE,
     INSTANCE_OWNER_ROLE,
     PRODUCT_OWNER_ROLE, 
+    ORACLE_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
     DISTRIBUTION_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {Version} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
-import {zeroObjectType} from "../../contracts/type/ObjectType.sol";
 import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 
 import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
@@ -90,6 +90,7 @@ import {Product} from "../../contracts/product/Product.sol";
 import {Pool} from "../../contracts/pool/Pool.sol";
 import {Usdc} from "../mock/Usdc.sol";
 import {SimpleDistribution} from "../mock/SimpleDistribution.sol";
+import {SimpleOracle} from "../mock/SimpleOracle.sol";
 import {SimplePool} from "../mock/SimplePool.sol";
 import {SimpleProduct} from "../mock/SimpleProduct.sol";
 
@@ -192,6 +193,8 @@ contract GifTest is GifDeployer {
 
     SimpleDistribution public distribution;
     NftId public distributionNftId;
+    SimpleOracle public oracle;
+    NftId public oracleNftId;
     SimplePool public pool;
     NftId public poolNftId;
     SimpleProduct public product;
@@ -207,6 +210,7 @@ contract GifTest is GifDeployer {
     address public stakingOwner = registryOwner;
     address public instanceOwner = makeAddr("instanceOwner");
     address public productOwner = makeAddr("productOwner");
+    address public oracleOwner = makeAddr("oracleOwner");
     address public poolOwner = makeAddr("poolOwner");
     address public distributionOwner = makeAddr("distributionOwner");
     address public customer = makeAddr("customer");
@@ -762,11 +766,15 @@ contract GifTest is GifDeployer {
 
 
     function _prepareDistributionAndPool() internal {
+
+        // grant component owner roles
         vm.startPrank(instanceOwner);
+        instanceAccessManager.grantRole(ORACLE_OWNER_ROLE().toInt(), oracleOwner, 0);
         instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
         instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
         vm.stopPrank();
 
+        // deploy and register distribution
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
             address(registry),
@@ -783,6 +791,7 @@ contract GifTest is GifDeployer {
         console.log("distribution component at", address(distribution));
         // solhint-enable
 
+        // deploy and register pool
         vm.startPrank(poolOwner);
         pool = new SimplePool(
             address(registry),
@@ -803,6 +812,23 @@ contract GifTest is GifDeployer {
         // solhint-disable
         console.log("pool nft id", poolNftId.toInt());
         console.log("pool component at", address(pool));
+        // solhint-enable
+
+        // deploy and register oracle
+        vm.startPrank(oracleOwner);
+        oracle = new SimpleOracle(
+            address(registry),
+            instanceNftId,
+            oracleOwner,
+            address(token));
+
+        oracle.register();
+        oracleNftId = oracle.getNftId();
+        vm.stopPrank();
+
+        // solhint-disable
+        console.log("oracle nft id", oracleNftId.toInt());
+        console.log("oracle component at", address(oracle));
         // solhint-enable
     }
 
@@ -839,7 +865,7 @@ contract GifTest is GifDeployer {
             IRegistry.ObjectInfo(
                 NftIdLib.zero(),
                 NftIdLib.zero(),
-                zeroObjectType(),
+                ObjectTypeLib.zero(),
                 false,
                 address(0),
                 address(0),

@@ -128,15 +128,6 @@ contract Instance is
         _instanceAdmin.setTargetLockedByInstance(target, locked);
     }
 
-    //--- Oracle Requests ---------------------------------------------------//
-
-    function createNextRequestId() 
-        external 
-        restricted // INSTANCE_OWNER_ROLE
-    {
-
-    }
-
     //--- ITransferInterceptor ----------------------------------------------//
 
     // TODO interception of child components nfts

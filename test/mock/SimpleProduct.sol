@@ -4,10 +4,13 @@ pragma solidity ^0.8.20;
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
+import {IOracleService} from "../../contracts/oracle/IOracleService.sol";
+import {ORACLE} from "../../contracts/type/ObjectType.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {PayoutId} from "../../contracts/type/PayoutId.sol";
 import {Product} from "../../contracts/product/Product.sol";
 import {ReferralId} from "../../contracts/type/Referral.sol";
+import {RequestId} from "../../contracts/type/RequestId.sol";
 import {RiskId} from "../../contracts/type/RiskId.sol";
 import {StateId} from "../../contracts/type/StateId.sol";
 import {Timestamp, Seconds} from "../../contracts/type/Timestamp.sol";
@@ -15,6 +18,10 @@ import {Timestamp, Seconds} from "../../contracts/type/Timestamp.sol";
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
 contract SimpleProduct is Product {
+
+    event LogSimpleProductRequestFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
+
+    IOracleService private _oracleService;
 
     constructor(
         address registry,
@@ -63,6 +70,8 @@ contract SimpleProduct is Product {
             distribution,
             "",
             ""); 
+
+        _oracleService = IOracleService(_getServiceAddress(ORACLE()));
     }
 
     function createRisk(
@@ -94,7 +103,7 @@ contract SimpleProduct is Product {
             state
         );
     }
-    
+
     function createApplication(
         address applicationOwner,
         RiskId riskId,
@@ -191,6 +200,44 @@ contract SimpleProduct is Product {
         _processPayout(policyNftId, payoutId);
     }
 
+    function createOracleTextRequest(
+        NftId oracleNftId,
+        string memory requestText,
+        Timestamp expiryAt
+    )
+        public
+        // restricted()
+        returns (RequestId)
+    {
+        bytes memory requestData = abi.encode(requestText);
+
+        return _oracleService.request(
+            oracleNftId, 
+            requestData, 
+            expiryAt, 
+            "fulfillOracleTextRequest");
+    }
+
+    function cancelOracleTextRequest(
+        RequestId requestId
+    )
+        public
+        // restricted() // 
+    {
+        _oracleService.cancel(requestId);
+    }
+
+    function fulfillOracleTextRequest(
+        RequestId requestId,
+        bytes memory responseData
+    )
+        public
+        // restricted() // only oracle service
+    {
+        string memory responseText = abi.decode(responseData, (string));
+        emit LogSimpleProductRequestFulfilled(requestId, responseText, responseData.length);
+    }
+
     function doSomethingSpecial() 
         public 
         restricted()
@@ -207,4 +254,7 @@ contract SimpleProduct is Product {
         return true;
     }
 
+    function getOracleService() public view returns (IOracleService) {
+        return _oracleService;
+    }
 }

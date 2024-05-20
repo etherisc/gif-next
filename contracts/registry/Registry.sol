@@ -525,7 +525,7 @@ contract Registry is
     // 1) EACH object type MUST have only one parent type across ALL mappings
     // 2) DO NOT use object type (e.g. POLCY, BUNDLE, STAKE) as parent type
     // 3) DO NOT use REGISTRY as object type
-    // 2) DO NOT use PROTOCOL and "zeroObjectType"
+    // 2) DO NOT use PROTOCOL and "ObjectTypeLib.zero"
     function _setupValidCoreTypesAndCombinations() 
         private 
     {

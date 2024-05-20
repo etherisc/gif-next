@@ -8,6 +8,7 @@ import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
+import {RequestId} from "../type/RequestId.sol";
 import {RiskId, RiskIdLib} from "../type/RiskId.sol";
 import {RoleId, RoleIdLib, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
 import {StateId, ACTIVE} from "../type/StateId.sol";
@@ -27,6 +28,7 @@ import {IBundle} from "./module/IBundle.sol";
 import {IComponents} from "./module/IComponents.sol";
 import {IDistribution} from "./module/IDistribution.sol";
 import {IPolicy} from "./module/IPolicy.sol";
+import {IOracle} from "../oracle/IOracle.sol";
 import {IRisk} from "./module/IRisk.sol";
 
 
@@ -42,10 +44,12 @@ contract InstanceStore is
     {
         address authority = IInstance(instance).authority();
         __AccessManaged_init(authority);
+
         initializeLifecycle();
     }
 
     //--- Component ---------------------------------------------------------//
+
     function createComponent(
         NftId componentNftId, 
         IComponents.ComponentInfo memory componentInfo
@@ -68,7 +72,7 @@ contract InstanceStore is
         _update(_toNftKey32(componentNftId, COMPONENT()), abi.encode(componentInfo), newState);
     }
 
-    //--- ProductSetup ------------------------------------------------------//
+    //--- Product -----------------------------------------------------------//
 
     function createProduct(NftId productNftId, IComponents.ProductInfo memory info) external restricted() {
         _create(_toNftKey32(productNftId, PRODUCT()), abi.encode(info));
@@ -82,7 +86,7 @@ contract InstanceStore is
         _updateState(_toNftKey32(productNftId, PRODUCT()), newState);
     }
 
-    //--- PoolSetup ------------------------------------------------------//
+    //--- Pool --------------------------------------------------------------//
 
     function createPool(
         NftId poolNftId, 
@@ -102,7 +106,7 @@ contract InstanceStore is
         _updateState(_toNftKey32(poolNftId, POOL()), newState);
     }
 
-    //--- DistributorType -------------------------------------------------------//
+    //--- DistributorType ---------------------------------------------------//
     function createDistributorType(DistributorType distributorType, IDistribution.DistributorTypeInfo memory info) external restricted() {
         _create(distributorType.toKey32(), abi.encode(info));
     }
@@ -219,6 +223,21 @@ contract InstanceStore is
 
     function updatePayoutState(NftId policyNftId, PayoutId payoutId, StateId newState) external restricted() {
         _updateState(_toPayoutKey32(policyNftId, payoutId), newState);
+    }
+
+    //--- Request -----------------------------------------------------------//
+
+    function createRequest(IOracle.RequestInfo memory request) external restricted() returns (RequestId requestId) {
+        requestId = _createNextRequestId();
+        _create(requestId.toKey32(), abi.encode(request));
+    }
+
+    function updateRequest(RequestId requestId, IOracle.RequestInfo memory request, StateId newState) external restricted() {
+        _update(requestId.toKey32(), abi.encode(request), newState);
+    }
+
+    function updateRequestState(RequestId requestId, StateId newState) external restricted() {
+        _updateState(requestId.toKey32(), newState);
     }
 
     //--- balance and fee management functions ------------------------------//

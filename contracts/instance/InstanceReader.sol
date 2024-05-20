@@ -12,10 +12,12 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, DISTRIBUTOR, DISTRIBUTION, INSTANCE, PRODUCT, POLICY, POOL, BUNDLE} from "../type/ObjectType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN, REFERRAL_ERROR_EXPIRED, REFERRAL_ERROR_EXHAUSTED} from "../type/Referral.sol";
+import {RequestId} from "../type/RequestId.sol";
 import {RiskId} from "../type/RiskId.sol";
+import {RoleId} from "../type/RoleId.sol";
+import {StateId} from "../type/StateId.sol";
 import {UFixed, MathLib, UFixedLib} from "../type/UFixed.sol";
 import {Version} from "../type/Version.sol";
-import {StateId} from "../type/StateId.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
@@ -23,6 +25,7 @@ import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IInstance} from "./IInstance.sol";
 import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
+import {IOracle} from "../oracle/IOracle.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
@@ -257,6 +260,16 @@ contract InstanceReader {
         }
     }
 
+    function getRequestInfo(RequestId requestId)
+        public
+        view
+        returns (IOracle.RequestInfo memory requestInfo)
+    {
+        bytes memory data = _store.getData(requestId.toKey32());
+        if (data.length > 0) {
+            return abi.decode(data, (IOracle.RequestInfo));
+        }
+    }
 
     function getMetadata(Key32 key)
         public 
@@ -264,6 +277,14 @@ contract InstanceReader {
         returns (IKeyValueStore.Metadata memory metadata)
     {
         return _store.getMetadata(key);
+    }
+
+    function getState(Key32 key)
+        public 
+        view 
+        returns (StateId state)
+    {
+        return _store.getMetadata(key).state;
     }
 
 
@@ -316,6 +337,10 @@ contract InstanceReader {
         );
     }
 
+    function hasRole(address account, RoleId roleId) public view returns (bool isMember) {
+        (isMember, ) = _instance.getInstanceAccessManager().hasRole(
+            roleId.toInt(), account);
+    }
 
     function toPolicyKey(NftId policyNftId) public pure returns (Key32) { 
         return policyNftId.toKey32(POLICY());

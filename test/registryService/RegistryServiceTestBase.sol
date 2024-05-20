@@ -10,7 +10,7 @@ import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType, TOKEN} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, toObjectType, ObjectTypeLib, TOKEN} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
@@ -54,7 +54,7 @@ function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
         IRegistry.ObjectInfo(
             NftIdLib.zero(),
             NftIdLib.zero(),
-            zeroObjectType(),
+            ObjectTypeLib.zero(),
             false,
             address(0),
             address(0),

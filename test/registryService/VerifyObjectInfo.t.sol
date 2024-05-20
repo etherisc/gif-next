@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType, toObjectType, ObjectTypeLib, zeroObjectType} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, toObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
@@ -62,7 +62,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withZeroObjectType() public 
     {
-        ObjectType objectType = zeroObjectType();
+        ObjectType objectType = ObjectTypeLib.zero();
         ObjectType expectedType = toObjectType(randomNumber(type(uint8).max));
 
         if(objectType == expectedType) {
@@ -92,7 +92,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
     function test_whenExpectedTypeIsZero() public 
     {
         ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
-        ObjectType expectedType = zeroObjectType();
+        ObjectType expectedType = ObjectTypeLib.zero();
 
         if(objectType == expectedType) {
             objectType = toObjectType(objectType.toInt() + 1);

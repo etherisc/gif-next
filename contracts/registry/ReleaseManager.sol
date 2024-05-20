@@ -10,7 +10,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {NftId} from "../type/NftId.sol";
 import {RoleId, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
-import {ObjectType, ObjectTypeLib, zeroObjectType, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 import {Timestamp, TimestampLib, zeroTimestamp, ltTimestamp} from "../type/Timestamp.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";

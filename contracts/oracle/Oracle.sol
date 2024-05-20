@@ -3,21 +3,16 @@ pragma solidity ^0.8.20;
 
 import {COMPONENT, ORACLE} from "../type/ObjectType.sol";
 import {IOracleService} from "./IOracleService.sol";
-import {IProductService} from "../product/IProductService.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
-import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IOracleComponent} from "./IOracleComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
-import {UFixed} from "../type/UFixed.sol";
-import {DistributorType} from "../type/DistributorType.sol";
+import {RequestId} from "../type/RequestId.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 
 abstract contract Oracle is
@@ -32,7 +27,8 @@ abstract contract Oracle is
         IOracleService _oracleService;
     }
 
-    function initializeDistribution(
+
+    function initializeOracle(
         address registry,
         NftId instanceNftId,
         address initialOwner,
@@ -54,12 +50,68 @@ abstract contract Oracle is
         registerInterface(type(IOracleComponent).interfaceId);
     }
 
+
     function register()
         external
         virtual
         onlyOwner()
     {
         _getOracleStorage()._componentService.registerOracle();
+    }
+
+
+    function isVerifying()
+        external 
+        virtual 
+        view 
+        returns (bool verifying)
+    {
+        return false;
+    }
+
+
+    function request(
+        RequestId requestId,
+        NftId requesterId,
+        bytes calldata requestData,
+        Timestamp expiryAt
+    )
+        external
+        virtual
+        restricted() // only oracle service
+    {
+        _request(requestId, requesterId, requestData, expiryAt);
+    }
+
+
+    /// @dev internal function for handling requests.
+    /// empty implementation.
+    /// overwrite this function to implement use case specific handling
+    /// for oracle calls.
+    function _request(
+        RequestId requestId,
+        NftId requesterId,
+        bytes calldata requestData,
+        Timestamp expiryAt
+    )
+        internal
+        virtual
+    {
+    }
+
+
+    /// @dev internal function for handling oracle responses.
+    /// use this function in use case specific external/public functions
+    /// to handle use case specific response handling.
+    function _respond(
+        RequestId requestId,
+        bytes calldata responseData
+    )
+        internal
+        virtual
+    {
+        _getOracleStorage()._oracleService.respond(
+            requestId, responseData);
     }
 
     function _getOracleStorage() private pure returns (OracleStorage storage $) {

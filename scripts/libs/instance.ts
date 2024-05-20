@@ -71,10 +71,12 @@ export async function deployAndRegisterMasterInstance(
                 ClaimIdLib: libraries.claimIdLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
-                ReferralLib: libraries.referralLibAddress
+                ReferralLib: libraries.referralLibAddress,
+                RequestIdLib: libraries.requestIdLibAddress,
             }
         }
     );
+
     const instanceStore = masterInstanceStoreContract as InstanceStore;
     await executeTx(() => instanceStore.initialize(instanceAddress));
     await executeTx(() => instance.setInstanceStore(instanceStore));
@@ -91,7 +93,9 @@ export async function deployAndRegisterMasterInstance(
                 NftIdLib: libraries.nftIdLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
                 ReferralLib: libraries.referralLibAddress,
+                RequestIdLib: libraries.requestIdLibAddress,
                 RiskIdLib: libraries.riskIdLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
             }

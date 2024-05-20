@@ -10,6 +10,8 @@ type RequestId is uint64;
 using {
     eqRequestId as ==, 
     neRequestId as !=,
+    RequestIdLib.eqz,
+    RequestIdLib.gtz,
     RequestIdLib.toInt,
     RequestIdLib.toKey32
 } for RequestId global;
@@ -39,6 +41,16 @@ library RequestIdLib {
     // @dev Converts a request id back to an int value.
     function toInt(RequestId requestId) public pure returns (uint256) {
         return RequestId.unwrap(requestId);
+    }
+
+    // @dev Returns true iff request id a == 0
+    function eqz(RequestId a) public pure returns (bool) {
+        return RequestId.unwrap(a) == 0;
+    }
+
+    // @dev Returns true iff request id a > 0
+    function gtz(RequestId a) public pure returns (bool) {
+        return RequestId.unwrap(a) > 0;
     }
 
     // @dev Returns true iff risk ids a and b are identical

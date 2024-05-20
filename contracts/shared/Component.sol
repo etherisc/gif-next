@@ -13,6 +13,7 @@ import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
+import {VersionPartLib} from "../type/Version.sol";
 
 abstract contract Component is
     AccessManagedUpgradeable,
@@ -251,6 +252,7 @@ abstract contract Component is
 
     }
 
+
     /// @dev for component contracts that hold its own component information 
     /// this function creates and sets a token hanlder for the components tokens
     function _createAndSetTokenHandler()
@@ -259,6 +261,7 @@ abstract contract Component is
         ComponentStorage storage $ = _getComponentStorage();
         $._tokenHandler = new TokenHandler(address($._token));
     }
+
 
     /// @dev depending on the source of the component information this function needs to be overwritten. 
     /// eg for instance linked components that externally store this information with the instance store contract

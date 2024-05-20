@@ -58,10 +58,6 @@ function COMPONENT() pure returns (ObjectType) {
     return toObjectType(100);
 }
 
-// function FEE() pure returns (ObjectType) {
-//     return toObjectType(101);
-// }
-
 function PRODUCT_SETUP() pure returns (ObjectType) {
     return toObjectType(101);
 }
@@ -131,12 +127,6 @@ function toObjectType(uint256 objectType) pure returns (ObjectType) {
     return ObjectType.wrap(uint8(objectType));
 }
 
-// TODO move to ObjecTypeLib and rename to zero()
-/// @dev Return the ObjectType zero (0)
-function zeroObjectType() pure returns (ObjectType) {
-    return ObjectType.wrap(0);
-}
-
 // pure free functions for operators
 function eqObjectType(ObjectType a, ObjectType b) pure returns (bool isSame) {
     return ObjectType.unwrap(a) == ObjectType.unwrap(b);
@@ -151,6 +141,11 @@ function neObjectType(
 
 // library functions that operate on user defined type
 library ObjectTypeLib {
+
+    function zero() public pure returns (ObjectType) {
+        return ObjectType.wrap(0);
+    }
+
     /// @dev Converts the NftId to a uint256.
     function toInt(ObjectType objectType) public pure returns (uint96) {
         return uint96(ObjectType.unwrap(objectType));
