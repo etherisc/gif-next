@@ -78,4 +78,11 @@ interface IInstanceService is IService {
     ) external;
 
     function setComponentLocked(bool locked) external;
+
+
+    function getMasterInstanceAddress() external view returns (address);
+    function getMasterInstanceAdminAddress() external view returns (address);
+    function getMasterInstanceReaderAddress() external view returns (address);
+    function getMasterBundleManagerAddress() external view returns (address);
+    function getMasterInstanceStoreAddress() external view returns (address);
 }
