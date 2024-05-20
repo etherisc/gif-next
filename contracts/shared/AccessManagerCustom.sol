@@ -59,8 +59,8 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
     uint64 public constant ADMIN_ROLE = type(uint64).min; // 0
     uint64 public constant PUBLIC_ROLE = type(uint64).max; // 2**64-1
 
-    /// @custom:storage-location erc7201:openzeppelin.storage.AccessManagerCustom
-    struct AccessManagerStorage {
+    /// @custom:storage-location erc7201:etherisc.storage.AccessManagerCustom
+    struct AccessManagerCustomStorage {
         mapping(address target => TargetConfig mode) _targets;
         mapping(uint64 roleId => Role) _roles;
         mapping(bytes32 operationId => Schedule) _schedules;
@@ -70,11 +70,10 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
         bytes32 _executionId;
     }
 
-    // TODO compute address
     // keccak256(abi.encode(uint256(keccak256("etherisc.storage.AccessManagerCustom")) - 1)) & ~bytes32(uint256(0xff))
     bytes32 private constant AccessManagerCustomStorageLocation = 0x77301bc69e8248c80abb894217605b71fa89ea6a9e8bdf359d9e8aa1dd62bf00;
 
-    function _getAccessManagerCustomStorage() private pure returns (AccessManagerStorage storage $) {
+    function _getAccessManagerCustomStorage() private pure returns (AccessManagerCustomStorage storage $) {
         assembly {
             $.slot := AccessManagerCustomStorageLocation
         }
@@ -134,37 +133,37 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
 
     /// @inheritdoc IAccessManager
     function isTargetClosed(address target) public view virtual returns (bool) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         return $._targets[target].closed;
     }
 
     /// @inheritdoc IAccessManager
     function getTargetFunctionRole(address target, bytes4 selector) public view virtual returns (uint64) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         return $._targets[target].allowedRoles[selector];
     }
 
     /// @inheritdoc IAccessManager
     function getTargetAdminDelay(address target) public view virtual returns (uint32) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         return $._targets[target].adminDelay.get();
     }
 
     /// @inheritdoc IAccessManager
     function getRoleAdmin(uint64 roleId) public view virtual returns (uint64) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         return $._roles[roleId].admin;
     }
 
     /// @inheritdoc IAccessManager
     function getRoleGuardian(uint64 roleId) public view virtual returns (uint64) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         return $._roles[roleId].guardian;
     }
 
     /// @inheritdoc IAccessManager
     function getRoleGrantDelay(uint64 roleId) public view virtual returns (uint32) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         return $._roles[roleId].grantDelay.get();
     }
 
@@ -173,7 +172,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
         uint64 roleId,
         address account
     ) public view virtual returns (uint48 since, uint32 currentDelay, uint32 pendingDelay, uint48 effect) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         Access storage access = $._roles[roleId].members[account];
 
         since = access.since;
@@ -248,7 +247,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
         uint32 grantDelay,
         uint32 executionDelay
     ) internal virtual returns (bool) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         if (roleId == PUBLIC_ROLE) {
             revert AccessManagerLockedRole(roleId);
         }
@@ -279,7 +278,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * Emits a {RoleRevoked} event if the account had the role.
      */
     function _revokeRole(uint64 roleId, address account) internal virtual returns (bool) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         if (roleId == PUBLIC_ROLE) {
             revert AccessManagerLockedRole(roleId);
         }
@@ -303,7 +302,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * anyone to set grant or revoke such role.
      */
     function _setRoleAdmin(uint64 roleId, uint64 admin) internal virtual {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         if (roleId == ADMIN_ROLE || roleId == PUBLIC_ROLE) {
             revert AccessManagerLockedRole(roleId);
         }
@@ -322,7 +321,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * anyone to cancel any scheduled operation for such role.
      */
     function _setRoleGuardian(uint64 roleId, uint64 guardian) internal virtual {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         if (roleId == ADMIN_ROLE || roleId == PUBLIC_ROLE) {
             revert AccessManagerLockedRole(roleId);
         }
@@ -338,7 +337,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * Emits a {RoleGrantDelayChanged} event.
      */
     function _setGrantDelay(uint64 roleId, uint32 newDelay) internal virtual {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         if (roleId == PUBLIC_ROLE) {
             revert AccessManagerLockedRole(roleId);
         }
@@ -367,7 +366,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * Emits a {TargetFunctionRoleUpdated} event.
      */
     function _setTargetFunctionRole(address target, bytes4 selector, uint64 roleId) internal virtual {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         $._targets[target].allowedRoles[selector] = roleId;
         emit TargetFunctionRoleUpdated(target, selector, roleId);
     }
@@ -383,7 +382,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * Emits a {TargetAdminDelayUpdated} event.
      */
     function _setTargetAdminDelay(address target, uint32 newDelay) internal virtual {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         uint48 effect;
         ($._targets[target].adminDelay, effect) = $._targets[target].adminDelay.withUpdate(newDelay, minSetback());
         emit TargetAdminDelayUpdated(target, newDelay, effect);
@@ -401,7 +400,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * Emits a {TargetClosed} event.
      */
     function _setTargetClosed(address target, bool closed) internal virtual {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         if (target == address(this)) {
             revert AccessManagerLockedAccount(target);
         }
@@ -412,14 +411,14 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
     // ============================================== DELAYED OPERATIONS ==============================================
     /// @inheritdoc IAccessManager
     function getSchedule(bytes32 id) public view virtual returns (uint48) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         uint48 timepoint = $._schedules[id].timepoint;
         return _isExpired(timepoint) ? 0 : timepoint;
     }
 
     /// @inheritdoc IAccessManager
     function getNonce(bytes32 id) public view virtual returns (uint32) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         return $._schedules[id].nonce;
     }
 
@@ -429,7 +428,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
         bytes calldata data,
         uint48 when
     ) public virtual returns (bytes32 operationId, uint32 nonce) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         address caller = _msgSender();
 
         // Fetch restrictions that apply to the caller on the targeted function
@@ -466,7 +465,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * (Note: This function was introduced due to stack too deep errors in schedule.)
      */
     function _checkNotScheduled(bytes32 operationId) private view {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         uint48 prevTimepoint = $._schedules[operationId].timepoint;
         if (prevTimepoint != 0 && !_isExpired(prevTimepoint)) {
             revert AccessManagerAlreadyScheduled(operationId);
@@ -478,7 +477,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
     // _consumeScheduledOp guarantees a scheduled operation is only executed once.
     // slither-disable-next-line reentrancy-no-eth
     function execute(address target, bytes calldata data) public payable virtual returns (uint32) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         address caller = _msgSender();
 
         // Fetch restrictions that apply to the caller on the targeted function
@@ -513,7 +512,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
 
     /// @inheritdoc IAccessManager
     function cancel(address caller, address target, bytes calldata data) public virtual returns (uint32) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         address msgsender = _msgSender();
         bytes4 selector = _checkSelector(data);
 
@@ -551,7 +550,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * Returns the nonce of the scheduled operation that is consumed.
      */
     function _consumeScheduledOp(bytes32 operationId) internal virtual returns (uint32) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         uint48 timepoint = $._schedules[operationId].timepoint;
         uint32 nonce = $._schedules[operationId].nonce;
 
@@ -709,7 +708,7 @@ abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, Mult
      * @dev Returns true if a call with `target` and `selector` is being executed via {executed}.
      */
     function _isExecuting(address target, bytes4 selector) private view returns (bool) {
-        AccessManagerStorage storage $ = _getAccessManagerCustomStorage();
+        AccessManagerCustomStorage storage $ = _getAccessManagerCustomStorage();
         return $._executionId == _hashExecutionId(target, selector);
     }
 
