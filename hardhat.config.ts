@@ -8,6 +8,20 @@ import "solidity-docgen";
 import { config as dotEnvConfig } from "dotenv";
 dotEnvConfig();
 
+const { TENDERLY_PRIVATE_VERIFICATION, TENDERLY_AUTOMATIC_VERIFICATION } =
+  process.env;
+
+const privateVerification = TENDERLY_PRIVATE_VERIFICATION === "true";
+const automaticVerifications = TENDERLY_AUTOMATIC_VERIFICATION === "true";// TODO use default false value -> no automatic verification
+
+import * as tenderly from "@tenderly/hardhat-tenderly";
+
+tenderly.setup({ automaticVerifications });
+
+console.log("Using private verification?", privateVerification);
+console.log("Using automatic verification?", automaticVerifications);
+
+
 const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.20",
@@ -18,6 +32,11 @@ const config: HardhatUserConfig = {
         runs: 200
       }
     }
+  },
+  tenderly: {
+    username: process.env.TENDERLY_USERNAME,
+    project: process.env.TENDERLY_PROJECT,
+    privateVerification: privateVerification,
   },
   docgen: require("./docs/config"),
   networks: {
@@ -43,6 +62,10 @@ const config: HardhatUserConfig = {
     mainnet: {
       chainId: 1,
       url: process.env.NETWORK_URL || 'https://mainnet.infura.io/v3/' + process.env.WEB3_INFURA_PROJECT_ID,
+    },
+    virtualMainnet: {
+      url: process.env.TENDERLY_DEVNET_RPC_URL,
+      chainId: 1
     },
   },
   etherscan: {

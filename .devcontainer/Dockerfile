@@ -30,3 +30,5 @@ RUN curl -L https://foundry.paradigm.xyz | bash
 RUN echo 'export PATH="$PATH:/home/node/.foundry/bin"' >> ~/.zshrc
 RUN echo 'export PATH="$PATH:/home/node/.foundry/bin"' >> ~/.bashrc
 RUN /home/node/.foundry/bin/foundryup
+
+RUN curl https://raw.githubusercontent.com/Tenderly/tenderly-cli/master/scripts/install-linux.sh | sudo sh

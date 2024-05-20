@@ -70,6 +70,10 @@ The deploy script will deploy all required contracts and create a test instance 
 # run deployment on a locally created ganache instance
 export SKIP_VERIFICATION=true
 hh run scripts/deploy_all.ts
+
+# run deployment on tenderly virtual network
+export SKIP_VERIFICATION=true
+hh run scripts/deploy_all.ts --network vitualMainnet
 ```
 
 ```bash
@@ -85,6 +89,11 @@ Environment variables:
 - `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
 - `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
 - `ETHERSCAN_API_KEY` `POLYGONSCAN_API_KEY` the api key for etherscan/polygonscan (required for mumbai and mainnet)
+
+# https://dashboard.tenderly.co/{TENDERLY_USERNAME}/{TENDERLY_PROJECT}/fork/{FORK_ID}
+- `TENDERLY_DEVNET_RPC_URL`
+- `TENDERLY_USERNAME` 
+- `TENDERLY_PROJECT` 
 
 ### Create a new instance
 
