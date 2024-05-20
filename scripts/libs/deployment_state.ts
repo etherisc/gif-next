@@ -12,8 +12,10 @@ type State = {
 
 export type ContractState = {
     name: string;
+    type: string;
     deploymentTransaction: string | undefined;
     address: string | undefined;
+    libraries?: any | undefined;
     verified: boolean;
 }
 
@@ -49,6 +51,14 @@ export class DeploymentState {
         return contractState.deploymentTransaction;
     }
 
+    public getLibraries(contractName: string): any | undefined {
+        const contractState = this.state.contracts.find(c => c.name === contractName);
+        if (contractState === undefined) {
+            return undefined;
+        }
+        return contractState.libraries;
+    }
+    
     public isContractDeployed(contractName: string): boolean {
         const contractState = this.state.contracts.find(c => c.name === contractName);
         if (contractState === undefined) {
@@ -57,18 +67,22 @@ export class DeploymentState {
         return contractState.address !== undefined;
     }
 
-    public setDeploymentTransaction(contractName: string, deploymentTransaction: string): void {
+    public setDeploymentTransaction(contractName: string, contractType: string, deploymentTransaction: string, libraries?: any | undefined): void {
         const contractState = this.state.contracts.find(c => c.name === contractName);
         if (contractState === undefined) {
             logger.debug(`Contract state not found for ${contractName}`);
             this.state.contracts.push({
                 name: contractName,
+                type: contractType,
                 deploymentTransaction: deploymentTransaction,
                 address: undefined,
+                libraries: libraries,
                 verified: false
             });
         } else {
             contractState.deploymentTransaction = deploymentTransaction;
+            contractState.libraries = libraries;
+            contractState.type = contractType;
         }
         this.persistState();
     }

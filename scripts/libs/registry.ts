@@ -1,4 +1,4 @@
-import { AddressLike, Signer, resolveAddress } from "ethers";
+import { AddressLike, Signer, TransactionResponse, resolveAddress } from "ethers";
 import { 
     Dip,
     ChainNft, ChainNft__factory, 
@@ -13,9 +13,11 @@ import {
     RegistryAccessManager__factory, 
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract, verifyContract } from "./deployment";
+import { deployContract, addDeployedContract, verifyContract } from "./deployment";
+import { deploymentState } from "./deployment_state";
 import { LibraryAddresses } from "./libraries";
 import { getFieldFromTxRcptLogs, executeTx } from "./transaction";
+import { tenderly } from "hardhat";
 
 
 export type RegistryAddresses = {
@@ -60,6 +62,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const { address: dipAddress, contract: dipBaseContract } = await deployContract(
         "Dip",
+        "Dip",
         owner, // GIF_ADMIN_ROLE
         [], 
         {
@@ -73,7 +76,12 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     logger.info("-------- Starting deployment Registry Admin ----------------");
 
-    const { address: registryAdminAddress, contract: registryAdminBaseContract } = await deployContract(
+    const { 
+        address: registryAdminAddress, 
+        contract: registryAdminBaseContract,
+        deploymentTransaction: registryAdminDeploymentTransaction 
+    } = await deployContract(
+        "RegistryAdmin",
         "RegistryAdmin",
         owner, // GIF_ADMIN_ROLE
         [], 
@@ -85,10 +93,29 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         });
 
     const registryAdmin = registryAdminBaseContract as RegistryAdmin;
+    const accessManagerAddress = await registryAdmin.authority();
+
+    await addDeployedContract(
+        "RegistryAccessManager",
+        "AccessManagerExtendedInitializeable",
+        accessManagerAddress,
+        owner, //signer
+        registryAdminDeploymentTransaction as TransactionResponse,
+        [],// constructor args
+        {
+            libraries: {
+                TimestampLib: libraries.timestampLibAddress,
+            }
+        });
 
     logger.info("-------- Starting deployment Registry ----------------");
 
-    const { address: registryAddress, contract: registryBaseContract } = await deployContract(
+    const { 
+        address: registryAddress, 
+        contract: registryBaseContract,
+        deploymentTransaction: registryDeploymentTransaction 
+    } = await deployContract(
+        "Registry",
         "Registry",
         owner, // GIF_ADMIN_ROLE
         [registryAdminAddress], 
@@ -104,10 +131,23 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const chainNftAddress = await registry.getChainNftAddress();
     const chainNft = ChainNft__factory.connect(chainNftAddress, owner);
-
+    
+    await addDeployedContract(
+        "ChainNft",
+        "ChainNft",
+        chainNftAddress,
+        owner, //signer
+        registryDeploymentTransaction as TransactionResponse,
+        [],// constructor args
+        {
+            libraries: {
+            }
+        });
+    
     logger.info("-------- Starting deployment Release Manager ----------------");
 
     const { address: releaseManagerAddress, contract: releaseManagerBaseContract } = await deployContract(
+        "ReleaseManager",
         "ReleaseManager",
         owner,
         [registryAddress], 
@@ -128,6 +168,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const { address: tokenRegistryAddress, contract: tokenRegistryBaseContract } = await deployContract(
         "TokenRegistry",
+        "TokenRegistry",
         owner,
         [
             registryAddress,
@@ -145,6 +186,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const { address: stakingReaderAddress, contract: stakingReaderBaseContract } = await deployContract(
         "StakingReader",
+        "StakingReader",
         owner,
         [registryAddress],
         {
@@ -158,6 +200,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     logger.info("-------- Starting deployment Staking Store ----------------");
 
     const { address: stakingStoreAddress, } = await deployContract(
+        "StakingStore",
         "StakingStore",
         owner,
         [
@@ -183,6 +226,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const { address: stakingManagerAddress, contract: stakingManagerBaseContract, } = await deployContract(
         "StakingManager",
+        "StakingManager",
         owner,
         [
             registryAddress,
@@ -202,17 +246,21 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         });
 
     const stakingManager = stakingManagerBaseContract as StakingManager;
+    logger.info(`StakingManager deployed at ${stakingManagerAddress}`);
     const stakingAddress = await stakingManager.getStaking();
+    logger.info(`Staking deployed at ${stakingAddress}`);
     const staking = Staking__factory.connect(stakingAddress, owner);
+
     const stakingNftId = await registry["getNftId(address)"](stakingAddress);
+    logger.info(`StakingReader deployed at ${stakingReaderAddress}`);
+    // revert here if resumable deployment is true -> can be already intialized
+    await executeTx(async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress));
 
-    await stakingReader.initialize(stakingAddress, stakingStoreAddress);
+    await executeTx(async () => await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress));
 
-    await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress);
+    await executeTx(async () =>await registryAdmin.initialize(registry, owner, owner));
 
-    await registryAdmin.initialize(registry, owner, owner);
-
-    await verifyRegistryComponents(registryAddress, owner)
+    //await verifyRegistryComponents(registryAddress, owner)
 
     logger.info(`Dip deployed at ${dipAddress}`);
     logger.info(`RegistryAdmin deployeqd at ${registryAdmin}`);
@@ -224,6 +272,10 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     logger.info(`StakingStore deployed at ${stakingStoreAddress}`);
     logger.info(`StakingManager deployed at ${stakingManagerAddress}`);
     logger.info(`Staking deployed at ${stakingAddress}`);
+
+    logger.info("protocol nftId: " + await registry._protocolNftId());
+    logger.info("registry nftId: " + await registry._registryNftId());
+    logger.info("staking nftId: " + await registry._stakingNftId());
 
     logger.info("======== Finished deployment of registry ========");
 

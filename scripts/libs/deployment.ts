@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { AddressLike, BaseContract, Signer, TransactionReceipt, TransactionResponse, resolveAddress } from "ethers";
-import hre, { ethers } from "hardhat";
+import hre, { ethers, tenderly } from "hardhat";
 import { logger } from "../logger";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
 import { GAS_PRICE, NUMBER_OF_CONFIRMATIONS } from "./constants";
@@ -21,6 +21,7 @@ type DeploymentResult = {
  * In case of "MissingLibrariesError", fetch library addresses from LIBRARY_ADDRESSES and retry.
  * @param sourceFileContract the contract name prefixed with file path (e.g. "contracts/types/ObjectType.sol:ObjectTypeLib")
  */
+// TODO verifyContract() and verifyDeployedContract() -> wrong naming
 export async function verifyContract(address: AddressLike, constructorArgs: any[], sourceFileContract: string | undefined) {
     let verified = false;
     let retries = 3;
@@ -92,19 +93,20 @@ export async function verifyContract(address: AddressLike, constructorArgs: any[
  * @param constructorArgs a list of constructor arguments to pass to the contract constructor
  * @param factoryOptions options to pass to the contract factory (libraries, ...)
  */
-export async function deployContract(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any | undefined, sourceFileContract?: string): Promise<DeploymentResult> {
+    // TODO get libraries from artifacts?
+export async function deployContract(contractName: string, contractType: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any | undefined, sourceFileContract?: string): Promise<DeploymentResult> {
     if (! isResumeableDeployment ) {
         logger.info("Starting new deployment");
-        return executeAllDeploymentSteps(contractName, signer, constructorArgs, factoryOptions, sourceFileContract);
+        return executeAllDeploymentSteps(contractType, signer, constructorArgs, factoryOptions, sourceFileContract);
     }
 
     logger.info(`Trying to resume deployment of ${contractName}`);
 
     if (deploymentState.getContractAddress(contractName) === undefined) {
         if (deploymentState.getDeploymentTransaction(contractName) === undefined) {
-            return executeAllDeploymentSteps(contractName, signer, constructorArgs, factoryOptions, sourceFileContract);
+            return executeAllDeploymentSteps(contractName, contractType, signer, constructorArgs, factoryOptions, sourceFileContract);
         } else {
-            return awaitDeploymentTxAndVerify(contractName, signer, constructorArgs, sourceFileContract);
+            return awaitDeploymentTxAndVerify(contractName, contractType, signer, constructorArgs, sourceFileContract);
         }
     } else {
         // fetch persisted data
@@ -117,7 +119,7 @@ export async function deployContract(contractName: string, signer: Signer, const
         } else {
             logger.info(`Contract ${contractName} is already deployed at ${address}`);
             if (deploymentTransaction !== null) {
-                await verifyDeployedContract(contractName, address, deploymentTransaction, constructorArgs, sourceFileContract);
+                await verifyDeployedContract(contractName, contractType, address, deploymentTransaction, constructorArgs, sourceFileContract);
             }
         }
 
@@ -125,43 +127,95 @@ export async function deployContract(contractName: string, signer: Signer, const
     }
 }
 
+// Use this function to add to deployemnt state and verify contract deployed by other contract
+export async function addDeployedContract(contractName: string, contractType: string, contractAddress: AddressLike, signer: Signer, deploymentTransaction: TransactionResponse, constructorArgs?: any[] | undefined, factoryOptions?: any | undefined, sourceFileContract?: string) {
+
+    const libraries = factoryOptions?.libraries ?? {};
+    if(deploymentTransaction == undefined) {
+        throw new Error(`Deployment transaction for ${contractName} is not defined`);
+    }
+    
+    if (! isResumeableDeployment ) {
+        // add contract to deployment state
+        deploymentState.setDeploymentTransaction(contractName, contractType, deploymentTransaction?.hash || "0x", libraries);
+        deploymentState.setContractAddress(contractName, contractAddress);
+        await verifyDeployedContract(contractName, contractType, contractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
+        return;
+    }
+    if (deploymentState.getContractAddress(contractName) === undefined) {
+        if (deploymentState.getDeploymentTransaction(contractName) === undefined) {
+            // contract not in deployment state 
+            //throw new Error(`${contractName} deployment transaction is not found in deployment state`);
+            deploymentState.setDeploymentTransaction(contractName, contractType, deploymentTransaction?.hash || "0x", libraries);
+            deploymentState.setContractAddress(contractName, contractAddress);
+            await verifyDeployedContract(contractName, contractType, contractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
+        } else {
+            awaitDeploymentTxAndVerify(contractName, contractType, signer, constructorArgs, sourceFileContract);
+        }
+    } else {
+        if (deploymentState.isDeployedAndVerified(contractName)) {
+            logger.info(`Contract ${contractName} is deployed at ${contractAddress} and verified`);
+        } else {
+            logger.info(`Contract ${contractName} is deployed at ${contractAddress}`);
+            if (deploymentTransaction !== null) {
+                await verifyDeployedContract(contractName, contractType, contractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
+            }
+        }
+    }
+}
+
 export function delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function executeAllDeploymentSteps(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any | undefined, sourceFileContract?: string): Promise<DeploymentResult> {
-    logger.info(`Deploying ${contractName}...`);
-        const factoryArgs = factoryOptions != undefined ? { ...factoryOptions, signer } : { signer };
-        const contractFactory = await ethers.getContractFactory(contractName, factoryArgs);
+async function executeAllDeploymentSteps(contractName: string, contractType: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any | undefined, sourceFileContract?: string): Promise<DeploymentResult> {
+    logger.info(`Deploying ${contractName}.sol...`);
+    const factoryArgs = factoryOptions != undefined ? { ...factoryOptions, signer } : { signer };
+    const contractFactory = await ethers.getContractFactory(contractType, factoryArgs);
 
-        const opts = {} as any;
-        if (GAS_PRICE !== undefined) {
-            opts['gasPrice'] = GAS_PRICE;
-        }
-        const deployTxResponse = constructorArgs !== undefined
-            ? await contractFactory.deploy(...constructorArgs, opts) 
-            : await contractFactory.deploy(opts);
-        deploymentState.setDeploymentTransaction(contractName, deployTxResponse.deploymentTransaction()?.hash || "0x");
-        logger.info(`Waiting for deployment transaction ${deployTxResponse.deploymentTransaction()?.hash} to be mined...`);
-        await deployTxResponse.deploymentTransaction()?.wait();
-        logger.debug("... mined");
-        
-        const deployedContractAddress = deployTxResponse.target;
-        const deploymentReceipt = await ethers.provider.getTransactionReceipt(deployTxResponse.deploymentTransaction()?.hash || "0x");
-        deploymentState.setContractAddress(contractName, await resolveAddress(deployedContractAddress));
-        logger.info(`${contractName} deployed to ${deployedContractAddress}`);
-        
-        await verifyDeployedContract(contractName, deployedContractAddress, deployTxResponse.deploymentTransaction()!, constructorArgs, sourceFileContract);
+    const opts = {} as any;
+    if (GAS_PRICE !== undefined) {
+        opts['gasPrice'] = GAS_PRICE;
+    }
+    const deployTxResponse = constructorArgs !== undefined
+        ? await contractFactory.deploy(...constructorArgs, opts) 
+        : await contractFactory.deploy(opts);
+    const libraries = factoryOptions?.libraries ?? {};
+    deploymentState.setDeploymentTransaction(contractName, contractType, deployTxResponse.deploymentTransaction()?.hash || "0x", libraries);
+    logger.info(`Waiting for deployment transaction ${deployTxResponse.deploymentTransaction()?.hash} to be mined...`);
+    await deployTxResponse.deploymentTransaction()?.wait();
+    logger.debug("... mined");
+    
+    const deployedContractAddress = deployTxResponse.target;
+    const deploymentReceipt = await ethers.provider.getTransactionReceipt(deployTxResponse.deploymentTransaction()?.hash || "0x");
+    deploymentState.setContractAddress(contractName, await resolveAddress(deployedContractAddress));
+    logger.info(`${contractName} deployed to ${deployedContractAddress}`);
+    
+    await verifyDeployedContract(contractName, contractType, deployedContractAddress, deployTxResponse.deploymentTransaction()!, constructorArgs, sourceFileContract);
 
-        return { 
-            address: deployedContractAddress, 
-            deploymentTransaction: deployTxResponse.deploymentTransaction(), 
-            deploymentReceipt: deploymentReceipt,
-            contract: deployTxResponse 
-        };
+    return { 
+        address: deployedContractAddress, 
+        deploymentTransaction: deployTxResponse.deploymentTransaction(), 
+        deploymentReceipt: deploymentReceipt,
+        contract: deployTxResponse 
+    };
 }
 
-async function verifyDeployedContract(contractName: string, address: AddressLike, tx: TransactionResponse, constructorArgs?: any[] | undefined, sourceFileContract?: string) {
+async function verifyDeployedContract(contractName: string, contractType: string, address: AddressLike, tx: TransactionResponse, constructorArgs?: any[] | undefined, sourceFileContract?: string) {
+        
+    // Tenderly verification
+    // TODO skip if not tenderly network..
+    // TODO libraries are in `${ARTIFACTS_PATH}${contractName}.json`
+    const libraries = deploymentState.getLibraries(contractName);
+    logger.info(`Verifing ${contractName}`)
+    await tenderly.verify({ 
+        name: contractType,
+        address: address,
+        libraries: libraries});
+
+    deploymentState.setVerified(contractName, true);  
+
+    // Etherscan verification
     if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
         logger.debug(`Waiting for ${NUMBER_OF_CONFIRMATIONS} confirmations`);
         await tx.wait(NUMBER_OF_CONFIRMATIONS); 
@@ -170,11 +224,11 @@ async function verifyDeployedContract(contractName: string, address: AddressLike
             : await verifyContract(address, [], sourceFileContract);
         deploymentState.setVerified(contractName, true);
     } else {
-        logger.debug("Skipping verification");
+        logger.debug("Skipping verification (etherscan)");
     }
 }
 
-async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, sourceFileContract?: string): Promise<DeploymentResult> {
+async function awaitDeploymentTxAndVerify(contractName: string, contractType: string, signer: Signer, constructorArgs?: any[] | undefined, sourceFileContract?: string): Promise<DeploymentResult> {
     const deploymentTx = deploymentState.getDeploymentTransaction(contractName)!
     logger.info(`Deployment transaction ${deploymentTx} exists, waiting for it to be mined...`);
     const deploymentTransaction = await ethers.provider.getTransaction(deploymentTx);
@@ -196,7 +250,7 @@ async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, 
 
     deploymentState.setContractAddress(contractName, await resolveAddress(address));
     
-    await verifyDeployedContract(contractName, address, deploymentTransaction, constructorArgs, sourceFileContract);
+    await verifyDeployedContract(contractName, contractType, address, deploymentTransaction, constructorArgs, sourceFileContract);
 
     return { address, deploymentTransaction, contract };
 }

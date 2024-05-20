@@ -1,14 +1,16 @@
+import { tenderly } from "hardhat";
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleManager, IRegistry__factory, Instance, InstanceAdmin, InstanceService__factory, InstanceReader, AccessManagerExtendedInitializeable, InstanceStore, TimestampLib__factory } from "../../typechain-types";
+import { BundleManager, IRegistry__factory, Instance, Instance__factory, InstanceAdmin, InstanceService__factory, InstanceReader, AccessManagerExtendedInitializeable, InstanceStore, TimestampLib__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
+import { deploymentState } from "./deployment_state";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
 import { executeTx, getFieldFromLogs, getFieldFromTxRcptLogs } from "./transaction";
 import { ServiceAddresses } from "./services";
 
 export type InstanceAddresses = {
-    accessManagerAddress: AddressLike,
+    instanceAccessManagerAddress: AddressLike,
     instanceAdminAddress: AddressLike,
     instanceReaderAddress: AddressLike,
     instanceBundleManagerAddress: AddressLike,
@@ -27,7 +29,8 @@ export async function deployAndRegisterMasterInstance(
 ): Promise<InstanceAddresses> {
     logger.info("======== Starting deployment of master instance ========");
 
-    const { address: accessManagerAddress, contract: accessManagerBaseContract } = await deployContract(
+    const { address: instanceAccessManagerAddress, contract: accessManagerBaseContract } = await deployContract(
+        "InstanceAccessManager",
         "AccessManagerExtendedInitializeable",
         owner,
         [],
@@ -42,6 +45,7 @@ export async function deployAndRegisterMasterInstance(
 
     const { address: instanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",
+        "Instance",
         owner,
         undefined,
         { 
@@ -53,9 +57,10 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const instance = masterInstanceBaseContract as Instance;
-    await executeTx(() => instance.initialize(accessManagerAddress, registry.registryAddress, resolveAddress(owner)));
+    await executeTx(() => instance.initialize(instanceAccessManagerAddress, registry.registryAddress, resolveAddress(owner)));
 
     const { address: instanceStoreAddress, contract: masterInstanceStoreContract } = await deployContract(
+        "InstanceStore",
         "InstanceStore",
         owner,
         [],
@@ -81,6 +86,7 @@ export async function deployAndRegisterMasterInstance(
 
     const { address: instanceReaderAddress, contract: masterReaderBaseContract } = await deployContract(
         "InstanceReader",
+        "InstanceReader",
         owner,
         [],
         { 
@@ -103,6 +109,7 @@ export async function deployAndRegisterMasterInstance(
 
     const {address: bundleManagerAddress, contract: bundleManagerBaseContrat} = await deployContract(
         "BundleManager",
+        "BundleManager",
         owner,
         [],
         { 
@@ -117,6 +124,7 @@ export async function deployAndRegisterMasterInstance(
     await executeTx(() => instance.setBundleManager(bundleManagerAddress));
 
     const { address: instanceAdminAddress, contract: instanceAdminBaseContract } = await deployContract(
+        "InstanceAdmin",
         "InstanceAdmin",
         owner,
         [],
@@ -152,7 +160,7 @@ export async function deployAndRegisterMasterInstance(
     logger.info("======== Finished deployment of master instance ========");
 
     return {
-        accessManagerAddress: accessManagerAddress,
+        instanceAccessManagerAddress: instanceAccessManagerAddress,
         instanceAdminAddress: instanceAdminAddress,
         instanceReaderAddress: instanceReaderAddress,
         instanceBundleManagerAddress: bundleManagerAddress,
@@ -162,47 +170,117 @@ export async function deployAndRegisterMasterInstance(
     } as InstanceAddresses;
 }
 
-export async function cloneInstance(masterInstance: InstanceAddresses, libraries: LibraryAddresses, registry: RegistryAddresses, services: ServiceAddresses, instanceOwner: Signer): Promise<InstanceAddresses> {
+// !!! TODO in addition: DO NOT DEPLOY WHOLE FRAMEWORK EACH TIME, RESUME DEPLOYMENT BASED ON DEPLOYMENT STATE OR ONCHAIN STATE
+// if onchain state:
+// then each chain must have at same predefined address with/which .... info about
+// deployment script knows where to start resumable deployment 
+export async function cloneInstance(instanceServiceAddress: AddressLike, instanceOwner: Signer, releaseVersion : string) : Promise<InstanceAddresses> {
     logger.info("======== Starting cloning of instance ========");
 
-    const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(services.instanceServiceAddress), instanceOwner);
-    logger.debug(`cloning instance ${masterInstance.instanceAddress} ...`);
-    const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
-    const clonedOzAccessManagerAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedOzAccessManager");
-    const clonedInstanceAdminAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAdmin");
-    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstance");
-    const clonedBundleManagerAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedBundleManager");
-    const clonedInstanceReaderAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceReader");
-    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceNftId");
+    const instanceService = InstanceService__factory.connect(await resolveAddress(instanceServiceAddress), instanceOwner);
+    const instanceServiceVersion = await instanceService.getMajorVersion();
+    const masterInstanceAddress = await instanceService.getMasterInstanceAddress(); 
+
+    logger.info(`instance service address: ${instanceServiceAddress}`);
+    logger.info(`instance service major version: ${instanceServiceVersion}`);
+    logger.info(`master instance address: ${masterInstanceAddress}`);
+
+    logger.debug(`------- cloning instance ${masterInstanceAddress} --------`);
+    const cloneTx = await executeTx(async () => await instanceService.createInstanceClone());
+    const clonedInstanceAccessManagerAddress = getFieldFromLogs(cloneTx.logs, instanceService.interface, "LogInstanceCloned", "clonedOzAccessManager");
+    const clonedInstanceAdminAddress = getFieldFromLogs(cloneTx.logs, instanceService.interface, "LogInstanceCloned", "clonedInstanceAdmin") as AddressLike;
+    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceService.interface, "LogInstanceCloned", "clonedInstance") as string;
+    const clonedBundleManagerAddress = getFieldFromLogs(cloneTx.logs, instanceService.interface, "LogInstanceCloned", "clonedBundleManager");
+    const clonedInstanceReaderAddress = getFieldFromLogs(cloneTx.logs, instanceService.interface, "LogInstanceCloned", "clonedInstanceReader");
+    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceService.interface, "LogInstanceCloned", "clonedInstanceNftId");
+
+    const clonedInstance = Instance__factory.connect(clonedInstanceAddress, instanceOwner);
+    const clonedlInstanceVersion = await clonedInstance.getMajorVersion();
+    const clonedInstanceOwner = await clonedInstance.getOwner();
+    logger.info(`cloned instance major version: ${clonedlInstanceVersion}`);
+    logger.info(`cloned instance owner: ${clonedInstanceOwner}`);
     
+    logger.info("Verifying cloned instance access manager");
+    const libraries = deploymentState.getLibraries("AccessManagerExtendedInitializeable");
+    if(libraries === undefined) {
+        throw new Error("Libraries not found in deployment state");
+    }
+
+    logger.info("Verifying cloned instance access manager");
+    await tenderly.verify({
+        name: "AccessManagerExtendedInitializeable",
+        address: clonedInstanceAccessManagerAddress,
+        libraries: {
+            TimestampLib: libraries.timestampLibAddress,
+        }
+    });
+    logger.info("Verifying cloned instance admin");
+    /*await deployContract(
+        "InstanceAdmin",
+        owner,
+        [],
+        { libraries: { 
+            RoleIdLib: libraries.roleIdLibAddress
+    }});*/
+    await tenderly.verify({
+        name: "InstanceAdmin",
+        address: clonedInstanceAdminAddress,
+        libraries: {
+            RoleIdLib: libraries.roleIdLibAddress
+    }});
+    logger.info("Verifying cloned instance");
+    await tenderly.verify({
+        name: "Instance",
+        address: clonedInstanceAddress,
+        libraries: {
+            NftIdLib: libraries.nftIdLibAddress,
+            VersionPartLib: libraries.versionPartLibAddress,
+            RoleIdLib: libraries.roleIdLibAddress,
+        }
+    });
+    logger.info("Verifying cloned instance reader");
+    await tenderly.verify({
+        name: "InstanceReader",
+        address: clonedInstanceReaderAddress,
+        libraries: {
+            AmountLib: libraries.amountLibAddress,
+            ClaimIdLib: libraries.claimIdLibAddress,
+            DistributorTypeLib: libraries.distributorTypeLibAddress,
+            NftIdLib: libraries.nftIdLibAddress,
+            PayoutIdLib: libraries.payoutIdLibAddress,
+            ReferralLib: libraries.referralLibAddress,
+            RiskIdLib: libraries.riskIdLibAddress,
+            TimestampLib: libraries.timestampLibAddress,
+            UFixedLib: libraries.uFixedLibAddress,
+        }
+    });
+    logger.info("Verifying cloned bundle manager");
+    await tenderly.verify({
+        name: "BundleManager",
+        address: clonedBundleManagerAddress,
+        libraries: {
+            NftIdLib: libraries.nftIdLibAddress,
+            LibNftIdSet: libraries.libNftIdSetAddress,
+        }
+    });
+
     logger.info(`instance cloned - clonedInstanceNftId: ${clonedInstanceNftId}`);
 
     logger.info("======== Finished cloning of instance ========");
     
     return {
-        accessManagerAddress: clonedOzAccessManagerAddress,
+        instanceAccessManagerAddress: clonedInstanceAccessManagerAddress,
         instanceAdminAddress: clonedInstanceAdminAddress,
         instanceAddress: clonedInstanceAddress,
         instanceBundleManagerAddress: clonedBundleManagerAddress,
         instanceReaderAddress: clonedInstanceReaderAddress,
         instanceNftId: clonedInstanceNftId as string,
-    } as InstanceAddresses;
+    } as InstanceAddresses;*/
 }
 
-export async function cloneInstanceFromRegistry(registryAddress: AddressLike, instanceOwner: Signer): Promise<InstanceAddresses> {
+export async function cloneInstanceFromRegistry(registryAddress: AddressLike, instanceOwner: Signer/*, releaseVersion: string*/): Promise<InstanceAddresses> {
     const registry = IRegistry__factory.connect(await resolveAddress(registryAddress), instanceOwner);
-    const instanceServiceAddress = await registry.getServiceAddress("InstanceService", "3");
-    const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(instanceServiceAddress), instanceOwner);
-    const masterInstanceAddress = await instanceServiceAsClonedInstanceOwner.getMasterInstance();
-    logger.debug(`cloning instance ${masterInstanceAddress} ...`);
-    const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
-    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAddress");
-    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceNftId");
-    
-    logger.info(`instance cloned - clonedInstanceNftId: ${clonedInstanceNftId}`);
-    
-    return {
-        instanceAddress: clonedInstanceAddress,
-        instanceNftId: clonedInstanceNftId as string,
-    } as InstanceAddresses;
+    const instanceServiceDomain = 70;
+    const instanceServiceAddress = await registry.getServiceAddress(instanceServiceDomain, "3");
+    return cloneInstance(instanceServiceAddress, instanceOwner);
 }
