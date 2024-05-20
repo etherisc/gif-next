@@ -19,7 +19,7 @@ contract TestInstanceService is GifTest {
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
 
         // THEN
-        assertEq(address(newMasterInstanceReader), instanceService.getMasterInstanceReader(), "master instance reader not set");
+        assertEq(address(newMasterInstanceReader), instanceService.getMasterInstanceReaderAddress(), "master instance reader not set");
     }
 
     function test_upgradeMasterInstanceReader_not_master_instance() public {
