@@ -3,6 +3,7 @@
 {
 	"name": "gif-next",
 	"dockerComposeFile": "docker-compose.yaml",
+	"initializeCommand": "docker pull mcr.microsoft.com/devcontainers/typescript-node:1-20",
     "service": "contracts",
     "workspaceFolder": "/workspaces/gif-next",
 
