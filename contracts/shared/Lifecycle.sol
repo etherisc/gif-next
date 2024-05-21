@@ -5,7 +5,7 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
 
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, BUNDLE, POLICY, REQUEST, RISK, CLAIM, PAYOUT} from "../type/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID, FULFILLED, CANCELLED} from "../type/StateId.sol";
+import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID, FULFILLED, FAILED, CANCELLED} from "../type/StateId.sol";
 import {ILifecycle} from "./ILifecycle.sol";
 
 contract Lifecycle is
@@ -123,6 +123,8 @@ contract Lifecycle is
     function _setupRequestLifecycle() internal {
         _initialState[REQUEST()] = ACTIVE();
         _isValidTransition[REQUEST()][ACTIVE()][FULFILLED()] = true;
+        _isValidTransition[REQUEST()][ACTIVE()][FAILED()] = true;
+        _isValidTransition[REQUEST()][FAILED()][FULFILLED()] = true;
         _isValidTransition[REQUEST()][ACTIVE()][CANCELLED()] = true;
     }
 }

@@ -11,13 +11,18 @@ import {Timestamp} from "../type/Timestamp.sol";
 interface IOracleService is IService {
 
     event LogOracleServiceRequestCreated(RequestId requestId, NftId requesterNftId, NftId oracleNftId, Timestamp expiryAt);
-    event LogOracleRequestFulfilled(RequestId requestId, NftId oracleNftId);
-    event LogOracleRequestCancelled(RequestId requestId, NftId requesterNftId);
+    event LogOracleServiceResponseProcessed(RequestId requestId, NftId oracleNftId);
+    event LogOracleServiceDeliveryFailed(RequestId requestId, address requesterAddress, string functionSignature);
+    event LogOracleServiceResponseReplayed(RequestId requestId, NftId requesterNftId);
+    event LogOracleServiceRequestCancelled(RequestId requestId, NftId requesterNftId);
 
     // create request
     error ErrorOracleServiceInstanceMismatch(NftId expectedInstanceNftId, NftId oracleInstanceNftId);
     error ErrorOracleServiceExpiryInThePast(Timestamp blockTimestamp, Timestamp expiryAt);
     error ErrorOracleServiceCallbackMethodNameEmpty();
+
+    // respond
+    error ErrorOracleServiceNotResponsibleOracle(RequestId requestId, NftId expectedOracleNftId, NftId oracleNftId);
 
     // get request info
     error ErrorOracleServiceRequestStateNotActive(RequestId requestId, StateId state);
@@ -31,18 +36,28 @@ interface IOracleService is IService {
         NftId oracleNftId,
         bytes calldata requestData,
         Timestamp expiryAt,
-        string calldata callbackMethodName // TODO consider to replace with method signature
+        string calldata callbackMethodName
     ) external returns (RequestId requestId);
 
     /// @dev respond to oracle request by oracle compnent.
-    /// persmissioned: only the oracle component linked to the request id may call this method
+    /// the response data is amende in the request info stored with the instance.
+    /// the request state changes to FULFILLED (when calling the callback method of the requester is successful)
+    /// or to FAILED when calling the requester is not succesful.
+    /// permissioned: only the oracle component linked to the request id may call this method
     function respond(
         RequestId requestId,
         bytes calldata responseData
     ) external;
 
-    /// @dev notify the oracle component that the specified request has become invalid
-    /// permissioned: only the originator of the request may cancel a request
+    /// @dev replays a failed response delivery to the requester.
+    /// only requests in state FAILED may be replayed.
+    /// the request state changes to FULFILLED when calling the callback method of the requester is successful.
+    /// permissioned: only the requester may replay a request
+    function replay(RequestId requestId) external;
+
+    /// @dev notify the oracle component that the specified request has become invalid.
+    /// only requests in state ACTIVE may be cancelled.
+    /// permissioned: only the requester may cancel a request
     function cancel(RequestId requestId) external;
 
 }

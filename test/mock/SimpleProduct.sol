@@ -12,9 +12,10 @@ import {Product} from "../../contracts/product/Product.sol";
 import {ReferralId} from "../../contracts/type/Referral.sol";
 import {RequestId} from "../../contracts/type/RequestId.sol";
 import {RiskId} from "../../contracts/type/RiskId.sol";
+import {Seconds} from "../../contracts/type/Seconds.sol";
 import {SimpleOracle} from "./SimpleOracle.sol";
 import {StateId} from "../../contracts/type/StateId.sol";
-import {Timestamp, Seconds} from "../../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
@@ -22,6 +23,8 @@ contract SimpleProduct is Product {
 
     event LogSimpleProductRequestAsyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
     event LogSimpleProductRequestSyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
+
+    error ErrorSimpleProductRevertedWhileProcessingResponse(RequestId requestId);
 
     IOracleService private _oracleService;
 
@@ -248,7 +251,7 @@ contract SimpleProduct is Product {
         // restricted() // only oracle service
     {
         string memory responseText = abi.decode(responseData, (string));
-        emit LogSimpleProductRequestSyncFulfilled(requestId, responseText, responseData.length);
+        emit LogSimpleProductRequestSyncFulfilled(requestId, responseText, bytes(responseText).length);
     }
 
     function fulfillOracleRequestAsync(
@@ -258,9 +261,26 @@ contract SimpleProduct is Product {
         public
         // restricted() // only oracle service
     {
-        string memory responseText = abi.decode(responseData, (string));
-        emit LogSimpleProductRequestAsyncFulfilled(requestId, responseText, responseData.length);
+        SimpleOracle.SimpleResponse memory response = abi.decode(
+            responseData, (SimpleOracle.SimpleResponse));
+
+        if (response.revertInCall && response.revertUntil >= TimestampLib.blockTimestamp()) {
+            revert ErrorSimpleProductRevertedWhileProcessingResponse(requestId);
+        }
+
+        emit LogSimpleProductRequestAsyncFulfilled(requestId, response.text, bytes(response.text).length);
     }
+
+
+    function replay(
+        RequestId requestId
+    )
+        public
+        // restricted() // 
+    {
+        _oracleService.replay(requestId);
+    }
+
 
     function doSomethingSpecial() 
         public 

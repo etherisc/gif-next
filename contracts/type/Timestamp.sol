@@ -56,13 +56,17 @@ function toTimestamp(uint256 timestamp) pure returns (Timestamp) {
 // TODO move to TimestampLib and rename to zero()
 /// @dev Return the Timestamp zero (0)
 function zeroTimestamp() pure returns (Timestamp) {
-    return toTimestamp(0);
+    return Timestamp.wrap(0);
 }
 
 library TimestampLib {
 
     function zero() public pure returns (Timestamp) {
-        return toTimestamp(0);
+        return Timestamp.wrap(0);
+    }
+
+    function max() public pure returns (Timestamp) {
+        return Timestamp.wrap(type(uint40).max);
     }
     
     function blockTimestamp() public view returns (Timestamp) {

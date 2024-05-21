@@ -15,13 +15,17 @@ contract SimpleOracle is Oracle {
         string text;
     }
 
+    struct SimpleResponse {
+        bool revertInCall;
+        Timestamp revertUntil;
+        string text;
+    }
+
     event LogSimpleOracleRequestReceived(RequestId requestId, NftId requesterId, bool synchronous, string requestText);
     event LogSimpleOracleCancellingReceived(RequestId requestId);
 
     event LogSimpleOracleAsyncResponseSent(RequestId requestId, string responseText);
     event LogSimpleOracleSyncResponseSent(RequestId requestId, string responseText);
-
-    SimpleOracleResponder public responder = new SimpleOracleResponder();
 
     constructor(
         address registry,
@@ -93,13 +97,20 @@ contract SimpleOracle is Oracle {
     }
 
 
-    function responeAsync(
+    function respondAsync(
         RequestId requestId,
-        string memory responseText
+        string memory responseText,
+        bool revertInCall,
+        Timestamp revertUntil
     )
         external
     {
-        bytes memory responseData = abi.encode(responseText);
+        bytes memory responseData = abi.encode(
+            SimpleResponse(
+                revertInCall, 
+                revertUntil,
+                responseText));
+
         _respond(requestId, responseData);
 
         emit LogSimpleOracleAsyncResponseSent(requestId, responseText);
@@ -117,13 +128,4 @@ contract SimpleOracle is Oracle {
         emit LogSimpleOracleSyncResponseSent(requestId, ANSWER_SYNC);
     }
 
-}
-
-contract SimpleOracleResponder {
-
-    string public constant DEFAULT_SYNC_ANSWER = "oracle constant sync answer";
-
-    function getDefaultAnswer() external pure returns (string memory) {
-        return DEFAULT_SYNC_ANSWER;
-    }
 }

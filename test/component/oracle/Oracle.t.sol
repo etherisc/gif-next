@@ -27,7 +27,7 @@ import {POLICY} from "../../../contracts/type/ObjectType.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../../../contracts/type/RiskId.sol";
 import {ReferralLib} from "../../../contracts/type/Referral.sol";
 import {RequestId, RequestIdLib} from "../../../contracts/type/RequestId.sol";
-import {SUBMITTED, ACTIVE, CANCELLED, FULFILLED} from "../../../contracts/type/StateId.sol";
+import {SUBMITTED, ACTIVE, CANCELLED, FAILED, FULFILLED} from "../../../contracts/type/StateId.sol";
 import {StateId} from "../../../contracts/type/StateId.sol";
 
 contract TestOracle is GifTest {
@@ -35,13 +35,17 @@ contract TestOracle is GifTest {
     // from SimpleOracle
     event LogSimpleOracleRequestReceived(RequestId requestId, NftId requesterId, bool synchronous, string requestText);
     event LogSimpleOracleCancellingReceived(RequestId requestId);
+    event LogSimpleOracleAsyncResponseSent(RequestId requestId, string responseText);
 
-    uint256 public constant BUNDLE_CAPITAL = 5000;
-    uint256 public constant SUM_INSURED = 1000;
-    uint256 public constant CUSTOMER_FUNDS = 400;
-    
-    RiskId public riskId;
-    NftId public policyNftId;
+    // from SimpleProduct
+    event LogSimpleProductRequestAsyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
+    event LogSimpleProductRequestSyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
+
+    // from IOracleService
+    event LogOracleServiceResponseProcessed(RequestId requestId, NftId oracleNftId);
+    event LogOracleServiceDeliveryFailed(RequestId requestId, address requesterAddress, string functionSignature);
+    event LogOracleServiceResponseReplayed(RequestId requestId, NftId requesterNftId);
+
 
     function setUp() public override {
         super.setUp();
@@ -50,7 +54,7 @@ contract TestOracle is GifTest {
     }
 
 
-    function test_OracleRequestCreateHappyCase() public {
+    function test_oracleRequestCreateAsyncHappyCase() public {
 
         // GIVEN
         string memory requestText = "some question for the oracle to answer";
@@ -98,7 +102,257 @@ contract TestOracle is GifTest {
     }
 
 
-    function test_OracleRequestCancelHappyCase() public {
+    function test_oracleRequestCreateSyncHappyCase() public {
+
+        // GIVEN
+        string memory requestText = "some sync question";
+        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+            SecondsLib.oneYear());
+
+        RequestId expectedRequestId = RequestIdLib.toRequestId(1);
+
+        // check that sync answer from oracle reaches product
+        uint256 expectedResponseLength = bytes(oracle.ANSWER_SYNC()).length;
+        vm.expectEmit(address(product));
+        emit LogSimpleProductRequestSyncFulfilled(
+            expectedRequestId, 
+            oracle.ANSWER_SYNC(),
+            expectedResponseLength);
+
+        // check that oracle component has received oracle request
+        vm.expectEmit(address(oracle));
+        emit LogSimpleOracleRequestReceived(
+            expectedRequestId, 
+            productNftId,
+            true,
+            requestText);
+
+        // WHEN
+        bool synchronous = true;
+        RequestId requestId = product.createOracleRequest(
+            oracleNftId, 
+            requestText,
+            expiryAt,
+            synchronous);
+
+        // THEN
+        console.log("requestId", requestId.toInt());
+        assertTrue(requestId.gtz(), "request id 0");
+        assertEq(requestId.toInt(), 1, "request id not 1");
+
+        // check request info
+        IOracle.RequestInfo memory request = instanceReader.getRequestInfo(requestId);
+        bytes memory expectedRequestData = abi.encode(SimpleOracle.SimpleRequest(
+            synchronous,
+            requestText));
+        
+        bytes memory expectedResponseData = abi.encode(oracle.ANSWER_SYNC());
+
+        assertEq(request.requesterNftId.toInt(), productNftId.toInt(), "requester not product");
+        assertEq(request.callbackMethodName, "fulfillOracleRequestSync", "unexpected callback name");
+        assertEq(request.oracleNftId.toInt(), oracleNftId.toInt(), "unexpected oracle nft id");
+        assertEq(request.requestData, expectedRequestData, "unexpected request data");
+        assertEq(request.responseData, expectedResponseData, "unexpected response data");
+        assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
+        assertFalse(request.isCancelled, "request cancelled");
+
+        // check request state
+        StateId requestState = instanceReader.getState(requestId.toKey32());
+        assertEq(requestState.toInt(), FULFILLED().toInt(), "unexpected request state");
+    }
+
+
+    function test_oracleResponseAsyncHappyCase() public {
+
+        // GIVEN
+        string memory requestText = "some question for the oracle to answer";
+        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+            SecondsLib.oneYear());
+
+        bool synchronous = false;
+        RequestId requestId = product.createOracleRequest(
+            oracleNftId, 
+            requestText,
+            expiryAt,
+            synchronous);
+
+        string memory responseText = "async 42";
+
+        // check product fulfillOracleRequestAsync has been called
+        Timestamp revertUntil = TimestampLib.max();
+        vm.expectEmit(address(product));
+        emit LogSimpleProductRequestAsyncFulfilled(
+            requestId, 
+            responseText,
+            bytes(responseText).length);
+
+        // check that oracle component has received oracle request
+        vm.expectEmit(address(oracle));
+        emit LogSimpleOracleAsyncResponseSent(
+            requestId, 
+            responseText);
+        
+        // actual LogSimpleOracleAsyncResponseSent(requestId: 1, responseText: "async 42")
+
+        // WHEN
+        oracle.respondAsync(
+            requestId, 
+            responseText,
+            false, // revert in call
+            revertUntil);
+
+        // THEN
+        // check request info
+        IOracle.RequestInfo memory request = instanceReader.getRequestInfo(requestId);
+        bytes memory expectedRequestData = abi.encode(SimpleOracle.SimpleRequest(
+            synchronous,
+            requestText));
+        
+        bytes memory expectedResponseData = abi.encode(
+            SimpleOracle.SimpleResponse({
+                revertInCall: false, 
+                revertUntil: TimestampLib.max(),
+                text: responseText}));
+
+        assertEq(request.requesterNftId.toInt(), productNftId.toInt(), "requester not product");
+        assertEq(request.callbackMethodName, "fulfillOracleRequestAsync", "unexpected callback name");
+        assertEq(request.oracleNftId.toInt(), oracleNftId.toInt(), "unexpected oracle nft id");
+        assertEq(request.requestData, expectedRequestData, "unexpected request data");
+        assertEq(request.responseData, expectedResponseData, "unexpected response data");
+        assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
+        assertFalse(request.isCancelled, "request cancelled");
+
+        // check request state
+        StateId requestState = instanceReader.getState(requestId.toKey32());
+        assertEq(requestState.toInt(), FULFILLED().toInt(), "unexpected request state");
+    }
+
+
+    function test_oracleResponseAsyncWithRequesterRevert() public {
+
+        // GIVEN
+        string memory requestText = "some question for the oracle to answer";
+        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+            SecondsLib.oneYear());
+
+        bool synchronous = false;
+        RequestId requestId = product.createOracleRequest(
+            oracleNftId, 
+            requestText,
+            expiryAt,
+            synchronous);
+
+        string memory responseText = "async /w revert";
+
+        // check product fulfillOracleRequestAsync has been called
+        Timestamp revertUntil = TimestampLib.max();
+        vm.expectEmit(address(oracleService));
+        emit LogOracleServiceDeliveryFailed(
+            requestId, 
+            address(product),
+            "fulfillOracleRequestAsync(uint64,bytes)");
+
+        // check that oracle component has received oracle request
+        vm.expectEmit(address(oracleService));
+        emit LogOracleServiceResponseProcessed(
+            requestId, 
+            oracleNftId);
+
+        // WHEN
+        oracle.respondAsync(
+            requestId, 
+            responseText,
+            true, // revert in call
+            revertUntil);
+
+        // THEN
+        // check request info
+        IOracle.RequestInfo memory request = instanceReader.getRequestInfo(requestId);
+        bytes memory expectedRequestData = abi.encode(SimpleOracle.SimpleRequest(
+            synchronous,
+            requestText));
+        
+        bytes memory expectedResponseData = abi.encode(
+            SimpleOracle.SimpleResponse({
+                revertInCall: true, 
+                revertUntil: revertUntil,
+                text: responseText}));
+
+        assertEq(request.requesterNftId.toInt(), productNftId.toInt(), "requester not product");
+        assertEq(request.callbackMethodName, "fulfillOracleRequestAsync", "unexpected callback name");
+        assertEq(request.oracleNftId.toInt(), oracleNftId.toInt(), "unexpected oracle nft id");
+        assertEq(request.requestData, expectedRequestData, "unexpected request data");
+        assertEq(request.responseData, expectedResponseData, "unexpected response data");
+        assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
+        assertFalse(request.isCancelled, "request cancelled");
+
+        // check request state
+        StateId requestState = instanceReader.getState(requestId.toKey32());
+        assertEq(requestState.toInt(), FAILED().toInt(), "unexpected request state");
+    }
+
+
+    function test_oracleResponseAsyncReplayHappyCase() public {
+
+        // GIVEN
+        string memory requestText = "some question for the oracle to answer";
+        Timestamp expiryAt = TimestampLib.blockTimestamp().addSeconds(
+            SecondsLib.oneYear());
+
+        bool synchronous = false;
+        RequestId requestId = product.createOracleRequest(
+            oracleNftId, 
+            requestText,
+            expiryAt,
+            synchronous);
+
+        string memory responseText = "async /w revert to replay";
+        Timestamp revertUntil = TimestampLib.blockTimestamp();
+
+        oracle.respondAsync(
+            requestId, 
+            responseText,
+            true, // revert in call
+            revertUntil);
+
+        // check failed state
+        StateId requestState = instanceReader.getState(requestId.toKey32());
+        assertEq(requestState.toInt(), FAILED().toInt(), "unexpected request state");
+
+        // ensure callback doesn't revert anymore
+        vm.warp(revertUntil.toInt() + 1); 
+
+        vm.expectEmit(address(product));
+        emit LogSimpleProductRequestAsyncFulfilled(
+            requestId, 
+            responseText,
+            bytes(responseText).length);
+
+        vm.expectEmit(address(oracleService));
+        emit LogOracleServiceResponseReplayed(
+            requestId, 
+            productNftId);
+
+        // WHEN
+        product.replay(requestId);
+
+        // THEN
+        // check request info
+        IOracle.RequestInfo memory request = instanceReader.getRequestInfo(requestId);
+
+        assertEq(request.requesterNftId.toInt(), productNftId.toInt(), "requester not product");
+        assertEq(request.callbackMethodName, "fulfillOracleRequestAsync", "unexpected callback name");
+        assertEq(request.oracleNftId.toInt(), oracleNftId.toInt(), "unexpected oracle nft id");
+        assertEq(request.expiredAt.toInt(), expiryAt.toInt(), "unexpected expired at");
+        assertFalse(request.isCancelled, "request cancelled");
+
+        // check request state
+        requestState = instanceReader.getState(requestId.toKey32());
+        assertEq(requestState.toInt(), FULFILLED().toInt(), "unexpected request state");
+    }
+
+
+    function test_oracleRequestCancelHappyCase() public {
 
         // GIVEN
         string memory requestText = "some question for the oracle to answer";

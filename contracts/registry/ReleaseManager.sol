@@ -424,6 +424,7 @@ contract ReleaseManager is
         if (fromId == DEPLOYING() && toId == SCHEDULED()) { return true; }
         if (fromId == DEPLOYING() && toId == DEPLOYING()) { return true; }
         if (fromId == DEPLOYING() && toId == ACTIVE()) { return true; }
+        // TODO active -> scheduled missing, add tests to cover this and more scenarios (#358)
 
         return false;
     }

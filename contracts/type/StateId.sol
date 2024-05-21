@@ -63,8 +63,12 @@ function FULFILLED() pure returns (StateId) {
     return toStateId(70);
 }
 
+function FAILED() pure returns (StateId) {
+    return toStateId(7);
+}
+
 function CANCELLED() pure returns (StateId) {
-    return toStateId(71);
+    return toStateId(72);
 }
 
 function PAUSED() pure returns (StateId) {
