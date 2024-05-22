@@ -31,7 +31,7 @@ export type LibraryAddresses = {
 
 export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, AddressLike>();
 
-export async function deployLibraries(owner: Signer): Promise<ContractByName[]> {
+export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> {
     logger.info("======== Starting deployment of libraries ========");
     const { address: key32LibAddress } = await deployContract(
         "Key32Lib",
@@ -301,6 +301,6 @@ export async function deployLibraries(owner: Signer): Promise<ContractByName[]> 
         serviceAuthorizationsLibAddress,
         targetManagerLibAddress,
         stakeManagerLibAddress,
-    };
+    } as LibraryAddresses;
     
 }

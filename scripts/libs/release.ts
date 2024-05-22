@@ -1,10 +1,11 @@
 
-import { AddressLike, BytesLike, Signer, resolveAddress, AbiCoder, keccak256, hexlify, Interface, solidityPacked, solidityPackedKeccak256, getCreate2Address, defaultAbiCoder, id, concat, Typed, BigNumberish } from "ethers";
+import { AddressLike, BytesLike, Signer, resolveAddress, AbiCoder, keccak256, hexlify, Interface, solidityPacked, solidityPackedKeccak256, getCreate2Address, defaultAbiCoder, id, concat, Typed, BigNumberish, ContractTransactionReceipt } from "ethers";
 import { logger } from "../logger";
-import { PoolService__factory, BundleService__factory, DistributionService__factory, InstanceService__factory, RegistryService__factory, ReleaseManager__factory } from "../../typechain-types";
-import { RegistryAddresses } from "./registry";
+import { ReleaseManager, PoolService__factory, BundleService__factory, DistributionService__factory, InstanceService__factory, RegistryService__factory, ReleaseManager__factory } from "../../typechain-types";
+import { CoreAddresses } from "./registry";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getFieldFromTxRcptLogs } from "./transaction";
+import { isResumeableDeployment, deploymentState } from "./deployment_state";
 
 
 export type ReleaseAddresses = {
@@ -144,7 +145,7 @@ export type Release = {
 };
 
 // TODO implement release addresses computation
-export async function computeReleaseAddresses(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike): Promise<ReleaseAddresses> {
+export async function computeReleaseAddresses(owner: Signer, registry: CoreAddresses, libraries: LibraryAddresses, salt: BytesLike): Promise<ReleaseAddresses> {
 
     const releaseAddresses: ReleaseAddresses = {
         registryServiceAddress: "0x0000000000000000000000000000000000000001",
@@ -179,7 +180,7 @@ export async function computeReleaseAddresses(owner: Signer, registry: RegistryA
 }
 
 
-export async function getReleaseConfig(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike): Promise<ReleaseConfig>
+export async function getReleaseConfig(owner: Signer, registry: CoreAddresses, libraries: LibraryAddresses, salt: BytesLike): Promise<ReleaseConfig>
 {
     const serviceAddresses = await computeReleaseAddresses(owner, registry, libraries, salt);
 
@@ -336,27 +337,77 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
     return config;
 }
 
-export async function createRelease(owner: Signer, registry: RegistryAddresses, config: ReleaseConfig, salt: BytesLike): Promise<Release>
+async function _tryCreateNextRelease(releaseManager: ReleaseManager): Promise<ContractTransactionReceipt>
 {
-    const releaseManager = await registry.releaseManager.connect(owner);
-    await releaseManager.createNextRelease();
+    let rcpt;
+    try {
+        rcpt = await executeTx(async () => releaseManager.createNextRelease());
+    } catch (error) {
+        logger.error(`Error creating release with ReleaseManager at ${await releaseManager.getAddress()}\n       ${error}`);
+    }
 
-    const rcpt = await executeTx(async () =>  releaseManager.prepareNextRelease(
-        config.addresses,
-        config.names,
-        config.serviceRoles,
-        config.serviceRoleNames,
-        config.functionRoles,
-        config.functionRoleNames,
-        config.selectors,
-        salt
-    ));
+    return rcpt;
+}
+// TODO in case release already prepared -> read verson salt and accessManager
+async function _tryPrepareNextRelease(releaseManager: ReleaseManager, config: ReleaseConfig, salt: BytesLike): Promise<ContractTransactionReceipt>
+{
+    let rcpt;
+    try {
+        rcpt = await executeTx(async () => releaseManager.prepareNextRelease(
+            config.addresses,
+            config.names,
+            config.serviceRoles,
+            config.serviceRoleNames,
+            config.functionRoles,
+            config.functionRoleNames,
+            config.selectors,
+            salt
+        ));
+    } catch (error) {
+        logger.error(`Error preparing next release with ReleaseManager at ${await releaseManager.getAddress()}\n       ${error}`);
+    }
 
-    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "version");
+    return rcpt;
+}
+
+async function _tryActivateNextRelease(releaseManager: ReleaseManager): Promise<ContractTransactionReceipt>
+{
+    let rcpt;
+    try {
+        rcpt = await executeTx(async () => releaseManager.activateNextRelease());
+    } catch (error) {
+        logger.error(`Error activating release with ReleaseManager at ${await releaseManager.getAddress()}\n       ${error}`);
+    }
+
+    return rcpt;
+}
+
+export async function createRelease(releaseManager: ReleaseManager, config: ReleaseConfig, salt: BytesLike): Promise<Release>
+{
+    deploymentState.requireDeployed("ReleaseManager");
+
+    let rcpt;
+    if(!isResumeableDeployment) {
+        await executeTx(async () => releaseManager.createNextRelease());
+        rcpt = await executeTx(async () => releaseManager.prepareNextRelease(
+            config.addresses,
+            config.names,
+            config.serviceRoles,
+            config.serviceRoleNames,
+            config.functionRoles,
+            config.functionRoleNames,
+            config.selectors,
+            salt));
+    } else {
+        await _tryCreateNextRelease(releaseManager);
+        rcpt = await _tryPrepareNextRelease(releaseManager, config, salt);
+    }
+    // TODO in case of failed tx (already created release) fetch release version from releaseManager
+    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, releaseManager.interface, "LogReleaseCreation", "version");
     const releaseVersion = (logCreationInfo as BigNumberish);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "salt");
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, releaseManager.interface, "LogReleaseCreation", "salt");
     const releaseSalt = (logCreationInfo as BytesLike);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "accessManager");
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, releaseManager.interface, "LogReleaseCreation", "accessManager");
     const releaseAccessManager = (logCreationInfo as AddressLike);
 
     const release: Release = {
@@ -367,4 +418,17 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
     };
     
     return release;
+}
+
+export async function activateRelease(releaseManager: ReleaseManager): Promise<void>
+{
+    deploymentState.requireDeployed("ReleaseManager");
+
+    let rcpt;
+
+    if(!isResumeableDeployment) {
+        rcpt = await executeTx(async () => releaseManager.activateNextRelease());
+    } else {
+        rcpt = await _tryActivateNextRelease(releaseManager);
+    }
 }

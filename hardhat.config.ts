@@ -17,7 +17,7 @@ const automaticVerifications = TENDERLY_AUTOMATIC_VERIFICATION === "true";// TOD
 import * as tenderly from "@tenderly/hardhat-tenderly";
 
 tenderly.setup({ automaticVerifications });
-
+console.log("Tenderly setup:");
 console.log("Using private verification?", privateVerification);
 console.log("Using automatic verification?", automaticVerifications);
 

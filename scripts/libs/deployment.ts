@@ -95,73 +95,127 @@ export async function verifyContract(address: AddressLike, constructorArgs: any[
  */
     // TODO get libraries from artifacts?
 export async function deployContract(contractName: string, contractType: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any | undefined, sourceFileContract?: string): Promise<DeploymentResult> {
+    // TODO use static variable as isResumeableDeployment -> set only at the first call in script run
     if (! isResumeableDeployment ) {
         logger.info("Starting new deployment");
-        return executeAllDeploymentSteps(contractType, signer, constructorArgs, factoryOptions, sourceFileContract);
+        return executeAllDeploymentSteps(contractType, contractType, signer, constructorArgs, factoryOptions, sourceFileContract);
     }
 
     logger.info(`Trying to resume deployment of ${contractName}`);
 
-    if (deploymentState.getContractAddress(contractName) === undefined) {
-        if (deploymentState.getDeploymentTransaction(contractName) === undefined) {
-            return executeAllDeploymentSteps(contractName, contractType, signer, constructorArgs, factoryOptions, sourceFileContract);
-        } else {
-            return awaitDeploymentTxAndVerify(contractName, contractType, signer, constructorArgs, sourceFileContract);
-        }
-    } else {
-        // fetch persisted data
-        const address = deploymentState.getContractAddress(contractName)!;
-        const deploymentTransaction = await ethers.provider.getTransaction(deploymentState.getDeploymentTransaction(contractName)!)!;
-        const contract = await ethers.getContractAt(contractName, address, signer);
-        
-        if (deploymentState.isDeployedAndVerified(contractName)) {
-            logger.info(`Contract ${contractName} is already deployed at ${address} and verified`);
-        } else {
-            logger.info(`Contract ${contractName} is already deployed at ${address}`);
-            if (deploymentTransaction !== null) {
-                await verifyDeployedContract(contractName, contractType, address, deploymentTransaction, constructorArgs, sourceFileContract);
-            }
-        }
+    const isDeploying = deploymentState.isDeploying(contractName);
+    if(isDeploying) {
+        return awaitDeploymentTxAndVerify(contractName, contractType, signer, constructorArgs, sourceFileContract);
+    }
 
-        return { address, deploymentTransaction, contract };
+    const isDeployed = deploymentState.isDeployed(contractName);
+    if (!isDeployed) {
+        return executeAllDeploymentSteps(contractName, contractType, signer, constructorArgs, factoryOptions, sourceFileContract);
+    }
+
+    // assume contract was deployed
+    // fetch local persisted deployment state
+    const deployedContractAddress = deploymentState.getContractAddress(contractName)!;
+    const deploymentTransactionHash = deploymentState.getDeploymentTransaction(contractName)!;
+
+    // fetch onchain state -> gives error on local chain
+    const contract = await ethers.getContractAt(contractType, deployedContractAddress, signer) as BaseContract;
+    const deploymentTransaction = await ethers.provider.getTransaction(deploymentTransactionHash);
+    const deploymentTransactionReceipt = await ethers.provider.getTransactionReceipt(deploymentTransactionHash);
+/*
+    // check onchain state for existance -> gives error on local chain
+    if(contract === null) {
+        throw new Error(`Onchain state: ${contractName} not found at ${deployedContractAddress}`);
+    }
+
+    if(deploymentTransaction === null) {
+        throw new Error(`Onchain state: ${contractName} deployment transaction ${deploymentTransactionHash} not found`);
+    }
+
+    if(deploymentTransactionReceipt === null) {
+        throw new Error(`Onchain state: ${contractName} deployment transaction receipt ${deploymentTransactionHash} not found`);
+    }
+*/
+    logger.info(`${contractName} already deployed at ${deployedContractAddress}`);
+
+    const isVerified = deploymentState.isDeployedAndVerified(contractName);
+    if(!isVerified) {
+        await verifyDeployedContract(contractName, contractType, deployedContractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
+    } else {
+        logger.info(`Contract ${contractName} already verified`);
+    }
+
+    return { 
+        address: deployedContractAddress, 
+        deploymentTransaction: deploymentTransaction, 
+        deploymentReceipt: deploymentTransactionReceipt,
+        contract: contract 
     }
 }
 
-// Use this function to add to deployemnt state and verify contract deployed by other contract
-export async function addDeployedContract(contractName: string, contractType: string, contractAddress: AddressLike, signer: Signer, deploymentTransaction: TransactionResponse, constructorArgs?: any[] | undefined, factoryOptions?: any | undefined, sourceFileContract?: string) {
-
+// Use this function to add to deployment state (and verify) a deployed contract (e.g. contract deployed by other contract)
+export async function addDeployedContract(contractName: string, contractType: string, deployedContractAddress: AddressLike, deploymentTransaction: TransactionResponse, constructorArgs?: any[] | undefined, factoryOptions?: any | undefined, sourceFileContract?: string) {
     const libraries = factoryOptions?.libraries ?? {};
     if(deploymentTransaction == undefined) {
-        throw new Error(`Deployment transaction for ${contractName} is not defined`);
+        throw new Error(`Deployment transaction of ${contractName} is not provided`);
     }
-    
+
+    // fetch onchain state\
+/* 
+    const contract = await ethers.getContractAt(contractType, deployedContractAddress) as BaseContract;
+    const actualDeploymentTransaction = await ethers.provider.getTransaction(deploymentTransaction.hash);
+    const actualDeploymentTransactionReceipt = await ethers.provider.getTransactionReceipt(deploymentTransaction.hash);
+    check given tx and oncahin tx are the same
+    if(deploymentTransaction != actualDeploymentTransaction) {
+        throw new Error(`Deployment transaction hash of ${contractName} is wrong, provided ${deploymentTransaction.hash}, actual ${actualDeploymentTransaction.hash}`);
+    }
+
+    if(contract === null) {
+        throw new Error(`Onchain state: ${contractName} not found at ${deployedContractAddress}`);
+    }
+
+    if(actualDeploymentTransaction === null) {
+        throw new Error(`Onchain state: ${contractName} deployment transaction ${deploymentTransaction.hash} not found`);
+    }
+
+    if(actualDeploymentTransactionReceipt === null) {
+        throw new Error(`Onchain state: ${contractName} deployment transaction receipt ${deploymentTransaction.hash} not found`);
+    }
+*/
     if (! isResumeableDeployment ) {
-        // add contract to deployment state
+        logger.info(`Adding new ${contractName} of type ${contractType} to deployment state...`);
+        // create new / overwrite existing deployment state
         deploymentState.setDeploymentTransaction(contractName, contractType, deploymentTransaction?.hash || "0x", libraries);
-        deploymentState.setContractAddress(contractName, contractAddress);
-        await verifyDeployedContract(contractName, contractType, contractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
+        deploymentState.setContractAddress(contractName, deployedContractAddress);
+        logger.info(`Contract ${contractName} set deployed at ${deployedContractAddress}`);
+        await verifyDeployedContract(contractName, contractType, deployedContractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
         return;
     }
-    if (deploymentState.getContractAddress(contractName) === undefined) {
-        if (deploymentState.getDeploymentTransaction(contractName) === undefined) {
-            // contract not in deployment state 
-            //throw new Error(`${contractName} deployment transaction is not found in deployment state`);
-            deploymentState.setDeploymentTransaction(contractName, contractType, deploymentTransaction?.hash || "0x", libraries);
-            deploymentState.setContractAddress(contractName, contractAddress);
-            await verifyDeployedContract(contractName, contractType, contractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
-        } else {
-            awaitDeploymentTxAndVerify(contractName, contractType, signer, constructorArgs, sourceFileContract);
-        }
-    } else {
-        if (deploymentState.isDeployedAndVerified(contractName)) {
-            logger.info(`Contract ${contractName} is deployed at ${contractAddress} and verified`);
-        } else {
-            logger.info(`Contract ${contractName} is deployed at ${contractAddress}`);
-            if (deploymentTransaction !== null) {
-                await verifyDeployedContract(contractName, contractType, contractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
-            }
-        }
+
+    logger.info(`Checking ${contractName} deployment state...`);
+
+    const isDeployed = deploymentState.isDeployed(contractName);
+    if(!isDeployed) {
+        logger.info(`Adding ${contractName} of type ${contractType} to deployment state...`);
+        // deploymet state is not set yet
+        deploymentState.setDeploymentTransaction(contractName, contractType, deploymentTransaction?.hash || "0x", libraries);
+        deploymentState.setContractAddress(contractName, deployedContractAddress);
+        logger.info(`${contractName} set deployed at ${deployedContractAddress}`);
+        await verifyDeployedContract(contractName, contractType, deployedContractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
+        return;
     }
+
+    logger.info(`${contractName} is already in deployment state`);
+    logger.info(`${contractName} deployed at ${deployedContractAddress}`);
+    //logger.info(`Checking ${contractName} verification...`);
+
+    const isVerified = deploymentState.isDeployedAndVerified(contractName);
+    if(!isVerified) {
+        await verifyDeployedContract(contractName, contractType, deployedContractAddress, deploymentTransaction, constructorArgs, sourceFileContract);
+        return;
+    }
+
+    logger.info(`${contractName} is already verified`);
 }
 
 export function delay(ms: number): Promise<void> {
@@ -169,7 +223,7 @@ export function delay(ms: number): Promise<void> {
 }
 
 async function executeAllDeploymentSteps(contractName: string, contractType: string, signer: Signer, constructorArgs?: any[] | undefined, factoryOptions?: any | undefined, sourceFileContract?: string): Promise<DeploymentResult> {
-    logger.info(`Deploying ${contractName}.sol...`);
+    logger.info(`Deploying ${contractName} of type ${contractType}...`);
     const factoryArgs = factoryOptions != undefined ? { ...factoryOptions, signer } : { signer };
     const contractFactory = await ethers.getContractFactory(contractType, factoryArgs);
 
@@ -204,19 +258,17 @@ async function executeAllDeploymentSteps(contractName: string, contractType: str
 async function verifyDeployedContract(contractName: string, contractType: string, address: AddressLike, tx: TransactionResponse, constructorArgs?: any[] | undefined, sourceFileContract?: string) {
         
     // Tenderly verification
-    // TODO skip if not tenderly network..
-    // TODO libraries are in `${ARTIFACTS_PATH}${contractName}.json`
-    const libraries = deploymentState.getLibraries(contractName);
-    logger.info(`Verifing ${contractName}`)
-    await tenderly.verify({ 
-        name: contractType,
-        address: address,
-        libraries: libraries});
-
-    deploymentState.setVerified(contractName, true);  
+    if (process.env.ENABLE_TENDERLY_VERIFICATION?.toLowerCase() === "true") {
+        const libraries = deploymentState.getLibraries(contractName);
+        logger.info(`Verifing ${contractName}`)
+        await tenderly.verify({name: contractType, address: address, libraries: libraries});
+        deploymentState.setVerified(contractName, true);
+    } else {
+        logger.debug("Skipping Tenderly verification");
+    }
 
     // Etherscan verification
-    if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
+    if (process.env.ENABLE_ETHERSCAN_VERIFICATION?.toLowerCase() === "true") {
         logger.debug(`Waiting for ${NUMBER_OF_CONFIRMATIONS} confirmations`);
         await tx.wait(NUMBER_OF_CONFIRMATIONS); 
         constructorArgs !== undefined
@@ -224,7 +276,7 @@ async function verifyDeployedContract(contractName: string, contractType: string
             : await verifyContract(address, [], sourceFileContract);
         deploymentState.setVerified(contractName, true);
     } else {
-        logger.debug("Skipping verification (etherscan)");
+        logger.debug("Skipping Etherscan verification");
     }
 }
 

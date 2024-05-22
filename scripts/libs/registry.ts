@@ -1,4 +1,4 @@
-import { AddressLike, Signer, TransactionResponse, resolveAddress } from "ethers";
+import { AddressLike, Signer, TransactionResponse, assert, resolveAddress } from "ethers";
 import { 
     Dip,
     ChainNft, ChainNft__factory, 
@@ -14,13 +14,13 @@ import {
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, addDeployedContract, verifyContract } from "./deployment";
-import { deploymentState } from "./deployment_state";
+import { deploymentState, isResumeableDeployment } from "./deployment_state";
 import { LibraryAddresses } from "./libraries";
 import { getFieldFromTxRcptLogs, executeTx } from "./transaction";
 import { tenderly } from "hardhat";
 
 
-export type RegistryAddresses = {
+export type CoreAddresses = {
 
     dipAddress: AddressLike;
     dip: Dip;
@@ -55,7 +55,7 @@ export type RegistryAddresses = {
     stakingNftId: bigint;
 }
 
-export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
+export async function deployCore(owner: Signer, libraries: LibraryAddresses): Promise<CoreAddresses> {
     logger.info("======== Starting deployment of registry ========");
 
     logger.info("-------- Starting deployment DIP ----------------");
@@ -90,7 +90,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
             }
-        });
+        },
+    );
 
     const registryAdmin = registryAdminBaseContract as RegistryAdmin;
     const accessManagerAddress = await registryAdmin.authority();
@@ -99,7 +100,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         "RegistryAccessManager",
         "AccessManagerExtendedInitializeable",
         accessManagerAddress,
-        owner, //signer
         registryAdminDeploymentTransaction as TransactionResponse,
         [],// constructor args
         {
@@ -124,7 +124,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 NftIdLib: libraries.nftIdLibAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress,
             }
-        });
+        },
+
+    );
 
     const registry = registryBaseContract as Registry;
     const registryNftId = await registry["getNftId(address)"](registryAddress);
@@ -136,7 +138,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         "ChainNft",
         "ChainNft",
         chainNftAddress,
-        owner, //signer
         registryDeploymentTransaction as TransactionResponse,
         [],// constructor args
         {
@@ -193,7 +194,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
             }
-        });
+        },
+    );
 
     const stakingReader = stakingReaderBaseContract as StakingReader;
 
@@ -253,20 +255,45 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     const stakingNftId = await registry["getNftId(address)"](stakingAddress);
     logger.info(`StakingReader deployed at ${stakingReaderAddress}`);
-    // revert here if resumable deployment is true -> can be already intialized
-    await executeTx(async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress));
 
-    await executeTx(async () => await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress));
+    if(!isResumeableDeployment) {
+        await executeTx(async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress));
+        logger.info("StakingReader initialized");
+        await executeTx(async () => await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress));
+        logger.info("Registry initialized");
+        await executeTx(async () => await registryAdmin.initialize(registry, owner, owner));
+        logger.info("RegistryAdmin initialized");
+    } else {
+        try{
+            await executeTx(async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress));
+            logger.info("StakingReader initialized");
+        } catch (error) {
+            logger.error(`Error initializing StakingReader at ${await stakingReader.getAddress()}\n       ${error}`);
+            logger.info("Assuming StakingReader is already initialized");
+        }
 
-    await executeTx(async () =>await registryAdmin.initialize(registry, owner, owner));
+        try{
+            await executeTx(async () => await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress));
+            logger.info("Registry initialized");
+        } catch (error) {
+            logger.error(`Error initializing Registry at ${await registry.getAddress()}\n       ${error}`);
+            logger.info("Assuming Registry is already initialized");
+        }
 
-    //await verifyRegistryComponents(registryAddress, owner)
+        try{
+            await executeTx(async () => await registryAdmin.initialize(registry, owner, owner));
+            logger.info("RegistryAdmin initialized");
+        } catch (error) {
+            logger.error(`Error initializing RegistryAdmin at ${await registryAdmin.getAddress()}\n       ${error}`);
+            logger.info("Assuming RegistryAdmin is already initialized");
+        }
+    }
 
     logger.info(`Dip deployed at ${dipAddress}`);
-    logger.info(`RegistryAdmin deployeqd at ${registryAdmin}`);
+    logger.info(`RegistryAdmin deployed at ${registryAdminAddress}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);
-    logger.info(`ReleaseManager deployed at ${releaseManager}`);
+    logger.info(`ReleaseManager deployed at ${releaseManagerAddress}`);
     logger.info(`TokenRegistry deployed at ${tokenRegistryAddress}`);
     logger.info(`StakingReader deployed at ${stakingReaderAddress}`);
     logger.info(`StakingStore deployed at ${stakingStoreAddress}`);
@@ -314,8 +341,52 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     };
 }
 
-async function verifyRegistryComponents(registryAddress: RegistryAddresses, owner: Signer) {
-    if (process.env.SKIP_VERIFICATION?.toLowerCase() === "true") {
+async function _tryInitializeCore(core: CoreAddresses, owner: Signer) {
+    const registry = core.registry.connect(owner);
+    const registryAdmin = core.registryAdmin.connect(owner);
+    const stakingReader = core.stakingReader.connect(owner);
+
+    const stakingAddress = core.stakingAddress;
+    const stakingStoreAddress = core.stakingStoreAddress;
+    const releaseManagerAddress = core.releaseManagerAddress;
+    const tokenRegistryAddress = core.tokenRegistryAddress;
+
+    if(!isResumeableDeployment) {
+        await executeTx(async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress));
+        logger.info("StakingReader initialized");
+        await executeTx(async () => await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress));
+        logger.info("Registry initialized");
+        await executeTx(async () => await registryAdmin.initialize(registry, owner, owner));
+        logger.info("RegistryAdmin initialized");
+    } else {
+        try{
+            await executeTx(async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress));
+            logger.info("StakingReader initialized");
+        } catch (error) {
+            logger.error(`Error initializing StakingReader at ${await stakingReader.getAddress()}\n       ${error}`);
+            logger.info("Assuming StakingReader is already initialized");
+        }
+
+        try{
+            await executeTx(async () => await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress));
+            logger.info("Registry initialized");
+        } catch (error) {
+            logger.error(`Error initializing Registry at ${await registry.getAddress()}\n       ${error}`);
+            logger.info("Assuming Registry is already initialized");
+        }
+
+        try{
+            await executeTx(async () => await registryAdmin.initialize(registry, owner, owner));
+            logger.info("RegistryAdmin initialized");
+        } catch (error) {
+            logger.error(`Error initializing RegistryAdmin at ${await registryAdmin.getAddress()}\n       ${error}`);
+            logger.info("Assuming RegistryAdmin is already initialized");
+        }
+    }
+}
+
+async function verifyRegistryComponents(registryAddress: CoreAddresses, owner: Signer) {
+    if (process.env.ENABLE_ETHERSCAN_VERIFICATION?.toLowerCase() === "true") {
         return;
     }
 

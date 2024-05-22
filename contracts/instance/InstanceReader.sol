@@ -16,16 +16,18 @@ import {RiskId} from "../type/RiskId.sol";
 import {UFixed, MathLib, UFixedLib} from "../type/UFixed.sol";
 import {Version} from "../type/Version.sol";
 import {StateId} from "../type/StateId.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
 
+import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
+
+import {IRisk} from "../instance/module/IRisk.sol";
+import {IPolicy} from "../instance/module/IPolicy.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {IInstance} from "./IInstance.sol";
-import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
-import {IPolicy} from "../instance/module/IPolicy.sol";
-import {IRisk} from "../instance/module/IRisk.sol";
-import {TimestampLib} from "../type/Timestamp.sol";
+
 
 import {InstanceStore} from "./InstanceStore.sol";
 
