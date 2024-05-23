@@ -44,7 +44,7 @@ contract TestOracle is GifTest {
     // from IOracleService
     event LogOracleServiceResponseProcessed(RequestId requestId, NftId oracleNftId);
     event LogOracleServiceDeliveryFailed(RequestId requestId, address requesterAddress, string functionSignature);
-    event LogOracleServiceResponseReplayed(RequestId requestId, NftId requesterNftId);
+    event LogOracleServiceResponseResent(RequestId requestId, NftId requesterNftId);
 
 
     function setUp() public override {
@@ -292,7 +292,7 @@ contract TestOracle is GifTest {
     }
 
 
-    function test_oracleResponseAsyncReplayHappyCase() public {
+    function test_oracleResponseAsyncResendHappyCase() public {
 
         // GIVEN
         string memory requestText = "some question for the oracle to answer";
@@ -329,12 +329,12 @@ contract TestOracle is GifTest {
             bytes(responseText).length);
 
         vm.expectEmit(address(oracleService));
-        emit LogOracleServiceResponseReplayed(
+        emit LogOracleServiceResponseResent(
             requestId, 
             productNftId);
 
         // WHEN
-        product.replay(requestId);
+        product.resend(requestId);
 
         // THEN
         // check request info

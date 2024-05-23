@@ -272,13 +272,13 @@ contract SimpleProduct is Product {
     }
 
 
-    function replay(
+    function resend(
         RequestId requestId
     )
         public
         // restricted() // 
     {
-        _oracleService.replay(requestId);
+        _oracleService.resend(requestId);
     }
 
 

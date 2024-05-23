@@ -118,6 +118,7 @@ contract OracleService is
         external
         virtual
         // restricted() // add authz
+        returns (bool success)
     {
         (
             NftId oracleNftId,
@@ -142,7 +143,7 @@ contract OracleService is
                 "(uint64,bytes)"
             ));
 
-        (bool success, bytes memory returnData) = requesterInfo.objectAddress.call(
+        (success, ) = requesterInfo.objectAddress.call(
             abi.encodeWithSignature(
                 functionSignature, 
                 requestId,
@@ -160,7 +161,7 @@ contract OracleService is
     }
 
 
-    function replay(RequestId requestId)
+    function resend(RequestId requestId)
         external 
         virtual 
         // restricted() // add authz
@@ -190,7 +191,7 @@ contract OracleService is
         // check that calling requestor was successful
         if (success) {
             instance.getInstanceStore().updateRequestState(requestId, FULFILLED());
-            emit LogOracleServiceResponseReplayed(requestId, requesterNftId);
+            emit LogOracleServiceResponseResent(requestId, requesterNftId);
         } else {
             emit LogOracleServiceDeliveryFailed(requestId, requesterInfo.objectAddress, functionSignature);
         }

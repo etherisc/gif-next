@@ -13,7 +13,7 @@ interface IOracleService is IService {
     event LogOracleServiceRequestCreated(RequestId requestId, NftId requesterNftId, NftId oracleNftId, Timestamp expiryAt);
     event LogOracleServiceResponseProcessed(RequestId requestId, NftId oracleNftId);
     event LogOracleServiceDeliveryFailed(RequestId requestId, address requesterAddress, string functionSignature);
-    event LogOracleServiceResponseReplayed(RequestId requestId, NftId requesterNftId);
+    event LogOracleServiceResponseResent(RequestId requestId, NftId requesterNftId);
     event LogOracleServiceRequestCancelled(RequestId requestId, NftId requesterNftId);
 
     // create request
@@ -31,6 +31,7 @@ interface IOracleService is IService {
     error ErrorOracleServiceRequestExpired(RequestId requestId, Timestamp expiredAt);
     
     /// @dev send an oracle request to the specified oracle component.
+    /// the function returns the id of the newly created request.
     /// permissioned: only registered components may send requests to oracles.
     function request(
         NftId oracleNftId,
@@ -43,17 +44,18 @@ interface IOracleService is IService {
     /// the response data is amende in the request info stored with the instance.
     /// the request state changes to FULFILLED (when calling the callback method of the requester is successful)
     /// or to FAILED when calling the requester is not succesful.
+    /// the function returns true iff the state changes to FULFILLED.
     /// permissioned: only the oracle component linked to the request id may call this method
     function respond(
         RequestId requestId,
         bytes calldata responseData
-    ) external;
+    ) external returns (bool success);
 
-    /// @dev replays a failed response delivery to the requester.
-    /// only requests in state FAILED may be replayed.
+    /// @dev re send a failed response to the requester.
+    /// only requests in state FAILED may be re sent.
     /// the request state changes to FULFILLED when calling the callback method of the requester is successful.
-    /// permissioned: only the requester may replay a request
-    function replay(RequestId requestId) external;
+    /// permissioned: only the requester may resend a request
+    function resend(RequestId requestId) external;
 
     /// @dev notify the oracle component that the specified request has become invalid.
     /// only requests in state ACTIVE may be cancelled.
