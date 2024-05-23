@@ -36,10 +36,10 @@ contract GifDeployer is Test {
         // 1) deploy dip token
         dip = new Dip();
 
-        // 2) deploy registry admin
+        // 2) deploy registry admin and registry access manager
         registryAdmin = new RegistryAdmin();
 
-        // 3) deploy registry
+        // 3) deploy registry and chainNft
         registry = new Registry(registryAdmin);
 
         // 4) deploy release manager

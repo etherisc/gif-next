@@ -68,12 +68,13 @@ The deploy script will deploy all required contracts and create a test instance 
 
 ```bash
 # run deployment on a locally created ganache instance
-export SKIP_VERIFICATION=true
+export ENABLE_ETHERSCAN_VERIFICATION=false
+export ENABLE_TENDERLY_VERIFICATION=false
 hh run scripts/deploy_all.ts
 ```
 
 ```bash
-# set appropriate values vor env variables (see below)
+# set appropriate values for env variables (see below)
 
 # run deployment on another network
 hh run --network <networkname> scripts/deploy_all.ts
@@ -81,17 +82,37 @@ hh run --network <networkname> scripts/deploy_all.ts
 
 Environment variables:
 
-- `SKIP_VERIFICATION` set to `true` to skip etherscan verification (required for ganacht and anvil)
+- `RESUMEABLE_DEPLOYMENT`set to `true` to skip deployment/verification of already deployed/verified contracts (based on ./deployment_state_<chainId>.json)
+- `ENABLE_ETHERSCAN_VERIFICATION` set to `true` to skip etherscan verification (required for ganacht and anvil)
 - `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
 - `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
 - `ETHERSCAN_API_KEY` `POLYGONSCAN_API_KEY` the api key for etherscan/polygonscan (required for mumbai and mainnet)
+
+
+```bash
+# run deployment and verify on tendrely network
+
+export ENABLE_ETHERSCAN_VERIFICATION=false
+export ENABLE_TENDERLY_VERIFICATION=true
+tenderly login
+hh run --network <tenderlyNetwork> scripts/deploy_all.ts
+```
+
+Environment variables:
+
+- `RESUMEABLE_DEPLOYMENT` set to `true` to skip deployment/verification of already deployed/verified contracts (based on ./deployment_state_<chainId>.json)
+- `ENABLE_TENDERLY_VERIFICATION` set to `true` to perform verification of deployed contracts 
+# https://dashboard.tenderly.co/{TENDERLY_USERNAME}/{TENDERLY_PROJECT}/fork/{FORK_ID}
+- `TENDERLY_DEVNET_RPC_URL` is the RPC_URL of a Tenderly Devnet, found on the devnet UI info tab
+- `TENDERLY_USERNAME` is username, {TENDERLY_USERNAME} in the URL
+- `TENDERLY_PROJECT` is project slug, {TENDERLY_PROJECT} in the URL
 
 ### Create a new instance
 
 Requires previous step to be completed. 
 
 ```bash
-# set appropriate values vor env variables (see below)
+# set appropriate values for env variables (see below)
 
 hh run --network <networkname> scripts/new_instance.ts
 ```

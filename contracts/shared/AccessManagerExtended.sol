@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
 
@@ -64,7 +64,7 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         __AccessManagerCustom_init(initialAdmin);
     }
 
-    // =================================================== GETTERS ====================================================
+    // ==================================== TARGET GETTERS ================================================== //
 
     function isTargetExists(address target) public view returns (bool) {
         AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
@@ -81,9 +81,33 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         return $._targetAddressForName[name];
     }
 
+    // by name?
     function getTargetInfo(address target) public view returns (TargetInfo memory) {
         AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
         return $._targetInfo[target];
+    }
+
+    // ==================================== ROLE GETTERS ==================================================== //
+
+    function isRoleExists(uint64 roleId) public view returns (bool exists) {
+        AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
+        return $._roleInfo[roleId].createdAt.gtz();
+    }
+
+    function isRoleNameExists(string memory name) public view returns (bool exists) {
+        AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
+        return $._roleIdForName[name] != 0;
+    }
+
+    // TODO returns ADMIN_ROLE id for non existent name
+    function getRoleId(string memory name) public view returns (uint64 roleId) {
+        AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
+        return $._roleIdForName[name];
+    }
+
+    function getRoleId(uint256 idx) public view returns (uint64 roleId) {
+        AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
+        return $._roleIds[idx];
     }
 
     function getRoleInfo(uint64 roleId) public view returns (RoleInfo memory) {
@@ -101,30 +125,9 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         return EnumerableSet.at($._roleMembers[roleId], idx);
     }
 
-    function getRoleId(uint256 idx) public view returns (uint64 roleId) {
-        AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
-        return $._roleIds[idx];
-    }
-
-    // TODO returns ADMIN_ROLE id for non existent name
-    function getRoleId(string memory name) public view returns (uint64 roleId) {
-        AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
-        return $._roleIdForName[name];
-    }
-
     function getRoles() public view returns (uint256 numberOfRoles) {
         AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
         return $._roleIds.length;
-    }
-
-    function isRoleExists(uint64 roleId) public view returns (bool exists) {
-        AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
-        return $._roleInfo[roleId].createdAt.gtz();
-    }
-
-    function isRoleNameExists(string memory name) public view returns (bool exists) {
-        AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
-        return $._roleIdForName[name] != 0;
     }
 
     // =============================================== ROLE MANAGEMENT ===============================================
@@ -320,12 +323,14 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
         if(target == address(0)) {
             revert AccessManagerTargetAddressZero();
         }
-        // panic if not contract
-        //address authority = IAccessManaged(target).authority();
 
-        //if(authority != address(this)) {
-        //    revert AccessManagerTargetAuthorityInvalid(target, authority);
-        //}
+        // panic if not contract or call reverts
+        //try/catch here?
+        address authority = IAccessManaged(target).authority();
+
+        if(authority != address(this)) {
+            revert AccessManagerTargetAuthorityInvalid(target, authority);
+        }
 
         if(bytes(name).length == 0) {
             revert AccessManagerTargetNameEmpty(target);

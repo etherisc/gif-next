@@ -35,6 +35,7 @@ contract ProxyManager is
     error ErrorProxyManagerZeroVersion();
     error ErrorProxyManagerNextVersionNotIncreasing(Version nextVersion);
 
+    address internal _implementation;
     UpgradableProxyWithAdmin internal _proxy;
 
     // state to keep version history
@@ -68,6 +69,7 @@ contract ProxyManager is
         address currentProxyOwner = getOwner(); // used by implementation
         address initialProxyAdminOwner = address(this); // used by proxy
         
+        _implementation = initialImplementation;
         _proxy = new UpgradableProxyWithAdmin(
             initialImplementation,
             initialProxyAdminOwner,
@@ -93,6 +95,7 @@ contract ProxyManager is
         address currentProxyOwner = getOwner();
         address initialProxyAdminOwner = address(this);
 
+        _implementation = initialImplementation;
         _proxy = new UpgradableProxyWithAdmin{salt: salt}(
             initialImplementation,
             initialProxyAdminOwner,
@@ -120,6 +123,7 @@ contract ProxyManager is
         ProxyAdmin proxyAdmin = getProxy().getProxyAdmin();
         ITransparentUpgradeableProxy proxy = ITransparentUpgradeableProxy(address(_proxy));
 
+        _implementation = newImplementation;
         proxyAdmin.upgradeAndCall(
             proxy,
             newImplementation, 
@@ -151,6 +155,10 @@ contract ProxyManager is
 
     function getProxy() public view returns (UpgradableProxyWithAdmin) {
         return _proxy;
+    }
+
+    function getImplementation() public view returns (address) {
+        return _implementation;
     }
 
     function getVersion() external view virtual returns(Version) {

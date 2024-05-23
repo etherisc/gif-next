@@ -39,7 +39,6 @@ contract InstanceService is
     Service,
     IInstanceService
 {
-
     // TODO update to real hash when instance is stable
     bytes32 public constant INSTANCE_CREATION_CODE_HASH = bytes32(0);
 
@@ -66,6 +65,51 @@ contract InstanceService is
             revert ErrorInstanceServiceRequestUnauhorized(msg.sender);
         }
         _;
+    }
+
+    function setAndRegisterMasterInstance(address instanceAddress)
+            external 
+            onlyOwner 
+            returns(NftId masterInstanceNftId)
+    {
+        if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
+        if(_masterAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
+        if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
+        if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
+
+        if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
+
+        IInstance instance = IInstance(instanceAddress);
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+        address instanceAdminAddress = address(instanceAdmin);
+        InstanceReader instanceReader = instance.getInstanceReader();
+        address instanceReaderAddress = address(instanceReader);
+        BundleManager bundleManager = instance.getBundleManager();
+        address bundleManagerAddress = address(bundleManager);
+        InstanceStore instanceStore = instance.getInstanceStore();
+        address instanceStoreAddress = address(instanceStore);
+
+        if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
+        if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
+        if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
+        if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
+        
+        if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
+        if(bundleManager.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
+        if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
+        if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
+        if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
+
+        _masterAccessManager = instance.authority();
+        _masterInstanceAdmin = instanceAdminAddress;
+        _masterInstance = instanceAddress;
+        _masterInstanceReader = instanceReaderAddress;
+        _masterInstanceBundleManager = bundleManagerAddress;
+        _masterInstanceStore = instanceStoreAddress;
+        
+        IInstance masterInstance = IInstance(_masterInstance);
+        IRegistry.ObjectInfo memory info = _registryService.registerInstance(masterInstance, getOwner());
+        masterInstanceNftId = info.nftId;
     }
 
     function createInstanceClone()
@@ -167,61 +211,6 @@ contract InstanceService is
             locked);
     }
 
-
-    function getMasterInstanceReader() external view returns (address) {
-        return _masterInstanceReader;
-    }
-
-    // From IService
-    function getDomain() public pure override returns(ObjectType) {
-        return INSTANCE();
-    }
-
-    function setAndRegisterMasterInstance(address instanceAddress)
-            external 
-            onlyOwner 
-            returns(NftId masterInstanceNftId)
-    {
-        if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
-        if(_masterAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
-        if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
-        if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
-
-        if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
-
-        IInstance instance = IInstance(instanceAddress);
-        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
-        address instanceAdminAddress = address(instanceAdmin);
-        InstanceReader instanceReader = instance.getInstanceReader();
-        address instanceReaderAddress = address(instanceReader);
-        BundleManager bundleManager = instance.getBundleManager();
-        address bundleManagerAddress = address(bundleManager);
-        InstanceStore instanceStore = instance.getInstanceStore();
-        address instanceStoreAddress = address(instanceStore);
-
-        if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
-        if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
-        if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
-        if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
-        
-        if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(bundleManager.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
-        if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
-        if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
-        if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
-
-        _masterAccessManager = instance.authority();
-        _masterInstanceAdmin = instanceAdminAddress;
-        _masterInstance = instanceAddress;
-        _masterInstanceReader = instanceReaderAddress;
-        _masterInstanceBundleManager = bundleManagerAddress;
-        _masterInstanceStore = instanceStoreAddress;
-        
-        IInstance masterInstance = IInstance(_masterInstance);
-        IRegistry.ObjectInfo memory info = _registryService.registerInstance(masterInstance, getOwner());
-        masterInstanceNftId = info.nftId;
-    }
-
     function upgradeMasterInstanceReader(address instanceReaderAddress) external onlyOwner {
         if(_masterInstanceReader == address(0)) { revert ErrorInstanceServiceMasterInstanceReaderNotSet(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderAddressZero(); }
@@ -246,7 +235,6 @@ contract InstanceService is
         instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
-
     function createGifTarget(
         NftId instanceNftId,
         address targetAddress,
@@ -267,7 +255,6 @@ contract InstanceService is
         );
     }
 
-
     function createComponentTarget(
         NftId instanceNftId,
         address targetAddress,
@@ -287,6 +274,34 @@ contract InstanceService is
             selectors
         );
     }
+
+    function getMasterInstanceAddress() external view returns (address) {
+        return _masterInstance;
+    }
+
+    function getMasterInstanceAdminAddress() external view returns (address) {
+        return _masterInstanceAdmin;
+    }
+
+    function getMasterBundleManagerAddress() external view returns (address) {
+        return _masterInstanceBundleManager;
+    }
+
+    function getMasterInstanceStoreAddress() external view returns (address) {
+        return _masterInstanceStore;
+    }
+
+    function getMasterInstanceReaderAddress() external view returns (address) {
+        return _masterInstanceReader;
+    }
+
+    // From IService
+
+    function getDomain() public pure override returns(ObjectType) {
+        return INSTANCE();
+    }
+
+    // ----------- internal functions -------------
 
 
     /// all gif targets MUST be children of instanceNftId

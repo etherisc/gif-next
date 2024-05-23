@@ -24,18 +24,7 @@ abstract contract Service is
     AccessManagedUpgradeable,
     IService
 {
-
     uint8 private constant GIF_MAJOR_VERSION = 3;
-
-    // from Versionable
-    function getVersion()
-        public 
-        pure 
-        virtual override (IVersionable, Versionable)
-        returns(Version)
-    {
-        return VersionLib.toVersion(GIF_MAJOR_VERSION,0,0);
-    }
 
     function initializeService(
         address registry, 
@@ -68,6 +57,25 @@ abstract contract Service is
 
         registerInterface(type(IAccessManaged).interfaceId);
         registerInterface(type(IService).interfaceId);
+    }
+
+    // from Versionable
+    function getVersion()
+        public 
+        pure 
+        virtual override (IVersionable, Versionable)
+        returns(Version)
+    {
+        return VersionLib.toVersion(GIF_MAJOR_VERSION,0,0);
+    }
+
+    function getMajorVersion() 
+        public 
+        pure
+        virtual
+        returns(VersionPart)
+    {
+        return VersionLib.toVersionPart(GIF_MAJOR_VERSION);
     }
 
 

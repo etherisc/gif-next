@@ -35,10 +35,12 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     logger.info("======== Starting deployment of libraries ========");
     const { address: key32LibAddress } = await deployContract(
         "Key32Lib",
+        "Key32Lib",
         owner);
     LIBRARY_ADDRESSES.set("Key32Lib", key32LibAddress);
 
     const { address: nftIdLibAddress } = await deployContract(
+        "NftIdLib",
         "NftIdLib",
         owner,
         undefined, 
@@ -51,10 +53,12 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: uFixedLibAddress } = await deployContract(
         "UFixedLib",
+        "UFixedLib",
         owner);
     LIBRARY_ADDRESSES.set("UFixedLib", uFixedLibAddress);
 
     const { address: amountLibAddress } = await deployContract(
+        "AmountLib",
         "AmountLib",
         owner, 
         undefined,
@@ -67,6 +71,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: claimIdLibAddress } = await deployContract(
         "ClaimIdLib",
+        "ClaimIdLib",
         owner, 
         undefined,
         {
@@ -77,6 +82,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     LIBRARY_ADDRESSES.set("ClaimIdLib", claimIdLibAddress);
 
     const { address: payoutIdLibAddress } = await deployContract(
+        "PayoutIdLib",
         "PayoutIdLib",
         owner, 
         undefined,
@@ -89,10 +95,12 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: mathLibAddress } = await deployContract(
         "MathLib",
+        "MathLib",
         owner);
     LIBRARY_ADDRESSES.set("MathLib", mathLibAddress);
 
     const { address: objectTypeLibAddress } = await deployContract(
+        "ObjectTypeLib",
         "ObjectTypeLib",
         owner,
         undefined,
@@ -102,25 +110,30 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: blockNumberLibAddress } = await deployContract(
         "BlocknumberLib",
+        "BlocknumberLib",
         owner);
     LIBRARY_ADDRESSES.set("BlocknumberLib", blockNumberLibAddress);
 
     const { address: versionLibAddress } = await deployContract(
+        "VersionLib",
         "VersionLib",
         owner);
     LIBRARY_ADDRESSES.set("VersionLib", versionLibAddress);
 
     const { address: versionPartLibAddress } = await deployContract(
         "VersionPartLib",
+        "VersionPartLib",
         owner);
     LIBRARY_ADDRESSES.set("VersionPartLib", versionPartLibAddress);
 
     const { address: secondsLibAddress } = await deployContract(
         "SecondsLib",
+        "SecondsLib",
         owner);
     LIBRARY_ADDRESSES.set("SecondsLib", secondsLibAddress);
 
     const { address: timestampLibAddress } = await deployContract(
+        "TimestampLib",
         "TimestampLib",
         owner, 
         undefined,
@@ -132,6 +145,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     LIBRARY_ADDRESSES.set("TimestampLib", timestampLibAddress);
 
     const { address: targetManagerLibAddress } = await deployContract(
+        "TargetManagerLib",
         "TargetManagerLib",
         owner, 
         undefined,
@@ -147,6 +161,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: stakeManagerLibAddress } = await deployContract(
         "StakeManagerLib",
+        "StakeManagerLib",
         owner, 
         undefined,
         {
@@ -161,6 +176,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: stateIdLibAddress } = await deployContract(
         "StateIdLib",
+        "StateIdLib",
         owner, 
         undefined,
         undefined,
@@ -169,10 +185,12 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: libNftIdSetAddress } = await deployContract(
         "LibNftIdSet",
+        "LibNftIdSet",
         owner);
     LIBRARY_ADDRESSES.set("LibNftIdSet", libNftIdSetAddress);
 
     const { address: roleIdLibAddress } = await deployContract(
+        "RoleIdLib",
         "RoleIdLib",
         owner,
         undefined,
@@ -185,6 +203,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: riskIdLibAddress } = await deployContract(
         "RiskIdLib",
+        "RiskIdLib",
         owner,
         undefined, 
         {
@@ -195,6 +214,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     LIBRARY_ADDRESSES.set("RiskIdLib", riskIdLibAddress);
 
     const { address: feeLibAddress } = await deployContract(
+        "FeeLib",
         "FeeLib",
         owner,
         undefined,
@@ -208,6 +228,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: distributorTypeLibAddress } = await deployContract(
         "DistributorTypeLib",
+        "DistributorTypeLib",
         owner,
         undefined,
         {
@@ -220,6 +241,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     // ReferralLib
     const { address: referralLibAddress } = await deployContract(
         "ReferralLib",
+        "ReferralLib",
         owner,
         undefined,
         {
@@ -231,6 +253,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: instanceAuthorizationsLibAddress } = await deployContract(
         "InstanceAuthorizationsLib",
+        "InstanceAuthorizationsLib",
         owner,
         undefined,
         {
@@ -241,6 +264,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     LIBRARY_ADDRESSES.set("InstanceAuthorizationsLib", instanceAuthorizationsLibAddress);
 
     const { address: serviceAuthorizationsLibAddress } = await deployContract(
+        "ServiceAuthorizationsLib",
         "ServiceAuthorizationsLib",
         owner,
         undefined,
@@ -278,6 +302,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         serviceAuthorizationsLibAddress,
         targetManagerLibAddress,
         stakeManagerLibAddress,
-    };
+    } as LibraryAddresses;
     
 }

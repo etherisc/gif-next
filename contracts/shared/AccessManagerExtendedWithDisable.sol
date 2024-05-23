@@ -1,6 +1,4 @@
-// SPDX-License-Identifier: MIT
-// OpenZeppelin Contracts (last updated v5.0.0) (access/manager/AccessManager.sol)
-
+// SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";

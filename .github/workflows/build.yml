@@ -145,6 +145,6 @@ jobs:
       
       - name: Run deployment script
         env:
-          SKIP_VERIFICATION: true
+          ENABLE_ETHERSCAN_VERIFICATION: true
         run: hh run scripts/deploy_all.ts 
         

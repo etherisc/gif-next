@@ -29,9 +29,10 @@
   ],
   "homepage": "https://github.com/etherisc/gif-next#readme",
   "devDependencies": {
-    "@nomicfoundation/hardhat-foundry": "^1.1.1",
-    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
-    "@nomicfoundation/hardhat-verify": "^1.1.1",
+    "@nomicfoundation/hardhat-foundry": "^1.1.2",
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.7",
+    "@tenderly/hardhat-tenderly": "^2.2.2",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
     "dotenv": "^16.3.1",
