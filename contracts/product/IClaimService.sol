@@ -45,6 +45,10 @@ interface IClaimService is
         bytes memory claimData
     ) external returns (ClaimId claimId);
 
+
+    // TODO add claim revoke functionality
+
+
     /// @dev declines the specified claim
     /// function can only be called by product, policy needs to match with calling product
     function decline(
@@ -52,6 +56,7 @@ interface IClaimService is
         ClaimId claimId,
         bytes memory data // claim processing data
     ) external;
+
 
     /// @dev confirms the specified claim and specifies the payout amount
     /// function can only be called by product, policy needs to match with calling product
@@ -61,6 +66,7 @@ interface IClaimService is
         Amount confirmedAmount,
         bytes memory data // claim processing data
     ) external;
+
 
     /// @dev closes the specified claim
     /// function can only be called by product, policy needs to match with calling product

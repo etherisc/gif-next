@@ -37,7 +37,6 @@ import {IPolicyService} from "../product/IPolicyService.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 
 
-
 interface IInstance is 
     IRegisterable, 
     ITransferInterceptor, 
@@ -55,6 +54,10 @@ interface IInstance is
 
     error ErrorInstanceInstanceStoreAlreadySet(address instanceStore);
     error ErrorInstanceInstanceStoreAuthorityMismatch(address instanceAuthority);
+
+    struct InstanceInfo {
+        uint64 requestsCount;
+    }
 
     function createRole(string memory roleName, string memory adminName) external returns (RoleId roleId, RoleId admin);
     function grantRole(RoleId roleId, address account) external;

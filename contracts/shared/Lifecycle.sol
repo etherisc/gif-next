@@ -4,8 +4,8 @@ pragma solidity ^0.8.20;
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
 import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, BUNDLE, POLICY, RISK, CLAIM, PAYOUT} from "../type/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID} from "../type/StateId.sol";
+import {ObjectType, COMPONENT, BUNDLE, POLICY, REQUEST, RISK, CLAIM, PAYOUT} from "../type/ObjectType.sol";
+import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID, FULFILLED, FAILED, CANCELLED} from "../type/StateId.sol";
 import {ILifecycle} from "./ILifecycle.sol";
 
 contract Lifecycle is
@@ -27,6 +27,7 @@ contract Lifecycle is
         _setupPolicyLifecycle();
         _setupClaimAndPayoutLifecycle();
         _setupRiskLifecycle();
+        _setupRequestLifecycle();
     }
 
     function hasLifecycle(
@@ -117,5 +118,13 @@ contract Lifecycle is
         _isValidTransition[RISK()][ACTIVE()][PAUSED()] = true;
         _isValidTransition[RISK()][PAUSED()][ACTIVE()] = true;
         _isValidTransition[RISK()][PAUSED()][ARCHIVED()] = true;
+    }
+
+    function _setupRequestLifecycle() internal {
+        _initialState[REQUEST()] = ACTIVE();
+        _isValidTransition[REQUEST()][ACTIVE()][FULFILLED()] = true;
+        _isValidTransition[REQUEST()][ACTIVE()][FAILED()] = true;
+        _isValidTransition[REQUEST()][FAILED()][FULFILLED()] = true;
+        _isValidTransition[REQUEST()][ACTIVE()][CANCELLED()] = true;
     }
 }

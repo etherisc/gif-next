@@ -11,6 +11,7 @@ import {
     PolicyService, PolicyServiceManager, PolicyService__factory, 
     ClaimService, ClaimServiceManager, ClaimService__factory, 
     BundleService, BundleServiceManager, BundleService__factory, 
+    OracleService, OracleServiceManager, OracleService__factory,
     PricingService, PricingServiceManager, PricingService__factory,
     RegistryService, RegistryService__factory, RegistryServiceManager,
     StakingService, StakingServiceManager, StakingService__factory
@@ -43,6 +44,11 @@ export type ServiceAddresses = {
     distributionServiceAddress: AddressLike,
     distributionService: DistributionService,
     distributionServiceManagerAddress: AddressLike,
+
+    oracleServiceNftId: string,
+    oracleServiceAddress: AddressLike,
+    oracleService: OracleService,
+    oracleServiceManagerAddress: AddressLike,
 
     pricingServiceNftId: string,
     pricingServiceAddress: AddressLike,
@@ -205,6 +211,33 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const logRegistrationInfoCmpt = getFieldFromTxRcptLogs(rcptCmpt!, registry.registry.interface, "LogRegistration", "nftId");
     const componentServiceNftId = (logRegistrationInfoCmpt as unknown);
     logger.info(`componentServiceManager deployed - componentServiceAddress: ${componentServiceAddress} componentServiceManagerAddress: ${componentServiceManagerAddress} nftId: ${componentServiceNftId}`);
+
+    logger.info("-------- oracle service --------");
+    const { address: oracleServiceManagerAddress, contract: oracleServiceManagerBaseContract, } = await deployContract(
+        "OracleServiceManager",
+        owner,
+        [
+            release.accessManager,
+            registry.registryAddress,
+            release.salt
+        ],
+        { libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                RequestIdLib: libraries.requestIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress, 
+                VersionPartLib: libraries.versionPartLibAddress,
+            }});
+    
+    const oracleServiceManager = oracleServiceManagerBaseContract as OracleServiceManager;
+    const oracleServiceAddress = await oracleServiceManager.getOracleService();
+    const oracleService = OracleService__factory.connect(oracleServiceAddress, owner);
+
+    const orclPrs = await executeTx(async () => await releaseManager.registerService(oracleServiceAddress));
+    const logRegistrationInfoOrc = getFieldFromTxRcptLogs(orclPrs!, registry.registry.interface, "LogRegistration", "nftId");
+    const oracleServiceNftId = (logRegistrationInfoOrc as unknown);
+    await oracleServiceManager.linkToProxy();
+    logger.info(`oracleServiceManager deployed - oracleServiceAddress: ${oracleServiceAddress} oracleServiceManagerAddress: ${oracleServiceManagerAddress} nftId: ${oracleServiceNftId}`);
 
     logger.info("-------- distribution service --------");
     const { address: distributionServiceManagerAddress, contract: distributionServiceManagerBaseContract, } = await deployContract(
@@ -456,6 +489,11 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         distributionServiceAddress: distributionServiceAddress,
         distributionService: distributionService,
         distributionServiceManagerAddress: distributionServiceManagerAddress,
+
+        oracleServiceNftId: oracleServiceNftId as string,
+        oracleServiceAddress: oracleServiceAddress,
+        oracleService: oracleService,
+        oracleServiceManagerAddress: oracleServiceManagerAddress,
 
         pricingServiceNftId: distributionServiceNftId as string,
         pricingServiceAddress: pricingServiceAddress,

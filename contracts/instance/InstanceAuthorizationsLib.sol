@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, COMPONENT_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
-import {APPLICATION, BUNDLE, CLAIM, COMPONENT, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, REGISTRY} from "../type/ObjectType.sol";
+import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, ORACLE_SERVICE_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, ORACLE_OWNER_ROLE, INSTANCE_SERVICE_ROLE, COMPONENT_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
+import {APPLICATION, BUNDLE, CLAIM, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POLICY, POOL, PRODUCT, REGISTRY} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
@@ -31,6 +31,7 @@ library InstanceAuthorizationsLib
         _createRoles(instanceAdmin);
         _createTargets(instanceAdmin, instance, bundleManager, instanceStore);
         _grantComponentServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
+        _grantOracleServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
         _grantDistributionServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
         _grantPoolServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
         _grantProductServiceAuthorizations(accessManager, instanceAdmin, instanceStore, registry, majorVersion);
@@ -49,6 +50,7 @@ library InstanceAuthorizationsLib
         instanceAdmin.createCoreRole(INSTANCE_SERVICE_ROLE(), "InstanceServiceRole");
         instanceAdmin.createCoreRole(COMPONENT_SERVICE_ROLE(), "ComponentServiceRole");
         instanceAdmin.createCoreRole(DISTRIBUTION_SERVICE_ROLE(), "DistributionServiceRole");
+        instanceAdmin.createCoreRole(ORACLE_SERVICE_ROLE(), "OracleServiceRole");
         instanceAdmin.createCoreRole(POOL_SERVICE_ROLE(), "PoolServiceRole");
         instanceAdmin.createCoreRole(APPLICATION_SERVICE_ROLE(), "ApplicationServiceRole");
         instanceAdmin.createCoreRole(PRODUCT_SERVICE_ROLE(), "ProductServiceRole");
@@ -58,6 +60,7 @@ library InstanceAuthorizationsLib
 
         // default roles controlled by INSTANCE_OWNER_ROLE -> gif roles
         instanceAdmin.createGifRole(DISTRIBUTION_OWNER_ROLE(), "DistributionOwnerRole", INSTANCE_OWNER_ROLE());
+        instanceAdmin.createGifRole(ORACLE_OWNER_ROLE(), "OracleOwnerRole", INSTANCE_OWNER_ROLE());
         instanceAdmin.createGifRole(POOL_OWNER_ROLE(), "PoolOwnerRole", INSTANCE_OWNER_ROLE());
         instanceAdmin.createGifRole(PRODUCT_OWNER_ROLE(), "ProductOwnerRole", INSTANCE_OWNER_ROLE());
     }
@@ -102,12 +105,37 @@ library InstanceAuthorizationsLib
             COMPONENT_SERVICE_ROLE());
     }
 
+    function _grantOracleServiceAuthorizations(
+        AccessManagerExtendedInitializeable accessManager,
+        InstanceAdmin instanceAdmin,
+        InstanceStore instanceStore,
+        IRegistry registry,
+        VersionPart majorVersion
+    )
+        private
+    {
+        // configure authorization for distribution service on instance
+        address oracleServiceAddress = registry.getServiceAddress(ORACLE(), majorVersion);
+        accessManager.grantRole(ORACLE_SERVICE_ROLE().toInt(), oracleServiceAddress, 0);
+
+        bytes4[] memory instanceOracleServiceSelectors = new bytes4[](3);
+        instanceOracleServiceSelectors[0] = instanceStore.createRequest.selector;
+        instanceOracleServiceSelectors[1] = instanceStore.updateRequest.selector;
+        instanceOracleServiceSelectors[2] = instanceStore.updateRequestState.selector;
+
+        instanceAdmin.setTargetFunctionRoleByService(
+            "InstanceStore",
+            instanceOracleServiceSelectors,
+            ORACLE_SERVICE_ROLE());
+    }
+
     function _grantDistributionServiceAuthorizations(
         AccessManagerExtendedInitializeable accessManager,
         InstanceAdmin instanceAdmin,
         InstanceStore instanceStore,
         IRegistry registry,
-        VersionPart majorVersion)
+        VersionPart majorVersion
+    )
         private
     {
         // configure authorization for distribution service on instance

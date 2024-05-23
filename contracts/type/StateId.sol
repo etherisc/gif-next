@@ -59,6 +59,18 @@ function EXPECTED() pure returns (StateId) {
     return toStateId(60);
 }
 
+function FULFILLED() pure returns (StateId) {
+    return toStateId(70);
+}
+
+function FAILED() pure returns (StateId) {
+    return toStateId(7);
+}
+
+function CANCELLED() pure returns (StateId) {
+    return toStateId(72);
+}
+
 function PAUSED() pure returns (StateId) {
     return toStateId(110);
 }

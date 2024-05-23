@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, COMPONENT_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, STAKING_SERVICE_ROLE, CAN_CREATE_GIF_TARGET__ROLE} from "../../contracts/type/RoleId.sol";
+import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, ORACLE_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, COMPONENT_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, STAKING_SERVICE_ROLE, CAN_CREATE_GIF_TARGET__ROLE} from "../../contracts/type/RoleId.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 import {PolicyServiceManager} from "../../contracts/product/PolicyServiceManager.sol";
@@ -12,6 +12,9 @@ import {ApplicationService} from "../../contracts/product/ApplicationService.sol
 
 import {ClaimService} from "../../contracts/product/ClaimService.sol";
 import {ClaimServiceManager} from "../../contracts/product/ClaimServiceManager.sol";
+
+import {OracleService} from "../../contracts/oracle/OracleService.sol";
+import {OracleServiceManager} from "../../contracts/oracle/OracleServiceManager.sol";
 
 import {ProductService} from "../../contracts/product/ProductService.sol";
 import {ProductServiceManager} from "../../contracts/product/ProductServiceManager.sol";
@@ -53,6 +56,7 @@ contract GifTestReleaseConfig is ReleaseConfig
     string constant POLICY_SERVICE_ROLE_NAME = "PolicyServiceRole";
     string constant APPLICATION_SERVICE_ROLE_NAME = "ApplicationServiceRole";
     string constant CLAIM_SERVICE_ROLE_NAME = "ClaimServiceRole";
+    string constant ORACLE_SERVICE_ROLE_NAME = "OracleServiceRole";
     string constant PRODUCT_SERVICE_ROLE_NAME = "ProductServiceRole";
     string constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
     string constant BUNDLE_SERVICE_ROLE_NAME = "BundleServiceRole";
@@ -67,6 +71,7 @@ contract GifTestReleaseConfig is ReleaseConfig
     string constant POLICY_SERVICE_NAME = "PolicyService";
     string constant APPLICATION_SERVICE_NAME = "ApplicationService";
     string constant CLAIM_SERVICE_NAME = "ClaimService";
+    string constant ORACLE_SERVICE_NAME = "OracleService";
     string constant PRODUCT_SERVICE_NAME = "ProductService";
     string constant POOL_SERVICE_NAME = "PoolService";
     string constant BUNDLE_SERVICE_NAME = "BundleService";
@@ -84,6 +89,7 @@ contract GifTestReleaseConfig is ReleaseConfig
         _pushPolicyServiceConfig();
         _pushApplicationServiceConfig();
         _pushClaimServiceConfig();
+        _pushOracleServiceConfig();
         _pushProductServiceConfig();
         _pushPoolServiceConfig();
         _pushBundleServiceConfig();
@@ -153,6 +159,28 @@ contract GifTestReleaseConfig is ReleaseConfig
         _serviceRoles[serviceIdx][0] = CLAIM_SERVICE_ROLE();
 
         _serviceRoleNames[serviceIdx][0] = CLAIM_SERVICE_ROLE_NAME;
+    }
+
+    function _pushOracleServiceConfig() internal
+    {
+        address proxyManager = _computeProxyManagerAddress(type(OracleServiceManager).creationCode);
+        address implementation = _computeImplementationAddress(type(OracleService).creationCode, proxyManager);
+        address proxyAddress = _computeProxyAddress(implementation, proxyManager);
+
+        _addresses.push(proxyAddress);
+        _names.push(ORACLE_SERVICE_NAME);
+        _serviceRoles.push(new RoleId[](2));
+        _serviceRoleNames.push(new string[](2));
+        _functionRoles.push(new RoleId[](0));
+        _functionRoleNames.push(new string[](0));
+        _selectors.push(new bytes4[][](0));
+        uint serviceIdx = _addresses.length - 1;
+
+        _serviceRoles[serviceIdx][0] = ORACLE_SERVICE_ROLE();
+        _serviceRoles[serviceIdx][1] = CAN_CREATE_GIF_TARGET__ROLE();
+
+        _serviceRoleNames[serviceIdx][0] = ORACLE_SERVICE_ROLE_NAME;
+        _serviceRoleNames[serviceIdx][1] = CAN_CREATE_GIF_TARGET__ROLE_NAME;
     }
 
     function _pushProductServiceConfig() internal

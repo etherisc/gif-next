@@ -4,17 +4,29 @@ pragma solidity ^0.8.20;
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
+import {IOracleService} from "../../contracts/oracle/IOracleService.sol";
+import {ORACLE} from "../../contracts/type/ObjectType.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {PayoutId} from "../../contracts/type/PayoutId.sol";
 import {Product} from "../../contracts/product/Product.sol";
 import {ReferralId} from "../../contracts/type/Referral.sol";
+import {RequestId} from "../../contracts/type/RequestId.sol";
 import {RiskId} from "../../contracts/type/RiskId.sol";
+import {Seconds} from "../../contracts/type/Seconds.sol";
+import {SimpleOracle} from "./SimpleOracle.sol";
 import {StateId} from "../../contracts/type/StateId.sol";
-import {Timestamp, Seconds} from "../../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
 contract SimpleProduct is Product {
+
+    event LogSimpleProductRequestAsyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
+    event LogSimpleProductRequestSyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
+
+    error ErrorSimpleProductRevertedWhileProcessingResponse(RequestId requestId);
+
+    IOracleService private _oracleService;
 
     constructor(
         address registry,
@@ -63,6 +75,8 @@ contract SimpleProduct is Product {
             distribution,
             "",
             ""); 
+
+        _oracleService = IOracleService(_getServiceAddress(ORACLE()));
     }
 
     function createRisk(
@@ -94,7 +108,7 @@ contract SimpleProduct is Product {
             state
         );
     }
-    
+
     function createApplication(
         address applicationOwner,
         RiskId riskId,
@@ -191,6 +205,83 @@ contract SimpleProduct is Product {
         _processPayout(policyNftId, payoutId);
     }
 
+    function createOracleRequest(
+        NftId oracleNftId,
+        string memory requestText,
+        Timestamp expiryAt,
+        bool synchronous
+    )
+        public
+        // restricted()
+        returns (RequestId)
+    {
+        bytes memory requestData = abi.encode(SimpleOracle.SimpleRequest(
+            synchronous,
+            requestText));
+
+        if (synchronous) {
+            return _oracleService.request(
+                oracleNftId, 
+                requestData, 
+                expiryAt, 
+                "fulfillOracleRequestSync");
+        } else {
+            return _oracleService.request(
+                oracleNftId, 
+                requestData, 
+                expiryAt, 
+                "fulfillOracleRequestAsync");
+        }
+    }
+
+    function cancelOracleRequest(
+        RequestId requestId
+    )
+        public
+        // restricted() // 
+    {
+        _oracleService.cancel(requestId);
+    }
+
+    function fulfillOracleRequestSync(
+        RequestId requestId,
+        bytes memory responseData
+    )
+        public
+        // restricted() // only oracle service
+    {
+        string memory responseText = abi.decode(responseData, (string));
+        emit LogSimpleProductRequestSyncFulfilled(requestId, responseText, bytes(responseText).length);
+    }
+
+    function fulfillOracleRequestAsync(
+        RequestId requestId,
+        bytes memory responseData
+    )
+        public
+        // restricted() // only oracle service
+    {
+        SimpleOracle.SimpleResponse memory response = abi.decode(
+            responseData, (SimpleOracle.SimpleResponse));
+
+        if (response.revertInCall && response.revertUntil >= TimestampLib.blockTimestamp()) {
+            revert ErrorSimpleProductRevertedWhileProcessingResponse(requestId);
+        }
+
+        emit LogSimpleProductRequestAsyncFulfilled(requestId, response.text, bytes(response.text).length);
+    }
+
+
+    function resend(
+        RequestId requestId
+    )
+        public
+        // restricted() // 
+    {
+        _oracleService.resend(requestId);
+    }
+
+
     function doSomethingSpecial() 
         public 
         restricted()
@@ -207,4 +298,7 @@ contract SimpleProduct is Product {
         return true;
     }
 
+    function getOracleService() public view returns (IOracleService) {
+        return _oracleService;
+    }
 }

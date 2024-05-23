@@ -16,7 +16,7 @@ import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, zeroObjectType, PROTOCOL, REGISTRY, TOKEN, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, toObjectType, PROTOCOL, REGISTRY, TOKEN, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
@@ -59,7 +59,7 @@ function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
         IRegistry.ObjectInfo(
             NftIdLib.zero(),
             NftIdLib.zero(),
-            zeroObjectType(),
+            ObjectTypeLib.zero(),
             false,
             address(0),
             address(0),
@@ -362,7 +362,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         EnumerableSet.add(_registeredAddresses, address(registry));
         EnumerableSet.add(_registeredAddresses, address(staking));
 
-        _types.push(zeroObjectType());
+        _types.push(ObjectTypeLib.zero());
         _types.push(PROTOCOL());
         _types.push(REGISTRY());
         _types.push(SERVICE());
@@ -403,7 +403,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         // SECTION: Names for logging
 
-        _typeName[zeroObjectType()] = "ZERO";
+        _typeName[ObjectTypeLib.zero()] = "ZERO";
         _typeName[PROTOCOL()] = "PROTOCOL";
         _typeName[REGISTRY()] = "REGISTRY";
         _typeName[STAKING()] = "STAKING";
@@ -554,7 +554,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             unknownNftId, 
             zeroObjectInfo(),
             VersionLib.zeroVersion().toMajorPart(),
-            zeroObjectType(),
+            ObjectTypeLib.zero(),
             address(0)
         );
 
