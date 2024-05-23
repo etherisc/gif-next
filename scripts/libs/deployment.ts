@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { AddressLike, BaseContract, Signer, TransactionReceipt, TransactionResponse, resolveAddress } from "ethers";
+import { AddressLike, BaseContract, Signer, TransactionReceipt, TransactionResponse, id, keccak256, resolveAddress } from "ethers";
 import hre, { ethers } from "hardhat";
 import { logger } from "../logger";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
@@ -133,6 +133,9 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
     logger.info(`Deploying ${contractName}...`);
         const factoryArgs = factoryOptions != undefined ? { ...factoryOptions, signer } : { signer };
         const contractFactory = await ethers.getContractFactory(contractName, factoryArgs);
+        logger.debug(contractFactory.bytecode);
+        const c2Address = ethers.getCreate2Address(await resolveAddress(signer.getAddress()), id("HelloWorld"), keccak256(contractFactory.bytecode));
+        console.log("c2Address: ", c2Address);
 
         const opts = {} as any;
         if (GAS_PRICE !== undefined) {
