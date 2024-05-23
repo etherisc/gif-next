@@ -89,18 +89,35 @@ Environment variables:
 - `ETHERSCAN_API_KEY` `POLYGONSCAN_API_KEY` the api key for etherscan/polygonscan (required for mumbai and mainnet)
 
 
-```bash
-# run deployment and verify on tendrely network
+#### Tenderly Testnet Deployment
 
+if not already done:
+*  install hardhat-tenderly
+* install tenderly cli
+
+```bash
+npm install @tenderly/hardhat-tenderly
+curl https://raw.githubusercontent.com/Tenderly/tenderly-cli/master/scripts/install-linux.sh | sudo sh
+```
+
+login to tenderly
+```bash
+tenderly login
+```
+when prompted (1st time usage) enter access key (= access token, see https://dashboard.tenderly.co/account/authorization)
+
+run deployment to tenderly testnet (eg <tenderlyNetwork>=virtualMainnet in the example below)
+
+```bash
+export RESUMEABLE_DEPLOYMENT=false
 export ENABLE_ETHERSCAN_VERIFICATION=false
 export ENABLE_TENDERLY_VERIFICATION=true
-tenderly login
 hh run --network <tenderlyNetwork> scripts/deploy_all.ts
 ```
 
 Environment variables:
 
-- `RESUMEABLE_DEPLOYMENT` set to `true` to skip deployment/verification of already deployed/verified contracts (based on ./deployment_state_<chainId>.json)
+- `RESUMEABLE_DEPLOYMENT` set to `true` to skip deployment/verification of already deployed/verified contracts (based on ./deployment_state_<chainId>.json), set to `true` to force a redeploy
 - `ENABLE_TENDERLY_VERIFICATION` set to `true` to perform verification of deployed contracts 
 # https://dashboard.tenderly.co/{TENDERLY_USERNAME}/{TENDERLY_PROJECT}/fork/{FORK_ID}
 - `TENDERLY_DEVNET_RPC_URL` is the RPC_URL of a Tenderly Devnet, found on the devnet UI info tab
