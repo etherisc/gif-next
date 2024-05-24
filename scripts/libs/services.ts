@@ -1,5 +1,4 @@
-
-import { AddressLike, BytesLike, Signer, resolveAddress, id } from "ethers";
+import { AddressLike, BytesLike, Signer, id } from "ethers";
 import { 
     DistributionService, DistributionServiceManager, DistributionService__factory, 
     InstanceService, InstanceServiceManager, InstanceService__factory, 
@@ -13,7 +12,7 @@ import {
     OracleService, OracleServiceManager, OracleService__factory,
     PricingService, PricingServiceManager, PricingService__factory,
     RegistryService, RegistryService__factory, RegistryServiceManager,
-    StakingService, StakingServiceManager, StakingService__factory
+    StakingService, StakingServiceManager, StakingService__factory,
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
@@ -150,6 +149,42 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             VersionPartLib: libraries.versionPartLibAddress,
         }});
 
+    // TODO: use ignition? 
+    // const { stakingServiceManagerFuture } = await hre.ignition.deploy(ServicesModule, {
+    //     parameters: {
+    //         "Services": {
+    //             "accessManager": await resolveAddress(release.accessManager),
+    //             "registryAddress": await resolveAddress(registry.registryAddress),
+    //             "salt": release.salt as string,
+    //             "amountLibAddress": await resolveAddress(libraries.amountLibAddress),
+    //             "nftIdLibAddress": await resolveAddress(libraries.nftIdLibAddress),
+    //             "timestampLibAddress": await resolveAddress(libraries.timestampLibAddress),
+    //             "versionLibAddress": await resolveAddress(libraries.versionLibAddress),
+    //             "versionPartLibAddress": await resolveAddress(libraries.versionPartLibAddress),
+    //             "targetManagerLibAddress": await resolveAddress(libraries.targetManagerLibAddress),  
+    //         }
+    //     }
+    //     // strategy: "create2",
+    //     // strategyConfig: {
+    //     //     salt: "0x0000000000000000000000000000000000000000000000000000000000000002"
+    //     // }
+    // });
+
+
+    //     const amountLib = m.contractAt("AmountLib", m.getParameter("amountLibAddress"));
+    // const nftIdLib = m.contractAt("NftIdLib", m.getParameter("nftIdLibAddress"));
+    // const timestampLib = m.contractAt("TimestampLib", m.getParameter("timestampLibAddress"));
+    // const versionLib = m.contractAt("VersionLib", m.getParameter("versionLibAddress"));
+    // const versionPartLib = m.contractAt("VersionPartLib", m.getParameter("versionPartLibAddress"));
+    // const targetManagerLib = m.contractAt("TargetManagerLib", m.getParameter("targetManagerLibAddress"));    
+
+    // const stakingServiceManager = m.contract("RegistryAdmin", [
+    //     m.getParameter("accessManager"),
+    //     m.getParameter("registryAddress"),
+    //     m.getParameter("salt")
+
+    // const stakingServiceManagerAddress = await stakingServiceManagerFuture.getAddress();
+    // logger.debug("deployed at " + stakingServiceManagerAddress);
     const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
     const stakingServiceAddress = await stakingServiceManager.getStakingService();
     const stakingService = StakingService__factory.connect(stakingServiceAddress, owner);
