@@ -110,27 +110,6 @@ contract RegistryAdmin is
         _setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
     }
 
-    // TODO makes sense to do this in intialize() function
-    // it is a single contract
-    // but if many token registries a possible...
-    /*function setTokenRegistry(
-        address tokenRegistry
-    )
-        external
-        restricted() // GIF_ADMIN_ROLE
-    {
-        // for TokenRegistry
-        bytes4[] memory functionSelector = new bytes4[](5);
-        functionSelector[0] = TokenRegistry.registerToken.selector;
-        functionSelector[1] = TokenRegistry.registerRemoteToken.selector;
-        functionSelector[2] = TokenRegistry.setActive.selector;
-        functionSelector[3] = TokenRegistry.setActiveForVersion.selector;
-
-        // only needed for testing TODO find a better way
-        functionSelector[4] = TokenRegistry.setActiveWithVersionCheck.selector;
-        _setTargetFunctionRole(address(tokenRegistry), functionSelector, GIF_MANAGER_ROLE());
-    }*/
-
 
     function setTargetFunctionRole(
         address target, 
@@ -152,6 +131,37 @@ contract RegistryAdmin is
     }*/
 
     //--- view functions ----------------------------------------------------//
+
+    function targets() external view returns (uint256 numberOfTargets) {
+        return AccessManagerExtendedInitializeable(authority()).getTargets();
+    }
+
+    function getTargetAddress(uint256 idx) external view returns (address target) {
+        return AccessManagerExtendedInitializeable(authority()).getTarget(idx);
+    }
+
+    function getTargetInfo(address target) external view returns (AccessManagerExtendedInitializeable.TargetInfo memory info) {
+        return AccessManagerExtendedInitializeable(authority()).getTargetInfo(target);
+    }
+
+    function roles() external view returns (uint256 numberOfRoles) {
+        return AccessManagerExtendedInitializeable(authority()).getRoles();
+    }
+
+    function getRoleId(uint256 idx) external view returns (RoleId roleId) {
+        uint64 roleIdInt = AccessManagerExtendedInitializeable(authority()).getRoleId(idx);
+        return RoleIdLib.toRoleId(roleIdInt);
+    }
+
+    function getRoleInfo(RoleId roleId) external view returns (AccessManagerExtendedInitializeable.RoleInfo memory) {
+        uint64 roleIdInt = uint64(roleId.toInt()); 
+        return AccessManagerExtendedInitializeable(authority()).getRoleInfo(roleIdInt);
+    }
+
+    function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers) {
+        uint64 roleIdInt = uint64(roleId.toInt());
+        return AccessManagerExtendedInitializeable(authority()).getRoleMembers(roleIdInt);
+    }
 
     function hasRole(address account, RoleId roleId) external view returns(bool) {
         (bool isMember,) =  AccessManagerExtendedInitializeable(authority()).hasRole(roleId.toInt(), account);

@@ -17,7 +17,12 @@ import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Ini
     2. _getAdminRestrictions() private view -> internal virtual view
     3. _checkSelector() private pure -> internal pure
 */
-abstract contract AccessManagerCustom is Initializable, ContextUpgradeable, MulticallUpgradeable, IAccessManager {
+abstract contract AccessManagerCustom is
+    Initializable, 
+    ContextUpgradeable, 
+    MulticallUpgradeable, 
+    IAccessManager
+{
     using Time for *;
 
     // Structure that stores the details for a target contract.

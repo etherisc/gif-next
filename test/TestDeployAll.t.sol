@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import "@openzeppelin/contracts/utils/Strings.sol";
+
 import {console} from "../lib/forge-std/src/Script.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {InstanceLinkedComponent} from "../contracts/shared/InstanceLinkedComponent.sol";
@@ -18,6 +20,56 @@ contract TestDeployAll is GifTest {
     function setUp() public override {
         super.setUp();
         _prepareProduct();  
+    }
+
+    function test_deployRegistryAdmin() public {
+        console.log("registry admin deployed:", address(registryAdmin));
+        console.log("registry admin authority", registryAdmin.authority());
+
+        uint256 roles = registryAdmin.roles();
+        uint256 targets = registryAdmin.targets();
+
+        console.log("number of roles", roles);
+
+        for(uint256 i = 0; i < roles; i++) {
+            console.log("role", i, _getRoleText(i));
+        }
+
+        console.log("number of targets", targets);
+
+        for(uint256 i = 0; i < targets; i++) {
+            console.log("target", i, _getTargetText(i));
+        }
+    }
+
+    function _getTargetText(uint256 idx) internal returns (string memory) {
+        address target = registryAdmin.getTargetAddress(idx);
+        return string(
+            abi.encodePacked(
+                "address ", 
+                _toString(target), 
+                " ", 
+                registryAdmin.getTargetInfo(target).name));
+    }
+
+    function _getRoleText(uint256 idx) internal returns (string memory) {
+        RoleId roleId = registryAdmin.getRoleId(idx);
+        return string(
+            abi.encodePacked(
+                "roleId ", 
+                _toString(roleId.toInt()), 
+                " ", 
+                registryAdmin.getRoleInfo(roleId).name,
+                " members ",
+                _toString(registryAdmin.roleMembers(roleId))));
+    }
+
+    function _toString(uint256 value) internal pure returns (string memory) {
+        return Strings.toString(value);
+    }
+
+    function _toString(address _address) internal pure returns (string memory) {
+        return Strings.toHexString(uint256(uint160(_address)), 20);
     }
 
     function test_deploySimpleProduct() public {
