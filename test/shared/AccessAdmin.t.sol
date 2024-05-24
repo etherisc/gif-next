@@ -41,6 +41,84 @@ contract AccessAdminTest is Test {
         vm.stopPrank();
     }
 
+    function test_accessAdminCreateTargetHappyCase() public {
+        // GIVEN (just setup)
+        string memory targetName = "AccessAdmin";
+        Str name = StrLib.toStr(targetName);
+
+        assertEq(accessAdmin.targets(), 0, "more than zero initial targets");
+        assertFalse(accessAdmin.targetExists(address(accessAdmin)), "address(this) exists as target");
+        assertEq(accessAdmin.getTargetForName(name), address(0), "AccessAdmin -> non zero target");
+
+        // WHEN
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.createTarget(address(accessAdmin), targetName);
+        vm.stopPrank();
+
+        // THEN
+        assertEq(accessAdmin.targets(), 1, "unexpected number of targets");
+        assertTrue(accessAdmin.targetExists(address(accessAdmin)), "address(this) doesn't exist as target");
+        assertEq(accessAdmin.getTargetForName(name), address(accessAdmin), "unexpected target address for name 'AccessAdmin'");
+
+        IAccessAdmin.TargetInfo memory info = accessAdmin.getTargetInfo(address(accessAdmin));
+        assertEq(info.name.toString(), targetName, "unexpected target name (info)");
+        assertEq(info.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected created at (info)");
+    }
+
+    function test_accessAdminCreateTargetInvalidParameters() public {
+        // GIVEN 
+        string memory targetName = "AccessAdmin";
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.createTarget(address(accessAdmin), targetName);
+        vm.stopPrank();
+
+        // WHEN + THEN
+
+        // attempt to create accessAdmin target a 2nd time
+        address accessAdminTarget = address(accessAdmin);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorTargetAlreadyCreated.selector, 
+                accessAdminTarget,
+                targetName));
+
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.createTarget(accessAdminTarget, "SomeTarget");
+        vm.stopPrank();
+
+        // attempt to create target that is not access managed
+        address invalidTarget = makeAddr("invalidContract");
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorTargetNotAccessManaged.selector, 
+                invalidTarget));
+
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.createTarget(invalidTarget, "SomeTarget");
+        vm.stopPrank();
+
+        // attempt to create target with empty name
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorTargetNameEmpty.selector, 
+                address(this)));
+
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.createTarget(address(this), "");
+        vm.stopPrank();
+
+        // attempt to create target with existing name
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorTargetNameAlreadyExists.selector, 
+                address(this),
+                targetName,
+                accessAdminTarget));
+
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.createTarget(address(this), "AccessAdmin");
+        vm.stopPrank();
+    }
 
     function test_accessAdminCreateRoleHappyCase() public {
         // GIVEN (just setup)
@@ -800,7 +878,7 @@ contract AccessAdminTest is Test {
     }
 
     function _checkRoleGranting(
-        AccessAdmin accessAdmin, 
+        AccessAdmin aa, 
         RoleId roleId, 
         address roleAdmin,
         address account1,
@@ -809,40 +887,40 @@ contract AccessAdminTest is Test {
         internal
     {
         // GIVEN
-        RoleId adminRoleId = accessAdmin.getRoleInfo(roleId).adminRoleId;
-        assertFalse(accessAdmin.hasRole(account1, roleId), "account1 already has role");
-        assertFalse(accessAdmin.hasRole(account1, adminRoleId), "account1 is role admin");
-        assertTrue(accessAdmin.hasRole(roleAdmin, adminRoleId), "role admin is not role admin");
+        RoleId adminRoleId = aa.getRoleInfo(roleId).adminRoleId;
+        assertFalse(aa.hasRole(account1, roleId), "account1 already has role");
+        assertFalse(aa.hasRole(account1, adminRoleId), "account1 is role admin");
+        assertTrue(aa.hasRole(roleAdmin, adminRoleId), "role admin is not role admin");
 
         // WHEN - grant role
         vm.startPrank(roleAdmin);
-        accessAdmin.grantRole(account1, roleId);
-        accessAdmin.grantRole(account2, roleId);
+        aa.grantRole(account1, roleId);
+        aa.grantRole(account2, roleId);
         vm.stopPrank();
 
         // THEN (grant)
-        assertTrue(accessAdmin.hasRole(account1, roleId), "outsider has not been granted role");
-        assertTrue(accessAdmin.hasRole(account2, roleId), "outsider2 has not been granted role");
-        assertFalse(accessAdmin.hasRole(account1, adminRoleId), "outsider is role admin");
-        assertFalse(accessAdmin.hasRole(account2, adminRoleId), "outsider2 is role admin");
+        assertTrue(aa.hasRole(account1, roleId), "outsider has not been granted role");
+        assertTrue(aa.hasRole(account2, roleId), "outsider2 has not been granted role");
+        assertFalse(aa.hasRole(account1, adminRoleId), "outsider is role admin");
+        assertFalse(aa.hasRole(account2, adminRoleId), "outsider2 is role admin");
 
         // WHEN - revoke role
         vm.startPrank(roleAdmin);
-        accessAdmin.revokeRole(account1, roleId);
+        aa.revokeRole(account1, roleId);
         vm.stopPrank();
 
         // THEN (revoke)
-        assertFalse(accessAdmin.hasRole(account1, roleId), "outsider still has role");
-        assertFalse(accessAdmin.hasRole(account1, adminRoleId), "outsider is role admin");
+        assertFalse(aa.hasRole(account1, roleId), "outsider still has role");
+        assertFalse(aa.hasRole(account1, adminRoleId), "outsider is role admin");
 
         // WHEN - renounce role
         vm.startPrank(account2);
-        accessAdmin.renounceRole(roleId);
+        aa.renounceRole(roleId);
         vm.stopPrank();
 
         // THEN (renounce)
-        assertFalse(accessAdmin.hasRole(account2, roleId), "outsider2 still has role");
-        assertFalse(accessAdmin.hasRole(account2, adminRoleId), "outsider2 is role admin");
+        assertFalse(aa.hasRole(account2, roleId), "outsider2 still has role");
+        assertFalse(aa.hasRole(account2, adminRoleId), "outsider2 is role admin");
     }
 
 

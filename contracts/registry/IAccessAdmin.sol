@@ -12,6 +12,10 @@ interface IAccessAdmin is
 {
 
     event LogRoleCreated(RoleId roleId, RoleId roleAdminId, string name);
+    event LogRoleGranted(RoleId roleId, address account);
+    event LogRoleRevoked(RoleId roleId, address account);
+    event LogRoleRenounced(RoleId roleId, address account);
+
     event LogTargetCreated(address target, string name);
 
     // only deployer modifier
@@ -28,13 +32,20 @@ interface IAccessAdmin is
     error ErrorAdminRoleMissing();
 
     // create role
-    error ErrorRoleAlreadyCreated(RoleId roleId, string roleName);
+    error ErrorRoleAlreadyCreated(RoleId roleId, string name);
     error ErrorRoleAdminNotExisting(RoleId adminRoleId);
     error ErrorRoleNameEmpty(RoleId roleId);
-    error ErrorRoleNameAlreadyExists(RoleId roleId, string roleName, RoleId existingRoleId);
+    error ErrorRoleNameAlreadyExists(RoleId roleId, string name, RoleId existingRoleId);
 
     // grant/revoke/renounce role
     error ErrorRoleIsLocked(RoleId roleId);
+
+    // create target
+    error ErrorTargetAlreadyCreated(address target, string name);
+    error ErrorTargetNameEmpty(address target);
+    error ErrorTargetNameAlreadyExists(address target, string name, address existingTarget);
+    error ErrorTargetNotAccessManaged(address target);
+    error ErrorTargetAuthorityMismatch(address expectedAuthority, address actualAuthority);
 
     struct RoleInfo {
         RoleId adminRoleId;
@@ -53,7 +64,7 @@ interface IAccessAdmin is
         Timestamp createdAt;
     }
 
-    /// @dev Create a new role using the specified parameters.
+    /// @dev Create a new named role using the specified parameters.
     /// The adminRoleId refers to the required role to grant/revoke the newly created role.
     /// permissioned: the caller must have the manager role (getManagerRole).
     function createRole(RoleId roleId, RoleId adminRoleId, string memory name) external;
@@ -69,7 +80,9 @@ interface IAccessAdmin is
     /// @dev Removes the provided role from the caller
     function renounceRole(RoleId roleId) external;
 
-    // function createTarget(address target, string memory name) external;
+    /// @dev Create a new named target.
+    /// permissioned: the caller must have the manager role (getManagerRole).
+    function createTarget(address target, string memory name) external;
 
     //--- view functions ----------------------------------------------------//
 
@@ -88,9 +101,12 @@ interface IAccessAdmin is
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers);
     function getRoleMember(RoleId roleId, uint256 idx) external view returns (address account);
 
-    // function targets() external view returns (uint256 numberOfTargets);
-    // function getTargetAddress(uint256 idx) external view returns (address target);
-    // function getTargetInfo(address target) external view returns (TargetInfo memory targetInfo);
+    function isAccessManaged(address target) external view returns (bool);
+    function targetExists(address target) external view returns (bool exists);
+    function targets() external view returns (uint256 numberOfTargets);
+    function getTargetAddress(uint256 idx) external view returns (address target);
+    function getTargetInfo(address target) external view returns (TargetInfo memory targetInfo);
+    function getTargetForName(Str name) external view returns (address target);
 
     function deployer() external view returns (address);
 }

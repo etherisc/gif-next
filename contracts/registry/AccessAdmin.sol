@@ -42,13 +42,22 @@ contract AccessAdmin is
     mapping(RoleId roleId => RoleInfo info) internal _roleInfo;
 
     /// @dev store role name info per role name
-    mapping(Str roleName => RoleNameInfo) internal _roleForName;
+    mapping(Str roleName => RoleNameInfo nameInfo) internal _roleForName;
 
     /// @dev store array with all created roles
     RoleId [] internal _roleIds;
 
     /// @dev store set of current role members for given role
     mapping(RoleId roleId => EnumerableSet.AddressSet roleMembers) internal _roleMembers;
+
+    /// @dev store target info per target address
+    mapping(address target => TargetInfo info) internal _targetInfo;
+
+    /// @dev store role name info per role name
+    mapping(Str targetName => address target) internal _targetForName;
+
+    /// @dev store array with all created targets
+    address [] internal _targets;
 
     /// @dev temporary dynamic functions array
     bytes4[] private _functions;
@@ -88,6 +97,7 @@ contract AccessAdmin is
         _disableInitializers();
     }
 
+    //--- role management functions -----------------------------------------//
 
     function createRole(
         RoleId roleId, 
@@ -131,6 +141,17 @@ contract AccessAdmin is
         _revokeRoleFromAccount(roleId, msg.sender);
     }
 
+    //--- target management functions ---------------------------------------//
+
+    function createTarget(
+        address target, 
+        string memory name
+    )
+        external
+        restricted()
+    {
+        _createTarget(target, name);
+    }
 
     //--- view functions ----------------------------------------------------//
 
@@ -183,6 +204,38 @@ contract AccessAdmin is
 
     function getRoleMember(RoleId roleId, uint256 idx) external view returns (address account) {
         return _roleMembers[roleId].at(idx);
+    }
+
+    function isAccessManaged(address target) public view returns (bool) {
+        if (!_isContract(target)) {
+            return false;
+        }
+
+        (bool success, ) = target.staticcall(
+            abi.encodeWithSelector(
+                AccessManagedUpgradeable.authority.selector));
+
+        return success;
+    }
+
+    function targetExists(address target) public view returns (bool exists) {
+        return _targetInfo[target].createdAt.gtz();
+    }
+
+    function targets() external view returns (uint256 numberOfTargets) {
+        return _targets.length;
+    }
+
+    function getTargetAddress(uint256 idx) external view returns (address target) {
+        return _targets[idx];
+    }
+
+    function getTargetInfo(address target) external view returns (TargetInfo memory targetInfo) {
+        return _targetInfo[target];
+    }
+
+    function getTargetForName(Str name) external view returns (address target) {
+        return _targetForName[name];
     }
 
     function deployer() public view returns (address) {
@@ -259,7 +312,8 @@ contract AccessAdmin is
 
         // grant manager role access to the specified functions 
         _functions = [
-            IAccessAdmin.createRole.selector
+            IAccessAdmin.createRole.selector,
+            IAccessAdmin.createTarget.selector
         ];
 
         // setup initial function granting for manager role
@@ -292,6 +346,8 @@ contract AccessAdmin is
             RoleId.unwrap(roleId), 
             account, 
             0);
+        
+        emit LogRoleGranted(roleId, account);
     }
 
     /// @dev revoke the specified role from the provided account
@@ -303,6 +359,12 @@ contract AccessAdmin is
         _authority.revokeRole(
             RoleId.unwrap(roleId), 
             account);
+        
+        if (msg.sender == account) {
+            emit LogRoleRenounced(roleId, account);
+        } else {
+            emit LogRoleRevoked(roleId, account);
+        }
     }
 
 
@@ -376,4 +438,68 @@ contract AccessAdmin is
 
         emit LogRoleCreated(roleId, adminRoleId, name.toString());
     }
+
+
+    function _createTarget(address target, string memory targetName)
+        internal
+    {
+        // check target does not yet exist
+        if(targetExists(target)) {
+            revert ErrorTargetAlreadyCreated(
+                target, 
+                _targetInfo[target].name.toString());
+        }
+
+        // check target name is not empty
+        Str name = StrLib.toStr(targetName);
+        if(name.length() == 0) {
+            revert ErrorTargetNameEmpty(target);
+        }
+
+        // check target name is not used for another role
+        if( _targetForName[name] != address(0)) {
+            revert ErrorTargetNameAlreadyExists(
+                target, 
+                targetName,
+                _targetForName[name]);
+        }
+
+        // check target is an access managed contract
+        if (!isAccessManaged(target)) {
+            revert ErrorTargetNotAccessManaged(target);
+        }
+
+        // check target shares authority with this contract
+        address targetAuthority = AccessManagedUpgradeable(target).authority();
+        if (targetAuthority != authority()) {
+            revert ErrorTargetAuthorityMismatch(authority(), targetAuthority);
+        }
+
+        // create target info
+        _targetInfo[target] = TargetInfo({
+            name: name,
+            createdAt: TimestampLib.blockTimestamp()
+        });
+
+        // create name to target mapping
+        _targetForName[name] = target;
+
+        // add role to list of roles
+        _targets.push(target);
+
+        emit LogTargetCreated(target, targetName);
+    }
+
+    function _isContract(address target)
+        internal
+        view 
+        returns (bool)
+    {
+        uint256 size;
+        assembly {
+            size := extcodesize(target)
+        }
+        return size > 0;
+    }
+    
 }
