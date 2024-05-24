@@ -17,6 +17,7 @@
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "todo-tree.tree.scanMode": "workspace only",
     "solidity.compileUsingLocalVersion": "/workspaces/gif-next/soljson-v0.8.20+commit.a1b79de6.js",
+    "asciidoc.antora.enableAntoraSupport": true,
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#f18500",
         "activityBar.background": "#f18500",
@@ -36,5 +37,4 @@
         "titleBar.inactiveBackground": "#be690099",
         "titleBar.inactiveForeground": "#e7e7e799"
     },
-    "asciidoc.antora.enableAntoraSupport": true,
 }

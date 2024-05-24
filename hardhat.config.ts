@@ -9,6 +9,13 @@ import { config as dotEnvConfig } from "dotenv";
 dotEnvConfig();
 
 const config: HardhatUserConfig = {
+  ignition: {
+    strategyConfig: {
+        create2: {
+            salt: "0x0000000000000000000000000000000000000000000000000000000000000000",
+        }
+    }
+  },
   solidity: {
     version: "0.8.20",
     settings: {
@@ -23,7 +30,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
     },
-    anvil: {
+    devchain: {
       chainId: 1337,
       url: "http://anvil:7545",
       accounts: {
