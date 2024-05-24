@@ -12,7 +12,7 @@ const config: HardhatUserConfig = {
   ignition: {
     strategyConfig: {
         create2: {
-            salt: "0x0000000000000000000000000000000000000000000000000000000000000000",
+            salt: "0x0000000000000000000000000000000000000000000000000000000000000001",
         }
     }
   },
@@ -30,7 +30,7 @@ const config: HardhatUserConfig = {
   networks: {
     hardhat: {
     },
-    devchain: {
+    anvil: {
       chainId: 1337,
       url: "http://anvil:7545",
       accounts: {
