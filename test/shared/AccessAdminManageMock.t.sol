@@ -1,0 +1,330 @@
+// SPDX-License-Identifier: Apache-2.0
+pragma solidity ^0.8.20;
+
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {Test, console} from "../../lib/forge-std/src/Test.sol";
+
+import {AccessAdmin} from "../../contracts/registry/AccessAdmin.sol";
+import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
+import {IAccessAdmin} from "../../contracts/registry/IAccessAdmin.sol";
+import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
+import {Selector, SelectorLib} from "../../contracts/type/Selector.sol";
+import {Str, StrLib} from "../../contracts/type/String.sol";
+import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
+
+
+contract AccessAdminManageMockTest is Test {
+
+    address public accessAdminDeployer = makeAddr("accessAdminDeployer");
+    address public outsider = makeAddr("outsider");
+    address public outsider2 = makeAddr("outsider2");
+
+    AccessAdmin public accessAdmin;
+    AccessManagedMock public managedMock;
+    address target;
+
+
+    function setUp() public {
+        vm.startPrank(accessAdminDeployer);
+        // deploy access admin
+        accessAdmin = new AccessAdmin();
+
+        // deploy access managed mock using authority of access admin
+        managedMock = new AccessManagedMock(accessAdmin.authority());
+        target = address(managedMock);
+
+        // register targets
+        accessAdmin.createTarget(address(accessAdmin), "AccessAdmin");
+        accessAdmin.createTarget(target, "AccessManagedMock");
+        vm.stopPrank();
+    }
+
+
+    function test_managedMockSetup() public {
+        // GIVEN (just setup)
+        // solhint-disable no-console
+        console.log("accessAdminDeployer", accessAdminDeployer);
+        console.log("access admin", address(accessAdmin));
+        console.log("access admin authority", accessAdmin.authority());
+        console.log("managed mock", target);
+        console.log("managed mock authority", managedMock.authority());
+
+        console.log("==========================================");
+        console.log("roles", accessAdmin.roles());
+        // solhint-enable
+
+        for(uint256 i = 0; i < accessAdmin.roles(); i++) {
+            _printRoleMembers(accessAdmin, accessAdmin.getRoleId(i));
+        }
+
+        // solhint-disable no-console
+        console.log("==========================================");
+        console.log("targets", accessAdmin.targets());
+        // solhint-enable
+
+        for(uint256 i = 0; i < accessAdmin.targets(); i++) {
+            _printTarget(accessAdmin, accessAdmin.getTargetAddress(i));
+        }
+
+        // solhint-disable no-console
+        console.log("------------------------------------------");
+        // solhint-enable
+
+        // WHEN (empty)
+        // THEN
+        RoleId adminRole = accessAdmin.getAdminRole();
+        assertTrue(accessAdmin.hasRole(address(accessAdmin), adminRole), "access admin contract does not have admin role");
+        assertFalse(accessAdmin.hasRole(accessAdminDeployer, adminRole), "access admin deployer does have admin role");
+
+        assertTrue(accessAdmin.targetExists(target));
+        assertEq(accessAdmin.authorizedFunctions(target), 0, "unexpected initial number of authorized functions for target");
+
+        // some more checks on access admin
+        _checkAccessAdmin(accessAdmin, accessAdminDeployer);
+    }
+
+
+    function test_managedMockCheckInitialRoleAccess() public {
+        // GIVEN
+        AccessManager accessManager = AccessManager(accessAdmin.authority());
+        RoleId adminRole = accessAdmin.getAdminRole();
+
+        // access admin is only address that has admin Role
+        address accessAdminAddress = address(accessAdmin);
+        assertEq(accessAdmin.roleMembers(adminRole), 1, "unexpected number of members for admin role");
+        assertTrue(accessAdmin.hasRole(accessAdminAddress, adminRole), "access admin contract does not have admin role");
+
+        // WHEN/THEN
+        // check accessAdmin (with admin role) can access restricted functions regardless of granted roles
+        address caller = accessAdminAddress;
+        bool allowed;
+        uint32 delay;
+        (allowed, delay) = accessManager.canCall(caller, target, AccessManagedMock.increaseCounter1.selector);
+        assertTrue(allowed, "accessAdminAddress (admin role) can't access increaseCounter1");
+        assertEq(delay, 0, "unexpected delay");
+        (allowed, delay) = accessManager.canCall(caller, target, AccessManagedMock.increaseCounter2.selector);
+        assertTrue(allowed, "accessAdminAddress (admin role) can't access increaseCounter2");
+        assertEq(delay, 0, "unexpected delay");
+
+        // check accessAdminDeployer (with admin manager) can't access restricted functions regardless of granted roles
+        caller = accessAdminDeployer;
+        (allowed, delay) = accessManager.canCall(caller, target, AccessManagedMock.increaseCounter1.selector);
+        assertFalse(allowed, "accessAdminDeployer (admin role) can access increaseCounter1");
+        assertEq(delay, 0, "unexpected delay");
+        (allowed, delay) = accessManager.canCall(caller, target, AccessManagedMock.increaseCounter2.selector);
+        assertFalse(allowed, "accessAdminDeployer (admin role) can access increaseCounter2");
+        assertEq(delay, 0, "unexpected delay");
+    }
+
+
+    function test_managedMockLockAndUnlockTarget() public {
+        // GIVEN
+        address accessAdminAddress = address(accessAdmin);
+        AccessManager accessManager = AccessManager(accessAdmin.authority());
+        RoleId adminRole = accessAdmin.getAdminRole();
+        RoleId managerRole = accessAdmin.getManagerRole();
+
+        Selector increaseCounter1 = SelectorLib.toSelector(AccessManagedMock.increaseCounter1.selector);
+        Selector increaseCounter2 = SelectorLib.toSelector(AccessManagedMock.increaseCounter2.selector);
+
+        // grant manager role access to increaseCounter2
+        IAccessAdmin.Function[] memory functions = new IAccessAdmin.Function[](1);
+        functions[0] = IAccessAdmin.Function(increaseCounter2, StrLib.toStr("grantRole"));
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.authorizeFunctions(target, managerRole, functions);
+        vm.stopPrank();
+
+        assertFalse(accessAdmin.isTargetLocked(target), "target is closed");
+
+        // check accessAdmin (with admin role) can access restricted functions regardless of granted roles
+        // check aa deployer (with manager role) can access only granted restricted functions
+        address caller = accessAdminAddress;
+        bool allowed;
+
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1);
+        assertTrue(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter1");
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1);
+        assertFalse(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter1");
+
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2);
+        assertFalse(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter2");
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2);
+        assertTrue(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter2");
+
+        // WHEN lock mock target
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.setTargetLocked(target, true);
+        vm.stopPrank();
+
+        // THEN
+        assertTrue(accessAdmin.isTargetLocked(target), "target not closed");
+
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1);
+        assertFalse(allowed, "accessAdminAddress (admin role) can access (locked) increaseCounter1");
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1);
+        assertFalse(allowed, "accessAdminDeployer (manager role) can access (locked) increaseCounter1");
+
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2);
+        assertFalse(allowed, "accessAdminAddress (admin role) can access (locked) increaseCounter2");
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2);
+        assertFalse(allowed, "accessAdminDeployer (manager role) can access (locked) increaseCounter2");
+
+        // WHEN - unlock mock target again
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.setTargetLocked(target, false);
+        vm.stopPrank();
+
+        // THEN - admin must be able again to call
+        assertFalse(accessAdmin.isTargetLocked(target), "target is closed");
+
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1);
+        assertTrue(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter1");
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1);
+        assertFalse(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter1");
+
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2);
+        assertFalse(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter2");
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2);
+        assertTrue(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter2");
+    }
+
+    function _checkAccessAdmin(
+        AccessAdmin aa, 
+        address expectedDeployer
+    )
+        internal
+    {
+        assertTrue(address(aa) != address(0), "access admin is 0");
+        assertTrue(aa.authority() != address(0), "access admin authority is 0");
+
+        assertEq(aa.deployer(), expectedDeployer, "unexpected deployer");
+
+        // check aa roles
+        assertTrue(aa.hasRole(address(aa), aa.getAdminRole()), "access admin missing admin role");
+        assertFalse(aa.hasRole(address(aa), aa.getManagerRole()), "access admin has manager role");
+        assertTrue(aa.hasRole(address(aa), aa.getPublicRole()), "access admin missing public role");
+
+        // check deployer roles
+        assertFalse(aa.hasRole(expectedDeployer, aa.getAdminRole()), "deployer has admin role");
+        assertTrue(aa.hasRole(expectedDeployer, aa.getManagerRole()), "deployer missing manager role");
+        assertTrue(aa.hasRole(expectedDeployer, aa.getPublicRole()), "deployer missing public role");
+
+        // check outsider roles
+        assertFalse(aa.hasRole(outsider, aa.getAdminRole()), "outsider has admin role");
+        assertFalse(aa.hasRole(outsider, aa.getManagerRole()), "outsider has manager role");
+        assertTrue(aa.hasRole(outsider, aa.getPublicRole()), "outsider missing public role");
+
+        // count roles and check role ids
+        assertEq(aa.roles(), 3, "unexpected number of roles for freshly initialized access admin");
+        assertEq(aa.getRoleId(0).toInt(), aa.getAdminRole().toInt(), "unexpected admin role id");
+        assertEq(aa.getRoleId(0).toInt(), type(uint64).min, "unexpected admin role id (absolute)");
+        assertEq(aa.getRoleId(1).toInt(), aa.getPublicRole().toInt(), "unexpected public role id");
+        assertEq(aa.getRoleId(1).toInt(), type(uint64).max, "unexpected public role id (absolute)");
+        assertEq(aa.getRoleId(2).toInt(), aa.getManagerRole().toInt(), "unexpected manager role id");
+        assertEq(aa.getRoleId(2).toInt(), 1, "unexpected manager role id (absolute)");
+
+        // check admin role
+        _checkRole(
+            aa,
+            aa.getAdminRole(), 
+            aa.getAdminRole(),
+            aa.ADMIN_ROLE_NAME(),
+            TimestampLib.max(), 
+            TimestampLib.blockTimestamp());
+
+        // check public role
+        _checkRole(
+            aa,
+            aa.getPublicRole(), 
+            aa.getAdminRole(),
+            aa.PUBLIC_ROLE_NAME(),
+            TimestampLib.max(), 
+            TimestampLib.blockTimestamp());
+
+        // check manager role
+        _checkRole(
+            aa,
+            aa.getManagerRole(), 
+            aa.getAdminRole(),
+            aa.MANAGER_ROLE_NAME(),
+            TimestampLib.max(), 
+            TimestampLib.blockTimestamp());
+
+        // check non existent role
+        RoleId missingRoleId = RoleIdLib.toRoleId(1313);
+        assertFalse(aa.roleExists(missingRoleId), "missing role exists"); 
+        assertFalse(aa.roleIsActive(missingRoleId), "missing role active");
+
+        assertFalse(aa.getRoleForName(StrLib.toStr("NoSuchRole")).exists, "NoSuchRole exists");
+
+        // minimal check on access manager of access admin
+        AccessManager accessManager = AccessManager(aa.authority());
+        bool isMember;
+        uint32 executionDelay;
+
+        (isMember, executionDelay) = accessManager.hasRole(accessManager.ADMIN_ROLE(), address(aa));
+        assertTrue(isMember, "access admin not admin of access manager");
+        assertEq(executionDelay, 0, "acess admin role execution delay not 0");
+    }
+
+    function _checkRole(
+        IAccessAdmin aa,
+        RoleId roleId, 
+        RoleId expectedAdminRoleId,
+        string memory expectedName,
+        Timestamp expectedDisabledAt,
+        Timestamp expectedCreatedAt
+    )
+        internal
+    {
+        // solhint-disable-next-line
+        console.log("checking role", expectedName);
+
+        IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
+        assertEq(info.adminRoleId.toInt(), expectedAdminRoleId.toInt(), "unexpected admin role (role info)");
+        assertEq(info.name.toString(), expectedName, "unexpected role name");
+        assertEq(info.disabledAt.toInt(), expectedDisabledAt.toInt(), "unexpected disabled at");
+        assertEq(info.createdAt.toInt(), expectedCreatedAt.toInt(), "unexpected created at");
+
+        Str roleName = StrLib.toStr(expectedName);
+        IAccessAdmin.RoleNameInfo memory nameInfo = aa.getRoleForName(roleName);
+        assertTrue(nameInfo.exists, "role name info missing");
+        assertEq(nameInfo.roleId.toInt(), roleId.toInt(), "unexpected role name rold id");
+    }
+
+    function _printRoleMembers(AccessAdmin aa, RoleId roleId) internal {
+        IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
+        uint256 members = aa.roleMembers(roleId);
+
+        // solhint-disable no-console
+        console.log("role", info.name.toString(), "id", roleId.toInt()); 
+        console.log("role members", members); 
+        for(uint i = 0; i < members; i++) {
+            console.log("-", i, aa.getRoleMember(roleId, i));
+        }
+        // solhint-enable
+    }
+
+    function _printTarget(AccessAdmin aa, address target) internal view {
+        IAccessAdmin.TargetInfo memory info = aa.getTargetInfo(target);
+
+        // solhint-disable no-console
+        uint256 functions = aa.authorizedFunctions(target);
+        console.log("target", info.name.toString(), "address", target);
+        console.log("authorized functions", functions);
+        for(uint256 i = 0; i < functions; i++) {
+            (
+                IAccessAdmin.Function memory func,
+                RoleId roleId
+            ) = aa.getAuthorizedFunction(target, i);
+            string memory role = aa.getRoleInfo(roleId).name.toString();
+
+            console.log("-", i, string(abi.encodePacked(func.name.toString(), "(): ", role,":")), roleId.toInt());
+        }
+        // solhint-enable
+    }
+
+}

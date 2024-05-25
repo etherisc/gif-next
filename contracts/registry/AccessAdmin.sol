@@ -160,6 +160,16 @@ contract AccessAdmin is
         _createTarget(target, name);
     }
 
+    function setTargetLocked(
+        address target, 
+        bool locked
+    )
+        external
+        restricted()
+    {
+        _authority.setTargetClosed(target, locked);
+    }
+
     function authorizeFunctions(
         address target, 
         RoleId roleId, 
@@ -196,6 +206,10 @@ contract AccessAdmin is
             _authority.getTargetFunctionRole(
                 target, 
                 selector.toBytes4()));
+    }
+
+    function canCall(address caller, address target, Selector selector) external view returns (bool can) {
+        (can, ) = _authority.canCall(caller, target, selector.toBytes4());
     }
 
     function _authorizeTargetFunctions(
@@ -297,6 +311,10 @@ contract AccessAdmin is
         return _targetInfo[target].createdAt.gtz();
     }
 
+    function isTargetLocked(address target) public view returns (bool locked) {
+        return _authority.isTargetClosed(target);
+    }
+
     function targets() external view returns (uint256 numberOfTargets) {
         return _targets.length;
     }
@@ -387,9 +405,11 @@ contract AccessAdmin is
         _authorizeTargetFunctions(address(this), getPublicRole(), functions);
 
         // grant manager role access to the specified functions 
-        functions = new Function[](2);
+        functions = new Function[](4);
         functions[0] = toFunction(IAccessAdmin.createRole.selector, "createRole");
         functions[1] = toFunction(IAccessAdmin.createTarget.selector, "createTarget");
+        functions[2] = toFunction(IAccessAdmin.setTargetLocked.selector, "setTargetLocked");
+        functions[3] = toFunction(IAccessAdmin.authorizeFunctions.selector, "authorizeFunctions");
         _authorizeTargetFunctions(address(this), _managerRoleId, functions);
 
         // grant manger role to deployer

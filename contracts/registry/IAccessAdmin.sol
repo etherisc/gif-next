@@ -90,6 +90,10 @@ interface IAccessAdmin is
     /// permissioned: the caller must have the manager role (getManagerRole).
     function createTarget(address target, string memory name) external;
 
+    /// @dev Set the locked status of the speicified contract.
+    /// permissioned: the caller must have the manager role (getManagerRole).
+    function setTargetLocked(address target, bool locked) external;
+
     /// @dev Specifies which functions of the target can be accessed by the provided role.
     /// Previously existing authorizations will be overwritten.
     /// permissioned: the caller must have the manager role (getManagerRole).
@@ -113,6 +117,7 @@ interface IAccessAdmin is
     function getRoleMember(RoleId roleId, uint256 idx) external view returns (address account);
 
     function targetExists(address target) external view returns (bool exists);
+    function isTargetLocked(address target) external view returns (bool locked);
     function targets() external view returns (uint256 numberOfTargets);
     function getTargetAddress(uint256 idx) external view returns (address target);
     function getTargetInfo(address target) external view returns (TargetInfo memory targetInfo);
@@ -120,6 +125,7 @@ interface IAccessAdmin is
 
     function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions);
     function getAuthorizedFunction(address target, uint256 idx) external view returns (Function memory func, RoleId roleId);
+    function canCall(address caller, address target, Selector selector) external view returns (bool can);
 
     function isAccessManaged(address target) external view returns (bool);
     function deployer() external view returns (address);
