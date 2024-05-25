@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {RoleId} from "../type/RoleId.sol";
+import {Selector, SelectorLib, SelectorSet} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
@@ -64,6 +65,11 @@ interface IAccessAdmin is
         Timestamp createdAt;
     }
 
+    struct Function {
+        Selector selector; // function selector
+        Str name; // function name
+    }
+
     /// @dev Create a new named role using the specified parameters.
     /// The adminRoleId refers to the required role to grant/revoke the newly created role.
     /// permissioned: the caller must have the manager role (getManagerRole).
@@ -84,6 +90,11 @@ interface IAccessAdmin is
     /// permissioned: the caller must have the manager role (getManagerRole).
     function createTarget(address target, string memory name) external;
 
+    /// @dev Specifies which functions of the target can be accessed by the provided role.
+    /// Previously existing authorizations will be overwritten.
+    /// permissioned: the caller must have the manager role (getManagerRole).
+    function authorizeFunctions(address target, RoleId roleId, Function[] memory functions) external;
+
     //--- view functions ----------------------------------------------------//
 
     function roles() external view returns (uint256 numberOfRoles);
@@ -101,12 +112,15 @@ interface IAccessAdmin is
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers);
     function getRoleMember(RoleId roleId, uint256 idx) external view returns (address account);
 
-    function isAccessManaged(address target) external view returns (bool);
     function targetExists(address target) external view returns (bool exists);
     function targets() external view returns (uint256 numberOfTargets);
     function getTargetAddress(uint256 idx) external view returns (address target);
     function getTargetInfo(address target) external view returns (TargetInfo memory targetInfo);
     function getTargetForName(Str name) external view returns (address target);
 
+    function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions);
+    function getAuthorizedFunction(address target, uint256 idx) external view returns (Function memory func, RoleId roleId);
+
+    function isAccessManaged(address target) external view returns (bool);
     function deployer() external view returns (address);
 }

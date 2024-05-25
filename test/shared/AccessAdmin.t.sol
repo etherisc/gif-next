@@ -8,6 +8,7 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessAdmin} from "../../contracts/registry/AccessAdmin.sol";
+import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {IAccessAdmin} from "../../contracts/registry/IAccessAdmin.sol";
 import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 import {Str, StrLib} from "../../contracts/type/String.sol";
@@ -37,30 +38,75 @@ contract AccessAdminTest is Test {
     function setUp() public {
         vm.startPrank(accessAdminDeployer);
         accessAdmin = new AccessAdmin();
+        accessAdmin.createTarget(address(accessAdmin), "AccessAdmin");
+
         aaMaster = new AccessAdminCloneable();
         vm.stopPrank();
     }
 
+
+    function test_accessAdminSetup() public {
+        // GIVEN (just setup)
+        // solhint-disable no-console
+        console.log("accessAdminDeployer", accessAdminDeployer);
+        console.log("access admin", address(accessAdmin));
+        console.log("access admin authority", accessAdmin.authority());
+        console.log("access admin deployer", accessAdmin.deployer());
+
+        console.log("==========================================");
+        console.log("roles", accessAdmin.roles());
+        // solhint-enable
+
+        for(uint256 i = 0; i < accessAdmin.roles(); i++) {
+            _printRoleMembers(accessAdmin, accessAdmin.getRoleId(i));
+        }
+
+        // solhint-disable no-console
+        console.log("==========================================");
+        console.log("targets", accessAdmin.targets());
+        // solhint-enable
+
+        for(uint256 i = 0; i < accessAdmin.targets(); i++) {
+            _printTarget(accessAdmin, accessAdmin.getTargetAddress(i));
+        }
+
+        // solhint-disable no-console
+        console.log("------------------------------------------");
+        // solhint-enable
+
+        // WHEN (empty)
+        // THEN
+        RoleId adminRole = accessAdmin.getAdminRole();
+        assertTrue(accessAdmin.hasRole(address(accessAdmin), adminRole), "access admin contract does not have admin role");
+        assertFalse(accessAdmin.hasRole(accessAdminDeployer, adminRole), "access admin deployer does have admin role");
+
+        // some more checks on access admin
+        _checkAccessAdmin(accessAdmin, accessAdminDeployer);
+    }
+
+
     function test_accessAdminCreateTargetHappyCase() public {
         // GIVEN (just setup)
-        string memory targetName = "AccessAdmin";
-        Str name = StrLib.toStr(targetName);
 
-        assertEq(accessAdmin.targets(), 0, "more than zero initial targets");
-        assertFalse(accessAdmin.targetExists(address(accessAdmin)), "address(this) exists as target");
+        string memory targetName = "AccessManagedMock";
+        Str name = StrLib.toStr(targetName);
+        AccessManagedMock accessManagedMock = new AccessManagedMock(accessAdmin.authority());
+
+        assertEq(accessAdmin.targets(), 1, "unexpected number of initial targets");
+        assertFalse(accessAdmin.targetExists(address(accessManagedMock)), "address(accessManagedMock) already exists as target");
         assertEq(accessAdmin.getTargetForName(name), address(0), "AccessAdmin -> non zero target");
 
         // WHEN
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createTarget(address(accessAdmin), targetName);
+        accessAdmin.createTarget(address(accessManagedMock), targetName);
         vm.stopPrank();
 
         // THEN
-        assertEq(accessAdmin.targets(), 1, "unexpected number of targets");
-        assertTrue(accessAdmin.targetExists(address(accessAdmin)), "address(this) doesn't exist as target");
-        assertEq(accessAdmin.getTargetForName(name), address(accessAdmin), "unexpected target address for name 'AccessAdmin'");
+        assertEq(accessAdmin.targets(), 2, "unexpected number of targets");
+        assertTrue(accessAdmin.targetExists(address(accessManagedMock)), "address(accessManagedMock) doesn't exist as target");
+        assertEq(accessAdmin.getTargetForName(name), address(accessManagedMock), "unexpected target address for name 'AccessManagedMock'");
 
-        IAccessAdmin.TargetInfo memory info = accessAdmin.getTargetInfo(address(accessAdmin));
+        IAccessAdmin.TargetInfo memory info = accessAdmin.getTargetInfo(address(accessManagedMock));
         assertEq(info.name.toString(), targetName, "unexpected target name (info)");
         assertEq(info.createdAt.toInt(), TimestampLib.blockTimestamp().toInt(), "unexpected created at (info)");
     }
@@ -68,9 +114,6 @@ contract AccessAdminTest is Test {
     function test_accessAdminCreateTargetInvalidParameters() public {
         // GIVEN 
         string memory targetName = "AccessAdmin";
-        vm.startPrank(accessAdminDeployer);
-        accessAdmin.createTarget(address(accessAdmin), targetName);
-        vm.stopPrank();
 
         // WHEN + THEN
 
@@ -714,29 +757,6 @@ contract AccessAdminTest is Test {
     }
 
 
-    function test_accessAdminSetup() public {
-        // GIVEN (just setup)
-        // solhint-disable no-console
-        console.log("accessAdminDeployer", accessAdminDeployer);
-        console.log("access admin", address(accessAdmin));
-        console.log("access admin authority", accessAdmin.authority());
-        console.log("access admin deployer", accessAdmin.deployer());
-        // solhint-enable
-
-        _printRoleMembers(accessAdmin, accessAdmin.getAdminRole());
-        _printRoleMembers(accessAdmin, accessAdmin.getManagerRole());
-
-        // WHEN (empty)
-        // THEN
-        RoleId adminRole = accessAdmin.getAdminRole();
-        assertTrue(accessAdmin.hasRole(address(accessAdmin), adminRole), "access admin contract does not have admin role");
-        assertFalse(accessAdmin.hasRole(accessAdminDeployer, adminRole), "access admin deployer does have admin role");
-
-        // some more checks on access admin
-        _checkAccessAdmin(accessAdmin, accessAdminDeployer);
-    }
-
-
     /// @dev test creating a new access admin via constructor
     function test_accessAdminConstructorHappyCase() public {
         // GIVEN (just setup)
@@ -1033,9 +1053,29 @@ contract AccessAdminTest is Test {
         uint256 members = aa.roleMembers(roleId);
 
         // solhint-disable no-console
-        console.log("role", info.name.toString(), "members", members); 
+        console.log("role", info.name.toString(), "id", roleId.toInt()); 
+        console.log("role members", members); 
         for(uint i = 0; i < members; i++) {
             console.log("-", i, aa.getRoleMember(roleId, i));
+        }
+        // solhint-enable
+    }
+
+    function _printTarget(AccessAdmin aa, address target) internal view {
+        IAccessAdmin.TargetInfo memory info = aa.getTargetInfo(target);
+
+        // solhint-disable no-console
+        uint256 functions = aa.authorizedFunctions(target);
+        console.log("target", info.name.toString(), "address", target);
+        console.log("authorized functions", functions);
+        for(uint256 i = 0; i < functions; i++) {
+            (
+                IAccessAdmin.Function memory func,
+                RoleId roleId
+            ) = aa.getAuthorizedFunction(target, i);
+            string memory role = aa.getRoleInfo(roleId).name.toString();
+
+            console.log("-", i, string(abi.encodePacked(func.name.toString(), "(): ", role,":")), roleId.toInt());
         }
         // solhint-enable
     }

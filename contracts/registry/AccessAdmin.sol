@@ -7,6 +7,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
+import {Selector, SelectorLib, SelectorSet} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
@@ -58,6 +59,12 @@ contract AccessAdmin is
 
     /// @dev store array with all created targets
     address [] internal _targets;
+
+    /// @dev store all managed functions per target
+    mapping(address target => SelectorSet.Set selectors) internal _targetFunctions;
+
+    /// @dev temporary dynamic function infos array
+    mapping(address target => mapping(Selector selector => Str functionName)) internal _functionName;
 
     /// @dev temporary dynamic functions array
     bytes4[] private _functions;
@@ -151,6 +158,74 @@ contract AccessAdmin is
         restricted()
     {
         _createTarget(target, name);
+    }
+
+    function authorizeFunctions(
+        address target, 
+        RoleId roleId, 
+        Function[] memory functions
+    )
+        external
+        restricted()
+    {
+        _authorizeTargetFunctions(target, roleId, functions);
+    }
+
+    function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions) {
+        return SelectorSet.size(_targetFunctions[target]);
+    }
+
+    function getAuthorizedFunction(
+        address target, 
+        uint256 idx
+    )
+        external 
+        view 
+        returns (
+            Function memory func, 
+            RoleId roleId
+        )
+    {
+        Selector selector = SelectorSet.at(_targetFunctions[target], idx);
+
+        func = Function({
+            selector: selector, 
+            name: _functionName[target][selector]});
+
+        roleId = RoleIdLib.toRoleId(
+            _authority.getTargetFunctionRole(
+                target, 
+                selector.toBytes4()));
+    }
+
+    function _authorizeTargetFunctions(
+        address target, 
+        RoleId roleId, 
+        Function[] memory functions
+    )
+        internal
+    {
+        // _processFunctions(target, roleId, functions);
+        uint256 n = functions.length;
+        bytes4[] memory functionSelectors = new bytes4[](n);
+        for (uint256 i = 0; i < n; i++) {
+            Function memory func = functions[i];
+            Selector selector = func.selector;
+
+            // add function selector to target selector set if not in set
+            if (!SelectorSet.contains(_targetFunctions[target], selector)) {
+                SelectorSet.add(_targetFunctions[target], selector);
+            }
+
+            // set function name
+            _functionName[target][selector] = func.name;
+
+            // add bytes4 selector to function selector array
+            functionSelectors[i] = selector.toBytes4();
+        }
+
+        // apply authz via access manager
+        _grantRoleAccessToFunctions(target, roleId, functionSelectors);
     }
 
     //--- view functions ----------------------------------------------------//
@@ -280,12 +355,16 @@ contract AccessAdmin is
         private
     {
         RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
+        Function[] memory functions;
 
-        // setup public role
+        // setup admin role
         _createRoleUnchecked(
             adminRoleId,
             adminRoleId,
             StrLib.toStr(ADMIN_ROLE_NAME));
+
+        // add this contract as admin role member
+        _roleMembers[adminRoleId].add(address(this));
 
         // setup public role
         _createRoleUnchecked(
@@ -300,38 +379,39 @@ contract AccessAdmin is
             adminRoleId,
             MANAGER_ROLE_NAME);
 
-        // grant anybody access to grant and revoke, renounce
-        // these functions do additional checks internally
-        _functions = [
-            IAccessAdmin.grantRole.selector,
-            IAccessAdmin.revokeRole.selector,
-            IAccessAdmin.renounceRole.selector
-        ];
-
-        _grantRoleAccessToFunctions(getPublicRole(), _functions);
+        // grant public role access to grant and revoke, renounce
+        functions = new Function[](3);
+        functions[0] = toFunction(IAccessAdmin.grantRole.selector, "grantRole");
+        functions[1] = toFunction(IAccessAdmin.revokeRole.selector, "revokeRole");
+        functions[2] = toFunction(IAccessAdmin.renounceRole.selector, "renounceRole");
+        _authorizeTargetFunctions(address(this), getPublicRole(), functions);
 
         // grant manager role access to the specified functions 
-        _functions = [
-            IAccessAdmin.createRole.selector,
-            IAccessAdmin.createTarget.selector
-        ];
-
-        // setup initial function granting for manager role
-        _grantRoleAccessToFunctions(_managerRoleId, _functions);
+        functions = new Function[](2);
+        functions[0] = toFunction(IAccessAdmin.createRole.selector, "createRole");
+        functions[1] = toFunction(IAccessAdmin.createTarget.selector, "createTarget");
+        _authorizeTargetFunctions(address(this), _managerRoleId, functions);
 
         // grant manger role to deployer
         _grantRoleToAccount(_managerRoleId, _deployer);
+    }
 
-        // add this contract as admin role member
-        _roleMembers[adminRoleId].add(address(this));
+    function toFunction(bytes4 selector, string memory name) internal pure returns (Function memory) {
+            return Function({
+                selector: SelectorLib.toSelector(selector),
+                name: StrLib.toStr(name)});
     }
 
     /// @dev grant the specified role access to all functions in the provided selector list
-    function _grantRoleAccessToFunctions(RoleId roleId, bytes4[] memory functionSelectors)
+    function _grantRoleAccessToFunctions(
+        address target,
+        RoleId roleId, 
+        bytes4[] memory functionSelectors
+    )
         internal
     {
         _authority.setTargetFunctionRole(
-            address(this), // target
+            target,
             functionSelectors,
             RoleId.unwrap(roleId));
     }
