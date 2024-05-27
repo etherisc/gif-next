@@ -7,9 +7,9 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessAdmin} from "../../contracts/registry/AccessAdmin.sol";
+import {AccessAdmin} from "../../contracts/shared/AccessAdmin.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
-import {IAccessAdmin} from "../../contracts/registry/IAccessAdmin.sol";
+import {IAccessAdmin} from "../../contracts/shared/IAccessAdmin.sol";
 import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
