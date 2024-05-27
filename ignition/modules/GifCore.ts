@@ -2,6 +2,8 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import LibraryModule from "./Libraries";
 
 export default buildModule("GifCore", (m) => {
+    const gifAdmin = m.getAccount(0);
+    const gifManager = m.getAccount(0);
     const stakingOwner = m.getAccount(0);
 
     const { 
@@ -35,6 +37,7 @@ export default buildModule("GifCore", (m) => {
         }
     );
 
+    // 3) deploy registry
     const registry = m.contract("Registry", 
         [registryAdmin],
         {
@@ -45,6 +48,7 @@ export default buildModule("GifCore", (m) => {
         }
     );
 
+    // 4) deploy release manager
     const releaseManager = m.contract("ReleaseManager",
         [registry],
         {
@@ -59,6 +63,7 @@ export default buildModule("GifCore", (m) => {
         }
     );
 
+    // 5) deploy token registry
     const tokenRegistry = m.contract("TokenRegistry",
         [registry, dip],
         {
@@ -68,6 +73,7 @@ export default buildModule("GifCore", (m) => {
         }
     );
 
+    // 6) deploy staking reader
     const stakingReader = m.contract("StakingReader",
         [registry],
         {
@@ -77,6 +83,7 @@ export default buildModule("GifCore", (m) => {
         }
     );
 
+    // 7) deploy staking store
     const stakingStore = m.contract("StakingStore",
         [registry, stakingReader],
         {
@@ -94,6 +101,7 @@ export default buildModule("GifCore", (m) => {
         }
     );
 
+    // 8) deploy staking manager and staking component
     const stakingManager = m.contract("StakingManager",
         [registry, tokenRegistry, stakingStore, stakingOwner],
         {
@@ -107,6 +115,27 @@ export default buildModule("GifCore", (m) => {
             },
         }
     );
+
+    const stakingAddress = m.staticCall(stakingManager, "getStaking");
+    const staking = m.contractAt("Staking", stakingAddress);
+
+    // 9) initialize instance reader
+    const stakingReaderInitialize = m.call(stakingReader, "initialize", [staking, stakingStore], {
+        after: [staking],
+    });
+
+    // 10) intialize registry and register staking component
+    const registryInitialize = m.call(registry, "initialize", [releaseManager, tokenRegistry, staking], {
+        after: [stakingReaderInitialize],
+    });
+    const stakingLinkToRegisteredNftId = m.call(staking, "linkToRegisteredNftId", [], {
+        after: [registryInitialize],
+    });
+
+    // 11) initialize registry admin
+    m.call(registryAdmin, "initialize", [registry, gifAdmin, gifManager], {
+        after: [stakingLinkToRegisteredNftId]
+    });
 
     return { 
         dip, 
