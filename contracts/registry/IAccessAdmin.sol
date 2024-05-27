@@ -12,12 +12,11 @@ interface IAccessAdmin is
     IAccessManaged
 {
 
+    // roles
     event LogRoleCreated(RoleId roleId, RoleId roleAdminId, string name);
-    event LogRoleGranted(RoleId roleId, address account);
-    event LogRoleRevoked(RoleId roleId, address account);
-    event LogRoleRenounced(RoleId roleId, address account);
-
+    event LogRoleDisabled(RoleId roleId, bool disabled, Timestamp disabledAtOld);
     event LogTargetCreated(address target, string name);
+    event LogFunctionCreated(address target, Selector selector, string name);
 
     // only deployer modifier
     error ErrorNotDeployer();
@@ -26,7 +25,7 @@ interface IAccessAdmin is
     error ErrorNotAdminOfRole(RoleId adminRoleId);
 
     // only role owner modifier
-    error ErrorNotRoleOwner();
+    error ErrorNotRoleOwner(RoleId roleId);
 
     // initialize authority
     error ErrorAuthorityAlreadySet();
@@ -39,7 +38,9 @@ interface IAccessAdmin is
     error ErrorRoleNameAlreadyExists(RoleId roleId, string name, RoleId existingRoleId);
 
     // grant/revoke/renounce role
+    error ErrorRoleUnknown(RoleId roleId);
     error ErrorRoleIsLocked(RoleId roleId);
+    error ErrorRoleIsDisabled(RoleId roleId);
 
     // create target
     error ErrorTargetAlreadyCreated(address target, string name);
@@ -48,11 +49,14 @@ interface IAccessAdmin is
     error ErrorTargetNotAccessManaged(address target);
     error ErrorTargetAuthorityMismatch(address expectedAuthority, address actualAuthority);
 
+    // authorize target functions
+    error ErrorAuthorizeForAdminRoleInvalid(address target);
+
     struct RoleInfo {
         RoleId adminRoleId;
         Str name;
         Timestamp disabledAt;
-        Timestamp createdAt;
+        bool exists;
     }
 
     struct RoleNameInfo {
@@ -75,6 +79,10 @@ interface IAccessAdmin is
     /// permissioned: the caller must have the manager role (getManagerRole).
     function createRole(RoleId roleId, RoleId adminRoleId, string memory name) external;
 
+    /// @dev Set the disabled status of the speicified role.
+    /// permissioned: the caller must have the manager role (getManagerRole).
+    function setRoleDisabled(RoleId roleId, bool disabled) external;
+
     /// @dev Grant the specified account the provided role.
     /// permissioned: the caller must have the roles admin role.
     function grantRole(address account, RoleId roleId) external;
@@ -96,8 +104,13 @@ interface IAccessAdmin is
 
     /// @dev Specifies which functions of the target can be accessed by the provided role.
     /// Previously existing authorizations will be overwritten.
+    /// Authorizing the admin role is not allowed, use function unauthorizedFunctions for this.
     /// permissioned: the caller must have the manager role (getManagerRole).
     function authorizeFunctions(address target, RoleId roleId, Function[] memory functions) external;
+
+    /// @dev Specifies for which functionss to remove any previous authorization
+    /// permissioned: the caller must have the manager role (getManagerRole).
+    function unauthorizeFunctions(address target, Function[] memory functions) external;
 
     //--- view functions ----------------------------------------------------//
 
@@ -108,7 +121,7 @@ interface IAccessAdmin is
     function getPublicRole() external view returns (RoleId roleId);
 
     function roleExists(RoleId roleId) external view returns (bool exists); 
-    function roleIsActive(RoleId roleId) external view returns (bool roleIsActive);
+    function isRoleDisabled(RoleId roleId) external view returns (bool roleIsActive);
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory roleInfo);
     function getRoleForName(Str name) external view returns (RoleNameInfo memory);
 
@@ -127,6 +140,7 @@ interface IAccessAdmin is
     function getAuthorizedFunction(address target, uint256 idx) external view returns (Function memory func, RoleId roleId);
     function canCall(address caller, address target, Selector selector) external view returns (bool can);
 
+    function toFunction(bytes4 selector, string memory name) external pure returns (Function memory);
     function isAccessManaged(address target) external view returns (bool);
     function deployer() external view returns (address);
 }

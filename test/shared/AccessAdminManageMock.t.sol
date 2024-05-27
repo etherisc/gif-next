@@ -87,6 +87,106 @@ contract AccessAdminManageMockTest is Test {
     }
 
 
+    function test_managedMockAuthorizeFunctionsHappyCase() public {
+        // GIVEN
+        AccessManager accessManager = AccessManager(accessAdmin.authority());
+        RoleId adminRole = accessAdmin.getAdminRole();
+        RoleId managerRole = accessAdmin.getManagerRole();
+
+        IAccessAdmin.Function memory increaseCounter1 = accessAdmin.toFunction(
+            AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
+
+        IAccessAdmin.Function memory increaseCounter2 = accessAdmin.toFunction(
+            AccessManagedMock.increaseCounter2.selector, "increaseCounter2");
+
+        _checkIncreaseCounter1Unauthorized(outsider, "outsider (before authorized)");
+        _checkIncreaseCounter1Unauthorized(accessAdminDeployer, "aa deployer (before authorized)");
+
+        // WHEN
+        IAccessAdmin.Function[] memory functions = new IAccessAdmin.Function[](1);
+        functions[0] = increaseCounter1;
+
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.authorizeFunctions(target, managerRole, functions);
+        vm.stopPrank();
+
+        // THEN
+        // solhint-disable no-console
+        console.log("==========================================");
+        console.log("targets", accessAdmin.targets());
+        // solhint-enable
+        for(uint256 i = 0; i < accessAdmin.targets(); i++) {
+            _printTarget(accessAdmin, accessAdmin.getTargetAddress(i));
+        }
+
+        _checkIncreaseCounter1Unauthorized(outsider, "outsider (after authorized)");
+
+        assertEq(managedMock.counter1(), 0, "managed mock counter1: unexpected value");
+
+        // increase counter 1
+        vm.startPrank(accessAdminDeployer);
+        managedMock.increaseCounter1();
+        vm.stopPrank();
+
+        assertEq(managedMock.counter1(), 1, "managed mock counter1: unexpected value (after increase)");
+
+        // WHEN - unauthorize function
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.unauthorizeFunctions(target, functions);
+        vm.stopPrank();
+
+        // THEN
+        // solhint-disable no-console
+        console.log("==========================================");
+        console.log("targets (after unauthorize mock)", accessAdmin.targets());
+        // solhint-enable
+        for(uint256 i = 0; i < accessAdmin.targets(); i++) {
+            _printTarget(accessAdmin, accessAdmin.getTargetAddress(i));
+        }
+
+        _checkIncreaseCounter1Unauthorized(outsider, "outsider (after authorized)");
+        _checkIncreaseCounter1Unauthorized(accessAdminDeployer, "aa deployer (after unauthorized)");
+    }
+
+    function test_managedMockAuthorizeFunctionsNotAdminRole() public {
+        // GIVEN
+        AccessManager accessManager = AccessManager(accessAdmin.authority());
+        RoleId adminRole = accessAdmin.getAdminRole();
+
+        IAccessAdmin.Function memory increaseCounter1 = accessAdmin.toFunction(
+            AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
+
+        // WHEN + THEN
+        IAccessAdmin.Function[] memory functions = new IAccessAdmin.Function[](1);
+        functions[0] = increaseCounter1;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorAuthorizeForAdminRoleInvalid.selector,
+                target));
+
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.authorizeFunctions(target, adminRole, functions);
+        vm.stopPrank();
+    }
+
+    function _checkIncreaseCounter1Unauthorized(address account, string memory message) internal {
+        // solhint-disable no-console
+        console.log(">>> check increaseCounter1() not authorized", message);
+        // solhint-enable
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessManaged.AccessManagedUnauthorized.selector,
+                account));
+
+        vm.startPrank(account);
+        managedMock.increaseCounter1();
+        vm.stopPrank();
+
+    }
+
+
     function test_managedMockCheckInitialRoleAccess() public {
         // GIVEN
         AccessManager accessManager = AccessManager(accessAdmin.authority());
@@ -96,6 +196,10 @@ contract AccessAdminManageMockTest is Test {
         address accessAdminAddress = address(accessAdmin);
         assertEq(accessAdmin.roleMembers(adminRole), 1, "unexpected number of members for admin role");
         assertTrue(accessAdmin.hasRole(accessAdminAddress, adminRole), "access admin contract does not have admin role");
+
+        // print initial target setup
+        _printTarget(accessAdmin, target);
+        assertEq(accessAdmin.authorizedFunctions(target), 0, "target should not have authorized functions initially");
 
         // WHEN/THEN
         // check accessAdmin (with admin role) can access restricted functions regardless of granted roles
@@ -127,16 +231,22 @@ contract AccessAdminManageMockTest is Test {
         RoleId adminRole = accessAdmin.getAdminRole();
         RoleId managerRole = accessAdmin.getManagerRole();
 
-        Selector increaseCounter1 = SelectorLib.toSelector(AccessManagedMock.increaseCounter1.selector);
-        Selector increaseCounter2 = SelectorLib.toSelector(AccessManagedMock.increaseCounter2.selector);
-
         // grant manager role access to increaseCounter2
+        IAccessAdmin.Function memory increaseCounter1 = accessAdmin.toFunction(
+            AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
+
+        IAccessAdmin.Function memory increaseCounter2 = accessAdmin.toFunction(
+            AccessManagedMock.increaseCounter2.selector, "increaseCounter2");
+
+        // WHEN
         IAccessAdmin.Function[] memory functions = new IAccessAdmin.Function[](1);
-        functions[0] = IAccessAdmin.Function(increaseCounter2, StrLib.toStr("grantRole"));
+        functions[0] = increaseCounter2;
+
         vm.startPrank(accessAdminDeployer);
         accessAdmin.authorizeFunctions(target, managerRole, functions);
         vm.stopPrank();
 
+        // THEN (mock target unlocked)
         assertFalse(accessAdmin.isTargetLocked(target), "target is closed");
 
         // check accessAdmin (with admin role) can access restricted functions regardless of granted roles
@@ -144,15 +254,19 @@ contract AccessAdminManageMockTest is Test {
         address caller = accessAdminAddress;
         bool allowed;
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1);
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1.selector);
         assertTrue(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter1");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1);
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1.selector);
         assertFalse(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter1");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2);
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2.selector);
         assertFalse(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter2");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2);
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2.selector);
         assertTrue(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter2");
+
+        // print target setup after given
+        _printTarget(accessAdmin, target);
+        assertEq(accessAdmin.authorizedFunctions(target), 1, "target should only have 1 authorized functions after given");
 
         // WHEN lock mock target
         vm.startPrank(accessAdminDeployer);
@@ -162,14 +276,14 @@ contract AccessAdminManageMockTest is Test {
         // THEN
         assertTrue(accessAdmin.isTargetLocked(target), "target not closed");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1);
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1.selector);
         assertFalse(allowed, "accessAdminAddress (admin role) can access (locked) increaseCounter1");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1);
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1.selector);
         assertFalse(allowed, "accessAdminDeployer (manager role) can access (locked) increaseCounter1");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2);
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2.selector);
         assertFalse(allowed, "accessAdminAddress (admin role) can access (locked) increaseCounter2");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2);
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2.selector);
         assertFalse(allowed, "accessAdminDeployer (manager role) can access (locked) increaseCounter2");
 
         // WHEN - unlock mock target again
@@ -180,14 +294,14 @@ contract AccessAdminManageMockTest is Test {
         // THEN - admin must be able again to call
         assertFalse(accessAdmin.isTargetLocked(target), "target is closed");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1);
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter1.selector);
         assertTrue(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter1");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1);
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter1.selector);
         assertFalse(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter1");
 
-        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2);
+        allowed = accessAdmin.canCall(accessAdminAddress, target, increaseCounter2.selector);
         assertFalse(allowed, "accessAdminAddress (admin role) can't access (unlocked) increaseCounter2");
-        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2);
+        allowed = accessAdmin.canCall(accessAdminDeployer, target, increaseCounter2.selector);
         assertTrue(allowed, "accessAdminDeployer (manager role) can't access (unlocked) increaseCounter2");
     }
 
@@ -256,7 +370,7 @@ contract AccessAdminManageMockTest is Test {
         // check non existent role
         RoleId missingRoleId = RoleIdLib.toRoleId(1313);
         assertFalse(aa.roleExists(missingRoleId), "missing role exists"); 
-        assertFalse(aa.roleIsActive(missingRoleId), "missing role active");
+        assertTrue(aa.isRoleDisabled(missingRoleId), "missing role active");
 
         assertFalse(aa.getRoleForName(StrLib.toStr("NoSuchRole")).exists, "NoSuchRole exists");
 
@@ -287,7 +401,7 @@ contract AccessAdminManageMockTest is Test {
         assertEq(info.adminRoleId.toInt(), expectedAdminRoleId.toInt(), "unexpected admin role (role info)");
         assertEq(info.name.toString(), expectedName, "unexpected role name");
         assertEq(info.disabledAt.toInt(), expectedDisabledAt.toInt(), "unexpected disabled at");
-        assertEq(info.createdAt.toInt(), expectedCreatedAt.toInt(), "unexpected created at");
+        assertTrue(info.exists, "role does not exist");
 
         Str roleName = StrLib.toStr(expectedName);
         IAccessAdmin.RoleNameInfo memory nameInfo = aa.getRoleForName(roleName);
@@ -308,18 +422,18 @@ contract AccessAdminManageMockTest is Test {
         // solhint-enable
     }
 
-    function _printTarget(AccessAdmin aa, address target) internal view {
-        IAccessAdmin.TargetInfo memory info = aa.getTargetInfo(target);
+    function _printTarget(AccessAdmin aa, address trgt) internal view {
+        IAccessAdmin.TargetInfo memory info = aa.getTargetInfo(trgt);
 
         // solhint-disable no-console
-        uint256 functions = aa.authorizedFunctions(target);
-        console.log("target", info.name.toString(), "address", target);
+        uint256 functions = aa.authorizedFunctions(trgt);
+        console.log("target", info.name.toString(), "address", trgt);
         console.log("authorized functions", functions);
         for(uint256 i = 0; i < functions; i++) {
             (
                 IAccessAdmin.Function memory func,
                 RoleId roleId
-            ) = aa.getAuthorizedFunction(target, i);
+            ) = aa.getAuthorizedFunction(trgt, i);
             string memory role = aa.getRoleInfo(roleId).name.toString();
 
             console.log("-", i, string(abi.encodePacked(func.name.toString(), "(): ", role,":")), roleId.toInt());

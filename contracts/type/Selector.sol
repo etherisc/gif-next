@@ -57,14 +57,9 @@ library SelectorSet {
         mapping(Selector selector => uint256 index) at;
     }
 
-    error ErrorSelectorAlreadyAdded(Selector selector);
-    error ErrorSelectorNotInSet(Selector selector);
-
-
     function add(Set storage set, Selector selector) external {
-        if (set.at[selector] > 0) {
-            revert ErrorSelectorAlreadyAdded(selector);
-        }
+        // selector already in set
+        if (set.at[selector] > 0) { return; }
 
         set.selectors.push(selector);
         set.at[selector] = set.selectors.length;
@@ -73,9 +68,8 @@ library SelectorSet {
     function remove(Set storage set, Selector selector) external {
         uint256 selectorIndex = set.at[selector];
 
-        if (selectorIndex == 0) {
-            revert ErrorSelectorNotInSet(selector);
-        }
+        // selector not in set
+        if (selectorIndex == 0) {return; }
 
         uint256 toDeleteIndex = selectorIndex - 1;
         uint256 lastIndex = set.selectors.length - 1;

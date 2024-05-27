@@ -643,13 +643,21 @@ contract AccessAdminTest is Test {
 
         // revoke new role 2nd time from account 1
         accessAdmin.revokeRole(account1, newRoleId);
+
         assertEq(accessAdmin.roleMembers(newRoleId), 1);
         assertFalse(accessAdmin.hasRole(account1, newRoleId), "account1 still has new role");
         vm.stopPrank();
 
         vm.startPrank(account1);
+
         // remove role account1 no longer has
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorNotRoleOwner.selector,
+                newRoleId));
+
         accessAdmin.renounceRole(newRoleId);
+
         assertEq(accessAdmin.roleMembers(newRoleId), 1);
         assertFalse(accessAdmin.hasRole(account1, newRoleId), "account1 still has new role");
         vm.stopPrank();
@@ -663,7 +671,13 @@ contract AccessAdminTest is Test {
         assertFalse(accessAdmin.hasRole(account2, newRoleId), "account2 still has new role");
 
         // remove role account2 no longer has
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorNotRoleOwner.selector,
+                newRoleId));
+
         accessAdmin.renounceRole(newRoleId);
+
         assertEq(accessAdmin.roleMembers(newRoleId), 0);
         assertFalse(accessAdmin.hasRole(account2, newRoleId), "account2 still has new role");
         vm.stopPrank();
@@ -689,6 +703,114 @@ contract AccessAdminTest is Test {
             adminRoleId, 
             newRoleName);
 
+        vm.stopPrank();
+    }
+
+
+    function test_accessAdminSetRoleDisabledHappyCase() public {
+
+        // GIVEN - setup
+        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId newRoleAdminRoleId = accessAdmin.getManagerRole();
+        string memory newRoleName = "NewRole";
+
+        // WHEN
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.createRole(
+            newRoleId, 
+            newRoleAdminRoleId, 
+            newRoleName);
+
+        accessAdmin.grantRole(outsider, newRoleId);
+        vm.stopPrank();
+
+        // THEN
+        assertTrue(accessAdmin.roleExists(newRoleId), "my role doesn't exist");
+        assertFalse(accessAdmin.isRoleDisabled(newRoleId), "my role disabled");
+        assertTrue(accessAdmin.hasRole(outsider, newRoleId), "outsider without my role");
+        assertFalse(accessAdmin.hasRole(outsider2, newRoleId), "outsider2 without my role");
+
+        // WHEN - disable new role
+        bool disabled = true;
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.setRoleDisabled(newRoleId, disabled);
+        vm.stopPrank();
+
+        // THEN
+        assertTrue(accessAdmin.roleExists(newRoleId), "my role doesn't exist (after disable)");
+        assertTrue(accessAdmin.isRoleDisabled(newRoleId), "my role isn't disabled (after disable)");
+
+        // WHEN + THEN 
+        vm.startPrank(accessAdminDeployer);
+
+        // attempt to grant disabled role must revert
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorRoleIsDisabled.selector,
+                newRoleId));
+
+        accessAdmin.grantRole(outsider2, newRoleId);
+
+        // revoking diabled roles must not revert
+        accessAdmin.revokeRole(outsider, newRoleId);
+        vm.stopPrank();
+
+        assertFalse(accessAdmin.hasRole(outsider, newRoleId), "outsider has my role (after revoke)");
+        assertFalse(accessAdmin.hasRole(outsider2, newRoleId), "outsider2 has my role (after revoke)");
+
+        // WHEN - enable new role again
+        disabled = false;
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.setRoleDisabled(newRoleId, disabled);
+
+        // granting role must again work and not revert
+        accessAdmin.grantRole(outsider2, newRoleId);
+        vm.stopPrank();
+
+        // THEN
+        assertTrue(accessAdmin.roleExists(newRoleId), "my role doesn't exist (after re-enable)");
+        assertFalse(accessAdmin.isRoleDisabled(newRoleId), "my role is disabled (after re-enable)");
+        assertFalse(accessAdmin.hasRole(outsider, newRoleId), "outsider has my role (after re-enable)");
+        assertTrue(accessAdmin.hasRole(outsider2, newRoleId), "outsider2 without my role (after re-enable)");
+    }
+
+
+    function test_accessAdminGrantRevokeNonexistentRole() public {
+
+        // GIVEN - setup
+        RoleId adminRoleId = accessAdmin.getAdminRole();
+        RoleId missingRoleId = RoleIdLib.toRoleId(404);
+
+        // WHEN + THEN grant/revoke
+        vm.startPrank(accessAdminDeployer);
+
+        // granting non existent role -> role unknown
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorRoleUnknown.selector,
+                missingRoleId));
+
+        accessAdmin.grantRole(outsider, missingRoleId);
+
+        // revoking non existent role -> role unknown
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorRoleUnknown.selector,
+                missingRoleId));
+
+        accessAdmin.revokeRole(outsider, missingRoleId);
+        vm.stopPrank();
+
+        vm.startPrank(outsider);
+
+        // WHEN + THEN - renounce
+        // renouncing non existent role -> role unknown
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorNotRoleOwner.selector,
+                missingRoleId));
+
+        accessAdmin.renounceRole(missingRoleId);
         vm.stopPrank();
     }
 
@@ -809,6 +931,7 @@ contract AccessAdminTest is Test {
         aaMaster.initialize(address(am));
         vm.stopPrank();
     }
+
 
     /// @dev test that a cloned access admin can only be initialized once
     function test_accessAdminClonedFailingToInitializeTwice() public {
@@ -1009,7 +1132,7 @@ contract AccessAdminTest is Test {
         // check non existent role
         RoleId missingRoleId = RoleIdLib.toRoleId(1313);
         assertFalse(aa.roleExists(missingRoleId), "missing role exists"); 
-        assertFalse(aa.roleIsActive(missingRoleId), "missing role active");
+        assertTrue(aa.isRoleDisabled(missingRoleId), "missing role active");
 
         assertFalse(aa.getRoleForName(StrLib.toStr("NoSuchRole")).exists, "NoSuchRole exists");
 
@@ -1040,7 +1163,7 @@ contract AccessAdminTest is Test {
         assertEq(info.adminRoleId.toInt(), expectedAdminRoleId.toInt(), "unexpected admin role (role info)");
         assertEq(info.name.toString(), expectedName, "unexpected role name");
         assertEq(info.disabledAt.toInt(), expectedDisabledAt.toInt(), "unexpected disabled at");
-        assertEq(info.createdAt.toInt(), expectedCreatedAt.toInt(), "unexpected created at");
+        assertTrue(info.exists, "role does not exist");
 
         Str roleName = StrLib.toStr(expectedName);
         IAccessAdmin.RoleNameInfo memory nameInfo = aa.getRoleForName(roleName);
