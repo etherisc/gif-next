@@ -6,7 +6,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -45,7 +45,7 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    toObjectType(randomNumber(type(uint8).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     address(uint160(randomNumber(type(uint160).max))),
@@ -65,7 +65,7 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    toObjectType(randomNumber(type(uint8).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
@@ -84,7 +84,7 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    toObjectType(randomNumber(type(uint8).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     address(uint160(randomNumber(type(uint160).max))),
@@ -103,7 +103,7 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
-                    toObjectType(randomNumber(type(uint8).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
@@ -198,7 +198,7 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
-                    toObjectType(randomNumber(type(uint8).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     address(uint160(randomNumber(type(uint160).max))),
@@ -217,7 +217,7 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
-                    toObjectType(randomNumber(type(uint8).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
                     address(uint160(randomNumber(type(uint160).max))),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
@@ -236,7 +236,7 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
-                    toObjectType(randomNumber(type(uint8).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     address(uint160(randomNumber(type(uint160).max))),
@@ -255,7 +255,7 @@ contract RegisterContinousTest is RegistryTestBase
                 IRegistry.ObjectInfo(
                     NftIdLib.toNftId(randomNumber(type(uint96).max)),
                     NftIdLib.toNftId(EnumerableSet.at(_nftIds, randomNumber(type(uint256).max) % EnumerableSet.length(_nftIds))),
-                    toObjectType(randomNumber(type(uint8).max)),
+                    ObjectTypeLib.toObjectType(randomNumber(type(uint8).max)),
                     toBool(randomNumber(1)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),
                     EnumerableSet.at(_addresses, randomNumber(type(uint256).max) % EnumerableSet.length(_addresses)),

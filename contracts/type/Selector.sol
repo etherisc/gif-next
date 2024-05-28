@@ -50,7 +50,7 @@ library SelectorLib {
 
 // selector specific set library
 // based on https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/structs/EnumerableSet.sol
-library SelectorSet {
+library SelectorSetLib {
 
     struct Set {
         Selector[] selectors;

@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import {console} from "../lib/forge-std/src/Script.sol";
 import {GifTest} from "./base/GifTest.sol";
+import {IAccessAdmin} from "../contracts/shared/IAccessAdmin.sol";
 import {InstanceLinkedComponent} from "../contracts/shared/InstanceLinkedComponent.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {IStaking} from "../contracts/staking/IStaking.sol";
@@ -29,16 +30,34 @@ contract TestDeployAll is GifTest {
         uint256 roles = registryAdmin.roles();
         uint256 targets = registryAdmin.targets();
 
-        console.log("number of roles", roles);
+        // TODO cleanup
+        // console.log("number of roles", roles);
 
-        for(uint256 i = 0; i < roles; i++) {
-            console.log("role", i, _getRoleText(i));
+        // for(uint256 i = 0; i < roles; i++) {
+        //     console.log("role", i, _getRoleText(i));
+        // }
+
+        // console.log("number of targets", targets);
+
+        // for(uint256 i = 0; i < targets; i++) {
+        //     console.log("target", i, _getTargetText(i));
+        // }
+
+        console.log("==========================================");
+        console.log("roles", registryAdmin.roles());
+        // solhint-enable
+
+        for(uint256 i = 0; i < registryAdmin.roles(); i++) {
+            _printRoleMembers(registryAdmin, registryAdmin.getRoleId(i));
         }
 
-        console.log("number of targets", targets);
+        // solhint-disable no-console
+        console.log("==========================================");
+        console.log("targets", registryAdmin.targets());
+        // solhint-enable
 
-        for(uint256 i = 0; i < targets; i++) {
-            console.log("target", i, _getTargetText(i));
+        for(uint256 i = 0; i < registryAdmin.targets(); i++) {
+            _printTarget(registryAdmin, registryAdmin.getTargetAddress(i));
         }
     }
 
@@ -208,4 +227,38 @@ contract TestDeployAll is GifTest {
         // check component owner has expected role
         assertTrue(instanceReader.hasRole(componentOwner, ownerRoleId), "component owner missing component owner role");
     }
+
+
+    function _printRoleMembers(IAccessAdmin aa, RoleId roleId) internal {
+        IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
+        uint256 members = aa.roleMembers(roleId);
+
+        // solhint-disable no-console
+        console.log("role", info.name.toString(), "id", roleId.toInt()); 
+        console.log("role members", members); 
+        for(uint i = 0; i < members; i++) {
+            console.log("-", i, aa.getRoleMember(roleId, i));
+        }
+        // solhint-enable
+    }
+
+    function _printTarget(IAccessAdmin aa, address target) internal view {
+        IAccessAdmin.TargetInfo memory info = aa.getTargetInfo(target);
+
+        // solhint-disable no-console
+        uint256 functions = aa.authorizedFunctions(target);
+        console.log("target", info.name.toString(), "address", target);
+        console.log("authorized functions", functions);
+        for(uint256 i = 0; i < functions; i++) {
+            (
+                IAccessAdmin.Function memory func,
+                RoleId roleId
+            ) = aa.getAuthorizedFunction(target, i);
+            string memory role = aa.getRoleInfo(roleId).name.toString();
+
+            console.log("-", i, string(abi.encodePacked(func.name.toString(), "(): ", role,":")), roleId.toInt());
+        }
+        // solhint-enable
+    }
+
 }

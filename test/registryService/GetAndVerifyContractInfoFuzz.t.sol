@@ -3,12 +3,10 @@ pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-import {ObjectType, toObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 
 import {RegistryServiceHarnessTestBase} from "./RegistryServiceHarnessTestBase.sol";
-
-import {RegisterableMock,
-        RegisterableMockWithInvalidAddress} from "../mock/RegisterableMock.sol";
+import {RegisterableMock, RegisterableMockWithInvalidAddress} from "../mock/RegisterableMock.sol";
 
 
 contract GetAndVerifyContractInfo_Fuzz_Test is RegistryServiceHarnessTestBase {

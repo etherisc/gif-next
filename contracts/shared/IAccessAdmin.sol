@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
 import {RoleId} from "../type/RoleId.sol";
-import {Selector, SelectorLib, SelectorSet} from "../type/Selector.sol";
+import {Selector} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 

@@ -75,7 +75,7 @@ contract GifDeployer is Test {
         staking.linkToRegisteredNftId();
 
         // 11) initialize registry admin
-        registryAdmin.initialize(
+        registryAdmin.completeSetup(
             registry,
             gifAdmin,
             gifManager);

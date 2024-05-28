@@ -6,7 +6,7 @@ import {FoundryRandom} from "foundry-random/FoundryRandom.sol";
 
 import {NftId} from "../../contracts/type/NftId.sol";
 import {Version, VersionPart, VersionLib} from "../../contracts/type/Version.sol";
-import {ObjectType, toObjectType, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, SERVICE, PRODUCT, POOL, ORACLE, DISTRIBUTION} from "../../contracts/type/ObjectType.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {RegisterableMock} from "./RegisterableMock.sol";
 
@@ -73,9 +73,9 @@ contract ServiceMockWithRandomInvalidType is ServiceMock {
     {
         FoundryRandom rng = new FoundryRandom();
 
-        ObjectType invalidType = toObjectType(rng.randomNumber(type(uint96).max));
+        ObjectType invalidType = ObjectTypeLib.toObjectType(rng.randomNumber(type(uint96).max));
         if(invalidType == SERVICE()) {
-            invalidType = toObjectType(invalidType.toInt() + 1);
+            invalidType = ObjectTypeLib.toObjectType(invalidType.toInt() + 1);
         }
 
         _info.objectType = invalidType;

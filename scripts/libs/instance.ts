@@ -47,8 +47,9 @@ export async function deployAndRegisterMasterInstance(
         { 
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
-                VersionPartLib: libraries.versionPartLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
             }
         }
     );
@@ -91,6 +92,7 @@ export async function deployAndRegisterMasterInstance(
                 ClaimIdLib: libraries.claimIdLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
                 ReferralLib: libraries.referralLibAddress,
                 RequestIdLib: libraries.requestIdLibAddress,

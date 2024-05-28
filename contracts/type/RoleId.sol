@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Key32, KeyId, Key32Lib} from "./Key32.sol";
-import {ROLE} from "./ObjectType.sol";
+import {ObjectType, ROLE} from "./ObjectType.sol";
 
 type RoleId is uint64;
 
@@ -35,7 +35,10 @@ function GIF_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500
 /// @dev role for token whith/blacklisting, deploying and registering the services for a new major release
 /// registering services for a new major release is only possible after a new initial release has been created by the GIF_ADMIN_ROLE
 /// token white/blacklisting is possible for any active release
-function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1600); } 
+function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1510); } 
+
+/// @dev role for registering remote staking targets and reporting remote total value locked amounts.
+function GIF_REMOTE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1520); } 
 
 /// @dev instance specific role to register/own a distribution component
 function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2); }
@@ -123,6 +126,13 @@ library RoleIdLib {
     function toInt(RoleId a) public pure returns (uint64) {
         return uint64(RoleId.unwrap(a));
     }
+
+
+    /// @dev Converts an uint into a RoleId.
+    function roleForObjectType(ObjectType objectType) public pure returns (RoleId) {
+        return RoleId.wrap(ObjectType.unwrap(objectType));
+    }
+
 
     /// @dev Returns true if the value is non-zero (> 0).
     function gtz(RoleId a) public pure returns (bool) {

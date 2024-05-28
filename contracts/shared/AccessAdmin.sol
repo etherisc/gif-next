@@ -7,7 +7,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {RoleId, RoleIdLib} from "../type/RoleId.sol";
-import {Selector, SelectorLib, SelectorSet} from "../type/Selector.sol";
+import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
@@ -61,7 +61,7 @@ contract AccessAdmin is
     address [] internal _targets;
 
     /// @dev store all managed functions per target
-    mapping(address target => SelectorSet.Set selectors) internal _targetFunctions;
+    mapping(address target => SelectorSetLib.Set selectors) internal _targetFunctions;
 
     /// @dev temporary dynamic function infos array
     mapping(address target => mapping(Selector selector => Str functionName)) internal _functionName;
@@ -210,7 +210,7 @@ contract AccessAdmin is
 
 
     function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions) {
-        return SelectorSet.size(_targetFunctions[target]);
+        return SelectorSetLib.size(_targetFunctions[target]);
     }
 
     function getAuthorizedFunction(
@@ -224,7 +224,7 @@ contract AccessAdmin is
             RoleId roleId
         )
     {
-        Selector selector = SelectorSet.at(_targetFunctions[target], idx);
+        Selector selector = SelectorSetLib.at(_targetFunctions[target], idx);
 
         func = Function({
             selector: selector, 
@@ -384,8 +384,8 @@ contract AccessAdmin is
             selector = func.selector;
 
             // add function selector to target selector set if not in set
-            if (addFunctions) { SelectorSet.add(_targetFunctions[target], selector); } 
-            else { SelectorSet.remove(_targetFunctions[target], selector); }
+            if (addFunctions) { SelectorSetLib.add(_targetFunctions[target], selector); } 
+            else { SelectorSetLib.remove(_targetFunctions[target], selector); }
 
             // set function name
             _functionName[target][selector] = func.name;

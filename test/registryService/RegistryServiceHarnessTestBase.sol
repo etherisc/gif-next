@@ -7,7 +7,7 @@ import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType, toObjectType} from "../../contracts/type/ObjectType.sol";
+import {ObjectType} from "../../contracts/type/ObjectType.sol";
 import {VersionPartLib, VersionPart} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 

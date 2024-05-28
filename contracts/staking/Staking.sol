@@ -210,7 +210,7 @@ contract Staking is
     function increaseTotalValueLocked(NftId targetNftId, address token, Amount amount)
         external
         virtual
-        // restricted() // only pool service
+        // restricted() // only pool service // will be multiple parallel pool service versions
         returns (Amount newBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
@@ -223,7 +223,7 @@ contract Staking is
     function decreaseTotalValueLocked(NftId targetNftId, address token, Amount amount)
         external
         virtual
-        // restricted() // only pool service
+        // restricted() // only pool service // will be multiple parallel pool service versions
         returns (Amount newBalance)
     {
         StakingStorage storage $ = _getStakingStorage();
@@ -419,30 +419,6 @@ contract Staking is
 
 
 
-    function _updateRewards(
-        StakingReader reader,
-        StakingStore store,
-        NftId stakeNftId
-    )
-        internal
-        virtual
-        returns (NftId targetNftId)
-    {
-        UFixed rewardRate;
-
-        (targetNftId, rewardRate) = reader.getTargetRewardRate(stakeNftId);
-        (Amount rewardIncrement, ) = StakeManagerLib.calculateRewardIncrease(
-            reader, 
-            stakeNftId,
-            rewardRate);
-
-        store.updateRewards(
-            stakeNftId, 
-            targetNftId,
-            rewardIncrement);
-    }
-
-
     //--- other functions ---------------------------------------------------//
 
     function collectDipAmount(address from, Amount dipAmount)
@@ -494,6 +470,29 @@ contract Staking is
     }
 
     //--- internal functions ------------------------------------------------//
+
+    function _updateRewards(
+        StakingReader reader,
+        StakingStore store,
+        NftId stakeNftId
+    )
+        internal
+        virtual
+        returns (NftId targetNftId)
+    {
+        UFixed rewardRate;
+
+        (targetNftId, rewardRate) = reader.getTargetRewardRate(stakeNftId);
+        (Amount rewardIncrement, ) = StakeManagerLib.calculateRewardIncrease(
+            reader, 
+            stakeNftId,
+            rewardRate);
+
+        store.updateRewards(
+            stakeNftId, 
+            targetNftId,
+            rewardIncrement);
+    }
 
     function _initialize(
         address owner, 

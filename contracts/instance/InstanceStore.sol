@@ -4,16 +4,13 @@ pragma solidity ^0.8.20;
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
 import {Amount} from "../type/Amount.sol";
-import {Key32, KeyId, Key32Lib} from "../type/Key32.sol";
+import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
+import {ObjectType, BUNDLE, POLICY, POOL, PRODUCT, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
 import {RequestId} from "../type/RequestId.sol";
-import {RiskId, RiskIdLib} from "../type/RiskId.sol";
-import {RoleId, RoleIdLib, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
-import {StateId, ACTIVE} from "../type/StateId.sol";
-import {TimestampLib} from "../type/Timestamp.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {StateId} from "../type/StateId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
@@ -21,7 +18,6 @@ import {PayoutId} from "../type/PayoutId.sol";
 import {BalanceStore} from "./base/BalanceStore.sol";
 import {IInstance} from "./IInstance.sol";
 import {KeyValueStore} from "../shared/KeyValueStore.sol";
-import {IKeyValueStore} from "../shared/KeyValueStore.sol";
 import {ObjectCounter} from "./base/ObjectCounter.sol";
 
 import {IBundle} from "./module/IBundle.sol";
@@ -82,10 +78,6 @@ contract InstanceStore is
         _update(_toNftKey32(productNftId, PRODUCT()), abi.encode(info), newState);
     }
 
-    function updateProductSetupState(NftId productNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(productNftId, PRODUCT()), newState);
-    }
-
     //--- Pool --------------------------------------------------------------//
 
     function createPool(
@@ -100,10 +92,6 @@ contract InstanceStore is
 
     function updatePool(NftId poolNftId, IComponents.PoolInfo memory info, StateId newState) external restricted() {
         _update(_toNftKey32(poolNftId, POOL()), abi.encode(info), newState);
-    }
-
-    function updatePoolState(NftId poolNftId, StateId newState) external restricted() {
-        _updateState(_toNftKey32(poolNftId, POOL()), newState);
     }
 
     //--- DistributorType ---------------------------------------------------//

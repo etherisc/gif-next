@@ -245,16 +245,6 @@ contract ReleaseManager is
             _releaseInfo[version].functionRoleNames[serviceIdx],
             _releaseInfo[version].selectors[serviceIdx]);
 
-        // TODO decide for one of the approaches
-        // // service to service authorization
-        // ServiceAuthorizationsLib.ServiceAuthorization memory authz = ServiceAuthorizationsLib.getAuthorizations(domain);
-        // for(uint8 idx = 0; idx < authz.authorizedRole.length; idx++) {
-        //     _accessManager.setTargetFunctionRole(
-        //         address(service), 
-        //         authz.authorizedSelectors[idx], 
-        //         authz.authorizedRole[idx]);
-        // }
-
         _awaitingRegistration = serviceIdx;
         // TODO end state depends on (_awaitingRegistration == 0)
         _state = DEPLOYING();

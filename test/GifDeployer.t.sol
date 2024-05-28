@@ -14,13 +14,13 @@ import {Registry} from "../contracts/registry/Registry.sol";
 import {RegistryAdmin} from "../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../contracts/registry/ReleaseManager.sol";
 import {REGISTRY, STAKING} from "../contracts/type/ObjectType.sol";
+import {Selector, SelectorLib} from "../contracts/type/Selector.sol";
 import {Staking} from "../contracts/staking/Staking.sol";
 import {StakingManager} from "../contracts/staking/StakingManager.sol";
 import {StakingReader} from "../contracts/staking/StakingReader.sol";
 import {StakingStore} from "../contracts/staking/StakingStore.sol";
 import {TokenRegistry} from "../contracts/registry/TokenRegistry.sol";
 import {VersionPart, VersionPartLib} from "../contracts/type/Version.sol";
-
 
 // solhint-disable-next-line max-states-count
 contract GifDeployerTest is GifDeployer {
@@ -114,17 +114,19 @@ contract GifDeployerTest is GifDeployer {
         assertTrue(registryAdmin.hasRole(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
 
         // check sample admin access
-        assertTrue(registryAdmin.canCall(
-                gifAdmin, 
-                address(releaseManager),
-                ReleaseManager.createNextRelease.selector), 
+        assertTrue(
+            registryAdmin.canCall(
+                gifAdmin, // caller
+                address(releaseManager), // target
+                _toSelector(ReleaseManager.createNextRelease.selector)), 
             "gif manager cannot call registerToken");
 
         // check sample manager access
-        assertTrue(registryAdmin.canCall(
-                gifManager, 
-                address(tokenRegistry),
-                TokenRegistry.registerToken.selector), 
+        assertTrue(
+            registryAdmin.canCall(
+                gifManager, // caller
+                address(tokenRegistry), // target
+                _toSelector(TokenRegistry.registerToken.selector)), 
             "gif manager cannot call registerToken");
 
         // check linked contracts
@@ -135,6 +137,9 @@ contract GifDeployerTest is GifDeployer {
         // TODO amend once full gif setup is streamlined
     }
 
+    function _toSelector(bytes4 selector) internal pure returns (Selector) {
+        return SelectorLib.toSelector(selector);
+    }
 
     function test_deployerCoreStakingManager() public {
         assertTrue(address(stakingManager) != address(0), "staking manager address zero");

@@ -16,7 +16,7 @@ import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, PROTOCOL, REGISTRY, TOKEN, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, TOKEN, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";

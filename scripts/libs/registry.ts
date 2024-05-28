@@ -80,6 +80,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
             libraries: {
                 RoleIdLib: libraries.roleIdLibAddress,
+                SelectorLib: libraries.selectorLibAddress,
+                SelectorSetLib: libraries.selectorSetLibAddress,
+                StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
             }
         });
@@ -114,6 +117,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
@@ -150,6 +154,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
+                ObjectTypeLib: libraries.objectTypeLibAddress,
             }
         });
 
@@ -197,6 +202,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 TargetManagerLib: libraries.targetManagerLibAddress, 
                 AmountLib: libraries.amountLibAddress, 
                 NftIdLib: libraries.nftIdLibAddress, 
+                ObjectTypeLib: libraries.objectTypeLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
             }
@@ -211,7 +217,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress);
 
-    await registryAdmin.initialize(registry, owner, owner);
+    await registryAdmin.completeSetup(registry, owner, owner);
 
     await verifyRegistryComponents(registryAddress, owner)
 
