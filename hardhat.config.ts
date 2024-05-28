@@ -12,7 +12,7 @@ const config: HardhatUserConfig = {
   ignition: {
     strategyConfig: {
         create2: {
-            salt: "0x0000000000000000000000000000000000000000000000000000000000000002",
+            salt: "0x0000000000000000000000000000000000000000000000000000000000000004",
         }
     }
   },
@@ -34,7 +34,7 @@ const config: HardhatUserConfig = {
       chainId: 1337,
       url: "http://anvil:7545",
       accounts: {
-        mnemonic: "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
+        mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
         count: 20,
       },
     },
