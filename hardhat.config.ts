@@ -12,7 +12,7 @@ const config: HardhatUserConfig = {
   ignition: {
     strategyConfig: {
         create2: {
-            salt: "0x0000000000000000000000000000000000000000000000000000000000000001",
+            salt: "0x0000000000000000000000000000000000000000000000000000000000000002",
         }
     }
   },
@@ -38,10 +38,9 @@ const config: HardhatUserConfig = {
         count: 20,
       },
     },
-    mumbai: {
-      chainId: 80001,
-      gasPrice: 3100000000,
-      url: process.env.NETWORK_URL || 'https://polygon-mumbai.infura.io/v3/' + process.env.WEB3_INFURA_PROJECT_ID,
+    polygonAmoy: {
+      chainId: 80002,
+      url: process.env.NETWORK_URL,
       accounts: {
         mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
         count: 20,
@@ -54,8 +53,18 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: {
-      polygonMumbai: process.env.POLYGONSCAN_API_KEY || "",
+      polygonAmoy:  process.env.POLYGONSCAN_API_KEY || "",
     },
+    customChains: [
+      {
+        network: "polygonAmoy",
+        chainId: 80002,
+        urls: {
+          apiURL: "https://api-amoy.polygonscan.com/api",
+          browserURL: "https://amoy.polygonscan.com"
+        },
+      }
+    ]
   },
 };
 
