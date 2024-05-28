@@ -29,7 +29,7 @@ contract StakingReader is
     IStaking private _staking;
     StakingStore private _store;
 
-    constructor(IRegistry registry) InitializableCustom() {
+    constructor(IRegistry registry, address initialOwner) InitializableCustom(initialOwner) {
         _registry = registry;
     }
 

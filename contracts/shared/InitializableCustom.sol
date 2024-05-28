@@ -73,9 +73,10 @@ abstract contract InitializableCustom {
         // solhint-disable-next-line var-name-mixedcase
         InitializableCustomStorage storage $ = _getInitializableCustomStorage();
 
-        if($._initializeOwner != msg.sender) {
-            revert InvalidInitializationCaller();
-        }
+        // FIXME: DO NOT MERGE WITH THIS!!!!
+        // if($._initializeOwner != msg.sender) {
+        //     revert InvalidInitializationCaller();
+        // }
 
         // Cache values to avoid duplicated sloads
         bool isTopLevelCall = !$._initializing;
@@ -115,10 +116,10 @@ abstract contract InitializableCustom {
     /**
      * @dev Constructor sets the caller of protected initializer function.
     */
-    constructor() {
+    constructor(address initialOwner) {
         // solhint-disable-previous-line var-name-mixedcase
         InitializableCustomStorage storage $ = _getInitializableCustomStorage();
-        $._initializeOwner = msg.sender;
+        $._initializeOwner = initialOwner;
     }
 
     /**

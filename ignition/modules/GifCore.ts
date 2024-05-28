@@ -28,7 +28,7 @@ export default buildModule("GifCore", (m) => {
     const dip = m.contract("Dip", []);
     
     // 2) deploy registry admin
-    const registryAdmin = m.contract("RegistryAdmin", [], 
+    const registryAdmin = m.contract("RegistryAdmin", [stakingOwner], 
         {
             libraries: {
                 TimestampLib: timestamplib,
@@ -39,7 +39,7 @@ export default buildModule("GifCore", (m) => {
 
     // 3) deploy registry
     const registry = m.contract("Registry", 
-        [registryAdmin],
+        [registryAdmin, stakingOwner],
         {
             libraries: {
                 NftIdLib: nftIdLib,
@@ -75,7 +75,7 @@ export default buildModule("GifCore", (m) => {
 
     // 6) deploy staking reader
     const stakingReader = m.contract("StakingReader",
-        [registry],
+        [registry, stakingOwner],
         {
             libraries: {
                 NftIdLib: nftIdLib,

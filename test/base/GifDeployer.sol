@@ -144,7 +144,7 @@ contract GifDeployer is Test {
         registryAdmin = new RegistryAdmin();
 
         // 3) deploy registry
-        registry = new Registry(registryAdmin);
+        registry = new Registry(registryAdmin, address(this));
 
         // 4) deploy release manager
         releaseManager = new ReleaseManager(registry);
@@ -153,7 +153,7 @@ contract GifDeployer is Test {
         tokenRegistry = new TokenRegistry(registry, dip);
 
         // 6) deploy staking reader
-        StakingReader stakingReader = new StakingReader(registry);
+        StakingReader stakingReader = new StakingReader(registry, address(this));
 
         // 7) deploy staking store
         StakingStore stakingStore = new StakingStore(registry, stakingReader);
