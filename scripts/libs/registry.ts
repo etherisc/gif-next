@@ -81,7 +81,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: registryAdminAddress, contract: registryAdminBaseContract } = await deployContract(
         "RegistryAdmin",
         owner, // GIF_ADMIN_ROLE
-        [], 
+        [owner], 
         {
             libraries: {
                 ObjectTypeLib: libraries.objectTypeLibAddress,
@@ -102,7 +102,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: registryAddress, contract: registryBaseContract } = await deployContract(
         "Registry",
         owner, // GIF_ADMIN_ROLE
-        [registryAdminAddress], 
+        [registryAdminAddress, owner], 
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
@@ -156,7 +156,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: stakingReaderAddress, contract: stakingReaderBaseContract } = await deployContract(
         "StakingReader",
         owner,
-        [registryAddress],
+        [registryAddress, owner],
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
