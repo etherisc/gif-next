@@ -12,117 +12,114 @@ using {
     ObjectTypeLib.gtz
 } for ObjectType global;
 
-// general pure free functions
 
-function RELEASE() pure returns (ObjectType) {
+//--- GIF object types/domains (rage: 1 - 99) -------------------------------//
+
+function PROTOCOL() pure returns (ObjectType) {
     return ObjectTypeLib.toObjectType(1);
 }
 
-function PROTOCOL() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(10);
-}
-
-function ROLE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(20);
-}
-
-function TARGET() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(30);
-}
-
 function REGISTRY() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(40);
+    return ObjectTypeLib.toObjectType(2);
 }
 
 function STAKING() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(45);
+    return ObjectTypeLib.toObjectType(3);
 }
 
 function TOKEN() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(50);
+    return ObjectTypeLib.toObjectType(6);
+}
+
+function RELEASE() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(7);
+}
+
+function ROLE() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(8);
 }
 
 function SERVICE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(60);
+    return ObjectTypeLib.toObjectType(9);
 }
 
 function INSTANCE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(70);
-}
-
-function STAKE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(80);
+    return ObjectTypeLib.toObjectType(10);
 }
 
 function COMPONENT() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(100);
-}
-
-function PRODUCT_SETUP() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(101);
-}
-
-function REQUEST() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(105);
+    return ObjectTypeLib.toObjectType(11);
 }
 
 function PRODUCT() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(110);
-}
-
-function DISTRIBUTION() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(120);
-}
-
-function DISTRIBUTOR_TYPE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(121);
-}
-
-function DISTRIBUTOR() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(122);
-}
-
-function REFERRAL() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(123);
+    return ObjectTypeLib.toObjectType(12);
 }
 
 function ORACLE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(130);
+    return ObjectTypeLib.toObjectType(13);
+}
+
+function DISTRIBUTION() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(14);
 }
 
 function POOL() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(140);
-}
-
-function BUNDLE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(220);
-}
-
-function RISK() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(200);
+    return ObjectTypeLib.toObjectType(15);
 }
 
 function APPLICATION() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(210);
+    return ObjectTypeLib.toObjectType(20);
 }
 
 function POLICY() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(211);
+    return ObjectTypeLib.toObjectType(21);
 }
 
 function CLAIM() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(212);
+    return ObjectTypeLib.toObjectType(22);
 }
 
 function PAYOUT() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(213); 
+    return ObjectTypeLib.toObjectType(23); 
+}
+
+function RISK() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(24);
 }
 
 function PRICE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(230);
+    return ObjectTypeLib.toObjectType(25);
 }
 
-// pure free functions for operators
+function REQUEST() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(26);
+}
+
+function DISTRIBUTOR_TYPE() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(27);
+}
+
+function DISTRIBUTOR() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(28);
+}
+
+function REFERRAL() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(29);
+}
+
+function BUNDLE() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(30);
+}
+
+function TARGET() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(31);
+}
+
+function STAKE() pure returns (ObjectType) {
+    return ObjectTypeLib.toObjectType(32);
+}
+
+// other pure free functions for operators
 function eqObjectType(ObjectType a, ObjectType b) pure returns (bool isSame) {
     return ObjectTypeLib.eq(a, b);
 }

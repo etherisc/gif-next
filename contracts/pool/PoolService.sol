@@ -84,10 +84,6 @@ contract PoolService is
         registerInterface(type(IPoolService).interfaceId);
     }
 
-    function getDomain() public pure override returns(ObjectType) {
-        return POOL();
-    }
-
 
     function setMaxCapitalAmount(Amount maxCapitalAmount)
         external
@@ -450,4 +446,7 @@ contract PoolService is
         }
     }
 
+    function _getDomain() internal pure override returns(ObjectType) {
+        return POOL();
+    }
 }

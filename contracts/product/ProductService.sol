@@ -75,11 +75,6 @@ contract ProductService is
     }
 
 
-    function getDomain() public pure override returns(ObjectType) {
-        return PRODUCT();
-    }
-
-
     function createRisk(
         RiskId riskId,
         bytes memory data
@@ -120,5 +115,10 @@ contract ProductService is
     {
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         instance.getInstanceStore().updateRiskState(riskId, state);
+    }
+
+
+    function _getDomain() internal pure override returns(ObjectType) {
+        return PRODUCT();
     }
 }

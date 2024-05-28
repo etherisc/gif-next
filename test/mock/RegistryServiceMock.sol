@@ -65,8 +65,8 @@ contract RegistryServiceMock is Service {
         return "hi from mock";
     }
 
-    function getDomain()
-        public
+    function _getDomain()
+        internal
         pure
         virtual override
         returns (ObjectType)

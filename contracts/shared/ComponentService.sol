@@ -64,11 +64,6 @@ contract ComponentService is
         registerInterface(type(IComponentService).interfaceId);
     }
 
-
-    function getDomain() public pure virtual override returns(ObjectType) {
-        return COMPONENT();
-    }
-
     //-------- component ----------------------------------------------------//
 
     function setWallet(address newWallet) external virtual {
@@ -614,5 +609,9 @@ contract ComponentService is
         if(!hasRole) {
             revert ErrorComponentServiceExpectedRoleMissing(info.parentNftId, requiredRole, owner);
         }
+    }
+
+    function _getDomain() internal pure virtual override returns(ObjectType) {
+        return COMPONENT();
     }
 }

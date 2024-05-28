@@ -172,11 +172,6 @@ contract InstanceService is
         return _masterInstanceReader;
     }
 
-    // From IService
-    function getDomain() public pure override returns(ObjectType) {
-        return INSTANCE();
-    }
-
     function setAndRegisterMasterInstance(address instanceAddress)
             external 
             onlyOwner 
@@ -358,5 +353,10 @@ contract InstanceService is
 
         instance = Instance(instanceInfo.objectAddress);
         componentNftId = componentInfo.nftId;
+    }
+
+    // From IService
+    function _getDomain() internal pure override returns(ObjectType) {
+        return INSTANCE();
     }
 }

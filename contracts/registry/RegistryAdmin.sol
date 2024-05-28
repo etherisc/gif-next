@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {AccessAdmin} from "../shared/AccessAdmin.sol";
 import {IRegistry} from "./IRegistry.sol";
+import {IStaking} from "../staking/IStaking.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
 import {RoleId, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
@@ -18,6 +19,10 @@ import {TokenRegistry} from "./TokenRegistry.sol";
         - MUST have 1 member at any time
         - granted/revoked ONLY in transferAdminRole() -> consider lock out situations!!!
         - responsible for creation and activation of releases
+
+    createServiceTarget(type, release)
+    createServiceRole(type,release)
+    getServiceRole(type, release)
 */
 contract RegistryAdmin is
     AccessAdmin

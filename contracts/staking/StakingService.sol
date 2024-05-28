@@ -45,10 +45,6 @@ contract StakingService is
         _;
     }
 
-    function getDomain() public pure override returns(ObjectType) {
-        return STAKING();
-    }
-
 
     function registerProtocolTarget()
         external
@@ -397,10 +393,13 @@ contract StakingService is
         return IStaking(stakingAddress);
     }
 
-
     function _getStakingServiceStorage() private pure returns (StakingServiceStorage storage $) {
         assembly {
             $.slot := STAKING_SERVICE_LOCATION_V1
         }
+    }
+
+    function _getDomain() internal pure override returns(ObjectType) {
+        return STAKING();
     }
 }

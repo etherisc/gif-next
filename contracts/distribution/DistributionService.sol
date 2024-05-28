@@ -77,10 +77,6 @@ contract DistributionService is
         registerInterface(type(IDistributionService).interfaceId);
     }
 
-    function getDomain() public pure override returns(ObjectType) {
-        return DISTRIBUTION();
-    }
-
 
     function createDistributorType(
         string memory name,
@@ -295,4 +291,7 @@ contract DistributionService is
         return IInstance(instanceAddress);
     }
 
+    function _getDomain() internal pure override returns(ObjectType) {
+        return DISTRIBUTION();
+    }
 }

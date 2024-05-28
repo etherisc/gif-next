@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Key32, KeyId, Key32Lib} from "./Key32.sol";
 import {ObjectType, ROLE} from "./ObjectType.sol";
+import {VersionPart} from "./Version.sol";
 
 type RoleId is uint64;
 
@@ -12,53 +13,84 @@ using {
     neRoleId as !=,
     RoleIdLib.eqz,
     RoleIdLib.gtz,
-    RoleIdLib.toInt,
-    RoleIdLib.toKey32
+    RoleIdLib.toInt
+    // RoleIdLib.toKey32
 } for RoleId global;
 
+// general pure free functions
 
-/// @dev role id needs to match with oz AccessManager.ADMIN_ROLE
+//--- OpenZeppelin provided roles -------------------------------------------//
+
+/// @dev Role ID needs to match with oz AccessManager.ADMIN_ROLE
 function ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(type(uint64).min); }
 
-/// @dev role id needs to match with oz AccessManager.PUBLIC_ROLE
+/// @dev Role ID needs to match with oz AccessManager.PUBLIC_ROLE
 function PUBLIC_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(type(uint64).max); }
 
-// general pure free functions
+/// @dev Default access admin (registry admin, instance admin) role with rights to manage roles
+function MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1); } 
+
+//--- Core GIF roles (range: 1-99) ------------------------------------------//
 
 /// @dev cental role for gif release management.
 /// this role is necessary to call ReleaseManager.createNextRelease/activateNextRelease
 /// the actual deployment of a release requires the GIF_MANAGER_ROLE.
 /// GIF_ADMIN_ROLE is the admin of the GIF_MANAGER_ROLE.
 /// only a single holder may hold this role at any time
-function GIF_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1500); } 
+function GIF_ADMIN_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2); } 
 
 /// @dev role for token whith/blacklisting, deploying and registering the services for a new major release
 /// registering services for a new major release is only possible after a new initial release has been created by the GIF_ADMIN_ROLE
 /// token white/blacklisting is possible for any active release
-function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1510); } 
+function GIF_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(3); } 
 
 /// @dev role for registering remote staking targets and reporting remote total value locked amounts.
-function GIF_REMOTE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1520); } 
+function GIF_REMOTE_MANAGER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(4); } 
 
-/// @dev instance specific role to register/own a distribution component
-function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2); }
-
-/// @dev instance specific  role to register/own an oracle component
-function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(3); }
-
-/// @dev instance specific  role to register/own a pool component
-function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(4); }
+/// @dev required role to own an instance.
+/// Role is granted by instance service when cloning a new instance.
+/// allows instance specific target, role and access management 
+function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10); }
 
 /// @dev instance specific  role to register/own a product component
-function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(5); }
+function PRODUCT_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(11); }
+
+/// @dev instance specific  role to register/own an oracle component
+function ORACLE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(12); }
+
+/// @dev instance specific role to register/own a distribution component
+function DISTRIBUTION_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(13); }
+
+/// @dev instance specific  role to register/own a pool component
+function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(14); }
+
+//--- GIF contract roles (range: 200 - 9900) --------------------------------//
+// created and assigned during initial deployment for registry and staking
+// granting for instances and components in instance service
+// object type * 100 + 0, examples:
+// - registry contract role: 200 
+// - staking contract role: 300 
+// - instance contract role: 1000
+// - product contract role: 1200
+
+//--- GIF service roles (range 201 - 99xx) ----------------------------------//
+// created and assigned by release manager contract
+// object type * 100 + 1/major version, examples:
+// - registry service role (any version): 201
+// - registry service role (version 3): 203
+// - registry service role (any version): 301
+// - staking service role: (version 3): 303
+// - application service role (version 3): 2003
+
+//--- Custom roles (range > 10000) ------------------------------------------//
+
+/// @dev role associated with the staking contract
+/// this role is the admin role for the INSTANCE_OWNER_ROLE
+function STAKING_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1313); }
 
 /// @dev role associated with an instance contract
 /// this role is the admin role for the INSTANCE_OWNER_ROLE
 function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600); }
-
-/// @dev required role to register/own an instance
-/// allows instance specific target, role and access management 
-function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1900); }
 
 function REGISTRY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1800); }
 
@@ -127,12 +159,18 @@ library RoleIdLib {
         return uint64(RoleId.unwrap(a));
     }
 
-
     /// @dev Converts an uint into a RoleId.
-    function roleForObjectType(ObjectType objectType) public pure returns (RoleId) {
-        return RoleId.wrap(ObjectType.unwrap(objectType));
+    /// Used for GIF core contracts.
+    function roleForType(ObjectType objectType) public pure returns (RoleId) {
+        return RoleId.wrap(100 * ObjectType.unwrap(objectType));
     }
 
+    /// @dev Converts an uint into a RoleId.
+    /// Used for GIF core contracts.
+    function roleForTypeAndVersion(ObjectType objectType, uint8 majorVersion) public pure returns (RoleId) {
+        return RoleId.wrap(
+            100 * ObjectType.unwrap(objectType) + majorVersion);
+    }
 
     /// @dev Returns true if the value is non-zero (> 0).
     function gtz(RoleId a) public pure returns (bool) {

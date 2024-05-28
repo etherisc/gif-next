@@ -30,19 +30,6 @@ contract TestDeployAll is GifTest {
         uint256 roles = registryAdmin.roles();
         uint256 targets = registryAdmin.targets();
 
-        // TODO cleanup
-        // console.log("number of roles", roles);
-
-        // for(uint256 i = 0; i < roles; i++) {
-        //     console.log("role", i, _getRoleText(i));
-        // }
-
-        // console.log("number of targets", targets);
-
-        // for(uint256 i = 0; i < targets; i++) {
-        //     console.log("target", i, _getTargetText(i));
-        // }
-
         console.log("==========================================");
         console.log("roles", registryAdmin.roles());
         // solhint-enable

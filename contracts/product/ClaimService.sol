@@ -73,11 +73,6 @@ contract ClaimService is
         registerInterface(type(IClaimService).interfaceId);
     }
 
-
-    function getDomain() public pure override returns(ObjectType) {
-        return CLAIM();
-    }
-
     function submit(
         NftId policyNftId, 
         Amount claimAmount,
@@ -438,5 +433,10 @@ contract ClaimService is
 
         // get claim info
         claimInfo = instanceReader.getClaimInfo(policyNftId, claimId);
+    }
+
+
+    function _getDomain() internal pure override returns(ObjectType) {
+        return CLAIM();
     }
 }

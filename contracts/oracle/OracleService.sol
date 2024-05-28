@@ -37,10 +37,6 @@ contract OracleService is
         registerInterface(type(IOracleService).interfaceId);
     }
 
-    function getDomain() public pure override returns(ObjectType) {
-        return ORACLE();
-    }
-
     function request(
         NftId oracleNftId,
         bytes calldata requestData,
@@ -273,5 +269,10 @@ contract OracleService is
         NftId instanceNftId = getRegistry().getObjectInfo(componentNftId).parentNftId;
         address instanceAddress = getRegistry().getObjectInfo(instanceNftId).objectAddress;
         return IInstance(instanceAddress);
+    }
+
+
+    function _getDomain() internal pure override returns(ObjectType) {
+        return ORACLE();
     }
 }
