@@ -40,7 +40,7 @@ const config: HardhatUserConfig = {
     },
     polygonAmoy: {
       chainId: 80002,
-      url: process.env.NETWORK_URL,
+      url: process.env.NETWORK_URL || 'https://rpc-amoy.polygon.technology/',
       accounts: {
         mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
         count: 20,
