@@ -122,7 +122,7 @@ jobs:
     permissions:
         contents: read
         # id-token: write
-    needs: [build_hardhat, build_foundry]
+    needs: [build_hardhat]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -154,7 +154,7 @@ jobs:
     permissions:
         contents: read
         # id-token: write
-    needs: [build_hardhat, build_foundry]
+    needs: [build_hardhat]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
