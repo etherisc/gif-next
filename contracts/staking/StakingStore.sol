@@ -96,8 +96,13 @@ contract StakingStore is
 
     //--- staking rate specific functions -----------------------------------//
 
-    function setStakingRate(uint256 chainId, address token, UFixed stakingRate)
+    function setStakingRate(
+        uint256 chainId, 
+        address token, 
+        UFixed stakingRate
+    )
         external
+        restricted()
     {
         _stakingRate[chainId][token] = stakingRate;
     }

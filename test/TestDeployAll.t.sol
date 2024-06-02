@@ -222,9 +222,16 @@ contract TestDeployAll is GifTest {
 
         // solhint-disable no-console
         console.log("role", info.name.toString(), "id", roleId.toInt()); 
-        console.log("role members", members); 
+        console.log("role members", members);
+
         for(uint i = 0; i < members; i++) {
-            console.log("-", i, aa.getRoleMember(roleId, i));
+            address memberAddress = aa.getRoleMember(roleId, i);
+            string memory targetName = "not target";
+            if (aa.targetExists(memberAddress)) {
+                targetName = aa.getTargetInfo(memberAddress).name.toString();
+            }
+
+            console.log("-", i, aa.getRoleMember(roleId, i), targetName);
         }
         // solhint-enable
     }
