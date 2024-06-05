@@ -324,11 +324,7 @@ contract GifTest is GifDeployer {
         address gifManager = registryOwner;
 
         (
-            dip,
             registry,
-            tokenRegistry,
-            releaseManager,
-            registryAdmin,
             stakingManager,
             staking
         ) = deployCore(
@@ -342,16 +338,22 @@ contract GifTest is GifDeployer {
         console.log("registry deployed at", address(registry));
         console.log("registry owner", registryOwner);
 
-        console.log("token registry deployed at", address(tokenRegistry));
-        console.log("release manager deployed at", address(releaseManager));
+        console.log("registry admin deployed:", registry.getRegistryAdminAddress());
+        console.log("registry admin authority", RegistryAdmin(registry.getRegistryAdminAddress()).authority());
 
-        console.log("registry access manager deployed:", address(registryAdmin));
-        console.log("registry access manager authority", registryAdmin.authority());
+        console.log("token registry deployed at", registry.getTokenRegistryAddress());
+        console.log("token registry authority", TokenRegistry(registry.getTokenRegistryAddress()).authority());
 
+        console.log("release manager deployed at", registry.getReleaseManagerAddress());
+        console.log("release manager authority", ReleaseManager(registry.getReleaseManagerAddress()).authority());
+
+        console.log("staking manager linked to nft id", stakingManager.getNftId().toInt());
         console.log("staking manager deployed at", address(stakingManager));
+        console.log("staking manager owner", stakingManager.getOwner());
 
         console.log("staking nft id", registry.getNftId(address(staking)).toInt());
         console.log("staking deployed at", address(staking));
+        console.log("staking authority", staking.authority());
         console.log("staking owner (opt 1)", registry.ownerOf(address(staking)));
         console.log("staking owner (opt 2)", staking.getOwner());
         // solhint-enable
@@ -527,6 +529,7 @@ contract GifTest is GifDeployer {
 
         // MUST be initialized and set before instance reader
         masterInstanceStore = new InstanceStore();
+        // TODO do we need to initialize master contracts? 
         masterInstanceStore.initialize(address(masterInstance));
         masterInstance.setInstanceStore(masterInstanceStore);
         assert(masterInstance.getInstanceStore() == masterInstanceStore);
@@ -558,11 +561,11 @@ contract GifTest is GifDeployer {
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
-        console.log("master oz access manager deployed at", address(masterInstanceAccessManager));
-        console.log("master instance access manager deployed at", address(masterInstanceAdmin));
+        console.log("master access manager deployed at", address(masterInstanceAccessManager));
+        console.log("master instance admin deployed at", address(masterInstanceAdmin));
+        console.log("master instance store deployed at", address(masterInstanceStore));
         console.log("master instance reader deployed at", address(masterInstanceReader));
         console.log("master bundle manager deployed at", address(masterBundleManager));
-        console.log("master instance store deployed at", address(masterInstanceStore));
         // solhint-enable
     }
 
@@ -583,11 +586,11 @@ contract GifTest is GifDeployer {
         // solhint-disable
         console.log("cloned instance deployed at", address(instance));
         console.log("cloned instance nft id", instanceNftId.toInt());
-        console.log("cloned oz access manager deployed at", address(instanceAccessManager));
-        console.log("cloned instance access manager deployed at", address(instanceAdmin));
+        console.log("cloned access manager deployed at", address(instanceAccessManager));
+        console.log("cloned instance admin deployed at", address(instanceAdmin));
+        console.log("cloned instance store deployed at", address(instanceStore));
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle manager deployed at", address(instanceBundleManager));
-        console.log("cloned instance store deployed at", address(instanceStore));
         // solhint-enable
     }
 

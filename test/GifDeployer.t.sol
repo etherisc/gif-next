@@ -195,11 +195,7 @@ contract GifDeployerTest is GifDeployer {
     function setUp() public virtual {
         vm.startPrank(registryOwner);
         (
-            dip,
             registry,
-            tokenRegistry,
-            releaseManager,
-            registryAdmin,
             stakingManager,
             staking
         ) = deployCore(

@@ -159,11 +159,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _startPrank(registryOwner);
 
         (
-            dip,
             registry,
-            tokenRegistry,
-            releaseManager,
-            registryAdmin,
             stakingManager,
             staking
         ) = deployCore(
