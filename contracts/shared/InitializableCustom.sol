@@ -115,10 +115,10 @@ abstract contract InitializableCustom {
     /**
      * @dev Constructor sets the caller of protected initializer function.
     */
-    constructor() {
+    constructor(address initializeOwner) {
         // solhint-disable-previous-line var-name-mixedcase
         InitializableCustomStorage storage $ = _getInitializableCustomStorage();
-        $._initializeOwner = msg.sender;
+        $._initializeOwner = initializeOwner;
     }
 
     /**

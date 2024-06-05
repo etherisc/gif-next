@@ -55,9 +55,9 @@ contract RegistryAdmin is
     address private _tokenRegistry;
     address private _staking;
 
-    constructor()
+    constructor(address initializeOwner)
         AccessManaged(msg.sender)
-        InitializableCustom()
+        InitializableCustom(initializeOwner)
     {
         AccessManagerExtendedInitializeable accessManager = new AccessManagerExtendedInitializeable();
         accessManager.initialize(address(this));
