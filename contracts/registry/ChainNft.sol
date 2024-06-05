@@ -199,11 +199,15 @@ contract ChainNft is ERC721Enumerable {
     * (42 * 10 ** 10 + 9876543210) * 100 + 10
     * (index * 10 ** digits + chainid) * 100 + digits (1 < digits < 100)
     */
-    function calculateTokenId(uint256 idIndex) public view returns (uint256 id) {
+    function calculateTokenId(uint256 idIndex, uint chainId) public view returns (uint256 id) {
         id =
-            (idIndex * _chainIdMultiplier + _chainIdInt) *
+            (idIndex * _chainIdMultiplier + chainId) *
             100 +
             _chainIdDigits;
+    }
+
+    function calculateTokenId(uint256 idIndex) public view returns (uint256 id) {
+        id = calculateTokenId(idIndex, _chainIdInt);
     }
 
     function getNextTokenId() external view returns (uint256) {
