@@ -320,17 +320,18 @@ contract GifTest is GifDeployer {
     function _deployCore()
         internal
     {
+        bytes32 salt = "0x1234";
         address gifAdmin = registryOwner;
         address gifManager = registryOwner;
 
         (
             registry,
-            stakingManager,
-            staking
+            stakingManager
         ) = deployCore(
             gifAdmin,
             gifManager,
-            stakingOwner);
+            stakingOwner,
+            salt);
 
         _setUpDependingItems();
 
@@ -351,6 +352,7 @@ contract GifTest is GifDeployer {
         console.log("staking manager deployed at", address(stakingManager));
         console.log("staking manager owner", stakingManager.getOwner());
 
+        staking = stakingManager.getStaking();
         console.log("staking nft id", registry.getNftId(address(staking)).toInt());
         console.log("staking deployed at", address(staking));
         console.log("staking authority", staking.authority());

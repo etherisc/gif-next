@@ -32,78 +32,80 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 //                   create       new_address =       keccak256(new_proxy_address, 1);
 
 contract GifDeployer is CreateXScript, Test {
-    bytes32 _salt;
-    address _initializeOwner;
-
     // non mainnet deployment
     function deployCore(
-        address gifAdmin,
+        address gifAdmin, // deployer
         address gifManager,
-        address stakingOwner
+        address stakingOwner,
+        bytes32 salt
     )
         public
         withCreateX
         returns (
             Registry registry,
-            StakingManager stakingManager,
-            Staking staking
+            StakingManager stakingManager
         )
     {
+        address initializeOwner = gifAdmin;
+        // prepare salt for permissioned deploymnet
+        bytes32 guardedSalt = keccak256(abi.encodePacked(uint256(uint160(gifAdmin)), salt));
         // 1) deploy dip token
         IERC20Metadata dip = new Dip();
 
         // 2) deploy registry admin
-        RegistryAdmin registryAdmin = _deployRegistryAdmin(_initializeOwner, _salt);
+        RegistryAdmin registryAdmin = _deployRegistryAdmin(initializeOwner, guardedSalt);
 
         // 3) deploy registry
         registry = _deployRegistry(
             address(registryAdmin),
-            _initializeOwner,
-            _salt);
+            initializeOwner,
+            guardedSalt);
 
-        // 4) deploy release manager
-        ReleaseManager releaseManager = _deployReleaseManager(
-            address(registry),
-            _salt);
+        {
+            // 4) deploy release manager
+            ReleaseManager releaseManager = _deployReleaseManager(
+                address(registry),
+                guardedSalt);
 
-        // 5) deploy token registry
-        TokenRegistry tokenRegistry = _deployTokenRegistry(
-            address(registry),
-            address(dip),
-            _salt);
+            // 5) deploy token registry
+            TokenRegistry tokenRegistry = _deployTokenRegistry(
+                address(registry),
+                address(dip),
+                guardedSalt);
 
-        // 6) deploy staking reader
-        StakingReader stakingReader = _deployStakingReader(
-            address(registry), 
-            _initializeOwner, 
-            _salt);
+            // 6) deploy staking reader
+            StakingReader stakingReader = _deployStakingReader(
+                address(registry), 
+                initializeOwner, 
+                guardedSalt);
 
-        // 7) deploy staking store
-        StakingStore stakingStore = _deployStakingStore(
-            address(registry),
-            stakingReader,
-            _salt);
+            // 7) deploy staking store
+            StakingStore stakingStore = _deployStakingStore(
+                address(registry),
+                address(stakingReader),
+                guardedSalt);
 
-        // 8) deploy staking manager and staking component
-        stakingManager = _deployStakingManager(
-            address (registry), 
-            address(tokenRegistry), 
-            address(stakingStore), 
-            stakingOwner, 
-            _salt);
-        staking = stakingManager.getStaking();
+            // 8) deploy staking manager and staking component
+            stakingManager = _deployStakingManager(
+                address (registry), 
+                address(tokenRegistry), 
+                address(stakingStore), 
+                stakingOwner, 
+                guardedSalt);
+            Staking staking = stakingManager.getStaking();
 
-        // 9) initialize instance reader
-        stakingReader.initialize(
-            address(staking),
-            address(stakingStore));
+            // 9) initialize instance reader
+            stakingReader.initialize(
+                address(staking),
+                address(stakingStore));
 
-        // 10) intialize registry and register staking component
-        registry.initialize(
-            address(releaseManager),
-            address(tokenRegistry), // <- under question
-            address(staking));
-        staking.linkToRegisteredNftId();
+            // 10) intialize registry and register staking component
+            registry.initialize(
+                address(releaseManager),
+                address(tokenRegistry), // <- under question
+                address(staking));
+            staking.linkToRegisteredNftId();
+        }
 
 
         // 11) initialize registry admin
@@ -122,10 +124,10 @@ contract GifDeployer is CreateXScript, Test {
     }
 
     function _deployRegistry(address registryAdmin, address initializeOwner, bytes32 salt) internal returns (Registry) {
-        //registry = new Registry(registryAdmin, _initializeOwner);
+        //registry = new Registry(registryAdmin, initializeOwner);
         bytes memory initCode = abi.encodePacked(
             type(Registry).creationCode, 
-            abi.encode(registryAdmin, _initializeOwner));//, salt));// exctract deployer from salt?
+            abi.encode(registryAdmin, initializeOwner));//, salt));// exctract deployer from salt?
         return Registry(CreateX.deployCreate2(salt, initCode));
     }
 
@@ -146,14 +148,14 @@ contract GifDeployer is CreateXScript, Test {
     }
 
     function _deployStakingReader(address registry, address initializeOwner, bytes32 salt) internal returns (StakingReader) {
-        //StakingReader stakingReader = new StakingReader(registry, _initializeOwner);
+        //StakingReader stakingReader = new StakingReader(registry, initializeOwner);
         bytes memory initCode = abi.encodePacked(
             type(StakingReader).creationCode, 
-            abi.encode(registry, _initializeOwner));
+            abi.encode(registry, initializeOwner));
         return StakingReader(CreateX.deployCreate2(salt, initCode));
     }
 
-    function _deployStakingStore(address registry, StakingReader stakingReader, bytes32 salt) internal returns (StakingStore) {
+    function _deployStakingStore(address registry, address stakingReader, bytes32 salt) internal returns (StakingStore) {
         //StakingStore stakingStore = new StakingStore(registry, stakingReader);
         bytes memory initCode = abi.encodePacked(
             type(StakingStore).creationCode, 

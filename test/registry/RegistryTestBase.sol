@@ -160,16 +160,17 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         (
             registry,
-            stakingManager,
-            staking
+            stakingManager
         ) = deployCore(
             gifAdmin,
             gifManager,
-            stakingOwner);
+            stakingOwner,
+            salt);
         
         chainNft = ChainNft(registry.getChainNftAddress());
         registryNftId = registry.getNftId(address(registry));
         registryAddress = address(registry);
+        staking = stakingManager.getStaking();
         stakingNftId = registry.getNftId(address(staking));
 
         _deployRegistryServiceMock();

@@ -36,6 +36,7 @@ contract GifDeployerTest is GifDeployer {
 
     VersionPart public gifV3 = VersionPartLib.toVersionPart(3);
 
+    bytes32 public salt = "0x1234";
     address public registryOwner = makeAddr("registryOwner");
     address public gifAdmin = registryOwner;
     address public gifManager = registryOwner;
@@ -196,13 +197,15 @@ contract GifDeployerTest is GifDeployer {
         vm.startPrank(registryOwner);
         (
             registry,
-            stakingManager,
-            staking
+            stakingManager
         ) = deployCore(
             gifAdmin,
             gifManager,
-            stakingOwner);
+            stakingOwner,
+            salt);
         vm.stopPrank();
+
+        staking = stakingManager.getStaking();
         
         _setUpDependingContracts();
     }
