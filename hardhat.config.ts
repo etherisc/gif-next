@@ -50,6 +50,14 @@ const config: HardhatUserConfig = {
       chainId: 1,
       url: process.env.NETWORK_URL || 'https://mainnet.infura.io/v3/' + process.env.WEB3_INFURA_PROJECT_ID,
     },
+    baseSepolia: {
+      chainId: 84532,
+      url: process.env.NETWORK_URL || "https://sepolia.base.org",
+      accounts: {
+        mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
+        count: 20,
+      },
+    }
   },
   etherscan: {
     apiKey: {
