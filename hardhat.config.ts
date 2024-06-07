@@ -16,6 +16,9 @@ const config: HardhatUserConfig = {
         }
     }
   },
+  "paths": {
+    "tests": "./test_hardhat",
+  },
   solidity: {
     version: "0.8.20",
     settings: {

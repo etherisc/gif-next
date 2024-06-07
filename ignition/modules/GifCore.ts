@@ -138,13 +138,13 @@ export default buildModule("GifCore", (m) => {
     });
 
     return { 
-        dip, 
-        registryAdmin, 
-        registry,
-        releaseManager,
-        stakingManager,
-        stakingStore,
-        stakingReader,
-        tokenRegistry,
+        dipContract: dip, 
+        registryAdminContract: registryAdmin, 
+        registryContract: registry,
+        releaseManagerContract: releaseManager,
+        stakingManagerContract: stakingManager,
+        stakingStoreContract: stakingStore,
+        stakingReaderContract: stakingReader,
+        tokenRegistryContract: tokenRegistry,
     };
 });
