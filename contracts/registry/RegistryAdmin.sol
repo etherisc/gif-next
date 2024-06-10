@@ -7,9 +7,9 @@ import {IRegistry} from "./IRegistry.sol";
 import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 import {IStaking} from "../staking/IStaking.sol";
-import {ObjectType, ObjectTypeLib, POOL, RELEASE} from "../type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {STAKING} from "../type/ObjectType.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
@@ -165,19 +165,28 @@ contract RegistryAdmin is
         private
     {
         ObjectType serviceDomain = service.getDomain();
+        ObjectType authorizedDomain;
+        RoleId authorizedRoleId;
+
         VersionPart release = service.getVersion().toMajorPart();
         ObjectType[] memory authorizedDomains = serviceAuthorization.getAuthorizedDomains(serviceDomain);
 
         for (uint256 i = 0; i < authorizedDomains.length; i++) {
+            authorizedDomain = authorizedDomains[i];
+
             // derive authorized role from authorized domain
-            RoleId authorizedRoleId = RoleIdLib.roleForTypeAndVersion(
-                authorizedDomains[i], 
+            if (authorizedDomain == ALL()) {
+                authorizedRoleId = PUBLIC_ROLE();
+            } else {
+                authorizedRoleId = RoleIdLib.roleForTypeAndVersion(
+                authorizedDomain, 
                 release);
+            }
 
             // get authorized functions for authorized domain
             IAccessAdmin.Function[] memory authorizatedFunctions = serviceAuthorization.getAuthorizedFunctions(
                 serviceDomain, 
-                authorizedDomains[i]);
+                authorizedDomain);
 
             _authorizeTargetFunctions(
                     address(service), 

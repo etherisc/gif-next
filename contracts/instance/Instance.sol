@@ -112,6 +112,14 @@ contract Instance is
         _instanceService.refillStakingRewardReserves(instanceOwner, dipAmount);
     }
 
+    function withdrawStakingRewardReserves(Amount dipAmount)
+        external
+        onlyOwner()
+        returns (Amount newBalance)
+    {
+        return _instanceService.withdrawStakingRewardReserves(dipAmount);
+    }
+
     //--- Roles ------------------------------------------------------------//
 
     function createRole(string memory roleName, string memory adminName)

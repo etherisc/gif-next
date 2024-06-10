@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {
      ObjectType, 
-     REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE
+     ALL, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE
 } from "../../contracts/type/ObjectType.sol";
 
 import {ComponentService} from "../shared/ComponentService.sol";
@@ -136,6 +136,16 @@ contract ServiceAuthorizationV3
           _authorize(functions, IStakingService.setInstanceLockingPeriod.selector, "setInstanceLockingPeriod");
           _authorize(functions, IStakingService.setInstanceRewardRate.selector, "setInstanceRewardRate");
           _authorize(functions, IStakingService.refillInstanceRewardReserves.selector, "refillInstanceRewardReserves");
+          _authorize(functions, IStakingService.withdrawInstanceRewardReserves.selector, "withdrawInstanceRewardReserves");
+
+          _authorizedDomains[STAKING()].push(ALL());
+          functions = _authorizedFunctions[STAKING()][ALL()];
+          _authorize(functions, IStakingService.create.selector, "create");
+          _authorize(functions, IStakingService.stake.selector, "stake");
+          _authorize(functions, IStakingService.restakeToNewTarget.selector, "restakeToNewTarget");
+          _authorize(functions, IStakingService.updateRewards.selector, "updateRewards");
+          _authorize(functions, IStakingService.claimRewards.selector, "claimRewards");
+          _authorize(functions, IStakingService.unstake.selector, "unstake");
      }
 
 

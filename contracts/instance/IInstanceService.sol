@@ -72,6 +72,10 @@ interface IInstanceService is IService {
     function setStakingRewardRate(UFixed rewardRate) external;
     function refillStakingRewardReserves(address rewardProvider, Amount dipAmount) external;
 
+    /// @dev defunds the staking reward reserves for the specified target
+    /// permissioned: only the target owner may call this function
+    function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
+
 
     function createComponentTarget(
         NftId instanceNftId,

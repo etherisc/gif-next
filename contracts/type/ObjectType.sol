@@ -16,107 +16,113 @@ using {
 //--- GIF object types/domains (rage: 1 - 99) -------------------------------//
 
 function PROTOCOL() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(1);
+    return ObjectType.wrap(1);
 }
 
 function REGISTRY() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(2);
+    return ObjectType.wrap(2);
 }
 
 function STAKING() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(3);
+    return ObjectType.wrap(3);
 }
 
 function TOKEN() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(6);
+    return ObjectType.wrap(6);
 }
 
 function RELEASE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(7);
+    return ObjectType.wrap(7);
 }
 
 function ROLE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(8);
+    return ObjectType.wrap(8);
 }
 
 function SERVICE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(9);
+    return ObjectType.wrap(9);
 }
 
 function INSTANCE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(10);
+    return ObjectType.wrap(10);
 }
 
 function COMPONENT() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(11);
+    return ObjectType.wrap(11);
 }
 
 function PRODUCT() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(12);
+    return ObjectType.wrap(12);
 }
 
 function ORACLE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(13);
+    return ObjectType.wrap(13);
 }
 
 function DISTRIBUTION() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(14);
+    return ObjectType.wrap(14);
 }
 
 function POOL() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(15);
+    return ObjectType.wrap(15);
 }
 
 function APPLICATION() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(20);
+    return ObjectType.wrap(20);
 }
 
 function POLICY() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(21);
+    return ObjectType.wrap(21);
 }
 
 function CLAIM() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(22);
+    return ObjectType.wrap(22);
 }
 
 function PAYOUT() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(23); 
+    return ObjectType.wrap(23); 
 }
 
 function RISK() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(24);
+    return ObjectType.wrap(24);
 }
 
 function PRICE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(25);
+    return ObjectType.wrap(25);
 }
 
 function REQUEST() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(26);
+    return ObjectType.wrap(26);
 }
 
 function DISTRIBUTOR_TYPE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(27);
+    return ObjectType.wrap(27);
 }
 
 function DISTRIBUTOR() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(28);
+    return ObjectType.wrap(28);
 }
 
 function REFERRAL() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(29);
+    return ObjectType.wrap(29);
 }
 
 function BUNDLE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(30);
+    return ObjectType.wrap(30);
 }
 
 function TARGET() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(31);
+    return ObjectType.wrap(31);
 }
 
 function STAKE() pure returns (ObjectType) {
-    return ObjectTypeLib.toObjectType(32);
+    return ObjectType.wrap(32);
+}
+
+/// @dev Object type that includes any other object type.
+/// Note that eq()/'==' does not take this property into account.
+function ALL() pure returns (ObjectType) {
+    return ObjectType.wrap(99);
 }
 
 // other pure free functions for operators

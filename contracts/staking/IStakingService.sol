@@ -70,7 +70,7 @@ interface IStakingService is IService
 
     /// @dev defunds the staking reward reserves for the specified target
     /// permissioned: only the target owner may call this function
-    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+    function withdrawInstanceRewardReserves(NftId instanceNftId, Amount dipAmount) external returns (Amount newBalance);
 
     /// @dev create a new stake with amount DIP to the specified target
     /// returns the id of the newly minted stake nft

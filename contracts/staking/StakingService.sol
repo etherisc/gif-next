@@ -110,25 +110,23 @@ contract StakingService is
     }
 
 
-    function withdrawRewardReserves(NftId targetNftId, Amount dipAmount)
+    function withdrawInstanceRewardReserves(NftId instanceNftId, Amount dipAmount)
         external
         virtual
-        onlyNftOwner(targetNftId)
+        restricted()
         returns (Amount newBalance)
     {
-        // modifyier checks that sender is owner
-        address targetOwner = msg.sender;
-
         // update reward reserve book keeping
         StakingServiceStorage storage $ = _getStakingServiceStorage();
-        newBalance = $._staking.withdrawRewardReserves(targetNftId, dipAmount);
+        newBalance = $._staking.withdrawRewardReserves(instanceNftId, dipAmount);
 
         // transfer withdrawal amount to target owner
+        address instanceOwner = getRegistry().ownerOf(instanceNftId);
         $._staking.transferDipAmount(
-            targetOwner,
+            instanceOwner,
             dipAmount);
 
-        emit LogStakingServiceRewardReservesDecreased(targetNftId, targetOwner, dipAmount, newBalance);
+        emit LogStakingServiceRewardReservesDecreased(instanceNftId, instanceOwner, dipAmount, newBalance);
     }
 
 
@@ -144,7 +142,7 @@ contract StakingService is
     )
         external
         virtual
-        // restricted // TODO re-enable once services have stable roles
+        restricted()
         returns (
             NftId stakeNftId
         )
@@ -186,7 +184,7 @@ contract StakingService is
     )
         external
         virtual
-        // restricted // TODO re-enable once services have stable roles
+        restricted()
         onlyNftOwner(stakeNftId)
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
@@ -214,7 +212,7 @@ contract StakingService is
     )
         external
         virtual
-        // restricted // TODO re-enable once services have stable roles
+        restricted()
         onlyNftOwner(stakeNftId)
         returns (
             NftId newStakeNftId
@@ -229,7 +227,8 @@ contract StakingService is
         NftId stakeNftId
     )
         external
-        // restricted // TODO re-enable once services have stable roles
+        virtual
+        restricted()
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         $._staking.updateRewards(stakeNftId);
@@ -241,7 +240,7 @@ contract StakingService is
     function claimRewards(NftId stakeNftId)
         external
         virtual
-        // restricted // TODO re-enable once services have stable roles
+        restricted()
         onlyNftOwner(stakeNftId)
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
@@ -259,7 +258,7 @@ contract StakingService is
     function unstake(NftId stakeNftId)
         external
         virtual
-        // restricted // TODO re-enable once services have stable roles
+        restricted()
         onlyNftOwner(stakeNftId)
     {
         StakingServiceStorage storage $ = _getStakingServiceStorage();
@@ -286,10 +285,13 @@ contract StakingService is
     )
         external
         virtual
+        restricted()
     {
+        // TODO implement
 
     }
 
+    //--- view functions ----------------------------------------------------//
 
     function getDipToken()
         external
@@ -317,6 +319,7 @@ contract StakingService is
         return _getStakingServiceStorage()._staking;
     }
 
+    //--- internal functions ------------------------------------------------//
 
     function _initialize(
         address owner, 

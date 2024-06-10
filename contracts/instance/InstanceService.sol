@@ -206,6 +206,19 @@ contract InstanceService is
     }
 
 
+    function withdrawStakingRewardReserves(Amount dipAmount)
+        external
+        virtual
+        onlyInstance()
+        returns (Amount newBalance)
+    {
+        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        _stakingService.withdrawInstanceRewardReserves(
+            instanceNftId,
+            dipAmount);
+    }
+
+
     function setComponentLocked(bool locked)
         external
         virtual

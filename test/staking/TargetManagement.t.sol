@@ -191,9 +191,7 @@ contract StakingTargetManagementTest is GifTest {
         Amount withdrawAmount = AmountLib.toAmount(refillAmount.toInt() / 2);
 
         vm.startPrank(instanceOwner);
-        stakingService.withdrawRewardReserves(
-            instanceNftId, 
-            withdrawAmount);
+        instance.withdrawStakingRewardReserves(withdrawAmount);
         vm.stopPrank();
 
         // THEN 
@@ -203,7 +201,7 @@ contract StakingTargetManagementTest is GifTest {
 
         // check dips have been transferred to staking wallet
         assertEq(dip.balanceOf(stakingWallet), expectedRemainingReserves.toInt(), "unexpected staking wallet dip balance (after reserve withdrawal)");
-        assertEq(dip.balanceOf(instanceOwner), withdrawAmount.toInt(), "unexpected instance owner dip balance (after reward funding)");
+        assertEq(dip.balanceOf(instanceOwner), withdrawAmount.toInt(), "unexpected instance owner dip balance (after reserve withdrawal)");
     }
 
 
@@ -220,17 +218,14 @@ contract StakingTargetManagementTest is GifTest {
         // WHEN / THEN (withdraw some reserves as outsider)
         Amount withdrawAmount = AmountLib.toAmount(refillAmount.toInt() / 2);
 
+        // WHEN + THEN
         vm.expectRevert(
             abi.encodeWithSelector(
-                IStakingService.ErrorStakingServiceNotNftOwner.selector,
-                instanceNftId,
-                instanceOwner,
-                outsider));
+                INftOwnable.ErrorNftOwnableNotOwner.selector,
+                outsider)); // attempting owner
 
         vm.startPrank(outsider);
-        stakingService.withdrawRewardReserves(
-            instanceNftId, 
-            withdrawAmount);
+        instance.withdrawStakingRewardReserves(withdrawAmount);
         vm.stopPrank();
     }
 
