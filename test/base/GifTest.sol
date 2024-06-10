@@ -25,6 +25,7 @@ import {Version} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 
+import {IAccessAdmin} from "../../contracts/shared/IAccessAdmin.sol";
 import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
@@ -36,9 +37,11 @@ import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWi
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
+import {IServiceAuthorization} from "../../contracts/registry/IServiceAuthorization.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
+import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
@@ -269,6 +272,10 @@ contract GifTest is GifDeployer {
         _deployRegisterAndActivateToken();
         vm.stopPrank();
 
+        // TODO move to end of this function once instance reg is fixed
+        // print full authz setup
+        _printAuthz();
+
         // create an instance (cloned from master instance)
         vm.startPrank(instanceOwner);
         _createInstance();
@@ -395,11 +402,14 @@ contract GifTest is GifDeployer {
 
         assertEq(releaseManager.getState().toInt(), SCHEDULED().toInt(), "unexpected state for releaseManager after createNextRelease");
 
+        IServiceAuthorization serviceAuthorizationV3 = new ServiceAuthorizationV3();
+
         (
-            address releaseAccessManager, 
+            address authority, 
             VersionPart releaseVersion,
             bytes32 salt
         ) = releaseManager.prepareNextRelease(
+            serviceAuthorizationV3,
             serviceAddrs, 
             serviceNames, 
             serviceRoles, 
@@ -416,63 +426,63 @@ contract GifTest is GifDeployer {
         // solhint-disable
         console.log("release version", releaseVersion.toInt());
         console.log("release salt", uint(salt));
-        console.log("release access manager deployed at", releaseAccessManager);
+        console.log("release access manager deployed at", authority);
         console.log("release services count", serviceAddrs.length);
         console.log("release services remaining (before service registration)", releaseManager.getRemainingServicesToRegister());
         // solhint-enable
 
         // --- register services --------------------------------------------//
-        registryServiceManager = new RegistryServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        registryServiceManager = new RegistryServiceManager{salt: salt}(authority, registryAddress, salt);
         registryService = registryServiceManager.getRegistryService();
-        registryServiceNftId = _registerService("registry", releaseManager, registryServiceManager, registryService);
+        registryServiceNftId = _registerService(releaseManager, registryServiceManager, registryService);
 
-        stakingServiceManager = new StakingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        stakingServiceManager = new StakingServiceManager{salt: salt}(authority, registryAddress, salt);
         stakingService = stakingServiceManager.getStakingService();
-        stakingServiceNftId = _registerService("staking", releaseManager, stakingServiceManager, stakingService);
+        stakingServiceNftId = _registerService(releaseManager, stakingServiceManager, stakingService);
 
-        instanceServiceManager = new InstanceServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        instanceServiceManager = new InstanceServiceManager{salt: salt}(authority, registryAddress, salt);
         instanceService = instanceServiceManager.getInstanceService();
-        instanceServiceNftId = _registerService("instance", releaseManager, instanceServiceManager, instanceService);
+        instanceServiceNftId = _registerService(releaseManager, instanceServiceManager, instanceService);
 
         componentServiceManager = new ComponentServiceManager(address(registry));
         componentService = componentServiceManager.getComponentService();
-        componentServiceNftId = _registerService("component", releaseManager, componentServiceManager, componentService);
+        componentServiceNftId = _registerService(releaseManager, componentServiceManager, componentService);
 
-        distributionServiceManager = new DistributionServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        distributionServiceManager = new DistributionServiceManager{salt: salt}(authority, registryAddress, salt);
         distributionService = distributionServiceManager.getDistributionService();
-        distributionServiceNftId = _registerService("distribution", releaseManager, distributionServiceManager, distributionService);
+        distributionServiceNftId = _registerService(releaseManager, distributionServiceManager, distributionService);
 
-        pricingServiceManager = new PricingServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        pricingServiceManager = new PricingServiceManager{salt: salt}(authority, registryAddress, salt);
         pricingService = pricingServiceManager.getPricingService();
-        pricingServiceNftId = _registerService("pricing", releaseManager, pricingServiceManager, pricingService);
+        pricingServiceNftId = _registerService(releaseManager, pricingServiceManager, pricingService);
 
-        bundleServiceManager = new BundleServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        bundleServiceManager = new BundleServiceManager{salt: salt}(authority, registryAddress, salt);
         bundleService = bundleServiceManager.getBundleService();
-        bundleServiceNftId = _registerService("bundle", releaseManager, bundleServiceManager, bundleService);
+        bundleServiceNftId = _registerService(releaseManager, bundleServiceManager, bundleService);
 
-        poolServiceManager = new PoolServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        poolServiceManager = new PoolServiceManager{salt: salt}(authority, registryAddress, salt);
         poolService = poolServiceManager.getPoolService();
-        poolServiceNftId = _registerService("pool", releaseManager, poolServiceManager, poolService);
+        poolServiceNftId = _registerService(releaseManager, poolServiceManager, poolService);
 
-        oracleServiceManager = new OracleServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        oracleServiceManager = new OracleServiceManager{salt: salt}(authority, registryAddress, salt);
         oracleService = oracleServiceManager.getOracleService();
-        oracleServiceNftId = _registerService("oracle", releaseManager, oracleServiceManager, oracleService);
+        oracleServiceNftId = _registerService(releaseManager, oracleServiceManager, oracleService);
 
-        productServiceManager = new ProductServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        productServiceManager = new ProductServiceManager{salt: salt}(authority, registryAddress, salt);
         productService = productServiceManager.getProductService();
-        productServiceNftId = _registerService("product", releaseManager, productServiceManager, productService);
+        productServiceNftId = _registerService(releaseManager, productServiceManager, productService);
 
-        claimServiceManager = new ClaimServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        claimServiceManager = new ClaimServiceManager{salt: salt}(authority, registryAddress, salt);
         claimService = claimServiceManager.getClaimService();
-        claimServiceNftId = _registerService("claim", releaseManager, claimServiceManager, claimService);
+        claimServiceNftId = _registerService(releaseManager, claimServiceManager, claimService);
 
-        applicationServiceManager = new ApplicationServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        applicationServiceManager = new ApplicationServiceManager{salt: salt}(authority, registryAddress, salt);
         applicationService = applicationServiceManager.getApplicationService();
-        applicationServiceNftId = _registerService("application", releaseManager, applicationServiceManager, applicationService);
+        applicationServiceNftId = _registerService(releaseManager, applicationServiceManager, applicationService);
 
-        policyServiceManager = new PolicyServiceManager{salt: salt}(releaseAccessManager, registryAddress, salt);
+        policyServiceManager = new PolicyServiceManager{salt: salt}(authority, registryAddress, salt);
         policyService = policyServiceManager.getPolicyService();
-        policyServiceNftId = _registerService("policy", releaseManager, policyServiceManager, policyService);
+        policyServiceNftId = _registerService(releaseManager, policyServiceManager, policyService);
 
         //--- all services deployed, activate relase ------------------------//
         releaseManager.activateNextRelease();
@@ -487,7 +497,6 @@ contract GifTest is GifDeployer {
     }
 
     function _registerService(
-        string memory _domain,
         ReleaseManager _releaseManager,
         ProxyManager _serviceManager,
         IService _service
@@ -499,17 +508,18 @@ contract GifTest is GifDeployer {
         _serviceManager.linkToProxy();
 
         assertEq(_releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
+        string memory domainName = ObjectTypeLib.toName(_service.getDomain());
 
         // solhint-disable
-        console.log("---", _domain, "registered ----------------------------");
-        console.log(_domain, "service proxy manager deployed at", address(_serviceManager));
-        console.log(_domain, "service proxy manager linked to nft id", registryServiceManager.getNftId().toInt());
-        console.log(_domain, "service proxy manager owner", registryServiceManager.getOwner());
-        console.log(_domain, "service deployed at", address(_service));
-        console.log(_domain, "service nft id", registryService.getNftId().toInt());
-        console.log(_domain, "service domain", registryService.getDomain().toInt());
-        console.log(_domain, "service owner", registryService.getOwner());
-        console.log(_domain, "service authority", registryService.authority());
+        console.log("---", domainName, "service registered ----------------------------");
+        console.log(domainName, "service proxy manager deployed at", address(_serviceManager));
+        console.log(domainName, "service proxy manager linked to nft id", _serviceManager.getNftId().toInt());
+        console.log(domainName, "service proxy manager owner", _serviceManager.getOwner());
+        console.log(domainName, "service deployed at", address(_service));
+        console.log(domainName, "service nft id", _service.getNftId().toInt());
+        console.log(domainName, "service domain", _service.getDomain().toInt());
+        console.log(domainName, "service owner", _service.getOwner());
+        console.log(domainName, "service authority", _service.authority());
         console.log("release services remaining", _releaseManager.getRemainingServicesToRegister());
     }
 
@@ -859,6 +869,80 @@ contract GifTest is GifDeployer {
         console.log("pool component at", address(pool));
         // solhint-enable
     }
+
+
+    function _printAuthz() internal {
+        console.log("registry admin deployed:", address(registryAdmin));
+        console.log("registry admin authority", registryAdmin.authority());
+
+        uint256 roles = registryAdmin.roles();
+        uint256 targets = registryAdmin.targets();
+
+        console.log("==========================================");
+        console.log("roles", registryAdmin.roles());
+        // solhint-enable
+
+        for(uint256 i = 0; i < registryAdmin.roles(); i++) {
+            _printRoleMembers(registryAdmin, registryAdmin.getRoleId(i));
+        }
+
+        // solhint-disable no-console
+        console.log("==========================================");
+        console.log("targets", registryAdmin.targets());
+        // solhint-enable
+
+        for(uint256 i = 0; i < registryAdmin.targets(); i++) {
+            _printTarget(registryAdmin, registryAdmin.getTargetAddress(i));
+        }
+    }
+
+
+    function _printRoleMembers(IAccessAdmin aa, RoleId roleId) internal {
+        IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
+        uint256 members = aa.roleMembers(roleId);
+
+        // solhint-disable no-console
+        console.log("role", info.name.toString(), "id", roleId.toInt()); 
+
+        if (members > 0) {
+            for(uint i = 0; i < members; i++) {
+                address memberAddress = aa.getRoleMember(roleId, i);
+                string memory targetName = "(not target)";
+                if (aa.targetExists(memberAddress)) {
+                    targetName = aa.getTargetInfo(memberAddress).name.toString();
+                }
+
+                console.log("-", i, aa.getRoleMember(roleId, i), targetName);
+            }
+        } else {
+            console.log("- no role members");
+        }
+        // solhint-enable
+    }
+
+    function _printTarget(IAccessAdmin aa, address target) internal view {
+        IAccessAdmin.TargetInfo memory info = aa.getTargetInfo(target);
+
+        // solhint-disable no-console
+        uint256 functions = aa.authorizedFunctions(target);
+        console.log("target", info.name.toString(), "address", target);
+
+        if (functions > 0) {
+            for(uint256 i = 0; i < functions; i++) {
+                (
+                    IAccessAdmin.Function memory func,
+                    RoleId roleId
+                ) = aa.getAuthorizedFunction(target, i);
+                string memory role = aa.getRoleInfo(roleId).name.toString();
+
+                console.log("-", i, string(abi.encodePacked(func.name.toString(), "(): role ", role,":")), roleId.toInt());
+            }
+        } else {
+            console.log("- no authorized functions");
+        }
+        // solhint-enable
+    }
+
 
     function zeroObjectInfo() internal pure returns (IRegistry.ObjectInfo memory) {
         return (

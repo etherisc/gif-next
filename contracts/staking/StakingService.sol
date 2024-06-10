@@ -46,25 +46,6 @@ contract StakingService is
     }
 
 
-    function registerProtocolTarget()
-        external
-        virtual
-    {
-        uint256 protocolId = ChainNft(
-            getRegistry().getChainNftAddress()).PROTOCOL_NFT_ID();
-
-        NftId protocolNftId = NftIdLib.toNftId(protocolId);
-        _getStakingServiceStorage()._staking.registerTarget(
-            protocolNftId,
-            PROTOCOL(),
-            1, // protocol is registered on mainnet
-            TargetManagerLib.getDefaultLockingPeriod(),
-            TargetManagerLib.getDefaultRewardRate());
-
-        emit LogStakingServiceProtocolTargetRegistered(protocolNftId);
-    }
-
-
     function createInstanceTarget(
         NftId targetNftId,
         Seconds initialLockingPeriod,
@@ -72,7 +53,7 @@ contract StakingService is
     )
         external
         virtual
-        // restricted // TODO re-enable once services have stable roles
+        restricted()
     {
         uint256 chainId = block.chainid;
         _getStakingServiceStorage()._staking.registerTarget(
@@ -86,44 +67,46 @@ contract StakingService is
     }
 
 
-    function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod)
+    function setInstanceLockingPeriod(NftId instanceNftId, Seconds lockingPeriod)
         external
         virtual
-        onlyNftOwner(targetNftId)
+        restricted()
     {
         _getStakingServiceStorage()._staking.setLockingPeriod(
-            targetNftId, lockingPeriod);
+            instanceNftId, 
+            lockingPeriod);
     }
 
 
-    function setRewardRate(NftId targetNftId, UFixed rewardRate)
+    function setInstanceRewardRate(NftId instanceNftId, UFixed rewardRate)
         external
         virtual
-        onlyNftOwner(targetNftId)
+        restricted()
     {
         _getStakingServiceStorage()._staking.setRewardRate(
-            targetNftId, rewardRate);
-
+            instanceNftId, 
+            rewardRate);
     }
 
 
-    function refillRewardReserves(NftId targetNftId, Amount dipAmount)
+    function refillInstanceRewardReserves(NftId instanceNftId, address rewardProvider, Amount dipAmount)
         external
         virtual
+        restricted()
+        returns (Amount newBalance)
+    {
+        return _refillRewardReserves(instanceNftId, rewardProvider, dipAmount);
+    }
+
+
+    function refillRewardReservesBySender(NftId targetNftId, Amount dipAmount)
+        external
+        virtual
+        restricted()
         returns (Amount newBalance)
     {
         address rewardProvider = msg.sender;
-
-        // update reward reserve book keeping
-        StakingServiceStorage storage $ = _getStakingServiceStorage();
-        newBalance = $._staking.refillRewardReserves(targetNftId, dipAmount);
-
-        // collect reward dip from provider
-        $._staking.collectDipAmount(
-            rewardProvider,
-            dipAmount);
-
-        emit LogStakingServiceRewardReservesIncreased(targetNftId, rewardProvider, dipAmount, newBalance);
+        return _refillRewardReserves(targetNftId, rewardProvider, dipAmount);
     }
 
 
@@ -393,11 +376,31 @@ contract StakingService is
         return IStaking(stakingAddress);
     }
 
+
+    function _refillRewardReserves(NftId targetNftId, address rewardProvider, Amount dipAmount)
+        internal
+        virtual
+        returns (Amount newBalance)
+    {
+        // update reward reserve book keeping
+        StakingServiceStorage storage $ = _getStakingServiceStorage();
+        newBalance = $._staking.refillRewardReserves(targetNftId, dipAmount);
+
+        // collect reward dip from provider
+        $._staking.collectDipAmount(
+            rewardProvider,
+            dipAmount);
+
+        emit LogStakingServiceRewardReservesIncreased(targetNftId, rewardProvider, dipAmount, newBalance);
+    }
+
+
     function _getStakingServiceStorage() private pure returns (StakingServiceStorage storage $) {
         assembly {
             $.slot := STAKING_SERVICE_LOCATION_V1
         }
     }
+
 
     function _getDomain() internal pure override returns(ObjectType) {
         return STAKING();

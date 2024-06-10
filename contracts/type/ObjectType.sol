@@ -164,4 +164,72 @@ library ObjectTypeLib {
     function ne(ObjectType a, ObjectType b) public pure returns (bool isSame) {
         return ObjectType.unwrap(a) != ObjectType.unwrap(b);
     }
+
+    /// @dev Returns the type/domain name for the provided object type
+    function toName(ObjectType objectType) public pure returns (string memory name) {
+        if (objectType == REGISTRY()) {
+            return "Registry";
+        } else if (objectType == STAKING()) {
+            return "Staking";
+        } else if (objectType == INSTANCE()) {
+            return "Instance";
+        } else if (objectType == COMPONENT()) {
+            return "Component";
+        } else if (objectType == PRODUCT()) {
+            return "Product";
+        } else if (objectType == ORACLE()) {
+            return "Oracle";
+        } else if (objectType == DISTRIBUTION()) {
+            return "Distribution";
+        } else if (objectType == POOL()) {
+            return "Pool";
+        } else if (objectType == APPLICATION()) {
+            return "Application";
+        } else if (objectType == POLICY()) {
+            return "Policy";
+        } else if (objectType == CLAIM()) {
+            return "Claim";
+        } else if (objectType == PRICE()) {
+            return "Price";
+        } else if (objectType == BUNDLE()) {
+            return "Bundle";
+        }
+
+        // fallback: ObjectType<obect-type-int>
+        return string(
+            abi.encodePacked(
+                "ObjectType",
+                toString(
+                    toInt(objectType))));
+    }
+
+    /// @dev returns the provied int as a string
+    function toString(uint256 value) public pure returns (string memory name) {
+
+        if (value == 0) {
+            return "0";
+        }
+
+        uint256 temp = value;
+        uint256 digits = 0;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+
+        bytes memory buffer = new bytes(digits);
+        uint index = digits - 1;
+
+        temp = value;
+        while (temp != 0) {
+            buffer[index] = bytes1(uint8(48 + temp % 10));
+            temp /= 10;
+
+            if (index > 0) {
+                index--;
+            }
+        }
+
+        return string(buffer);
+    }
 }

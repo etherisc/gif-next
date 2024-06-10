@@ -167,9 +167,16 @@ library RoleIdLib {
 
     /// @dev Converts an uint into a RoleId.
     /// Used for GIF core contracts.
-    function roleForTypeAndVersion(ObjectType objectType, uint8 majorVersion) public pure returns (RoleId) {
+    function roleForTypeAndVersion(ObjectType objectType, VersionPart majorVersion) public pure returns (RoleId) {
         return RoleId.wrap(
-            100 * uint64(objectType.toInt()) + majorVersion);
+            uint64(100 * objectType.toInt() + majorVersion.toInt()));
+    }
+
+    /// @dev Converts an uint into a RoleId.
+    /// Used for GIF core contracts.
+    function roleForTypeAndAllVersions(ObjectType objectType) public pure returns (RoleId) {
+        return RoleId.wrap(
+            uint64(100 * objectType.toInt() + 99));
     }
 
     /// @dev Returns true if the value is non-zero (> 0).

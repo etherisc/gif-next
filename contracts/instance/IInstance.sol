@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 
+import {Amount} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
 import {PayoutId} from "../type/PayoutId.sol";
@@ -13,6 +14,8 @@ import {RiskId} from "../type/RiskId.sol";
 import {VersionPart} from "../type/Version.sol";
 import {Key32} from "../type/Key32.sol";
 import {RoleId} from "../type/RoleId.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {UFixed} from "../type/UFixed.sol";
 
 import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
@@ -67,11 +70,9 @@ interface IInstance is
     function setTargetFunctionRole(string memory targetName, bytes4[] calldata selectors, RoleId roleId) external;
     function setTargetLocked(address target, bool locked) external;
 
-    function getDistributionService() external view returns (IDistributionService);
-    function getProductService() external view returns (IProductService);
-    function getPoolService() external view returns (IPoolService);
-    function getPolicyService() external view returns (IPolicyService);
-    function getBundleService() external view returns (IBundleService);
+    function setStakingLockingPeriod(Seconds stakeLockingPeriod) external;
+    function setStakingRewardRate(UFixed rewardRate) external;
+    function refillStakingRewardReserves(Amount dipAmount) external;
 
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);

@@ -85,12 +85,22 @@ contract StakingStore is
     constructor(IRegistry registry, StakingReader reader)
         AccessManaged(msg.sender)
     {
+        // set final authority
+        setAuthority(registry.getAuthority());
+
+        // set internal variables
         _registry = registry; //TODO if keeps registry -> RegistryLinked and checks registry address
-        address authority = _registry.getAuthority();
-        setAuthority(authority);
-        
         _reader = reader;
         _targetManager = new NftIdSetManager();
+
+        // register protocol target
+        _createTarget(
+            NftIdLib.toNftId(1101), 
+            IStaking.TargetInfo({
+                objectType: PROTOCOL(),
+                chainId: 1,
+                lockingPeriod: TargetManagerLib.getDefaultLockingPeriod(),
+                rewardRate: TargetManagerLib.getDefaultRewardRate()}));
     }
 
 
@@ -116,15 +126,7 @@ contract StakingStore is
         external
         restricted()
     {
-        _create(
-            targetNftId.toKey32(TARGET()),
-            abi.encode(targetInfo));
-
-        // initialize tvl and stake balance
-        _tvlLastUpdatedIn[targetNftId]= BlocknumberLib.currentBlocknumber();
-        _createTargetBalance(targetNftId);
-
-        _targetManager.add(targetNftId);
+        _createTarget(targetNftId, targetInfo);
     }
 
 
@@ -475,6 +477,22 @@ contract StakingStore is
 
     //--- private functions -------------------------------------------//
 
+    function _createTarget(
+        NftId targetNftId,
+        IStaking.TargetInfo memory targetInfo
+    )
+        private
+    {
+        _create(
+            targetNftId.toKey32(TARGET()),
+            abi.encode(targetInfo));
+
+        // initialize tvl and stake balance
+        _tvlLastUpdatedIn[targetNftId]= BlocknumberLib.currentBlocknumber();
+        _createTargetBalance(targetNftId);
+
+        _targetManager.add(targetNftId);
+    }
 
     function _updateReserves(
         NftId targetNftId, 

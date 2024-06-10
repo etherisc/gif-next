@@ -52,17 +52,21 @@ interface IStakingService is IService
         UFixed initialRewardRate
     ) external;
 
-    /// @dev set the stake locking period to the specified duration.
+    /// @dev Set the instance stake locking period to the specified duration.
     /// permissioned: only the owner of the specified target may set the locking period
-    function setLockingPeriod(NftId targetNftId, Seconds lockingPeriod) external;
+    function setInstanceLockingPeriod(NftId instanceNftId, Seconds lockingPeriod) external;
 
-    /// @dev set the reward rate to the specified value
+    /// @dev Set the instance reward rate to the specified value
     /// permissioned: only the owner of the specified target may set the locking period
-    function setRewardRate(NftId targetNftId, UFixed rewardRate) external;
+    function setInstanceRewardRate(NftId instanceNftId, UFixed rewardRate) external;
 
-    /// @dev (re)fills the staking reward reserves for the specified target
+    /// @dev (Re)fills the staking reward reserves for the specified target using the dips provided by the reward provider.
     /// unpermissioned: anybody may fill up staking reward reserves
-    function refillRewardReserves(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
+    function refillInstanceRewardReserves(NftId instanceNftId, address rewardProvider, Amount dipAmount) external returns (Amount newBalance);
+
+    /// @dev (Re)fills the staking reward reserves for the specified target using the dips provided by the sender
+    /// unpermissioned: anybody may fill up staking reward reserves
+    function refillRewardReservesBySender(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
 
     /// @dev defunds the staking reward reserves for the specified target
     /// permissioned: only the target owner may call this function

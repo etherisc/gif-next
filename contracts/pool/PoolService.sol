@@ -226,7 +226,7 @@ contract PoolService is
     ) 
         external
         virtual
-        restricted
+        restricted()
     {
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory bundleObjectInfo = registry.getObjectInfo(bundleNftId);
@@ -307,7 +307,7 @@ contract PoolService is
     )
         external
         virtual
-        restricted
+        restricted()
     {
         _bundleService.releaseCollateral(
             instance, 
@@ -333,7 +333,7 @@ contract PoolService is
     )
         external
         virtual
-        restricted
+        restricted()
     {
         Amount remainingCollateralAmount = policyInfo.sumInsuredAmount - policyInfo.claimAmount;
 

@@ -62,7 +62,7 @@ abstract contract Service is
     }
 
     function getRoleId() external virtual pure returns(RoleId serviceRoleId) {
-        return RoleIdLib.roleForTypeAndVersion(_getDomain(), GIF_MAJOR_VERSION);
+        return RoleIdLib.roleForTypeAndVersion(_getDomain(), VersionPartLib.toVersionPart(GIF_MAJOR_VERSION));
     }
 
     // from Versionable

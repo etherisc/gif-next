@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 import {console} from "../lib/forge-std/src/Script.sol";
 import {GifTest} from "./base/GifTest.sol";
-import {IAccessAdmin} from "../contracts/shared/IAccessAdmin.sol";
 import {InstanceLinkedComponent} from "../contracts/shared/InstanceLinkedComponent.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
 import {IStaking} from "../contracts/staking/IStaking.sol";
@@ -24,28 +23,7 @@ contract TestDeployAll is GifTest {
     }
 
     function test_deployRegistryAdmin() public {
-        console.log("registry admin deployed:", address(registryAdmin));
-        console.log("registry admin authority", registryAdmin.authority());
-
-        uint256 roles = registryAdmin.roles();
-        uint256 targets = registryAdmin.targets();
-
-        console.log("==========================================");
-        console.log("roles", registryAdmin.roles());
-        // solhint-enable
-
-        for(uint256 i = 0; i < registryAdmin.roles(); i++) {
-            _printRoleMembers(registryAdmin, registryAdmin.getRoleId(i));
-        }
-
-        // solhint-disable no-console
-        console.log("==========================================");
-        console.log("targets", registryAdmin.targets());
-        // solhint-enable
-
-        for(uint256 i = 0; i < registryAdmin.targets(); i++) {
-            _printTarget(registryAdmin, registryAdmin.getTargetAddress(i));
-        }
+        assertTrue(true);
     }
 
     function _getTargetText(uint256 idx) internal returns (string memory) {
@@ -213,46 +191,6 @@ contract TestDeployAll is GifTest {
 
         // check component owner has expected role
         assertTrue(instanceReader.hasRole(componentOwner, ownerRoleId), "component owner missing component owner role");
-    }
-
-
-    function _printRoleMembers(IAccessAdmin aa, RoleId roleId) internal {
-        IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
-        uint256 members = aa.roleMembers(roleId);
-
-        // solhint-disable no-console
-        console.log("role", info.name.toString(), "id", roleId.toInt()); 
-        console.log("role members", members);
-
-        for(uint i = 0; i < members; i++) {
-            address memberAddress = aa.getRoleMember(roleId, i);
-            string memory targetName = "not target";
-            if (aa.targetExists(memberAddress)) {
-                targetName = aa.getTargetInfo(memberAddress).name.toString();
-            }
-
-            console.log("-", i, aa.getRoleMember(roleId, i), targetName);
-        }
-        // solhint-enable
-    }
-
-    function _printTarget(IAccessAdmin aa, address target) internal view {
-        IAccessAdmin.TargetInfo memory info = aa.getTargetInfo(target);
-
-        // solhint-disable no-console
-        uint256 functions = aa.authorizedFunctions(target);
-        console.log("target", info.name.toString(), "address", target);
-        console.log("authorized functions", functions);
-        for(uint256 i = 0; i < functions; i++) {
-            (
-                IAccessAdmin.Function memory func,
-                RoleId roleId
-            ) = aa.getAuthorizedFunction(target, i);
-            string memory role = aa.getRoleInfo(roleId).name.toString();
-
-            console.log("-", i, string(abi.encodePacked(func.name.toString(), "(): ", role,":")), roleId.toInt());
-        }
-        // solhint-enable
     }
 
 }

@@ -22,6 +22,7 @@ import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
+import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
 
@@ -108,6 +109,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = releaseManager.prepareNextRelease(
+            new ServiceAuthorizationV3(),
             serviceAddresses, 
             serviceNames, 
             serviceRoles, 

@@ -3,16 +3,19 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 
+import {Amount} from "../type/Amount.sol";
 import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
 import {RoleId, RoleIdLib, eqRoleId, ADMIN_ROLE, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
-import {VersionPart, VersionPartLib} from "../type/Version.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {PayoutId} from "../type/PayoutId.sol";
 import {DistributorType} from "../type/DistributorType.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {UFixed} from "../type/UFixed.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
@@ -21,6 +24,7 @@ import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtend
 import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IInstance} from "./IInstance.sol";
+import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {BundleManager} from "./BundleManager.sol";
@@ -49,6 +53,7 @@ contract Instance is
 
     bool private _initialized;
 
+    IInstanceService internal _instanceService;
     InstanceAdmin internal _instanceAdmin;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
@@ -74,13 +79,44 @@ contract Instance is
         IRegistry registry = IRegistry(registryAddress);
         initializeRegisterable(registryAddress, registry.getNftId(), INSTANCE(), true, initialOwner, "");
 
+        _instanceService = IInstanceService(
+            getRegistry().getServiceAddress(
+                INSTANCE(), 
+                getMajorVersion()));
+
         registerInterface(type(IInstance).interfaceId);    
+    }
+
+    //--- Staking ----------------------------------------------------------//
+
+    function setStakingLockingPeriod(Seconds stakeLockingPeriod)
+        external
+        // TODO decide if onlyOwner or restricted to instance owner role is better
+        onlyOwner()
+    {
+        _instanceService.setStakingLockingPeriod(stakeLockingPeriod);
+    }
+
+    function setStakingRewardRate(UFixed rewardRate)
+        external
+        onlyOwner()
+    {
+        _instanceService.setStakingRewardRate(rewardRate);
+    }
+
+    function refillStakingRewardReserves(Amount dipAmount)
+        external
+        onlyOwner()
+    {
+        address instanceOwner = msg.sender;
+        _instanceService.refillStakingRewardReserves(instanceOwner, dipAmount);
     }
 
     //--- Roles ------------------------------------------------------------//
 
     function createRole(string memory roleName, string memory adminName)
         external
+        // TODO decide if onlyOwner or restricted to instance owner role is better
         restricted // INSTANCE_OWNER_ROLE
         returns (RoleId roleId, RoleId admin)
     {
@@ -89,6 +125,7 @@ contract Instance is
 
     function grantRole(RoleId roleId, address account) 
         external 
+        // TODO decide if onlyOwner or restricted to instance owner role is better
         restricted // INSTANCE_OWNER_ROLE
     {
         AccessManagerExtendedInitializeable(authority()).grantRole(roleId.toInt(), account, 0);
@@ -96,6 +133,7 @@ contract Instance is
 
     function revokeRole(RoleId roleId, address account) 
         external 
+        // TODO decide if onlyOwner or restricted to instance owner role is better
         restricted // INSTANCE_OWNER_ROLE
     {
         AccessManagerExtendedInitializeable(authority()).revokeRole(roleId.toInt(), account);
@@ -105,6 +143,7 @@ contract Instance is
 
     function createTarget(address target, string memory name) 
         external 
+        // TODO decide if onlyOwner or restricted to instance owner role is better
         restricted // INSTANCE_OWNER_ROLE
     {
         _instanceAdmin.createTarget(target, name);
@@ -176,6 +215,16 @@ contract Instance is
         _instanceReader = instanceReader;
     }
 
+    function setInstanceStore(InstanceStore instanceStore) external restricted {
+        if(address(_instanceStore) != address(0)) {
+            revert ErrorInstanceInstanceStoreAlreadySet(address(_instanceStore));
+        }
+        if(instanceStore.authority() != authority()) {
+            revert ErrorInstanceInstanceStoreAuthorityMismatch(authority());
+        }
+        _instanceStore = instanceStore;
+    }
+
     //--- external view functions -------------------------------------------//
 
     function getInstanceReader() external view returns (InstanceReader) {
@@ -194,42 +243,12 @@ contract Instance is
         return AccessManagerExtendedInitializeable(authority());
     }
 
-    function setInstanceStore(InstanceStore instanceStore) external restricted {
-        if(address(_instanceStore) != address(0)) {
-            revert ErrorInstanceInstanceStoreAlreadySet(address(_instanceStore));
-        }
-        if(instanceStore.authority() != authority()) {
-            revert ErrorInstanceInstanceStoreAuthorityMismatch(authority());
-        }
-        _instanceStore = instanceStore;
-    }
-
     function getInstanceStore() external view returns (InstanceStore) {
         return _instanceStore;
     }
 
-    function getMajorVersion() external pure returns (VersionPart majorVersion) {
+    function getMajorVersion() public pure returns (VersionPart majorVersion) {
         return VersionPartLib.toVersionPart(GIF_MAJOR_VERSION);
-    }
-
-    function getDistributionService() external view returns (IDistributionService) {
-        return IDistributionService(getRegistry().getServiceAddress(DISTRIBUTION(), VersionPart.wrap(3)));
-    }
-
-    function getProductService() external view returns (IProductService) {
-        return IProductService(getRegistry().getServiceAddress(PRODUCT(), VersionPart.wrap(3)));
-    }
-
-    function getPoolService() external view returns (IPoolService) {
-        return IPoolService(getRegistry().getServiceAddress(POOL(), VersionPart.wrap(3)));
-    }
-
-    function getPolicyService() external view returns (IPolicyService) {
-        return IPolicyService(getRegistry().getServiceAddress(POLICY(), VersionPart.wrap(3)));
-    }
-
-    function getBundleService() external view returns (IBundleService) {
-        return IBundleService(getRegistry().getServiceAddress(BUNDLE(), VersionPart.wrap(3)));
     }
 
     //--- internal view/pure functions --------------------------------------//

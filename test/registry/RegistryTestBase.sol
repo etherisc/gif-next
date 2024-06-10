@@ -28,6 +28,7 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
+import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
 
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
@@ -215,6 +216,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 VersionPart releaseVersion,
                 bytes32 releaseSalt
             ) = releaseManager.prepareNextRelease(
+                new ServiceAuthorizationV3(),
                 serviceAddresses, 
                 serviceNames, 
                 serviceRoles, 
