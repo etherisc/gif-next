@@ -204,6 +204,9 @@ contract ChainNft is ERC721Enumerable {
             (idIndex * _chainIdMultiplier + chainId) *
             100 +
             _chainIdDigits;
+        // TODO
+        // global registry on chain 31337 is 20000105
+        // global registry on chain 1 is 2102...
     }
 
     function calculateTokenId(uint256 idIndex) public view returns (uint256 id) {

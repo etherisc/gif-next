@@ -5,7 +5,7 @@ import {Amount} from "../type/Amount.sol";
 import {Blocknumber}  from "../type/Blocknumber.sol";
 import {IKeyValueStore} from "../shared/IKeyValueStore.sol";
 import {IComponent} from "../shared/IComponent.sol";
-import {InitializableCustom} from "../shared/InitializableCustom.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IStaking} from "../staking/IStaking.sol";
@@ -20,7 +20,7 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 contract StakingReader is
     IRegistryLinked,
-    InitializableCustom
+    Initializable
 {
 
     error ErrorStakingReaderDependenciesAlreadySet();
@@ -29,17 +29,15 @@ contract StakingReader is
     IStaking private _staking;
     StakingStore private _store;
 
-    constructor(IRegistry registry, address initializeOwner) InitializableCustom(initializeOwner) {
-        _registry = registry;
-    }
-
     function initialize(
+        address registry,
         address stakingAddress,
         address stakingStoreAddress
     )
         external
         initializer
     {
+        _registry = IRegistry(registry);
         _staking = IStaking(stakingAddress);
         _store = StakingStore(stakingStoreAddress);
     }

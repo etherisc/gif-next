@@ -34,6 +34,7 @@ import {ServiceAuthorizationsLib} from "./ServiceAuthorizationsLib.sol";
 
 contract ReleaseManager is 
     AccessManaged, 
+    Initializable, 
     ILifecycle, 
     IRegistryLinked
 {
@@ -45,7 +46,7 @@ contract ReleaseManager is
     event LogReleaseActivation(VersionPart version);
 
     // constructor
-    error ErrorReleaseManagerNotRegistry(Registry registry);
+    error ErrorReleaseManagerNotRegistry(address registry);
 
     // createNextRelease
     error ErrorReleaseManagerReleaseCreationDisallowed(StateId currentStateId);
@@ -91,9 +92,9 @@ contract ReleaseManager is
 
     Seconds public constant MIN_DISABLE_DELAY = Seconds.wrap(60 * 24 * 365); // 1 year
 
-    RegistryAdmin public immutable _admin;
-    address public immutable _releaseAccessManagerCodeAddress;
-    Registry public immutable _registry;
+    RegistryAdmin private _admin;
+    address public _releaseAccessManagerCodeAddress;
+    Registry private _registry;
     IRegisterable private _staking;
     address private _stakingOwner;
 
@@ -101,34 +102,38 @@ contract ReleaseManager is
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
     mapping(address registryService => VersionPart version) _releaseVersionByAddress;
 
-    VersionPart immutable internal _initial;// first active version    
+    VersionPart private _initial;// first active version    
     VersionPart internal _latest; // latest active version
     VersionPart internal _next; // version to create and activate 
     StateId internal _state; // current state of release manager
 
     uint256 internal _awaitingRegistration; // "services left to register" counter
 
-    // deployer of this contract must be gif admin
-    constructor(Registry registry)
+    constructor()
         AccessManaged(msg.sender)
     {
-        // TODO move this part to RegistryLinked constructor
-        if(!_isRegistry(address(registry))) {
-            revert ErrorReleaseManagerNotRegistry(registry);
-        }
-
-        _registry = registry;
-        setAuthority(_registry.getAuthority());
-        _admin = RegistryAdmin(_registry.getRegistryAdminAddress());
+        AccessManagerExtendedWithDisableInitializeable masterReleaseAccessManager = new AccessManagerExtendedWithDisableInitializeable();
+        masterReleaseAccessManager.initialize(address(this));
+        //masterReleaseAccessManager.disable();
+        _releaseAccessManagerCodeAddress = address(masterReleaseAccessManager);
 
         _initial = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION);
         _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
         _state = getInitialState(RELEASE());
-        
-        AccessManagerExtendedWithDisableInitializeable masterReleaseAccessManager = new AccessManagerExtendedWithDisableInitializeable();
-        masterReleaseAccessManager.initialize(_registry.NFT_LOCK_ADDRESS(), VersionLib.toVersionPart(0));
-        //masterReleaseAccessManager.disable();
-        _releaseAccessManagerCodeAddress = address(masterReleaseAccessManager);
+    }
+
+    function initialize(address registry) 
+        public 
+        initializer
+    {
+        // TODO move this part to RegistryLinked constructor
+        if(!_isRegistry(registry)) {
+            revert ErrorReleaseManagerNotRegistry(registry);
+        }
+
+        _registry = Registry(registry);
+        setAuthority(_registry.getAuthority());
+        _admin = RegistryAdmin(_registry.getRegistryAdminAddress());
     }
 
     /// @dev skips previous release if was not activated
@@ -171,6 +176,8 @@ contract ReleaseManager is
         version = getNextVersion();
 
         // ensures unique salt
+        // TODO CreateX have clones capability also
+        // what would releaseSalt look like if used with CreateX in pemissioned mode?
         releaseSalt = keccak256(
             bytes.concat(
                 bytes32(version.toInt()),
@@ -178,7 +185,7 @@ contract ReleaseManager is
 
         releaseAccessManagerAddress = Clones.cloneDeterministic(_releaseAccessManagerCodeAddress, releaseSalt);
         AccessManagerExtendedWithDisableInitializeable releaseAccessManager = AccessManagerExtendedWithDisableInitializeable(releaseAccessManagerAddress);
-        releaseAccessManager.initialize(address(this), version);
+        releaseAccessManager.initialize(address(this));
 
         if (!isValidTransition(RELEASE(), _state, DEPLOYING())) {
             revert ErrorReleaseManagerReleasePreparationDisallowed(_state);
@@ -321,7 +328,7 @@ contract ReleaseManager is
 
         disableDelay = SecondsLib.toSeconds(Math.max(disableDelay.toInt(), MIN_DISABLE_DELAY.toInt()));
 
-        _releaseAccessManager[version].disable(disableDelay);
+        _releaseAccessManager[version].disable();
 
         _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp().addSeconds(disableDelay);
     }

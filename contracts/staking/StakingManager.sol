@@ -8,7 +8,6 @@ import {Staking} from "./Staking.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";
 
-import {RegistryAdmin} from "../registry/RegistryAdmin.sol";
 
 contract StakingManager is
     ProxyManager

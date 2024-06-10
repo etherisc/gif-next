@@ -254,6 +254,7 @@ contract GifTest is GifDeployer {
     {
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
+        console.log("chain id", block.chainid);
 
         // deploy registry, services, master instance and token
         vm.startPrank(registryOwner);
@@ -325,7 +326,10 @@ contract GifTest is GifDeployer {
         address gifManager = registryOwner;
 
         (
+            dip,
             registry,
+            releaseManager,
+            tokenRegistry,
             stakingManager
         ) = deployCore(
             gifAdmin,
@@ -352,7 +356,6 @@ contract GifTest is GifDeployer {
         console.log("staking manager deployed at", address(stakingManager));
         console.log("staking manager owner", stakingManager.getOwner());
 
-        staking = stakingManager.getStaking();
         console.log("staking nft id", registry.getNftId(address(staking)).toInt());
         console.log("staking deployed at", address(staking));
         console.log("staking authority", staking.authority());
@@ -367,6 +370,8 @@ contract GifTest is GifDeployer {
 
         chainNft = ChainNft(registry.getChainNftAddress());
         registryNftId = registry.getNftId(registryAddress);
+
+        staking = stakingManager.getStaking();
 
         stakingNftId = registry.getNftId(address(staking));
         stakingReader = staking.getStakingReader();
@@ -478,7 +483,7 @@ contract GifTest is GifDeployer {
         policyService = policyServiceManager.getPolicyService();
         policyServiceNftId = _registerService("policy", releaseManager, policyServiceManager, policyService);
 
-        //--- all services deployed, activate relase ------------------------//
+        //--- all services deployed, activate release ------------------------//
         releaseManager.activateNextRelease();
 
         // activate dip for new release

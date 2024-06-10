@@ -42,6 +42,31 @@ contract GifDeployerTest is GifDeployer {
     address public gifManager = registryOwner;
     address public stakingOwner = registryOwner;
 
+    function setUp() public virtual {
+        vm.startPrank(registryOwner);
+        (
+            dip,
+            registry,
+            releaseManager,
+            tokenRegistry,
+            stakingManager
+        ) = deployCore(
+            gifAdmin,
+            gifManager,
+            stakingOwner,
+            salt);
+        vm.stopPrank();
+
+        staking = stakingManager.getStaking();
+        
+        _setUpDependingContracts();
+    }
+
+    function _setUpDependingContracts() internal {
+        chainNft = ChainNft(registry.getChainNftAddress());
+        registryAdmin = RegistryAdmin(registry.getRegistryAdminAddress());
+    }
+
 
     function test_deployerCoreDip() public {
         assertTrue(address(dip) != address(0), "dip address zero");
@@ -190,27 +215,5 @@ contract GifDeployerTest is GifDeployer {
 
         // check authority
         assertEq(store.authority(), registryAdmin.authority(), "unexpected staking store authority");
-    }
-
-
-    function setUp() public virtual {
-        vm.startPrank(registryOwner);
-        (
-            registry,
-            stakingManager
-        ) = deployCore(
-            gifAdmin,
-            gifManager,
-            stakingOwner,
-            salt);
-        vm.stopPrank();
-
-        staking = stakingManager.getStaking();
-        
-        _setUpDependingContracts();
-    }
-
-    function _setUpDependingContracts() internal {
-        chainNft = ChainNft(registry.getChainNftAddress());
     }
 }

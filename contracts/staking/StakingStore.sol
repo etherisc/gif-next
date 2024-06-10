@@ -27,8 +27,6 @@ import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {Version, VersionLib} from "../type/Version.sol";
 import {Versionable} from "../shared/Versionable.sol";
 
-import {RegistryAdmin} from "../registry/RegistryAdmin.sol";
-
 
 contract StakingStore is 
     AccessManaged,
@@ -82,14 +80,18 @@ contract StakingStore is
     mapping(NftId nftId => Blocknumber lastUpdatedIn) private _tvlLastUpdatedIn;
 
 
-    constructor(IRegistry registry, StakingReader reader)
+    constructor()
         AccessManaged(msg.sender)
+    {}
+
+    function initialize(address registry, address reader)
+        external
+        initializer
     {
-        _registry = registry; //TODO if keeps registry -> RegistryLinked and checks registry address
-        address authority = _registry.getAuthority();
-        setAuthority(authority);
+        _registry = IRegistry(registry); //TODO if keeps registry -> RegistryLinked and checks registry address
+        setAuthority(_registry.getAuthority());
         
-        _reader = reader;
+        _reader = StakingReader(reader);
         _targetManager = new NftIdSetManager();
     }
 

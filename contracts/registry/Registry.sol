@@ -3,8 +3,7 @@ pragma solidity ^0.8.20;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
-import {InitializableCustom} from "../shared/InitializableCustom.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -27,7 +26,7 @@ import {RegistryAdmin} from "./RegistryAdmin.sol";
 // 3)            -> registers object by IService (POLICY, BUNDLE, STAKE)
 
 contract Registry is
-    InitializableCustom,
+    Initializable,
     IRegistry
 {
     using NftIdLib for NftId;
@@ -50,17 +49,20 @@ contract Registry is
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) private _coreObjectCombinations;
 
-    RegistryAdmin public immutable _admin;
-    ChainNft public immutable _chainNft;
+    address private _authority;
+    RegistryAdmin private _admin;
+    ChainNft internal _chainNft;
 
-    NftId public immutable _protocolNftId;
-    NftId public immutable _globalRegistryNftId;
-    NftId public immutable _registryNftId;
+    NftId internal _protocolNftId;
+    NftId internal _globalRegistryNftId;
+    NftId public _registryNftId;
     NftId public _stakingNftId;
 
     address public _tokenRegistryAddress;
     address public _stakingAddress;
     ReleaseManager public _releaseManager;
+
+    bytes32 internal _initCodeHash;
 
     modifier onlyRegistryService() {
         if(!_releaseManager.isActiveRegistryService(msg.sender)) {
@@ -77,38 +79,34 @@ contract Registry is
         _;
     }
 
-
-    constructor(RegistryAdmin admin, address initializeOwner) 
-        InitializableCustom(initializeOwner) 
-    {
-        _admin = admin;
-        // deploy NFT 
-        _chainNft = new ChainNft(address(this));
-
-        // initial registry setup
-        _protocolNftId = _registerProtocol();
-        _globalRegistryNftId = _registerGlobalRegistry();
-        _registryNftId = _registerRegistry();
-
-        // set object types and object parent relations
-        _setupValidCoreTypesAndCombinations();
-    }
-
-
-    /// @dev wires release manager, token registry and staking to registry (this contract).
     function initialize(
+        address authority,
+        address registryAdmin,
         address releaseManager,
         address tokenRegistry,
-        address staking
+        address staking,
+        address stakingOwner,
+        bytes32 initCodeHash,
+        bytes32 salt
     )
         external
-        initializer()
+        initializer
     {
+        _authority = authority;
+        _admin = RegistryAdmin(registryAdmin);
         _releaseManager = ReleaseManager(releaseManager);
         _tokenRegistryAddress = tokenRegistry;
         _stakingAddress = staking;
 
-        _stakingNftId = _registerStaking();
+        _chainNft = new ChainNft(address(this));
+
+        _protocolNftId = _registerProtocol();
+        _globalRegistryNftId = _registerGlobalRegistry();
+        _registryNftId = _registerRegistry();
+        _stakingNftId = _registerStaking(stakingOwner);
+        _initCodeHash = initCodeHash;
+
+        _setupValidCoreTypesAndCombinations();
     }
 
     function registerService(
@@ -311,7 +309,7 @@ contract Registry is
     }
 
     function getAuthority() external view returns (address) {
-        return _admin.authority();
+        return _authority;
     }
 
     function getOwner() public view returns (address owner) {
@@ -453,7 +451,7 @@ contract Registry is
         onlyInitializing
         returns (NftId globalRegistryNftId)
     {
-        uint256 globalRegistryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, 1);
+        uint256 globalRegistryId = _chainNft.GLOBAL_REGISTRY_ID();
         globalRegistryNftId = NftIdLib.toNftId(globalRegistryId);
 
         _info[globalRegistryNftId] = ObjectInfo({
@@ -461,7 +459,11 @@ contract Registry is
             parentNftId: _protocolNftId,
             objectType: REGISTRY(),
             isInterceptor: false,
-            objectAddress: address(0),// TODO points to mainnet's registry address? then set nftIdbByAddress[]
+            // TODO points to mainnet's registry address? (then set nftIdbByAddress[]); mainnet registry address influences deployment address on each L2?
+            // if you want to deploy chain registry on chainId X
+            //     -> you need to use global registry address at chainId 1 to calculate deployment address of chain registry at chainId xyz
+            // deployed chain registry can recover global registry address based on its own address?
+            objectAddress: address(0),
             initialOwner: NFT_LOCK_ADDRESS,
             data: ""
         });
@@ -494,12 +496,11 @@ contract Registry is
     }
 
     // depends on _registryNftId and _stakingAddress
-    function _registerStaking()
+    function _registerStaking(address stakingOwner)
         private
         onlyInitializing
         returns (NftId stakingNftId)
     {
-        address stakingOwner = IRegisterable(_stakingAddress).getOwner();
         uint256 stakingId = _chainNft.calculateTokenId(STAKING_TOKEN_SEQUENCE_ID);
         stakingNftId = NftIdLib.toNftId(stakingId);
 

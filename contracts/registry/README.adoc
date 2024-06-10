@@ -5,6 +5,8 @@ Contains the registry related contracts.
 == Contracts
 
 {{ChainNft}}
+{{GlobalRegistry}}
+{{IGlobalRegistry}}
 {{IRegistryService}}
 {{IRegistry}}
 {{ITransferInterceptor}}

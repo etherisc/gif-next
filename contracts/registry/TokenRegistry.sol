@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {ERC165Checker} from "@openzeppelin/contracts/utils/introspection/ERC165Checker.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import {REGISTRY} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -12,6 +13,7 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
+import {Registry} from "./Registry.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 
@@ -19,6 +21,7 @@ import {RegistryAdmin} from "./RegistryAdmin.sol";
 /// @title contract to register token per GIF major release.
 contract TokenRegistry is
     AccessManaged,
+    Initializable,
     IRegistryLinked
 {
     event LogTokenRegistryTokenRegistered(uint256 chainId, address token, uint256 decimals, string symbol);
@@ -48,8 +51,7 @@ contract TokenRegistry is
     mapping(uint256 chainId => mapping(address token => mapping(VersionPart majorVersion => bool isActive))) internal _active;
     TokenInfo [] internal _token;
 
-    IRegistry internal _registry;
-    ReleaseManager internal _releaseManager;
+    Registry internal _registry;
     IERC20Metadata internal _dipToken;
 
     /// @dev enforces msg.sender is owner of nft (or initial owner of nft ownable)
@@ -60,16 +62,19 @@ contract TokenRegistry is
         _;
     }
 
-    constructor(IRegistry registry, IERC20Metadata dipToken)
+    constructor()
         AccessManaged(msg.sender)
-    {
-        // set authority
-        address authority = RegistryAdmin(registry.getRegistryAdminAddress()).authority();
-        setAuthority(authority);
-        
-        _registry = registry;
-        _dipToken = dipToken;
+    {}
 
+    function initialize(address registry, address dipToken)
+        public
+        initializer
+    {   
+        _registry = Registry(registry);
+        _dipToken = IERC20Metadata(dipToken);
+        
+        // set authority
+        setAuthority(_registry.getAuthority());
         // register dip token
         uint256 chainId = block.chainid;
         _registerToken(
@@ -78,7 +83,6 @@ contract TokenRegistry is
             _dipToken.decimals(), 
             _dipToken.symbol());
     }
-
 
     /// @dev register an onchain token.
     /// this function verifies that the provided token address is a contract that implements

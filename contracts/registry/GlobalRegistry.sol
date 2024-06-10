@@ -3,8 +3,6 @@ pragma solidity ^0.8.20;
 
 import {ICreateX} from "../../lib/createx/src/ICreateX.sol";
 
-import {InitializableCustom} from "../shared/InitializableCustom.sol";
-
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {VersionPart} from "../type/Version.sol";
 import {ObjectType, REGISTRY} from "../type/ObjectType.sol";
@@ -23,15 +21,14 @@ contract GlobalRegistry is
 
     mapping(uint chanId => address registry) _registryAddressByChainId;
 
+    uint constant public MAINNET_CHAIN_ID = 1;
     ICreateX public constant _createX = ICreateX(0xba5Ed099633D3B313e4D5F7bdc1305d3c28ba5Ed);
-    bytes32 _salt = "0x1234567890";
+    bytes32 public constant _salt = "0x1234567890"; // salt used to deploy on L2
 
-    constructor(RegistryAdmin admin, address initializeOwner)
-        Registry(admin, initializeOwner)
-    {}
-
+    // TODO still preferable to know registry address at chainId xyz without asking registry on chainId 1?
     // TODO caller restrictions?
     // TODO the only ever deployer per chain id?
+    // if no registrations at all -> then code and deployer are not future proof...
     function registerChainRegistry(uint chainId, address deployer)
         external
         onlyReleaseManager() // or restricted to GIF_ADMIN / GIF_MANAGER
@@ -40,9 +37,15 @@ contract GlobalRegistry is
         // calculate chain registry token id
         uint chainRegistryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, chainId);
         chainRegistryNftId = NftIdLib.toNftId(chainRegistryId);
-        // calculate chainRegistryAddress
+        // calculate chain registry address, independent of chainId
         address chainRegistryAddress = _computeChainRegistryAddress(deployer);
 
+        if(chainId == 1) {
+            // TODO must revert on attempt to register with chainId 1
+            // ideally "_chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, 1);" must return  globalRegistryId (and revert later when minting)
+        }
+
+        // TODO !!! If deployed to the same addresses on each chain??? !!!
         if(_nftIdByAddress[chainRegistryAddress] != NftIdLib.zero()) {
             revert ErrorGlobalRegistryChainRegistryAddressInvalid(chainId, chainRegistryAddress);
         }
@@ -66,44 +69,28 @@ contract GlobalRegistry is
         _chainNft.mint(NFT_LOCK_ADDRESS, chainRegistryId);
     }
 
+    function getChainRegistry(uint chainId) public returns (address) {
+        return _registryAddressByChainId[chainId];
+    }
+
     function _computeChainRegistryAddress(address deployer)
         private
         returns (address chainRegistryAddress)
     {
-        address initializeOwner = deployer;// deployer does initialization
-        // calculate registryAdminAddress
-        bytes32 initCodeHash = keccak256(
-            abi.encodePacked(
-                type(RegistryAdmin).creationCode,
-                abi.encode(initializeOwner) 
-            )
-        );
-        address chainRegistryAdmin = _createX.computeCreate2Address(_salt, initCodeHash, deployer);
-        //chainRegistryAdmin = _createX.computeCreate2Address(_salt, initCodeHash);// <- if deployer is the same createX address
-        //chainRegistryAdmin = _createX.computeCreate3Address(_salt, deployer);
-        //chainRegistryAdmin = _createX.computeCreate3Address(_salt);// <- if deployer is the same createX address
-
-        // calculate chainRegistryAddress
-        initCodeHash = keccak256(
-            abi.encodePacked(
-                type(Registry).creationCode, 
-                abi.encode(chainRegistryAdmin, initializeOwner)
-            )
-        );
-        chainRegistryAddress = _createX.computeCreate2Address(_salt, initCodeHash, deployer);
-    }
-
-    function getChainRegistry(uint chainId) public returns (address) {
-        return _registryAddressByChainId[chainId];
+        // [0..19] - deployer address, [20] - cross-chain redeploy protection, [21..31] - salt
+        bytes32 permissionedSalt = bytes32(abi.encodePacked(bytes20(uint160(deployer)), bytes1(hex"00"), _salt));
+        chainRegistryAddress = _createX.computeCreate2Address(_salt, _initCodeHash, deployer);
     }
 
     function _registerGlobalRegistry()
         internal 
         virtual
         override
+        onlyInitializing
         returns (NftId globalRegistryNftId)
     {
-        uint256 globalRegistryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, 1);
+        // TODO .GLOBAL_REGISTRY_ID() MUST BE equal to .calculateTokenId(regestrySequenceId, 1)
+        uint256 globalRegistryId = _chainNft.GLOBAL_REGISTRY_ID();
         globalRegistryNftId = NftIdLib.toNftId(globalRegistryId);
 
         _info[globalRegistryNftId] = ObjectInfo({
@@ -124,14 +111,16 @@ contract GlobalRegistry is
     /// @dev checks network, reverts if not mainnet
     function _registerRegistry() 
         internal
+        virtual
         override
         onlyInitializing
         returns (NftId registryNftId)
     {
+        // TODO just require block.chainId == MAINNET_CHAIN_ID
         uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, block.chainid);
-        //uint256 globalRegistryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, 1);
-
-        if(registryId != _globalRegistryNftId.toInt()) {
+        uint256 globalRegistryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, MAINNET_CHAIN_ID);
+        // TODO "_globalRegistryNftId" have special value given by GLOBAL_REGISTRY_ID() function, you never get it by calculation
+        if(registryId != globalRegistryId) {
             revert ErrorGlobalRegistryDeploymentNotOnMainnet(block.chainid);
         }
 
