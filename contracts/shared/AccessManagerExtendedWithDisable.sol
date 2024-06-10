@@ -5,8 +5,7 @@ pragma solidity ^0.8.20;
 
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 
-import {VersionPart} from "../type/Version.sol";
-import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {Timestamp, TimestampLib, zeroTimestamp, maxTimestamp} from "../type/Timestamp.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 
 import {IAccessManagerExtendedWithDisable} from "./IAccessManagerExtendedWithDisable.sol";
@@ -18,7 +17,6 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
 
     /// @custom:storage-location erc7201:etherisc.storage.ReleaseAccessManager
     struct AccessManagerExtendedWithDisableStorage {
-        VersionPart _version;
         Timestamp _disabledAt;
     }
 
@@ -32,11 +30,10 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
     }
 
     // TODO add version
-    function __AccessManagerExtendedWithDisable_init(address initialAdmin, VersionPart version) internal onlyInitializing {
-        AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
-        $._version = version;
-        
+    function __AccessManagerExtendedWithDisable_init(address initialAdmin) internal onlyInitializing {        
         __AccessManagerExtended_init(initialAdmin);
+        AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
+        $._disabledAt = maxTimestamp();
     }
 
     // =================================================== GETTERS ====================================================
@@ -50,40 +47,35 @@ contract AccessManagerExtendedWithDisable is AccessManagerExtended, IAccessManag
         virtual override (AccessManagerCustom, IAccessManager)
         returns (bool immediate, uint32 delay)
     {
-        AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
         if(isDisabled()) {
             revert AccessManagerDisabled();
         }
         return super.canCall(caller, target, selector);
     }
 
-    function getVersion() public view returns (VersionPart) {
-        AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
-        return $._version;
-    }
-
     function isDisabled() public view returns (bool) {
         AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
-        return $._disabledAt.gtz() && TimestampLib.blockTimestamp() > $._disabledAt;
+        return TimestampLib.blockTimestamp() >= $._disabledAt;
     }
 
     // ===================================== ACCESS MANAGER MODE MANAGEMENT ============================================
 
     /// inheritdoc IAccessManagerExtended
-    function disable(Seconds delay) external onlyAuthorized {
-        AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
-        if($._disabledAt.gtz()) {
-            revert AccessManagerDisabled();
-        }
-        $._disabledAt = TimestampLib.blockTimestamp().addSeconds(delay);
-    }
-    /// inheritdoc IAccessManagerExtended
-    function enable() external onlyAuthorized {
-        AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
+    function disable() external onlyAuthorized {
         if(isDisabled()) {
             revert AccessManagerDisabled();
         }
-        $._disabledAt = zeroTimestamp();
+        AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
+        $._disabledAt = TimestampLib.blockTimestamp();
+    }
+    /// inheritdoc IAccessManagerExtended
+    function enable() external onlyAuthorized {
+        if(isDisabled()) {
+            AccessManagerExtendedWithDisableStorage storage $ = _getAccessManagerExtendedWithDisableStorage();
+            $._disabledAt = maxTimestamp();
+        } else {
+            revert AccessManagerEnabled();
+        }
     }
 
 

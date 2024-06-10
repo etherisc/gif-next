@@ -59,6 +59,10 @@ function zeroTimestamp() pure returns (Timestamp) {
     return Timestamp.wrap(0);
 }
 
+function maxTimestamp() pure returns (Timestamp) {
+    return Timestamp.wrap(type(uint40).max);
+}
+
 library TimestampLib {
 
     function zero() public pure returns (Timestamp) {
