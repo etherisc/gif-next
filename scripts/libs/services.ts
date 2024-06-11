@@ -102,11 +102,12 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info("======== Starting deployment of services ========");
     const releaseManager = await registry.releaseManager.connect(owner);
     logger.info("-------- regtistry service --------");
+    const authority = await registry.registryAdmin.authority();
     const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
         "RegistryServiceManager",
         owner,
         [
-            release.accessManager, // release access manager address it self can be a salt like value
+            authority, // address itself can be a salt like value
             registry.registryAddress,
             release.salt
         ],
@@ -118,17 +119,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 VersionPartLib: libraries.versionPartLibAddress,
             }});
 
-    logger.info("a");
-
     const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
     const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
-    logger.info("b");
 
     const rcptRs = await executeTx(async () => await releaseManager.registerService(registryServiceAddress));
     const logRegistrationInfoRs = getFieldFromTxRcptLogs(rcptRs!, registry.registry.interface, "LogRegistration", "nftId");
     const registryServiceNfdId = (logRegistrationInfoRs as unknown);
-    logger.info("c");
 
     // is not NftOwnable
     //await registry.tokenRegistry.linkToRegistryService();
@@ -140,7 +137,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "StakingServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -151,7 +148,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
             VersionPartLib: libraries.versionPartLibAddress,
-            TargetManagerLib: libraries.targetManagerLibAddress,
         }});
 
     const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
@@ -169,7 +165,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "InstanceServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -224,7 +220,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "OracleServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -253,7 +249,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "DistributionServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -285,7 +281,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "PricingServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -315,7 +311,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "BundleServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -344,7 +340,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "PoolServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -374,7 +370,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "ProductServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -402,7 +398,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "ClaimServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -434,7 +430,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "ApplicationServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -463,7 +459,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "PolicyServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
