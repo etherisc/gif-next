@@ -9,6 +9,7 @@ import {
     TokenRegistry, TokenRegistry__factory,
     Staking, StakingManager, Staking__factory,
     StakingStore, StakingReader,
+    ServiceAuthorizationV3,
     LibNftIdSet__factory,
     RegistryAccessManager__factory, 
 } from "../../typechain-types";
@@ -51,6 +52,10 @@ export type RegistryAddresses = {
     stakingAddress: AddressLike;
     staking: Staking;
     stakingNftId: bigint;
+
+    serviceAuthorizationV3Address: AddressLike;
+    serviceAuthorizationV3: ServiceAuthorizationV3;
+
 }
 
 export async function deployAndInitializeRegistry(owner: Signer, libraries: LibraryAddresses): Promise<RegistryAddresses> {
@@ -85,6 +90,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 SelectorSetLib: libraries.selectorSetLibAddress,
                 StrLib: libraries.strLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
             }
         });
 
@@ -118,7 +125,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
@@ -155,7 +161,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress,
             }
         });
 
@@ -179,6 +184,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 LibNftIdSet: libraries.libNftIdSetAddress,
                 ObjectTypeLib: libraries.objectTypeLibAddress, 
                 StateIdLib: libraries.stateIdLibAddress, 
+                TargetManagerLib: libraries.targetManagerLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
             }
@@ -203,7 +209,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 TargetManagerLib: libraries.targetManagerLibAddress, 
                 AmountLib: libraries.amountLibAddress, 
                 NftIdLib: libraries.nftIdLibAddress, 
-                ObjectTypeLib: libraries.objectTypeLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
             }
@@ -232,6 +237,23 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     logger.info(`StakingStore deployed at ${stakingStoreAddress}`);
     logger.info(`StakingManager deployed at ${stakingManagerAddress}`);
     logger.info(`Staking deployed at ${stakingAddress}`);
+
+
+    logger.info("-------- Starting deployment Service Authorization v3 ----------------");
+
+    const { address: serviceAuthorizationV3Address, contract: serviceAuthorizationV3BaseContract, } = await deployContract(
+        "ServiceAuthorizationV3",
+        owner,
+        [ ],
+        { 
+            libraries: { 
+                SelectorLib: libraries.selectorLibAddress,
+                StrLib: libraries.strLibAddress,
+                VersionPartLib: libraries.versionPartLibAddress,
+            }
+        });
+
+    const serviceAuthorizationV3 = serviceAuthorizationV3BaseContract as ServiceAuthorizationV3;
 
     logger.info("======== Finished deployment of registry ========");
 
@@ -267,6 +289,9 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         stakingAddress: stakingAddress,
         staking: staking,
         stakingNftId: stakingNftId,
+
+        serviceAuthorizationV3Address: serviceAuthorizationV3Address,
+        serviceAuthorizationV3: serviceAuthorizationV3,
     };
 }
 

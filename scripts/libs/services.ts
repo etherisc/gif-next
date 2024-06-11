@@ -1,7 +1,6 @@
 
 import { AddressLike, BytesLike, Signer, resolveAddress, id } from "ethers";
 import { 
-    ReleaseManager__factory, 
     DistributionService, DistributionServiceManager, DistributionService__factory, 
     InstanceService, InstanceServiceManager, InstanceService__factory, 
     ComponentService, ComponentServiceManager, ComponentService__factory, 
@@ -113,20 +112,23 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: { 
                 NftIdLib: libraries.nftIdLibAddress, 
-                ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }});
 
+    logger.info("a");
+
     const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
     const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
+    logger.info("b");
 
     const rcptRs = await executeTx(async () => await releaseManager.registerService(registryServiceAddress));
     const logRegistrationInfoRs = getFieldFromTxRcptLogs(rcptRs!, registry.registry.interface, "LogRegistration", "nftId");
     const registryServiceNfdId = (logRegistrationInfoRs as unknown);
+    logger.info("c");
 
     // is not NftOwnable
     //await registry.tokenRegistry.linkToRegistryService();
@@ -145,7 +147,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         { libraries: {
             AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
-            ObjectTypeLib: libraries.objectTypeLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
@@ -174,7 +175,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: { 
             NftIdLib: libraries.nftIdLibAddress, 
-            ObjectTypeLib: libraries.objectTypeLibAddress, 
+            // ObjectTypeLib: libraries.objectTypeLibAddress, 
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
             VersionPartLib: libraries.versionPartLibAddress,
@@ -202,7 +203,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             AmountLib: libraries.amountLibAddress,
             FeeLib: libraries.feeLibAddress,
             NftIdLib: libraries.nftIdLibAddress, 
-            ObjectTypeLib: libraries.objectTypeLibAddress, 
+            // ObjectTypeLib: libraries.objectTypeLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
@@ -229,7 +230,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress, 
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RequestIdLib: libraries.requestIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -260,7 +261,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 AmountLib: libraries.amountLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress, 
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 ReferralLib: libraries.referralLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
@@ -290,7 +291,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress, 
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
@@ -321,7 +322,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress, 
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -351,7 +352,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 AmountLib: libraries.amountLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress, 
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -379,7 +380,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress, 
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -410,7 +411,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 ClaimIdLib: libraries.claimIdLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
-                ObjectTypeLib: libraries.objectTypeLibAddress, 
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
@@ -440,7 +441,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         { libraries: {
             AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
-            ObjectTypeLib: libraries.objectTypeLibAddress, 
+            // ObjectTypeLib: libraries.objectTypeLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
@@ -469,7 +470,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         { libraries: {
             AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
-            ObjectTypeLib: libraries.objectTypeLibAddress, 
+            // ObjectTypeLib: libraries.objectTypeLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 

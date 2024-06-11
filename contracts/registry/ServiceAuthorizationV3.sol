@@ -70,6 +70,7 @@ contract ServiceAuthorizationV3
           _serviceDomains[12] = REGISTRY();
      }
 
+
      function _setupDomainAuthorizations() internal {
           _setupIRegistryServiceAuthorization();
           _setupStakingServiceAuthorization();

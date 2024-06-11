@@ -230,9 +230,9 @@ contract ReleaseManager is
 
         authority = _admin.authority();
 
+        // TODO refactor/remove old service authz
         _verifyReleaseAuthorizations(addresses, serviceRoles, functionRoles, selectors);
 
-        // TODO instead of copying just set ServiceAuthorizationsLib for release and array of domains???
         _releaseInfo[version].version = version;
         _releaseInfo[version].salt = releaseSalt;
         _releaseInfo[version].addresses = addresses;

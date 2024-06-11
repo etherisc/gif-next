@@ -917,6 +917,8 @@ contract GifTest is GifDeployer {
         } else {
             console.log("- no role members");
         }
+
+        console.log("");
         // solhint-enable
     }
 
@@ -940,6 +942,8 @@ contract GifTest is GifDeployer {
         } else {
             console.log("- no authorized functions");
         }
+
+        console.log("");
         // solhint-enable
     }
 

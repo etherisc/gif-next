@@ -358,6 +358,7 @@ export async function createRelease(owner: Signer, registry: RegistryAddresses, 
     await releaseManager.createNextRelease();
 
     const rcpt = await executeTx(async () =>  releaseManager.prepareNextRelease(
+        registry.serviceAuthorizationV3,
         config.addresses,
         config.names,
         config.serviceRoles,

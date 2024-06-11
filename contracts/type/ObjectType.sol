@@ -127,11 +127,11 @@ function ALL() pure returns (ObjectType) {
 
 // other pure free functions for operators
 function eqObjectType(ObjectType a, ObjectType b) pure returns (bool isSame) {
-    return ObjectTypeLib.eq(a, b);
+    return ObjectType.unwrap(a) == ObjectType.unwrap(b);
 }
 
 function neObjectType(ObjectType a, ObjectType b) pure returns (bool isSame) {
-    return ObjectTypeLib.ne(a, b);
+    return ObjectType.unwrap(a) != ObjectType.unwrap(b);
 }
 
 // library functions that operate on user defined type

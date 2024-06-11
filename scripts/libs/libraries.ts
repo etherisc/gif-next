@@ -25,7 +25,6 @@ export type LibraryAddresses = {
     referralLibAddress: AddressLike;
     requestIdLibAddress: AddressLike;
     instanceAuthorizationsLibAddress: AddressLike;
-    serviceAuthorizationsLibAddress: AddressLike;
     targetManagerLibAddress: AddressLike;
     stakeManagerLibAddress: AddressLike;
     selectorLibAddress: AddressLike;
@@ -37,6 +36,17 @@ export const LIBRARY_ADDRESSES: Map<string, AddressLike> = new Map<string, Addre
 
 export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> {
     logger.info("======== Starting deployment of libraries ========");
+
+    const { address: versionLibAddress } = await deployContract(
+        "VersionLib",
+        owner);
+    LIBRARY_ADDRESSES.set("VersionLib", versionLibAddress);
+
+    const { address: versionPartLibAddress } = await deployContract(
+        "VersionPartLib",
+        owner);
+    LIBRARY_ADDRESSES.set("VersionPartLib", versionPartLibAddress);
+
     const { address: key32LibAddress } = await deployContract(
         "Key32Lib",
         owner);
@@ -84,6 +94,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
             libraries: {
                 ObjectTypeLib: objectTypeLibAddress,
                 Key32Lib: key32LibAddress,
+                VersionPartLib: versionPartLibAddress,
             }
         });
     LIBRARY_ADDRESSES.set("RoleIdLib", roleIdLibAddress);
@@ -95,7 +106,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         {
             libraries: {
                 Key32Lib: key32LibAddress,
-                ObjectTypeLib: objectTypeLibAddress,
             }
         });
     LIBRARY_ADDRESSES.set("ClaimIdLib", claimIdLibAddress);
@@ -106,7 +116,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         undefined,
         {
             libraries: {
-                ObjectTypeLib: objectTypeLibAddress,
                 Key32Lib: key32LibAddress,
             }
         });
@@ -121,16 +130,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         "BlocknumberLib",
         owner);
     LIBRARY_ADDRESSES.set("BlocknumberLib", blockNumberLibAddress);
-
-    const { address: versionLibAddress } = await deployContract(
-        "VersionLib",
-        owner);
-    LIBRARY_ADDRESSES.set("VersionLib", versionLibAddress);
-
-    const { address: versionPartLibAddress } = await deployContract(
-        "VersionPartLib",
-        owner);
-    LIBRARY_ADDRESSES.set("VersionPartLib", versionPartLibAddress);
 
     const { address: secondsLibAddress } = await deployContract(
         "SecondsLib",
@@ -156,7 +155,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
             libraries: {
                 AmountLib: amountLibAddress,
                 NftIdLib: nftIdLibAddress,
-                ObjectTypeLib: objectTypeLibAddress,
                 SecondsLib: secondsLibAddress,
                 UFixedLib: uFixedLibAddress,
             }
@@ -197,7 +195,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         {
             libraries: {
                 Key32Lib: key32LibAddress,
-                ObjectTypeLib: objectTypeLibAddress,
             }
         });
     LIBRARY_ADDRESSES.set("RiskIdLib", riskIdLibAddress);
@@ -221,7 +218,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         {
             libraries: {
                 Key32Lib: key32LibAddress,
-                ObjectTypeLib: objectTypeLibAddress,
             }
         });
     LIBRARY_ADDRESSES.set("DistributorTypeLib", distributorTypeLibAddress);
@@ -233,7 +229,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         {
             libraries: {
                 Key32Lib: key32LibAddress,
-                ObjectTypeLib: objectTypeLibAddress,
             }
         });
     LIBRARY_ADDRESSES.set("ReferralLib", referralLibAddress);
@@ -246,7 +241,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         {
             libraries: {
                 Key32Lib: key32LibAddress,
-                ObjectTypeLib: objectTypeLibAddress,
             }
         });
     LIBRARY_ADDRESSES.set("RequestIdLib", requestIdLibAddress);
@@ -258,23 +252,10 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         undefined,
         {
             libraries: {
-                ObjectTypeLib: objectTypeLibAddress,
                 RoleIdLib: roleIdLibAddress
             }
         });
     LIBRARY_ADDRESSES.set("InstanceAuthorizationsLib", instanceAuthorizationsLibAddress);
-
-    const { address: serviceAuthorizationsLibAddress } = await deployContract(
-        "ServiceAuthorizationsLib",
-        owner,
-        undefined,
-        {
-            libraries: {
-                ObjectTypeLib: objectTypeLibAddress,
-                RoleIdLib: roleIdLibAddress
-            }
-        });
-    LIBRARY_ADDRESSES.set("ServiceAuthorizationsLib", serviceAuthorizationsLibAddress);
 
     const { address: selectorLibAddress } = await deployContract(
         "SelectorLib",
@@ -337,7 +318,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         referralLibAddress,
         requestIdLibAddress,
         instanceAuthorizationsLibAddress,
-        serviceAuthorizationsLibAddress,
         targetManagerLibAddress,
         stakeManagerLibAddress,
         selectorLibAddress,

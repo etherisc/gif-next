@@ -74,6 +74,10 @@ interface IInstance is
     function setStakingRewardRate(UFixed rewardRate) external;
     function refillStakingRewardReserves(Amount dipAmount) external;
 
+    /// @dev defunds the staking reward reserves for the specified target
+    /// permissioned: only the target owner may call this function
+    function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
+
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleManager() external view returns (BundleManager);
