@@ -15,61 +15,66 @@ import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
+import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
-import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
+import {ServiceMockAuthorizationV3} from "../registry/ServiceMockAuthorizationV3.sol";
 
 import {GifDeployer} from "../base/GifDeployer.sol";
 import {GifTest} from "../base/GifTest.sol";
 import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
 
-contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
+contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
 
     address public registerableOwner = makeAddr("registerableOwner");
+
+    IRegistry public registry;
+    address public registryAddress;
+    address public registryOwner = makeAddr("registryOwner");
+    address public outsider = makeAddr("outsider");
+    ReleaseManager releaseManager;
 
     RegistryServiceManagerMockWithHarness public registryServiceManagerWithHarness;
     RegistryServiceHarness public registryServiceHarness;
 
-    function setUp() public virtual override
+
+    function setUp() public virtual
     {
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
 
+        address gifAdmin = registryOwner;
+        address gifManager = registryOwner;
+        address stakingOwner = registryOwner;
+
+        (
+            , // dip,
+            registry,
+            , // tokenRegistry,
+            releaseManager,
+            , // registryAdmin,
+            , // stakingManager,
+            // staking
+        ) = deployCore(
+            gifAdmin,
+            gifManager,
+            stakingOwner);
+
+        registryAddress = address(registry);
+
         vm.startPrank(registryOwner);
-
-        _deployCore();
-
         _deployRegistryServiceHarness();
+        vm.stopPrank();
     }
 
     function _deployRegistryServiceHarness() internal 
     {
-        //bytes32 salt = "0x2222";
-
-        // RegistryServiceManagerMockWithHarness first deploys RegistryService and then upgrades to RegistryServiceHarness
-        // thus address is computed with RegistryService bytecode instead of RegistryServiceHarness...
-        RegistryServiceTestConfig config = new RegistryServiceTestConfig(
-            releaseManager,
-            type(RegistryServiceManagerMockWithHarness).creationCode, // proxy manager
-            type(RegistryService).creationCode, // implementation
-            registryOwner,
-            VersionPartLib.toVersionPart(3),
-            "0x2222");
-
-        (
-            address[] memory serviceAddresses,
-            string[] memory serviceNames,
-            RoleId[][] memory serviceRoles,
-            string[][] memory serviceRoleNames,
-            RoleId[][] memory functionRoles,
-            string[][] memory functionRoleNames,
-            bytes4[][][] memory selectors
-        ) = config.getConfig();
+        bytes32 salt = "0x2222";
 
         releaseManager.createNextRelease();
 
@@ -78,29 +83,23 @@ contract RegistryServiceHarnessTestBase is GifTest, FoundryRandom {
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = releaseManager.prepareNextRelease(
-            new ServiceAuthorizationV3(),
-            serviceAddresses, 
-            serviceNames, 
-            serviceRoles, 
-            serviceRoleNames, 
-            functionRoles, 
-            functionRoleNames,
-            selectors, 
-            "0x2222");//salt);
+            new ServiceMockAuthorizationV3(),
+            salt);
 
         registryServiceManagerWithHarness = new RegistryServiceManagerMockWithHarness{salt: releaseSalt}(
             releaseAccessManager,
             registryAddress,
             releaseSalt);
+
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManagerWithHarness.getRegistryService()));
+        releaseManager.registerService(registryServiceHarness);
+        registryServiceManagerWithHarness.linkToProxy();
 
         // TODO check if this nees to be re-enabled
         // assertEq(serviceAddresses[0], address(registryServiceHarness), "error: registry service address mismatch");
-        releaseManager.registerService(registryServiceHarness);
 
         releaseManager.activateNextRelease();
 
-        registryServiceManagerWithHarness.linkToProxy();
     }
 
     function _assert_getAndVerifyContractInfo(

@@ -78,8 +78,6 @@ import {InstanceServiceManager} from "../../contracts/instance/InstanceServiceMa
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
-import {StakingService} from "../../contracts/staking/StakingService.sol";
-import {StakingServiceManager} from "../../contracts/staking/StakingServiceManager.sol";
 
 import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
@@ -126,57 +124,57 @@ contract GifTest is GifDeployer {
     StakingReader public stakingReader;
     NftId public stakingNftId;
 
-    RegistryServiceManager public registryServiceManager;
-    RegistryService public registryService;
-    NftId public registryServiceNftId;
+    // RegistryServiceManager public registryServiceManager;
+    // RegistryService public registryService;
+    // NftId public registryServiceNftId;
 
-    StakingServiceManager public stakingServiceManager;
-    StakingService public stakingService;
-    NftId public stakingServiceNftId;
+    // StakingServiceManager public stakingServiceManager;
+    // StakingService public stakingService;
+    // NftId public stakingServiceNftId;
 
-    InstanceServiceManager public instanceServiceManager;
-    InstanceService public instanceService;
-    NftId public instanceServiceNftId;
+    // InstanceServiceManager public instanceServiceManager;
+    // InstanceService public instanceService;
+    // NftId public instanceServiceNftId;
 
-    ComponentServiceManager public componentServiceManager;
-    ComponentService public componentService;
-    NftId public componentServiceNftId;
+    // ComponentServiceManager public componentServiceManager;
+    // ComponentService public componentService;
+    // NftId public componentServiceNftId;
 
-    DistributionServiceManager public distributionServiceManager;
-    DistributionService public distributionService;
-    NftId public distributionServiceNftId;
+    // DistributionServiceManager public distributionServiceManager;
+    // DistributionService public distributionService;
+    // NftId public distributionServiceNftId;
 
-    OracleServiceManager public oracleServiceManager;
-    OracleService public oracleService;
-    NftId public oracleServiceNftId;
+    // OracleServiceManager public oracleServiceManager;
+    // OracleService public oracleService;
+    // NftId public oracleServiceNftId;
 
-    ProductServiceManager public productServiceManager;
-    ProductService public productService;
-    NftId public productServiceNftId;
+    // ProductServiceManager public productServiceManager;
+    // ProductService public productService;
+    // NftId public productServiceNftId;
 
-    PoolServiceManager public poolServiceManager;
-    PoolService public poolService;
-    NftId public poolServiceNftId;
+    // PoolServiceManager public poolServiceManager;
+    // PoolService public poolService;
+    // NftId public poolServiceNftId;
 
-    ApplicationServiceManager public applicationServiceManager;
-    ApplicationService public applicationService;
-    NftId public applicationServiceNftId;
+    // ApplicationServiceManager public applicationServiceManager;
+    // ApplicationService public applicationService;
+    // NftId public applicationServiceNftId;
 
-    PolicyServiceManager public policyServiceManager;
-    PolicyService public policyService;
-    NftId public policyServiceNftId;
+    // PolicyServiceManager public policyServiceManager;
+    // PolicyService public policyService;
+    // NftId public policyServiceNftId;
 
-    ClaimServiceManager public claimServiceManager;
-    ClaimService public claimService;
-    NftId public claimServiceNftId;
+    // ClaimServiceManager public claimServiceManager;
+    // ClaimService public claimService;
+    // NftId public claimServiceNftId;
 
-    PricingService public pricingService;
-    PricingServiceManager public pricingServiceManager;
-    NftId public pricingServiceNftId;
+    // PricingService public pricingService;
+    // PricingServiceManager public pricingServiceManager;
+    // NftId public pricingServiceNftId;
 
-    BundleServiceManager public bundleServiceManager;
-    BundleService public bundleService;
-    NftId public bundleServiceNftId;
+    // BundleServiceManager public bundleServiceManager;
+    // BundleService public bundleService;
+    // NftId public bundleServiceNftId;
 
     AccessManagerExtendedInitializeable public masterInstanceAccessManager;
     InstanceAdmin public masterInstanceAdmin;
@@ -258,11 +256,12 @@ contract GifTest is GifDeployer {
         // solhint-disable-next-line
         console.log("tx origin", tx.origin);
 
+        address gifAdmin = registryOwner;
+        address gifManager = registryOwner;
+
         // deploy registry, services, master instance and token
-        vm.startPrank(registryOwner);
-        _deployCore();
-        _deployAndRegisterServices();
-        vm.stopPrank();
+        _deployCore(gifAdmin, gifManager);
+        _deployAndRegisterServices(gifAdmin, gifManager);
 
         vm.startPrank(registryOwner);
         _deployMasterInstance();
@@ -324,12 +323,12 @@ contract GifTest is GifDeployer {
         console.log(message, gasDelta);
     }
 
-    function _deployCore()
+    function _deployCore(
+        address gifAdmin,
+        address gifManager
+    )
         internal
     {
-        address gifAdmin = registryOwner;
-        address gifManager = registryOwner;
-
         (
             dip,
             registry,
@@ -343,7 +342,12 @@ contract GifTest is GifDeployer {
             gifManager,
             stakingOwner);
 
-        _setUpDependingItems();
+        // obtain some references
+        registryAddress = address(registry);
+        chainNft = ChainNft(registry.getChainNftAddress());
+        registryNftId = registry.getNftId(registryAddress);
+        stakingNftId = registry.getNftId(address(staking));
+        stakingReader = staking.getStakingReader();
 
         // solhint-disable
         console.log("registry deployed at", address(registry));
@@ -365,162 +369,21 @@ contract GifTest is GifDeployer {
     }
 
 
-    function _setUpDependingItems() internal {
-        registryAddress = address(registry);
-
-        chainNft = ChainNft(registry.getChainNftAddress());
-        registryNftId = registry.getNftId(registryAddress);
-
-        stakingNftId = registry.getNftId(address(staking));
-        stakingReader = staking.getStakingReader();
-    }
-
-
-    function _deployAndRegisterServices() internal 
+    function _deployAndRegisterServices(
+        address gifAdmin,
+        address gifManager
+    )
+        internal 
     {
-        VersionPart version = VersionPartLib.toVersionPart(3);
+        IServiceAuthorization serviceAuthorization = new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810");
 
-        GifTestReleaseConfig config = new GifTestReleaseConfig(
-            releaseManager,
-            registryOwner,
-            version,
-            "0x1234");
-
-        (
-            address[] memory serviceAddrs,
-            string[] memory serviceNames,
-            RoleId[][] memory serviceRoles,
-            string[][] memory serviceRoleNames,
-            RoleId[][] memory functionRoles,
-            string[][] memory functionRoleNames,
-            bytes4[][][] memory selectors
-        ) = config.getConfig();
-
-        assertEq(releaseManager.getState().toInt(), INITIAL().toInt(), "unexpected initial state for releaseManager");
-
-        releaseManager.createNextRelease();
-
-        assertEq(releaseManager.getState().toInt(), SCHEDULED().toInt(), "unexpected state for releaseManager after createNextRelease");
-
-        IServiceAuthorization serviceAuthorizationV3 = new ServiceAuthorizationV3();
-
-        (
-            address authority, 
-            VersionPart releaseVersion,
-            bytes32 salt
-        ) = releaseManager.prepareNextRelease(
-            serviceAuthorizationV3,
-            serviceAddrs, 
-            serviceNames, 
-            serviceRoles, 
-            serviceRoleNames, 
-            functionRoles,
-            functionRoleNames,
-            selectors, 
-            "0x1234");
-
-        assertEq(releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after prepareNextRelease");
-
-        //salt = releaseSalt;
-
-        // solhint-disable
-        console.log("release version", releaseVersion.toInt());
-        console.log("release salt", uint(salt));
-        console.log("release access manager deployed at", authority);
-        console.log("release services count", serviceAddrs.length);
-        console.log("release services remaining (before service registration)", releaseManager.getRemainingServicesToRegister());
-        // solhint-enable
-
-        // --- register services --------------------------------------------//
-        registryServiceManager = new RegistryServiceManager{salt: salt}(authority, registryAddress, salt);
-        registryService = registryServiceManager.getRegistryService();
-        registryServiceNftId = _registerService(releaseManager, registryServiceManager, registryService);
-
-        stakingServiceManager = new StakingServiceManager{salt: salt}(authority, registryAddress, salt);
-        stakingService = stakingServiceManager.getStakingService();
-        stakingServiceNftId = _registerService(releaseManager, stakingServiceManager, stakingService);
-
-        instanceServiceManager = new InstanceServiceManager{salt: salt}(authority, registryAddress, salt);
-        instanceService = instanceServiceManager.getInstanceService();
-        instanceServiceNftId = _registerService(releaseManager, instanceServiceManager, instanceService);
-
-        componentServiceManager = new ComponentServiceManager(address(registry));
-        componentService = componentServiceManager.getComponentService();
-        componentServiceNftId = _registerService(releaseManager, componentServiceManager, componentService);
-
-        distributionServiceManager = new DistributionServiceManager{salt: salt}(authority, registryAddress, salt);
-        distributionService = distributionServiceManager.getDistributionService();
-        distributionServiceNftId = _registerService(releaseManager, distributionServiceManager, distributionService);
-
-        pricingServiceManager = new PricingServiceManager{salt: salt}(authority, registryAddress, salt);
-        pricingService = pricingServiceManager.getPricingService();
-        pricingServiceNftId = _registerService(releaseManager, pricingServiceManager, pricingService);
-
-        bundleServiceManager = new BundleServiceManager{salt: salt}(authority, registryAddress, salt);
-        bundleService = bundleServiceManager.getBundleService();
-        bundleServiceNftId = _registerService(releaseManager, bundleServiceManager, bundleService);
-
-        poolServiceManager = new PoolServiceManager{salt: salt}(authority, registryAddress, salt);
-        poolService = poolServiceManager.getPoolService();
-        poolServiceNftId = _registerService(releaseManager, poolServiceManager, poolService);
-
-        oracleServiceManager = new OracleServiceManager{salt: salt}(authority, registryAddress, salt);
-        oracleService = oracleServiceManager.getOracleService();
-        oracleServiceNftId = _registerService(releaseManager, oracleServiceManager, oracleService);
-
-        productServiceManager = new ProductServiceManager{salt: salt}(authority, registryAddress, salt);
-        productService = productServiceManager.getProductService();
-        productServiceNftId = _registerService(releaseManager, productServiceManager, productService);
-
-        claimServiceManager = new ClaimServiceManager{salt: salt}(authority, registryAddress, salt);
-        claimService = claimServiceManager.getClaimService();
-        claimServiceNftId = _registerService(releaseManager, claimServiceManager, claimService);
-
-        applicationServiceManager = new ApplicationServiceManager{salt: salt}(authority, registryAddress, salt);
-        applicationService = applicationServiceManager.getApplicationService();
-        applicationServiceNftId = _registerService(releaseManager, applicationServiceManager, applicationService);
-
-        policyServiceManager = new PolicyServiceManager{salt: salt}(authority, registryAddress, salt);
-        policyService = policyServiceManager.getPolicyService();
-        policyServiceNftId = _registerService(releaseManager, policyServiceManager, policyService);
-
-        //--- all services deployed, activate relase ------------------------//
-        releaseManager.activateNextRelease();
-
-        // activate dip for new release
-        tokenRegistry.setActiveForVersion(
-            block.chainid, 
-            address(dip), 
-            registry.getLatestVersion(), true);
+        deployRelease(
+            releaseManager, 
+            serviceAuthorization, 
+            gifAdmin, 
+            gifManager);
 
         assertEq(releaseManager.getState().toInt(), ACTIVE().toInt(), "unexpected state for releaseManager after activateNextRelease");
-    }
-
-    function _registerService(
-        ReleaseManager _releaseManager,
-        ProxyManager _serviceManager,
-        IService _service
-    )
-        internal
-        returns (NftId serviceNftId)
-    {
-        serviceNftId = _releaseManager.registerService(_service);
-        _serviceManager.linkToProxy();
-
-        assertEq(_releaseManager.getState().toInt(), DEPLOYING().toInt(), "unexpected state for releaseManager after registerService");
-        string memory domainName = ObjectTypeLib.toName(_service.getDomain());
-
-        // solhint-disable
-        console.log("---", domainName, "service registered ----------------------------");
-        console.log(domainName, "service proxy manager deployed at", address(_serviceManager));
-        console.log(domainName, "service proxy manager linked to nft id", _serviceManager.getNftId().toInt());
-        console.log(domainName, "service proxy manager owner", _serviceManager.getOwner());
-        console.log(domainName, "service deployed at", address(_service));
-        console.log(domainName, "service nft id", _service.getNftId().toInt());
-        console.log(domainName, "service domain", _service.getDomain().toInt());
-        console.log(domainName, "service owner", _service.getOwner());
-        console.log(domainName, "service authority", _service.authority());
-        console.log("release services remaining", _releaseManager.getRemainingServicesToRegister());
     }
 
     function _deployMasterInstance() internal 
@@ -602,9 +465,14 @@ contract GifTest is GifDeployer {
     }
 
     function _deployRegisterAndActivateToken() internal {
-        token = new Usdc();
+        // dip
+        tokenRegistry.setActiveForVersion(
+            block.chainid, 
+            address(dip), 
+            registry.getLatestVersion(), true);
 
         // usdc
+        token = new Usdc();
         tokenRegistry.registerToken(address(token));
         tokenRegistry.setActiveForVersion(
             block.chainid, 
@@ -961,32 +829,4 @@ contract GifTest is GifDeployer {
             )
         );
     }
-
-    function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) internal returns (bool isSame) {
-
-        assertEq(a.nftId.toInt(), b.nftId.toInt(), "getObjectInfo(address).nftId returned unexpected value");
-        assertEq(a.parentNftId.toInt(), b.parentNftId.toInt(), "getObjectInfo(address).parentNftId returned unexpected value");
-        assertEq(a.objectType.toInt(), b.objectType.toInt(), "getObjectInfo(address).objectType returned unexpected value");
-        assertEq(a.objectAddress, b.objectAddress, "getObjectInfo(address).objectAddress returned unexpected value");
-        assertEq(a.initialOwner, b.initialOwner, "getObjectInfo(address).initialOwner returned unexpected value");
-        assertEq(a.data.length, b.data.length, "getObjectInfo(address).data.length returned unexpected value");
-        assertEq(keccak256(a.data), keccak256(b.data), "getObjectInfo(address).data returned unexpected value");
-        return (
-            (a.nftId == b.nftId) &&
-            (a.parentNftId == b.parentNftId) &&
-            (a.objectType == b.objectType) &&
-            (a.objectAddress == b.objectAddress) &&
-            (a.initialOwner == b.initialOwner) &&
-            (a.data.length == b.data.length) &&
-            keccak256(a.data) == keccak256(b.data)
-        );
-    }
-
-    function toBool(uint256 uintVal) internal pure returns (bool boolVal)
-    {
-        assembly {
-            boolVal := uintVal
-        }
-    }
-
 }

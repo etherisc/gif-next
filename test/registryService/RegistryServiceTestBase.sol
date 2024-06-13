@@ -82,7 +82,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
     function _deployRegistryService() internal
     {
-        //bytes32 salt = "0x1111";
+        bytes32 salt = "0x1111";
 
         RegistryServiceTestConfig config = new RegistryServiceTestConfig(
             releaseManager,
@@ -92,16 +92,6 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             VersionPartLib.toVersionPart(3),
             "0x1111");//salt);
 
-        (
-            address[] memory serviceAddresses,
-            string[] memory serviceNames,
-            RoleId[][] memory serviceRoles,
-            string[][] memory serviceRoleNames,
-            RoleId[][] memory functionRoles,
-            string[][] memory functionRoleNames,
-            bytes4[][][] memory selectors
-        ) = config.getConfig();
-
         releaseManager.createNextRelease();
 
         (
@@ -109,15 +99,8 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = releaseManager.prepareNextRelease(
-            new ServiceAuthorizationV3(),
-            serviceAddresses, 
-            serviceNames, 
-            serviceRoles, 
-            serviceRoleNames,
-            functionRoles,
-            functionRoleNames,
-            selectors, 
-            "0x1111");//salt);
+            new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810"),
+            salt);
 
         registryServiceManager = new RegistryServiceManager{salt: releaseSalt}(
             releaseAccessManager,

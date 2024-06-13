@@ -28,7 +28,7 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
+import {ServiceMockAuthorizationV3} from "./ServiceMockAuthorizationV3.sol";
 
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
@@ -97,8 +97,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     Staking staking;
     ReleaseManager releaseManager;
 
-    RegistryServiceManager public registryServiceManager;
-    RegistryService public registryService;
     Registry public registry;
     address public registryAddress;
     TokenRegistry public tokenRegistry;
@@ -110,7 +108,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     NftId public protocolNftId = NftIdLib.toNftId(1101);
     NftId public globalRegistryNftId = NftIdLib.toNftId(2101);
     NftId public registryNftId; // chainId dependent
-    NftId public registryServiceNftId ; // chainId dependent
     NftId public stakingNftId;
 
     IRegistry.ObjectInfo public protocolInfo;
@@ -157,8 +154,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         address gifManager = registryOwner;
         address stakingOwner = registryOwner;
 
-        _startPrank(registryOwner);
-
         (
             dip,
             registry,
@@ -177,38 +172,19 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         registryAddress = address(registry);
         stakingNftId = registry.getNftId(address(staking));
 
+        _startPrank(registryOwner);
         _deployRegistryServiceMock();
         _stopPrank();
 
-        // Tests bookeeping
+        // Tests book keeping
         _afterDeployment();
     }
 
 
     function _deployRegistryServiceMock() internal
     {
-        //bytes32 salt = "0x5678";
+        bytes32 salt = "0x5678";
         {
-            // RegistryServiceManagerMock first deploys RegistryService and then upgrades it to RegistryServiceMock
-            // thus address is computed with RegistryService bytecode instead of RegistryServiceMock...
-            RegistryServiceTestConfig config = new RegistryServiceTestConfig(
-                releaseManager,
-                type(RegistryServiceManagerMock).creationCode, // proxy manager
-                type(RegistryService).creationCode, // implementation
-                registryOwner,
-                VersionPartLib.toVersionPart(3),
-                "0x5678");//salt);
-
-            (
-                address[] memory serviceAddresses,
-                string[] memory serviceNames,
-                RoleId[][] memory serviceRoles,
-                string[][] memory serviceRoleNames,
-                RoleId[][] memory functionRoles,
-                string[][] memory functionRoleNames,
-                bytes4[][][] memory selectors
-            ) = config.getConfig();
-
             releaseManager.createNextRelease();
 
             (
@@ -216,30 +192,21 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
                 VersionPart releaseVersion,
                 bytes32 releaseSalt
             ) = releaseManager.prepareNextRelease(
-                new ServiceAuthorizationV3(),
-                serviceAddresses, 
-                serviceNames, 
-                serviceRoles, 
-                serviceRoleNames, 
-                functionRoles,
-                functionRoleNames,
-                selectors, 
-                "0x5678");//salt);
+                new ServiceMockAuthorizationV3(),
+                salt);
 
             registryServiceManagerMock = new RegistryServiceManagerMock{salt: releaseSalt}(
                 releaseAccessManager, 
                 registryAddress, 
                 releaseSalt);
         }
-        registryServiceMock = RegistryServiceMock(address(registryServiceManagerMock.getRegistryService()));
 
+        registryServiceMock = RegistryServiceMock(address(registryServiceManagerMock.getRegistryService()));
         releaseManager.registerService(registryServiceMock);
+        registryServiceManagerMock.linkToProxy();
+        registryServiceNftId = registry.getNftId(address(registryServiceMock));
 
         releaseManager.activateNextRelease();
-
-        registryServiceManagerMock.linkToProxy();
-
-        registryServiceNftId = registry.getNftId(address(registryServiceMock));
     }
 
     // call right after registry deployment, before checks
