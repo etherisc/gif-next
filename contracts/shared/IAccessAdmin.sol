@@ -54,6 +54,9 @@ interface IAccessAdmin is
     // authorize target functions
     error ErrorAuthorizeForAdminRoleInvalid(address target);
 
+    // check target
+    error ErrorTargetUnknown(address target);
+
     struct RoleInfo {
         RoleId adminRoleId;
         Str name;
@@ -91,6 +94,8 @@ interface IAccessAdmin is
         external;
 
     /// @dev Set the disabled status of the speicified role.
+    /// Role disabling only prevents the role from being granted to new accounts.
+    /// Existing role members may still execute functions that are authorized for that role.
     /// permissioned: the caller must have the manager role (getManagerRole).
     function setRoleDisabled(RoleId roleId, bool disabled) external;
 

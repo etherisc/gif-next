@@ -23,6 +23,9 @@ contract AccessAdminForTesting is AccessAdmin {
         Function[] memory functions = new Function[](1);
         functions[0] = toFunction(AccessAdminForTesting.createRoleSimple.selector, "createRoleSimple");
         _authorizeTargetFunctions(address(this), _managerRoleId, functions);
+
+        // grant manger role to deployer
+        _grantRoleToAccount(_managerRoleId, _deployer);
     }
 
     function createRoleSimple(
@@ -39,9 +42,25 @@ contract AccessAdminForTesting is AccessAdmin {
 
 contract AccessAdminCloneable is AccessAdminForTesting {
 
-    function initialize(address authorityAddress) public initializer() {
-        _initializeAuthority(authorityAddress);
+    /// @dev initializer with externally provided accessManager
+    /// IMPORTANT cloning and initialization needs to be done in a single transaction
+    function initializeWithAccessManager(address accessManager) public initializer() {
+        _initialize(accessManager);
+    }
+
+    /// @dev initializer that will creaete its own accessManager internally
+    /// IMPORTANT cloning and initialization needs to be done in a single transaction
+    function initialize() public initializer() {
+        AccessManager accessManager = new AccessManager(address(this));
+        _initialize(address(accessManager));
+    }
+
+    function _initialize(address accessManager) internal {
+        _initializeAuthority(address(accessManager));
         _initializeRoleSetup();
+
+        // grant manger role to deployer
+        _grantRoleToAccount(_managerRoleId, _deployer);
     }
 }
 
@@ -107,7 +126,7 @@ contract AccessAdminTest is Test {
 
 
     function test_accessAdminCreateTargetHappyCase() public {
-        // GIVEN (just setup)
+        // GIVEN 
 
         string memory targetName = "AccessManagedMock";
         Str name = StrLib.toStr(targetName);
@@ -181,6 +200,31 @@ contract AccessAdminTest is Test {
 
         vm.startPrank(accessAdminDeployer);
         accessAdmin.createTarget(address(this), "AccessAdmin");
+        vm.stopPrank();
+    }
+
+    function test_accessAdminSetTargetLocked() public {
+        // GIVEN (just setup)
+
+        address accessAdminTarget = address(accessAdmin);
+        assertFalse(accessAdmin.isTargetLocked(accessAdminTarget), "target is locked (before)");
+
+        // WHEN
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.setTargetLocked(accessAdminTarget, true);
+        vm.stopPrank();
+
+        // THEN
+        assertTrue(accessAdmin.isTargetLocked(accessAdminTarget), "target still not locked");
+
+        // WHEN + THEN - attempt to unlock 
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessManaged.AccessManagedUnauthorized.selector, 
+                accessAdminDeployer));
+
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.setTargetLocked(accessAdminTarget, false);
         vm.stopPrank();
     }
 
@@ -983,11 +1027,11 @@ contract AccessAdminTest is Test {
         // GIVEN (just setup)
         // WHEN
         vm.startPrank(accessAdminDeployer);
-        AccessAdmin aa = new AccessAdmin();
+        AccessAdminForTesting aat = new AccessAdminForTesting();
         vm.stopPrank();
 
         // THEN
-        _checkAccessAdmin(aa, accessAdminDeployer);
+        _checkAccessAdmin(aat, accessAdminDeployer);
     }
 
 
@@ -1001,13 +1045,9 @@ contract AccessAdminTest is Test {
         AccessAdminCloneable aa = AccessAdminCloneable(
             Clones.clone(
                 address(aaMaster)));
-        
-        // create access manager with aa as admin
-        AccessManager am = new AccessManager(address(aa));
 
         // initialize aa with newly created access manager
-        aa.initialize(address(am));
-
+        aa.initialize();
         vm.stopPrank();
 
         // THEN
@@ -1020,20 +1060,42 @@ contract AccessAdminTest is Test {
         // GIVEN (just setup)
         vm.startPrank(accessAdminDeployer);
 
-        // WHEN
+        // WHEN + 
         // create access manager with aa as admin
         AccessManager am = AccessManager(address(aaMaster));
 
         // THEN
         // initialize aa with newly created access manager
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        aaMaster.initialize(address(am));
+        aaMaster.initializeWithAccessManager(address(am));
         vm.stopPrank();
     }
 
 
     /// @dev test that a cloned access admin can only be initialized once
-    function test_accessAdminClonedFailingToInitializeTwice() public {
+    function test_accessAdminClonedFailingToInitializeTwice1stVersion() public {
+        // GIVEN
+        vm.startPrank(accessAdminCloner);
+
+        // create cloned access manager
+        AccessAdminCloneable aa = AccessAdminCloneable(
+            Clones.clone(
+                address(aaMaster)));
+        
+        // initialize aa with newly created access manager
+        aa.initialize();
+
+        // WHEN + THEN
+        // attempt to initialize 2nd time
+        vm.expectRevert(Initializable.InvalidInitialization.selector);
+        aa.initialize();
+
+        vm.stopPrank();
+    }
+
+
+    /// @dev test that a cloned access admin can only be initialized once
+    function test_accessAdminClonedFailingToInitializeTwice2NdVersion() public {
         // GIVEN
         vm.startPrank(accessAdminCloner);
 
@@ -1046,12 +1108,12 @@ contract AccessAdminTest is Test {
         AccessManager am = new AccessManager(address(aa));
 
         // initialize aa with newly created access manager
-        aa.initialize(address(am));
+        aa.initializeWithAccessManager(address(am));
 
         // WHEN + THEN
         // attempt to initialize 2nd time
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        aa.initialize(address(am));
+        aa.initializeWithAccessManager(address(am));
 
         vm.stopPrank();
     }
@@ -1074,7 +1136,7 @@ contract AccessAdminTest is Test {
         // WHEN + THEN
         // attempt to initialize with unsuitable access manager
         vm.expectRevert(IAccessAdmin.ErrorAdminRoleMissing.selector);
-        aa.initialize(address(am));
+        aa.initializeWithAccessManager(address(am));
 
         vm.stopPrank();
     }

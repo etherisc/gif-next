@@ -79,8 +79,8 @@ contract RegistryAdmin is
         _setupGifAdminRole(gifAdmin);
         _setupGifManagerRole(gifManager);
 
-        _setupReleaseManagerRole();
-        _setupStakingRoles();
+        _setupReleaseManager();
+        _setupStaking();
     }
 
 
@@ -151,8 +151,8 @@ contract RegistryAdmin is
             roleId, 
             ADMIN_ROLE(), 
             serviceRoleName,
-            1,
-            true);
+            1, // service roles must only be given to this unique service
+            true); // it must not be possible to remove this role once granted
 
         _grantRoleToAccount( 
             roleId,
@@ -257,7 +257,7 @@ contract RegistryAdmin is
     }
 
 
-    function _setupReleaseManagerRole() private {
+    function _setupReleaseManager() private {
         _createTarget(_releaseManager, RELEASE_MANAGER_TARGET_NAME);
 
         RoleId releaseManagerRoleId = RoleIdLib.roleForType(RELEASE());
@@ -272,7 +272,7 @@ contract RegistryAdmin is
     }
 
 
-    function _setupStakingRoles() private {
+    function _setupStaking() private {
         _createTarget(_staking, STAKING_TARGET_NAME);
         _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME);
 

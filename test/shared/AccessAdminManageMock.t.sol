@@ -16,6 +16,31 @@ import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
 
+contract AccessAdminForTesting is AccessAdmin {
+
+    constructor() {
+        // super constructor called implicitly
+        // grant manager role access to createRoleSimple
+        Function[] memory functions = new Function[](1);
+        functions[0] = toFunction(AccessAdminForTesting.createRoleSimple.selector, "createRoleSimple");
+        _authorizeTargetFunctions(address(this), _managerRoleId, functions);
+
+        // grant manger role to deployer
+        _grantRoleToAccount(_managerRoleId, _deployer);
+    }
+
+    function createRoleSimple(
+        RoleId roleId, 
+        RoleId adminRoleId, 
+        string memory name
+    )
+        external
+        restricted()
+    {
+        _createRole(roleId, adminRoleId, name, type(uint256).max, false);
+    }
+}
+
 contract AccessAdminManageMockTest is Test {
 
     address public accessAdminDeployer = makeAddr("accessAdminDeployer");
@@ -30,7 +55,7 @@ contract AccessAdminManageMockTest is Test {
     function setUp() public {
         vm.startPrank(accessAdminDeployer);
         // deploy access admin
-        accessAdmin = new AccessAdmin();
+        accessAdmin = new AccessAdminForTesting();
 
         // deploy access managed mock using authority of access admin
         managedMock = new AccessManagedMock(accessAdmin.authority());
@@ -162,8 +187,8 @@ contract AccessAdminManageMockTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                IAccessAdmin.ErrorAuthorizeForAdminRoleInvalid.selector,
-                target));
+                IAccessAdmin.ErrorRoleIsLocked.selector,
+                adminRole));
 
         vm.startPrank(accessAdminDeployer);
         accessAdmin.authorizeFunctions(target, adminRole, functions);

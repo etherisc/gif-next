@@ -70,6 +70,8 @@ contract AccessAdmin is
     bytes4[] private _functions;
 
     modifier onlyDeployer() {
+        // special case for cloned AccessAdmin contracts
+        // IMPORTANT cloning and _initializeAuthority needs to be done in a single transaction
         if (_deployer == address(0)) {
             _deployer = msg.sender;
         }
@@ -80,7 +82,7 @@ contract AccessAdmin is
         _;
     }
 
-    modifier onlyAdminRole(RoleId roleId) {
+    modifier onlyRoleAdmin(RoleId roleId) {
         if (!roleExists(roleId)) {
             revert ErrorRoleUnknown(roleId);
         }
@@ -91,10 +93,20 @@ contract AccessAdmin is
         _;
     }
 
-    modifier onlyRoleOwner(RoleId roleId) {
+    modifier onlyRoleMember(RoleId roleId) {
         if (!hasRole(msg.sender, roleId)) {
             revert ErrorNotRoleOwner(roleId);
         }
+        _;
+    }
+
+    modifier onlyExistingRole(RoleId roleId) {
+        _checkRoleId(roleId);
+        _;
+    }
+
+    modifier onlyExistingTarget(address target) {
+        _checkTarget(target);
         _;
     }
 
@@ -138,7 +150,7 @@ contract AccessAdmin is
         RoleId roleId
     )
         external
-        onlyAdminRole(roleId)
+        onlyRoleAdmin(roleId)
         restricted()
     {
         _grantRoleToAccount(roleId, account);
@@ -149,7 +161,7 @@ contract AccessAdmin is
         RoleId roleId
     )
         external
-        onlyAdminRole(roleId)
+        onlyRoleAdmin(roleId)
         restricted()
     {
         _revokeRoleFromAccount(roleId, account);
@@ -159,7 +171,7 @@ contract AccessAdmin is
         RoleId roleId
     )
         external
-        onlyRoleOwner(roleId)
+        onlyRoleMember(roleId)
         restricted()
     {
         _revokeRoleFromAccount(roleId, msg.sender);
@@ -182,6 +194,7 @@ contract AccessAdmin is
         bool locked
     )
         external
+        onlyExistingTarget(target)
         restricted()
     {
         _authority.setTargetClosed(target, locked);
@@ -195,6 +208,8 @@ contract AccessAdmin is
         Function[] memory functions
     )
         external
+        onlyExistingTarget(target)
+        onlyExistingRole(roleId)
         restricted()
     {
         _authorizeTargetFunctions(target, roleId, functions);
@@ -333,6 +348,12 @@ contract AccessAdmin is
 
     function deployer() public view returns (address) {
         return _deployer;
+    }
+
+    function toFunction(bytes4 selector, string memory name) public pure returns (Function memory) {
+            return Function({
+                selector: SelectorLib.toSelector(selector),
+                name: StrLib.toStr(name)});
     }
 
     //--- internal/private functions -------------------------------------------------//
@@ -477,16 +498,16 @@ contract AccessAdmin is
         functions[3] = toFunction(IAccessAdmin.setTargetLocked.selector, "setTargetLocked");
         functions[4] = toFunction(IAccessAdmin.authorizeFunctions.selector, "authorizeFunctions");
         functions[5] = toFunction(IAccessAdmin.unauthorizeFunctions.selector, "unauthorizeFunctions");
-        _authorizeTargetFunctions(address(this), _managerRoleId, functions);
-
-        // grant manger role to deployer
-        _grantRoleToAccount(_managerRoleId, _deployer);
+        _authorizeTargetFunctions(address(this), getManagerRole(), functions);
     }
 
-    function toFunction(bytes4 selector, string memory name) public pure returns (Function memory) {
-            return Function({
-                selector: SelectorLib.toSelector(selector),
-                name: StrLib.toStr(name)});
+    /// @dev check if target exists and reverts if it doesn't
+    function _checkTarget(address target)
+        internal
+    {
+        if (_targetInfo[target].createdAt.eqz()) {
+            revert ErrorTargetUnknown(target);
+        }
     }
 
     /// @dev grant the specified role access to all functions in the provided selector list
