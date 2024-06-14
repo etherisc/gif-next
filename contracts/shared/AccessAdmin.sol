@@ -113,12 +113,14 @@ contract AccessAdmin is
     function createRole(
         RoleId roleId, 
         RoleId adminRoleId, 
-        string memory name
+        string memory name,
+        uint256 maxMemberCount,
+        bool memberRemovalDisabled
     )
         external
         restricted()
     {
-        _createRole(roleId, adminRoleId, name);
+        _createRole(roleId, adminRoleId, name, maxMemberCount, memberRemovalDisabled);
     }
 
     function setRoleDisabled(
@@ -427,7 +429,7 @@ contract AccessAdmin is
 
 
     function _createInitialRoleSetup()
-        private
+        internal
     {
         RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
         Function[] memory functions;
@@ -436,7 +438,9 @@ contract AccessAdmin is
         _createRoleUnchecked(
             adminRoleId,
             adminRoleId,
-            StrLib.toStr(ADMIN_ROLE_NAME));
+            StrLib.toStr(ADMIN_ROLE_NAME),
+            1,
+            true);
 
         // add this contract as admin role member
         _roleMembers[adminRoleId].add(address(this));
@@ -445,14 +449,18 @@ contract AccessAdmin is
         _createRoleUnchecked(
             RoleIdLib.toRoleId(_authority.PUBLIC_ROLE()),
             adminRoleId,
-            StrLib.toStr(PUBLIC_ROLE_NAME));
+            StrLib.toStr(PUBLIC_ROLE_NAME),
+            type(uint256).max,
+            true);
 
         // setup manager role
         _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
         _createRole(
             _managerRoleId, 
             adminRoleId,
-            MANAGER_ROLE_NAME);
+            MANAGER_ROLE_NAME,
+            3, // TODO think about max member count
+            false);
 
         // grant public role access to grant and revoke, renounce
         functions = new Function[](3);
@@ -504,6 +512,11 @@ contract AccessAdmin is
         _checkRoleId(roleId);
         _checkRoleIsActive(roleId);
 
+        // check max role members will not be exceeded
+        if (_roleMembers[roleId].length() >= _roleInfo[roleId].maxMemberCount) {
+            revert ErrorRoleMembersLimitReached(roleId, _roleInfo[roleId].maxMemberCount);
+        }
+
         _roleMembers[roleId].add(account);
         _authority.grantRole(
             RoleId.unwrap(roleId), 
@@ -518,6 +531,12 @@ contract AccessAdmin is
         internal
     {
         _checkRoleId(roleId);
+
+        // check role removal is permitted
+        if (_roleInfo[roleId].memberRemovalDisabled) {
+            revert ErrorRoleRemovalDisabled(roleId);
+        }
+
         _roleMembers[roleId].remove(account);
         _authority.revokeRole(
             RoleId.unwrap(roleId), 
@@ -552,7 +571,13 @@ contract AccessAdmin is
     }
 
 
-    function _createRole(RoleId roleId, RoleId adminRoleId, string memory roleName)
+    function _createRole(
+        RoleId roleId, 
+        RoleId adminRoleId, 
+        string memory roleName,
+        uint256 maxMemberCount,
+        bool memberRemovalDisabled
+    )
         internal
     {
         // check role does not yet exist
@@ -581,7 +606,11 @@ contract AccessAdmin is
                 _roleForName[name].roleId);
         }
 
-        _createRoleUnchecked(roleId, adminRoleId, name);
+        _createRoleUnchecked(
+            roleId, adminRoleId, 
+            name, 
+            maxMemberCount, 
+            memberRemovalDisabled);
     }
 
 
@@ -608,7 +637,9 @@ contract AccessAdmin is
     function _createRoleUnchecked(
         RoleId roleId, 
         RoleId adminRoleId, 
-        Str name
+        Str name,
+        uint256 maxMemberCount,
+        bool memberRemovalDisabled
     )
         private
     {
@@ -616,6 +647,8 @@ contract AccessAdmin is
         _roleInfo[roleId] = RoleInfo({
             adminRoleId: adminRoleId,
             name: name,
+            maxMemberCount: maxMemberCount,
+            memberRemovalDisabled: memberRemovalDisabled,
             disabledAt: TimestampLib.max(),
             exists: true});
 

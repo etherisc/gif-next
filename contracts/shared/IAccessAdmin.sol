@@ -41,6 +41,8 @@ interface IAccessAdmin is
     error ErrorRoleUnknown(RoleId roleId);
     error ErrorRoleIsLocked(RoleId roleId);
     error ErrorRoleIsDisabled(RoleId roleId);
+    error ErrorRoleMembersLimitReached(RoleId roleId, uint256 memberCountLimit);
+    error ErrorRoleRemovalDisabled(RoleId roleId);
 
     // create target
     error ErrorTargetAlreadyCreated(address target, string name);
@@ -55,6 +57,8 @@ interface IAccessAdmin is
     struct RoleInfo {
         RoleId adminRoleId;
         Str name;
+        uint256 maxMemberCount;
+        bool memberRemovalDisabled;
         Timestamp disabledAt;
         bool exists;
     }
@@ -77,7 +81,14 @@ interface IAccessAdmin is
     /// @dev Create a new named role using the specified parameters.
     /// The adminRoleId refers to the required role to grant/revoke the newly created role.
     /// permissioned: the caller must have the manager role (getManagerRole).
-    function createRole(RoleId roleId, RoleId adminRoleId, string memory name) external;
+    function createRole(
+        RoleId roleId, 
+        RoleId adminRoleId, 
+        string memory name,
+        uint256 maxMemberCount,
+        bool memberRemovalDisabled
+    )
+        external;
 
     /// @dev Set the disabled status of the speicified role.
     /// permissioned: the caller must have the manager role (getManagerRole).

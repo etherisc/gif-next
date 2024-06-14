@@ -15,14 +15,35 @@ import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
 
-contract AccessAdminCloneable is AccessAdmin {
+contract AccessAdminForTesting is AccessAdmin {
+
+    constructor() {
+        // super constructor called implicitly
+        // grant manager role access to createRoleSimple
+        Function[] memory functions = new Function[](1);
+        functions[0] = toFunction(AccessAdminForTesting.createRoleSimple.selector, "createRoleSimple");
+        _authorizeTargetFunctions(address(this), _managerRoleId, functions);
+    }
+
+    function createRoleSimple(
+        RoleId roleId, 
+        RoleId adminRoleId, 
+        string memory name
+    )
+        external
+        restricted()
+    {
+        _createRole(roleId, adminRoleId, name, type(uint256).max, false);
+    }
+}
+
+contract AccessAdminCloneable is AccessAdminForTesting {
 
     function initialize(address authorityAddress) public initializer() {
         _initializeAuthority(authorityAddress);
         _initializeRoleSetup();
     }
 }
-
 
 contract AccessAdminTest is Test {
 
@@ -31,13 +52,13 @@ contract AccessAdminTest is Test {
     address public outsider = makeAddr("outsider");
     address public outsider2 = makeAddr("outsider2");
 
-    AccessAdmin public accessAdmin;
+    AccessAdminForTesting public accessAdmin;
     AccessAdminCloneable aaMaster;
 
 
     function setUp() public {
         vm.startPrank(accessAdminDeployer);
-        accessAdmin = new AccessAdmin();
+        accessAdmin = new AccessAdminForTesting();
         accessAdmin.createTarget(address(accessAdmin), "AccessAdmin");
 
         aaMaster = new AccessAdminCloneable();
@@ -164,6 +185,7 @@ contract AccessAdminTest is Test {
     }
 
     function test_accessAdminCreateRoleHappyCase() public {
+
         // GIVEN (just setup)
         RoleId newRoleId = RoleIdLib.toRoleId(100);
         RoleId adminRoleId = accessAdmin.getManagerRole();
@@ -172,7 +194,7 @@ contract AccessAdminTest is Test {
         vm.startPrank(accessAdminDeployer);
 
         // WHEN
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newRoleId, 
             adminRoleId, 
             newRoleName);
@@ -197,6 +219,83 @@ contract AccessAdminTest is Test {
     }
 
 
+    function test_accessAdminCreateRoleWithSingleMember() public {
+
+        // GIVEN (just setup)
+        RoleId newRoleId = RoleIdLib.toRoleId(100);
+        RoleId adminRoleId = accessAdmin.getManagerRole();
+        string memory newRoleName = "NewRole";
+
+        vm.startPrank(accessAdminDeployer);
+
+        // WHEN
+        uint256 maxOneRoleMember = 1; // max 1 member allowed
+        bool memberRemovalDisallowed = true;
+        accessAdmin.createRole(
+            newRoleId, 
+            adminRoleId, 
+            newRoleName,
+            maxOneRoleMember, 
+            memberRemovalDisallowed); // member removal disallowed
+
+        vm.stopPrank();
+
+        // THEN
+        _checkRole(
+            accessAdmin,
+            newRoleId, 
+            adminRoleId,
+            newRoleName,
+            maxOneRoleMember,
+            memberRemovalDisallowed,
+            TimestampLib.max(),
+            TimestampLib.blockTimestamp());
+
+        assertEq(accessAdmin.roleMembers(newRoleId), 0, "role members > 0 before granting role");
+        assertFalse(accessAdmin.isRoleDisabled(newRoleId), "role disabled after creation");
+
+        // WHEN - assign role 1st time
+        address thisContract = address(this);
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.grantRole(thisContract, newRoleId);
+        vm.stopPrank();
+
+        // THEN
+        assertEq(accessAdmin.roleMembers(newRoleId), 1, "unexpected role member count after granting");
+        assertEq(accessAdmin.getRoleMember(newRoleId, 0), thisContract, "unexpected role member");
+
+        // WHEN + THEN - attempt to add 2nd role member
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorRoleMembersLimitReached.selector, 
+                newRoleId,
+                maxOneRoleMember));
+
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.grantRole(outsider, newRoleId);
+        vm.stopPrank();
+
+        // WHEN + THEN - attempt to revoke role
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorRoleRemovalDisabled.selector, 
+                newRoleId));
+
+        vm.startPrank(accessAdminDeployer);
+        accessAdmin.revokeRole(thisContract, newRoleId);
+        vm.stopPrank();
+
+        // WHEN + THEN - attempt to renounce role
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IAccessAdmin.ErrorRoleRemovalDisabled.selector, 
+                newRoleId));
+
+        vm.startPrank(thisContract);
+        accessAdmin.renounceRole(newRoleId);
+        vm.stopPrank();
+    }
+
     function test_accessAdminCreateProtectedRoles() public {
         // GIVEN
         RoleId adminRole = accessAdmin.getAdminRole();
@@ -214,7 +313,7 @@ contract AccessAdminTest is Test {
                 "AdminRole"));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             adminRole, 
             adminRole, 
             newName);
@@ -227,7 +326,7 @@ contract AccessAdminTest is Test {
                 "PublicRole"));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             publicRole, 
             adminRole, 
             newName);
@@ -240,7 +339,7 @@ contract AccessAdminTest is Test {
                 "ManagerRole"));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             managerRole, 
             adminRole, 
             newName);
@@ -256,7 +355,7 @@ contract AccessAdminTest is Test {
         string memory newRoleName = "NewRole";
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newRoleId, 
             adminRoleId, 
             newRoleName);
@@ -270,7 +369,7 @@ contract AccessAdminTest is Test {
                 newRoleName));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newRoleId, 
             adminRoleId, 
             "SomeOtherRule");
@@ -286,7 +385,7 @@ contract AccessAdminTest is Test {
                 newRoleId));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             otherRoleId, 
             adminRoleId, 
             newRoleName);
@@ -308,7 +407,7 @@ contract AccessAdminTest is Test {
                 newRoleId));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newRoleId, 
             adminRoleId, 
             "");
@@ -321,7 +420,7 @@ contract AccessAdminTest is Test {
                 missingAdminRoleId));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newRoleId, 
             missingAdminRoleId, 
             newRoleName);
@@ -348,13 +447,13 @@ contract AccessAdminTest is Test {
         // WHEN
 
         // create admin role first
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newAdminRoleId, 
             adminRoleId, 
             newRoleAdminName);
 
         // then create actual role
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newRoleId, 
             newAdminRoleId, 
             newRoleName);
@@ -698,7 +797,7 @@ contract AccessAdminTest is Test {
                 IAccessManaged.AccessManagedUnauthorized.selector,
                 outsider));
 
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newRoleId, 
             adminRoleId, 
             newRoleName);
@@ -716,7 +815,7 @@ contract AccessAdminTest is Test {
 
         // WHEN
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newRoleId, 
             newRoleAdminRoleId, 
             newRoleName);
@@ -1005,13 +1104,13 @@ contract AccessAdminTest is Test {
         vm.startPrank(accessAdminDeployer);
 
         // create admin role first
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newAdminRoleId, 
             adminRoleId, 
             newAdminRoleName);
 
         // then create actual role
-        accessAdmin.createRole(
+        accessAdmin.createRoleSimple(
             newRoleId, 
             newAdminRoleId, 
             newRoleName);
@@ -1108,6 +1207,8 @@ contract AccessAdminTest is Test {
             aa.getAdminRole(), 
             aa.getAdminRole(),
             aa.ADMIN_ROLE_NAME(),
+            1, // only one admin ! (aa contract is sole admin role member)
+            true, // no removal of only admin
             TimestampLib.max(), 
             TimestampLib.blockTimestamp());
 
@@ -1117,6 +1218,8 @@ contract AccessAdminTest is Test {
             aa.getPublicRole(), 
             aa.getAdminRole(),
             aa.PUBLIC_ROLE_NAME(),
+            type(uint256).max, // every account is public role member
+            true, // role membership cannot be removed
             TimestampLib.max(), 
             TimestampLib.blockTimestamp());
 
@@ -1126,6 +1229,8 @@ contract AccessAdminTest is Test {
             aa.getManagerRole(), 
             aa.getAdminRole(),
             aa.MANAGER_ROLE_NAME(),
+            3,
+            false, // manager role may be removed
             TimestampLib.max(), 
             TimestampLib.blockTimestamp());
 
@@ -1156,12 +1261,40 @@ contract AccessAdminTest is Test {
     )
         internal
     {
+        _checkRole(
+            aa, 
+            roleId, 
+            expectedAdminRoleId, 
+            expectedName, 
+            type(uint256).max, 
+            false, 
+            expectedDisabledAt, 
+            expectedCreatedAt);
+    }
+
+    function _checkRole(
+        IAccessAdmin aa,
+        RoleId roleId, 
+        RoleId expectedAdminRoleId,
+        string memory expectedName,
+        uint256 expectedMaxMemberCount,
+        bool expectedMemberRemovalDisabled,
+        Timestamp expectedDisabledAt,
+        Timestamp expectedCreatedAt
+    )
+        internal
+    {
         // solhint-disable-next-line
         console.log("checking role", expectedName);
+
+        assertTrue(aa.roleExists(roleId), "role does not exist");
+        assertEq(aa.getRoleForName(StrLib.toStr(expectedName)).roleId.toInt(), roleId.toInt(), "unexpected roleId for getRoleForName");
 
         IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
         assertEq(info.adminRoleId.toInt(), expectedAdminRoleId.toInt(), "unexpected admin role (role info)");
         assertEq(info.name.toString(), expectedName, "unexpected role name");
+        assertEq(info.maxMemberCount, expectedMaxMemberCount, "unexpected maxMemberCount");
+        assertEq(info.memberRemovalDisabled, expectedMemberRemovalDisabled, "unexpected memberRemovalDisabled");
         assertEq(info.disabledAt.toInt(), expectedDisabledAt.toInt(), "unexpected disabled at");
         assertTrue(info.exists, "role does not exist");
 

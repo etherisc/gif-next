@@ -6,12 +6,6 @@ import {
 } from "../../contracts/type/ObjectType.sol";
 
 import {IAccessAdmin} from "../../contracts/shared/IAccessAdmin.sol";
-// TODO cleanup
-// import {IDistributionService} from "../../contracts/distribution/IDistributionService.sol";
-// import {InstanceService} from "../../contracts/instance/InstanceService.sol";
-// import {IInstanceService} from "../../contracts/instance/IInstanceService.sol";
-// import {IPoolService} from "../../contracts/pool/IPoolService.sol";
-// import {IStakingService} from "../../contracts/staking/IStakingService.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {ServiceAuthorization} from "../../contracts/registry/ServiceAuthorization.sol";
 
