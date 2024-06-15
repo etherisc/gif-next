@@ -31,8 +31,11 @@ contract ServiceAuthorization
           return _commitHash;
      }
 
-     function getRelease() external pure returns(VersionPart release) {
-          return VersionPartLib.toVersionPart(GIF_VERSION);
+     function getRelease() external view returns(VersionPart release, uint domainsCount) {
+          return (
+               VersionPartLib.toVersionPart(GIF_VERSION),
+               _serviceDomains.length
+          );
      }
 
      function getServiceDomains() external view returns(ObjectType[] memory serviceDomains) {

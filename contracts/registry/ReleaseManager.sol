@@ -166,6 +166,23 @@ contract ReleaseManager is
             bytes32 releaseSalt
         )
     {
+        // TODO Any call to serviceAuthorization contract must be treated as a call to an external malicious contract
+        // How can wrong authorizations tamper the core, releases or instances?
+        (
+            VersionPart releaseVersion,
+            uint serviceDomainsCount
+        ) = serviceAuthorization.getRelease();
+
+        // verify authorizaion contract release matches with expected version
+        if (releaseVersion != _next) {
+            revert ErrorReleaseManagerVersionMismatch(_next, releaseVersion);
+        }
+
+        // sanity check to ensure service domain list is not empty
+        if (serviceDomainsCount == 0) {
+            revert ErrorReleaseManagerNoDomains(_next);
+        }
+
         // verify release manager is in proper state to start deploying a next release
         if (!isValidTransition(RELEASE(), _state, DEPLOYING())) {
             revert ErrorReleaseManagerReleasePreparationDisallowed(_state);
@@ -176,20 +193,8 @@ contract ReleaseManager is
             revert ErrorReleaseManagerReleaseAlreadyPrepared(version);
         }
 
-        // verify authorizaion contract release matches with expected version
-        if (serviceAuthorization.getRelease() != _next) {
-            revert ErrorReleaseManagerVersionMismatch(_next, serviceAuthorization.getRelease());
-        }
-
-        // sanity check to ensure service domain list is not empty
-        if (serviceAuthorization.getServiceDomains().length == 0) {
-            revert ErrorReleaseManagerNoDomains(_next);
-        }
-
         // store release specific service authorization
         _serviceAuthorization[_next] = serviceAuthorization;
-
-        version = getNextVersion();
 
         // ensures unique salt
         releaseSalt = keccak256(
@@ -199,9 +204,8 @@ contract ReleaseManager is
 
         authority = _admin.authority();
 
-        _releaseAccessManager[version] = authority;
-        _servicesToRegister = serviceAuthorization.getServiceDomains().length;
-        _registeredServices = 0;
+        _releaseAccessManager[_next] = authority;
+        _servicesToRegister = serviceDomainsCount;
 
         _state = DEPLOYING();
 
@@ -214,6 +218,7 @@ contract ReleaseManager is
         restricted // GIF_MANAGER_ROLE
         returns(NftId nftId)
     {
+        // TODO is it usefull to check transition from A to A?
         if (!isValidTransition(RELEASE(), _state, DEPLOYING())) {
             revert ErrorReleaseManagerServiceRegistrationDisallowed(_state);
         }
@@ -250,6 +255,7 @@ contract ReleaseManager is
         // TODO consider to extend this to REGISTRY
         // special roles for registry/staking/pool service
         if (domain == STAKING() || domain == POOL()) {
+            // TODO rename to grantServiceDomainRole()
             _admin.grantServiceRoleForAllVersions(service, domain);
         }
 

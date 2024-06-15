@@ -17,7 +17,7 @@ interface IServiceAuthorization {
      function getRelease()
           external
           view
-          returns(VersionPart release);
+          returns(VersionPart release, uint domainsCount);
 
      /// @dev Returns the full list of service domains for this release.
      /// Services need to be registered for the release in revers order of this list.
