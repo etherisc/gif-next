@@ -179,6 +179,16 @@ contract GifDeployer is Test {
         staking.linkToRegisteredNftId();
 
         // 11) initialize registry admin
+        // TODO Consider making it non permitted
+        // no arguments
+        // cmp deployed contracts codehashes with precalculated ones
+        // check authority is the same
+        // check registry is the same
+        // whatever...
+        // Consider: specific completeSetup can do specific checks and require specific initial state of deployed contracts
+        // if state is different -> setup can not be completed...
+        // state: owner/admin/manager
+        // can be usefull for non permissioned deployment
         registryAdmin.completeSetup(
             registry,
             gifAdmin,
