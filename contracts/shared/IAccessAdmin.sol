@@ -51,6 +51,9 @@ interface IAccessAdmin is
     error ErrorTargetNotAccessManaged(address target);
     error ErrorTargetAuthorityMismatch(address expectedAuthority, address actualAuthority);
 
+    // lock target
+    error ErrorTagetNotLockable();
+
     // authorize target functions
     error ErrorAuthorizeForAdminRoleInvalid(address target);
 

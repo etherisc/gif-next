@@ -197,6 +197,9 @@ contract AccessAdmin is
         onlyExistingTarget(target)
         restricted()
     {
+        if(target == address(this)) {
+            revert ErrorTagetNotLockable();
+        }
         _authority.setTargetClosed(target, locked);
 
         // implizit logging: rely on OpenZeppelin log TargetClosed
