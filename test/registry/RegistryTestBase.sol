@@ -42,39 +42,7 @@ import {RegistryServiceTestConfig} from "../registryService/RegistryServiceTestC
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {GifDeployer} from "../base/GifDeployer.sol";
 
-// Helper functions to test IRegistry.ObjectInfo structs 
-function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) pure returns (bool isSame) {
-    return (
-        (a.nftId == b.nftId) &&
-        (a.parentNftId == b.parentNftId) &&
-        (a.objectType == b.objectType) &&
-        (a.objectAddress == b.objectAddress) &&
-        (a.initialOwner == b.initialOwner) &&
-        (a.data.length == b.data.length) &&
-        keccak256(a.data) == keccak256(b.data)
-    );
-}
 
-function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
-    return (
-        IRegistry.ObjectInfo(
-            NftIdLib.zero(),
-            NftIdLib.zero(),
-            ObjectTypeLib.zero(),
-            false,
-            address(0),
-            address(0),
-            bytes("")
-        )
-    );
-}
-
-function toBool(uint256 uintVal) pure returns (bool boolVal)
-{
-    assembly {
-        boolVal := uintVal
-    }
-}
 
 contract RegistryTestBase is GifDeployer, FoundryRandom {
 
@@ -406,6 +374,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }
 
+    // call after every succesfull registration with register() function
     function _afterRegistration(IRegistry.ObjectInfo memory info) internal virtual
     {
         _nextId++;
@@ -431,6 +400,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
     }
 
+    // call after every succesfull registration with registerService() function
     function _afterServiceRegistration(IRegistry.ObjectInfo memory info, VersionPart version, ObjectType domain) internal 
     {
         require(info.objectType.toInt() == SERVICE().toInt(), "Test error: _afterServiceRegistration() called with non-service object");

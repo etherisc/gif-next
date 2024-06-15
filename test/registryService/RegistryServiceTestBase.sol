@@ -37,39 +37,6 @@ import {GifTest} from "../base/GifTest.sol";
 import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
 
-// Helper functions to test IRegistry.ObjectInfo structs 
-function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) pure returns (bool isSame) {
-    return (
-        (a.nftId == b.nftId) &&
-        (a.parentNftId == b.parentNftId) &&
-        (a.objectType == b.objectType) &&
-        (a.objectAddress == b.objectAddress) &&
-        (a.initialOwner == b.initialOwner) &&
-        (a.data.length == b.data.length) &&
-        keccak256(a.data) == keccak256(b.data)
-    );
-}
-
-function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
-    return (
-        IRegistry.ObjectInfo(
-            NftIdLib.zero(),
-            NftIdLib.zero(),
-            ObjectTypeLib.zero(),
-            false,
-            address(0),
-            address(0),
-            bytes("")
-        )
-    );
-}
-
-function toBool(uint256 uintVal) pure returns (bool boolVal)
-{
-    assembly {
-        boolVal := uintVal
-    }
-}
 
 contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
