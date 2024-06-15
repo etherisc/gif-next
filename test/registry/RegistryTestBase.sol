@@ -91,6 +91,9 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
+    address public gifAdmin = registryOwner;
+    address public gifManager = registryOwner;
+    address public stakingOwner = registryOwner;
 
     RegistryAdmin registryAdmin;
     StakingManager stakingManager;
@@ -150,9 +153,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     function setUp() public virtual
     {
         bytes32 salt = "0x1234";
-        address gifAdmin = registryOwner;
-        address gifManager = registryOwner;
-        address stakingOwner = registryOwner;
 
         (
             dip,
@@ -187,6 +187,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         {
             releaseManager.createNextRelease();
 
+            // TODO do we need preparation phase now?
             (
                 address releaseAccessManager,
                 VersionPart releaseVersion,
@@ -271,7 +272,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             STAKING(),
             false,
             address(staking), // must be without erc721 receiver support?
-            registry.NFT_LOCK_ADDRESS(),
+            stakingOwner,
             ""
         );
 

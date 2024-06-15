@@ -314,7 +314,6 @@ contract GifTest is GifDeployer {
         _checkpointGasLeft = gasleft();
     }
 
-
     function _stopMeasureGas() internal virtual {
         // Subtract 100 to account for the warm SLOAD in startMeasuringGas.
         uint256 gasDelta = _checkpointGasLeft - gasleft() - 100;
@@ -813,20 +812,5 @@ contract GifTest is GifDeployer {
 
         console.log("");
         // solhint-enable
-    }
-
-
-    function zeroObjectInfo() internal pure returns (IRegistry.ObjectInfo memory) {
-        return (
-            IRegistry.ObjectInfo(
-                NftIdLib.zero(),
-                NftIdLib.zero(),
-                ObjectTypeLib.zero(),
-                false,
-                address(0),
-                address(0),
-                bytes("")
-            )
-        );
     }
 }

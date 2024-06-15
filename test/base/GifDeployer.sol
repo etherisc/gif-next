@@ -376,7 +376,7 @@ contract GifDeployer is Test {
         console.log("release services remaining", _releaseManager.getRemainingServicesToRegister());
     }
 
-    function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) internal returns (bool isSame) {
+    function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) public returns (bool isSame) {
 
         assertEq(a.nftId.toInt(), b.nftId.toInt(), "getObjectInfo(address).nftId returned unexpected value");
         assertEq(a.parentNftId.toInt(), b.parentNftId.toInt(), "getObjectInfo(address).parentNftId returned unexpected value");
@@ -394,6 +394,20 @@ contract GifDeployer is Test {
             (a.initialOwner == b.initialOwner) &&
             (a.data.length == b.data.length) &&
             keccak256(a.data) == keccak256(b.data)
+        );
+    }
+
+    function zeroObjectInfo() public pure returns (IRegistry.ObjectInfo memory) {
+        return (
+            IRegistry.ObjectInfo(
+                NftIdLib.zero(),
+                NftIdLib.zero(),
+                ObjectTypeLib.zero(),
+                false,
+                address(0),
+                address(0),
+                bytes("")
+            )
         );
     }
 
