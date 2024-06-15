@@ -50,6 +50,9 @@ contract AccessAdminCloneable is AccessAdminForTesting {
 
     /// @dev initializer that will creaete its own accessManager internally
     /// IMPORTANT cloning and initialization needs to be done in a single transaction
+    // TODO AccessAdmin (base class) has _disableInitializer() in constructor
+    //      How can child class use initialzier / onlyInitializing then?
+    //      Quote: "Calling this (_disableInitializer) in the constructor of a contract will prevent that contract from being initialized or reinitialized"
     function initialize() public initializer() {
         AccessManager accessManager = new AccessManager(address(this));
         _initialize(address(accessManager));
@@ -224,6 +227,9 @@ contract AccessAdminTest is Test {
                 accessAdminDeployer));
 
         vm.startPrank(accessAdminDeployer);
+        // TODO - locked target is not callable -> why it is works?
+        // because throws AccessManagedUnauthorized before it reaches locked check...
+        // why "open" is not authorized if was able to close by the same account?
         accessAdmin.setTargetLocked(accessAdminTarget, false);
         vm.stopPrank();
     }
