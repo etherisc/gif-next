@@ -85,11 +85,6 @@ contract PolicyService is
     }
 
 
-    function getDomain() public pure override returns(ObjectType) {
-        return POLICY();
-    }
-
-
     function _getAndVerifyInstanceAndProduct() internal view returns (Product product) {
         IRegistry.ObjectInfo memory productInfo;
         (, productInfo,) = _getAndVerifyActiveComponent(PRODUCT());
@@ -471,5 +466,10 @@ contract PolicyService is
         distributionWallet = instanceReader.getComponentInfo(distributionNftId).wallet;
         poolWallet = instanceReader.getComponentInfo(productInfo.poolNftId).wallet;
         productWallet = instanceReader.getComponentInfo(productNftId).wallet;
+    }
+
+
+    function _getDomain() internal pure override returns(ObjectType) {
+        return POLICY();
     }
 }

@@ -68,10 +68,6 @@ contract BundleService is
         registerInterface(type(IBundleService).interfaceId);
     }
 
-    function getDomain() public pure override returns(ObjectType) {
-        return BUNDLE();
-    }
-
 
     function setFee(
         NftId bundleNftId,
@@ -261,6 +257,23 @@ contract BundleService is
         instance.getInstanceStore().decreaseLocked(bundleNftId, collateralAmount);
     }
 
+    /// @dev unlinks policy from bundle
+    function unlinkPolicy(
+        IInstance instance, 
+        NftId policyNftId
+    ) 
+        external
+        virtual
+        restricted
+    {
+        // ensure policy is closeable
+        if (!instance.getInstanceReader().policyIsCloseable(policyNftId)) {
+            revert ErrorBundleServicePolicyNotCloseable(policyNftId);
+        }
+
+        instance.getBundleManager().unlinkPolicy(policyNftId);
+    }
+
     /// @dev links policy to bundle
     function _linkPolicy(IInstance instance, NftId policyNftId) 
         internal
@@ -277,20 +290,7 @@ contract BundleService is
         bundleManager.linkPolicy(policyNftId);
     }
 
-    /// @dev unlinks policy from bundle
-    function unlinkPolicy(
-        IInstance instance, 
-        NftId policyNftId
-    ) 
-        external
-        virtual
-        restricted
-    {
-        // ensure policy is closeable
-        if (!instance.getInstanceReader().policyIsCloseable(policyNftId)) {
-            revert ErrorBundleServicePolicyNotCloseable(policyNftId);
-        }
-
-        instance.getBundleManager().unlinkPolicy(policyNftId);
+    function _getDomain() internal pure override returns(ObjectType) {
+        return BUNDLE();
     }
 }

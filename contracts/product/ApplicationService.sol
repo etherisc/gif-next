@@ -80,11 +80,6 @@ contract ApplicationService is
     }
 
 
-    function getDomain() public pure override returns(ObjectType) {
-        return APPLICATION();
-    }
-
-
     function _checkLinkedpplicationParameters(
         InstanceReader instanceReader,
         NftId productNftId,
@@ -251,4 +246,9 @@ contract ApplicationService is
     }
 
     // internal functions
+
+
+    function _getDomain() internal pure override returns(ObjectType) {
+        return APPLICATION();
+    }
 }

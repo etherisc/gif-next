@@ -13,7 +13,10 @@ import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 
 
 // IMPORTANT: check role/target for existance before using return value of getter
-contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
+contract AccessManagerExtended is
+    AccessManagerCustom, 
+    IAccessManagerExtended
+{
     using EnumerableSet for EnumerableSet.AddressSet;
 
     string constant private ADMIN_ROLE_NAME = "Admin";
@@ -74,6 +77,14 @@ contract AccessManagerExtended is AccessManagerCustom, IAccessManagerExtended {
     function isTargetNameExists(string memory name) public view returns (bool) {
         AccessManagerExtendedStorage storage $ = _getAccessManagerExtendedStorage();
         return $._targetAddressForName[name] != address(0);
+    }
+
+    function getTargets() public view returns (uint256 numberOfTargets) {
+        return _getAccessManagerExtendedStorage()._targetAddresses.length;
+    }
+
+    function getTarget(uint256 idx) public view returns (address target) {
+        return _getAccessManagerExtendedStorage()._targetAddresses[idx];
     }
 
     function getTargetAddress(string memory name) public view returns(address targetAddress) {

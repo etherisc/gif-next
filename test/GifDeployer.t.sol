@@ -9,18 +9,20 @@ import {Dip} from "../contracts/mock/Dip.sol";
 import {GifDeployer} from "./base/GifDeployer.sol";
 import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../contracts/type/RoleId.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
+import {IServiceAuthorization} from "../contracts/registry/IServiceAuthorization.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {Registry} from "../contracts/registry/Registry.sol";
 import {RegistryAdmin} from "../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../contracts/registry/ReleaseManager.sol";
 import {REGISTRY, STAKING} from "../contracts/type/ObjectType.sol";
+import {Selector, SelectorLib} from "../contracts/type/Selector.sol";
+import {ServiceAuthorizationV3} from "../contracts/registry/ServiceAuthorizationV3.sol";
 import {Staking} from "../contracts/staking/Staking.sol";
 import {StakingManager} from "../contracts/staking/StakingManager.sol";
 import {StakingReader} from "../contracts/staking/StakingReader.sol";
 import {StakingStore} from "../contracts/staking/StakingStore.sol";
 import {TokenRegistry} from "../contracts/registry/TokenRegistry.sol";
 import {VersionPart, VersionPartLib} from "../contracts/type/Version.sol";
-
 
 // solhint-disable-next-line max-states-count
 contract GifDeployerTest is GifDeployer {
@@ -35,6 +37,7 @@ contract GifDeployerTest is GifDeployer {
     Staking public staking;
 
     VersionPart public gifV3 = VersionPartLib.toVersionPart(3);
+    IServiceAuthorization public serviceAuthorization = new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810");
 
     address public registryOwner = makeAddr("registryOwner");
     address public gifAdmin = registryOwner;
@@ -114,17 +117,19 @@ contract GifDeployerTest is GifDeployer {
         assertTrue(registryAdmin.hasRole(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
 
         // check sample admin access
-        assertTrue(registryAdmin.canCall(
-                gifAdmin, 
-                address(releaseManager),
-                ReleaseManager.createNextRelease.selector), 
+        assertTrue(
+            registryAdmin.canCall(
+                gifAdmin, // caller
+                address(releaseManager), // target
+                _toSelector(ReleaseManager.createNextRelease.selector)), 
             "gif manager cannot call registerToken");
 
         // check sample manager access
-        assertTrue(registryAdmin.canCall(
-                gifManager, 
-                address(tokenRegistry),
-                TokenRegistry.registerToken.selector), 
+        assertTrue(
+            registryAdmin.canCall(
+                gifManager, // caller
+                address(tokenRegistry), // target
+                _toSelector(TokenRegistry.registerToken.selector)), 
             "gif manager cannot call registerToken");
 
         // check linked contracts
@@ -135,6 +140,9 @@ contract GifDeployerTest is GifDeployer {
         // TODO amend once full gif setup is streamlined
     }
 
+    function _toSelector(bytes4 selector) internal pure returns (Selector) {
+        return SelectorLib.toSelector(selector);
+    }
 
     function test_deployerCoreStakingManager() public {
         assertTrue(address(stakingManager) != address(0), "staking manager address zero");
@@ -193,7 +201,6 @@ contract GifDeployerTest is GifDeployer {
 
 
     function setUp() public virtual {
-        vm.startPrank(registryOwner);
         (
             dip,
             registry,
@@ -206,12 +213,13 @@ contract GifDeployerTest is GifDeployer {
             gifAdmin,
             gifManager,
             stakingOwner);
-        vm.stopPrank();
         
-        _setUpDependingContracts();
-    }
-
-    function _setUpDependingContracts() internal {
         chainNft = ChainNft(registry.getChainNftAddress());
+
+        deployRelease(
+            releaseManager,
+            serviceAuthorization,
+            gifAdmin,
+            gifManager);
     }
 }

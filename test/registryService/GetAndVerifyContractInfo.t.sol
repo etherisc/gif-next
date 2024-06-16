@@ -5,7 +5,7 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType, toObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -21,7 +21,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withValidRegisterableHappyCase() public
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
         
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
@@ -42,7 +42,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withInvalidRegisterableAddress() public 
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMockWithInvalidAddress registerable = new RegisterableMockWithInvalidAddress(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
@@ -67,11 +67,11 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withRegisterableTypeDifferentFromExpectedType() public 
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
-        ObjectType expectedType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        ObjectType expectedType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         if(registerableType == expectedType) {
-            expectedType = toObjectType(expectedType.toInt() + 1);
+            expectedType = ObjectTypeLib.toObjectType(expectedType.toInt() + 1);
         }
 
         RegisterableMock registerable = new RegisterableMock(
@@ -98,10 +98,10 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     function test_withZeroRegisterableType() public
     {
         ObjectType registerableType = ObjectTypeLib.zero();
-        ObjectType expectedType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType expectedType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         if(registerableType == expectedType) {
-            expectedType = toObjectType(expectedType.toInt() + 1);
+            expectedType = ObjectTypeLib.toObjectType(expectedType.toInt() + 1);
         }
 
         RegisterableMock registerable = new RegisterableMock(
@@ -127,11 +127,11 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_whenExpectedTypeIsZero() public
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
         ObjectType expectedType = ObjectTypeLib.zero();
 
         if(registerableType == expectedType) {
-            registerableType = toObjectType(registerableType.toInt() + 1);
+            registerableType = ObjectTypeLib.toObjectType(registerableType.toInt() + 1);
         } 
 
         RegisterableMock registerable = new RegisterableMock(
@@ -158,7 +158,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
     // TODO cleanup or reenable
     // function test_withInvalidRegisterableAddressHappyCase() public 
     // {
-    //     ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+    //     ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
     //     RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
     //         NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
@@ -184,7 +184,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withRegisterableOwnerDifferentFromExpectedOwner() public
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
@@ -209,7 +209,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_whenExpectedOwnerIsZero() public
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
@@ -234,7 +234,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withZeroRegisterableOwner() public
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
@@ -259,7 +259,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withZeroRegisterableOwnerAndZeroExpectedOwner() public
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
@@ -282,7 +282,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withRegisteredRegisterableOwner() public
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
         
         RegisterableMock registerable = new RegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
@@ -306,7 +306,7 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withSelfOwnedRegisterable() public
     {
-        ObjectType registerableType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
         
         SelfOwnedRegisterableMock selfOwnedRegisterable = new SelfOwnedRegisterableMock(
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId

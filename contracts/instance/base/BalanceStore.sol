@@ -60,7 +60,7 @@ contract BalanceStore {
         }
 
         _isRegistered[targetNftId] = true;
-        _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+        _setLastUpdatedIn(targetNftId);
 
         emit LogBalanceStoreTargetRegistered(targetNftId);
     }
@@ -71,7 +71,7 @@ contract BalanceStore {
         _feeAmount[targetNftId] = newBalance;
 
         emit LogBalanceStoreFeesIncreased(targetNftId, amount, newBalance, _lastUpdatedIn[targetNftId]);
-        _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+        _setLastUpdatedIn(targetNftId);
     }
 
     function _decreaseFees(NftId targetNftId, Amount amount) internal onlyRegisteredTarget(targetNftId) returns (Amount newBalance) {
@@ -79,7 +79,7 @@ contract BalanceStore {
         _feeAmount[targetNftId] = newBalance;
 
         emit LogBalanceStoreFeesDecreased(targetNftId, amount, newBalance, _lastUpdatedIn[targetNftId]);
-        _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+        _setLastUpdatedIn(targetNftId);
     }
 
     //--- locked management -------------------------------------------------//
@@ -88,7 +88,7 @@ contract BalanceStore {
         _lockedAmount[targetNftId] = newBalance;
 
         emit LogBalanceStoreLockedIncreased(targetNftId, amount, newBalance, _lastUpdatedIn[targetNftId]);
-        _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+        _setLastUpdatedIn(targetNftId);
     }
 
     function _decreaseLocked(NftId targetNftId, Amount amount) internal onlyRegisteredTarget(targetNftId) returns (Amount newBalance) {
@@ -96,7 +96,7 @@ contract BalanceStore {
         _lockedAmount[targetNftId] = newBalance;
 
         emit LogBalanceStoreLockedDecreased(targetNftId, amount, newBalance, _lastUpdatedIn[targetNftId]);
-        _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+        _setLastUpdatedIn(targetNftId);
     }
 
     //--- balance management ------------------------------------------------//
@@ -105,7 +105,7 @@ contract BalanceStore {
         _balanceAmount[targetNftId] = newBalance;
 
         emit LogBalanceStoreBalanceIncreased(targetNftId, amount, newBalance, _lastUpdatedIn[targetNftId]);
-        _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+        _setLastUpdatedIn(targetNftId);
     }
 
     function _decreaseBalance(NftId targetNftId, Amount amount) internal onlyRegisteredTarget(targetNftId) returns (Amount newBalance) {
@@ -113,6 +113,11 @@ contract BalanceStore {
         _balanceAmount[targetNftId] = newBalance;
 
         emit LogBalanceStoreBalanceDecreased(targetNftId, amount, newBalance, _lastUpdatedIn[targetNftId]);
+        _setLastUpdatedIn(targetNftId);
+    }
+
+    //--- internal/private functions ----------------------------------------//
+    function _setLastUpdatedIn(NftId targetNftId) internal {
         _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
     }
 }

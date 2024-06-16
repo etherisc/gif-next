@@ -14,7 +14,7 @@ import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";

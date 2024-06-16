@@ -337,10 +337,12 @@ contract InstanceReader {
         );
     }
 
+
     function hasRole(address account, RoleId roleId) public view returns (bool isMember) {
         (isMember, ) = _instance.getInstanceAccessManager().hasRole(
             roleId.toInt(), account);
     }
+
 
     function toPolicyKey(NftId policyNftId) public pure returns (Key32) { 
         return policyNftId.toKey32(POLICY());

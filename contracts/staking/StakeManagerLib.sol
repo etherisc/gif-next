@@ -13,12 +13,64 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType, INSTANCE, PROTOCOL, TARGET} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakingReader} from "./StakingReader.sol";
+import {StakingStore} from "./StakingStore.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
 
 library StakeManagerLib {
 
+    function stake(
+        IRegistry registry,
+        StakingReader stakingReader,
+        StakingStore stakingStore,
+        NftId stakeNftId,
+        Amount stakeAmount
+    )
+        external
+        returns (Amount stakeBalance)
+    {
+        // check that target is active for staking
+        (
+            UFixed rewardRate,
+            Seconds lockingPeriod
+        ) = checkStakeParameters(
+            stakingReader, 
+            stakeNftId);        
+
+        // calculate new rewards (if any)
+        (
+            Amount rewardIncrementAmount, 
+            Amount currentTotalDipAmount
+        ) = calculateRewardIncrease(
+            stakingReader, 
+            stakeNftId,
+            rewardRate);
+
+        stakeBalance = currentTotalDipAmount + stakeAmount;
+
+        // TODO check that additional dip, rewards and rewards increment 
+        // are still ok with max target staking amount
+        NftId targetNftId = registry.getObjectInfo(stakeNftId).parentNftId;
+
+        stakingStore.restakeRewards(
+            stakeNftId, 
+            targetNftId, 
+            rewardIncrementAmount);
+
+        stakingStore.increaseStake(
+            stakeNftId, 
+            targetNftId, 
+            stakeAmount);
+
+        // update locked until with target locking period
+        stakingStore.update(
+            stakeNftId, 
+            IStaking.StakeInfo({
+                lockedUntil: TimestampLib.blockTimestamp().addSeconds(
+                    lockingPeriod)}));
+
+    }
 
     function checkCreateParameters(
         StakingReader stakingReader,

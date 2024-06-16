@@ -4,14 +4,15 @@ pragma solidity ^0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
+import {Amount} from "../type/Amount.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {SecondsLib} from "../type/Seconds.sol";
-import {UFixedLib} from "../type/UFixed.sol";
+import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
-import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
+import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
@@ -34,6 +35,9 @@ import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 import {InstanceAuthorizationsLib} from "./InstanceAuthorizationsLib.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
+
 
 contract InstanceService is
     Service,
@@ -52,6 +56,28 @@ contract InstanceService is
     address internal _masterInstanceReader;
     address internal _masterInstanceBundleManager;
     address internal _masterInstanceStore;
+
+
+    modifier onlyInstance() {        
+        address instanceAddress = msg.sender;
+        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        if (instanceNftId.eqz()) {
+            revert ErrorInstanceServiceNotRegistered(instanceAddress);
+        }
+
+        ObjectType objectType = getRegistry().getObjectInfo(instanceNftId).objectType;
+        if (objectType != INSTANCE()) {
+            revert ErrorInstanceServiceNotInstance(instanceAddress, objectType);
+        }
+
+        VersionPart instanceVersion = IInstance(instanceAddress).getMajorVersion();
+        if (instanceVersion != getVersion().toMajorPart()) {
+            revert ErrorInstanceServiceInstanceVersionMismatch(instanceAddress, instanceVersion);
+        }
+
+        _;
+    }
+
 
     modifier onlyInstanceOwner(NftId instanceNftId) {        
         if(msg.sender != getRegistry().ownerOf(instanceNftId)) {
@@ -142,6 +168,57 @@ contract InstanceService is
             clonedInstanceNftId);
     }
 
+
+    function setStakingLockingPeriod(Seconds stakeLockingPeriod)
+        external
+        virtual
+        onlyInstance()
+    {
+        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        _stakingService.setInstanceLockingPeriod(
+            instanceNftId,
+            stakeLockingPeriod);
+    }
+
+
+    function setStakingRewardRate(UFixed rewardRate)
+        external
+        virtual
+        onlyInstance()
+    {
+        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        _stakingService.setInstanceRewardRate(
+            instanceNftId,
+            rewardRate);
+    }
+
+
+    function refillStakingRewardReserves(address rewardProvider, Amount dipAmount)
+        external
+        virtual
+        onlyInstance()
+    {
+        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        _stakingService.refillInstanceRewardReserves(
+            instanceNftId,
+            rewardProvider,
+            dipAmount);
+    }
+
+
+    function withdrawStakingRewardReserves(Amount dipAmount)
+        external
+        virtual
+        onlyInstance()
+        returns (Amount newBalance)
+    {
+        NftId instanceNftId = getRegistry().getNftId(msg.sender);
+        _stakingService.withdrawInstanceRewardReserves(
+            instanceNftId,
+            dipAmount);
+    }
+
+
     function setComponentLocked(bool locked)
         external
         virtual
@@ -170,11 +247,6 @@ contract InstanceService is
 
     function getMasterInstanceReader() external view returns (address) {
         return _masterInstanceReader;
-    }
-
-    // From IService
-    function getDomain() public pure override returns(ObjectType) {
-        return INSTANCE();
     }
 
     function setAndRegisterMasterInstance(address instanceAddress)
@@ -348,7 +420,7 @@ contract InstanceService is
         IRegistry registry = getRegistry();
         IRegistry.ObjectInfo memory instanceInfo = registry.getObjectInfo(instanceNftId);
         if(instanceInfo.objectType != INSTANCE()) {
-            revert ErrorInstanceServiceNotInstance(instanceNftId);
+            revert ErrorInstanceServiceNotInstanceNftId(instanceNftId);
         }
 
         IRegistry.ObjectInfo memory componentInfo = registry.getObjectInfo(componentAddress);
@@ -358,5 +430,10 @@ contract InstanceService is
 
         instance = Instance(instanceInfo.objectAddress);
         componentNftId = componentInfo.nftId;
+    }
+
+    // From IService
+    function _getDomain() internal pure override returns(ObjectType) {
+        return INSTANCE();
     }
 }

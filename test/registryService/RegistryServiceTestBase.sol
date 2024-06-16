@@ -10,7 +10,7 @@ import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, toObjectType, ObjectTypeLib, TOKEN} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, TOKEN} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
@@ -22,6 +22,7 @@ import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
+import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
 
@@ -36,39 +37,6 @@ import {GifTest} from "../base/GifTest.sol";
 import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
 
-// Helper functions to test IRegistry.ObjectInfo structs 
-function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) pure returns (bool isSame) {
-    return (
-        (a.nftId == b.nftId) &&
-        (a.parentNftId == b.parentNftId) &&
-        (a.objectType == b.objectType) &&
-        (a.objectAddress == b.objectAddress) &&
-        (a.initialOwner == b.initialOwner) &&
-        (a.data.length == b.data.length) &&
-        keccak256(a.data) == keccak256(b.data)
-    );
-}
-
-function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
-    return (
-        IRegistry.ObjectInfo(
-            NftIdLib.zero(),
-            NftIdLib.zero(),
-            ObjectTypeLib.zero(),
-            false,
-            address(0),
-            address(0),
-            bytes("")
-        )
-    );
-}
-
-function toBool(uint256 uintVal) pure returns (bool boolVal)
-{
-    assembly {
-        boolVal := uintVal
-    }
-}
 
 contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
@@ -81,7 +49,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
     function _deployRegistryService() internal
     {
-        //bytes32 salt = "0x1111";
+        bytes32 salt = "0x1111";
 
         RegistryServiceTestConfig config = new RegistryServiceTestConfig(
             releaseManager,
@@ -91,16 +59,6 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             VersionPartLib.toVersionPart(3),
             "0x1111");//salt);
 
-        (
-            address[] memory serviceAddresses,
-            string[] memory serviceNames,
-            RoleId[][] memory serviceRoles,
-            string[][] memory serviceRoleNames,
-            RoleId[][] memory functionRoles,
-            string[][] memory functionRoleNames,
-            bytes4[][][] memory selectors
-        ) = config.getConfig();
-
         releaseManager.createNextRelease();
 
         (
@@ -108,14 +66,8 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             VersionPart releaseVersion,
             bytes32 releaseSalt
         ) = releaseManager.prepareNextRelease(
-            serviceAddresses, 
-            serviceNames, 
-            serviceRoles, 
-            serviceRoleNames,
-            functionRoles,
-            functionRoleNames,
-            selectors, 
-            "0x1111");//salt);
+            new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810"),
+            salt);
 
         registryServiceManager = new RegistryServiceManager{salt: releaseSalt}(
             releaseAccessManager,

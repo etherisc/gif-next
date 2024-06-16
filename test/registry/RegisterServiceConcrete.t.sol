@@ -6,7 +6,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -25,14 +25,14 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             IRegistry.ObjectInfo(
                 NftIdLib.toNftId(10017),
                 NftIdLib.toNftId(353073667),
-                toObjectType(35),
+                ObjectTypeLib.toObjectType(35),
                 false, // isInterceptor
                 address(2072),
                 address(162012514),
                 ""                
             ),
             VersionLib.toVersionPart(22),
-            toObjectType(244)
+            ObjectTypeLib.toObjectType(244)
         );
 
         _stopPrank();
@@ -46,14 +46,14 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             IRegistry.ObjectInfo(
                 NftIdLib.toNftId(10017),
                 NftIdLib.toNftId(353073667),
-                toObjectType(35),
+                ObjectTypeLib.toObjectType(35),
                 false, // isInterceptor
                 address(0),
                 address(2072),
                 ""                
             ),
             VersionLib.toVersionPart(98),
-            toObjectType(22)
+            ObjectTypeLib.toObjectType(22)
         );
 
         _stopPrank();
@@ -67,14 +67,14 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             IRegistry.ObjectInfo(
                 NftIdLib.toNftId(7505),
                 NftIdLib.toNftId(11674931516840186165219379815826254658548193973),
-                toObjectType(173),
+                ObjectTypeLib.toObjectType(173),
                 false, // isInterceptor
                 address(7148),
                 address(0x00000000000000000000000000000000000000000000000000000000fdd9ec7e),
                 ""                
             ),
             VersionLib.toVersionPart(172),
-            toObjectType(185)
+            ObjectTypeLib.toObjectType(185)
         );
 
         _stopPrank();
@@ -88,14 +88,14 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             IRegistry.ObjectInfo(
                 NftIdLib.toNftId(12537),
                 NftIdLib.toNftId(6191),
-                toObjectType(100),
+                ObjectTypeLib.toObjectType(100),
                 false, // isInterceptor
                 address(16382),
                 address(0x0000000000000000000000000000000000000000000000000000000000002181),
                 ""                
             ),
             VersionLib.toVersionPart(178),
-            toObjectType(44)
+            ObjectTypeLib.toObjectType(44)
         );
 
         _stopPrank();
@@ -109,14 +109,14 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             IRegistry.ObjectInfo(
                 NftIdLib.toNftId(3590),
                 NftIdLib.toNftId(158),
-                toObjectType(220),
+                ObjectTypeLib.toObjectType(220),
                 false, // isInterceptor
                 address(0x0000000000000000000000000000000000001eF1),
                 address(0x000000000000000000000000000000000000000000000000000000000000441c),
                 ""                
             ),
             VersionLib.toVersionPart(63),
-            toObjectType(99)
+            ObjectTypeLib.toObjectType(99)
         );
 
         _stopPrank();
@@ -138,7 +138,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
             EnumerableSet.at(_addresses, 804448731 % EnumerableSet.length(_addresses)),
             "0x00000000000000000000000000000000000000000000000000000000000026a3"),
             VersionLib.toVersionPart(115),
-            toObjectType(250)
+            ObjectTypeLib.toObjectType(250)
         );
 
         _stopPrank();
@@ -160,7 +160,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         );
 
         VersionPart version = VersionLib.toVersionPart(115);
-        ObjectType domain = toObjectType(250);
+        ObjectType domain = ObjectTypeLib.toObjectType(250);
         address sender = address(0x000000000000000000000000000000005FA4428e);
 
         _registerService_testFunction(sender, info, version, domain);
