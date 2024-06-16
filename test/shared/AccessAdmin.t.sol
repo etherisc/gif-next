@@ -50,7 +50,8 @@ contract AccessAdminCloneable is AccessAdminForTesting {
 
     /// @dev initializer that will creaete its own accessManager internally
     /// IMPORTANT cloning and initialization needs to be done in a single transaction
-    // TODO AccessAdmin (base class) has _disableInitializer() in constructor
+    // QUESTION AccessAdmin (base class) has _disableInitializer() in constructor
+    // ANSWER constructor is never called in cloned contract, therefore _disableInitializer is never called in cloned contract.
     //      How can child class use initialzier / onlyInitializing then?
     //      Quote: "Calling this (_disableInitializer) in the constructor of a contract will prevent that contract from being initialized or reinitialized"
     function initialize() public initializer() {

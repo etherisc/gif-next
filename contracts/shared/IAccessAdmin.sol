@@ -99,36 +99,39 @@ interface IAccessAdmin is
     /// @dev Set the disabled status of the speicified role.
     /// Role disabling only prevents the role from being granted to new accounts.
     /// Existing role members may still execute functions that are authorized for that role.
-    /// permissioned: the caller must have the manager role (getManagerRole).
+    /// Permissioned: the caller must have the manager role (getManagerRole).
     function setRoleDisabled(RoleId roleId, bool disabled) external;
 
     /// @dev Grant the specified account the provided role.
-    /// permissioned: the caller must have the roles admin role.
+    /// Permissioned: the caller must have the roles admin role.
     function grantRole(address account, RoleId roleId) external;
 
     /// @dev Revoke the provided role from the specified account.
-    /// permissioned: the caller must have the roles admin role.
+    /// Permissioned: the caller must have the roles admin role.
     function revokeRole(address account, RoleId roleId) external;
 
     /// @dev Removes the provided role from the caller
     function renounceRole(RoleId roleId) external;
 
     /// @dev Create a new named target.
-    /// permissioned: the caller must have the manager role (getManagerRole).
+    /// Permissioned: the caller must have the manager role (getManagerRole).
     function createTarget(address target, string memory name) external;
 
     /// @dev Set the locked status of the speicified contract.
-    /// permissioned: the caller must have the manager role (getManagerRole).
+    /// IMPORTANT: using this function the AccessManager might itself be put into locked state from which it cannot be unlocked again.
+    /// Overwrite this function if a different use case specific behaviour is required.
+    /// Alternatively, add specific function to just unlock this contract without a restricted() modifier.
+    /// Permissioned: the caller must have the manager role (getManagerRole).
     function setTargetLocked(address target, bool locked) external;
 
     /// @dev Specifies which functions of the target can be accessed by the provided role.
     /// Previously existing authorizations will be overwritten.
     /// Authorizing the admin role is not allowed, use function unauthorizedFunctions for this.
-    /// permissioned: the caller must have the manager role (getManagerRole).
+    /// Permissioned: the caller must have the manager role (getManagerRole).
     function authorizeFunctions(address target, RoleId roleId, Function[] memory functions) external;
 
     /// @dev Specifies for which functionss to remove any previous authorization
-    /// permissioned: the caller must have the manager role (getManagerRole).
+    /// Permissioned: the caller must have the manager role (getManagerRole).
     function unauthorizeFunctions(address target, Function[] memory functions) external;
 
     //--- view functions ----------------------------------------------------//

@@ -125,7 +125,6 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         {
             libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
-                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
@@ -244,7 +243,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: serviceAuthorizationV3Address, contract: serviceAuthorizationV3BaseContract, } = await deployContract(
         "ServiceAuthorizationV3",
         owner,
-        [ ],
+        [ "SomeV3CommitHash" ],
         { 
             libraries: { 
                 SelectorLib: libraries.selectorLibAddress,

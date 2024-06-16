@@ -215,35 +215,6 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const componentServiceNftId = (logRegistrationInfoCmpt as unknown);
     logger.info(`componentServiceManager deployed - componentServiceAddress: ${componentServiceAddress} componentServiceManagerAddress: ${componentServiceManagerAddress} nftId: ${componentServiceNftId}`);
 
-    logger.info("-------- oracle service --------");
-    const { address: oracleServiceManagerAddress, contract: oracleServiceManagerBaseContract, } = await deployContract(
-        "OracleServiceManager",
-        owner,
-        [
-            authority,
-            registry.registryAddress,
-            release.salt
-        ],
-        { libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                // ObjectTypeLib: libraries.objectTypeLibAddress, 
-                RequestIdLib: libraries.requestIdLibAddress,
-                RoleIdLib: libraries.roleIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress,
-            }});
-    
-    const oracleServiceManager = oracleServiceManagerBaseContract as OracleServiceManager;
-    const oracleServiceAddress = await oracleServiceManager.getOracleService();
-    const oracleService = OracleService__factory.connect(oracleServiceAddress, owner);
-
-    const orclPrs = await executeTx(async () => await releaseManager.registerService(oracleServiceAddress));
-    const logRegistrationInfoOrc = getFieldFromTxRcptLogs(orclPrs!, registry.registry.interface, "LogRegistration", "nftId");
-    const oracleServiceNftId = (logRegistrationInfoOrc as unknown);
-    await oracleServiceManager.linkToProxy();
-    logger.info(`oracleServiceManager deployed - oracleServiceAddress: ${oracleServiceAddress} oracleServiceManagerAddress: ${oracleServiceManagerAddress} nftId: ${oracleServiceNftId}`);
-
     logger.info("-------- distribution service --------");
     const { address: distributionServiceManagerAddress, contract: distributionServiceManagerBaseContract, } = await deployContract(
         "DistributionServiceManager",
@@ -364,6 +335,35 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const poolServiceNftId = (logRegistrationInfoPs as unknown);
     await poolServiceManager.linkToProxy();
     logger.info(`poolServiceManager deployed - poolServiceAddress: ${poolServiceAddress} poolServiceManagerAddress: ${poolServiceManagerAddress} nftId: ${poolServiceNftId}`);
+
+    logger.info("-------- oracle service --------");
+    const { address: oracleServiceManagerAddress, contract: oracleServiceManagerBaseContract, } = await deployContract(
+        "OracleServiceManager",
+        owner,
+        [
+            authority,
+            registry.registryAddress,
+            release.salt
+        ],
+        { libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
+                RequestIdLib: libraries.requestIdLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress, 
+                VersionPartLib: libraries.versionPartLibAddress,
+            }});
+    
+    const oracleServiceManager = oracleServiceManagerBaseContract as OracleServiceManager;
+    const oracleServiceAddress = await oracleServiceManager.getOracleService();
+    const oracleService = OracleService__factory.connect(oracleServiceAddress, owner);
+
+    const orclPrs = await executeTx(async () => await releaseManager.registerService(oracleServiceAddress));
+    const logRegistrationInfoOrc = getFieldFromTxRcptLogs(orclPrs!, registry.registry.interface, "LogRegistration", "nftId");
+    const oracleServiceNftId = (logRegistrationInfoOrc as unknown);
+    await oracleServiceManager.linkToProxy();
+    logger.info(`oracleServiceManager deployed - oracleServiceAddress: ${oracleServiceAddress} oracleServiceManagerAddress: ${oracleServiceManagerAddress} nftId: ${oracleServiceNftId}`);
 
     logger.info("-------- product service --------");
     const { address: productServiceManagerAddress, contract: productServiceManagerBaseContract, } = await deployContract(

@@ -130,6 +130,7 @@ contract AccessAdmin is
         bool memberRemovalDisabled
     )
         external
+        virtual
         restricted()
     {
         _createRole(roleId, adminRoleId, name, maxMemberCount, memberRemovalDisabled);
@@ -140,6 +141,7 @@ contract AccessAdmin is
         bool disabled
     )
         external
+        virtual
         restricted()
     {
         _setRoleDisabled(roleId, disabled);
@@ -150,6 +152,7 @@ contract AccessAdmin is
         RoleId roleId
     )
         external
+        virtual
         onlyRoleAdmin(roleId)
         restricted()
     {
@@ -161,6 +164,7 @@ contract AccessAdmin is
         RoleId roleId
     )
         external
+        virtual
         onlyRoleAdmin(roleId)
         restricted()
     {
@@ -171,6 +175,7 @@ contract AccessAdmin is
         RoleId roleId
     )
         external
+        virtual
         onlyRoleMember(roleId)
         restricted()
     {
@@ -184,6 +189,7 @@ contract AccessAdmin is
         string memory name
     )
         external
+        virtual
         restricted()
     {
         _createTarget(target, name);
@@ -194,12 +200,10 @@ contract AccessAdmin is
         bool locked
     )
         external
+        virtual
         onlyExistingTarget(target)
         restricted()
     {
-        if(target == address(this)) {
-            revert ErrorTagetNotLockable();
-        }
         _authority.setTargetClosed(target, locked);
 
         // implizit logging: rely on OpenZeppelin log TargetClosed
@@ -211,6 +215,7 @@ contract AccessAdmin is
         Function[] memory functions
     )
         external
+        virtual
         onlyExistingTarget(target)
         onlyExistingRole(roleId)
         restricted()
@@ -223,6 +228,7 @@ contract AccessAdmin is
         Function[] memory functions
     )
         external
+        virtual
         restricted()
     {
         _unauthorizeTargetFunctions(target, functions);
