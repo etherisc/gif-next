@@ -13,7 +13,7 @@ import {VersionPart, VersionPartLib} from "../type/Version.sol";
 contract ServiceAuthorization
      is IServiceAuthorization
 {
-     uint256 public constant GIF_VERSION = 3;
+     uint256 public constant GIF_VERSION_3 = 3;
 
      string private _commitHash;
 
@@ -33,7 +33,7 @@ contract ServiceAuthorization
      }
 
      function getRelease() external view returns(VersionPart release) {
-          return VersionPartLib.toVersionPart(GIF_VERSION);
+          return VersionPartLib.toVersionPart(GIF_VERSION_3);
      }
 
      function getServiceDomains() external view returns(ObjectType[] memory serviceDomains) {
@@ -69,6 +69,7 @@ contract ServiceAuthorization
           _serviceAddress[serviceDomain] = serviceAddress;
      }
 
+     /// @dev Use this method to authorize the specified domain to access the service domain.
      function _authorizeForService(ObjectType serviceDomain, ObjectType authorizedDomain)
           internal
           returns (IAccess.FunctionInfo[] storage authorizatedFunctions)

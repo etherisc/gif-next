@@ -394,6 +394,14 @@ contract ReleaseManager is
         return _releaseAccessManager[version];
     }
 
+    function getServiceAuthorization(VersionPart version)
+        external
+        view
+        returns (IServiceAuthorization serviceAuthorization)
+    {
+        return _serviceAuthorization[version];
+    }
+
     function getRegistryAdmin() external view returns (address) {
         return address(_admin);
     }

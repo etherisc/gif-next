@@ -40,7 +40,7 @@ interface IRegistry is IERC165 {
         bytes data;
     }
 
-
+    // TODO cleanup
     struct ReleaseInfo {
         VersionPart version;
         bytes32 salt;

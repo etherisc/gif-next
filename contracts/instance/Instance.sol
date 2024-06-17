@@ -124,8 +124,7 @@ contract Instance is
 
     function createRole(string memory roleName, string memory adminName)
         external
-        // TODO decide if onlyOwner or restricted to instance owner role is better
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
         returns (RoleId roleId, RoleId admin)
     {
         (roleId, admin) = _instanceAdmin.createRole(roleName, adminName);
@@ -133,16 +132,14 @@ contract Instance is
 
     function grantRole(RoleId roleId, address account) 
         external 
-        // TODO decide if onlyOwner or restricted to instance owner role is better
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
         AccessManagerExtendedInitializeable(authority()).grantRole(roleId.toInt(), account, 0);
     }
 
     function revokeRole(RoleId roleId, address account) 
         external 
-        // TODO decide if onlyOwner or restricted to instance owner role is better
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
         AccessManagerExtendedInitializeable(authority()).revokeRole(roleId.toInt(), account);
     }
@@ -151,8 +148,7 @@ contract Instance is
 
     function createTarget(address target, string memory name) 
         external 
-        // TODO decide if onlyOwner or restricted to instance owner role is better
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
         _instanceAdmin.createTarget(target, name);
     }
@@ -163,14 +159,14 @@ contract Instance is
         RoleId roleId
     ) 
         external 
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
         _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
     }
 
     function setTargetLocked(address target, bool locked)
         external 
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
         _instanceAdmin.setTargetLockedByInstance(target, locked);
     }
@@ -215,14 +211,6 @@ contract Instance is
         _bundleManager = bundleManager;
     }
 
-    function setInstanceReader(InstanceReader instanceReader) external restricted() {
-        if(instanceReader.getInstance() != Instance(this)) {
-            revert ErrorInstanceInstanceReaderInstanceMismatch(address(this));
-        }
-
-        _instanceReader = instanceReader;
-    }
-
     function setInstanceStore(InstanceStore instanceStore) external restricted {
         if(address(_instanceStore) != address(0)) {
             revert ErrorInstanceInstanceStoreAlreadySet(address(_instanceStore));
@@ -231,6 +219,14 @@ contract Instance is
             revert ErrorInstanceInstanceStoreAuthorityMismatch(authority());
         }
         _instanceStore = instanceStore;
+    }
+
+    function setInstanceReader(InstanceReader instanceReader) external restricted() {
+        if(instanceReader.getInstance() != Instance(this)) {
+            revert ErrorInstanceInstanceReaderInstanceMismatch(address(this));
+        }
+
+        _instanceReader = instanceReader;
     }
 
     //--- external view functions -------------------------------------------//

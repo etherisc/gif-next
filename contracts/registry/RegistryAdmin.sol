@@ -116,39 +116,23 @@ contract RegistryAdmin is
         string memory baseName = ObjectTypeLib.toName(domain);
         VersionPart version = service.getVersion().toMajorPart();
         uint256 versionInt = version.toInt();
-        string memory versionName = "_v0";
-        string memory versionNumber = ObjectTypeLib.toString(versionInt);
-
-        if (versionInt >= 10) {
-            versionName = "_v";
-        }
 
         // create service target
-        string memory serviceTargetName = string(
-            abi.encodePacked(
-                baseName,
-                "Service",
-                versionName,
-                versionNumber));
+        string memory serviceTargetName = ObjectTypeLib.toVersionedName(
+            baseName, "Service", versionInt);
 
         _createTarget(
             address(service), 
             serviceTargetName);
 
         // create service role
-        string memory serviceRoleName = string(
-            abi.encodePacked(
-                baseName,
-                "ServiceRole",
-                versionName,
-                versionNumber));
-
+        RoleId roleId = RoleIdLib.roleForTypeAndVersion(
+            domain,  version);
+        string memory serviceRoleName = ObjectTypeLib.toVersionedName(
+            baseName, "ServiceRole", versionInt);
         bool isCustom = false; // service roles are never custom roles
         uint256 maxRoleMembers = 1; // service roles must only be given to this unique service
         bool memberRemovalDisabled = true; // it must not be possible to remove this role once granted 
-        RoleId roleId = RoleIdLib.roleForTypeAndVersion(
-            domain, 
-            version);
 
         _createRole(
             roleId, 

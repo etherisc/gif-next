@@ -430,6 +430,7 @@ contract AccessAdmin is
     }
 
 
+    /// @dev internal setup function that can be used in both constructor and initializer.
     function _createInitialRoleSetup()
         internal
     {

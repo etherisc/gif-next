@@ -209,6 +209,29 @@ library ObjectTypeLib {
                     toInt(objectType))));
     }
 
+    function toVersionedName(
+        string memory name, 
+        string memory suffix, 
+        uint256 version
+    )
+        external
+        pure
+        returns (string memory versionedName)
+    {
+        string memory versionName = "_v0";
+
+        if (version >= 10) {
+            versionName = "_v";
+        }
+
+        versionedName = string(
+            abi.encodePacked(
+                name,
+                suffix,
+                versionName,
+                toString(version)));
+    }
+
     /// @dev returns the provied int as a string
     function toString(uint256 value) public pure returns (string memory name) {
 
