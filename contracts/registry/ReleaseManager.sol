@@ -26,7 +26,7 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IRegistryService} from "./IRegistryService.sol";
-import {IServiceAuthorization} from "./IServiceAuthorization.sol";
+import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {Registry} from "./Registry.sol";
@@ -159,17 +159,14 @@ contract ReleaseManager is
             bytes32 releaseSalt
         )
     {
-        (
-            VersionPart releaseVersion,
-            uint serviceDomainsCount
-        ) = serviceAuthorization.getRelease();
-
         // verify authorizaion contract release matches with expected version
+        VersionPart releaseVersion = serviceAuthorization.getRelease();
         if (releaseVersion != _next) {
             revert ErrorReleaseManagerVersionMismatch(_next, releaseVersion);
         }
 
         // sanity check to ensure service domain list is not empty
+        uint256 serviceDomainsCount = serviceAuthorization.getServiceDomains().length;
         if (serviceDomainsCount == 0) {
             revert ErrorReleaseManagerNoDomains(_next);
         }
@@ -198,6 +195,8 @@ contract ReleaseManager is
 
         authority = _admin.authority();
         _serviceAuthorization[_next] = serviceAuthorization;
+
+        // TODO refactor, authority is not depending on release
         _releaseAccessManager[_next] = authority;
         _servicesToRegister = serviceDomainsCount;
         _state[version] = newState;

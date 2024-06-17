@@ -14,7 +14,7 @@ import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
-import {ServiceAuthorization} from "./ServiceAuthorization.sol";
+import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
 
 
 contract ServiceAuthorizationV3

@@ -2,11 +2,11 @@
 pragma solidity ^0.8.20;
 
 import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
-import {ObjectType} from "../../contracts/type/ObjectType.sol";
+import {ObjectType} from "../type/ObjectType.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
-import {SelectorLib} from "../../contracts/type/Selector.sol";
-import {StrLib} from "../../contracts/type/String.sol";
-import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {SelectorLib} from "../type/Selector.sol";
+import {StrLib} from "../type/String.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 /// @dev Base contract for release specific service authorization contracts.
 contract ServiceAuthorization
@@ -31,11 +31,8 @@ contract ServiceAuthorization
           return _commitHash;
      }
 
-     function getRelease() external view returns(VersionPart release, uint domainsCount) {
-          return (
-               VersionPartLib.toVersionPart(GIF_VERSION),
-               _serviceDomains.length
-          );
+     function getRelease() external view returns(VersionPart release) {
+          return VersionPartLib.toVersionPart(GIF_VERSION);
      }
 
      function getServiceDomains() external view returns(ObjectType[] memory serviceDomains) {

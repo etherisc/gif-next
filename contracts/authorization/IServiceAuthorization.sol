@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
-import {ObjectType} from "../../contracts/type/ObjectType.sol";
-import {VersionPart} from "../../contracts/type/Version.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {VersionPart} from "../type/Version.sol";
 
 interface IServiceAuthorization {
 
@@ -17,7 +17,7 @@ interface IServiceAuthorization {
      function getRelease()
           external
           view
-          returns(VersionPart release, uint domainsCount);
+          returns(VersionPart release);
 
      /// @dev Returns the service domain for the provided index.
      function getServiceDomain(uint idx) external view returns(ObjectType serviceDomain);

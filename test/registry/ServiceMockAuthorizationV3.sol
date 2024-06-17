@@ -7,7 +7,7 @@ import {
 
 import {IAccessAdmin} from "../../contracts/shared/IAccessAdmin.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
-import {ServiceAuthorization} from "../../contracts/registry/ServiceAuthorization.sol";
+import {ServiceAuthorization} from "../../contracts/authorization/ServiceAuthorization.sol";
 
 
 contract ServiceMockAuthorizationV3

@@ -37,7 +37,7 @@ import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWi
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
-import {IServiceAuthorization} from "../../contracts/registry/IServiceAuthorization.sol";
+import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";

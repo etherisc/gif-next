@@ -5,7 +5,7 @@ import {AccessAdmin} from "../shared/AccessAdmin.sol";
 import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IService} from "../shared/IService.sol";
-import {IServiceAuthorization} from "./IServiceAuthorization.sol";
+import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 import {IStaking} from "../staking/IStaking.sol";
 import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
