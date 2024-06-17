@@ -122,7 +122,7 @@ jobs:
     permissions:
         contents: read
         # id-token: write
-    needs: [build_hardhat, build_foundry]
+    needs: [build_hardhat]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -147,4 +147,33 @@ jobs:
         env:
           SKIP_VERIFICATION: true
         run: hh run scripts/deploy_all.ts 
+
+  deployment_ignition:
+    name: Execute ignition deployment on local chain 
+    runs-on: ubuntu-latest
+    permissions:
+        contents: read
+        # id-token: write
+    needs: [build_hardhat]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Setup node environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: |
+          npm install
+      
+      - name: Run deployment script
+        run: npx hardhat ignition deploy ignition/modules/GifCore.ts --strategy create2
         

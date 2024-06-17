@@ -110,8 +110,8 @@ contract AccessAdmin is
         _;
     }
 
-    constructor() {
-        _deployer = msg.sender;
+    constructor(address deployer) {
+        _deployer = deployer;
         _authority = new AccessManager(address(this));
 
         _setAuthority(address(_authority));
