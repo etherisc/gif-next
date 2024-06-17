@@ -120,92 +120,83 @@ function printAddresses(
     // productAddress: AddressLike, productNftId: string,
 ) {
     let addresses = "\nAddresses of deployed smart contracts:\n==========\n";
-    addresses += `amountLibAddress: ${libraries.amountLibAddress}\n`;
-    addresses += `blockNumberLibAddress: ${libraries.blockNumberLibAddress}\n`;
-    addresses += `feeLibAddress: ${libraries.feeLibAddress}\n`;
-    addresses += `key32LibAddress: ${libraries.key32LibAddress}\n`;
-    addresses += `libNftIdSetAddress: ${libraries.libNftIdSetAddress}\n`;
-    addresses += `mathLibAddress: ${libraries.mathLibAddress}\n`;
-    addresses += `nftIdLibAddress: ${libraries.nftIdLibAddress}\n`;
-    addresses += `objectTypeLibAddress: ${libraries.objectTypeLibAddress}\n`;
-    addresses += `referralLibAddress: ${libraries.referralLibAddress}\n`;
-    addresses += `riskIdLibAddress: ${libraries.riskIdLibAddress}\n`;
-    addresses += `roleIdLibAddress: ${libraries.roleIdLibAddress}\n`;
-    addresses += `stateIdLibAddress: ${libraries.stateIdLibAddress}\n`;
-    addresses += `timestampLibAddress: ${libraries.timestampLibAddress}\n`;
-    addresses += `uFixedLibAddress: ${libraries.uFixedLibAddress}\n`;
-    addresses += `versionLibAddress: ${libraries.versionLibAddress}\n`;
-    addresses += `versionPartLibAddress: ${libraries.versionPartLibAddress}\n`;
-    addresses += `instanceAuthorizationsLibAddress: ${libraries.instanceAuthorizationsLibAddress}\n`;
+    addresses += `Library Addresses:\n----------\n`;
+    for (const lib in libraries) {
+        let libName = lib.toUpperCase();
+        libName = libName.replace("ADDRESS", "_ADDRESS");
+        // @ts-expect-error types are from static list
+        addresses += `${libName}=${libraries[lib]}\n`;
+    }
+
     addresses += `--------\n`;
-    addresses += `registryAdminAddress: ${registry.registryAdminAddress}\n`;
-    addresses += `releaseManagerAddress: ${registry.releaseManagerAddress}\n`;
-    addresses += `registryAddress: ${registry.registryAddress}\n`;
-    addresses += `registryNftId: ${registry.registryNftId}\n`;
-    addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
-    addresses += `tokenRegistryAddress: ${registry.tokenRegistryAddress}\n`;
-    addresses += `stakingNftId: ${registry.stakingNftId}\n`;
-    addresses += `stakingAddress: ${registry.stakingAddress}\n`;
-    addresses += `dipAddress: ${registry.dipAddress}\n`;
+    addresses += `REGISTRY_ADMIN_ADDRESS=${registry.registryAdminAddress}\n`;
+    addresses += `RELEASE_MANAGER_ADDRESS=${registry.releaseManagerAddress}\n`;
+    addresses += `REGISTRY_ADDRESS=${registry.registryAddress}\n`;
+    addresses += `REGISTRY_NFT_ID=${registry.registryNftId}\n`;
+    addresses += `CHAIN_NFT_ADDRESS=${registry.chainNftAddress}\n`;
+    addresses += `TOKEN_REGISTRY_ADDRESS=${registry.tokenRegistryAddress}\n`;
+    addresses += `STAKING_NFT_ID=${registry.stakingNftId}\n`;
+    addresses += `STAKING_ADDRESS=${registry.stakingAddress}\n`;
+    addresses += `DIP_ADDRESS=${registry.dipAddress}\n`;
     addresses += `--------\n`;
-    addresses += `registryServiceManagerAddress: ${services.registryServiceManagerAddress}\n`;
-    addresses += `registryServiceAddress: ${services.registryServiceAddress}\n`;
-    addresses += `registryServiceNftId: ${services.registryServiceNftId}\n`;
+    addresses += `REGISTRY_SERVICE_MANAGER_ADDRESS=${services.registryServiceManagerAddress}\n`;
+    addresses += `REGISTRY_SERVICE_ADDRESS=${services.registryServiceAddress}\n`;
+    addresses += `REGISTRY_SERVICE_NFT_ID=${services.registryServiceNftId}\n`;
 
-    addresses += `stakingServiceManagerAddress: ${services.stakingServiceManagerAddress}\n`;
-    addresses += `stakingServiceAddress: ${services.stakingServiceAddress}\n`;
-    addresses += `stakingServiceNftId: ${services.stakingServiceNftId}\n`;
+    addresses += `STAKING_SERVICE_MANAGER_ADDRESS=${services.stakingServiceManagerAddress}\n`;
+    addresses += `STAKING_SERVICE_ADDRESS=${services.stakingServiceAddress}\n`;
+    addresses += `STAKING_SERVICE_NFT_ID=${services.stakingServiceNftId}\n`;
 
-    addresses += `instanceServiceManagerAddress: ${services.instanceServiceManagerAddress}\n`;
-    addresses += `instanceServiceAddress: ${services.instanceServiceAddress}\n`;
-    addresses += `instanceServiceNftId: ${services.instanceServiceNftId}\n`;
+    addresses += `INSTANCE_SERVICE_MANAGER_ADDRESS=${services.instanceServiceManagerAddress}\n`;
+    addresses += `INSTANCE_SERVICE_ADDRESS=${services.instanceServiceAddress}\n`;
+    addresses += `INSTANCE_SERVICE_NFT_ID=${services.instanceServiceNftId}\n`;
 
-    addresses += `componentServiceManagerAddress: ${services.componentServiceManagerAddress}\n`;
-    addresses += `componentServiceAddress: ${services.componentServiceAddress}\n`;
-    addresses += `componentServiceNftId: ${services.componentServiceNftId}\n`;
+    addresses += `COMPONENT_SERVICE_MANAGER_ADDRESS=${services.componentServiceManagerAddress}\n`;
+    addresses += `COMPONENT_SERVICE_ADDRESS=${services.componentServiceAddress}\n`;
+    addresses += `COMPONENT_SERVICE_NFT_ID=${services.componentServiceNftId}\n`;
 
-    addresses += `distributionServiceManagerAddress: ${services.distributionServiceManagerAddress}\n`;
-    addresses += `distributionServiceAddress: ${services.distributionServiceAddress}\n`;
-    addresses += `distributionServiceNftId: ${services.distributionServiceNftId}\n`;
+    addresses += `DISTRIBUTION_SERVICE_MANAGER_ADDRESS=${services.distributionServiceManagerAddress}\n`;
+    addresses += `DISTRIBUTION_SERVICE_ADDRESS=${services.distributionServiceAddress}\n`;
+    addresses += `DISTRIBUTION_SERVICE_NFT_ID=${services.distributionServiceNftId}\n`;
 
-    addresses += `poolServiceManagerAddress: ${services.poolServiceManagerAddress}\n`;
-    addresses += `poolServiceAddress: ${services.poolServiceAddress}\n`;
-    addresses += `poolServiceNftId: ${services.poolServiceNftId}\n`;
+    addresses += `POOL_SERVICE_MANAGER_ADDRESS=${services.poolServiceManagerAddress}\n`;
+    addresses += `POOL_SERVICE_ADDRESS=${services.poolServiceAddress}\n`;
+    addresses += `POOL_SERVICE_NFT_ID=${services.poolServiceNftId}\n`;
 
-    addresses += `productServiceManagerAddress: ${services.productServiceManagerAddress}\n`;
-    addresses += `productServiceAddress: ${services.productServiceAddress}\n`;
-    addresses += `productServiceNftId: ${services.productServiceNftId}\n`;
+    addresses += `PRODUCT_SERVICE_MANAGER_ADDRESS=${services.productServiceManagerAddress}\n`;
+    addresses += `PRODUCT_SERVICE_ADDRESS=${services.productServiceAddress}\n`;
+    addresses += `PRODUCT_SERVICE_NFT_ID=${services.productServiceNftId}\n`;
 
-    addresses += `applicationServiceManagerAddress: ${services.applicationServiceManagerAddress}\n`;
-    addresses += `applicationServiceAddress: ${services.applicationServiceAddress}\n`;
-    addresses += `applicationServiceNftId: ${services.applicationServiceNftId}\n`;
+    addresses += `APPLICATION_SERVICE_MANAGER_ADDRESS=${services.applicationServiceManagerAddress}\n`;
+    addresses += `APPLICATION_SERVICE_ADDRESS=${services.applicationServiceAddress}\n`;
+    addresses += `APPLICATION_SERVICE_NFT_ID=${services.applicationServiceNftId}\n`;
 
-    addresses += `policyServiceManagerAddress: ${services.policyServiceManagerAddress}\n`;
-    addresses += `policyServiceAddress: ${services.policyServiceAddress}\n`;
-    addresses += `policyServiceNftId: ${services.policyServiceNftId}\n`;
+    addresses += `POLICY_SERVICE_MANAGER_ADDRESS=${services.policyServiceManagerAddress}\n`;
+    addresses += `POLICY_SERVICE_ADDRESS=${services.policyServiceAddress}\n`;
+    addresses += `POLICY_SERVICE_NFT_ID=${services.policyServiceNftId}\n`;
 
-    addresses += `claimServiceManagerAddress: ${services.claimServiceManagerAddress}\n`;
-    addresses += `claimServiceAddress: ${services.claimServiceAddress}\n`;
-    addresses += `claimServiceNftId: ${services.claimServiceNftId}\n`;
+    addresses += `CLAIM_SERVICE_MANAGER_ADDRESS=${services.claimServiceManagerAddress}\n`;
+    addresses += `CLAIM_SERVICE_ADDRESS=${services.claimServiceAddress}\n`;
+    addresses += `CLAIM_SERVICE_NFT_ID=${services.claimServiceNftId}\n`;
 
-    addresses += `bundleServiceManagerAddress: ${services.bundleServiceManagerAddress}\n`;
-    addresses += `bundleServiceAddress: ${services.bundleServiceAddress}\n`;
-    addresses += `bundleServiceNftId: ${services.bundleServiceNftId}\n`;
+    addresses += `BUNDLE_SERVICE_MANAGER_ADDRESS=${services.bundleServiceManagerAddress}\n`;
+    addresses += `BUNDLE_SERVICE_ADDRESS=${services.bundleServiceAddress}\n`;
+    addresses += `BUNDLE_SERVICE_NFT_ID=${services.bundleServiceNftId}\n`;
     addresses += `--------\n`;
-    addresses += `masterInstanceAddress: ${masterInstance.instanceAddress}\n`;
-    addresses += `masterInstanceNftId: ${masterInstance.instanceNftId}\n`;
-    addresses += `masterInstanceAccessManagerAddress: ${masterInstance.accessManagerAddress}\n`;
-    addresses += `masterInstanceAdminAddress: ${masterInstance.instanceAdminAddress}\n`;
-    addresses += `masterBundleManagerAddress: ${masterInstance.instanceBundleManagerAddress}\n`;
-    addresses += `masterInstanceReaderAddress: ${masterInstance.instanceReaderAddress}\n`;
-    addresses += `masterInstanceStoreAddress: ${masterInstance.instanceStoreAddress}\n`;
+    addresses += `MASTER_INSTANCE_ADDRESS=${masterInstance.instanceAddress}\n`;
+    addresses += `MASTER_INSTANCE_NFT_ID=${masterInstance.instanceNftId}\n`;
+    addresses += `MASTER_INSTANCE_ACCESS_MANAGER_ADDRESS=${masterInstance.accessManagerAddress}\n`;
+    addresses += `MASTER_INSTANCE_ADMIN_ADDRESS=${masterInstance.instanceAdminAddress}\n`;
+    addresses += `MASTER_BUNDLE_MANAGER_ADDRESS=${masterInstance.instanceBundleManagerAddress}\n`;
+    addresses += `MASTER_INSTANCE_READER_ADDRESS=${masterInstance.instanceReaderAddress}\n`;
+    addresses += `MASTER_INSTANCE_STORE_ADDRESS=${masterInstance.instanceStoreAddress}\n`;
     addresses += `--------\n`;
-    addresses += `clonedInstanceAddress: ${clonedInstance.instanceAddress}\n`;
-    addresses += `clonedInstanceNftId: ${clonedInstance.instanceNftId}\n`;
-    addresses += `clonedInstanceAccessManagerAddress: ${clonedInstance.accessManagerAddress}\n`;
-    addresses += `clonedInstanceAdminAddress: ${clonedInstance.instanceAdminAddress}\n`;
-    addresses += `clonedBundleManagerAddress: ${clonedInstance.instanceBundleManagerAddress}\n`;
-    addresses += `clonedInstanceReaderAddress: ${clonedInstance.instanceReaderAddress}\n`;
+    addresses += `CLONED_INSTANCE_ADDRESS=${clonedInstance.instanceAddress}\n`;
+    addresses += `CLONED_INSTANCE_NFT_ID=${clonedInstance.instanceNftId}\n`;
+    addresses += `CLONED_INSTANCE_ACCESS_MANAGER_ADDRESS=${clonedInstance.accessManagerAddress}\n`;
+    addresses += `CLONED_INSTANCE_ADMIN_ADDRESS=${clonedInstance.instanceAdminAddress}\n`;
+    addresses += `CLONED_BUNDLE_MANAGER_ADDRESS=${clonedInstance.instanceBundleManagerAddress}\n`;
+    addresses += `CLONED_INSTANCE_READER_ADDRESS=${clonedInstance.instanceReaderAddress}\n`;
     addresses += `--------\n`;
     // addresses += `tokenAddress: ${tokenAddress}\n`;
     // addresses += `poolAddress: ${poolAddress}\n`;
