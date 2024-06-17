@@ -2,7 +2,7 @@ import { buildModule } from "@nomicfoundation/hardhat-ignition/modules";
 import LibraryModule from "./Libraries";
 
 export default buildModule("Token", (m) => {
-    const { roleIdLib, tslib } = m.useModule(LibraryModule);
+    const { roleIdLib, timestamplib } = m.useModule(LibraryModule);
 
     const dip = m.contract("Dip", []);
 
@@ -10,7 +10,7 @@ export default buildModule("Token", (m) => {
     const ra = m.contract("RegistryAdmin", [], 
         {
             libraries: {
-                TimestampLib: tslib,
+                TimestampLib: timestamplib,
                 RoleIdLib: roleIdLib
             },
         }
