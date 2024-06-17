@@ -17,7 +17,7 @@ import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
 contract AccessAdminForTesting is AccessAdmin {
 
-    constructor() {
+    constructor(address deployer) AccessAdmin(deployer) {
         // super constructor called implicitly
         // grant manager role access to createRoleSimple
         Function[] memory functions = new Function[](1);
@@ -41,6 +41,9 @@ contract AccessAdminForTesting is AccessAdmin {
 }
 
 contract AccessAdminCloneable is AccessAdminForTesting {
+
+    constructor(address deployer) AccessAdminForTesting(deployer) {
+    }
 
     /// @dev initializer with externally provided accessManager
     /// IMPORTANT cloning and initialization needs to be done in a single transaction
@@ -81,10 +84,10 @@ contract AccessAdminTest is Test {
 
     function setUp() public {
         vm.startPrank(accessAdminDeployer);
-        accessAdmin = new AccessAdminForTesting();
+        accessAdmin = new AccessAdminForTesting(accessAdminDeployer);
         accessAdmin.createTarget(address(accessAdmin), "AccessAdmin");
 
-        aaMaster = new AccessAdminCloneable();
+        aaMaster = new AccessAdminCloneable(accessAdminDeployer);
         vm.stopPrank();
     }
 
@@ -1034,7 +1037,7 @@ contract AccessAdminTest is Test {
         // GIVEN (just setup)
         // WHEN
         vm.startPrank(accessAdminDeployer);
-        AccessAdminForTesting aat = new AccessAdminForTesting();
+        AccessAdminForTesting aat = new AccessAdminForTesting(accessAdminDeployer);
         vm.stopPrank();
 
         // THEN

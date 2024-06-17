@@ -27,3 +27,5 @@ test_brownie/__pycache__
 deployment_state_*.json
 lcov.info
 .*.drawio.bkp
+
+ignition/deployments/

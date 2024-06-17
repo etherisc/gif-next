@@ -54,7 +54,7 @@ contract RegistryAdmin is
     address private _stakingStore;
     bool private _setupCompleted;
 
-    constructor() AccessAdmin() { }
+    constructor(address deployer) AccessAdmin(deployer) { }
 
     function completeSetup(
         IRegistry registry,

@@ -82,8 +82,8 @@ contract Registry is
     }
 
 
-    constructor(RegistryAdmin admin) 
-        InitializableCustom() 
+    constructor(RegistryAdmin admin, address initialOwner) 
+        InitializableCustom(initialOwner) 
     {
         _admin = admin;
         // deploy NFT 

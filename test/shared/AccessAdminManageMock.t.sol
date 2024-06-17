@@ -18,7 +18,7 @@ import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
 contract AccessAdminForTesting is AccessAdmin {
 
-    constructor() {
+    constructor(address deployer) AccessAdmin(deployer) {
         // super constructor called implicitly
         // grant manager role access to createRoleSimple
         Function[] memory functions = new Function[](1);
@@ -55,7 +55,7 @@ contract AccessAdminManageMockTest is Test {
     function setUp() public {
         vm.startPrank(accessAdminDeployer);
         // deploy access admin
-        accessAdmin = new AccessAdminForTesting();
+        accessAdmin = new AccessAdminForTesting(accessAdminDeployer);
 
         // deploy access managed mock using authority of access admin
         managedMock = new AccessManagedMock(accessAdmin.authority());
