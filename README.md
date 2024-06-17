@@ -72,6 +72,13 @@ export SKIP_VERIFICATION=true
 hh run scripts/deploy_all.ts
 ```
 
+Deployment via ignition
+
+```bash
+npx hardhat ignition deploy ignition/modules/GifCore.ts
+hh ignition deploy ignition/modules/GifCore.ts
+```
+
 ```bash
 # set appropriate values vor env variables (see below)
 

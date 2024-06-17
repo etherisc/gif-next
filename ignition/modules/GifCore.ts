@@ -15,8 +15,11 @@ export default buildModule("GifCore", (m) => {
         objectTypeLib,
         roleIdLib, 
         secondsLib,
+        selectorLib,
+        selectorSetLib,
         stakeManagerLib,
         stateIdLib,
+        strLib,
         targetManagerLib,
         timestamplib, 
         uFixedLib,
@@ -28,11 +31,17 @@ export default buildModule("GifCore", (m) => {
     const dip = m.contract("Dip", []);
     
     // 2) deploy registry admin
-    const registryAdmin = m.contract("RegistryAdmin", [stakingOwner], 
+    const registryAdmin = m.contract("RegistryAdmin", [], 
         {
             libraries: {
-                TimestampLib: timestamplib,
+                ObjectTypeLib: objectTypeLib,
                 RoleIdLib: roleIdLib,
+                SelectorLib: selectorLib,
+                SelectorSetLib: selectorSetLib,
+                StrLib: strLib,
+                TimestampLib: timestamplib,
+                VersionLib: versionLib,
+                VersionPartLib: versionPartLib,
             },
         }
     );
@@ -54,7 +63,6 @@ export default buildModule("GifCore", (m) => {
         {
             libraries: {
                 NftIdLib: nftIdLib,
-                RoleIdLib: roleIdLib,
                 SecondsLib: secondsLib,
                 TimestampLib: timestamplib,
                 VersionLib: versionLib,
@@ -95,6 +103,7 @@ export default buildModule("GifCore", (m) => {
                 NftIdLib: nftIdLib,
                 ObjectTypeLib: objectTypeLib,
                 StateIdLib: stateIdLib,
+                TargetManagerLib: targetManagerLib,
                 TimestampLib: timestamplib,
                 UFixedLib: uFixedLib,
             },
@@ -133,7 +142,7 @@ export default buildModule("GifCore", (m) => {
     });
 
     // 11) initialize registry admin
-    m.call(registryAdmin, "initialize", [registry, gifAdmin, gifManager], {
+    m.call(registryAdmin, "completeSetup", [registry, gifAdmin, gifManager], {
         after: [stakingLinkToRegisteredNftId]
     });
 
