@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {AccessAdmin} from "../shared/AccessAdmin.sol";
-import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
+import {AccessAdmin} from "../authorization/AccessAdmin.sol";
+import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {IService} from "../shared/IService.sol";

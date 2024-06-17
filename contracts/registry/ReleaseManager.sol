@@ -27,7 +27,7 @@ import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IRegistryService} from "./IRegistryService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
-import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
+import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {Registry} from "./Registry.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";

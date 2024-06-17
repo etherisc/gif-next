@@ -63,8 +63,8 @@ contract AccessAdmin is
     /// @dev store all managed functions per target
     mapping(address target => SelectorSetLib.Set selectors) internal _targetFunctions;
 
-    /// @dev temporary dynamic function infos array
-    mapping(address target => mapping(Selector selector => Str functionName)) internal _functionName;
+    /// @dev function infos array
+    mapping(address target => mapping(Selector selector => FunctionInfo)) internal _functionInfo;
 
     /// @dev temporary dynamic functions array
     bytes4[] private _functions;
@@ -122,20 +122,6 @@ contract AccessAdmin is
 
     //--- role management functions -----------------------------------------//
 
-    function createRole(
-        RoleId roleId, 
-        RoleId adminRoleId, 
-        string memory name,
-        uint256 maxMemberCount,
-        bool memberRemovalDisabled
-    )
-        external
-        virtual
-        restricted()
-    {
-        _createRole(roleId, adminRoleId, name, maxMemberCount, memberRemovalDisabled);
-    }
-
     function setRoleDisabled(
         RoleId roleId, 
         bool disabled
@@ -184,17 +170,6 @@ contract AccessAdmin is
 
     //--- target management functions ---------------------------------------//
 
-    function createTarget(
-        address target, 
-        string memory name
-    )
-        external
-        virtual
-        restricted()
-    {
-        _createTarget(target, name);
-    }
-
     function setTargetLocked(
         address target, 
         bool locked
@@ -212,7 +187,7 @@ contract AccessAdmin is
     function authorizeFunctions(
         address target, 
         RoleId roleId, 
-        Function[] memory functions
+        FunctionInfo[] memory functions
     )
         external
         virtual
@@ -225,7 +200,7 @@ contract AccessAdmin is
 
     function unauthorizeFunctions(
         address target, 
-        Function[] memory functions
+        FunctionInfo[] memory functions
     )
         external
         virtual
@@ -246,16 +221,12 @@ contract AccessAdmin is
         external 
         view 
         returns (
-            Function memory func, 
+            FunctionInfo memory func, 
             RoleId roleId
         )
     {
         Selector selector = SelectorSetLib.at(_targetFunctions[target], idx);
-
-        func = Function({
-            selector: selector, 
-            name: _functionName[target][selector]});
-
+        func = _functionInfo[target][selector];
         roleId = RoleIdLib.toRoleId(
             _authority.getTargetFunctionRole(
                 target, 
@@ -285,7 +256,7 @@ contract AccessAdmin is
     }
 
     function roleExists(RoleId roleId) public view returns (bool exists) {
-        return _roleInfo[roleId].exists;
+        return _roleInfo[roleId].createdAt.gtz();
     }
 
     function isRoleDisabled(RoleId roleId) public view returns (bool isActive) {
@@ -351,7 +322,7 @@ contract AccessAdmin is
         return success;
     }
 
-    function canCall(address caller, address target, Selector selector) external view returns (bool can) {
+    function canCall(address caller, address target, Selector selector) external virtual view returns (bool can) {
         (can, ) = _authority.canCall(caller, target, selector.toBytes4());
     }
 
@@ -359,10 +330,11 @@ contract AccessAdmin is
         return _deployer;
     }
 
-    function toFunction(bytes4 selector, string memory name) public pure returns (Function memory) {
-            return Function({
-                selector: SelectorLib.toSelector(selector),
-                name: StrLib.toStr(name)});
+    function toFunction(bytes4 selector, string memory name) public view returns (FunctionInfo memory) {
+        return FunctionInfo({
+            selector: SelectorLib.toSelector(selector),
+            name: StrLib.toStr(name),
+            createdAt: TimestampLib.blockTimestamp()});
     }
 
     //--- internal/private functions -------------------------------------------------//
@@ -370,7 +342,7 @@ contract AccessAdmin is
     function _authorizeTargetFunctions(
         address target, 
         RoleId roleId, 
-        Function[] memory functions
+        FunctionInfo[] memory functions
     )
         internal
     {
@@ -387,7 +359,7 @@ contract AccessAdmin is
 
     function _unauthorizeTargetFunctions(
         address target, 
-        Function[] memory functions
+        FunctionInfo[] memory functions
     )
         internal
     {
@@ -398,7 +370,7 @@ contract AccessAdmin is
 
     function _processFunctionSelectors(
         address target,
-        Function[] memory functions,
+        FunctionInfo[] memory functions,
         bool addFunctions
     )
         internal
@@ -408,7 +380,7 @@ contract AccessAdmin is
     {
         uint256 n = functions.length;
         functionSelectors = new bytes4[](n);
-        Function memory func;
+        FunctionInfo memory func;
         Selector selector;
 
         for (uint256 i = 0; i < n; i++) {
@@ -420,7 +392,7 @@ contract AccessAdmin is
             else { SelectorSetLib.remove(_targetFunctions[target], selector); }
 
             // set function name
-            _functionName[target][selector] = func.name;
+            _functionInfo[target][selector] = func;
 
             // add bytes4 selector to function selector array
             functionSelectors[i] = selector.toBytes4();
@@ -461,14 +433,16 @@ contract AccessAdmin is
     function _createInitialRoleSetup()
         internal
     {
+        bool isCustom = false;
         RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
-        Function[] memory functions;
+        FunctionInfo[] memory functions;
 
         // setup admin role
         _createRoleUnchecked(
             adminRoleId,
             adminRoleId,
             StrLib.toStr(ADMIN_ROLE_NAME),
+            isCustom,
             1,
             true);
 
@@ -480,6 +454,7 @@ contract AccessAdmin is
             RoleIdLib.toRoleId(_authority.PUBLIC_ROLE()),
             adminRoleId,
             StrLib.toStr(PUBLIC_ROLE_NAME),
+            isCustom,
             type(uint256).max,
             true);
 
@@ -489,24 +464,26 @@ contract AccessAdmin is
             _managerRoleId, 
             adminRoleId,
             MANAGER_ROLE_NAME,
+            isCustom,
             3, // TODO think about max member count
             false);
 
         // grant public role access to grant and revoke, renounce
-        functions = new Function[](3);
+        functions = new FunctionInfo[](3);
         functions[0] = toFunction(IAccessAdmin.grantRole.selector, "grantRole");
         functions[1] = toFunction(IAccessAdmin.revokeRole.selector, "revokeRole");
         functions[2] = toFunction(IAccessAdmin.renounceRole.selector, "renounceRole");
         _authorizeTargetFunctions(address(this), getPublicRole(), functions);
 
         // grant manager role access to the specified functions 
-        functions = new Function[](6);
-        functions[0] = toFunction(IAccessAdmin.createRole.selector, "createRole");
-        functions[1] = toFunction(IAccessAdmin.setRoleDisabled.selector, "setRoleDisabled");
-        functions[2] = toFunction(IAccessAdmin.createTarget.selector, "createTarget");
-        functions[3] = toFunction(IAccessAdmin.setTargetLocked.selector, "setTargetLocked");
-        functions[4] = toFunction(IAccessAdmin.authorizeFunctions.selector, "authorizeFunctions");
-        functions[5] = toFunction(IAccessAdmin.unauthorizeFunctions.selector, "unauthorizeFunctions");
+        functions = new FunctionInfo[](4);
+        // TODO cleanup
+        // functions[0] = toFunction(IAccessAdmin.createRole.selector, "createRole");
+        functions[0] = toFunction(IAccessAdmin.setRoleDisabled.selector, "setRoleDisabled");
+        // functions[1] = toFunction(IAccessAdmin.createTarget.selector, "createTarget");
+        functions[1] = toFunction(IAccessAdmin.setTargetLocked.selector, "setTargetLocked");
+        functions[2] = toFunction(IAccessAdmin.authorizeFunctions.selector, "authorizeFunctions");
+        functions[3] = toFunction(IAccessAdmin.unauthorizeFunctions.selector, "unauthorizeFunctions");
         _authorizeTargetFunctions(address(this), getManagerRole(), functions);
     }
 
@@ -579,7 +556,7 @@ contract AccessAdmin is
     function _checkRoleId(RoleId roleId)
         internal
     {
-        if (!_roleInfo[roleId].exists) {
+        if (_roleInfo[roleId].createdAt.eqz()) {
             revert ErrorRoleUnknown(roleId);
         }
 
@@ -605,6 +582,7 @@ contract AccessAdmin is
         RoleId roleId, 
         RoleId adminRoleId, 
         string memory roleName,
+        bool isCustom,
         uint256 maxMemberCount,
         bool memberRemovalDisabled
     )
@@ -639,6 +617,7 @@ contract AccessAdmin is
         _createRoleUnchecked(
             roleId, adminRoleId, 
             name, 
+            isCustom,
             maxMemberCount, 
             memberRemovalDisabled);
     }
@@ -668,6 +647,7 @@ contract AccessAdmin is
         RoleId roleId, 
         RoleId adminRoleId, 
         Str name,
+        bool custom,
         uint256 maxMemberCount,
         bool memberRemovalDisabled
     )
@@ -677,10 +657,11 @@ contract AccessAdmin is
         _roleInfo[roleId] = RoleInfo({
             adminRoleId: adminRoleId,
             name: name,
+            isCustom: custom,
             maxMemberCount: maxMemberCount,
             memberRemovalDisabled: memberRemovalDisabled,
-            disabledAt: TimestampLib.max(),
-            exists: true});
+            createdAt: TimestampLib.blockTimestamp(),
+            disabledAt: TimestampLib.max()});
 
         // create role name info
         _roleForName[name] = RoleNameInfo({
@@ -695,6 +676,13 @@ contract AccessAdmin is
 
 
     function _createTarget(address target, string memory targetName)
+        internal
+    {
+        _createTarget(target, targetName, false);
+    }
+
+
+    function _createTarget(address target, string memory targetName, bool custom)
         internal
     {
         // check target does not yet exist
@@ -732,6 +720,7 @@ contract AccessAdmin is
         // create target info
         _targetInfo[target] = TargetInfo({
             name: name,
+            isCustom: custom,
             createdAt: TimestampLib.blockTimestamp()
         });
 

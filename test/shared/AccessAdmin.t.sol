@@ -7,9 +7,10 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessAdmin} from "../../contracts/shared/AccessAdmin.sol";
+import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
-import {IAccessAdmin} from "../../contracts/shared/IAccessAdmin.sol";
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
@@ -20,15 +21,29 @@ contract AccessAdminForTesting is AccessAdmin {
     constructor() {
         // super constructor called implicitly
         // grant manager role access to createRoleSimple
-        Function[] memory functions = new Function[](1);
-        functions[0] = toFunction(AccessAdminForTesting.createRoleSimple.selector, "createRoleSimple");
+        FunctionInfo[] memory functions = new FunctionInfo[](3);
+        functions[0] = toFunction(AccessAdminForTesting.createTarget.selector, "createTarget");
+        functions[1] = toFunction(AccessAdminForTesting.createRole.selector, "createRole");
+        functions[2] = toFunction(AccessAdminForTesting.createRoleExtended.selector, "createRoleExtended");
         _authorizeTargetFunctions(address(this), _managerRoleId, functions);
 
         // grant manger role to deployer
         _grantRoleToAccount(_managerRoleId, _deployer);
     }
 
-    function createRoleSimple(
+    function createTarget(
+        address target, 
+        string memory name
+    )
+        external
+        virtual
+        restricted()
+    {
+        bool custom = true;
+        _createTarget(target, name, custom);
+    }
+
+    function createRole(
         RoleId roleId, 
         RoleId adminRoleId, 
         string memory name
@@ -36,7 +51,22 @@ contract AccessAdminForTesting is AccessAdmin {
         external
         restricted()
     {
-        _createRole(roleId, adminRoleId, name, type(uint256).max, false);
+        bool custom = true;
+        _createRole(roleId, adminRoleId, name, custom, type(uint256).max, false);
+    }
+
+    function createRoleExtended(
+        RoleId roleId, 
+        RoleId adminRoleId, 
+        string memory name, 
+        uint256 maxOneRoleMember, 
+        bool memberRemovalDisallowed
+    )
+        external
+        restricted()
+    {
+        bool custom = true;
+        _createRole(roleId, adminRoleId, name, custom, maxOneRoleMember, memberRemovalDisallowed);
     }
 }
 
@@ -245,7 +275,7 @@ contract AccessAdminTest is Test {
         vm.startPrank(accessAdminDeployer);
 
         // WHEN
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newRoleId, 
             adminRoleId, 
             newRoleName);
@@ -282,7 +312,7 @@ contract AccessAdminTest is Test {
         // WHEN
         uint256 maxOneRoleMember = 1; // max 1 member allowed
         bool memberRemovalDisallowed = true;
-        accessAdmin.createRole(
+        accessAdmin.createRoleExtended(
             newRoleId, 
             adminRoleId, 
             newRoleName,
@@ -364,7 +394,7 @@ contract AccessAdminTest is Test {
                 "AdminRole"));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             adminRole, 
             adminRole, 
             newName);
@@ -377,7 +407,7 @@ contract AccessAdminTest is Test {
                 "PublicRole"));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             publicRole, 
             adminRole, 
             newName);
@@ -390,7 +420,7 @@ contract AccessAdminTest is Test {
                 "ManagerRole"));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             managerRole, 
             adminRole, 
             newName);
@@ -406,7 +436,7 @@ contract AccessAdminTest is Test {
         string memory newRoleName = "NewRole";
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newRoleId, 
             adminRoleId, 
             newRoleName);
@@ -420,7 +450,7 @@ contract AccessAdminTest is Test {
                 newRoleName));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newRoleId, 
             adminRoleId, 
             "SomeOtherRule");
@@ -436,7 +466,7 @@ contract AccessAdminTest is Test {
                 newRoleId));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             otherRoleId, 
             adminRoleId, 
             newRoleName);
@@ -458,7 +488,7 @@ contract AccessAdminTest is Test {
                 newRoleId));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newRoleId, 
             adminRoleId, 
             "");
@@ -471,7 +501,7 @@ contract AccessAdminTest is Test {
                 missingAdminRoleId));
 
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newRoleId, 
             missingAdminRoleId, 
             newRoleName);
@@ -498,13 +528,13 @@ contract AccessAdminTest is Test {
         // WHEN
 
         // create admin role first
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newAdminRoleId, 
             adminRoleId, 
             newRoleAdminName);
 
         // then create actual role
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newRoleId, 
             newAdminRoleId, 
             newRoleName);
@@ -848,7 +878,7 @@ contract AccessAdminTest is Test {
                 IAccessManaged.AccessManagedUnauthorized.selector,
                 outsider));
 
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newRoleId, 
             adminRoleId, 
             newRoleName);
@@ -866,7 +896,7 @@ contract AccessAdminTest is Test {
 
         // WHEN
         vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newRoleId, 
             newRoleAdminRoleId, 
             newRoleName);
@@ -1173,13 +1203,13 @@ contract AccessAdminTest is Test {
         vm.startPrank(accessAdminDeployer);
 
         // create admin role first
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newAdminRoleId, 
             adminRoleId, 
             newAdminRoleName);
 
         // then create actual role
-        accessAdmin.createRoleSimple(
+        accessAdmin.createRole(
             newRoleId, 
             newAdminRoleId, 
             newRoleName);
@@ -1365,7 +1395,7 @@ contract AccessAdminTest is Test {
         assertEq(info.maxMemberCount, expectedMaxMemberCount, "unexpected maxMemberCount");
         assertEq(info.memberRemovalDisabled, expectedMemberRemovalDisabled, "unexpected memberRemovalDisabled");
         assertEq(info.disabledAt.toInt(), expectedDisabledAt.toInt(), "unexpected disabled at");
-        assertTrue(info.exists, "role does not exist");
+        assertTrue(info.createdAt.gtz(), "role does not exist");
 
         Str roleName = StrLib.toStr(expectedName);
         IAccessAdmin.RoleNameInfo memory nameInfo = aa.getRoleForName(roleName);
@@ -1395,7 +1425,7 @@ contract AccessAdminTest is Test {
         console.log("authorized functions", functions);
         for(uint256 i = 0; i < functions; i++) {
             (
-                IAccessAdmin.Function memory func,
+                IAccess.FunctionInfo memory func,
                 RoleId roleId
             ) = aa.getAuthorizedFunction(target, i);
             string memory role = aa.getRoleInfo(roleId).name.toString();

@@ -269,6 +269,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             libraries: { 
                 SelectorLib: libraries.selectorLibAddress,
                 StrLib: libraries.strLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }
         },

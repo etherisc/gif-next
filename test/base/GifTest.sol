@@ -25,7 +25,8 @@ import {Version} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 
-import {IAccessAdmin} from "../../contracts/shared/IAccessAdmin.sol";
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
@@ -799,7 +800,7 @@ contract GifTest is GifDeployer {
         if (functions > 0) {
             for(uint256 i = 0; i < functions; i++) {
                 (
-                    IAccessAdmin.Function memory func,
+                    IAccess.FunctionInfo memory func,
                     RoleId roleId
                 ) = aa.getAuthorizedFunction(target, i);
                 string memory role = aa.getRoleInfo(roleId).name.toString();

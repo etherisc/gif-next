@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
+import {IAccess} from "../authorization/IAccess.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {IServiceAuthorization} from "./IServiceAuthorization.sol";
 import {SelectorLib} from "../type/Selector.sol";
 import {StrLib} from "../type/String.sol";
+import {TimestampLib} from "../type/Timestamp.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 /// @dev Base contract for release specific service authorization contracts.
@@ -19,7 +20,7 @@ contract ServiceAuthorization
      ObjectType[] internal _serviceDomains;
      mapping(ObjectType domain => address service) internal _serviceAddress;
      mapping(ObjectType domain => ObjectType[] authorizedDomains) internal _authorizedDomains;
-     mapping(ObjectType domain => mapping(ObjectType authorizedDomain => IAccessAdmin.Function[] functions)) internal _authorizedFunctions;
+     mapping(ObjectType domain => mapping(ObjectType authorizedDomain => IAccess.FunctionInfo[] functions)) internal _authorizedFunctions;
 
      constructor(string memory commitHash) {
           _commitHash = commitHash;
@@ -51,7 +52,7 @@ contract ServiceAuthorization
           return _authorizedDomains[serviceDomain];
      }
 
-     function getAuthorizedFunctions(ObjectType serviceDomain, ObjectType authorizedDomain) external view returns(IAccessAdmin.Function[] memory authorizatedFunctions) {
+     function getAuthorizedFunctions(ObjectType serviceDomain, ObjectType authorizedDomain) external view returns(IAccess.FunctionInfo[] memory authorizatedFunctions) {
           return _authorizedFunctions[serviceDomain][authorizedDomain];
      }
 
@@ -70,18 +71,19 @@ contract ServiceAuthorization
 
      function _authorizeForService(ObjectType serviceDomain, ObjectType authorizedDomain)
           internal
-          returns (IAccessAdmin.Function[] storage authorizatedFunctions)
+          returns (IAccess.FunctionInfo[] storage authorizatedFunctions)
      {
           _authorizedDomains[serviceDomain].push(authorizedDomain);
           return _authorizedFunctions[serviceDomain][authorizedDomain];
      }
 
      /// @dev Use this method to authorize a specific function authorization
-     function _authorize(IAccessAdmin.Function[] storage functions, bytes4 selector, string memory name) internal {
+     function _authorize(IAccess.FunctionInfo[] storage functions, bytes4 selector, string memory name) internal {
           functions.push(
-               IAccessAdmin.Function({
+               IAccess.FunctionInfo({
                     selector: SelectorLib.toSelector(selector),
-                    name: StrLib.toStr(name)}));
+                    name: StrLib.toStr(name),
+                    createdAt: TimestampLib.blockTimestamp()}));
      }
 }
 
