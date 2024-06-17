@@ -141,7 +141,7 @@ contract GifDeployer is Test {
         dip = new Dip();
 
         // 2) deploy registry admin
-        registryAdmin = new RegistryAdmin();
+        registryAdmin = new RegistryAdmin(gifAdmin);
 
         // 3) deploy registry
         registry = new Registry(registryAdmin, gifAdmin);

@@ -31,7 +31,7 @@ export default buildModule("GifCore", (m) => {
     const dip = m.contract("Dip", []);
     
     // 2) deploy registry admin
-    const registryAdmin = m.contract("RegistryAdmin", [], 
+    const registryAdmin = m.contract("RegistryAdmin", [gifAdmin], 
         {
             libraries: {
                 ObjectTypeLib: objectTypeLib,

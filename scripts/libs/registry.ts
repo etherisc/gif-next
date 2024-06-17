@@ -81,7 +81,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const { address: registryAdminAddress, contract: registryAdminBaseContract } = await deployContract(
         "RegistryAdmin",
         owner, // GIF_ADMIN_ROLE
-        [], 
+        [owner], 
         {
             libraries: {
                 ObjectTypeLib: libraries.objectTypeLibAddress,
