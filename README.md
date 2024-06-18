@@ -77,6 +77,12 @@ Deployment via ignition
 ```bash
 npx hardhat ignition deploy ignition/modules/GifCore.ts
 hh ignition deploy ignition/modules/GifCore.ts
+
+hh ignition deploy ignition/modules/GifCore.ts --strategy create2
+hh ignition deploy ignition/modules/GifCore.ts --strategy create2 --verify
+
+npx hardhat ignition verify chain-84532 --network baseSepolia
+
 ```
 
 ```bash

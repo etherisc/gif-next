@@ -12,7 +12,7 @@ const config: HardhatUserConfig = {
   ignition: {
     strategyConfig: {
         create2: {
-            salt: "0x0000000000000000000000000000000000000000000000000000000000000004",
+            salt: "0x0000000000000000000000000000000000000000000000000000000000000006",
         }
     }
   },
@@ -44,6 +44,8 @@ const config: HardhatUserConfig = {
     polygonAmoy: {
       chainId: 80002,
       url: process.env.NETWORK_URL || 'https://rpc-amoy.polygon.technology/',
+      gas: 1000000000,
+      gasPrice: 1000000000,
       accounts: {
         mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
         count: 20,
@@ -56,6 +58,8 @@ const config: HardhatUserConfig = {
     baseSepolia: {
       chainId: 84532,
       url: process.env.NETWORK_URL || "https://sepolia.base.org",
+      gas: 200000000,
+      gasPrice: 2000000000,
       accounts: {
         mnemonic: process.env.WALLET_MNEMONIC || "candy maple cake sugar pudding cream honey rich smooth crumble sweet treat",
         count: 20,
