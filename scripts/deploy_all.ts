@@ -6,7 +6,7 @@ import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
 import { logger } from "./logger";
 import { InstanceAddresses, MASTER_INSTANCE_OWNER, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
-import { ServiceAddresses, authorizeServices, deployAndRegisterServices } from "./libs/services";
+import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
 
 
 async function main() {
@@ -208,16 +208,6 @@ function printAddresses(
     
     logger.info(addresses);
 }
-
-export type InstanceAddresses = {
-    ozAccessManagerAddress: AddressLike,
-    instanceAccessManagerAddress: AddressLike,
-    instanceReaderAddress: AddressLike,
-    instanceBundleManagerAddress: AddressLike,
-    instanceAddress: AddressLike,
-    instanceNftId: string,
-}
-
 
 main().catch((error) => {
     logger.error(error.stack);
