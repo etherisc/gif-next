@@ -123,7 +123,10 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 
     const { address: mathLibAddress } = await deployContract(
         "MathLib",
-        owner);
+        owner,
+        undefined,
+        {},
+        "contracts/type/UFixed.sol:MathLib");
     LIBRARY_ADDRESSES.set("MathLib", mathLibAddress);
 
     const { address: blockNumberLibAddress } = await deployContract(
@@ -180,7 +183,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         owner, 
         undefined,
         undefined,
-        "contracts/types/StateId.sol:StateIdLib");
+        "contracts/type/StateId.sol:StateIdLib");
     LIBRARY_ADDRESSES.set("StateIdLib", stateIdLibAddress);
 
     const { address: libNftIdSetAddress } = await deployContract(
