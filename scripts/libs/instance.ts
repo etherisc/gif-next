@@ -5,7 +5,7 @@ import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
 import { ServiceAddresses } from "./services";
-import { executeTx, getFieldFromLogs, getFieldFromTxRcptLogs } from "./transaction";
+import { executeTx, getFieldFromLogs, getFieldFromTxRcptLogs, getTxOpts } from "./transaction";
 
 export type InstanceAddresses = {
     accessManagerAddress: AddressLike,
@@ -38,7 +38,10 @@ export async function deployAndRegisterMasterInstance(
         }
     )
     const accessManager = accessManagerBaseContract as AccessManagerExtendedInitializeable;
-    await executeTx(() => accessManager.initialize(resolveAddress(owner)));
+    await executeTx(
+        () => accessManager.initialize(resolveAddress(owner), getTxOpts()),
+        "masterInstance accessManager.initialize"
+    );
 
     const { address: instanceAddress, contract: masterInstanceBaseContract } = await deployContract(
         "Instance",
@@ -53,7 +56,10 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const instance = masterInstanceBaseContract as Instance;
-    await executeTx(() => instance.initialize(accessManagerAddress, registry.registryAddress, resolveAddress(owner)));
+    await executeTx(
+        () => instance.initialize(accessManagerAddress, registry.registryAddress, resolveAddress(owner), getTxOpts()),
+        "masterInstance instance.initialize"
+    );
 
     const { address: instanceStoreAddress, contract: masterInstanceStoreContract } = await deployContract(
         "InstanceStore",
@@ -78,8 +84,14 @@ export async function deployAndRegisterMasterInstance(
     );
 
     const instanceStore = masterInstanceStoreContract as InstanceStore;
-    await executeTx(() => instanceStore.initialize(instanceAddress));
-    await executeTx(() => instance.setInstanceStore(instanceStore));
+    await executeTx(
+        () => instanceStore.initialize(instanceAddress, getTxOpts()),
+        "masterInstance instanceStore.initialize"
+    );
+    await executeTx(
+        () => instance.setInstanceStore(instanceStore, getTxOpts()),
+        "masterInstance instance.setInstanceStore"
+    );
 
     const { address: instanceReaderAddress, contract: masterReaderBaseContract } = await deployContract(
         "InstanceReader",
@@ -102,8 +114,14 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const instanceReader = masterReaderBaseContract as InstanceReader;
-    await executeTx(() => instanceReader.initialize(instanceAddress));
-    await executeTx(() => instance.setInstanceReader(instanceReaderAddress));
+    await executeTx(
+        () => instanceReader.initialize(instanceAddress, getTxOpts()),
+        "masterInstance instanceReader.initialize"
+    );
+    await executeTx(
+        () => instance.setInstanceReader(instanceReaderAddress, getTxOpts()),
+        "masterInstance instance.setInstanceReader"
+    );
 
     const {address: bundleManagerAddress, contract: bundleManagerBaseContrat} = await deployContract(
         "BundleManager",
@@ -117,8 +135,14 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const bundleManager = bundleManagerBaseContrat as BundleManager;
-    await executeTx(() => bundleManager.initialize(instanceAddress));
-    await executeTx(() => instance.setBundleManager(bundleManagerAddress));
+    await executeTx(
+        () => bundleManager.initialize(instanceAddress, getTxOpts()),
+        "masterInstance bundleManager.initialize"
+    );
+    await executeTx(
+        () => instance.setBundleManager(bundleManagerAddress, getTxOpts()),
+        "masterInstance instance.setBundleManager"
+    );
 
     const { address: instanceAdminAddress, contract: instanceAdminBaseContract } = await deployContract(
         "InstanceAdmin",
@@ -133,23 +157,44 @@ export async function deployAndRegisterMasterInstance(
     );
     const instanceAdmin = instanceAdminBaseContract as InstanceAdmin;
     // grant admin role to master instance admin
-    await executeTx(() => accessManager.grantRole(0, instanceAdminAddress, 0));
-    await executeTx(() => instanceAdmin.initialize(instanceAddress));
-    await executeTx(() => instance.setInstanceAdmin(instanceAdmin));
+    await executeTx(
+        () => accessManager.grantRole(0, instanceAdminAddress, 0, getTxOpts()),
+        "masterInstance accessManager.grantRole masterinstanceadmin"
+    );
+    await executeTx(
+        () => instanceAdmin.initialize(instanceAddress, getTxOpts()),
+        "masterInstance instanceAdmin.initialize"
+    );
+    await executeTx(
+        () => instance.setInstanceAdmin(instanceAdmin, getTxOpts()),
+        "masterInstance instance.setInstanceAdmin"
+    );
 
     logger.debug(`setting master addresses into instance service and registering master instance`);
-    const rcpt = await executeTx(() => services.instanceService.setAndRegisterMasterInstance(instanceAddress));
+    const rcpt = await executeTx(
+        () => services.instanceService.setAndRegisterMasterInstance(instanceAddress, getTxOpts()),
+        "masterInstance instanceService.setAndRegisterMasterInstance"
+    );
     // this extracts the ObjectInfo struct from the LogRegistration event
     const logRegistrationInfo = getFieldFromTxRcptLogs(rcpt!, registry.registry.interface, "LogRegistration", "nftId");
     // nftId is the first field of the ObjectInfo struct
     const masterInstanceNfdId = (logRegistrationInfo as unknown);
 
-    await executeTx(() => registry.chainNft.transferFrom(resolveAddress(owner), MASTER_INSTANCE_OWNER, BigInt(masterInstanceNfdId as string)));
+    await executeTx(
+        () => registry.chainNft.transferFrom(resolveAddress(owner), MASTER_INSTANCE_OWNER, BigInt(masterInstanceNfdId as string), getTxOpts()),
+        "masterInstance transfer ownership nft"
+    );
 
     // revoke admin role for master instance admin
-    await executeTx(() => accessManager.revokeRole(0, instanceAdminAddress));   
+    await executeTx(
+        () => accessManager.revokeRole(0, instanceAdminAddress, getTxOpts()),
+        "masterInstance accessManager.revokeRole masterinstanceadmin"
+    );   
     // revoke admin role for protocol owner
-    await executeTx(() => accessManager.renounceRole(0, owner));
+    await executeTx(
+        () => accessManager.renounceRole(0, owner, getTxOpts()),
+        "masterInstance accessManager.renounceRole owner"
+    );
 
     logger.info(`master instance registered - masterInstanceNftId: ${masterInstanceNfdId}`);
     logger.info(`master addresses set`);
@@ -172,7 +217,10 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
 
     const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(services.instanceServiceAddress), instanceOwner);
     logger.debug(`cloning instance ${masterInstance.instanceAddress} ...`);
-    const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
+    const cloneTx = await executeTx(
+        async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone(getTxOpts()),
+        "clonedInstance instanceService.createInstanceClone"
+    );
     const clonedOzAccessManagerAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedOzAccessManager");
     const clonedInstanceAdminAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAdmin");
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstance");
@@ -198,7 +246,7 @@ export async function cloneInstanceFromRegistry(registryAddress: AddressLike, in
     const registry = IRegistry__factory.connect(await resolveAddress(registryAddress), instanceOwner);
     const instanceServiceAddress = await registry.getServiceAddress("InstanceService", "3");
     const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(instanceServiceAddress), instanceOwner);
-    const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
+    const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone(getTxOpts()));
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAddress");
     const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceNftId");
     

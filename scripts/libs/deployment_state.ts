@@ -8,6 +8,7 @@ const DEPLOYMENT_STATE_FILENAME_SUFFIX = ".json";
 
 type State = {
     contracts: ContractState[];
+    transactions: TransactionState[];
 }
 
 export type ContractState = {
@@ -17,12 +18,17 @@ export type ContractState = {
     verified: boolean;
 }
 
+export type TransactionState = {
+    txId: string;
+    hash: string;
+}
+
 export class DeploymentState {
 
     private state: State;
 
     constructor(preloadedState: State | null) {
-        this.state = preloadedState ?? { contracts: [] };
+        this.state = preloadedState ?? { contracts: [], transactions: []};
     }
 
     public isDeployedAndVerified(contractName: string): boolean {
@@ -93,6 +99,27 @@ export class DeploymentState {
         this.persistState();
     }
 
+    public setTransactionId(txId: string, txHash: string): void {
+        const transactionState = this.state.transactions.find(t => t.txId === txId);
+        if (transactionState !== undefined) {
+            throw new Error(`Transaction state already exists for ${txId}`);
+        }
+        this.state.transactions.push({ txId: txId, hash: txHash });
+        this.persistState();
+    }
+
+    public hasTransactionId(txId: string): boolean {
+        return this.state.transactions.find(t => t.txId === txId) !== undefined;
+    }
+
+    public getTransactionHash(txId: string): string {
+        const transactionState = this.state.transactions.find(t => t.txId === txId);
+        if (transactionState === undefined) {
+            throw new Error(`Transaction state not found for ${txId}`);
+        }
+        return transactionState.hash;
+    }
+
     private persistState() {
         const json = JSON.stringify(this.state);
         fs.writeFileSync(deploymentFilename(), json);
@@ -106,4 +133,4 @@ function deploymentFilename(): string {
 const deploymentStateFromFile = fs.existsSync(deploymentFilename()) ? JSON.parse(fs.readFileSync(deploymentFilename()).toString()) : null;
 export const deploymentState = new DeploymentState(deploymentStateFromFile);
 
-export const isResumeableDeployment = process.env.RESUMEABLE_DEPLOYMENT === "true";
+export const isResumeableDeployment = process.env.RESUMEABLE_DEPLOYMENT?.toLowerCase() === "true";

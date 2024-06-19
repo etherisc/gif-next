@@ -15,6 +15,7 @@ import {
 import { logger } from "../logger";
 import { deployContract, verifyContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
+import { executeTx, getTxOpts } from "./transaction";
 
 
 export type RegistryAddresses = {
@@ -216,14 +217,20 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const staking = Staking__factory.connect(stakingAddress, owner);
     const stakingNftId = await registry["getNftId(address)"](stakingAddress);
 
-    console.log("stakingReader.initialize");
-    await stakingReader.initialize(stakingAddress, stakingStoreAddress);
+    await executeTx(
+        async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress, getTxOpts()),
+        "stakingReader.initialize"
+    );
 
-    console.log("stakingStore.initialize");
-    await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress);
+    await executeTx(
+        async () => await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress, getTxOpts()),
+        "registry.initialize"
+    );
 
-    console.log("stakingManager.initialize");
-    await registryAdmin.completeSetup(registry, owner, owner);
+    await executeTx(
+        async () => await registryAdmin.completeSetup(registry, owner, owner, getTxOpts()),
+        "registryAdmin.completeSetup"
+    );
 
     await verifyRegistryComponents(
         registryAddress, 

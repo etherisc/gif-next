@@ -1,4 +1,9 @@
 import { Interface, TransactionReceipt, ethers } from "ethers";
+import { GAS_PRICE } from "./constants";
+import { deploymentState, isResumeableDeployment } from "./deployment_state";
+import { ethers as hhEthers } from "hardhat";
+import { logger } from "../logger";
+import { log } from "winston";
 
 /**
  * Extract a field from the logs of a transaction. 
@@ -33,9 +38,39 @@ export function getFieldFromLogs(logs: readonly ethers.Log[], abiInterface: Inte
  * Execute a transaction and wait for it to be mined. Then check if the transaction was successful. 
  * @throws TransactionFailedException if the transaction failed
  */ 
-export async function executeTx(txFunc: () => Promise<ethers.ContractTransactionResponse>): Promise<ethers.ContractTransactionReceipt> {
+export async function executeTx(
+    txFunc: () => Promise<ethers.ContractTransactionResponse>, 
+    txId: string|null = null,
+): Promise<ethers.TransactionReceipt> {
+    if (txId !== null) {
+        logger.info(`executing tx with id: ${txId}`);
+    }
+
+    if (isResumeableDeployment && txId !== null) {
+        if (deploymentState.hasTransactionId(txId)) {
+            const txHash = deploymentState.getTransactionHash(txId);
+            const transaction = await hhEthers.provider.getTransaction(txHash)!;
+            if (transaction === null) {
+                throw new Error(`Transaction not found: ${txHash}`);
+            }
+            logger.info(`Resuming transaction: ${txHash}`);
+            const tx = await transaction.wait();
+            const rcpt = (await hhEthers.provider.getTransactionReceipt(transaction.hash))!;
+            if (tx === null) {
+                throw new TransactionFailedException(null);
+            }
+            logger.debug(`tx mined: ${tx.hash} status: ${tx.status}`)
+            if (tx.status !== 1) {
+                throw new TransactionFailedException(null);
+            }
+            return rcpt;
+        }
+    }
+
     const txResp = await txFunc();
+    deploymentState.setTransactionId(txId!, txResp.hash);
     const tx = await txResp.wait();
+    logger.debug(`tx mined. hash: ${tx?.hash} status: ${tx?.status}`);
     if (tx === null) {
         throw new TransactionFailedException(null);
     }
@@ -57,3 +92,12 @@ export class TransactionFailedException extends Error {
     }
 }
 
+export function getTxOpts() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const opts = {} as any;
+    if (GAS_PRICE !== undefined) {
+        opts['gasPrice'] = GAS_PRICE;
+    }
+
+    return opts;
+}
