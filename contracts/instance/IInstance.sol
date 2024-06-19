@@ -22,7 +22,7 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
-import {InstanceAdmin} from "./InstanceAdmin.sol";
+import {InstanceAdminNew} from "./InstanceAdminNew.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
@@ -81,7 +81,7 @@ interface IInstance is
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleManager() external view returns (BundleManager);
-    function getInstanceAdmin() external view returns (InstanceAdmin);
+    function getInstanceAdmin() external view returns (InstanceAdminNew);
     function getInstanceStore() external view returns (InstanceStore);
     function getInstanceAccessManager() external view returns (AccessManagerExtendedInitializeable);
 }

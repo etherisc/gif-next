@@ -26,7 +26,9 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
-import {InstanceAdmin} from "./InstanceAdmin.sol";
+// TODO cleanup
+// import {InstanceAdmin} from "./InstanceAdmin.sol";
+import {InstanceAdminNew} from "./InstanceAdminNew.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 
@@ -54,7 +56,7 @@ contract Instance is
     bool private _initialized;
 
     IInstanceService internal _instanceService;
-    InstanceAdmin internal _instanceAdmin;
+    InstanceAdminNew internal _instanceAdmin;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
     InstanceStore internal _instanceStore;
@@ -66,18 +68,44 @@ contract Instance is
         _;
     }
 
-    function initialize(address authority, address registryAddress, address initialOwner) 
+    function initialize(
+        InstanceAdminNew instanceAdmin, 
+        InstanceStore instanceStore,
+        BundleManager bundleManager,
+        InstanceReader instanceReader,
+        IRegistry registry, 
+        address initialOwner
+    ) 
         external 
         initializer()
     {
-        if(authority == address(0)) {
+        _instanceAdmin = instanceAdmin;
+        if(_instanceAdmin.authority() == address(0)) {
+            // TODO rename error
             revert ErrorInstanceInstanceAdminZero();
         }
 
-        __AccessManaged_init(authority);
-        
-        IRegistry registry = IRegistry(registryAddress);
-        initializeRegisterable(registryAddress, registry.getNftId(), INSTANCE(), true, initialOwner, "");
+        // set authority to instance admin authority
+        __AccessManaged_init(_instanceAdmin.authority());
+
+        // setup instance object info
+        initializeRegisterable(
+            address(registry), 
+            registry.getNftId(), 
+            INSTANCE(), 
+            true, 
+            initialOwner, 
+            "");
+
+        // store instance supporting contracts
+        _instanceStore = instanceStore;
+        _bundleManager = bundleManager;
+        _instanceReader = instanceReader;
+
+        // initialize instance supporting contracts
+        _instanceStore.initialize();
+        _bundleManager.initialize();
+        _instanceReader.initialize();
 
         _instanceService = IInstanceService(
             getRegistry().getServiceAddress(
@@ -127,21 +155,23 @@ contract Instance is
         onlyOwner()
         returns (RoleId roleId, RoleId admin)
     {
-        (roleId, admin) = _instanceAdmin.createRole(roleName, adminName);
+        // TODO refactor
+        // (roleId, admin) = _instanceAdmin.createRole(roleName, adminName);
     }
 
     function grantRole(RoleId roleId, address account) 
         external 
         onlyOwner()
     {
-        AccessManagerExtendedInitializeable(authority()).grantRole(roleId.toInt(), account, 0);
+        _instanceAdmin.grantRole(roleId, account);
     }
 
     function revokeRole(RoleId roleId, address account) 
         external 
         onlyOwner()
     {
-        AccessManagerExtendedInitializeable(authority()).revokeRole(roleId.toInt(), account);
+        // TODO refactor
+        // AccessManagerExtendedInitializeable(authority()).revokeRole(roleId.toInt(), account);
     }
 
     //--- Targets ------------------------------------------------------------//
@@ -150,7 +180,8 @@ contract Instance is
         external 
         onlyOwner()
     {
-        _instanceAdmin.createTarget(target, name);
+        // TODO refactor
+        // _instanceAdmin.createTarget(target, name);
     }
 
     function setTargetFunctionRole(
@@ -161,25 +192,29 @@ contract Instance is
         external 
         onlyOwner()
     {
-        _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
+        // TODO refactor
+        // _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
     }
 
     function setTargetLocked(address target, bool locked)
         external 
         onlyOwner()
     {
-        _instanceAdmin.setTargetLockedByInstance(target, locked);
+        // TODO refactor
+        // _instanceAdmin.setTargetLockedByInstance(target, locked);
     }
 
     //--- ITransferInterceptor ----------------------------------------------//
 
     // TODO interception of child components nfts
     function nftMint(address to, uint256 tokenId) external onlyChainNft {
-        _instanceAdmin.transferInstanceOwnerRole(address(0), to);
+        // TODO refactor
+        // _instanceAdmin.transferInstanceOwnerRole(address(0), to);
     }
 
     function nftTransferFrom(address from, address to, uint256 tokenId) external onlyChainNft {
-        _instanceAdmin.transferInstanceOwnerRole(from, to);
+        // TODO refactor
+        // _instanceAdmin.transferInstanceOwnerRole(from, to);
     }
 
     //function nftBurn(address from, uint256 tokenId) external onlyChainNft {
@@ -188,15 +223,16 @@ contract Instance is
 
     //--- initial setup functions -------------------------------------------//
 
-    function setInstanceAdmin(InstanceAdmin accessManager) external restricted {
-        if(address(_instanceAdmin) != address(0)) {
-            revert ErrorInstanceInstanceAdminAlreadySet(address(_instanceAdmin));
-        }
-        if(accessManager.authority() != authority()) {
-            revert ErrorInstanceInstanceAdminAuthorityMismatch(authority());
-        }
-        _instanceAdmin = accessManager;      
-    }
+    // TODO cleanup
+    // function setInstanceAdmin(InstanceAdmin accessManager) external restricted {
+    //     if(address(_instanceAdmin) != address(0)) {
+    //         revert ErrorInstanceInstanceAdminAlreadySet(address(_instanceAdmin));
+    //     }
+    //     if(accessManager.authority() != authority()) {
+    //         revert ErrorInstanceInstanceAdminAuthorityMismatch(authority());
+    //     }
+    //     _instanceAdmin = accessManager;      
+    // }
     
     function setBundleManager(BundleManager bundleManager) external restricted() {
         if(address(_bundleManager) != address(0)) {
@@ -227,6 +263,7 @@ contract Instance is
         }
 
         _instanceReader = instanceReader;
+        _instanceReader.initialize();
     }
 
     //--- external view functions -------------------------------------------//
@@ -239,7 +276,7 @@ contract Instance is
         return _bundleManager;
     }
 
-    function getInstanceAdmin() external view returns (InstanceAdmin) {
+    function getInstanceAdmin() external view returns (InstanceAdminNew) {
         return _instanceAdmin;
     }
 

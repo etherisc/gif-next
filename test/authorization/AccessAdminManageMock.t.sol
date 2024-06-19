@@ -8,6 +8,7 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
 import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
@@ -16,45 +17,6 @@ import {Selector, SelectorLib} from "../../contracts/type/Selector.sol";
 import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
-
-contract AccessAdminForTesting is AccessAdmin {
-
-    constructor() {
-        // super constructor called implicitly
-        // grant manager role access to createRoleSimple
-        FunctionInfo[] memory functions = new FunctionInfo[](2);
-        functions[0] = toFunction(AccessAdminForTesting.createTarget.selector, "createTarget");
-        functions[1] = toFunction(AccessAdminForTesting.createRole.selector, "createRole");
-        _authorizeTargetFunctions(address(this), _managerRoleId, functions);
-
-        // grant manger role to deployer
-        _grantRoleToAccount(_managerRoleId, _deployer);
-    }
-
-    function createTarget(
-        address target, 
-        string memory name
-    )
-        external
-        virtual
-        restricted()
-    {
-        bool custom = true;
-        _createTarget(target, name, custom);
-    }
-
-    function createRole(
-        RoleId roleId, 
-        RoleId adminRoleId, 
-        string memory name
-    )
-        external
-        restricted()
-    {
-        bool custom = false;
-        _createRole(roleId, adminRoleId, name, custom, type(uint256).max, false);
-    }
-}
 
 contract AccessAdminManageMockTest is Test {
 
@@ -346,7 +308,7 @@ contract AccessAdminManageMockTest is Test {
     }
 
     function _checkAccessAdmin(
-        AccessAdmin aa, 
+        AccessAdminForTesting aa, 
         address expectedDeployer
     )
         internal

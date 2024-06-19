@@ -15,6 +15,12 @@ contract ModuleAuthorization
 {
 
      Str[] internal _targets;
+     ObjectType[] internal _serviceDomains;
+
+     mapping(ObjectType domain => Str target) internal _serviceTarget;
+     mapping(Str target => RoleId roleid) internal _targetRole;
+     mapping(Str target => bool exists) internal _targetExists;
+
      RoleId[] internal _roles;
      mapping(RoleId role => Str name) internal _roleName;
 
@@ -22,16 +28,12 @@ contract ModuleAuthorization
      mapping(Str target => mapping(RoleId authorizedRole => IAccess.FunctionInfo[] functions)) internal _authorizedFunctions;
 
      constructor() {
-          _setupTargets();
           _setupRoles();
+          _setupTargets();
           _setupTargetAuthorizations();
      }
 
      function getRelease() public virtual view returns(VersionPart release) { }
-
-     function getTargets() external view returns(Str[] memory targets) {
-          return _targets;
-     }
 
      function getRoles() external view returns(RoleId[] memory roles) {
           return _roles;
@@ -39,6 +41,30 @@ contract ModuleAuthorization
 
      function getRoleName(RoleId roleId) external view returns (Str name) {
           return _roleName[roleId];
+     }
+
+     function roleExists(RoleId roleId) public view returns(bool exists) {
+          return _roleName[roleId].length() > 0;
+     }
+
+     function getTargets() external view returns(Str[] memory targets) {
+          return _targets;
+     }
+
+     function getServiceDomains() external view returns(ObjectType[] memory serviceDomains) {
+          return _serviceDomains;
+     }
+
+     function getServiceTarget(ObjectType serviceDomain) external view returns(Str serviceTarget) {
+          return _serviceTarget[serviceDomain];
+     }
+
+     function getTargetRole(Str target) external view returns(RoleId roleId) {
+          return _targetRole[target];
+     }
+
+     function targetExists(Str target) external view returns(bool exists) {
+          return _targetExists[target];
      }
 
      function getAuthorizedRoles(Str target) external view returns(RoleId[] memory roleIds) {
@@ -58,11 +84,7 @@ contract ModuleAuthorization
      /// @dev Overwrite this function for a specific realease.
      function _setupTargetAuthorizations() internal virtual {}
 
-     /// @dev Use this method to to add an authorized target.
-     function _addTarget(string memory name) internal {
-          _targets.push(StrLib.toStr(name));
-     }
-
+     /// @dev Add the versioned service role for the specified service domain
      function _addServiceRole(ObjectType serviceDomain) internal {
           _addRole(
                _getServiceRoleId(serviceDomain),
@@ -76,6 +98,62 @@ contract ModuleAuthorization
      function _addRole(RoleId roleId, string memory name) internal {
           _roles.push(roleId);
           _roleName[roleId] = StrLib.toStr(name);
+     }
+
+     /// @dev Add the service target role for the specified service domain
+     function _addServiceTargetWithRole(ObjectType serviceDomain) internal {
+          // add service domain
+          _serviceDomains.push(serviceDomain);
+
+          // get versioned target name
+          string memory serviceTargetName = ObjectTypeLib.toVersionedName(
+                    ObjectTypeLib.toName(serviceDomain), 
+                    "Service", 
+                    getRelease().toInt());
+
+          _serviceTarget[serviceDomain] = StrLib.toStr(serviceTargetName);
+
+          RoleId serviceRoleId = _getServiceRoleId(serviceDomain);
+          string memory serviceRoleName = ObjectTypeLib.toVersionedName(
+                    ObjectTypeLib.toName(serviceDomain), 
+                    "ServiceRole", 
+                    getRelease().toInt());
+
+          _addTargetWithRole(
+               serviceTargetName,
+               serviceRoleId,
+               serviceRoleName);
+     }
+
+     /// @dev Use this method to to add an authorized target together with its target role.
+     function _addTargetWithRole(
+          string memory targetName, 
+          RoleId roleId, 
+          string memory roleName
+     )
+          internal
+     {
+          // add target
+          Str target = StrLib.toStr(targetName);
+          _targets.push(target);
+
+          _targetExists[target] = true;
+
+          // link role to target if defined
+          if (roleId != RoleIdLib.zero()) {
+               // add role if new
+               if (!roleExists(roleId)) {
+                    _addRole(roleId, roleName);
+               }
+
+               // link target to role
+               _targetRole[target] = roleId;
+          }
+     }
+
+     /// @dev Use this method to to add an authorized target.
+     function _addTarget(string memory name) internal {
+          _addTargetWithRole(name, RoleIdLib.zero(), "");
      }
 
      /// @dev Use this method to authorize the specified role to access the target.

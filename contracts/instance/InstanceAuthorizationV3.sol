@@ -2,12 +2,17 @@
 pragma solidity ^0.8.20;
 
 import {
-     ALL, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE
+     PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, APPLICATION, POLICY, CLAIM, BUNDLE
 } from "../../contracts/type/ObjectType.sol";
 
+import {
+     DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE
+} from "../../contracts/type/RoleId.sol";
+
 import {IAccess} from "../authorization/IAccess.sol";
+import {BundleManager} from "../instance/BundleManager.sol"; 
 import {Instance} from "../instance/Instance.sol";
-import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
+import {InstanceAdminNew} from "../instance/InstanceAdminNew.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {ModuleAuthorization} from "../authorization/ModuleAuthorization.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
@@ -24,37 +29,53 @@ contract InstanceAuthorizationV3
      string public constant BUNDLE_MANAGER_TARGET_NAME = "BundleManager";
 
      string public constant INSTANCE_ROLE_NAME = "InstanceRole";
+     string public constant DISTRIBUTION_OWNER_ROLE_NAME = "DistributionOwnerRole";
+     string public constant ORACLE_OWNER_ROLE_NAME = "OracleOwnerRole";
+     string public constant POOL_OWNER_ROLE_NAME = "PoolOwnerRole";
+     string public constant PRODUCT_OWNER_ROLE_NAME = "ProductOwnerRole";
 
      function getRelease() public override view returns(VersionPart release) {
           return VersionPartLib.toVersionPart(GIF_VERSION);
      }
 
-     function _setupTargets()
-          internal
-          override
-     {
-          _addTarget(INSTANCE_TARGET_NAME);
-          _addTarget(INSTANCE_STORE_TARGET_NAME);
-          _addTarget(INSTANCE_ADMIN_TARGET_NAME);
-          _addTarget(BUNDLE_MANAGER_TARGET_NAME);
-     }
 
      function _setupRoles()
           internal
           override
      {
-          _addRole(_getTargetRoleId(INSTANCE()), INSTANCE_ROLE_NAME);
+          _addRole(DISTRIBUTION_OWNER_ROLE(), DISTRIBUTION_OWNER_ROLE_NAME);
+          _addRole(ORACLE_OWNER_ROLE(), ORACLE_OWNER_ROLE_NAME);
+          _addRole(POOL_OWNER_ROLE(), POOL_OWNER_ROLE_NAME);
+          _addRole(PRODUCT_OWNER_ROLE(), PRODUCT_OWNER_ROLE_NAME);
+     }
 
-          _addServiceRole(INSTANCE());
-          _addServiceRole(COMPONENT());
-          _addServiceRole(DISTRIBUTION());
-          _addServiceRole(ORACLE());
-          _addServiceRole(POOL());
-          _addServiceRole(BUNDLE());
-          _addServiceRole(PRODUCT());
-          _addServiceRole(APPLICATION());
-          _addServiceRole(POLICY());
-          _addServiceRole(CLAIM());
+
+     function _setupTargets()
+          internal
+          override
+     {
+          // instance target
+          _addTargetWithRole(
+               INSTANCE_TARGET_NAME, 
+               _getTargetRoleId(INSTANCE()),
+               INSTANCE_ROLE_NAME);
+
+          // instance supporting targets
+          _addTarget(INSTANCE_STORE_TARGET_NAME);
+          _addTarget(INSTANCE_ADMIN_TARGET_NAME);
+          _addTarget(BUNDLE_MANAGER_TARGET_NAME);
+
+          // service targets relevant to instance
+          _addServiceTargetWithRole(INSTANCE());
+          _addServiceTargetWithRole(COMPONENT());
+          _addServiceTargetWithRole(DISTRIBUTION());
+          _addServiceTargetWithRole(ORACLE());
+          _addServiceTargetWithRole(POOL());
+          _addServiceTargetWithRole(BUNDLE());
+          _addServiceTargetWithRole(PRODUCT());
+          _addServiceTargetWithRole(APPLICATION());
+          _addServiceTargetWithRole(POLICY());
+          _addServiceTargetWithRole(CLAIM());
      }
 
 
@@ -65,6 +86,22 @@ contract InstanceAuthorizationV3
           _setupInstanceAuthorization();
           _setupInstanceAdminAuthorization();
           _setupInstanceStoreAuthorization();
+          _setupBundleManagerAuthorization();
+     }
+
+
+     function _setupBundleManagerAuthorization()
+          internal
+     {
+          IAccess.FunctionInfo[] storage functions;
+
+          // authorize bundle service role
+          functions = _authorizeForTarget(BUNDLE_MANAGER_TARGET_NAME, _getServiceRoleId(BUNDLE()));
+          _authorize(functions, BundleManager.linkPolicy.selector, "linkPolicy");
+          _authorize(functions, BundleManager.unlinkPolicy.selector, "unlinkPolicy");
+          _authorize(functions, BundleManager.add.selector, "add");
+          _authorize(functions, BundleManager.lock.selector, "lock");
+          _authorize(functions, BundleManager.unlock.selector, "unlock");
      }
 
 
@@ -73,12 +110,13 @@ contract InstanceAuthorizationV3
      {
           IAccess.FunctionInfo[] storage functions;
 
+          // TODO cleanup
           // authorize instance service role
-          functions = _authorizeForTarget( INSTANCE_TARGET_NAME, _getServiceRoleId(INSTANCE()));
-          _authorize(functions, Instance.setInstanceAdmin.selector, "setInstanceAdmin");
-          _authorize(functions, Instance.setInstanceStore.selector, "setInstanceStore");
-          _authorize(functions, Instance.setBundleManager.selector, "setBundleManager");
-          _authorize(functions, Instance.setInstanceReader.selector, "setInstanceReader");
+          // functions = _authorizeForTarget( INSTANCE_TARGET_NAME, _getServiceRoleId(INSTANCE()));
+          // _authorize(functions, Instance.setInstanceAdmin.selector, "setInstanceAdmin");
+          // _authorize(functions, Instance.setInstanceStore.selector, "setInstanceStore");
+          // _authorize(functions, Instance.setBundleManager.selector, "setBundleManager");
+          // _authorize(functions, Instance.setInstanceReader.selector, "setInstanceReader");
      }
 
 
@@ -89,16 +127,17 @@ contract InstanceAuthorizationV3
 
           // authorize instance role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _getTargetRoleId(INSTANCE()));
-          _authorize(functions, InstanceAdmin.createRole.selector, "createRole");
-          _authorize(functions, InstanceAdmin.createTarget.selector, "createTarget");
-          _authorize(functions, InstanceAdmin.setTargetFunctionRoleByInstance.selector, "setTargetFunctionRoleByInstance");
-          _authorize(functions, InstanceAdmin.setTargetLockedByInstance.selector, "setTargetLockedByInstance");
+          // _authorize(functions, InstanceAdminNew.createRole.selector, "createRole");
+          _authorize(functions, InstanceAdminNew.grantRole.selector, "grantRole");
+          // _authorize(functions, InstanceAdminNew.createTarget.selector, "createTarget");
+          // _authorize(functions, InstanceAdminNew.setTargetFunctionRoleByInstance.selector, "setTargetFunctionRoleByInstance");
+          // _authorize(functions, InstanceAdminNew.setTargetLockedByInstance.selector, "setTargetLockedByInstance");
 
           // authorize instance service role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _getServiceRoleId(INSTANCE()));
-          _authorize(functions, InstanceAdmin.createGifTarget.selector, "createGifTarget");
-          _authorize(functions, InstanceAdmin.setTargetLockedByService.selector, "setTargetLockedByService");
-          _authorize(functions, InstanceAdmin.setTargetFunctionRoleByService.selector, "setTargetFunctionRoleByService");
+          // _authorize(functions, InstanceAdminNew.createGifTarget.selector, "createGifTarget");
+          // _authorize(functions, InstanceAdminNew.setTargetLockedByService.selector, "setTargetLockedByService");
+          // _authorize(functions, InstanceAdminNew.setTargetFunctionRoleByService.selector, "setTargetFunctionRoleByService");
      }
 
 

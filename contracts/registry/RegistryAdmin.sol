@@ -74,7 +74,7 @@ contract RegistryAdmin is
             IStaking(_staking).getStakingStore());
 
         // at this moment all registry contracts are deployed and fully intialized
-        _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME);
+        _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME, true, false);
 
         _setupGifAdminRole(gifAdmin);
         _setupGifManagerRole(gifManager);
@@ -123,7 +123,9 @@ contract RegistryAdmin is
 
         _createTarget(
             address(service), 
-            serviceTargetName);
+            serviceTargetName,
+            true,
+            false);
 
         // create service role
         RoleId roleId = RoleIdLib.roleForTypeAndVersion(
@@ -251,7 +253,7 @@ contract RegistryAdmin is
 
 
     function _setupReleaseManager() private {
-        _createTarget(_releaseManager, RELEASE_MANAGER_TARGET_NAME);
+        _createTarget(_releaseManager, RELEASE_MANAGER_TARGET_NAME, true, false);
 
         bool isCustom = false;
         RoleId releaseManagerRoleId = RoleIdLib.roleForType(RELEASE());
@@ -267,8 +269,8 @@ contract RegistryAdmin is
 
 
     function _setupStaking() private {
-        _createTarget(_staking, STAKING_TARGET_NAME);
-        _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME);
+        _createTarget(_staking, STAKING_TARGET_NAME, true, false);
+        _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME, true, false);
 
         // staking function authorization for staking service
         bool isCustom = false;

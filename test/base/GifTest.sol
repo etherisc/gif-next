@@ -80,7 +80,10 @@ import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 
-import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
+// TODO cleanup
+// import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
+import {InstanceAdminNew} from "../../contracts/instance/InstanceAdminNew.sol";
+import {InstanceAuthorizationV3} from "../../contracts/instance/InstanceAuthorizationV3.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
@@ -125,60 +128,11 @@ contract GifTest is GifDeployer {
     StakingReader public stakingReader;
     NftId public stakingNftId;
 
-    // RegistryServiceManager public registryServiceManager;
-    // RegistryService public registryService;
-    // NftId public registryServiceNftId;
-
-    // StakingServiceManager public stakingServiceManager;
-    // StakingService public stakingService;
-    // NftId public stakingServiceNftId;
-
-    // InstanceServiceManager public instanceServiceManager;
-    // InstanceService public instanceService;
-    // NftId public instanceServiceNftId;
-
-    // ComponentServiceManager public componentServiceManager;
-    // ComponentService public componentService;
-    // NftId public componentServiceNftId;
-
-    // DistributionServiceManager public distributionServiceManager;
-    // DistributionService public distributionService;
-    // NftId public distributionServiceNftId;
-
-    // OracleServiceManager public oracleServiceManager;
-    // OracleService public oracleService;
-    // NftId public oracleServiceNftId;
-
-    // ProductServiceManager public productServiceManager;
-    // ProductService public productService;
-    // NftId public productServiceNftId;
-
-    // PoolServiceManager public poolServiceManager;
-    // PoolService public poolService;
-    // NftId public poolServiceNftId;
-
-    // ApplicationServiceManager public applicationServiceManager;
-    // ApplicationService public applicationService;
-    // NftId public applicationServiceNftId;
-
-    // PolicyServiceManager public policyServiceManager;
-    // PolicyService public policyService;
-    // NftId public policyServiceNftId;
-
-    // ClaimServiceManager public claimServiceManager;
-    // ClaimService public claimService;
-    // NftId public claimServiceNftId;
-
-    // PricingService public pricingService;
-    // PricingServiceManager public pricingServiceManager;
-    // NftId public pricingServiceNftId;
-
-    // BundleServiceManager public bundleServiceManager;
-    // BundleService public bundleService;
-    // NftId public bundleServiceNftId;
-
     AccessManagerExtendedInitializeable public masterInstanceAccessManager;
-    InstanceAdmin public masterInstanceAdmin;
+    // TODO cleanup
+    // InstanceAdmin public masterInstanceAdmin;
+    InstanceAdminNew public masterInstanceAdmin;
+    InstanceAuthorizationV3 public instanceAuthorizationV3;
     BundleManager public masterBundleManager;
     InstanceStore public masterInstanceStore;
     Instance public masterInstance;
@@ -186,7 +140,8 @@ contract GifTest is GifDeployer {
     InstanceReader public masterInstanceReader;
 
     AccessManagerExtendedInitializeable public instanceAccessManager;
-    InstanceAdmin public instanceAdmin;
+    // InstanceAdmin public instanceAdmin;
+    InstanceAdminNew public instanceAdmin;
     BundleManager public instanceBundleManager;
     InstanceStore public instanceStore;
     Instance public instance;
@@ -274,12 +229,15 @@ contract GifTest is GifDeployer {
 
         // TODO move to end of this function once instance reg is fixed
         // print full authz setup
-        _printAuthz();
+        _printAuthz(registryAdmin, "registry");
+        _printAuthz(masterInstanceAdmin, "masterInstance");
 
         // create an instance (cloned from master instance)
         vm.startPrank(instanceOwner);
         _createInstance();
         vm.stopPrank();
+
+        _printAuthz(instance.getInstanceAdmin(), "instance");
     }
 
     /// @dev Helper function to assert that a given NftId is equal to the expected NftId.
@@ -388,45 +346,58 @@ contract GifTest is GifDeployer {
 
     function _deployMasterInstance() internal 
     {
-        masterInstanceAccessManager = new AccessManagerExtendedInitializeable();
-        // grants registryOwner ADMIN_ROLE
-        masterInstanceAccessManager.initialize(registryOwner);
-        
+        // TODO cleanup
+        // masterInstanceAccessManager = new AccessManagerExtendedInitializeable();
+        // // grants registryOwner ADMIN_ROLE
+        // masterInstanceAccessManager.initialize(registryOwner);
+                // masterInstanceAdmin.initialize(instanceAuthorizationV3);
+        // masterInstanceAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin), 0);
+
+        // create instance supporting contracts
+        instanceAuthorizationV3 = new InstanceAuthorizationV3();
+        masterInstanceAdmin = new InstanceAdminNew(instanceAuthorizationV3);
+        masterInstanceStore = new InstanceStore();
+        masterBundleManager = new BundleManager();
+        masterInstanceReader = new InstanceReader();
+
+        // crate instance
         masterInstance = new Instance();
         masterInstance.initialize(
-            address(masterInstanceAccessManager),
-            address(registry),
+            masterInstanceAdmin,
+            masterInstanceStore,
+            masterBundleManager,
+            masterInstanceReader,
+            registry,
             registryOwner);
 
         // MUST be initialized and set before instance reader
-        masterInstanceStore = new InstanceStore();
-        masterInstanceStore.initialize(address(masterInstance));
-        masterInstance.setInstanceStore(masterInstanceStore);
-        assert(masterInstance.getInstanceStore() == masterInstanceStore);
+        // masterInstanceStore = new InstanceStore();
+        // masterInstanceStore.initialize(address(masterInstance));
+        // masterInstance.setInstanceStore(masterInstanceStore);
+        // assert(masterInstance.getInstanceStore() == masterInstanceStore);
 
-        masterInstanceReader = new InstanceReader();
-        masterInstanceReader.initialize(address(masterInstance));
-        masterInstance.setInstanceReader(masterInstanceReader);
+        // masterInstanceReader = new InstanceReader();
+        // masterInstanceReader.initialize(address(masterInstance));
+        // masterInstance.setInstanceReader(masterInstanceReader);
         
-        masterBundleManager = new BundleManager();
-        masterBundleManager.initialize(address(masterInstance));
-        masterInstance.setBundleManager(masterBundleManager);
-
-        masterInstanceAdmin = new InstanceAdmin();
-        masterInstanceAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin), 0);
-        masterInstanceAdmin.initialize(address(masterInstance));
-        masterInstance.setInstanceAdmin(masterInstanceAdmin);
+        // masterBundleManager = new BundleManager();
+        // masterBundleManager.initialize(address(masterInstance));
+        // masterInstance.setBundleManager(masterBundleManager);
 
         // sets master instance address in instance service
         // instance service is now ready to create cloned instances
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
+        // MUST be set after instance is set up and registered
+        masterInstanceAdmin.initializeInstanceAuthorization(address(masterInstance));
+
         // lock master instance nft
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 
-        // revoke ADMIN_ROLE from all members
-        masterInstanceAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin));
-        masterInstanceAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
+        // TODO cleanup
+        // // revoke ADMIN_ROLE from all members
+        // masterInstanceAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin));
+        // masterInstanceAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
@@ -597,7 +568,7 @@ contract GifTest is GifDeployer {
 
     function _prepareProduct(bool createBundle) internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
+        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();
 
         _prepareDistributionAndPool();
@@ -647,9 +618,9 @@ contract GifTest is GifDeployer {
 
         // grant component owner roles
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(ORACLE_OWNER_ROLE().toInt(), oracleOwner, 0);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instance.grantRole(ORACLE_OWNER_ROLE(), oracleOwner);
+        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
         vm.stopPrank();
 
         // deploy and register distribution
@@ -739,28 +710,35 @@ contract GifTest is GifDeployer {
     }
 
 
-    function _printAuthz() internal {
-        console.log("registry admin deployed:", address(registryAdmin));
-        console.log("registry admin authority", registryAdmin.authority());
-
-        uint256 roles = registryAdmin.roles();
-        uint256 targets = registryAdmin.targets();
-
+    function _printAuthz(
+        IAccessAdmin aa,
+        string memory aaName
+    )
+        internal
+    {
         console.log("==========================================");
-        console.log("roles", registryAdmin.roles());
+        console.log(aaName, "admin authorization");
+        console.log(aaName, "admin contract:", address(aa));
+        console.log(aaName, "admin authority:", aa.authority());
+
+        uint256 roles = aa.roles();
+        uint256 targets = aa.targets();
+
+        console.log("------------------------------------------");
+        console.log("roles", aa.roles());
         // solhint-enable
 
-        for(uint256 i = 0; i < registryAdmin.roles(); i++) {
-            _printRoleMembers(registryAdmin, registryAdmin.getRoleId(i));
+        for(uint256 i = 0; i < aa.roles(); i++) {
+            _printRoleMembers(aa, aa.getRoleId(i));
         }
 
         // solhint-disable no-console
-        console.log("==========================================");
-        console.log("targets", registryAdmin.targets());
+        console.log("------------------------------------------");
+        console.log("targets", aa.targets());
         // solhint-enable
 
-        for(uint256 i = 0; i < registryAdmin.targets(); i++) {
-            _printTarget(registryAdmin, registryAdmin.getTargetAddress(i));
+        for(uint256 i = 0; i < aa.targets(); i++) {
+            _printTarget(aa, aa.getTargetAddress(i));
         }
     }
 

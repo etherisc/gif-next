@@ -18,30 +18,54 @@ import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
 contract AccessAdminForTesting is AccessAdmin {
 
-    constructor() {
-        // super constructor called implicitly
-        // grant manager role access to createRoleSimple
-        FunctionInfo[] memory functions = new FunctionInfo[](3);
-        functions[0] = toFunction(AccessAdminForTesting.createTarget.selector, "createTarget");
-        functions[1] = toFunction(AccessAdminForTesting.createRole.selector, "createRole");
-        functions[2] = toFunction(AccessAdminForTesting.createRoleExtended.selector, "createRoleExtended");
-        _authorizeTargetFunctions(address(this), _managerRoleId, functions);
+    uint64 public constant MANAGER_ROLE = type(uint64).min + 1;
+    string public constant MANAGER_ROLE_NAME = "ManagerRole";
 
-        // grant manger role to deployer
+    /// @dev required role for state changes to this contract
+    RoleId internal _managerRoleId;
+
+
+    constructor() AccessAdmin() {
+        _initializeAccessAdminForTesting();
+    }
+
+
+    function _initializeAccessAdminForTesting() internal {
+
+        FunctionInfo[] memory functions;
+
+        // setup manager role
+        _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
+        _createRole(
+            _managerRoleId, 
+            getAdminRole(),
+            MANAGER_ROLE_NAME,
+            false, // is custom
+            3, // max accounts with this role
+            false); // roleRemovalDisabled
+
+        // grant public role access to grant and revoke, renounce
+        functions = new FunctionInfo[](3);
+        functions[0] = toFunction(AccessAdminForTesting.grantRole.selector, "grantRole");
+        functions[1] = toFunction(AccessAdminForTesting.revokeRole.selector, "revokeRole");
+        functions[2] = toFunction(AccessAdminForTesting.renounceRole.selector, "renounceRole");
+        _authorizeTargetFunctions(address(this), getPublicRole(), functions);
+
+        // grant manager role access to the specified functions 
+        functions = new FunctionInfo[](7);
+        functions[0] = toFunction(AccessAdminForTesting.createRole.selector, "createRole");
+        functions[1] = toFunction(AccessAdminForTesting.createRoleExtended.selector, "createRoleExtended");
+        functions[2] = toFunction(AccessAdminForTesting.setRoleDisabled.selector, "setRoleDisabled");
+        functions[3] = toFunction(AccessAdminForTesting.createTarget.selector, "createTarget");
+        functions[4] = toFunction(AccessAdminForTesting.setTargetLocked.selector, "setTargetLocked");
+        functions[5] = toFunction(AccessAdminForTesting.authorizeFunctions.selector, "authorizeFunctions");
+        functions[6] = toFunction(AccessAdminForTesting.unauthorizeFunctions.selector, "unauthorizeFunctions");
+        _authorizeTargetFunctions(address(this), getManagerRole(), functions);
+
         _grantRoleToAccount(_managerRoleId, _deployer);
     }
 
-    function createTarget(
-        address target, 
-        string memory name
-    )
-        external
-        virtual
-        restricted()
-    {
-        bool custom = true;
-        _createTarget(target, name, custom);
-    }
+    //--- role management functions -----------------------------------------//
 
     function createRole(
         RoleId roleId, 
@@ -68,33 +92,140 @@ contract AccessAdminForTesting is AccessAdmin {
         bool custom = true;
         _createRole(roleId, adminRoleId, name, custom, maxOneRoleMember, memberRemovalDisallowed);
     }
+
+    function grantRole(
+        address account, 
+        RoleId roleId
+    )
+        external
+        virtual
+        onlyRoleAdmin(roleId) 
+        restricted()
+    {
+        _grantRoleToAccount(roleId, account);
+    }
+
+    function revokeRole(
+        address account, 
+        RoleId roleId
+    )
+        external
+        virtual
+        onlyRoleAdmin(roleId)
+        restricted()
+    {
+        _revokeRoleFromAccount(roleId, account);
+    }
+
+    function renounceRole(
+        RoleId roleId
+    )
+        external
+        virtual
+        onlyRoleMember(roleId)
+        restricted()
+    {
+        _revokeRoleFromAccount(roleId, msg.sender);
+    }
+
+    function setRoleDisabled(
+        RoleId roleId, 
+        bool disabled
+    )
+        external
+        virtual
+        onlyRoleAdmin(roleId) 
+        restricted()
+    {
+        _setRoleDisabled(roleId, disabled);
+    }
+
+    //--- target management functions ---------------------------------------//
+
+    function createTarget(
+        address target, 
+        string memory name
+    )
+        external
+        virtual
+        restricted()
+    {
+        bool checkAuthoritiy = true;
+        bool custom = true;
+        _createTarget(target, name, checkAuthoritiy, custom);
+    }
+
+    function authorizeFunctions(
+        address target, 
+        RoleId roleId, 
+        FunctionInfo[] memory functions
+    )
+        external
+        virtual
+        onlyExistingTarget(target)
+        onlyExistingRole(roleId)
+        restricted()
+    {
+        _authorizeTargetFunctions(target, roleId, functions);
+    }
+
+    function unauthorizeFunctions(
+        address target, 
+        FunctionInfo[] memory functions
+    )
+        external
+        virtual
+        restricted()
+    {
+        _unauthorizeTargetFunctions(target, functions);
+    }
+
+
+    function setTargetLocked(
+        address target, 
+        bool locked
+    )
+        external
+        virtual
+        onlyExistingTarget(target)
+        restricted()
+    {
+        _authority.setTargetClosed(target, locked);
+
+        // implizit logging: rely on OpenZeppelin log TargetClosed
+    }
+
+    function getManagerRole() public view returns (RoleId roleId) {
+        return _managerRoleId;
+    }
+
 }
 
 contract AccessAdminCloneable is AccessAdminForTesting {
 
-    /// @dev initializer with externally provided accessManager
-    /// IMPORTANT cloning and initialization needs to be done in a single transaction
-    function initializeWithAccessManager(address accessManager) public initializer() {
-        _initialize(accessManager);
-    }
+    // TODO cleanup
+    // /// @dev initializer with externally provided accessManager.
+    // /// IMPORTANT cloning and initialization needs to be done in a single transaction
+    // function initializeWithAccessManager(address accessManager) public initializer() {
+    //     _initialize(accessManager);
+    // }
 
-    /// @dev initializer that will creaete its own accessManager internally
+    /// @dev initializer that will creaete its own accessManager internally.
     /// IMPORTANT cloning and initialization needs to be done in a single transaction
     // QUESTION AccessAdmin (base class) has _disableInitializer() in constructor
     // ANSWER constructor is never called in cloned contract, therefore _disableInitializer is never called in cloned contract.
     //      How can child class use initialzier / onlyInitializing then?
     //      Quote: "Calling this (_disableInitializer) in the constructor of a contract will prevent that contract from being initialized or reinitialized"
     function initialize() public initializer() {
-        AccessManager accessManager = new AccessManager(address(this));
-        _initialize(address(accessManager));
+        _initialize(
+            address(new AccessManager(address(this))));
     }
 
+    /// @dev shared code for both initializer methods.
     function _initialize(address accessManager) internal {
         _initializeAuthority(address(accessManager));
-        _initializeRoleSetup();
-
-        // grant manger role to deployer
-        _grantRoleToAccount(_managerRoleId, _deployer);
+        _createAdminAndPublicRoles();
+        _initializeAccessAdminForTesting();
     }
 }
 
@@ -1091,22 +1222,22 @@ contract AccessAdminTest is Test {
         _checkAccessAdmin(aa, accessAdminCloner);
     }
 
+    // TODO cleanup
+    // /// @dev test that a access admin created via constructor cannot be initialized
+    // function test_accessAdminClonedFailingToInitializeMaster() public {
+    //     // GIVEN (just setup)
+    //     vm.startPrank(accessAdminDeployer);
 
-    /// @dev test that a access admin created via constructor cannot be initialized
-    function test_accessAdminClonedFailingToInitializeMaster() public {
-        // GIVEN (just setup)
-        vm.startPrank(accessAdminDeployer);
+    //     // WHEN + 
+    //     // create access manager with aa as admin
+    //     AccessManager am = AccessManager(address(aaMaster));
 
-        // WHEN + 
-        // create access manager with aa as admin
-        AccessManager am = AccessManager(address(aaMaster));
-
-        // THEN
-        // initialize aa with newly created access manager
-        vm.expectRevert(Initializable.InvalidInitialization.selector);
-        aaMaster.initializeWithAccessManager(address(am));
-        vm.stopPrank();
-    }
+    //     // THEN
+    //     // initialize aa with newly created access manager
+    //     vm.expectRevert(Initializable.InvalidInitialization.selector);
+    //     aaMaster.initializeWithAccessManager(address(am));
+    //     vm.stopPrank();
+    // }
 
 
     /// @dev test that a cloned access admin can only be initialized once
@@ -1130,53 +1261,54 @@ contract AccessAdminTest is Test {
         vm.stopPrank();
     }
 
+    // TODO cleanup
+    // /// @dev test that a cloned access admin can only be initialized once
+    // function test_accessAdminClonedFailingToInitializeTwice2NdVersion() public {
+    //     // GIVEN
+    //     vm.startPrank(accessAdminCloner);
 
-    /// @dev test that a cloned access admin can only be initialized once
-    function test_accessAdminClonedFailingToInitializeTwice2NdVersion() public {
-        // GIVEN
-        vm.startPrank(accessAdminCloner);
-
-        // create cloned access manager
-        AccessAdminCloneable aa = AccessAdminCloneable(
-            Clones.clone(
-                address(aaMaster)));
+    //     // create cloned access manager
+    //     AccessAdminCloneable aa = AccessAdminCloneable(
+    //         Clones.clone(
+    //             address(aaMaster)));
         
-        // create access manager with aa as admin
-        AccessManager am = new AccessManager(address(aa));
+    //     // create access manager with aa as admin
+    //     AccessManager am = new AccessManager(address(aa));
 
-        // initialize aa with newly created access manager
-        aa.initializeWithAccessManager(address(am));
+    //     // initialize aa with newly created access manager
+    //     aa.initializeWithAccessManager(address(am));
 
-        // WHEN + THEN
-        // attempt to initialize 2nd time
-        vm.expectRevert(Initializable.InvalidInitialization.selector);
-        aa.initializeWithAccessManager(address(am));
+    //     // WHEN + THEN
+    //     // attempt to initialize 2nd time
+    //     vm.expectRevert(Initializable.InvalidInitialization.selector);
+    //     aa.initializeWithAccessManager(address(am));
 
-        vm.stopPrank();
-    }
+    //     vm.stopPrank();
+    // }
 
-    /// @dev check that initializing a cloned access admin reverts
-    /// when trying to provide an access manager that does not have
-    /// the access admin as initial owner
-    function test_accessAdminClonedAdminMismatch() public {
-        // GIVEN
-        vm.startPrank(accessAdminCloner);
+    // TODO cleanup
+    // /// @dev check that initializing a cloned access admin reverts
+    // /// when trying to provide an access manager that does not have
+    // /// the access admin as initial owner
+    // function test_accessAdminClonedAdminMismatch() public {
+    //     // GIVEN
+    //     vm.startPrank(accessAdminCloner);
 
-        // create cloned access manager
-        AccessAdminCloneable aa = AccessAdminCloneable(
-            Clones.clone(
-                address(aaMaster)));
+    //     // create cloned access manager
+    //     AccessAdminCloneable aa = AccessAdminCloneable(
+    //         Clones.clone(
+    //             address(aaMaster)));
 
-        // create access manager with outsider as admin
-        AccessManager am = new AccessManager(outsider);
+    //     // create access manager with outsider as admin
+    //     AccessManager am = new AccessManager(outsider);
 
-        // WHEN + THEN
-        // attempt to initialize with unsuitable access manager
-        vm.expectRevert(IAccessAdmin.ErrorAdminRoleMissing.selector);
-        aa.initializeWithAccessManager(address(am));
+    //     // WHEN + THEN
+    //     // attempt to initialize with unsuitable access manager
+    //     vm.expectRevert(IAccessAdmin.ErrorAdminRoleMissing.selector);
+    //     aa.initializeWithAccessManager(address(am));
 
-        vm.stopPrank();
-    }
+    //     vm.stopPrank();
+    // }
 
     function _createManagedRoleWithOwnAdmin(
         uint256 roleIdInt, 
@@ -1219,7 +1351,7 @@ contract AccessAdminTest is Test {
     }
 
     function _checkRoleGranting(
-        AccessAdmin aa, 
+        AccessAdminForTesting aa, 
         RoleId roleId, 
         address roleAdmin,
         address account1,
@@ -1266,7 +1398,7 @@ contract AccessAdminTest is Test {
 
 
     function _checkAccessAdmin(
-        AccessAdmin aa, 
+        AccessAdminForTesting aa, 
         address expectedDeployer
     )
         internal

@@ -38,24 +38,20 @@ contract InstanceReader {
     error ErrorInstanceReaderAlreadyInitialized();
     error ErrorInstanceReaderInstanceAddressZero();
 
-    bool private _initialized;
+    bool private _initialized = false;
 
     IInstance internal _instance;
     InstanceStore internal _store;
 
-    function initialize(address instance) public {
+    /// @dev This initializer needs to be called from the instance itself.
+    function initialize() public {
         if(_initialized) {
             revert ErrorInstanceReaderAlreadyInitialized();
         }
 
-        if(instance == address(0)) {
-            revert ErrorInstanceReaderInstanceAddressZero();
-        }
-
-        _instance = IInstance(instance);
-        _store = _instance.getInstanceStore();
-
         _initialized = true;
+        _instance = IInstance(msg.sender);
+        _store = _instance.getInstanceStore();
     }
 
 

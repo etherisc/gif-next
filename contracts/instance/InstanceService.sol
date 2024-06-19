@@ -11,7 +11,7 @@ import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {SecondsLib} from "../type/Seconds.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
-import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
+import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
@@ -29,8 +29,11 @@ import {IStakingService} from "../staking/IStakingService.sol";
 import {TargetManagerLib} from "../staking/TargetManagerLib.sol";
 
 import {Instance} from "./Instance.sol";
+import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
 import {IInstance} from "./IInstance.sol";
+// TODO cleanup
 import {InstanceAdmin} from "./InstanceAdmin.sol";
+import {InstanceAdminNew} from "./InstanceAdminNew.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
@@ -101,72 +104,122 @@ contract InstanceService is
             NftId clonedInstanceNftId
         )
     {
+        // tx sender will become instance owner
         address instanceOwner = msg.sender;
-        AccessManagerExtendedInitializeable clonedAccessManager = AccessManagerExtendedInitializeable(
-            Clones.clone(_masterAccessManager));
 
-        // initially grants ADMIN_ROLE to this (being the instance service). 
-        // This will allow the instance service to bootstrap the authorizations of the instance.
-        // Instance service will renounce ADMIN_ROLE when bootstraping is finished
-        clonedAccessManager.initialize(address(this));
+        // start with setting up the instance admin
+        InstanceAdminNew clonedInstanceAdmin = InstanceAdminNew(Clones.clone(_masterInstanceAdmin));
+        clonedInstanceAdmin.initialize(InstanceAdminNew(_masterInstanceAdmin).getInstanceAuthorization());
 
+        InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
+        BundleManager clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
+        InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
+
+        // clone instance
         clonedInstance = Instance(Clones.clone(_masterInstance));
         clonedInstance.initialize(
-            address(clonedAccessManager),
-            address(getRegistry()), 
-            instanceOwner);
-        // initialize and set before instance reader
-        InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
-        clonedInstanceStore.initialize(address(clonedInstance));
-        clonedInstance.setInstanceStore(clonedInstanceStore);
-        
-        InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-        clonedInstanceReader.initialize(address(clonedInstance));
-        clonedInstance.setInstanceReader(clonedInstanceReader);
-
-        BundleManager clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
-        clonedBundleManager.initialize(address(clonedInstance));
-        clonedInstance.setBundleManager(clonedBundleManager);
-
-        InstanceAdmin clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
-        clonedAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAdmin), 0);
-        clonedInstanceAdmin.initialize(address(clonedInstance));
-        clonedInstance.setInstanceAdmin(clonedInstanceAdmin);
-
-        // TODO amend setters with instance specific , policy manager ...
-
-        // TODO library does external calls -> but it is registry and access manager -> find out is it best practice
-        InstanceAuthorizationsLib.grantInitialAuthorizations(
-            clonedAccessManager, 
-            clonedInstanceAdmin, 
-            clonedInstance, 
-            clonedBundleManager, 
-            clonedInstanceStore, 
-            instanceOwner,
+            clonedInstanceAdmin,
+            clonedInstanceStore,
+            clonedBundleManager,
+            clonedInstanceReader,
             getRegistry(),
-            getVersion().toMajorPart());
+            instanceOwner);
 
-        clonedAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
+        // TODO cleanup
+        // // initialize and set before instance reader
+        // InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
+        // clonedInstanceStore.initialize(address(clonedInstance));
+        // clonedInstance.setInstanceStore(clonedInstanceStore);
+        
+        // InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
+        // clonedInstanceReader.initialize(address(clonedInstance));
+        // clonedInstance.setInstanceReader(clonedInstanceReader);
 
-        // register new instance with registry
+        // BundleManager clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
+        // clonedBundleManager.initialize(address(clonedInstance));
+        // clonedInstance.setBundleManager(clonedBundleManager);
+
+        // register cloned instance with registry
         IRegistry.ObjectInfo memory info = _registryService.registerInstance(clonedInstance, instanceOwner);
         clonedInstanceNftId = info.nftId;
 
-        // create corresponding staking target
-        _stakingService.createInstanceTarget(
-            clonedInstanceNftId,
-            TargetManagerLib.getDefaultLockingPeriod(),
-            TargetManagerLib.getDefaultRewardRate());
+        // MUST be set after instance is set up and registered
+        clonedInstanceAdmin.initializeInstanceAuthorization(address(clonedInstance));
 
         emit LogInstanceCloned(
-            address(clonedAccessManager), 
-            address(clonedInstanceAdmin), 
-            address(clonedInstance),
-            address(clonedInstanceStore),
-            address(clonedBundleManager), 
-            address(clonedInstanceReader), 
-            clonedInstanceNftId);
+            clonedInstanceNftId,
+            address(clonedInstance));
     }
+
+    // TODO cleanup/remove
+    // function _createInstanceCloneOld()
+    //     external 
+    //     returns (
+    //         Instance clonedInstance,
+    //         NftId clonedInstanceNftId
+    //     )
+    // {
+    //     address instanceOwner = msg.sender;
+    //     AccessManagerExtendedInitializeable clonedAccessManager = AccessManagerExtendedInitializeable(
+    //         Clones.clone(_masterAccessManager));
+
+    //     // initially grants ADMIN_ROLE to this (being the instance service). 
+    //     // This will allow the instance service to bootstrap the authorizations of the instance.
+    //     // Instance service will renounce ADMIN_ROLE when bootstraping is finished
+    //     clonedAccessManager.initialize(address(this));
+
+    //     clonedInstance = Instance(Clones.clone(_masterInstance));
+    //     // clonedInstance.initialize(
+    //     //     address(clonedAccessManager),
+    //     //     address(getRegistry()), 
+    //     //     instanceOwner);
+    //     // initialize and set before instance reader
+    //     InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
+    //     // clonedInstanceStore.initialize(address(clonedInstance));
+    //     clonedInstance.setInstanceStore(clonedInstanceStore);
+        
+    //     InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
+    //     // clonedInstanceReader.initialize(address(clonedInstance));
+    //     clonedInstance.setInstanceReader(clonedInstanceReader);
+
+    //     BundleManager clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
+    //     // clonedBundleManager.initialize(address(clonedInstance));
+    //     clonedInstance.setBundleManager(clonedBundleManager);
+
+    //     InstanceAdmin clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
+    //     clonedAccessManager.grantRole(ADMIN_ROLE().toInt(), address(clonedInstanceAdmin), 0);
+    //     // clonedInstanceAdmin.initialize(address(clonedInstance));
+    //     // clonedInstance.setInstanceAdmin(clonedInstanceAdmin);
+
+    //     // TODO amend setters with instance specific , policy manager ...
+
+    //     // TODO library does external calls -> but it is registry and access manager -> find out is it best practice
+    //     InstanceAuthorizationsLib.grantInitialAuthorizations(
+    //         clonedAccessManager, 
+    //         clonedInstanceAdmin, 
+    //         clonedInstance, 
+    //         clonedBundleManager, 
+    //         clonedInstanceStore, 
+    //         instanceOwner,
+    //         getRegistry(),
+    //         getVersion().toMajorPart());
+
+    //     clonedAccessManager.renounceRole(ADMIN_ROLE().toInt(), address(this));
+
+    //     // register new instance with registry
+    //     IRegistry.ObjectInfo memory info = _registryService.registerInstance(clonedInstance, instanceOwner);
+    //     clonedInstanceNftId = info.nftId;
+
+    //     // create corresponding staking target
+    //     _stakingService.createInstanceTarget(
+    //         clonedInstanceNftId,
+    //         TargetManagerLib.getDefaultLockingPeriod(),
+    //         TargetManagerLib.getDefaultRewardRate());
+
+    //     emit LogInstanceCloned(
+    //         clonedInstanceNftId,
+    //         address(clonedInstance));
+    // }
 
 
     function setStakingLockingPeriod(Seconds stakeLockingPeriod)
@@ -239,9 +292,10 @@ contract InstanceService is
                 instanceNftId).objectAddress);
 
         // no revert in case already locked
-        instance.getInstanceAdmin().setTargetLockedByService(
-            componentAddress, 
-            locked);
+        // TODO refactor/implement
+        // instance.getInstanceAdmin().setTargetLockedByService(
+        //     componentAddress, 
+        //     locked);
     }
 
 
@@ -262,7 +316,7 @@ contract InstanceService is
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
-        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
+        InstanceAdminNew instanceAdmin = instance.getInstanceAdmin();
         address instanceAdminAddress = address(instanceAdmin);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
@@ -314,7 +368,6 @@ contract InstanceService is
         Instance instance = Instance(instanceInfo.objectAddress);
         
         InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_masterInstanceReader)));
-        upgradedInstanceReaderClone.initialize(address(instance));
         instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
@@ -378,13 +431,17 @@ contract InstanceService is
             // or targetInfo
         ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
 
-        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
-        instanceAdmin.createGifTarget(targetAddress, targetName);
+        InstanceAdminNew instanceAdmin = instance.getInstanceAdmin();
+
+        // TODO refactor/implement
+        // instanceAdmin.createGifTarget(targetAddress, targetName);
+
         // set proposed target config
         // TODO restriction: gif targets are set only once and only here?
         //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
         for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++) {
-            instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);
+            // TODO refactor/implement
+            // instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);
         }
     }
     
