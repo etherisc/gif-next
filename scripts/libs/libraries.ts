@@ -1,6 +1,8 @@
 import { AddressLike, Signer } from "ethers";
 import { deployContract } from "./deployment";
 import { logger } from "../logger";
+import fs from 'fs';
+import hre from 'hardhat';
 
 export type LibraryAddresses = {
     nftIdLibAddress: AddressLike;
@@ -297,6 +299,8 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
     LIBRARY_ADDRESSES.set("StrLib", strLibAddress);
         
     logger.info("======== Finished deployment of libraries ========");
+
+    dumpLibraryAddressesToFile(LIBRARY_ADDRESSES);
         
     return {
         nftIdLibAddress,
@@ -328,4 +332,9 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         strLibAddress,
     };
     
+}
+
+function dumpLibraryAddressesToFile(addresses: Map<string, AddressLike>): void {
+    const data = JSON.stringify(Object.fromEntries(addresses), null, 2);
+    fs.writeFileSync(`./libraries_${hre.network.config.chainId}.json`, data);
 }

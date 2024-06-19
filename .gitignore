@@ -25,5 +25,6 @@ test_brownie/__pycache__
 # custom stuff
 *.log
 deployment_state_*.json
+libraries_*.json
 lcov.info
 .*.drawio.bkp
