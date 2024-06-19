@@ -1,5 +1,7 @@
 
+import { getImplementationAddress } from '@openzeppelin/upgrades-core';
 import { AddressLike, BytesLike, Signer, id } from "ethers";
+import { ethers as hhEthers } from "hardhat";
 import {
     ApplicationService, ApplicationServiceManager, ApplicationService__factory,
     BundleService, BundleServiceManager, BundleService__factory,
@@ -18,7 +20,7 @@ import {
     StakingService, StakingServiceManager, StakingService__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract } from "./deployment";
+import { deployContract, prepareVerificationData } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
 import { createRelease, getReleaseConfig } from "./release";
@@ -103,7 +105,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
 
     logger.info("======== Starting deployment of services ========");
     const releaseManager = await registry.releaseManager.connect(owner);
-    logger.info("-------- regtistry service --------");
+    logger.info("-------- registry service --------");
     const authority = await registry.registryAdmin.authority();
     const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
         "RegistryServiceManager",
@@ -124,6 +126,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const registryServiceManager = registryServiceManagerBaseContract as RegistryServiceManager;
     const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
+
+    // verify service implementation 
+    prepareVerificationData(
+        "RegistryService", 
+        await getImplementationAddress(hhEthers.provider, await registryServiceManager.getProxy()), 
+        [], 
+        undefined);
 
     const rcptRs = await executeTx(
         async () => await releaseManager.registerService(registryServiceAddress, getTxOpts()),
@@ -158,6 +167,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
     const stakingServiceAddress = await stakingServiceManager.getStakingService();
     const stakingService = StakingService__factory.connect(stakingServiceAddress, owner);
+
+    // verify service implementation 
+    prepareVerificationData(
+        "StakingService", 
+        await getImplementationAddress(hhEthers.provider, await stakingServiceManager.getProxy()), 
+        [], 
+        undefined);
 
     const rcptStk = await executeTx(
         async () => await releaseManager.registerService(stakingServiceAddress, getTxOpts()),
@@ -195,6 +211,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const instanceServiceAddress = await instanceServiceManager.getInstanceService();
     const instanceService = InstanceService__factory.connect(instanceServiceAddress, owner);
 
+    // verify service implementation 
+    prepareVerificationData(
+        "InstanceService", 
+        await getImplementationAddress(hhEthers.provider, await instanceServiceManager.getProxy()), 
+        [], 
+        undefined);
+
     const rcptInst = await executeTx(
         async () => await releaseManager.registerService(instanceServiceAddress, getTxOpts()),
         "registerService - instanceService"
@@ -226,6 +249,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const componentServiceManager = componentServiceManagerBaseContract as ComponentServiceManager;
     const componentServiceAddress = await componentServiceManager.getComponentService();
     const componentService = ComponentService__factory.connect(componentServiceAddress, owner);
+
+    // verify service implementation 
+    prepareVerificationData(
+        "ComponentService", 
+        await getImplementationAddress(hhEthers.provider, await componentServiceManager.getProxy()), 
+        [], 
+        undefined);
 
     const rcptCmpt = await executeTx(
         async () => await releaseManager.registerService(componentServiceAddress, getTxOpts()),
@@ -260,6 +290,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const distributionServiceManager = distributionServiceManagerBaseContract as DistributionServiceManager;
     const distributionServiceAddress = await distributionServiceManager.getDistributionService();
     const distributionService = DistributionService__factory.connect(distributionServiceAddress, owner);
+
+    // verify service implementation 
+    prepareVerificationData(
+        "DistributuonService", 
+        await getImplementationAddress(hhEthers.provider, await distributionServiceManager.getProxy()), 
+        [], 
+        undefined);
 
     const rcptDs = await executeTx(
         async () => await releaseManager.registerService(distributionServiceAddress, getTxOpts()),
@@ -297,6 +334,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const pricingServiceAddress = await pricingServiceManager.getPricingService();
     const pricingService = PricingService__factory.connect(pricingServiceAddress, owner);
 
+    // verify service implementation 
+    prepareVerificationData(
+        "PricingService", 
+        await getImplementationAddress(hhEthers.provider, await pricingServiceManager.getProxy()), 
+        [], 
+        undefined);
+
     const rcptPrs = await executeTx(
         async () => await releaseManager.registerService(pricingServiceAddress, getTxOpts()),
         "registerService - pricingService"
@@ -331,6 +375,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const bundleServiceManager = bundleServiceManagerBaseContract as BundleServiceManager;
     const bundleServiceAddress = await bundleServiceManager.getBundleService();
     const bundleService = BundleService__factory.connect(bundleServiceAddress, owner);
+
+    // verify service implementation 
+    prepareVerificationData(
+        "BundleService", 
+        await getImplementationAddress(hhEthers.provider, await bundleServiceManager.getProxy()), 
+        [], 
+        undefined);
 
     const rcptBdl = await executeTx(
         async () => await releaseManager.registerService(bundleServiceAddress, getTxOpts()),
@@ -368,6 +419,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const poolServiceAddress = await poolServiceManager.getPoolService();
     const poolService = PoolService__factory.connect(poolServiceAddress, owner);
 
+    // verify service implementation 
+    prepareVerificationData(
+        "PoolService", 
+        await getImplementationAddress(hhEthers.provider, await poolServiceManager.getProxy()), 
+        [], 
+        undefined);
+
     const rcptPs = await executeTx(
         async () => await releaseManager.registerService(poolServiceAddress, getTxOpts()),
         "registerService - poolService"
@@ -403,6 +461,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const oracleServiceAddress = await oracleServiceManager.getOracleService();
     const oracleService = OracleService__factory.connect(oracleServiceAddress, owner);
 
+    // verify service implementation 
+    prepareVerificationData(
+        "OracleService", 
+        await getImplementationAddress(hhEthers.provider, await oracleServiceManager.getProxy()), 
+        [], 
+        undefined);
+
     const orclPrs = await executeTx(
         async () => await releaseManager.registerService(oracleServiceAddress, getTxOpts()),
         "registerService - oracleService"
@@ -436,6 +501,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const productServiceManager = productServiceManagerBaseContract as ProductServiceManager;
     const productServiceAddress = await productServiceManager.getProductService();
     const productService = ProductService__factory.connect(productServiceAddress, owner);
+
+    // verify service implementation 
+    prepareVerificationData(
+        "ProductService", 
+        await getImplementationAddress(hhEthers.provider, await productServiceManager.getProxy()), 
+        [], 
+        undefined);
 
     const rcptPrd = await executeTx(
         async () => await releaseManager.registerService(productServiceAddress, getTxOpts()),
@@ -475,6 +547,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const claimServiceAddress = await claimServiceManager.getClaimService();
     const claimService = ClaimService__factory.connect(claimServiceAddress, owner);
 
+    // verify service implementation 
+    prepareVerificationData(
+        "ClaimService", 
+        await getImplementationAddress(hhEthers.provider, await claimServiceManager.getProxy()), 
+        [], 
+        undefined);
+
     const rcptClm = await executeTx(
         async () => await releaseManager.registerService(claimServiceAddress, getTxOpts()),
         "registerService - claimService"
@@ -510,6 +589,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const applicationServiceAddress = await applicationServiceManager.getApplicationService();
     const applicationService = ApplicationService__factory.connect(applicationServiceAddress, owner);
 
+    // verify service implementation 
+    prepareVerificationData(
+        "ApplicationService", 
+        await getImplementationAddress(hhEthers.provider, await applicationServiceManager.getProxy()), 
+        [], 
+        undefined);
+    
     const rcptAppl = await executeTx(
         async () => await releaseManager.registerService(applicationServiceAddress, getTxOpts()),
         "registerService - applicationService"
@@ -544,6 +630,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const policyServiceManager = policyServiceManagerBaseContract as PolicyServiceManager;
     const policyServiceAddress = await policyServiceManager.getPolicyService();
     const policyService = PolicyService__factory.connect(policyServiceAddress, owner);
+
+    // verify service implementation 
+    prepareVerificationData(
+        "PolicyService", 
+        await getImplementationAddress(hhEthers.provider, await policyServiceManager.getProxy()), 
+        [], 
+        undefined);
 
     const rcptPol = await executeTx(
         async () => await releaseManager.registerService(policyServiceAddress, getTxOpts()),
