@@ -4,7 +4,7 @@ import { logger } from "../logger";
 import { PoolService__factory, BundleService__factory, DistributionService__factory, InstanceService__factory, RegistryService__factory, ReleaseManager__factory } from "../../typechain-types";
 import { RegistryAddresses } from "./registry";
 import { LibraryAddresses } from "./libraries";
-import { executeTx, getFieldFromTxRcptLogs } from "./transaction";
+import { executeTx, getFieldFromTxRcptLogs, getTxOpts } from "./transaction";
 
 
 export type ReleaseAddresses = {
@@ -354,12 +354,15 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
 
 export async function createRelease(owner: Signer, registry: RegistryAddresses, config: ReleaseConfig, salt: BytesLike): Promise<Release>
 {
-    const releaseManager = await registry.releaseManager.connect(owner);
-    await releaseManager.createNextRelease();
+    const releaseManager = registry.releaseManager.connect(owner);
+    logger.debug('releaseManager.createNextRelease');
+    await releaseManager.createNextRelease(getTxOpts());
 
+    logger.debug('releaseManager.prepareNextRelease')
     const rcpt = await executeTx(async () =>  releaseManager.prepareNextRelease(
         registry.serviceAuthorizationV3,
-        salt
+        salt,
+        getTxOpts()
     ));
 
     let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "version");

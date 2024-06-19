@@ -1,4 +1,5 @@
 import { Interface, TransactionReceipt, ethers } from "ethers";
+import { GAS_PRICE } from "./constants";
 
 /**
  * Extract a field from the logs of a transaction. 
@@ -57,3 +58,12 @@ export class TransactionFailedException extends Error {
     }
 }
 
+export function getTxOpts() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const opts = {} as any;
+    if (GAS_PRICE !== undefined) {
+        opts['gasPrice'] = GAS_PRICE;
+    }
+
+    return opts;
+}
