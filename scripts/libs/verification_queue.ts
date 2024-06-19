@@ -12,6 +12,14 @@ const VERIFICATION_DATA_STATE = [] as any[];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function saveVerificationData(args: any) {
+    if (args.contractName !== undefined) {
+        // check if not in data
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if (VERIFICATION_DATA_STATE.find((e: any) => e.contractName === args.contractName) !== undefined) {
+            logger.debug(`Contract ${args.contractName} already in verification queue`);
+            return;
+        }
+    }
     VERIFICATION_DATA_STATE.push(args);
     persistState();
     logger.debug("Contract verification data saved");
