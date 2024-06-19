@@ -1,9 +1,8 @@
 
-import { AddressLike, BytesLike, Signer, resolveAddress, AbiCoder, keccak256, hexlify, Interface, solidityPacked, solidityPackedKeccak256, getCreate2Address, defaultAbiCoder, id, concat, Typed, BigNumberish } from "ethers";
+import { AddressLike, BigNumberish, BytesLike, Signer } from "ethers";
+import { BundleService__factory, DistributionService__factory, InstanceService__factory, PoolService__factory, RegistryService__factory } from "../../typechain-types";
 import { logger } from "../logger";
-import { PoolService__factory, BundleService__factory, DistributionService__factory, InstanceService__factory, RegistryService__factory, ReleaseManager__factory } from "../../typechain-types";
 import { RegistryAddresses } from "./registry";
-import { LibraryAddresses } from "./libraries";
 import { executeTx, getFieldFromTxRcptLogs, getTxOpts } from "./transaction";
 
 
@@ -151,7 +150,7 @@ export type Release = {
 };
 
 // TODO implement release addresses computation
-export async function computeReleaseAddresses(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike): Promise<ReleaseAddresses> {
+export async function computeReleaseAddresses(/*owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike*/): Promise<ReleaseAddresses> {
 
     const releaseAddresses: ReleaseAddresses = {
         registryServiceAddress: "0x0000000000000000000000000000000000000001",
@@ -188,9 +187,9 @@ export async function computeReleaseAddresses(owner: Signer, registry: RegistryA
 }
 
 
-export async function getReleaseConfig(owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike): Promise<ReleaseConfig>
+export async function getReleaseConfig(/*owner: Signer, registry: RegistryAddresses, libraries: LibraryAddresses, salt: BytesLike*/): Promise<ReleaseConfig>
 {
-    const serviceAddresses = await computeReleaseAddresses(owner, registry, libraries, salt);
+    const serviceAddresses = await computeReleaseAddresses(/*owner, registry, libraries, salt*/);
 
     // prepare config
     const config: ReleaseConfig =
@@ -355,15 +354,20 @@ export async function getReleaseConfig(owner: Signer, registry: RegistryAddresse
 export async function createRelease(owner: Signer, registry: RegistryAddresses, config: ReleaseConfig, salt: BytesLike): Promise<Release>
 {
     const releaseManager = registry.releaseManager.connect(owner);
-    logger.debug('releaseManager.createNextRelease');
-    await releaseManager.createNextRelease(getTxOpts());
+    
+    await executeTx(
+        async () => await releaseManager.createNextRelease(getTxOpts()),
+        "releaseManager.createNextRelease"
+    );
 
-    logger.debug('releaseManager.prepareNextRelease')
-    const rcpt = await executeTx(async () =>  releaseManager.prepareNextRelease(
-        registry.serviceAuthorizationV3,
-        salt,
-        getTxOpts()
-    ));
+
+    const rcpt = await executeTx(
+        async () =>  releaseManager.prepareNextRelease(
+            registry.serviceAuthorizationV3,
+            salt,
+            getTxOpts()
+        ),
+        "releaseManager.prepareNextRelease");
 
     let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "version");
     const releaseVersion = (logCreationInfo as BigNumberish);

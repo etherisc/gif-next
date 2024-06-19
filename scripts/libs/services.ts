@@ -97,7 +97,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info("======== Starting release creation ========");
     //const salt = zeroPadBytes("0x03", 32);
     const salt: BytesLike = id(`0x5678`);
-    const config = await getReleaseConfig(owner, registry, libraries, salt);
+    const config = await getReleaseConfig(/*owner, registry, libraries, salt*/);
     const release = await createRelease(owner, registry, config, salt);
     logger.info(`Release created - version: ${release.version} salt: ${release.salt} access manager: ${release.accessManager}`);
 
@@ -125,7 +125,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const registryServiceAddress = await registryServiceManager.getRegistryService();
     const registryService = RegistryService__factory.connect(registryServiceAddress, owner);
 
-    const rcptRs = await executeTx(async () => await releaseManager.registerService(registryServiceAddress, getTxOpts()));
+    const rcptRs = await executeTx(
+        async () => await releaseManager.registerService(registryServiceAddress, getTxOpts()),
+        "registerService - registryService"
+    );
     const logRegistrationInfoRs = getFieldFromTxRcptLogs(rcptRs!, registry.registry.interface, "LogRegistration", "nftId");
     const registryServiceNfdId = (logRegistrationInfoRs as unknown);
 
@@ -156,10 +159,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const stakingServiceAddress = await stakingServiceManager.getStakingService();
     const stakingService = StakingService__factory.connect(stakingServiceAddress, owner);
 
-    const rcptStk = await executeTx(async () => await releaseManager.registerService(stakingServiceAddress, getTxOpts()));
+    const rcptStk = await executeTx(
+        async () => await releaseManager.registerService(stakingServiceAddress, getTxOpts()),
+        "registerService - stakingService"
+    );
     const logRegistrationInfoStk = getFieldFromTxRcptLogs(rcptStk!, registry.registry.interface, "LogRegistration", "nftId");
     const stakingServiceNftId = (logRegistrationInfoStk as unknown);
-    await stakingServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await stakingServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - stakingService"
+    );
     logger.info(`stakingServiceManager deployed - stakingServiceAddress: ${stakingServiceAddress} stakingServiceManagerAddress: ${stakingServiceManagerAddress} nftId: ${stakingServiceNftId}`);
 
     logger.info("-------- instance service --------");
@@ -186,10 +195,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const instanceServiceAddress = await instanceServiceManager.getInstanceService();
     const instanceService = InstanceService__factory.connect(instanceServiceAddress, owner);
 
-    const rcptInst = await executeTx(async () => await releaseManager.registerService(instanceServiceAddress, getTxOpts()));
+    const rcptInst = await executeTx(
+        async () => await releaseManager.registerService(instanceServiceAddress, getTxOpts()),
+        "registerService - instanceService"
+    );
     const logRegistrationInfoInst = getFieldFromTxRcptLogs(rcptInst!, registry.registry.interface, "LogRegistration", "nftId");
     const instanceServiceNfdId = (logRegistrationInfoInst as unknown);
-    await instanceServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await instanceServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - instanceService"
+    );
     logger.info(`instanceServiceManager deployed - instanceServiceAddress: ${instanceServiceAddress} instanceServiceManagerAddress: ${instanceServiceManagerAddress} nftId: ${instanceServiceNfdId}`);
 
     logger.info("-------- component service --------");
@@ -212,7 +227,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const componentServiceAddress = await componentServiceManager.getComponentService();
     const componentService = ComponentService__factory.connect(componentServiceAddress, owner);
 
-    const rcptCmpt = await executeTx(async () => await releaseManager.registerService(componentServiceAddress, getTxOpts()));
+    const rcptCmpt = await executeTx(
+        async () => await releaseManager.registerService(componentServiceAddress, getTxOpts()),
+        "registerService - componentService"
+    );
     const logRegistrationInfoCmpt = getFieldFromTxRcptLogs(rcptCmpt!, registry.registry.interface, "LogRegistration", "nftId");
     const componentServiceNftId = (logRegistrationInfoCmpt as unknown);
     logger.info(`componentServiceManager deployed - componentServiceAddress: ${componentServiceAddress} componentServiceManagerAddress: ${componentServiceManagerAddress} nftId: ${componentServiceNftId}`);
@@ -243,10 +261,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const distributionServiceAddress = await distributionServiceManager.getDistributionService();
     const distributionService = DistributionService__factory.connect(distributionServiceAddress, owner);
 
-    const rcptDs = await executeTx(async () => await releaseManager.registerService(distributionServiceAddress, getTxOpts()));
+    const rcptDs = await executeTx(
+        async () => await releaseManager.registerService(distributionServiceAddress, getTxOpts()),
+        "registerService - distributionService"
+    );
     const logRegistrationInfoDs = getFieldFromTxRcptLogs(rcptDs!, registry.registry.interface, "LogRegistration", "nftId");
     const distributionServiceNftId = (logRegistrationInfoDs as unknown);
-    await distributionServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await distributionServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - distributionService"
+    );
     logger.info(`distributionServiceManager deployed - distributionServiceAddress: ${distributionServiceAddress} distributionServiceManagerAddress: ${distributionServiceManagerAddress} nftId: ${distributionServiceNftId}`);
 
     logger.info("-------- pricing service --------");
@@ -273,10 +297,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const pricingServiceAddress = await pricingServiceManager.getPricingService();
     const pricingService = PricingService__factory.connect(pricingServiceAddress, owner);
 
-    const rcptPrs = await executeTx(async () => await releaseManager.registerService(pricingServiceAddress, getTxOpts()));
+    const rcptPrs = await executeTx(
+        async () => await releaseManager.registerService(pricingServiceAddress, getTxOpts()),
+        "registerService - pricingService"
+    );
     const logRegistrationInfoPrs = getFieldFromTxRcptLogs(rcptPrs!, registry.registry.interface, "LogRegistration", "nftId");
     const pricingServiceNftId = (logRegistrationInfoPrs as unknown);
-    await pricingServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await pricingServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - pricingService"
+    );
     logger.info(`pricingServiceManager deployed - pricingServiceAddress: ${pricingServiceAddress} pricingServiceManagerAddress: ${pricingServiceManagerAddress} nftId: ${pricingServiceNftId}`);
 
     logger.info("-------- bundle service --------");
@@ -302,10 +332,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const bundleServiceAddress = await bundleServiceManager.getBundleService();
     const bundleService = BundleService__factory.connect(bundleServiceAddress, owner);
 
-    const rcptBdl = await executeTx(async () => await releaseManager.registerService(bundleServiceAddress, getTxOpts()));
+    const rcptBdl = await executeTx(
+        async () => await releaseManager.registerService(bundleServiceAddress, getTxOpts()),
+        "registerService - bundleService"
+    );
     const logRegistrationInfoBdl = getFieldFromTxRcptLogs(rcptBdl!, registry.registry.interface, "LogRegistration", "nftId");
     const bundleServiceNftId = (logRegistrationInfoBdl as unknown);
-    await bundleServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await bundleServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - bundleService"
+    );
     logger.info(`bundleServiceManager deployed - bundleServiceAddress: ${bundleServiceAddress} bundleServiceManagerAddress: ${bundleServiceManagerAddress} nftId: ${bundleServiceNftId}`);
 
     logger.info("-------- pool service --------");
@@ -332,10 +368,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const poolServiceAddress = await poolServiceManager.getPoolService();
     const poolService = PoolService__factory.connect(poolServiceAddress, owner);
 
-    const rcptPs = await executeTx(async () => await releaseManager.registerService(poolServiceAddress, getTxOpts()));
+    const rcptPs = await executeTx(
+        async () => await releaseManager.registerService(poolServiceAddress, getTxOpts()),
+        "registerService - poolService"
+    );
     const logRegistrationInfoPs = getFieldFromTxRcptLogs(rcptPs!, registry.registry.interface, "LogRegistration", "nftId");
     const poolServiceNftId = (logRegistrationInfoPs as unknown);
-    await poolServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await poolServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - poolService"
+    );
     logger.info(`poolServiceManager deployed - poolServiceAddress: ${poolServiceAddress} poolServiceManagerAddress: ${poolServiceManagerAddress} nftId: ${poolServiceNftId}`);
 
     logger.info("-------- oracle service --------");
@@ -361,10 +403,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const oracleServiceAddress = await oracleServiceManager.getOracleService();
     const oracleService = OracleService__factory.connect(oracleServiceAddress, owner);
 
-    const orclPrs = await executeTx(async () => await releaseManager.registerService(oracleServiceAddress, getTxOpts()));
+    const orclPrs = await executeTx(
+        async () => await releaseManager.registerService(oracleServiceAddress, getTxOpts()),
+        "registerService - oracleService"
+    );
     const logRegistrationInfoOrc = getFieldFromTxRcptLogs(orclPrs!, registry.registry.interface, "LogRegistration", "nftId");
     const oracleServiceNftId = (logRegistrationInfoOrc as unknown);
-    await oracleServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await oracleServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - oracleService"
+    );
     logger.info(`oracleServiceManager deployed - oracleServiceAddress: ${oracleServiceAddress} oracleServiceManagerAddress: ${oracleServiceManagerAddress} nftId: ${oracleServiceNftId}`);
 
     logger.info("-------- product service --------");
@@ -389,10 +437,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const productServiceAddress = await productServiceManager.getProductService();
     const productService = ProductService__factory.connect(productServiceAddress, owner);
 
-    const rcptPrd = await executeTx(async () => await releaseManager.registerService(productServiceAddress, getTxOpts()));
+    const rcptPrd = await executeTx(
+        async () => await releaseManager.registerService(productServiceAddress, getTxOpts()),
+        "registerService - productService"
+    );
     const logRegistrationInfoPrd = getFieldFromTxRcptLogs(rcptPrd!, registry.registry.interface, "LogRegistration", "nftId");
     const productServiceNftId = (logRegistrationInfoPrd as unknown);
-    await productServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await productServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - productService"
+    );
     logger.info(`productServiceManager deployed - productServiceAddress: ${productServiceAddress} productServiceManagerAddress: ${productServiceManagerAddress} nftId: ${productServiceNftId}`);
 
     logger.info("-------- claim service --------");
@@ -421,10 +475,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const claimServiceAddress = await claimServiceManager.getClaimService();
     const claimService = ClaimService__factory.connect(claimServiceAddress, owner);
 
-    const rcptClm = await executeTx(async () => await releaseManager.registerService(claimServiceAddress, getTxOpts()));
+    const rcptClm = await executeTx(
+        async () => await releaseManager.registerService(claimServiceAddress, getTxOpts()),
+        "registerService - claimService"
+    );
     const logRegistrationInfoClm = getFieldFromTxRcptLogs(rcptClm!, registry.registry.interface, "LogRegistration", "nftId");
     const claimServiceNftId = (logRegistrationInfoClm as unknown);
-    await claimServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await claimServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - claimService"
+    );
     logger.info(`claimServiceManager deployed - claimServiceAddress: ${claimServiceAddress} claimServiceManagerAddress: ${claimServiceManagerAddress} nftId: ${claimServiceNftId}`);
 
     logger.info("-------- application service --------");
@@ -450,10 +510,16 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const applicationServiceAddress = await applicationServiceManager.getApplicationService();
     const applicationService = ApplicationService__factory.connect(applicationServiceAddress, owner);
 
-    const rcptAppl = await executeTx(async () => await releaseManager.registerService(applicationServiceAddress, getTxOpts()));
+    const rcptAppl = await executeTx(
+        async () => await releaseManager.registerService(applicationServiceAddress, getTxOpts()),
+        "registerService - applicationService"
+    );
     const logRegistrationInfoAppl = getFieldFromTxRcptLogs(rcptAppl!, registry.registry.interface, "LogRegistration", "nftId");
     const applicationServiceNftId = (logRegistrationInfoAppl as unknown);
-    await applicationServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await applicationServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - applicationService"
+    );
     logger.info(`applicationServiceManager deployed - applicationServiceAddress: ${applicationServiceAddress} policyServiceManagerAddress: ${applicationServiceManagerAddress} nftId: ${applicationServiceNftId}`);
 
     logger.info("-------- policy service --------");
@@ -479,16 +545,25 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const policyServiceAddress = await policyServiceManager.getPolicyService();
     const policyService = PolicyService__factory.connect(policyServiceAddress, owner);
 
-    const rcptPol = await executeTx(async () => await releaseManager.registerService(policyServiceAddress, getTxOpts()));
+    const rcptPol = await executeTx(
+        async () => await releaseManager.registerService(policyServiceAddress, getTxOpts()),
+        "registerService - policyService"
+    );
     const logRegistrationInfoPol = getFieldFromTxRcptLogs(rcptPol!, registry.registry.interface, "LogRegistration", "nftId");
     const policyServiceNftId = (logRegistrationInfoPol as unknown);
-    await policyServiceManager.linkToProxy(getTxOpts());
+    await executeTx(
+        async () => await policyServiceManager.linkToProxy(getTxOpts()),
+        "linkToProxy - policyService"
+    );
     logger.info(`policyServiceManager deployed - policyServiceAddress: ${policyServiceAddress} policyServiceManagerAddress: ${policyServiceManagerAddress} nftId: ${policyServiceNftId}`);
     
     logger.info("======== Finished deployment of services ========");
 
     logger.info("======== Activating release ========");
-    await releaseManager.activateNextRelease();
+    await executeTx(
+        async () => await releaseManager.activateNextRelease(),
+        "releaseManager.activateNextRelease"
+    );
     logger.info("======== release activated ========");
 
     return {
