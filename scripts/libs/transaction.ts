@@ -1,9 +1,8 @@
 import { Interface, TransactionReceipt, ethers } from "ethers";
-import { GAS_PRICE } from "./constants";
-import { deploymentState, isResumeableDeployment } from "./deployment_state";
 import { ethers as hhEthers } from "hardhat";
 import { logger } from "../logger";
-import { log } from "winston";
+import { GAS_PRICE } from "./constants";
+import { deploymentState, isResumeableDeployment } from "./deployment_state";
 
 /**
  * Extract a field from the logs of a transaction. 

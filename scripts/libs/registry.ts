@@ -13,7 +13,7 @@ import {
     TokenRegistry
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract, verifyContract } from "./deployment";
+import { deployContract, prepareVerificationData } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getTxOpts } from "./transaction";
 
@@ -318,10 +318,10 @@ async function verifyRegistryComponents(
     logger.info("Verifying additional registry components");
 
     logger.debug("Verifying registry");
-    await verifyContract(registryAddress, [owner, 3], undefined);
+    await prepareVerificationData("Registry", registryAddress, [owner, 3], undefined);
     
     logger.debug("Verifying chainNft");
-    await verifyContract(chainNftAddress, [registryAddress], undefined);
+    await prepareVerificationData("ChainNft", chainNftAddress, [registryAddress], undefined);
     
     logger.info("Additional registry components verified");
 }

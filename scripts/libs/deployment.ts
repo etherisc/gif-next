@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { AddressLike, BaseContract, Signer, TransactionReceipt, TransactionResponse, resolveAddress } from "ethers";
-import hre, { ethers } from "hardhat";
+import { ethers } from "hardhat";
 import { logger } from "../logger";
+import { GAS_PRICE } from "./constants";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
-import { GAS_PRICE, NUMBER_OF_CONFIRMATIONS } from "./constants";
-import { LIBRARY_ADDRESSES } from "./libraries";
-import { util } from "chai";
+import { saveVerificationData } from "./verification_queue";
 
 type DeploymentResult = {
     address: AddressLike; 
@@ -16,72 +15,19 @@ type DeploymentResult = {
 }
 
 /**
- * Verify a smart contract on Etherscan using hardhat-etherscan task "verify". 
- * In case of "does not have bytecode" error, retry after 5s for 3 times in a row. 
- * In case of "MissingLibrariesError", fetch library addresses from LIBRARY_ADDRESSES and retry.
+ * Prepare the data required for verifying a contract on Etherscan.
  * @param sourceFileContract the contract name prefixed with file path (e.g. "contracts/types/ObjectType.sol:ObjectTypeLib")
  */
-export async function verifyContract(address: AddressLike, constructorArgs: any[], sourceFileContract: string | undefined) {
-    let verified = false;
-    let retries = 3;
-    const libraries: Record<string,string> = {};
-    let error = undefined;
-    while (! verified && retries > 0) {
-        retries--;
-        logger.debug("verifying contract @ address: " + address);
-        try {
-            const args = {
-                address: address,
-                constructorArguments: constructorArgs,
-                libraries: libraries,
-            } as any;
-            if (sourceFileContract !== undefined) {
-                args['contract'] = sourceFileContract;
-            }
-            await hre.run("verify:verify", args);
-            logger.info("Contract verified");
-            verified = true;
-        } catch (err: any) {
-            error = err;
-            
-            if (err.message.toLowerCase().includes("already verified")) {
-                logger.info("Contract is already verified!");
-                verified = true;
-            } else if (err.message.toLowerCase().includes("does not have bytecode")) {
-                logger.info("Bytecode not yet available on Etherscan, retrying in 5s...");
-                await delay(5000);
-            } else if (err.name === "MissingLibrariesError") { // ethers does not export error - match by name
-                logger.debug("caught MissingLibrariesError - fetching library addresses and retry");
-                if (retries > 0) retries = 1; // one more retry
-                /* 
-                 * Extract missing libraries from error message. Error message looks like:
-                 *
-                 * error: MissingLibrariesError: The contract contracts/instance/Instance.sol:Instance has one or more library addresses that cannot be detected from deployed bytecode.
-                 * This can occur if the library is only called in the contract constructor. The missing libraries are:
-                 *   * contracts/types/Key32.sol:Key32Lib
-                 *   * contracts/types/ObjectType.sol:ObjectTypeLib
-                 *   * contracts/types/StateId.sol:StateIdLib
-                 */
-                const missingLibraries: string[] = err.message.split("\n")
-                    .filter((line: string) => line.startsWith("  * "))
-                    .map((line: string) => line.split(":").pop()!);
-                missingLibraries.forEach(async (lib: string) => {
-                    const address = LIBRARY_ADDRESSES.get(lib);
-                    if (address === undefined) {
-                        throw new Error(`Library address for ${lib} not found`);
-                    }
-                    libraries[lib] = await resolveAddress(address);
-                });
-                logger.info("retrying verification with missing libraries: " + util.inspect(libraries));
-            } else {
-                retries = 0; // no retries
-            }
-        }
+export async function prepareVerificationData(contractName: string, address: AddressLike, constructorArgs: any[], sourceFileContract: string | undefined) {
+    const args = {
+        contractName: contractName,
+        address: address,
+        constructorArguments: constructorArgs,
+    } as any;
+    if (sourceFileContract !== undefined) {
+        args['contract'] = sourceFileContract;
     }
-
-    if (! verified && error !== undefined) {
-        throw error;
-    }
+    saveVerificationData(args);
 }
 
 /**
@@ -162,16 +108,9 @@ async function executeAllDeploymentSteps(contractName: string, signer: Signer, c
 }
 
 async function verifyDeployedContract(contractName: string, address: AddressLike, tx: TransactionResponse, constructorArgs?: any[] | undefined, sourceFileContract?: string) {
-    if (process.env.SKIP_VERIFICATION?.toLowerCase() !== "true") {
-        logger.debug(`Waiting for ${NUMBER_OF_CONFIRMATIONS} confirmations`);
-        await tx.wait(NUMBER_OF_CONFIRMATIONS); 
-        constructorArgs !== undefined
-            ? await verifyContract(address, constructorArgs, sourceFileContract)
-            : await verifyContract(address, [], sourceFileContract);
-        deploymentState.setVerified(contractName, true);
-    } else {
-        logger.debug("Skipping verification");
-    }
+    constructorArgs !== undefined
+        ? await prepareVerificationData(contractName, address, constructorArgs, sourceFileContract)
+        : await prepareVerificationData(contractName, address, [], sourceFileContract);
 }
 
 async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, constructorArgs?: any[] | undefined, sourceFileContract?: string): Promise<DeploymentResult> {

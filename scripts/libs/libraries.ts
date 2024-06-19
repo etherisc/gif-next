@@ -1,8 +1,8 @@
 import { AddressLike, Signer } from "ethers";
-import { deployContract } from "./deployment";
-import { logger } from "../logger";
 import fs from 'fs';
 import hre from 'hardhat';
+import { logger } from "../logger";
+import { deployContract } from "./deployment";
 
 export type LibraryAddresses = {
     nftIdLibAddress: AddressLike;
