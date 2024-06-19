@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType, toObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
@@ -14,7 +14,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withValidObjectHappyCase() public
     {
-        ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType objectType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
         
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -33,11 +33,11 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withObjectTypeDifferentFromExpectedType() public 
     {
-        ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
-        ObjectType expectedType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType objectType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
+        ObjectType expectedType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         if(objectType == expectedType) {
-            expectedType = toObjectType(expectedType.toInt() + 1);
+            expectedType = ObjectTypeLib.toObjectType(expectedType.toInt() + 1);
         }
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
@@ -63,10 +63,10 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
     function test_withZeroObjectType() public 
     {
         ObjectType objectType = ObjectTypeLib.zero();
-        ObjectType expectedType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType expectedType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         if(objectType == expectedType) {
-            expectedType = toObjectType(expectedType.toInt() + 1);
+            expectedType = ObjectTypeLib.toObjectType(expectedType.toInt() + 1);
         }
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
@@ -91,11 +91,11 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
     function test_whenExpectedTypeIsZero() public 
     {
-        ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType objectType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
         ObjectType expectedType = ObjectTypeLib.zero();
 
         if(objectType == expectedType) {
-            objectType = toObjectType(objectType.toInt() + 1);
+            objectType = ObjectTypeLib.toObjectType(objectType.toInt() + 1);
         }
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
@@ -121,7 +121,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
     /* 0 object address is enforced
     function test_withNonZeroObjectAddress() public 
     {
-        ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType objectType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         address nonZeroObjectAddress = address(uint160(randomNumber(type(uint160).max)));
         if(nonZeroObjectAddress == address(0)) {
@@ -150,7 +150,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withZeroObjectOwner() public
     {
-        ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType objectType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),
@@ -173,7 +173,7 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
 
     function test_withRegisteredObjectOwner() public
     {
-        ObjectType objectType = toObjectType(randomNumber(type(uint8).max));
+        ObjectType objectType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
 
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo({
             nftId: NftIdLib.toNftId(randomNumber(type(uint96).max)),

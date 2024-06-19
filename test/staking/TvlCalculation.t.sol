@@ -350,7 +350,10 @@ contract TvlCalculation is GifTest {
 
         // for every usdc token 10 dip tokens must be staked
         stakingRate = UFixedLib.toUFixed(1, int8(dip.decimals() - token.decimals() + 1));
-        staking.getStakingStore().setStakingRate(block.chainid, tokenAddress, stakingRate);
+
+        vm.startPrank(stakingOwner);
+        staking.setStakingRate(block.chainid, tokenAddress, stakingRate);
+        vm.stopPrank();
     }
 
 

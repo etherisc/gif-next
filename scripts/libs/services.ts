@@ -1,7 +1,6 @@
 
 import { AddressLike, BytesLike, Signer, resolveAddress, id } from "ethers";
 import { 
-    ReleaseManager__factory, 
     DistributionService, DistributionServiceManager, DistributionService__factory, 
     InstanceService, InstanceServiceManager, InstanceService__factory, 
     ComponentService, ComponentServiceManager, ComponentService__factory, 
@@ -103,16 +102,18 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     logger.info("======== Starting deployment of services ========");
     const releaseManager = await registry.releaseManager.connect(owner);
     logger.info("-------- regtistry service --------");
+    const authority = await registry.registryAdmin.authority();
     const { address: registryServiceManagerAddress, contract: registryServiceManagerBaseContract } = await deployContract(
         "RegistryServiceManager",
         owner,
         [
-            release.accessManager, // release access manager address it self can be a salt like value
+            authority, // address itself can be a salt like value
             registry.registryAddress,
             release.salt
         ],
         { libraries: { 
                 NftIdLib: libraries.nftIdLibAddress, 
+                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
@@ -136,17 +137,17 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "StakingServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
+            RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
             VersionPartLib: libraries.versionPartLibAddress,
-            TargetManagerLib: libraries.targetManagerLibAddress,
         }});
 
     const stakingServiceManager = stakingServiceManagerBaseContract as StakingServiceManager;
@@ -164,12 +165,13 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "InstanceServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
         { libraries: { 
             NftIdLib: libraries.nftIdLibAddress, 
+            // ObjectTypeLib: libraries.objectTypeLibAddress, 
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
             VersionPartLib: libraries.versionPartLibAddress,
@@ -197,6 +199,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
             AmountLib: libraries.amountLibAddress,
             FeeLib: libraries.feeLibAddress,
             NftIdLib: libraries.nftIdLibAddress, 
+            // ObjectTypeLib: libraries.objectTypeLibAddress, 
             RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
@@ -212,39 +215,12 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     const componentServiceNftId = (logRegistrationInfoCmpt as unknown);
     logger.info(`componentServiceManager deployed - componentServiceAddress: ${componentServiceAddress} componentServiceManagerAddress: ${componentServiceManagerAddress} nftId: ${componentServiceNftId}`);
 
-    logger.info("-------- oracle service --------");
-    const { address: oracleServiceManagerAddress, contract: oracleServiceManagerBaseContract, } = await deployContract(
-        "OracleServiceManager",
-        owner,
-        [
-            release.accessManager,
-            registry.registryAddress,
-            release.salt
-        ],
-        { libraries: {
-                NftIdLib: libraries.nftIdLibAddress,
-                RequestIdLib: libraries.requestIdLibAddress,
-                TimestampLib: libraries.timestampLibAddress,
-                VersionLib: libraries.versionLibAddress, 
-                VersionPartLib: libraries.versionPartLibAddress,
-            }});
-    
-    const oracleServiceManager = oracleServiceManagerBaseContract as OracleServiceManager;
-    const oracleServiceAddress = await oracleServiceManager.getOracleService();
-    const oracleService = OracleService__factory.connect(oracleServiceAddress, owner);
-
-    const orclPrs = await executeTx(async () => await releaseManager.registerService(oracleServiceAddress));
-    const logRegistrationInfoOrc = getFieldFromTxRcptLogs(orclPrs!, registry.registry.interface, "LogRegistration", "nftId");
-    const oracleServiceNftId = (logRegistrationInfoOrc as unknown);
-    await oracleServiceManager.linkToProxy();
-    logger.info(`oracleServiceManager deployed - oracleServiceAddress: ${oracleServiceAddress} oracleServiceManagerAddress: ${oracleServiceManagerAddress} nftId: ${oracleServiceNftId}`);
-
     logger.info("-------- distribution service --------");
     const { address: distributionServiceManagerAddress, contract: distributionServiceManagerBaseContract, } = await deployContract(
         "DistributionServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -252,7 +228,9 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 AmountLib: libraries.amountLibAddress,
                 DistributorTypeLib: libraries.distributorTypeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 ReferralLib: libraries.referralLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -274,12 +252,14 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "PricingServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
         { libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
+                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 UFixedLib: libraries.uFixedLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -302,13 +282,15 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "BundleServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
         { libraries: {
                 AmountLib: libraries.amountLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
+                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress, 
@@ -329,7 +311,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "PoolServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -337,6 +319,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 AmountLib: libraries.amountLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
                 RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -353,17 +336,48 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
     await poolServiceManager.linkToProxy();
     logger.info(`poolServiceManager deployed - poolServiceAddress: ${poolServiceAddress} poolServiceManagerAddress: ${poolServiceManagerAddress} nftId: ${poolServiceNftId}`);
 
-    logger.info("-------- product service --------");
-    const { address: productServiceManagerAddress, contract: productServiceManagerBaseContract, } = await deployContract(
-        "ProductServiceManager",
+    logger.info("-------- oracle service --------");
+    const { address: oracleServiceManagerAddress, contract: oracleServiceManagerBaseContract, } = await deployContract(
+        "OracleServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
         { libraries: {
                 NftIdLib: libraries.nftIdLibAddress,
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
+                RequestIdLib: libraries.requestIdLibAddress,
+                RoleIdLib: libraries.roleIdLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
+                VersionLib: libraries.versionLibAddress, 
+                VersionPartLib: libraries.versionPartLibAddress,
+            }});
+    
+    const oracleServiceManager = oracleServiceManagerBaseContract as OracleServiceManager;
+    const oracleServiceAddress = await oracleServiceManager.getOracleService();
+    const oracleService = OracleService__factory.connect(oracleServiceAddress, owner);
+
+    const orclPrs = await executeTx(async () => await releaseManager.registerService(oracleServiceAddress));
+    const logRegistrationInfoOrc = getFieldFromTxRcptLogs(orclPrs!, registry.registry.interface, "LogRegistration", "nftId");
+    const oracleServiceNftId = (logRegistrationInfoOrc as unknown);
+    await oracleServiceManager.linkToProxy();
+    logger.info(`oracleServiceManager deployed - oracleServiceAddress: ${oracleServiceAddress} oracleServiceManagerAddress: ${oracleServiceManagerAddress} nftId: ${oracleServiceNftId}`);
+
+    logger.info("-------- product service --------");
+    const { address: productServiceManagerAddress, contract: productServiceManagerBaseContract, } = await deployContract(
+        "ProductServiceManager",
+        owner,
+        [
+            authority,
+            registry.registryAddress,
+            release.salt
+        ],
+        { libraries: {
+                NftIdLib: libraries.nftIdLibAddress,
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
+                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress, 
@@ -384,7 +398,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "ClaimServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
@@ -393,6 +407,8 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 ClaimIdLib: libraries.claimIdLibAddress,
                 FeeLib: libraries.feeLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
+                // ObjectTypeLib: libraries.objectTypeLibAddress, 
+                RoleIdLib: libraries.roleIdLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 PayoutIdLib: libraries.payoutIdLibAddress,
                 VersionLib: libraries.versionLibAddress, 
@@ -414,13 +430,15 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "ApplicationServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
+            // ObjectTypeLib: libraries.objectTypeLibAddress, 
+            RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
             VersionPartLib: libraries.versionPartLibAddress, 
@@ -441,13 +459,15 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         "PolicyServiceManager",
         owner,
         [
-            release.accessManager,
+            authority,
             registry.registryAddress,
             release.salt
         ],
         { libraries: {
             AmountLib: libraries.amountLibAddress,
             NftIdLib: libraries.nftIdLibAddress,
+            // ObjectTypeLib: libraries.objectTypeLibAddress, 
+            RoleIdLib: libraries.roleIdLibAddress,
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress, 
             VersionPartLib: libraries.versionPartLibAddress, 

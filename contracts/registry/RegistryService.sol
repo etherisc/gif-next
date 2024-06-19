@@ -37,11 +37,6 @@ contract RegistryService is
     // TODO update to real hash when registry is stable
     bytes32 public constant REGISTRY_CREATION_CODE_HASH = bytes32(0);
 
-    // From IService
-    function getDomain() public pure override returns(ObjectType serviceDomain) {
-        return REGISTRY(); 
-    }
-
     // from Versionable
 
     /// @dev top level initializer
@@ -262,5 +257,10 @@ contract RegistryService is
         if(getRegistry().isRegistered(owner)) { 
             revert ErrorRegistryServiceObjectOwnerRegistered(info.objectType, owner);
         }
+    }
+
+    // From IService
+    function _getDomain() internal override pure returns(ObjectType serviceDomain) {
+        return REGISTRY(); 
     }
 }

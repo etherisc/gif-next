@@ -93,13 +93,27 @@ contract StakingStore is
         
         _reader = StakingReader(reader);
         _targetManager = new NftIdSetManager();
+
+        // register protocol target
+        _createTarget(
+            NftIdLib.toNftId(1101), 
+            IStaking.TargetInfo({
+                objectType: PROTOCOL(),
+                chainId: 1,
+                lockingPeriod: TargetManagerLib.getDefaultLockingPeriod(),
+                rewardRate: TargetManagerLib.getDefaultRewardRate()}));
     }
 
 
     //--- staking rate specific functions -----------------------------------//
 
-    function setStakingRate(uint256 chainId, address token, UFixed stakingRate)
+    function setStakingRate(
+        uint256 chainId, 
+        address token, 
+        UFixed stakingRate
+    )
         external
+        restricted()
     {
         _stakingRate[chainId][token] = stakingRate;
     }
@@ -111,16 +125,9 @@ contract StakingStore is
         IStaking.TargetInfo memory targetInfo
     )
         external
+        restricted()
     {
-        _create(
-            targetNftId.toKey32(TARGET()),
-            abi.encode(targetInfo));
-
-        // initialize tvl and stake balance
-        _tvlLastUpdatedIn[targetNftId]= BlocknumberLib.currentBlocknumber();
-        _createTargetBalance(targetNftId);
-
-        _targetManager.add(targetNftId);
+        _createTarget(targetNftId, targetInfo);
     }
 
 
@@ -129,6 +136,7 @@ contract StakingStore is
         IStaking.TargetInfo memory targetInfo
     )
         external
+        restricted()
     {
         _update(
             targetNftId.toKey32(TARGET()), 
@@ -141,6 +149,7 @@ contract StakingStore is
         Amount dipAmount
     )
         external
+        restricted()
         returns (Amount newReserveBalance)
     {
         newReserveBalance = _reserveBalance[targetNftId] + dipAmount;
@@ -155,6 +164,7 @@ contract StakingStore is
         Amount dipAmount
     )
         external
+        restricted()
         returns (Amount newReserveBalance)
     {
         Amount reserveAmount = _reserveBalance[targetNftId];
@@ -172,24 +182,6 @@ contract StakingStore is
     }
 
 
-    function _updateReserves(
-        NftId targetNftId, 
-        Amount newRewardBalance
-    )
-        internal
-        returns (Blocknumber lastUpdatedIn)
-    {
-        if (_lastUpdatedIn[targetNftId].eqz()) {
-            revert ErrorStakingStoreNotTarget(targetNftId);
-        }
-
-        lastUpdatedIn = _lastUpdatedIn[targetNftId];
-
-        _reserveBalance[targetNftId] = newRewardBalance;
-        _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
-    }
-
-
     //--- tvl specific functions -------------------------------------//
 
     function increaseTotalValueLocked(
@@ -199,6 +191,7 @@ contract StakingStore is
         Amount amount
     )
         external
+        restricted()
         returns (Amount newBalance)
     {
         (
@@ -231,6 +224,7 @@ contract StakingStore is
         Amount amount
     )
         external
+        restricted()
         returns (Amount newBalance)
     {
         (
@@ -263,6 +257,7 @@ contract StakingStore is
         IStaking.StakeInfo memory stakeInfo
     )
         external
+        restricted()
     {
         _create(
             stakeNftId.toKey32(STAKE()),
@@ -276,6 +271,7 @@ contract StakingStore is
         IStaking.StakeInfo memory stakeInfo
     )
         external
+        restricted()
     {
         _update(
             stakeNftId.toKey32(STAKE()),
@@ -291,7 +287,8 @@ contract StakingStore is
         NftId targetNftId,
         Amount amount
     )
-        public
+        external
+        restricted()
     {
         Blocknumber lastUpdatedIn = _checkBalanceExists(nftId);
 
@@ -315,6 +312,7 @@ contract StakingStore is
         Amount rewardIncrementAmount
     )
         external
+        restricted()
     {
         Blocknumber lastUpdatedIn = _checkBalanceExists(nftId);
         Amount stakeAmount = _stakeBalance[nftId];
@@ -341,6 +339,7 @@ contract StakingStore is
         Amount rewardIncrementAmount
     )
         external
+        restricted()
     {
         Blocknumber lastUpdatedIn = _checkBalanceExists(nftId);
 
@@ -365,6 +364,7 @@ contract StakingStore is
         Amount maxClaimAmount
     )
         external
+        restricted()
         returns (Amount claimedAmount)
     {
         Blocknumber lastUpdatedIn = _checkBalanceExists(nftId);
@@ -394,6 +394,7 @@ contract StakingStore is
         Amount maxClaimAmount
     )
         external
+        restricted()
         returns (
             Amount unstakedAmount,
             Amount claimedAmount
@@ -477,8 +478,44 @@ contract StakingStore is
 
     //--- private functions -------------------------------------------//
 
+    function _createTarget(
+        NftId targetNftId,
+        IStaking.TargetInfo memory targetInfo
+    )
+        private
+    {
+        _create(
+            targetNftId.toKey32(TARGET()),
+            abi.encode(targetInfo));
 
-    function _createTargetBalance(NftId nftId) private {
+        // initialize tvl and stake balance
+        _tvlLastUpdatedIn[targetNftId]= BlocknumberLib.currentBlocknumber();
+        _createTargetBalance(targetNftId);
+
+        _targetManager.add(targetNftId);
+    }
+
+    function _updateReserves(
+        NftId targetNftId, 
+        Amount newRewardBalance
+    )
+        private
+        returns (Blocknumber lastUpdatedIn)
+    {
+        if (_lastUpdatedIn[targetNftId].eqz()) {
+            revert ErrorStakingStoreNotTarget(targetNftId);
+        }
+
+        lastUpdatedIn = _lastUpdatedIn[targetNftId];
+
+        _reserveBalance[targetNftId] = newRewardBalance;
+        _lastUpdatedIn[targetNftId] = BlocknumberLib.currentBlocknumber();
+    }
+
+
+    function _createTargetBalance(NftId nftId)
+        private
+    {
         if (_lastUpdatedIn[nftId].gtz()) {
             revert ErrorStakingStoreBalanceAlreadyInitialized(nftId);
         }
@@ -494,7 +531,9 @@ contract StakingStore is
     }
 
 
-    function _createStakeBalance(NftId nftId) private {
+    function _createStakeBalance(NftId nftId)
+        private
+    {
         if (_lastUpdatedIn[nftId].gtz()) {
             revert ErrorStakingStoreBalanceAlreadyInitialized(nftId);
         }
@@ -514,7 +553,7 @@ contract StakingStore is
         Amount newStakeAmount,
         Amount newRewardAmount
     )
-        internal
+        private
     {
         _stakeBalance[stakeNftId] = newStakeAmount;
         _rewardBalance[stakeNftId] = newRewardAmount;
@@ -529,7 +568,7 @@ contract StakingStore is
         Amount newStakeAmount,
         Amount newRewardAmount
     )
-        internal
+        private
     {
         _stakeBalance[targetNftId] = newStakeAmount;
         _rewardBalance[targetNftId] = newRewardAmount;
@@ -539,7 +578,8 @@ contract StakingStore is
     }
 
     function _checkBalanceExists(NftId nftId)
-        internal
+        private
+        view
         returns (Blocknumber lastUpdatedIn)
     {
         lastUpdatedIn = _lastUpdatedIn[nftId];
@@ -554,7 +594,7 @@ contract StakingStore is
         NftId targetNftId,
         address token
     )
-        internal
+        private
         view
         returns (
             Blocknumber tvlLastUpdatedIn,

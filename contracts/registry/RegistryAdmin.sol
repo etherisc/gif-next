@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
-import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManaged.sol";
-import {AuthorityUtils} from "@openzeppelin/contracts/access/manager/AuthorityUtils.sol";
-import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-
-import {RoleId, RoleIdLib, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../type/RoleId.sol";
-
-import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
-
+import {AccessAdmin} from "../shared/AccessAdmin.sol";
+import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
 import {IRegistry} from "./IRegistry.sol";
-import {Registry} from "./Registry.sol";
+import {IService} from "../shared/IService.sol";
+import {IServiceAuthorization} from "./IServiceAuthorization.sol";
+import {IStaking} from "../staking/IStaking.sol";
+import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
 import {ReleaseManager} from "./ReleaseManager.sol";
-import {TokenRegistry} from "./TokenRegistry.sol";
-//import {Staking} from "../staking/Staking.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
-import {StakingReader} from "../staking/StakingReader.sol";
+import {STAKING} from "../type/ObjectType.sol";
+import {TokenRegistry} from "./TokenRegistry.sol";
+import {VersionPart} from "../type/Version.sol";
 
 /*
     1) GIF_MANAGER_ROLE
@@ -29,51 +26,80 @@ import {StakingReader} from "../staking/StakingReader.sol";
         - MUST have 1 member at any time
         - granted/revoked ONLY in transferAdminRole() -> consider lock out situations!!!
         - responsible for creation and activation of releases
+
+    createServiceTarget(type, release)
+    createServiceRole(type,release)
+    getServiceRole(type, release)
 */
-
 contract RegistryAdmin is
-    AccessManaged,
-    Initializable
+    AccessAdmin
 {
-    error ErrorRegistryAdminReleaseManagerAuthorityMismatch();
-    error ErrorRegistryAdminTokenRegistryAuthorityMismatch();
-    error ErrorRegistryAdminStakingAuthorityMismatch();
-    error ErrorRegistryAdminStakingStoreAuthorityMismatch();
-
-    error ErrorRegistryAdminReleaseManagerCodehashMismatch();
-    error ErrorRegistryAdminTokenRegistryCodehashMismatch();
-    error ErrorRegistryAdminStakingCodehashMismatch();
-    error ErrorRegistryAdminStakingStoreCodehashMismatch();
-    error ErrorRegistryAdminStakingReaderCodehashMismatch();
+    error ErrorRegistryAdminIsAlreadySetUp();
 
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
+    string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
+    string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
+    string public constant RELEASE_MANAGER_ROLE_NAME = "ReleaseManagerRole";
 
-    string public constant RELEASE_MANAGER_TARGET_NAME = "ReleaseManager";
-    string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
-    string public constant STAKING_TARGET_NAME = "Staking";
+    string public constant RELEASE_MANAGER_TARGET_NAME = "ReleaseManagerTarget";
+    string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistryTarget";
+    string public constant STAKING_TARGET_NAME = "StakingTarget";
+    string public constant STAKING_STORE_TARGET_NAME = "StakingStoreTarget";
 
-    bytes32 public immutable REGISTRY_CODE_HASH;
-    bytes32 public immutable RELEASE_MANAGER_CODE_HASH;
-    bytes32 public immutable TOKEN_REGISTRY_CODE_HASH;
-    bytes32 public immutable STAKING_CODE_HASH;
-    bytes32 public immutable STAKING_STORE_CODE_HASH;
-    bytes32 public immutable STAKING_READER_CODE_HASH;
-    
-    IRegistry private _registry;
+    mapping(address service => VersionPart majorVersion) private _ServiceRelease;
+
     address private _releaseManager;
     address private _tokenRegistry;
     address private _staking;
     address private _stakingStore;
+    bool private _setupCompleted;
 
+    constructor() AccessAdmin() { }
+
+    function completeSetup(
+        IRegistry registry,
+        address gifAdmin, 
+        address gifManager
+    )
+        external
+        //onlyDeployer()
+    {
+        if (_setupCompleted) { revert ErrorRegistryAdminIsAlreadySetUp(); } 
+        else { _setupCompleted = true; }
+
+        // TODO check deployed contracts hashes
+        // TODO check deployed contracts authority 
+
+        _releaseManager = registry.getReleaseManagerAddress();
+        _tokenRegistry = registry.getTokenRegistryAddress();
+        _staking = registry.getStakingAddress();
+        _stakingStore = address(
+            IStaking(_staking).getStakingStore());
+
+        // at this moment all registry contracts are deployed and fully intialized
+        _createTarget(_releaseManager, RELEASE_MANAGER_TARGET_NAME);
+        _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME);
+        _createTarget(_staking, STAKING_TARGET_NAME);
+        _createTarget(_stakingStore, STAKING_STORE_TARGET_NAME);
+
+        _setupGifAdminRole(gifAdmin);
+        _setupGifManagerRole(gifManager);
+
+        _setupReleaseManagerRole();
+        _setupStakingRoles();
+    }
+
+/* Adoption to create2AndInit() -> empty constructor (creates access manager, but clone have no constructor) -> right after call initialize(registry, gifAdmin, gifManager) -> after deployment non restricted completeSetup
     // deployed first
     constructor()
-        AccessManaged(msg.sender)
+        //AccessAdmin()
+        //AccessManaged(msg.sender)
     {
-        AccessManagerExtendedInitializeable accessManager = new AccessManagerExtendedInitializeable();
-        accessManager.initialize(address(this));
+        //AccessManagerExtendedInitializeable accessManager = new AccessManagerExtendedInitializeable();
+        //accessManager.initialize(address(this));
          //accessManager.disable();
-        setAuthority(address(accessManager));
+        //setAuthority(address(accessManager));
 
         REGISTRY_CODE_HASH = keccak256(type(Registry).runtimeCode);
         RELEASE_MANAGER_CODE_HASH = keccak256(type(ReleaseManager).runtimeCode);
@@ -82,7 +108,7 @@ contract RegistryAdmin is
         STAKING_STORE_CODE_HASH = keccak256(type(StakingStore).runtimeCode);
         STAKING_READER_CODE_HASH = keccak256(type(StakingReader).runtimeCode);
     }
-    
+
     function initialize(
         address registryAddress,
         address gifAdmin, 
@@ -91,20 +117,31 @@ contract RegistryAdmin is
         external
         initializer
     {
+        //AccessManagerExtendedInitializeable accessManager = new AccessManagerExtendedInitializeable();
+        AccessManagerInitializeable accessManager = new ();
+        accessManager.initialize(address(this));
+
+        _initializeAccessAdmin(address(accessManager));
+
         _registry = IRegistry(registryAddress);
         _releaseManager = _registry.getReleaseManagerAddress();
         _tokenRegistry = _registry.getTokenRegistryAddress();
         _staking = _registry.getStakingAddress();
         //_stakingStore = _registry.getStakingStoreAddress(); 
 
-        _createRole(GIF_ADMIN_ROLE(), GIF_ADMIN_ROLE_NAME);
-        _createRole(GIF_MANAGER_ROLE(), GIF_MANAGER_ROLE_NAME);
 
-        _grantRole(GIF_ADMIN_ROLE(), gifAdmin, 0);
-        _grantRole(GIF_MANAGER_ROLE(), gifManager, 0);
+        // TODO decide on max member count\
+        // Creating / granting this roles here because it is the only place where gifAdmin and gifManager are known
+        _createRole(GIF_ADMIN_ROLE(), getAdminRole(), GIF_ADMIN_ROLE_NAME, 2, false);
+        _createRole(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE(), GIF_MANAGER_ROLE_NAME, 1, false);
+        
+        _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
+        _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
+
         // at this moment each contract which uses this authority() is a brick
-        // in order to fly it needs completeCoreDeployment() function to be called
+        // in order to fly it needs completeSetup() function to be called
     }
+
     // Not resrticted
     // Checks all contracts are deployed and initialized
     // Then sets all the roles (which makes core contracts callable)
@@ -119,7 +156,7 @@ contract RegistryAdmin is
         if(_tokenRegistry.codehash != TOKEN_REGISTRY_CODE_HASH) {
             revert ErrorRegistryAdminTokenRegistryCodehashMismatch();
         }
-/*
+
         if(_staking.codehash != STAKING_CODE_HASH) {
             revert ErrorRegistryAdminStakingCodehashMismatch();
         }
@@ -127,7 +164,7 @@ contract RegistryAdmin is
         if(registry.getStakingStoreAddress().codehash != STAKING_STORE_CODE_HASH) {
             revert ErrorRegistryAdminStakingStoreCodehashMismatch();
         }
-*/
+
 
         // validate authority (initialization)
         if(IAccessManaged(_releaseManager).authority() != authority()) {
@@ -141,55 +178,203 @@ contract RegistryAdmin is
         if(IAccessManaged(_staking).authority() != authority()) {
             revert ErrorRegistryAdminStakingAuthorityMismatch();
         }
-/*
+
         if(IAccessManaged(_stakingStore).authority() != authority()) {
             revert ErrorRegistryAdminStakingStoreAuthorityMismatch();
         }
-*/
 
-        _createTarget(_releaseManager, RELEASE_MANAGER_TARGET_NAME);
+
+        //_createTarget(_releaseManager, RELEASE_MANAGER_TARGET_NAME);
         _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME);
-        _createTarget(_staking, STAKING_TARGET_NAME);
+        //_createTarget(_staking, STAKING_TARGET_NAME);
 
-        _setGifAdminRole();
-        _setGifManagerRole();
+        _setupGifAdminRole(gifAdmin);
+        _setupGifManagerRole(gifManager);
+
+        _setupReleaseManager();
+        _setupStaking();
 
         // set gif manager role admin
-        _setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
+        //_setRoleAdmin(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE());
     }
 
-    // TODO makes sense to do this in initialize() function
-    // it is a single contract
-    // but if many token registries a possible use separate registration function?
-    // same true for staking components
-    /*function setTokenRegistry(
-        address tokenRegistry
+    function completeSetup()
+        external
+    {
+        // can check that there are code and do not care about hashes 
+        // but have to calculate addresess then (which is more expensive)
+        // validate deployment
+        if(_releaseManager.codehash != RELEASE_MANAGER_CODE_HASH) {
+            revert ErrorRegistryAdminReleaseManagerCodehashMismatch();
+        }
+
+        if(_tokenRegistry.codehash != TOKEN_REGISTRY_CODE_HASH) {
+            revert ErrorRegistryAdminTokenRegistryCodehashMismatch();
+        }
+
+        if(_staking.codehash != STAKING_CODE_HASH) {
+            revert ErrorRegistryAdminStakingCodehashMismatch();
+        }
+
+        if(registry.getStakingStoreAddress().codehash != STAKING_STORE_CODE_HASH) {
+            revert ErrorRegistryAdminStakingStoreCodehashMismatch();
+        }
+
+        // validate authority (initialization)
+        if(IAccessManaged(_releaseManager).authority() != authority()) {
+            revert ErrorRegistryAdminReleaseManagerAuthorityMismatch();
+        }
+
+        if(IAccessManaged(_tokenRegistry).authority() != authority()) {
+            revert ErrorRegistryAdminTokenRegistryAuthorityMismatch();
+        }
+
+        if(IAccessManaged(_staking).authority() != authority()) {
+            revert ErrorRegistryAdminStakingAuthorityMismatch();
+        }
+
+        if(IAccessManaged(_stakingStore).authority() != authority()) {
+            revert ErrorRegistryAdminStakingStoreAuthorityMismatch();
+        }
+
+        // at this moment all registry contracts are deployed and fully intialized
+        _createTarget(_tokenRegistry, TOKEN_REGISTRY_TARGET_NAME);
+
+        _setupGifAdminRole();
+        _setupGifManagerRole();
+
+        _setupReleaseManager();
+        _setupStaking();
+    }
+*/
+
+
+    /// @dev Sets up authorizaion for specified service.
+    /// For all authorized services its authorized functions are enabled.
+    /// Permissioned function: Access is restricted to release manager.
+    function authorizeService(
+        IServiceAuthorization serviceAuthorization,
+        IService service
     )
         external
-        restricted() // GIF_ADMIN_ROLE
+        restricted()
     {
-        // for TokenRegistry
-        bytes4[] memory functionSelector = new bytes4[](5);
-        functionSelector[0] = TokenRegistry.registerToken.selector;
-        functionSelector[1] = TokenRegistry.registerRemoteToken.selector;
-        functionSelector[2] = TokenRegistry.setActive.selector;
-        functionSelector[3] = TokenRegistry.setActiveForVersion.selector;
-
-        // only needed for testing TODO find a better way
-        functionSelector[4] = TokenRegistry.setActiveWithVersionCheck.selector;
-        _setTargetFunctionRole(address(tokenRegistry), functionSelector, GIF_MANAGER_ROLE());
-    }*/
+        // TODO require service to be registered
+        _createServiceTargetAndRole(service);
+        _authorizeServiceFunctions(serviceAuthorization, service);
+    }
 
 
-    function setTargetFunctionRole(
-        address target, 
-        bytes4[] memory selector,
-        RoleId roleId
-    )
+    function grantServiceRoleForAllVersions(IService service, ObjectType domain)
         external
-        restricted // RELEASE_MANAGER_ROLE -> TODO create this role
+        restricted()
     {
-        _setTargetFunctionRole(target, selector, roleId);
+        _grantRoleToAccount( 
+            RoleIdLib.roleForTypeAndAllVersions(domain),
+            address(service)); 
+    }
+
+
+    function _createServiceTargetAndRole(IService service)
+        private
+    {
+        ObjectType domain = service.getDomain();
+        string memory baseName = ObjectTypeLib.toName(domain);
+        VersionPart version = service.getVersion().toMajorPart();
+        uint256 versionInt = version.toInt();
+        string memory versionName = "_v0";
+        string memory versionNumber = ObjectTypeLib.toString(versionInt);
+
+        if (versionInt >= 10) {
+            versionName = "_v";
+        }
+
+        // create service target
+        string memory serviceTargetName = string(
+            abi.encodePacked(
+                baseName,
+                "Service",
+                versionName,
+                versionNumber));
+
+        _createTarget(
+            address(service), 
+            serviceTargetName);
+
+        // create service role
+        string memory serviceRoleName = string(
+            abi.encodePacked(
+                baseName,
+                "ServiceRole",
+                versionName,
+                versionNumber));
+
+        RoleId roleId = RoleIdLib.roleForTypeAndVersion(
+            domain, 
+            version);
+
+        // role may already exist
+        if(!roleExists(roleId)) {
+            _createRole(
+                roleId, 
+                ADMIN_ROLE(), 
+                serviceRoleName,
+                1, // service roles must only be given to this unique service
+                true); // it must not be possible to remove this role once granted
+        }
+
+        _grantRoleToAccount( 
+            roleId,
+            address(service)); 
+    }
+
+
+    function _authorizeServiceFunctions(
+        IServiceAuthorization serviceAuthorization,
+        IService service
+    )
+        private
+    {
+        ObjectType serviceDomain = service.getDomain();
+        ObjectType authorizedDomain;
+        RoleId authorizedRoleId;
+
+        VersionPart release = service.getVersion().toMajorPart();
+        ObjectType[] memory authorizedDomains = serviceAuthorization.getAuthorizedDomains(serviceDomain);
+
+        for (uint256 i = 0; i < authorizedDomains.length; i++) {
+            authorizedDomain = authorizedDomains[i];
+
+            // derive authorized role from authorized domain
+            if (authorizedDomain == ALL()) {
+                authorizedRoleId = PUBLIC_ROLE();
+            } else {
+                authorizedRoleId = RoleIdLib.roleForTypeAndVersion(
+                authorizedDomain, 
+                release);
+
+                // role may not exist yet
+                if(!roleExists(authorizedRoleId)) {
+                    _createRole(
+                        authorizedRoleId, 
+                        ADMIN_ROLE(), 
+                        ObjectTypeLib.toName(authorizedDomain),
+                        1, 
+                        true);
+                }
+            }
+
+            // In case of authorizedDomain ALL() -> using PUBLIC_ROLE() which is prohibited in onlyExistingRole() modifier
+            // get authorized functions for authorized domain
+            IAccessAdmin.Function[] memory authorizatedFunctions = serviceAuthorization.getAuthorizedFunctions(
+                serviceDomain, 
+                authorizedDomain);
+
+            _authorizeTargetFunctions(
+                    address(service), 
+                    authorizedRoleId, 
+                    authorizatedFunctions);
+        }
     }
 
     /*function transferAdmin(address to)
@@ -202,85 +387,122 @@ contract RegistryAdmin is
 
     //--- view functions ----------------------------------------------------//
 
-    function hasRole(address account, RoleId roleId) external view returns(bool) {
-        (bool isMember,) =  AccessManagerExtendedInitializeable(authority()).hasRole(roleId.toInt(), account);
-        return isMember;
+    function getGifAdminRole() external view returns (RoleId) {
+        return GIF_ADMIN_ROLE();
     }
 
-
-    function canCall(
-        address account,
-        address target,
-        bytes4 functionSelector
-    )
-        external
-        view
-        returns(bool)
-    {
-        (bool immediate,) = AuthorityUtils.canCallWithDelay(
-            authority(),
-            account,
-            target,
-            functionSelector);
-
-        return immediate;
+    function getGifManagerRole() external view returns (RoleId) {
+        return GIF_MANAGER_ROLE();
     }
 
     //--- private functions -------------------------------------------------//
 
-    function _setGifAdminRole() private
-    {
-        // for ReleaseManager
-        bytes4[] memory functionSelector2 = new bytes4[](2);
-        //functionSelector2[0] = ReleaseManager.registerStaking.selector;
-        functionSelector2[0] = ReleaseManager.createNextRelease.selector;
-        functionSelector2[1] = ReleaseManager.activateNextRelease.selector;
+    function _setupGifAdminRole(address gifAdmin) private {
+        // TODO decide on max member count
+        _createRole(GIF_ADMIN_ROLE(), getAdminRole(), GIF_ADMIN_ROLE_NAME, 2, false);
+        _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
 
-        _setTargetFunctionRole(_releaseManager, functionSelector2, GIF_ADMIN_ROLE());
+        // for ReleaseManager
+        Function[] memory functions;
+        functions = new Function[](2);
+        functions[0] = toFunction(ReleaseManager.createNextRelease.selector, "createNextRelease");
+        functions[1] = toFunction(ReleaseManager.activateNextRelease.selector, "activateNextRelease");
+        _authorizeTargetFunctions(_releaseManager, GIF_ADMIN_ROLE(), functions);
 
         // for Staking
     }
     
-    function _setGifManagerRole() private 
-    {
-        // for TokenRegistry
-        bytes4[] memory functionSelectorTr = new bytes4[](5);
-        functionSelectorTr[0] = TokenRegistry.registerToken.selector;
-        functionSelectorTr[1] = TokenRegistry.registerRemoteToken.selector;
-        functionSelectorTr[2] = TokenRegistry.setActive.selector;
-        functionSelectorTr[3] = TokenRegistry.setActiveForVersion.selector;
+    function _setupGifManagerRole(address gifManager) private {
+        _createRole(GIF_MANAGER_ROLE(), GIF_ADMIN_ROLE(), GIF_MANAGER_ROLE_NAME, 1, false);
+        _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
 
-        // only needed for testing TODO find a better way
-        functionSelectorTr[4] = TokenRegistry.setActiveWithVersionCheck.selector;
-        _setTargetFunctionRole(_tokenRegistry, functionSelectorTr, GIF_MANAGER_ROLE());
+        // for TokenRegistry
+        Function[] memory functions;
+        functions = new Function[](5);
+        functions[0] = toFunction(TokenRegistry.registerToken.selector, "registerToken");
+        functions[1] = toFunction(TokenRegistry.registerRemoteToken.selector, "registerRemoteToken");
+        functions[2] = toFunction(TokenRegistry.setActive.selector, "setActive");
+        functions[3] = toFunction(TokenRegistry.setActiveForVersion.selector, "setActiveForVersion");
+        // TODO find a better way (only needed for testing)
+        functions[4] = toFunction(TokenRegistry.setActiveWithVersionCheck.selector, "setActiveWithVersionCheck");
+        _authorizeTargetFunctions(_tokenRegistry, GIF_MANAGER_ROLE(), functions);
 
         // for ReleaseManager
-        bytes4[] memory functionSelectorRm = new bytes4[](2);
-        functionSelectorRm[0] = ReleaseManager.registerService.selector;
-        functionSelectorRm[1] = ReleaseManager.prepareNextRelease.selector;
-        _setTargetFunctionRole(_releaseManager, functionSelectorRm, GIF_MANAGER_ROLE());
+        functions = new Function[](2);
+        functions[0] = toFunction(ReleaseManager.prepareNextRelease.selector, "prepareNextRelease");
+        functions[1] = toFunction(ReleaseManager.registerService.selector, "registerService");
+        _authorizeTargetFunctions(_releaseManager, GIF_MANAGER_ROLE(), functions);
 
         // for Staking
     }
 
 
-    function _setTargetFunctionRole(address target, bytes4[] memory selectors, RoleId roleId) private {
-        AccessManagerExtendedInitializeable(authority()).setTargetFunctionRole(target, selectors, roleId.toInt());        
+    function _setupReleaseManagerRole() private {
+        RoleId releaseManagerRoleId = RoleIdLib.roleForType(RELEASE());
+        _createRole(releaseManagerRoleId, ADMIN_ROLE(), RELEASE_MANAGER_ROLE_NAME, 1, true);
+        _grantRoleToAccount(releaseManagerRoleId, _releaseManager);
+
+        // TODO require to work with admin target... _authorizeTargetFunctionsUnchecked()
+        Function[] memory functions;
+        functions = new Function[](2);
+        functions[0] = toFunction(RegistryAdmin.authorizeService.selector, "authorizeService");
+        functions[1] = toFunction(RegistryAdmin.grantServiceRoleForAllVersions.selector, "grantServiceRoleForAllVersions");
+        _authorizeTargetFunctionsUnchecked(address(this), releaseManagerRoleId, functions);
     }
 
-    function _setRoleAdmin(RoleId roleId, RoleId adminRoleId) private {
-        AccessManagerExtendedInitializeable(authority()).setRoleAdmin(roleId.toInt(), adminRoleId.toInt());
-    }
 
-    function _grantRole(RoleId roleId, address account, uint32 executionDelay) private {
-        AccessManagerExtendedInitializeable(authority()).grantRole(roleId.toInt(), account, executionDelay);
-    }
+    function _setupStakingRoles() private {
+        // staking function authorization for staking service
+        RoleId stakingServiceRoleId = RoleIdLib.roleForTypeAndAllVersions(STAKING());
+        _createRole(stakingServiceRoleId, ADMIN_ROLE(), STAKING_SERVICE_ROLE_NAME, 1, true);
 
-    function _createRole(RoleId roleId, string memory roleName) private {
-        AccessManagerExtendedInitializeable(authority()).createRole(roleId.toInt(), roleName);
-    }
+        Function[] memory functions;
+        functions = new Function[](13);
+        functions[0] = toFunction(IStaking.registerTarget.selector, "registerTarget");
+        functions[1] = toFunction(IStaking.setLockingPeriod.selector, "setLockingPeriod");
+        functions[2] = toFunction(IStaking.setRewardRate.selector, "setRewardRate");
+        functions[3] = toFunction(IStaking.refillRewardReserves.selector, "refillRewardReserves");
+        functions[4] = toFunction(IStaking.withdrawRewardReserves.selector, "withdrawRewardReserves");
+        functions[5] = toFunction(IStaking.createStake.selector, "createStake");
+        functions[6] = toFunction(IStaking.stake.selector, "stake");
+        functions[7] = toFunction(IStaking.unstake.selector, "unstake");
+        functions[8] = toFunction(IStaking.restake.selector, "restake");
+        functions[9] = toFunction(IStaking.updateRewards.selector, "updateRewards");
+        functions[10] = toFunction(IStaking.claimRewards.selector, "claimRewards");
+        functions[11] = toFunction(IStaking.collectDipAmount.selector, "collectDipAmount");
+        functions[12] = toFunction(IStaking.transferDipAmount.selector, "transferDipAmount");
+        _authorizeTargetFunctions(_staking, stakingServiceRoleId, functions);
 
-    function _createTarget(address target, string memory targetName) private {
-        AccessManagerExtendedInitializeable(authority()).createTarget(target, targetName);
+        // staking function authorization for pool service
+        RoleId poolServiceRoleId = RoleIdLib.roleForTypeAndAllVersions(POOL());
+        _createRole(poolServiceRoleId, ADMIN_ROLE(), POOL_SERVICE_ROLE_NAME, 1, true);
+
+        // staking function authorizations
+        functions = new Function[](2);
+        functions[0] = toFunction(IStaking.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
+        functions[1] = toFunction(IStaking.decreaseTotalValueLocked.selector, "decreaseTotalValueLocked");
+        _authorizeTargetFunctions(_staking, poolServiceRoleId, functions);
+
+        // staking store function authorizations
+        RoleId stakingRoleId = RoleIdLib.roleForType(STAKING());
+        _createRole(stakingRoleId, ADMIN_ROLE(), STAKING_TARGET_NAME, 1, true);
+        _grantRoleToAccount(stakingRoleId, _staking);
+
+        functions = new Function[](14);
+        functions[0] = toFunction(StakingStore.setStakingRate.selector, "setStakingRate");
+        functions[1] = toFunction(StakingStore.createTarget.selector, "createTarget");
+        functions[2] = toFunction(StakingStore.updateTarget.selector, "updateTarget");
+        functions[3] = toFunction(StakingStore.increaseReserves.selector, "increaseReserves");
+        functions[4] = toFunction(StakingStore.decreaseReserves.selector, "decreaseReserves");
+        functions[5] = toFunction(StakingStore.increaseTotalValueLocked.selector, "increaseTotalValueLocked");
+        functions[6] = toFunction(StakingStore.decreaseTotalValueLocked.selector, "decreaseTotalValueLocked");
+        functions[7] = toFunction(StakingStore.create.selector, "create");
+        functions[8] = toFunction(StakingStore.update.selector, "update");
+        functions[9] = toFunction(StakingStore.increaseStake.selector, "increaseStake");
+        functions[10] = toFunction(StakingStore.restakeRewards.selector, "restakeRewards");
+        functions[11] = toFunction(StakingStore.updateRewards.selector, "updateRewards");
+        functions[12] = toFunction(StakingStore.claimUpTo.selector, "claimUpTo");
+        functions[13] = toFunction(StakingStore.unstakeUpTo.selector, "unstakeUpTo");
+        _authorizeTargetFunctions(_stakingStore, stakingRoleId, functions);
     }
 }

@@ -532,9 +532,7 @@ contract Staking is GifTest {
         (tokenHandler, dipAmount) = _prepareAccount(instanceOwner, amount);
 
         vm.startPrank(instanceOwner);
-        stakingService.refillRewardReserves(
-            instanceNftId, 
-            dipAmount);
+        instance.refillStakingRewardReserves(dipAmount);
         vm.stopPrank();
     }
 

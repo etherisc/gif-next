@@ -56,11 +56,6 @@ contract PricingService is
         _distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION()));
     }
 
-
-    function getDomain() public pure override returns(ObjectType) {
-        return PRICE();
-    }
-
     /// @dev calculates the premium amount for the specified attributes
     /// also returns the various fee components involved with creating a policy
     function calculatePremium(
@@ -298,4 +293,8 @@ contract PricingService is
         premiumWithTargetWalletAmounts = premium;
     }
 
+
+    function _getDomain() internal pure override returns(ObjectType) {
+        return PRICE();
+    }
 }

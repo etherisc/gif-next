@@ -1,18 +1,23 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount} from "../type/Amount.sol";
+import {BundleManager} from "./BundleManager.sol";
+import {Instance} from "./Instance.sol";
+import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {RoleId} from "../type/RoleId.sol";
-import {IService} from "../shared/IService.sol";
-
-import {InstanceAdmin} from "./InstanceAdmin.sol";
-import {Instance} from "./Instance.sol";
-import {InstanceReader} from "./InstanceReader.sol";
-import {BundleManager} from "./BundleManager.sol";
-import {InstanceStore} from "./InstanceStore.sol";
+import {Seconds} from "../type/Seconds.sol";
+import {UFixed} from "../type/UFixed.sol";
+import {VersionPart} from "../type/Version.sol";
 
 interface IInstanceService is IService {
+
+    // onlyInstance
+    error ErrorInstanceServiceNotRegistered(address instance);
+    error ErrorInstanceServiceNotInstance(address instance, ObjectType objectType);
+    error ErrorInstanceServiceInstanceVersionMismatch(address instance, VersionPart instanceVersion);
 
     error ErrorInstanceServiceComponentNotInstanceLinked(address component);
 
@@ -39,7 +44,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceStoreAuthorityMismatch();
 
     error ErrorInstanceServiceRequestUnauhorized(address caller);
-    error ErrorInstanceServiceNotInstance(NftId nftId);
+    error ErrorInstanceServiceNotInstanceNftId(NftId nftId);
     error ErrorInstanceServiceComponentNotRegistered(address componentAddress);
     error ErrorInstanceServiceInstanceComponentMismatch(NftId instanceNftId, NftId componentNftId);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
@@ -57,9 +62,20 @@ interface IInstanceService is IService {
     function createInstanceClone()
         external 
         returns (
+            // TODO check if Instance can be changed to IInstance
             Instance clonedInstance,
             NftId instanceNftId
         );
+
+
+    function setStakingLockingPeriod(Seconds stakeLockingPeriod) external;
+    function setStakingRewardRate(UFixed rewardRate) external;
+    function refillStakingRewardReserves(address rewardProvider, Amount dipAmount) external;
+
+    /// @dev defunds the staking reward reserves for the specified target
+    /// permissioned: only the target owner may call this function
+    function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
+
 
     function createComponentTarget(
         NftId instanceNftId,

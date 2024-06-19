@@ -16,7 +16,7 @@ import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, toObjectType, PROTOCOL, REGISTRY, TOKEN, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, TOKEN, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
@@ -28,6 +28,7 @@ import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
+import {ServiceMockAuthorizationV3} from "./ServiceMockAuthorizationV3.sol";
 
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
@@ -41,39 +42,7 @@ import {RegistryServiceTestConfig} from "../registryService/RegistryServiceTestC
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {GifDeployer} from "../base/GifDeployer.sol";
 
-// Helper functions to test IRegistry.ObjectInfo structs 
-function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) pure returns (bool isSame) {
-    return (
-        (a.nftId == b.nftId) &&
-        (a.parentNftId == b.parentNftId) &&
-        (a.objectType == b.objectType) &&
-        (a.objectAddress == b.objectAddress) &&
-        (a.initialOwner == b.initialOwner) &&
-        (a.data.length == b.data.length) &&
-        keccak256(a.data) == keccak256(b.data)
-    );
-}
 
-function zeroObjectInfo() pure returns (IRegistry.ObjectInfo memory) {
-    return (
-        IRegistry.ObjectInfo(
-            NftIdLib.zero(),
-            NftIdLib.zero(),
-            ObjectTypeLib.zero(),
-            false,
-            address(0),
-            address(0),
-            bytes("")
-        )
-    );
-}
-
-function toBool(uint256 uintVal) pure returns (bool boolVal)
-{
-    assembly {
-        boolVal := uintVal
-    }
-}
 
 contract RegistryTestBase is GifDeployer, FoundryRandom {
 
@@ -90,14 +59,15 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
+    address public gifAdmin = registryOwner;
+    address public gifManager = registryOwner;
+    address public stakingOwner = registryOwner;
 
     RegistryAdmin registryAdmin;
     StakingManager stakingManager;
     Staking staking;
     ReleaseManager releaseManager;
 
-    RegistryServiceManager public registryServiceManager;
-    RegistryService public registryService;
     Registry public registry;
     address public registryAddress;
     TokenRegistry public tokenRegistry;
@@ -109,7 +79,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     NftId public protocolNftId = NftIdLib.toNftId(1101);
     NftId public globalRegistryNftId = NftIdLib.toNftId(2101);
     NftId public registryNftId; // chainId dependent
-    NftId public registryServiceNftId ; // chainId dependent
     NftId public stakingNftId;
 
     IRegistry.ObjectInfo public protocolInfo;
@@ -152,14 +121,8 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     function setUp() public virtual
     {
         bytes32 salt = "0x1234";
-        address gifAdmin = registryOwner;
-        address gifManager = registryOwner;
-        address stakingOwner = registryOwner;
-
-        _startPrank(registryOwner);
 
         (
-            dip,
             registry,
             releaseManager,
             tokenRegistry,
@@ -176,68 +139,42 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         staking = stakingManager.getStaking();
         stakingNftId = registry.getNftId(address(staking));
 
+        _startPrank(registryOwner);
         _deployRegistryServiceMock();
         _stopPrank();
 
-        // Tests bookeeping
+        // Tests book keeping
         _afterDeployment();
     }
 
 
     function _deployRegistryServiceMock() internal
     {
-        //bytes32 salt = "0x5678";
+        bytes32 salt = "0x5678";
         {
-            // RegistryServiceManagerMock first deploys RegistryService and then upgrades it to RegistryServiceMock
-            // thus address is computed with RegistryService bytecode instead of RegistryServiceMock...
-            RegistryServiceTestConfig config = new RegistryServiceTestConfig(
-                releaseManager,
-                type(RegistryServiceManagerMock).creationCode, // proxy manager
-                type(RegistryService).creationCode, // implementation
-                registryOwner,
-                VersionPartLib.toVersionPart(3),
-                "0x5678");//salt);
-
-            (
-                address[] memory serviceAddresses,
-                string[] memory serviceNames,
-                RoleId[][] memory serviceRoles,
-                string[][] memory serviceRoleNames,
-                RoleId[][] memory functionRoles,
-                string[][] memory functionRoleNames,
-                bytes4[][][] memory selectors
-            ) = config.getConfig();
-
             releaseManager.createNextRelease();
 
+            // TODO do we need preparation phase now?
             (
                 address releaseAccessManager,
                 VersionPart releaseVersion,
                 bytes32 releaseSalt
             ) = releaseManager.prepareNextRelease(
-                serviceAddresses, 
-                serviceNames, 
-                serviceRoles, 
-                serviceRoleNames, 
-                functionRoles,
-                functionRoleNames,
-                selectors, 
-                "0x5678");//salt);
+                new ServiceMockAuthorizationV3(),
+                salt);
 
             registryServiceManagerMock = new RegistryServiceManagerMock{salt: releaseSalt}(
                 releaseAccessManager, 
                 registryAddress, 
                 releaseSalt);
         }
-        registryServiceMock = RegistryServiceMock(address(registryServiceManagerMock.getRegistryService()));
 
+        registryServiceMock = RegistryServiceMock(address(registryServiceManagerMock.getRegistryService()));
         releaseManager.registerService(registryServiceMock);
+        registryServiceManagerMock.linkToProxy();
+        registryServiceNftId = registry.getNftId(address(registryServiceMock));
 
         releaseManager.activateNextRelease();
-
-        registryServiceManagerMock.linkToProxy();
-
-        registryServiceNftId = registry.getNftId(address(registryServiceMock));
     }
 
     // call right after registry deployment, before checks
@@ -302,7 +239,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             STAKING(),
             false,
             address(staking), // must be without erc721 receiver support?
-            registry.NFT_LOCK_ADDRESS(),
+            stakingOwner,
             ""
         );
 
@@ -436,6 +373,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _errorName[IERC721Errors.ERC721InvalidReceiver.selector] = "ERC721InvalidReceiver";
     }
 
+    // call after every succesfull registration with register() function
     function _afterRegistration(IRegistry.ObjectInfo memory info) internal virtual
     {
         _nextId++;
@@ -461,6 +399,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
     }
 
+    // call after every succesfull registration with registerService() function
     function _afterServiceRegistration(IRegistry.ObjectInfo memory info, VersionPart version, ObjectType domain) internal 
     {
         require(info.objectType.toInt() == SERVICE().toInt(), "Test error: _afterServiceRegistration() called with non-service object");

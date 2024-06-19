@@ -14,7 +14,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
-import {RegistryServiceTestBase, toBool} from "./RegistryServiceTestBase.sol";
+import {RegistryServiceTestBase} from "./RegistryServiceTestBase.sol";
 
 import {ServiceMock,
         SelfOwnedServiceMock,

@@ -130,10 +130,12 @@ contract ReferralTest is ReferralTestBase {
         uint256 expectedPremium = netPremium + 14; // 100 (net premium) + 14 (distribution fee 3 + 11 distributor commission)
         assertEq(token.balanceOf(address(customer)), initialCustomerBalance - expectedPremium, "customer balance not 886");
 
-        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
-        assertEq(policyInfo.premiumAmount.toInt(), expectedPremium, "unexpected policy premium amount");
-        assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
-        assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
+        {
+            IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+            assertEq(policyInfo.premiumAmount.toInt(), expectedPremium, "unexpected policy premium amount");
+            assertTrue(policyInfo.activatedAt.gtz(), "activatedAt not set");
+            assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
+        }
 
         // check distribution financials and balance
         assertEq(token.balanceOf(distribution.getWallet()), 14, "distribution balance not 14 (1)");

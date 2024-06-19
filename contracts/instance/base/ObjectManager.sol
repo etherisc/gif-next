@@ -17,7 +17,6 @@ contract ObjectManager is
     event LogObjectManagerInitialized(address instance);
 
     error ErrorObjectManagerNftIdInvalid(NftId instanceNftId);
-    error ErrorObjectManagerAlreadyAdded(NftId componentNftId, NftId objectNftId);
 
     mapping(NftId compnentNftId => LibNftIdSet.Set objects) internal _activeObjects;
     mapping(NftId compnentNftId => LibNftIdSet.Set objects) internal _allObjects;
@@ -29,8 +28,7 @@ contract ObjectManager is
         external 
     {
         IInstance instance = IInstance(instanceAddress);
-        initialize(instance.authority(), address(instance.getRegistry()));
-
+        __Cloneable_init(instance.authority(), address(instance.getRegistry()));
         _instance = instance;
         
         emit LogObjectManagerInitialized(instanceAddress);

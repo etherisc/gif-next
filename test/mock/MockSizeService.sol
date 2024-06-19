@@ -5,7 +5,7 @@ import {Service} from "../../contracts/shared/Service.sol";
 import {ObjectType, SERVICE} from "../../contracts/type/ObjectType.sol";
 
 contract MockSizeService is Service {
-    function getDomain() public pure override returns(ObjectType serviceDomain) {
+    function _getDomain() internal pure override returns(ObjectType serviceDomain) {
         return SERVICE();
     }
 }

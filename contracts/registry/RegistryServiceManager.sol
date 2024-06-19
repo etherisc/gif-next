@@ -1,14 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-
-import {Registry} from "./Registry.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {ProxyManager} from "../shared/ProxyManager.sol";
 import {RegistryService} from "./RegistryService.sol";
-import {TokenRegistry} from "./TokenRegistry.sol";
-
 
 contract RegistryServiceManager is
     ProxyManager
