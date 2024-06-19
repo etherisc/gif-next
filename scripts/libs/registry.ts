@@ -16,6 +16,8 @@ import { logger } from "../logger";
 import { deployContract, prepareVerificationData } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getTxOpts } from "./transaction";
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
+import { ethers as hhEthers } from "hardhat";
 
 
 export type RegistryAddresses = {
@@ -216,6 +218,13 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const stakingAddress = await stakingManager.getStaking();
     const staking = Staking__factory.connect(stakingAddress, owner);
     const stakingNftId = await registry["getNftId(address)"](stakingAddress);
+
+    // verify service implementation 
+    prepareVerificationData(
+        "Staking", 
+        await getImplementationAddress(hhEthers.provider, await stakingManager.getProxy()), 
+        [], 
+        undefined);
 
     await executeTx(
         async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress, getTxOpts()),
