@@ -27,12 +27,15 @@ import {IPolicy} from "./module/IPolicy.sol";
 import {IOracle} from "../oracle/IOracle.sol";
 import {IRisk} from "./module/IRisk.sol";
 
+import {ObjectLifecycle} from "./base/ObjectLifecycle.sol";
+
 
 contract InstanceStore is
     AccessManagedUpgradeable, 
     BalanceStore,
     KeyValueStore,
-    ObjectCounter
+    ObjectCounter,
+    ObjectLifecycle
 {
     function initialize(address instance)
         public 
@@ -40,8 +43,8 @@ contract InstanceStore is
     {
         address authority = IInstance(instance).authority();
         __AccessManaged_init(authority);
-
-        initializeLifecycle();
+        // double initialization, safe
+        _initializeLifecycle();
     }
 
     //--- Component ---------------------------------------------------------//

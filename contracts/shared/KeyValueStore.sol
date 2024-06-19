@@ -34,8 +34,12 @@ contract KeyValueStore is
             revert ErrorKeyValueStoreAlreadyCreated(key32, objectType);
         }
 
+        if(!hasLifecycle(objectType)) {
+            revert ErrorKeyValueStoreNoLifecycle(objectType);
+        }
+
         Blocknumber blocknumber = blockBlocknumber();
-        StateId initialState = hasLifecycle(objectType) ? getInitialState(objectType) : ACTIVE();
+        StateId initialState = getInitialState(objectType);
 
         // set metadata
         metadata.objectType = objectType;

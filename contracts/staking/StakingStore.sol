@@ -28,11 +28,13 @@ import {Version, VersionLib} from "../type/Version.sol";
 import {Versionable} from "../shared/Versionable.sol";
 
 import {RegistryAdmin} from "../registry/RegistryAdmin.sol";
+import {StakingLifecycle} from "./StakingLifecycle.sol";
 
 
 contract StakingStore is 
     AccessManaged,
-    KeyValueStore
+    KeyValueStore,
+    StakingLifecycle
 {
 
     event LogStakingStoreReserveBalanceIncreased(NftId targetNftId, Amount dipAmount, Amount reserveBalance, Blocknumber lastUpdatedIn);
