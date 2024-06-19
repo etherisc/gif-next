@@ -176,7 +176,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
                 UFixedLib: uFixedLibAddress,
             }
         });
-    LIBRARY_ADDRESSES.set("StaketManagerLib", stakeManagerLibAddress);
+    LIBRARY_ADDRESSES.set("StakeManagerLib", stakeManagerLibAddress);
 
     const { address: stateIdLibAddress } = await deployContract(
         "StateIdLib",

@@ -1,11 +1,11 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleManager, IRegistry__factory, Instance, InstanceAdmin, InstanceService__factory, InstanceReader, AccessManagerExtendedInitializeable, InstanceStore, TimestampLib__factory } from "../../typechain-types";
+import { AccessManagerExtendedInitializeable, BundleManager, IRegistry__factory, Instance, InstanceAdmin, InstanceReader, InstanceService__factory, InstanceStore } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
-import { executeTx, getFieldFromLogs, getFieldFromTxRcptLogs } from "./transaction";
 import { ServiceAddresses } from "./services";
+import { executeTx, getFieldFromLogs, getFieldFromTxRcptLogs } from "./transaction";
 
 export type InstanceAddresses = {
     accessManagerAddress: AddressLike,
@@ -117,7 +117,7 @@ export async function deployAndRegisterMasterInstance(
         }
     );
     const bundleManager = bundleManagerBaseContrat as BundleManager;
-    await executeTx(() => bundleManager["initialize(address)"](instanceAddress));
+    await executeTx(() => bundleManager.initialize(instanceAddress));
     await executeTx(() => instance.setBundleManager(bundleManagerAddress));
 
     const { address: instanceAdminAddress, contract: instanceAdminBaseContract } = await deployContract(
@@ -198,8 +198,6 @@ export async function cloneInstanceFromRegistry(registryAddress: AddressLike, in
     const registry = IRegistry__factory.connect(await resolveAddress(registryAddress), instanceOwner);
     const instanceServiceAddress = await registry.getServiceAddress("InstanceService", "3");
     const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(instanceServiceAddress), instanceOwner);
-    const masterInstanceAddress = await instanceServiceAsClonedInstanceOwner.getMasterInstance();
-    logger.debug(`cloning instance ${masterInstanceAddress} ...`);
     const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone());
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAddress");
     const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceNftId");

@@ -121,7 +121,7 @@ export async function deployContract(contractName: string, signer: Signer, const
             }
         }
 
-        return { address, deploymentTransaction, contract };
+        return { address, deploymentTransaction, contract, deploymentReceipt: null };
     }
 }
 
@@ -198,5 +198,5 @@ async function awaitDeploymentTxAndVerify(contractName: string, signer: Signer, 
     
     await verifyDeployedContract(contractName, address, deploymentTransaction, constructorArgs, sourceFileContract);
 
-    return { address, deploymentTransaction, contract };
+    return { address, deploymentTransaction, contract, deploymentReceipt: receipt };
 }

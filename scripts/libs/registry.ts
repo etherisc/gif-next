@@ -1,22 +1,20 @@
 import { AddressLike, Signer, resolveAddress } from "ethers";
-import { 
+import {
+    ChainNft, ChainNft__factory,
     Dip,
-    ChainNft, ChainNft__factory, 
-    IVersionable__factory, 
-    Registry, Registry__factory,
-    RegistryAdmin, 
-    ReleaseManager, 
-    TokenRegistry, TokenRegistry__factory,
-    Staking, StakingManager, Staking__factory,
-    StakingStore, StakingReader,
+    Registry,
+    RegistryAdmin,
+    ReleaseManager,
     ServiceAuthorizationV3,
-    LibNftIdSet__factory,
-    RegistryAccessManager__factory, 
+    Staking, StakingManager,
+    StakingReader,
+    StakingStore,
+    Staking__factory,
+    TokenRegistry
 } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract, verifyContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
-import { getFieldFromTxRcptLogs, executeTx } from "./transaction";
 
 
 export type RegistryAddresses = {
@@ -73,7 +71,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         });
 
     const dip = dipBaseContract as Dip;
-    const dipMainnetAddress = "0xc719d010b63e5bbf2c0551872cd5316ed26acd83";
+    // const dipMainnetAddress = "0xc719d010b63e5bbf2c0551872cd5316ed26acd83";
 
 
     logger.info("-------- Starting deployment Registry Admin ----------------");
@@ -200,7 +198,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             registryAddress,
             tokenRegistryAddress,
             stakingStoreAddress,
-            owner
+            await resolveAddress(owner)
         ],
         { 
             libraries: { 
@@ -218,13 +216,19 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const staking = Staking__factory.connect(stakingAddress, owner);
     const stakingNftId = await registry["getNftId(address)"](stakingAddress);
 
+    console.log("stakingReader.initialize");
     await stakingReader.initialize(stakingAddress, stakingStoreAddress);
 
+    console.log("stakingStore.initialize");
     await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress);
 
+    console.log("stakingManager.initialize");
     await registryAdmin.completeSetup(registry, owner, owner);
 
-    await verifyRegistryComponents(registryAddress, owner)
+    await verifyRegistryComponents(
+        registryAddress, 
+        chainNftAddress,
+        await resolveAddress(owner));
 
     logger.info(`Dip deployed at ${dipAddress}`);
     logger.info(`RegistryAdmin deployeqd at ${registryAdmin}`);
@@ -250,7 +254,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 StrLib: libraries.strLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }
-        });
+        },
+        "contracts/registry/ServiceAuthorizationV3.sol:ServiceAuthorizationV3");
 
     const serviceAuthorizationV3 = serviceAuthorizationV3BaseContract as ServiceAuthorizationV3;
 
@@ -294,7 +299,11 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     };
 }
 
-async function verifyRegistryComponents(registryAddress: RegistryAddresses, owner: Signer) {
+async function verifyRegistryComponents(
+    registryAddress: AddressLike, 
+    chainNftAddress: AddressLike, 
+    owner: AddressLike) 
+{
     if (process.env.SKIP_VERIFICATION?.toLowerCase() === "true") {
         return;
     }
@@ -302,33 +311,10 @@ async function verifyRegistryComponents(registryAddress: RegistryAddresses, owne
     logger.info("Verifying additional registry components");
 
     logger.debug("Verifying registry");
-    await verifyContract(registryAddress.registryAddress, [await owner.getAddress(), 3], undefined);
+    await verifyContract(registryAddress, [owner, 3], undefined);
     
     logger.debug("Verifying chainNft");
-    await verifyContract(registryAddress.chainNftAddress, [registryAddress.registryAddress], undefined);
-    
-    logger.debug("Verifying registryService");
-    const [registryServiceImplenenationAddress] = await getImplementationAddress(registryAddress.registryServiceAddress, owner);
-    // const registryCreationCode = abiRegistry.bytecode;
-
-    // const proxyManager = ProxyManager__factory.connect(await resolveAddress(registryAddress.registryServiceAddress), owner);
-    // const initData = await proxyManager.getDeployData(
-    //     registryServiceImplenenationAddress, await owner.getAddress(), registryCreationCode);
-    await verifyContract(
-        registryServiceImplenenationAddress, 
-        [], 
-        undefined);
+    await verifyContract(chainNftAddress, [registryAddress], undefined);
     
     logger.info("Additional registry components verified");
-}
-
-async function getImplementationAddress(proxyAddress: AddressLike, owner: Signer): Promise<[string, string]> {
-    const versionable = IVersionable__factory.connect(await resolveAddress(proxyAddress), owner);
-    const version = await versionable["getVersion()"]();
-    const versonInfo = await versionable.getVersionInfo(version);
-    const implementationAddress = versonInfo.implementation;
-    const activatedBy = versonInfo.activatedBy;
-    logger.debug(implementationAddress);
-    logger.debug(activatedBy);
-    return [implementationAddress, activatedBy];
 }
