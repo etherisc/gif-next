@@ -341,7 +341,7 @@ function dumpLibraryAddressesToFile(addresses: Map<string, AddressLike>): void {
 
 export function loadLibraryAddressesFromFile() {
     const json = fs.readFileSync(`./libraries_${hre.network.config.chainId}.json`);
-    logger.info(`Loaded libraries from file: ${json}`);
+    // logger.info(`Loaded libraries from file: ${json}`);
     const libraries = JSON.parse(json.toString());
     for (const key in libraries) {
         // logger.debug(`Loaded library ${key} at ${libraries[key]}`);
