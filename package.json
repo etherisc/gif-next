@@ -34,6 +34,7 @@
     "@nomicfoundation/hardhat-verify": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
+    "antlr4ng-cli": "^2.0.0",
     "dotenv": "^16.3.1",
     "eslint": "^8.50.0",
     "hardhat": "^2.17.2",
@@ -46,6 +47,7 @@
     "@openzeppelin/contracts-upgradeable": "5.0.0",
     "@openzeppelin/upgrades-core": "^1.34.1",
     "abi-coder": "^5.0.0",
+    "antlr4ng": "^3.0.4",
     "ethers": "^6.7.1",
     "solidity-docgen": "^0.6.0-beta.36",
     "winston": "^3.10.0"
