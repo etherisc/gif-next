@@ -8,15 +8,13 @@
     "peacock.remoteColor": "#be6900",
     "solidity.packageDefaultDependenciesContractsDirectory": "contracts",
     "solidity.packageDefaultDependenciesDirectory": "lib",
-    "solidity.defaultCompiler": "localFile",
-    "solidity.compileUsingRemoteVersion": "v0.8.20+commit.a1b79de6",
+    "solidity.compileUsingRemoteVersion": "v0.8.24+commit.e11b9ed9",
     "solidity.formatter": "prettier", 
     "[solidity]": {
         "editor.defaultFormatter": "esbenp.prettier-vscode",
     },
     "editor.defaultFormatter": "esbenp.prettier-vscode",
     "todo-tree.tree.scanMode": "workspace only",
-    "solidity.compileUsingLocalVersion": "/workspaces/gif-next/soljson-v0.8.20+commit.a1b79de6.js",
     "workbench.colorCustomizations": {
         "activityBar.activeBackground": "#f18500",
         "activityBar.background": "#f18500",
