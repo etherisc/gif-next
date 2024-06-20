@@ -68,7 +68,6 @@ The deploy script will deploy all required contracts and create a test instance 
 
 ```bash
 # run deployment on a locally created ganache instance
-export SKIP_VERIFICATION=true
 hh run scripts/deploy_all.ts
 ```
 
@@ -79,9 +78,17 @@ hh run scripts/deploy_all.ts
 hh run --network <networkname> scripts/deploy_all.ts
 ```
 
+The deployment will persist deployment information into the files `deployment_state_<chainid>.json`, `libraries_<chainid>.json` and `verification_log_<chainid>.json`. 
+This data can then be used for verification of the deployed contracts on etherscan/polygonscan.
+
+For the verification of the contracts on etherscan/polygonscan the above files (created by previous deployment) are required and then the following command can be used:
+
+```bash
+hh run --network <networkname> scripts/verify_deployment.ts 
+```
+
 Environment variables:
 
-- `SKIP_VERIFICATION` set to `true` to skip etherscan verification (required for ganacht and anvil)
 - `WEB3_INFURA_PROJECT_ID` set to infura project id (required for mumbai and mainnet)
 - `WALLET_MNEMONIC` the mnemonic of the wallet to use for deployment (required for mumbai and mainnet)
 - `ETHERSCAN_API_KEY` `POLYGONSCAN_API_KEY` the api key for etherscan/polygonscan (required for mumbai and mainnet)

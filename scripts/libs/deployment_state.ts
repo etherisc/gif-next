@@ -15,7 +15,6 @@ export type ContractState = {
     name: string;
     deploymentTransaction: string | undefined;
     address: string | undefined;
-    verified: boolean;
 }
 
 export type TransactionState = {
@@ -36,7 +35,7 @@ export class DeploymentState {
         if (contractState === undefined) {
             return false;
         }
-        return contractState.address !== undefined && contractState.verified && contractState.deploymentTransaction !== undefined;
+        return contractState.address !== undefined && contractState.deploymentTransaction !== undefined;
     }
 
     public getContractAddress(contractName: string): string | undefined {
@@ -71,7 +70,6 @@ export class DeploymentState {
                 name: contractName,
                 deploymentTransaction: deploymentTransaction,
                 address: undefined,
-                verified: false
             });
         } else {
             contractState.deploymentTransaction = deploymentTransaction;
@@ -85,16 +83,6 @@ export class DeploymentState {
             throw new Error("Contract state not found");
         } else {
             contractState.address = contractAddress;
-        }
-        this.persistState();
-    }
-
-    public setVerified(contractName: string, verified: boolean): void {
-        const contractState = this.state.contracts.find(c => c.name === contractName);
-        if (contractState === undefined) {
-            throw new Error("Contract state not found");
-        } else {
-            contractState.verified = verified;
         }
         this.persistState();
     }

@@ -13,9 +13,12 @@ import {
     TokenRegistry
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract, verifyContract } from "./deployment";
+import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getTxOpts } from "./transaction";
+import { getImplementationAddress } from "@openzeppelin/upgrades-core";
+import { ethers as hhEthers } from "hardhat";
+import { prepareVerificationData } from "./verification";
 
 
 export type RegistryAddresses = {
@@ -217,6 +220,13 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     const staking = Staking__factory.connect(stakingAddress, owner);
     const stakingNftId = await registry["getNftId(address)"](stakingAddress);
 
+    // verify service implementation 
+    prepareVerificationData(
+        "Staking", 
+        await getImplementationAddress(hhEthers.provider, await stakingManager.getProxy()), 
+        [], 
+        undefined);
+
     await executeTx(
         async () => await stakingReader.initialize(stakingAddress, stakingStoreAddress, getTxOpts()),
         "stakingReader.initialize"
@@ -318,10 +328,10 @@ async function verifyRegistryComponents(
     logger.info("Verifying additional registry components");
 
     logger.debug("Verifying registry");
-    await verifyContract(registryAddress, [owner, 3], undefined);
+    await prepareVerificationData("Registry", registryAddress, [owner, 3], undefined);
     
     logger.debug("Verifying chainNft");
-    await verifyContract(chainNftAddress, [registryAddress], undefined);
+    await prepareVerificationData("ChainNft", chainNftAddress, [registryAddress], undefined);
     
     logger.info("Additional registry components verified");
 }
