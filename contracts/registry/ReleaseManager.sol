@@ -382,7 +382,7 @@ contract ReleaseManager is
     }
 
     function isActiveRelease(VersionPart version) public view returns(bool) {
-        return _releaseInfo[version].activatedAt.gtz();
+        return _state[version] == ACTIVE();
     }
 
     function getReleaseInfo(VersionPart version) external view returns(IRegistry.ReleaseInfo memory) {
@@ -409,12 +409,10 @@ contract ReleaseManager is
         return _servicesToRegister - _registeredServices;
     }
 
-    // TODO cleanup
-    function getReleaseAccessManager(VersionPart version) external view returns(AccessManagerExtendedWithDisableInitializeable) {
-        // return _releaseAccessManager[version];
+    function getReleaseAccessManager(VersionPart version) external view returns(address) {
+        return _releaseAccessManager[version];
     }
 
-    // TODO token registry knows nothing about adfmin, only registry
     function getRegistryAdmin() external view returns (address) {
         return address(_admin);
     }
@@ -511,7 +509,7 @@ contract ReleaseManager is
             return false;
         }
         // TODO try catch and return false in case of revert
-        // a just panic
+        // or just panic
         // check if contract returns a zero nft id for its own address
         if (IRegistry(registryAddress).getNftId(registryAddress).eqz()) {
             return false;
