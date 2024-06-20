@@ -6,15 +6,16 @@ import {
 } from "../../contracts/type/ObjectType.sol";
 
 import {
-     DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE
+     ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE
 } from "../../contracts/type/RoleId.sol";
 
-import {IAccess} from "../authorization/IAccess.sol";
 import {BundleManager} from "../instance/BundleManager.sol"; 
+import {IAccess} from "../authorization/IAccess.sol";
 import {Instance} from "../instance/Instance.sol";
 import {InstanceAdminNew} from "../instance/InstanceAdminNew.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {ModuleAuthorization} from "../authorization/ModuleAuthorization.sol";
+import {RoleId} from "../type/RoleId.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 
@@ -43,10 +44,10 @@ contract InstanceAuthorizationV3
           internal
           override
      {
-          _addRole(DISTRIBUTION_OWNER_ROLE(), DISTRIBUTION_OWNER_ROLE_NAME);
-          _addRole(ORACLE_OWNER_ROLE(), ORACLE_OWNER_ROLE_NAME);
-          _addRole(POOL_OWNER_ROLE(), POOL_OWNER_ROLE_NAME);
-          _addRole(PRODUCT_OWNER_ROLE(), PRODUCT_OWNER_ROLE_NAME);
+          _addGifRole(DISTRIBUTION_OWNER_ROLE(), DISTRIBUTION_OWNER_ROLE_NAME);
+          _addGifRole(ORACLE_OWNER_ROLE(), ORACLE_OWNER_ROLE_NAME);
+          _addGifRole(POOL_OWNER_ROLE(), POOL_OWNER_ROLE_NAME);
+          _addGifRole(PRODUCT_OWNER_ROLE(), PRODUCT_OWNER_ROLE_NAME);
      }
 
 

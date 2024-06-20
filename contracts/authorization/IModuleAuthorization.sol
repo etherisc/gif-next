@@ -7,7 +7,9 @@ import {RoleId} from "../type/RoleId.sol";
 import {Str} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
-interface IModuleAuthorization {
+interface IModuleAuthorization is 
+     IAccess 
+{
 
      /// @dev Returns the release (VersionPart) for which the instance authorizations are defined by this contract.
      /// Matches with the release returned by the linked service authorization.
@@ -17,7 +19,7 @@ interface IModuleAuthorization {
      function getRoles() external view returns(RoleId[] memory roles);
 
      /// @dev Returns the name for the provided role id.
-     function getRoleName(RoleId roleId) external view returns (Str name);
+     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory roleInfo);
 
      /// @dev Returns true iff the specified role id exists.
      function roleExists(RoleId roleId) external view returns(bool exists);
@@ -42,6 +44,6 @@ interface IModuleAuthorization {
      function getAuthorizedRoles(Str target) external view returns(RoleId[] memory roleIds);
 
      /// @dev For the given target and role id the list of authorized functions is returned
-     function getAuthorizedFunctions(Str target, RoleId roleId) external view returns(IAccess.FunctionInfo[] memory authorizatedFunctions);
+     function getAuthorizedFunctions(Str target, RoleId roleId) external view returns(FunctionInfo[] memory authorizatedFunctions);
 }
 

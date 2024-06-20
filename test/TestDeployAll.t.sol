@@ -22,7 +22,7 @@ contract TestDeployAll is GifTest {
         _prepareProduct();  
     }
 
-    function test_deployRegistryAdmin() public {
+    function test_deployAllSetup() public {
         assertTrue(true);
     }
 

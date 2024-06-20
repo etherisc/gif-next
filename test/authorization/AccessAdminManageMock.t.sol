@@ -372,7 +372,6 @@ contract AccessAdminManageMockTest is Test {
         // check non existent role
         RoleId missingRoleId = RoleIdLib.toRoleId(1313);
         assertFalse(aa.roleExists(missingRoleId), "missing role exists"); 
-        assertTrue(aa.isRoleDisabled(missingRoleId), "missing role active");
 
         assertFalse(aa.getRoleForName(StrLib.toStr("NoSuchRole")).exists, "NoSuchRole exists");
 
@@ -402,7 +401,6 @@ contract AccessAdminManageMockTest is Test {
         IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
         assertEq(info.adminRoleId.toInt(), expectedAdminRoleId.toInt(), "unexpected admin role (role info)");
         assertEq(info.name.toString(), expectedName, "unexpected role name");
-        assertEq(info.disabledAt.toInt(), expectedDisabledAt.toInt(), "unexpected disabled at");
         assertTrue(info.createdAt.gtz(), "role does not exist");
 
         Str roleName = StrLib.toStr(expectedName);

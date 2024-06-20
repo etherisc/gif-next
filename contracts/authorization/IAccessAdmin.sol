@@ -15,8 +15,7 @@ interface IAccessAdmin is
 {
 
     // roles
-    event LogRoleCreated(RoleId roleId, RoleId roleAdminId, string name);
-    event LogRoleDisabled(RoleId roleId, bool disabled, Timestamp disabledAtOld);
+    event LogRoleCreated(RoleId roleId, RoleType roleType, RoleId roleAdminId, string name);
     event LogTargetCreated(address target, string name);
     event LogFunctionCreated(address target, Selector selector, string name);
 
@@ -111,7 +110,6 @@ interface IAccessAdmin is
     function getPublicRole() external view returns (RoleId roleId);
 
     function roleExists(RoleId roleId) external view returns (bool exists); 
-    function isRoleDisabled(RoleId roleId) external view returns (bool roleIsActive);
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory roleInfo);
     function getRoleForName(Str name) external view returns (RoleNameInfo memory);
 
@@ -131,6 +129,7 @@ interface IAccessAdmin is
     function getAuthorizedFunction(address target, uint256 idx) external view returns (FunctionInfo memory func, RoleId roleId);
     function canCall(address caller, address target, Selector selector) external view returns (bool can);
 
+    function toRole(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) external view returns (RoleInfo memory);
     function toFunction(bytes4 selector, string memory name) external view returns (FunctionInfo memory);
     function isAccessManaged(address target) external view returns (bool);
     function deployer() external view returns (address);

@@ -137,16 +137,13 @@ contract InstanceAdminNew is
         RoleId[] memory roles = _instanceAuthorization.getRoles();
         RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
         RoleId roleId;
+        RoleInfo memory roleInfo;
 
         for(uint256 i = 0; i < roles.length; i++) {
             roleId = roles[i];
             _createRole(
                 roleId,
-                adminRoleId,
-                _instanceAuthorization.getRoleName(roleId).toString(),
-                false, // not custom role
-                1, // only one role owner allowed
-                true); // role removal not allowed
+                _instanceAuthorization.getRoleInfo(roleId));
         }
     }
 

@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {IAccess} from "../authorization/IAccess.sol";
 import {IModuleAuthorization} from "./IModuleAuthorization.sol";
 import {ObjectType, ObjectTypeLib} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE} from "../type/RoleId.sol";
 import {SelectorLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
@@ -22,7 +22,7 @@ contract ModuleAuthorization
      mapping(Str target => bool exists) internal _targetExists;
 
      RoleId[] internal _roles;
-     mapping(RoleId role => Str name) internal _roleName;
+     mapping(RoleId role => RoleInfo info) internal _roleInfo;
 
      mapping(Str target => RoleId[] authorizedRoles) internal _authorizedRoles;
      mapping(Str target => mapping(RoleId authorizedRole => IAccess.FunctionInfo[] functions)) internal _authorizedFunctions;
@@ -39,12 +39,12 @@ contract ModuleAuthorization
           return _roles;
      }
 
-     function getRoleName(RoleId roleId) external view returns (Str name) {
-          return _roleName[roleId];
+     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory info) {
+          return _roleInfo[roleId];
      }
 
      function roleExists(RoleId roleId) public view returns(bool exists) {
-          return _roleName[roleId].length() > 0;
+          return _roleInfo[roleId].roleType != RoleType.Undefined;
      }
 
      function getTargets() external view returns(Str[] memory targets) {
@@ -84,20 +84,42 @@ contract ModuleAuthorization
      /// @dev Overwrite this function for a specific realease.
      function _setupTargetAuthorizations() internal virtual {}
 
+     /// @dev Use this method to to add an authorized role.
+     function _addRole(RoleId roleId, RoleInfo memory info) internal {
+          _roles.push(roleId);
+          _roleInfo[roleId] = info;
+     }
+
+     /// @dev Add a GIF role for the provided role id and name.
+     function _addGifRole(RoleId roleId, string memory name) internal returns (RoleInfo memory info) {
+          _addRole(
+               roleId,
+               _toRoleInfo(
+                    ADMIN_ROLE(),
+                    RoleType.Gif,
+                    type(uint32).max,
+                    name));
+     }
+
+     /// @dev Add a contract role for the provided role id and name.
+     function _addContractRole(RoleId roleId, string memory name) internal {
+          _addRole(
+               roleId,
+               _toRoleInfo(
+                    ADMIN_ROLE(),
+                    RoleType.Contract,
+                    1,
+                    name));
+     }
+
      /// @dev Add the versioned service role for the specified service domain
      function _addServiceRole(ObjectType serviceDomain) internal {
-          _addRole(
+          _addContractRole(
                _getServiceRoleId(serviceDomain),
                ObjectTypeLib.toVersionedName(
                     ObjectTypeLib.toName(serviceDomain), 
                     "ServiceRole", 
                     getRelease().toInt()));
-     }
-
-     /// @dev Use this method to to add an authorized role.
-     function _addRole(RoleId roleId, string memory name) internal {
-          _roles.push(roleId);
-          _roleName[roleId] = StrLib.toStr(name);
      }
 
      /// @dev Add the service target role for the specified service domain
@@ -143,12 +165,22 @@ contract ModuleAuthorization
           if (roleId != RoleIdLib.zero()) {
                // add role if new
                if (!roleExists(roleId)) {
-                    _addRole(roleId, roleName);
+                    _addContractRole(roleId, roleName);
                }
 
                // link target to role
                _targetRole[target] = roleId;
           }
+     }
+
+     /// @dev creates a role info object from the provided parameters
+     function _toRoleInfo(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) internal view returns (RoleInfo memory info) {
+          return RoleInfo({
+               name: StrLib.toStr(name),
+               adminRoleId: adminRoleId,
+               roleType: roleType,
+               maxMemberCount: maxMemberCount,
+               createdAt: TimestampLib.blockTimestamp()});
      }
 
      /// @dev Use this method to to add an authorized target.

@@ -6,7 +6,7 @@ import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/acce
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {IAccessAdmin} from "./IAccessAdmin.sol";
-import {RoleId, RoleIdLib} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
@@ -135,10 +135,6 @@ contract AccessAdmin is
         return _roleInfo[roleId].createdAt.gtz();
     }
 
-    function isRoleDisabled(RoleId roleId) public view returns (bool isActive) {
-        return _roleInfo[roleId].disabledAt <= TimestampLib.blockTimestamp();
-    }
-
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory) {
         return _roleInfo[roleId];
     }
@@ -236,10 +232,20 @@ contract AccessAdmin is
         (can, ) = _authority.canCall(caller, target, selector.toBytes4());
     }
 
+    function toRole(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) public view returns (RoleInfo memory) {
+        return RoleInfo({
+            name: StrLib.toStr(name),
+            adminRoleId: adminRoleId,
+            roleType: roleType,
+            maxMemberCount: maxMemberCount,
+            createdAt: TimestampLib.blockTimestamp()
+        });
+    }
+
     function toFunction(bytes4 selector, string memory name) public view returns (FunctionInfo memory) {
         return FunctionInfo({
-            selector: SelectorLib.toSelector(selector),
             name: StrLib.toStr(name),
+            selector: SelectorLib.toSelector(selector),
             createdAt: TimestampLib.blockTimestamp()});
     }
 
@@ -345,30 +351,29 @@ contract AccessAdmin is
     function _createAdminAndPublicRoles()
         internal
     {
-        bool isCustom = false;
         RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
         FunctionInfo[] memory functions;
 
         // setup admin role
         _createRoleUnchecked(
-            adminRoleId,
-            adminRoleId,
-            StrLib.toStr(ADMIN_ROLE_NAME),
-            isCustom,
-            1,
-            true);
+            ADMIN_ROLE(),
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Contract,
+                maxMemberCount: 1,
+                name: ADMIN_ROLE_NAME}));
 
         // add this contract as admin role member
         _roleMembers[adminRoleId].add(address(this));
 
         // setup public role
         _createRoleUnchecked(
-            RoleIdLib.toRoleId(_authority.PUBLIC_ROLE()),
-            adminRoleId,
-            StrLib.toStr(PUBLIC_ROLE_NAME),
-            isCustom,
-            type(uint256).max,
-            true);
+            PUBLIC_ROLE(),
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Gif,
+                maxMemberCount: type(uint32).max,
+                name: PUBLIC_ROLE_NAME}));
 
         // TODO cleanup
         // // setup manager role
@@ -430,11 +435,15 @@ contract AccessAdmin is
         internal
     {
         _checkRoleId(roleId);
-        _checkRoleIsActive(roleId);
 
         // check max role members will not be exceeded
         if (_roleMembers[roleId].length() >= _roleInfo[roleId].maxMemberCount) {
             revert ErrorRoleMembersLimitReached(roleId, _roleInfo[roleId].maxMemberCount);
+        }
+
+        // check account is contract for contract role
+        // TODO implement
+        if (_roleInfo[roleId].roleType == RoleType.Contract) {
         }
 
         _roleMembers[roleId].add(account);
@@ -453,7 +462,7 @@ contract AccessAdmin is
         _checkRoleId(roleId);
 
         // check role removal is permitted
-        if (_roleInfo[roleId].memberRemovalDisabled) {
+        if (_roleInfo[roleId].roleType == RoleType.Contract) {
             revert ErrorRoleRemovalDisabled(roleId);
         }
 
@@ -481,23 +490,11 @@ contract AccessAdmin is
         }
     }
 
-
-    function _checkRoleIsActive(RoleId roleId)
-        internal
-    {
-        if (isRoleDisabled(roleId)) {
-            revert ErrorRoleIsDisabled(roleId);
-        }
-    }
-
-
+    /// @dev Creates a role based on the provided parameters.
+    /// Checks that the provided role and role id and role name not already used.
     function _createRole(
         RoleId roleId, 
-        RoleId adminRoleId, 
-        string memory roleName,
-        bool isCustom,
-        uint256 maxMemberCount,
-        bool memberRemovalDisabled
+        RoleInfo memory info
     )
         internal
     {
@@ -509,82 +506,46 @@ contract AccessAdmin is
         }
 
         // check admin role exists
-        if(!roleExists(adminRoleId)) {
-            revert ErrorRoleAdminNotExisting(adminRoleId);
+        if(!roleExists(info.adminRoleId)) {
+            revert ErrorRoleAdminNotExisting(info.adminRoleId);
         }
 
         // check role name is not empty
-        Str name = StrLib.toStr(roleName);
-        if(name.length() == 0) {
+        if(info.name.length() == 0) {
             revert ErrorRoleNameEmpty(roleId);
         }
 
         // check role name is not used for another role
-        if(_roleForName[name].exists) {
+        if(_roleForName[info.name].exists) {
             revert ErrorRoleNameAlreadyExists(
                 roleId, 
-                roleName,
-                _roleForName[name].roleId);
+                info.name.toString(),
+                _roleForName[info.name].roleId);
         }
 
-        _createRoleUnchecked(
-            roleId, adminRoleId, 
-            name, 
-            isCustom,
-            maxMemberCount, 
-            memberRemovalDisabled);
-    }
-
-
-    function _setRoleDisabled(
-        RoleId roleId, 
-        bool disabled
-    )
-        internal
-    {
-
-        _checkRoleId(roleId);
-        Timestamp disabledAtOld = _roleInfo[roleId].disabledAt;
-
-        if (disabled) {
-            _roleInfo[roleId].disabledAt = TimestampLib.blockTimestamp();
-        } else {
-            _roleInfo[roleId].disabledAt = TimestampLib.max();
-        }
-
-        emit LogRoleDisabled(roleId, disabled, disabledAtOld);
+        _createRoleUnchecked(roleId, info);
     }
 
 
     function _createRoleUnchecked(
         RoleId roleId, 
-        RoleId adminRoleId, 
-        Str name,
-        bool custom,
-        uint256 maxMemberCount,
-        bool memberRemovalDisabled
+        RoleInfo memory info
     )
         private
     {
         // create role info
-        _roleInfo[roleId] = RoleInfo({
-            adminRoleId: adminRoleId,
-            name: name,
-            isCustom: custom,
-            maxMemberCount: maxMemberCount,
-            memberRemovalDisabled: memberRemovalDisabled,
-            createdAt: TimestampLib.blockTimestamp(),
-            disabledAt: TimestampLib.max()});
+        info.createdAt = TimestampLib.blockTimestamp();
+        _roleInfo[roleId] = info;
 
         // create role name info
-        _roleForName[name] = RoleNameInfo({
+        _roleForName[info.name] = RoleNameInfo({
             roleId: roleId,
             exists: true});
 
         // add role to list of roles
         _roleIds.push(roleId);
 
-        emit LogRoleCreated(roleId, adminRoleId, name.toString());
+        emit LogRoleCreated(roleId, info.roleType, info.adminRoleId, info.name.toString());
     }
 
 

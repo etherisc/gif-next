@@ -38,11 +38,11 @@ contract AccessAdminForTesting is AccessAdmin {
         _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
         _createRole(
             _managerRoleId, 
-            getAdminRole(),
-            MANAGER_ROLE_NAME,
-            false, // is custom
-            3, // max accounts with this role
-            false); // roleRemovalDisabled
+            toRole(
+                getAdminRole(),
+                RoleType.Custom,
+                3, // max accounts with this role
+                MANAGER_ROLE_NAME)); 
 
         // grant public role access to grant and revoke, renounce
         functions = new FunctionInfo[](3);
@@ -52,14 +52,13 @@ contract AccessAdminForTesting is AccessAdmin {
         _authorizeTargetFunctions(address(this), getPublicRole(), functions);
 
         // grant manager role access to the specified functions 
-        functions = new FunctionInfo[](7);
+        functions = new FunctionInfo[](6);
         functions[0] = toFunction(AccessAdminForTesting.createRole.selector, "createRole");
         functions[1] = toFunction(AccessAdminForTesting.createRoleExtended.selector, "createRoleExtended");
-        functions[2] = toFunction(AccessAdminForTesting.setRoleDisabled.selector, "setRoleDisabled");
-        functions[3] = toFunction(AccessAdminForTesting.createTarget.selector, "createTarget");
-        functions[4] = toFunction(AccessAdminForTesting.setTargetLocked.selector, "setTargetLocked");
-        functions[5] = toFunction(AccessAdminForTesting.authorizeFunctions.selector, "authorizeFunctions");
-        functions[6] = toFunction(AccessAdminForTesting.unauthorizeFunctions.selector, "unauthorizeFunctions");
+        functions[2] = toFunction(AccessAdminForTesting.createTarget.selector, "createTarget");
+        functions[3] = toFunction(AccessAdminForTesting.setTargetLocked.selector, "setTargetLocked");
+        functions[4] = toFunction(AccessAdminForTesting.authorizeFunctions.selector, "authorizeFunctions");
+        functions[5] = toFunction(AccessAdminForTesting.unauthorizeFunctions.selector, "unauthorizeFunctions");
         _authorizeTargetFunctions(address(this), getManagerRole(), functions);
 
         _grantRoleToAccount(_managerRoleId, _deployer);
@@ -75,22 +74,31 @@ contract AccessAdminForTesting is AccessAdmin {
         external
         restricted()
     {
-        bool custom = true;
-        _createRole(roleId, adminRoleId, name, custom, type(uint256).max, false);
+        _createRole(
+            roleId,
+            toRole(
+                adminRoleId, 
+                RoleType.Custom, 
+                type(uint32).max, 
+                name));
     }
 
     function createRoleExtended(
         RoleId roleId, 
         RoleId adminRoleId, 
         string memory name, 
-        uint256 maxOneRoleMember, 
-        bool memberRemovalDisallowed
+        uint32 maxOneRoleMember
     )
         external
         restricted()
     {
-        bool custom = true;
-        _createRole(roleId, adminRoleId, name, custom, maxOneRoleMember, memberRemovalDisallowed);
+        _createRole(
+            roleId, 
+            toRole(
+                adminRoleId, 
+                RoleType.Custom, 
+                maxOneRoleMember, 
+                name));
     }
 
     function grantRole(
@@ -126,18 +134,6 @@ contract AccessAdminForTesting is AccessAdmin {
         restricted()
     {
         _revokeRoleFromAccount(roleId, msg.sender);
-    }
-
-    function setRoleDisabled(
-        RoleId roleId, 
-        bool disabled
-    )
-        external
-        virtual
-        onlyRoleAdmin(roleId) 
-        restricted()
-    {
-        _setRoleDisabled(roleId, disabled);
     }
 
     //--- target management functions ---------------------------------------//
@@ -441,14 +437,13 @@ contract AccessAdminTest is Test {
         vm.startPrank(accessAdminDeployer);
 
         // WHEN
-        uint256 maxOneRoleMember = 1; // max 1 member allowed
+        uint32 maxOneRoleMember = 1; // max 1 member allowed
         bool memberRemovalDisallowed = true;
         accessAdmin.createRoleExtended(
             newRoleId, 
             adminRoleId, 
             newRoleName,
-            maxOneRoleMember, 
-            memberRemovalDisallowed); // member removal disallowed
+            maxOneRoleMember); 
 
         vm.stopPrank();
 
@@ -464,7 +459,6 @@ contract AccessAdminTest is Test {
             TimestampLib.blockTimestamp());
 
         assertEq(accessAdmin.roleMembers(newRoleId), 0, "role members > 0 before granting role");
-        assertFalse(accessAdmin.isRoleDisabled(newRoleId), "role disabled after creation");
 
         // WHEN - assign role 1st time
         address thisContract = address(this);
@@ -1018,74 +1012,6 @@ contract AccessAdminTest is Test {
     }
 
 
-    function test_accessAdminSetRoleDisabledHappyCase() public {
-
-        // GIVEN - setup
-        RoleId newRoleId = RoleIdLib.toRoleId(100);
-        RoleId newRoleAdminRoleId = accessAdmin.getManagerRole();
-        string memory newRoleName = "NewRole";
-
-        // WHEN
-        vm.startPrank(accessAdminDeployer);
-        accessAdmin.createRole(
-            newRoleId, 
-            newRoleAdminRoleId, 
-            newRoleName);
-
-        accessAdmin.grantRole(outsider, newRoleId);
-        vm.stopPrank();
-
-        // THEN
-        assertTrue(accessAdmin.roleExists(newRoleId), "my role doesn't exist");
-        assertFalse(accessAdmin.isRoleDisabled(newRoleId), "my role disabled");
-        assertTrue(accessAdmin.hasRole(outsider, newRoleId), "outsider without my role");
-        assertFalse(accessAdmin.hasRole(outsider2, newRoleId), "outsider2 without my role");
-
-        // WHEN - disable new role
-        bool disabled = true;
-        vm.startPrank(accessAdminDeployer);
-        accessAdmin.setRoleDisabled(newRoleId, disabled);
-        vm.stopPrank();
-
-        // THEN
-        assertTrue(accessAdmin.roleExists(newRoleId), "my role doesn't exist (after disable)");
-        assertTrue(accessAdmin.isRoleDisabled(newRoleId), "my role isn't disabled (after disable)");
-
-        // WHEN + THEN 
-        vm.startPrank(accessAdminDeployer);
-
-        // attempt to grant disabled role must revert
-        vm.expectRevert(
-            abi.encodeWithSelector(
-                IAccessAdmin.ErrorRoleIsDisabled.selector,
-                newRoleId));
-
-        accessAdmin.grantRole(outsider2, newRoleId);
-
-        // revoking diabled roles must not revert
-        accessAdmin.revokeRole(outsider, newRoleId);
-        vm.stopPrank();
-
-        assertFalse(accessAdmin.hasRole(outsider, newRoleId), "outsider has my role (after revoke)");
-        assertFalse(accessAdmin.hasRole(outsider2, newRoleId), "outsider2 has my role (after revoke)");
-
-        // WHEN - enable new role again
-        disabled = false;
-        vm.startPrank(accessAdminDeployer);
-        accessAdmin.setRoleDisabled(newRoleId, disabled);
-
-        // granting role must again work and not revert
-        accessAdmin.grantRole(outsider2, newRoleId);
-        vm.stopPrank();
-
-        // THEN
-        assertTrue(accessAdmin.roleExists(newRoleId), "my role doesn't exist (after re-enable)");
-        assertFalse(accessAdmin.isRoleDisabled(newRoleId), "my role is disabled (after re-enable)");
-        assertFalse(accessAdmin.hasRole(outsider, newRoleId), "outsider has my role (after re-enable)");
-        assertTrue(accessAdmin.hasRole(outsider2, newRoleId), "outsider2 without my role (after re-enable)");
-    }
-
-
     function test_accessAdminGrantRevokeNonexistentRole() public {
 
         // GIVEN - setup
@@ -1468,7 +1394,6 @@ contract AccessAdminTest is Test {
         // check non existent role
         RoleId missingRoleId = RoleIdLib.toRoleId(1313);
         assertFalse(aa.roleExists(missingRoleId), "missing role exists"); 
-        assertTrue(aa.isRoleDisabled(missingRoleId), "missing role active");
 
         assertFalse(aa.getRoleForName(StrLib.toStr("NoSuchRole")).exists, "NoSuchRole exists");
 
@@ -1525,8 +1450,6 @@ contract AccessAdminTest is Test {
         assertEq(info.adminRoleId.toInt(), expectedAdminRoleId.toInt(), "unexpected admin role (role info)");
         assertEq(info.name.toString(), expectedName, "unexpected role name");
         assertEq(info.maxMemberCount, expectedMaxMemberCount, "unexpected maxMemberCount");
-        assertEq(info.memberRemovalDisabled, expectedMemberRemovalDisabled, "unexpected memberRemovalDisabled");
-        assertEq(info.disabledAt.toInt(), expectedDisabledAt.toInt(), "unexpected disabled at");
         assertTrue(info.createdAt.gtz(), "role does not exist");
 
         Str roleName = StrLib.toStr(expectedName);

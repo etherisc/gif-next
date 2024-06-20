@@ -140,8 +140,14 @@ contract InstanceService is
         // clonedInstance.setBundleManager(clonedBundleManager);
 
         // register cloned instance with registry
-        IRegistry.ObjectInfo memory info = _registryService.registerInstance(clonedInstance, instanceOwner);
-        clonedInstanceNftId = info.nftId;
+        clonedInstanceNftId = _registryService.registerInstance(
+            clonedInstance, instanceOwner).nftId;
+
+        // register cloned instance as staking target
+        _stakingService.createInstanceTarget(
+            clonedInstanceNftId,
+            TargetManagerLib.getDefaultLockingPeriod(),
+            TargetManagerLib.getDefaultRewardRate());
 
         // MUST be set after instance is set up and registered
         clonedInstanceAdmin.initializeInstanceAuthorization(address(clonedInstance));

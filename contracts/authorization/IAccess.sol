@@ -8,19 +8,19 @@ import {Timestamp} from "../type/Timestamp.sol";
 
 interface IAccess {
 
-    struct RoleInfo {
-        RoleId adminRoleId;
-        Str name;
-        bool isCustom;
-        uint256 maxMemberCount;
-        bool memberRemovalDisabled;
-        Timestamp createdAt;
-        Timestamp disabledAt;
+    enum RoleType {
+        Undefined, // no role must have this type
+        Contract, // roles assigned to contracts, cannot be revoked
+        Gif, // framework roles that may be freely assigned and revoked
+        Custom // use case specific rules for components
     }
 
-    struct RoleNameInfo {
-        RoleId roleId;
-        bool exists;
+    struct RoleInfo {
+        RoleId adminRoleId;
+        RoleType roleType;
+        uint32 maxMemberCount;
+        Str name;
+        Timestamp createdAt;
     }
 
     struct TargetInfo {
@@ -29,15 +29,20 @@ interface IAccess {
         Timestamp createdAt;
     }
 
-    struct TargeNameInfo {
-        address target;
+    struct FunctionInfo {
+        Str name; // function name
+        Selector selector; // function selector
         Timestamp createdAt;
     }
 
-    struct FunctionInfo {
-        Selector selector; // function selector
-        Str name; // function name
-        Timestamp createdAt;
+    struct RoleNameInfo {
+        RoleId roleId;
+        bool exists;
+    }
+
+    struct TargeNameInfo {
+        address target;
+        bool exists;
     }
 
 }
