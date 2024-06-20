@@ -14,7 +14,7 @@ import {ObjectType, ObjectTypeLib, POOL, RELEASE, REGISTRY, SERVICE, STAKING} fr
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 import {Timestamp, TimestampLib, zeroTimestamp, ltTimestamp} from "../type/Timestamp.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
-import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../type/StateId.sol";
+import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE, PAUSED, CLOSED} from "../type/StateId.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 
 import {IService} from "../shared/IService.sol";
@@ -45,6 +45,9 @@ contract ReleaseManager is
 
     event LogReleaseCreation(VersionPart version, bytes32 salt, address authority); 
     event LogReleaseActivation(VersionPart version);
+    event LogReleaseDisabled(VersionPart version);
+    event LogReleaseEnabled(VersionPart version);
+    event LogReleaseClosed(VersionPart version);
 
     // constructor
     error ErrorReleaseManagerNotRegistry(Registry registry);
@@ -176,7 +179,7 @@ contract ReleaseManager is
         StateId state = _state[version];
         StateId newState = DEPLOYING();
 
-        // verify release manager is in proper state to start deploying a next release
+        // verify release in state SCHEDULED
         if (!isValidTransition(RELEASE(), state, newState)) {
             revert ErrorReleaseManagerReleasePreparationDisallowed(version, state);
         }
@@ -211,9 +214,10 @@ contract ReleaseManager is
     {
         VersionPart releaseVersion = _next;
         StateId state = _state[releaseVersion];
+        StateId newState = DEPLOYING();
 
-        // release in state DEPLOYING
-        if (!isValidTransition(RELEASE(), state, DEPLOYING())) {
+        // verify release in state DEPLOYING
+        if (!isValidTransition(RELEASE(), state, newState)) {
             // TOOD name must represent failed state transition
             revert ErrorReleaseManagerServiceRegistrationDisallowed(state);
         }
@@ -236,8 +240,8 @@ contract ReleaseManager is
             revert ErrorReleaseManagerServiceDomainMismatch(expectedDomain, serviceDomain);
         }
 
-        // service address matches defined in release config
         // TODO uncomment when release addresses calculations are ready
+        // service address matches defined in release config
         /*address expectedAddress = _serviceAuthorization[releaseVersion].getServiceAddress(expectedDomain);
         if(address(service) != expectedAddress) {
             //revert ErrorReleaseManagerServiceAddressMismatch(expectedAddress, address(service));
@@ -246,7 +250,7 @@ contract ReleaseManager is
         // checked in registry
         _releaseInfo[releaseVersion].domains.push(serviceDomain);
 
-        _state[releaseVersion] = DEPLOYING();
+        _state[releaseVersion] = newState;
         _registeredServices++;
 
         // setup service authorization
@@ -275,6 +279,7 @@ contract ReleaseManager is
         StateId state = _state[version];
         StateId newState = ACTIVE();
 
+        // verify release in state DEPLOYING
         if (!isValidTransition(RELEASE(), state, newState)) {
             revert ErrorReleaseManagerReleaseActivationDisallowed(version, state);
         }
@@ -290,11 +295,6 @@ contract ReleaseManager is
             revert ErrorReleaseManagerReleaseNotCreated(version);
         }
 
-        // release is not activated -> redundant with state transition check
-        /*if(_releaseInfo[version].activatedAt.gtz()) {
-            revert ErrorReleaseManagerReleaseAlreadyActivated(version);
-        }*/
-
         _latest = version;
         _state[version] = newState;
 
@@ -304,44 +304,66 @@ contract ReleaseManager is
         emit LogReleaseActivation(version);
     }
 
-    // release becomes disabled after delay expiration (can be reenabled before that)
-    function disableRelease(VersionPart version, Seconds disableDelay)
+    /// @dev stop all operations with release services
+    function pauseRelease(VersionPart version)
         external
         restricted // GIF_ADMIN_ROLE
     {
-        // TODO add state check / change -> check with matthias branch?
-        // release was activated
-        if(_releaseInfo[version].activatedAt.eqz()) {
-            revert ErrorReleaseManagerReleaseNotActivated(version);
+        StateId state = _state[version];
+        StateId newState = PAUSED();
+
+        // verify release in state ACTIVE
+        if (!isValidTransition(RELEASE(), state, newState)) {
+            revert ErrorReleaseManagerReleaseActivationDisallowed(version, state);
         }
 
-        // release not disabled already
-        if(_releaseInfo[version].disabledAt.gtz()) {
-            revert ErrorReleaseManagerReleaseAlreadyDisabled(version);
-        }
-
-        disableDelay = SecondsLib.toSeconds(Math.max(disableDelay.toInt(), MIN_DISABLE_DELAY.toInt()));
-        
         // TODO come up with a substitute
         //_releaseAccessManager[version].disable();
 
-        _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp().addSeconds(disableDelay);
+        _state[version] = newState;
+        _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp();
+
+        emit LogReleaseDisabled(version);
     }
-    
-    function enableRelease(VersionPart version)
+
+    // TODO consider revert if some delay is expired -> becomes disabled automatically
+    /// @dev resume operations with release services
+    function unpauseRelease(VersionPart version)
         external
         restricted // GIF_ADMIN_ROLE
     {
-        // release was disabled
-        //if(_releaseInfo[version].disabledAt.eqz()) {
-        //    revert ErrorReleaseManagerReleaseAlreadyEnabled(version);
-        //}
+        StateId state = _state[version];
+        StateId newState = ACTIVE();
 
-        // reverts if disable delay expired
+        // verify release in state PAUSED
+        if (!isValidTransition(RELEASE(), state, newState)) {
+            revert ErrorReleaseManagerReleaseActivationDisallowed(version, state);
+        }
+
         // TODO come up with a substitute
         // _releaseAccessManager[version].enable();
         
+        _state[version] = newState;
         _releaseInfo[version].disabledAt = zeroTimestamp();
+
+        emit LogReleaseEnabled(version);
+    }
+    /// @dev permanently disable release
+    function closeRelease(VersionPart version) 
+        external
+        restricted // GIF_ADMIN_ROLE
+    {
+        StateId state = _state[version];
+        StateId newState = CLOSED();
+
+        // verify release in state PAUSED
+        if (!isValidTransition(RELEASE(), state, newState)) {
+            revert ErrorReleaseManagerReleaseActivationDisallowed(version, state);
+        }
+
+        _state[version] = newState;
+
+        emit LogReleaseClosed(version);
     }
 
     //--- view functions ----------------------------------------------------//
