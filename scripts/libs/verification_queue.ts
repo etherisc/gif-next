@@ -8,7 +8,7 @@ const VERIFICATION_QUEUE_FILENAME_SUFFIX = ".json";
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const VERIFICATION_DATA_STATE = [] as any[];
+let VERIFICATION_DATA_STATE = [] as any[];
 
 /** Saves the verification data for a contract in the queue and persists the queue to the file system */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -29,6 +29,15 @@ export function saveVerificationData(args: any) {
 function persistState() {
     const json = JSON.stringify(VERIFICATION_DATA_STATE);
     fs.writeFileSync(verificationQueueFilename(), json);
+}
+
+export function loadVerificationQueueState() {
+    if (! fs.existsSync(verificationQueueFilename())) {
+        return;
+    }
+    const filename = verificationQueueFilename();
+    const json = fs.readFileSync(filename, 'utf8');
+    VERIFICATION_DATA_STATE = JSON.parse(json);
 }
 
 export function verificationQueueFilename(): string {

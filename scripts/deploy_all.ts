@@ -7,12 +7,14 @@ import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry"
 import { logger } from "./logger";
 import { InstanceAddresses, MASTER_INSTANCE_OWNER, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
 import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
+import { loadVerificationQueueState } from "./libs/verification_queue";
 
 
 async function main() {
     logger.info("deploying new GIF instance...");
     const { protocolOwner, masterInstanceOwner, instanceOwner } = await getNamedAccounts();
-
+    loadVerificationQueueState();
+    
     // deploy protocol contracts
     const libraries = await deployLibraries(protocolOwner);
     const registry = await deployAndInitializeRegistry(protocolOwner, libraries);
