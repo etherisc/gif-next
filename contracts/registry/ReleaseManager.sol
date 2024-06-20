@@ -58,9 +58,6 @@ contract ReleaseManager is
     error ErrorReleaseManagerVersionMismatch(VersionPart expected, VersionPart actual);
     error ErrorReleaseManagerNoDomains(VersionPart version);
 
-    // register staking
-    //error ErrorReleaseManagerStakingAlreadySet(address stakingAddress);
-
     // registerService
     error ErrorReleaseManagerNoServiceRegistrationExpected();
     error ErrorReleaseManagerServiceRegistrationDisallowed(StateId currentStateId);
@@ -95,8 +92,6 @@ contract ReleaseManager is
     RegistryAdmin private _admin;
     address public _releaseAccessManagerCodeAddress;
     Registry private _registry;
-    IRegisterable private _staking;
-    address private _stakingOwner;
 
     // TODO remove once it's clear that release authority will always be registry authority
     mapping(VersionPart version => address authority) internal _releaseAccessManager;
@@ -108,7 +103,7 @@ contract ReleaseManager is
     VersionPart private _initial;// first active version    
     VersionPart internal _latest; // latest active version
     VersionPart internal _next; // version to create and activate 
-    mapping(VersionPart verson => StateId releaseState) _state;
+    mapping(VersionPart verson => StateId releaseState) private _state;
 
     uint256 internal _registeredServices;
     uint256 internal _servicesToRegister;
@@ -162,8 +157,6 @@ contract ReleaseManager is
             bytes32 releaseSalt
         )
     {
-        // TODO Any call to serviceAuthorization contract must be treated as a call to an external malicious contract
-        // How can wrong authorizations tamper the core, releases or instances?
         (
             VersionPart releaseVersion,
             uint serviceDomainsCount
@@ -206,24 +199,11 @@ contract ReleaseManager is
         _releaseAccessManager[_next] = authority;
         _servicesToRegister = serviceDomainsCount;
         _state[version] = newState;
-/*
-        _releaseInfo[version].version = version;
-        _releaseInfo[version].salt = releaseSalt;
-        _releaseInfo[version].addresses = addresses;
-        _releaseInfo[version].names = names;
-        _releaseInfo[version].serviceRoles = serviceRoles;
-        _releaseInfo[version].serviceRoleNames = serviceRoleNames;
-        _releaseInfo[version].functionRoles = functionRoles;
-        _releaseInfo[version].functionRoleNames = functionRoleNames;
-        _releaseInfo[version].selectors = selectors;
-*/
 
         emit LogReleaseCreation(version, releaseSalt, authority);
     }
 
     // TODO this function can have 0 args -> use stored addresses from prepareNextRelease()
-    // TODO given precomputed and stored here addresses we can check address.codeHash == expectedCodeHash
-    //      expected hash is provided in prepareNextRelease() and stored here
     function registerService(IService service) 
         external
         restricted // GIF_MANAGER_ROLE
@@ -257,6 +237,7 @@ contract ReleaseManager is
         }
 
         // service address matches defined in release config
+        // TODO uncomment when release addresses calculations are ready
         /*address expectedAddress = _serviceAuthorization[releaseVersion].getServiceAddress(expectedDomain);
         if(address(service) != expectedAddress) {
             //revert ErrorReleaseManagerServiceAddressMismatch(expectedAddress, address(service));

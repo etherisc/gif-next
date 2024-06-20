@@ -8,12 +8,6 @@ import {Lifecycle} from "../../shared/Lifecycle.sol";
 contract ObjectLifecycle is
     Lifecycle
 {
-    constructor() {
-        _setupLifecycle();
-    }
-
-    // in case of clone deployment
-    // in the worst case it is save to call _setupLifecycle() twice
     function _initializeLifecycle() internal onlyInitializing
     {
         _setupLifecycle();

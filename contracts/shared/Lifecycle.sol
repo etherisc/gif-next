@@ -50,9 +50,9 @@ abstract contract Lifecycle is
         public
         view
     {
-        // return if no life cycle support
+        // revert if no life cycle support
         if (_initialState[objectType].eqz()) {
-            return;
+            revert ErrorNoLifecycle(objectType);
         }
 
         // enforce valid state transition

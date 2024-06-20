@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {RELEASE} from "../type/ObjectType.sol";
-import {SCHEDULED, DEPLOYING, DEPLOYED, ACTIVE, PAUSED, CLOSED/*, FREE*/} from "../type/StateId.sol";
+import {SCHEDULED, DEPLOYING, ACTIVE, PAUSED, CLOSED/*, FREE*/} from "../type/StateId.sol";
 import {Lifecycle} from "../shared/Lifecycle.sol";
 
 contract ReleaseLifecycle is
