@@ -490,13 +490,16 @@ contract ComponentService is
 
         component.linkToRegisteredNftId();
 
+
+        // TODO second part, may be done in different tx....
+
         // save amended component info with instance
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
 
         IComponents.ComponentInfo memory componentInfo = component.getComponentInfo();
         componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token));
-        instanceStore.createComponent(component.getNftId(), componentInfo);
+        instanceStore.createComponent(componentNftId, componentInfo);
 
         // configure instance authorization
         _instanceService.createComponentTarget(
