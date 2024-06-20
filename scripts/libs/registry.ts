@@ -127,7 +127,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
-                SecondsLib: libraries.secondsLibAddress,
+                StateIdLib: libraries.stateIdLibAddress
             }
         });
 
