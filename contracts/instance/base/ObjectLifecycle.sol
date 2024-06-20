@@ -1,12 +1,15 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ObjectType, COMPONENT, BUNDLE, POLICY, REQUEST, RISK, CLAIM, PAYOUT, POOL, PRODUCT, DISTRIBUTION, DISTRIBUTOR, DISTRIBUTOR_TYPE, REFERRAL} from "../../type/ObjectType.sol";
-import {StateId, INITIAL, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID, FULFILLED, FAILED, CANCELLED} from "../../type/StateId.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
+
+import {COMPONENT, BUNDLE, POLICY, REQUEST, RISK, CLAIM, PAYOUT, POOL, PRODUCT, DISTRIBUTION, DISTRIBUTOR, DISTRIBUTOR_TYPE, REFERRAL} from "../../type/ObjectType.sol";
+import {ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID, FULFILLED, FAILED, CANCELLED} from "../../type/StateId.sol";
 import {Lifecycle} from "../../shared/Lifecycle.sol";
 
 contract ObjectLifecycle is
-    Lifecycle
+    Lifecycle,
+    Initializable
 {
     function _initializeLifecycle() internal onlyInitializing
     {
