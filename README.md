@@ -128,6 +128,15 @@ await provider.getBalance(me)
 
 https://hardhat.org/hardhat-runner/docs/guides/compile-contracts
 
+### ANTLR based checker to find methods that should be restricted but are not
+
+```bash
+hh run scripts/restriction_checker.ts
+```
+
+The script `restriction_checker.ts` is based on the ANTLR grammar `Solidity.g4` (from https://github.com/solidity-parser/antlr) and uses the antlr4ng runtime (https://github.com/mike-lischke/antlr4ng).
+To compile grammar to ts classes run `antlr4ng -Dlanguage=TypeScript -o antlr/generated/ -visitor -listener  antlr/Solidity.g4` (requires openjdk to be installed `sudo apt install openjdk-17-jre-headless`).
+
 ## Forge 
 
 ### Commands
