@@ -13,11 +13,12 @@ import {
     TokenRegistry
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract, prepareVerificationData } from "./deployment";
+import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { executeTx, getTxOpts } from "./transaction";
 import { getImplementationAddress } from "@openzeppelin/upgrades-core";
 import { ethers as hhEthers } from "hardhat";
+import { prepareVerificationData } from "./verification";
 
 
 export type RegistryAddresses = {

@@ -10,6 +10,7 @@ const VERIFICATION_QUEUE_FILENAME_SUFFIX = ".json";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const VERIFICATION_DATA_STATE = [] as any[];
 
+/** Saves the verification data for a contract in the queue and persists the queue to the file system */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function saveVerificationData(args: any) {
     if (args.contractName !== undefined) {
@@ -24,7 +25,6 @@ export function saveVerificationData(args: any) {
     persistState();
     logger.debug("Contract verification data saved");
 }
-
 
 function persistState() {
     const json = JSON.stringify(VERIFICATION_DATA_STATE);

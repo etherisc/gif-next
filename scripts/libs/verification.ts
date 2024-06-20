@@ -3,6 +3,25 @@ import { logger } from "../logger";
 import hre from "hardhat";
 import { delay } from "./deployment";
 import { LIBRARY_ADDRESSES } from "./libraries";
+import { saveVerificationData } from "./verification_queue";
+
+/**
+ * Prepares the data required for verifying a contract on Etherscan and stores it to the verification queue file. 
+ * @param sourceFileContract the contract name prefixed with file path (e.g. "contracts/types/ObjectType.sol:ObjectTypeLib")
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function prepareVerificationData(contractName: string, address: AddressLike, constructorArgs: any[], sourceFileContract: string | undefined) {
+    const args = {
+        contractName: contractName,
+        address: address,
+        constructorArguments: constructorArgs,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any;
+    if (sourceFileContract !== undefined) {
+        args['contract'] = sourceFileContract;
+    }
+    saveVerificationData(args);
+}
 
 /**
  * Verify a smart contract on Etherscan using hardhat-etherscan task "verify". 

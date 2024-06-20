@@ -5,29 +5,13 @@ import { ethers } from "hardhat";
 import { logger } from "../logger";
 import { GAS_PRICE } from "./constants";
 import { deploymentState, isResumeableDeployment } from "./deployment_state";
-import { saveVerificationData } from "./verification_queue";
+import { prepareVerificationData } from "./verification";
 
 type DeploymentResult = {
     address: AddressLike; 
     deploymentTransaction: TransactionResponse | null;
     deploymentReceipt: TransactionReceipt | null;
     contract: BaseContract | null;
-}
-
-/**
- * Prepare the data required for verifying a contract on Etherscan.
- * @param sourceFileContract the contract name prefixed with file path (e.g. "contracts/types/ObjectType.sol:ObjectTypeLib")
- */
-export async function prepareVerificationData(contractName: string, address: AddressLike, constructorArgs: any[], sourceFileContract: string | undefined) {
-    const args = {
-        contractName: contractName,
-        address: address,
-        constructorArguments: constructorArgs,
-    } as any;
-    if (sourceFileContract !== undefined) {
-        args['contract'] = sourceFileContract;
-    }
-    saveVerificationData(args);
 }
 
 /**

@@ -20,11 +20,12 @@ import {
     StakingService, StakingServiceManager, StakingService__factory
 } from "../../typechain-types";
 import { logger } from "../logger";
-import { deployContract, prepareVerificationData } from "./deployment";
+import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
 import { RegistryAddresses } from "./registry";
 import { createRelease, getReleaseConfig } from "./release";
 import { executeTx, getFieldFromTxRcptLogs, getTxOpts } from "./transaction";
+import { prepareVerificationData } from './verification';
 
 
 export type ServiceAddresses = {
