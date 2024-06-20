@@ -24,4 +24,6 @@ contract MockSizeUpgradeableKeyValueStore is
         return VersionLib.toVersion(3,0,0);
     }
 
+    function _setupLifecycle() internal override {}
+
 }

@@ -17,12 +17,14 @@ contract ObjectLifecycle is
     }
 
     function _setupLifecycle()
-        private
+        internal
+        override
     {
         _setupBundleLifecycle();
         _setupComponentLifecycle();
         _setupPolicyLifecycle();
-        _setupClaimAndPayoutLifecycle();
+        _setupClaimLifecycle();
+        _setupPayoutLifecycle();
         _setupRiskLifecycle();
         _setupRequestLifecycle();
         _setUpPoolLifecycle();
@@ -31,69 +33,71 @@ contract ObjectLifecycle is
     }
 
     function _setupComponentLifecycle() private {
-        _initialState[COMPONENT()] = ACTIVE();
-        _isValidTransition[COMPONENT()][ACTIVE()][PAUSED()] = true;
-        _isValidTransition[COMPONENT()][PAUSED()][ACTIVE()] = true;
-        _isValidTransition[COMPONENT()][PAUSED()][ARCHIVED()] = true;
+        setInitialState(COMPONENT(), ACTIVE());
+        setStateTransition(COMPONENT(), ACTIVE(), PAUSED());
+        setStateTransition(COMPONENT(), PAUSED(), ACTIVE());
+        setStateTransition(COMPONENT(), PAUSED(), ARCHIVED());
     }
 
     function _setupBundleLifecycle() private {
-        _initialState[BUNDLE()] = ACTIVE();
-        _isValidTransition[BUNDLE()][ACTIVE()][PAUSED()] = true;
-        _isValidTransition[BUNDLE()][ACTIVE()][CLOSED()] = true;
-        _isValidTransition[BUNDLE()][PAUSED()][ACTIVE()] = true;
-        _isValidTransition[BUNDLE()][PAUSED()][CLOSED()] = true;
+        setInitialState(BUNDLE(), ACTIVE());
+        setStateTransition(BUNDLE(), ACTIVE(), PAUSED());
+        setStateTransition(BUNDLE(), ACTIVE(), CLOSED());
+        setStateTransition(BUNDLE(), PAUSED(), ACTIVE());
+        setStateTransition(BUNDLE(), PAUSED(), CLOSED());
     }
 
     function _setupPolicyLifecycle() private {
-        _initialState[POLICY()] = APPLIED();
-        _isValidTransition[POLICY()][APPLIED()][REVOKED()] = true;
-        _isValidTransition[POLICY()][APPLIED()][DECLINED()] = true;
-        _isValidTransition[POLICY()][APPLIED()][COLLATERALIZED()] = true;
-        _isValidTransition[POLICY()][APPLIED()][ACTIVE()] = true;
-        _isValidTransition[POLICY()][COLLATERALIZED()][ACTIVE()] = true;
-        _isValidTransition[POLICY()][ACTIVE()][CLOSED()] = true;
+        setInitialState(POLICY(), APPLIED());
+        setStateTransition(POLICY(), APPLIED(), REVOKED());
+        setStateTransition(POLICY(), APPLIED(), DECLINED());
+        setStateTransition(POLICY(), APPLIED(), COLLATERALIZED());
+        setStateTransition(POLICY(), APPLIED(), ACTIVE());
+        setStateTransition(POLICY(), COLLATERALIZED(), ACTIVE());
+        setStateTransition(POLICY(), ACTIVE(), CLOSED());
     }
 
-    function _setupClaimAndPayoutLifecycle() private {
-        _initialState[CLAIM()] = SUBMITTED();
-        _isValidTransition[CLAIM()][SUBMITTED()][CONFIRMED()] = true;
-        _isValidTransition[CLAIM()][SUBMITTED()][DECLINED()] = true;
-        _isValidTransition[CLAIM()][CONFIRMED()][CLOSED()] = true;
+    function _setupClaimLifecycle() private {
+        setInitialState(CLAIM(), SUBMITTED());
+        setStateTransition(CLAIM(), SUBMITTED(), CONFIRMED());
+        setStateTransition(CLAIM(), SUBMITTED(), DECLINED());
+        setStateTransition(CLAIM(), CONFIRMED(), CLOSED());
+    }
 
-        _initialState[PAYOUT()] = EXPECTED();
-        _isValidTransition[PAYOUT()][EXPECTED()][PAID()] = true;
+    function _setupPayoutLifecycle() private {
+        setInitialState(PAYOUT(), EXPECTED());
+        setStateTransition(PAYOUT(), EXPECTED(), PAID());
     }
 
     function _setupRiskLifecycle() private {
-        _initialState[RISK()] = ACTIVE();
-        _isValidTransition[RISK()][ACTIVE()][PAUSED()] = true;
-        _isValidTransition[RISK()][PAUSED()][ACTIVE()] = true;
-        _isValidTransition[RISK()][PAUSED()][ARCHIVED()] = true;
+        setInitialState(RISK(), ACTIVE());
+        setStateTransition(RISK(), ACTIVE(), PAUSED());
+        setStateTransition(RISK(), PAUSED(), ACTIVE());
+        setStateTransition(RISK(), PAUSED(), ARCHIVED());
     }
 
     function _setupRequestLifecycle() private {
-        _initialState[REQUEST()] = ACTIVE();
-        _isValidTransition[REQUEST()][ACTIVE()][FULFILLED()] = true;
-        _isValidTransition[REQUEST()][ACTIVE()][FAILED()] = true;
-        _isValidTransition[REQUEST()][FAILED()][FULFILLED()] = true;
-        _isValidTransition[REQUEST()][ACTIVE()][CANCELLED()] = true;
+        setInitialState(REQUEST(), ACTIVE());
+        setStateTransition(REQUEST(), ACTIVE(), FULFILLED());
+        setStateTransition(REQUEST(), ACTIVE(), FAILED());
+        setStateTransition(REQUEST(), FAILED(), FULFILLED());
+        setStateTransition(REQUEST(), ACTIVE(), CANCELLED());
     }
 
     // TODO why this is needed when _setupComponentLifecycle() exists ?!!
     function _setUpPoolLifecycle() private {
-        _initialState[POOL()] = ACTIVE();
+        setInitialState(POOL(), ACTIVE());
     }
 
     function _setUpProductLifecycle() private {
-        _initialState[PRODUCT()] = ACTIVE();
+        setInitialState(PRODUCT(), ACTIVE());
     }
 
     function _setUpDistributionLifecycle() private {
-        _initialState[DISTRIBUTION()] = ACTIVE();
-        _initialState[DISTRIBUTOR()] = ACTIVE();
-        _initialState[DISTRIBUTOR_TYPE()] = ACTIVE();
-        _initialState[REFERRAL()] = ACTIVE();
+        setInitialState(DISTRIBUTION(), ACTIVE());
+        setInitialState(DISTRIBUTOR(), ACTIVE());
+        setInitialState(DISTRIBUTOR_TYPE(), ACTIVE());
+        setInitialState(REFERRAL(), ACTIVE());
     }
 
 }

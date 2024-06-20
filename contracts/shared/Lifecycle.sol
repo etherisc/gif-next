@@ -2,20 +2,30 @@
 pragma solidity ^0.8.20;
 
 import {ObjectType} from "../type/ObjectType.sol";
-import {StateId} from "../type/StateId.sol";
+import {StateId, zeroStateId} from "../type/StateId.sol";
 import {ILifecycle} from "./ILifecycle.sol";
 
 abstract contract Lifecycle is
     ILifecycle
 {
-    // TODO make private
     mapping(ObjectType objectType => StateId initialState)
-        internal _initialState;
+        private _initialState;
 
     mapping(ObjectType objectType => mapping(StateId stateFrom => mapping(StateId stateTo => bool isValid)))
-        internal _isValidTransition;
+        private _isValidTransition;
 
-    //function _initializeLifecycle() internal virtual;
+    /// @dev child class must implement and CALL setup func at deployment/initializaton time
+    function _setupLifecycle() internal virtual;
+
+    function setInitialState(ObjectType ttype, StateId state) internal virtual {
+        assert(_initialState[ttype] == zeroStateId());
+        _initialState[ttype] = state;
+    }
+
+    function setStateTransition(ObjectType ttype, StateId oldState, StateId newState) internal virtual {
+        assert(_isValidTransition[ttype][oldState][newState] == false);
+        _isValidTransition[ttype][oldState][newState] = true;
+    }
 
     function hasLifecycle(
         ObjectType objectType

@@ -13,16 +13,17 @@ contract ReleaseLifecycle is
     }
 
     function _setupLifecycle()
-        private
+        internal 
+        override
     {
-        _initialState[RELEASE()] = SCHEDULED();
+        setInitialState(RELEASE(), SCHEDULED());
 
-        _isValidTransition[RELEASE()][SCHEDULED()][DEPLOYING()] = true;
-        _isValidTransition[RELEASE()][DEPLOYING()][DEPLOYING()] = true;
-        _isValidTransition[RELEASE()][DEPLOYING()][ACTIVE()] = true;
-        _isValidTransition[RELEASE()][ACTIVE()][PAUSED()] = true;
-        _isValidTransition[RELEASE()][PAUSED()][ACTIVE()] = true;
-        _isValidTransition[RELEASE()][PAUSED()][CLOSED()] = true;
-        //_isValidTransition[RELEASE()][ACTIVE()][FREE()] = true;
+        setStateTransition(RELEASE(), SCHEDULED(), DEPLOYING());
+        setStateTransition(RELEASE(), DEPLOYING(), DEPLOYING());
+        setStateTransition(RELEASE(), DEPLOYING(), ACTIVE());
+        setStateTransition(RELEASE(), ACTIVE(), PAUSED());
+        setStateTransition(RELEASE(), PAUSED(), ACTIVE());
+        setStateTransition(RELEASE(), PAUSED(), CLOSED());
+        //setStateTransition(RELEASE(), ACTIVE(), FREE());
     }
 }

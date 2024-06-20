@@ -11,7 +11,7 @@ import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {Lifecycle} from "./Lifecycle.sol";
 import {IKeyValueStore} from "./IKeyValueStore.sol";
 
-contract KeyValueStore is
+abstract contract KeyValueStore is
     Lifecycle, 
     IKeyValueStore
 {

@@ -13,12 +13,11 @@ contract StakingLifecycle is
     }
 
     function _setupLifecycle()
-        private
+        internal
+        override
     {
-        _initialState[TARGET()] = INITIAL();
-
-        _initialState[COMPONENT()] = INITIAL();
-
-        _initialState[STAKE()] = INITIAL();
+        setInitialState(TARGET(), INITIAL());
+        setInitialState(COMPONENT(), INITIAL());
+        setInitialState(STAKE(), INITIAL());
     }
 }
