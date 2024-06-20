@@ -224,9 +224,12 @@ contract RegistryAdmin is
 
         // for ReleaseManager
         Function[] memory functions;
-        functions = new Function[](2);
+        functions = new Function[](5);
         functions[0] = toFunction(ReleaseManager.createNextRelease.selector, "createNextRelease");
         functions[1] = toFunction(ReleaseManager.activateNextRelease.selector, "activateNextRelease");
+        functions[2] = toFunction(ReleaseManager.pauseRelease.selector, "pauseRelease");
+        functions[3] = toFunction(ReleaseManager.unpauseRelease.selector, "unpauseRelease");
+        functions[4] = toFunction(ReleaseManager.closeRelease.selector, "closeRelease");
         _authorizeTargetFunctions(_releaseManager, GIF_ADMIN_ROLE(), functions);
 
         // for Staking
