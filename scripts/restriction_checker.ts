@@ -89,7 +89,7 @@ class RestrictedMissingListener extends SolidityListener {
             && (! this.isView && ! this.isPure)
             && ! this.isRestricted)  {
             // console.log(`Function ${this.functionDescriptor} ${this.modifierList} without restricted modifier`);
-            this.findings += `Function ${this.functionDescriptor} ${this.modifierList} without restricted modifier\n`;
+            this.findings += `Function '${this.functionDescriptor}' |${this.modifierList}| without restricted modifier\n`;
         }
     }
 
