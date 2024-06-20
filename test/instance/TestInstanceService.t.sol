@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: APACHE-2.0
-pragma solidity 0.8.20;
+pragma solidity 0.8.24;
 
 import {GifTest} from "../base/GifTest.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
