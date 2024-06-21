@@ -11,7 +11,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {IAccess} from "../instance/module/IAccess.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
-import {RoleId, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, POLICY_SERVICE_ROLE, PRODUCT_SERVICE_ROLE} from "../type/RoleId.sol";
+import {RoleId, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
@@ -102,12 +102,6 @@ contract ComponentService is
         virtual
     {
         address contractAddress = msg.sender;
-        RoleId[] memory roles = new RoleId[](1);
-        bytes4[][] memory selectors = new bytes4[][](1);
-
-        // authorizaion for distribution owner
-        roles[0] = PRODUCT_OWNER_ROLE();
-        selectors[0] = _createSelectors(IProductComponent.setFees.selector);
 
         // register/create component setup
         (
@@ -117,9 +111,7 @@ contract ComponentService is
         ) = _register(
             contractAddress,
             PRODUCT(),
-            PRODUCT_OWNER_ROLE(),
-            roles,
-            selectors);
+            PRODUCT_OWNER_ROLE());
 
         // create product info
         IComponents.ProductInfo memory productInfo = IProductComponent(contractAddress).getInitialProductInfo();
@@ -193,24 +185,12 @@ contract ComponentService is
         virtual
     {
         address contractAddress = msg.sender;
-        RoleId[] memory roles = new RoleId[](2);
-        bytes4[][] memory selectors = new bytes4[][](2);
-
-        // authorizaion for distribution owner
-        roles[0] = DISTRIBUTION_OWNER_ROLE();
-        selectors[0] = _createSelectors(IDistributionComponent.setFees.selector);
-
-        // authorizaion for product service
-        roles[1] = PRODUCT_SERVICE_ROLE();
-        selectors[1] = _createSelectors(IDistributionComponent.processRenewal.selector);
 
         // register/create component info
         _register(
             contractAddress,
             DISTRIBUTION(),
-            DISTRIBUTION_OWNER_ROLE(),
-            roles,
-            selectors);
+            DISTRIBUTION_OWNER_ROLE());
     }
 
 
@@ -282,8 +262,6 @@ contract ComponentService is
         virtual
     {
         address contractAddress = msg.sender;
-        RoleId[] memory roles = new RoleId[](0);
-        bytes4[][] memory selectors = new bytes4[][](0);
 
         // register/create component setup
         (
@@ -293,9 +271,7 @@ contract ComponentService is
         ) = _register(
             contractAddress,
             ORACLE(),
-            ORACLE_OWNER_ROLE(),
-            roles,
-            selectors);            
+            ORACLE_OWNER_ROLE());            
     }
 
     //-------- pool ---------------------------------------------------------//
@@ -305,16 +281,18 @@ contract ComponentService is
         virtual
     {
         address contractAddress = msg.sender;
-        RoleId[] memory roles = new RoleId[](2);
-        bytes4[][] memory selectors = new bytes4[][](2);
 
-        // authorizaion for pool owner
-        roles[0] = POOL_OWNER_ROLE();
-        selectors[0] = _createSelectors(IPoolComponent.setFees.selector);
+        // TODO cleanup
+        // RoleId[] memory roles = new RoleId[](2);
+        // bytes4[][] memory selectors = new bytes4[][](2);
 
-        // authorizaion for product service
-        roles[1] = POLICY_SERVICE_ROLE();
-        selectors[1] = _createSelectors(IPoolComponent.verifyApplication.selector);
+        // // authorizaion for pool owner
+        // roles[0] = POOL_OWNER_ROLE();
+        // selectors[0] = _createSelectors(IPoolComponent.setFees.selector);
+
+        // // authorizaion for product service
+        // roles[1] = POLICY_SERVICE_ROLE();
+        // selectors[1] = _createSelectors(IPoolComponent.verifyApplication.selector);
 
         // register/create component setup
         (
@@ -324,14 +302,13 @@ contract ComponentService is
         ) = _register(
             contractAddress,
             POOL(),
-            POOL_OWNER_ROLE(),
-            roles,
-            selectors);            
+            POOL_OWNER_ROLE());            
 
         // create info
         instanceStore.createPool(
             componentNftId, 
-            IPoolComponent(contractAddress).getInitialPoolInfo());
+            IPoolComponent(
+                contractAddress).getInitialPoolInfo());
     }
 
 
@@ -461,9 +438,7 @@ contract ComponentService is
     function _register(
         address componentAddress, // address of component to register
         ObjectType requiredType, // required type for component for registration
-        RoleId requiredRole, // role required for comonent owner for registration
-        RoleId[] memory roles, // roles with write access to component
-        bytes4[][] memory selectors // authorized functions per role with write access
+        RoleId requiredRole // role required for comonent owner for registration
     )
         internal
         virtual
@@ -490,8 +465,10 @@ contract ComponentService is
 
         component.linkToRegisteredNftId();
 
-
-        // TODO second part, may be done in different tx....
+        // setup initial component authorization
+        _instanceService.initializeAuthorization(
+            instance.getNftId(),
+            component);
 
         // save amended component info with instance
         instanceReader = instance.getInstanceReader();
@@ -499,16 +476,48 @@ contract ComponentService is
 
         IComponents.ComponentInfo memory componentInfo = component.getComponentInfo();
         componentInfo.tokenHandler = new TokenHandler(address(componentInfo.token));
-        instanceStore.createComponent(componentNftId, componentInfo);
 
-        // configure instance authorization
-        _instanceService.createComponentTarget(
-            instance.getNftId(), 
-            componentAddress, 
-            component.getName(), 
-            selectors, 
-            roles);
+        instanceStore.createComponent(
+            component.getNftId(), 
+            componentInfo);
+
+        // TODO add logging
     }
+
+    // TODO cleanup
+    // /// @dev registers the component represented by the provided address
+    // function _registerOld(
+    //     address componentAddress, // address of component to register
+    //     ObjectType requiredType, // required type for component for registration
+    //     RoleId requiredRole, // role required for comonent owner for registration
+    //     RoleId[] memory roles, // roles with write access to component
+    //     bytes4[][] memory selectors // authorized functions per role with write access
+    // )
+    //     internal
+    //     virtual
+    //     returns (
+    //         InstanceReader instanceReader, 
+    //         InstanceStore instanceStore, 
+    //         NftId componentNftId
+    //     )
+    // {
+    //     (
+    //         instanceReader, 
+    //         instanceStore, 
+    //         componentNftId
+    //     ) = _register(
+    //         componentAddress,
+    //         requiredType,
+    //         requiredRole);
+
+    //     // configure instance authorization
+    //     _instanceService.createComponentTarget(
+    //         instance.getNftId(), 
+    //         componentAddress, 
+    //         component.getName(), 
+    //         selectors, 
+    //         roles);
+    // }
 
 
     /// @dev link the component info corresponding to the componentNftId to the provided productNftId
@@ -608,8 +617,7 @@ contract ComponentService is
         instance = _getInstance(info.parentNftId);
         owner = info.initialOwner;
 
-        (bool hasRole,) = instance.getInstanceAccessManager().hasRole(requiredRole.toInt(), owner);
-        if(!hasRole) {
+        if(!instance.getInstanceAdmin().hasRole(owner, requiredRole)) {
             revert ErrorComponentServiceExpectedRoleMissing(info.parentNftId, requiredRole, owner);
         }
     }

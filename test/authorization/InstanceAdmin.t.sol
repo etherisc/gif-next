@@ -18,15 +18,15 @@ import {RoleId, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, DISTRIBU
 contract TestInstanceAdmin is
     GifTest
 {
-    InstanceAuthorizationV3 public instanceAuthz;
-    InstanceAdminNew public instanceAdminMaster;
+    InstanceAuthorizationV3 public someInstanceAuthz;
+    InstanceAdminNew public someInstanceAdminMaster;
 
     function setUp() public override {
         super.setUp();
 
-        instanceAuthz = new InstanceAuthorizationV3();
-        instanceAdminMaster = new InstanceAdminNew(instanceAuthz);
-        instanceAdminMaster.initialize(instanceAuthz);
+        someInstanceAuthz = new InstanceAuthorizationV3();
+        someInstanceAdminMaster = new InstanceAdminNew(someInstanceAuthz);
+        // instanceAdminMaster.initialize(instanceAuthz);
     }
 
     function test_instanceAdminSetup() public {
@@ -41,11 +41,12 @@ contract TestInstanceAdmin is
     function _cloneNewInstanceAdmin() internal returns (InstanceAdminNew clonedInstanceAdmin) {
         clonedInstanceAdmin = InstanceAdminNew(
             Clones.clone(
-                address(instanceAdminMaster)));
+                address(someInstanceAdminMaster)));
 
         clonedInstanceAdmin.initialize(
-            instanceAuthz);
+            someInstanceAuthz);
 
-        clonedInstanceAdmin.initializeInstanceAuthorization(address(instance));
+        clonedInstanceAdmin.initializeInstanceAuthorization(
+            address(instance));
     }
 }

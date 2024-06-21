@@ -5,6 +5,7 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {IComponent} from "../shared/IComponent.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
@@ -42,5 +43,8 @@ interface IInstanceLinkedComponent is
     /// @dev defines the product to which this component is linked to
     /// this is only relevant for pool and distribution components
     function getProductNftId() external view returns (NftId productNftId);
+
+    /// @dev returns the initial component authorization specification.
+    function getAuthorization() external view returns (IAuthorization authorization);
 
 }

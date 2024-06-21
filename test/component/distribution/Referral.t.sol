@@ -32,13 +32,15 @@ contract ReferralTest is ReferralTestBase {
         console.log("distributor nft id", distributorNftId.toInt());
 
         SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+
+        vm.startPrank(customer);
         referralId = sdistribution.createReferral(
-            distributorNftId,
             referralCode,
             discountPercentage,
             maxReferrals,
             expiryAt,
             referralData);
+        vm.stopPrank();
 
         assertTrue(distributionService.referralIsValid(distributionNftId, referralId), "referral is not valid");
     }
@@ -50,13 +52,15 @@ contract ReferralTest is ReferralTestBase {
         console.log("distributor nft id", distributorNftId.toInt());
 
         SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+
+        vm.startPrank(customer);
         referralId = sdistribution.createReferral(
-            distributorNftId,
             referralCode,
             discountPercentage,
             maxReferrals,
             expiryAt,
             referralData);
+        vm.stopPrank();
 
         assertFalse(distributionService.referralIsValid(distributionNftId, ReferralLib.toReferralId(distributionNftId, "UNKNOWN")), "referral is valid");
     }
@@ -91,7 +95,6 @@ contract ReferralTest is ReferralTestBase {
         token.approve(address(componentInfo.tokenHandler), 1000);
 
         referralId = distribution.createReferral(
-            distributorNftId,
             referralCode,
             UFixedLib.toUFixed(5, -2),
             maxReferrals,
@@ -182,10 +185,8 @@ contract ReferralTest is ReferralTestBase {
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
         token.approve(address(componentInfo.tokenHandler), 1000);
-        // revert("checkApprove");
 
         referralId = distribution.createReferral(
-            distributorNftId,
             referralCode,
             UFixedLib.toUFixed(5, -2),
             maxReferrals,
@@ -249,21 +250,22 @@ contract ReferralTest is ReferralTestBase {
         // GIVEN one more policy to collateralize with a different referral
         vm.startPrank(distributionOwner);
         NftId distributorNftId2 = distribution.createDistributor(
-            customer2,
+            distributor,
             distributorType,
             distributorData);
         vm.stopPrank();
 
-        vm.startPrank(customer2);
-        token.approve(address(componentInfo.tokenHandler), 1000);
-
+        vm.startPrank(distributor);
         ReferralId referralId2 = distribution.createReferral(
-            distributorNftId2,
             "SAVE2!!!",
             UFixedLib.toUFixed(5, -2),
             maxReferrals,
             expiryAt,
             referralData);
+        vm.stopPrank();
+
+        vm.startPrank(customer2);
+        token.approve(address(componentInfo.tokenHandler), 1000);
 
         NftId policyNftId3 = product.createApplication(
             customer2,

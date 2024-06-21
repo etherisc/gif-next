@@ -871,11 +871,12 @@ contract TestProductClaim is GifTest {
 
 
     function _prepareProductLocal() internal {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
-        vm.stopPrank();
 
         _prepareDistributionAndPool();
+
+        vm.startPrank(instanceOwner);
+        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        vm.stopPrank();
 
         vm.startPrank(productOwner);
         prdct = new SimpleProduct(

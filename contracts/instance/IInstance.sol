@@ -17,7 +17,6 @@ import {RoleId} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {UFixed} from "../type/UFixed.sol";
 
-import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
 
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
@@ -78,10 +77,10 @@ interface IInstance is
     /// Permissioned: only the target owner may call this function.
     function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
 
+    // get instance release and supporting contracts
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
     function getBundleManager() external view returns (BundleManager);
     function getInstanceAdmin() external view returns (InstanceAdminNew);
     function getInstanceStore() external view returns (InstanceStore);
-    function getInstanceAccessManager() external view returns (AccessManagerExtendedInitializeable);
 }

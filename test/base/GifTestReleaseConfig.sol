@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {RoleId, PUBLIC_ROLE, POLICY_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, CLAIM_SERVICE_ROLE, ORACLE_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, POOL_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, COMPONENT_SERVICE_ROLE, PRICING_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, INSTANCE_SERVICE_ROLE, REGISTRY_SERVICE_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE, STAKING_SERVICE_ROLE, CAN_CREATE_GIF_TARGET__ROLE} from "../../contracts/type/RoleId.sol";
+import {RoleId, RoleIdLib, PUBLIC_ROLE, PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 import {PolicyServiceManager} from "../../contracts/product/PolicyServiceManager.sol";
@@ -47,6 +47,54 @@ import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 
 import {ReleaseConfig} from "./ReleaseConfig.sol";
 
+
+function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600); }
+
+function CAN_CREATE_GIF_TARGET__ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(42424); }
+
+/// @dev required role to own an instance.
+/// Role is granted by instance service when cloning a new instance.
+/// allows instance specific target, role and access management 
+function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10); }
+
+
+function REGISTRY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1800); }
+
+/// @dev instance specific role for instance service
+function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
+
+/// @dev role for registering gif components
+function COMPONENT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2001); }
+
+/// @dev instance specific role for distribution service
+function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
+
+/// @dev instance specific role for oracle service
+function ORACLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2150); }
+
+/// @dev instance specific role for pool service
+function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2200); }
+
+/// @dev instance specific role for product service
+function PRODUCT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2300); }
+
+/// @dev instance specific role for application service
+function APPLICATION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2400); }
+
+/// @dev instance specific role for policy service
+function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2410); }
+
+/// @dev instance specific role for claim service
+function CLAIM_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2420); }
+
+/// @dev instance specific role for bundle service
+function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
+
+/// @dev instance specific role for pricing service
+function PRICING_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2800); }
+
+/// @dev instance specific role for staking service
+function STAKING_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2900); }
 
 // IMPORTANT: only for easier testing, hh script should precalculate addresses and give to release manager
 // extended version with access control setup

@@ -5,12 +5,13 @@ import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManage
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {IService} from "../shared/IService.sol";
 import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
@@ -25,7 +26,8 @@ contract InstanceAdminNew is
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
 
-    error ErrorInstanceAdminSetupAlreadyCompleted();
+    error ErrorInstanceAdminNotRegistered(address target);
+    error ErrorInstanceAdminAlreadyAuthorized(address target);
     error ErrorInstanceAdminReleaseMismatch();
     error ErrorInstanceAdminExpectedTargetMissing(string targetName);
 
@@ -34,7 +36,6 @@ contract InstanceAdminNew is
     uint64 _idNext;
 
     IModuleAuthorization _instanceAuthorization;
-    bool private _setupCompleted = false;
 
     /// @dev Only used for master instance admin.
     /// Contracts created via constructor come with disabled initializers.
@@ -63,17 +64,26 @@ contract InstanceAdminNew is
         _instanceAuthorization = IModuleAuthorization(instanceAuthorization);
     }
 
+    function _checkTargetIsReadyForAuthorization(address target)
+        internal
+        view
+    {
+        if (address(_registry) != address(0) && !_registry.isRegistered(target)) {
+            revert ErrorInstanceAdminNotRegistered(target);
+        }
+
+        if (targetExists(target)) {
+            revert ErrorInstanceAdminAlreadyAuthorized(target);
+        }
+    }
 
     /// @dev Completes the initialization of this instance admin using the provided instance.
     /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
     function initializeInstanceAuthorization(address instanceAddress)
         external
     {
-        if (_setupCompleted) {
-            revert ErrorInstanceAdminSetupAlreadyCompleted();
-        }
+        _checkTargetIsReadyForAuthorization(instanceAddress);
 
-        _setupCompleted = true;
         _idNext = CUSTOM_ROLE_ID_MIN;
         _instance = IInstance(instanceAddress);
         _registry = _instance.getRegistry();
@@ -84,13 +94,42 @@ contract InstanceAdminNew is
         }
 
         // add instance authorization
-        _creatRoles();
-        _createTargetsWithRoles();
-        _createTargetAuthorizations();
+        _createRoles(_instanceAuthorization);
+        _createModuleTargetsWithRoles();
+        _createTargetAuthorizations(_instanceAuthorization);
 
         // grant component owner roles to instance owner
         _grantComponentOwnerRoles();
     }
+
+
+    /// @dev Initializes the authorization for the specified component.
+    /// Important: The component MUST be registered.
+    function initializeComponentAuthorization(
+        address componentAddress,
+        IAuthorization authorization
+    )
+        external
+    {
+        _checkTargetIsReadyForAuthorization(componentAddress);
+
+        _createRoles(authorization);
+
+        // create component target
+        _createTarget(
+            componentAddress, 
+            authorization.getTargetName(), 
+            true, // checkAuthority
+            false); // custom
+
+        _grantRoleToAccount(
+            authorization.getTargetRole(
+                authorization.getTarget()), 
+            componentAddress);
+        
+        _createTargetAuthorizations(authorization);
+    }
+
 
     function _grantComponentOwnerRoles()
         internal
@@ -131,11 +170,10 @@ contract InstanceAdminNew is
     }
 
 
-    function _creatRoles()
+    function _createRoles(IAuthorization authorization)
         internal
     {
-        RoleId[] memory roles = _instanceAuthorization.getRoles();
-        RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
+        RoleId[] memory roles = authorization.getRoles();
         RoleId roleId;
         RoleInfo memory roleInfo;
 
@@ -143,42 +181,20 @@ contract InstanceAdminNew is
             roleId = roles[i];
             _createRole(
                 roleId,
-                _instanceAuthorization.getRoleInfo(roleId));
+                authorization.getRoleInfo(roleId));
         }
     }
 
-    function _createTargetsWithRoles()
+
+    function _createTargetAuthorizations(IAuthorization authorization)
         internal
     {
-        // create module targets
-        _checkAndCreateTargetWithRole(address(_instance), INSTANCE_TARGET_NAME);
-        _checkAndCreateTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME);
-        _checkAndCreateTargetWithRole(address(_instance.getInstanceAdmin()), INSTANCE_ADMIN_TARGET_NAME);
-        _checkAndCreateTargetWithRole(address(_instance.getBundleManager()), BUNDLE_MANAGER_TARGET_NAME);
-
-        // create targets for services that need to access the module targets
-        ObjectType[] memory serviceDomains = _instanceAuthorization.getServiceDomains();
-        VersionPart release = _instanceAuthorization.getRelease();
-        ObjectType serviceDomain;
-
-        for (uint256 i = 0; i < serviceDomains.length; i++) {
-            serviceDomain = serviceDomains[i];
-
-            _checkAndCreateTargetWithRole(
-                _registry.getServiceAddress(serviceDomain, release),
-                _instanceAuthorization.getServiceTarget(serviceDomain).toString());
-        }
-    }
-
-    function _createTargetAuthorizations()
-        internal
-    {
-        Str[] memory targets = _instanceAuthorization.getTargets();
+        Str[] memory targets = authorization.getTargets();
         Str target;
 
         for(uint256 i = 0; i < targets.length; i++) {
             target = targets[i];
-            RoleId[] memory authorizedRoles = _instanceAuthorization.getAuthorizedRoles(target);
+            RoleId[] memory authorizedRoles = authorization.getAuthorizedRoles(target);
             RoleId authorizedRole;
 
             for(uint256 j = 0; j < authorizedRoles.length; j++) {
@@ -187,7 +203,7 @@ contract InstanceAdminNew is
                 _authorizeTargetFunctions(
                     getTargetForName(target),
                     authorizedRole,
-                    _instanceAuthorization.getAuthorizedFunctions(
+                    authorization.getAuthorizedFunctions(
                         target, 
                         authorizedRole));
             }
@@ -217,6 +233,29 @@ contract InstanceAdminNew is
         RoleId targetRoleId = _instanceAuthorization.getTargetRole(name);
         if (targetRoleId != RoleIdLib.zero()) {
             _grantRoleToAccount(targetRoleId, target);
+        }
+    }
+
+    function _createModuleTargetsWithRoles()
+        internal
+    {
+        // create module targets
+        _checkAndCreateTargetWithRole(address(_instance), INSTANCE_TARGET_NAME);
+        _checkAndCreateTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME);
+        _checkAndCreateTargetWithRole(address(_instance.getInstanceAdmin()), INSTANCE_ADMIN_TARGET_NAME);
+        _checkAndCreateTargetWithRole(address(_instance.getBundleManager()), BUNDLE_MANAGER_TARGET_NAME);
+
+        // create targets for services that need to access the module targets
+        ObjectType[] memory serviceDomains = _instanceAuthorization.getServiceDomains();
+        VersionPart release = _instanceAuthorization.getRelease();
+        ObjectType serviceDomain;
+
+        for (uint256 i = 0; i < serviceDomains.length; i++) {
+            serviceDomain = serviceDomains[i];
+
+            _checkAndCreateTargetWithRole(
+                _registry.getServiceAddress(serviceDomain, release),
+                _instanceAuthorization.getServiceTarget(serviceDomain).toString());
         }
     }
 }

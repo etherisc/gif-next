@@ -14,7 +14,6 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
-import {PRODUCT_SERVICE_ROLE, DISTRIBUTION_OWNER_ROLE} from "../type/RoleId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {ObjectType, COMPONENT, DISTRIBUTION, INSTANCE, DISTRIBUTION, DISTRIBUTOR, REGISTRY} from "../type/ObjectType.sol";
 import {Version, VersionLib} from "../type/Version.sol";
@@ -98,10 +97,17 @@ contract DistributionService is
         {
             NftId productNftId = _getProductNftId(instanceReader, distributionNftId);
             IComponents.ProductInfo memory productInfo = instance.getInstanceReader().getProductInfo(productNftId);
-            UFixed variableFeesPartsTotal = productInfo.minDistributionOwnerFee.fractionalFee.add(commissionPercentage);
-            UFixed maxDiscountPercentageLimit = productInfo.distributionFee.fractionalFee.sub(variableFeesPartsTotal);
+
+            UFixed variableDistributionFees = productInfo.distributionFee.fractionalFee;
+            UFixed variableFeesPartsTotal = productInfo.minDistributionOwnerFee.fractionalFee + commissionPercentage;
+
+            if (variableFeesPartsTotal > variableDistributionFees) {
+                revert ErrorDistributionServiceVariableFeesTooHight(variableDistributionFees.toInt1000(), variableFeesPartsTotal.toInt1000());
+            }
+            UFixed maxDiscountPercentageLimit = variableDistributionFees - variableFeesPartsTotal;
+
             if (maxDiscountPercentage.gt(maxDiscountPercentageLimit)) {
-                revert ErrorIDistributionServiceMaxDiscountTooHigh(maxDiscountPercentage.toInt(), maxDiscountPercentageLimit.toInt());
+                revert ErrorDistributionServiceMaxDiscountTooHigh(maxDiscountPercentage.toInt1000(), maxDiscountPercentageLimit.toInt1000());
             }
         }
 

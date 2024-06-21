@@ -11,13 +11,12 @@ import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {SecondsLib} from "../type/Seconds.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
-import {ADMIN_ROLE, INSTANCE_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE, INSTANCE_SERVICE_ROLE, DISTRIBUTION_SERVICE_ROLE, POOL_SERVICE_ROLE, PRODUCT_SERVICE_ROLE, APPLICATION_SERVICE_ROLE, POLICY_SERVICE_ROLE, CLAIM_SERVICE_ROLE, BUNDLE_SERVICE_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
+import {ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
 import {ObjectType, INSTANCE, BUNDLE, APPLICATION, CLAIM, DISTRIBUTION, INSTANCE, POLICY, POOL, PRODUCT, REGISTRY, STAKING} from "../type/ObjectType.sol";
 
 import {Service} from "../shared/Service.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IService} from "../shared/IService.sol";
-import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 
 import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
@@ -53,7 +52,6 @@ contract InstanceService is
     IRegistryService internal _registryService;
     IStakingService internal _stakingService;
 
-    address internal _masterAccessManager;
     address internal _masterInstanceAdmin;
     address internal _masterInstance;
     address internal _masterInstanceReader;
@@ -315,7 +313,6 @@ contract InstanceService is
             returns(NftId masterInstanceNftId)
     {
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
-        if(_masterAccessManager != address(0)) { revert ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet(); }
         if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
         if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
 
@@ -342,7 +339,6 @@ contract InstanceService is
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
-        _masterAccessManager = instance.authority();
         _masterInstanceAdmin = instanceAdminAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
@@ -374,6 +370,7 @@ contract InstanceService is
         Instance instance = Instance(instanceInfo.objectAddress);
         
         InstanceReader upgradedInstanceReaderClone = InstanceReader(Clones.clone(address(_masterInstanceReader)));
+        upgradedInstanceReaderClone.initializeWithInstance(address(instance));
         instance.setInstanceReader(upgradedInstanceReaderClone);
     }
 
@@ -396,6 +393,25 @@ contract InstanceService is
             roles,
             selectors
         );
+    }
+
+
+    function initializeAuthorization(
+        NftId instanceNftId, 
+        IInstanceLinkedComponent component
+    )
+        external
+        virtual
+        restricted()
+    {
+        (IInstance instance, ) = _validateInstanceAndComponent(
+            instanceNftId, 
+            address(component));
+
+        InstanceAdminNew instanceAdmin = instance.getInstanceAdmin();
+        instanceAdmin.initializeComponentAuthorization(
+            address(component),
+            component.getAuthorization());
     }
 
 
@@ -443,8 +459,6 @@ contract InstanceService is
         // instanceAdmin.createGifTarget(targetAddress, targetName);
 
         // set proposed target config
-        // TODO restriction: gif targets are set only once and only here?
-        //      assume config is a mix of gif and custom roles and no further configuration by INSTANCE_OWNER_ROLE is ever needed?
         for(uint roleIdx = 0; roleIdx < roles.length; roleIdx++) {
             // TODO refactor/implement
             // instanceAdmin.setTargetFunctionRoleByService(targetName, selectors[roleIdx], roles[roleIdx]);

@@ -1,12 +1,16 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-import {Oracle} from "../../contracts/oracle/Oracle.sol";
+import {BasicOracle} from "../../contracts/oracle/BasicOracle.sol";
+import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
 import {RequestId} from "../../contracts/type/RequestId.sol";
 import {Timestamp} from "../../contracts/type/Timestamp.sol";
 
-contract SimpleOracle is Oracle {
+contract SimpleOracle is
+    BasicOracle
+{
 
     string public constant ANSWER_SYNC = "oracle constant sync answer";
 
@@ -54,14 +58,15 @@ contract SimpleOracle is Oracle {
         virtual
         initializer()
     {
-        initializeOracle(
+        IAuthorization authorization = new BasicOracleAuthorization("SimpleOracle");
+
+        _initializeBasicOracle(
             registry,
             instanceNftId,
+            authorization,
             initialOwner,
             name,
-            token,
-            "",
-            "");
+            token);
     }
 
     /// @dev use case specific handling of oracle requests
@@ -78,7 +83,7 @@ contract SimpleOracle is Oracle {
         SimpleRequest memory request = abi.decode(requestData, (SimpleRequest));
 
         if (request.synchronous) {
-            _responeSync(requestId);
+            _respondSync(requestId);
         }
 
         emit LogSimpleOracleRequestReceived(requestId, requesterId, request.synchronous, request.text);
@@ -104,6 +109,7 @@ contract SimpleOracle is Oracle {
         Timestamp revertUntil
     )
         external
+        // permissionless, no restricted() for now
     {
         bytes memory responseData = abi.encode(
             SimpleResponse(
@@ -117,7 +123,7 @@ contract SimpleOracle is Oracle {
     }
 
 
-    function _responeSync(
+    function _respondSync(
         RequestId requestId
     )
         internal

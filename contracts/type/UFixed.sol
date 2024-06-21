@@ -16,6 +16,7 @@ using {
     eqUFixed as ==,
     neUFixed as !=,
     UFixedLib.toInt,
+    UFixedLib.toInt1000,
     UFixedLib.gtz
 } for UFixed global;
 
@@ -234,6 +235,11 @@ library UFixedLib {
     /// @dev Converts a UFixed to a uint256.
     function toInt(UFixed a) public pure returns (uint256) {
         return toIntWithRounding(a, ROUNDING_HALF_UP());
+    }
+
+    /// @dev Converts a UFixed to a uint256.
+    function toInt1000(UFixed a) public pure returns (uint256) {
+        return toIntWithRounding(toUFixed(1000) * a, ROUNDING_HALF_UP());
     }
 
     /// @dev Converts a UFixed to a uint256 with given rounding mode.

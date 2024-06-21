@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 import {NftId} from "../type/NftId.sol";
 
@@ -14,6 +14,9 @@ import {IRegistry} from "../registry/IRegistry.sol";
 
 import {IInstance} from "./IInstance.sol";
 import {IAccess} from "./module/IAccess.sol";
+
+function INSTANCE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2600); }
+function INSTANCE_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(10); }
 
 contract InstanceAdmin is
     AccessManagedUpgradeable

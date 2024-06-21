@@ -16,7 +16,7 @@ import {Amount, AmountLib} from "../type/Amount.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, POOL, BUNDLE, COMPONENT, INSTANCE, REGISTRY, STAKING} from "../type/ObjectType.sol";
-import {PUBLIC_ROLE, POOL_OWNER_ROLE, POLICY_SERVICE_ROLE, RoleId} from "../type/RoleId.sol";
+import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {Version, VersionLib} from "../type/Version.sol";
 import {KEEP_STATE, StateId} from "../type/StateId.sol";

@@ -41,7 +41,7 @@ contract TestProductService is GifTest {
 
     function test_ProductService_register() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
+        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();
 
         _prepareDistributionAndPool();

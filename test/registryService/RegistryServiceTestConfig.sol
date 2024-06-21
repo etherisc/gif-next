@@ -1,13 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {RoleId, REGISTRY_SERVICE_ROLE} from "../../contracts/type/RoleId.sol";
+import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 
 import {ReleaseConfig} from "../base/ReleaseConfig.sol";
 
+function REGISTRY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1800); }
 
 contract RegistryServiceTestConfig is ReleaseConfig
 {

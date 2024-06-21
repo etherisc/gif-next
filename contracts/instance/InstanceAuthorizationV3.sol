@@ -22,7 +22,6 @@ import {VersionPart, VersionPartLib} from "../type/Version.sol";
 contract InstanceAuthorizationV3
      is ModuleAuthorization
 {
-     uint256 public constant GIF_VERSION = 3;
 
      string public constant INSTANCE_TARGET_NAME = "Instance";
      string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
@@ -35,9 +34,7 @@ contract InstanceAuthorizationV3
      string public constant POOL_OWNER_ROLE_NAME = "PoolOwnerRole";
      string public constant PRODUCT_OWNER_ROLE_NAME = "ProductOwnerRole";
 
-     function getRelease() public override view returns(VersionPart release) {
-          return VersionPartLib.toVersionPart(GIF_VERSION);
-     }
+     constructor() ModuleAuthorization(INSTANCE_TARGET_NAME) {}
 
 
      function _setupRoles()
@@ -97,7 +94,7 @@ contract InstanceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
 
           // authorize bundle service role
-          functions = _authorizeForTarget(BUNDLE_MANAGER_TARGET_NAME, _getServiceRoleId(BUNDLE()));
+          functions = _authorizeForTarget(BUNDLE_MANAGER_TARGET_NAME, getServiceRole(BUNDLE()));
           _authorize(functions, BundleManager.linkPolicy.selector, "linkPolicy");
           _authorize(functions, BundleManager.unlinkPolicy.selector, "unlinkPolicy");
           _authorize(functions, BundleManager.add.selector, "add");
@@ -113,11 +110,11 @@ contract InstanceAuthorizationV3
 
           // TODO cleanup
           // authorize instance service role
-          // functions = _authorizeForTarget( INSTANCE_TARGET_NAME, _getServiceRoleId(INSTANCE()));
+          functions = _authorizeForTarget(INSTANCE_TARGET_NAME, getServiceRole(INSTANCE()));
           // _authorize(functions, Instance.setInstanceAdmin.selector, "setInstanceAdmin");
           // _authorize(functions, Instance.setInstanceStore.selector, "setInstanceStore");
           // _authorize(functions, Instance.setBundleManager.selector, "setBundleManager");
-          // _authorize(functions, Instance.setInstanceReader.selector, "setInstanceReader");
+          _authorize(functions, Instance.setInstanceReader.selector, "setInstanceReader");
      }
 
 
@@ -135,7 +132,7 @@ contract InstanceAuthorizationV3
           // _authorize(functions, InstanceAdminNew.setTargetLockedByInstance.selector, "setTargetLockedByInstance");
 
           // authorize instance service role
-          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _getServiceRoleId(INSTANCE()));
+          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(INSTANCE()));
           // _authorize(functions, InstanceAdminNew.createGifTarget.selector, "createGifTarget");
           // _authorize(functions, InstanceAdminNew.setTargetLockedByService.selector, "setTargetLockedByService");
           // _authorize(functions, InstanceAdminNew.setTargetFunctionRoleByService.selector, "setTargetFunctionRoleByService");
@@ -148,7 +145,7 @@ contract InstanceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
 
           // authorize component service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, _getServiceRoleId(COMPONENT()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(COMPONENT()));
           _authorize(functions, InstanceStore.createComponent.selector, "createComponent");
           _authorize(functions, InstanceStore.updateComponent.selector, "updateComponent");
           _authorize(functions, InstanceStore.createPool.selector, "createPool");
@@ -158,7 +155,7 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.increaseFees.selector, "increaseFees");
 
           // authorize distribution service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, _getServiceRoleId(DISTRIBUTION()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(DISTRIBUTION()));
           _authorize(functions, InstanceStore.createDistributorType.selector, "createDistributorType");
           _authorize(functions, InstanceStore.updateDistributorType.selector, "updateDistributorType");
           _authorize(functions, InstanceStore.updateDistributorTypeState.selector, "updateDistributorTypeState");
@@ -170,17 +167,17 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.updateReferralState.selector, "updateReferralState");
 
           // authorize oracle service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, _getServiceRoleId(ORACLE()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(ORACLE()));
           _authorize(functions, InstanceStore.createRequest.selector, "createRequest");
           _authorize(functions, InstanceStore.updateRequest.selector, "updateRequest");
           _authorize(functions, InstanceStore.updateRequestState.selector, "updateRequestState");
 
           // authorize pool service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, _getServiceRoleId(POOL()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(POOL()));
           _authorize(functions, InstanceStore.updatePool.selector, "updatePool");
 
           // authorize bundle service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, _getServiceRoleId(BUNDLE()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(BUNDLE()));
           _authorize(functions, InstanceStore.createBundle.selector, "createBundle");
           _authorize(functions, InstanceStore.updateBundle.selector, "updateBundle");
           _authorize(functions, InstanceStore.updateBundleState.selector, "updateBundleState");
@@ -188,24 +185,24 @@ contract InstanceAuthorizationV3
           _authorize(functions, InstanceStore.decreaseLocked.selector, "decreaseLocked");
 
           // authorize product service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, _getServiceRoleId(PRODUCT()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(PRODUCT()));
           _authorize(functions, InstanceStore.createRisk.selector, "createRisk");
           _authorize(functions, InstanceStore.updateRisk.selector, "updateRisk");
           _authorize(functions, InstanceStore.updateRiskState.selector, "updateRiskState");
 
           // authorize application service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, _getServiceRoleId(APPLICATION()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(APPLICATION()));
           _authorize(functions, InstanceStore.createApplication.selector, "createApplication");
           _authorize(functions, InstanceStore.updateApplication.selector, "updateApplication");
           _authorize(functions, InstanceStore.updateApplicationState.selector, "updateApplicationState");
 
           // authorize policy service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, _getServiceRoleId(POLICY()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(POLICY()));
           _authorize(functions, InstanceStore.updatePolicy.selector, "updatePolicy");
           _authorize(functions, InstanceStore.updatePolicyState.selector, "updatePolicyState");
 
           // authorize claim service role
-          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, _getServiceRoleId(CLAIM()));
+          functions = _authorizeForTarget(INSTANCE_STORE_TARGET_NAME, getServiceRole(CLAIM()));
           _authorize(functions, InstanceStore.updatePolicyClaims.selector, "updatePolicyClaims");
           _authorize(functions, InstanceStore.createClaim.selector, "createClaim");
           _authorize(functions, InstanceStore.updateClaim.selector, "updateClaim");

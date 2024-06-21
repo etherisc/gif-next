@@ -9,6 +9,7 @@ import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
 import {IRisk} from "../instance/module/IRisk.sol";
 import {IApplicationService} from "./IApplicationService.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {IProductService} from "./IProductService.sol";
@@ -52,9 +53,92 @@ abstract contract Product is
         Distribution _distribution;
     }
 
-    function initializeProduct(
+
+    function calculatePremium(
+        Amount sumInsuredAmount,
+        RiskId riskId,
+        Seconds lifetime,
+        bytes memory applicationData,
+        NftId bundleNftId,
+        ReferralId referralId
+    )
+        external 
+        view 
+        override 
+        returns (Amount premiumAmount)
+    {
+        IPolicy.Premium memory premium = _getProductStorage()._pricingService.calculatePremium(
+            getNftId(),
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+
+        return AmountLib.toAmount(premium.premiumAmount);
+    }
+
+    function calculateNetPremium(
+        Amount sumInsuredAmount,
+        RiskId riskId,
+        Seconds lifetime,
+        bytes memory applicationData
+    )
+        external
+        view
+        virtual override
+        returns (Amount netPremiumAmount)
+    {
+        // default 10% of sum insured
+        return AmountLib.toAmount(sumInsuredAmount.toInt() / 10);
+    }
+
+
+    function register()
+        external
+        virtual
+        onlyOwner()
+    {
+        _getProductStorage()._componentService.registerProduct();
+    }
+
+
+    function getInitialProductInfo()
+        public 
+        virtual 
+        view 
+        returns (IComponents.ProductInfo memory poolInfo)
+    {
+        ProductStorage storage $ = _getProductStorage();
+
+        return IComponents.ProductInfo({
+            distributionNftId: $._distributionNftId,
+            poolNftId: $._poolNftId,
+            productFee: FeeLib.zero(),
+            processingFee: FeeLib.zero(),
+            distributionFee: FeeLib.zero(),
+            minDistributionOwnerFee: FeeLib.zero(),
+            poolFee: FeeLib.zero(),
+            stakingFee: FeeLib.zero(),
+            performanceFee: FeeLib.zero()
+        });
+    }
+
+    function getPoolNftId() external view override returns (NftId poolNftId) {
+        return getRegistry().getNftId(address(_getProductStorage()._pool));
+    }
+
+    function getDistributionNftId() external view override returns (NftId distributionNftId) {
+        return getRegistry().getNftId(address(_getProductStorage()._distribution));
+    }
+
+
+    function _initializeProduct(
         address registry,
         NftId instanceNftId,
+        IAuthorization authorization,
         address initialOwner,
         string memory name,
         address token,
@@ -64,11 +148,21 @@ abstract contract Product is
         bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // writeonly data that will saved in the object info record of the registry
     )
-        public
+        internal
         virtual
         onlyInitializing()
     {
-        initializeInstanceLinkedComponent(registry, instanceNftId, name, token, PRODUCT(), isInterceptor, initialOwner, registryData, componentData);
+        _initializeInstanceLinkedComponent(
+            registry, 
+            instanceNftId, 
+            name, 
+            token, 
+            PRODUCT(), 
+            authorization, 
+            isInterceptor, 
+            initialOwner, 
+            registryData, 
+            componentData);
 
         ProductStorage storage $ = _getProductStorage();
         // TODO add validation
@@ -88,26 +182,16 @@ abstract contract Product is
     }
 
 
-    function register()
-        external
-        virtual
-        onlyOwner()
-    {
-        _getProductStorage()._componentService.registerProduct();
-    }
-
-
-    function setFees(
+    function _setFees(
         Fee memory productFee,
         Fee memory processingFee
     )
-        external
-        onlyOwner
-        restricted()
-        override
+        internal
+        virtual
     {
         _getProductStorage()._componentService.setProductFees(productFee, processingFee);
     }
+
 
     function _createRisk(
         RiskId id,
@@ -139,9 +223,11 @@ abstract contract Product is
         );
     }
 
+
     function _getRiskInfo(RiskId id) internal view returns (IRisk.RiskInfo memory info) {
         return getInstance().getInstanceReader().getRiskInfo(id);
     }
+
 
     function _createApplication(
         address applicationOwner,
@@ -288,77 +374,6 @@ abstract contract Product is
         _getProductStorage()._claimService.processPayout(
             policyNftId,
             payoutId);
-    }
-
-    function calculatePremium(
-        Amount sumInsuredAmount,
-        RiskId riskId,
-        Seconds lifetime,
-        bytes memory applicationData,
-        NftId bundleNftId,
-        ReferralId referralId
-    )
-        external 
-        view 
-        override 
-        returns (Amount premiumAmount)
-    {
-        IPolicy.Premium memory premium = _getProductStorage()._pricingService.calculatePremium(
-            getNftId(),
-            riskId,
-            sumInsuredAmount,
-            lifetime,
-            applicationData,
-            bundleNftId,
-            referralId
-        );
-
-        return AmountLib.toAmount(premium.premiumAmount);
-    }
-
-    function calculateNetPremium(
-        Amount sumInsuredAmount,
-        RiskId riskId,
-        Seconds lifetime,
-        bytes memory applicationData
-    )
-        external
-        view
-        virtual override
-        returns (Amount netPremiumAmount)
-    {
-        // default 10% of sum insured
-        return AmountLib.toAmount(sumInsuredAmount.toInt() / 10);
-    }
-
-
-    function getInitialProductInfo()
-        public 
-        virtual 
-        view 
-        returns (IComponents.ProductInfo memory poolInfo)
-    {
-        ProductStorage storage $ = _getProductStorage();
-
-        return IComponents.ProductInfo({
-            distributionNftId: $._distributionNftId,
-            poolNftId: $._poolNftId,
-            productFee: FeeLib.zero(),
-            processingFee: FeeLib.zero(),
-            distributionFee: FeeLib.zero(),
-            minDistributionOwnerFee: FeeLib.zero(),
-            poolFee: FeeLib.zero(),
-            stakingFee: FeeLib.zero(),
-            performanceFee: FeeLib.zero()
-        });
-    }
-
-    function getPoolNftId() external view override returns (NftId poolNftId) {
-        return getRegistry().getNftId(address(_getProductStorage()._pool));
-    }
-
-    function getDistributionNftId() external view override returns (NftId distributionNftId) {
-        return getRegistry().getNftId(address(_getProductStorage()._distribution));
     }
 
     function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {

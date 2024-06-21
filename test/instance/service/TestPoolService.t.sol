@@ -12,16 +12,12 @@ import {SimplePool} from "../../mock/SimplePool.sol";
 contract TestPoolService is GifTest {
     using NftIdLib for NftId;
 
-    function test_PoolService_register_missingPoolOwnerRole() public {
+    function test_PoolServiceRegisterWithMissingOwnerRole() public {
         vm.startPrank(poolOwner);
         pool = new SimplePool(
             address(registry),
             instanceNftId,
             address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
             poolOwner
         );
         
@@ -35,21 +31,17 @@ contract TestPoolService is GifTest {
         pool.register();
     }
 
-    function test_PoolService_register() public {
+    function test_PoolServiceRegisterWithOwnerRole() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instance.grantRole(POOL_OWNER_ROLE(), outsider);
         vm.stopPrank();
 
-        vm.startPrank(poolOwner);
+        vm.startPrank(outsider);
         pool = new SimplePool(
             address(registry),
             instanceNftId,
             address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
-            poolOwner
+            outsider
         );
         
         pool.register();

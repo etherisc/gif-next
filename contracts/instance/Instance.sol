@@ -8,7 +8,7 @@ import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, eqRoleId, ADMIN_ROLE, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
+import {RoleId} from "../type/RoleId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {PayoutId} from "../type/PayoutId.sol";
@@ -19,7 +19,6 @@ import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 
@@ -233,37 +232,39 @@ contract Instance is
     //     }
     //     _instanceAdmin = accessManager;      
     // }
-    
-    function setBundleManager(BundleManager bundleManager) external restricted() {
-        if(address(_bundleManager) != address(0)) {
-            revert ErrorInstanceBundleManagerAlreadySet(address(_bundleManager));
-        }
-        if(bundleManager.getInstance() != Instance(this)) {
-            revert ErrorInstanceBundleManagerInstanceMismatch(address(this));
-        }
-        if(bundleManager.authority() != authority()) {
-            revert ErrorInstanceBundleManagerAuthorityMismatch(authority());
-        }
-        _bundleManager = bundleManager;
-    }
 
-    function setInstanceStore(InstanceStore instanceStore) external restricted {
-        if(address(_instanceStore) != address(0)) {
-            revert ErrorInstanceInstanceStoreAlreadySet(address(_instanceStore));
-        }
-        if(instanceStore.authority() != authority()) {
-            revert ErrorInstanceInstanceStoreAuthorityMismatch(authority());
-        }
-        _instanceStore = instanceStore;
-    }
+    // function setBundleManager(BundleManager bundleManager) external restricted() {
+    //     if(address(_bundleManager) != address(0)) {
+    //         revert ErrorInstanceBundleManagerAlreadySet(address(_bundleManager));
+    //     }
+    //     if(bundleManager.getInstance() != Instance(this)) {
+    //         revert ErrorInstanceBundleManagerInstanceMismatch(address(this));
+    //     }
+    //     if(bundleManager.authority() != authority()) {
+    //         revert ErrorInstanceBundleManagerAuthorityMismatch(authority());
+    //     }
+    //     _bundleManager = bundleManager;
+    // }
 
-    function setInstanceReader(InstanceReader instanceReader) external restricted() {
+    // function setInstanceStore(InstanceStore instanceStore) external restricted {
+    //     if(address(_instanceStore) != address(0)) {
+    //         revert ErrorInstanceInstanceStoreAlreadySet(address(_instanceStore));
+    //     }
+    //     if(instanceStore.authority() != authority()) {
+    //         revert ErrorInstanceInstanceStoreAuthorityMismatch(authority());
+    //     }
+    //     _instanceStore = instanceStore;
+    // }
+
+    function setInstanceReader(InstanceReader instanceReader)
+        external
+        restricted()
+    {
         if(instanceReader.getInstance() != Instance(this)) {
             revert ErrorInstanceInstanceReaderInstanceMismatch(address(this));
         }
 
         _instanceReader = instanceReader;
-        _instanceReader.initialize();
     }
 
     //--- external view functions -------------------------------------------//
@@ -278,10 +279,6 @@ contract Instance is
 
     function getInstanceAdmin() external view returns (InstanceAdminNew) {
         return _instanceAdmin;
-    }
-
-    function getInstanceAccessManager() external view returns (AccessManagerExtendedInitializeable) {
-        return AccessManagerExtendedInitializeable(authority());
     }
 
     function getInstanceStore() external view returns (InstanceStore) {

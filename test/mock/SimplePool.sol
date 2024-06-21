@@ -2,22 +2,22 @@
 pragma solidity ^0.8.20;
 
 import {AmountLib} from "../../contracts/type/Amount.sol";
+import {BasicPool} from "../../contracts/pool/BasicPool.sol";
+import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
 import {Fee} from "../../contracts/type/Fee.sol";
+import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-import {Pool} from "../../contracts/pool/Pool.sol";
 import {Seconds} from "../../contracts/type/Timestamp.sol";
 import {UFixed} from "../../contracts/type/UFixed.sol";
 
-contract SimplePool is Pool {
+contract SimplePool is
+    BasicPool
+{
     
     constructor(
         address registry,
         NftId instanceNftId,
         address token,
-        bool isInterceptor,
-        bool isConfirmingApplication,
-        UFixed collateralizationLevel,
-        UFixed retentionLevel,
         address initialOwner
     ) 
     {
@@ -25,10 +25,6 @@ contract SimplePool is Pool {
             registry,
             instanceNftId,
             token,
-            isInterceptor,
-            isConfirmingApplication,
-            collateralizationLevel,
-            retentionLevel,
             initialOwner
         );
     }
@@ -37,30 +33,22 @@ contract SimplePool is Pool {
         address registry,
         NftId instanceNftId,
         address token,
-        bool isInterceptor,
-        bool isConfirmingApplication,
-        UFixed collateralizationLevel,
-        UFixed retentionLevel,
         address initialOwner
     )
         public
         virtual
         initializer()
     {
-        initializePool(
+        IAuthorization authorization = new BasicPoolAuthorization(
+            "SimplePool");
+
+        _initializeBasicPool(
             registry,
             instanceNftId,
-            "SimplePool",
+            authorization,
             token,
-            isInterceptor,
-            // TODO refactor
-            // false, // externally managed
-            // isConfirmingApplication, // verifying applications
-            // collateralizationLevel,
-            // retentionLevel,
-            initialOwner,
-            "",
-            "");
+            "SimplePool",
+            initialOwner);
     }
 
     function createBundle(

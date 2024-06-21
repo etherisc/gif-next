@@ -15,11 +15,11 @@ import {
     GIF_MANAGER_ROLE,
     GIF_ADMIN_ROLE,
     ADMIN_ROLE,
-    INSTANCE_OWNER_ROLE,
     PRODUCT_OWNER_ROLE, 
     ORACLE_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
-    DISTRIBUTION_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
+    DISTRIBUTION_OWNER_ROLE
+} from "../../contracts/type/RoleId.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {Version} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
@@ -128,8 +128,8 @@ contract GifTest is GifDeployer {
     StakingReader public stakingReader;
     NftId public stakingNftId;
 
-    AccessManagerExtendedInitializeable public masterInstanceAccessManager;
     // TODO cleanup
+    // AccessManagerExtendedInitializeable public masterInstanceAccessManager;
     // InstanceAdmin public masterInstanceAdmin;
     InstanceAdminNew public masterInstanceAdmin;
     InstanceAuthorizationV3 public instanceAuthorizationV3;
@@ -139,7 +139,8 @@ contract GifTest is GifDeployer {
     NftId public masterInstanceNftId;
     InstanceReader public masterInstanceReader;
 
-    AccessManagerExtendedInitializeable public instanceAccessManager;
+    // TODO cleanup
+    // AccessManagerExtendedInitializeable public instanceAccessManager;
     // InstanceAdmin public instanceAdmin;
     InstanceAdminNew public instanceAdmin;
     BundleManager public instanceBundleManager;
@@ -170,6 +171,7 @@ contract GifTest is GifDeployer {
     address public oracleOwner = makeAddr("oracleOwner");
     address public poolOwner = makeAddr("poolOwner");
     address public distributionOwner = makeAddr("distributionOwner");
+    address public distributor = makeAddr("distributor");
     address public customer = makeAddr("customer");
     address public customer2 = makeAddr("customer2");
     address public investor = makeAddr("investor");
@@ -180,12 +182,14 @@ contract GifTest is GifDeployer {
     uint8 initialProductFeePercentage = 2;
     uint8 initialPoolFeePercentage = 3;
     uint8 initialBundleFeePercentage = 4;
-    uint8 initialDistributionFeePercentage = 10;
+    uint8 initialDistributionFeePercentage = 20;
+    uint8 initialMinDistributionOwnerFeePercentage = 2;
 
     Fee public initialProductFee = FeeLib.percentageFee(initialProductFeePercentage);
     Fee public initialPoolFee = FeeLib.percentageFee(initialPoolFeePercentage);
     Fee public initialBundleFee = FeeLib.percentageFee(initialBundleFeePercentage);
     Fee public initialDistributionFee = FeeLib.percentageFee(initialDistributionFeePercentage);
+    Fee public initialMinDistributionOwnerFee = FeeLib.percentageFee(initialMinDistributionOwnerFeePercentage);
 
     bool poolIsVerifying = true;
     bool distributionIsVerifying = true;
@@ -402,7 +406,7 @@ contract GifTest is GifDeployer {
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
-        console.log("master oz access manager deployed at", address(masterInstanceAccessManager));
+        console.log("master oz access manager deployed at", address(masterInstance.authority()));
         console.log("master instance access manager deployed at", address(masterInstanceAdmin));
         console.log("master instance reader deployed at", address(masterInstanceReader));
         console.log("master bundle manager deployed at", address(masterBundleManager));
@@ -418,7 +422,8 @@ contract GifTest is GifDeployer {
         ) = instanceService.createInstanceClone();
 
         instanceAdmin = instance.getInstanceAdmin();
-        instanceAccessManager = AccessManagerExtendedInitializeable(instance.authority());
+        // TODO cleanup
+        // instanceAccessManager = AccessManagerExtendedInitializeable(instance.authority());
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
         instanceBundleManager = instance.getBundleManager();
@@ -427,8 +432,7 @@ contract GifTest is GifDeployer {
         // solhint-disable
         console.log("cloned instance deployed at", address(instance));
         console.log("cloned instance nft id", instanceNftId.toInt());
-        console.log("cloned oz access manager deployed at", address(instanceAccessManager));
-        console.log("cloned instance access manager deployed at", address(instanceAdmin));
+        console.log("cloned oz access manager deployed at", instance.authority());
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle manager deployed at", address(instanceBundleManager));
         console.log("cloned instance store deployed at", address(instanceStore));
@@ -456,114 +460,9 @@ contract GifTest is GifDeployer {
         // solhint-enable
     }
 
-
-    // function _deployPool(
-    //     bool isInterceptor,
-    //     bool isVerifying,
-    //     UFixed collateralizationLevel
-    // )
-    //     internal
-    // {
-        // Fee memory stakingFee = FeeLib.zero();
-        // Fee memory performanceFee = FeeLib.zero();
-
-        // pool = new TestPool(
-        //     address(registry), 
-        //     instance.getNftId(), 
-        //     address(token),
-        //     false, // isInterceptor
-        //     isVerifying,
-        //     collateralizationLevel,
-        //     initialPoolFee,
-        //     stakingFee,
-        //     performanceFee,
-        //     poolOwner);
-
-        // componentOwnerService.registerPool(pool);
-
-        // uint256 nftId = pool.getNftId().toInt();
-        // uint256 state = instance.getState(pool.getNftId().toKey32(POOL())).toInt();
-        // // solhint-disable-next-line
-        // console.log("pool deployed at", address(pool));
-        // // solhint-disable-next-line
-        // console.log("pool nftId", nftId, "state", state);
-    // }
-
-
-    // function _deployDistribution(
-    //     bool isVerifying
-    // )
-    //     internal
-    // {
-        // Fee memory distributionFee = FeeLib.percentageFee(15);
-        // distribution = new TestDistribution(
-        //     address(registry), 
-        //     instance.getNftId(), 
-        //     address(token),
-        //     isVerifying,
-        //     initialDistributionFee,
-        //     distributionOwner);
-
-        // componentOwnerService.registerDistribution(distribution);
-
-        // uint256 nftId = distribution.getNftId().toInt();
-        // uint256 state = instance.getState(distribution.getNftId().toKey32(DISTRIBUTION())).toInt();
-        // // solhint-disable-next-line
-        // console.log("distribution deployed at", address(pool));
-        // // solhint-disable-next-line
-        // console.log("distribution nftId", nftId, "state", state);
-    // }
-
-
-    // function _deployProduct() internal {
-        // Fee memory processingFee = FeeLib.zero();
-
-        // product = new TestProduct(
-        //     address(registry), 
-        //     instance.getNftId(), 
-        //     address(token), 
-        //     false, // isInterceptor
-        //     address(pool),
-        //     address(distribution),
-        //     initialProductFee,
-        //     processingFee,
-        //     productOwner);
-
-        // componentOwnerService.registerProduct(product);
-        //registryService.registerComponent(product, PRODUCT());
-
-        // uint256 nftId = product.getNftId().toInt();
-        // uint256 state = instance.getState(product.getNftId().toKey32(PRODUCT())).toInt();
-        // // tokenHandler = instance.getTokenHandler(product.getNftId());
-        // // solhint-disable-next-line
-        // console.log("product deployed at", address(product));
-        // // solhint-disable-next-line
-        // console.log("product nftId", nftId, "state", state);
-        // // solhint-disable-next-line
-        // console.log("product token handler deployed at", address(tokenHandler));
-    // }
-
-    // function _createBundle(
-    //     Fee memory fee,
-    //     uint256 amount,
-    //     uint256 lifetime
-    // ) 
-    //     internal
-    // {
-        // bundleNftId = pool.createBundle(
-        //     fee,
-        //     amount,
-        //     lifetime,
-        //     "");
-
-    //     // solhint-disable-next-line
-    //     console.log("bundle fundet with", amount);
-    //     // solhint-disable-next-line
-    //     console.log("bundle nft id", bundleNftId.toInt());
-    // }
-
     function _prepareProduct() internal {
         _prepareProduct(true);
+        _printAuthz(instanceAdmin, "instanceWithProduct");
     }
 
     function _prepareProduct(bool createBundle) internal {
@@ -572,6 +471,9 @@ contract GifTest is GifDeployer {
         vm.stopPrank();
 
         _prepareDistributionAndPool();
+
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple product");
 
         vm.startPrank(productOwner);
         product = new SimpleProduct(
@@ -586,6 +488,13 @@ contract GifTest is GifDeployer {
         
         product.register();
         productNftId = product.getNftId();
+        vm.stopPrank();
+
+        // setup some meaningful distribution fees
+        vm.startPrank(distributionOwner);
+        distribution.setFees(
+            initialDistributionFee, 
+            initialMinDistributionOwnerFee);
         vm.stopPrank();
 
         // solhint-disable
@@ -624,6 +533,9 @@ contract GifTest is GifDeployer {
         vm.stopPrank();
 
         // deploy and register distribution
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple distribution");
+
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
             address(registry),
@@ -641,15 +553,14 @@ contract GifTest is GifDeployer {
         // solhint-enable
 
         // deploy and register pool
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple pool");
+
         vm.startPrank(poolOwner);
         pool = new SimplePool(
             address(registry),
             instanceNftId,
             address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
             poolOwner
         );
 
@@ -664,6 +575,9 @@ contract GifTest is GifDeployer {
         // solhint-enable
 
         // deploy and register oracle
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple oracle");
+
         vm.startPrank(oracleOwner);
         oracle = new SimpleOracle(
             address(registry),
@@ -684,7 +598,7 @@ contract GifTest is GifDeployer {
 
     function _preparePool() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
@@ -692,10 +606,6 @@ contract GifTest is GifDeployer {
             address(registry),
             instanceNftId,
             address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
             poolOwner
         );
         pool.register();

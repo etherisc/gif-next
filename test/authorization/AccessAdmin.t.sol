@@ -86,6 +86,7 @@ contract AccessAdminForTesting is AccessAdmin {
     function createRoleExtended(
         RoleId roleId, 
         RoleId adminRoleId, 
+        RoleType roleType,
         string memory name, 
         uint32 maxOneRoleMember
     )
@@ -96,7 +97,7 @@ contract AccessAdminForTesting is AccessAdmin {
             roleId, 
             toRole(
                 adminRoleId, 
-                RoleType.Custom, 
+                roleType, 
                 maxOneRoleMember, 
                 name));
     }
@@ -415,7 +416,6 @@ contract AccessAdminTest is Test {
             newRoleId, 
             adminRoleId,
             newRoleName,
-            TimestampLib.max(),
             TimestampLib.blockTimestamp());
 
         _checkRoleGranting(
@@ -438,10 +438,10 @@ contract AccessAdminTest is Test {
 
         // WHEN
         uint32 maxOneRoleMember = 1; // max 1 member allowed
-        bool memberRemovalDisallowed = true;
         accessAdmin.createRoleExtended(
             newRoleId, 
             adminRoleId, 
+            IAccess.RoleType.Contract,
             newRoleName,
             maxOneRoleMember); 
 
@@ -454,8 +454,6 @@ contract AccessAdminTest is Test {
             adminRoleId,
             newRoleName,
             maxOneRoleMember,
-            memberRemovalDisallowed,
-            TimestampLib.max(),
             TimestampLib.blockTimestamp());
 
         assertEq(accessAdmin.roleMembers(newRoleId), 0, "role members > 0 before granting role");
@@ -677,7 +675,6 @@ contract AccessAdminTest is Test {
             newAdminRoleId, 
             adminRoleId,
             newRoleAdminName,
-            TimestampLib.max(),
             TimestampLib.blockTimestamp());
 
         // check granting of new role admin role
@@ -693,7 +690,6 @@ contract AccessAdminTest is Test {
             newRoleId, 
             newAdminRoleId,
             newRoleName,
-            TimestampLib.max(),
             TimestampLib.blockTimestamp());
 
         // check granting of new role (check that roleAdmin can grant/revoke new role)
@@ -709,7 +705,7 @@ contract AccessAdminTest is Test {
         // GIVEN
 
         RoleId adminRoleId = accessAdmin.getManagerRole();
-        uint256 roleIdInt = 42;
+        uint64 roleIdInt = 42;
         string memory roleNameBase = "test";
         address account1 = makeAddr("account1");
         address account2 = makeAddr("account2");
@@ -733,7 +729,6 @@ contract AccessAdminTest is Test {
             newAdminRoleId, 
             adminRoleId,
             newAdminRoleName,
-            TimestampLib.max(),
             TimestampLib.blockTimestamp());
 
         // check granting of new role admin role
@@ -749,7 +744,6 @@ contract AccessAdminTest is Test {
             newRoleId, 
             newAdminRoleId,
             newRoleName,
-            TimestampLib.max(),
             TimestampLib.blockTimestamp());
 
         // check granting of new role (check that roleAdmin can grant/revoke new role)
@@ -765,7 +759,7 @@ contract AccessAdminTest is Test {
         // GIVEN
 
         RoleId adminRoleId = accessAdmin.getManagerRole();
-        uint256 roleIdInt = 42;
+        uint64 roleIdInt = 42;
         string memory roleNameBase = "test";
         address account1 = makeAddr("account1");
         address account2 = makeAddr("account2");
@@ -810,7 +804,7 @@ contract AccessAdminTest is Test {
         // GIVEN
 
         RoleId adminRoleId = accessAdmin.getManagerRole();
-        uint256 roleIdInt = 42;
+        uint64 roleIdInt = 42;
         string memory roleNameBase = "test";
         address account1 = makeAddr("account1");
         address account2 = makeAddr("account2");
@@ -851,7 +845,7 @@ contract AccessAdminTest is Test {
         // GIVEN
 
         RoleId adminRoleId = accessAdmin.getManagerRole();
-        uint256 roleIdInt = 42;
+        uint64 roleIdInt = 42;
         string memory roleNameBase = "test";
         address account1 = makeAddr("account1");
         address account2 = makeAddr("account2");
@@ -907,7 +901,7 @@ contract AccessAdminTest is Test {
         // GIVEN
 
         RoleId adminRoleId = accessAdmin.getManagerRole();
-        uint256 roleIdInt = 42;
+        uint64 roleIdInt = 42;
         string memory roleNameBase = "test";
         address account1 = makeAddr("account1");
         address account2 = makeAddr("account2");
@@ -1237,7 +1231,7 @@ contract AccessAdminTest is Test {
     // }
 
     function _createManagedRoleWithOwnAdmin(
-        uint256 roleIdInt, 
+        uint64 roleIdInt, 
         string memory roleNameBase
     )
         internal
@@ -1365,8 +1359,6 @@ contract AccessAdminTest is Test {
             aa.getAdminRole(),
             aa.ADMIN_ROLE_NAME(),
             1, // only one admin ! (aa contract is sole admin role member)
-            true, // no removal of only admin
-            TimestampLib.max(), 
             TimestampLib.blockTimestamp());
 
         // check public role
@@ -1375,9 +1367,7 @@ contract AccessAdminTest is Test {
             aa.getPublicRole(), 
             aa.getAdminRole(),
             aa.PUBLIC_ROLE_NAME(),
-            type(uint256).max, // every account is public role member
-            true, // role membership cannot be removed
-            TimestampLib.max(), 
+            type(uint32).max, // every account is public role member
             TimestampLib.blockTimestamp());
 
         // check manager role
@@ -1387,8 +1377,6 @@ contract AccessAdminTest is Test {
             aa.getAdminRole(),
             aa.MANAGER_ROLE_NAME(),
             3,
-            false, // manager role may be removed
-            TimestampLib.max(), 
             TimestampLib.blockTimestamp());
 
         // check non existent role
@@ -1412,7 +1400,6 @@ contract AccessAdminTest is Test {
         RoleId roleId, 
         RoleId expectedAdminRoleId,
         string memory expectedName,
-        Timestamp expectedDisabledAt,
         Timestamp expectedCreatedAt
     )
         internal
@@ -1422,9 +1409,7 @@ contract AccessAdminTest is Test {
             roleId, 
             expectedAdminRoleId, 
             expectedName, 
-            type(uint256).max, 
-            false, 
-            expectedDisabledAt, 
+            type(uint32).max, 
             expectedCreatedAt);
     }
 
@@ -1434,8 +1419,6 @@ contract AccessAdminTest is Test {
         RoleId expectedAdminRoleId,
         string memory expectedName,
         uint256 expectedMaxMemberCount,
-        bool expectedMemberRemovalDisabled,
-        Timestamp expectedDisabledAt,
         Timestamp expectedCreatedAt
     )
         internal

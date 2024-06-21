@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {COMPONENT, DISTRIBUTION} from "../type/ObjectType.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IDistributionService} from "./IDistributionService.sol";
 import {IProductService} from "../product/IProductService.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
@@ -33,29 +34,13 @@ abstract contract Distribution is
         mapping(address distributor => NftId distributorNftId) _distributorNftId;
     }
 
-    error ErrorDistributionAlreadyDistributor(address distributor, NftId distributorNftId);
-
-    function initializeDistribution(
-        address registry,
-        NftId instanceNftId,
-        address initialOwner,
-        string memory name,
-        address token,
-        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
-        bytes memory componentData // component specifidc data 
-    )
-        public
-        virtual
-        onlyInitializing()
-    {
-        initializeInstanceLinkedComponent(registry, instanceNftId, name, token, DISTRIBUTION(), true, initialOwner, registryData, componentData);
-
-        DistributionStorage storage $ = _getDistributionStorage();
-        $._distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION())); 
-        $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
-
-        registerInterface(type(IDistributionComponent).interfaceId);
+    modifier onlyDistributor() {
+        if (!isDistributor(msg.sender)) {
+            revert ErrorDistributionNotDistributor(msg.sender);
+        }
+        _;
     }
+
 
     function register()
         external
@@ -65,110 +50,6 @@ abstract contract Distribution is
         _getDistributionStorage()._componentService.registerDistribution();
     }
 
-    function setFees(
-        Fee memory distributionFee,
-        Fee memory minDistributionOwnerFee
-    )
-        external
-        override
-        onlyOwner()
-        restricted()
-    {
-        _getDistributionStorage()._componentService.setDistributionFees(
-            distributionFee, 
-            minDistributionOwnerFee);
-    }
-
-
-    function createDistributorType(
-        string memory name,
-        UFixed minDiscountPercentage,
-        UFixed maxDiscountPercentage,
-        UFixed commissionPercentage,
-        uint32 maxReferralCount,
-        uint32 maxReferralLifetime,
-        bool allowSelfReferrals,
-        bool allowRenewals,
-        bytes memory data
-    )
-        public
-        returns (DistributorType distributorType)
-    {
-        DistributionStorage storage $ = _getDistributionStorage();
-        distributorType = $._distributionService.createDistributorType(
-            name,
-            minDiscountPercentage,
-            maxDiscountPercentage,
-            commissionPercentage,
-            maxReferralCount,
-            maxReferralLifetime,
-            allowSelfReferrals,
-            allowRenewals,
-            data);
-    }
-
-    function createDistributor(
-        address distributor,
-        DistributorType distributorType,
-        bytes memory data
-    )
-        public
-        returns(NftId distributorNftId)
-    {
-        DistributionStorage storage $ = _getDistributionStorage();
-        if($._distributorNftId[distributor].gtz()) {
-            revert ErrorDistributionAlreadyDistributor(distributor, $._distributorNftId[distributor]);
-        }
-
-        distributorNftId = $._distributionService.createDistributor(
-            distributor,
-            distributorType,
-            data);
-
-        $._distributorNftId[distributor] = distributorNftId;
-    }
-
-    function updateDistributorType(
-        NftId distributorNftId,
-        DistributorType distributorType,
-        bytes memory data
-    )
-        public
-        // TODO figure out what we need for authz
-        // and add it
-    {
-        DistributionStorage storage $ = _getDistributionStorage();
-        // TODO re-enable once implemented
-        // $._distributionService.updateDistributorType(
-        //     distributorNftId,
-        //     distributorType,
-        //     data);
-    }
-
-    /**
-     * @dev lets distributors create referral codes.
-     * referral codes need to be unique
-     */
-    function _createReferral(
-        NftId distributorNftId,
-        string memory code,
-        UFixed discountPercentage,
-        uint32 maxReferrals,
-        Timestamp expiryAt,
-        bytes memory data
-    )
-        internal
-        returns (ReferralId referralId)
-    {
-        DistributionStorage storage $ = _getDistributionStorage();
-        referralId = $._distributionService.createReferral(
-            distributorNftId,
-            code,
-            discountPercentage,
-            maxReferrals,
-            expiryAt,
-            data);
-    }
 
     function isDistributor(address candidate)
         public
@@ -179,6 +60,7 @@ abstract contract Distribution is
         return $._distributorNftId[candidate].gtz();
     }
 
+
     function getDistributorNftId(address distributor)
         public
         view
@@ -187,6 +69,7 @@ abstract contract Distribution is
         DistributionStorage storage $ = _getDistributionStorage();
         return $._distributorNftId[distributor];
     }
+
 
     function getDiscountPercentage(string memory referralCode)
         external
@@ -213,6 +96,7 @@ abstract contract Distribution is
             referralCode);      
     }
 
+
     function calculateRenewalFeeAmount(
         ReferralId referralId,
         uint256 netPremiumAmount
@@ -226,16 +110,160 @@ abstract contract Distribution is
         return 0 * netPremiumAmount;
     }
 
+
     function processRenewal(
         ReferralId referralId,
         uint256 feeAmount
     )
         external
-        onlyOwner
+        virtual
         restricted()
-        virtual override
     {
         // default is no action
+    }
+
+    /// @dev Returns true iff the component needs to be called when selling/renewing policis
+    function isVerifying() external pure returns (bool verifying) {
+        return true;
+    }
+
+
+    function _initializeDistribution(
+        address registry,
+        NftId instanceNftId,
+        IAuthorization authorization, 
+        address initialOwner,
+        string memory name,
+        address token,
+        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
+        bytes memory componentData // component specifidc data 
+    )
+        internal
+        virtual
+        onlyInitializing()
+    {
+        _initializeInstanceLinkedComponent(
+            registry, 
+            instanceNftId, 
+            name, 
+            token, 
+            DISTRIBUTION(), 
+            authorization,
+            true, 
+            initialOwner, 
+            registryData, 
+            componentData);
+
+        DistributionStorage storage $ = _getDistributionStorage();
+        $._distributionService = IDistributionService(_getServiceAddress(DISTRIBUTION())); 
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
+
+        registerInterface(type(IDistributionComponent).interfaceId);
+    }
+
+    /// @dev Sets the distribution fees to the provided values.
+    function _setFees(
+        Fee memory distributionFee,
+        Fee memory minDistributionOwnerFee
+    )
+        internal
+        virtual
+    {
+        _getDistributionStorage()._componentService.setDistributionFees(
+            distributionFee, 
+            minDistributionOwnerFee);
+    }
+
+    /// @dev Creates a new distributor type using the provided parameters.
+    function _createDistributorType(
+        string memory name,
+        UFixed minDiscountPercentage,
+        UFixed maxDiscountPercentage,
+        UFixed commissionPercentage,
+        uint32 maxReferralCount,
+        uint32 maxReferralLifetime,
+        bool allowSelfReferrals,
+        bool allowRenewals,
+        bytes memory data
+    )
+        internal
+        virtual
+        returns (DistributorType distributorType)
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        distributorType = $._distributionService.createDistributorType(
+            name,
+            minDiscountPercentage,
+            maxDiscountPercentage,
+            commissionPercentage,
+            maxReferralCount,
+            maxReferralLifetime,
+            allowSelfReferrals,
+            allowRenewals,
+            data);
+    }
+
+    /// @dev Turns the provided account into a new distributor of the specified type.
+    function _createDistributor(
+        address distributor,
+        DistributorType distributorType,
+        bytes memory data
+    )
+        internal
+        virtual
+        returns(NftId distributorNftId)
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        if($._distributorNftId[distributor].gtz()) {
+            revert ErrorDistributionAlreadyDistributor(distributor, $._distributorNftId[distributor]);
+        }
+
+        distributorNftId = $._distributionService.createDistributor(
+            distributor,
+            distributorType,
+            data);
+
+        $._distributorNftId[distributor] = distributorNftId;
+    }
+
+    /// @dev Uptates the distributor type for the specified distributor.
+    function _updateDistributorType(
+        NftId distributorNftId,
+        DistributorType distributorType,
+        bytes memory data
+    )
+        internal
+        virtual
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        // TODO re-enable once implemented
+        // $._distributionService.updateDistributorType(
+        //     distributorNftId,
+        //     distributorType,
+        //     data);
+    }
+
+    /// @dev Create a new referral code for the provided distributor.
+    function _createReferral(
+        NftId distributorNftId,
+        string memory code,
+        UFixed discountPercentage,
+        uint32 maxReferrals,
+        Timestamp expiryAt,
+        bytes memory data
+    )
+        internal
+        virtual
+        returns (ReferralId referralId)
+    {
+        DistributionStorage storage $ = _getDistributionStorage();
+        referralId = $._distributionService.createReferral(
+            distributorNftId,
+            code,
+            discountPercentage,
+            maxReferrals,
+            expiryAt,
+            data);
     }
 
 
@@ -245,12 +273,6 @@ abstract contract Distribution is
         DistributionStorage storage $ = _getDistributionStorage();
         $._distributorNftId[from] = NftIdLib.zero();
         $._distributorNftId[to] = NftIdLib.toNftId(tokenId);
-    }
-    
-
-    /// @dev returns true iff the component needs to be called when selling/renewing policis
-    function isVerifying() external pure returns (bool verifying) {
-        return true;
     }
 
     function _getDistributionStorage() private pure returns (DistributionStorage storage $) {

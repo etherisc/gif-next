@@ -49,8 +49,22 @@ contract InstanceReader {
             revert ErrorInstanceReaderAlreadyInitialized();
         }
 
+        // TODO cleanup
+        // _initialized = true;
+        // _instance = IInstance(msg.sender);
+        // _store = _instance.getInstanceStore();
+
+        initializeWithInstance(msg.sender);
+    }
+
+    /// @dev This initializer needs to be called from the instance itself.
+    function initializeWithInstance(address instanceAddress) public {
+        if(_initialized) {
+            revert ErrorInstanceReaderAlreadyInitialized();
+        }
+
         _initialized = true;
-        _instance = IInstance(msg.sender);
+        _instance = IInstance(instanceAddress);
         _store = _instance.getInstanceStore();
     }
 
@@ -335,10 +349,18 @@ contract InstanceReader {
 
 
     function hasRole(address account, RoleId roleId) public view returns (bool isMember) {
-        (isMember, ) = _instance.getInstanceAccessManager().hasRole(
-            roleId.toInt(), account);
+        return _instance.getInstanceAdmin().hasRole(account, roleId);
     }
 
+
+    function hasAdminRole(address account, RoleId roleId) public view returns (bool isMember) {
+        return _instance.getInstanceAdmin().hasAdminRole(account, roleId);
+    }
+
+
+    function isTargetLocked(address target) public view returns (bool) {
+        return _instance.getInstanceAdmin().isTargetLocked(target);
+    }
 
     function toPolicyKey(NftId policyNftId) public pure returns (Key32) { 
         return policyNftId.toKey32(POLICY());
