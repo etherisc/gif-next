@@ -155,33 +155,6 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             registerableOwner);       
     }
 
-    // TODO cleanup or reenable
-    // function test_withInvalidRegisterableAddressHappyCase() public 
-    // {
-    //     ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));
-
-    //     RegisterableMockWithRandomInvalidAddress registerable = new RegisterableMockWithRandomInvalidAddress(
-    //         NftIdLib.toNftId(randomNumber(type(uint96).max)), // nftId
-    //         NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
-    //         registerableType,
-    //         toBool(randomNumber(1)), // isInterceptor
-    //         registerableOwner, // initialOwner
-    //         ""
-    //     );
-
-    //     IRegistry.ObjectInfo memory infoFromRegistryService = registryServiceHarness.exposed_getAndVerifyContractInfo(
-    //             registerable,
-    //             registerableType,
-    //             registerableOwner);
-
-    //     IRegistry.ObjectInfo memory infoFromRegisterable = registerable.getInitialInfo();
-
-    //     infoFromRegisterable.objectAddress = address(registerable);
-        
-    //     assertTrue(eqObjectInfo(infoFromRegistryService, infoFromRegisterable), 
-    //         "Info returned by registry service is different from info stored in registerable");
-    // }
-
     function test_withRegisterableOwnerDifferentFromExpectedOwner() public
     {
         ObjectType registerableType = ObjectTypeLib.toObjectType(randomNumber(type(uint8).max));

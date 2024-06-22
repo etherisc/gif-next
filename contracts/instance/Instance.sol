@@ -25,8 +25,6 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
-// TODO cleanup
-// import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {InstanceAdminNew} from "./InstanceAdminNew.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceStore} from "./InstanceStore.sol";
@@ -216,45 +214,8 @@ contract Instance is
         // _instanceAdmin.transferInstanceOwnerRole(from, to);
     }
 
-    //function nftBurn(address from, uint256 tokenId) external onlyChainNft {
-        //_instanceAdmin.transferInstanceOwnerRole(from, address(0));
-    //}
-
     //--- initial setup functions -------------------------------------------//
 
-    // TODO cleanup
-    // function setInstanceAdmin(InstanceAdmin accessManager) external restricted {
-    //     if(address(_instanceAdmin) != address(0)) {
-    //         revert ErrorInstanceInstanceAdminAlreadySet(address(_instanceAdmin));
-    //     }
-    //     if(accessManager.authority() != authority()) {
-    //         revert ErrorInstanceInstanceAdminAuthorityMismatch(authority());
-    //     }
-    //     _instanceAdmin = accessManager;      
-    // }
-
-    // function setBundleManager(BundleManager bundleManager) external restricted() {
-    //     if(address(_bundleManager) != address(0)) {
-    //         revert ErrorInstanceBundleManagerAlreadySet(address(_bundleManager));
-    //     }
-    //     if(bundleManager.getInstance() != Instance(this)) {
-    //         revert ErrorInstanceBundleManagerInstanceMismatch(address(this));
-    //     }
-    //     if(bundleManager.authority() != authority()) {
-    //         revert ErrorInstanceBundleManagerAuthorityMismatch(authority());
-    //     }
-    //     _bundleManager = bundleManager;
-    // }
-
-    // function setInstanceStore(InstanceStore instanceStore) external restricted {
-    //     if(address(_instanceStore) != address(0)) {
-    //         revert ErrorInstanceInstanceStoreAlreadySet(address(_instanceStore));
-    //     }
-    //     if(instanceStore.authority() != authority()) {
-    //         revert ErrorInstanceInstanceStoreAuthorityMismatch(authority());
-    //     }
-    //     _instanceStore = instanceStore;
-    // }
 
     function setInstanceReader(InstanceReader instanceReader)
         external

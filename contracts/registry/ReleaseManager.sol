@@ -1,9 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-// TODO cleanup
-// import {AccessManagerExtendedWithDisableInitializeable} from "../shared/AccessManagerExtendedWithDisableInitializeable.sol";
-
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
@@ -214,18 +211,21 @@ contract ReleaseManager is
     {
         VersionPart releaseVersion = _next;
         StateId state = _state[releaseVersion];
-        StateId newState = DEPLOYING();
 
         // verify release in state DEPLOYING
-        if (!isValidTransition(RELEASE(), state, newState)) {
+        if (!isValidTransition(RELEASE(), state, DEPLOYING())) {
             // TOOD name must represent failed state transition
             revert ErrorReleaseManagerServiceRegistrationDisallowed(state);
         }
+
+        _state[releaseVersion] = DEPLOYING();
 
         // not all services are registered
         if (_servicesToRegister == _registeredServices) {
             revert ErrorReleaseManagerNoServiceRegistrationExpected();
         }
+
+        _registeredServices++;
 
         // service can work with release manager
         (
@@ -240,8 +240,9 @@ contract ReleaseManager is
             revert ErrorReleaseManagerServiceDomainMismatch(expectedDomain, serviceDomain);
         }
 
-        _state[releaseVersion] = newState;
-        _registeredServices++;
+        // register service with registry
+        nftId = _registry.registerService(info, serviceVersion, serviceDomain);
+        service.linkToRegisteredNftId();
 
         // setup service authorization
         _admin.authorizeService(
@@ -254,10 +255,6 @@ contract ReleaseManager is
             // TODO rename to grantServiceDomainRole()
             _admin.grantServiceRoleForAllVersions(service, serviceDomain);
         }
-
-        // register service with registry
-        nftId = _registry.registerService(info, serviceVersion, serviceDomain);
-        service.linkToRegisteredNftId();
     }
 
 

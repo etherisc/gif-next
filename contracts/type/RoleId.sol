@@ -19,6 +19,16 @@ using {
 
 // general pure free functions
 
+// @dev Returns true iff role ids a and b are identical
+function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {
+    return RoleId.unwrap(a) == RoleId.unwrap(b);
+}
+
+// @dev Returns true iff role ids a and b are different
+function neRoleId(RoleId a, RoleId b) pure returns (bool isDifferent) {
+    return RoleId.unwrap(a) != RoleId.unwrap(b);
+}
+
 //--- OpenZeppelin provided roles -------------------------------------------//
 
 /// @dev Role ID needs to match with oz AccessManager.ADMIN_ROLE
@@ -89,44 +99,6 @@ function POOL_OWNER_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(14)
 //--- Custom roles (range >= 1'000'000) -------------------------------------//
 
 function CUSTOM_ROLE_MIN() pure returns (RoleId) { return RoleIdLib.toRoleId(1000000); }
-
-// TODO cleanup
-/// @dev role associated with the staking contract
-// function REGISTRY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(1800); }
-// /// @dev instance specific role for instance service
-// function INSTANCE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2000); }
-// /// @dev role for registering gif components
-// function COMPONENT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2001); }
-// /// @dev instance specific role for distribution service
-// function DISTRIBUTION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2100); }
-// /// @dev instance specific role for oracle service
-// function ORACLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2150); }
-// /// @dev instance specific role for pool service
-// function POOL_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2200); }
-// /// @dev instance specific role for product service
-// function PRODUCT_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2300); }
-// /// @dev instance specific role for application service
-// function APPLICATION_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2400); }
-// /// @dev instance specific role for policy service
-// function POLICY_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2410); }
-// /// @dev instance specific role for claim service
-// function CLAIM_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2420); }
-// /// @dev instance specific role for bundle service
-// function BUNDLE_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2500); }
-// /// @dev instance specific role for pricing service
-// function PRICING_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2800); }
-// /// @dev instance specific role for staking service
-
-// function STAKING_SERVICE_ROLE() pure returns (RoleId) { return RoleIdLib.toRoleId(2900); 
-// @dev Returns true iff role ids a and b are identical
-function eqRoleId(RoleId a, RoleId b) pure returns (bool isSame) {
-    return RoleId.unwrap(a) == RoleId.unwrap(b);
-}
-
-// @dev Returns true iff role ids a and b are different
-function neRoleId(RoleId a, RoleId b) pure returns (bool isDifferent) {
-    return RoleId.unwrap(a) != RoleId.unwrap(b);
-}
 
 library RoleIdLib {
 

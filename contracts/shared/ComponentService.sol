@@ -282,18 +282,6 @@ contract ComponentService is
     {
         address contractAddress = msg.sender;
 
-        // TODO cleanup
-        // RoleId[] memory roles = new RoleId[](2);
-        // bytes4[][] memory selectors = new bytes4[][](2);
-
-        // // authorizaion for pool owner
-        // roles[0] = POOL_OWNER_ROLE();
-        // selectors[0] = _createSelectors(IPoolComponent.setFees.selector);
-
-        // // authorizaion for product service
-        // roles[1] = POLICY_SERVICE_ROLE();
-        // selectors[1] = _createSelectors(IPoolComponent.verifyApplication.selector);
-
         // register/create component setup
         (
             , // instance reader
@@ -483,41 +471,6 @@ contract ComponentService is
 
         // TODO add logging
     }
-
-    // TODO cleanup
-    // /// @dev registers the component represented by the provided address
-    // function _registerOld(
-    //     address componentAddress, // address of component to register
-    //     ObjectType requiredType, // required type for component for registration
-    //     RoleId requiredRole, // role required for comonent owner for registration
-    //     RoleId[] memory roles, // roles with write access to component
-    //     bytes4[][] memory selectors // authorized functions per role with write access
-    // )
-    //     internal
-    //     virtual
-    //     returns (
-    //         InstanceReader instanceReader, 
-    //         InstanceStore instanceStore, 
-    //         NftId componentNftId
-    //     )
-    // {
-    //     (
-    //         instanceReader, 
-    //         instanceStore, 
-    //         componentNftId
-    //     ) = _register(
-    //         componentAddress,
-    //         requiredType,
-    //         requiredRole);
-
-    //     // configure instance authorization
-    //     _instanceService.createComponentTarget(
-    //         instance.getNftId(), 
-    //         componentAddress, 
-    //         component.getName(), 
-    //         selectors, 
-    //         roles);
-    // }
 
 
     /// @dev link the component info corresponding to the componentNftId to the provided productNftId

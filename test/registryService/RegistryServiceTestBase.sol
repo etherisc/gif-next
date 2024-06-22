@@ -35,9 +35,6 @@ import {RegisterableMock} from "../mock/RegisterableMock.sol";
 import {RegistryTestBase} from "../registry/RegistryTestBase.sol";
 import {GifTest} from "../base/GifTest.sol";
 
-// TODO cleanup
-// import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
-
 
 
 contract RegistryServiceTestBase is GifTest, FoundryRandom {
@@ -52,15 +49,6 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
     function _deployRegistryService() internal
     {
         bytes32 salt = "0x1111";
-
-        // TODO cleanup
-        // RegistryServiceTestConfig config = new RegistryServiceTestConfig(
-        //     releaseManager,
-        //     type(RegistryServiceManager).creationCode,
-        //     type(RegistryService).creationCode, 
-        //     registryOwner,
-        //     VersionPartLib.toVersionPart(3),
-        //     "0x1111");//salt);
 
         releaseManager.createNextRelease();
 

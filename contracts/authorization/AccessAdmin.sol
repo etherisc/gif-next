@@ -374,35 +374,6 @@ contract AccessAdmin is
                 roleType: RoleType.Gif,
                 maxMemberCount: type(uint32).max,
                 name: PUBLIC_ROLE_NAME}));
-
-        // TODO cleanup
-        // // setup manager role
-        // _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
-        // _createRole(
-        //     _managerRoleId, 
-        //     adminRoleId,
-        //     MANAGER_ROLE_NAME,
-        //     isCustom,
-        //     3, // TODO think about max member count
-        //     false);
-
-        // // grant public role access to grant and revoke, renounce
-        // functions = new FunctionInfo[](3);
-        // functions[0] = toFunction(IAccessAdmin.grantRole.selector, "grantRole");
-        // functions[1] = toFunction(IAccessAdmin.revokeRole.selector, "revokeRole");
-        // functions[2] = toFunction(IAccessAdmin.renounceRole.selector, "renounceRole");
-        // _authorizeTargetFunctions(address(this), getPublicRole(), functions);
-
-        // // grant manager role access to the specified functions 
-        // functions = new FunctionInfo[](4);
-        // // TODO cleanup
-        // // functions[0] = toFunction(IAccessAdmin.createRole.selector, "createRole");
-        // functions[0] = toFunction(IAccessAdmin.setRoleDisabled.selector, "setRoleDisabled");
-        // // functions[1] = toFunction(IAccessAdmin.createTarget.selector, "createTarget");
-        // functions[1] = toFunction(IAccessAdmin.setTargetLocked.selector, "setTargetLocked");
-        // functions[2] = toFunction(IAccessAdmin.authorizeFunctions.selector, "authorizeFunctions");
-        // functions[3] = toFunction(IAccessAdmin.unauthorizeFunctions.selector, "unauthorizeFunctions");
-        // _authorizeTargetFunctions(address(this), getManagerRole(), functions);
     }
 
     /// @dev check if target exists and reverts if it doesn't

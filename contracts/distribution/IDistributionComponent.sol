@@ -16,36 +16,6 @@ interface IDistributionComponent is IInstanceLinkedComponent {
 
     event LogDistributorUpdated(address to, address caller);
 
-    // TODO cleanup
-    // function setFees(
-    //     Fee memory distributionFee,
-    //     Fee memory minDistributionOwnerFee
-    // ) external;
-
-    // function createDistributorType(
-    //     string memory name,
-    //     UFixed minDiscountPercentage,
-    //     UFixed maxDiscountPercentage,
-    //     UFixed commissionPercentage,
-    //     uint32 maxReferralCount,
-    //     uint32 maxReferralLifetime,
-    //     bool allowSelfReferrals,
-    //     bool allowRenewals,
-    //     bytes memory data
-    // ) external returns (DistributorType distributorType);
-
-    // function createDistributor(
-    //     address distributor,
-    //     DistributorType distributorType,
-    //     bytes memory data
-    // ) external returns(NftId distributorNftId);
-
-    // function updateDistributorType(
-    //     NftId distributorNftId,
-    //     DistributorType distributorType,
-    //     bytes memory data
-    // ) external;
-
     /// @dev Returns true iff the provided address is registered as a distributor with this distribution component.
     function isDistributor(address candidate) external view returns (bool);
 

@@ -108,12 +108,8 @@ contract InstanceAuthorizationV3
      {
           IAccess.FunctionInfo[] storage functions;
 
-          // TODO cleanup
           // authorize instance service role
           functions = _authorizeForTarget(INSTANCE_TARGET_NAME, getServiceRole(INSTANCE()));
-          // _authorize(functions, Instance.setInstanceAdmin.selector, "setInstanceAdmin");
-          // _authorize(functions, Instance.setInstanceStore.selector, "setInstanceStore");
-          // _authorize(functions, Instance.setBundleManager.selector, "setBundleManager");
           _authorize(functions, Instance.setInstanceReader.selector, "setInstanceReader");
      }
 

@@ -124,8 +124,6 @@ contract ServiceAuthorizationV3
           IAccess.FunctionInfo[] storage functions;
 
           functions = _authorizeForService(INSTANCE(), COMPONENT());
-          // TODO cleanup
-          // _authorize(functions, IInstanceService.createComponentTarget.selector, "createComponentTarget");
           _authorize(functions, IInstanceService.initializeAuthorization.selector, "initializeAuthorization");
      }
 

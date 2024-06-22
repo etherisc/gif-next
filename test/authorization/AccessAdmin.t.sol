@@ -200,19 +200,6 @@ contract AccessAdminForTesting is AccessAdmin {
 
 contract AccessAdminCloneable is AccessAdminForTesting {
 
-    // TODO cleanup
-    // /// @dev initializer with externally provided accessManager.
-    // /// IMPORTANT cloning and initialization needs to be done in a single transaction
-    // function initializeWithAccessManager(address accessManager) public initializer() {
-    //     _initialize(accessManager);
-    // }
-
-    /// @dev initializer that will creaete its own accessManager internally.
-    /// IMPORTANT cloning and initialization needs to be done in a single transaction
-    // QUESTION AccessAdmin (base class) has _disableInitializer() in constructor
-    // ANSWER constructor is never called in cloned contract, therefore _disableInitializer is never called in cloned contract.
-    //      How can child class use initialzier / onlyInitializing then?
-    //      Quote: "Calling this (_disableInitializer) in the constructor of a contract will prevent that contract from being initialized or reinitialized"
     function initialize() public initializer() {
         _initialize(
             address(new AccessManager(address(this))));
@@ -1142,23 +1129,6 @@ contract AccessAdminTest is Test {
         _checkAccessAdmin(aa, accessAdminCloner);
     }
 
-    // TODO cleanup
-    // /// @dev test that a access admin created via constructor cannot be initialized
-    // function test_accessAdminClonedFailingToInitializeMaster() public {
-    //     // GIVEN (just setup)
-    //     vm.startPrank(accessAdminDeployer);
-
-    //     // WHEN + 
-    //     // create access manager with aa as admin
-    //     AccessManager am = AccessManager(address(aaMaster));
-
-    //     // THEN
-    //     // initialize aa with newly created access manager
-    //     vm.expectRevert(Initializable.InvalidInitialization.selector);
-    //     aaMaster.initializeWithAccessManager(address(am));
-    //     vm.stopPrank();
-    // }
-
 
     /// @dev test that a cloned access admin can only be initialized once
     function test_accessAdminClonedFailingToInitializeTwice1stVersion() public {
@@ -1181,54 +1151,6 @@ contract AccessAdminTest is Test {
         vm.stopPrank();
     }
 
-    // TODO cleanup
-    // /// @dev test that a cloned access admin can only be initialized once
-    // function test_accessAdminClonedFailingToInitializeTwice2NdVersion() public {
-    //     // GIVEN
-    //     vm.startPrank(accessAdminCloner);
-
-    //     // create cloned access manager
-    //     AccessAdminCloneable aa = AccessAdminCloneable(
-    //         Clones.clone(
-    //             address(aaMaster)));
-        
-    //     // create access manager with aa as admin
-    //     AccessManager am = new AccessManager(address(aa));
-
-    //     // initialize aa with newly created access manager
-    //     aa.initializeWithAccessManager(address(am));
-
-    //     // WHEN + THEN
-    //     // attempt to initialize 2nd time
-    //     vm.expectRevert(Initializable.InvalidInitialization.selector);
-    //     aa.initializeWithAccessManager(address(am));
-
-    //     vm.stopPrank();
-    // }
-
-    // TODO cleanup
-    // /// @dev check that initializing a cloned access admin reverts
-    // /// when trying to provide an access manager that does not have
-    // /// the access admin as initial owner
-    // function test_accessAdminClonedAdminMismatch() public {
-    //     // GIVEN
-    //     vm.startPrank(accessAdminCloner);
-
-    //     // create cloned access manager
-    //     AccessAdminCloneable aa = AccessAdminCloneable(
-    //         Clones.clone(
-    //             address(aaMaster)));
-
-    //     // create access manager with outsider as admin
-    //     AccessManager am = new AccessManager(outsider);
-
-    //     // WHEN + THEN
-    //     // attempt to initialize with unsuitable access manager
-    //     vm.expectRevert(IAccessAdmin.ErrorAdminRoleMissing.selector);
-    //     aa.initializeWithAccessManager(address(am));
-
-    //     vm.stopPrank();
-    // }
 
     function _createManagedRoleWithOwnAdmin(
         uint64 roleIdInt, 

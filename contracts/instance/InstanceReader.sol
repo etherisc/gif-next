@@ -49,11 +49,6 @@ contract InstanceReader {
             revert ErrorInstanceReaderAlreadyInitialized();
         }
 
-        // TODO cleanup
-        // _initialized = true;
-        // _instance = IInstance(msg.sender);
-        // _store = _instance.getInstanceStore();
-
         initializeWithInstance(msg.sender);
     }
 

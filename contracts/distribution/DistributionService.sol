@@ -3,8 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "../instance/IInstance.sol";
-// TODO cleanup
-// import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";

@@ -80,8 +80,6 @@ import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 
-// TODO cleanup
-// import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {InstanceAdminNew} from "../../contracts/instance/InstanceAdminNew.sol";
 import {InstanceAuthorizationV3} from "../../contracts/instance/InstanceAuthorizationV3.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
@@ -101,8 +99,6 @@ import {SimpleProduct} from "../mock/SimpleProduct.sol";
 
 import {GifDeployer} from "./GifDeployer.sol";
 
-// TODO cleanup
-// import {GifTestReleaseConfig} from "./GifTestReleaseConfig.sol";
 
 // solhint-disable-next-line max-states-count
 contract GifTest is GifDeployer {
@@ -130,9 +126,6 @@ contract GifTest is GifDeployer {
     StakingReader public stakingReader;
     NftId public stakingNftId;
 
-    // TODO cleanup
-    // AccessManagerExtendedInitializeable public masterInstanceAccessManager;
-    // InstanceAdmin public masterInstanceAdmin;
     InstanceAdminNew public masterInstanceAdmin;
     InstanceAuthorizationV3 public instanceAuthorizationV3;
     BundleManager public masterBundleManager;
@@ -141,9 +134,6 @@ contract GifTest is GifDeployer {
     NftId public masterInstanceNftId;
     InstanceReader public masterInstanceReader;
 
-    // TODO cleanup
-    // AccessManagerExtendedInitializeable public instanceAccessManager;
-    // InstanceAdmin public instanceAdmin;
     InstanceAdminNew public instanceAdmin;
     BundleManager public instanceBundleManager;
     InstanceStore public instanceStore;
@@ -352,13 +342,6 @@ contract GifTest is GifDeployer {
 
     function _deployMasterInstance() internal 
     {
-        // TODO cleanup
-        // masterInstanceAccessManager = new AccessManagerExtendedInitializeable();
-        // // grants registryOwner ADMIN_ROLE
-        // masterInstanceAccessManager.initialize(registryOwner);
-                // masterInstanceAdmin.initialize(instanceAuthorizationV3);
-        // masterInstanceAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin), 0);
-
         // create instance supporting contracts
         instanceAuthorizationV3 = new InstanceAuthorizationV3();
         masterInstanceAdmin = new InstanceAdminNew(instanceAuthorizationV3);
@@ -400,11 +383,6 @@ contract GifTest is GifDeployer {
         // lock master instance nft
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 
-        // TODO cleanup
-        // // revoke ADMIN_ROLE from all members
-        // masterInstanceAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin));
-        // masterInstanceAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
-
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
@@ -424,8 +402,6 @@ contract GifTest is GifDeployer {
         ) = instanceService.createInstanceClone();
 
         instanceAdmin = instance.getInstanceAdmin();
-        // TODO cleanup
-        // instanceAccessManager = AccessManagerExtendedInitializeable(instance.authority());
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
         instanceBundleManager = instance.getBundleManager();
