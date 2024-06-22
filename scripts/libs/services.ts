@@ -199,12 +199,10 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
         ],
         { libraries: { 
             NftIdLib: libraries.nftIdLibAddress, 
-            // ObjectTypeLib: libraries.objectTypeLibAddress, 
             TimestampLib: libraries.timestampLibAddress,
             VersionLib: libraries.versionLibAddress,
             VersionPartLib: libraries.versionPartLibAddress,
             RoleIdLib: libraries.roleIdLibAddress,
-            InstanceAuthorizationsLib: libraries.instanceAuthorizationsLibAddress,
             TargetManagerLib: libraries.targetManagerLibAddress,
         }});
 

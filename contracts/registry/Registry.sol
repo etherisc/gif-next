@@ -298,9 +298,10 @@ contract Registry is
         service =  _service[releaseVersion][serviceDomain]; 
     }
 
-    function getReleaseAccessManagerAddress(VersionPart version) external view returns (address) {
-        return address(_releaseManager.getReleaseAccessManager(version));
-    }
+    // TODO cleanup
+    // function getReleaseAccessManagerAddress(VersionPart version) external view returns (address) {
+    //     return address(_releaseManager.getReleaseAccessManager(version));
+    // }
 
     function getReleaseManagerAddress() external view returns (address) {
         return address(_releaseManager);

@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+// TODO cleanup
+// import {AccessManagerExtendedWithDisableInitializeable} from "../shared/AccessManagerExtendedWithDisableInitializeable.sol";
+
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {IAccessManager} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
@@ -18,7 +21,6 @@ import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE, PAUSED, CLOSED} from "..
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 
 import {IService} from "../shared/IService.sol";
-import {AccessManagerExtendedWithDisableInitializeable} from "../shared/AccessManagerExtendedWithDisableInitializeable.sol";
 import {ILifecycle} from "../shared/ILifecycle.sol";
 import {INftOwnable} from "../shared/INftOwnable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
@@ -92,16 +94,20 @@ contract ReleaseManager is
 
     Seconds public constant MIN_DISABLE_DELAY = Seconds.wrap(60 * 24 * 365); // 1 year
 
-    RegistryAdmin private _admin;
-    address public _releaseAccessManagerCodeAddress;
-    Registry private _registry;
+    RegistryAdmin public immutable _admin;
+    Registry public immutable _registry;
+    IRegisterable private _staking;
+    address private _stakingOwner;
+
+    mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
+    mapping(VersionPart version => IServiceAuthorization authz) internal _serviceAuthorization;
+
+    // TODO check where/why this is used
+    mapping(address registryService => VersionPart version) _releaseVersionByAddress;
 
     // TODO remove once it's clear that release authority will always be registry authority
     mapping(VersionPart version => address authority) internal _releaseAccessManager;
-    mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
-    mapping(address registryService => VersionPart version) _releaseVersionByAddress;
 
-    mapping(VersionPart version => IServiceAuthorization authz) internal _serviceAuthorization;
 
     VersionPart private _initial;// first active version    
     VersionPart internal _latest; // latest active version
@@ -126,11 +132,6 @@ contract ReleaseManager is
 
         _initial = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION);
         _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
-
-        //AccessManagerExtendedWithDisableInitializeable masterReleaseAccessManager = new AccessManagerExtendedWithDisableInitializeable();
-        //masterReleaseAccessManager.initialize(address(this));
-          //masterReleaseAccessManager.disable();
-        //_releaseAccessManagerCodeAddress = address(masterReleaseAccessManager);
     }
 
     /// @dev skips previous release if was not activated
@@ -238,16 +239,6 @@ contract ReleaseManager is
         if (serviceDomain != expectedDomain) {
             revert ErrorReleaseManagerServiceDomainMismatch(expectedDomain, serviceDomain);
         }
-
-        // TODO uncomment when release addresses calculations are ready
-        // service address matches defined in release config
-        /*address expectedAddress = _serviceAuthorization[releaseVersion].getServiceAddress(expectedDomain);
-        if(address(service) != expectedAddress) {
-            //revert ErrorReleaseManagerServiceAddressMismatch(expectedAddress, address(service));
-        }*/
-
-        // checked in registry
-        _releaseInfo[releaseVersion].domains.push(serviceDomain);
 
         _state[releaseVersion] = newState;
         _registeredServices++;
@@ -389,10 +380,6 @@ contract ReleaseManager is
 
     function getRemainingServicesToRegister() external view returns (uint256 services) {
         return _servicesToRegister - _registeredServices;
-    }
-
-    function getReleaseAccessManager(VersionPart version) external view returns(address) {
-        return _releaseAccessManager[version];
     }
 
     function getServiceAuthorization(VersionPart version)

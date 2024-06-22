@@ -40,17 +40,16 @@ interface IRegistry is IERC165 {
         bytes data;
     }
 
-    // TODO cleanup
     struct ReleaseInfo {
         VersionPart version;
         bytes32 salt;
         address[] addresses;
         string[] names;
-        RoleId[][] serviceRoles;
-        string[][] serviceRoleNames;
-        RoleId[][] functionRoles;
-        string[][] functionRoleNames;
-        bytes4[][][] selectors;
+        // RoleId[][] serviceRoles;
+        // string[][] serviceRoleNames;
+        // RoleId[][] functionRoles;
+        // string[][] functionRoleNames;
+        // bytes4[][][] selectors;
         ObjectType[] domains;
         Timestamp activatedAt;
         Timestamp disabledAt;
@@ -111,8 +110,6 @@ interface IRegistry is IERC165 {
     function getChainNftAddress() external view returns (address);
 
     function getReleaseManagerAddress() external view returns (address);
-
-    function getReleaseAccessManagerAddress(VersionPart version) external view returns (address);
 
     function getStakingAddress() external view returns (address);
 

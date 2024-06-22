@@ -32,8 +32,8 @@ import {IService} from "../../contracts/shared/IService.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
-import {AccessManagerExtendedInitializeable} from "../../contracts/shared/AccessManagerExtendedInitializeable.sol";
-import {AccessManagerExtendedWithDisableInitializeable} from "../../contracts/shared/AccessManagerExtendedWithDisableInitializeable.sol";
+// import {AccessManagerExtendedInitializeable} from "../../contracts/shared/AccessManagerExtendedInitializeable.sol";
+// import {AccessManagerExtendedWithDisableInitializeable} from "../../contracts/shared/AccessManagerExtendedWithDisableInitializeable.sol";
 import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWithAdmin.sol";
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -100,7 +100,9 @@ import {SimplePool} from "../mock/SimplePool.sol";
 import {SimpleProduct} from "../mock/SimpleProduct.sol";
 
 import {GifDeployer} from "./GifDeployer.sol";
-import {GifTestReleaseConfig} from "./GifTestReleaseConfig.sol";
+
+// TODO cleanup
+// import {GifTestReleaseConfig} from "./GifTestReleaseConfig.sol";
 
 // solhint-disable-next-line max-states-count
 contract GifTest is GifDeployer {

@@ -13,7 +13,8 @@ import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
+// TODO cleanup
+// import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";

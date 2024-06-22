@@ -34,11 +34,13 @@ import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
-//import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
+
+// TODO cleanup
+// import {DistributionServiceManager} from "../../contracts/distribution/DistributionServiceManager.sol";
+// import {RegistryServiceTestConfig} from "../registryService/RegistryServiceTestConfig.sol";
 
 import {RegistryServiceManagerMock} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceMock} from "../mock/RegistryServiceMock.sol";
-import {RegistryServiceTestConfig} from "../registryService/RegistryServiceTestConfig.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {GifDeployer} from "../base/GifDeployer.sol";
 

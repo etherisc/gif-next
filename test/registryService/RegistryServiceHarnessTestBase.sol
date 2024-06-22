@@ -26,7 +26,9 @@ import {ServiceMockAuthorizationV3} from "../registry/ServiceMockAuthorizationV3
 
 import {GifDeployer} from "../base/GifDeployer.sol";
 import {GifTest} from "../base/GifTest.sol";
-import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
+
+// TODO cleanup
+// import {RegistryServiceTestConfig} from "./RegistryServiceTestConfig.sol";
 
 
 contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
