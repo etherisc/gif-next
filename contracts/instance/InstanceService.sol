@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStrings.sol";
 
+import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount} from "../type/Amount.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
@@ -30,11 +31,10 @@ import {TargetManagerLib} from "../staking/TargetManagerLib.sol";
 import {Instance} from "./Instance.sol";
 import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
 import {IInstance} from "./IInstance.sol";
-import {InstanceAdminNew} from "./InstanceAdminNew.sol";
+import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
-// import {InstanceAuthorizationsLib} from "./InstanceAuthorizationsLib.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
@@ -50,6 +50,7 @@ contract InstanceService is
     IRegistryService internal _registryService;
     IStakingService internal _stakingService;
 
+    address internal _masterAccessManager;
     address internal _masterInstanceAdmin;
     address internal _masterInstance;
     address internal _masterInstanceReader;
@@ -103,9 +104,18 @@ contract InstanceService is
         // tx sender will become instance owner
         address instanceOwner = msg.sender;
 
-        // start with setting up the instance admin
-        InstanceAdminNew clonedInstanceAdmin = InstanceAdminNew(Clones.clone(_masterInstanceAdmin));
-        clonedInstanceAdmin.initialize(InstanceAdminNew(_masterInstanceAdmin).getInstanceAuthorization());
+        // start with setting up a new OZ access manager
+        AccessManagerCloneable clonedAccessManager = AccessManagerCloneable(
+            Clones.clone(_masterAccessManager));
+        
+        // set up the instance admin
+        InstanceAdmin clonedInstanceAdmin = InstanceAdmin(Clones.clone(_masterInstanceAdmin));
+        clonedAccessManager.initialize(
+            address(clonedInstanceAdmin)); // grant ADMIN_ROLE to instance admin
+
+        clonedInstanceAdmin.initialize(
+            clonedAccessManager,
+            InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization());
 
         InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
         BundleManager clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
@@ -233,7 +243,8 @@ contract InstanceService is
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
         IInstance instance = IInstance(instanceAddress);
-        InstanceAdminNew instanceAdmin = instance.getInstanceAdmin();
+        address accessManagerAddress = instance.authority();
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
         address instanceAdminAddress = address(instanceAdmin);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
@@ -242,6 +253,7 @@ contract InstanceService is
         InstanceStore instanceStore = instance.getInstanceStore();
         address instanceStoreAddress = address(instanceStore);
 
+        if(accessManagerAddress == address(0)) { revert ErrorInstanceServiceAccessManagerZero(); }
         if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
         if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
@@ -253,6 +265,7 @@ contract InstanceService is
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
 
+        _masterAccessManager = accessManagerAddress;
         _masterInstanceAdmin = instanceAdminAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
@@ -322,7 +335,7 @@ contract InstanceService is
             instanceNftId, 
             address(component));
 
-        InstanceAdminNew instanceAdmin = instance.getInstanceAdmin();
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
         instanceAdmin.initializeComponentAuthorization(
             address(component),
             component.getAuthorization());
@@ -367,7 +380,7 @@ contract InstanceService is
             // or targetInfo
         ) = _validateInstanceAndComponent(instanceNftId, targetAddress);
 
-        InstanceAdminNew instanceAdmin = instance.getInstanceAdmin();
+        InstanceAdmin instanceAdmin = instance.getInstanceAdmin();
 
         // TODO refactor/implement
         // instanceAdmin.createGifTarget(targetAddress, targetName);

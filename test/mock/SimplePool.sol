@@ -18,6 +18,7 @@ contract SimplePool is
         address registry,
         NftId instanceNftId,
         address token,
+        IAuthorization authorization,
         address initialOwner
     ) 
     {
@@ -25,6 +26,7 @@ contract SimplePool is
             registry,
             instanceNftId,
             token,
+            authorization,
             initialOwner
         );
     }
@@ -33,15 +35,13 @@ contract SimplePool is
         address registry,
         NftId instanceNftId,
         address token,
+        IAuthorization authorization,
         address initialOwner
     )
         public
         virtual
         initializer()
     {
-        IAuthorization authorization = new BasicPoolAuthorization(
-            "SimplePool");
-
         _initializeBasicPool(
             registry,
             instanceNftId,

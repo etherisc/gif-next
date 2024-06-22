@@ -35,6 +35,7 @@ contract SimpleProduct is
     constructor(
         address registry,
         NftId instanceNftid,
+        IAuthorization authorization,
         address initialOwner,
         address token,
         bool isInterceptor,
@@ -42,8 +43,6 @@ contract SimpleProduct is
         address distribution
     )
     {
-        IAuthorization authorization = new BasicProductAuthorization("SimpleProduct");
-
         initialize(
             registry,
             instanceNftid,

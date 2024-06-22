@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {BasicPoolAuthorization} from "../../../contracts/pool/BasicPoolAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {POOL_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
@@ -18,6 +19,7 @@ contract TestPoolService is GifTest {
             address(registry),
             instanceNftId,
             address(token),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
         
@@ -41,6 +43,7 @@ contract TestPoolService is GifTest {
             address(registry),
             instanceNftId,
             address(token),
+            new BasicPoolAuthorization("SimplePool"),
             outsider
         );
         

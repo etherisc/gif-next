@@ -200,9 +200,11 @@ contract AccessAdminForTesting is AccessAdmin {
 
 contract AccessAdminCloneable is AccessAdminForTesting {
 
-    function initialize() public initializer() {
-        _initialize(
-            address(new AccessManager(address(this))));
+    error ErrorAccessAdminCloneableAdminRoleMissing();
+
+    function initialize(address accessManagerAddress) public initializer() {
+        _checkAccessManager(accessManagerAddress);
+        _initialize(accessManagerAddress);
     }
 
     /// @dev shared code for both initializer methods.
@@ -210,6 +212,14 @@ contract AccessAdminCloneable is AccessAdminForTesting {
         _initializeAuthority(address(accessManager));
         _createAdminAndPublicRoles();
         _initializeAccessAdminForTesting();
+    }
+
+    function _checkAccessManager(address accessManagerAddress) internal view {
+        AccessManager am = AccessManager(accessManagerAddress);
+        (bool hasAdminRole, ) = am.hasRole(am.ADMIN_ROLE(), address(this));
+        if (!hasAdminRole) {
+            revert ErrorAccessAdminCloneableAdminRoleMissing();
+        }
     }
 }
 
@@ -1122,7 +1132,8 @@ contract AccessAdminTest is Test {
                 address(aaMaster)));
 
         // initialize aa with newly created access manager
-        aa.initialize();
+        AccessManager am = new AccessManager(address(aa));
+        aa.initialize(address(am));
         vm.stopPrank();
 
         // THEN
@@ -1141,12 +1152,13 @@ contract AccessAdminTest is Test {
                 address(aaMaster)));
         
         // initialize aa with newly created access manager
-        aa.initialize();
+        AccessManager am = new AccessManager(address(aa));
+        aa.initialize(address(am));
 
         // WHEN + THEN
         // attempt to initialize 2nd time
         vm.expectRevert(Initializable.InvalidInitialization.selector);
-        aa.initialize();
+        aa.initialize(address(am));
 
         vm.stopPrank();
     }

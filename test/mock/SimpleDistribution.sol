@@ -18,6 +18,7 @@ contract SimpleDistribution is
     constructor(
         address registry,
         NftId instanceNftId,
+        IAuthorization authorization,
         address initialOwner,
         address token
     ) 
@@ -25,6 +26,7 @@ contract SimpleDistribution is
         initialize(
             registry,
             instanceNftId,
+            authorization,
             initialOwner,
             "SimpleDistribution",
             token);
@@ -33,6 +35,7 @@ contract SimpleDistribution is
     function initialize(
         address registry,
         NftId instanceNftId,
+        IAuthorization authorization,
         address initialOwner,
         string memory name,
         address token
@@ -41,9 +44,6 @@ contract SimpleDistribution is
         virtual
         initializer()
     {
-        IAuthorization authorization = new BasicDistributionAuthorization(
-            "SimpleDistribution");
-
         _initializeBasicDistribution(
             registry,
             instanceNftId,

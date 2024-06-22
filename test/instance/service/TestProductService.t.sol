@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
 import {console} from "../../../lib/forge-std/src/Script.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
@@ -22,6 +23,7 @@ contract TestProductService is GifTest {
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            new BasicProductAuthorization("SimpleProduct"),
             productOwner,
             address(token),
             false,
@@ -50,6 +52,7 @@ contract TestProductService is GifTest {
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            new BasicProductAuthorization("SimpleProduct"),
             productOwner,
             address(token),
             false,

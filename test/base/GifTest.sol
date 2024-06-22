@@ -32,9 +32,12 @@ import {IService} from "../../contracts/shared/IService.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
-// import {AccessManagerExtendedInitializeable} from "../../contracts/shared/AccessManagerExtendedInitializeable.sol";
-// import {AccessManagerExtendedWithDisableInitializeable} from "../../contracts/shared/AccessManagerExtendedWithDisableInitializeable.sol";
 import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWithAdmin.sol";
+
+import {BasicDistributionAuthorization} from "../../contracts/distribution/BasicDistributionAuthorization.sol";
+import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
+import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
+import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -80,7 +83,8 @@ import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 
-import {InstanceAdminNew} from "../../contracts/instance/InstanceAdminNew.sol";
+import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
+import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {InstanceAuthorizationV3} from "../../contracts/instance/InstanceAuthorizationV3.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
@@ -126,7 +130,8 @@ contract GifTest is GifDeployer {
     StakingReader public stakingReader;
     NftId public stakingNftId;
 
-    InstanceAdminNew public masterInstanceAdmin;
+    AccessManagerCloneable public masterAccessManager;
+    InstanceAdmin public masterInstanceAdmin;
     InstanceAuthorizationV3 public instanceAuthorizationV3;
     BundleManager public masterBundleManager;
     InstanceStore public masterInstanceStore;
@@ -134,7 +139,7 @@ contract GifTest is GifDeployer {
     NftId public masterInstanceNftId;
     InstanceReader public masterInstanceReader;
 
-    InstanceAdminNew public instanceAdmin;
+    InstanceAdmin public instanceAdmin;
     BundleManager public instanceBundleManager;
     InstanceStore public instanceStore;
     Instance public instance;
@@ -223,16 +228,13 @@ contract GifTest is GifDeployer {
         _deployRegisterAndActivateToken();
         vm.stopPrank();
 
-        // TODO move to end of this function once instance reg is fixed
-        // print full authz setup
-        _printAuthz(registryAdmin, "registry");
-        _printAuthz(masterInstanceAdmin, "masterInstance");
-
         // create an instance (cloned from master instance)
         vm.startPrank(instanceOwner);
         _createInstance();
         vm.stopPrank();
 
+        // print full authz setup
+        _printAuthz(registryAdmin, "registry");
         _printAuthz(instance.getInstanceAdmin(), "instance");
     }
 
@@ -344,7 +346,7 @@ contract GifTest is GifDeployer {
     {
         // create instance supporting contracts
         instanceAuthorizationV3 = new InstanceAuthorizationV3();
-        masterInstanceAdmin = new InstanceAdminNew(instanceAuthorizationV3);
+        masterInstanceAdmin = new InstanceAdmin(instanceAuthorizationV3);
         masterInstanceStore = new InstanceStore();
         masterBundleManager = new BundleManager();
         masterInstanceReader = new InstanceReader();
@@ -359,19 +361,9 @@ contract GifTest is GifDeployer {
             registry,
             registryOwner);
 
-        // MUST be initialized and set before instance reader
-        // masterInstanceStore = new InstanceStore();
-        // masterInstanceStore.initialize(address(masterInstance));
-        // masterInstance.setInstanceStore(masterInstanceStore);
-        // assert(masterInstance.getInstanceStore() == masterInstanceStore);
-
-        // masterInstanceReader = new InstanceReader();
-        // masterInstanceReader.initialize(address(masterInstance));
-        // masterInstance.setInstanceReader(masterInstanceReader);
-        
-        // masterBundleManager = new BundleManager();
-        // masterBundleManager.initialize(address(masterInstance));
-        // masterInstance.setBundleManager(masterBundleManager);
+        // retrieve master access manager from instance
+        masterAccessManager = AccessManagerCloneable(
+            masterInstanceAdmin.authority());
 
         // sets master instance address in instance service
         // instance service is now ready to create cloned instances
@@ -457,6 +449,7 @@ contract GifTest is GifDeployer {
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            new BasicProductAuthorization("SimpleProduct"),
             productOwner,
             address(token),
             false,
@@ -518,6 +511,7 @@ contract GifTest is GifDeployer {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
+            new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
             address(token));
 
@@ -539,6 +533,7 @@ contract GifTest is GifDeployer {
             address(registry),
             instanceNftId,
             address(token),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
 
@@ -560,6 +555,7 @@ contract GifTest is GifDeployer {
         oracle = new SimpleOracle(
             address(registry),
             instanceNftId,
+            new BasicOracleAuthorization("SimpleOracle"),
             oracleOwner,
             address(token));
 
@@ -584,6 +580,7 @@ contract GifTest is GifDeployer {
             address(registry),
             instanceNftId,
             address(token),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
         pool.register();

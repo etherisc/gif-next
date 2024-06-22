@@ -32,6 +32,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch();
 
+    error ErrorInstanceServiceAccessManagerZero();
     error ErrorInstanceServiceInstanceAdminZero();
     error ErrorInstanceServiceInstanceReaderZero();
     error ErrorInstanceServiceBundleManagerZero();

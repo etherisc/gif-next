@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
+import {BasicPoolAuthorization} from "../contracts/pool/BasicPoolAuthorization.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
@@ -27,6 +28,7 @@ contract TestPool is GifTest {
             address(registry),
             instanceNftId,
             address(token),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
 
@@ -61,6 +63,7 @@ contract TestPool is GifTest {
             address(registry),
             instanceNftId,
             address(token),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
 

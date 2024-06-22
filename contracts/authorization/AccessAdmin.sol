@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
+import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
@@ -27,7 +27,7 @@ contract AccessAdmin is
     string public constant PUBLIC_ROLE_NAME = "PublicRole";
 
     /// @dev the OpenZeppelin access manager driving the access admin contract
-    AccessManager internal _authority;
+    AccessManagerCloneable internal _authority;
 
     /// @dev stores the deployer address and allows to create initializers
     /// that are restricted to the deployer address.
@@ -106,7 +106,8 @@ contract AccessAdmin is
 
     constructor() {
         _deployer = msg.sender;
-        _authority = new AccessManager(address(this));
+        _authority = new AccessManagerCloneable();
+        _authority.initialize(address(this));
 
         _setAuthority(address(_authority)); // set authority for oz access managed
         _createAdminAndPublicRoles();
@@ -327,13 +328,7 @@ contract AccessAdmin is
             revert ErrorAuthorityAlreadySet();
         }
 
-        _authority = AccessManager(authorityAddress);
-
-        // TODO check if we really need this
-        // if(!hasRole(address(this), RoleId.wrap(_authority.ADMIN_ROLE()))) {
-        //     revert ErrorAdminRoleMissing();
-        // }
-
+        _authority = AccessManagerCloneable(authorityAddress);
         __AccessManaged_init(address(_authority));
     }
 

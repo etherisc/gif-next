@@ -25,7 +25,7 @@ import {IRegistry} from "../registry/IRegistry.sol";
 import {IInstance} from "./IInstance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
-import {InstanceAdminNew} from "./InstanceAdminNew.sol";
+import {InstanceAdmin} from "./InstanceAdmin.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 
@@ -53,7 +53,7 @@ contract Instance is
     bool private _initialized;
 
     IInstanceService internal _instanceService;
-    InstanceAdminNew internal _instanceAdmin;
+    InstanceAdmin internal _instanceAdmin;
     InstanceReader internal _instanceReader;
     BundleManager internal _bundleManager;
     InstanceStore internal _instanceStore;
@@ -66,7 +66,7 @@ contract Instance is
     }
 
     function initialize(
-        InstanceAdminNew instanceAdmin, 
+        InstanceAdmin instanceAdmin, 
         InstanceStore instanceStore,
         BundleManager bundleManager,
         InstanceReader instanceReader,
@@ -238,7 +238,7 @@ contract Instance is
         return _bundleManager;
     }
 
-    function getInstanceAdmin() external view returns (InstanceAdminNew) {
+    function getInstanceAdmin() external view returns (InstanceAdmin) {
         return _instanceAdmin;
     }
 

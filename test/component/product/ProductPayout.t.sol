@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
+import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
@@ -882,6 +883,7 @@ contract TestProductClaim is GifTest {
         prdct = new SimpleProduct(
             address(registry),
             instanceNftId,
+            new BasicProductAuthorization("SimpleProduct"),
             productOwner,
             address(token),
             false,

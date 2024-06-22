@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
 import {AccessAdmin} from "../authorization/AccessAdmin.sol";
+import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
@@ -16,7 +17,7 @@ import {Str, StrLib} from "../type/String.sol";
 import {VersionPart} from "../type/Version.sol";
 
 
-contract InstanceAdminNew is
+contract InstanceAdmin is
     AccessAdmin
 {
     string public constant INSTANCE_TARGET_NAME = "Instance";
@@ -39,7 +40,11 @@ contract InstanceAdminNew is
 
     /// @dev Only used for master instance admin.
     /// Contracts created via constructor come with disabled initializers.
-    constructor(IModuleAuthorization instanceAuthorization) AccessAdmin() {
+    constructor(
+        IModuleAuthorization instanceAuthorization
+    )
+        AccessAdmin()
+    {
         _instanceAuthorization = instanceAuthorization;
     }
 
@@ -48,13 +53,13 @@ contract InstanceAdminNew is
     /// for the inststance authorizatios.
     /// Important: Initialization of this instance admin is only complete after calling function initializeInstance. 
     function initialize(
+        AccessManagerCloneable accessManager,
         IModuleAuthorization instanceAuthorization
     )
         external
         initializer() 
     {
         // create new access manager for this instance admin
-        AccessManager accessManager = new AccessManager(address(this));
         _initializeAuthority(address(accessManager));
 
         // create basic instance independent setup

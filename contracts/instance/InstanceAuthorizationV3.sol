@@ -12,7 +12,7 @@ import {
 import {BundleManager} from "../instance/BundleManager.sol"; 
 import {IAccess} from "../authorization/IAccess.sol";
 import {Instance} from "../instance/Instance.sol";
-import {InstanceAdminNew} from "../instance/InstanceAdminNew.sol";
+import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {ModuleAuthorization} from "../authorization/ModuleAuthorization.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -121,17 +121,10 @@ contract InstanceAuthorizationV3
 
           // authorize instance role
           functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, _getTargetRoleId(INSTANCE()));
-          // _authorize(functions, InstanceAdminNew.createRole.selector, "createRole");
-          _authorize(functions, InstanceAdminNew.grantRole.selector, "grantRole");
-          // _authorize(functions, InstanceAdminNew.createTarget.selector, "createTarget");
-          // _authorize(functions, InstanceAdminNew.setTargetFunctionRoleByInstance.selector, "setTargetFunctionRoleByInstance");
-          // _authorize(functions, InstanceAdminNew.setTargetLockedByInstance.selector, "setTargetLockedByInstance");
+          _authorize(functions, InstanceAdmin.grantRole.selector, "grantRole");
 
           // authorize instance service role
-          functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(INSTANCE()));
-          // _authorize(functions, InstanceAdminNew.createGifTarget.selector, "createGifTarget");
-          // _authorize(functions, InstanceAdminNew.setTargetLockedByService.selector, "setTargetLockedByService");
-          // _authorize(functions, InstanceAdminNew.setTargetFunctionRoleByService.selector, "setTargetFunctionRoleByService");
+          // functions = _authorizeForTarget(INSTANCE_ADMIN_TARGET_NAME, getServiceRole(INSTANCE()));
      }
 
 

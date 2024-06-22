@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Test, Vm, console} from "../../../lib/forge-std/src/Test.sol";
 import {GifTest} from "../../base/GifTest.sol";
 
+import {BasicDistributionAuthorization} from "../../../contracts/distribution/BasicDistributionAuthorization.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {DistributorType, DistributorTypeLib} from "../../../contracts/type/DistributorType.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
@@ -89,6 +90,7 @@ contract DistributorTypeTest is GifTest {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
+            new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
             address(token));
 
