@@ -23,7 +23,5 @@ contract ReleaseLifecycle is
         setStateTransition(RELEASE(), DEPLOYING(), ACTIVE());
         setStateTransition(RELEASE(), ACTIVE(), PAUSED());
         setStateTransition(RELEASE(), PAUSED(), ACTIVE());
-        setStateTransition(RELEASE(), PAUSED(), CLOSED());
-        //setStateTransition(RELEASE(), ACTIVE(), FREE());
     }
 }

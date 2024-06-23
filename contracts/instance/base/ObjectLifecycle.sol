@@ -27,6 +27,8 @@ contract ObjectLifecycle is
         _setupPayoutLifecycle();
         _setupRiskLifecycle();
         _setupRequestLifecycle();
+
+        // setup dummy lifecycles to manage with key value store 
         _setUpPoolLifecycle();
         _setUpProductLifecycle();
         _setUpDistributionLifecycle();
@@ -84,20 +86,21 @@ contract ObjectLifecycle is
         setStateTransition(REQUEST(), ACTIVE(), CANCELLED());
     }
 
-    // TODO why this is needed when _setupComponentLifecycle() exists ?!!
+    // dummy lifecycle only
     function _setUpPoolLifecycle() private {
         setInitialState(POOL(), ACTIVE());
     }
 
+    // dummy lifecycle only
     function _setUpProductLifecycle() private {
         setInitialState(PRODUCT(), ACTIVE());
     }
 
+    // dummy lifecycles only
     function _setUpDistributionLifecycle() private {
         setInitialState(DISTRIBUTION(), ACTIVE());
         setInitialState(DISTRIBUTOR(), ACTIVE());
         setInitialState(DISTRIBUTOR_TYPE(), ACTIVE());
         setInitialState(REFERRAL(), ACTIVE());
     }
-
 }

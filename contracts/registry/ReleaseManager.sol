@@ -47,7 +47,6 @@ contract ReleaseManager is
     event LogReleaseActivation(VersionPart version);
     event LogReleaseDisabled(VersionPart version);
     event LogReleaseEnabled(VersionPart version);
-    event LogReleaseClosed(VersionPart version);
 
     // constructor
     error ErrorReleaseManagerNotRegistry(Registry registry);
@@ -347,23 +346,6 @@ contract ReleaseManager is
         _releaseInfo[version].disabledAt = zeroTimestamp();
 
         emit LogReleaseEnabled(version);
-    }
-    /// @dev permanently disable release
-    function closeRelease(VersionPart version) 
-        external
-        restricted // GIF_ADMIN_ROLE
-    {
-        StateId state = _state[version];
-        StateId newState = CLOSED();
-
-        // verify release in state PAUSED
-        if (!isValidTransition(RELEASE(), state, newState)) {
-            revert ErrorReleaseManagerReleaseActivationDisallowed(version, state);
-        }
-
-        _state[version] = newState;
-
-        emit LogReleaseClosed(version);
     }
 
     //--- view functions ----------------------------------------------------//
