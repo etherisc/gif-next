@@ -382,7 +382,7 @@ contract GifTest is GifDeployer {
             gifAdmin, 
             gifManager);
 
-        assertEq(releaseManager.getState().toInt(), ACTIVE().toInt(), "unexpected state for releaseManager after activateNextRelease");
+        assertEq(releaseManager.getState(releaseManager.getLatestVersion()).toInt(), ACTIVE().toInt(), "unexpected state for releaseManager after activateNextRelease");
     }
 
     function _deployMasterInstance() internal 

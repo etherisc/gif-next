@@ -19,6 +19,9 @@ interface IServiceAuthorization {
           view
           returns(VersionPart release, uint domainsCount);
 
+     /// @dev Returns the service domain for the provided index.
+     function getServiceDomain(uint idx) external view returns(ObjectType serviceDomain);
+
      /// @dev Returns the full list of service domains for this release.
      /// Services need to be registered for the release in revers order of this list.
      function getServiceDomains() external view returns(ObjectType[] memory serviceDomains);

@@ -1,15 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
-
-import {NftId} from "../type/NftId.sol";
-import {ObjectType, COMPONENT, BUNDLE, POLICY, REQUEST, RISK, CLAIM, PAYOUT} from "../type/ObjectType.sol";
-import {StateId, ACTIVE, PAUSED, ARCHIVED, CLOSED, APPLIED, COLLATERALIZED, REVOKED, SUBMITTED, CONFIRMED, DECLINED, EXPECTED, PAID, FULFILLED, FAILED, CANCELLED} from "../type/StateId.sol";
+import {ObjectType} from "../type/ObjectType.sol";
+import {StateId, zeroStateId} from "../type/StateId.sol";
 import {ILifecycle} from "./ILifecycle.sol";
 
-contract Lifecycle is
-    Initializable,
+abstract contract Lifecycle is
     ILifecycle
 {
     mapping(ObjectType objectType => StateId initialState)
@@ -18,16 +14,17 @@ contract Lifecycle is
     mapping(ObjectType objectType => mapping(StateId stateFrom => mapping(StateId stateTo => bool isValid)))
         private _isValidTransition;
 
-    function initializeLifecycle()
-        public
-        onlyInitializing
-    {
-        _setupBundleLifecycle();
-        _setupComponentLifecycle();
-        _setupPolicyLifecycle();
-        _setupClaimAndPayoutLifecycle();
-        _setupRiskLifecycle();
-        _setupRequestLifecycle();
+    /// @dev child class must implement and CALL setup func at deployment/initializaton time
+    function _setupLifecycle() internal virtual;
+
+    function setInitialState(ObjectType ttype, StateId state) internal virtual {
+        assert(_initialState[ttype] == zeroStateId());
+        _initialState[ttype] = state;
+    }
+
+    function setStateTransition(ObjectType ttype, StateId oldState, StateId newState) internal virtual {
+        assert(_isValidTransition[ttype][oldState][newState] == false);
+        _isValidTransition[ttype][oldState][newState] = true;
     }
 
     function hasLifecycle(
@@ -59,9 +56,9 @@ contract Lifecycle is
         public
         view
     {
-        // return if no life cycle support
+        // revert if no life cycle support
         if (_initialState[objectType].eqz()) {
-            return;
+            revert ErrorNoLifecycle(objectType);
         }
 
         // enforce valid state transition
@@ -76,55 +73,5 @@ contract Lifecycle is
         StateId toId
     ) public view returns (bool) {
         return _isValidTransition[objectType][fromId][toId];
-    }
-
-    function _setupComponentLifecycle() internal {
-        _initialState[COMPONENT()] = ACTIVE();
-        _isValidTransition[COMPONENT()][ACTIVE()][PAUSED()] = true;
-        _isValidTransition[COMPONENT()][PAUSED()][ACTIVE()] = true;
-        _isValidTransition[COMPONENT()][PAUSED()][ARCHIVED()] = true;
-    }
-
-    function _setupBundleLifecycle() internal {
-        _initialState[BUNDLE()] = ACTIVE();
-        _isValidTransition[BUNDLE()][ACTIVE()][PAUSED()] = true;
-        _isValidTransition[BUNDLE()][ACTIVE()][CLOSED()] = true;
-        _isValidTransition[BUNDLE()][PAUSED()][ACTIVE()] = true;
-        _isValidTransition[BUNDLE()][PAUSED()][CLOSED()] = true;
-    }
-
-    function _setupPolicyLifecycle() internal {
-        _initialState[POLICY()] = APPLIED();
-        _isValidTransition[POLICY()][APPLIED()][REVOKED()] = true;
-        _isValidTransition[POLICY()][APPLIED()][DECLINED()] = true;
-        _isValidTransition[POLICY()][APPLIED()][COLLATERALIZED()] = true;
-        _isValidTransition[POLICY()][APPLIED()][ACTIVE()] = true;
-        _isValidTransition[POLICY()][COLLATERALIZED()][ACTIVE()] = true;
-        _isValidTransition[POLICY()][ACTIVE()][CLOSED()] = true;
-    }
-
-    function _setupClaimAndPayoutLifecycle() internal {
-        _initialState[CLAIM()] = SUBMITTED();
-        _isValidTransition[CLAIM()][SUBMITTED()][CONFIRMED()] = true;
-        _isValidTransition[CLAIM()][SUBMITTED()][DECLINED()] = true;
-        _isValidTransition[CLAIM()][CONFIRMED()][CLOSED()] = true;
-
-        _initialState[PAYOUT()] = EXPECTED();
-        _isValidTransition[PAYOUT()][EXPECTED()][PAID()] = true;
-    }
-
-    function _setupRiskLifecycle() internal {
-        _initialState[RISK()] = ACTIVE();
-        _isValidTransition[RISK()][ACTIVE()][PAUSED()] = true;
-        _isValidTransition[RISK()][PAUSED()][ACTIVE()] = true;
-        _isValidTransition[RISK()][PAUSED()][ARCHIVED()] = true;
-    }
-
-    function _setupRequestLifecycle() internal {
-        _initialState[REQUEST()] = ACTIVE();
-        _isValidTransition[REQUEST()][ACTIVE()][FULFILLED()] = true;
-        _isValidTransition[REQUEST()][ACTIVE()][FAILED()] = true;
-        _isValidTransition[REQUEST()][FAILED()][FULFILLED()] = true;
-        _isValidTransition[REQUEST()][ACTIVE()][CANCELLED()] = true;
     }
 }

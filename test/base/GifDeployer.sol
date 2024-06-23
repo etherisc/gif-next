@@ -258,7 +258,7 @@ contract GifDeployer is Test {
 
         // check release manager state before release preparation step
         assertEq(
-            releaseManager.getState().toInt(), 
+            releaseManager.getState(releaseManager.getNextVersion()).toInt(), 
             SCHEDULED().toInt(), 
             "unexpected state for releaseManager after createNextRelease");
 
@@ -274,7 +274,7 @@ contract GifDeployer is Test {
 
         // check release manager state after release preparation step
         assertEq(
-            releaseManager.getState().toInt(), 
+            releaseManager.getState(releaseManager.getNextVersion()).toInt(), 
             DEPLOYING().toInt(), 
             "unexpected state for releaseManager after prepareNextRelease");
 

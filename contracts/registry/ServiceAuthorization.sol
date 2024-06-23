@@ -42,6 +42,10 @@ contract ServiceAuthorization
           return _serviceDomains;
      }
 
+     function getServiceDomain(uint idx) external view returns(ObjectType serviceDomain) {
+          return _serviceDomains[idx];
+     }
+
      function getServiceAddress(ObjectType serviceDomain) external view returns(address service) {
           return _serviceAddress[serviceDomain];
      }

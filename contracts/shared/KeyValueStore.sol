@@ -11,7 +11,7 @@ import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {Lifecycle} from "./Lifecycle.sol";
 import {IKeyValueStore} from "./IKeyValueStore.sol";
 
-contract KeyValueStore is
+abstract contract KeyValueStore is
     Lifecycle, 
     IKeyValueStore
 {
@@ -34,8 +34,12 @@ contract KeyValueStore is
             revert ErrorKeyValueStoreAlreadyCreated(key32, objectType);
         }
 
+        if(!hasLifecycle(objectType)) {
+            revert ErrorKeyValueStoreNoLifecycle(objectType);
+        }
+
         Blocknumber blocknumber = blockBlocknumber();
-        StateId initialState = hasLifecycle(objectType) ? getInitialState(objectType) : ACTIVE();
+        StateId initialState = getInitialState(objectType);
 
         // set metadata
         metadata.objectType = objectType;

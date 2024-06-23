@@ -130,7 +130,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
-                SecondsLib: libraries.secondsLibAddress,
+                StateIdLib: libraries.stateIdLibAddress
             }
         });
 
@@ -169,7 +169,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     logger.info("-------- Starting deployment Staking Store ----------------");
 
-    const { address: stakingStoreAddress, } = await deployContract(
+    const { address: stakingStoreAddress, contract: stakingStoreBaseContract, } = await deployContract(
         "StakingStore",
         owner,
         [
@@ -191,7 +191,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             }
         });
 
-    const stakingStore = stakingStoreAddress as StakingStore;
+    const stakingStore = stakingStoreBaseContract as StakingStore;
 
     logger.info("-------- Starting deployment Staking Manager ----------------");
 

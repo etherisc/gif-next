@@ -13,6 +13,7 @@ interface IKeyValueStore is ILifecycle {
 
     error ErrorKeyValueStoreTypeUndefined(ObjectType objectType);
     error ErrorKeyValueStoreAlreadyCreated(Key32 key, ObjectType objectType);
+    error ErrorKeyValueStoreNoLifecycle(ObjectType objectType);
     error ErrorKeyValueStoreStateZero(Key32 key);
     error ErrorKeyValueStoreNotExisting(Key32 key);
 
