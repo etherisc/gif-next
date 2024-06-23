@@ -185,8 +185,14 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
     logger.info("======== Starting cloning of instance ========");
 
     const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(services.instanceServiceAddress), instanceOwner);
-    logger.debug(`cloning instance ${masterInstance.instanceAddress} ...`);
-    const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone(getTxOpts()));
+    logger.debug(`cloning master instance ${masterInstance.instanceAddress} ...`);
+
+    const cloneTx = await executeTx(
+        async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone(
+            getTxOpts()),
+        "instanceService createInstanceClone"
+    );
+
     const clonedInstanceAdminAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAdmin");
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstance");
     const clonedBundleManagerAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedBundleManager");

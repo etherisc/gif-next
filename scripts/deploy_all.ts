@@ -5,7 +5,7 @@ import { getNamedAccounts, printBalance, validateNftOwnerhip } from "./libs/acco
 import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
 import { logger } from "./logger";
-import { InstanceAddresses, MASTER_INSTANCE_OWNER, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
+import { InstanceAddresses, MASTER_INSTANCE_OWNER, cloneInstance, cloneInstanceFromRegistry, deployAndRegisterMasterInstance } from "./libs/instance";
 import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
 import { loadVerificationQueueState } from "./libs/verification_queue";
 
@@ -22,7 +22,10 @@ async function main() {
     
     // // deploy instance contracts
     const masterInstance = await deployAndRegisterMasterInstance(protocolOwner, libraries, registry, services);
-    const clonedInstance = await cloneInstance(masterInstance, libraries, registry, services, instanceOwner);
+
+    // const clonedInstance = await cloneInstance(masterInstance, libraries, registry, services, instanceOwner);
+    logger.info("--- cloning instance as instance owner ---");
+    const clonedInstance = await cloneInstanceFromRegistry(registry.registry, instanceOwner);
 
     // await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
     // await grantRole(instanceOwner, libraries, instance, Role.DISTRIBUTION_OWNER_ROLE, distributionOwner);
