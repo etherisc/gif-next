@@ -214,7 +214,7 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
 
 export async function cloneInstanceFromRegistry(registryAddress: AddressLike, instanceOwner: Signer): Promise<InstanceAddresses> {
     const registry = IRegistry__factory.connect(await resolveAddress(registryAddress), instanceOwner);
-    const instanceServiceAddress = await registry.getServiceAddress("InstanceService", "3");
+    const instanceServiceAddress = await registry.getServiceAddress("InstanceService", 3);
     const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(instanceServiceAddress), instanceOwner);
     const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone(getTxOpts()));
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAddress");
