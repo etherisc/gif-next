@@ -3,6 +3,7 @@ import fs from 'fs';
 import hre from 'hardhat';
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
+import { isTestChain } from "./deployment_state";
 
 export type LibraryAddresses = {
     nftIdLibAddress: AddressLike;
@@ -26,7 +27,6 @@ export type LibraryAddresses = {
     distributorTypeLibAddress: AddressLike;
     referralLibAddress: AddressLike;
     requestIdLibAddress: AddressLike;
-    instanceAuthorizationsLibAddress: AddressLike;
     targetManagerLibAddress: AddressLike;
     stakeManagerLibAddress: AddressLike;
     selectorLibAddress: AddressLike;
@@ -250,18 +250,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         });
     LIBRARY_ADDRESSES.set("RequestIdLib", requestIdLibAddress);
 
-
-    const { address: instanceAuthorizationsLibAddress } = await deployContract(
-        "InstanceAuthorizationsLib",
-        owner,
-        undefined,
-        {
-            libraries: {
-                RoleIdLib: roleIdLibAddress
-            }
-        });
-    LIBRARY_ADDRESSES.set("InstanceAuthorizationsLib", instanceAuthorizationsLibAddress);
-
     const { address: selectorLibAddress } = await deployContract(
         "SelectorLib",
         owner,
@@ -324,7 +312,6 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
         distributorTypeLibAddress,
         referralLibAddress,
         requestIdLibAddress,
-        instanceAuthorizationsLibAddress,
         targetManagerLibAddress,
         stakeManagerLibAddress,
         selectorLibAddress,
@@ -335,6 +322,9 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 }
 
 function dumpLibraryAddressesToFile(addresses: Map<string, AddressLike>): void {
+    if (isTestChain()) {
+        return;
+    }
     const data = JSON.stringify(Object.fromEntries(addresses), null, 2);
     fs.writeFileSync(`./libraries_${hre.network.config.chainId}.json`, data);
 }

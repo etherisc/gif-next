@@ -2,13 +2,15 @@
 pragma solidity ^0.8.20;
 
 import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
+import {BasicProduct} from "../../contracts/product/BasicProduct.sol";
+import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
 import {ClaimId} from "../../contracts/type/ClaimId.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
+import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
 import {IOracleService} from "../../contracts/oracle/IOracleService.sol";
 import {ORACLE} from "../../contracts/type/ObjectType.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {PayoutId} from "../../contracts/type/PayoutId.sol";
-import {Product} from "../../contracts/product/Product.sol";
 import {ReferralId} from "../../contracts/type/Referral.sol";
 import {RequestId} from "../../contracts/type/RequestId.sol";
 import {RiskId} from "../../contracts/type/RiskId.sol";
@@ -19,7 +21,9 @@ import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
 uint64 constant SPECIAL_ROLE_INT = 11111;
 
-contract SimpleProduct is Product {
+contract SimpleProduct is 
+    BasicProduct
+{
 
     event LogSimpleProductRequestAsyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
     event LogSimpleProductRequestSyncFulfilled(RequestId requestId, string responseText, uint256 responseDataLength);
@@ -31,6 +35,7 @@ contract SimpleProduct is Product {
     constructor(
         address registry,
         NftId instanceNftid,
+        IAuthorization authorization,
         address initialOwner,
         address token,
         bool isInterceptor,
@@ -41,6 +46,7 @@ contract SimpleProduct is Product {
         initialize(
             registry,
             instanceNftid,
+            authorization,
             initialOwner,
             "SimpleProduct",
             token,
@@ -53,6 +59,7 @@ contract SimpleProduct is Product {
     function initialize(
         address registry,
         NftId instanceNftid,
+        IAuthorization authorization,
         address initialOwner,
         string memory name,
         address token,
@@ -64,17 +71,16 @@ contract SimpleProduct is Product {
         virtual
         initializer()
     {
-        initializeProduct(
+        _initializeBasicProduct(
             registry,
             instanceNftid,
+            authorization,
             initialOwner,
             name,
             token,
             isInterceptor,
             pool,
-            distribution,
-            "",
-            ""); 
+            distribution); 
 
         _oracleService = IOracleService(_getServiceAddress(ORACLE()));
     }

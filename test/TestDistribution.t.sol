@@ -3,6 +3,7 @@ pragma solidity 0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
+import {BasicDistributionAuthorization} from "../contracts/distribution/BasicDistributionAuthorization.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
@@ -281,13 +282,14 @@ contract TestDistribution is GifTest {
 
     function _prepareDistribution() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
+            new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
             address(token));
 

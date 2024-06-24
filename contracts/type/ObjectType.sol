@@ -137,6 +137,8 @@ function neObjectType(ObjectType a, ObjectType b) pure returns (bool isSame) {
 // library functions that operate on user defined type
 library ObjectTypeLib {
 
+    error ErrorVersionTooBig(uint256 version);
+
     function zero() public pure returns (ObjectType) {
         return ObjectType.wrap(0);
     }
@@ -207,6 +209,38 @@ library ObjectTypeLib {
                 "ObjectType",
                 toString(
                     toInt(objectType))));
+    }
+
+    function toVersionedName(
+        string memory name, 
+        string memory suffix, 
+        uint256 version
+    )
+        external
+        pure
+        returns (string memory versionedName)
+    {
+        if (version > maxNumReleases()) {
+            revert ErrorVersionTooBig(version);
+        }
+
+        string memory versionName = "_v0";
+
+        if (version >= 10) {
+            versionName = "_v";
+        }
+
+        versionedName = string(
+            abi.encodePacked(
+                name,
+                suffix,
+                versionName,
+                toString(version)));
+    }
+
+    /// @dev returns the max number of releases (major versions) this gif setup can handle.
+    function maxNumReleases() public pure returns (uint8) {
+        return 99;
     }
 
     /// @dev returns the provied int as a string

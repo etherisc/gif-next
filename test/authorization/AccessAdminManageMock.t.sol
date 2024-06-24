@@ -7,39 +7,16 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
-import {AccessAdmin} from "../../contracts/shared/AccessAdmin.sol";
+import {AccessAdmin} from "../../contracts/authorization/AccessAdmin.sol";
+import {AccessAdminForTesting} from "./AccessAdmin.t.sol";
 import {AccessManagedMock} from "../mock/AccessManagedMock.sol";
-import {IAccessAdmin} from "../../contracts/shared/IAccessAdmin.sol";
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {RoleId, RoleIdLib} from "../../contracts/type/RoleId.sol";
 import {Selector, SelectorLib} from "../../contracts/type/Selector.sol";
 import {Str, StrLib} from "../../contracts/type/String.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 
-
-contract AccessAdminForTesting is AccessAdmin {
-
-    constructor() {
-        // super constructor called implicitly
-        // grant manager role access to createRoleSimple
-        Function[] memory functions = new Function[](1);
-        functions[0] = toFunction(AccessAdminForTesting.createRoleSimple.selector, "createRoleSimple");
-        _authorizeTargetFunctions(address(this), _managerRoleId, functions);
-
-        // grant manger role to deployer
-        _grantRoleToAccount(_managerRoleId, _deployer);
-    }
-
-    function createRoleSimple(
-        RoleId roleId, 
-        RoleId adminRoleId, 
-        string memory name
-    )
-        external
-        restricted()
-    {
-        _createRole(roleId, adminRoleId, name, type(uint256).max, false);
-    }
-}
 
 contract AccessAdminManageMockTest is Test {
 
@@ -47,7 +24,7 @@ contract AccessAdminManageMockTest is Test {
     address public outsider = makeAddr("outsider");
     address public outsider2 = makeAddr("outsider2");
 
-    AccessAdmin public accessAdmin;
+    AccessAdminForTesting public accessAdmin;
     AccessManagedMock public managedMock;
     address target;
 
@@ -118,17 +95,17 @@ contract AccessAdminManageMockTest is Test {
         RoleId adminRole = accessAdmin.getAdminRole();
         RoleId managerRole = accessAdmin.getManagerRole();
 
-        IAccessAdmin.Function memory increaseCounter1 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter1 = accessAdmin.toFunction(
             AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
 
-        IAccessAdmin.Function memory increaseCounter2 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter2 = accessAdmin.toFunction(
             AccessManagedMock.increaseCounter2.selector, "increaseCounter2");
 
         _checkIncreaseCounter1Unauthorized(outsider, "outsider (before authorized)");
         _checkIncreaseCounter1Unauthorized(accessAdminDeployer, "aa deployer (before authorized)");
 
         // WHEN
-        IAccessAdmin.Function[] memory functions = new IAccessAdmin.Function[](1);
+        IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](1);
         functions[0] = increaseCounter1;
 
         vm.startPrank(accessAdminDeployer);
@@ -178,11 +155,11 @@ contract AccessAdminManageMockTest is Test {
         AccessManager accessManager = AccessManager(accessAdmin.authority());
         RoleId adminRole = accessAdmin.getAdminRole();
 
-        IAccessAdmin.Function memory increaseCounter1 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter1 = accessAdmin.toFunction(
             AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
 
         // WHEN + THEN
-        IAccessAdmin.Function[] memory functions = new IAccessAdmin.Function[](1);
+        IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](1);
         functions[0] = increaseCounter1;
 
         vm.expectRevert(
@@ -257,14 +234,14 @@ contract AccessAdminManageMockTest is Test {
         RoleId managerRole = accessAdmin.getManagerRole();
 
         // grant manager role access to increaseCounter2
-        IAccessAdmin.Function memory increaseCounter1 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter1 = accessAdmin.toFunction(
             AccessManagedMock.increaseCounter1.selector, "increaseCounter1");
 
-        IAccessAdmin.Function memory increaseCounter2 = accessAdmin.toFunction(
+        IAccess.FunctionInfo memory increaseCounter2 = accessAdmin.toFunction(
             AccessManagedMock.increaseCounter2.selector, "increaseCounter2");
 
         // WHEN
-        IAccessAdmin.Function[] memory functions = new IAccessAdmin.Function[](1);
+        IAccess.FunctionInfo[] memory functions = new IAccess.FunctionInfo[](1);
         functions[0] = increaseCounter2;
 
         vm.startPrank(accessAdminDeployer);
@@ -331,7 +308,7 @@ contract AccessAdminManageMockTest is Test {
     }
 
     function _checkAccessAdmin(
-        AccessAdmin aa, 
+        AccessAdminForTesting aa, 
         address expectedDeployer
     )
         internal
@@ -395,7 +372,6 @@ contract AccessAdminManageMockTest is Test {
         // check non existent role
         RoleId missingRoleId = RoleIdLib.toRoleId(1313);
         assertFalse(aa.roleExists(missingRoleId), "missing role exists"); 
-        assertTrue(aa.isRoleDisabled(missingRoleId), "missing role active");
 
         assertFalse(aa.getRoleForName(StrLib.toStr("NoSuchRole")).exists, "NoSuchRole exists");
 
@@ -425,8 +401,7 @@ contract AccessAdminManageMockTest is Test {
         IAccessAdmin.RoleInfo memory info = aa.getRoleInfo(roleId);
         assertEq(info.adminRoleId.toInt(), expectedAdminRoleId.toInt(), "unexpected admin role (role info)");
         assertEq(info.name.toString(), expectedName, "unexpected role name");
-        assertEq(info.disabledAt.toInt(), expectedDisabledAt.toInt(), "unexpected disabled at");
-        assertTrue(info.exists, "role does not exist");
+        assertTrue(info.createdAt.gtz(), "role does not exist");
 
         Str roleName = StrLib.toStr(expectedName);
         IAccessAdmin.RoleNameInfo memory nameInfo = aa.getRoleForName(roleName);
@@ -456,7 +431,7 @@ contract AccessAdminManageMockTest is Test {
         console.log("authorized functions", functions);
         for(uint256 i = 0; i < functions; i++) {
             (
-                IAccessAdmin.Function memory func,
+                IAccess.FunctionInfo memory func,
                 RoleId roleId
             ) = aa.getAuthorizedFunction(trgt, i);
             string memory role = aa.getRoleInfo(roleId).name.toString();

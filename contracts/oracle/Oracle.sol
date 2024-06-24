@@ -2,16 +2,17 @@
 pragma solidity ^0.8.20;
 
 import {COMPONENT, ORACLE} from "../type/ObjectType.sol";
-import {IOracleService} from "./IOracleService.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
-import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IOracleComponent} from "./IOracleComponent.sol";
+import {IOracleService} from "./IOracleService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
+import {NftId, NftIdLib} from "../type/NftId.sol";
+import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {RequestId} from "../type/RequestId.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
-import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 
@@ -28,45 +29,12 @@ abstract contract Oracle is
     }
 
 
-    function initializeOracle(
-        address registry,
-        NftId instanceNftId,
-        address initialOwner,
-        string memory name,
-        address token,
-        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
-        bytes memory componentData // component specifidc data 
-    )
-        public
-        virtual
-        onlyInitializing()
-    {
-        initializeInstanceLinkedComponent(registry, instanceNftId, name, token, ORACLE(), true, initialOwner, registryData, componentData);
-
-        OracleStorage storage $ = _getOracleStorage();
-        $._oracleService = IOracleService(_getServiceAddress(ORACLE())); 
-        $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
-
-        registerInterface(type(IOracleComponent).interfaceId);
-    }
-
-
     function register()
         external
         virtual
         onlyOwner()
     {
         _getOracleStorage()._componentService.registerOracle();
-    }
-
-
-    function isVerifying()
-        external 
-        virtual 
-        view 
-        returns (bool verifying)
-    {
-        return false;
     }
 
 
@@ -78,7 +46,7 @@ abstract contract Oracle is
     )
         external
         virtual
-        // restricted() // TODO enable: only oracle service
+        restricted()
     {
         _request(requestId, requesterId, requestData, expiryAt);
     }
@@ -89,16 +57,60 @@ abstract contract Oracle is
     )
         external
         virtual
-        // restricted() // TODO enable: only oracle service
+        restricted()
     {
         _cancel(requestId);
     }
 
 
-    /// @dev internal function for handling requests.
-    /// empty implementation.
-    /// overwrite this function to implement use case specific handling
-    /// for oracle calls.
+    /// @dev Not relevant for oracle components, always returns false.
+    function isVerifying()
+        external 
+        virtual 
+        view 
+        returns (bool verifying)
+    {
+        return false;
+    }
+
+
+    function _initializeOracle(
+        address registry,
+        NftId instanceNftId,
+        IAuthorization authorization,
+        address initialOwner,
+        string memory name,
+        address token,
+        bytes memory registryData, // writeonly data that will saved in the object info record of the registry
+        bytes memory componentData // component specifidc data 
+    )
+        internal
+        virtual
+        onlyInitializing()
+    {
+        _initializeInstanceLinkedComponent(
+            registry, 
+            instanceNftId, 
+            name, 
+            token, 
+            ORACLE(), 
+            authorization,
+            true, 
+            initialOwner, 
+            registryData, 
+            componentData);
+
+        OracleStorage storage $ = _getOracleStorage();
+        $._oracleService = IOracleService(_getServiceAddress(ORACLE())); 
+        $._componentService = IComponentService(_getServiceAddress(COMPONENT())); 
+
+        registerInterface(type(IOracleComponent).interfaceId);
+    }
+
+
+    /// @dev Internal function for handling requests.
+    /// Empty implementation.
+    /// Overwrite this function to implement use case specific handling for oracle calls.
     function _request(
         RequestId requestId,
         NftId requesterId,
@@ -111,9 +123,9 @@ abstract contract Oracle is
     }
 
 
-    /// @dev internal function for cancelling requests.
-    /// empty implementation.
-    /// overwrite this function to implement use case specific cancelling
+    /// @dev Internal function for cancelling requests.
+    /// Empty implementation.
+    /// Overwrite this function to implement use case specific cancelling.
     function _cancel(
         RequestId requestId
     )
@@ -123,9 +135,9 @@ abstract contract Oracle is
     }
 
 
-    /// @dev internal function for handling oracle responses.
-    /// use this function in use case specific external/public functions
-    /// to handle use case specific response handling.
+    /// @dev Internal function for handling oracle responses.
+    /// Default implementation sends response back to oracle service.
+    /// Use this function in use case specific external/public functions to handle use case specific response handling.
     function _respond(
         RequestId requestId,
         bytes memory responseData

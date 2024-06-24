@@ -1,331 +1,266 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 
-import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, INSTANCE_SERVICE_ROLE, INSTANCE_OWNER_ROLE, INSTANCE_ROLE} from "../type/RoleId.sol";
-import {TimestampLib} from "../type/Timestamp.sol";
-import {NftId} from "../type/NftId.sol";
-
-import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
-
+import {AccessAdmin} from "../authorization/AccessAdmin.sol";
+import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
+import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
+import {IModuleAuthorization} from "../authorization/IModuleAuthorization.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
-
 import {IInstance} from "./IInstance.sol";
-import {IAccess} from "./module/IAccess.sol";
+import {IService} from "../shared/IService.sol";
+import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
+import {Str, StrLib} from "../type/String.sol";
+import {VersionPart} from "../type/Version.sol";
+
 
 contract InstanceAdmin is
-    AccessManagedUpgradeable
+    AccessAdmin
 {
-    using RoleIdLib for RoleId;
-
-    string public constant INSTANCE_ROLE_NAME = "InstanceRole";
-    string public constant INSTANCE_OWNER_ROLE_NAME = "InstanceOwnerRole";
-
+    string public constant INSTANCE_TARGET_NAME = "Instance";
+    string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
     string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
+    string public constant BUNDLE_MANAGER_TARGET_NAME = "BundleManager";
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
-    uint32 public constant EXECUTION_DELAY = 0;
 
-    mapping(address target => IAccess.Type) _targetType;
-    mapping(RoleId roleId => IAccess.Type) _roleType;
+    error ErrorInstanceAdminNotRegistered(address target);
+    error ErrorInstanceAdminAlreadyAuthorized(address target);
+    error ErrorInstanceAdminReleaseMismatch();
+    error ErrorInstanceAdminExpectedTargetMissing(string targetName);
+
+    IInstance _instance;
+    IRegistry internal _registry;
     uint64 _idNext;
 
-    AccessManagerExtendedInitializeable internal _accessManager;
-    address _instance;
-    IRegistry internal _registry;
+    IModuleAuthorization _instanceAuthorization;
 
-    // instance owner role is granted upon instance nft minting in callback function
-    // assume this contract is already a member of ADMIN_ROLE, the only member
-    function initialize(address instanceAddress) external initializer 
+    /// @dev Only used for master instance admin.
+    /// Contracts created via constructor come with disabled initializers.
+    constructor(
+        IModuleAuthorization instanceAuthorization
+    )
+        AccessAdmin()
     {
-        IInstance instance = IInstance(instanceAddress);
-        IRegistry registry = instance.getRegistry();
-        address authority = instance.authority();
+        _instanceAuthorization = instanceAuthorization;
+    }
 
-        __AccessManaged_init(authority);
+    /// @dev Initializes this instance admin with the provided instances authorization specification.
+    /// Internally the function creates an instance specific OpenZeppelin AccessManager that is used as the authority
+    /// for the inststance authorizatios.
+    /// Important: Initialization of this instance admin is only complete after calling function initializeInstance. 
+    function initialize(
+        AccessManagerCloneable accessManager,
+        IModuleAuthorization instanceAuthorization
+    )
+        external
+        initializer() 
+    {
+        // create new access manager for this instance admin
+        _initializeAuthority(address(accessManager));
 
-        _accessManager = AccessManagerExtendedInitializeable(authority);
-        _instance = instanceAddress;
-        _registry = registry;
+        // create basic instance independent setup
+        _createAdminAndPublicRoles();
+
+        // store instance authorization specification
+        _instanceAuthorization = IModuleAuthorization(instanceAuthorization);
+    }
+
+    function _checkTargetIsReadyForAuthorization(address target)
+        internal
+        view
+    {
+        if (address(_registry) != address(0) && !_registry.isRegistered(target)) {
+            revert ErrorInstanceAdminNotRegistered(target);
+        }
+
+        if (targetExists(target)) {
+            revert ErrorInstanceAdminAlreadyAuthorized(target);
+        }
+    }
+
+    /// @dev Completes the initialization of this instance admin using the provided instance.
+    /// Important: The instance MUST be registered and all instance supporting contracts must be wired to this instance.
+    function initializeInstanceAuthorization(address instanceAddress)
+        external
+    {
+        _checkTargetIsReadyForAuthorization(instanceAddress);
+
         _idNext = CUSTOM_ROLE_ID_MIN;
+        _instance = IInstance(instanceAddress);
+        _registry = _instance.getRegistry();
 
-        // minimum configuration required for nft interception
-        _createRole(INSTANCE_ROLE(), INSTANCE_ROLE_NAME, IAccess.Type.Core);
-        _createRole(INSTANCE_OWNER_ROLE(), INSTANCE_OWNER_ROLE_NAME, IAccess.Type.Core);
-        _grantRole(INSTANCE_ROLE(), address(instance));
+        // check matching releases
+        if (_instanceAuthorization.getRelease() != _instance.getMajorVersion()) {
+            revert ErrorInstanceAdminReleaseMismatch();
+        }
 
-        _createTarget(address(this), INSTANCE_ADMIN_TARGET_NAME, IAccess.Type.Core);
-        bytes4[] memory instanceAdminInstanceSelectors = new bytes4[](1);
-        instanceAdminInstanceSelectors[0] = this.transferInstanceOwnerRole.selector;
-        _setTargetFunctionRole(address(this), instanceAdminInstanceSelectors, INSTANCE_ROLE());                
+        // add instance authorization
+        _createRoles(_instanceAuthorization);
+        _createModuleTargetsWithRoles();
+        _createTargetAuthorizations(_instanceAuthorization);
+
+        // grant component owner roles to instance owner
+        _grantComponentOwnerRoles();
     }
 
-    //--- Role ------------------------------------------------------//
-    // ADMIN_ROLE
-    // assume all core roles are known at deployment time
-    // assume core roles are set and granted only during instance cloning
-    // assume core roles are never revoked -> core roles admin is never active after intialization
-    function createCoreRole(RoleId roleId, string memory name) external restricted() {
-        _createRole(roleId, name, IAccess.Type.Core);
+
+    /// @dev Initializes the authorization for the specified component.
+    /// Important: The component MUST be registered.
+    function initializeComponentAuthorization(
+        address componentAddress,
+        IAuthorization authorization
+    )
+        external
+    {
+        _checkTargetIsReadyForAuthorization(componentAddress);
+
+        _createRoles(authorization);
+
+        // create component target
+        _createTarget(
+            componentAddress, 
+            authorization.getTargetName(), 
+            true, // checkAuthority
+            false); // custom
+
+        _grantRoleToAccount(
+            authorization.getTargetRole(
+                authorization.getTarget()), 
+            componentAddress);
+        
+        _createTargetAuthorizations(authorization);
     }
 
-    // ADMIN_ROLE
-    // assume gif roles can be revoked
-    // assume admin is INSTANCE_OWNER_ROLE or INSTANCE_ROLE
-    function createGifRole(RoleId roleId, string memory name, RoleId admin) external restricted() {
-        _createRole(roleId, name, IAccess.Type.Gif);
-        _setRoleAdmin(roleId, admin);
+
+    function _grantComponentOwnerRoles()
+        internal
+    {
+        address instanceOwner = _registry.ownerOf(_instance.getNftId());
+        _grantRoleToAccount(DISTRIBUTION_OWNER_ROLE(), instanceOwner);
+        _grantRoleToAccount(ORACLE_OWNER_ROLE(), instanceOwner);
+        _grantRoleToAccount(POOL_OWNER_ROLE(), instanceOwner);
+        _grantRoleToAccount(PRODUCT_OWNER_ROLE(), instanceOwner);
     }
 
-    // INSTANCE_ROLE
-    // TODO specify how many owners role can have -> many roles MUST have exactly 1 member?
-    function createRole(string memory roleName, string memory adminName)
+    /// @dev Creates a custom role
+    // TODO implement
+    // function createRole()
+    //     external
+    //     restricted()
+    // {
+
+    // }
+
+    /// @dev Grants the provided role to the specified account
+    function grantRole(
+        RoleId roleId, 
+        address account)
         external
         restricted()
-        returns(RoleId roleId, RoleId admin)
     {
-        (roleId, admin) = _getNextCustomRoleId();
-
-        _createRole(roleId, roleName, IAccess.Type.Custom);
-        _createRole(admin, adminName, IAccess.Type.Custom);
-
-        _setRoleAdmin(roleId, admin);
-        _setRoleAdmin(admin, INSTANCE_OWNER_ROLE());
+        _grantRoleToAccount(roleId, account);
     }
 
-    // ADMIN_ROLE
-    // assume used by instance service only during instance cloning
-    // assume used only by this.createRole(), this.createGifRole() afterwards
-    function setRoleAdmin(RoleId roleId, RoleId admin) public restricted() {
-        _setRoleAdmin(roleId, admin);
-    }
-
-    // INSTANCE_ROLE
-    function transferInstanceOwnerRole(address from, address to) external restricted() {
-        // temp pre transfer checks
-        assert(_getRoleMembers(INSTANCE_ROLE()) == 1);
-        assert(_hasRole(INSTANCE_ROLE(), _instance));
-        assert(_getRoleAdmin(INSTANCE_OWNER_ROLE()).toInt() == ADMIN_ROLE().toInt());
-        if(from != address(0)) { // nft transfer
-            assert(_getRoleMembers(INSTANCE_OWNER_ROLE()) == 1);
-        } else { // nft minting 
-            assert(_getRoleMembers(INSTANCE_OWNER_ROLE()) == 0);            
-        }
-
-        // transfer
-        assert(from != to);
-        _grantRole(INSTANCE_OWNER_ROLE(), to);
-        if(from != address(0)) { // nft transfer
-            _revokeRole(INSTANCE_OWNER_ROLE(), from);
-        }
-
-        // temp post transfer checks
-        assert(_getRoleMembers(INSTANCE_OWNER_ROLE()) == 1);// temp
-        assert(_hasRole(INSTANCE_OWNER_ROLE(), to));
-    }
-
-    //--- Target ------------------------------------------------------//
-    // ADMIN_ROLE
-    // assume some core targets are registred (instance) while others are not (instance accesss manager, instance reader, bundle manager)
-    function createCoreTarget(address target, string memory name) external restricted() {
-        _createTarget(target, name, IAccess.Type.Core);
-    }
-
-    // INSTANCE_SERVICE_ROLE
-    function createGifTarget(address target, string memory name) external restricted() 
+    /// @dev Returns the instance authorization specification used to set up this instance admin.
+    function getInstanceAuthorization()
+        external
+        view
+        returns (IModuleAuthorization instanceAuthorizaion)
     {
-        if(!_registry.isRegistered(target)) {
-            revert IAccess.ErrorIAccessTargetNotRegistered(target);
-        }
-
-        NftId targetParentNftId = _registry.getObjectInfo(target).parentNftId;
-        NftId instanceNftId = _registry.getObjectInfo(_instance).nftId;
-        if(targetParentNftId != instanceNftId) {
-            revert IAccess.ErrorIAccessTargetInstanceMismatch(target, targetParentNftId, instanceNftId);
-        }
-
-        _createTarget(target, name, IAccess.Type.Gif);
-    }
-
-    // INSTANCE_ROLE
-    // assume custom target.authority() is constant -> target MUST not be used with different instance access manager
-    // assume custom target can not be registered as component -> each service which is doing component registration MUST register a gif target
-    // assume custom target can not be registered as instance or service -> why?
-    // TODO check target associated with instance owner or instance or instance components or components helpers
-    function createTarget(address target, string memory name) external restricted() {
-        _createTarget(target, name, IAccess.Type.Custom);
-    }
-
-    // TODO instance owner locks component instead of revoking it access to the instance...
-    // INSTANCE_SERVICE_ROLE
-    function setTargetLockedByService(address target, bool locked) external restricted {
-        _setTargetLocked(target, locked);
-    }
-
-    // INSTANCE_ROLE
-    function setTargetLockedByInstance(address target, bool locked) external restricted {
-        _setTargetLocked(target, locked);
+        return _instanceAuthorization;
     }
 
 
-    // allowed combinations of roles and targets:
-    //1) set core role for core target 
-    //2) set gif role for gif target  
-    //3) set custom role for gif target
-    //4) set custom role for custom target
-
-    // ADMIN_ROLE if used only during initialization, works with:
-    //      any roles for any targets
-    // INSTANCE_SERVICE_ROLE if used not only during initilization, works with:
-    //      core roles for core targets
-    //      gif roles for gif targets
-    function setTargetFunctionRoleByService(
-        string memory targetName,
-        bytes4[] calldata selectors,
-        RoleId roleId
-    ) 
-        public 
-        virtual 
-        restricted
+    function _createRoles(IAuthorization authorization)
+        internal
     {
-        address target = _accessManager.getTargetAddress(targetName);
-        // not custom target
-        if(_targetType[target] == IAccess.Type.Custom) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(target, IAccess.Type.Custom);
-        }
+        RoleId[] memory roles = authorization.getRoles();
+        RoleId roleId;
+        RoleInfo memory roleInfo;
 
-        // not custom role
-        if(_roleType[roleId] == IAccess.Type.Custom) {
-            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, IAccess.Type.Custom);
+        for(uint256 i = 0; i < roles.length; i++) {
+            roleId = roles[i];
+            _createRole(
+                roleId,
+                authorization.getRoleInfo(roleId));
         }
-
-        _setTargetFunctionRole(target, selectors, roleId);
     }
 
-    // INSTANCE_ROLE
-    // gif role for gif target
-    // gif role for custom target
-    // custom role for gif target -> need to prohibit
-    // custom role for custom target
-    // TODO instance owner can mess with gif target (component) -> e.g. set custom role for function intendent to work with gif role
-    function setTargetFunctionRoleByInstance(
-        string memory targetName,
-        bytes4[] calldata selectors,
-        RoleId roleId// string memory roleName
-    ) 
-        public 
-        virtual 
-        restricted() 
+
+    function _createTargetAuthorizations(IAuthorization authorization)
+        internal
     {
-        address target = _accessManager.getTargetAddress(targetName);
+        Str[] memory targets = authorization.getTargets();
+        Str target;
 
-        // not core target
-        if(_targetType[target] == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(target, IAccess.Type.Core);
+        for(uint256 i = 0; i < targets.length; i++) {
+            target = targets[i];
+            RoleId[] memory authorizedRoles = authorization.getAuthorizedRoles(target);
+            RoleId authorizedRole;
+
+            for(uint256 j = 0; j < authorizedRoles.length; j++) {
+                authorizedRole = authorizedRoles[j];
+
+                _authorizeTargetFunctions(
+                    getTargetForName(target),
+                    authorizedRole,
+                    authorization.getAuthorizedFunctions(
+                        target, 
+                        authorizedRole));
+            }
         }
-
-        // not core role
-        if(_roleType[roleId] == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, IAccess.Type.Core);
-        }
-
-        _setTargetFunctionRole(target, selectors, roleId);
     }
 
-    //--- Role internal view/pure functions --------------------------------------//
-    function _createRole(RoleId roleId, string memory name, IAccess.Type rtype) internal {
-        _validateRole(roleId, rtype);
-
-        _roleType[roleId] = rtype;
-        _accessManager.createRole(roleId.toInt(), name);
-    }
-
-    function _validateRole(RoleId roleId, IAccess.Type rtype) internal pure
+    function _checkAndCreateTargetWithRole(
+        address target,
+        string memory targetName
+    )
+        internal
     {
-        uint roleIdInt = roleId.toInt();
-        if(rtype == IAccess.Type.Custom && roleIdInt < CUSTOM_ROLE_ID_MIN) {
-            revert IAccess.ErrorIAccessRoleIdTooSmall(roleId);
+        // check that target name is defined in authorization specification
+        Str name = StrLib.toStr(targetName);
+        if (!_instanceAuthorization.targetExists(name)) {
+            revert ErrorInstanceAdminExpectedTargetMissing(targetName);
         }
 
-        if(
-            rtype != IAccess.Type.Custom && 
-            roleIdInt >= CUSTOM_ROLE_ID_MIN && 
-            roleIdInt != PUBLIC_ROLE().toInt()) 
-        {
-            revert IAccess.ErrorIAccessRoleIdTooBig(roleId);
+        // create named target
+        _createTarget(
+            target, 
+            targetName, 
+            false, // check authority TODO check normal targets, don't check service targets (they share authority with registry admin)
+            false);
+
+        // assign target role if defined
+        RoleId targetRoleId = _instanceAuthorization.getTargetRole(name);
+        if (targetRoleId != RoleIdLib.zero()) {
+            _grantRoleToAccount(targetRoleId, target);
         }
     }
 
-    function _grantRole(RoleId roleId, address account) internal {
-        _accessManager.grantRole(roleId.toInt(), account, EXECUTION_DELAY);
-    }
-
-    function _revokeRole(RoleId roleId, address member) internal {
-        _accessManager.revokeRole(roleId.toInt(), member);
-    }
-
-    function _setRoleAdmin(RoleId roleId, RoleId admin) internal {
-        if(_roleType[roleId] == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessRoleTypeInvalid(roleId, IAccess.Type.Core);
-        }
-
-        _accessManager.setRoleAdmin(roleId.toInt(), admin.toInt());
-    }
-
-    function _getRoleAdmin(RoleId roleId) internal view returns (RoleId admin) {
-        return RoleIdLib.toRoleId(_accessManager.getRoleAdmin(roleId.toInt()));
-    }
-
-    function _hasRole(RoleId roleId, address account) internal view returns (bool accountHasRole) {
-        uint32 executionDelay;
-        (accountHasRole, executionDelay) = _accessManager.hasRole(roleId.toInt(), account);
-        assert(executionDelay == 0);
-    }
-
-    function _getRoleMembers(RoleId roleId) internal view returns (uint) {
-        return _accessManager.getRoleMembers(roleId.toInt());
-    }
-
-    function _getNextCustomRoleId() internal returns(RoleId roleId, RoleId admin) {
-        uint64 roleIdInt = _idNext;
-        uint64 adminInt = roleIdInt + 1;
-
-        _idNext = roleIdInt + 2;
-
-        roleId = RoleIdLib.toRoleId(roleIdInt);
-        admin = RoleIdLib.toRoleId(adminInt);
-    }
-
-    //--- Target internal view/pure functions --------------------------------------//
-    function _createTarget(address target, string memory name, IAccess.Type ttype) 
-        internal 
+    function _createModuleTargetsWithRoles()
+        internal
     {
-        _validateTarget(target, ttype);
-        _targetType[target] = ttype;
-        _accessManager.createTarget(target, name);
-    }
+        // create module targets
+        _checkAndCreateTargetWithRole(address(_instance), INSTANCE_TARGET_NAME);
+        _checkAndCreateTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME);
+        _checkAndCreateTargetWithRole(address(_instance.getInstanceAdmin()), INSTANCE_ADMIN_TARGET_NAME);
+        _checkAndCreateTargetWithRole(address(_instance.getBundleManager()), BUNDLE_MANAGER_TARGET_NAME);
 
-    function _validateTarget(address target, IAccess.Type ttype) 
-        internal 
-        view 
-    {}
+        // create targets for services that need to access the module targets
+        ObjectType[] memory serviceDomains = _instanceAuthorization.getServiceDomains();
+        VersionPart release = _instanceAuthorization.getRelease();
+        ObjectType serviceDomain;
 
-    // IMPORTANT: instance admin MUST be of Core type -> otherwise can be locked forever
-    // TODO: consider locking gif targets in a separate function?
-    function _setTargetLocked(address target, bool locked) internal
-    {
-        IAccess.Type targetType = _targetType[target];
+        for (uint256 i = 0; i < serviceDomains.length; i++) {
+            serviceDomain = serviceDomains[i];
 
-        if(targetType == IAccess.Type.Core) {
-            revert IAccess.ErrorIAccessTargetTypeInvalid(target, targetType);
+            _checkAndCreateTargetWithRole(
+                _registry.getServiceAddress(serviceDomain, release),
+                _instanceAuthorization.getServiceTarget(serviceDomain).toString());
         }
-
-        _accessManager.setTargetClosed(target, locked);
-    }
-
-    function _setTargetFunctionRole(address target, bytes4[] memory selectors, RoleId roleId) internal {
-        _accessManager.setTargetFunctionRole(target, selectors, roleId.toInt());
     }
 }

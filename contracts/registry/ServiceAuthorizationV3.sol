@@ -6,7 +6,7 @@ import {
 } from "../../contracts/type/ObjectType.sol";
 
 import {ComponentService} from "../shared/ComponentService.sol";
-import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
+import {IAccess} from "../authorization/IAccess.sol";
 import {IBundleService} from "../pool/IBundleService.sol";
 import {IDistributionService} from "../distribution/IDistributionService.sol";
 import {InstanceService} from "../instance/InstanceService.sol";
@@ -14,7 +14,7 @@ import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IStakingService} from "../staking/IStakingService.sol";
 import {IRegistryService} from "./IRegistryService.sol";
-import {ServiceAuthorization} from "./ServiceAuthorization.sol";
+import {ServiceAuthorization} from "../authorization/ServiceAuthorization.sol";
 
 
 contract ServiceAuthorizationV3
@@ -64,7 +64,7 @@ contract ServiceAuthorizationV3
      function _setupIRegistryServiceAuthorization()
           internal
      {
-          IAccessAdmin.Function[] storage functions;
+          IAccess.FunctionInfo[] storage functions;
 
           functions = _authorizeForService(REGISTRY(), APPLICATION());
           _authorize(functions, IRegistryService.registerPolicy.selector, "registerPolicy");
@@ -98,7 +98,7 @@ contract ServiceAuthorizationV3
      function _setupStakingServiceAuthorization()
           internal
      {
-          IAccessAdmin.Function[] storage functions;
+          IAccess.FunctionInfo[] storage functions;
 
           functions = _authorizeForService(STAKING(), INSTANCE());
           _authorize(functions, IStakingService.createInstanceTarget.selector, "createInstanceTarget");
@@ -121,10 +121,10 @@ contract ServiceAuthorizationV3
      function _setupInstanceServiceAuthorization()
           internal
      {
-          IAccessAdmin.Function[] storage functions;
+          IAccess.FunctionInfo[] storage functions;
 
           functions = _authorizeForService(INSTANCE(), COMPONENT());
-          _authorize(functions, IInstanceService.createComponentTarget.selector, "createComponentTarget");
+          _authorize(functions, IInstanceService.initializeAuthorization.selector, "initializeAuthorization");
      }
 
 
@@ -159,7 +159,7 @@ contract ServiceAuthorizationV3
      function _setupDistributionServiceAuthorization()
           internal
      {
-          IAccessAdmin.Function[] storage functions;
+          IAccess.FunctionInfo[] storage functions;
 
           functions = _authorizeForService(DISTRIBUTION(), POLICY());
           _authorize(functions, IDistributionService.processSale.selector, "processSale");
@@ -170,7 +170,7 @@ contract ServiceAuthorizationV3
      function _setupPoolServiceAuthorization()
           internal
      {
-          IAccessAdmin.Function[] storage functions;
+          IAccess.FunctionInfo[] storage functions;
 
           functions = _authorizeForService(POOL(), POLICY());
           _authorize(functions, IPoolService.lockCollateral.selector, "lockCollateral");
@@ -187,7 +187,7 @@ contract ServiceAuthorizationV3
      function _setupBundleServiceAuthorization()
           internal
      {
-          IAccessAdmin.Function[] storage functions;
+          IAccess.FunctionInfo[] storage functions;
 
           functions = _authorizeForService(BUNDLE(), POOL());
           _authorize(functions, IBundleService.create.selector, "create");

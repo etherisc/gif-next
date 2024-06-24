@@ -6,9 +6,10 @@ import {GifTest} from "../../base/GifTest.sol";
 
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {DistributorType} from "../../../contracts/type/DistributorType.sol";
-import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {Distribution} from "../../../contracts/distribution/Distribution.sol";
+import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
+import {IDistributionComponent} from "../../../contracts/distribution/IDistributionComponent.sol";
 import {NftId} from "../../../contracts/type/NftId.sol";
 import {ReferralId, ReferralStatus, ReferralLib, REFERRAL_OK, REFERRAL_ERROR_UNKNOWN} from "../../../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
@@ -40,7 +41,7 @@ contract DistributorTest is GifTest {
     bytes public referralData;
 
 
-    function test_GifSetupReferralUnknown() public {
+    function test_distributionReferralUnknown() public {
         _prepareDistribution();
 
         string memory invalidCode = "some_invalid_referral_code";
@@ -59,20 +60,22 @@ contract DistributorTest is GifTest {
             "invalid referral code not unknown");
     }
 
-    function test_GifSetupReferralCreate() public {
+    function test_distributionReferralCreate() public {
         _setupTestData(true);
 
         // solhint-disable-next-line 
         console.log("distributor nft id", distributorNftId.toInt());
 
         SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+
+        vm.startPrank(customer);
         referralId = sdistribution.createReferral(
-            distributorNftId,
             referralCode,
             discountPercentage,
             maxReferrals,
             expiryAt,
             referralData);
+        vm.stopPrank();
 
         // solhint-disable-next-line 
         console.log("referral id", vm.toString(ReferralId.unwrap(referralId)));        
@@ -117,7 +120,7 @@ contract DistributorTest is GifTest {
     }
 
 
-    function test_GifSetupDistributorCreateTwice() public {
+    function test_distributionDistributorCreateTwice() public {
         _prepareDistribution();
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
         _setupTestData(true);
@@ -125,18 +128,20 @@ contract DistributorTest is GifTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                Distribution.ErrorDistributionAlreadyDistributor.selector, 
+                IDistributionComponent.ErrorDistributionAlreadyDistributor.selector, 
                 customer, // distributor
                 distributorNftId)); // existing distributor nft id
 
+        vm.startPrank(distributionOwner);
         distributorNftId = distribution.createDistributor(
             customer,
             distributorType,
             distributorData);
+        vm.stopPrank();
     }
 
 
-    function test_GifSetupDistributorCreateTransfer() public {
+    function test_distributionDistributorCreateTransfer() public {
         _prepareDistribution();
 
         assertTrue(!distribution.isDistributor(customer), "customer is already distributor");
@@ -159,13 +164,15 @@ contract DistributorTest is GifTest {
     }
 
 
-    function test_GifSetupDistributorCreate() public {
+    function test_distributionDistributorCreateSingle() public {
         _setupTestData(false);
 
+        vm.startPrank(distributionOwner);
         distributorNftId = distribution.createDistributor(
             customer,
             distributorType,
             distributorData);
+        vm.stopPrank();
 
         assertEq(registry.ownerOf(distributorNftId), customer, "unexpected distributor nft owner");
 
@@ -187,6 +194,8 @@ contract DistributorTest is GifTest {
         vm.stopPrank();
 
         distributionNftId = distribution.getNftId();
+        assertTrue(distributionNftId.gtz(), "distribution nft id unexpectedly zero");
+        assertEq(registry.ownerOf(distributionNftId), distributionOwner, "distribution owner unexpectly not owner of distribution nft id");
     }
 
     function test_DistributorTypeCreateHappyCase() public {
@@ -231,14 +240,15 @@ contract DistributorTest is GifTest {
         referralData = "refDat";
 
         // WHEN
+        vm.startPrank(customer);
         referralId = SimpleDistribution(
             address(distribution)).createReferral(
-                distributorNftId,
                 referralCode,
                 referralDiscount,
                 maxReferralCount,
                 referralExpiresAt,
                 referralData);
+        vm.stopPrank();
 
         // THEN
         assertTrue(
@@ -271,6 +281,7 @@ contract DistributorTest is GifTest {
         allowRenewals = true;
         data = ".";
 
+        vm.startPrank(distributionOwner);
         distributorType = distribution.createDistributorType(
             name,
             minDiscountPercentage,
@@ -281,14 +292,17 @@ contract DistributorTest is GifTest {
             allowSelfReferrals,
             allowRenewals,
             data);
+        vm.stopPrank();
     }
 
     function _createDistributor() internal {
+        vm.startPrank(distributionOwner);
         distributorData = "..";
         distributorNftId = distribution.createDistributor(
             customer,
             distributorType,
             distributorData);
+        vm.stopPrank();
     }
 
     function _setupTestData(bool createDistributor) internal {

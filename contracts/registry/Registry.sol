@@ -64,7 +64,7 @@ contract Registry is
     // 1). Registry and ReleaseManager must be treated as whole single entity. 
     //     But current limitations of EVM does not allow it -> require it to be splitted
     // 2). Keep onlyReleaseManager modifier
-    // 3). Delete onlyRegistryService in favor of restricted, introduce aditional "domain role", REGISTRY_SERVICE_ROLE
+    // 3). Delete onlyRegistryService in favor of restricted
     // 4). (For GlobalRegistry ONLY) make registerChainRegistry() restricted to GIF_ADMIN_ROLE
     modifier onlyRegistryService() {
         if(!_releaseManager.isActiveRegistryService(msg.sender)) {
@@ -296,10 +296,6 @@ contract Registry is
     ) external view returns (address service)
     {
         service =  _service[releaseVersion][serviceDomain]; 
-    }
-
-    function getReleaseAccessManagerAddress(VersionPart version) external view returns (address) {
-        return address(_releaseManager.getReleaseAccessManager(version));
     }
 
     function getReleaseManagerAddress() external view returns (address) {

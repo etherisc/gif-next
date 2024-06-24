@@ -22,39 +22,39 @@ contract TestDeployAll is GifTest {
         _prepareProduct();  
     }
 
-    function test_deployRegistryAdmin() public {
+    function test_deployAllSetup() public {
         assertTrue(true);
     }
 
-    function _getTargetText(uint256 idx) internal returns (string memory) {
-        address target = registryAdmin.getTargetAddress(idx);
-        return string(
-            abi.encodePacked(
-                "address ", 
-                _toString(target), 
-                " ", 
-                registryAdmin.getTargetInfo(target).name));
-    }
+    // function _getTargetText(uint256 idx) internal returns (string memory) {
+    //     address target = registryAdmin.getTargetAddress(idx);
+    //     return string(
+    //         abi.encodePacked(
+    //             "address ", 
+    //             _toString(target), 
+    //             " ", 
+    //             registryAdmin.getTargetInfo(target).name));
+    // }
 
-    function _getRoleText(uint256 idx) internal returns (string memory) {
-        RoleId roleId = registryAdmin.getRoleId(idx);
-        return string(
-            abi.encodePacked(
-                "roleId ", 
-                _toString(roleId.toInt()), 
-                " ", 
-                registryAdmin.getRoleInfo(roleId).name,
-                " members ",
-                _toString(registryAdmin.roleMembers(roleId))));
-    }
+    // function _getRoleText(uint256 idx) internal returns (string memory) {
+    //     RoleId roleId = registryAdmin.getRoleId(idx);
+    //     return string(
+    //         abi.encodePacked(
+    //             "roleId ", 
+    //             _toString(roleId.toInt()), 
+    //             " ", 
+    //             registryAdmin.getRoleInfo(roleId).name,
+    //             " members ",
+    //             _toString(registryAdmin.roleMembers(roleId))));
+    // }
 
-    function _toString(uint256 value) internal pure returns (string memory) {
-        return Strings.toString(value);
-    }
+    // function _toString(uint256 value) internal pure returns (string memory) {
+    //     return Strings.toString(value);
+    // }
 
-    function _toString(address _address) internal pure returns (string memory) {
-        return Strings.toHexString(uint256(uint160(_address)), 20);
-    }
+    // function _toString(address _address) internal pure returns (string memory) {
+    //     return Strings.toHexString(uint256(uint160(_address)), 20);
+    // }
 
     function test_deploySimpleProduct() public {
         _checkMockComponent(product, productNftId, instanceNftId, PRODUCT(), "SimpleProduct", productOwner, PRODUCT_OWNER_ROLE());

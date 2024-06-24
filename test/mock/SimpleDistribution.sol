@@ -1,19 +1,24 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Distribution} from "../../contracts/distribution/Distribution.sol";
-
+import {BasicDistribution} from "../../contracts/distribution/BasicDistribution.sol";
+import {BasicDistributionAuthorization} from "../../contracts/distribution/BasicDistributionAuthorization.sol";
 import {Fee} from "../../contracts/type/Fee.sol";
+import {IAuthorization} from "../../contracts/authorization/IAuthorization.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {ReferralId} from "../../contracts/type/Referral.sol";
 import {Timestamp} from "../../contracts/type/Timestamp.sol";
 import {UFixed} from "../../contracts/type/UFixed.sol";
 
-contract SimpleDistribution is Distribution {
+
+contract SimpleDistribution is
+    BasicDistribution
+{
     
     constructor(
         address registry,
         NftId instanceNftId,
+        IAuthorization authorization,
         address initialOwner,
         address token
     ) 
@@ -21,6 +26,7 @@ contract SimpleDistribution is Distribution {
         initialize(
             registry,
             instanceNftId,
+            authorization,
             initialOwner,
             "SimpleDistribution",
             token);
@@ -29,6 +35,7 @@ contract SimpleDistribution is Distribution {
     function initialize(
         address registry,
         NftId instanceNftId,
+        IAuthorization authorization,
         address initialOwner,
         string memory name,
         address token
@@ -37,37 +44,12 @@ contract SimpleDistribution is Distribution {
         virtual
         initializer()
     {
-        initializeDistribution(
+        _initializeBasicDistribution(
             registry,
             instanceNftId,
+            authorization,
             initialOwner,
             name,
-            token,
-            "",
-            "");
-    }
-
-    /**
-     * @dev lets distributors create referral codes.
-     * referral codes need to be unique
-     */
-    function createReferral(
-        NftId distributorNftId,
-        string memory code,
-        UFixed discountPercentage,
-        uint32 maxReferrals,
-        Timestamp expiryAt,
-        bytes memory data
-    )
-        external
-        returns (ReferralId referralId)
-    {
-        return _createReferral(
-            distributorNftId,
-            code,
-            discountPercentage,
-            maxReferrals,
-            expiryAt,
-            data);
+            token);
     }
 }

@@ -15,29 +15,33 @@ import {
     GIF_MANAGER_ROLE,
     GIF_ADMIN_ROLE,
     ADMIN_ROLE,
-    INSTANCE_OWNER_ROLE,
     PRODUCT_OWNER_ROLE, 
     ORACLE_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
-    DISTRIBUTION_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
+    DISTRIBUTION_OWNER_ROLE
+} from "../../contracts/type/RoleId.sol";
 import {UFixed, UFixedLib} from "../../contracts/type/UFixed.sol";
 import {Version} from "../../contracts/type/Version.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE} from "../../contracts/type/StateId.sol";
 
-import {IAccessAdmin} from "../../contracts/shared/IAccessAdmin.sol";
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
+import {IAccessAdmin} from "../../contracts/authorization/IAccessAdmin.sol";
 import {IKeyValueStore} from "../../contracts/shared/IKeyValueStore.sol";
 import {IService} from "../../contracts/shared/IService.sol";
 import {IVersionable} from "../../contracts/shared/IVersionable.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {TokenHandler} from "../../contracts/shared/TokenHandler.sol";
-import {AccessManagerExtendedInitializeable} from "../../contracts/shared/AccessManagerExtendedInitializeable.sol";
-import {AccessManagerExtendedWithDisableInitializeable} from "../../contracts/shared/AccessManagerExtendedWithDisableInitializeable.sol";
 import {UpgradableProxyWithAdmin} from "../../contracts/shared/UpgradableProxyWithAdmin.sol";
+
+import {BasicDistributionAuthorization} from "../../contracts/distribution/BasicDistributionAuthorization.sol";
+import {BasicOracleAuthorization} from "../../contracts/oracle/BasicOracleAuthorization.sol";
+import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
+import {BasicProductAuthorization} from "../../contracts/product/BasicProductAuthorization.sol";
 
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
-import {IServiceAuthorization} from "../../contracts/registry/IServiceAuthorization.sol";
+import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
@@ -79,7 +83,9 @@ import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 
+import {AccessManagerCloneable} from "../../contracts/authorization/AccessManagerCloneable.sol";
 import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
+import {InstanceAuthorizationV3} from "../../contracts/instance/InstanceAuthorizationV3.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
 import {BundleManager} from "../../contracts/instance/BundleManager.sol";
@@ -96,7 +102,7 @@ import {SimplePool} from "../mock/SimplePool.sol";
 import {SimpleProduct} from "../mock/SimpleProduct.sol";
 
 import {GifDeployer} from "./GifDeployer.sol";
-import {GifTestReleaseConfig} from "./GifTestReleaseConfig.sol";
+
 
 // solhint-disable-next-line max-states-count
 contract GifTest is GifDeployer {
@@ -124,67 +130,15 @@ contract GifTest is GifDeployer {
     StakingReader public stakingReader;
     NftId public stakingNftId;
 
-    // RegistryServiceManager public registryServiceManager;
-    // RegistryService public registryService;
-    // NftId public registryServiceNftId;
-
-    // StakingServiceManager public stakingServiceManager;
-    // StakingService public stakingService;
-    // NftId public stakingServiceNftId;
-
-    // InstanceServiceManager public instanceServiceManager;
-    // InstanceService public instanceService;
-    // NftId public instanceServiceNftId;
-
-    // ComponentServiceManager public componentServiceManager;
-    // ComponentService public componentService;
-    // NftId public componentServiceNftId;
-
-    // DistributionServiceManager public distributionServiceManager;
-    // DistributionService public distributionService;
-    // NftId public distributionServiceNftId;
-
-    // OracleServiceManager public oracleServiceManager;
-    // OracleService public oracleService;
-    // NftId public oracleServiceNftId;
-
-    // ProductServiceManager public productServiceManager;
-    // ProductService public productService;
-    // NftId public productServiceNftId;
-
-    // PoolServiceManager public poolServiceManager;
-    // PoolService public poolService;
-    // NftId public poolServiceNftId;
-
-    // ApplicationServiceManager public applicationServiceManager;
-    // ApplicationService public applicationService;
-    // NftId public applicationServiceNftId;
-
-    // PolicyServiceManager public policyServiceManager;
-    // PolicyService public policyService;
-    // NftId public policyServiceNftId;
-
-    // ClaimServiceManager public claimServiceManager;
-    // ClaimService public claimService;
-    // NftId public claimServiceNftId;
-
-    // PricingService public pricingService;
-    // PricingServiceManager public pricingServiceManager;
-    // NftId public pricingServiceNftId;
-
-    // BundleServiceManager public bundleServiceManager;
-    // BundleService public bundleService;
-    // NftId public bundleServiceNftId;
-
-    AccessManagerExtendedInitializeable public masterInstanceAccessManager;
+    AccessManagerCloneable public masterAccessManager;
     InstanceAdmin public masterInstanceAdmin;
+    InstanceAuthorizationV3 public instanceAuthorizationV3;
     BundleManager public masterBundleManager;
     InstanceStore public masterInstanceStore;
     Instance public masterInstance;
     NftId public masterInstanceNftId;
     InstanceReader public masterInstanceReader;
 
-    AccessManagerExtendedInitializeable public instanceAccessManager;
     InstanceAdmin public instanceAdmin;
     BundleManager public instanceBundleManager;
     InstanceStore public instanceStore;
@@ -214,6 +168,7 @@ contract GifTest is GifDeployer {
     address public oracleOwner = makeAddr("oracleOwner");
     address public poolOwner = makeAddr("poolOwner");
     address public distributionOwner = makeAddr("distributionOwner");
+    address public distributor = makeAddr("distributor");
     address public customer = makeAddr("customer");
     address public customer2 = makeAddr("customer2");
     address public investor = makeAddr("investor");
@@ -224,12 +179,14 @@ contract GifTest is GifDeployer {
     uint8 initialProductFeePercentage = 2;
     uint8 initialPoolFeePercentage = 3;
     uint8 initialBundleFeePercentage = 4;
-    uint8 initialDistributionFeePercentage = 10;
+    uint8 initialDistributionFeePercentage = 20;
+    uint8 initialMinDistributionOwnerFeePercentage = 2;
 
     Fee public initialProductFee = FeeLib.percentageFee(initialProductFeePercentage);
     Fee public initialPoolFee = FeeLib.percentageFee(initialPoolFeePercentage);
     Fee public initialBundleFee = FeeLib.percentageFee(initialBundleFeePercentage);
     Fee public initialDistributionFee = FeeLib.percentageFee(initialDistributionFeePercentage);
+    Fee public initialMinDistributionOwnerFee = FeeLib.percentageFee(initialMinDistributionOwnerFeePercentage);
 
     bool poolIsVerifying = true;
     bool distributionIsVerifying = true;
@@ -271,14 +228,14 @@ contract GifTest is GifDeployer {
         _deployRegisterAndActivateToken();
         vm.stopPrank();
 
-        // TODO move to end of this function once instance reg is fixed
-        // print full authz setup
-        _printAuthz();
-
         // create an instance (cloned from master instance)
         vm.startPrank(instanceOwner);
         _createInstance();
         vm.stopPrank();
+
+        // print full authz setup
+        _printAuthz(registryAdmin, "registry");
+        _printAuthz(instance.getInstanceAdmin(), "instance");
     }
 
     /// @dev Helper function to assert that a given NftId is equal to the expected NftId.
@@ -387,50 +344,41 @@ contract GifTest is GifDeployer {
 
     function _deployMasterInstance() internal 
     {
-        masterInstanceAccessManager = new AccessManagerExtendedInitializeable();
-        // grants registryOwner ADMIN_ROLE
-        masterInstanceAccessManager.initialize(registryOwner);
-        
+        // create instance supporting contracts
+        instanceAuthorizationV3 = new InstanceAuthorizationV3();
+        masterInstanceAdmin = new InstanceAdmin(instanceAuthorizationV3);
+        masterInstanceStore = new InstanceStore();
+        masterBundleManager = new BundleManager();
+        masterInstanceReader = new InstanceReader();
+
+        // crate instance
         masterInstance = new Instance();
         masterInstance.initialize(
-            address(masterInstanceAccessManager),
-            address(registry),
+            masterInstanceAdmin,
+            masterInstanceStore,
+            masterBundleManager,
+            masterInstanceReader,
+            registry,
             registryOwner);
 
-        // MUST be initialized and set before instance reader
-        masterInstanceStore = new InstanceStore();
-        masterInstanceStore.initialize(address(masterInstance));
-        masterInstance.setInstanceStore(masterInstanceStore);
-        assert(masterInstance.getInstanceStore() == masterInstanceStore);
-
-        masterInstanceReader = new InstanceReader();
-        masterInstanceReader.initialize(address(masterInstance));
-        masterInstance.setInstanceReader(masterInstanceReader);
-        
-        masterBundleManager = new BundleManager();
-        masterBundleManager.initialize(address(masterInstance));
-        masterInstance.setBundleManager(masterBundleManager);
-
-        masterInstanceAdmin = new InstanceAdmin();
-        masterInstanceAccessManager.grantRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin), 0);
-        masterInstanceAdmin.initialize(address(masterInstance));
-        masterInstance.setInstanceAdmin(masterInstanceAdmin);
+        // retrieve master access manager from instance
+        masterAccessManager = AccessManagerCloneable(
+            masterInstanceAdmin.authority());
 
         // sets master instance address in instance service
         // instance service is now ready to create cloned instances
         masterInstanceNftId = instanceService.setAndRegisterMasterInstance(address(masterInstance));
 
+        // MUST be set after instance is set up and registered
+        masterInstanceAdmin.initializeInstanceAuthorization(address(masterInstance));
+
         // lock master instance nft
         chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
-
-        // revoke ADMIN_ROLE from all members
-        masterInstanceAccessManager.revokeRole(ADMIN_ROLE().toInt(), address(masterInstanceAdmin));
-        masterInstanceAccessManager.renounceRole(ADMIN_ROLE().toInt(), registryOwner);
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
         console.log("master instance nft id", masterInstanceNftId.toInt());
-        console.log("master oz access manager deployed at", address(masterInstanceAccessManager));
+        console.log("master oz access manager deployed at", address(masterInstance.authority()));
         console.log("master instance access manager deployed at", address(masterInstanceAdmin));
         console.log("master instance reader deployed at", address(masterInstanceReader));
         console.log("master bundle manager deployed at", address(masterBundleManager));
@@ -446,7 +394,6 @@ contract GifTest is GifDeployer {
         ) = instanceService.createInstanceClone();
 
         instanceAdmin = instance.getInstanceAdmin();
-        instanceAccessManager = AccessManagerExtendedInitializeable(instance.authority());
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
         instanceBundleManager = instance.getBundleManager();
@@ -455,8 +402,7 @@ contract GifTest is GifDeployer {
         // solhint-disable
         console.log("cloned instance deployed at", address(instance));
         console.log("cloned instance nft id", instanceNftId.toInt());
-        console.log("cloned oz access manager deployed at", address(instanceAccessManager));
-        console.log("cloned instance access manager deployed at", address(instanceAdmin));
+        console.log("cloned oz access manager deployed at", instance.authority());
         console.log("cloned instance reader deployed at", address(instanceReader));
         console.log("cloned bundle manager deployed at", address(instanceBundleManager));
         console.log("cloned instance store deployed at", address(instanceStore));
@@ -484,127 +430,26 @@ contract GifTest is GifDeployer {
         // solhint-enable
     }
 
-
-    // function _deployPool(
-    //     bool isInterceptor,
-    //     bool isVerifying,
-    //     UFixed collateralizationLevel
-    // )
-    //     internal
-    // {
-        // Fee memory stakingFee = FeeLib.zero();
-        // Fee memory performanceFee = FeeLib.zero();
-
-        // pool = new TestPool(
-        //     address(registry), 
-        //     instance.getNftId(), 
-        //     address(token),
-        //     false, // isInterceptor
-        //     isVerifying,
-        //     collateralizationLevel,
-        //     initialPoolFee,
-        //     stakingFee,
-        //     performanceFee,
-        //     poolOwner);
-
-        // componentOwnerService.registerPool(pool);
-
-        // uint256 nftId = pool.getNftId().toInt();
-        // uint256 state = instance.getState(pool.getNftId().toKey32(POOL())).toInt();
-        // // solhint-disable-next-line
-        // console.log("pool deployed at", address(pool));
-        // // solhint-disable-next-line
-        // console.log("pool nftId", nftId, "state", state);
-    // }
-
-
-    // function _deployDistribution(
-    //     bool isVerifying
-    // )
-    //     internal
-    // {
-        // Fee memory distributionFee = FeeLib.percentageFee(15);
-        // distribution = new TestDistribution(
-        //     address(registry), 
-        //     instance.getNftId(), 
-        //     address(token),
-        //     isVerifying,
-        //     initialDistributionFee,
-        //     distributionOwner);
-
-        // componentOwnerService.registerDistribution(distribution);
-
-        // uint256 nftId = distribution.getNftId().toInt();
-        // uint256 state = instance.getState(distribution.getNftId().toKey32(DISTRIBUTION())).toInt();
-        // // solhint-disable-next-line
-        // console.log("distribution deployed at", address(pool));
-        // // solhint-disable-next-line
-        // console.log("distribution nftId", nftId, "state", state);
-    // }
-
-
-    // function _deployProduct() internal {
-        // Fee memory processingFee = FeeLib.zero();
-
-        // product = new TestProduct(
-        //     address(registry), 
-        //     instance.getNftId(), 
-        //     address(token), 
-        //     false, // isInterceptor
-        //     address(pool),
-        //     address(distribution),
-        //     initialProductFee,
-        //     processingFee,
-        //     productOwner);
-
-        // componentOwnerService.registerProduct(product);
-        //registryService.registerComponent(product, PRODUCT());
-
-        // uint256 nftId = product.getNftId().toInt();
-        // uint256 state = instance.getState(product.getNftId().toKey32(PRODUCT())).toInt();
-        // // tokenHandler = instance.getTokenHandler(product.getNftId());
-        // // solhint-disable-next-line
-        // console.log("product deployed at", address(product));
-        // // solhint-disable-next-line
-        // console.log("product nftId", nftId, "state", state);
-        // // solhint-disable-next-line
-        // console.log("product token handler deployed at", address(tokenHandler));
-    // }
-
-    // function _createBundle(
-    //     Fee memory fee,
-    //     uint256 amount,
-    //     uint256 lifetime
-    // ) 
-    //     internal
-    // {
-        // bundleNftId = pool.createBundle(
-        //     fee,
-        //     amount,
-        //     lifetime,
-        //     "");
-
-    //     // solhint-disable-next-line
-    //     console.log("bundle fundet with", amount);
-    //     // solhint-disable-next-line
-    //     console.log("bundle nft id", bundleNftId.toInt());
-    // }
-
     function _prepareProduct() internal {
         _prepareProduct(true);
+        _printAuthz(instanceAdmin, "instanceWithProduct");
     }
 
     function _prepareProduct(bool createBundle) internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
+        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();
 
         _prepareDistributionAndPool();
+
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple product");
 
         vm.startPrank(productOwner);
         product = new SimpleProduct(
             address(registry),
             instanceNftId,
+            new BasicProductAuthorization("SimpleProduct"),
             productOwner,
             address(token),
             false,
@@ -614,6 +459,13 @@ contract GifTest is GifDeployer {
         
         product.register();
         productNftId = product.getNftId();
+        vm.stopPrank();
+
+        // setup some meaningful distribution fees
+        vm.startPrank(distributionOwner);
+        distribution.setFees(
+            initialDistributionFee, 
+            initialMinDistributionOwnerFee);
         vm.stopPrank();
 
         // solhint-disable
@@ -646,16 +498,20 @@ contract GifTest is GifDeployer {
 
         // grant component owner roles
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(ORACLE_OWNER_ROLE().toInt(), oracleOwner, 0);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instance.grantRole(ORACLE_OWNER_ROLE(), oracleOwner);
+        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
         vm.stopPrank();
 
         // deploy and register distribution
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple distribution");
+
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
+            new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
             address(token));
 
@@ -669,15 +525,15 @@ contract GifTest is GifDeployer {
         // solhint-enable
 
         // deploy and register pool
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple pool");
+
         vm.startPrank(poolOwner);
         pool = new SimplePool(
             address(registry),
             instanceNftId,
             address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
 
@@ -692,10 +548,14 @@ contract GifTest is GifDeployer {
         // solhint-enable
 
         // deploy and register oracle
+        // solhint-disable-next-line
+        console.log("--- deploy and register simple oracle");
+
         vm.startPrank(oracleOwner);
         oracle = new SimpleOracle(
             address(registry),
             instanceNftId,
+            new BasicOracleAuthorization("SimpleOracle"),
             oracleOwner,
             address(token));
 
@@ -712,7 +572,7 @@ contract GifTest is GifDeployer {
 
     function _preparePool() internal {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
@@ -720,10 +580,7 @@ contract GifTest is GifDeployer {
             address(registry),
             instanceNftId,
             address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
         pool.register();
@@ -738,28 +595,35 @@ contract GifTest is GifDeployer {
     }
 
 
-    function _printAuthz() internal {
-        console.log("registry admin deployed:", address(registryAdmin));
-        console.log("registry admin authority", registryAdmin.authority());
-
-        uint256 roles = registryAdmin.roles();
-        uint256 targets = registryAdmin.targets();
-
+    function _printAuthz(
+        IAccessAdmin aa,
+        string memory aaName
+    )
+        internal
+    {
         console.log("==========================================");
-        console.log("roles", registryAdmin.roles());
+        console.log(aaName, "admin authorization");
+        console.log(aaName, "admin contract:", address(aa));
+        console.log(aaName, "admin authority:", aa.authority());
+
+        uint256 roles = aa.roles();
+        uint256 targets = aa.targets();
+
+        console.log("------------------------------------------");
+        console.log("roles", aa.roles());
         // solhint-enable
 
-        for(uint256 i = 0; i < registryAdmin.roles(); i++) {
-            _printRoleMembers(registryAdmin, registryAdmin.getRoleId(i));
+        for(uint256 i = 0; i < aa.roles(); i++) {
+            _printRoleMembers(aa, aa.getRoleId(i));
         }
 
         // solhint-disable no-console
-        console.log("==========================================");
-        console.log("targets", registryAdmin.targets());
+        console.log("------------------------------------------");
+        console.log("targets", aa.targets());
         // solhint-enable
 
-        for(uint256 i = 0; i < registryAdmin.targets(); i++) {
-            _printTarget(registryAdmin, registryAdmin.getTargetAddress(i));
+        for(uint256 i = 0; i < aa.targets(); i++) {
+            _printTarget(aa, aa.getTargetAddress(i));
         }
     }
 
@@ -799,7 +663,7 @@ contract GifTest is GifDeployer {
         if (functions > 0) {
             for(uint256 i = 0; i < functions; i++) {
                 (
-                    IAccessAdmin.Function memory func,
+                    IAccess.FunctionInfo memory func,
                     RoleId roleId
                 ) = aa.getAuthorizedFunction(target, i);
                 string memory role = aa.getRoleInfo(roleId).name.toString();

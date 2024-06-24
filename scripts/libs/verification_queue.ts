@@ -2,6 +2,7 @@
 import * as fs from 'fs';
 import hre from 'hardhat';
 import { logger } from '../logger';
+import { isTestChain } from './deployment_state';
 
 const VERIFICATION_QUEUE_FILENAME = "verification_queue";
 const VERIFICATION_QUEUE_FILENAME_SUFFIX = ".json";
@@ -27,6 +28,9 @@ export function saveVerificationData(args: any) {
 }
 
 function persistState() {
+    if (isTestChain()) {
+        return;
+    }
     const json = JSON.stringify(VERIFICATION_DATA_STATE);
     fs.writeFileSync(verificationQueueFilename(), json);
 }

@@ -216,6 +216,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         });
 
     const stakingManager = stakingManagerBaseContract as StakingManager;
+
     const stakingAddress = await stakingManager.getStaking();
     const staking = Staking__factory.connect(stakingAddress, owner);
     const stakingNftId = await registry["getNftId(address)"](stakingAddress);
@@ -269,6 +270,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             libraries: { 
                 SelectorLib: libraries.selectorLibAddress,
                 StrLib: libraries.strLibAddress,
+                TimestampLib: libraries.timestampLibAddress,
                 VersionPartLib: libraries.versionPartLibAddress,
             }
         },

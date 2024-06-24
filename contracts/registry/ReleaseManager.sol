@@ -18,7 +18,6 @@ import {StateId, INITIAL, SCHEDULED, DEPLOYING, ACTIVE, PAUSED, CLOSED} from "..
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 
 import {IService} from "../shared/IService.sol";
-import {AccessManagerExtendedWithDisableInitializeable} from "../shared/AccessManagerExtendedWithDisableInitializeable.sol";
 import {ILifecycle} from "../shared/ILifecycle.sol";
 import {INftOwnable} from "../shared/INftOwnable.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
@@ -26,14 +25,15 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IRegistryService} from "./IRegistryService.sol";
-import {IServiceAuthorization} from "./IServiceAuthorization.sol";
-import {IAccessAdmin} from "../shared/IAccessAdmin.sol";
+import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
+import {IAccessAdmin} from "../authorization/IAccessAdmin.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 import {Registry} from "./Registry.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
 
-
+// TODO rename to something that does not end with 'Manager' 
+// everywhere else *Manager points to an upgradeable contract
 contract ReleaseManager is 
     AccessManaged,
     ReleaseLifecycle, 
@@ -43,7 +43,7 @@ contract ReleaseManager is
 
     uint256 public constant INITIAL_GIF_VERSION = 3;
 
-    event LogReleaseCreation(VersionPart version, bytes32 salt, address authority); 
+    event LogReleaseCreation(VersionPart version, bytes32 salt); 
     event LogReleaseActivation(VersionPart version);
     event LogReleaseDisabled(VersionPart version);
     event LogReleaseEnabled(VersionPart version);
@@ -91,16 +91,16 @@ contract ReleaseManager is
 
     Seconds public constant MIN_DISABLE_DELAY = Seconds.wrap(60 * 24 * 365); // 1 year
 
-    RegistryAdmin private _admin;
-    address public _releaseAccessManagerCodeAddress;
-    Registry private _registry;
+    RegistryAdmin public immutable _admin;
+    Registry public immutable _registry;
+    IRegisterable private _staking;
+    address private _stakingOwner;
 
-    // TODO remove once it's clear that release authority will always be registry authority
-    mapping(VersionPart version => address authority) internal _releaseAccessManager;
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
-    mapping(address registryService => VersionPart version) _releaseVersionByAddress;
-
     mapping(VersionPart version => IServiceAuthorization authz) internal _serviceAuthorization;
+
+    // TODO check where/why this is used
+    mapping(address registryService => VersionPart version) _releaseVersionByAddress;
 
     VersionPart private _initial;// first active version    
     VersionPart internal _latest; // latest active version
@@ -125,11 +125,6 @@ contract ReleaseManager is
 
         _initial = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION);
         _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
-
-        //AccessManagerExtendedWithDisableInitializeable masterReleaseAccessManager = new AccessManagerExtendedWithDisableInitializeable();
-        //masterReleaseAccessManager.initialize(address(this));
-          //masterReleaseAccessManager.disable();
-        //_releaseAccessManagerCodeAddress = address(masterReleaseAccessManager);
     }
 
     /// @dev skips previous release if was not activated
@@ -159,34 +154,8 @@ contract ReleaseManager is
             bytes32 releaseSalt
         )
     {
-        (
-            VersionPart releaseVersion,
-            uint serviceDomainsCount
-        ) = serviceAuthorization.getRelease();
-
-        // verify authorizaion contract release matches with expected version
-        if (releaseVersion != _next) {
-            revert ErrorReleaseManagerVersionMismatch(_next, releaseVersion);
-        }
-
-        // sanity check to ensure service domain list is not empty
-        if (serviceDomainsCount == 0) {
-            revert ErrorReleaseManagerNoDomains(_next);
-        }
-
+        authority = _admin.authority();
         version = _next;
-        StateId state = _state[version];
-        StateId newState = DEPLOYING();
-
-        // verify release in state SCHEDULED
-        if (!isValidTransition(RELEASE(), state, newState)) {
-            revert ErrorReleaseManagerReleasePreparationDisallowed(version, state);
-        }
-
-        // verify prepareNextRelease is only called once per release
-        if(_servicesToRegister > 0) {
-            revert ErrorReleaseManagerReleaseAlreadyPrepared(version, state);
-        }
 
         // ensures unique salt
         // TODO CreateX have clones capability also
@@ -196,13 +165,35 @@ contract ReleaseManager is
                 bytes32(version.toInt()),
                 salt));
 
-        authority = _admin.authority();
-        _serviceAuthorization[_next] = serviceAuthorization;
-        _releaseAccessManager[_next] = authority;
-        _servicesToRegister = serviceDomainsCount;
-        _state[version] = newState;
+        // verify release in state SCHEDULED
+        if (!isValidTransition(RELEASE(), _state[version], DEPLOYING())) {
+            revert ErrorReleaseManagerReleasePreparationDisallowed(version, _state[version]);
+        }
 
-        emit LogReleaseCreation(version, releaseSalt, authority);
+        _state[version] = DEPLOYING();
+
+        // verify authorizaion contract release matches with expected version
+        VersionPart releaseVersion = serviceAuthorization.getRelease();
+        if (releaseVersion != version) {
+            revert ErrorReleaseManagerVersionMismatch(version, releaseVersion);
+        }
+
+
+        // sanity check to ensure service domain list is not empty
+        uint256 serviceDomainsCount = serviceAuthorization.getServiceDomains().length;
+        if (serviceDomainsCount == 0) {
+            revert ErrorReleaseManagerNoDomains(version);
+        }
+
+        // verify prepareNextRelease is only called once per release
+        if(_servicesToRegister > 0) {
+            revert ErrorReleaseManagerReleaseAlreadyPrepared(version, _state[version]);
+        }
+
+        _servicesToRegister = serviceDomainsCount;
+        _serviceAuthorization[version] = serviceAuthorization;
+
+        emit LogReleaseCreation(version, releaseSalt);
     }
 
     // TODO this function can have 0 args -> use stored addresses from prepareNextRelease()
@@ -213,13 +204,14 @@ contract ReleaseManager is
     {
         VersionPart releaseVersion = _next;
         StateId state = _state[releaseVersion];
-        StateId newState = DEPLOYING();
 
         // verify release in state DEPLOYING
-        if (!isValidTransition(RELEASE(), state, newState)) {
+        if (!isValidTransition(RELEASE(), state, DEPLOYING())) {
             // TOOD name must represent failed state transition
             revert ErrorReleaseManagerServiceRegistrationDisallowed(state);
         }
+
+        _state[releaseVersion] = DEPLOYING();
 
         // not all services are registered
         if (_servicesToRegister == _registeredServices) {
@@ -239,17 +231,9 @@ contract ReleaseManager is
             revert ErrorReleaseManagerServiceDomainMismatch(expectedDomain, serviceDomain);
         }
 
-        // TODO uncomment when release addresses calculations are ready
-        // service address matches defined in release config
-        /*address expectedAddress = _serviceAuthorization[releaseVersion].getServiceAddress(expectedDomain);
-        if(address(service) != expectedAddress) {
-            //revert ErrorReleaseManagerServiceAddressMismatch(expectedAddress, address(service));
-        }*/
-
-        // checked in registry
-        _releaseInfo[releaseVersion].domains.push(serviceDomain);
-
-        _state[releaseVersion] = newState;
+        // register service with registry
+        nftId = _registry.registerService(info, serviceVersion, serviceDomain);
+        service.linkToRegisteredNftId();
         _registeredServices++;
 
         // setup service authorization
@@ -263,10 +247,6 @@ contract ReleaseManager is
             // TODO rename to grantServiceDomainRole()
             _admin.grantServiceRoleForAllVersions(service, serviceDomain);
         }
-
-        // register service with registry
-        nftId = _registry.registerService(info, serviceVersion, serviceDomain);
-        service.linkToRegisteredNftId();
     }
 
 
@@ -391,8 +371,12 @@ contract ReleaseManager is
         return _servicesToRegister - _registeredServices;
     }
 
-    function getReleaseAccessManager(VersionPart version) external view returns(address) {
-        return _releaseAccessManager[version];
+    function getServiceAuthorization(VersionPart version)
+        external
+        view
+        returns (IServiceAuthorization serviceAuthorization)
+    {
+        return _serviceAuthorization[version];
     }
 
     function getRegistryAdmin() external view returns (address) {
@@ -429,14 +413,14 @@ contract ReleaseManager is
         _verifyServiceInfo(service, serviceInfo, owner);
 
         VersionPart releaseVersion = _next; // never 0
-        address releaseAuthority = address(_releaseAccessManager[releaseVersion]); // can be zero if registering service when release is not created
+        address expectedAuthority = _admin.authority(); // can be zero if registering service when release is not created
 
         // IMPORTANT: can not guarantee service access is actually controlled by authority
-        if(serviceAuthority != releaseAuthority) {
+        if(serviceAuthority != expectedAuthority) {
             revert ErrorReleaseManagerServiceReleaseAuthorityMismatch(
                 service,
                 serviceAuthority,
-                releaseAuthority);
+                expectedAuthority);
         }
 
         if(serviceVersion != releaseVersion) {

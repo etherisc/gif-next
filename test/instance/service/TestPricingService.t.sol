@@ -22,9 +22,8 @@ import {SimplePool} from "../../mock/SimplePool.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
 
 contract TestPricingService is GifTest {
-    using NftIdLib for NftId;
-// FIXME: move to PricingService
-    function test_PricingService_calculatePremium_noFees() public {
+
+    function test_pricingServiceCalculatePremiumNoFees() public {
         _createAndRegisterDistributionPoolProductWithFees(
             FeeLib.zero(),
             FeeLib.zero(),
@@ -49,7 +48,7 @@ contract TestPricingService is GifTest {
     }
 
 
-    function test_PricingServiceCalculatePremiumOnlyFixedFees() public {
+    function test_pricingServiceCalculatePremiumOnlyFixedFees() public {
         _createAndRegisterDistributionPoolProductWithFees(
             FeeLib.toFee(UFixedLib.zero(), 10),
             FeeLib.toFee(UFixedLib.zero(), 2),
@@ -83,7 +82,7 @@ contract TestPricingService is GifTest {
         assertEq(premium.distributionOwnerFeeVarAmount, 0, "distributionOwnerFeeVarAmount invalid");
     }
 
-    function test_PricingService_calculatePremium_onlyVariableFees() public {
+    function test_pricingServiceCalculatePremiumOnlyVariableFees() public {
         _createAndRegisterDistributionPoolProductWithFees(
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 0),
@@ -117,7 +116,7 @@ contract TestPricingService is GifTest {
         assertEq(premium.distributionOwnerFeeVarAmount, 5, "distributionOwnerFeeVarAmount invalid");
     }
 
-    function test_PricingServiceCalculatePremiumFixedAndVariableFees() public {
+    function test_pricingServiceCalculatePremiumFixedAndVariableFees() public {
         _createAndRegisterDistributionPoolProductWithFees(
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 3),
             FeeLib.toFee(UFixedLib.toUFixed(5, -2), 2),
@@ -151,7 +150,8 @@ contract TestPricingService is GifTest {
         assertEq(premium.distributionOwnerFeeVarAmount, 5, "distributionOwnerFeeVarAmount invalid");
     }
 
-    function test_PricingService_calculatePremiumOnlyVariableFeesWithReferral() public {
+    function test_pricingServiceCalculatePremiumOnlyVariableFeesWithReferral() public {
+
         _createAndRegisterDistributionPoolProductWithFees(
             FeeLib.toFee(UFixedLib.toUFixed(30, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0),
@@ -160,6 +160,7 @@ contract TestPricingService is GifTest {
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0)
         );
 
+        vm.startPrank(distributionOwner);
         DistributorType distributorType = distribution.createDistributorType(
             "Gold",
             UFixedLib.zero(),
@@ -175,15 +176,16 @@ contract TestPricingService is GifTest {
             customer,
             distributorType,
             "");
-        
-        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
-        ReferralId referralId = sdistribution.createReferral(
-            distributorNftId,
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+        ReferralId referralId = distribution.createReferral(
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(10, -2),
             5,
             TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(604800)),
             "");
+        vm.stopPrank();
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
@@ -212,7 +214,7 @@ contract TestPricingService is GifTest {
         assertEq(premium.distributionOwnerFeeVarAmount, 9, "distributionOwnerFeeVarAmount invalid");
     }
 
-    function test_PricingService_calculatePremiumOnlyVariableFeesWithReferralNoDiscount() public {
+    function test_pricingServiceCalculatePremiumOnlyVariableFeesWithReferralNoDiscount() public {
         _createAndRegisterDistributionPoolProductWithFees(
             FeeLib.toFee(UFixedLib.toUFixed(30, -2), 0),
             FeeLib.toFee(UFixedLib.toUFixed(2, -2), 0),
@@ -221,6 +223,7 @@ contract TestPricingService is GifTest {
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 0)
         );
 
+        vm.startPrank(distributionOwner);
         DistributorType distributorType = distribution.createDistributorType(
             "Gold",
             UFixedLib.zero(),
@@ -236,15 +239,17 @@ contract TestPricingService is GifTest {
             customer,
             distributorType,
             "");
+        vm.stopPrank();
         
-        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
-        ReferralId referralId = sdistribution.createReferral(
-            distributorNftId,
+
+        vm.startPrank(customer);
+        ReferralId referralId = distribution.createReferral(
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(0, -2),
             5,
             TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(604800)),
             "");
+        vm.stopPrank();
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
@@ -273,7 +278,7 @@ contract TestPricingService is GifTest {
         assertEq(premium.distributionOwnerFeeVarAmount, 25, "distributionOwnerFeeVarAmount invalid");
     }
 
-    function test_PricingService_calculatePremiumVariableAndFixedFeesWithReferral() public {
+    function test_pricingServiceCalculatePremiumVariableAndFixedFeesWithReferral() public {
         _createAndRegisterDistributionPoolProductWithFees(
             FeeLib.toFee(UFixedLib.toUFixed(30, -2), 10),
             FeeLib.toFee(UFixedLib.toUFixed(2, -2), 5),
@@ -282,6 +287,9 @@ contract TestPricingService is GifTest {
             FeeLib.toFee(UFixedLib.toUFixed(10, -2), 10)
         );
 
+        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+
+        vm.startPrank(distributionOwner);
         DistributorType distributorType = distribution.createDistributorType(
             "Gold",
             UFixedLib.zero(),
@@ -293,19 +301,19 @@ contract TestPricingService is GifTest {
             false,
             "");
 
-        NftId distributorNftId = distribution.createDistributor(
-            customer,
-            distributorType,
-            "");
+        // create distributor
+        NftId distributorNftId = distribution.createDistributor(customer, distributorType, "");
+        vm.stopPrank();
         
-        SimpleDistribution sdistribution = SimpleDistribution(address(distribution));
+        // distributor creates referral
+        vm.startPrank(customer);
         ReferralId referralId = sdistribution.createReferral(
-            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(10, -2),
             5,
             TimestampLib.blockTimestamp().addSeconds(SecondsLib.toSeconds(604800)),
             "");
+        vm.stopPrank();
 
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         IPolicy.Premium memory premium = pricingService.calculatePremium(
@@ -344,9 +352,9 @@ contract TestPricingService is GifTest {
         _prepareProduct();
 
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
+        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
+        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
+        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
         vm.stopPrank();
 
         // -- set various fees

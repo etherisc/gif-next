@@ -5,9 +5,9 @@ import {
      ALL, REGISTRY, SERVICE, PRODUCT, ORACLE, POOL, INSTANCE, COMPONENT, DISTRIBUTION, DISTRIBUTOR, APPLICATION, POLICY, CLAIM, BUNDLE, STAKE, STAKING, PRICE
 } from "../../contracts/type/ObjectType.sol";
 
-import {IAccessAdmin} from "../../contracts/shared/IAccessAdmin.sol";
+import {IAccess} from "../../contracts/authorization/IAccess.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
-import {ServiceAuthorization} from "../../contracts/registry/ServiceAuthorization.sol";
+import {ServiceAuthorization} from "../../contracts/authorization/ServiceAuthorization.sol";
 
 
 contract ServiceMockAuthorizationV3
@@ -39,7 +39,7 @@ contract ServiceMockAuthorizationV3
      function _setupIRegistryServiceAuthorization()
           internal
      {
-          IAccessAdmin.Function[] storage functions;
+          IAccess.FunctionInfo[] storage functions;
 
           functions = _authorizeForService(REGISTRY(), APPLICATION());
           _authorize(functions, IRegistryService.registerPolicy.selector, "registerPolicy");

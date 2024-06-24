@@ -8,7 +8,7 @@ import {Test, console} from "../../lib/forge-std/src/Test.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../../contracts/type/RoleId.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {IServiceAuthorization} from "../../contracts/registry/IServiceAuthorization.sol";
+import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";

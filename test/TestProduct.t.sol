@@ -341,23 +341,21 @@ contract TestProduct is GifTest {
         _prepareProductLocal();  
 
         // set product fees and create risk
-        vm.startPrank(productOwner);
-
         Fee memory productFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        product.setFees(productFee, FeeLib.zero());
-
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";
-        product.createRisk(riskId, data);
 
+        vm.startPrank(productOwner);
+        product.setFees(productFee, FeeLib.zero());
+        product.createRisk(riskId, data);
         vm.stopPrank();
 
         // configure distribution fee and referral
-        vm.startPrank(distributionOwner);
         Fee memory distributionFee = FeeLib.toFee(UFixedLib.toUFixed(1, -1), 0);
         Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
-        distribution.setFees(distributionFee, minDistributionOwnerFee);
 
+        vm.startPrank(distributionOwner);
+        distribution.setFees(distributionFee, minDistributionOwnerFee);
         DistributorType distributorType = distribution.createDistributorType(
             "Gold",
             UFixedLib.zero(),
@@ -373,9 +371,10 @@ contract TestProduct is GifTest {
             customer2,
             distributorType,
             "");
+        vm.stopPrank();
 
+        vm.startPrank(customer2);
         ReferralId referralId = distribution.createReferral(
-            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(2, -2),
             5,
@@ -481,6 +480,7 @@ contract TestProduct is GifTest {
         Fee memory minDistributionOwnerFee = FeeLib.toFee(UFixedLib.toUFixed(1, -2), 0);
         distribution.setFees(distributionFee, minDistributionOwnerFee);
 
+        vm.startPrank(distributionOwner);
         DistributorType distributorType = distribution.createDistributorType(
             "Gold",
             UFixedLib.zero(),
@@ -496,10 +496,11 @@ contract TestProduct is GifTest {
             customer2,
             distributorType,
             "");
+        vm.stopPrank();
         
         // create short lived referral
+        vm.startPrank(customer2);
         ReferralId referralId = distribution.createReferral(
-            distributorNftId,
             "GET_A_DISCOUNT",
             UFixedLib.toUFixed(2, -2),
             5,

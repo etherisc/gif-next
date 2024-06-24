@@ -12,8 +12,7 @@ contract TestInstanceService is GifTest {
     function test_upgradeMasterInstanceReader() public {
         // GIVEN
         vm.startPrank(registryOwner);
-        InstanceReader newMasterInstanceReader = new InstanceReader();
-        newMasterInstanceReader.initialize(address(masterInstance));
+        InstanceReader newMasterInstanceReader = _createNewMasterInstanceReader();
         
         // WHEN
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
@@ -22,18 +21,17 @@ contract TestInstanceService is GifTest {
         assertEq(address(newMasterInstanceReader), instanceService.getMasterInstanceReader(), "master instance reader not set");
     }
 
-    function test_upgradeMasterInstanceReader_not_master_instance() public {
+    function test_upgradeMasterInstanceReaderNotMasterInstance() public {
         // GIVEN
-        vm.startPrank(registryOwner);
-        InstanceReader newMasterInstanceReader = new InstanceReader();
-        newMasterInstanceReader.initialize(address(instance));
-        
+        InstanceReader newMasterInstanceReader = new InstanceReader();        
+
         // THEN
         vm.expectRevert(
             abi.encodeWithSelector(
                 IInstanceService.ErrorInstanceServiceInstanceReaderInstanceMismatch.selector));
 
         // WHEN
+        vm.startPrank(registryOwner);
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
     }
     
@@ -50,29 +48,30 @@ contract TestInstanceService is GifTest {
         instanceService.upgradeMasterInstanceReader(address(masterInstanceReader));
     }
 
-    function test_upgradeInstanceReader() public {
+    function test_upgradeInstanceReaderAuthorized() public {
         // GIVEN
         vm.startPrank(registryOwner);
-        InstanceReader newMasterInstanceReader = new InstanceReader();
-        newMasterInstanceReader.initialize(address(masterInstance));
+        InstanceReader newMasterInstanceReader = _createNewMasterInstanceReader();
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();
         
         address oldInstanceReaderAddress = address(instance.getInstanceReader());
-        vm.startPrank(instanceOwner);
         
+        assertEq(registry.ownerOf(instanceNftId), instanceOwner, "instanceOwner not owner of instance nft id");
+
         // WHEN
+        vm.startPrank(instanceOwner);
         instanceService.upgradeInstanceReader(instanceNftId);
+        vm.stopPrank();
         
         // THEN
         assertFalse(oldInstanceReaderAddress == address(instance.getInstanceReader()), "instance reader not upgraded");
     }
 
-    function test_upgradeInstanceReader_not_authorized() public {
+    function test_upgradeInstanceReaderNotAuthorized() public {
         // GIVEN
         vm.startPrank(registryOwner);
-        InstanceReader newMasterInstanceReader = new InstanceReader();
-        newMasterInstanceReader.initialize(address(masterInstance));
+        InstanceReader newMasterInstanceReader = _createNewMasterInstanceReader();
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
         vm.stopPrank();
         
@@ -84,6 +83,13 @@ contract TestInstanceService is GifTest {
 
         // WHEN
         instanceService.upgradeInstanceReader(instanceNftId);
+    }
+
+
+    function _createNewMasterInstanceReader() internal returns (InstanceReader) {
+        InstanceReader newMIR = new InstanceReader();
+        newMIR.initializeWithInstance(address(masterInstance));
+        return newMIR;
     }
 
 }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {BasicDistributionAuthorization} from "../../../contracts/distribution/BasicDistributionAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
@@ -16,6 +17,7 @@ contract TestDistributionService is GifTest {
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
+            new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
             address(token));
         
@@ -31,13 +33,14 @@ contract TestDistributionService is GifTest {
 
     function test_DistributionService_register() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
             address(registry),
             instanceNftId,
+            new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
             address(token)
         );

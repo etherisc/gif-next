@@ -57,6 +57,7 @@ contract ReferralTestBase is GifTest {
         expiryAt = toTimestamp(block.timestamp + 7 * 24 * 3600);
         referralData = "...";
 
+        vm.startPrank(distributionOwner);
         distributorType = distribution.createDistributorType(
             name,
             minDiscountPercentage,
@@ -74,6 +75,7 @@ contract ReferralTestBase is GifTest {
                 distributorType,
                 distributorData);
         }
+        vm.stopPrank();
     }
 
 
@@ -81,7 +83,7 @@ contract ReferralTestBase is GifTest {
         _prepareProduct();
 
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(DISTRIBUTION_OWNER_ROLE().toInt(), distributionOwner, 0);
+        instance.grantRole(DISTRIBUTION_OWNER_ROLE(), distributionOwner);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);

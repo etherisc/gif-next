@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Vm, console} from "../../../lib/forge-std/src/Test.sol";
 
+import {BasicProductAuthorization} from "../../../contracts/product/BasicProductAuthorization.sol";
 import {GifTest} from "../../base/GifTest.sol";
 import {Amount, AmountLib} from "../../../contracts/type/Amount.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
@@ -871,16 +872,18 @@ contract TestProductClaim is GifTest {
 
 
     function _prepareProductLocal() internal {
-        vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(PRODUCT_OWNER_ROLE().toInt(), productOwner, 0);
-        vm.stopPrank();
 
         _prepareDistributionAndPool();
+
+        vm.startPrank(instanceOwner);
+        instance.grantRole(PRODUCT_OWNER_ROLE(), productOwner);
+        vm.stopPrank();
 
         vm.startPrank(productOwner);
         prdct = new SimpleProduct(
             address(registry),
             instanceNftId,
+            new BasicProductAuthorization("SimpleProduct"),
             productOwner,
             address(token),
             false,

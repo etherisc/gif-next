@@ -1,10 +1,21 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
 import {ObjectManager} from "../../contracts/instance/base/ObjectManager.sol";
 
 contract MockObjectManager is ObjectManager {
+
+    function initialize(address instance)
+        external
+        initializer()
+    {
+        _instance = IInstance(instance);
+        __Cloneable_init(_instance.authority(), address(_instance.getRegistry()));
+        
+        emit LogObjectManagerInitialized(instance);
+    }
 
     function add(NftId componentNftId, NftId objectNftId) external {
         _add(componentNftId, objectNftId);

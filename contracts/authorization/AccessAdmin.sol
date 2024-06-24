@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
+import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
-import {RoleId, RoleIdLib} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Selector, SelectorLib, SelectorSetLib} from "../type/Selector.sol";
 import {Str, StrLib} from "../type/String.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
@@ -19,6 +20,7 @@ import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
  */ 
 contract AccessAdmin is
     AccessManagedUpgradeable,
+    ReentrancyGuardUpgradeable,
     IAccessAdmin
 {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -26,18 +28,12 @@ contract AccessAdmin is
     string public constant ADMIN_ROLE_NAME = "AdminRole";
     string public constant PUBLIC_ROLE_NAME = "PublicRole";
 
-    uint64 public constant MANAGER_ROLE = type(uint64).min + 1;
-    string public constant MANAGER_ROLE_NAME = "ManagerRole";
-
     /// @dev the OpenZeppelin access manager driving the access admin contract
-    AccessManager internal _authority;
+    AccessManagerCloneable internal _authority;
 
     /// @dev stores the deployer address and allows to create initializers
     /// that are restricted to the deployer address.
     address internal _deployer;
-
-    /// @dev required role for state changes to this contract
-    RoleId internal _managerRoleId;
 
     /// @dev store role info per role id
     mapping(RoleId roleId => RoleInfo info) internal _roleInfo;
@@ -63,8 +59,8 @@ contract AccessAdmin is
     /// @dev store all managed functions per target
     mapping(address target => SelectorSetLib.Set selectors) internal _targetFunctions;
 
-    /// @dev temporary dynamic function infos array
-    mapping(address target => mapping(Selector selector => Str functionName)) internal _functionName;
+    /// @dev function infos array
+    mapping(address target => mapping(Selector selector => FunctionInfo)) internal _functionInfo;
 
     /// @dev temporary dynamic functions array
     bytes4[] private _functions;
@@ -87,7 +83,7 @@ contract AccessAdmin is
             revert ErrorRoleUnknown(roleId);
         }
 
-        if (!hasRole(msg.sender, _roleInfo[roleId].adminRoleId)) {
+        if (!hasAdminRole(msg.sender, roleId)) {
             revert ErrorNotAdminOfRole(_roleInfo[roleId].adminRoleId);
         }
         _;
@@ -112,157 +108,15 @@ contract AccessAdmin is
 
     constructor() {
         _deployer = msg.sender;
-        _authority = new AccessManager(address(this));
+        _authority = new AccessManagerCloneable();
+        _authority.initialize(address(this));
 
-        _setAuthority(address(_authority));
-        _createInitialRoleSetup();
-
+        _setAuthority(address(_authority)); // set authority for oz access managed
+        _createAdminAndPublicRoles();
         _disableInitializers();
     }
 
-    //--- role management functions -----------------------------------------//
-
-    function createRole(
-        RoleId roleId, 
-        RoleId adminRoleId, 
-        string memory name,
-        uint256 maxMemberCount,
-        bool memberRemovalDisabled
-    )
-        external
-        virtual
-        restricted()
-    {
-        _createRole(roleId, adminRoleId, name, maxMemberCount, memberRemovalDisabled);
-    }
-
-    function setRoleDisabled(
-        RoleId roleId, 
-        bool disabled
-    )
-        external
-        virtual
-        restricted()
-    {
-        _setRoleDisabled(roleId, disabled);
-    }
-
-    function grantRole(
-        address account, 
-        RoleId roleId
-    )
-        external
-        virtual
-        onlyRoleAdmin(roleId)
-        restricted()
-    {
-        _grantRoleToAccount(roleId, account);
-    }
-
-    function revokeRole(
-        address account, 
-        RoleId roleId
-    )
-        external
-        virtual
-        onlyRoleAdmin(roleId)
-        restricted()
-    {
-        _revokeRoleFromAccount(roleId, account);
-    }
-
-    function renounceRole(
-        RoleId roleId
-    )
-        external
-        virtual
-        onlyRoleMember(roleId)
-        restricted()
-    {
-        _revokeRoleFromAccount(roleId, msg.sender);
-    }
-
-    //--- target management functions ---------------------------------------//
-
-    function createTarget(
-        address target, 
-        string memory name
-    )
-        external
-        virtual
-        restricted()
-    {
-        _createTarget(target, name);
-    }
-
-    function setTargetLocked(
-        address target, 
-        bool locked
-    )
-        external
-        virtual
-        onlyExistingTarget(target)
-        restricted()
-    {
-        _authority.setTargetClosed(target, locked);
-
-        // implizit logging: rely on OpenZeppelin log TargetClosed
-    }
-
-    function authorizeFunctions(
-        address target, 
-        RoleId roleId, 
-        Function[] memory functions
-    )
-        external
-        virtual
-        onlyExistingTarget(target)
-        onlyExistingRole(roleId)
-        restricted()
-    {
-        _authorizeTargetFunctions(target, roleId, functions);
-    }
-
-    function unauthorizeFunctions(
-        address target, 
-        Function[] memory functions
-    )
-        external
-        virtual
-        restricted()
-    {
-        _unauthorizeTargetFunctions(target, functions);
-    }
-
-
-    function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions) {
-        return SelectorSetLib.size(_targetFunctions[target]);
-    }
-
-    function getAuthorizedFunction(
-        address target, 
-        uint256 idx
-    )
-        external 
-        view 
-        returns (
-            Function memory func, 
-            RoleId roleId
-        )
-    {
-        Selector selector = SelectorSetLib.at(_targetFunctions[target], idx);
-
-        func = Function({
-            selector: selector, 
-            name: _functionName[target][selector]});
-
-        roleId = RoleIdLib.toRoleId(
-            _authority.getTargetFunctionRole(
-                target, 
-                selector.toBytes4()));
-    }
-
-    //--- view functions ----------------------------------------------------//
+    //--- view functions for roles ------------------------------------------//
 
     function roles() external view returns (uint256 numberOfRoles) {
         return _roleIds.length;
@@ -280,16 +134,8 @@ contract AccessAdmin is
         return RoleId.wrap(_authority.PUBLIC_ROLE());
     }
 
-    function getManagerRole() public view returns (RoleId roleId) {
-        return _managerRoleId;
-    }
-
     function roleExists(RoleId roleId) public view returns (bool exists) {
-        return _roleInfo[roleId].exists;
-    }
-
-    function isRoleDisabled(RoleId roleId) public view returns (bool isActive) {
-        return _roleInfo[roleId].disabledAt <= TimestampLib.blockTimestamp();
+        return _roleInfo[roleId].createdAt.gtz();
     }
 
     function getRoleInfo(RoleId roleId) external view returns (RoleInfo memory) {
@@ -300,13 +146,6 @@ contract AccessAdmin is
         return _roleForName[name];
     }
 
-    function hasRole(address account, RoleId roleId) public view returns (bool) {
-        (bool isMember, ) = _authority.hasRole(
-            RoleId.unwrap(roleId), 
-            account);
-        return isMember;
-    }
-
     function roleMembers(RoleId roleId) external view returns (uint256 numberOfMembers) {
         return _roleMembers[roleId].length();
     }
@@ -315,12 +154,26 @@ contract AccessAdmin is
         return _roleMembers[roleId].at(idx);
     }
 
-    function targetExists(address target) public view returns (bool exists) {
-        return _targetInfo[target].createdAt.gtz();
+    function hasRole(address account, RoleId roleId) public view returns (bool) {
+        (bool isMember, ) = _authority.hasRole(
+            RoleId.unwrap(roleId), 
+            account);
+        return isMember;
     }
 
-    function isTargetLocked(address target) public view returns (bool locked) {
-        return _authority.isTargetClosed(target);
+    function hasAdminRole(address account, RoleId roleId)
+        public 
+        virtual
+        view 
+        returns (bool)
+    {
+        return hasRole(account, _roleInfo[roleId].adminRoleId);
+    }
+
+    //--- view functions for targets ----------------------------------------//
+
+    function targetExists(address target) public view returns (bool exists) {
+        return _targetInfo[target].createdAt.gtz();
     }
 
     function targets() external view returns (uint256 numberOfTargets) {
@@ -335,8 +188,35 @@ contract AccessAdmin is
         return _targetInfo[target];
     }
 
-    function getTargetForName(Str name) external view returns (address target) {
+    function getTargetForName(Str name) public view returns (address target) {
         return _targetForName[name];
+    }
+
+    function isTargetLocked(address target) public view returns (bool locked) {
+        return _authority.isTargetClosed(target);
+    }
+
+    function authorizedFunctions(address target) external view returns (uint256 numberOfFunctions) {
+        return SelectorSetLib.size(_targetFunctions[target]);
+    }
+
+    function getAuthorizedFunction(
+        address target, 
+        uint256 idx
+    )
+        external 
+        view 
+        returns (
+            FunctionInfo memory func, 
+            RoleId roleId
+        )
+    {
+        Selector selector = SelectorSetLib.at(_targetFunctions[target], idx);
+        func = _functionInfo[target][selector];
+        roleId = RoleIdLib.toRoleId(
+            _authority.getTargetFunctionRole(
+                target, 
+                selector.toBytes4()));
     }
 
     function isAccessManaged(address target) public view returns (bool) {
@@ -351,18 +231,29 @@ contract AccessAdmin is
         return success;
     }
 
-    function canCall(address caller, address target, Selector selector) external view returns (bool can) {
+    function canCall(address caller, address target, Selector selector) external virtual view returns (bool can) {
         (can, ) = _authority.canCall(caller, target, selector.toBytes4());
+    }
+
+    function toRole(RoleId adminRoleId, RoleType roleType, uint32 maxMemberCount, string memory name) public view returns (RoleInfo memory) {
+        return RoleInfo({
+            name: StrLib.toStr(name),
+            adminRoleId: adminRoleId,
+            roleType: roleType,
+            maxMemberCount: maxMemberCount,
+            createdAt: TimestampLib.blockTimestamp()
+        });
+    }
+
+    function toFunction(bytes4 selector, string memory name) public view returns (FunctionInfo memory) {
+        return FunctionInfo({
+            name: StrLib.toStr(name),
+            selector: SelectorLib.toSelector(selector),
+            createdAt: TimestampLib.blockTimestamp()});
     }
 
     function deployer() public view returns (address) {
         return _deployer;
-    }
-
-    function toFunction(bytes4 selector, string memory name) public pure returns (Function memory) {
-            return Function({
-                selector: SelectorLib.toSelector(selector),
-                name: StrLib.toStr(name)});
     }
 
     //--- internal/private functions -------------------------------------------------//
@@ -370,7 +261,7 @@ contract AccessAdmin is
     function _authorizeTargetFunctions(
         address target, 
         RoleId roleId, 
-        Function[] memory functions
+        FunctionInfo[] memory functions
     )
         internal
     {
@@ -387,7 +278,7 @@ contract AccessAdmin is
 
     function _unauthorizeTargetFunctions(
         address target, 
-        Function[] memory functions
+        FunctionInfo[] memory functions
     )
         internal
     {
@@ -398,7 +289,7 @@ contract AccessAdmin is
 
     function _processFunctionSelectors(
         address target,
-        Function[] memory functions,
+        FunctionInfo[] memory functions,
         bool addFunctions
     )
         internal
@@ -408,7 +299,7 @@ contract AccessAdmin is
     {
         uint256 n = functions.length;
         functionSelectors = new bytes4[](n);
-        Function memory func;
+        FunctionInfo memory func;
         Selector selector;
 
         for (uint256 i = 0; i < n; i++) {
@@ -420,7 +311,7 @@ contract AccessAdmin is
             else { SelectorSetLib.remove(_targetFunctions[target], selector); }
 
             // set function name
-            _functionName[target][selector] = func.name;
+            _functionInfo[target][selector] = func;
 
             // add bytes4 selector to function selector array
             functionSelectors[i] = selector.toBytes4();
@@ -439,75 +330,47 @@ contract AccessAdmin is
             revert ErrorAuthorityAlreadySet();
         }
 
-        _authority = AccessManager(authorityAddress);
-
-        if(!hasRole(address(this), RoleId.wrap(_authority.ADMIN_ROLE()))) {
-            revert ErrorAdminRoleMissing();
-        }
-
+        _authority = AccessManagerCloneable(authorityAddress);
         __AccessManaged_init(address(_authority));
     }
 
 
-    function _initializeRoleSetup()
+    function _initializeAdminAndPublicRoles()
         internal
         virtual
         onlyInitializing()
     {
-        _createInitialRoleSetup();
+        _createAdminAndPublicRoles();
     }
 
 
-    function _createInitialRoleSetup()
+    /// @dev internal setup function that can be used in both constructor and initializer.
+    function _createAdminAndPublicRoles()
         internal
     {
         RoleId adminRoleId = RoleIdLib.toRoleId(_authority.ADMIN_ROLE());
-        Function[] memory functions;
+        FunctionInfo[] memory functions;
 
         // setup admin role
         _createRoleUnchecked(
-            adminRoleId,
-            adminRoleId,
-            StrLib.toStr(ADMIN_ROLE_NAME),
-            1,
-            true);
+            ADMIN_ROLE(),
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Contract,
+                maxMemberCount: 1,
+                name: ADMIN_ROLE_NAME}));
 
         // add this contract as admin role member
         _roleMembers[adminRoleId].add(address(this));
 
         // setup public role
         _createRoleUnchecked(
-            RoleIdLib.toRoleId(_authority.PUBLIC_ROLE()),
-            adminRoleId,
-            StrLib.toStr(PUBLIC_ROLE_NAME),
-            type(uint256).max,
-            true);
-
-        // setup manager role
-        _managerRoleId = RoleIdLib.toRoleId(MANAGER_ROLE);
-        _createRole(
-            _managerRoleId, 
-            adminRoleId,
-            MANAGER_ROLE_NAME,
-            3, // TODO think about max member count
-            false);
-
-        // grant public role access to grant and revoke, renounce
-        functions = new Function[](3);
-        functions[0] = toFunction(IAccessAdmin.grantRole.selector, "grantRole");
-        functions[1] = toFunction(IAccessAdmin.revokeRole.selector, "revokeRole");
-        functions[2] = toFunction(IAccessAdmin.renounceRole.selector, "renounceRole");
-        _authorizeTargetFunctions(address(this), getPublicRole(), functions);
-
-        // grant manager role access to the specified functions 
-        functions = new Function[](6);
-        functions[0] = toFunction(IAccessAdmin.createRole.selector, "createRole");
-        functions[1] = toFunction(IAccessAdmin.setRoleDisabled.selector, "setRoleDisabled");
-        functions[2] = toFunction(IAccessAdmin.createTarget.selector, "createTarget");
-        functions[3] = toFunction(IAccessAdmin.setTargetLocked.selector, "setTargetLocked");
-        functions[4] = toFunction(IAccessAdmin.authorizeFunctions.selector, "authorizeFunctions");
-        functions[5] = toFunction(IAccessAdmin.unauthorizeFunctions.selector, "unauthorizeFunctions");
-        _authorizeTargetFunctions(address(this), getManagerRole(), functions);
+            PUBLIC_ROLE(),
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Gif,
+                maxMemberCount: type(uint32).max,
+                name: PUBLIC_ROLE_NAME}));
     }
 
     /// @dev check if target exists and reverts if it doesn't
@@ -540,11 +403,15 @@ contract AccessAdmin is
         internal
     {
         _checkRoleId(roleId);
-        _checkRoleIsActive(roleId);
 
         // check max role members will not be exceeded
         if (_roleMembers[roleId].length() >= _roleInfo[roleId].maxMemberCount) {
             revert ErrorRoleMembersLimitReached(roleId, _roleInfo[roleId].maxMemberCount);
+        }
+
+        // check account is contract for contract role
+        // TODO implement
+        if (_roleInfo[roleId].roleType == RoleType.Contract) {
         }
 
         _roleMembers[roleId].add(account);
@@ -563,7 +430,7 @@ contract AccessAdmin is
         _checkRoleId(roleId);
 
         // check role removal is permitted
-        if (_roleInfo[roleId].memberRemovalDisabled) {
+        if (_roleInfo[roleId].roleType == RoleType.Contract) {
             revert ErrorRoleRemovalDisabled(roleId);
         }
 
@@ -579,7 +446,7 @@ contract AccessAdmin is
     function _checkRoleId(RoleId roleId)
         internal
     {
-        if (!_roleInfo[roleId].exists) {
+        if (_roleInfo[roleId].createdAt.eqz()) {
             revert ErrorRoleUnknown(roleId);
         }
 
@@ -591,22 +458,11 @@ contract AccessAdmin is
         }
     }
 
-
-    function _checkRoleIsActive(RoleId roleId)
-        internal
-    {
-        if (isRoleDisabled(roleId)) {
-            revert ErrorRoleIsDisabled(roleId);
-        }
-    }
-
-
+    /// @dev Creates a role based on the provided parameters.
+    /// Checks that the provided role and role id and role name not already used.
     function _createRole(
         RoleId roleId, 
-        RoleId adminRoleId, 
-        string memory roleName,
-        uint256 maxMemberCount,
-        bool memberRemovalDisabled
+        RoleInfo memory info
     )
         internal
     {
@@ -618,84 +474,57 @@ contract AccessAdmin is
         }
 
         // check admin role exists
-        if(!roleExists(adminRoleId)) {
-            revert ErrorRoleAdminNotExisting(adminRoleId);
+        if(!roleExists(info.adminRoleId)) {
+            revert ErrorRoleAdminNotExisting(info.adminRoleId);
         }
 
         // check role name is not empty
-        Str name = StrLib.toStr(roleName);
-        if(name.length() == 0) {
+        if(info.name.length() == 0) {
             revert ErrorRoleNameEmpty(roleId);
         }
 
         // check role name is not used for another role
-        if(_roleForName[name].exists) {
+        if(_roleForName[info.name].exists) {
             revert ErrorRoleNameAlreadyExists(
                 roleId, 
-                roleName,
-                _roleForName[name].roleId);
+                info.name.toString(),
+                _roleForName[info.name].roleId);
         }
 
-        _createRoleUnchecked(
-            roleId, adminRoleId, 
-            name, 
-            maxMemberCount, 
-            memberRemovalDisabled);
-    }
-
-
-    function _setRoleDisabled(
-        RoleId roleId, 
-        bool disabled
-    )
-        internal
-    {
-
-        _checkRoleId(roleId);
-        Timestamp disabledAtOld = _roleInfo[roleId].disabledAt;
-
-        if (disabled) {
-            _roleInfo[roleId].disabledAt = TimestampLib.blockTimestamp();
-        } else {
-            _roleInfo[roleId].disabledAt = TimestampLib.max();
-        }
-
-        emit LogRoleDisabled(roleId, disabled, disabledAtOld);
+        _createRoleUnchecked(roleId, info);
     }
 
 
     function _createRoleUnchecked(
         RoleId roleId, 
-        RoleId adminRoleId, 
-        Str name,
-        uint256 maxMemberCount,
-        bool memberRemovalDisabled
+        RoleInfo memory info
     )
         private
     {
         // create role info
-        _roleInfo[roleId] = RoleInfo({
-            adminRoleId: adminRoleId,
-            name: name,
-            maxMemberCount: maxMemberCount,
-            memberRemovalDisabled: memberRemovalDisabled,
-            disabledAt: TimestampLib.max(),
-            exists: true});
+        info.createdAt = TimestampLib.blockTimestamp();
+        _roleInfo[roleId] = info;
 
         // create role name info
-        _roleForName[name] = RoleNameInfo({
+        _roleForName[info.name] = RoleNameInfo({
             roleId: roleId,
             exists: true});
 
         // add role to list of roles
         _roleIds.push(roleId);
 
-        emit LogRoleCreated(roleId, adminRoleId, name.toString());
+        emit LogRoleCreated(roleId, info.roleType, info.adminRoleId, info.name.toString());
     }
 
 
-    function _createTarget(address target, string memory targetName)
+    function _createTarget(
+        address target, 
+        string memory targetName, 
+        bool checkAuthority,
+        bool custom
+    )
         internal
+        nonReentrant()
     {
         // check target does not yet exist
         if(targetExists(target)) {
@@ -710,7 +539,7 @@ contract AccessAdmin is
             revert ErrorTargetNameEmpty(target);
         }
 
-        // check target name is not used for another role
+        // check target name is not used for another target
         if( _targetForName[name] != address(0)) {
             revert ErrorTargetNameAlreadyExists(
                 target, 
@@ -724,14 +553,17 @@ contract AccessAdmin is
         }
 
         // check target shares authority with this contract
-        address targetAuthority = AccessManagedUpgradeable(target).authority();
-        if (targetAuthority != authority()) {
-            revert ErrorTargetAuthorityMismatch(authority(), targetAuthority);
+        if (checkAuthority) {
+            address targetAuthority = AccessManagedUpgradeable(target).authority();
+            if (targetAuthority != authority()) {
+                revert ErrorTargetAuthorityMismatch(authority(), targetAuthority);
+            }
         }
 
         // create target info
         _targetInfo[target] = TargetInfo({
             name: name,
+            isCustom: custom,
             createdAt: TimestampLib.blockTimestamp()
         });
 

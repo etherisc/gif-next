@@ -37,4 +37,5 @@
         "titleBar.inactiveForeground": "#e7e7e799"
     },
     "asciidoc.antora.enableAntoraSupport": true,
+    "security.olympix.project.includePath": "/contracts",
 }

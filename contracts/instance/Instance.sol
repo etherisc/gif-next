@@ -8,7 +8,7 @@ import {Key32} from "../type/Key32.sol";
 import {NftId} from "../type/NftId.sol";
 import {RiskId} from "../type/RiskId.sol";
 import {ObjectType, BUNDLE, DISTRIBUTION, INSTANCE, POLICY, POOL, ROLE, PRODUCT, TARGET, COMPONENT, DISTRIBUTOR, DISTRIBUTOR_TYPE} from "../type/ObjectType.sol";
-import {RoleId, RoleIdLib, eqRoleId, ADMIN_ROLE, INSTANCE_ROLE, INSTANCE_OWNER_ROLE} from "../type/RoleId.sol";
+import {RoleId} from "../type/RoleId.sol";
 import {ClaimId} from "../type/ClaimId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {PayoutId} from "../type/PayoutId.sol";
@@ -19,7 +19,6 @@ import {VersionPart, VersionPartLib} from "../type/Version.sol";
 
 import {Registerable} from "../shared/Registerable.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
-import {AccessManagerExtendedInitializeable} from "../shared/AccessManagerExtendedInitializeable.sol";
 
 import {IRegistry} from "../registry/IRegistry.sol";
 
@@ -66,18 +65,44 @@ contract Instance is
         _;
     }
 
-    function initialize(address authority, address registryAddress, address initialOwner) 
+    function initialize(
+        InstanceAdmin instanceAdmin, 
+        InstanceStore instanceStore,
+        BundleManager bundleManager,
+        InstanceReader instanceReader,
+        IRegistry registry, 
+        address initialOwner
+    ) 
         external 
         initializer()
     {
-        if(authority == address(0)) {
+        _instanceAdmin = instanceAdmin;
+        if(_instanceAdmin.authority() == address(0)) {
+            // TODO rename error
             revert ErrorInstanceInstanceAdminZero();
         }
 
-        __AccessManaged_init(authority);
-        
-        IRegistry registry = IRegistry(registryAddress);
-        initializeRegisterable(registryAddress, registry.getNftId(), INSTANCE(), true, initialOwner, "");
+        // set authority to instance admin authority
+        __AccessManaged_init(_instanceAdmin.authority());
+
+        // setup instance object info
+        initializeRegisterable(
+            address(registry), 
+            registry.getNftId(), 
+            INSTANCE(), 
+            true, 
+            initialOwner, 
+            "");
+
+        // store instance supporting contracts
+        _instanceStore = instanceStore;
+        _bundleManager = bundleManager;
+        _instanceReader = instanceReader;
+
+        // initialize instance supporting contracts
+        _instanceStore.initialize();
+        _bundleManager.initialize();
+        _instanceReader.initialize();
 
         _instanceService = IInstanceService(
             getRegistry().getServiceAddress(
@@ -124,37 +149,36 @@ contract Instance is
 
     function createRole(string memory roleName, string memory adminName)
         external
-        // TODO decide if onlyOwner or restricted to instance owner role is better
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
         returns (RoleId roleId, RoleId admin)
     {
-        (roleId, admin) = _instanceAdmin.createRole(roleName, adminName);
+        // TODO refactor
+        // (roleId, admin) = _instanceAdmin.createRole(roleName, adminName);
     }
 
     function grantRole(RoleId roleId, address account) 
         external 
-        // TODO decide if onlyOwner or restricted to instance owner role is better
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
-        AccessManagerExtendedInitializeable(authority()).grantRole(roleId.toInt(), account, 0);
+        _instanceAdmin.grantRole(roleId, account);
     }
 
     function revokeRole(RoleId roleId, address account) 
         external 
-        // TODO decide if onlyOwner or restricted to instance owner role is better
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
-        AccessManagerExtendedInitializeable(authority()).revokeRole(roleId.toInt(), account);
+        // TODO refactor
+        // AccessManagerExtendedInitializeable(authority()).revokeRole(roleId.toInt(), account);
     }
 
     //--- Targets ------------------------------------------------------------//
 
     function createTarget(address target, string memory name) 
         external 
-        // TODO decide if onlyOwner or restricted to instance owner role is better
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
-        _instanceAdmin.createTarget(target, name);
+        // TODO refactor
+        // _instanceAdmin.createTarget(target, name);
     }
 
     function setTargetFunctionRole(
@@ -163,74 +187,45 @@ contract Instance is
         RoleId roleId
     ) 
         external 
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
-        _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
+        // TODO refactor
+        // _instanceAdmin.setTargetFunctionRoleByInstance(targetName, selectors, roleId);
     }
 
     function setTargetLocked(address target, bool locked)
         external 
-        restricted // INSTANCE_OWNER_ROLE
+        onlyOwner()
     {
-        _instanceAdmin.setTargetLockedByInstance(target, locked);
+        // TODO refactor
+        // _instanceAdmin.setTargetLockedByInstance(target, locked);
     }
 
     //--- ITransferInterceptor ----------------------------------------------//
 
     // TODO interception of child components nfts
     function nftMint(address to, uint256 tokenId) external onlyChainNft {
-        _instanceAdmin.transferInstanceOwnerRole(address(0), to);
+        // TODO refactor
+        // _instanceAdmin.transferInstanceOwnerRole(address(0), to);
     }
 
     function nftTransferFrom(address from, address to, uint256 tokenId) external onlyChainNft {
-        _instanceAdmin.transferInstanceOwnerRole(from, to);
+        // TODO refactor
+        // _instanceAdmin.transferInstanceOwnerRole(from, to);
     }
-
-    //function nftBurn(address from, uint256 tokenId) external onlyChainNft {
-        //_instanceAdmin.transferInstanceOwnerRole(from, address(0));
-    //}
 
     //--- initial setup functions -------------------------------------------//
 
-    function setInstanceAdmin(InstanceAdmin accessManager) external restricted {
-        if(address(_instanceAdmin) != address(0)) {
-            revert ErrorInstanceInstanceAdminAlreadySet(address(_instanceAdmin));
-        }
-        if(accessManager.authority() != authority()) {
-            revert ErrorInstanceInstanceAdminAuthorityMismatch(authority());
-        }
-        _instanceAdmin = accessManager;      
-    }
-    
-    function setBundleManager(BundleManager bundleManager) external restricted() {
-        if(address(_bundleManager) != address(0)) {
-            revert ErrorInstanceBundleManagerAlreadySet(address(_bundleManager));
-        }
-        if(bundleManager.getInstance() != Instance(this)) {
-            revert ErrorInstanceBundleManagerInstanceMismatch(address(this));
-        }
-        if(bundleManager.authority() != authority()) {
-            revert ErrorInstanceBundleManagerAuthorityMismatch(authority());
-        }
-        _bundleManager = bundleManager;
-    }
 
-    function setInstanceReader(InstanceReader instanceReader) external restricted() {
+    function setInstanceReader(InstanceReader instanceReader)
+        external
+        restricted()
+    {
         if(instanceReader.getInstance() != Instance(this)) {
             revert ErrorInstanceInstanceReaderInstanceMismatch(address(this));
         }
 
         _instanceReader = instanceReader;
-    }
-
-    function setInstanceStore(InstanceStore instanceStore) external restricted {
-        if(address(_instanceStore) != address(0)) {
-            revert ErrorInstanceInstanceStoreAlreadySet(address(_instanceStore));
-        }
-        if(instanceStore.authority() != authority()) {
-            revert ErrorInstanceInstanceStoreAuthorityMismatch(authority());
-        }
-        _instanceStore = instanceStore;
     }
 
     //--- external view functions -------------------------------------------//
@@ -245,10 +240,6 @@ contract Instance is
 
     function getInstanceAdmin() external view returns (InstanceAdmin) {
         return _instanceAdmin;
-    }
-
-    function getInstanceAccessManager() external view returns (AccessManagerExtendedInitializeable) {
-        return AccessManagerExtendedInitializeable(authority());
     }
 
     function getInstanceStore() external view returns (InstanceStore) {

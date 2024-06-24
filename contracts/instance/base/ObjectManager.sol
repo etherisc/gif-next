@@ -22,16 +22,15 @@ contract ObjectManager is
     mapping(NftId compnentNftId => LibNftIdSet.Set objects) internal _allObjects;
     IInstance internal _instance; // store instance address -> more flexible, instance may not be registered during ObjectManager initialization
 
-    /// @dev call to initialize MUST be made in the same transaction as cloning of the contract
-    function initialize(address instanceAddress) 
-        initializer
-        external 
+    /// @dev This initializer needs to be called from the instance itself.
+    function initialize() 
+        external
+        initializer()
     {
-        IInstance instance = IInstance(instanceAddress);
-        __Cloneable_init(instance.authority(), address(instance.getRegistry()));
-        _instance = instance;
+        _instance = IInstance(msg.sender);
+        __Cloneable_init(_instance.authority(), address(_instance.getRegistry()));
         
-        emit LogObjectManagerInitialized(instanceAddress);
+        emit LogObjectManagerInitialized(address(_instance));
     }
 
     function getInstance() external view returns (IInstance) {

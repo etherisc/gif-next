@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {Amount} from "../type/Amount.sol";
 import {BundleManager} from "./BundleManager.sol";
 import {Instance} from "./Instance.sol";
+import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
@@ -22,7 +23,6 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceComponentNotInstanceLinked(address component);
 
     error ErrorInstanceServiceMasterInstanceAlreadySet();
-    error ErrorInstanceServiceMasterInstanceAccessManagerAlreadySet();
     error ErrorInstanceServiceMasterInstanceAdminAlreadySet();
     error ErrorInstanceServiceMasterBundleManagerAlreadySet();
     error ErrorInstanceServiceInstanceAddressZero();
@@ -32,6 +32,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceReaderSameAsMasterInstanceReader();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch();
 
+    error ErrorInstanceServiceAccessManagerZero();
     error ErrorInstanceServiceInstanceAdminZero();
     error ErrorInstanceServiceInstanceReaderZero();
     error ErrorInstanceServiceBundleManagerZero();
@@ -49,15 +50,7 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceInstanceComponentMismatch(NftId instanceNftId, NftId componentNftId);
     error ErrorInstanceServiceInvalidComponentType(address componentAddress, ObjectType expectedType, ObjectType componentType);
     
-    event LogInstanceCloned(
-        address clonedOzAccessManager,
-        address clonedInstanceAccessManager,
-        address clonedInstance,
-        address clonedInstanceStore,
-        address clonedBundleManager, 
-        address clonedInstanceReader, 
-        NftId clonedInstanceNftId
-    );
+    event LogInstanceCloned(NftId instanceNftId, address instance);
 
     function createInstanceClone()
         external 
@@ -72,10 +65,12 @@ interface IInstanceService is IService {
     function setStakingRewardRate(UFixed rewardRate) external;
     function refillStakingRewardReserves(address rewardProvider, Amount dipAmount) external;
 
-    /// @dev defunds the staking reward reserves for the specified target
-    /// permissioned: only the target owner may call this function
+    /// @dev Defunds the staking reward reserves for the specified target.
     function withdrawStakingRewardReserves(Amount dipAmount) external returns (Amount newBalance);
 
+    /// @dev Sets up the component authorization for the specified instance.
+    /// The authorization is based on the authz specification provided by the component via getAuthorization.
+    function initializeAuthorization(NftId instanceNftId, IInstanceLinkedComponent component) external;
 
     function createComponentTarget(
         NftId instanceNftId,

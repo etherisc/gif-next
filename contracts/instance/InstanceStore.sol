@@ -37,11 +37,15 @@ contract InstanceStore is
     ObjectCounter,
     ObjectLifecycle
 {
-    function initialize(address instance)
+
+    /// @dev This initializer needs to be called from the instance itself.
+    function initialize()
         public 
         initializer()
     {
+        address instance = msg.sender;
         address authority = IInstance(instance).authority();
+
         __AccessManaged_init(authority);
         // double initialization, safe
         _initializeLifecycle();

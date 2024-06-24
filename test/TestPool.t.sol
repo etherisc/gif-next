@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
+import {BasicPoolAuthorization} from "../contracts/pool/BasicPoolAuthorization.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
@@ -27,10 +28,7 @@ contract TestPool is GifTest {
             address(registry),
             instanceNftId,
             address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
 
@@ -56,7 +54,7 @@ contract TestPool is GifTest {
 
     function test_PoolComponentAndPoolInfo() public {
         vm.startPrank(instanceOwner);
-        instanceAccessManager.grantRole(POOL_OWNER_ROLE().toInt(), poolOwner, 0);
+        instance.grantRole(POOL_OWNER_ROLE(), poolOwner);
         vm.stopPrank();
 
         vm.startPrank(poolOwner);
@@ -65,10 +63,7 @@ contract TestPool is GifTest {
             address(registry),
             instanceNftId,
             address(token),
-            false,
-            false,
-            UFixedLib.toUFixed(1),
-            UFixedLib.toUFixed(1),
+            new BasicPoolAuthorization("SimplePool"),
             poolOwner
         );
 

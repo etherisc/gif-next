@@ -9,10 +9,10 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Component} from "./Component.sol";
 import {IComponentService} from "./IComponentService.sol";
 import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
+import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {NftId} from "../type/NftId.sol";
@@ -35,6 +35,27 @@ abstract contract InstanceLinkedComponent is
     struct InstanceLinkedComponentStorage {
         IInstance _instance; // instance for this component
         InstanceReader _instanceReader; // instance reader for this component
+        IAuthorization _initialAuthorization;
+    }
+
+    function lock() external onlyOwner {
+        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
+    }
+    
+    function unlock() external onlyOwner {
+        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
+    }
+
+    function getInstance() public view override returns (IInstance instance) {
+        return _getInstanceLinkedComponentStorage()._instance;
+    }
+
+    function getProductNftId() public view override returns (NftId productNftId) {
+        return getComponentInfo().productNftId;
+    }
+
+    function getAuthorization() external view returns (IAuthorization authorization) {
+        return _getInstanceLinkedComponentStorage()._initialAuthorization;
     }
 
     function _getInstanceLinkedComponentStorage() private pure returns (InstanceLinkedComponentStorage storage $) {
@@ -43,18 +64,19 @@ abstract contract InstanceLinkedComponent is
         }
     }
 
-    function initializeInstanceLinkedComponent(
+    function _initializeInstanceLinkedComponent(
         address registry,
         NftId instanceNftId,
         string memory name,
         address token,
         ObjectType componentType,
+        IAuthorization authorization,
         bool isInterceptor,
         address initialOwner,
         bytes memory registryData, // writeonly data that will saved in the object info record of the registry
         bytes memory componentData // data that will saved with the component info in the instance store
     )
-        public
+        internal
         virtual
         onlyInitializing()
     {
@@ -82,6 +104,7 @@ abstract contract InstanceLinkedComponent is
 
         // set component state
         $._instanceReader = $._instance.getInstanceReader();
+        $._initialAuthorization = authorization;
 
         registerInterface(type(IAccessManaged).interfaceId);
         registerInterface(type(IInstanceLinkedComponent).interfaceId);
@@ -91,22 +114,6 @@ abstract contract InstanceLinkedComponent is
     /// updating needs to go throug component service
     function _setWallet(address newWallet) internal virtual override onlyOwner {
         IComponentService(_getServiceAddress(COMPONENT())).setWallet(newWallet);
-    }
-
-    function lock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(true);
-    }
-    
-    function unlock() external onlyOwner {
-        IInstanceService(_getServiceAddress(INSTANCE())).setComponentLocked(false);
-    }
-
-    function getInstance() public view override returns (IInstance instance) {
-        return _getInstanceLinkedComponentStorage()._instance;
-    }
-
-    function getProductNftId() public view override returns (NftId productNftId) {
-        return getComponentInfo().productNftId;
     }
 
 
