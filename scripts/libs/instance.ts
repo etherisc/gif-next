@@ -135,14 +135,16 @@ export async function deployAndRegisterMasterInstance(
     );
     const masterInstance = masterInstanceBaseContract as Instance;
 
-    await executeTx(() => masterInstance.initialize(
-        masterInstanceAdmin,
-        masterInstanceStore,
-        masterInstanceBundleManager,
-        masterInstanceReader,
-        registry.registryAddress, 
-        resolveAddress(owner),
-        getTxOpts()));
+    await executeTx(
+        () => masterInstance.initialize(
+            masterInstanceAdmin,
+            masterInstanceStore,
+            masterInstanceBundleManager,
+            masterInstanceReader,
+            registry.registryAddress, 
+            resolveAddress(owner),
+            getTxOpts()),
+        "masterInstance initialize");
 
     const rcpt = await executeTx(
         () => services.instanceService.setAndRegisterMasterInstance(
