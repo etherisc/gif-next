@@ -109,6 +109,9 @@ export class DeploymentState {
     }
 
     private persistState() {
+        if (hre.network.config.chainId === 31337) {
+            return;
+        }
         const json = JSON.stringify(this.state);
         fs.writeFileSync(deploymentFilename(), json);
     }

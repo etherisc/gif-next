@@ -27,6 +27,9 @@ export function saveVerificationData(args: any) {
 }
 
 function persistState() {
+    if (hre.network.config.chainId === 31337) {
+        return;
+    }
     const json = JSON.stringify(VERIFICATION_DATA_STATE);
     fs.writeFileSync(verificationQueueFilename(), json);
 }

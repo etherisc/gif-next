@@ -321,6 +321,9 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 }
 
 function dumpLibraryAddressesToFile(addresses: Map<string, AddressLike>): void {
+    if (hre.network.config.chainId === 31337) {
+        return;
+    }
     const data = JSON.stringify(Object.fromEntries(addresses), null, 2);
     fs.writeFileSync(`./libraries_${hre.network.config.chainId}.json`, data);
 }

@@ -212,6 +212,7 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
     } as InstanceAddresses;
 }
 
+// TODO: move to new_instance.ts
 export async function cloneInstanceFromRegistry(registryAddress: AddressLike, instanceOwner: Signer): Promise<InstanceAddresses> {
     const registry = IRegistry__factory.connect(await resolveAddress(registryAddress), instanceOwner);
     const instanceServiceAddress = await registry.getServiceAddress("InstanceService", 3);

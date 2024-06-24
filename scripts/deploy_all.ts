@@ -2,12 +2,12 @@ import { AddressLike, resolveAddress } from "ethers";
 import { ethers } from "hardhat";
 import { ChainNft__factory, IRegistry__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance, validateNftOwnerhip } from "./libs/accounts";
+import { InstanceAddresses, MASTER_INSTANCE_OWNER, cloneInstance, deployAndRegisterMasterInstance } from "./libs/instance";
 import { LibraryAddresses, deployLibraries } from "./libs/libraries";
 import { RegistryAddresses, deployAndInitializeRegistry } from "./libs/registry";
-import { logger } from "./logger";
-import { InstanceAddresses, MASTER_INSTANCE_OWNER, cloneInstance, cloneInstanceFromRegistry, deployAndRegisterMasterInstance } from "./libs/instance";
 import { ServiceAddresses, deployAndRegisterServices } from "./libs/services";
 import { loadVerificationQueueState } from "./libs/verification_queue";
+import { logger } from "./logger";
 
 
 async function main() {
@@ -25,7 +25,7 @@ async function main() {
 
     // const clonedInstance = await cloneInstance(masterInstance, libraries, registry, services, instanceOwner);
     logger.info("--- cloning instance as instance owner ---");
-    const clonedInstance = await cloneInstanceFromRegistry(registry.registry, instanceOwner);
+    const clonedInstance = await cloneInstance(masterInstance, libraries, registry, services, instanceOwner);
 
     // await grantRole(instanceOwner, libraries, instance, Role.POOL_OWNER_ROLE, poolOwner);
     // await grantRole(instanceOwner, libraries, instance, Role.DISTRIBUTION_OWNER_ROLE, distributionOwner);
