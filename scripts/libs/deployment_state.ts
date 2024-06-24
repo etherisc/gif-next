@@ -109,7 +109,7 @@ export class DeploymentState {
     }
 
     private persistState() {
-        if (hre.network.config.chainId === 31337) {
+        if (isTestChain()) {
             return;
         }
         const json = JSON.stringify(this.state);
@@ -117,11 +117,19 @@ export class DeploymentState {
     }
 }
 
+export function isTestChain(): boolean {
+    return hre.network.config.chainId === 31337;
+}
+
 function deploymentFilename(): string {
     return DEPLOYMENT_STATE_FILENAME + "_" + hre.network.config.chainId + DEPLOYMENT_STATE_FILENAME_SUFFIX;
 }
 
-const deploymentStateFromFile = fs.existsSync(deploymentFilename()) ? JSON.parse(fs.readFileSync(deploymentFilename()).toString()) : null;
+let deploymentStateFromFile = null;
+if (!isTestChain()) {
+    deploymentStateFromFile = fs.existsSync(deploymentFilename()) ? JSON.parse(fs.readFileSync(deploymentFilename()).toString()) : null;
+    
+}
 export const deploymentState = new DeploymentState(deploymentStateFromFile);
 
 export const isResumeableDeployment = process.env.RESUMEABLE_DEPLOYMENT?.toLowerCase() === "true";

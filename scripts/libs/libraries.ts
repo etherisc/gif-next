@@ -3,6 +3,7 @@ import fs from 'fs';
 import hre from 'hardhat';
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
+import { isTestChain } from "./deployment_state";
 
 export type LibraryAddresses = {
     nftIdLibAddress: AddressLike;
@@ -321,7 +322,7 @@ export async function deployLibraries(owner: Signer): Promise<LibraryAddresses> 
 }
 
 function dumpLibraryAddressesToFile(addresses: Map<string, AddressLike>): void {
-    if (hre.network.config.chainId === 31337) {
+    if (isTestChain()) {
         return;
     }
     const data = JSON.stringify(Object.fromEntries(addresses), null, 2);
