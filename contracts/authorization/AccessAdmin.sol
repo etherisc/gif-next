@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {AccessManagedUpgradeable} from "@openzeppelin/contracts-upgradeable/access/manager/AccessManagedUpgradeable.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 
 import {AccessManagerCloneable} from "./AccessManagerCloneable.sol";
 import {IAccessAdmin} from "./IAccessAdmin.sol";
@@ -19,6 +20,7 @@ import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
  */ 
 contract AccessAdmin is
     AccessManagedUpgradeable,
+    ReentrancyGuardUpgradeable,
     IAccessAdmin
 {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -522,6 +524,7 @@ contract AccessAdmin is
         bool custom
     )
         internal
+        nonReentrant()
     {
         // check target does not yet exist
         if(targetExists(target)) {
