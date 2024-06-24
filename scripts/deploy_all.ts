@@ -190,7 +190,7 @@ function printAddresses(
     addresses += `--------\n`;
     addresses += `MASTER_INSTANCE_ADDRESS=${masterInstance.instanceAddress}\n`;
     addresses += `MASTER_INSTANCE_NFT_ID=${masterInstance.instanceNftId}\n`;
-    addresses += `MASTER_INSTANCE_ACCESS_MANAGER_ADDRESS=${masterInstance.accessManagerAddress}\n`;
+    addresses += `MASTER_INSTANCE_AUTHORIZATION_V3_ADDRESS=${masterInstance.instanceAuthorizationV3Address}\n`;
     addresses += `MASTER_INSTANCE_ADMIN_ADDRESS=${masterInstance.instanceAdminAddress}\n`;
     addresses += `MASTER_BUNDLE_MANAGER_ADDRESS=${masterInstance.instanceBundleManagerAddress}\n`;
     addresses += `MASTER_INSTANCE_READER_ADDRESS=${masterInstance.instanceReaderAddress}\n`;
@@ -198,10 +198,10 @@ function printAddresses(
     addresses += `--------\n`;
     addresses += `CLONED_INSTANCE_ADDRESS=${clonedInstance.instanceAddress}\n`;
     addresses += `CLONED_INSTANCE_NFT_ID=${clonedInstance.instanceNftId}\n`;
-    addresses += `CLONED_INSTANCE_ACCESS_MANAGER_ADDRESS=${clonedInstance.accessManagerAddress}\n`;
     addresses += `CLONED_INSTANCE_ADMIN_ADDRESS=${clonedInstance.instanceAdminAddress}\n`;
     addresses += `CLONED_BUNDLE_MANAGER_ADDRESS=${clonedInstance.instanceBundleManagerAddress}\n`;
     addresses += `CLONED_INSTANCE_READER_ADDRESS=${clonedInstance.instanceReaderAddress}\n`;
+    addresses += `CLONED_INSTANCE_STORE_ADDRESS=${clonedInstance.instanceStoreAddress}\n`;
     addresses += `--------\n`;
     // addresses += `tokenAddress: ${tokenAddress}\n`;
     // addresses += `poolAddress: ${poolAddress}\n`;

@@ -1,5 +1,5 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleManager, InstanceAuthorizationV3, IRegistry__factory, Instance, InstanceAdmin, InstanceService__factory, InstanceReader, InstanceStore } from "../../typechain-types";
+import { BundleManager, InstanceAuthorizationV3, IRegistry__factory, Instance, InstanceAdmin, InstanceService__factory, InstanceReader, InstanceStore, IInstance__factory } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -195,22 +195,25 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
         "instanceService createInstanceClone"
     );
 
-    const clonedInstanceAdminAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAdmin");
-    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstance");
-    const clonedBundleManagerAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedBundleManager");
-    const clonedInstanceReaderAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceReader");
-    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceNftId");
+    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instance");
+    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instanceNftId");
+    const clonedInstance = IInstance__factory.connect(clonedInstanceAddress as string, instanceOwner);
+    const clonedInstanceAdminAddress = await clonedInstance.getInstanceAdmin();
+    const clonedInstanceStoreAddress = await clonedInstance.getInstanceStore();
+    const clonedInstanceBundleManagerAddress = await clonedInstance.getBundleManager();
+    const clonedInstanceReaderAddress = await clonedInstance.getInstanceReader();
     
     logger.info(`instance cloned - clonedInstanceNftId: ${clonedInstanceNftId}`);
 
     logger.info("======== Finished cloning of instance ========");
     
     return {
-        instanceAdminAddress: clonedInstanceAdminAddress,
         instanceAddress: clonedInstanceAddress,
-        instanceBundleManagerAddress: clonedBundleManagerAddress,
-        instanceReaderAddress: clonedInstanceReaderAddress,
         instanceNftId: clonedInstanceNftId as string,
+        instanceAdminAddress: clonedInstanceAdminAddress,
+        instanceReaderAddress: clonedInstanceReaderAddress,
+        instanceBundleManagerAddress: clonedInstanceBundleManagerAddress,
+        instanceStoreAddress: clonedInstanceStoreAddress,
     } as InstanceAddresses;
 }
 
