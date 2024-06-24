@@ -1,5 +1,5 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleManager, InstanceAuthorizationV3, IRegistry__factory, Instance, InstanceAdmin, InstanceService__factory, InstanceReader, InstanceStore, IInstance__factory } from "../../typechain-types";
+import { BundleManager, IInstance__factory, Instance, InstanceAdmin, InstanceAuthorizationV3, InstanceReader, InstanceService__factory, InstanceStore } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -217,19 +217,3 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
     } as InstanceAddresses;
 }
 
-// TODO: move to new_instance.ts
-export async function cloneInstanceFromRegistry(registryAddress: AddressLike, instanceOwner: Signer): Promise<InstanceAddresses> {
-    const registry = IRegistry__factory.connect(await resolveAddress(registryAddress), instanceOwner);
-    const instanceServiceAddress = await registry.getServiceAddress("InstanceService", 3);
-    const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(instanceServiceAddress), instanceOwner);
-    const cloneTx = await executeTx(async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone(getTxOpts()));
-    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceAddress");
-    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "clonedInstanceNftId");
-    
-    logger.info(`instance cloned - clonedInstanceNftId: ${clonedInstanceNftId}`);
-    
-    return {
-        instanceAddress: clonedInstanceAddress,
-        instanceNftId: clonedInstanceNftId as string,
-    } as InstanceAddresses;
-}

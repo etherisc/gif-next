@@ -67,7 +67,9 @@ export async function executeTx(
     }
 
     const txResp = await txFunc();
-    deploymentState.setTransactionId(txId!, txResp.hash);
+    if (txId !== null) {
+        deploymentState.setTransactionId(txId!, txResp.hash);
+    }
     const tx = await txResp.wait();
     logger.debug(`tx mined. hash: ${tx?.hash} status: ${tx?.status}`);
     if (tx === null) {

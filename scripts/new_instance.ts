@@ -1,5 +1,8 @@
+import { AddressLike, Signer, resolveAddress } from "ethers";
+import { IRegistry__factory, InstanceService__factory } from "../typechain-types";
 import { getNamedAccounts, printBalance } from "./libs/accounts";
-import { InstanceAddresses, cloneInstanceFromRegistry } from "./libs/instance";
+import { InstanceAddresses } from "./libs/instance";
+import { executeTx, getTxOpts, getFieldFromLogs } from "./libs/transaction";
 import { logger } from "./logger";
 
 
@@ -20,6 +23,25 @@ async function main() {
         );
 }
 
+export async function cloneInstanceFromRegistry(registryAddress: AddressLike, instanceOwner: Signer): Promise<InstanceAddresses> {
+    const registry = IRegistry__factory.connect(await resolveAddress(registryAddress), instanceOwner);
+    const instanceServiceAddress = await registry.getServiceAddress(10, 3); // ObjectType = Instance (10) and majorVersion = 3 
+    const instanceServiceAsClonedInstanceOwner = InstanceService__factory.connect(await resolveAddress(instanceServiceAddress), instanceOwner);
+    logger.info(`instanceServiceAddress: ${instanceServiceAddress}`);
+    logger.info(`Creating new instance ...`);
+    const cloneTx = await executeTx(
+        async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone(getTxOpts())
+    );
+    const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instance");
+    const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instanceNftId");
+    
+    logger.info(`instanceNftId: ${clonedInstanceNftId} instanceAddress: ${clonedInstanceAddress}`);
+    
+    return {
+        instanceAddress: clonedInstanceAddress,
+        instanceNftId: clonedInstanceNftId as string,
+    } as InstanceAddresses;
+}
 
 function printInstanceAddress(
     clonedInstance: InstanceAddresses,
