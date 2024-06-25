@@ -1,6 +1,6 @@
 # InstanceService sequences
 
-## createInstanceClone
+## createInstance
 
 ```mermaid
 sequenceDiagram
@@ -15,7 +15,7 @@ sequenceDiagram
     participant IAL as InstanceAuthorizationsLib
     participant RS as RegistryService
     
-    O ->> IS: createInstanceClone()
+    O ->> IS: createInstance()
     IS ->> OAM: deploy clone
     IS ->> OAM: initialize(owner)
     IS ->> I: deploy clone

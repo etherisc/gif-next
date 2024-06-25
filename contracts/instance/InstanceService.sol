@@ -94,7 +94,7 @@ contract InstanceService is
         _;
     }
 
-    function createInstanceClone()
+    function createInstance()
         external 
         returns (
             Instance clonedInstance,

@@ -91,7 +91,7 @@ contract TestInstanceService is GifTest {
         instanceService.upgradeInstanceReader(instanceNftId);
     }
 
-    function test_createInstanceClone_checkPermissions() public {
+    function test_createInstance_checkPermissions() public {
         // GIVEN
         address user = makeAddr("user");
         vm.startPrank(user);
@@ -100,7 +100,7 @@ contract TestInstanceService is GifTest {
         (
             IInstance newInstance,
             NftId newInstanceNftId
-        ) = instanceService.createInstanceClone();
+        ) = instanceService.createInstance();
 
         // THEN - check permissions
         InstanceAdmin newInstanceAdmin = newInstance.getInstanceAdmin();

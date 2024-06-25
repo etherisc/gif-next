@@ -391,7 +391,7 @@ contract GifTest is GifDeployer {
         ( 
             instance,
             instanceNftId
-        ) = instanceService.createInstanceClone();
+        ) = instanceService.createInstance();
 
         instanceAdmin = instance.getInstanceAdmin();
         instanceReader = instance.getInstanceReader();
