@@ -2,8 +2,12 @@
 pragma solidity ^0.8.20;
 
 import {GifTest} from "../base/GifTest.sol";
-import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
+import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {IInstanceService} from "../../contracts/instance/IInstanceService.sol";
+import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
+import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
+import {NftId} from "../../contracts/type/NftId.sol";
+import {PRODUCT_OWNER_ROLE, POOL_OWNER_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE} from "../../contracts/type/RoleId.sol";
 
 contract TestInstanceService is GifTest {
 
@@ -18,7 +22,9 @@ contract TestInstanceService is GifTest {
         instanceService.upgradeMasterInstanceReader(address(newMasterInstanceReader));
 
         // THEN
-        assertEq(address(newMasterInstanceReader), instanceService.getMasterInstanceReader(), "master instance reader not set");
+        assertEq(
+            address(newMasterInstanceReader), 
+            instanceService.getMasterInstanceReader(), "master instance reader not set");
     }
 
     function test_upgradeMasterInstanceReaderNotMasterInstance() public {
@@ -83,6 +89,25 @@ contract TestInstanceService is GifTest {
 
         // WHEN
         instanceService.upgradeInstanceReader(instanceNftId);
+    }
+
+    function test_createInstanceClone_checkPermissions() public {
+        // GIVEN
+        address user = makeAddr("user");
+        vm.startPrank(user);
+
+        // WHEN
+        (
+            IInstance newInstance,
+            NftId newInstanceNftId
+        ) = instanceService.createInstanceClone();
+
+        // THEN - check permissions
+        InstanceAdmin newInstanceAdmin = newInstance.getInstanceAdmin();
+        assertTrue(newInstanceAdmin.hasRole(user, PRODUCT_OWNER_ROLE()));
+        assertTrue(newInstanceAdmin.hasRole(user, POOL_OWNER_ROLE()));
+        assertTrue(newInstanceAdmin.hasRole(user, DISTRIBUTION_OWNER_ROLE()));
+        assertTrue(newInstanceAdmin.hasRole(user, ORACLE_OWNER_ROLE()));
     }
 
 
