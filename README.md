@@ -128,15 +128,26 @@ await provider.getBalance(me)
 
 https://hardhat.org/hardhat-runner/docs/guides/compile-contracts
 
-### ANTLR based checker to find methods that should be restricted but are not
+### Scripts to find syntax bugs in code
+
+#### find methods missing the `restricted` modifier
 
 ```bash
 hh run scripts/find_unrestricted_methods.ts.ts
 ```
 
+Checks all public/external methods in services and components for methods that are missing the `restricted` modifier but should have one.
+
 The script `find_unrestricted_methods.ts` is based on the ANTLR grammar `Solidity.g4` (from https://github.com/solidity-parser/antlr) and uses the antlr4ng runtime (https://github.com/mike-lischke/antlr4ng).
 To compile grammar to ts classes run `antlr4ng -Dlanguage=TypeScript -o antlr/generated/ -visitor -listener  antlr/Solidity.g4` (requires openjdk to be installed `sudo apt install openjdk-17-jre-headless`).
 
+#### find methods missing the `virtual` keyword
+
+```bash
+hh run scripts/find_missing_virtual_methods.ts.ts
+```
+
+Checks all public/external methods in services and components for methods that are not marked as `virtual` but should be.
 
 ## Forge 
 
