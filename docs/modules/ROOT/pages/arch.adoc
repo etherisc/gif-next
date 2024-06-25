@@ -40,7 +40,7 @@ NOTE: This document is under construction
 - Instance contracts are non upgradable
 - Instance contracts support minor and patch updates of services
 - Instance contracts do not support major updates of services
-- New instances are created by the instancer owner calling `InstanceService.createInstanceClone`
+- New instances are created by the instancer owner calling `InstanceService.createInstance`
 - Transactional operations (writing) are only via services
 - Read access to the instance is done through the `InstanceReader` and/or services
 - Every instance has its own `AuthorizationManager` for managing authorizations

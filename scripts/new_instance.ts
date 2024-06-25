@@ -30,7 +30,7 @@ export async function cloneInstanceFromRegistry(registryAddress: AddressLike, in
     logger.info(`instanceServiceAddress: ${instanceServiceAddress}`);
     logger.info(`Creating new instance ...`);
     const cloneTx = await executeTx(
-        async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone(getTxOpts())
+        async () => await instanceServiceAsClonedInstanceOwner.createInstance(getTxOpts())
     );
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instance");
     const clonedInstanceNftId = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instanceNftId");

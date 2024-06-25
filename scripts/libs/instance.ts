@@ -190,9 +190,9 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
     logger.debug(`cloning master instance ${masterInstance.instanceAddress} ...`);
 
     const cloneTx = await executeTx(
-        async () => await instanceServiceAsClonedInstanceOwner.createInstanceClone(
+        async () => await instanceServiceAsClonedInstanceOwner.createInstance(
             getTxOpts()),
-        "instanceService createInstanceClone"
+        "instanceService createInstance"
     );
 
     const clonedInstanceAddress = getFieldFromLogs(cloneTx.logs, instanceServiceAsClonedInstanceOwner.interface, "LogInstanceCloned", "instance");

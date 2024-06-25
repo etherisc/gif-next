@@ -1,6 +1,6 @@
 # InstanceService sequences
 
-## createInstanceClone
+## createInstance
 
 ```mermaid
 sequenceDiagram
