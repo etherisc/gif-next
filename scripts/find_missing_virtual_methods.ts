@@ -35,9 +35,9 @@ function parseContract(file: string) {
 
 const RELEVANT_BASE_CONTRACTS = [
     'Service',
-    'AccessManagedUpgradeable',
-    'AccessManaged',
-    'ObjectManager',
+    // 'AccessManagedUpgradeable',
+    // 'AccessManaged',
+    // 'ObjectManager',
     'Component',
     'InstanceLinkedComponent',
     'ComponentVerifyingService'
@@ -49,11 +49,11 @@ class RestrictedMissingListener extends SolidityListener {
     isRelevant = false;
     isPublic = false;
     isExternal = false;
-    isRestricted = false;
-    isView = false;
-    isPure = false;
+    isVirtual = false;
     functionDescriptor = '';
     modifierList = '';
+
+    // Service, AccessManagedUpgradeable, AccessManaged, ObjectManager, Component, InstanceLinkedComponent, ComponentVerifyingService
 
     public enterContractDefinition = (/*ctx: FunctionDefinitionContext*/) => {
         this.isRelevant = false;
@@ -70,9 +70,7 @@ class RestrictedMissingListener extends SolidityListener {
         // console.log(`Entering function definition ${ctx.getText()}`);
         this.isPublic = false;
         this.isExternal = false;
-        this.isRestricted = false;
-        this.isView = false;
-        this.isPure = false;
+        this.isVirtual = false;
         this.functionDescriptor = '';
         this.modifierList = '';
     }
@@ -82,10 +80,9 @@ class RestrictedMissingListener extends SolidityListener {
         if (
             this.isRelevant 
             && (this.isPublic || this.isExternal) 
-            && (! this.isView && ! this.isPure)
-            && ! this.isRestricted)  {
+            && ! this.isVirtual)  {
             // console.log(`Function ${this.functionDescriptor} ${this.modifierList} without restricted modifier`);
-            this.findings += `Function '${this.functionDescriptor}' |${this.modifierList}| without restricted modifier\n`;
+            this.findings += `Function '${this.functionDescriptor}' |${this.modifierList}| missing virtual modifier\n`;
         }
     }
 
@@ -107,27 +104,11 @@ class RestrictedMissingListener extends SolidityListener {
         if (ctx.getTokens(SolidityParser.ExternalKeyword).length > 0) {
             this.isExternal = true;
         }
+        if (ctx.getTokens(SolidityParser.VirtualKeyword).length > 0) {
+            this.isVirtual = true;
+        }
         this.modifierList = ctx.getText();
         // console.log(`--1`);
-    }
-
-    public exitStateMutability = (ctx: StateMutabilityContext) => {
-        if (ctx.getTokens(SolidityParser.PureKeyword).length > 0) {
-            this.isPure = true;
-        }
-        if (ctx.getTokens(SolidityParser.ViewKeyword).length > 0) {
-            this.isView = true;
-            // console.log(`View function ${this.functionDescriptor}`);
-        }
-    }
-
-    public exitModifierInvocation = (ctx: ModifierInvocationContext) => {
-        // console.log(`--2`);
-        // console.log(ctx.getText());
-        if (ctx.getText() === "restricted()") {
-            this.isRestricted = true;
-        }
-        // console.log(`--3`);
     }
 
 }
