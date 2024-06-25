@@ -10,17 +10,17 @@ import {IRegistry} from "../../registry/IRegistry.sol";
 import {LibNftIdSet} from "../../type/NftIdSet.sol";
 import {NftId} from "../../type/NftId.sol";
 
-contract ObjectManager is
+contract ObjectSet is
     Cloneable
 {
 
-    event LogObjectManagerInitialized(address instance);
+    event LogObjectSetInitialized(address instance);
 
-    error ErrorObjectManagerNftIdInvalid(NftId instanceNftId);
+    error ErrorObjectSetNftIdInvalid(NftId instanceNftId);
 
     mapping(NftId compnentNftId => LibNftIdSet.Set objects) internal _activeObjects;
     mapping(NftId compnentNftId => LibNftIdSet.Set objects) internal _allObjects;
-    IInstance internal _instance; // store instance address -> more flexible, instance may not be registered during ObjectManager initialization
+    IInstance internal _instance; // store instance address -> more flexible, instance may not be registered during ObjectSet initialization
 
     /// @dev This initializer needs to be called from the instance itself.
     function initialize() 
@@ -30,7 +30,7 @@ contract ObjectManager is
         _instance = IInstance(msg.sender);
         __Cloneable_init(_instance.authority(), address(_instance.getRegistry()));
         
-        emit LogObjectManagerInitialized(address(_instance));
+        emit LogObjectSetInitialized(address(_instance));
     }
 
     function getInstance() external view returns (IInstance) {

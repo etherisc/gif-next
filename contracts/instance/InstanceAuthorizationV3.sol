@@ -9,7 +9,7 @@ import {
      ADMIN_ROLE, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE
 } from "../../contracts/type/RoleId.sol";
 
-import {BundleManager} from "../instance/BundleManager.sol"; 
+import {BundleSet} from "../instance/BundleSet.sol"; 
 import {IAccess} from "../authorization/IAccess.sol";
 import {Instance} from "../instance/Instance.sol";
 import {InstanceAdmin} from "../instance/InstanceAdmin.sol";
@@ -26,7 +26,7 @@ contract InstanceAuthorizationV3
      string public constant INSTANCE_TARGET_NAME = "Instance";
      string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
      string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
-     string public constant BUNDLE_MANAGER_TARGET_NAME = "BundleManager";
+     string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
 
      string public constant INSTANCE_ROLE_NAME = "InstanceRole";
      string public constant DISTRIBUTION_OWNER_ROLE_NAME = "DistributionOwnerRole";
@@ -61,7 +61,7 @@ contract InstanceAuthorizationV3
           // instance supporting targets
           _addTarget(INSTANCE_STORE_TARGET_NAME);
           _addTarget(INSTANCE_ADMIN_TARGET_NAME);
-          _addTarget(BUNDLE_MANAGER_TARGET_NAME);
+          _addTarget(BUNDLE_SET_TARGET_NAME);
 
           // service targets relevant to instance
           _addServiceTargetWithRole(INSTANCE());
@@ -84,22 +84,22 @@ contract InstanceAuthorizationV3
           _setupInstanceAuthorization();
           _setupInstanceAdminAuthorization();
           _setupInstanceStoreAuthorization();
-          _setupBundleManagerAuthorization();
+          _setupBundleSetAuthorization();
      }
 
 
-     function _setupBundleManagerAuthorization()
+     function _setupBundleSetAuthorization()
           internal
      {
           IAccess.FunctionInfo[] storage functions;
 
           // authorize bundle service role
-          functions = _authorizeForTarget(BUNDLE_MANAGER_TARGET_NAME, getServiceRole(BUNDLE()));
-          _authorize(functions, BundleManager.linkPolicy.selector, "linkPolicy");
-          _authorize(functions, BundleManager.unlinkPolicy.selector, "unlinkPolicy");
-          _authorize(functions, BundleManager.add.selector, "add");
-          _authorize(functions, BundleManager.lock.selector, "lock");
-          _authorize(functions, BundleManager.unlock.selector, "unlock");
+          functions = _authorizeForTarget(BUNDLE_SET_TARGET_NAME, getServiceRole(BUNDLE()));
+          _authorize(functions, BundleSet.linkPolicy.selector, "linkPolicy");
+          _authorize(functions, BundleSet.unlinkPolicy.selector, "unlinkPolicy");
+          _authorize(functions, BundleSet.add.selector, "add");
+          _authorize(functions, BundleSet.lock.selector, "lock");
+          _authorize(functions, BundleSet.unlock.selector, "unlock");
      }
 
 

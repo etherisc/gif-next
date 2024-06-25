@@ -12,7 +12,7 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 
 import {IRegistry} from "./IRegistry.sol";
 import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
-import {ReleaseManager} from "./ReleaseManager.sol";
+import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 
 
@@ -49,7 +49,7 @@ contract TokenRegistry is
     TokenInfo [] internal _token;
 
     IRegistry internal _registry;
-    ReleaseManager internal _releaseManager;
+    ReleaseRegistry internal _releaseRegistry;
     IERC20Metadata internal _dipToken;
 
     /// @dev enforces msg.sender is owner of nft (or initial owner of nft ownable)

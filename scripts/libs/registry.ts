@@ -4,7 +4,7 @@ import {
     Dip,
     Registry,
     RegistryAdmin,
-    ReleaseManager,
+    ReleaseRegistry,
     ServiceAuthorizationV3,
     Staking, StakingManager,
     StakingReader,
@@ -36,8 +36,8 @@ export type RegistryAddresses = {
     chainNftAddress: AddressLike;
     chainNft: ChainNft;
 
-    releaseManagerAddress : AddressLike;
-    releaseManager: ReleaseManager;
+    releaseRegistryAddress : AddressLike;
+    releaseRegistry: ReleaseRegistry;
 
     tokenRegistryAddress: AddressLike;
     tokenRegistry: TokenRegistry;
@@ -120,8 +120,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
 
     logger.info("-------- Starting deployment Release Manager ----------------");
 
-    const { address: releaseManagerAddress, contract: releaseManagerBaseContract } = await deployContract(
-        "ReleaseManager",
+    const { address: releaseRegistryAddress, contract: releaseRegistryBaseContract } = await deployContract(
+        "ReleaseRegistry",
         owner,
         [registryAddress], 
         {
@@ -134,7 +134,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
             }
         });
 
-    const releaseManager = releaseManagerBaseContract as ReleaseManager;
+    const releaseRegistry = releaseRegistryBaseContract as ReleaseRegistry;
 
     logger.info("-------- Starting deployment Token Registry ----------------");
 
@@ -234,7 +234,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     );
 
     await executeTx(
-        async () => await registry.initialize(releaseManagerAddress, tokenRegistryAddress, stakingAddress, getTxOpts()),
+        async () => await registry.initialize(releaseRegistryAddress, tokenRegistryAddress, stakingAddress, getTxOpts()),
         "registry.initialize"
     );
 
@@ -252,7 +252,7 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
     logger.info(`RegistryAdmin deployeqd at ${registryAdmin}`);
     logger.info(`Registry deployed at ${registryAddress}`);
     logger.info(`ChainNft deployed at ${chainNftAddress}`);
-    logger.info(`ReleaseManager deployed at ${releaseManager}`);
+    logger.info(`ReleaseRegistry deployed at ${releaseRegistry}`);
     logger.info(`TokenRegistry deployed at ${tokenRegistryAddress}`);
     logger.info(`StakingReader deployed at ${stakingReaderAddress}`);
     logger.info(`StakingStore deployed at ${stakingStoreAddress}`);
@@ -294,8 +294,8 @@ export async function deployAndInitializeRegistry(owner: Signer, libraries: Libr
         chainNftAddress: chainNftAddress,
         chainNft: chainNft,
 
-        releaseManagerAddress: releaseManagerAddress,
-        releaseManager: releaseManager,
+        releaseRegistryAddress: releaseRegistryAddress,
+        releaseRegistry: releaseRegistry,
 
         tokenRegistryAddress: tokenRegistryAddress,
         tokenRegistry: tokenRegistry,

@@ -14,9 +14,8 @@ import {IVersionable} from "../shared/IVersionable.sol";
 import {Key32} from "../type/Key32.sol";
 import {KeyValueStore} from "../shared/KeyValueStore.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
-import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {NftIdSetManager} from "../shared/NftIdSetManager.sol";
+import {NftIdSet} from "../shared/NftIdSet.sol";
 import {ObjectType, INSTANCE, PROTOCOL, STAKE, STAKING, TARGET} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakingReader} from "./StakingReader.sol";
@@ -63,7 +62,7 @@ contract StakingStore is
     error ErrorStakingStoreTvlBalanceNotInitialized(NftId nftId);
 
     IRegistry private _registry;
-    NftIdSetManager private _targetManager;
+    NftIdSet private _targetNftIdSet;
     StakingReader private _reader;
 
     // staking rate
@@ -93,7 +92,7 @@ contract StakingStore is
         // set internal variables
         _registry = registry; //TODO if keeps registry -> RegistryLinked and checks registry address
         _reader = reader;
-        _targetManager = new NftIdSetManager();
+        _targetNftIdSet = new NftIdSet();
 
         // register protocol target
         _createTarget(
@@ -428,8 +427,9 @@ contract StakingStore is
         return _reader;
     }
 
-    function getTargetManager() external view returns (NftIdSetManager targetManager){
-        return _targetManager;
+    // TODO rename
+    function getTargetNftIdSet() external view returns (NftIdSet targetNftIdSet){
+        return _targetNftIdSet;
     }
 
     function getStakingRate(uint256 chainId, address token) external view returns (UFixed stakingRate) { return _stakingRate[chainId][token]; }
@@ -493,7 +493,7 @@ contract StakingStore is
         _tvlLastUpdatedIn[targetNftId]= BlocknumberLib.currentBlocknumber();
         _createTargetBalance(targetNftId);
 
-        _targetManager.add(targetNftId);
+        _targetNftIdSet.add(targetNftId);
     }
 
     function _updateReserves(

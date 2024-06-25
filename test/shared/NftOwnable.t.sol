@@ -13,7 +13,6 @@ import {NftId} from "../../contracts/type/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {Dip} from "../../contracts/mock/Dip.sol";
 import {NftOwnableMock, NftOwnableMockUninitialized} from "../mock/NftOwnableMock.sol";

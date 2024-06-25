@@ -353,27 +353,27 @@ export async function getReleaseConfig(/*owner: Signer, registry: RegistryAddres
 
 export async function createRelease(owner: Signer, registry: RegistryAddresses, config: ReleaseConfig, salt: BytesLike): Promise<Release>
 {
-    const releaseManager = registry.releaseManager.connect(owner);
+    const releaseRegistry = registry.releaseRegistry.connect(owner);
     
     await executeTx(
-        async () => await releaseManager.createNextRelease(getTxOpts()),
-        "releaseManager.createNextRelease"
+        async () => await releaseRegistry.createNextRelease(getTxOpts()),
+        "releaseRegistry.createNextRelease"
     );
 
 
     const rcpt = await executeTx(
-        async () =>  releaseManager.prepareNextRelease(
+        async () =>  releaseRegistry.prepareNextRelease(
             registry.serviceAuthorizationV3,
             salt,
             getTxOpts()
         ),
-        "releaseManager.prepareNextRelease");
+        "releaseRegistry.prepareNextRelease");
 
-    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "version");
+    let logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "version");
     const releaseVersion = (logCreationInfo as BigNumberish);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "salt");
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "salt");
     const releaseSalt = (logCreationInfo as BytesLike);
-    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseManager.interface, "LogReleaseCreation", "accessManager");
+    logCreationInfo = getFieldFromTxRcptLogs(rcpt!, registry.releaseRegistry.interface, "LogReleaseCreation", "accessManager");
     const releaseAccessManager = (logCreationInfo as AddressLike);
 
     const release: Release = {

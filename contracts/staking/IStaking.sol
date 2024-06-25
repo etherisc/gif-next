@@ -5,7 +5,6 @@ import {Amount} from "../type/Amount.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {NftId} from "../type/NftId.sol";
-import {NftIdSetManager} from "../shared/NftIdSetManager.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StakingReader} from "./StakingReader.sol";

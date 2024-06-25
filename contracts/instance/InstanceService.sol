@@ -6,7 +6,7 @@ import {ShortString, ShortStrings} from "@openzeppelin/contracts/utils/ShortStri
 
 import {AccessManagerCloneable} from "../authorization/AccessManagerCloneable.sol";
 import {Amount} from "../type/Amount.sol";
-import {BundleManager} from "./BundleManager.sol";
+import {BundleSet} from "./BundleSet.sol";
 import {ChainNft} from "../registry/ChainNft.sol";
 import {NftId} from "../type/NftId.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -54,7 +54,7 @@ contract InstanceService is
     address internal _masterInstanceAdmin;
     address internal _masterInstance;
     address internal _masterInstanceReader;
-    address internal _masterInstanceBundleManager;
+    address internal _masterInstanceBundleSet;
     address internal _masterInstanceStore;
 
 
@@ -118,7 +118,7 @@ contract InstanceService is
             InstanceAdmin(_masterInstanceAdmin).getInstanceAuthorization());
 
         InstanceStore clonedInstanceStore = InstanceStore(Clones.clone(address(_masterInstanceStore)));
-        BundleManager clonedBundleManager = BundleManager(Clones.clone(_masterInstanceBundleManager));
+        BundleSet clonedBundleSet = BundleSet(Clones.clone(_masterInstanceBundleSet));
         InstanceReader clonedInstanceReader = InstanceReader(Clones.clone(address(_masterInstanceReader)));
 
         // clone instance
@@ -126,7 +126,7 @@ contract InstanceService is
         clonedInstance.initialize(
             clonedInstanceAdmin,
             clonedInstanceStore,
-            clonedBundleManager,
+            clonedBundleSet,
             clonedInstanceReader,
             getRegistry(),
             instanceOwner);
@@ -238,7 +238,7 @@ contract InstanceService is
     {
         if(_masterInstance != address(0)) { revert ErrorInstanceServiceMasterInstanceAlreadySet(); }
         if(_masterInstanceAdmin != address(0)) { revert ErrorInstanceServiceMasterInstanceAdminAlreadySet(); }
-        if(_masterInstanceBundleManager != address(0)) { revert ErrorInstanceServiceMasterBundleManagerAlreadySet(); }
+        if(_masterInstanceBundleSet != address(0)) { revert ErrorInstanceServiceMasterBundleSetAlreadySet(); }
 
         if(instanceAddress == address(0)) { revert ErrorInstanceServiceInstanceAddressZero(); }
 
@@ -248,7 +248,7 @@ contract InstanceService is
         address instanceAdminAddress = address(instanceAdmin);
         InstanceReader instanceReader = instance.getInstanceReader();
         address instanceReaderAddress = address(instanceReader);
-        BundleManager bundleManager = instance.getBundleManager();
+        BundleSet bundleManager = instance.getBundleSet();
         address bundleManagerAddress = address(bundleManager);
         InstanceStore instanceStore = instance.getInstanceStore();
         address instanceStoreAddress = address(instanceStore);
@@ -256,11 +256,11 @@ contract InstanceService is
         if(accessManagerAddress == address(0)) { revert ErrorInstanceServiceAccessManagerZero(); }
         if(instanceAdminAddress == address(0)) { revert ErrorInstanceServiceInstanceAdminZero(); }
         if(instanceReaderAddress == address(0)) { revert ErrorInstanceServiceInstanceReaderZero(); }
-        if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleManagerZero(); }
+        if(bundleManagerAddress == address(0)) { revert ErrorInstanceServiceBundleSetZero(); }
         if(instanceStoreAddress == address(0)) { revert ErrorInstanceServiceInstanceStoreZero(); }
         
         if(instance.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceAuthorityMismatch(); }
-        if(bundleManager.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleManagerAuthorityMismatch(); }
+        if(bundleManager.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceBundleSetAuthorityMismatch(); }
         if(instanceStore.authority() != instanceAdmin.authority()) { revert ErrorInstanceServiceInstanceStoreAuthorityMismatch(); }
         if(bundleManager.getInstance() != instance) { revert ErrorInstanceServiceBundleMangerInstanceMismatch(); }
         if(instanceReader.getInstance() != instance) { revert ErrorInstanceServiceInstanceReaderInstanceMismatch2(); }
@@ -269,7 +269,7 @@ contract InstanceService is
         _masterInstanceAdmin = instanceAdminAddress;
         _masterInstance = instanceAddress;
         _masterInstanceReader = instanceReaderAddress;
-        _masterInstanceBundleManager = bundleManagerAddress;
+        _masterInstanceBundleSet = bundleManagerAddress;
         _masterInstanceStore = instanceStoreAddress;
         
         IInstance masterInstance = IInstance(_masterInstance);

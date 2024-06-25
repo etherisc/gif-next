@@ -60,33 +60,33 @@ contract RegistryTokenWhitelisting is GifTest {
         assertEq(tokenInfo.symbol, token.symbol(), "unexpected token (usdc) symbol");
         assertTrue(tokenInfo.active, "unexpected token (usdc) active");
 
-        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseManager.getLatestVersion()), "dip not active in current relase");
-        assertTrue(tokenRegistry.isActive(chainId, address(token), releaseManager.getLatestVersion()), "token (usdc) not active in current relase");
-        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), releaseManager.getLatestVersion()), "usdc2 active in current relase");
+        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseRegistry.getLatestVersion()), "dip not active in current relase");
+        assertTrue(tokenRegistry.isActive(chainId, address(token), releaseRegistry.getLatestVersion()), "token (usdc) not active in current relase");
+        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), releaseRegistry.getLatestVersion()), "usdc2 active in current relase");
     }
 
 
     function test_tokenRegistrySetGlobalState() public {
 
-        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseManager.getLatestVersion()), "dip active in current relase (1)");
+        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseRegistry.getLatestVersion()), "dip active in current relase (1)");
         assertTrue(tokenRegistry.getTokenInfo(chainId, address(dip)).active, "dip not active (1a)");
-        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), releaseManager.getLatestVersion()), "usdc2 active in current relase (1)");
+        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), releaseRegistry.getLatestVersion()), "usdc2 active in current relase (1)");
 
         vm.startPrank(registryOwner);
         tokenRegistry.setActive(chainId, address(dip), false);
         vm.stopPrank();
 
-        assertFalse(tokenRegistry.isActive(chainId, address(dip), releaseManager.getLatestVersion()), "dip active in current relase (2)");
+        assertFalse(tokenRegistry.isActive(chainId, address(dip), releaseRegistry.getLatestVersion()), "dip active in current relase (2)");
         assertFalse(tokenRegistry.getTokenInfo(chainId, address(dip)).active, "dip active (2a)");
-        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), releaseManager.getLatestVersion()), "usdc2 active in current relase (2)");
+        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), releaseRegistry.getLatestVersion()), "usdc2 active in current relase (2)");
 
         vm.startPrank(registryOwner);
         tokenRegistry.setActive(chainId, address(dip), true);
         vm.stopPrank();
 
-        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseManager.getLatestVersion()), "dip not active in current relase (3)");
+        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseRegistry.getLatestVersion()), "dip not active in current relase (3)");
         assertTrue(tokenRegistry.getTokenInfo(chainId, address(dip)).active, "dip not active (3a)");
-        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), releaseManager.getLatestVersion()), "usdc2 active in current relase (3)");
+        assertFalse(tokenRegistry.isActive(chainId, address(usdc2), releaseRegistry.getLatestVersion()), "usdc2 active in current relase (3)");
     }
 
 
@@ -100,9 +100,9 @@ contract RegistryTokenWhitelisting is GifTest {
         assertTrue(tokenRegistry.isRegistered(chainId, address(dip)), "dip not registered");
         assertTrue(tokenRegistry.isRegistered(chainId, address(usdc2)), "usdc2 not registered");
 
-        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseManager.getLatestVersion()), "dip not whitelisted in current relase");
-        assertTrue(tokenRegistry.isActive(chainId, address(usdc2), releaseManager.getLatestVersion()), "usdc2 not whitelisted in current relase");
-        assertFalse(tokenRegistry.isActive(chainId, address(registryService), releaseManager.getLatestVersion()), "registry service active in current relase");
+        assertTrue(tokenRegistry.isActive(chainId, address(dip), releaseRegistry.getLatestVersion()), "dip not whitelisted in current relase");
+        assertTrue(tokenRegistry.isActive(chainId, address(usdc2), releaseRegistry.getLatestVersion()), "usdc2 not whitelisted in current relase");
+        assertFalse(tokenRegistry.isActive(chainId, address(registryService), releaseRegistry.getLatestVersion()), "registry service active in current relase");
     }
 
 

@@ -8,7 +8,7 @@ import {IService} from "../shared/IService.sol";
 import {IServiceAuthorization} from "../authorization/IServiceAuthorization.sol";
 import {IStaking} from "../staking/IStaking.sol";
 import {ObjectType, ObjectTypeLib, ALL, POOL, RELEASE} from "../type/ObjectType.sol";
-import {ReleaseManager} from "./ReleaseManager.sol";
+import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {StakingStore} from "../staking/StakingStore.sol";
 import {STAKING} from "../type/ObjectType.sol";
@@ -39,11 +39,11 @@ contract RegistryAdmin is
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
     string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
-    string public constant RELEASE_MANAGER_ROLE_NAME = "ReleaseManagerRole";
+    string public constant RELEASE_REGISTRY_ROLE_NAME = "ReleaseRegistryRole";
     string public constant STAKING_SERVICE_ROLE_NAME = "StakingServiceRole";
     string public constant STAKING_ROLE_NAME = "StakingRole";
 
-    string public constant RELEASE_MANAGER_TARGET_NAME = "ReleaseManager";
+    string public constant RELEASE_REGISTRY_TARGET_NAME = "ReleaseRegistry";
     string public constant TOKEN_REGISTRY_TARGET_NAME = "TokenRegistry";
     string public constant STAKING_TARGET_NAME = "Staking";
     string public constant STAKING_STORE_TARGET_NAME = "StakingStore";
@@ -52,7 +52,7 @@ contract RegistryAdmin is
 
     mapping(address service => VersionPart majorVersion) private _ServiceRelease;
 
-    address private _releaseManager;
+    address private _releaseRegistry;
     address private _tokenRegistry;
     address private _staking;
     address private _stakingStore;
@@ -71,7 +71,7 @@ contract RegistryAdmin is
         if (_setupCompleted) { revert ErrorRegistryAdminIsAlreadySetUp(); } 
         else { _setupCompleted = true; }
 
-        _releaseManager = registry.getReleaseManagerAddress();
+        _releaseRegistry = registry.getReleaseRegistryAddress();
         _tokenRegistry = registry.getTokenRegistryAddress();
         _staking = registry.getStakingAddress();
         _stakingStore = address(
@@ -83,7 +83,7 @@ contract RegistryAdmin is
         _setupGifAdminRole(gifAdmin);
         _setupGifManagerRole(gifManager);
 
-        _setupReleaseManager();
+        _setupReleaseRegistry();
         _setupStaking();
     }
 
@@ -220,14 +220,14 @@ contract RegistryAdmin is
                 maxMemberCount: 2, // TODO decide on max member count
                 name: GIF_ADMIN_ROLE_NAME}));
 
-        // for ReleaseManager
+        // for ReleaseRegistry
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](4);
-        functions[0] = toFunction(ReleaseManager.createNextRelease.selector, "createNextRelease");
-        functions[1] = toFunction(ReleaseManager.activateNextRelease.selector, "activateNextRelease");
-        functions[2] = toFunction(ReleaseManager.pauseRelease.selector, "pauseRelease");
-        functions[3] = toFunction(ReleaseManager.unpauseRelease.selector, "unpauseRelease");
-        _authorizeTargetFunctions(_releaseManager, GIF_ADMIN_ROLE(), functions);
+        functions[0] = toFunction(ReleaseRegistry.createNextRelease.selector, "createNextRelease");
+        functions[1] = toFunction(ReleaseRegistry.activateNextRelease.selector, "activateNextRelease");
+        functions[2] = toFunction(ReleaseRegistry.pauseRelease.selector, "pauseRelease");
+        functions[3] = toFunction(ReleaseRegistry.unpauseRelease.selector, "unpauseRelease");
+        _authorizeTargetFunctions(_releaseRegistry, GIF_ADMIN_ROLE(), functions);
 
         _grantRoleToAccount(GIF_ADMIN_ROLE(), gifAdmin);
     }
@@ -253,36 +253,36 @@ contract RegistryAdmin is
         functions[4] = toFunction(TokenRegistry.setActiveWithVersionCheck.selector, "setActiveWithVersionCheck");
         _authorizeTargetFunctions(_tokenRegistry, GIF_MANAGER_ROLE(), functions);
 
-        // for ReleaseManager
+        // for ReleaseRegistry
         functions = new FunctionInfo[](2);
-        functions[0] = toFunction(ReleaseManager.prepareNextRelease.selector, "prepareNextRelease");
-        functions[1] = toFunction(ReleaseManager.registerService.selector, "registerService");
-        _authorizeTargetFunctions(_releaseManager, GIF_MANAGER_ROLE(), functions);
+        functions[0] = toFunction(ReleaseRegistry.prepareNextRelease.selector, "prepareNextRelease");
+        functions[1] = toFunction(ReleaseRegistry.registerService.selector, "registerService");
+        _authorizeTargetFunctions(_releaseRegistry, GIF_MANAGER_ROLE(), functions);
 
         _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
     }
 
 
-    function _setupReleaseManager() private {
+    function _setupReleaseRegistry() private {
 
-        _createTarget(_releaseManager, RELEASE_MANAGER_TARGET_NAME, true, false);
+        _createTarget(_releaseRegistry, RELEASE_REGISTRY_TARGET_NAME, true, false);
 
-        RoleId releaseManagerRoleId = RoleIdLib.roleForType(RELEASE());
+        RoleId releaseRegistryRoleId = RoleIdLib.roleForType(RELEASE());
         _createRole(
-            releaseManagerRoleId, 
+            releaseRegistryRoleId, 
             toRole({
                 adminRoleId: ADMIN_ROLE(),
                 roleType: RoleType.Contract,
                 maxMemberCount: 1,
-                name: RELEASE_MANAGER_ROLE_NAME}));
+                name: RELEASE_REGISTRY_ROLE_NAME}));
 
         FunctionInfo[] memory functions;
         functions = new FunctionInfo[](2);
         functions[0] = toFunction(RegistryAdmin.authorizeService.selector, "authorizeService");
         functions[1] = toFunction(RegistryAdmin.grantServiceRoleForAllVersions.selector, "grantServiceRoleForAllVersions");
-        _authorizeTargetFunctions(address(this), releaseManagerRoleId, functions);
+        _authorizeTargetFunctions(address(this), releaseRegistryRoleId, functions);
 
-        _grantRoleToAccount(releaseManagerRoleId, _releaseManager);
+        _grantRoleToAccount(releaseRegistryRoleId, _releaseRegistry);
     }
 
 

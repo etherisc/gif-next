@@ -146,7 +146,7 @@ function printAddresses(
     addresses += `instanceAuthorizationsLibAddress: ${libraries.instanceAuthorizationsLibAddress}\n`;
     addresses += `--------\n`;
     addresses += `registryAccessManagerAddress: ${registry.registryAccessManagerAddress}\n`;
-    addresses += `releaseManagerAddress: ${registry.releaseManagerAddress}\n`;
+    addresses += `releaseRegistryAddress: ${registry.releaseRegistryAddress}\n`;
     addresses += `registryAddress: ${registry.registryAddress}\n`;
     addresses += `registryNftId: ${registry.registryNftId}\n`;
     addresses += `chainNftAddress: ${registry.chainNftAddress}\n`;
@@ -191,7 +191,7 @@ function printAddresses(
     addresses += `masterInstanceNftId: ${masterInstance.instanceNftId}\n`;
     addresses += `masterOzAccessManagerAddress: ${masterInstance.ozAccessManagerAddress}\n`;
     addresses += `masterInstanceAccessManagerAddress: ${masterInstance.instanceAccessManagerAddress}\n`;
-    addresses += `masterBundleManagerAddress: ${masterInstance.instanceBundleManagerAddress}\n`;
+    addresses += `masterBundleSetAddress: ${masterInstance.instanceBundleSetAddress}\n`;
     addresses += `masterInstanceReaderAddress: ${masterInstance.instanceReaderAddress}\n`;
     addresses += `masterInstanceStoreAddress: ${masterInstance.instanceStoreAddress}\n`;
     addresses += `--------\n`;
@@ -199,7 +199,7 @@ function printAddresses(
     addresses += `clonedInstanceNftId: ${clonedInstance.instanceNftId}\n`;
     addresses += `clonedOzAccessManagerAddress: ${clonedInstance.ozAccessManagerAddress}\n`;
     addresses += `clonedInstanceAccessManagerAddress: ${clonedInstance.instanceAccessManagerAddress}\n`;
-    addresses += `clonedBundleManagerAddress: ${clonedInstance.instanceBundleManagerAddress}\n`;
+    addresses += `clonedBundleSetAddress: ${clonedInstance.instanceBundleSetAddress}\n`;
     addresses += `clonedInstanceReaderAddress: ${clonedInstance.instanceReaderAddress}\n`;
     addresses += `--------\n`;
     // addresses += `tokenAddress: ${tokenAddress}\n`;
@@ -217,7 +217,7 @@ export type InstanceAddresses = {
     ozAccessManagerAddress: AddressLike,
     instanceAccessManagerAddress: AddressLike,
     instanceReaderAddress: AddressLike,
-    instanceBundleManagerAddress: AddressLike,
+    instanceBundleSetAddress: AddressLike,
     instanceAddress: AddressLike,
     instanceNftId: string,
 }

@@ -11,7 +11,6 @@ import {IRegistryLinked} from "../shared/IRegistryLinked.sol";
 import {IStaking} from "../staking/IStaking.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {NftId} from "../type/NftId.sol";
-import {NftIdSetManager} from "../shared/NftIdSetManager.sol";
 import {ObjectType, STAKE, TARGET} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {StakingStore} from "./StakingStore.sol";
@@ -60,32 +59,32 @@ contract StakingReader is
 
 
     function isTarget(NftId targetNftId) external view returns (bool) {
-        return _store.getTargetManager().exists(targetNftId);
+        return _store.getTargetNftIdSet().exists(targetNftId);
     }
 
 
     function targets() external view returns (uint256) {
-        return _store.getTargetManager().nftIds();
+        return _store.getTargetNftIdSet().nftIds();
     }
 
 
     function getTargetNftId(uint256 idx) external view returns (NftId) {
-        return _store.getTargetManager().getNftId(idx);
+        return _store.getTargetNftIdSet().getNftId(idx);
     }
 
 
     function isActive(NftId targetNftId) external view returns (bool) {
-        return _store.getTargetManager().isActive(targetNftId);
+        return _store.getTargetNftIdSet().isActive(targetNftId);
     }
 
 
     function activeTargets() external view returns (uint256) {
-        return _store.getTargetManager().activeNftIds();
+        return _store.getTargetNftIdSet().activeNftIds();
     }
 
 
     function getActiveTargetNftId(uint256 idx) external view returns (NftId) {
-        return _store.getTargetManager().getActiveNftId(idx);
+        return _store.getTargetNftIdSet().getActiveNftId(idx);
     }
 
 

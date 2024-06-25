@@ -10,26 +10,26 @@ import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId} from "../type/NftId.sol";
 import {TimestampLib} from "../type/Timestamp.sol";
 
-import {ObjectManager} from "./base/ObjectManager.sol";
+import {ObjectSet} from "./base/ObjectSet.sol";
 
-contract BundleManager is 
-    ObjectManager
+contract BundleSet is 
+    ObjectSet
 {
 
-    event LogBundleManagerPolicyLinked(NftId bundleNftId, NftId policyNftId);
-    event LogBundleManagerPolicyUnlinked(NftId bundleNftId, NftId policyNftId);
+    event LogBundleSetPolicyLinked(NftId bundleNftId, NftId policyNftId);
+    event LogBundleSetPolicyUnlinked(NftId bundleNftId, NftId policyNftId);
 
-    event LogBundleManagerBundleAdded(NftId poolNftId, NftId bundleNftId);
-    event LogBundleManagerBundleUnlocked(NftId poolNftId, NftId bundleNftId);
-    event LogBundleManagerBundleLocked(NftId poolNftId, NftId bundleNftId);
-    event LogBundleManagerBundleClosed(NftId poolNftId, NftId bundleNftId);
+    event LogBundleSetBundleAdded(NftId poolNftId, NftId bundleNftId);
+    event LogBundleSetBundleUnlocked(NftId poolNftId, NftId bundleNftId);
+    event LogBundleSetBundleLocked(NftId poolNftId, NftId bundleNftId);
+    event LogBundleSetBundleClosed(NftId poolNftId, NftId bundleNftId);
 
-    error ErrorBundleManagerPolicyAlreadyActivated(NftId policyNftId);
-    error ErrorBundleManagerBundleLocked(NftId bundleNftId, NftId policyNftId);
-    error ErrorBundleManagerPolicyWithOpenClaims(NftId policyNftId, uint256 openClaimsCount);
-    error ErrorBundleManagerPolicyNotCloseable(NftId policyNftId);
-    error ErrorBundleManagerBundleUnknown(NftId bundleNftId);
-    error ErrorBundleManagerBundleNotRegistered(NftId bundleNftId);
+    error ErrorBundleSetPolicyAlreadyActivated(NftId policyNftId);
+    error ErrorBundleSetBundleLocked(NftId bundleNftId, NftId policyNftId);
+    error ErrorBundleSetPolicyWithOpenClaims(NftId policyNftId, uint256 openClaimsCount);
+    error ErrorBundleSetPolicyNotCloseable(NftId policyNftId);
+    error ErrorBundleSetBundleUnknown(NftId bundleNftId);
+    error ErrorBundleSetBundleNotRegistered(NftId bundleNftId);
 
     mapping(NftId bundleNftId => LibNftIdSet.Set policies) internal _activePolicies;
 
@@ -42,11 +42,11 @@ contract BundleManager is
 
         // ensure bundle is unlocked (in active set) and registered with this instance
         if (!_isActive(poolNftId, bundleNftId)) {
-            revert ErrorBundleManagerBundleLocked(bundleNftId, policyNftId);
+            revert ErrorBundleSetBundleLocked(bundleNftId, policyNftId);
         }
 
         LibNftIdSet.add(_activePolicies[bundleNftId], policyNftId);
-        emit LogBundleManagerPolicyLinked(bundleNftId, policyNftId);
+        emit LogBundleSetPolicyLinked(bundleNftId, policyNftId);
     }
 
 
@@ -63,11 +63,11 @@ contract BundleManager is
 
         // ensure bundle is registered with this instance
         if (!_contains(poolNftId, bundleNftId)) {
-            revert ErrorBundleManagerBundleUnknown(bundleNftId);
+            revert ErrorBundleSetBundleUnknown(bundleNftId);
         }
 
         LibNftIdSet.remove(_activePolicies[bundleNftId], policyNftId);
-        emit LogBundleManagerPolicyUnlinked(policyInfo.bundleNftId, policyNftId);
+        emit LogBundleSetPolicyUnlinked(policyInfo.bundleNftId, policyNftId);
     }
 
 
@@ -78,11 +78,11 @@ contract BundleManager is
 
         // ensure pool is registered with instance
         if(poolNftId.eqz()) {
-            revert ErrorBundleManagerBundleNotRegistered(bundleNftId);
+            revert ErrorBundleSetBundleNotRegistered(bundleNftId);
         }
 
         _add(poolNftId, bundleNftId);
-        emit LogBundleManagerBundleAdded(poolNftId, bundleNftId);
+        emit LogBundleSetBundleAdded(poolNftId, bundleNftId);
     }
 
 
@@ -90,14 +90,14 @@ contract BundleManager is
     function unlock(NftId bundleNftId) external restricted() {
         NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
         _activate(poolNftId, bundleNftId);
-        emit LogBundleManagerBundleUnlocked(poolNftId, bundleNftId);
+        emit LogBundleSetBundleUnlocked(poolNftId, bundleNftId);
     }
 
     /// @dev locked (deactivated) bundles may not collateralize any new policies
     function lock(NftId bundleNftId) external restricted() {
         NftId poolNftId = _instance.getInstanceReader().getBundleInfo(bundleNftId).poolNftId;
         _deactivate(poolNftId, bundleNftId);
-        emit LogBundleManagerBundleLocked(poolNftId, bundleNftId);
+        emit LogBundleSetBundleLocked(poolNftId, bundleNftId);
     }
 
     function bundles(NftId poolNftId) external view returns(uint256) {
