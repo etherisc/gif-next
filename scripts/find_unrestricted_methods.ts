@@ -1,36 +1,9 @@
-import { CharStream, CommonTokenStream } from "antlr4ng";
-import fs from "fs";
-import { SolidityLexer } from "../antlr/generated/SolidityLexer";
-import { SolidityListener } from "../antlr/generated/SolidityListener";
 import { FunctionDescriptorContext, InheritanceSpecifierContext, ModifierInvocationContext, ModifierListContext, SolidityParser, StateMutabilityContext } from "../antlr/generated/SolidityParser";
+import { SolidityFileListener, parseSolidityContracts } from "./contract_parser_helper";
 import { logger } from "./logger";
 
 async function main() {
-    fs.readdirSync("contracts", { recursive: true, withFileTypes: true}).forEach(file => {
-        if (file.name.endsWith(".sol") && file.isFile() ) {
-            const f = file.path + "/" + file.name;
-            parseContract(f);
-        }
-    });
-}
-
-function parseContract(file: string) {
-    const content = fs.readFileSync(file, "utf8");
-
-    const listener = new RestrictedMissingListener();
-    const inputStream = CharStream.fromString(content);
-    const lexer = new SolidityLexer(inputStream);
-    const tokenStream = new CommonTokenStream(lexer);
-    const parser = new SolidityParser(tokenStream);
-    parser.addParseListener(listener);
-    parser.sourceUnit();
-
-    if (listener.findings.length > 0) {
-        console.log(`=============== Contract ${file}`);
-        console.log(listener.findings);
-        console.log(`===============\n\n`);
-    }
-
+    parseSolidityContracts("contracts", RestrictedMissingListener);   
 }
 
 const RELEVANT_BASE_CONTRACTS = [
@@ -43,7 +16,7 @@ const RELEVANT_BASE_CONTRACTS = [
     'ComponentVerifyingService'
 ];
 
-class RestrictedMissingListener extends SolidityListener {
+class RestrictedMissingListener extends SolidityFileListener {
 
     public findings = '';
     isRelevant = false;
@@ -85,7 +58,7 @@ class RestrictedMissingListener extends SolidityListener {
             && (! this.isView && ! this.isPure)
             && ! this.isRestricted)  {
             // console.log(`Function ${this.functionDescriptor} ${this.modifierList} without restricted modifier`);
-            this.findings += `Function '${this.functionDescriptor}' |${this.modifierList}| without restricted modifier\n`;
+            this.findings += `${this.filename}: Function '${this.functionDescriptor}' |${this.modifierList}| without restricted modifier\n`;
         }
     }
 
