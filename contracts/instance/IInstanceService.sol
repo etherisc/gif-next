@@ -52,7 +52,7 @@ interface IInstanceService is IService {
     
     event LogInstanceCloned(NftId instanceNftId, address instance);
 
-    function createInstanceClone()
+    function createInstance()
         external 
         returns (
             // TODO check if Instance can be changed to IInstance

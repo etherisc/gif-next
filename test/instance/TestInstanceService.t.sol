@@ -100,7 +100,7 @@ contract TestInstanceService is GifTest {
         (
             IInstance newInstance,
             NftId newInstanceNftId
-        ) = instanceService.createInstanceClone();
+        ) = instanceService.createInstance();
 
         // THEN - check permissions
         InstanceAdmin newInstanceAdmin = newInstance.getInstanceAdmin();
