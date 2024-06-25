@@ -224,8 +224,8 @@ contract TestProduct is GifTest {
         assertEq(lockedAmount.toInt(), sumInsuredAmount, "unexpected locked amount");
         assertEq(feeAmount.toInt(), 0, "unexpected bundle fee amount");
 
-        assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
-        assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
+        assertEq(instanceBundleSet.activePolicies(bundleNftId), 1, "expected one active policy");
+        assertTrue(instanceBundleSet.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
     function test_productCollateralizeWithPayment() public {
@@ -328,8 +328,8 @@ contract TestProduct is GifTest {
         assertEq(token.balanceOf(customer), pb[customer] - ep.premiumAmount, "unexpected customer balance");
         assertEq(token.balanceOf(pool.getWallet()) - pb[pool.getWallet()], 120, "unexpected pool balance"); // 100 (net premium) + 10 (pool fee) + 10 (bundle fee)
 
-        assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
-        assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
+        assertEq(instanceBundleSet.activePolicies(bundleNftId), 1, "expected one active policy");
+        assertTrue(instanceBundleSet.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
     }
 
     function test_productWithReferralCollateralizeWithPayment() public {
@@ -856,7 +856,7 @@ contract TestProduct is GifTest {
         
         assertEq(token.balanceOf(address(pool)) - pb[address(pool)], 120, "pool balance not 10120"); // 100 (netPremium) + 10 (poolFee) + 10 (bundleFee)
 
-        assertEq(instanceBundleManager.activePolicies(bundleNftId), 0, "expected no active policy");
+        assertEq(instanceBundleSet.activePolicies(bundleNftId), 0, "expected no active policy");
     }
 
     function test_productCreateRisk() public {

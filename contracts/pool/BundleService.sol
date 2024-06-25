@@ -26,7 +26,7 @@ import {Versionable} from "../shared/Versionable.sol";
 
 import {IService} from "../shared/IService.sol";
 import {Service} from "../shared/Service.sol";
-import {BundleManager} from "../instance/BundleManager.sol";
+import {BundleSet} from "../instance/BundleSet.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
@@ -139,7 +139,7 @@ contract BundleService is
             AmountLib.zero()); // fee amount
 
         // put bundle under bundle managemet
-        BundleManager bundleManager = instance.getBundleManager();
+        BundleSet bundleManager = instance.getBundleSet();
         bundleManager.add(bundleNftId);
 
         // TODO add logging
@@ -197,7 +197,7 @@ contract BundleService is
         instance.getInstanceStore().updateBundleState(bundleNftId, PAUSED());
 
         // update set of active bundles
-        BundleManager bundleManager = instance.getBundleManager();
+        BundleSet bundleManager = instance.getBundleSet();
         bundleManager.lock(bundleNftId);
 
         emit LogBundleServiceBundleLocked(bundleNftId);
@@ -214,7 +214,7 @@ contract BundleService is
         instance.getInstanceStore().updateBundleState(bundleNftId, ACTIVE());
 
         // update set of active bundles
-        BundleManager bundleManager = instance.getBundleManager();
+        BundleSet bundleManager = instance.getBundleSet();
         bundleManager.unlock(bundleNftId);
 
         emit LogBundleServiceBundleActivated(bundleNftId);
@@ -233,7 +233,7 @@ contract BundleService is
         instance.getInstanceStore().updateBundleState(bundleNftId, CLOSED());
 
         // ensure no open policies attached to bundle
-        BundleManager bundleManager = instance.getBundleManager();
+        BundleSet bundleManager = instance.getBundleSet();
         uint256 openPolicies = bundleManager.activePolicies(bundleNftId);
         if(openPolicies > 0) {
             revert ErrorBundleServiceBundleWithOpenPolicies(bundleNftId, openPolicies);
@@ -271,7 +271,7 @@ contract BundleService is
             revert ErrorBundleServicePolicyNotCloseable(policyNftId);
         }
 
-        instance.getBundleManager().unlinkPolicy(policyNftId);
+        instance.getBundleSet().unlinkPolicy(policyNftId);
     }
 
     /// @dev links policy to bundle
@@ -283,10 +283,10 @@ contract BundleService is
 
         // ensure policy has not yet been activated in a previous tx already
         if (policyInfo.activatedAt.gtz() && policyInfo.activatedAt < TimestampLib.blockTimestamp()) {
-            revert BundleManager.ErrorBundleManagerPolicyAlreadyActivated(policyNftId);
+            revert BundleSet.ErrorBundleSetPolicyAlreadyActivated(policyNftId);
         }
         
-        BundleManager bundleManager = instance.getBundleManager();
+        BundleSet bundleManager = instance.getBundleSet();
         bundleManager.linkPolicy(policyNftId);
     }
 

@@ -127,7 +127,7 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         // args=[0x0000000000000000000000000000000000001262, 11159 [1.115e4], 2099035519 [2.099e9], 148, true, 0x000000000000000000000000000000007e273289, 804448731 [8.044e8], 0x00000000000000000000000000000000000000000000000000000000000026a3, 115, 250]] 
         // testFuzz_registerService_0011001(address,uint96,uint256,uint8,bool,address,uint256,bytes,uint8,uint8) (runs: 2, μ: 73578, ~: 73578)
 
-        _startPrank(address(releaseManager));
+        _startPrank(address(releaseRegistry));
 
         _assert_registerService_withChecks(IRegistry.ObjectInfo(
             NftIdLib.toNftId(11159),

@@ -13,7 +13,7 @@ import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, STAKING
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
 import {IRegisterable} from "../shared/IRegisterable.sol";
-import {ReleaseManager} from "./ReleaseManager.sol";
+import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
 
@@ -58,25 +58,25 @@ contract Registry is
 
     address public _tokenRegistryAddress;
     address public _stakingAddress;
-    ReleaseManager public _releaseManager;
+    ReleaseRegistry public _releaseRegistry;
 
     // TODO 
-    // 1). Registry and ReleaseManager must be treated as whole single entity. 
+    // 1). Registry and ReleaseRegistry must be treated as whole single entity. 
     //     But current limitations of EVM does not allow it -> require it to be splitted
-    // 2). Keep onlyReleaseManager modifier
+    // 2). Keep onlyReleaseRegistry modifier
     // 3). Delete onlyRegistryService in favor of restricted
     // 4). (For GlobalRegistry ONLY) make registerChainRegistry() restricted to GIF_ADMIN_ROLE
     modifier onlyRegistryService() {
-        if(!_releaseManager.isActiveRegistryService(msg.sender)) {
+        if(!_releaseRegistry.isActiveRegistryService(msg.sender)) {
             revert ErrorRegistryCallerNotRegistryService();
         }
         _;
     }
 
 
-    modifier onlyReleaseManager() {
-        if(msg.sender != address(_releaseManager)) {
-            revert ErrorRegistryCallerNotReleaseManager();
+    modifier onlyReleaseRegistry() {
+        if(msg.sender != address(_releaseRegistry)) {
+            revert ErrorRegistryCallerNotReleaseRegistry();
         }
         _;
     }
@@ -101,14 +101,14 @@ contract Registry is
     /// @dev wires release manager and token to registry (this contract).
     /// MUST be called by release manager.
     function initialize(
-        address releaseManager,
+        address releaseRegistry,
         address tokenRegistry,
         address staking
     )
         external
         initializer()
     {
-        _releaseManager = ReleaseManager(releaseManager);
+        _releaseRegistry = ReleaseRegistry(releaseRegistry);
         _tokenRegistryAddress = tokenRegistry;
         _stakingAddress = staking;
 
@@ -121,7 +121,7 @@ contract Registry is
         ObjectType domain
     )
         external
-        onlyReleaseManager
+        onlyReleaseRegistry
         returns(NftId nftId)
     {
         address service = info.objectAddress;
@@ -209,21 +209,21 @@ contract Registry is
 
     /// @dev earliest GIF major version 
     function getInitialVersion() external view returns (VersionPart) {
-        return _releaseManager.getInitialVersion();
+        return _releaseRegistry.getInitialVersion();
     }
 
     /// @dev next GIF release version to be released
     function getNextVersion() external view returns (VersionPart) {
-        return _releaseManager.getNextVersion();
+        return _releaseRegistry.getNextVersion();
     }
 
     /// @dev latest active GIF release version 
     function getLatestVersion() external view returns (VersionPart) { 
-        return _releaseManager.getLatestVersion();
+        return _releaseRegistry.getLatestVersion();
     }
 
     function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory) {
-        return _releaseManager.getReleaseInfo(version);
+        return _releaseRegistry.getReleaseInfo(version);
     }
 
     function getObjectCount() external view returns (uint256) {
@@ -277,7 +277,7 @@ contract Registry is
 
     function isActiveRelease(VersionPart version) external view returns (bool)
     {
-        return _releaseManager.isActiveRelease(version);
+        return _releaseRegistry.isActiveRelease(version);
     }
 
     function getStakingAddress() external view returns (address staking) {
@@ -298,8 +298,8 @@ contract Registry is
         service =  _service[releaseVersion][serviceDomain]; 
     }
 
-    function getReleaseManagerAddress() external view returns (address) {
-        return address(_releaseManager);
+    function getReleaseRegistryAddress() external view returns (address) {
+        return address(_releaseRegistry);
     }
 
     function getChainNftAddress() external view override returns (address) {

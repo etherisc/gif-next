@@ -28,7 +28,6 @@ import {Version, VersionLib} from "../type/Version.sol";
 
 import {IService} from "../shared/IService.sol";
 import {Service} from "../shared/Service.sol";
-import {BundleManager} from "../instance/BundleManager.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IComponentService} from "../shared/IComponentService.sol";

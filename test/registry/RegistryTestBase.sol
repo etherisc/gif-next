@@ -26,7 +26,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
-import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
+import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
 import {ServiceMockAuthorizationV3} from "./ServiceMockAuthorizationV3.sol";
 
@@ -63,7 +63,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     RegistryAdmin registryAdmin;
     StakingManager stakingManager;
     Staking staking;
-    ReleaseManager releaseManager;
+    ReleaseRegistry releaseRegistry;
 
     Registry public registry;
     address public registryAddress;
@@ -123,7 +123,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             dip,
             registry,
             tokenRegistry,
-            releaseManager,
+            releaseRegistry,
             registryAdmin,
             stakingManager,
             staking
@@ -150,14 +150,14 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     {
         bytes32 salt = "0x5678";
         {
-            releaseManager.createNextRelease();
+            releaseRegistry.createNextRelease();
 
             // TODO do we need preparation phase now?
             (
                 address releaseAccessManager,
                 VersionPart releaseVersion,
                 bytes32 releaseSalt
-            ) = releaseManager.prepareNextRelease(
+            ) = releaseRegistry.prepareNextRelease(
                 new ServiceMockAuthorizationV3(),
                 salt);
 
@@ -168,11 +168,11 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
 
         registryServiceMock = RegistryServiceMock(address(registryServiceManagerMock.getRegistryService()));
-        releaseManager.registerService(registryServiceMock);
+        releaseRegistry.registerService(registryServiceMock);
         registryServiceManagerMock.linkToProxy();
         registryServiceNftId = registry.getNftId(address(registryServiceMock));
 
-        releaseManager.activateNextRelease();
+        releaseRegistry.activateNextRelease();
     }
 
     // call right after registry deployment, before checks
@@ -361,7 +361,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _addressName[address(registryServiceMock)] = "registryServiceMock";
         
         _errorName[IRegistry.ErrorRegistryCallerNotRegistryService.selector] = "ErrorRegistryCallerNotRegistryService"; 
-        _errorName[IRegistry.ErrorRegistryCallerNotReleaseManager.selector] = "ErrorRegistryCallerNotReleaseManager"; 
+        _errorName[IRegistry.ErrorRegistryCallerNotReleaseRegistry.selector] = "ErrorRegistryCallerNotReleaseRegistry"; 
         _errorName[IRegistry.ErrorRegistryParentAddressZero.selector] = "ErrorRegistryParentAddressZero"; 
         _errorName[IRegistry.ErrorRegistryContractAlreadyRegistered.selector] = "ErrorRegistryContractAlreadyRegistered";
         _errorName[IRegistry.ErrorRegistryTypesCombinationInvalid.selector] = "ErrorRegistryTypesCombinationInvalid";
@@ -679,9 +679,9 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
     function _registerServiceChecks(IRegistry.ObjectInfo memory info, VersionPart version, ObjectType domain) internal view returns (bool expectRevert, bytes memory expectedRevertMsg)
     {
-        if(_sender != address(releaseManager)) 
+        if(_sender != address(releaseRegistry)) 
         {// auth check
-            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryCallerNotReleaseManager.selector);
+            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryCallerNotReleaseRegistry.selector);
             expectRevert = true;
         } else if(domain.eqz()) {
             expectedRevertMsg = abi.encodeWithSelector(
@@ -817,8 +817,8 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         _stopPrank();
 
-        if(sender != address(releaseManager)) {
-            _startPrank(address(releaseManager));
+        if(sender != address(releaseRegistry)) {
+            _startPrank(address(releaseRegistry));
 
             _assert_registerService_withChecks(info, version ,domain);
 

@@ -153,8 +153,8 @@ contract ReferralTest is ReferralTestBase {
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), initialPoolBalance + netPremium, "unexpected pool balance (1)");
         assertEq(token.balanceOf(pool.getWallet()), initialPoolBalance + netPremium, "unexpected pool balance (2)");
 
-        assertEq(instanceBundleManager.activePolicies(bundleNftId), 1, "expected one active policy");
-        assertTrue(instanceBundleManager.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
+        assertEq(instanceBundleSet.activePolicies(bundleNftId), 1, "expected one active policy");
+        assertTrue(instanceBundleSet.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
 
         // check bundle financials
         Amount lockedAmount = instanceReader.getLockedAmount(bundleNftId);
@@ -237,7 +237,7 @@ contract ReferralTest is ReferralTestBase {
         
         assertEq(token.balanceOf(distribution.getWallet()), 28, "distribution balance not 14");
         
-        assertEq(instanceBundleManager.activePolicies(bundleNftId), 2, "expected one active policy");
+        assertEq(instanceBundleSet.activePolicies(bundleNftId), 2, "expected one active policy");
         
         IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
         assertEq(distributorInfo.numPoliciesSold, 2, "numPoliciesSold not 2");
@@ -291,7 +291,7 @@ contract ReferralTest is ReferralTestBase {
         
         assertEq(token.balanceOf(distribution.getWallet()), 42, "distribution balance not 42");
         
-        assertEq(instanceBundleManager.activePolicies(bundleNftId), 3, "expected one active policy");
+        assertEq(instanceBundleSet.activePolicies(bundleNftId), 3, "expected one active policy");
 
         assertEq(instanceReader.getFeeAmount(distributionNftId).toInt(), 33, "sumDistributionOwnerFees not 33");
         vm.stopPrank();

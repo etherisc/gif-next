@@ -3,9 +3,9 @@ pragma solidity ^0.8.20;
 
 import {IInstance} from "../../contracts/instance/IInstance.sol";
 import {NftId} from "../../contracts/type/NftId.sol";
-import {ObjectManager} from "../../contracts/instance/base/ObjectManager.sol";
+import {ObjectSet} from "../../contracts/instance/base/ObjectSet.sol";
 
-contract MockObjectManager is ObjectManager {
+contract MockObjectSet is ObjectSet {
 
     function initialize(address instance)
         external
@@ -14,7 +14,7 @@ contract MockObjectManager is ObjectManager {
         _instance = IInstance(instance);
         __Cloneable_init(_instance.authority(), address(_instance.getRegistry()));
         
-        emit LogObjectManagerInitialized(instance);
+        emit LogObjectSetInitialized(instance);
     }
 
     function add(NftId componentNftId, NftId objectNftId) external {

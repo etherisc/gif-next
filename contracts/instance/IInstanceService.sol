@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
-import {BundleManager} from "./BundleManager.sol";
+import {BundleSet} from "./BundleSet.sol";
 import {Instance} from "./Instance.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IService} from "../shared/IService.sol";
@@ -24,7 +24,7 @@ interface IInstanceService is IService {
 
     error ErrorInstanceServiceMasterInstanceAlreadySet();
     error ErrorInstanceServiceMasterInstanceAdminAlreadySet();
-    error ErrorInstanceServiceMasterBundleManagerAlreadySet();
+    error ErrorInstanceServiceMasterBundleSetAlreadySet();
     error ErrorInstanceServiceInstanceAddressZero();
 
     error ErrorInstanceServiceMasterInstanceReaderNotSet();
@@ -35,11 +35,11 @@ interface IInstanceService is IService {
     error ErrorInstanceServiceAccessManagerZero();
     error ErrorInstanceServiceInstanceAdminZero();
     error ErrorInstanceServiceInstanceReaderZero();
-    error ErrorInstanceServiceBundleManagerZero();
+    error ErrorInstanceServiceBundleSetZero();
     error ErrorInstanceServiceInstanceStoreZero();
 
     error ErrorInstanceServiceInstanceAuthorityMismatch();
-    error ErrorInstanceServiceBundleManagerAuthorityMismatch();
+    error ErrorInstanceServiceBundleSetAuthorityMismatch();
     error ErrorInstanceServiceInstanceReaderInstanceMismatch2();
     error ErrorInstanceServiceBundleMangerInstanceMismatch();
     error ErrorInstanceServiceInstanceStoreAuthorityMismatch();

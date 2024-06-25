@@ -22,7 +22,7 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
 
 import {InstanceAdmin} from "./InstanceAdmin.sol";
-import {BundleManager} from "./BundleManager.sol";
+import {BundleSet} from "./BundleSet.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 
@@ -48,9 +48,9 @@ interface IInstance is
     error ErrorInstanceInstanceAdminAlreadySet(address InstanceAdmin);
     error ErrorInstanceInstanceAdminAuthorityMismatch(address instanceAuthority);
 
-    error ErrorInstanceBundleManagerAlreadySet(address instanceBundleManager);
-    error ErrorInstanceBundleManagerInstanceMismatch(address instance);
-    error ErrorInstanceBundleManagerAuthorityMismatch(address instanceAuthority);
+    error ErrorInstanceBundleSetAlreadySet(address instanceBundleSet);
+    error ErrorInstanceBundleSetInstanceMismatch(address instance);
+    error ErrorInstanceBundleSetAuthorityMismatch(address instanceAuthority);
 
     error ErrorInstanceInstanceReaderInstanceMismatch(address instanceAuthority);
 
@@ -80,7 +80,7 @@ interface IInstance is
     // get instance release and supporting contracts
     function getMajorVersion() external pure returns (VersionPart majorVersion);
     function getInstanceReader() external view returns (InstanceReader);
-    function getBundleManager() external view returns (BundleManager);
+    function getBundleSet() external view returns (BundleSet);
     function getInstanceAdmin() external view returns (InstanceAdmin);
     function getInstanceStore() external view returns (InstanceStore);
 }

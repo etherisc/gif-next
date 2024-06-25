@@ -16,7 +16,6 @@ import {RoleId} from "../../contracts/type/RoleId.sol";
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
 
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
@@ -50,13 +49,13 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
     {
         bytes32 salt = "0x1111";
 
-        releaseManager.createNextRelease();
+        releaseRegistry.createNextRelease();
 
         (
             address releaseAccessManager,
             VersionPart releaseVersion,
             bytes32 releaseSalt
-        ) = releaseManager.prepareNextRelease(
+        ) = releaseRegistry.prepareNextRelease(
             new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810"),
             salt);
 
@@ -65,15 +64,15 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             registryAddress,
             releaseSalt);
         registryService = registryServiceManager.getRegistryService();
-        releaseManager.registerService(registryService);
+        releaseRegistry.registerService(registryService);
 
-        releaseManager.activateNextRelease();
+        releaseRegistry.activateNextRelease();
         
         registryServiceManager.linkToProxy();
     }
 /*
     function _deployAndRegisterServices() internal {
-        releaseManager.registerService(componentOwnerService);
+        releaseRegistry.registerService(componentOwnerService);
     }
 */
     function _assert_registered_token(address token, NftId nftIdFromRegistryService) internal

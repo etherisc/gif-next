@@ -11,7 +11,7 @@ import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
+import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
@@ -129,7 +129,7 @@ contract GifDeployer is Test {
             IERC20Metadata dip,
             Registry registry,
             TokenRegistry tokenRegistry,
-            ReleaseManager releaseManager,
+            ReleaseRegistry releaseRegistry,
             RegistryAdmin registryAdmin,
             StakingManager stakingManager,
             Staking staking
@@ -147,7 +147,7 @@ contract GifDeployer is Test {
         registry = new Registry(registryAdmin);
 
         // 4) deploy release manager
-        releaseManager = new ReleaseManager(registry);
+        releaseRegistry = new ReleaseRegistry(registry);
 
         // 5) deploy token registry
         tokenRegistry = new TokenRegistry(registry, dip);
@@ -173,7 +173,7 @@ contract GifDeployer is Test {
 
         // 10) intialize registry and register staking component
         registry.initialize(
-            address(releaseManager),
+            address(releaseRegistry),
             address(tokenRegistry),
             address(staking));
         staking.linkToRegisteredNftId();
@@ -199,7 +199,7 @@ contract GifDeployer is Test {
 
 
     function deployRelease(
-        ReleaseManager releaseManager,
+        ReleaseRegistry releaseRegistry,
         IServiceAuthorization serviceAuthorization,
         address gifAdmin,
         address gifManager
@@ -207,23 +207,23 @@ contract GifDeployer is Test {
         public
     {
         vm.startPrank(gifAdmin);
-        releaseManager.createNextRelease();
+        releaseRegistry.createNextRelease();
         vm.stopPrank();
 
         vm.startPrank(gifManager);
         _deployReleaseServices(
-            releaseManager,
+            releaseRegistry,
             serviceAuthorization);
         vm.stopPrank();
 
         vm.startPrank(gifAdmin);
-        releaseManager.activateNextRelease();
+        releaseRegistry.activateNextRelease();
         vm.stopPrank();
     }
 
 
     function _deployReleaseServices(
-        ReleaseManager releaseManager,
+        ReleaseRegistry releaseRegistry,
         IServiceAuthorization serviceAuthorization
     )
         internal
@@ -232,18 +232,18 @@ contract GifDeployer is Test {
             address authority, 
             bytes32 salt
         ) = _prepareRelease(
-            releaseManager, 
+            releaseRegistry, 
             serviceAuthorization);
 
         _deployAndRegisterServices(
-            releaseManager,
+            releaseRegistry,
             authority, 
             salt);
     }
 
 
     function _prepareRelease(
-        ReleaseManager releaseManager,
+        ReleaseRegistry releaseRegistry,
         IServiceAuthorization serviceAuthorization
     )
         internal
@@ -258,9 +258,9 @@ contract GifDeployer is Test {
 
         // check release manager state before release preparation step
         assertEq(
-            releaseManager.getState(releaseManager.getNextVersion()).toInt(), 
+            releaseRegistry.getState(releaseRegistry.getNextVersion()).toInt(), 
             SCHEDULED().toInt(), 
-            "unexpected state for releaseManager after createNextRelease");
+            "unexpected state for releaseRegistry after createNextRelease");
 
         // prepare release by providing the service authorization setup to the release manager
         VersionPart release;
@@ -268,93 +268,93 @@ contract GifDeployer is Test {
             authority, 
             release,
             salt
-        ) = releaseManager.prepareNextRelease(
+        ) = releaseRegistry.prepareNextRelease(
             serviceAuthorization,
             "0x1234");
 
         // check release manager state after release preparation step
         assertEq(
-            releaseManager.getState(releaseManager.getNextVersion()).toInt(), 
+            releaseRegistry.getState(releaseRegistry.getNextVersion()).toInt(), 
             DEPLOYING().toInt(), 
-            "unexpected state for releaseManager after prepareNextRelease");
+            "unexpected state for releaseRegistry after prepareNextRelease");
 
         // solhint-disable
         console.log("release version", release.toInt());
         console.log("release salt", uint(salt));
         console.log("release access manager deployed at", authority);
         console.log("release services count", serviceAuthorization.getServiceDomains().length);
-        console.log("release services remaining (before service registration)", releaseManager.getRemainingServicesToRegister());
+        console.log("release services remaining (before service registration)", releaseRegistry.getRemainingServicesToRegister());
         // solhint-enable
     }
 
 
     /// @dev Populates the service mapping by deploying all service proxies and service for gif release 3.
     function _deployAndRegisterServices(
-        ReleaseManager releaseManager,
+        ReleaseRegistry releaseRegistry,
         address authority, 
         bytes32 salt
     )
         internal
     {
-        address registryAddress = address(releaseManager.getRegistry());
+        address registryAddress = address(releaseRegistry.getRegistry());
 
         registryServiceManager = new RegistryServiceManager{salt: salt}(authority, registryAddress, salt);
         registryService = registryServiceManager.getRegistryService();
-        registryServiceNftId = _registerService(releaseManager, registryServiceManager, registryService);
+        registryServiceNftId = _registerService(releaseRegistry, registryServiceManager, registryService);
 
         stakingServiceManager = new StakingServiceManager{salt: salt}(authority, registryAddress, salt);
         stakingService = stakingServiceManager.getStakingService();
-        stakingServiceNftId = _registerService(releaseManager, stakingServiceManager, stakingService);
+        stakingServiceNftId = _registerService(releaseRegistry, stakingServiceManager, stakingService);
 
         instanceServiceManager = new InstanceServiceManager{salt: salt}(authority, registryAddress, salt);
         instanceService = instanceServiceManager.getInstanceService();
-        instanceServiceNftId = _registerService(releaseManager, instanceServiceManager, instanceService);
+        instanceServiceNftId = _registerService(releaseRegistry, instanceServiceManager, instanceService);
 
         // TODO figure out why this service manager deployment is different from the others
         componentServiceManager = new ComponentServiceManager(registryAddress);
         componentService = componentServiceManager.getComponentService();
-        componentServiceNftId = _registerService(releaseManager, componentServiceManager, componentService);
+        componentServiceNftId = _registerService(releaseRegistry, componentServiceManager, componentService);
 
         distributionServiceManager = new DistributionServiceManager{salt: salt}(authority, registryAddress, salt);
         distributionService = distributionServiceManager.getDistributionService();
-        distributionServiceNftId = _registerService(releaseManager, distributionServiceManager, distributionService);
+        distributionServiceNftId = _registerService(releaseRegistry, distributionServiceManager, distributionService);
 
         pricingServiceManager = new PricingServiceManager{salt: salt}(authority, registryAddress, salt);
         pricingService = pricingServiceManager.getPricingService();
-        pricingServiceNftId = _registerService(releaseManager, pricingServiceManager, pricingService);
+        pricingServiceNftId = _registerService(releaseRegistry, pricingServiceManager, pricingService);
 
         bundleServiceManager = new BundleServiceManager{salt: salt}(authority, registryAddress, salt);
         bundleService = bundleServiceManager.getBundleService();
-        bundleServiceNftId = _registerService(releaseManager, bundleServiceManager, bundleService);
+        bundleServiceNftId = _registerService(releaseRegistry, bundleServiceManager, bundleService);
 
         poolServiceManager = new PoolServiceManager{salt: salt}(authority, registryAddress, salt);
         poolService = poolServiceManager.getPoolService();
-        poolServiceNftId = _registerService(releaseManager, poolServiceManager, poolService);
+        poolServiceNftId = _registerService(releaseRegistry, poolServiceManager, poolService);
 
         oracleServiceManager = new OracleServiceManager{salt: salt}(authority, registryAddress, salt);
         oracleService = oracleServiceManager.getOracleService();
-        oracleServiceNftId = _registerService(releaseManager, oracleServiceManager, oracleService);
+        oracleServiceNftId = _registerService(releaseRegistry, oracleServiceManager, oracleService);
 
         productServiceManager = new ProductServiceManager{salt: salt}(authority, registryAddress, salt);
         productService = productServiceManager.getProductService(); 
-        productServiceNftId = _registerService(releaseManager, productServiceManager, productService);
+        productServiceNftId = _registerService(releaseRegistry, productServiceManager, productService);
 
         claimServiceManager = new ClaimServiceManager{salt: salt}(authority, registryAddress, salt);
         claimService = claimServiceManager.getClaimService();
-        claimServiceNftId = _registerService(releaseManager, claimServiceManager, claimService);
+        claimServiceNftId = _registerService(releaseRegistry, claimServiceManager, claimService);
 
         applicationServiceManager = new ApplicationServiceManager{salt: salt}(authority, registryAddress, salt);
         applicationService = applicationServiceManager.getApplicationService();
-        applicationServiceNftId = _registerService(releaseManager, applicationServiceManager, applicationService);
+        applicationServiceNftId = _registerService(releaseRegistry, applicationServiceManager, applicationService);
 
         policyServiceManager = new PolicyServiceManager{salt: salt}(authority, registryAddress, salt);
         policyService = policyServiceManager.getPolicyService();
-        policyServiceNftId = _registerService(releaseManager, policyServiceManager, policyService);
+        policyServiceNftId = _registerService(releaseRegistry, policyServiceManager, policyService);
     }
 
 
     function _registerService(
-        ReleaseManager _releaseManager,
+        ReleaseRegistry _releaseRegistry,
         ProxyManager _serviceManager,
         IService _service
     )
@@ -362,7 +362,7 @@ contract GifDeployer is Test {
         returns (NftId serviceNftId)
     {
         // register service with release manager
-        serviceNftId = _releaseManager.registerService(_service);
+        serviceNftId = _releaseRegistry.registerService(_service);
         _serviceManager.linkToProxy();
 
         // update service mapping
@@ -383,7 +383,7 @@ contract GifDeployer is Test {
         console.log(domainName, "service domain", _service.getDomain().toInt());
         console.log(domainName, "service owner", _service.getOwner());
         console.log(domainName, "service authority", _service.authority());
-        console.log("release services remaining", _releaseManager.getRemainingServicesToRegister());
+        console.log("release services remaining", _releaseRegistry.getRemainingServicesToRegister());
     }
 
     function eqObjectInfo(IRegistry.ObjectInfo memory a, IRegistry.ObjectInfo memory b) public returns (bool isSame) {

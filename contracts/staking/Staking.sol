@@ -9,9 +9,7 @@ import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IStaking} from "./IStaking.sol";
 import {IVersionable} from "../shared/IVersionable.sol";
 import {Key32} from "../type/Key32.sol";
-import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {NftIdSetManager} from "../shared/NftIdSetManager.sol";
 import {ObjectType, INSTANCE, PROTOCOL, STAKE, STAKING, TARGET} from "../type/ObjectType.sol";
 import {Seconds, SecondsLib} from "../type/Seconds.sol";
 import {StakeManagerLib} from "./StakeManagerLib.sol";
@@ -54,7 +52,7 @@ contract Staking is
 
 
     modifier onlyTarget(NftId targetNftId) {
-        if (!_getStakingStorage()._store.getTargetManager().exists(targetNftId)) {
+        if (!_getStakingStorage()._store.getTargetNftIdSet().exists(targetNftId)) {
             revert ErrorStakingNotTarget(targetNftId);
         }
         _;

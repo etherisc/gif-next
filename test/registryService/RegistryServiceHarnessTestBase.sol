@@ -15,11 +15,10 @@ import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
-import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
 import {IRegistryService} from "../../contracts/registry/IRegistryService.sol";
 import {RegistryService} from "../../contracts/registry/RegistryService.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
+import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {RegistryServiceManagerMockWithHarness} from "../mock/RegistryServiceManagerMock.sol";
 import {RegistryServiceHarness} from "./RegistryServiceHarness.sol";
 import {ServiceMockAuthorizationV3} from "../registry/ServiceMockAuthorizationV3.sol";
@@ -36,7 +35,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
     address public registryAddress;
     address public registryOwner = makeAddr("registryOwner");
     address public outsider = makeAddr("outsider");
-    ReleaseManager releaseManager;
+    ReleaseRegistry releaseRegistry;
 
     RegistryServiceManagerMockWithHarness public registryServiceManagerWithHarness;
     RegistryServiceHarness public registryServiceHarness;
@@ -55,7 +54,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             , // dip,
             registry,
             , // tokenRegistry,
-            releaseManager,
+            releaseRegistry,
             , // registryAdmin,
             , // stakingManager,
             // staking
@@ -75,13 +74,13 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
     {
         bytes32 salt = "0x2222";
 
-        releaseManager.createNextRelease();
+        releaseRegistry.createNextRelease();
 
         (
             address releaseAccessManager,
             VersionPart releaseVersion,
             bytes32 releaseSalt
-        ) = releaseManager.prepareNextRelease(
+        ) = releaseRegistry.prepareNextRelease(
             new ServiceMockAuthorizationV3(),
             salt);
 
@@ -91,13 +90,13 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             releaseSalt);
 
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManagerWithHarness.getRegistryService()));
-        releaseManager.registerService(registryServiceHarness);
+        releaseRegistry.registerService(registryServiceHarness);
         registryServiceManagerWithHarness.linkToProxy();
 
         // TODO check if this nees to be re-enabled
         // assertEq(serviceAddresses[0], address(registryServiceHarness), "error: registry service address mismatch");
 
-        releaseManager.activateNextRelease();
+        releaseRegistry.activateNextRelease();
 
     }
 

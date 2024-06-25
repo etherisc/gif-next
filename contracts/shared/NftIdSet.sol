@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import {LibNftIdSet} from "../type/NftIdSet.sol";
 import {NftId} from "../type/NftId.sol";
 
-contract NftIdSetManager {
+contract NftIdSet {
 
     error ErrorNftIdSetManagerNotOwner(address owner, address sender);
     error ErrorNftIdSetManagerOwnerAlreadySet(address owner);

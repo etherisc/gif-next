@@ -3,7 +3,6 @@ pragma solidity ^0.8.20;
 
 import {IVersionable} from "../shared/IVersionable.sol";
 import {ProxyManager} from "../shared/ProxyManager.sol";
-import {ReleaseManager} from "../registry/ReleaseManager.sol";
 import {Staking} from "./Staking.sol";
 import {StakingReader} from "./StakingReader.sol";
 import {StakingStore} from "./StakingStore.sol";

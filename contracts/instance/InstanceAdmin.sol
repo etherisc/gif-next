@@ -23,7 +23,7 @@ contract InstanceAdmin is
     string public constant INSTANCE_TARGET_NAME = "Instance";
     string public constant INSTANCE_STORE_TARGET_NAME = "InstanceStore";
     string public constant INSTANCE_ADMIN_TARGET_NAME = "InstanceAdmin";
-    string public constant BUNDLE_MANAGER_TARGET_NAME = "BundleManager";
+    string public constant BUNDLE_SET_TARGET_NAME = "BundleSet";
 
     uint64 public constant CUSTOM_ROLE_ID_MIN = 10000; // MUST be even
 
@@ -248,7 +248,7 @@ contract InstanceAdmin is
         _checkAndCreateTargetWithRole(address(_instance), INSTANCE_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getInstanceStore()), INSTANCE_STORE_TARGET_NAME);
         _checkAndCreateTargetWithRole(address(_instance.getInstanceAdmin()), INSTANCE_ADMIN_TARGET_NAME);
-        _checkAndCreateTargetWithRole(address(_instance.getBundleManager()), BUNDLE_MANAGER_TARGET_NAME);
+        _checkAndCreateTargetWithRole(address(_instance.getBundleSet()), BUNDLE_SET_TARGET_NAME);
 
         // create targets for services that need to access the module targets
         ObjectType[] memory serviceDomains = _instanceAuthorization.getServiceDomains();

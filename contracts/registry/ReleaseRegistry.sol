@@ -34,7 +34,7 @@ import {ReleaseLifecycle} from "./ReleaseLifecycle.sol";
 
 // TODO rename to something that does not end with 'Manager' 
 // everywhere else *Manager points to an upgradeable contract
-contract ReleaseManager is 
+contract ReleaseRegistry is 
     AccessManaged,
     ReleaseLifecycle, 
     IRegistryLinked
@@ -49,45 +49,45 @@ contract ReleaseManager is
     event LogReleaseEnabled(VersionPart version);
 
     // constructor
-    error ErrorReleaseManagerNotRegistry(Registry registry);
+    error ErrorReleaseRegistryNotRegistry(Registry registry);
 
     // createNextRelease
-    error ErrorReleaseManagerReleaseCreationDisallowed(VersionPart version, StateId currentStateId);
+    error ErrorReleaseRegistryReleaseCreationDisallowed(VersionPart version, StateId currentStateId);
 
     // prepareRelease
-    error ErrorReleaseManagerReleasePreparationDisallowed(VersionPart version, StateId currentStateId);
-    error ErrorReleaseManagerReleaseAlreadyPrepared(VersionPart version, StateId currentStateId);
-    error ErrorReleaseManagerVersionMismatch(VersionPart expected, VersionPart actual);
-    error ErrorReleaseManagerNoDomains(VersionPart version);
+    error ErrorReleaseRegistryReleasePreparationDisallowed(VersionPart version, StateId currentStateId);
+    error ErrorReleaseRegistryReleaseAlreadyPrepared(VersionPart version, StateId currentStateId);
+    error ErrorReleaseRegistryVersionMismatch(VersionPart expected, VersionPart actual);
+    error ErrorReleaseRegistryNoDomains(VersionPart version);
 
     // registerService
-    error ErrorReleaseManagerNoServiceRegistrationExpected();
-    error ErrorReleaseManagerServiceRegistrationDisallowed(StateId currentStateId);
-    error ErrorReleaseManagerServiceDomainMismatch(ObjectType expectedDomain, ObjectType actualDomain);
-    error ErrorReleaseManagerNotService(address notService);
-    error ErrorReleaseManagerServiceAddressMismatch(address expected, address actual);
+    error ErrorReleaseRegistryNoServiceRegistrationExpected();
+    error ErrorReleaseRegistryServiceRegistrationDisallowed(StateId currentStateId);
+    error ErrorReleaseRegistryServiceDomainMismatch(ObjectType expectedDomain, ObjectType actualDomain);
+    error ErrorReleaseRegistryNotService(address notService);
+    error ErrorReleaseRegistryServiceAddressMismatch(address expected, address actual);
 
     // activateNextRelease
-    error ErrorReleaseManagerReleaseActivationDisallowed(VersionPart releaseVersion, StateId currentStateId);
-    error ErrorReleaseManagerReleaseNotCreated(VersionPart releaseVersion);
-    error ErrorReleaseManagerReleaseRegistrationNotFinished(VersionPart releaseVersion, uint awaitingRegistration);
-    error ErrorReleaseManagerReleaseAlreadyActivated(VersionPart releaseVersion);
+    error ErrorReleaseRegistryReleaseActivationDisallowed(VersionPart releaseVersion, StateId currentStateId);
+    error ErrorReleaseRegistryReleaseNotCreated(VersionPart releaseVersion);
+    error ErrorReleaseRegistryReleaseRegistrationNotFinished(VersionPart releaseVersion, uint awaitingRegistration);
+    error ErrorReleaseRegistryReleaseAlreadyActivated(VersionPart releaseVersion);
 
     // disableRelease
-    error ErrorReleaseManagerReleaseNotActivated(VersionPart releaseVersion);
-    error ErrorReleaseManagerReleaseAlreadyDisabled(VersionPart releaseVersion);
+    error ErrorReleaseRegistryReleaseNotActivated(VersionPart releaseVersion);
+    error ErrorReleaseRegistryReleaseAlreadyDisabled(VersionPart releaseVersion);
 
     // _verifyService
-    error ErrorReleaseManagerServiceReleaseAuthorityMismatch(IService service, address serviceAuthority, address releaseAuthority);
-    error ErrorReleaseManagerServiceReleaseVersionMismatch(IService service, VersionPart serviceVersion, VersionPart releaseVersion);
+    error ErrorReleaseRegistryServiceReleaseAuthorityMismatch(IService service, address serviceAuthority, address releaseAuthority);
+    error ErrorReleaseRegistryServiceReleaseVersionMismatch(IService service, VersionPart serviceVersion, VersionPart releaseVersion);
 
     // _verifyServiceInfo
-    error ErrorReleaseManagerServiceInfoAddressInvalid(IService service, address expected);
-    error ErrorReleaseManagerServiceInfoInterceptorInvalid(IService service, bool isInterceptor);
-    error ErrorReleaseManagerServiceInfoTypeInvalid(IService service, ObjectType expected, ObjectType found);
-    error ErrorReleaseManagerServiceInfoOwnerInvalid(IService service, address expected, address found);
-    error ErrorReleaseManagerServiceSelfRegistration(IService service);
-    error ErrorReleaseManagerServiceOwnerRegistered(IService service, address owner);
+    error ErrorReleaseRegistryServiceInfoAddressInvalid(IService service, address expected);
+    error ErrorReleaseRegistryServiceInfoInterceptorInvalid(IService service, bool isInterceptor);
+    error ErrorReleaseRegistryServiceInfoTypeInvalid(IService service, ObjectType expected, ObjectType found);
+    error ErrorReleaseRegistryServiceInfoOwnerInvalid(IService service, address expected, address found);
+    error ErrorReleaseRegistryServiceSelfRegistration(IService service);
+    error ErrorReleaseRegistryServiceOwnerRegistered(IService service, address owner);
 
     Seconds public constant MIN_DISABLE_DELAY = Seconds.wrap(60 * 24 * 365); // 1 year
 
@@ -115,7 +115,7 @@ contract ReleaseManager is
     {
         // TODO move this part to RegistryLinked constructor
         if(!_isRegistry(address(registry))) {
-            revert ErrorReleaseManagerNotRegistry(registry);
+            revert ErrorReleaseRegistryNotRegistry(registry);
         }
 
         setAuthority(registry.getAuthority());
@@ -167,7 +167,7 @@ contract ReleaseManager is
 
         // verify release in state SCHEDULED
         if (!isValidTransition(RELEASE(), _state[version], DEPLOYING())) {
-            revert ErrorReleaseManagerReleasePreparationDisallowed(version, _state[version]);
+            revert ErrorReleaseRegistryReleasePreparationDisallowed(version, _state[version]);
         }
 
         _state[version] = DEPLOYING();
@@ -175,19 +175,19 @@ contract ReleaseManager is
         // verify authorizaion contract release matches with expected version
         VersionPart releaseVersion = serviceAuthorization.getRelease();
         if (releaseVersion != version) {
-            revert ErrorReleaseManagerVersionMismatch(version, releaseVersion);
+            revert ErrorReleaseRegistryVersionMismatch(version, releaseVersion);
         }
 
 
         // sanity check to ensure service domain list is not empty
         uint256 serviceDomainsCount = serviceAuthorization.getServiceDomains().length;
         if (serviceDomainsCount == 0) {
-            revert ErrorReleaseManagerNoDomains(version);
+            revert ErrorReleaseRegistryNoDomains(version);
         }
 
         // verify prepareNextRelease is only called once per release
         if(_servicesToRegister > 0) {
-            revert ErrorReleaseManagerReleaseAlreadyPrepared(version, _state[version]);
+            revert ErrorReleaseRegistryReleaseAlreadyPrepared(version, _state[version]);
         }
 
         _servicesToRegister = serviceDomainsCount;
@@ -208,14 +208,14 @@ contract ReleaseManager is
         // verify release in state DEPLOYING
         if (!isValidTransition(RELEASE(), state, DEPLOYING())) {
             // TOOD name must represent failed state transition
-            revert ErrorReleaseManagerServiceRegistrationDisallowed(state);
+            revert ErrorReleaseRegistryServiceRegistrationDisallowed(state);
         }
 
         _state[releaseVersion] = DEPLOYING();
 
         // not all services are registered
         if (_servicesToRegister == _registeredServices) {
-            revert ErrorReleaseManagerNoServiceRegistrationExpected();
+            revert ErrorReleaseRegistryNoServiceRegistrationExpected();
         }
 
         // service can work with release manager
@@ -228,7 +228,7 @@ contract ReleaseManager is
         // service domain matches defined in release config
         ObjectType expectedDomain = _serviceAuthorization[releaseVersion].getServiceDomain(_registeredServices);
         if (serviceDomain != expectedDomain) {
-            revert ErrorReleaseManagerServiceDomainMismatch(expectedDomain, serviceDomain);
+            revert ErrorReleaseRegistryServiceDomainMismatch(expectedDomain, serviceDomain);
         }
 
         // register service with registry
@@ -260,18 +260,18 @@ contract ReleaseManager is
 
         // verify release in state DEPLOYING
         if (!isValidTransition(RELEASE(), state, newState)) {
-            revert ErrorReleaseManagerReleaseActivationDisallowed(version, state);
+            revert ErrorReleaseRegistryReleaseActivationDisallowed(version, state);
         }
 
         // release fully deployed
         if(_registeredServices < _servicesToRegister) {
-            revert ErrorReleaseManagerReleaseRegistrationNotFinished(version, _servicesToRegister - _registeredServices);
+            revert ErrorReleaseRegistryReleaseRegistrationNotFinished(version, _servicesToRegister - _registeredServices);
         }
 
         // release exists, registry service MUST exist
         address service = _registry.getServiceAddress(REGISTRY(), version);
         if(service == address(0)) {
-            revert ErrorReleaseManagerReleaseNotCreated(version);
+            revert ErrorReleaseRegistryReleaseNotCreated(version);
         }
 
         _latest = version;
@@ -293,7 +293,7 @@ contract ReleaseManager is
 
         // verify release in state ACTIVE
         if (!isValidTransition(RELEASE(), state, newState)) {
-            revert ErrorReleaseManagerReleaseActivationDisallowed(version, state);
+            revert ErrorReleaseRegistryReleaseActivationDisallowed(version, state);
         }
 
         // TODO come up with a substitute
@@ -316,7 +316,7 @@ contract ReleaseManager is
 
         // verify release in state PAUSED
         if (!isValidTransition(RELEASE(), state, newState)) {
-            revert ErrorReleaseManagerReleaseActivationDisallowed(version, state);
+            revert ErrorReleaseRegistryReleaseActivationDisallowed(version, state);
         }
 
         // TODO come up with a substitute
@@ -401,7 +401,7 @@ contract ReleaseManager is
         )
     {
         if(!service.supportsInterface(type(IService).interfaceId)) {
-            revert ErrorReleaseManagerNotService(address(service));
+            revert ErrorReleaseRegistryNotService(address(service));
         }
 
         address owner = msg.sender;
@@ -417,14 +417,14 @@ contract ReleaseManager is
 
         // IMPORTANT: can not guarantee service access is actually controlled by authority
         if(serviceAuthority != expectedAuthority) {
-            revert ErrorReleaseManagerServiceReleaseAuthorityMismatch(
+            revert ErrorReleaseRegistryServiceReleaseAuthorityMismatch(
                 service,
                 serviceAuthority,
                 expectedAuthority);
         }
 
         if(serviceVersion != releaseVersion) {
-            revert ErrorReleaseManagerServiceReleaseVersionMismatch(
+            revert ErrorReleaseRegistryServiceReleaseVersionMismatch(
                 service,
                 serviceVersion,
                 releaseVersion);            
@@ -441,29 +441,29 @@ contract ReleaseManager is
         view
     {
         if(info.objectAddress != address(service)) {
-            revert ErrorReleaseManagerServiceInfoAddressInvalid(service, address(service));
+            revert ErrorReleaseRegistryServiceInfoAddressInvalid(service, address(service));
         }
 
         if(info.isInterceptor != false) { // service is never interceptor
-            revert ErrorReleaseManagerServiceInfoInterceptorInvalid(service, info.isInterceptor);
+            revert ErrorReleaseRegistryServiceInfoInterceptorInvalid(service, info.isInterceptor);
         }
 
         if(info.objectType != SERVICE()) {
-            revert ErrorReleaseManagerServiceInfoTypeInvalid(service, SERVICE(), info.objectType);
+            revert ErrorReleaseRegistryServiceInfoTypeInvalid(service, SERVICE(), info.objectType);
         }
 
         address owner = info.initialOwner;
 
         if(owner != expectedOwner) { // registerable owner protection
-            revert ErrorReleaseManagerServiceInfoOwnerInvalid(service, expectedOwner, owner); 
+            revert ErrorReleaseRegistryServiceInfoOwnerInvalid(service, expectedOwner, owner); 
         }
 
         if(owner == address(service)) {
-            revert ErrorReleaseManagerServiceSelfRegistration(service);
+            revert ErrorReleaseRegistryServiceSelfRegistration(service);
         }
         
         if(_registry.isRegistered(owner)) { 
-            revert ErrorReleaseManagerServiceOwnerRegistered(service, owner);
+            revert ErrorReleaseRegistryServiceOwnerRegistered(service, owner);
         }
     }
 

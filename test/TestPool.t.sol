@@ -187,10 +187,10 @@ contract TestPool is GifTest {
         assertEq(token.balanceOf(poolOwner), 0, "pool owner balance not 0");
         assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet balance not 10000");
 
-        assertEq(instanceBundleManager.bundles(poolNftId), 1, "expected only 1 bundle");
-        assertEq(instanceBundleManager.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
-        assertEq(instanceBundleManager.activeBundles(poolNftId), 1, "expected one active bundle");
-        assertEq(instanceBundleManager.getActiveBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "active bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
+        assertEq(instanceBundleSet.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleSet.activeBundles(poolNftId), 1, "expected one active bundle");
+        assertEq(instanceBundleSet.getActiveBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "active bundle nft id in bundle manager not equal to bundle nft id");
 
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(
@@ -217,10 +217,10 @@ contract TestPool is GifTest {
         assertEq(metadata.state.toInt(), ACTIVE().toInt(), "unexpected bundle state");
 
         // bundle manager checks
-        assertEq(instanceBundleManager.bundles(poolNftId), 1, "expected only 1 bundle");
-        assertEq(instanceBundleManager.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
-        assertEq(instanceBundleManager.activeBundles(poolNftId), 1, "expected one active bundle");
-        assertEq(instanceBundleManager.getActiveBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "active bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
+        assertEq(instanceBundleSet.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleSet.activeBundles(poolNftId), 1, "expected one active bundle");
+        assertEq(instanceBundleSet.getActiveBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "active bundle nft id in bundle manager not equal to bundle nft id");
     }
 
 
@@ -244,9 +244,9 @@ contract TestPool is GifTest {
         assertEq(metadata.state.toInt(), PAUSED().toInt(), "bundle state not paused");
 
         // bundle manager checks
-        assertEq(instanceBundleManager.bundles(poolNftId), 1, "expected only 1 bundle");
-        assertEq(instanceBundleManager.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
-        assertEq(instanceBundleManager.activeBundles(poolNftId), 0, "expected zero active bundle");
+        assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
+        assertEq(instanceBundleSet.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleSet.activeBundles(poolNftId), 0, "expected zero active bundle");
 
         // WHEN unlock bundle again
         vm.prank(investor);
@@ -255,10 +255,10 @@ contract TestPool is GifTest {
         metadata = instanceReader.getMetadata(bundleKey);
         assertEq(metadata.state.toInt(), ACTIVE().toInt(), "bundle state not active again");
 
-        assertEq(instanceBundleManager.bundles(poolNftId), 1, "expected only 1 bundle");
-        assertEq(instanceBundleManager.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
-        assertEq(instanceBundleManager.activeBundles(poolNftId), 1, "expected one active bundle");
-        assertEq(instanceBundleManager.getActiveBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "active bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
+        assertEq(instanceBundleSet.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
+        assertEq(instanceBundleSet.activeBundles(poolNftId), 1, "expected one active bundle");
+        assertEq(instanceBundleSet.getActiveBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "active bundle nft id in bundle manager not equal to bundle nft id");
 
         // WHEN close bundle
         vm.prank(investor);
@@ -269,7 +269,7 @@ contract TestPool is GifTest {
         assertEq(metadata.state.toInt(), CLOSED().toInt(), "bundle state not closed");
 
         // bundle manager checks
-        assertEq(instanceBundleManager.activeBundles(poolNftId), 0, "expected zero active bundle");
+        assertEq(instanceBundleSet.activeBundles(poolNftId), 0, "expected zero active bundle");
     }
 
 

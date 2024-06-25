@@ -1,5 +1,5 @@
 import { AddressLike, Signer, ethers, resolveAddress } from "ethers";
-import { BundleManager, IInstance__factory, Instance, InstanceAdmin, InstanceAuthorizationV3, InstanceReader, InstanceService__factory, InstanceStore } from "../../typechain-types";
+import { BundleSet, IInstance__factory, Instance, InstanceAdmin, InstanceAuthorizationV3, InstanceReader, InstanceService__factory, InstanceStore } from "../../typechain-types";
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
 import { LibraryAddresses } from "./libraries";
@@ -11,7 +11,7 @@ export type InstanceAddresses = {
     instanceAuthorizationV3Address: AddressLike,
     instanceAdminAddress: AddressLike,
     instanceReaderAddress: AddressLike,
-    instanceBundleManagerAddress: AddressLike,
+    instanceBundleSetAddress: AddressLike,
     instanceStoreAddress: AddressLike,
     instanceAddress: AddressLike,
     instanceNftId: string,
@@ -83,8 +83,8 @@ export async function deployAndRegisterMasterInstance(
     );
     const masterInstanceStore = masterInstanceStoreContract as InstanceStore;
 
-    const {address: masterInstanceBundleManagerAddress, contract: masterBundleManagerContrat} = await deployContract(
-        "BundleManager",
+    const {address: masterInstanceBundleSetAddress, contract: masterBundleSetContrat} = await deployContract(
+        "BundleSet",
         owner,
         [],
         { 
@@ -94,7 +94,7 @@ export async function deployAndRegisterMasterInstance(
             }
         }
     );
-    const masterInstanceBundleManager = masterBundleManagerContrat as BundleManager;
+    const masterInstanceBundleSet = masterBundleSetContrat as BundleSet;
 
     const { address: masterInstanceReaderAddress, contract: masterInstanceReaderContract } = await deployContract(
         "InstanceReader",
@@ -139,7 +139,7 @@ export async function deployAndRegisterMasterInstance(
         () => masterInstance.initialize(
             masterInstanceAdmin,
             masterInstanceStore,
-            masterInstanceBundleManager,
+            masterInstanceBundleSet,
             masterInstanceReader,
             registry.registryAddress, 
             resolveAddress(owner),
@@ -176,7 +176,7 @@ export async function deployAndRegisterMasterInstance(
         instanceAuthorizationV3Address: masterInstanceAuthorizationV3Address,
         instanceAdminAddress: masterInstanceAdminAddress,
         instanceReaderAddress: masterInstanceReaderAddress,
-        instanceBundleManagerAddress: masterInstanceBundleManagerAddress,
+        instanceBundleSetAddress: masterInstanceBundleSetAddress,
         instanceStoreAddress: masterInstanceStoreAddress,
         instanceAddress: masterInstanceAddress,
         instanceNftId: masterInstanceNfdId,
@@ -200,7 +200,7 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
     const clonedInstance = IInstance__factory.connect(clonedInstanceAddress as string, instanceOwner);
     const clonedInstanceAdminAddress = await clonedInstance.getInstanceAdmin();
     const clonedInstanceStoreAddress = await clonedInstance.getInstanceStore();
-    const clonedInstanceBundleManagerAddress = await clonedInstance.getBundleManager();
+    const clonedInstanceBundleSetAddress = await clonedInstance.getBundleSet();
     const clonedInstanceReaderAddress = await clonedInstance.getInstanceReader();
     
     logger.info(`instance cloned - clonedInstanceNftId: ${clonedInstanceNftId}`);
@@ -212,7 +212,7 @@ export async function cloneInstance(masterInstance: InstanceAddresses, libraries
         instanceNftId: clonedInstanceNftId as string,
         instanceAdminAddress: clonedInstanceAdminAddress,
         instanceReaderAddress: clonedInstanceReaderAddress,
-        instanceBundleManagerAddress: clonedInstanceBundleManagerAddress,
+        instanceBundleSetAddress: clonedInstanceBundleSetAddress,
         instanceStoreAddress: clonedInstanceStoreAddress,
     } as InstanceAddresses;
 }

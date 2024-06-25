@@ -44,6 +44,13 @@ interface IStakingService is IService
     error ErrorStakingServiceDipBalanceInsufficient(NftId targetNftId, uint256 amount, uint256 balance);
     error ErrorStakingServiceDipAllowanceInsufficient(NftId targetNftId, address tokenHandler, uint256 amount, uint256 allowance);
 
+    /// @dev Set the protocol reward rate stake locking period to the specified duration.
+    /// Permissioned: only staking owner
+    // TODO implement
+    // function setProtocolRewardRate(UFixed rewardRate) external;
+    // function setProtocolLockingPeriod(Seconds lockingPeriod) external;
+    // TODO also make sure that protocol rewards can be refilled and withdrawn
+
     /// @dev creates/registers an on-chain instance staking target.
     /// function granted to instance service
     function createInstanceTarget(
@@ -53,11 +60,11 @@ interface IStakingService is IService
     ) external;
 
     /// @dev Set the instance stake locking period to the specified duration.
-    /// permissioned: only the owner of the specified target may set the locking period
+    /// Permissioned: Only owner of the specified target.
     function setInstanceLockingPeriod(NftId instanceNftId, Seconds lockingPeriod) external;
 
-    /// @dev Set the instance reward rate to the specified value
-    /// permissioned: only the owner of the specified target may set the locking period
+    /// @dev Set the instance reward rate to the specified value.
+    /// Permissioned: Only owner of the specified target.
     function setInstanceRewardRate(NftId instanceNftId, UFixed rewardRate) external;
 
     /// @dev (Re)fills the staking reward reserves for the specified target using the dips provided by the reward provider.
@@ -68,8 +75,8 @@ interface IStakingService is IService
     /// unpermissioned: anybody may fill up staking reward reserves
     function refillRewardReservesBySender(NftId targetNftId, Amount dipAmount) external returns (Amount newBalance);
 
-    /// @dev defunds the staking reward reserves for the specified target
-    /// permissioned: only the target owner may call this function
+    /// @dev Defunds the staking reward reserves for the specified target
+    /// Permissioned: only the target owner may call this function
     function withdrawInstanceRewardReserves(NftId instanceNftId, Amount dipAmount) external returns (Amount newBalance);
 
     /// @dev create a new stake with amount DIP to the specified target

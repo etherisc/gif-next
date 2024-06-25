@@ -26,7 +26,7 @@ import {IInstance} from "./IInstance.sol";
 import {IInstanceService} from "./IInstanceService.sol";
 import {InstanceReader} from "./InstanceReader.sol";
 import {InstanceAdmin} from "./InstanceAdmin.sol";
-import {BundleManager} from "./BundleManager.sol";
+import {BundleSet} from "./BundleSet.sol";
 import {InstanceStore} from "./InstanceStore.sol";
 
 import {KeyValueStore} from "../shared/KeyValueStore.sol";
@@ -55,7 +55,7 @@ contract Instance is
     IInstanceService internal _instanceService;
     InstanceAdmin internal _instanceAdmin;
     InstanceReader internal _instanceReader;
-    BundleManager internal _bundleManager;
+    BundleSet internal _bundleManager;
     InstanceStore internal _instanceStore;
 
     modifier onlyChainNft() {
@@ -68,7 +68,7 @@ contract Instance is
     function initialize(
         InstanceAdmin instanceAdmin, 
         InstanceStore instanceStore,
-        BundleManager bundleManager,
+        BundleSet bundleManager,
         InstanceReader instanceReader,
         IRegistry registry, 
         address initialOwner
@@ -234,7 +234,7 @@ contract Instance is
         return _instanceReader;
     }
 
-    function getBundleManager() external view returns (BundleManager) {
+    function getBundleSet() external view returns (BundleSet) {
         return _bundleManager;
     }
 

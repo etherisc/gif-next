@@ -431,7 +431,7 @@ contract RegisterServiceFuzzTest is RegistryTestBase
         info_2.objectType = SERVICE();
         info_2.isInterceptor = false;
 
-        _startPrank(address(releaseManager));
+        _startPrank(address(releaseRegistry));
 
         _assert_registerService(info_1, version, domain, false, "");
 

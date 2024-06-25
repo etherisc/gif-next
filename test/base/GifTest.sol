@@ -44,7 +44,7 @@ import {IRegistryService} from "../../contracts/registry/RegistryService.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {RegistryServiceManager} from "../../contracts/registry/RegistryServiceManager.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {ReleaseManager} from "../../contracts/registry/ReleaseManager.sol";
+import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {ServiceAuthorizationV3} from "../../contracts/registry/ServiceAuthorizationV3.sol";
 import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -88,7 +88,7 @@ import {InstanceAdmin} from "../../contracts/instance/InstanceAdmin.sol";
 import {InstanceAuthorizationV3} from "../../contracts/instance/InstanceAuthorizationV3.sol";
 import {Instance} from "../../contracts/instance/Instance.sol";
 import {InstanceReader} from "../../contracts/instance/InstanceReader.sol";
-import {BundleManager} from "../../contracts/instance/BundleManager.sol";
+import {BundleSet} from "../../contracts/instance/BundleSet.sol";
 import {InstanceStore} from "../../contracts/instance/InstanceStore.sol";
 
 import {Dip} from "../../contracts/mock/Dip.sol";
@@ -122,7 +122,7 @@ contract GifTest is GifDeployer {
     RegistryAdmin registryAdmin;
     Registry public registry;
     ChainNft public chainNft;
-    ReleaseManager public releaseManager;
+    ReleaseRegistry public releaseRegistry;
     TokenRegistry public tokenRegistry;
 
     StakingManager public stakingManager;
@@ -133,14 +133,14 @@ contract GifTest is GifDeployer {
     AccessManagerCloneable public masterAccessManager;
     InstanceAdmin public masterInstanceAdmin;
     InstanceAuthorizationV3 public instanceAuthorizationV3;
-    BundleManager public masterBundleManager;
+    BundleSet public masterBundleSet;
     InstanceStore public masterInstanceStore;
     Instance public masterInstance;
     NftId public masterInstanceNftId;
     InstanceReader public masterInstanceReader;
 
     InstanceAdmin public instanceAdmin;
-    BundleManager public instanceBundleManager;
+    BundleSet public instanceBundleSet;
     InstanceStore public instanceStore;
     Instance public instance;
     NftId public instanceNftId;
@@ -289,7 +289,7 @@ contract GifTest is GifDeployer {
             dip,
             registry,
             tokenRegistry,
-            releaseManager,
+            releaseRegistry,
             registryAdmin,
             stakingManager,
             staking
@@ -310,7 +310,7 @@ contract GifTest is GifDeployer {
         console.log("registry owner", registryOwner);
 
         console.log("token registry deployed at", address(tokenRegistry));
-        console.log("release manager deployed at", address(releaseManager));
+        console.log("release manager deployed at", address(releaseRegistry));
 
         console.log("registry access manager deployed:", address(registryAdmin));
         console.log("registry access manager authority", registryAdmin.authority());
@@ -334,12 +334,12 @@ contract GifTest is GifDeployer {
         IServiceAuthorization serviceAuthorization = new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810");
 
         deployRelease(
-            releaseManager, 
+            releaseRegistry, 
             serviceAuthorization, 
             gifAdmin, 
             gifManager);
 
-        assertEq(releaseManager.getState(releaseManager.getLatestVersion()).toInt(), ACTIVE().toInt(), "unexpected state for releaseManager after activateNextRelease");
+        assertEq(releaseRegistry.getState(releaseRegistry.getLatestVersion()).toInt(), ACTIVE().toInt(), "unexpected state for releaseRegistry after activateNextRelease");
     }
 
     function _deployMasterInstance() internal 
@@ -348,7 +348,7 @@ contract GifTest is GifDeployer {
         instanceAuthorizationV3 = new InstanceAuthorizationV3();
         masterInstanceAdmin = new InstanceAdmin(instanceAuthorizationV3);
         masterInstanceStore = new InstanceStore();
-        masterBundleManager = new BundleManager();
+        masterBundleSet = new BundleSet();
         masterInstanceReader = new InstanceReader();
 
         // crate instance
@@ -356,7 +356,7 @@ contract GifTest is GifDeployer {
         masterInstance.initialize(
             masterInstanceAdmin,
             masterInstanceStore,
-            masterBundleManager,
+            masterBundleSet,
             masterInstanceReader,
             registry,
             registryOwner);
@@ -381,7 +381,7 @@ contract GifTest is GifDeployer {
         console.log("master oz access manager deployed at", address(masterInstance.authority()));
         console.log("master instance access manager deployed at", address(masterInstanceAdmin));
         console.log("master instance reader deployed at", address(masterInstanceReader));
-        console.log("master bundle manager deployed at", address(masterBundleManager));
+        console.log("master bundle manager deployed at", address(masterBundleSet));
         console.log("master instance store deployed at", address(masterInstanceStore));
         // solhint-enable
     }
@@ -396,7 +396,7 @@ contract GifTest is GifDeployer {
         instanceAdmin = instance.getInstanceAdmin();
         instanceReader = instance.getInstanceReader();
         instanceStore = instance.getInstanceStore();
-        instanceBundleManager = instance.getBundleManager();
+        instanceBundleSet = instance.getBundleSet();
         instanceStore = instance.getInstanceStore();
         
         // solhint-disable
@@ -404,7 +404,7 @@ contract GifTest is GifDeployer {
         console.log("cloned instance nft id", instanceNftId.toInt());
         console.log("cloned oz access manager deployed at", instance.authority());
         console.log("cloned instance reader deployed at", address(instanceReader));
-        console.log("cloned bundle manager deployed at", address(instanceBundleManager));
+        console.log("cloned bundle manager deployed at", address(instanceBundleSet));
         console.log("cloned instance store deployed at", address(instanceStore));
         // solhint-enable
     }

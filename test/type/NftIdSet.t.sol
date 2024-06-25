@@ -6,23 +6,23 @@ import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {LibNftIdSet} from "../../contracts/type/NftIdSet.sol";
-import {MockObjectManager} from "../mock/MockObjectManager.sol";
+import {MockObjectSet} from "../mock/MockObjectSet.sol";
 import {GifTest} from "../base/GifTest.sol";
 
 contract NftIdSetTest is GifTest {
 
     LibNftIdSet.Set internal set;
     mapping(NftId setId => LibNftIdSet.Set objects) internal sets;
-    MockObjectManager public objectManager;
+    MockObjectSet public objectSet;
 
     function setUp() public override {
         super.setUp();
 
         Dummy dummyAuthority = new Dummy();
-        MockObjectManager master = new MockObjectManager();
+        MockObjectSet master = new MockObjectSet();
 
-        objectManager = MockObjectManager(Clones.clone(address(master)));
-        objectManager.initialize(address(instance));
+        objectSet = MockObjectSet(Clones.clone(address(master)));
+        objectSet.initialize(address(instance));
     }
 
     function test_addToSetHappyCase() public {
@@ -50,17 +50,17 @@ contract NftIdSetTest is GifTest {
         assertTrue(LibNftIdSet.contains(sets[setId], objectId), "id not in set");
     }
 
-    function test_addToObjectManagerHappyCase() public {
+    function test_addToObjectSetHappyCase() public {
         NftId setId = NftIdLib.toNftId(7);
         NftId objectId = NftIdLib.toNftId(42);
 
-        assertEq(objectManager.objects(setId), 0, "set size not 0");
-        assertFalse(objectManager.contains(setId, objectId), "id in empty set");
+        assertEq(objectSet.objects(setId), 0, "set size not 0");
+        assertFalse(objectSet.contains(setId, objectId), "id in empty set");
 
-        objectManager.add(setId, objectId);
+        objectSet.add(setId, objectId);
 
-        assertEq(objectManager.objects(setId), 1, "set size not 1");
-        assertTrue(objectManager.contains(setId, objectId), "id not in set");
+        assertEq(objectSet.objects(setId), 1, "set size not 1");
+        assertTrue(objectSet.contains(setId, objectId), "id not in set");
     }
 }
 

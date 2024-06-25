@@ -15,7 +15,7 @@ interface IRegistry is IERC165 {
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
     // registerService()
-    error ErrorRegistryCallerNotReleaseManager();
+    error ErrorRegistryCallerNotReleaseRegistry();
     error ErrorRegistryDomainZero(address service);
     error ErrorRegistryDomainAlreadyRegistered(address service, VersionPart version, ObjectType domain);
 
@@ -109,7 +109,7 @@ interface IRegistry is IERC165 {
     // TODO refactor the address getters below to contract getters
     function getChainNftAddress() external view returns (address);
 
-    function getReleaseManagerAddress() external view returns (address);
+    function getReleaseRegistryAddress() external view returns (address);
 
     function getStakingAddress() external view returns (address);
 
