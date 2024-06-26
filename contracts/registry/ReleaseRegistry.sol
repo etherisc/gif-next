@@ -9,7 +9,7 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 
 import {NftId} from "../type/NftId.sol";
-import {RoleId, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
+import {RoleId, RoleIdLib, ADMIN_ROLE, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {ObjectType, ObjectTypeLib, POOL, RELEASE, REGISTRY, SERVICE, STAKING} from "../type/ObjectType.sol";
 import {Version, VersionLib, VersionPart, VersionPartLib} from "../type/Version.sol";
 import {Timestamp, TimestampLib, zeroTimestamp, ltTimestamp} from "../type/Timestamp.sol";
@@ -98,9 +98,6 @@ contract ReleaseRegistry is
 
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
     mapping(VersionPart version => IServiceAuthorization authz) internal _serviceAuthorization;
-
-    // TODO check where/why this is used
-    mapping(address registryService => VersionPart version) _releaseVersionByAddress;
 
     VersionPart private _initial;// first active version    
     VersionPart internal _latest; // latest active version
@@ -231,22 +228,29 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryServiceDomainMismatch(expectedDomain, serviceDomain);
         }
 
-        // register service with registry
-        nftId = _registry.registerService(info, serviceVersion, serviceDomain);
-        service.linkToRegisteredNftId();
-        _registeredServices++;
+        // TODO: service address matches defined in release config
 
         // setup service authorization
         _admin.authorizeService(
             _serviceAuthorization[releaseVersion], 
-            service);
+            service,
+            serviceDomain,
+            releaseVersion);
 
-        // TODO consider to extend this to REGISTRY
         // special roles for registry/staking/pool service
-        if (serviceDomain == STAKING() || serviceDomain == POOL()) {
-            // TODO rename to grantServiceDomainRole()
+        if (
+            serviceDomain == REGISTRY() ||
+            serviceDomain == STAKING() ||
+            serviceDomain == POOL()) 
+        {
             _admin.grantServiceRoleForAllVersions(service, serviceDomain);
         }
+
+        _registeredServices++;
+
+        // register service with registry
+        nftId = _registry.registerService(info, serviceVersion, serviceDomain);
+        service.linkToRegisteredNftId();
     }
 
 
@@ -277,7 +281,6 @@ contract ReleaseRegistry is
         _latest = version;
         _state[version] = newState;
 
-        _releaseVersionByAddress[service] = version;
         _releaseInfo[version].activatedAt = TimestampLib.blockTimestamp();
 
         emit LogReleaseActivation(version);
@@ -296,8 +299,7 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryReleaseActivationDisallowed(version, state);
         }
 
-        // TODO come up with a substitute
-        //_releaseAccessManager[version].disable();
+        _revokeReleaseRoles(version);
 
         _state[version] = newState;
         _releaseInfo[version].disabledAt = TimestampLib.blockTimestamp();
@@ -319,8 +321,7 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryReleaseActivationDisallowed(version, state);
         }
 
-        // TODO come up with a substitute
-        // _releaseAccessManager[version].enable();
+        _grantReleaseRoles(version);
         
         _state[version] = newState;
         _releaseInfo[version].disabledAt = zeroTimestamp();
@@ -336,11 +337,6 @@ contract ReleaseRegistry is
         address deployer
     ) external pure returns (address predicted) {
         return Clones.predictDeterministicAddress(implementation, salt, deployer);
-    }
-
-    function isActiveRegistryService(address service) external view returns(bool) {
-        VersionPart version = _releaseVersionByAddress[service];
-        return isActiveRelease(version);
     }
 
     function isActiveRelease(VersionPart version) public view returns(bool) {
@@ -390,6 +386,57 @@ contract ReleaseRegistry is
     }
 
     //--- private functions ----------------------------------------------------//
+
+    function _revokeReleaseRoles(VersionPart version)
+        private
+    {
+        address service;
+        ObjectType domain;
+
+        ObjectType[] memory domains = _serviceAuthorization[version].getServiceDomains();
+        for(uint idx = 0; idx < domains.length; idx++)
+        {
+            domain = domains[idx];
+            service = _registry.getServiceAddress(domain, version);
+            _admin.revokeServiceRole(IService(service), domain, version);
+
+            // special roles for registry/staking/pool service
+            if(
+                domain == REGISTRY() ||
+                domain == STAKING() ||
+                domain == POOL()
+            )
+            {
+                _admin.revokeServiceRoleForAllVersions(IService(service), domain);
+            }
+        }
+    }
+
+    function _grantReleaseRoles(VersionPart version)
+        private
+    {
+        address service;
+        ObjectType domain;
+
+        // TODO consider getting domains from local store
+        ObjectType[] memory domains = _serviceAuthorization[version].getServiceDomains();
+        for(uint idx = 0; idx < domains.length; idx++)
+        {
+            domain = domains[idx];
+            service = _registry.getServiceAddress(domain, version);
+            _admin.grantServiceRole(IService(service), domain, version);
+
+            // special roles for registry/staking/pool service
+            if(
+                domain == REGISTRY() ||
+                domain == STAKING() ||
+                domain == POOL()
+            )
+            {
+                _admin.grantServiceRoleForAllVersions(IService(service), domain);
+            }
+        }
+    }
 
     function _verifyService(IService service)
         internal
@@ -474,8 +521,7 @@ contract ReleaseRegistry is
         if (registryAddress == address(0)) {
             return false;
         }
-        // TODO try catch and return false in case of revert
-        // or just panic
+        // TODO try catch and return false in case of revert or just panic
         // check if contract returns a zero nft id for its own address
         if (IRegistry(registryAddress).getNftId(registryAddress).eqz()) {
             return false;
