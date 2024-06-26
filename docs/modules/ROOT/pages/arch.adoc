@@ -2,11 +2,100 @@
 
 NOTE: This document is under construction
 
-== Rules
+== Introduction
 
-=== General
+=== Decentralized Insurance Protocol (DIP)
 
-- Libraries, registry and services are pre-deployed on the chain (by Etherisc) and are owned by the protocol owner
+The Decentralized Insurance Protocol (DIP) enables the creation and management of decentralized insurance products. The protocol is designed to be flexible and extensible, allowing for the creation of a wide range of insurance products. 
+
+The protocol supports a multi-chain ecosystem to let users choose the chain that best fits their needs. The protocol is designed to be chain agnostic, allowing for the deployment of the protocol on any EVM compatible chain.
+
+=== Generalized Insurance Framework (GIF)
+
+The Generalized Insurance Framework (GIF) is a set of smart contracts that implement the Decentralized Insurance Protocol (DIP). 
+The main Goal of the GIF is to support its users in creating and managing decentralized insurance products as efficitiently and safe as possible. 
+
+GIF users should be able to focus on their use case specific business logic.
+GIF takes care of the use case independent heavy lifting like managing policies, claims, payouts, managing collateral in pools, etc.
+
+The GIF itself is a highly modularized and flexible infrastructure that can be deployed to any EVM compatible chain.
+Most contracts of the GIF will already be deployed and are ready to be used by the users.
+
+== GIF Multi-Chain Setup
+
+=== Overview
+
+For each supported chain a chain specific GIF setup is deployed.
+To link all chains together a global registry is deployed on mainnet.
+This global registry then holds the links to all chain specific registries as shown in the diagram below.
+
+image::./images/multi-chain-setup.png[GIF multi-chain setup]
+
+
+=== Global Registry
+
+The global registry is deployed on mainnet can be understood as the directory and entry point for the complete protocol ecosystem. 
+
+The global registry contains entries for all protocol relevant objects on mainnet and a chain registry entry for each supported chain in the ecosystem.
+At the same time the global registy plays the role of the mainnet chain registry.
+
+=== Chain Registries
+
+On each chain supported by the protocol a chain registry is deployed.
+A chain registry contains entries for all protocol relevant objects on that specific chain.
+These entries hold basic metadata of the object and are backed by an NFT that defines the ownership of the object.
+
+The list below provides the basic metadata for each object in the registry:
+
+* NFT ID: A protocol unique ID
+* Parent NFT ID: A pointer to the parent object in the registry
+* Object Type: The type of the object (registry, service, instance, product, policy, etc)
+* Object Address: The contract address for contract objects
+
+=== Protocol Objects
+
+The following objects are managed by the protocol:
+
+* Protocol: The object representing the protocol itself
+* Registry: Registry contracts
+* Instance: Instance contracts linked to the chain registry
+* Product: Product contracts linked to an instance
+* Policy: Policy object linked to a product contract
+* Distribution: Distribution contracts linked to an instance
+* Distributor: Distributor object linked to a distribution contract
+* Oracle: Oracle contracts linked to an instance
+* Pool: Pool contracts linked to an instance
+* Bundle: Bundle object linked to a pool contract
+* Staking: Staking contracts linked to the chain registry
+* Stake: Stake object linked to its target object (instance or protocol)
+
+
+== GIF Single-Chain Setup
+
+=== Overview
+
+image::./images/single-chain-setup.png[GIF single-chain setup]
+
+
+=== Registry
+
+=== Services
+
+=== Instance
+
+=== Components
+
+==== Product
+
+==== Distribution
+
+==== Oracle
+
+==== Pool
+
+=== Staking
+
+== GIF Release Mangement
 
 === Releases
 

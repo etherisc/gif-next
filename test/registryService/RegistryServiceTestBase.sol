@@ -10,7 +10,7 @@ import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {VersionPart, VersionPartLib } from "../../contracts/type/Version.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, TOKEN} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {ERC165, IERC165} from "../../contracts/shared/ERC165.sol";
@@ -69,21 +69,6 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
         releaseRegistry.activateNextRelease();
         
         registryServiceManager.linkToProxy();
-    }
-/*
-    function _deployAndRegisterServices() internal {
-        releaseRegistry.registerService(componentOwnerService);
-    }
-*/
-    function _assert_registered_token(address token, NftId nftIdFromRegistryService) internal
-    {
-        IRegistry.ObjectInfo memory info = registry.getObjectInfo(token);
-
-        assertEq(info.nftId.toInt(), nftIdFromRegistryService.toInt(), "NftId of token registered is different");
-        assertEq(info.parentNftId.toInt(), registryNftId.toInt(), "Parent of token registered is not registry");
-        assertEq(info.objectType.toInt(), TOKEN().toInt(), "Type of token registered is not TOKEN");
-        assertEq(info.objectAddress, token, "Address of token registered is different");
-        assertEq(info.initialOwner, NFT_LOCK_ADDRESS, "Initial owner of the token is different");
     }
 
     function _assert_registered_contract(

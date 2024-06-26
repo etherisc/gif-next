@@ -7,20 +7,28 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {VersionPart} from "../type/Version.sol";
 import {Timestamp} from "../type/Timestamp.sol";
-import {RoleId} from "../type/RoleId.sol";
 
+/// @title Chain Registry interface.
+/// A chain registry holds all protocol relevant objects with basic metadata.
+/// Registered objects include services, instances, products, pools, policies, bundles, stakes and more.
+/// Registered objects are represented by NFTs.
 interface IRegistry is IERC165 {
 
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
 
-    // registerService()
-    error ErrorRegistryCallerNotReleaseRegistry();
-    error ErrorRegistryDomainZero(address service);
-    error ErrorRegistryDomainAlreadyRegistered(address service, VersionPart version, ObjectType domain);
-
     // register()
     error ErrorRegistryCallerNotRegistryService();
+    error ErrorRegistryService(address service);
+
+    // registerService()
+    error ErrorRegistryCallerNotReleaseRegistry();
+    error ErrorRegistryServiceAddressZero(); 
+    error ErrorRegistryServiceVersionZero(); 
+    error ErrorRegistryNotService(address service, ObjectType objectType);
+    error ErrorRegistryServiceParentNotRegistry(NftId parentNftId);
+    error ErrorRegistryDomainZero(address service);
+    error ErrorRegistryDomainAlreadyRegistered(address service, VersionPart version, ObjectType domain);
 
     // registerWithCustomTypes()
     error ErrorRegistryCoreTypeRegistration();
@@ -45,24 +53,29 @@ interface IRegistry is IERC165 {
         bytes32 salt;
         address[] addresses;
         string[] names;
-        // RoleId[][] serviceRoles;
-        // string[][] serviceRoleNames;
-        // RoleId[][] functionRoles;
-        // string[][] functionRoleNames;
-        // bytes4[][][] selectors;
         ObjectType[] domains;
         Timestamp activatedAt;
         Timestamp disabledAt;
     }
 
+    /// @dev Register an object with a known core type.
+    /// The function returns a newly minted object NFT ID.
+    /// May not be used to register services.
+    function register(ObjectInfo memory info) external returns (NftId nftId);
+
+    /// @dev Register a service with using the provided domain and version.
+    /// The function returns a newly minted service NFT ID.
+    /// May only be used to register services.
     function registerService(
         ObjectInfo memory serviceInfo, 
         VersionPart serviceVersion, 
         ObjectType serviceDomain
     ) external returns(NftId nftId);
 
-    function register(ObjectInfo memory info) external returns (NftId nftId);
-
+    /// @dev Register an object with a custom type.
+    /// The function returns a newly minted object NFT ID.
+    /// This function is reserved for GIF releases > 3.
+    /// May not be used to register known core types.
     function registerWithCustomType(ObjectInfo memory info) external returns (NftId nftId);
 
     function getInitialVersion() external view returns (VersionPart);

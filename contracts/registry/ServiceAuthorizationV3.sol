@@ -69,14 +69,14 @@ contract ServiceAuthorizationV3
           functions = _authorizeForService(REGISTRY(), APPLICATION());
           _authorize(functions, IRegistryService.registerPolicy.selector, "registerPolicy");
 
-          functions = _authorizeForService(REGISTRY(), POOL());
-          _authorize(functions, IRegistryService.registerPool.selector, "registerPool");
+          // functions = _authorizeForService(REGISTRY(), POOL());
+          // _authorize(functions, IRegistryService.registerPool.selector, "registerPool");
 
           functions = _authorizeForService(REGISTRY(), BUNDLE());
           _authorize(functions, IRegistryService.registerBundle.selector, "registerBundle");
 
           functions = _authorizeForService(REGISTRY(), DISTRIBUTION());
-          _authorize(functions, IRegistryService.registerDistribution.selector, "registerDistribution");
+          // _authorize(functions, IRegistryService.registerDistribution.selector, "registerDistribution");
           _authorize(functions, IRegistryService.registerDistributor.selector, "registerDistributor");
 
           functions = _authorizeForService(REGISTRY(), COMPONENT());
@@ -88,8 +88,8 @@ contract ServiceAuthorizationV3
           functions = _authorizeForService(REGISTRY(), STAKING());
           _authorize(functions, IRegistryService.registerStake.selector, "registerStake");
 
-          functions = _authorizeForService(REGISTRY(), PRODUCT());
-          _authorize(functions, IRegistryService.registerProduct.selector, "registerProduct");
+          // functions = _authorizeForService(REGISTRY(), PRODUCT());
+          // _authorize(functions, IRegistryService.registerProduct.selector, "registerProduct");
      }
 
 

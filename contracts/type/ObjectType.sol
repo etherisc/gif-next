@@ -27,20 +27,16 @@ function STAKING() pure returns (ObjectType) {
     return ObjectType.wrap(3);
 }
 
-function TOKEN() pure returns (ObjectType) {
+function RELEASE() pure returns (ObjectType) {
     return ObjectType.wrap(6);
 }
 
-function RELEASE() pure returns (ObjectType) {
+function ROLE() pure returns (ObjectType) {
     return ObjectType.wrap(7);
 }
 
-function ROLE() pure returns (ObjectType) {
-    return ObjectType.wrap(8);
-}
-
 function SERVICE() pure returns (ObjectType) {
-    return ObjectType.wrap(9);
+    return ObjectType.wrap(8);
 }
 
 function INSTANCE() pure returns (ObjectType) {

@@ -1,0 +1,27 @@
+@startuml
+
+package "Mainnet" {
+  [Global Registry] as globalRegistry
+  [...] as contracts
+}
+
+package "Polygon" {
+  [Registry] as polygonRegistry
+  [...] as pContracts
+}
+
+package "Base" {
+  [Registry] as baseRegistry
+  [...] as bContracts
+}
+
+package "Gnosis" {
+  [Registry] as gnosisRegistry
+  [...] as gContracts
+}
+
+globalRegistry --> polygonRegistry
+globalRegistry --> baseRegistry
+globalRegistry --> gnosisRegistry
+
+@enduml
