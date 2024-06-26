@@ -31,7 +31,6 @@ This global registry then holds the links to all chain specific registries as sh
 
 image::./images/multi-chain-setup.png[GIF multi-chain setup]
 
-
 === Global Registry
 
 The global registry is deployed on mainnet can be understood as the directory and entry point for the complete protocol ecosystem. 
@@ -74,7 +73,16 @@ The following objects are managed by the protocol:
 
 === Overview
 
+The GIF setup on any specific chain always consists of a registry and staking modules, services and instances as shown in the diagram below.
+
 image::./images/single-chain-setup.png[GIF single-chain setup]
+
+Instances are used by ecosystem participants to create and operate insurance products. 
+To create and operate actual use cases/products a number of components linked to that instance are needed.
+
+Internally instances consist of a set of contracts to manage the protocol relevant data for all components that are linked to that intance.
+The component contracts then implement the use case specific business logic of the products, pools, distributions and oracles that are used to operate the use cases that are provided by this instance.
+
 
 
 === Registry
