@@ -1,8 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManager.sol";
 import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -361,8 +360,8 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _addressName[address(staking)] = "Staking";
         _addressName[address(registryServiceMock)] = "registryServiceMock";
         
-        _errorName[IRegistry.ErrorRegistryCallerNotRegistryService.selector] = "ErrorRegistryCallerNotRegistryService"; 
-        _errorName[IRegistry.ErrorRegistryCallerNotReleaseRegistry.selector] = "ErrorRegistryCallerNotReleaseRegistry"; 
+        _errorName[IAccessManaged.AccessManagedUnauthorized.selector] = "AccessManagedUnauthorized"; 
+        _errorName[IRegistry.ErrorRegistryCallerNotReleaseRegistry.selector] = "ErrorRegistryCallerNotReleaseManager"; 
         _errorName[IRegistry.ErrorRegistryParentAddressZero.selector] = "ErrorRegistryParentAddressZero"; 
         _errorName[IRegistry.ErrorRegistryContractAlreadyRegistered.selector] = "ErrorRegistryContractAlreadyRegistered";
         _errorName[IRegistry.ErrorRegistryTypesCombinationInvalid.selector] = "ErrorRegistryTypesCombinationInvalid";
@@ -714,7 +713,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
 
         if(_sender != address(registryServiceMock)) 
         {// auth check
-            expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryCallerNotRegistryService.selector);
+            expectedRevertMsg = abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender);
             expectRevert = true;
         } else if(info.objectAddress > address(0)) 
         {

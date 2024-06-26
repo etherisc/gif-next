@@ -144,7 +144,8 @@ contract GifDeployer is Test {
         registryAdmin = new RegistryAdmin();
 
         // 3) deploy registry
-        registry = new Registry(registryAdmin);
+        address globalRegistry;
+        registry = new Registry(registryAdmin, globalRegistry);
 
         // 4) deploy release manager
         releaseRegistry = new ReleaseRegistry(registry);

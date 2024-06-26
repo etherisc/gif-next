@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
@@ -206,23 +207,30 @@ contract RegisterConcreteTest is RegistryTestBase {
             info.objectAddress = address(uint160(info.objectAddress) + 1);
         }
 
-        bytes memory reason_NotRegistryService = abi.encodeWithSelector(IRegistry.ErrorRegistryCallerNotRegistryService.selector);
-
         // outsider can not register
         _startPrank(outsider);
-        _assert_register(info, true, reason_NotRegistryService);
+        _assert_register(
+            info, 
+            true, 
+            abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
         _stopPrank();
 
         _startPrank(registryOwner);
         // registryOwner can not register
-        _assert_register(info, true, reason_NotRegistryService);
+        _assert_register(
+            info, 
+            true, 
+            abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
 
         // transfer to outsider
         chainNft.approve(outsider, registryServiceNftId.toInt());
         chainNft.safeTransferFrom(registryOwner, outsider, registryServiceNftId.toInt(), "");
 
         // registryOwner is not owner anymore, still can not register
-        _assert_register(info, true, reason_NotRegistryService);
+        _assert_register(
+            info, 
+            true, 
+            abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
 
         _stopPrank();
 
@@ -233,7 +241,10 @@ contract RegisterConcreteTest is RegistryTestBase {
 
         // outsider is new owner, still can not register
         _startPrank(outsider);
-        _assert_register(info, true, reason_NotRegistryService);
+        _assert_register(
+            info, 
+            true,
+            abi.encodeWithSelector(IAccessManaged.AccessManagedUnauthorized.selector, _sender));
         _stopPrank();
     }
 }
