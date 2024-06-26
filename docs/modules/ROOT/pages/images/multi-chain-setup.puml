@@ -2,8 +2,7 @@
 
 package "Mainnet" {
   [Global Registry] as globalRegistry
-  [Services]
-  [Instances]
+  [...] as contracts
 }
 
 package "Polygon" {

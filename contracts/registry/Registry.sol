@@ -8,7 +8,7 @@ import {InitializableCustom} from "../shared/InitializableCustom.sol";
 
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {VersionPart} from "../type/Version.sol";
-import {ObjectType, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, STAKE, STAKING, PRODUCT, DISTRIBUTION, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../type/ObjectType.sol";
+import {ObjectType, PROTOCOL, REGISTRY, SERVICE, INSTANCE, STAKE, STAKING, PRODUCT, DISTRIBUTION, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../type/ObjectType.sol";
 
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
@@ -27,6 +27,8 @@ import {RegistryAdmin} from "./RegistryAdmin.sol";
 // 3) IRegisterable address by regular service (INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE)
 // 4) state object by regular service (POLICY, BUNDLE, STAKE)
 
+/// @title Chain Registry contract implementing IRegistry.
+/// @notice See IRegistry for method details.
 contract Registry is
     InitializableCustom,
     IRegistry
@@ -81,7 +83,8 @@ contract Registry is
         _;
     }
 
-
+    /// @dev Creates the registry contract and populates it with the protocol and registry objects.
+    /// Internally deploys the ChainNft contract.
     constructor(RegistryAdmin admin) 
         InitializableCustom() 
     {
@@ -98,8 +101,8 @@ contract Registry is
     }
 
 
-    /// @dev wires release manager and token to registry (this contract).
-    /// MUST be called by release manager.
+    /// @dev Wires release registry and token to registry (this contract).
+    /// MUST be called by release registry.
     function initialize(
         address releaseRegistry,
         address tokenRegistry,
@@ -115,6 +118,33 @@ contract Registry is
         _stakingNftId = _registerStaking();
     }
 
+    /// @inheritdoc IRegistry
+    function register(ObjectInfo memory info)
+        external
+        onlyRegistryService
+        returns(NftId nftId)
+    {
+        ObjectType objectType = info.objectType;
+        ObjectType parentType = _info[info.parentNftId].objectType;
+
+        // check type combinations for core objects
+        if(info.objectAddress == address(0)) {
+            if(_coreObjectCombinations[objectType][parentType] == false) {
+                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
+            }
+        }
+        // check type combinations for contract objects
+        else {
+            if(_coreContractCombinations[objectType][parentType] == false) {
+                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
+            }
+        }
+
+        nftId = _register(info);
+    }
+
+
+    /// @inheritdoc IRegistry
     function registerService(
         ObjectInfo memory info, 
         VersionPart version, 
@@ -124,65 +154,45 @@ contract Registry is
         onlyReleaseRegistry
         returns(NftId nftId)
     {
+        // check service address is defined
         address service = info.objectAddress;
-        /* must be guaranteed by release manager
         if(service == address(0)) {
-            revert();
+            revert ErrorRegistryServiceAddressZero();
         }
 
+        // check version is defined
         if(version.eqz()) {
-            revert();
+            revert ErrorRegistryServiceVersionZero();
         }
 
-        if(info.objectType != SERVICE()) {
-            revert();
-        }
-        if(info.parentType != REGISTRY()) {
-            revert();
-        }        
-        info.initialOwner == NFT_LOCK_ADDRESS <- if services are access managed
-        */
-
+        // check domain is defined
         if(domain.eqz()) {
             revert ErrorRegistryDomainZero(service);
         }
 
-        if(_service[version][domain] > address(0)) {
+        // check contract has not already been registered
+        if(_service[version][domain] != address(0)) {
             revert ErrorRegistryDomainAlreadyRegistered(service, version, domain);
         }
-        
-        _service[version][domain] = service;
 
+        // check service has proper type
+        if(info.objectType != SERVICE()) {
+            revert ErrorRegistryNotService(service, info.objectType);
+        }
+
+        // check that parent has registry type
+        if(info.parentNftId != _registryNftId) {
+            revert ErrorRegistryServiceParentNotRegistry(info.parentNftId);
+        }        
+
+        _service[version][domain] = service;
         nftId = _register(info);
 
         emit LogServiceRegistration(version, domain);
     }
 
-    function register(ObjectInfo memory info)
-        external
-        onlyRegistryService
-        returns(NftId nftId)
-    {
-        ObjectType objectType = info.objectType;
-        ObjectType parentType = _info[info.parentNftId].objectType;
 
-        // only valid core types combinations
-        if(info.objectAddress == address(0)) 
-        {
-            if(_coreObjectCombinations[objectType][parentType] == false) {
-                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
-            }
-        }
-        else
-        {
-            if(_coreContractCombinations[objectType][parentType] == false) {
-                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
-            }
-        }
-
-        nftId = _register(info);
-    }
-
+    /// @inheritdoc IRegistry
     function registerWithCustomType(ObjectInfo memory info)
         external
         onlyRegistryService
@@ -197,7 +207,6 @@ contract Registry is
 
         if(
             parentType == PROTOCOL() ||
-            parentType == REGISTRY() ||
             parentType == SERVICE()
         ) {
             revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
@@ -331,7 +340,6 @@ contract Registry is
     // Internals
 
     /// @dev registry protects only against tampering existing records, registering with invalid types pairs and 0 parent address
-    // TODO registration of precompile addresses
     function _register(ObjectInfo memory info)
         internal
         returns(NftId nftId)
@@ -518,22 +526,18 @@ contract Registry is
         });
 
         _nftIdByAddress[_stakingAddress] = stakingNftId;
+
         // reverts if nftId was already minted
         _chainNft.mint(stakingOwner, stakingId);
     }
 
     /// @dev defines which object - parent types relations are allowed to register
-    // IMPORTANT: 
-    // 1) EACH object type MUST have only one parent type across ALL mappings
-    // 2) DO NOT use object type (e.g. POLCY, BUNDLE, STAKE) as parent type
-    // 3) DO NOT use REGISTRY as object type
-    // 2) DO NOT use PROTOCOL and "ObjectTypeLib.zero"
+    /// EACH object type MUST have only one parent type across ALL mappings
     function _setupValidCoreTypesAndCombinations() 
         private 
     {
         _coreTypes[REGISTRY()] = true;
         _coreTypes[SERVICE()] = true;
-        _coreTypes[TOKEN()] = true;
         _coreTypes[INSTANCE()] = true;
         _coreTypes[PRODUCT()] = true;
         _coreTypes[POOL()] = true;
@@ -545,28 +549,22 @@ contract Registry is
         _coreTypes[STAKING()] = true;
         _coreTypes[STAKE()] = true;
 
-        uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
-        if(registryId == _chainNft.GLOBAL_REGISTRY_ID()) {
-            // we are global registry
-            // object is registry from different chain
-            // parent is global registry, this contract
-            _coreContractCombinations[REGISTRY()][REGISTRY()] = true; // only for global regstry
-            //_coreObjectCombinations[REGISTRY()][REGISTRY()] = true;
-        } else {
-            // we are not global registry
-            // object is local registry, this contract
-            // parent is global registry, object with 0 address or registry from mainnet???
+        // only global registry allowed to register registry (after initialization)
+        if(block.chainid == 1) {
+            _coreContractCombinations[REGISTRY()][REGISTRY()] = true;
         }
+
+        // contracts with registry parent
         _coreContractCombinations[STAKING()][REGISTRY()] = true; // only for chain staking contract
-        _coreContractCombinations[TOKEN()][REGISTRY()] = true;
-        //_coreContractCombinations[SERVICE()][REGISTRY()] = true;// do not need it here -> registerService() registers exactly this combination
         _coreContractCombinations[INSTANCE()][REGISTRY()] = true;
 
+        // components with instance parent
         _coreContractCombinations[PRODUCT()][INSTANCE()] = true;
         _coreContractCombinations[DISTRIBUTION()][INSTANCE()] = true;
         _coreContractCombinations[ORACLE()][INSTANCE()] = true;
         _coreContractCombinations[POOL()][INSTANCE()] = true;
 
+        // objects with coponent parents
         _coreObjectCombinations[DISTRIBUTOR()][DISTRIBUTION()] = true;
         _coreObjectCombinations[POLICY()][PRODUCT()] = true;
         _coreObjectCombinations[BUNDLE()][POOL()] = true;

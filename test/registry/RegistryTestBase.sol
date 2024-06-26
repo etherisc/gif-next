@@ -16,7 +16,7 @@ import {VersionLib, Version, VersionPart, VersionPartLib } from "../../contracts
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
 import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, TOKEN, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, STAKING, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 import {RoleId} from "../../contracts/type/RoleId.sol";
 
 import {IService} from "../../contracts/shared/IService.sol";
@@ -301,7 +301,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _types.push(PROTOCOL());
         _types.push(REGISTRY());
         _types.push(SERVICE());
-        _types.push(TOKEN());
+        // _types.push(TOKEN());
         _types.push(INSTANCE());
         _types.push(PRODUCT());
         _types.push(POOL());
@@ -318,8 +318,9 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         if(block.chainid == 1) {
             _isValidContractTypesCombo[REGISTRY()][REGISTRY()] = true;// only for global regstry
         }
+
         _isValidContractTypesCombo[STAKING()][REGISTRY()] = true;// only for chain staking contract
-        _isValidContractTypesCombo[TOKEN()][REGISTRY()] = true;
+        // _isValidContractTypesCombo[TOKEN()][REGISTRY()] = true;
         //_isValidContractTypesCombo[SERVICE()][REGISTRY()] = true;
         _isValidContractTypesCombo[INSTANCE()][REGISTRY()] = true;
 
@@ -343,7 +344,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         _typeName[REGISTRY()] = "REGISTRY";
         _typeName[STAKING()] = "STAKING";
         _typeName[SERVICE()] = "SERVICE";
-        _typeName[TOKEN()] = "TOKEN";
+        // _typeName[TOKEN()] = "TOKEN";
         _typeName[INSTANCE()] = "INSTANCE";
         _typeName[PRODUCT()] = "PRODUCT";
         _typeName[POOL()] = "POOL";
@@ -683,6 +684,14 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         {// auth check
             expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryCallerNotReleaseRegistry.selector);
             expectRevert = true;
+        } else if(info.objectAddress == address(0)) {
+            expectedRevertMsg = abi.encodeWithSelector(
+                IRegistry.ErrorRegistryServiceAddressZero.selector);
+            expectRevert = true;
+        } else if(version.eqz()) {
+            expectedRevertMsg = abi.encodeWithSelector(
+                IRegistry.ErrorRegistryServiceVersionZero.selector);
+            expectRevert = true;
         } else if(domain.eqz()) {
             expectedRevertMsg = abi.encodeWithSelector(
                 IRegistry.ErrorRegistryDomainZero.selector,
@@ -744,6 +753,18 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
             expectedRevertMsg = abi.encodeWithSelector(IERC721Errors.ERC721InvalidReceiver.selector, info.initialOwner);
             expectRevert = true;
         }
+
+        // overwrite expected results for attempts to register a service address 0 or with a parent that is not the registry
+        if (info.objectType == SERVICE()) {
+            if (info.objectAddress == address(0)) {
+                expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryServiceAddressZero.selector);
+                expectRevert = true;
+            } else if (parentNftId != registryNftId) {
+                expectedRevertMsg = abi.encodeWithSelector(IRegistry.ErrorRegistryServiceParentNotRegistry.selector, info.parentNftId);
+                expectRevert = true;
+            }
+        }
+
         // TODO add interceptor checks
     }
 

@@ -6,7 +6,7 @@ import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet
 import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
 import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, TOKEN, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
@@ -458,7 +458,7 @@ contract RegisterServiceWithPresetFuzzTest is RegistryTestBaseWithPreset, Regist
         RegistryTestBaseWithPreset.setUp();
     }
 
-    function testFuzz_registerService_00P1000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
+    function testFuzz_RegisterService_00P1000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data, VersionPart version, ObjectType domain) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,

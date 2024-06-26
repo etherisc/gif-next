@@ -9,7 +9,7 @@ import {AmountLib} from "../../contracts/type/Amount.sol";
 import {VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {SecondsLib} from "../../contracts/type/Seconds.sol";
-import {ObjectTypeLib, REGISTRY, TOKEN, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
+import {ObjectTypeLib, REGISTRY, SERVICE, INSTANCE, POOL, ORACLE, PRODUCT, DISTRIBUTION, BUNDLE, POLICY} from "../../contracts/type/ObjectType.sol";
 import {Fee, FeeLib} from "../../contracts/type/Fee.sol";
 import {
     GIF_MANAGER_ROLE,

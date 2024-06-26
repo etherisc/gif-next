@@ -7,6 +7,7 @@ using {
     versionPartGt as >,
     versionPartEq as ==,
     versionPartNe as !=,
+    VersionPartLib.eqz,
     VersionPartLib.toInt
 }
     for VersionPart global;
@@ -16,7 +17,8 @@ function versionPartEq(VersionPart a, VersionPart b) pure returns(bool isSame) {
 function versionPartNe(VersionPart a, VersionPart b) pure returns(bool isSame) { return VersionPart.unwrap(a) != VersionPart.unwrap(b); }
 
 library VersionPartLib {
-    function toInt(VersionPart a) external pure returns(uint) { return VersionPart.unwrap(a); }
+    function eqz(VersionPart a) external pure returns(bool) { return VersionPart.unwrap(a) == 0; }
+    function toInt(VersionPart a) external pure returns(uint256) { return VersionPart.unwrap(a); }
     function toVersionPart(uint256 a) external pure returns(VersionPart) { return VersionPart.wrap(uint8(a)); }
 }
 
