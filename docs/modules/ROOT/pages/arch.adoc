@@ -2,11 +2,61 @@
 
 NOTE: This document is under construction
 
-== Rules
+== Introduction
 
-=== General
+=== Decentralized Insurance Protocol (DIP)
 
-- Libraries, registry and services are pre-deployed on the chain (by Etherisc) and are owned by the protocol owner
+The Decentralized Insurance Protocol (DIP) enables the creation and management of decentralized insurance products. The protocol is designed to be flexible and extensible, allowing for the creation of a wide range of insurance products. 
+
+The protocol supports a multi-chain ecosystem to let users choose the chain that best fits their needs. The protocol is designed to be chain agnostic, allowing for the deployment of the protocol on any EVM compatible chain.
+
+=== Generalized Insurance Framework (GIF)
+
+The Generalized Insurance Framework (GIF) is a set of smart contracts that implement the Decentralized Insurance Protocol (DIP). 
+The main Goal of the GIF is to support its users in creating and managing decentralized insurance products as efficitiently and safe as possible. 
+
+GIF users should be able to focus on their use case specific business logic.
+GIF takes care of the use case independent heavy lifting like managing policies, claims, payouts, managing collateral in pools, etc.
+
+The GIF itself is a highly modularized and flexible infrastructure that can be deployed to any EVM compatible chain.
+Most contracts of the GIF will already be deployed and are ready to be used by the users.
+
+== GIF Multi-Chain Setup
+
+=== Overview
+
+image::./images/multi-chain-setup.png[GIF multi-chain setup]
+
+=== Global Registry
+
+=== Chain Registries
+
+== GIF Single-Chain Setup
+
+=== Overview
+
+image::./images/single-chain-setup.png[GIF single-chain setup]
+
+
+=== Registry
+
+=== Services
+
+=== Instance
+
+=== Components
+
+==== Product
+
+==== Distribution
+
+==== Oracle
+
+==== Pool
+
+=== Staking
+
+== GIF Release Mangement
 
 === Releases
 

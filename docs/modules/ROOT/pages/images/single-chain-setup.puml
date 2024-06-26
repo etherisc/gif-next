@@ -1,0 +1,45 @@
+@startuml
+package "Chain" {
+
+  package "Registry" {
+    [Registry Contracts ...] as registry
+  }
+
+  package "Services v3" {
+    [Release specific Service Contracts ...] as services
+  }
+
+  package "Staking" {
+    [Staking Contracts...] as staking
+  }
+
+  package "Instance 1" {
+    [Component Contracts] as comp1
+    [Instance Contracts] as inst1
+  }
+
+  package "Instance 2" {
+    [Component Contracts] as comp2
+    [Instance Contracts] as inst2
+  }
+
+  package "Instance 3" {
+    [Component Contracts] as comp3
+    [Instance Contracts] as inst3
+  }
+
+  services -> registry
+  services -r-> staking
+
+
+  comp1 -d-> services
+  services -u-> inst1
+
+  comp2 --> services
+  services --> inst2
+
+  comp3 --> services
+  services --> inst3
+
+}
+@enduml
