@@ -15,12 +15,11 @@ contract ChainNft is ERC721Enumerable {
     uint256 public constant PROTOCOL_NFT_ID = 1101;
     uint256 public constant GLOBAL_REGISTRY_ID = 2101;
 
-    // TODO rename errors to error pattern: CallerNotRegistry -> ErrorCallerNotRegistry etc.
     // custom errors
-    error CallerNotRegistry(address caller);
-    error RegistryAddressZero();
-    error NftUriEmpty();
-    error NftUriAlreadySet();
+    error ErrorChainNftCallerNotRegistry(address caller);
+    error ErrorChainNftRegistryAddressZero();
+    error ErrorChainNftUriEmpty();
+    error ErrorChainNftUriAlreadySet();
 
     // contract state
 
@@ -34,32 +33,18 @@ contract ChainNft is ERC721Enumerable {
     address private _registry;
 
     // only used for _getNextTokenId
-    uint256 internal _chainIdInt;
-    uint256 internal _chainIdDigits;
-    uint256 internal _chainIdMultiplier;
     uint256 internal _idNext;
     uint256 internal _totalMinted;
 
     modifier onlyRegistry() {
-        if (msg.sender != _registry) { revert CallerNotRegistry(msg.sender); }
+        if (msg.sender != _registry) { revert ErrorChainNftCallerNotRegistry(msg.sender); }
         _;
     }
 
     constructor(address registry) ERC721(NAME, SYMBOL) {
-        if (registry == address(0)) { revert RegistryAddressZero(); }
+        if (registry == address(0)) { revert ErrorChainNftRegistryAddressZero(); }
 
         _registry = registry;
-        _chainIdInt = block.chainid;
-        _chainIdDigits = 0;
-
-        // count digis
-        uint256 num = _chainIdInt;
-        while (num != 0) {
-            _chainIdDigits++;
-            num /= 10;
-        }
-
-        _chainIdMultiplier = 10 ** _chainIdDigits;
 
         // the first object registered through normal registration starts with id 4
         // 1 -> protocol
@@ -132,8 +117,8 @@ contract ChainNft is ERC721Enumerable {
         uint256 tokenId,
         string memory uri
     ) external onlyRegistry {
-        if (bytes(uri).length == 0) { revert NftUriEmpty(); }
-        if (bytes(_uri[tokenId]).length > 0) { revert NftUriAlreadySet(); }
+        if (bytes(uri).length == 0) { revert ErrorChainNftUriEmpty(); }
+        if (bytes(_uri[tokenId]).length > 0) { revert ErrorChainNftUriAlreadySet(); }
 
         _requireOwned(tokenId);
         _uri[tokenId] = uri;
@@ -199,11 +184,17 @@ contract ChainNft is ERC721Enumerable {
     * (42 * 10 ** 10 + 9876543210) * 100 + 10
     * (index * 10 ** digits + chainid) * 100 + digits (1 < digits < 100)
     */
-    function calculateTokenId(uint256 idIndex) public view returns (uint256 id) {
+    // TODO consider situation when chainId = 2^256
+    function calculateTokenId(uint256 idIndex, uint chainId) public view returns (uint256 id) {
+        uint256 chainIdDigits = _chainIdDigits(chainId);
         id =
-            (idIndex * _chainIdMultiplier + _chainIdInt) *
+            (idIndex * (10 ** chainIdDigits) + chainId) *
             100 +
-            _chainIdDigits;
+            chainIdDigits;
+    }
+
+    function calculateTokenId(uint256 idIndex) public view returns (uint256 id) {
+        id = calculateTokenId(idIndex, block.chainid);
     }
 
     function getNextTokenId() external view returns (uint256) {
@@ -213,5 +204,15 @@ contract ChainNft is ERC721Enumerable {
     function _getNextTokenId() private returns (uint256 id) {
         id = calculateTokenId(_idNext);
         _idNext++;
+    }
+
+    function _chainIdDigits(uint chainId) internal view returns (uint256) {
+        uint256 num = chainId;
+        uint256 digits = 0;
+        while (num != 0) {
+            digits++;
+            num /= 10;
+        }
+        return digits;
     }
 }

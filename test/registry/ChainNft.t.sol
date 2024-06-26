@@ -79,7 +79,7 @@ contract ChainNftTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ChainNft.CallerNotRegistry.selector,
+                ChainNft.ErrorChainNftCallerNotRegistry.selector,
                 outsider));
         vm.prank(outsider);
         chainNft.mint(outsider, tokenId);
@@ -121,7 +121,7 @@ contract ChainNftTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ChainNft.CallerNotRegistry.selector,
+                ChainNft.ErrorChainNftCallerNotRegistry.selector,
                 outsider));
         vm.prank(outsider);
         chainNft.setURI(tokenId, uri);
@@ -135,7 +135,7 @@ contract ChainNftTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ChainNft.NftUriEmpty.selector));
+                ChainNft.ErrorChainNftUriEmpty.selector));
         vm.prank(registry);
         chainNft.setURI(tokenId, "");
     }
@@ -152,7 +152,7 @@ contract ChainNftTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ChainNft.NftUriAlreadySet.selector));
+                ChainNft.ErrorChainNftUriAlreadySet.selector));
         vm.prank(registry);
         chainNft.setURI(tokenId, "ipfs://someOtherHash");
     }
@@ -231,7 +231,7 @@ contract ChainNftTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ChainNft.NftUriAlreadySet.selector));
+                ChainNft.ErrorChainNftUriAlreadySet.selector));
         vm.prank(registry);
         chainNft.setURI(tokenId, "ipfs://someOtherHash");
     }
@@ -241,7 +241,7 @@ contract ChainNftTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ChainNft.CallerNotRegistry.selector,
+                ChainNft.ErrorChainNftCallerNotRegistry.selector,
                 outsider));
         vm.prank(outsider);
         chainNft.mint(outsider, address(interceptor), uri);
@@ -379,7 +379,7 @@ contract ChainNftTest is Test {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                ChainNft.CallerNotRegistry.selector,
+                ChainNft.ErrorChainNftCallerNotRegistry.selector,
                 outsider));
         vm.prank(outsider);
         chainNft.burn(tokenId);
