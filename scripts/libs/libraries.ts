@@ -3,7 +3,7 @@ import fs from 'fs';
 import hre from 'hardhat';
 import { logger } from "../logger";
 import { deployContract } from "./deployment";
-import { isTestChain } from "./deployment_state";
+import { deploymentsBaseDirectory, isTestChain } from "./deployment_state";
 
 export type LibraryAddresses = {
     nftIdLibAddress: AddressLike;
@@ -326,11 +326,11 @@ function dumpLibraryAddressesToFile(addresses: Map<string, AddressLike>): void {
         return;
     }
     const data = JSON.stringify(Object.fromEntries(addresses), null, 2);
-    fs.writeFileSync(`./libraries_${hre.network.config.chainId}.json`, data);
+    fs.writeFileSync(deploymentsBaseDirectory() + `libraries_${hre.network.config.chainId}.json`, data);
 }
 
 export function loadLibraryAddressesFromFile() {
-    const json = fs.readFileSync(`./libraries_${hre.network.config.chainId}.json`);
+    const json = fs.readFileSync(deploymentsBaseDirectory() + `libraries_${hre.network.config.chainId}.json`);
     // logger.info(`Loaded libraries from file: ${json}`);
     const libraries = JSON.parse(json.toString());
     for (const key in libraries) {

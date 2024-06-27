@@ -30,3 +30,4 @@ verification_log_*.json
 verification_queue_*.json
 lcov.info
 .*.drawio.bkp
+deployments/

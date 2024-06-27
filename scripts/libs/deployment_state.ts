@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { logger } from '../logger';
 import hre from 'hardhat';
 
+export const DEPLOYMENTS_BASE_DIRECTORY_NAME = "deployments";
 const DEPLOYMENT_STATE_FILENAME = "deployment_state";
 const DEPLOYMENT_STATE_FILENAME_SUFFIX = ".json";
 
@@ -112,8 +113,9 @@ export class DeploymentState {
         if (isTestChain()) {
             return;
         }
+        mkdirDeploymentsBaseDirectory();
         const json = JSON.stringify(this.state);
-        fs.writeFileSync(deploymentFilename(), json);
+        fs.writeFileSync(deploymentsBaseDirectory() + deploymentFilename(), json);
     }
 }
 
@@ -121,13 +123,23 @@ export function isTestChain(): boolean {
     return hre.network.config.chainId === 31337;
 }
 
+export function deploymentsBaseDirectory(): string {
+    return DEPLOYMENTS_BASE_DIRECTORY_NAME + "/" + hre.network.config.chainId + "/";
+}
+
+export function mkdirDeploymentsBaseDirectory(): void {
+    if (!fs.existsSync(deploymentsBaseDirectory())) {
+        fs.mkdirSync(deploymentsBaseDirectory(), { recursive: true });
+    }
+}
+
 function deploymentFilename(): string {
-    return DEPLOYMENT_STATE_FILENAME + "_" + hre.network.config.chainId + DEPLOYMENT_STATE_FILENAME_SUFFIX;
+    return DEPLOYMENT_STATE_FILENAME + DEPLOYMENT_STATE_FILENAME_SUFFIX;
 }
 
 let deploymentStateFromFile = null;
 if (!isTestChain()) {
-    deploymentStateFromFile = fs.existsSync(deploymentFilename()) ? JSON.parse(fs.readFileSync(deploymentFilename()).toString()) : null;
+    deploymentStateFromFile = fs.existsSync(deploymentsBaseDirectory() + deploymentFilename()) ? JSON.parse(fs.readFileSync(deploymentsBaseDirectory() + deploymentFilename()).toString()) : null;
     
 }
 export const deploymentState = new DeploymentState(deploymentStateFromFile);

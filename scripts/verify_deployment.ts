@@ -5,13 +5,14 @@ import { verifyContract } from "./libs/verification";
 import { addVerifiedContract, isContractVerified, loadVerifiedContractsLogFromFile } from "./libs/verification_log";
 import { verificationQueueFilename } from "./libs/verification_queue";
 import { logger } from "./logger";
+import { deploymentsBaseDirectory } from "./libs/deployment_state";
 
 async function main() {
     const chainId = hre.network.config.chainId;
     logger.info(`Verifying deployment on chain ${chainId} ...`);
 
     // read the verification queue file
-    const filename = verificationQueueFilename();
+    const filename = deploymentsBaseDirectory() + verificationQueueFilename();
     const json = fs.readFileSync(filename, 'utf8');
     const verificationData = JSON.parse(json);
     loadLibraryAddressesFromFile();
