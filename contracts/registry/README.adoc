@@ -1,16 +1,18 @@
 = Registry
  
-Contains the registry related contracts. 
+Contains interfaces and contracts related to the registry. 
 
 == Contracts
 
-{{ChainNft}}
-{{IRegistryService}}
 {{IRegistry}}
+{{IRegistryService}}
 {{ITransferInterceptor}}
-{{RegistryAdmin}}
-{{RegistryServiceManager}}
-{{RegistryService}}
+
+{{ChainNft}}
 {{Registry}}
-{{ReleaseManager}}
+{{RegistryAdmin}}
+{{ReleaseRegistry}}
 {{TokenRegistry}}
+
+{{RegistryService}}
+{{RegistryServiceManager}}

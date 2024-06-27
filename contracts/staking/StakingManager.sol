@@ -1,13 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IVersionable} from "../shared/IVersionable.sol";
-import {ProxyManager} from "../shared/ProxyManager.sol";
+import {IVersionable} from "../upgradeability/IVersionable.sol";
+import {ProxyManager} from "../upgradeability/ProxyManager.sol";
 import {Staking} from "./Staking.sol";
-import {StakingReader} from "./StakingReader.sol";
-import {StakingStore} from "./StakingStore.sol";
 
-import {RegistryAdmin} from "../registry/RegistryAdmin.sol";
 
 contract StakingManager is
     ProxyManager

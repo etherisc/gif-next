@@ -25,7 +25,7 @@ import {
     APPLICATION, BUNDLE, CLAIM, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POLICY, POOL, PRICE, PRODUCT, REGISTRY, STAKING
 } from "../../contracts/type/ObjectType.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
+import {ProxyManager} from "../../contracts/upgradeability/ProxyManager.sol";
 import {SCHEDULED, DEPLOYING} from "../../contracts/type/StateId.sol";
 import {VersionPart} from "../../contracts/type/Version.sol";
 

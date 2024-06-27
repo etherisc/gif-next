@@ -3,7 +3,7 @@ pragma solidity ^0.8.20;
 
 import {Amount} from "../type/Amount.sol";
 import {IComponent} from "../shared/IComponent.sol";
-import {IVersionable} from "../shared/IVersionable.sol";
+import {IVersionable} from "../upgradeability/IVersionable.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";

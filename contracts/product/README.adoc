@@ -1,0 +1,25 @@
+= Product
+ 
+Contains interfaces and contracts related to products. 
+
+== Contracts
+
+{{IProductComponent}}
+{{IApplicationService}}
+{{IProductService}}
+{{IPricingService}}
+{{IClaimervice}}
+
+{{Product}}
+{{BasicProduct}}
+{{BasicProductAuthorization}}
+
+{{ApplicationService}}
+{{ProductService}}
+{{PricingService}}
+{{ClaimService}}
+
+{{ApplicationServiceManager}}
+{{ProductServiceManager}}
+{{PricingServiceManager}}
+{{ClaimServiceManager}}

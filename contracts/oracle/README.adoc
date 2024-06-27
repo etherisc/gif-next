@@ -1,0 +1,15 @@
+= Oracle
+ 
+Contains interfaces and contracts related to oracles. 
+
+== Contracts
+
+{{IOracleComponent}}
+{{IOracleervice}}
+
+{{Oracle}}
+{{BasicOracle}}
+{{BasicOracleAuthorization}}
+
+{{OracleService}}
+{{OracleServiceManager}}

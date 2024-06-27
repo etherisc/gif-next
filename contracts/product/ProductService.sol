@@ -1,45 +1,20 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IRegistry} from "../registry/IRegistry.sol";
-import {IProductComponent} from "./IProductComponent.sol";
-import {Product} from "./Product.sol";
-import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
-import {IPoolComponent} from "../pool/IPoolComponent.sol";
-import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {IPolicy} from "../instance/module/IPolicy.sol";
-import {IRisk} from "../instance/module/IRisk.sol";
-import {IBundle} from "../instance/module/IBundle.sol";
-import {IProductService} from "./IProductService.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
-
-import {TokenHandler} from "../shared/TokenHandler.sol";
-
-import {IVersionable} from "../shared/IVersionable.sol";
-import {Versionable} from "../shared/Versionable.sol";
-
-import {Timestamp, zeroTimestamp} from "../type/Timestamp.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
-import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
-import {ObjectType, INSTANCE, PRODUCT, POOL, POLICY, REGISTRY} from "../type/ObjectType.sol";
-import {APPLIED, ACTIVE, KEEP_STATE} from "../type/StateId.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
-import {ReferralId} from "../type/Referral.sol";
-import {RiskId} from "../type/RiskId.sol";
-import {StateId} from "../type/StateId.sol";
-import {Version, VersionLib} from "../type/Version.sol";
-import {RoleId, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
-
-import {IService} from "../shared/IService.sol";
-import {Service} from "../shared/Service.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
+import {IPoolService} from "../pool/PoolService.sol";
 import {IProductService} from "./IProductService.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
+import {IRisk} from "../instance/module/IRisk.sol";
+
 import {InstanceReader} from "../instance/InstanceReader.sol";
-import {IPoolService} from "../pool/PoolService.sol";
+import {ObjectType, INSTANCE, PRODUCT, POOL, POLICY, REGISTRY} from "../type/ObjectType.sol";
+import {KEEP_STATE} from "../type/StateId.sol";
+import {NftId} from "../type/NftId.sol";
+import {RiskId} from "../type/RiskId.sol";
+import {StateId} from "../type/StateId.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 
 contract ProductService is
     ComponentVerifyingService,

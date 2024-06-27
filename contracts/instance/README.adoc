@@ -1,4 +1,4 @@
-= Components
+= Instance
  
 Contains the instance related contracts. 
 

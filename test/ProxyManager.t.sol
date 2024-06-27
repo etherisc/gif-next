@@ -3,8 +3,8 @@ pragma solidity ^0.8.20;
 
 import {Test, Vm, console} from "../lib/forge-std/src/Test.sol";
 import {VersionLib} from "../contracts/type/Version.sol";
-import {IVersionable} from "../contracts/shared/IVersionable.sol";
-import {ProxyManager} from "../contracts/shared/ProxyManager.sol";
+import {IVersionable} from "../contracts/upgradeability/IVersionable.sol";
+import {ProxyManager} from "../contracts/upgradeability/ProxyManager.sol";
 
 import {GifTest} from "./base/GifTest.sol";
 

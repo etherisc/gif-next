@@ -2,36 +2,24 @@
 pragma solidity ^0.8.20;
 
 import {IBundle} from "../instance/module/IBundle.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
+import {IBundleService} from "./IBundleService.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
+import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 
-import {IVersionable} from "../shared/IVersionable.sol";
-import {INftOwnable} from "../shared/INftOwnable.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
+import {BundleSet} from "../instance/BundleSet.sol";
+import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
+import {Fee} from "../type/Fee.sol";
+import {InstanceReader} from "../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, POOL, BUNDLE, REGISTRY} from "../type/ObjectType.sol";
-import {POOL_OWNER_ROLE, RoleId} from "../type/RoleId.sol";
-import {Pool} from "./Pool.sol";
-
-import {Amount, AmountLib} from "../type/Amount.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
-import {Version, VersionLib} from "../type/Version.sol";
-import {Versionable} from "../shared/Versionable.sol";
-
-import {IService} from "../shared/IService.sol";
-import {Service} from "../shared/Service.sol";
-import {BundleSet} from "../instance/BundleSet.sol";
-import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-import {IBundleService} from "./IBundleService.sol";
-import {IRegistryService} from "../registry/IRegistryService.sol";
-import {InstanceService} from "../instance/InstanceService.sol";
-import {InstanceReader} from "../instance/InstanceReader.sol";
 
 string constant BUNDLE_SERVICE_NAME = "BundleService";
 

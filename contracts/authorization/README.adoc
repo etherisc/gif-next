@@ -1,6 +1,6 @@
-= Overview
+= Authorization
  
-Contains all authorization related interfaces and contracts. 
+Contains interfaces and contracts related to authorization. 
 
 == Contracts
 

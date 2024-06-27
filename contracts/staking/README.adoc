@@ -1,4 +1,4 @@
-= Overview
+= Staking
  
 Contains all staking related interfaces and contracts. 
 

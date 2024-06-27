@@ -12,3 +12,4 @@
 * xref:shared.adoc[shared]
 * xref:staking.adoc[staking]
 * xref:type.adoc[type]
+* xref:upgradeability.adoc[upgradeability]
