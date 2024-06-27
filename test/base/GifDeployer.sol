@@ -6,11 +6,12 @@ import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 // core contracts
 import {Dip} from "../../contracts/mock/Dip.sol";
-import {GIF_MANAGER_ROLE, GIF_ADMIN_ROLE} from "../../contracts/type/RoleId.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
+import {GlobalRegistry} from "../../contracts/registry/GlobalRegistry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
+import {GlobalRegistryAdmin} from "../../contracts/registry/GlobalRegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
@@ -20,10 +21,7 @@ import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
 
 // service and proxy contracts
 import {IService} from "../../contracts/shared/IService.sol";
-import {
-    ObjectType, ObjectTypeLib, 
-    APPLICATION, BUNDLE, CLAIM, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POLICY, POOL, PRICE, PRODUCT, REGISTRY, STAKING
-} from "../../contracts/type/ObjectType.sol";
+import {ObjectType, ObjectTypeLib} from "../../contracts/type/ObjectType.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ProxyManager} from "../../contracts/shared/ProxyManager.sol";
 import {SCHEDULED, DEPLOYING} from "../../contracts/type/StateId.sol";
@@ -141,11 +139,19 @@ contract GifDeployer is Test {
         dip = new Dip();
 
         // 2) deploy registry admin
-        registryAdmin = new RegistryAdmin();
+        if(block.chainid == 1) {
+            registryAdmin = new GlobalRegistryAdmin();
+        } else {
+            registryAdmin = new RegistryAdmin();
+        }
 
         // 3) deploy registry
-        address globalRegistry;
-        registry = new Registry(registryAdmin, globalRegistry);
+        if(block.chainid == 1) {
+            registry = new GlobalRegistry(registryAdmin);
+        } else {
+            address globalRegistry;
+            registry = new Registry(registryAdmin, globalRegistry);
+        }
 
         // 4) deploy release manager
         releaseRegistry = new ReleaseRegistry(registry);
