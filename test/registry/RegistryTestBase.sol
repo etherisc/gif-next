@@ -400,7 +400,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
     // call after every succesfull registration with registerService() function
     function _afterServiceRegistration(IRegistry.ObjectInfo memory info, VersionPart version, ObjectType domain) internal 
     {
-        require(info.objectType.toInt() == SERVICE().toInt(), "Test error: _afterServiceRegistration() called with non-service object");
+        assertEq(info.objectType.toInt(), SERVICE().toInt(), "Test error: _afterServiceRegistration() called with non-service object");
         _afterRegistration(info);
 
         NftId nftId = info.nftId;
@@ -449,7 +449,7 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         //console.log("         data: %d", info.data);
         // solhint-enable
     }
-
+    // TODO add missing getters
     function _checkRegistryGetters() internal
     {
         // solhint-disable-next-line
@@ -644,8 +644,6 @@ contract RegistryTestBase is GifDeployer, FoundryRandom {
         }
         else
         {
-            // TODO figure out why this doesn't work
-            // "log != expected log" with NftIdLib.toNftId()...
             NftId expectedNftId = NftIdLib.toNftId(chainNft.calculateTokenId(_nextId));
             vm.expectEmit(address(registry));
             emit LogRegistration(
