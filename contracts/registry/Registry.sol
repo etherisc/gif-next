@@ -16,7 +16,6 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
-import {SidenetContract} from "../shared/MainnetId.sol";
 
 /// @dev IMPORTANT
 // Each NFT minted by registry is accosiated with:
@@ -30,7 +29,6 @@ import {SidenetContract} from "../shared/MainnetId.sol";
 /// @title Chain Registry contract implementing IRegistry.
 /// @notice See IRegistry for method details.
 contract Registry is
-    SidenetContract,
     Initializable,
     AccessManaged,
     IRegistry

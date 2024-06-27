@@ -13,7 +13,6 @@ import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {VersionPart} from "../type/Version.sol";
-import {SidenetContract} from "../shared/MainnetId.sol";
 
 /*
     1) GIF_MANAGER_ROLE
@@ -28,7 +27,6 @@ import {SidenetContract} from "../shared/MainnetId.sol";
         - responsible for creation and activation of releases
 */
 contract RegistryAdmin is
-    SidenetContract,
     AccessAdmin
 {
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";

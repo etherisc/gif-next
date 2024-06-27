@@ -5,7 +5,7 @@ import {GIF_ADMIN_ROLE} from "../type/RoleId.sol";
 
 import {IGlobalRegistry} from "./IGlobalRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
-import {MainnetContract} from "../shared/MainnetId.sol";
+import {MainnetContract} from "../shared/MainnetContract.sol";
 
 
 contract GlobalRegistryAdmin is
