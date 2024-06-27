@@ -1,8 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 import * as fs from 'fs';
-import hre from 'hardhat';
 import { logger } from '../logger';
-import { isTestChain } from './deployment_state';
+import { deploymentsBaseDirectory, isTestChain, mkdirDeploymentsBaseDirectory } from './deployment_state';
 
 const VERIFICATION_QUEUE_FILENAME = "verification_queue";
 const VERIFICATION_QUEUE_FILENAME_SUFFIX = ".json";
@@ -31,19 +30,20 @@ function persistState() {
     if (isTestChain()) {
         return;
     }
+    mkdirDeploymentsBaseDirectory();
     const json = JSON.stringify(VERIFICATION_DATA_STATE);
-    fs.writeFileSync(verificationQueueFilename(), json);
+    fs.writeFileSync(deploymentsBaseDirectory() + verificationQueueFilename(), json);
 }
 
 export function loadVerificationQueueState() {
-    if (! fs.existsSync(verificationQueueFilename())) {
+    if (! fs.existsSync(deploymentsBaseDirectory() + verificationQueueFilename())) {
         return;
     }
-    const filename = verificationQueueFilename();
+    const filename = deploymentsBaseDirectory() + verificationQueueFilename();
     const json = fs.readFileSync(filename, 'utf8');
     VERIFICATION_DATA_STATE = JSON.parse(json);
 }
 
 export function verificationQueueFilename(): string {
-    return VERIFICATION_QUEUE_FILENAME + "_" + hre.network.config.chainId + VERIFICATION_QUEUE_FILENAME_SUFFIX;
+    return VERIFICATION_QUEUE_FILENAME + VERIFICATION_QUEUE_FILENAME_SUFFIX;
 }

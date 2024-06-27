@@ -1,5 +1,6 @@
 import hre from "hardhat";
 import fs from "fs";
+import { deploymentsBaseDirectory, mkdirDeploymentsBaseDirectory } from "./deployment_state";
 
 const VERIFICATION_LOG = [] as string[];
 
@@ -11,8 +12,9 @@ export function verificationQueueFilename(): string {
 }
 
 export function persistLog() {
+    mkdirDeploymentsBaseDirectory();
     const json = JSON.stringify(VERIFICATION_LOG);
-    fs.writeFileSync(verificationQueueFilename(), json);
+    fs.writeFileSync(deploymentsBaseDirectory() + verificationQueueFilename(), json);
 }
 
 export function addVerifiedContract(address: string) {
@@ -25,8 +27,8 @@ export function isContractVerified(address: string): boolean {
 }
 
 export function loadVerifiedContractsLogFromFile() {
-    const filename = verificationQueueFilename();
-    if (fs.existsSync(verificationQueueFilename())) {
+    const filename = deploymentsBaseDirectory() + verificationQueueFilename();
+    if (fs.existsSync(deploymentsBaseDirectory() + verificationQueueFilename())) {
         const json = fs.readFileSync(filename, 'utf8');
         const log = JSON.parse(json);
         VERIFICATION_LOG.push(...log);
