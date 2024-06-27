@@ -16,19 +16,21 @@ import {IRegisterable} from "../shared/IRegisterable.sol";
 import {ReleaseRegistry} from "./ReleaseRegistry.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
+import {SidenetContract} from "../shared/MainnetId.sol";
 
 /// @dev IMPORTANT
 // Each NFT minted by registry is accosiated with:
 // 1) NFT owner
 // 2) registred contract OR object stored in registered (parent) contract
 // Three registration flows:
-// 1) registerService() -> registers IService address by ReleaseManager (ReleaseManager set at deployment time)
+// 1) registerService() -> registers IService address by ReleaseRegistry (ReleaseRegistry is set at deployment time)
 // 2) register() -> registers IRegisterable address by IService (INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE)
 // 3)            -> registers object by IService (POLICY, BUNDLE, STAKE)
 
 /// @title Chain Registry contract implementing IRegistry.
 /// @notice See IRegistry for method details.
 contract Registry is
+    SidenetContract,
     Initializable,
     AccessManaged,
     IRegistry
@@ -85,6 +87,7 @@ contract Registry is
 
     /// @dev Creates the registry contract and populates it with the protocol and registry objects.
     /// Internally deploys the ChainNft contract.
+    // TODO consider storing global registry address as constant
     constructor(RegistryAdmin admin, address globalRegistry)
         AccessManaged(admin.authority())
     {
@@ -95,7 +98,6 @@ contract Registry is
 
         // initial registry setup
         _protocolNftId = _registerProtocol();
-        // TODO consider storing global registry address as constant
         _globalRegistryNftId = _registerGlobalRegistry(globalRegistry);
         _registryNftId = _registerRegistry();
 
@@ -462,7 +464,6 @@ contract Registry is
         internal
         returns (NftId globalRegistryNftId)
     {
-        require(_chainNft.GLOBAL_REGISTRY_ID() == _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, 1), "GlobalRegistry: invalid GLOBAL_REGISTRY_ID");
         uint256 globalRegistryId = _chainNft.GLOBAL_REGISTRY_ID();
         globalRegistryNftId = NftIdLib.toNftId(globalRegistryId);
 

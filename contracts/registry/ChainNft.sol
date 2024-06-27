@@ -13,7 +13,7 @@ contract ChainNft is ERC721Enumerable {
     string public constant SYMBOL = "DIPNFT";
 
     uint256 public constant PROTOCOL_NFT_ID = 1101;
-    uint256 public constant GLOBAL_REGISTRY_ID = 2101;
+    uint256 public constant GLOBAL_REGISTRY_ID = 2101; //TODO make dependent of MAINNET_CHAIN_ID constant?
 
     // custom errors
     error ErrorChainNftCallerNotRegistry(address caller);

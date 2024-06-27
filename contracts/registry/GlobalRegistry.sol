@@ -10,8 +10,10 @@ import {ObjectType, REGISTRY} from "../type/ObjectType.sol";
 import {IGlobalRegistry} from "./IGlobalRegistry.sol";
 import {Registry} from "./Registry.sol";
 import {RegistryAdmin} from "./RegistryAdmin.sol";
+import {MainnetContract} from "../shared/MainnetId.sol";
 
-contract GlobalRegistry is 
+contract GlobalRegistry is
+    MainnetContract, 
     Registry,
     IGlobalRegistry
 {
@@ -24,22 +26,17 @@ contract GlobalRegistry is
     mapping(uint chanId => address registry) _registryAddressByChainId;
     uint256[] _chainId;
 
-    uint constant public MAINNET_CHAIN_ID = 1;
-
-
     constructor(RegistryAdmin admin) Registry(admin, address(this)) 
     {}
 
+    /// @dev registers a registry contract for a specified chain
+    //  only one chain registry per chain
+    //  each chain registry have unique address (sort of share same address space)
     function registerChainRegistry(uint chainId, address chainRegistryAddress)
         external
         restricted
         returns (NftId chainRegistryNftId)
     {
-        if(chainId == MAINNET_CHAIN_ID) {
-            // TODO better naming
-            revert ErrorGlobalRegistryChainRegistryAlreadyRegistered(chainId, address(this));
-        }
-
         // TODO allow for the same address to be registered on multiple chains
         if(_nftIdByAddress[chainRegistryAddress] != NftIdLib.zero()) {
             revert ErrorGlobalRegistryChainRegistryAddressInvalid(chainId, chainRegistryAddress);
@@ -71,7 +68,6 @@ contract GlobalRegistry is
     }
 
     //------------- public view functions -------------//
-    // TODO returns 0 for mainnet
     function getChainRegistryAddress(uint chainId) public view returns (address) {
         return _registryAddressByChainId[chainId];
     }
@@ -86,18 +82,14 @@ contract GlobalRegistry is
 
     // Internals
 
-    /// @dev makes no registration, just reverts if not on mainnet
+    /// @dev global registry already registered, register specifics only
     function _registerRegistry() 
         internal
         virtual
         override
-        onlyInitializing
-        returns (NftId registryNftId)
+        returns (NftId)
     {
-        if(block.chainid != MAINNET_CHAIN_ID) {
-            revert ErrorGlobalRegistryDeploymentNotOnMainnet(block.chainid);
-        }
-
+        _registryAddressByChainId[MAINNET_CHAIN_ID] = address(this);
         return _globalRegistryNftId;
     }
 }

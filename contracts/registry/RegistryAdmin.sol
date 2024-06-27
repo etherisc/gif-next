@@ -13,6 +13,7 @@ import {RoleId, RoleIdLib, ADMIN_ROLE, GIF_MANAGER_ROLE, GIF_ADMIN_ROLE, PUBLIC_
 import {StakingStore} from "../staking/StakingStore.sol";
 import {TokenRegistry} from "./TokenRegistry.sol";
 import {VersionPart} from "../type/Version.sol";
+import {SidenetContract} from "../shared/MainnetId.sol";
 
 /*
     1) GIF_MANAGER_ROLE
@@ -25,16 +26,11 @@ import {VersionPart} from "../type/Version.sol";
         - MUST have 1 member at any time
         - granted/revoked ONLY in transferAdminRole() -> consider lock out situations!!!
         - responsible for creation and activation of releases
-
-    createServiceTarget(type, release)
-    createServiceRole(type,release)
-    getServiceRole(type, release)
 */
 contract RegistryAdmin is
+    SidenetContract,
     AccessAdmin
 {
-    error ErrorRegistryAdminIsAlreadySetUp();
-
     string public constant GIF_ADMIN_ROLE_NAME = "GifAdminRole";
     string public constant GIF_MANAGER_ROLE_NAME = "GifManagerRole";
     string public constant POOL_SERVICE_ROLE_NAME = "PoolServiceRole";
@@ -50,15 +46,14 @@ contract RegistryAdmin is
     string public constant STAKING_STORE_TARGET_NAME = "StakingStore";
 
     uint8 public constant MAX_NUM_RELEASES = 99;
-
+    // TODO consider deleting this
     mapping(address service => VersionPart majorVersion) private _ServiceRelease;
 
-    address private _registry;
+    address internal _registry;
     address private _releaseRegistry;
     address private _tokenRegistry;
     address private _staking;
     address private _stakingStore;
-    bool private _setupCompleted;
 
     constructor() AccessAdmin() { }
 
@@ -71,9 +66,6 @@ contract RegistryAdmin is
         initializer
         onlyDeployer()
     {
-        if (_setupCompleted) { revert ErrorRegistryAdminIsAlreadySetUp(); } 
-        else { _setupCompleted = true; }
-
         _registry = address(registry);
         _releaseRegistry = registry.getReleaseRegistryAddress();
         _tokenRegistry = registry.getTokenRegistryAddress();
@@ -317,7 +309,8 @@ contract RegistryAdmin is
     }
 
     function _setupRegistry()
-        private 
+        internal
+        virtual
         onlyInitializing()
     {
         _createTarget(_registry, REGISTRY_TARGET_NAME, true, false);
