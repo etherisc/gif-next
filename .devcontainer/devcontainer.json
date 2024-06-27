@@ -33,6 +33,7 @@
 				"ms-vsliveshare.vsliveshare",
 				"bierner.markdown-mermaid",
 				"asciidoctor.asciidoctor-vscode",
+				"alefragnani.bookmarks",
 			]
 		}
 	},
