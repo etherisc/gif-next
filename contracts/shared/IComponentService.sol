@@ -27,6 +27,9 @@ interface IComponentService is
     error ErrorComponentServiceWalletAddressZero();
     error ErrorComponentServiceWalletAddressIsSameAsCurrent();
 
+    error ErrorComponentServiceWithdrawAmountExceedsLimit(Amount withdrawnAmount, Amount withdrawLimit);
+    error ErrorComponentServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
+
     event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
     event LogComponentServiceProductFeesUpdated(NftId productNftId);
     event LogComponentServiceDistributionFeesUpdated(NftId distributionNftId);
@@ -50,6 +53,9 @@ interface IComponentService is
 
     /// @dev unlocks the component associated with the caller
     function unlock() external;
+
+    /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
+    function withdrawFees(Amount withdrawAmount) external returns (Amount withdrawnAmount);
 
     //-------- product ------------------------------------------------------//
 

@@ -4,18 +4,17 @@ pragma solidity ^0.8.20;
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {IInstanceLinkedComponent} from "./IInstanceLinkedComponent.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
 import {IInstance} from "../instance/IInstance.sol";
-import {IAccess} from "../instance/module/IAccess.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {RoleId, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "./IComponentService.sol";
-import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
 import {IInstanceService} from "../instance/IInstanceService.sol";
 import {IPoolComponent} from "../pool/IPoolComponent.sol";
 import {IProductComponent} from "../product/IProductComponent.sol";
@@ -27,6 +26,7 @@ contract ComponentService is
     ComponentVerifyingService,
     IComponentService
 {
+    using AmountLib for Amount;
 
     error ErrorComponentServiceAlreadyRegistered(address component);
     error ErrorComponentServiceNotComponent(address component);
@@ -93,6 +93,42 @@ contract ComponentService is
 
     // TODO implement
     function unlock() external virtual {}
+
+    function withdrawFees(Amount feeAmount)
+        external
+        virtual
+        returns (Amount withdrawnAmount)
+    {
+        (NftId componentNftId,, IInstance instance) = _getAndVerifyActiveComponent(COMPONENT());
+        IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
+        address componentWallet = info.wallet;
+
+        // determine withdrawal amount
+        withdrawnAmount = feeAmount;
+        if (withdrawnAmount.eq(AmountLib.max())) {
+            withdrawnAmount = instance.getInstanceReader().getFeeAmount(componentNftId);
+        } else {
+            Amount withdrawLimit = instance.getInstanceReader().getFeeAmount(componentNftId);
+            if (withdrawnAmount.gt(withdrawLimit)) {
+                revert ErrorComponentServiceWithdrawAmountExceedsLimit(withdrawnAmount, withdrawLimit);
+            }
+        }
+
+        // check allowance
+        TokenHandler tokenHandler = info.tokenHandler;
+        IERC20Metadata token = IERC20Metadata(info.token);
+        uint256 tokenAllowance = token.allowance(componentWallet, address(tokenHandler));
+        if (tokenAllowance < withdrawnAmount.toInt()) {
+            revert ErrorComponentServiceWalletAllowanceTooSmall(componentWallet, address(tokenHandler), tokenAllowance, withdrawnAmount.toInt());
+        }
+
+        // decrease fee counters by withdrawnAmount
+        _changeTargetBalance(DECREASE, instance.getInstanceStore(), componentNftId, AmountLib.zero(), withdrawnAmount);
+        
+        // transfer amount to component owner
+        address componentOwner = getRegistry().ownerOf(componentNftId);
+        tokenHandler.transfer(componentWallet, componentOwner, withdrawnAmount);
+    }
 
 
     //-------- product ------------------------------------------------------//

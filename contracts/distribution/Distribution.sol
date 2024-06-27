@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount, AmountLib} from "../type/Amount.sol";
 import {COMPONENT, DISTRIBUTION} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IDistributionService} from "./IDistributionService.sol";
@@ -127,6 +128,14 @@ abstract contract Distribution is
         return true;
     }
 
+    function withdrawFees(Amount amount)
+        external
+        virtual
+        onlyOwner()
+        returns (Amount withdrawnAmount)
+    {
+        return _withdrawFees(amount);
+    }
 
     function _initializeDistribution(
         address registry,
@@ -264,6 +273,14 @@ abstract contract Distribution is
             maxReferrals,
             expiryAt,
             data);
+    }
+
+    function _withdrawFees(Amount amount)
+        internal
+        virtual
+        returns (Amount withdrawnAmount)
+    {
+        return _getDistributionStorage()._componentService.withdrawFees(amount);
     }
 
 
