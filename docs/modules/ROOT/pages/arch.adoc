@@ -82,25 +82,25 @@ The GIF setup on any specific chain always consists of a registry and staking mo
 
 image::./images/single-chain-setup.png[Single-chain setup]
 
-==== Registry
+=== Registry
 
 Registries have already been introduced in the text above.
 As already mentioned a registry is the central entry point for all protocol objects on a specific chain.
 
-==== Staking
+=== Staking
 
 The staking module is used to manage the DIP that are staked by users to either the protocol itself or to an instance that is registered as a staking target.
 
-==== Instance
+=== Instance
 
 Instances are used by ecosystem participants to create and operate actual use cases/products.
 Instances consist of a set of instance contracts and a number of so-called components that are required to implement an actual use cases. 
 
-==== Components
+=== Components
 
 Currently, products, distributions, oracles, and pools as supported by GIF as component types.
 
-==== Services
+=== Services
 
 Services are used to implement the generic insurance business logic of the GIF.
 Components, instances, the registry and the staking module may only interact with each other through these generic service contracts.
@@ -109,6 +109,42 @@ A set of consistent service contracts define the functionality of a GIF release.
 Even though the service contracts are upgradeable, only non breaking changes are ever allowed inside a specific major release.
 For simplicity the above diagram only shows the setup for a single major release.
 
+== Modules and Services
+
+=== Overview
+
+=== Modules
+
+Modules are defined as a set of contracts that serve a specific purpose.
+Each contract in a module has its clear role and responsibility and interacts with other contracts in the module to fulfill its purpose.
+Contracts in the same module may directly interact with each other without the need to go over a service contract.
+
+Examples of modules are the registry module, the staking module, and instance modules.
+
+=== Services
+
+Services contracts implement the GIF business logic that operates on the state of module contracts.
+Service contract may also interact with other service contracts.
+
+In general, services do not have any state that is not fixed at deployment/registration time.
+The only exception being the instance service that holds the addresses of the so called master instance which is used to clone new instances.
+
+=== Registry Module
+
+image::./images/registry-module.png[Registry Module]
+
+=== Staking Module
+
+image::./images/staking-module.png[Staking Module]
+
+- Keep track of total value locked (TVL) per instance
+- TVL: amount of tokens locked by active policies
+- Creating policies increase TVL, executing payouts and closing policies decrease TVL
+- TVL in USD may be calculated using price feeds or CEX/DEX exchange rates
+- Staking will initially be supported on instance level (bundle staking too fine grained)
+- A corresponding amount of DIP token shall be staked using a staking rate
+- For the tracking of TVL and related DIP stakes a global dashboard will be provided
+
 == Authorization
 
 === Overview
@@ -116,34 +152,39 @@ For simplicity the above diagram only shows the setup for a single major release
 Autorization is a key concept in the GIF.
 Authorization is organized per supported chain and implemented in access admin contracts using role based access control.
 
-There are two kinds of access admin contracts.
+=== Access Admin
+
+Access admin contracts manage explicit lists of named targets, roles and functions that are granted to these roles.
+It also provides view functions that allow to enumerate all available roles, current role members and all granted functions for every managed target.
+
+The implementation of the access admin contract is based on OpenZeppelin's `AccessManagerUpgradeable` and `AccessManagedUpgradeable` contracts.
+
+The access admin contract extends the OpenZeppelin functionality by providing named roles, targets and functions and by providing the capability to enumerate all current role members and all granted functions for every managed target.
+
+The access admin contract is the base contract for two specialized admin contracts.
 Per supported chain there is a registry admin contract and for each instance there is an instance admin contract.
 
 === Registry Admin
 
-The registry admin contract is the central contract that controls access to the registry and staking as well as interactions between service contracts.
+The registry admin contract is the central contract that controls access to the registry, to staking as well as interactions between service contracts.
 
 In the case of services the registry admin maintains access to service functions per major release in the sense that a service of a specific major release may only interact with services of the same major release.
 
 === Instance Admin
 
-For each instance an individual instance admin contract is used to manage authorizations for the interactions between services and the instance and all its linked components.
+For each instance an individual instance admin contract exits.
+This instance admin is used to manage authorizations for the interactions between the instance and all its linked components with all linked services.
 
 === Upgrading Contracts
 
-Upgradeable contracts are a special case.
-Every upgradeable contract has a corresponding proxy manager contract that may be used to upgrade the current implementation.
+Authorization for upgrading upgradeable contracts is a special case.
+Every upgradeable contract in GIF comes with its own proxy manager contract.
+Only this proxy manager contract may be used to upgrade an upgradeable contract.
+And only the owner of an upgradeable contract may execute an upgrade via this proxy manager contract.
 
-Only the owner of an upgradeable contract may execute an upgrade.
-The ownership is defined through the associated NFT registered with the registry.
-As all protocol relevant contracts are registered with the registry 
+The ownership of an GIF relevant upgradeable contract is defined via its NFT as recorded in the chain registry.
 
-=== Roles
-
-=== Targets
-
-=== Granted Functions
-
+Upgradeability relies on OpenZeppelin's `TransparentUpgradeableProxy` and `ProxyAdmin` contracts.
 
 == Release Management
 
@@ -159,9 +200,19 @@ Instance modules are non-upgradeable and directly linked to the service contract
 
 Adding a new major release is guarded by role based authorization including two roles, a GIF Admin role and the GIF Manager role.
 
-== Modules
+=== Initial Chain Deployment
 
-=== Instance
+An initial chain deployment deploys the registry contracts and the staking contracts.
+
+
+=== Release Deployment
+
+
+== Instances
+
+=== Overview
+
+=== Instance Module
 
 - Instance contracts are non upgradable
 - Instance contracts support minor and patch updates of services
@@ -174,7 +225,7 @@ Adding a new major release is guarded by role based authorization including two 
 - GIF provides default set of authorizations when cloning the instance
 - Instances are not upgradable
 
-=== Component
+=== Component Modules
 
 - Components are built and deployed by the component owners (which are not the same as the protocol owner)
 - Components interact with the instance through the services
@@ -184,20 +235,3 @@ Adding a new major release is guarded by role based authorization including two 
 - End users (consumers) interact with the system through components
 - Components must provide all necessary functions for consumer interaction 
 - Components use the instance's `AuthorizationManager` for authorization checks
-
-=== Staking
-
-- Keep track of total value locked (TVL) per instance
-- TVL: amount of tokens locked by active policies
-- Creating policies increase TVL, executing payouts and closing policies decrease TVL
-- TVL in USD may be calculated using price feeds or CEX/DEX exchange rates
-- Staking will initially be supported on instance level (bundle staking too fine grained)
-- A corresponding amount of DIP token shall be staked using a staking rate
-- For the tracking of TVL and related DIP stakes a global dashboard will be provided
-
-Open staking questions
-
-- minimal staking period? eg 3 months 
-- minimal staking extensino period? eg 3 months
-- slashing? not initially
-- upgradeability? likely yes
