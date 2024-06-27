@@ -1,0 +1,17 @@
+= Overview
+ 
+Contains all authorization related interfaces and contracts. 
+
+== Contracts
+
+{{IAccess}}
+{{IAuthorization}}
+{{IModuleAuthorization}}
+{{IServiceAuthorization}}
+{{IAccessAdmin}}
+
+{{AccessAdmin}}
+{{AccessManagerCloneable}}
+{{Authorization}}
+{{ModuleAuthorization}}
+{{ServiceAuthorization}}

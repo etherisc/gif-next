@@ -6,7 +6,6 @@ import {ITransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transp
 import {Blocknumber, blockNumber} from "../type/Blocknumber.sol";
 import {IVersionable} from "./IVersionable.sol";
 import {NftOwnable} from "./NftOwnable.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ProxyAdmin} from "@openzeppelin/contracts/proxy/transparent/ProxyAdmin.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {UpgradableProxyWithAdmin} from "./UpgradableProxyWithAdmin.sol";

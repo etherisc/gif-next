@@ -21,7 +21,7 @@ GIF takes care of the use case independent heavy lifting like managing policies,
 The GIF itself is a highly modularized and flexible infrastructure that can be deployed to any EVM compatible chain.
 Most contracts of the GIF will already be deployed and are ready to be used by the users.
 
-== GIF Multi-Chain Setup
+== Multi-Chain Setup
 
 === Overview
 
@@ -29,7 +29,7 @@ For each supported chain a chain specific GIF setup is deployed.
 To link all chains together a global registry is deployed on mainnet.
 This global registry then holds the links to all chain specific registries as shown in the diagram below.
 
-image::./images/multi-chain-setup.png[GIF multi-chain setup]
+image::./images/multi-chain-setup.png[Multi-chain setup]
 
 === Global Registry
 
@@ -55,82 +55,111 @@ The list below provides the basic metadata for each object in the registry:
 
 The following objects are managed by the protocol:
 
-* Protocol: The object representing the protocol itself
-* Registry: Registry contracts
-* Instance: Instance contracts linked to the chain registry
-* Product: Product contracts linked to an instance
-* Policy: Policy object linked to a product contract
-* Distribution: Distribution contracts linked to an instance
-* Distributor: Distributor object linked to a distribution contract
-* Oracle: Oracle contracts linked to an instance
-* Pool: Pool contracts linked to an instance
-* Bundle: Bundle object linked to a pool contract
-* Staking: Staking contracts linked to the chain registry
-* Stake: Stake object linked to its target object (instance or protocol)
+[cols="1,3"]
+|===
+|Object |Comments
+
+|Protocol |The object representing the protocol itself
+|Registry |Registry contracts
+|Instance |Instance contracts linked to the chain registry
+|Product |Product contracts linked to an instance
+|Policy |Policy object linked to a product contract
+|Distribution |Distribution contracts linked to an instance
+|Distributor |Distributor object linked to a distribution contract
+|Oracle |Oracle contracts linked to an instance
+|Pool |Pool contracts linked to an instance
+|Bundle |Bundle object linked to a pool contract
+|Staking |Staking contracts linked to the chain registry
+|Stake |Stake object linked to its target object (instance or protocol)
+|===
 
 
-== GIF Single-Chain Setup
+== Single-Chain Setup
 
 === Overview
 
 The GIF setup on any specific chain always consists of a registry and staking modules, services and instances as shown in the diagram below.
 
-image::./images/single-chain-setup.png[GIF single-chain setup]
+image::./images/single-chain-setup.png[Single-chain setup]
 
-Instances are used by ecosystem participants to create and operate insurance products. 
-To create and operate actual use cases/products a number of components linked to that instance are needed.
+==== Registry
 
-Internally instances consist of a set of contracts to manage the protocol relevant data for all components that are linked to that intance.
-The component contracts then implement the use case specific business logic of the products, pools, distributions and oracles that are used to operate the use cases that are provided by this instance.
+Registries have already been introduced in the text above.
+As already mentioned a registry is the central entry point for all protocol objects on a specific chain.
+
+==== Staking
+
+The staking module is used to manage the DIP that are staked by users to either the protocol itself or to an instance that is registered as a staking target.
+
+==== Instance
+
+Instances are used by ecosystem participants to create and operate actual use cases/products.
+Instances consist of a set of instance contracts and a number of so-called components that are required to implement an actual use cases. 
+
+==== Components
+
+Currently, products, distributions, oracles, and pools as supported by GIF as component types.
+
+==== Services
+
+Services are used to implement the generic insurance business logic of the GIF.
+Components, instances, the registry and the staking module may only interact with each other through these generic service contracts.
+
+A set of consistent service contracts define the functionality of a GIF release.
+Even though the service contracts are upgradeable, only non breaking changes are ever allowed inside a specific major release.
+For simplicity the above diagram only shows the setup for a single major release.
+
+== Authorization
+
+=== Overview
+
+Autorization is a key concept in the GIF.
+Authorization is organized per supported chain and implemented in access admin contracts using role based access control.
+
+There are two kinds of access admin contracts.
+Per supported chain there is a registry admin contract and for each instance there is an instance admin contract.
+
+=== Registry Admin
+
+The registry admin contract is the central contract that controls access to the registry and staking as well as interactions between service contracts.
+
+In the case of services the registry admin maintains access to service functions per major release in the sense that a service of a specific major release may only interact with services of the same major release.
+
+=== Instance Admin
+
+For each instance an individual instance admin contract is used to manage authorizations for the interactions between services and the instance and all its linked components.
+
+=== Upgrading Contracts
+
+Upgradeable contracts are a special case.
+Every upgradeable contract has a corresponding proxy manager contract that may be used to upgrade the current implementation.
+
+Only the owner of an upgradeable contract may execute an upgrade.
+The ownership is defined through the associated NFT registered with the registry.
+As all protocol relevant contracts are registered with the registry 
+
+=== Roles
+
+=== Targets
+
+=== Granted Functions
 
 
+== Release Management
 
-=== Registry
+=== Overview
+GIF releases follow semantic versioning, which includes major, minor, and patch releases. 
+The major version number is incremented whenever there are breaking changes that could potentially disrupt existing functionality or compatibility.
 
-=== Services
+For every major releases, a consistent set of upgradeable service contracts are deployed and registered with the registry. 
+For non-breaking changes the existing service contracts are upgraded in place.
+The staking module is independently upgradeable and may be upgraded at any time.
+The registry module is non-upgradeable and is capable of serving multiple major releases simultaneously.
+Instance modules are non-upgradeable and directly linked to the service contracts of the same major release.
 
-=== Instance
+Adding a new major release is guarded by role based authorization including two roles, a GIF Admin role and the GIF Manager role.
 
-=== Components
-
-==== Product
-
-==== Distribution
-
-==== Oracle
-
-==== Pool
-
-=== Staking
-
-== GIF Release Mangement
-
-=== Releases
-
-- GIF releases use semantic versioning with major, minor and patch releases
-- For GIF major releases a new master instance and a set of upgradeable service contracts are deployed
-- Smart contract upgradeability is only used for minor and patch releases for a specific major release
-- The GIF registry contract is non-upgradeable and built to be able to handle multiple major releases
-- Most instance contracts are non-upgradeable and hard wired to a specific major release
-
-=== Registry
-
-- Registry registers all relevant and ownable GIF objects like instances, products, policies, etc on a specific chain
-- The global registry on mainnet also contains entries for the chain registries on other chains
-- Registry access is granted through the `RegistryAdmin`
-- Registry contracts are non-upgradeable
-- Registry should be able to cope with multiple major version upgrades. 
-- Transactional operations (writing) to the registry are done via the `RegistryService`
-- Registry is owned by the protocol owner
-
-=== Services
-
-- Service contracts are upgradeable
-- Service contracts may be upgraded for minor and patch updates
-- Service contracts may not be upgraded for major updates. 
-- For major GIF upgrades a new service contract needs to be deployed and registered
-- Services are maintained and upgraded by the protocol owner
-- Service ownership/maintenance may be delegated to specific service owners in the future
+== Modules
 
 === Instance
 
