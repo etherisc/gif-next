@@ -8,6 +8,7 @@ import {IVersionable} from "../upgradeability/IVersionable.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Component} from "../shared/Component.sol";
+import {IComponent} from "../shared/IComponent.sol";
 import {NftId} from "../type/NftId.sol";
 import {ObjectType, STAKING} from "../type/ObjectType.sol";
 import {Seconds} from "../type/Seconds.sol";
@@ -36,6 +37,7 @@ contract Staking is
     struct StakingStorage {
         IRegistryService _registryService;
         TokenRegistry _tokenRegistry;
+        TokenHandler _tokenHandler;
         StakingStore _store;
         StakingReader _reader;
         NftId _protocolNftId;
@@ -419,6 +421,9 @@ contract Staking is
         return address(_getStakingStorage()._tokenRegistry);
     }
 
+    function getTokenHandler() public virtual override(Component, IComponent) view returns (TokenHandler tokenHandler) {
+        return _getStakingStorage()._tokenHandler;
+    }
 
     // from Versionable
     function getVersion()
@@ -489,14 +494,13 @@ contract Staking is
             "", // registry data
             ""); // component data
 
-        _createAndSetTokenHandler();
-
         // wiring to external contracts
         StakingStorage storage $ = _getStakingStorage();
         $._protocolNftId = getRegistry().getProtocolNftId();
         $._store = StakingStore(stakingStoreAddress);
         $._reader = StakingStore(stakingStoreAddress).getStakingReader();
         $._tokenRegistry = TokenRegistry(tokenRegistryAddress);
+        $._tokenHandler = new TokenHandler(address(getToken()));
 
         registerInterface(type(IStaking).interfaceId);
     }

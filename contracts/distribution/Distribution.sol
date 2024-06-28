@@ -49,6 +49,7 @@ abstract contract Distribution is
         onlyOwner()
     {
         _getDistributionStorage()._componentService.registerDistribution();
+        _approveTokenHandler(type(uint256).max);
     }
 
 

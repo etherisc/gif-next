@@ -21,7 +21,6 @@ interface IComponents {
         bytes data; // will hold component type specific additional info (eg encoded pool info)
     }
 
-
     struct ProductInfo {
         NftId distributionNftId;
         NftId poolNftId;
