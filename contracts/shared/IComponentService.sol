@@ -27,6 +27,7 @@ interface IComponentService is
     error ErrorComponentServiceWalletAddressZero();
     error ErrorComponentServiceWalletAddressIsSameAsCurrent();
 
+    error ErrorComponentServiceWithdrawAmountIsZero();
     error ErrorComponentServiceWithdrawAmountExceedsLimit(Amount withdrawnAmount, Amount withdrawLimit);
     error ErrorComponentServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
 

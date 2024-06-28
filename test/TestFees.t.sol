@@ -124,7 +124,7 @@ contract TestFees is GifTest {
         Amount withdrawnAmount = distribution.withdrawFees(withdrawalAmount);
     }
 
-        /// @dev try to withdraw when allowance is too small
+    /// @dev try to withdraw when allowance is too small
     function test_Fees_withdrawDistributionFees_allowanceTooSmall() public {
         // GIVEN
         _setupWithActivePolicy();
@@ -144,6 +144,22 @@ contract TestFees is GifTest {
             address(distribution.getTokenHandler()),
             0,
             10));
+        
+        // WHEN
+        Amount withdrawnAmount = distribution.withdrawFees(withdrawalAmount);
+    }
+
+    /// @dev try to withdraw zero amount
+    function test_Fees_withdrawDistributionFees_withdrawalAmountZero() public {
+        // GIVEN
+        _setupWithActivePolicy();
+
+        Amount withdrawalAmount = AmountLib.toAmount(0);
+        vm.startPrank(distributionOwner);
+        
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IComponentService.ErrorComponentServiceWithdrawAmountIsZero.selector));
         
         // WHEN
         Amount withdrawnAmount = distribution.withdrawFees(withdrawalAmount);

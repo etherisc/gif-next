@@ -94,7 +94,7 @@ contract ComponentService is
     // TODO implement
     function unlock() external virtual {}
 
-    function withdrawFees(Amount feeAmount)
+    function withdrawFees(Amount amount)
         external
         virtual
         returns (Amount withdrawnAmount)
@@ -103,10 +103,12 @@ contract ComponentService is
         IComponents.ComponentInfo memory info = instance.getInstanceReader().getComponentInfo(componentNftId);
         address componentWallet = info.wallet;
 
-        // determine withdrawal amount
-        withdrawnAmount = feeAmount;
+        // determine withdrawn amount
+        withdrawnAmount = amount;
         if (withdrawnAmount.eq(AmountLib.max())) {
             withdrawnAmount = instance.getInstanceReader().getFeeAmount(componentNftId);
+        } else if (withdrawnAmount.eqz()) {
+            revert ErrorComponentServiceWithdrawAmountIsZero();
         } else {
             Amount withdrawLimit = instance.getInstanceReader().getFeeAmount(componentNftId);
             if (withdrawnAmount.gt(withdrawLimit)) {
