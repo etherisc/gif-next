@@ -74,16 +74,31 @@ contract GlobalRegistry is
     }
 
     // Internals
-
-    /// @dev global registry already registered, register specifics only
-    function _registerRegistry() 
+        /// @dev global registry registration
+    function _registerRegistry(address globalRegistry) 
         internal
         virtual
         override
-        returns (NftId)
+        returns (NftId globalRegistryNftId)
     {
+        uint256 globalRegistryId = _chainNft.GLOBAL_REGISTRY_ID();
+        globalRegistryNftId = NftIdLib.toNftId(globalRegistryId);
+
+        _info[globalRegistryNftId] = ObjectInfo({
+            nftId: globalRegistryNftId,
+            parentNftId: _protocolNftId,
+            objectType: REGISTRY(),
+            isInterceptor: false,
+            objectAddress: globalRegistry,
+            initialOwner: NFT_LOCK_ADDRESS,
+            data: ""
+        });
+        _nftIdByAddress[address(this)] = globalRegistryNftId;
+        // global registry specific
         _registryAddressByChainId[MAINNET_CHAIN_ID] = address(this);
         _chainId.push(MAINNET_CHAIN_ID);
-        return _globalRegistryNftId;
+
+        _chainNft.mint(NFT_LOCK_ADDRESS, globalRegistryId);
     }
+
 }

@@ -61,7 +61,6 @@ contract Registry is
     ChainNft public immutable _chainNft;
 
     NftId public immutable _protocolNftId;
-    NftId public immutable _globalRegistryNftId;
     NftId public immutable _registryNftId;
     NftId public _stakingNftId;
 
@@ -96,8 +95,7 @@ contract Registry is
 
         // initial registry setup
         _protocolNftId = _registerProtocol();
-        _globalRegistryNftId = _registerGlobalRegistry(globalRegistry);
-        _registryNftId = _registerRegistry();
+        _registryNftId = _registerRegistry(globalRegistry);
 
         // set object types and object parent relations
         _setupValidCoreTypesAndCombinations();
@@ -459,7 +457,7 @@ contract Registry is
 
     /// @dev global registry registration
     function _registerGlobalRegistry(address globalRegistry)
-        internal
+        private
         returns (NftId globalRegistryNftId)
     {
         uint256 globalRegistryId = _chainNft.GLOBAL_REGISTRY_ID();
@@ -480,17 +478,19 @@ contract Registry is
     }
 
     /// @dev registry registration
-    function _registerRegistry() 
+    function _registerRegistry(address globalRegistry) 
         internal 
         virtual
         returns (NftId registryNftId)
     {
+        NftId globalRegistryNftId = _registerGlobalRegistry(globalRegistry);
+
         uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
         registryNftId = NftIdLib.toNftId(registryId);
 
         _info[registryNftId] = ObjectInfo({
             nftId: registryNftId,
-            parentNftId: _globalRegistryNftId,
+            parentNftId: globalRegistryNftId,
             objectType: REGISTRY(),
             isInterceptor: false,
             objectAddress: address(this), 
