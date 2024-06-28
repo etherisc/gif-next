@@ -412,6 +412,30 @@ contract TestFees is GifTest {
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
     }
 
+    function test_Fees_withdrawCommission_allowanceTooSmall() public {
+        // GIVEN
+        _setupWithActivePolicy(true);
+
+        address externalWallet = makeAddr("externalWallet");
+        vm.startPrank(distributionOwner);
+        distribution.setWallet(externalWallet);
+        vm.stopPrank();
+
+        Amount withdrawAmount = AmountLib.max();
+        vm.startPrank(distributor);
+
+        // THEN 
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceWalletAllowanceTooSmall.selector,
+            externalWallet,
+            address(distribution.getTokenHandler()),
+            0,
+            5));
+        
+        // WHEN - the distributor withdraws part of his commission
+        distribution.withdrawCommission(distributorNftId, withdrawAmount);
+    }
+
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
