@@ -38,16 +38,26 @@ contract TestFees is GifTest {
         uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
         vm.stopPrank();
 
-        // WHEN
+        Amount withdrawAmount = AmountLib.toAmount(15);
         vm.startPrank(distributionOwner);
-        Amount amountWithdrawn = distribution.withdrawFees(AmountLib.toAmount(15));
+
+        vm.expectEmit();
+        emit IComponentService.LogComponentServiceComponentFeesWithdrawn(
+            distributionNftId,
+            distributionOwner,
+            address(token),
+            withdrawAmount
+        );
+        
+        // WHEN
+        Amount amountWithdrawn = distribution.withdrawFees(withdrawAmount);
 
         // THEN
-        assertEq(amountWithdrawn.toInt(), 15, "withdrawn amount not 15");
+        assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not 15");
         uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
-        assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore + 15, "distribution owner balance not 15 higher");
+        assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 15 higher");
         uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
-        assertEq(distributionBalanceAfter, distributionBalanceBefore - 15, "distribution balance not 15 lower");
+        assertEq(distributionBalanceAfter, distributionBalanceBefore - withdrawAmount.toInt(), "distribution balance not 15 lower");
 
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeAfter.toInt(), 5, "distribution fee not 5");

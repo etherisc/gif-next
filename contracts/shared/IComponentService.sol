@@ -32,6 +32,7 @@ interface IComponentService is
     error ErrorComponentServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
 
     event LogComponentServiceWalletAddressChanged(NftId componentNftId, address currentWallet, address newWallet);
+    event LogComponentServiceComponentFeesWithdrawn(NftId componentNftId, address recipient, address token, Amount withdrawnAmount);
     event LogComponentServiceProductFeesUpdated(NftId productNftId);
     event LogComponentServiceDistributionFeesUpdated(NftId distributionNftId);
     event LogComponentServicePoolFeesUpdated(NftId poolNftId);

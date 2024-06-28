@@ -130,6 +130,8 @@ contract ComponentService is
         // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
         tokenHandler.transfer(componentWallet, componentOwner, withdrawnAmount);
+
+        emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(token), withdrawnAmount);
     }
 
 
