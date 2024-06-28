@@ -49,4 +49,6 @@ interface IPoolComponent is IInstanceLinkedComponent {
     /// @dev returns initial pool specific infos for this pool
     function getInitialPoolInfo() external view returns (IComponents.PoolInfo memory info);
 
+    /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
+    function withdrawFees(Amount amount) external returns (Amount withdrawnAmount);
 }

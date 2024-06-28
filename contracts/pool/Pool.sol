@@ -115,6 +115,15 @@ abstract contract Pool is
         );
     }
 
+    function withdrawFees(Amount amount)
+        external
+        virtual
+        onlyOwner()
+        returns (Amount withdrawnAmount)
+    {
+        return _withdrawFees(amount);
+    }
+
     // Internals
 
     function _initializePool(
@@ -294,6 +303,14 @@ abstract contract Pool is
             filter);
 
         // TODO add logging
+    }
+
+    function _withdrawFees(Amount amount)
+        internal
+        virtual
+        returns (Amount withdrawnAmount)
+    {
+        return _getPoolStorage()._componentService.withdrawFees(amount);
     }
 
 

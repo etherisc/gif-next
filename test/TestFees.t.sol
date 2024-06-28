@@ -25,7 +25,7 @@ contract TestFees is GifTest {
     using NftIdLib for NftId;
 
     /// @dev test withdraw fees from distribution component as distribution owner
-    function test_Fees_withdrawDistributionFee() public {
+    function test_Fees_withdrawDistributionOwnerFees() public {
         // GIVEN
         _setupWithActivePolicy();
 
@@ -51,12 +51,48 @@ contract TestFees is GifTest {
         assertEq(distributionFeeAfter.toInt(), 5, "distribution fee not 5");
     }
 
+    /// @dev test withdraw fees from distribution component as distribution owner
+    function test_Fees_withdrawPoolOwnerFees() public {
+        // GIVEN
+        _setupWithActivePolicy();
+
+        // solhint-disable-next-line 
+        Amount poolFee = instanceReader.getFeeAmount(poolNftId);
+        assertEq(poolFee.toInt(), 5, "pool fee not 5"); // 5% of the 10% premium -> 5
+
+        uint256 poolOwnerBalanceBefore = token.balanceOf(poolOwner);
+        uint256 poolBalanceBefore = token.balanceOf(address(pool));
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(poolOwner);
+        pool.withdrawFees(AmountLib.toAmount(3));
+
+        // THEN
+        uint256 poolOwnerBalanceAfter = token.balanceOf(poolOwner);
+        assertEq(poolOwnerBalanceAfter, poolOwnerBalanceBefore + 3, "pool owner balance not 3 higher");
+        uint256 poolBalanceAfter = token.balanceOf(address(pool));
+        assertEq(poolBalanceAfter, poolBalanceBefore - 3, "pool balance not 3 lower");
+
+        Amount poolFeeAfter = instanceReader.getFeeAmount(poolNftId);
+        assertEq(poolFeeAfter.toInt(), 2, "pool fee not 2");
+    }
+
     function _setupWithActivePolicy() internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
 
         _prepareProduct();  
+
+        // setup pool fees
+        vm.startPrank(poolOwner);
+        pool.setFees(
+            FeeLib.percentageFee(5), 
+            FeeLib.zero(),
+            FeeLib.zero());
+        vm.stopPrank();
+
 
         vm.startPrank(productOwner);
         
