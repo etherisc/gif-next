@@ -42,7 +42,6 @@ abstract contract Distribution is
         _;
     }
 
-
     function register()
         external
         virtual
@@ -129,6 +128,18 @@ abstract contract Distribution is
         return true;
     }
 
+    /// @inheritdoc IDistributionComponent
+    function withdrawCommission(NftId distributorNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        onlyDistributor()
+        onlyNftOwner(distributorNftId)
+        returns (Amount withdrawnAmount) 
+    {
+        return _withdrawCommission(distributorNftId, amount);
+    }
+        
     function _initializeDistribution(
         address registry,
         NftId instanceNftId,
@@ -267,6 +278,12 @@ abstract contract Distribution is
             data);
     }
 
+    function _withdrawCommission(NftId distributorNftId, Amount amount) 
+        internal
+        returns (Amount withdrawnAmount) 
+    {
+        return _getDistributionStorage()._distributionService.withdrawCommission(distributorNftId, amount);
+    }
 
     function _nftTransferFrom(address from, address to, uint256 tokenId) internal virtual override {
         // keep track of distributor nft owner

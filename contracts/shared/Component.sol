@@ -39,6 +39,12 @@ abstract contract Component is
         _;
     }
 
+    modifier onlyNftOwner(NftId nftId) {
+        if(msg.sender != getRegistry().ownerOf(nftId)) {
+            revert ErrorNftOwnableNotOwner(msg.sender);
+        }
+        _;
+    }
 
     function _getComponentStorage() private pure returns (ComponentStorage storage $) {
         assembly {
