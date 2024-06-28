@@ -20,6 +20,7 @@ import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {ACTIVE} from "../contracts/type/StateId.sol";
 import {TimestampLib} from "../contracts/type/Timestamp.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
+import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
 
 contract TestFees is GifTest {
     using NftIdLib for NftId;
@@ -51,6 +52,23 @@ contract TestFees is GifTest {
         assertEq(distributionFeeAfter.toInt(), 5, "distribution fee not 5");
     }
 
+    /// @dev test withdraw fees from distribution component as distribution owner
+    function test_Fees_withdrawDistributionFees_notOwner() public {
+        // GIVEN
+        _setupWithActivePolicy();
+
+        vm.startPrank(poolOwner);
+        Amount withdrawAmount = AmountLib.toAmount(15);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableNotOwner.selector, 
+            poolOwner));
+            
+        // WHEN
+        distribution.withdrawFees(withdrawAmount);
+    }
+
     /// @dev test withdraw fees from pool component as pool owner
     function test_Fees_withdrawPoolFees() public {
         // GIVEN
@@ -78,6 +96,23 @@ contract TestFees is GifTest {
         assertEq(poolFeeAfter.toInt(), 2, "pool fee not 2");
     }
 
+    /// @dev test withdraw fees from pool component as pool owner
+    function test_Fees_withdrawPoolFees_notOwner() public {
+        // GIVEN
+        _setupWithActivePolicy();
+
+        vm.startPrank(productOwner);
+        Amount withdrawAmount = AmountLib.toAmount(3);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableNotOwner.selector, 
+            productOwner));
+
+        // WHEN    
+        pool.withdrawFees(withdrawAmount);
+    }
+
     /// @dev test withdraw fees from product component as product owner
     function test_Fees_withdrawProductFees() public {
         // GIVEN
@@ -103,6 +138,23 @@ contract TestFees is GifTest {
 
         Amount productFeeAfter = instanceReader.getFeeAmount(productNftId);
         assertEq(productFeeAfter.toInt(), 2, "product fee not 2");
+    }
+
+        /// @dev test withdraw fees from product component as product owner
+    function test_Fees_withdrawProductFees_notOwner() public {
+        // GIVEN
+        _setupWithActivePolicy();
+        
+        vm.startPrank(distributionOwner);
+        Amount withdrawAmount = AmountLib.toAmount(3);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableNotOwner.selector, 
+            distributionOwner));
+
+        // WHEN
+        product.withdrawFees(withdrawAmount);
     }
 
     function _setupWithActivePolicy() internal returns (NftId policyNftId) {
