@@ -77,8 +77,8 @@ contract RegistryAdmin is
         _setupGifAdminRole(gifAdmin);
         _setupGifManagerRole(gifManager);
 
-        _setupRegistry();
         _setupReleaseRegistry();
+        _setupRegistry();
         _setupStaking();
     }
 
@@ -261,8 +261,13 @@ contract RegistryAdmin is
                 maxMemberCount: 2, // TODO decide on max member count
                 name: GIF_ADMIN_ROLE_NAME}));
 
-        // for ReleaseRegistry
+        // for Registry
         FunctionInfo[] memory functions;
+        functions = new FunctionInfo[](1);
+        functions[0] = toFunction(IRegistry.registerRegistry.selector, "registerRegistry");
+        _authorizeTargetFunctions(_releaseRegistry, GIF_ADMIN_ROLE(), functions);
+
+        // for ReleaseRegistry
         functions = new FunctionInfo[](4);
         functions[0] = toFunction(ReleaseRegistry.createNextRelease.selector, "createNextRelease");
         functions[1] = toFunction(ReleaseRegistry.activateNextRelease.selector, "activateNextRelease");
@@ -306,32 +311,6 @@ contract RegistryAdmin is
         _grantRoleToAccount(GIF_MANAGER_ROLE(), gifManager);
     }
 
-    function _setupRegistry()
-        internal
-        virtual
-        onlyInitializing()
-    {
-        _createTarget(_registry, REGISTRY_TARGET_NAME, true, false);
-
-        // registry function authorization for registry service
-        RoleId registryServiceRoleId = RoleIdLib.roleForTypeAndAllVersions(REGISTRY());
-        _createRole(
-            registryServiceRoleId, 
-            toRole({
-                adminRoleId: ADMIN_ROLE(),
-                roleType: RoleType.Contract,
-                maxMemberCount: MAX_NUM_RELEASES,
-                name: REGISTRY_SERVICE_ROLE_NAME}));
-
-        FunctionInfo[] memory functions;
-        functions = new FunctionInfo[](2);
-        functions[0] = toFunction(IRegistry.register.selector, "register");
-        functions[1] = toFunction(IRegistry.registerWithCustomType.selector, "registerWithCustomType");
-        // TODO add registerChainRegistry()
-
-        _authorizeTargetFunctions(_registry, registryServiceRoleId, functions);
-    }
-
 
     function _setupReleaseRegistry()
         private 
@@ -356,10 +335,41 @@ contract RegistryAdmin is
         functions[2] = toFunction(RegistryAdmin.revokeServiceRoleForAllVersions.selector, "revokeServiceRoleForAllVersions");
         functions[3] = toFunction(RegistryAdmin.grantServiceRole.selector, "grantServiceRole");
         functions[4] = toFunction(RegistryAdmin.revokeServiceRole.selector, "revokeServiceRole");
-
         _authorizeTargetFunctions(address(this), releaseRegistryRoleId, functions);
 
         _grantRoleToAccount(releaseRegistryRoleId, _releaseRegistry);
+    }
+
+
+    function _setupRegistry()
+        internal
+        virtual
+        onlyInitializing()
+    {
+        _createTarget(_registry, REGISTRY_TARGET_NAME, true, false);
+
+        // registry function authorization for registry service
+        RoleId registryServiceRoleId = RoleIdLib.roleForTypeAndAllVersions(REGISTRY());
+        _createRole(
+            registryServiceRoleId, 
+            toRole({
+                adminRoleId: ADMIN_ROLE(),
+                roleType: RoleType.Contract,
+                maxMemberCount: MAX_NUM_RELEASES,
+                name: REGISTRY_SERVICE_ROLE_NAME}));
+
+        // authorize registry service
+        FunctionInfo[] memory functions;
+        functions = new FunctionInfo[](2);
+        functions[0] = toFunction(IRegistry.register.selector, "register");
+        functions[1] = toFunction(IRegistry.registerWithCustomType.selector, "registerWithCustomType");
+        _authorizeTargetFunctions(_registry, registryServiceRoleId, functions);
+
+        // authorize release registry
+        RoleId releaseRegistryRoleId = RoleIdLib.roleForType(RELEASE());
+        functions = new FunctionInfo[](1);
+        functions[0] = toFunction(IRegistry.registerService.selector, "registerService");
+        _authorizeTargetFunctions(_registry, releaseRegistryRoleId, functions);
     }
 
 

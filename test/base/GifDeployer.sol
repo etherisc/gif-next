@@ -9,9 +9,10 @@ import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
-import {GlobalRegistry} from "../../contracts/registry/GlobalRegistry.sol";
+// TODO cleanup
+// import {GlobalRegistry} from "../../contracts/registry/GlobalRegistry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-import {GlobalRegistryAdmin} from "../../contracts/registry/GlobalRegistryAdmin.sol";
+// import {GlobalRegistryAdmin} from "../../contracts/registry/GlobalRegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
@@ -138,20 +139,28 @@ contract GifDeployer is Test {
         // 1) deploy dip token
         dip = new Dip();
 
+        // TODO cleanup
+        // if(block.chainid == 1) {
+        //     registryAdmin = new GlobalRegistryAdmin();
+        // } else {
+        //     registryAdmin = new RegistryAdmin();
+        // }
         // 2) deploy registry admin
-        if(block.chainid == 1) {
-            registryAdmin = new GlobalRegistryAdmin();
-        } else {
-            registryAdmin = new RegistryAdmin();
-        }
+        registryAdmin = new RegistryAdmin();
 
         // 3) deploy registry
-        if(block.chainid == 1) {
-            registry = new GlobalRegistry(registryAdmin);
-        } else {
-            address globalRegistry;
-            registry = new Registry(registryAdmin, globalRegistry);
-        }
+        registry = new Registry(
+                registryAdmin, 
+                makeAddr("global registry"));
+
+        // TODO cleanup
+        // if(block.chainid == 1) {
+        //     registry = new GlobalRegistry(registryAdmin);
+        // } else {
+        //     registry = new Registry(
+        //         registryAdmin, 
+        //         makeAddr("global registry"));
+        // }
 
         // 4) deploy release manager
         releaseRegistry = new ReleaseRegistry(registry);

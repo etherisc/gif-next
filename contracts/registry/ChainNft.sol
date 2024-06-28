@@ -43,9 +43,12 @@ contract ChainNft is ERC721Enumerable {
         _;
     }
 
-    constructor(address registry) ERC721(NAME, SYMBOL) {
+    constructor(address registry)
+        ERC721(NAME, SYMBOL)
+    {
         if (registry == address(0)) { revert ErrorChainNftRegistryAddressZero(); }
 
+        // NFT contract is deployed by the registry
         _registry = registry;
 
         _chainIdDigits = _calculateChainIdDigits(block.chainid);
@@ -64,7 +67,13 @@ contract ChainNft is ERC721Enumerable {
     * not part of the IRegistry interface only needed for
     * initial registry setup (protocol and global registry objects)
     */
-    function mint(address to, uint256 tokenId) external onlyRegistry {
+    function mint(
+        address to, 
+        uint256 tokenId
+    )
+        external
+        onlyRegistry()
+    {
         _totalMinted++;
         _safeMint(to, tokenId);
     }
@@ -79,7 +88,11 @@ contract ChainNft is ERC721Enumerable {
         address to,
         address interceptor,
         string memory uri
-    ) public onlyRegistry returns (uint256 tokenId) {
+    )
+        public
+        onlyRegistry()
+        returns (uint256 tokenId) 
+    {
         tokenId = _getNextTokenId();
 
         if (interceptor != address(0)) {

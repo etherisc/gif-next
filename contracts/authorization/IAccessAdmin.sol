@@ -7,7 +7,6 @@ import {IAccess} from "./IAccess.sol";
 import {RoleId} from "../type/RoleId.sol";
 import {Selector} from "../type/Selector.sol";
 import {Str} from "../type/String.sol";
-import {Timestamp} from "../type/Timestamp.sol";
 
 interface IAccessAdmin is 
     IAccessManaged,

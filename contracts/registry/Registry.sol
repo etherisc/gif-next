@@ -26,27 +26,48 @@ import {RegistryAdmin} from "./RegistryAdmin.sol";
 // 2) register() -> registers IRegisterable address by IService (INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE)
 // 3)            -> registers object by IService (POLICY, BUNDLE, STAKE)
 
-/// @title Chain Registry contract implementing IRegistry.
-/// @notice See IRegistry for method details.
+/// @dev Chain Registry contract implementing IRegistry.
+/// IRegistry for method details.
 contract Registry is
     Initializable,
     AccessManaged,
     IRegistry
 {
-    using NftIdLib for NftId;
+    /// @dev Protocol NFT ID
+    NftId public immutable PROTOCOL_NFT_ID;
 
-    address public NFT_LOCK_ADDRESS = address(0x1);
+    /// @dev Gobal registry NFT ID
+    NftId public immutable GLOBAL_REGISTRY_NFT_ID;
+
+    /// @dev Gobal registry address on mainnet.
+    address public immutable GLOBAL_REGISTRY_ADDRESS;
+
+    /// @dev Registry NFT ID
+    NftId public immutable REGISTRY_NFT_ID;
+
+    /// @dev Deployer address that authorizes the initializer of this contract.
+    address public immutable DEPLOYER;
+
+    /// @dev Registry admin contract for this registry.
+    RegistryAdmin public immutable ADMIN;
+
+    /// @dev Chain NFT contract that keeps track of the ownership of all registered objects.
+    ChainNft public immutable CHAIN_NFT;
+
+    address public constant NFT_LOCK_ADDRESS = address(0x1);
     uint256 public constant REGISTRY_TOKEN_SEQUENCE_ID = 2;
     uint256 public constant STAKING_TOKEN_SEQUENCE_ID = 3;
     string public constant EMPTY_URI = "";
 
-    /// @dev stores the deployer address and allows to create initializers
-    /// that are restricted to the deployer address.
-    address public immutable _deployer;
+    /// @dev keep track of different registries on different chains
+    mapping(uint256 chanId => NftId registryNftId) private _registryNftIdByChainId;
+    uint256[] private _chainId;
 
-    mapping(NftId nftId => ObjectInfo info) internal _info;
-    mapping(address object => NftId nftId) internal _nftIdByAddress;
+    /// @dev keep track of object info and address reverse lookup
+    mapping(NftId nftId => ObjectInfo info) private _info;
+    mapping(address object => NftId nftId) private _nftIdByAddress;
 
+    /// @dev keep track of service addresses by version and domain
     mapping(VersionPart version => mapping(ObjectType serviceDomain => address)) private _service;
 
     mapping(ObjectType objectType => bool) private _coreTypes;
@@ -57,52 +78,43 @@ contract Registry is
     mapping(ObjectType objectType => mapping(
             ObjectType parentType => bool)) private _coreObjectCombinations;
 
-    RegistryAdmin public immutable _admin;
-    ChainNft public immutable _chainNft;
+    NftId private _stakingNftId;
 
-    NftId public immutable _protocolNftId;
-    NftId public immutable _registryNftId;
-    NftId public _stakingNftId;
-
-    address public _tokenRegistryAddress;
-    address public _stakingAddress;
-    ReleaseRegistry public _releaseRegistry;
+    ReleaseRegistry private _releaseRegistry;
+    address private _tokenRegistryAddress;
+    address private _stakingAddress;
 
     modifier onlyDeployer() {
-        if (msg.sender != _deployer) {
+        if (msg.sender != DEPLOYER) {
             revert ErrorRegistryCallerNotDeployer();
-        }
-        _;
-    }
-
-    modifier onlyReleaseRegistry() {
-        if(msg.sender != address(_releaseRegistry)) {
-            revert ErrorRegistryCallerNotReleaseRegistry();
         }
         _;
     }
 
     /// @dev Creates the registry contract and populates it with the protocol and registry objects.
     /// Internally deploys the ChainNft contract.
-    // TODO consider storing global registry address as constant
     constructor(RegistryAdmin admin, address globalRegistry)
         AccessManaged(admin.authority())
     {
-        _deployer = msg.sender;
-        _admin = admin;
+        DEPLOYER = msg.sender;
+        ADMIN = admin;
+        GLOBAL_REGISTRY_ADDRESS = _getGlobalRegistryAddress(globalRegistry);
+
         // deploy NFT 
-        _chainNft = new ChainNft(address(this));
+        CHAIN_NFT = new ChainNft(address(this));
+        GLOBAL_REGISTRY_NFT_ID = NftIdLib.toNftId(
+            CHAIN_NFT.GLOBAL_REGISTRY_ID());
 
         // initial registry setup
-        _protocolNftId = _registerProtocol();
-        _registryNftId = _registerRegistry(globalRegistry);
+        PROTOCOL_NFT_ID = _registerProtocol();
+        REGISTRY_NFT_ID = _registerRegistry();
 
         // set object types and object parent relations
         _setupValidCoreTypesAndCombinations();
     }
 
 
-    /// @dev Wires release registry and token to registry (this contract).
+    /// @dev Wires release registry, token registry and staking contract to this registry.
     /// MUST be called by release registry.
     function initialize(
         address releaseRegistry,
@@ -113,36 +125,59 @@ contract Registry is
         initializer()
         onlyDeployer()
     {
+        // store links to supporting contracts
         _releaseRegistry = ReleaseRegistry(releaseRegistry);
         _tokenRegistryAddress = tokenRegistry;
         _stakingAddress = staking;
 
+        // register staking contract
         _stakingNftId = _registerStaking();
     }
 
+
     /// @inheritdoc IRegistry
-    function register(ObjectInfo memory info)
+    function registerRegistry(
+        NftId nftId,
+        uint256 chainId, 
+        address registryAddress
+    )
         external
-        restricted
-        returns(NftId nftId)
+        restricted()
     {
-        ObjectType objectType = info.objectType;
-        ObjectType parentType = _info[info.parentNftId].objectType;
-
-        // check type combinations for core objects
-        if(info.objectAddress == address(0)) {
-            if(_coreObjectCombinations[objectType][parentType] == false) {
-                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
-            }
-        }
-        // check type combinations for contract objects
-        else {
-            if(_coreContractCombinations[objectType][parentType] == false) {
-                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
-            }
+        // registration of chain registries only allowed on mainnet
+        if (block.chainid != 1) {
+            revert ErrorRegistryNotOnMainnet(block.chainid);
         }
 
-        nftId = _register(info);
+        // check registry is not arelady registered
+        if (isRegistered(nftId)) {
+            revert ErrorRegistryAlreadyRegistered(nftId);
+        }
+
+        // check nft id matches with expected registry nft id for specified chain
+        uint256 expectedRegistryId = CHAIN_NFT.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID, chainId);
+        if (nftId != NftIdLib.toNftId(expectedRegistryId)) {
+            revert ErrorRegistryNftIdInvalid(nftId, chainId);
+        }
+
+        // check registry address is not zero
+        if (registryAddress == address(0)) {
+            revert ErrorRegistryAddressZero(nftId);
+        }
+
+        _registerRegistryForNft(
+            nftId,
+            chainId,
+            ObjectInfo({
+                nftId: nftId,
+                parentNftId: REGISTRY_NFT_ID,
+                objectType: REGISTRY(),
+                isInterceptor: false,
+                objectAddress: registryAddress,
+                initialOwner: NFT_LOCK_ADDRESS,
+                data: ""  
+            }),
+            false); // don't update address lookup for registries on different chains
     }
 
 
@@ -153,7 +188,7 @@ contract Registry is
         ObjectType domain
     )
         external
-        onlyReleaseRegistry
+        restricted()
         returns(NftId nftId)
     {
         // check service address is defined
@@ -183,7 +218,7 @@ contract Registry is
         }
 
         // check that parent has registry type
-        if(info.parentNftId != _registryNftId) {
+        if(info.parentNftId != REGISTRY_NFT_ID) {
             revert ErrorRegistryServiceParentNotRegistry(info.parentNftId);
         }        
 
@@ -195,9 +230,35 @@ contract Registry is
 
 
     /// @inheritdoc IRegistry
+    function register(ObjectInfo memory info)
+        external
+        restricted()
+        returns(NftId nftId)
+    {
+        ObjectType objectType = info.objectType;
+        ObjectType parentType = _info[info.parentNftId].objectType;
+
+        // check type combinations for core objects
+        if(info.objectAddress == address(0)) {
+            if(_coreObjectCombinations[objectType][parentType] == false) {
+                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
+            }
+        }
+        // check type combinations for contract objects
+        else {
+            if(_coreContractCombinations[objectType][parentType] == false) {
+                revert ErrorRegistryTypesCombinationInvalid(objectType, parentType);
+            }
+        }
+
+        nftId = _register(info);
+    }
+
+
+    /// @inheritdoc IRegistry
     function registerWithCustomType(ObjectInfo memory info)
         external
-        restricted
+        restricted()
         returns(NftId nftId)
     {
         ObjectType objectType = info.objectType;
@@ -237,16 +298,28 @@ contract Registry is
         return _releaseRegistry.getReleaseInfo(version);
     }
 
+    function chainIds() public view returns (uint256) {
+        return _chainId.length;
+    }
+
+    function getChainId(uint256 idx) public view returns (uint256) {
+        return _chainId[idx];
+    }
+
+    function getRegistryNftid(uint256 chainId) public view returns (NftId nftId) {
+        return _registryNftIdByChainId[chainId];
+    }
+
     function getObjectCount() external view returns (uint256) {
-        return _chainNft.totalSupply();
+        return CHAIN_NFT.totalSupply();
     }
 
     function getNftId() external view returns (NftId nftId) {
-        return _registryNftId;
+        return REGISTRY_NFT_ID;
     }
 
     function getProtocolNftId() external view returns (NftId nftId) {
-        return _protocolNftId;
+        return PROTOCOL_NFT_ID;
     }
 
     function getNftId(address object) external view returns (NftId id) {
@@ -254,11 +327,11 @@ contract Registry is
     }
 
     function ownerOf(NftId nftId) public view returns (address) {
-        return _chainNft.ownerOf(nftId.toInt());
+        return CHAIN_NFT.ownerOf(nftId.toInt());
     }
 
     function ownerOf(address contractAddress) public view returns (address) {
-        return _chainNft.ownerOf(_nftIdByAddress[contractAddress].toInt());
+        return CHAIN_NFT.ownerOf(_nftIdByAddress[contractAddress].toInt());
     }
 
     function getObjectInfo(NftId nftId) external view returns (ObjectInfo memory) {
@@ -314,15 +387,15 @@ contract Registry is
     }
 
     function getChainNftAddress() external view override returns (address) {
-        return address(_chainNft);
+        return address(CHAIN_NFT);
     }
 
     function getRegistryAdminAddress() external view returns (address) {
-        return address(_admin);
+        return address(ADMIN);
     }
 
     function getAuthority() external view returns (address) {
-        return _admin.authority();
+        return ADMIN.authority();
     }
 
     function getOwner() public view returns (address owner) {
@@ -353,14 +426,13 @@ contract Registry is
 
         NftId parentNftId = info.parentNftId;
         ObjectInfo memory parentInfo = _info[parentNftId];
-        ObjectType parentType = parentInfo.objectType; // see function header
         address parentAddress = parentInfo.objectAddress;
 
         // parent is contract -> need to check? -> check before minting
         // special case: staking: to protocol possible as well
         // special case: global registry nft as parent when not on mainnet -> global registry address is 0
-        // special case: when parentNftId == _chainNft.mint(), check for zero parent address before mint
-        // special case: when parentNftId == _chainNft.mint() && objectAddress == initialOwner
+        // special case: when parentNftId == CHAIN_NFT.mint(), check for zero parent address before mint
+        // special case: when parentNftId == CHAIN_NFT.mint() && objectAddress == initialOwner
         if(objectType != STAKE()) {
             if(parentAddress == address(0)) {
                 revert ErrorRegistryParentAddressZero();
@@ -374,23 +446,17 @@ contract Registry is
             parentInfo.isInterceptor, 
             parentAddress);
 
-        uint256 tokenId = _chainNft.getNextTokenId();
+        uint256 tokenId = CHAIN_NFT.getNextTokenId();
         nftId = NftIdLib.toNftId(tokenId);
         info.nftId = nftId;
+
         _info[nftId] = info;
-
-        if(objectAddress > address(0)) {
-            if(_nftIdByAddress[objectAddress].gtz()) { 
-                revert ErrorRegistryContractAlreadyRegistered(objectAddress);
-            }
-
-            _nftIdByAddress[objectAddress] = nftId;
-        }
+        _setAddressForNftId(nftId, objectAddress);
 
         emit LogRegistration(nftId, parentNftId, objectType, isInterceptor, objectAddress, owner);
 
         // calls nft receiver(1) and interceptor(2)
-        uint256 mintedTokenId = _chainNft.mint(
+        uint256 mintedTokenId = CHAIN_NFT.mint(
             owner,
             interceptorAddress,
             EMPTY_URI);
@@ -439,91 +505,146 @@ contract Registry is
         private
         returns (NftId protocolNftId)
     {
-        uint256 protocolId = _chainNft.PROTOCOL_NFT_ID();
+        uint256 protocolId = CHAIN_NFT.PROTOCOL_NFT_ID();
         protocolNftId = NftIdLib.toNftId(protocolId);
 
-        _info[protocolNftId] = ObjectInfo({
-            nftId: protocolNftId,
-            parentNftId: NftIdLib.zero(),
-            objectType: PROTOCOL(),
-            isInterceptor: false, 
-            objectAddress: address(0),
-            initialOwner: NFT_LOCK_ADDRESS,
-            data: ""
-        });
-
-        _chainNft.mint(NFT_LOCK_ADDRESS, protocolId);
+        // _info[protocolNftId] = ObjectInfo({
+        _registerForNft(
+            protocolNftId,
+            ObjectInfo({
+                nftId: protocolNftId,
+                parentNftId: NftIdLib.zero(),
+                objectType: PROTOCOL(),
+                isInterceptor: false, 
+                objectAddress: address(0),
+                initialOwner: NFT_LOCK_ADDRESS,
+                data: ""}),
+            true);
     }
 
-    /// @dev global registry registration
-    function _registerGlobalRegistry(address globalRegistry)
-        private
-        returns (NftId globalRegistryNftId)
-    {
-        uint256 globalRegistryId = _chainNft.GLOBAL_REGISTRY_ID();
-        globalRegistryNftId = NftIdLib.toNftId(globalRegistryId);
-
-        _info[globalRegistryNftId] = ObjectInfo({
-            nftId: globalRegistryNftId,
-            parentNftId: _protocolNftId,
-            objectType: REGISTRY(),
-            isInterceptor: false,
-            objectAddress: globalRegistry,
-            initialOwner: NFT_LOCK_ADDRESS,
-            data: ""
-        });
-
-        _nftIdByAddress[address(this)] = globalRegistryNftId;
-        _chainNft.mint(NFT_LOCK_ADDRESS, globalRegistryId);
-    }
-
-    /// @dev registry registration
-    function _registerRegistry(address globalRegistry) 
+    /// @dev register this registry
+    function _registerRegistry() 
         internal 
         virtual
         returns (NftId registryNftId)
     {
-        NftId globalRegistryNftId = _registerGlobalRegistry(globalRegistry);
+        // initial assignment
+        registryNftId = GLOBAL_REGISTRY_NFT_ID;
 
-        uint256 registryId = _chainNft.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID);
-        registryNftId = NftIdLib.toNftId(registryId);
+        // register global registry
+        _registerRegistryForNft(
+            GLOBAL_REGISTRY_NFT_ID,
+            1, // mainnet chain id
+            ObjectInfo({
+                nftId: GLOBAL_REGISTRY_NFT_ID,
+                parentNftId: PROTOCOL_NFT_ID,
+                objectType: REGISTRY(),
+                isInterceptor: false,
+                objectAddress: GLOBAL_REGISTRY_ADDRESS,
+                initialOwner: NFT_LOCK_ADDRESS,
+                data: ""}),
+            true);
 
-        _info[registryNftId] = ObjectInfo({
-            nftId: registryNftId,
-            parentNftId: globalRegistryNftId,
-            objectType: REGISTRY(),
-            isInterceptor: false,
-            objectAddress: address(this), 
-            initialOwner: NFT_LOCK_ADDRESS,
-            data: "" 
-        });
+        // if not on mainnet: register this registry with global registry as parent
+        if (block.chainid != 1) {
 
-        _nftIdByAddress[address(this)] = registryNftId;
-        _chainNft.mint(NFT_LOCK_ADDRESS, registryId);
+            // modify registry nft id to local registry when not on mainnet
+            registryNftId = NftIdLib.toNftId(
+                CHAIN_NFT.calculateTokenId(REGISTRY_TOKEN_SEQUENCE_ID));
+
+            _registerRegistryForNft(
+                registryNftId,
+                block.chainid, 
+                ObjectInfo({
+                    nftId: registryNftId,
+                    parentNftId: GLOBAL_REGISTRY_NFT_ID,
+                    objectType: REGISTRY(),
+                    isInterceptor: false,
+                    objectAddress: address(this), 
+                    initialOwner: NFT_LOCK_ADDRESS,
+                    data: ""}),
+                true);
+        }
+    }
+
+    /// @dev staking registration
+    function _registerRegistryForNft(
+        NftId nftId, 
+        uint256 chainId,
+        ObjectInfo memory info,
+        bool updateAddressLookup
+    )
+        private
+    {
+
+        // update registry lookup variables
+        _registryNftIdByChainId[chainId] = nftId;
+        _chainId.push(chainId);
+
+        // register the registry info
+        _registerForNft(
+            nftId,
+            info,
+            updateAddressLookup); 
     }
 
     /// @dev staking registration
     function _registerStaking()
         private
-        onlyInitializing()
         returns (NftId stakingNftId)
     {
         address stakingOwner = IRegisterable(_stakingAddress).getOwner();
-        uint256 stakingId = _chainNft.calculateTokenId(STAKING_TOKEN_SEQUENCE_ID);
+        uint256 stakingId = CHAIN_NFT.calculateTokenId(STAKING_TOKEN_SEQUENCE_ID);
         stakingNftId = NftIdLib.toNftId(stakingId);
 
-        _info[stakingNftId] = ObjectInfo({
-            nftId: stakingNftId,
-            parentNftId: _registryNftId,
-            objectType: STAKING(),
-            isInterceptor: false,
-            objectAddress: _stakingAddress, 
-            initialOwner: stakingOwner,
-            data: "" 
-        });
+        _registerForNft(
+            stakingNftId, 
+            ObjectInfo({
+                nftId: stakingNftId,
+                parentNftId: REGISTRY_NFT_ID,
+                objectType: STAKING(),
+                isInterceptor: false,
+                objectAddress: _stakingAddress, 
+                initialOwner: stakingOwner,
+                data: ""}),
+            true); 
+    }
 
-        _nftIdByAddress[_stakingAddress] = stakingNftId;
-        _chainNft.mint(stakingOwner, stakingId);
+    /// @dev Register the provided object info for the specified NFT ID.
+    function _registerForNft(
+        NftId nftId, 
+        ObjectInfo memory info, 
+        bool updateAddressLookup
+    )
+        internal
+    {
+        _info[nftId] = info;
+
+        if (updateAddressLookup) {
+            _setAddressForNftId(nftId, info.objectAddress);
+        }
+
+        CHAIN_NFT.mint(info.initialOwner, nftId.toInt());
+    }
+
+    function _setAddressForNftId(NftId nftId, address objectAddress)
+        internal
+    {
+        if (objectAddress != address(0)) {
+            if (_nftIdByAddress[objectAddress].gtz()) { 
+                revert ErrorRegistryContractAlreadyRegistered(objectAddress);
+            }
+
+            _nftIdByAddress[objectAddress] = nftId;
+        }
+    }
+
+    function _getGlobalRegistryAddress(address globalRegistry) internal view returns (address) {
+        if (block.chainid == 1) {
+            return address(this);
+        } else {
+            return globalRegistry;
+        }
     }
 
     /// @dev defines which object - parent types relations are allowed to register

@@ -20,6 +20,12 @@ interface IRegistry is IERC165 {
     // initialize
     error ErrorRegistryCallerNotDeployer();
 
+    // registerRegistry()
+    error ErrorRegistryNotOnMainnet(uint256 chainId);
+    error ErrorRegistryAlreadyRegistered(NftId nftId);
+    error ErrorRegistryNftIdInvalid(NftId nftId, uint256 chainId);
+    error ErrorRegistryAddressZero(NftId nftId);
+
     // registerService()
     error ErrorRegistryCallerNotReleaseRegistry();
     error ErrorRegistryServiceAddressZero(); 
@@ -57,10 +63,13 @@ interface IRegistry is IERC165 {
         Timestamp disabledAt;
     }
 
-    /// @dev Register an object with a known core type.
-    /// The function returns a newly minted object NFT ID.
-    /// May not be used to register services.
-    function register(ObjectInfo memory info) external returns (NftId nftId);
+    /// @dev Registers a registry contract for a specified chain.
+    /// Only one chain registry may be registered per chain
+    function registerRegistry(
+        NftId nftId, 
+        uint256 chainId, 
+        address chainRegistryAddress
+    ) external;
 
     /// @dev Register a service with using the provided domain and version.
     /// The function returns a newly minted service NFT ID.
@@ -70,6 +79,11 @@ interface IRegistry is IERC165 {
         VersionPart serviceVersion, 
         ObjectType serviceDomain
     ) external returns(NftId nftId);
+
+    /// @dev Register an object with a known core type.
+    /// The function returns a newly minted object NFT ID.
+    /// May not be used to register services.
+    function register(ObjectInfo memory info) external returns (NftId nftId);
 
     /// @dev Register an object with a custom type.
     /// The function returns a newly minted object NFT ID.
@@ -84,6 +98,15 @@ interface IRegistry is IERC165 {
     function getLatestVersion() external view returns (VersionPart);
 
     function getReleaseInfo(VersionPart version) external view returns (ReleaseInfo memory);
+
+    /// @dev Returns the number of supported chains.
+    function chainIds() external view returns (uint256);
+
+    /// @dev Returns the chain id at the specified index.
+    function getChainId(uint256 idx) external view returns (uint256);
+
+    /// @dev Returns the NFT ID of the registry for the specified chain.
+    function getRegistryNftid(uint256 chainId) external returns (NftId nftId); 
 
     function getObjectCount() external view returns (uint256);
 

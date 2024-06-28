@@ -92,13 +92,16 @@ contract Authorization
      }
 
      /// @dev Overwrite this function for a specific realease.
-     /// The first target added represents the components/module main target.
-     function _setupTargets() internal virtual { }
-
-     /// @dev Overwrite this function for a specific realease.
+     // solhint-disable-next-line no-empty-blocks
      function _setupRoles() internal virtual {}
 
      /// @dev Overwrite this function for a specific realease.
+     /// The first target added represents the components/module main target.
+     // solhint-disable-next-line no-empty-blocks
+     function _setupTargets() internal virtual { }
+
+     /// @dev Overwrite this function for a specific realease.
+     // solhint-disable-next-line no-empty-blocks
      function _setupTargetAuthorizations() internal virtual {}
 
      /// @dev Use this method to to add an authorized role.
