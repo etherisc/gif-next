@@ -11,7 +11,8 @@ import {UFixed} from "../type/UFixed.sol";
 import {Timestamp} from "../type/Timestamp.sol";
 
 interface IOracleComponent is IInstanceLinkedComponent {
-
+    error ErrorOracleNotImplemented(string methodName);
+    
     /// @dev callback method for requesting some data from the oracle
     function request(
         RequestId requestId,
