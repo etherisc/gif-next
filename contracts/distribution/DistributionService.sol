@@ -275,8 +275,6 @@ contract DistributionService is
         IComponents.ComponentInfo memory distributionInfo = reader.getComponentInfo(distributionNftId);
         address distributionWallet = distributionInfo.wallet;
         
-        // TODO: check nft id is valid distributor
-
         IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(distributorNftId);
 
         if (!distributorInfo.active) {

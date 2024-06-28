@@ -315,7 +315,7 @@ contract TestFees is GifTest {
         uint256 distributorBalanceAfter = token.balanceOf(distributor);
         assertEq(distributorBalanceAfter, distributorBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 3 higher");
         uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
-        assertEq(distributionBalanceAfter, distributionBalanceBefore - withdrawAmount.toInt(), "distribution balance not 15 lower");
+        assertEq(distributionBalanceAfter, distributionBalanceBefore - withdrawAmount.toInt(), "distribution balance not 3 lower");
     }
 
     function test_Fees_withdrawCommission_notDistributor() public {
@@ -330,6 +330,54 @@ contract TestFees is GifTest {
 
         // WHEN - the distributor withdraws part of his commission
         distribution.withdrawCommission(distributorNftId, withdrawAmount);
+    }
+
+    function test_Fees_withdrawCommission_maxAmount() public {
+        // GIVEN
+        _setupWithActivePolicy(true);
+
+        // solhint-disable-next-line 
+        Amount distributionFeeBefore = instanceReader.getFeeAmount(distributionNftId);
+        assertEq(distributionFeeBefore.toInt(), 8, "distribution fee not 8"); // 20% of the 10% premium -> 20 - 7 (discount) - 5 (referral) = 8
+
+        Amount commission = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        assertEq(commission.toInt(), 5, "commission not 5");
+
+        uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
+        uint256 distributorBalanceBefore = token.balanceOf(distributor);
+        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        vm.stopPrank();
+
+        Amount withdrawAmount = AmountLib.max();
+        Amount expectedWithdrawnAmount = AmountLib.toAmount(5);
+        vm.startPrank(distributor);
+
+        // THEN - expect a log entry for the commission withdrawal
+        vm.expectEmit();
+        emit IDistributionService.LogDistributionServiceCommissionWithdrawn(
+            distributorNftId,
+            distributor,
+            address(token),
+            expectedWithdrawnAmount
+        );
+        
+        // WHEN - the distributor withdraws part of his commission
+        Amount amountWithdrawn = distribution.withdrawCommission(distributorNftId, withdrawAmount);
+
+        // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
+        assertEq(amountWithdrawn.toInt(), expectedWithdrawnAmount.toInt(), "withdrawn amount not 5");
+        Amount commissionAfter = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        assertEq(commissionAfter.toInt(), 0, "distribution fee not 0");
+        Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
+        assertEq(distributionFeeAfter.toInt(), distributionFeeBefore.toInt(), "distribution fee has changed"); 
+
+        // and the tokens have been transferred
+        uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
+        assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore, "distribution owner balance changed");
+        uint256 distributorBalanceAfter = token.balanceOf(distributor);
+        assertEq(distributorBalanceAfter, distributorBalanceBefore + expectedWithdrawnAmount.toInt(), "distribution owner balance not 5 higher");
+        uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
+        assertEq(distributionBalanceAfter, distributionBalanceBefore - expectedWithdrawnAmount.toInt(), "distribution balance not 5 lower");
     }
 
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
