@@ -4,6 +4,8 @@ pragma solidity ^0.8.20;
 import {console} from "../lib/forge-std/src/Test.sol";
 
 import {BasicDistributionAuthorization} from "../contracts/distribution/BasicDistributionAuthorization.sol";
+import {DistributorType} from "../contracts/type/DistributorType.sol";
+import {IDistributionService} from "../contracts/distribution/IDistributionService.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
@@ -18,17 +20,21 @@ import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {ACTIVE} from "../contracts/type/StateId.sol";
-import {TimestampLib} from "../contracts/type/Timestamp.sol";
+import {TimestampLib, toTimestamp} from "../contracts/type/Timestamp.sol";
 import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {INftOwnable} from "../contracts/shared/INftOwnable.sol";
 
 contract TestFees is GifTest {
     using NftIdLib for NftId;
 
+    DistributorType distributorType;
+    NftId distributorNftId;
+    ReferralId referralId;
+
     /// @dev test withdraw fees from distribution component as distribution owner
     function test_Fees_withdrawDistributionFees() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         // solhint-disable-next-line 
         Amount distributionFee = instanceReader.getFeeAmount(distributionNftId);
@@ -66,7 +72,7 @@ contract TestFees is GifTest {
     /// @dev test withdraw fees from distribution component as not the distribution owner
     function test_Fees_withdrawDistributionFees_notOwner() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         vm.startPrank(poolOwner);
         Amount withdrawAmount = AmountLib.toAmount(15);
@@ -83,7 +89,7 @@ contract TestFees is GifTest {
     /// @dev try to withdraw all fees from distribution component
     function test_Fees_withdrawDistributionFees_getMaxAmount() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         // solhint-disable-next-line 
         Amount distributionFee = instanceReader.getFeeAmount(distributionNftId);
@@ -111,7 +117,7 @@ contract TestFees is GifTest {
     /// @dev try to withdraw more fees than available from distribution component 
     function test_Fees_withdrawDistributionFees_withdrawlAmountTooLarge() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         // solhint-disable-next-line 
         Amount distributionFee = instanceReader.getFeeAmount(distributionNftId);
@@ -137,7 +143,7 @@ contract TestFees is GifTest {
     /// @dev try to withdraw when allowance is too small
     function test_Fees_withdrawDistributionFees_allowanceTooSmall() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         address externalWallet = makeAddr("externalWallet");
         vm.startPrank(distributionOwner);
@@ -162,7 +168,7 @@ contract TestFees is GifTest {
     /// @dev try to withdraw zero amount
     function test_Fees_withdrawDistributionFees_withdrawalAmountZero() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         Amount withdrawalAmount = AmountLib.toAmount(0);
         vm.startPrank(distributionOwner);
@@ -178,7 +184,7 @@ contract TestFees is GifTest {
     /// @dev test withdraw fees from pool component as pool owner
     function test_Fees_withdrawPoolFees() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         // solhint-disable-next-line 
         Amount poolFee = instanceReader.getFeeAmount(poolNftId);
@@ -206,7 +212,7 @@ contract TestFees is GifTest {
     /// @dev test withdraw fees from pool component as not the pool owner
     function test_Fees_withdrawPoolFees_notOwner() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         vm.startPrank(productOwner);
         Amount withdrawAmount = AmountLib.toAmount(3);
@@ -223,7 +229,7 @@ contract TestFees is GifTest {
     /// @dev test withdraw fees from product component as product owner
     function test_Fees_withdrawProductFees() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         // solhint-disable-next-line 
         Amount productFee = instanceReader.getFeeAmount(productNftId);
@@ -251,7 +257,7 @@ contract TestFees is GifTest {
     /// @dev test withdraw fees from product component as not the product owner
     function test_Fees_withdrawProductFees_notOwner() public {
         // GIVEN
-        _setupWithActivePolicy();
+        _setupWithActivePolicy(false);
 
         vm.startPrank(distributionOwner);
         Amount withdrawAmount = AmountLib.toAmount(3);
@@ -264,8 +270,55 @@ contract TestFees is GifTest {
         // WHEN
         product.withdrawFees(withdrawAmount);
     }
+    
+    function test_Fees_withdrawCommission() public {
+        // GIVEN
+        _setupWithActivePolicy(true);
 
-    function _setupWithActivePolicy() internal returns (NftId policyNftId) {
+        // solhint-disable-next-line 
+        Amount distributionFeeBefore = instanceReader.getFeeAmount(distributionNftId);
+        assertEq(distributionFeeBefore.toInt(), 8, "distribution fee not 8"); // 20% of the 10% premium -> 20 - 7 (discount) - 5 (referral) = 8
+
+        Amount commission = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        assertEq(commission.toInt(), 5, "commission not 5");
+
+        uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
+        uint256 distributorBalanceBefore = token.balanceOf(distributor);
+        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        vm.stopPrank();
+
+        Amount withdrawAmount = AmountLib.toAmount(3);
+        vm.startPrank(distributor);
+
+        // THEN - expect a log entry for the commission withdrawal
+        vm.expectEmit();
+        emit IDistributionService.LogDistributionServiceCommissionWithdrawn(
+            distributorNftId,
+            distributor,
+            address(token),
+            withdrawAmount
+        );
+        
+        // WHEN - the distributor withdraws part of his commission
+        Amount amountWithdrawn = distribution.withdrawCommission(distributorNftId, withdrawAmount);
+
+        // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
+        assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not 3");
+        Amount commissionAfter = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        assertEq(commissionAfter.toInt(), 2, "distribution fee not 2");
+        Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
+        assertEq(distributionFeeAfter.toInt(), distributionFeeBefore.toInt(), "distribution fee has changed"); 
+
+        // and the tokens have been transferred
+        uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
+        assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore, "distribution owner balance changed");
+        uint256 distributorBalanceAfter = token.balanceOf(distributor);
+        assertEq(distributorBalanceAfter, distributorBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 3 higher");
+        uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
+        assertEq(distributionBalanceAfter, distributionBalanceBefore - withdrawAmount.toInt(), "distribution balance not 15 lower");
+    }
+
+    function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
         vm.stopPrank();
@@ -281,8 +334,8 @@ contract TestFees is GifTest {
         vm.stopPrank();
 
 
+        // set product fees
         vm.startPrank(productOwner);
-
         product.setFees(
             FeeLib.percentageFee(5), 
             FeeLib.zero());
@@ -291,6 +344,33 @@ contract TestFees is GifTest {
         bytes memory data = "bla di blubb";
         product.createRisk(riskId, data);
         vm.stopPrank();
+
+        if (purchaseWithReferral) {
+            // prepare distributor type, distributor and referral
+            vm.startPrank(distributionOwner);
+            distributorType = distribution.createDistributorType(
+                "PREMIUM_SELLER", 
+                instanceReader.toUFixed(5, -2), 
+                instanceReader.toUFixed(8, -2), 
+                instanceReader.toUFixed(5, -2), 
+                10, 
+                30 * 24 * 60 * 60, 
+                false, 
+                false, 
+                "");
+            distributorNftId = distribution.createDistributor(distributor, distributorType, "");
+            vm.stopPrank();
+            vm.startPrank(distributor);
+            referralId = distribution.createReferral(
+                "DEAL", 
+                instanceReader.toUFixed(5, -2), 
+                10, 
+                toTimestamp(30 * 24 * 60 * 60), 
+                "");
+            vm.stopPrank();
+        } else {
+            referralId = ReferralLib.zero();
+        }
 
         vm.startPrank(customer);
 
@@ -305,7 +385,6 @@ contract TestFees is GifTest {
         uint sumInsuredAmount = 1000;
         Seconds lifetime = SecondsLib.toSeconds(30);
         bytes memory applicationData = "";
-        ReferralId referralId = ReferralLib.zero();
         policyNftId = product.createApplication(
             customer,
             riskId,
@@ -328,4 +407,6 @@ contract TestFees is GifTest {
 
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
     }
+
+    
 }

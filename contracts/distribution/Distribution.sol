@@ -129,6 +129,18 @@ abstract contract Distribution is
         return true;
     }
 
+    /// @inheritdoc IDistributionComponent
+    function withdrawCommission(NftId distributorNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        // FIXME: caller must be distributor
+        returns (Amount withdrawnAmount) 
+    {
+        // TODO: move to internal
+        return _getDistributionStorage()._distributionService.withdrawCommission(distributorNftId, amount);
+    }
+        
     function _initializeDistribution(
         address registry,
         NftId instanceNftId,
