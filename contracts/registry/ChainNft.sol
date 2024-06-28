@@ -13,7 +13,7 @@ contract ChainNft is ERC721Enumerable {
     string public constant SYMBOL = "DIPNFT";
 
     uint256 public constant PROTOCOL_NFT_ID = 1101;
-    uint256 public constant GLOBAL_REGISTRY_ID = 2101; //TODO make dependent of MAINNET_CHAIN_ID constant?
+    uint256 public constant GLOBAL_REGISTRY_ID = 2101;
 
     // custom errors
     error ErrorChainNftCallerNotRegistry(address caller);
@@ -202,25 +202,17 @@ contract ChainNft is ERC721Enumerable {
     * (42 * 10 ** 10 + 9876543210) * 100 + 10
     * (index * 10 ** digits + chainid) * 100 + digits (1 < digits < 100)
     */
-    function calculateTokenId(uint256 idIndex, uint chainId) public view returns (uint256 id) {
-        uint256 chainIdDigits;
-        uint256 chainIdMultiplier;
+    function calculateTokenId(uint256 idIndex, uint256 chainId) public view returns (uint256 id) {
         if(chainId == block.chainid) {
-            chainIdDigits = _chainIdDigits;
-            chainIdMultiplier = _chainIdMultiplier;
+            return 100 * (idIndex * _chainIdMultiplier + chainId) + _chainIdDigits;
         } else {
-            chainIdDigits = _calculateChainIdDigits(chainId);
-            chainIdMultiplier = 10 ** chainIdDigits;
+            uint256 chainIdDigits = _calculateChainIdDigits(chainId);
+            return 100 * (idIndex * (10 ** chainIdDigits) + chainId) + chainIdDigits;
         }
-
-        id =
-            (idIndex * chainIdMultiplier + chainId) *
-            100 +
-            chainIdDigits;
     }
 
     function calculateTokenId(uint256 idIndex) public view returns (uint256) {
-        return calculateTokenId(idIndex, block.chainid);
+        return 100 * (idIndex * _chainIdMultiplier + block.chainid) + _chainIdDigits;
     }
 
     function getNextTokenId() external view returns (uint256) {
@@ -232,7 +224,7 @@ contract ChainNft is ERC721Enumerable {
         _idNext++;
     }
 
-    function _calculateChainIdDigits(uint chainId) internal view returns (uint256) {
+    function _calculateChainIdDigits(uint256 chainId) internal view returns (uint256) {
         uint256 num = chainId;
         uint256 digits = 0;
         while (num != 0) {
