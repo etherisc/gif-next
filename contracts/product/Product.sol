@@ -135,15 +135,6 @@ abstract contract Product is
         return getRegistry().getNftId(address(_getProductStorage()._distribution));
     }
 
-    function withdrawFees(Amount amount)
-        external
-        virtual
-        onlyOwner()
-        returns (Amount withdrawnAmount)
-    {
-        return _withdrawFees(amount);
-    }
-
     function _initializeProduct(
         address registry,
         NftId instanceNftId,
@@ -387,14 +378,6 @@ abstract contract Product is
 
     function _toRiskId(string memory riskName) internal pure returns (RiskId riskId) {
         return RiskIdLib.toRiskId(riskName);
-    }
-
-    function _withdrawFees(Amount amount)
-        internal
-        virtual
-        returns (Amount withdrawnAmount)
-    {
-        return _getProductStorage()._componentService.withdrawFees(amount);
     }
 
     function _getProductStorage() private pure returns (ProductStorage storage $) {

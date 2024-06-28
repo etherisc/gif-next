@@ -116,15 +116,6 @@ abstract contract Pool is
         );
     }
 
-    function withdrawFees(Amount amount)
-        external
-        virtual
-        onlyOwner()
-        returns (Amount withdrawnAmount)
-    {
-        return _withdrawFees(amount);
-    }
-
     // Internals
 
     function _initializePool(
@@ -305,15 +296,6 @@ abstract contract Pool is
 
         // TODO add logging
     }
-
-    function _withdrawFees(Amount amount)
-        internal
-        virtual
-        returns (Amount withdrawnAmount)
-    {
-        return _getPoolStorage()._componentService.withdrawFees(amount);
-    }
-
 
     // TODO remove function once this is no longer used to produce contract locations on the fly ...
     function getContractLocation(bytes memory name) external pure returns (bytes32 hash) {

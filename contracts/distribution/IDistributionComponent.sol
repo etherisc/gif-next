@@ -43,7 +43,5 @@ interface IDistributionComponent is IInstanceLinkedComponent {
 
     /// @dev Returns true to ensure component is called when transferring distributor Nft Ids.
     function isVerifying() external view returns (bool verifying);
-
-    /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
-    function withdrawFees(Amount amount) external returns (Amount withdrawnAmount);
+    
 }

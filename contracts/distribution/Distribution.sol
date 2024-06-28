@@ -129,15 +129,6 @@ abstract contract Distribution is
         return true;
     }
 
-    function withdrawFees(Amount amount)
-        external
-        virtual
-        onlyOwner()
-        returns (Amount withdrawnAmount)
-    {
-        return _withdrawFees(amount);
-    }
-
     function _initializeDistribution(
         address registry,
         NftId instanceNftId,
@@ -274,14 +265,6 @@ abstract contract Distribution is
             maxReferrals,
             expiryAt,
             data);
-    }
-
-    function _withdrawFees(Amount amount)
-        internal
-        virtual
-        returns (Amount withdrawnAmount)
-    {
-        return _getDistributionStorage()._componentService.withdrawFees(amount);
     }
 
 

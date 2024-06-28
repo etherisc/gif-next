@@ -57,6 +57,8 @@ interface IComponentService is
     function unlock() external;
 
     /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
+    /// @param withdrawAmount the amount to withdraw
+    /// @return withdrawnAmount the amount that was actually withdrawn
     function withdrawFees(Amount withdrawAmount) external returns (Amount withdrawnAmount);
 
     //-------- product ------------------------------------------------------//

@@ -36,7 +36,5 @@ interface IProductComponent is
 
     /// @dev returns initial pool specific infos for this pool
     function getInitialProductInfo() external view returns (IComponents.ProductInfo memory info);
-
-    /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
-    function withdrawFees(Amount amount) external returns (Amount withdrawnAmount);
+    
 }
