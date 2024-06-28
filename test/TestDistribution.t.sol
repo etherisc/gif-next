@@ -4,22 +4,17 @@ pragma solidity ^0.8.20;
 import {console} from "../lib/forge-std/src/Test.sol";
 
 import {BasicDistributionAuthorization} from "../contracts/distribution/BasicDistributionAuthorization.sol";
-import {GifTest} from "./base/GifTest.sol";
-import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
-import {IComponent} from "../contracts/shared/IComponent.sol";
-import {IComponentService} from "../contracts/shared/IComponentService.sol";
-import {IComponents} from "../contracts/instance/module/IComponents.sol";
-import {IAccess} from "../contracts/instance/module/IAccess.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
-import {UFixedLib} from "../contracts/type/UFixed.sol";
+import {GifTest} from "./base/GifTest.sol";
+import {IAccess} from "../contracts/instance/module/IAccess.sol";
+import {IComponent} from "../contracts/shared/IComponent.sol";
+import {IComponents} from "../contracts/instance/module/IComponents.sol";
+import {IComponentService} from "../contracts/shared/IComponentService.sol";
+import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
-import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
-import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
-import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
-import {ACTIVE} from "../contracts/type/StateId.sol";
-import {TimestampLib} from "../contracts/type/Timestamp.sol";
-import {Amount, AmountLib} from "../contracts/type/Amount.sol";
+import {UFixedLib} from "../contracts/type/UFixed.sol";
+
 
 contract TestDistribution is GifTest {
     using NftIdLib for NftId;
