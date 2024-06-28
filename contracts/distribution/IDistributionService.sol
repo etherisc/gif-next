@@ -28,8 +28,8 @@ interface IDistributionService is IService {
     error ErrorIDistributionServiceMinFeeTooHigh(uint256 minFee, uint256 limit);
 
     error ErrorDistributionServiceDistributorNotActive(NftId distributorNftId);
-    error ErrorComponentServiceWithdrawAmountExceedsLimit(Amount amount, Amount limit);
-    error ErrorDistributionServiceWithdrawAmountIsZero();
+    error ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(Amount amount, Amount limit);
+    error ErrorDistributionServiceCommissionWithdrawAmountIsZero();
     error ErrorDistributionServiceWalletAllowanceTooSmall(address wallet, address tokenHandler, uint256 allowance, uint256 amount);
 
     error ErrorDistributionServiceVariableFeesTooHight(uint256 maxDiscountPercentage, uint256 limit);

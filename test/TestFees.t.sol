@@ -380,6 +380,23 @@ contract TestFees is GifTest {
         assertEq(distributionBalanceAfter, distributionBalanceBefore - expectedWithdrawnAmount.toInt(), "distribution balance not 5 lower");
     }
 
+    function test_Fees_withdrawCommission_amountTooLarge() public {
+        // GIVEN
+        _setupWithActivePolicy(true);
+
+        Amount withdrawAmount = AmountLib.toAmount(10);
+        vm.startPrank(distributor);
+
+        // THEN 
+        vm.expectRevert(abi.encodeWithSelector(
+            IDistributionService.ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit.selector, 
+            10, 
+            5));
+        
+        // WHEN - the distributor withdraws part of his commission
+        distribution.withdrawCommission(distributorNftId, withdrawAmount);
+    }
+
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);

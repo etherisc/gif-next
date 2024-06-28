@@ -287,12 +287,12 @@ contract DistributionService is
             withdrawnAmount = distributorInfo.commissionAmount;
         } else {
             if (withdrawnAmount.gt(distributorInfo.commissionAmount)) {
-                revert ErrorComponentServiceWithdrawAmountExceedsLimit(withdrawnAmount, distributorInfo.commissionAmount);
+                revert ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(withdrawnAmount, distributorInfo.commissionAmount);
             }
         }
 
         if (withdrawnAmount.eqz()) {
-            revert ErrorDistributionServiceWithdrawAmountIsZero();
+            revert ErrorDistributionServiceCommissionWithdrawAmountIsZero();
         }
 
         // check allowance
