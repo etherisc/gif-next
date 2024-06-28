@@ -40,9 +40,10 @@ contract TestFees is GifTest {
 
         // WHEN
         vm.startPrank(distributionOwner);
-        distribution.withdrawFees(AmountLib.toAmount(15));
+        Amount amountWithdrawn = distribution.withdrawFees(AmountLib.toAmount(15));
 
         // THEN
+        assertEq(amountWithdrawn.toInt(), 15, "withdrawn amount not 15");
         uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
         assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore + 15, "distribution owner balance not 15 higher");
         uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
@@ -52,7 +53,7 @@ contract TestFees is GifTest {
         assertEq(distributionFeeAfter.toInt(), 5, "distribution fee not 5");
     }
 
-    /// @dev test withdraw fees from distribution component as distribution owner
+    /// @dev try to withdraw all fees from distribution component
     function test_Fees_withdrawDistributionFees_getMaxAmount() public {
         // GIVEN
         _setupWithActivePolicy();
@@ -80,7 +81,33 @@ contract TestFees is GifTest {
         assertEq(distributionFeeAfter.toInt(), 0, "distribution fee not 0");
     }
 
-    /// @dev test withdraw fees from distribution component as distribution owner
+    /// @dev try to withdraw more fees than available from distribution component 
+    function test_Fees_withdrawDistributionFees_withdrawlAmountTooLarge() public {
+        // GIVEN
+        _setupWithActivePolicy();
+
+        // solhint-disable-next-line 
+        Amount distributionFee = instanceReader.getFeeAmount(distributionNftId);
+        assertEq(distributionFee.toInt(), 20, "distribution fee not 20"); // 20% of the 10% premium -> 20
+
+        uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
+        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        vm.stopPrank();
+
+        Amount withdrawalAmount = AmountLib.toAmount(30);
+        vm.startPrank(distributionOwner);
+        
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IComponentService.ErrorComponentServiceWithdrawAmountExceedsLimit.selector, 
+            withdrawalAmount, 
+            20));
+        
+        // WHEN
+        Amount withdrawnAmount = distribution.withdrawFees(withdrawalAmount);
+    }
+
+    /// @dev test withdraw fees from distribution component as not the distribution owner
     function test_Fees_withdrawDistributionFees_notOwner() public {
         // GIVEN
         _setupWithActivePolicy();
@@ -112,9 +139,10 @@ contract TestFees is GifTest {
 
         // WHEN
         vm.startPrank(poolOwner);
-        pool.withdrawFees(AmountLib.toAmount(3));
+        Amount amountWithdrawn = pool.withdrawFees(AmountLib.toAmount(3));
 
         // THEN
+        assertEq(amountWithdrawn.toInt(), 3, "withdrawn amount not 3");
         uint256 poolOwnerBalanceAfter = token.balanceOf(poolOwner);
         assertEq(poolOwnerBalanceAfter, poolOwnerBalanceBefore + 3, "pool owner balance not 3 higher");
         uint256 poolBalanceAfter = token.balanceOf(address(pool));
@@ -124,7 +152,7 @@ contract TestFees is GifTest {
         assertEq(poolFeeAfter.toInt(), 2, "pool fee not 2");
     }
 
-    /// @dev test withdraw fees from pool component as pool owner
+    /// @dev test withdraw fees from pool component as not the pool owner
     function test_Fees_withdrawPoolFees_notOwner() public {
         // GIVEN
         _setupWithActivePolicy();
@@ -156,9 +184,10 @@ contract TestFees is GifTest {
 
         // WHEN
         vm.startPrank(productOwner);
-        product.withdrawFees(AmountLib.toAmount(3));
+        Amount amountWithdrawn = product.withdrawFees(AmountLib.toAmount(3));
 
         // THEN
+        assertEq(amountWithdrawn.toInt(), 3, "withdrawn amount not 3");
         uint256 productOwnerBalanceAfter = token.balanceOf(productOwner);
         assertEq(productOwnerBalanceAfter, productOwnerBalanceBefore + 3, "product owner balance not 3 higher");
         uint256 productBalanceAfter = token.balanceOf(address(product));
@@ -168,7 +197,7 @@ contract TestFees is GifTest {
         assertEq(productFeeAfter.toInt(), 2, "product fee not 2");
     }
 
-    /// @dev test withdraw fees from product component as product owner
+    /// @dev test withdraw fees from product component as not the product owner
     function test_Fees_withdrawProductFees_notOwner() public {
         // GIVEN
         _setupWithActivePolicy();
