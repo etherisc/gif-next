@@ -33,6 +33,8 @@ contract ChainNft is ERC721Enumerable {
     address private _registry;
 
     // only used for _getNextTokenId
+    uint256 internal _chainIdDigits;
+    uint256 internal _chainIdMultiplier;
     uint256 internal _idNext;
     uint256 internal _totalMinted;
 
@@ -45,6 +47,9 @@ contract ChainNft is ERC721Enumerable {
         if (registry == address(0)) { revert ErrorChainNftRegistryAddressZero(); }
 
         _registry = registry;
+
+        _chainIdDigits = _calculateChainIdDigits(block.chainid);
+        _chainIdMultiplier = 10 ** _chainIdDigits;
 
         // the first object registered through normal registration starts with id 4
         // 1 -> protocol
@@ -184,17 +189,25 @@ contract ChainNft is ERC721Enumerable {
     * (42 * 10 ** 10 + 9876543210) * 100 + 10
     * (index * 10 ** digits + chainid) * 100 + digits (1 < digits < 100)
     */
-    // TODO consider situation when chainId = 2^256
     function calculateTokenId(uint256 idIndex, uint chainId) public view returns (uint256 id) {
-        uint256 chainIdDigits = _chainIdDigits(chainId);
+        uint256 chainIdDigits;
+        uint256 chainIdMultiplier;
+        if(chainId == block.chainid) {
+            chainIdDigits = _chainIdDigits;
+            chainIdMultiplier = _chainIdMultiplier;
+        } else {
+            chainIdDigits = _calculateChainIdDigits(chainId);
+            chainIdMultiplier = 10 ** chainIdDigits;
+        }
+
         id =
-            (idIndex * (10 ** chainIdDigits) + chainId) *
+            (idIndex * chainIdMultiplier + chainId) *
             100 +
             chainIdDigits;
     }
 
-    function calculateTokenId(uint256 idIndex) public view returns (uint256 id) {
-        id = calculateTokenId(idIndex, block.chainid);
+    function calculateTokenId(uint256 idIndex) public view returns (uint256) {
+        return calculateTokenId(idIndex, block.chainid);
     }
 
     function getNextTokenId() external view returns (uint256) {
@@ -206,7 +219,7 @@ contract ChainNft is ERC721Enumerable {
         _idNext++;
     }
 
-    function _chainIdDigits(uint chainId) internal view returns (uint256) {
+    function _calculateChainIdDigits(uint chainId) internal view returns (uint256) {
         uint256 num = chainId;
         uint256 digits = 0;
         while (num != 0) {
