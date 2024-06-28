@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
+import {Amount} from "../type/Amount.sol";
 import {IComponent} from "../shared/IComponent.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -46,5 +47,10 @@ interface IInstanceLinkedComponent is
 
     /// @dev returns the initial component authorization specification.
     function getAuthorization() external view returns (IAuthorization authorization);
+
+    /// @dev Withdraw fees from the distribution component. Only component owner is allowed to withdraw fees.
+    /// @param amount the amount to withdraw
+    /// @return withdrawnAmount the amount that was actually withdrawn
+    function withdrawFees(Amount amount) external returns (Amount withdrawnAmount);
 
 }

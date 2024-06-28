@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Amount, AmountLib} from "../type/Amount.sol";
 import {COMPONENT, DISTRIBUTION} from "../type/ObjectType.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
 import {IDistributionService} from "./IDistributionService.sol";
@@ -48,6 +49,7 @@ abstract contract Distribution is
         onlyOwner()
     {
         _getDistributionStorage()._componentService.registerDistribution();
+        _approveTokenHandler(type(uint256).max);
     }
 
 
@@ -126,7 +128,6 @@ abstract contract Distribution is
     function isVerifying() external pure returns (bool verifying) {
         return true;
     }
-
 
     function _initializeDistribution(
         address registry,

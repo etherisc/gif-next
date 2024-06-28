@@ -48,5 +48,4 @@ interface IPoolComponent is IInstanceLinkedComponent {
 
     /// @dev returns initial pool specific infos for this pool
     function getInitialPoolInfo() external view returns (IComponents.PoolInfo memory info);
-
 }

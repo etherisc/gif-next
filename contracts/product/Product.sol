@@ -102,6 +102,7 @@ abstract contract Product is
         onlyOwner()
     {
         _getProductStorage()._componentService.registerProduct();
+        _approveTokenHandler(type(uint256).max);
     }
 
 
@@ -133,7 +134,6 @@ abstract contract Product is
     function getDistributionNftId() external view override returns (NftId distributionNftId) {
         return getRegistry().getNftId(address(_getProductStorage()._distribution));
     }
-
 
     function _initializeProduct(
         address registry,

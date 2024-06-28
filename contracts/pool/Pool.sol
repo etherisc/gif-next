@@ -91,6 +91,7 @@ abstract contract Pool is
         onlyOwner()
     {
         _getPoolStorage()._componentService.registerPool();
+        _approveTokenHandler(type(uint256).max);
     }
 
 
@@ -295,7 +296,6 @@ abstract contract Pool is
 
         // TODO add logging
     }
-
 
     // TODO remove function once this is no longer used to produce contract locations on the fly ...
     function getContractLocation(bytes memory name) external pure returns (bytes32 hash) {
