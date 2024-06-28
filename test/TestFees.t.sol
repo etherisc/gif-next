@@ -53,6 +53,34 @@ contract TestFees is GifTest {
     }
 
     /// @dev test withdraw fees from distribution component as distribution owner
+    function test_Fees_withdrawDistributionFees_getMaxAmount() public {
+        // GIVEN
+        _setupWithActivePolicy();
+
+        // solhint-disable-next-line 
+        Amount distributionFee = instanceReader.getFeeAmount(distributionNftId);
+        assertEq(distributionFee.toInt(), 20, "distribution fee not 20"); // 20% of the 10% premium -> 20
+
+        uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
+        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(distributionOwner);
+        Amount withdrawnAmount = distribution.withdrawFees(AmountLib.max());
+
+        // THEN
+        assertEq(withdrawnAmount.toInt(), 20, "withdrawn amount not 20");
+        uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
+        assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore + 20, "distribution owner balance not 20 higher");
+        uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
+        assertEq(distributionBalanceAfter, distributionBalanceBefore - 20, "distribution balance not 20 lower");
+
+        Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
+        assertEq(distributionFeeAfter.toInt(), 0, "distribution fee not 0");
+    }
+
+    /// @dev test withdraw fees from distribution component as distribution owner
     function test_Fees_withdrawDistributionFees_notOwner() public {
         // GIVEN
         _setupWithActivePolicy();
@@ -140,11 +168,11 @@ contract TestFees is GifTest {
         assertEq(productFeeAfter.toInt(), 2, "product fee not 2");
     }
 
-        /// @dev test withdraw fees from product component as product owner
+    /// @dev test withdraw fees from product component as product owner
     function test_Fees_withdrawProductFees_notOwner() public {
         // GIVEN
         _setupWithActivePolicy();
-        
+
         vm.startPrank(distributionOwner);
         Amount withdrawAmount = AmountLib.toAmount(3);
 
