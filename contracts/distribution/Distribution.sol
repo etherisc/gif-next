@@ -42,7 +42,6 @@ abstract contract Distribution is
         _;
     }
 
-
     function register()
         external
         virtual
@@ -134,11 +133,11 @@ abstract contract Distribution is
         external 
         virtual
         restricted()
-        // FIXME: caller must be distributor
+        onlyDistributor()
+        onlyNftOwner(distributorNftId)
         returns (Amount withdrawnAmount) 
     {
-        // TODO: move to internal
-        return _getDistributionStorage()._distributionService.withdrawCommission(distributorNftId, amount);
+        return _withdrawCommission(distributorNftId, amount);
     }
         
     function _initializeDistribution(
@@ -279,6 +278,12 @@ abstract contract Distribution is
             data);
     }
 
+    function _withdrawCommission(NftId distributorNftId, Amount amount) 
+        internal
+        returns (Amount withdrawnAmount) 
+    {
+        return _getDistributionStorage()._distributionService.withdrawCommission(distributorNftId, amount);
+    }
 
     function _nftTransferFrom(address from, address to, uint256 tokenId) internal virtual override {
         // keep track of distributor nft owner
