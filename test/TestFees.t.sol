@@ -25,7 +25,7 @@ contract TestFees is GifTest {
     using NftIdLib for NftId;
 
     /// @dev test withdraw fees from distribution component as distribution owner
-    function test_Fees_withdrawDistributionOwnerFees() public {
+    function test_Fees_withdrawDistributionFees() public {
         // GIVEN
         _setupWithActivePolicy();
 
@@ -51,8 +51,8 @@ contract TestFees is GifTest {
         assertEq(distributionFeeAfter.toInt(), 5, "distribution fee not 5");
     }
 
-    /// @dev test withdraw fees from distribution component as distribution owner
-    function test_Fees_withdrawPoolOwnerFees() public {
+    /// @dev test withdraw fees from pool component as pool owner
+    function test_Fees_withdrawPoolFees() public {
         // GIVEN
         _setupWithActivePolicy();
 
@@ -78,6 +78,33 @@ contract TestFees is GifTest {
         assertEq(poolFeeAfter.toInt(), 2, "pool fee not 2");
     }
 
+    /// @dev test withdraw fees from product component as product owner
+    function test_Fees_withdrawProductFees() public {
+        // GIVEN
+        _setupWithActivePolicy();
+
+        // solhint-disable-next-line 
+        Amount productFee = instanceReader.getFeeAmount(productNftId);
+        assertEq(productFee.toInt(), 5, "product fee not 5"); // 5% of the 10% premium -> 5
+
+        uint256 productOwnerBalanceBefore = token.balanceOf(productOwner);
+        uint256 productBalanceBefore = token.balanceOf(address(product));
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(productOwner);
+        product.withdrawFees(AmountLib.toAmount(3));
+
+        // THEN
+        uint256 productOwnerBalanceAfter = token.balanceOf(productOwner);
+        assertEq(productOwnerBalanceAfter, productOwnerBalanceBefore + 3, "product owner balance not 3 higher");
+        uint256 productBalanceAfter = token.balanceOf(address(product));
+        assertEq(productBalanceAfter, productBalanceBefore - 3, "product balance not 3 lower");
+
+        Amount productFeeAfter = instanceReader.getFeeAmount(productNftId);
+        assertEq(productFeeAfter.toInt(), 2, "product fee not 2");
+    }
+
     function _setupWithActivePolicy() internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
@@ -95,6 +122,10 @@ contract TestFees is GifTest {
 
 
         vm.startPrank(productOwner);
+
+        product.setFees(
+            FeeLib.percentageFee(5), 
+            FeeLib.zero());
         
         RiskId riskId = RiskIdLib.toRiskId("42x4711");
         bytes memory data = "bla di blubb";

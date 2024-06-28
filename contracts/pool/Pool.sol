@@ -91,6 +91,7 @@ abstract contract Pool is
         onlyOwner()
     {
         _getPoolStorage()._componentService.registerPool();
+        _approveTokenHandler(type(uint256).max);
     }
 
 
