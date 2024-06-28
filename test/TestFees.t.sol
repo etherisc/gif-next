@@ -53,6 +53,23 @@ contract TestFees is GifTest {
         assertEq(distributionFeeAfter.toInt(), 5, "distribution fee not 5");
     }
 
+    /// @dev test withdraw fees from distribution component as not the distribution owner
+    function test_Fees_withdrawDistributionFees_notOwner() public {
+        // GIVEN
+        _setupWithActivePolicy();
+
+        vm.startPrank(poolOwner);
+        Amount withdrawAmount = AmountLib.toAmount(15);
+
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            INftOwnable.ErrorNftOwnableNotOwner.selector, 
+            poolOwner));
+            
+        // WHEN
+        distribution.withdrawFees(withdrawAmount);
+    }
+
     /// @dev try to withdraw all fees from distribution component
     function test_Fees_withdrawDistributionFees_getMaxAmount() public {
         // GIVEN
@@ -107,21 +124,29 @@ contract TestFees is GifTest {
         Amount withdrawnAmount = distribution.withdrawFees(withdrawalAmount);
     }
 
-    /// @dev test withdraw fees from distribution component as not the distribution owner
-    function test_Fees_withdrawDistributionFees_notOwner() public {
+        /// @dev try to withdraw when allowance is too small
+    function test_Fees_withdrawDistributionFees_allowanceTooSmall() public {
         // GIVEN
         _setupWithActivePolicy();
 
-        vm.startPrank(poolOwner);
-        Amount withdrawAmount = AmountLib.toAmount(15);
+        address externalWallet = makeAddr("externalWallet");
+        vm.startPrank(distributionOwner);
+        
+        // use external wallet and set no allowance
+        distribution.setWallet(externalWallet);
 
+        Amount withdrawalAmount = AmountLib.toAmount(10);
+        
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            INftOwnable.ErrorNftOwnableNotOwner.selector, 
-            poolOwner));
-            
+            IComponentService.ErrorComponentServiceWalletAllowanceTooSmall.selector, 
+            externalWallet, 
+            address(distribution.getTokenHandler()),
+            0,
+            10));
+        
         // WHEN
-        distribution.withdrawFees(withdrawAmount);
+        Amount withdrawnAmount = distribution.withdrawFees(withdrawalAmount);
     }
 
     /// @dev test withdraw fees from pool component as pool owner
