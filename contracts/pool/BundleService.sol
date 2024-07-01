@@ -283,7 +283,7 @@ contract BundleService is
         
         // determine withdrawn amount
         withdrawnAmount = amount;
-        if (withdrawnAmount.eq(AmountLib.max())) {
+        if (withdrawnAmount.gte(AmountLib.max())) {
             withdrawnAmount = reader.getFeeAmount(bundleNftId);
         } else {
             if (withdrawnAmount.gt(reader.getFeeAmount(bundleNftId))) {
