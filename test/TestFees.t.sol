@@ -540,6 +540,7 @@ contract TestFees is GifTest {
         pool.withdrawBundleFees(bundleNftId, withdrawAmount);
     }
 
+    /// @dev test withdraw of bundle fees when the max amount is requested
     function test_Fees_withdrawBundleFees_maxAmount() public {
         // GIVEN
         _setupWithActivePolicy(false);
@@ -589,7 +590,7 @@ contract TestFees is GifTest {
         assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - expectedWithdrawAmount.toInt(), "pool did not transfer the withdrawn tokens");
     }
 
-    /// @dev test withdraw of bundle fees when the requester is not the bundle owner
+    /// @dev test withdraw of bundle fees when the withdraw amount is too large
     function test_Fees_withdrawBundleFees_amountTooLarge() public {
         // GIVEN
         _setupWithActivePolicy(false);
@@ -609,7 +610,7 @@ contract TestFees is GifTest {
         pool.withdrawBundleFees(bundleNftId, withdrawAmount);
     }
 
-    /// @dev test withdraw of bundle fees when the requester is not the bundle owner
+    /// @dev test withdraw of bundle fees when the allowance is too small
     function test_Fees_withdrawBundleFees_allowanceTooSmall() public {
         // GIVEN
         _setupWithActivePolicy(false);
@@ -635,6 +636,30 @@ contract TestFees is GifTest {
         // WHEN - the investor tries to withdraw more tokens than available 
         pool.withdrawBundleFees(bundleNftId, withdrawAmount);
     }
+
+    /// @dev test withdraw of bundle fees when the amount is zero
+    function test_Fees_withdrawBundleFees_amountIsZero() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        vm.stopPrank();
+
+        vm.startPrank(poolOwner);
+        address externalWallet = makeAddr("externalWallet");
+        pool.setWallet(externalWallet);
+        vm.stopPrank();
+        
+        Amount withdrawAmount = AmountLib.toAmount(0);
+        vm.startPrank(investor);
+        
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IBundleService.ErrorBundleServiceFeesWithdrawAmountIsZero.selector));
+        
+        // WHEN - the investor tries to withdraw more tokens than available 
+        pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+    }
+
 
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
