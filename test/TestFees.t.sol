@@ -242,9 +242,10 @@ contract TestFees is GifTest {
         // solhint-disable-next-line 
         Amount productFee = instanceReader.getFeeAmount(productNftId);
         assertEq(productFee.toInt(), 5, "product fee not 5"); // 5% of the 10% premium -> 5
+        Amount productBalance = instanceReader.getBalanceAmount(productNftId);
 
-        uint256 productOwnerBalanceBefore = token.balanceOf(productOwner);
-        uint256 productBalanceBefore = token.balanceOf(address(product));
+        uint256 productOwnerTokenBalanceBefore = token.balanceOf(productOwner);
+        uint256 productTokenBalanceBefore = token.balanceOf(address(product));
         vm.stopPrank();
 
         // WHEN
@@ -253,13 +254,15 @@ contract TestFees is GifTest {
 
         // THEN
         assertEq(amountWithdrawn.toInt(), 3, "withdrawn amount not 3");
-        uint256 productOwnerBalanceAfter = token.balanceOf(productOwner);
-        assertEq(productOwnerBalanceAfter, productOwnerBalanceBefore + 3, "product owner balance not 3 higher");
-        uint256 productBalanceAfter = token.balanceOf(address(product));
-        assertEq(productBalanceAfter, productBalanceBefore - 3, "product balance not 3 lower");
+        uint256 productOwnerTokenBalanceAfter = token.balanceOf(productOwner);
+        assertEq(productOwnerTokenBalanceAfter, productOwnerTokenBalanceBefore + 3, "product owner balance not 3 higher");
+        uint256 productTokenBalanceAfter = token.balanceOf(address(product));
+        assertEq(productTokenBalanceAfter, productTokenBalanceBefore - 3, "product balance not 3 lower");
 
         Amount productFeeAfter = instanceReader.getFeeAmount(productNftId);
         assertEq(productFeeAfter.toInt(), 2, "product fee not 2");
+        Amount productBalanceAfter = instanceReader.getBalanceAmount(productNftId);
+        assertEq(productBalanceAfter.toInt(), productBalance.toInt() - 3, "product balance not 3 lower");
     }
 
     /// @dev test withdraw fees from product component as not the product owner
