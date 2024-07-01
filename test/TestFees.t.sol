@@ -41,9 +41,10 @@ contract TestFees is GifTest {
         // solhint-disable-next-line 
         Amount distributionFee = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFee.toInt(), 20, "distribution fee not 20"); // 20% of the 10% premium -> 20
+        Amount distributionBalance = instanceReader.getBalanceAmount(distributionNftId);
 
-        uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
-        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        uint256 distributionOwnerTokenBalanceBefore = token.balanceOf(distributionOwner);
+        uint256 distributionTokenBalanceBefore = token.balanceOf(address(distribution));
         vm.stopPrank();
 
         Amount withdrawAmount = AmountLib.toAmount(15);
@@ -62,13 +63,15 @@ contract TestFees is GifTest {
 
         // THEN
         assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not 15");
-        uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
-        assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 15 higher");
-        uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
-        assertEq(distributionBalanceAfter, distributionBalanceBefore - withdrawAmount.toInt(), "distribution balance not 15 lower");
+        uint256 distributionOwnerTokenBalanceAfter = token.balanceOf(distributionOwner);
+        assertEq(distributionOwnerTokenBalanceAfter, distributionOwnerTokenBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 15 higher");
+        uint256 distributionTokenBalanceAfter = token.balanceOf(address(distribution));
+        assertEq(distributionTokenBalanceAfter, distributionTokenBalanceBefore - withdrawAmount.toInt(), "distribution balance not 15 lower");
 
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeAfter.toInt(), 5, "distribution fee not 5");
+        Amount distributionBalanceAfter = instanceReader.getBalanceAmount(distributionNftId);
+        assertEq(distributionBalanceAfter.toInt(), distributionBalance.toInt() - withdrawAmount.toInt(), "distribution balance not 15 lower");
     }
 
     /// @dev test withdraw fees from distribution component as not the distribution owner
@@ -191,9 +194,10 @@ contract TestFees is GifTest {
         // solhint-disable-next-line 
         Amount poolFee = instanceReader.getFeeAmount(poolNftId);
         assertEq(poolFee.toInt(), 5, "pool fee not 5"); // 5% of the 10% premium -> 5
+        Amount poolBalance = instanceReader.getBalanceAmount(poolNftId);
 
-        uint256 poolOwnerBalanceBefore = token.balanceOf(poolOwner);
-        uint256 poolBalanceBefore = token.balanceOf(address(pool));
+        uint256 poolOwnerTokenBalanceBefore = token.balanceOf(poolOwner);
+        uint256 poolTokenBalanceBefore = token.balanceOf(address(pool));
         vm.stopPrank();
 
         // WHEN
@@ -202,13 +206,15 @@ contract TestFees is GifTest {
 
         // THEN
         assertEq(amountWithdrawn.toInt(), 3, "withdrawn amount not 3");
-        uint256 poolOwnerBalanceAfter = token.balanceOf(poolOwner);
-        assertEq(poolOwnerBalanceAfter, poolOwnerBalanceBefore + 3, "pool owner balance not 3 higher");
-        uint256 poolBalanceAfter = token.balanceOf(address(pool));
-        assertEq(poolBalanceAfter, poolBalanceBefore - 3, "pool balance not 3 lower");
+        uint256 poolOwnerTokenBalanceAfter = token.balanceOf(poolOwner);
+        assertEq(poolOwnerTokenBalanceAfter, poolOwnerTokenBalanceBefore + 3, "pool owner balance not 3 higher");
+        uint256 poolTokenBalanceAfter = token.balanceOf(address(pool));
+        assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - 3, "pool balance not 3 lower");
 
         Amount poolFeeAfter = instanceReader.getFeeAmount(poolNftId);
         assertEq(poolFeeAfter.toInt(), 2, "pool fee not 2");
+        Amount poolBalanceAfter = instanceReader.getBalanceAmount(poolNftId);
+        assertEq(poolBalanceAfter.toInt(), poolBalance.toInt() - 3, "pool balance not 3 lower");
     }
 
     /// @dev test withdraw fees from pool component as not the pool owner
