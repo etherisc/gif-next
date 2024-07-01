@@ -290,13 +290,14 @@ contract TestFees is GifTest {
         // solhint-disable-next-line 
         Amount distributionFeeBefore = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeBefore.toInt(), 8, "distribution fee not 8"); // 20% of the 10% premium -> 20 - 7 (discount) - 5 (referral) = 8
+        Amount distributionBalanceBefore = instanceReader.getBalanceAmount(distributionNftId);
 
         Amount commission = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
         assertEq(commission.toInt(), 5, "commission not 5");
 
-        uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
-        uint256 distributorBalanceBefore = token.balanceOf(distributor);
-        uint256 distributionBalanceBefore = token.balanceOf(address(distribution));
+        uint256 distributionOwnerTokenBalanceBefore = token.balanceOf(distributionOwner);
+        uint256 distributorTokenBalanceBefore = token.balanceOf(distributor);
+        uint256 distributionTokenBalanceBefore = token.balanceOf(address(distribution));
         vm.stopPrank();
 
         Amount withdrawAmount = AmountLib.toAmount(3);
@@ -320,14 +321,16 @@ contract TestFees is GifTest {
         assertEq(commissionAfter.toInt(), 2, "distribution fee not 2");
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeAfter.toInt(), distributionFeeBefore.toInt(), "distribution fee has changed"); 
+        Amount distributionBalanceAfter = instanceReader.getBalanceAmount(distributionNftId);
+        assertEq(distributionBalanceAfter.toInt(), distributionBalanceBefore.toInt() - withdrawAmount.toInt(), "distribution balance not 3 lower");
 
         // and the tokens have been transferred
-        uint256 distributionOwnerBalanceAfter = token.balanceOf(distributionOwner);
-        assertEq(distributionOwnerBalanceAfter, distributionOwnerBalanceBefore, "distribution owner balance changed");
-        uint256 distributorBalanceAfter = token.balanceOf(distributor);
-        assertEq(distributorBalanceAfter, distributorBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 3 higher");
-        uint256 distributionBalanceAfter = token.balanceOf(address(distribution));
-        assertEq(distributionBalanceAfter, distributionBalanceBefore - withdrawAmount.toInt(), "distribution balance not 3 lower");
+        uint256 distributionOwnerTokenBalanceAfter = token.balanceOf(distributionOwner);
+        assertEq(distributionOwnerTokenBalanceAfter, distributionOwnerTokenBalanceBefore, "distribution owner balance changed");
+        uint256 distributorTokenBalanceAfter = token.balanceOf(distributor);
+        assertEq(distributorTokenBalanceAfter, distributorTokenBalanceBefore + withdrawAmount.toInt(), "distribution owner balance not 3 higher");
+        uint256 distributionTokenBalanceAfter = token.balanceOf(address(distribution));
+        assertEq(distributionTokenBalanceAfter, distributionTokenBalanceBefore - withdrawAmount.toInt(), "distribution balance not 3 lower");
     }
 
     /// @dev test withdraw of distributor commission as not the distributor
