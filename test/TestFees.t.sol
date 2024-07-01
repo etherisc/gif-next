@@ -491,6 +491,34 @@ contract TestFees is GifTest {
         assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - withdrawAmount.toInt(), "pool did not transfer the withdrawn tokens");
     }
 
+    /// @dev test withdraw of bundle fees when the bundle is locked
+    function test_Fees_withdrawBundleFees_bundleLocked() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        vm.stopPrank();
+
+        
+        Amount withdrawAmount = AmountLib.toAmount(5);
+        vm.startPrank(investor);
+        pool.lockBundle(bundleNftId);
+
+        // THEN - expect a log entry for the commission withdrawal
+        vm.expectEmit();
+        emit IBundleService.LogBundleServiceFeesWithdrawn(
+            bundleNftId,
+            investor,
+            address(token),
+            withdrawAmount
+        );
+        
+        // WHEN - the distributor withdraws part of his commission
+        Amount amountWithdrawn = pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+
+        // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
+        assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not as expected");
+    }
+
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
