@@ -99,8 +99,7 @@ abstract contract Pool is
         external 
         virtual
         restricted()
-        // TODO: access restriction to bundle owner
-        onlyNftOwner(bundleNftId)
+        onlyBundleOwner(bundleNftId)
         returns (Amount withdrawnAmount) 
     {
         return _withdrawBundleFees(bundleNftId, amount);

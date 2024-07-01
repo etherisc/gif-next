@@ -9,11 +9,12 @@ import {IDistributionService} from "../contracts/distribution/IDistributionServi
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
+import {IAccess} from "../contracts/instance/module/IAccess.sol";
 import {IBundleService} from "../contracts/pool/IBundleService.sol";
 import {IComponent} from "../contracts/shared/IComponent.sol";
 import {IComponentService} from "../contracts/shared/IComponentService.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
-import {IAccess} from "../contracts/instance/module/IAccess.sol";
+import {IPoolComponent} from "../contracts/pool/IPoolComponent.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
 import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
@@ -461,7 +462,7 @@ contract TestFees is GifTest {
         Amount withdrawAmount = AmountLib.toAmount(5);
         vm.startPrank(investor);
 
-        // THEN - expect a log entry for the commission withdrawal
+        // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
         emit IBundleService.LogBundleServiceFeesWithdrawn(
             bundleNftId,
@@ -470,7 +471,7 @@ contract TestFees is GifTest {
             withdrawAmount
         );
         
-        // WHEN - the distributor withdraws part of his commission
+        // WHEN - the investor withdraws part of the bundle fee
         Amount amountWithdrawn = pool.withdrawBundleFees(bundleNftId, withdrawAmount);
 
         // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
@@ -503,7 +504,7 @@ contract TestFees is GifTest {
         vm.startPrank(investor);
         pool.lockBundle(bundleNftId);
 
-        // THEN - expect a log entry for the commission withdrawal
+        // THEN - expect a log entry for the fee withdrawal
         vm.expectEmit();
         emit IBundleService.LogBundleServiceFeesWithdrawn(
             bundleNftId,
@@ -512,11 +513,31 @@ contract TestFees is GifTest {
             withdrawAmount
         );
         
-        // WHEN - the distributor withdraws part of his commission
+        // WHEN - the investor withdraws part of his bundle fee from the locked bundle
         Amount amountWithdrawn = pool.withdrawBundleFees(bundleNftId, withdrawAmount);
 
         // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
         assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not as expected");
+    }
+
+    /// @dev test withdraw of bundle fees when the requester is not the bundle owner
+    function test_Fees_withdrawBundleFees_notBundleOwner() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        vm.stopPrank();
+        
+        Amount withdrawAmount = AmountLib.toAmount(5);
+        vm.startPrank(customer);
+        
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolComponent.ErrorPoolNotBundleOwner.selector, 
+            bundleNftId,
+            customer));
+        
+        // WHEN - the customer tries to withdraw 
+        pool.withdrawBundleFees(bundleNftId, withdrawAmount);
     }
 
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
