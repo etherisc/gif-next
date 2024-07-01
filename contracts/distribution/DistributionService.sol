@@ -276,10 +276,6 @@ contract DistributionService is
         address distributionWallet = distributionInfo.wallet;
         
         IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(distributorNftId);
-
-        if (!distributorInfo.active) {
-            revert ErrorDistributionServiceDistributorNotActive(distributorNftId);
-        }
         
         // determine withdrawn amount
         withdrawnAmount = amount;

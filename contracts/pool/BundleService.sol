@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
+import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
 import {IRegistry} from "../registry/IRegistry.sol";
 import {IRegistryService} from "../registry/IRegistryService.sol";
@@ -28,6 +31,7 @@ contract BundleService is
     IBundleService 
 {
     using NftIdLib for NftId;
+    using AmountLib for Amount;
 
     string public constant NAME = "BundleService";
 
@@ -260,6 +264,60 @@ contract BundleService is
         }
 
         instance.getBundleSet().unlinkPolicy(policyNftId);
+    }
+
+    /// @inheritdoc IBundleService
+    function withdrawBundleFees(NftId bundleNftId, Amount amount) 
+        public 
+        virtual
+        // TODO: restricted() (once #462 is done)
+        returns (Amount withdrawnAmount) 
+    {
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        InstanceReader reader = instance.getInstanceReader();
+        
+        IComponents.ComponentInfo memory poolInfo = reader.getComponentInfo(poolNftId);
+        address poolWallet = poolInfo.wallet;
+        
+        IBundle.BundleInfo memory bundleInfo = reader.getBundleInfo(bundleNftId);
+        
+        // determine withdrawn amount
+        withdrawnAmount = amount;
+        if (withdrawnAmount.eq(AmountLib.max())) {
+            withdrawnAmount = reader.getFeeAmount(bundleNftId);
+        } else {
+            if (withdrawnAmount.gt(reader.getFeeAmount(bundleNftId))) {
+                revert ErrorBundleServiceFeesWithdrawAmountExceedsLimit(withdrawnAmount, reader.getFeeAmount(bundleNftId));
+            }
+        }
+
+        if (withdrawnAmount.eqz()) {
+            revert ErrorBundleServiceFeesWithdrawAmountIsZero();
+        }
+
+        // check allowance
+        IERC20Metadata token = IERC20Metadata(poolInfo.token);
+        uint256 tokenAllowance = token.allowance(poolWallet, address(poolInfo.tokenHandler));
+        if (tokenAllowance < withdrawnAmount.toInt()) {
+            revert ErrorBundleServiceWalletAllowanceTooSmall(poolWallet, address(poolInfo.tokenHandler), tokenAllowance, withdrawnAmount.toInt());
+        }
+
+        // decrease fee counters by withdrawnAmount
+        {
+            InstanceStore store = instance.getInstanceStore();
+            // decrease fee amount of the bundle
+            _componentService.decreaseBundleBalance(store, bundleNftId, AmountLib.zero(), withdrawnAmount);
+            // decrease pool balance 
+            _componentService.decreasePoolBalance(store, poolNftId, withdrawnAmount, AmountLib.zero());
+        }
+
+        // transfer amount to bundle owner
+        {
+            address owner = getRegistry().ownerOf(bundleNftId);
+            poolInfo.tokenHandler.transfer(poolWallet, owner, withdrawnAmount);
+
+            emit LogBundleServiceFeesWithdrawn(bundleNftId, owner, address(token), withdrawnAmount);
+        }
     }
 
     /// @dev links policy to bundle
