@@ -1,21 +1,12 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessManaged.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 
 import {Amount} from "../type/Amount.sol";
 import {Fee} from "../type/Fee.sol";
-import {IComponents} from "../instance/module/IComponents.sol";
-import {IInstance} from "../instance/IInstance.sol";
-import {IInstanceService} from "../instance/IInstanceService.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {IProductService} from "../product/IProductService.sol";
-import {IRegisterable} from "../shared/IRegisterable.sol";
 import {IService} from "../shared/IService.sol";
 import {NftId} from "../type/NftId.sol";
-import {ObjectType} from "../type/ObjectType.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed} from "../type/UFixed.sol";
 
 /// @dev component base class
@@ -87,6 +78,10 @@ interface IComponentService is
     function increaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
     function decreaseDistributionBalance(InstanceStore instanceStore, NftId distributionNftId, Amount amount, Amount feeAmount) external;
 
+    //-------- distributor --------------------------------------------------//
+    function increaseDistributorBalance(InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount) external;
+    function decreaseDistributorBalance(InstanceStore instanceStore, NftId distributorNftId, Amount amount, Amount feeAmount) external;
+
     //-------- oracle -------------------------------------------------------//
 
     /// @dev registers the sending component as an oracle component
@@ -109,4 +104,5 @@ interface IComponentService is
     //-------- bundle -------------------------------------------------------//
     function increaseBundleBalance(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
     function decreaseBundleBalance(InstanceStore instanceStore, NftId bundleNftId, Amount amount, Amount feeAmount) external;
+
 }

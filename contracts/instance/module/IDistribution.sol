@@ -25,7 +25,6 @@ interface IDistribution {
         DistributorType distributorType;
         bool active;
         bytes data;
-        Amount commissionAmount;
         uint32 numPoliciesSold;
     }
 

@@ -296,6 +296,36 @@ contract ComponentService is
         _changeTargetBalance(DECREASE, instanceStore, distributionNftId, amount, feeAmount);
     }
 
+    //-------- distributor -------------------------------------------------------//
+
+    function increaseDistributorBalance(
+        InstanceStore instanceStore, 
+        NftId distributorNftId, 
+        Amount amount, 
+        Amount feeAmount
+    )
+        external
+        virtual
+        // TODO re-enable once role granting is stable and fixed
+        // restricted()
+    {
+        _changeTargetBalance(INCREASE, instanceStore, distributorNftId, amount, feeAmount);
+    }
+
+    function decreaseDistributorBalance(
+        InstanceStore instanceStore, 
+        NftId distributorNftId, 
+        Amount amount, 
+        Amount feeAmount
+    )
+        external
+        virtual
+        // TODO re-enable once role granting is stable and fixed
+        // restricted()
+    {
+        _changeTargetBalance(DECREASE, instanceStore, distributorNftId, amount, feeAmount);
+    }
+
     //-------- oracle -------------------------------------------------------//
 
     function registerOracle()

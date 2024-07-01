@@ -4,23 +4,19 @@ pragma solidity ^0.8.20;
 import {ACTIVE, APPLIED} from "../../../contracts/type/StateId.sol";
 import {Amount} from "../../../contracts/type/Amount.sol";
 import {console} from "../../../lib/forge-std/src/Test.sol";
-import {Fee, FeeLib} from "../../../contracts/type/Fee.sol";
-import {IBundle} from "../../../contracts/instance/module/IBundle.sol";
+import {FeeLib} from "../../../contracts/type/Fee.sol";
 import {IComponents} from "../../../contracts/instance/module/IComponents.sol";
 import {IDistribution} from "../../../contracts/instance/module/IDistribution.sol";
 import {IPolicy} from "../../../contracts/instance/module/IPolicy.sol";
 import {NftId, NftIdLib} from "../../../contracts/type/NftId.sol";
 import {POLICY} from "../../../contracts/type/ObjectType.sol";
-import {POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../../../contracts/type/RoleId.sol";
 import {ReferralId, ReferralLib} from "../../../contracts/type/Referral.sol";
 import {ReferralTestBase} from "./ReferralTestBase.sol";
 import {RiskId, RiskIdLib} from "../../../contracts/type/RiskId.sol";
-import {Seconds, SecondsLib} from "../../../contracts/type/Seconds.sol";
+import {SecondsLib} from "../../../contracts/type/Seconds.sol";
 import {SimpleDistribution} from "../../mock/SimpleDistribution.sol";
-import {SimplePool} from "../../mock/SimplePool.sol";
-import {SimpleProduct} from "../../mock/SimpleProduct.sol";
 import {TimestampLib} from "../../../contracts/type/Timestamp.sol";
-import {UFixed, UFixedLib} from "../../../contracts/type/UFixed.sol";
+import {UFixedLib} from "../../../contracts/type/UFixed.sol";
 
 contract ReferralTest is ReferralTestBase {
     using NftIdLib for NftId;
@@ -147,7 +143,7 @@ contract ReferralTest is ReferralTestBase {
 
         IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
         assertEq(distributorInfo.numPoliciesSold, 1, "numPoliciesSold not 1");
-        assertEq(distributorInfo.commissionAmount.toInt(), 3, "sumCommisions not 3");
+        assertEq(instanceReader.getFeeAmount(distributorNftId).toInt(), 3, "sumCommisions not 3");
 
         // check pool financials and balance
         assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), initialPoolBalance + netPremium, "unexpected pool balance (1)");
@@ -241,7 +237,7 @@ contract ReferralTest is ReferralTestBase {
         
         IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
         assertEq(distributorInfo.numPoliciesSold, 2, "numPoliciesSold not 2");
-        assertEq(distributorInfo.commissionAmount.toInt(), 6, "commissionAmount not 6");
+        assertEq(instanceReader.getFeeAmount(distributorNftId).toInt(), 6, "commissionAmount not 6");
 
         assertEq(instanceReader.getFeeAmount(distributionNftId).toInt(), 22, "sumDistributionOwnerFees not 22");
         vm.stopPrank();
