@@ -106,7 +106,7 @@ contract ComponentService is
 
         // determine withdrawn amount
         withdrawnAmount = amount;
-        if (withdrawnAmount.eq(AmountLib.max())) {
+        if (withdrawnAmount.gte(AmountLib.max())) {
             withdrawnAmount = instance.getInstanceReader().getFeeAmount(componentNftId);
         } else if (withdrawnAmount.eqz()) {
             revert ErrorComponentServiceWithdrawAmountIsZero();

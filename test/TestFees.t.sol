@@ -540,6 +540,55 @@ contract TestFees is GifTest {
         pool.withdrawBundleFees(bundleNftId, withdrawAmount);
     }
 
+    function test_Fees_withdrawBundleFees_maxAmount() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        // solhint-disable-next-line 
+        Amount bundleFeeBefore = instanceReader.getFeeAmount(bundleNftId);
+        assertEq(bundleFeeBefore.toInt(), 10, "bundle fee expected to be 10"); 
+        Amount bundleBalanceBefore = instanceReader.getBalanceAmount(bundleNftId);
+        Amount poolBalanceBefore = instanceReader.getBalanceAmount(poolNftId);
+        Amount poolFeeBefore = instanceReader.getFeeAmount(poolNftId);
+
+        uint256 investorTokenBalanceBefore = token.balanceOf(investor);
+        uint256 poolTokenBalanceBefore = token.balanceOf(address(pool));
+        vm.stopPrank();
+
+        Amount withdrawAmount = AmountLib.max();
+        Amount expectedWithdrawAmount = AmountLib.toAmount(10);
+        vm.startPrank(investor);
+
+        // THEN - expect a log entry for the fee withdrawal
+        vm.expectEmit();
+        emit IBundleService.LogBundleServiceFeesWithdrawn(
+            bundleNftId,
+            investor,
+            address(token),
+            bundleFeeBefore
+        );
+        
+        // WHEN - the investor withdraws the maximum available bundle fee amount
+        Amount amountWithdrawn = pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+
+        // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
+        assertEq(amountWithdrawn.toInt(), expectedWithdrawAmount.toInt(), "withdrawn amount not as expected");
+        Amount bundleFeeAfter = instanceReader.getFeeAmount(bundleNftId);
+        assertEq(bundleFeeAfter.toInt(), bundleFeeBefore.toInt() - expectedWithdrawAmount.toInt(), "bundle fee was not decreased by the withdraw amount"); 
+        Amount bundleBalanceAfter = instanceReader.getBalanceAmount(bundleNftId);
+        assertEq(bundleBalanceAfter.toInt(), bundleBalanceBefore.toInt() - expectedWithdrawAmount.toInt(), "bundle balance was not decreased by the withdraw amount");
+        Amount poolBalanceAfter = instanceReader.getBalanceAmount(poolNftId);
+        assertEq(poolBalanceAfter.toInt(), poolBalanceBefore.toInt() - expectedWithdrawAmount.toInt(), "pool balance was not decreased by the withdraw amount");
+        Amount poolFeeAfter = instanceReader.getFeeAmount(poolNftId);
+        assertEq(poolFeeAfter.toInt(), poolFeeBefore.toInt(), "pool fee has changed");
+
+        // and the tokens have been transferred
+        uint256 investorTokenBalanceAfter = token.balanceOf(investor);
+        assertEq(investorTokenBalanceAfter, investorTokenBalanceBefore + expectedWithdrawAmount.toInt(), "investor did not received the withdrawn tokens");
+        uint256 poolTokenBalanceAfter = token.balanceOf(address(pool));
+        assertEq(poolTokenBalanceAfter, poolTokenBalanceBefore - expectedWithdrawAmount.toInt(), "pool did not transfer the withdrawn tokens");
+    }
+
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);

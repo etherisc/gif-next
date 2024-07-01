@@ -77,14 +77,19 @@ library AmountLib {
         return Amount.unwrap(amount1) == Amount.unwrap(amount2);
     }
 
-    /// @dev return true if amount a1 is smaller than a2
+    /// @dev return true if amount a1 is less than a2
     function lt(Amount a1, Amount a2) public pure returns (bool) {
         return Amount.unwrap(a1) < Amount.unwrap(a2);
     }
 
-    /// @dev return true if amount a1 is larger than a2
+    /// @dev return true if amount a1 is greater than a2
     function gt(Amount a1, Amount a2) public pure returns (bool) {
         return Amount.unwrap(a1) > Amount.unwrap(a2);
+    }
+
+    /// @dev return true if amount a1 is greater or equal than a2
+    function gte(Amount a1, Amount a2) public pure returns (bool) {
+        return Amount.unwrap(a1) >= Amount.unwrap(a2);
     }
 
     /// @dev return minimum of a1 and a2.

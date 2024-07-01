@@ -259,10 +259,7 @@ contract DistributionService is
         }
     }
 
-    /// @dev Withdraw commission for the distributor
-    /// @param distributorNftId the distributor Nft Id
-    /// @param amount the amount to withdraw. If set to UINT256_MAX, the full commission available is withdrawn
-    /// @return withdrawnAmount the effective withdrawn amount
+    /// @inheritdoc IDistributionService
     function withdrawCommission(NftId distributorNftId, Amount amount) 
         public 
         virtual
@@ -279,7 +276,7 @@ contract DistributionService is
         
         // determine withdrawn amount
         withdrawnAmount = amount;
-        if (withdrawnAmount.eq(AmountLib.max())) {
+        if (withdrawnAmount.gte(AmountLib.max())) {
             withdrawnAmount = distributorInfo.commissionAmount;
         } else {
             if (withdrawnAmount.gt(distributorInfo.commissionAmount)) {
