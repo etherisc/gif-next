@@ -1,7 +1,5 @@
 = Architecture
 
-NOTE: This document is under construction
-
 == Introduction
 
 === Decentralized Insurance Protocol (DIP)
@@ -105,10 +103,6 @@ Currently, products, distributions, oracles, and pools as supported by GIF as co
 Services are used to implement the generic insurance business logic of the GIF.
 Components, instances, the registry and the staking module may only interact with each other through these generic service contracts.
 
-A set of consistent service contracts define the functionality of a GIF release.
-Even though the service contracts are upgradeable, only non breaking changes are ever allowed inside a specific major release.
-For simplicity the above diagram only shows the setup for a single major release.
-
 == Modules and Services
 
 === Overview
@@ -123,27 +117,93 @@ Examples of modules are the registry module, the staking module, and instance mo
 
 === Services
 
-Services contracts implement the GIF business logic that operates on the state of module contracts.
+Services have a domain scope such as "Registry" or "Policy" and implement the domain specific business logic.
+Services are stateless and only operate on the state of the involved module contracts.
 Service contract may also interact with other service contracts.
 
-In general, services do not have any state that is not fixed at deployment/registration time.
-The only exception being the instance service that holds the addresses of the so called master instance which is used to clone new instances.
+Even though the service contracts are upgradeable, only non breaking changes are ever allowed inside a specific major release.
 
 === Registry Module
 
+The registry module diagram below provides an overview of the registry related contracts of a GIF deployment.
+
 image::./images/registry-module.png[Registry Module]
+
+Contracts and their responsibilities are outlined below.
+
+[cols="1,3"]
+|===
+| Contract | Responsibility
+
+| GIF Admin
+| Account with the GIF Admin role initiates and confirms new GIF releases.
+
+| GIF Manager
+| Deployes and registers service contracts of new GIF releases.
+Manages token white listing.
+
+| ChainNft
+| Mints and manages all NFTs related to the objects stored in the registry.
+Only the registry contract may call state changing functions on this contract.
+
+| Registry
+| Stores entries for all protocol relevant objects on this chain.
+
+| ReleaseRegistry
+| Keeps track of all deployed major releases so far.
+Manages deployment of new releases.
+
+| TokenRegistry
+| Manages whitelisting of supported ERC20 tokens per major release.
+
+| RegistryAdmin
+| Central authorization for all core contracts (resistry module and staking module) and all service contracts from all major releases.
+
+| RegistryService
+| A registry service contract from a specific GIF release.
+Registry service contracts are authoriezd to register new objects with the registry.
+
+| Other Services
+| TODO remove this component also remove dashed line beween registry and registry service.
+
+| Dip
+| The DIP token deployed outside of the GIF deployment.
+The DIP token is always registered with the Token registry.
+
+
+|===
 
 === Staking Module
 
+The staking module diagram below provides an overview of the registry related contracts of a GIF deployment.
+
 image::./images/staking-module.png[Staking Module]
 
-- Keep track of total value locked (TVL) per instance
-- TVL: amount of tokens locked by active policies
-- Creating policies increase TVL, executing payouts and closing policies decrease TVL
-- TVL in USD may be calculated using price feeds or CEX/DEX exchange rates
-- Staking will initially be supported on instance level (bundle staking too fine grained)
-- A corresponding amount of DIP token shall be staked using a staking rate
-- For the tracking of TVL and related DIP stakes a global dashboard will be provided
+
+[cols="1,3"]
+|===
+| Contract | Responsibility
+
+| StakingReader
+| Provides all read access functions to staking related data.
+
+| StakingStore
+| Stores all staking related data like staked DIPs per staker and target, available staking targets, total locked value per target staked DIPs per target.
+
+| Staking
+| The central staking contract that implements to upgradeable business logic for staking.
+
+| StakingService
+| A release specific service contract that is authorized to create new stakes and manage existing stakes.
+
+| PoolService
+| Informs the staking contract about changes in the total locked value (TVL) amounts of the instances.
+
+| RegistryAdmin
+| Manages the authorization for all contracts in the staking module.
+
+|===
+
 
 == Authorization
 
@@ -151,6 +211,18 @@ image::./images/staking-module.png[Staking Module]
 
 Autorization is a key concept in the GIF.
 Authorization is organized per supported chain and implemented in access admin contracts using role based access control.
+Role based access control involves roles, targets and functions level authorization.
+
+Roles can be considered as lables or IDs that can be assigned (granted) to accounts or removed (revoked) from accounts.
+*Accounts* can either be externally owned accounts or contract accounts.
+The set of accounts that have a specific role is called the role members.
+
+The term *Targets* is used for contracts for which function level authorization is managed by an access admin contract.
+That particular access admin contract is then called the authority of the target contract.
+
+*Function Level Authorization* defines which fuctions of a target may be executed through which role.
+For each authorized function of a target the required role to access it is defined.
+Only a single role can be specified per function and only members of that role (both contracts and externally owned accounts) may then execute the function.
 
 === Access Admin
 
@@ -189,6 +261,7 @@ Upgradeability relies on OpenZeppelin's `TransparentUpgradeableProxy` and `Proxy
 == Release Management
 
 === Overview
+
 GIF releases follow semantic versioning, which includes major, minor, and patch releases. 
 The major version number is incremented whenever there are breaking changes that could potentially disrupt existing functionality or compatibility.
 
@@ -200,13 +273,74 @@ Instance modules are non-upgradeable and directly linked to the service contract
 
 Adding a new major release is guarded by role based authorization including two roles, a GIF Admin role and the GIF Manager role.
 
-=== Initial Chain Deployment
+=== Core Deployment
 
-An initial chain deployment deploys the registry contracts and the staking contracts.
+The core deployment sets up the registry and the staking modules and includes all the wiring between the contracts needed for actual relese deployment.
+For each supported chain a core deployment is the required first step.
 
+For the registry module deployments the contracts Registry, ChainNft, TokenRegistry, and RegistryAdmin are deployed and initialized.
+Where neceesary these contracts are linked to the registry admin contract that manages all authorization for both the registry and the staking module.
+
+On mainnet the *Regsitry* contract is deployed and initialized with two entries, one for the protocol object and one for global registry.
+On any other chain the initial setup includes an additional entry for the chain registry.
+
+The registry istelf deployes the *ChainNFT* contract that will hold NFT representations of all protocol relevant objects on this chain.
+
+The *TokenRegistry* is deployed and initialized with the DIP token as staking token.
+
+The *RegistryAdmin* contract is deployed intialized with the GIF Admin role and the GIF Manager role.
+
+* The necessary authorizations are put in place to allow the GIF Admin and GIF Manager roles to deploy the first major release.
+* For the whitelisting of tokens the GIF Manager role is granted the necessary authorizations.
+* For release deployment the release registry contract is authorized to register new service contracts with the registry.
+* Regstry services (for all releases) are granted access to register objects with the registry contract.
+* Staking services (for all releases) are granted access to the staking contract.
+* Pool services (for all releases) are granted access to the staking contract to update the total value locked in instances.s
+
+For the staking module deployment the contracts StakingReader, StakingStore, StakingManager and Staking are deployed and initialized.
+The staking contract is also registerd with the registry.
 
 === Release Deployment
 
+The release deployment is the second and final GIF deployment step to a specific chain.
+For each supported chain a release deployment is required.
+A release deployment to a new chain will only include the deployment of the latest major release.
+Initially this will be the GIF v3 release.
+In the future new major releases should be deployed on all chains that are actively supported by the protocol.
+
+A release deployment consist of the deployment and authorization of a release specific and consistent set of service contracts.
+As the service authorization is restricted to other services of the same release, services are assigned release specific roles.
+Service authorization is managed by the registry admin contract and defines which service fuction may be called by which other service.
+
+The process of a release deployment invlovles the GIF Admin and the GIF Manager roles.
+The GIF Admin role represents the principal owner of the protocol and GIF Manager role is the role that is authorized to deploy and register the service contracts with the release registry.
+
+[cols="1,2,2,4"]
+|===
+| Step | Role | Action | Comment
+
+| 1
+| GIF Admin
+| `createNextRelease`
+| Initiates the deployment of the next major relase, sets the release registry contract into the state where release deployment is enabled.
+
+| 2
+| GIF Manager
+| `prepareNextRelease`
+| Lets the release manager provide the authorization specification for the new release. 
+This includes the ordered list of service domains relevant to the release.
+
+| 3
+| GIF Manager
+| `registerService` +
+n times, once for each service contract.
+| The deployed release service contracts are registered with the release registry in the same order as defined in the authorization specification.
+
+| 4
+| GIF Admin
+| `activateNextRelease`
+| After verifying the release deployment the GIF Admin can activate the new release.
+|===
 
 == Instances
 
