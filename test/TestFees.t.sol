@@ -609,6 +609,33 @@ contract TestFees is GifTest {
         pool.withdrawBundleFees(bundleNftId, withdrawAmount);
     }
 
+    /// @dev test withdraw of bundle fees when the requester is not the bundle owner
+    function test_Fees_withdrawBundleFees_allowanceTooSmall() public {
+        // GIVEN
+        _setupWithActivePolicy(false);
+
+        vm.stopPrank();
+
+        vm.startPrank(poolOwner);
+        address externalWallet = makeAddr("externalWallet");
+        pool.setWallet(externalWallet);
+        vm.stopPrank();
+        
+        Amount withdrawAmount = AmountLib.toAmount(7);
+        vm.startPrank(investor);
+        
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IBundleService.ErrorBundleServiceWalletAllowanceTooSmall.selector, 
+            externalWallet,
+            address(pool.getTokenHandler()),
+            0,
+            7));
+        
+        // WHEN - the investor tries to withdraw more tokens than available 
+        pool.withdrawBundleFees(bundleNftId, withdrawAmount);
+    }
+
     function _setupWithActivePolicy(bool purchaseWithReferral) internal returns (NftId policyNftId) {
         vm.startPrank(registryOwner);
         token.transfer(customer, 1000);
