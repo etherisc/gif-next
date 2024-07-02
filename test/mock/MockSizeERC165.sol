@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {ERC165} from "../../contracts/shared/ERC165.sol";
+import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
 
-contract MockSizeERC165 is ERC165 {
+contract MockSizeInitializableERC165 is InitializableERC165 {
 }
