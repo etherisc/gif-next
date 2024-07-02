@@ -233,6 +233,26 @@ contract BundleService is
         bundleManager.lock(bundleNftId);
     }
 
+    function stake(NftId bundleNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        returns(Amount netAmount) 
+    {
+        // TODO: implement
+        revert();
+    }
+
+    function unstake(NftId bundleNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        returns(Amount netAmount) 
+    {
+        // TODO: implement
+        revert();
+    }
+
 
     function releaseCollateral(
         IInstance instance,

@@ -200,6 +200,25 @@ contract PoolService is
         emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId);
     }
 
+    function stake(NftId bundleNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        returns(Amount netAmount) 
+    {
+        // TODO: implement
+        revert();
+    }
+
+    function unstake(NftId bundleNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        returns(Amount netAmount) 
+    {
+        // TODO: implement
+        revert();
+    }
 
     function processSale(
         NftId bundleNftId, 

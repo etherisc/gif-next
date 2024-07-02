@@ -111,13 +111,13 @@ interface IPoolService is IService {
     /// @dev increase stakes for bundle
     /// staking fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
-    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+    function stake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
 
 
     /// @dev decrease stakes for bundle
     /// performance fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
-    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+    function unstake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
 
 
     /// @dev calulate required collateral for the provided parameters

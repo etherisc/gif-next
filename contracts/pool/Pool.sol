@@ -172,8 +172,9 @@ abstract contract Pool is
     )
         internal
         virtual
+        returns(Amount netAmount) 
     {
-        // TODO add implementation
+        _getPoolStorage()._poolService.stake(bundleNftId, amount);
     }
 
 
@@ -185,8 +186,9 @@ abstract contract Pool is
     )
         internal
         virtual
+        returns(Amount netAmount) 
     {
-        // TODO add implementation
+        return _getPoolStorage()._poolService.unstake(bundleNftId, amount);
     }
 
 
