@@ -8,14 +8,10 @@ import {IComponentService} from "../shared/IComponentService.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
 import {IOracleComponent} from "./IOracleComponent.sol";
 import {IOracleService} from "./IOracleService.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
-import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
+import {NftId} from "../type/NftId.sol";
 import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
-import {InstanceReader} from "../instance/InstanceReader.sol";
 import {RequestId} from "../type/RequestId.sol";
-import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
-import {UFixed} from "../type/UFixed.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
 
 abstract contract Oracle is
