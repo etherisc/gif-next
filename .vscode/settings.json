@@ -36,5 +36,6 @@
     },
     "asciidoc.antora.enableAntoraSupport": true,
     "security.olympix.project.includePath": "/contracts",
-    "solidity.defaultCompiler": "localFile",
+    "solidity.defaultCompiler": "localNodeModule",
+    "solidity.compileUsingLocalVersion": "/workspaces/gif-next/soljson-v0.8.26+commit.8a97fa7a.js",
 }

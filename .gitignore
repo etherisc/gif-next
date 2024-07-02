@@ -31,3 +31,4 @@ verification_queue_*.json
 lcov.info
 .*.drawio.bkp
 deployments/
+soljson*.js
