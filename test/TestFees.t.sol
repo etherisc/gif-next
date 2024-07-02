@@ -3,21 +3,15 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
-import {BasicDistributionAuthorization} from "../contracts/distribution/BasicDistributionAuthorization.sol";
 import {DistributorType} from "../contracts/type/DistributorType.sol";
 import {IDistributionService} from "../contracts/distribution/IDistributionService.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
-import {DISTRIBUTION_OWNER_ROLE} from "../contracts/type/RoleId.sol";
-import {IAccess} from "../contracts/instance/module/IAccess.sol";
 import {IBundleService} from "../contracts/pool/IBundleService.sol";
-import {IComponent} from "../contracts/shared/IComponent.sol";
 import {IComponentService} from "../contracts/shared/IComponentService.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IPoolComponent} from "../contracts/pool/IPoolComponent.sol";
-import {Fee, FeeLib} from "../contracts/type/Fee.sol";
-import {UFixedLib} from "../contracts/type/UFixed.sol";
-import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
+import {FeeLib} from "../contracts/type/Fee.sol";
 import {RiskId, RiskIdLib} from "../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
@@ -292,7 +286,7 @@ contract TestFees is GifTest {
         assertEq(distributionFeeBefore.toInt(), 8, "distribution fee not 8"); // 20% of the 10% premium -> 20 - 7 (discount) - 5 (referral) = 8
         Amount distributionBalanceBefore = instanceReader.getBalanceAmount(distributionNftId);
 
-        Amount commission = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        Amount commission = instanceReader.getFeeAmount(distributorNftId);
         assertEq(commission.toInt(), 5, "commission not 5");
 
         uint256 distributionOwnerTokenBalanceBefore = token.balanceOf(distributionOwner);
@@ -317,7 +311,7 @@ contract TestFees is GifTest {
 
         // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
         assertEq(amountWithdrawn.toInt(), withdrawAmount.toInt(), "withdrawn amount not 3");
-        Amount commissionAfter = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        Amount commissionAfter = instanceReader.getFeeAmount(distributorNftId);
         assertEq(commissionAfter.toInt(), 2, "distribution fee not 2");
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeAfter.toInt(), distributionFeeBefore.toInt(), "distribution fee has changed"); 
@@ -357,7 +351,7 @@ contract TestFees is GifTest {
         Amount distributionFeeBefore = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeBefore.toInt(), 8, "distribution fee not 8"); // 20% of the 10% premium -> 20 - 7 (discount) - 5 (referral) = 8
 
-        Amount commission = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        Amount commission = instanceReader.getFeeAmount(distributorNftId);
         assertEq(commission.toInt(), 5, "commission not 5");
 
         uint256 distributionOwnerBalanceBefore = token.balanceOf(distributionOwner);
@@ -383,7 +377,7 @@ contract TestFees is GifTest {
 
         // THEN - make sure, the withdrawn amount is correct and all counters have been correctly updated or not
         assertEq(amountWithdrawn.toInt(), expectedWithdrawnAmount.toInt(), "withdrawn amount not 5");
-        Amount commissionAfter = instanceReader.getDistributorInfo(distributorNftId).commissionAmount;
+        Amount commissionAfter = instanceReader.getFeeAmount(distributorNftId);
         assertEq(commissionAfter.toInt(), 0, "distribution fee not 0");
         Amount distributionFeeAfter = instanceReader.getFeeAmount(distributionNftId);
         assertEq(distributionFeeAfter.toInt(), distributionFeeBefore.toInt(), "distribution fee has changed"); 

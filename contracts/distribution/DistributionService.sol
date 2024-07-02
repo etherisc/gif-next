@@ -25,7 +25,6 @@ import {ReferralId, ReferralLib} from "../type/Referral.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
 
 
 contract DistributionService is
@@ -135,7 +134,6 @@ contract DistributionService is
             distributorType,
             true, // active
             data,
-            AmountLib.zero(),
             0);
 
         instance.getInstanceStore().createDistributor(distributorNftId, info);
@@ -240,10 +238,10 @@ contract DistributionService is
             referralInfo.usedReferrals += 1;
             store.updateReferral(referralId, referralInfo, KEEP_STATE());
 
+            _componentService.increaseDistributorBalance(store, referralInfo.distributorNftId, AmountLib.zero(), commissionAmount);
+
             // update book keeping for distributor info
             IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(referralInfo.distributorNftId);
-            // TODO refactor sum of commission amount into a fee balance for distributors
-            distributorInfo.commissionAmount = distributorInfo.commissionAmount + commissionAmount;
             distributorInfo.numPoliciesSold += 1;
             store.updateDistributor(referralInfo.distributorNftId, distributorInfo, KEEP_STATE());
         } else {
@@ -265,15 +263,15 @@ contract DistributionService is
         IComponents.ComponentInfo memory distributionInfo = reader.getComponentInfo(distributionNftId);
         address distributionWallet = distributionInfo.wallet;
         
-        IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(distributorNftId);
+        Amount commissionAmount = reader.getFeeAmount(distributorNftId);
         
         // determine withdrawn amount
         withdrawnAmount = amount;
         if (withdrawnAmount.gte(AmountLib.max())) {
-            withdrawnAmount = distributorInfo.commissionAmount;
+            withdrawnAmount = commissionAmount;
         } else {
-            if (withdrawnAmount.gt(distributorInfo.commissionAmount)) {
-                revert ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(withdrawnAmount, distributorInfo.commissionAmount);
+            if (withdrawnAmount.gt(commissionAmount)) {
+                revert ErrorDistributionServiceCommissionWithdrawAmountExceedsLimit(withdrawnAmount, commissionAmount);
             }
         }
 
@@ -291,10 +289,10 @@ contract DistributionService is
         // decrease fee counters by withdrawnAmount and update distributor info
         {
             InstanceStore store = instance.getInstanceStore();
+            // decrease fee counter for distribution balance
             _componentService.decreaseDistributionBalance(store, distributionNftId, withdrawnAmount, AmountLib.zero());
-
-            distributorInfo.commissionAmount = distributorInfo.commissionAmount - withdrawnAmount;
-            store.updateDistributor(distributorNftId, distributorInfo, KEEP_STATE());
+            // decrease fee counter for distributor fee
+            _componentService.decreaseDistributorBalance(store, distributorNftId, AmountLib.zero(), withdrawnAmount);
         }
 
         // transfer amount to distributor
