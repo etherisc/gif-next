@@ -90,15 +90,37 @@ contract PolicyService is
         (, productInfo,) = _getAndVerifyActiveComponent(PRODUCT());
         product = Product(productInfo.objectAddress);
     }
-
+    
 
     function decline(
-        NftId policyNftId
+        NftId applicationNftId // = policyNftId
     )
         external
-        override
+        virtual override
     {
-        revert();
+        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        InstanceReader instanceReader = instance.getInstanceReader();
+
+        // check policy is in state applied
+        if (instanceReader.getPolicyState(applicationNftId) != APPLIED()) {
+            revert ErrorPolicyServicePolicyStateNotApplied(applicationNftId);
+        }
+
+        // check policy matches with calling product
+        IPolicy.PolicyInfo memory applicationInfo = instanceReader.getPolicyInfo(applicationNftId);
+        if(applicationInfo.productNftId != productNftId) {
+            revert ErrorPolicyServicePolicyProductMismatch(
+                applicationNftId, 
+                applicationInfo.productNftId, 
+                productNftId);
+        }
+        
+        StateId newPolicyState = DECLINED();
+
+                // store updated policy info
+        instance.getInstanceStore().updatePolicyState(
+            applicationNftId, 
+            newPolicyState);
     }
 
     event LogDebug(uint idx, string message);
