@@ -12,6 +12,7 @@ type ReferralStatus is uint8;
 using {
     eqReferralId as ==, 
     neReferralId as !=,
+    ReferralLib.eqz,
     ReferralLib.toKey32
 } for ReferralId global;
 

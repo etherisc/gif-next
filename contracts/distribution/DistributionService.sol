@@ -32,13 +32,6 @@ contract DistributionService is
     ComponentVerifyingService,
     IDistributionService
 {
-    using AmountLib for Amount;
-    using NftIdLib for NftId;
-    using TimestampLib for Timestamp;
-    using UFixedLib for UFixed;
-    using FeeLib for Fee;
-    using ReferralLib for ReferralId;
-
     IComponentService private _componentService;
     IInstanceService private _instanceService;
     IRegistryService private _registryService;

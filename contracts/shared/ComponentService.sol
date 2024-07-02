@@ -27,8 +27,6 @@ contract ComponentService is
     ComponentVerifyingService,
     IComponentService
 {
-    using AmountLib for Amount;
-
     error ErrorComponentServiceAlreadyRegistered(address component);
     error ErrorComponentServiceNotComponent(address component);
     error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);

@@ -30,9 +30,7 @@ contract BundleService is
     ComponentVerifyingService, 
     IBundleService 
 {
-    using NftIdLib for NftId;
-    using AmountLib for Amount;
-
+    
     string public constant NAME = "BundleService";
 
     address private _registryAddress;

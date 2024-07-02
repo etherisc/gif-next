@@ -12,13 +12,15 @@ using {
     nqAmount as !=,
     ltAmount as <,
     gtAmount as >,
+    AmountLib.add,
     AmountLib.eq,
     AmountLib.eqz,
     AmountLib.gtz,
+    AmountLib.gt,
+    AmountLib.gte,
+    AmountLib.multiplyWith,
     AmountLib.toInt,
-    AmountLib.add,
-    AmountLib.toUFixed,
-    AmountLib.multiplyWith
+    AmountLib.toUFixed
 } for Amount global;
 
 function addAmount(Amount a, Amount b) pure returns (Amount) {

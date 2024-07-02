@@ -15,9 +15,10 @@ using {
     lteUFixed as <=,
     eqUFixed as ==,
     neUFixed as !=,
+    UFixedLib.gt,
+    UFixedLib.gtz,
     UFixedLib.toInt,
-    UFixedLib.toInt1000,
-    UFixedLib.gtz
+    UFixedLib.toInt1000
 } for UFixed global;
 
 // TODO move to UFixedLib and rename to zero()
