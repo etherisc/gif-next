@@ -149,6 +149,8 @@ contract PoolService is
             _getStakingFee(instanceReader, poolNftId), 
             stakingAmount);
 
+        // TODO: staking amount must be be > maxCapitalAmount
+
         bundleNftId = _bundleService.create(
             instance,
             poolNftId,
@@ -215,6 +217,8 @@ contract PoolService is
         if (bundleInfo.poolNftId != poolNftId) {
             revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
         }
+
+        // TODO: ensure that poolBalance + amount <= maxCapitalAmount
 
         // calculate fees
         (
