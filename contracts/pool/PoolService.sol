@@ -263,6 +263,7 @@ contract PoolService is
         // call bundle service for bookkeeping and additional checks
         _bundleService.unstake(instance, bundleNftId, amount);
 
+        // FIXME: performance fee is only calculated on the earnings
         (
             Amount performanceFeeAmount,
             Amount netAmount
