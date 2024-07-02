@@ -117,10 +117,12 @@ contract PolicyService is
         
         StateId newPolicyState = DECLINED();
 
-                // store updated policy info
+        // store updated policy info
         instance.getInstanceStore().updatePolicyState(
             applicationNftId, 
             newPolicyState);
+
+        emit LogPolicyServicePolicyDeclined(applicationNftId);
     }
 
     event LogDebug(uint idx, string message);

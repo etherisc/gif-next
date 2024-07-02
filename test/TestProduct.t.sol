@@ -892,6 +892,10 @@ contract TestProduct is GifTest {
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         vm.startPrank(productOwner);
+        
+        // THEN
+        vm.expectEmit();
+        emit IPolicyService.LogPolicyServicePolicyDeclined(policyNftId);
 
         // WHEN
         product.decline(policyNftId);
