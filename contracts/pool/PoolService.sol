@@ -420,6 +420,7 @@ contract PoolService is
         address poolWallet = componentInfo.wallet;
 
         if(amount.gtz()) {
+            // TODO: centralize token handling (issue #471)
             tokenHandler.transfer(
                 bundleOwner,
                 poolWallet,

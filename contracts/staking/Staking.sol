@@ -386,6 +386,7 @@ contract Staking is
             address(tokenHandler), 
             dipAmount);
 
+        // TODO: centralize token handling (issue #471)
         tokenHandler.transfer(from, stakingWallet, dipAmount);
     }
 
@@ -402,7 +403,8 @@ contract Staking is
             stakingWallet, 
             address(tokenHandler), 
             dipAmount);
-
+        
+        // TODO: centralize token handling (issue #471)
         tokenHandler.transfer(stakingWallet, to, dipAmount);
     }
 
