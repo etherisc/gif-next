@@ -58,6 +58,9 @@ interface IBundleService is IService {
     /// may only be called by the pool service
     function unstake(IInstance instance, NftId bundleNftId, Amount amount) external;
 
+    /// @dev extend the lifetime of the bundle by the specified time in seconds
+    function extend(NftId bundleNftId, Seconds lifetimeExtension) external returns (Timestamp extendedExpiredAt);
+
     /// @dev locks the specified bundle, locked bundles are not available to collateralize new policies
     /// only active bundles may be locked
     /// may only be called by registered and unlocked pool components

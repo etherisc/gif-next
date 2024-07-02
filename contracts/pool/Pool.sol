@@ -14,6 +14,7 @@ import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
@@ -200,8 +201,9 @@ abstract contract Pool is
     )
         internal
         virtual
+        returns (Timestamp extendedExpiredAt) 
     {
-        // TODO add implementation
+        return _getPoolStorage()._bundleService.extend(bundleNftId, lifetimeExtension);
     }
 
 

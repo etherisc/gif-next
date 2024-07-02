@@ -22,7 +22,7 @@ import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, POOL, BUNDLE, REGISTRY} from "../type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 
 string constant BUNDLE_SERVICE_NAME = "BundleService";
 
@@ -284,6 +284,17 @@ contract BundleService is
             amount, 
             // TODO: if above includes fees, how to split this? 
             AmountLib.zero());
+    }
+
+    function extend(NftId bundleNftId, Seconds lifetimeExtension) 
+        external 
+        virtual
+        restricted
+        returns (Timestamp extendedExpiredAt) 
+    {
+        // TODO: implement lifetime extension
+        // TODO: bundle must be active or locked, not expired or closed
+        revert("Not implemented yet");
     }
 
 
