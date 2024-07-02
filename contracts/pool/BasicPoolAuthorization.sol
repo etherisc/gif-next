@@ -5,6 +5,7 @@ import {Authorization} from "../authorization/Authorization.sol";
 import {BasicPool} from "./BasicPool.sol"; 
 import {IAccess} from "../authorization/IAccess.sol";
 import {IInstanceLinkedComponent} from "../shared/IInstanceLinkedComponent.sol";
+import {IPoolComponent} from "./IPoolComponent.sol";
 import {POOL} from "../type/ObjectType.sol";
 import {PUBLIC_ROLE} from "../../contracts/type/RoleId.sol";
 import {RoleId} from "../type/RoleId.sol";
@@ -47,6 +48,8 @@ contract BasicPoolAuthorization
           _authorize(functions, BasicPool.setFees.selector, "setFees");
 
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
+
+          _authorize(functions, IPoolComponent.withdrawBundleFees.selector, "withdrawBundleFees");
      }
 }
 

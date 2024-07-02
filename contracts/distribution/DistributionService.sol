@@ -32,13 +32,6 @@ contract DistributionService is
     ComponentVerifyingService,
     IDistributionService
 {
-    using AmountLib for Amount;
-    using NftIdLib for NftId;
-    using TimestampLib for Timestamp;
-    using UFixedLib for UFixed;
-    using FeeLib for Fee;
-    using ReferralLib for ReferralId;
-
     IComponentService private _componentService;
     IInstanceService private _instanceService;
     IRegistryService private _registryService;
@@ -259,10 +252,7 @@ contract DistributionService is
         }
     }
 
-    /// @dev Withdraw commission for the distributor
-    /// @param distributorNftId the distributor Nft Id
-    /// @param amount the amount to withdraw. If set to UINT256_MAX, the full commission available is withdrawn
-    /// @return withdrawnAmount the effective withdrawn amount
+    /// @inheritdoc IDistributionService
     function withdrawCommission(NftId distributorNftId, Amount amount) 
         public 
         virtual
@@ -276,14 +266,10 @@ contract DistributionService is
         address distributionWallet = distributionInfo.wallet;
         
         IDistribution.DistributorInfo memory distributorInfo = reader.getDistributorInfo(distributorNftId);
-
-        if (!distributorInfo.active) {
-            revert ErrorDistributionServiceDistributorNotActive(distributorNftId);
-        }
         
         // determine withdrawn amount
         withdrawnAmount = amount;
-        if (withdrawnAmount.eq(AmountLib.max())) {
+        if (withdrawnAmount.gte(AmountLib.max())) {
             withdrawnAmount = distributorInfo.commissionAmount;
         } else {
             if (withdrawnAmount.gt(distributorInfo.commissionAmount)) {
@@ -314,6 +300,7 @@ contract DistributionService is
         // transfer amount to distributor
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
+            // TODO: centralize token handling (issue #471)
             distributionInfo.tokenHandler.transfer(distributionWallet, distributor, withdrawnAmount);
 
             emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(token), withdrawnAmount);

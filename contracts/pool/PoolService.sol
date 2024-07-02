@@ -32,9 +32,6 @@ contract PoolService is
     ComponentVerifyingService, 
     IPoolService 
 {
-    using NftIdLib for NftId;
-    using AmountLib for Amount;
-
     IBundleService internal _bundleService;
     IComponentService internal _componentService;
     IInstanceService private _instanceService;
@@ -423,6 +420,7 @@ contract PoolService is
         address poolWallet = componentInfo.wallet;
 
         if(amount.gtz()) {
+            // TODO: centralize token handling (issue #471)
             tokenHandler.transfer(
                 bundleOwner,
                 poolWallet,

@@ -336,7 +336,8 @@ contract ClaimService is
                 // TODO transfer processing fees to product wallet
                 // TODO inform product to update fee book keeping
             }
-
+            
+            // TODO: centralize token handling (issue #471)
             poolInfo.tokenHandler.transfer(
                 poolInfo.wallet,
                 beneficiary,

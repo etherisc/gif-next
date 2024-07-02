@@ -45,7 +45,7 @@ contract UFixedTest is Test {
         // smalltest possible value
         UFixedLib.toUFixed(1, -18);
         // one order of magnitude smaller reverts
-        vm.expectRevert("ERROR:FM-010:EXPONENT_TOO_SMALL");
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibExponentTooSmall.selector, -19));
         UFixedLib.toUFixed(1, -19);
 
         // largest possible value -- 10 ** 46 (64 - EXP(18))
@@ -53,7 +53,7 @@ contract UFixedTest is Test {
             UFixedLib.toUFixed(1, 46) == UFixedLib.toUFixed(1 * 10 ** 46)
         );
         // one order of magnitude larger reverts
-        vm.expectRevert("ERROR:FM-011:EXPONENT_TOO_LARGE");
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibExponentTooLarge.selector, 47));
         UFixedLib.toUFixed(1, 64 - 18 + 1);
     }
 
@@ -120,9 +120,9 @@ contract UFixedTest is Test {
         assertTrue((e - e) == e);
         assertTrue(e.sub(e) == e);
 
-        vm.expectRevert("ERROR:UFM-010:NEGATIVE_RESULT");
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibNegativeResult.selector));
         a - c;
-        vm.expectRevert("ERROR:UFM-010:NEGATIVE_RESULT");
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibNegativeResult.selector));
         a.sub(c);
     }
 
@@ -285,15 +285,15 @@ contract UFixedTest is Test {
         assertTrue(z.div(a).eq(z));
 
         // 0 / 0 = 0
-        vm.expectRevert("ERROR:UFM-020:DIVISOR_ZERO");
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibDivisionByZero.selector));
         assertTrue((z / z) == z);
-        vm.expectRevert("ERROR:UFM-020:DIVISOR_ZERO");
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibDivisionByZero.selector));
         assertTrue(z.div(z).eq(z));
 
         // 1 / 0 = 0
-        vm.expectRevert("ERROR:UFM-020:DIVISOR_ZERO");
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibDivisionByZero.selector));
         assertTrue((a / z) == z);
-        vm.expectRevert("ERROR:UFM-020:DIVISOR_ZERO");
+        vm.expectRevert(abi.encodeWithSelector(UFixedLib.UFixedLibDivisionByZero.selector));
         assertTrue(a.div(z).eq(z));
     }
 

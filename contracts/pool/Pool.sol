@@ -94,6 +94,17 @@ abstract contract Pool is
         _approveTokenHandler(type(uint256).max);
     }
 
+    /// @inheritdoc IPoolComponent
+    function withdrawBundleFees(NftId bundleNftId, Amount amount) 
+        external 
+        virtual
+        restricted()
+        onlyBundleOwner(bundleNftId)
+        returns (Amount withdrawnAmount) 
+    {
+        return _withdrawBundleFees(bundleNftId, amount);
+    }
+
 
     function getInitialPoolInfo()
         public 
@@ -302,6 +313,12 @@ abstract contract Pool is
         return keccak256(abi.encode(uint256(keccak256(name)) - 1)) & ~bytes32(uint256(0xff));
     }
 
+    function _withdrawBundleFees(NftId bundleNftId, Amount amount) 
+        internal
+        returns (Amount withdrawnAmount) 
+    {
+        return _getPoolStorage()._bundleService.withdrawBundleFees(bundleNftId, amount);
+    }
 
     function _getPoolStorage() private pure returns (PoolStorage storage $) {
         assembly {

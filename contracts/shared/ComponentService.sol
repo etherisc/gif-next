@@ -27,8 +27,6 @@ contract ComponentService is
     ComponentVerifyingService,
     IComponentService
 {
-    using AmountLib for Amount;
-
     error ErrorComponentServiceAlreadyRegistered(address component);
     error ErrorComponentServiceNotComponent(address component);
     error ErrorComponentServiceInvalidType(address component, ObjectType requiredType, ObjectType componentType);
@@ -106,7 +104,7 @@ contract ComponentService is
 
         // determine withdrawn amount
         withdrawnAmount = amount;
-        if (withdrawnAmount.eq(AmountLib.max())) {
+        if (withdrawnAmount.gte(AmountLib.max())) {
             withdrawnAmount = instance.getInstanceReader().getFeeAmount(componentNftId);
         } else if (withdrawnAmount.eqz()) {
             revert ErrorComponentServiceWithdrawAmountIsZero();
@@ -130,6 +128,7 @@ contract ComponentService is
         
         // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
+        // TODO: centralize token handling (issue #471)
         tokenHandler.transfer(componentWallet, componentOwner, withdrawnAmount);
 
         emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(token), withdrawnAmount);

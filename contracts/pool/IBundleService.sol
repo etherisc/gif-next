@@ -26,6 +26,13 @@ interface IBundleService is IService {
 
     error ErrorBundleServicePolicyNotCloseable(NftId policyNftId);
 
+    // error ErrorBundleServiceBundleNotActive(NftId distributorNftId);
+    error ErrorBundleServiceFeesWithdrawAmountExceedsLimit(Amount amount, Amount limit);
+    error ErrorBundleServiceFeesWithdrawAmountIsZero();
+    error ErrorBundleServiceWalletAllowanceTooSmall(address wallet, address tokenHandler, uint256 allowance, uint256 amount);
+
+    event LogBundleServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
+
     /// @dev create a new bundle for the specified attributes
     /// may only be called by pool service
     function create(
@@ -103,4 +110,11 @@ interface IBundleService is IService {
         IInstance instance, 
         NftId policyNftId
     ) external;
+
+    /// @dev Withdraw bundle feeds for the given bundle
+    /// @param bundleNftId the bundle Nft Id
+    /// @param amount the amount to withdraw. If set to AMOUNT_MAX, the full commission available is withdrawn
+    /// @return withdrawnAmount the effective withdrawn amount
+    function withdrawBundleFees(NftId bundleNftId, Amount amount) external returns (Amount withdrawnAmount);
+
 }

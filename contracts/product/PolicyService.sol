@@ -427,6 +427,7 @@ contract PolicyService is
             bundleNftId, 
             premium);
 
+        // TODO: centralize token handling (issue #471)
         // transfer premium amounts to target wallets
         tokenHandler.transfer(policyHolder, productWallet, premium.productFeeAmount);
         tokenHandler.transfer(policyHolder, distributionWallet, premium.distributionFeeAndCommissionAmount);
