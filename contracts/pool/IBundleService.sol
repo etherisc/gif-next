@@ -31,6 +31,8 @@ interface IBundleService is IService {
     error ErrorBundleServiceFeesWithdrawAmountIsZero();
     error ErrorBundleServiceWalletAllowanceTooSmall(address wallet, address tokenHandler, uint256 allowance, uint256 amount);
 
+    error ErrorBundleServiceStakeAmountExceedsLimit(Amount amount, Amount limit);
+
     event LogBundleServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
 
     /// @dev create a new bundle for the specified attributes

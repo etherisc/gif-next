@@ -251,8 +251,51 @@ contract PoolService is
         restricted()
         returns(Amount netAmount) 
     {
-        // TODO: implement
-        revert();
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        InstanceReader instanceReader = instance.getInstanceReader();
+        InstanceStore instanceStore = instance.getInstanceStore();
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+
+        if (bundleInfo.poolNftId != poolNftId) {
+            revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
+        }
+
+        // call bundle service for bookkeeping and additional checks
+        _bundleService.unstake(instance, bundleNftId, amount);
+
+        (
+            Amount performanceFeeAmount,
+            Amount netAmount
+        ) = FeeLib.calculateFee(
+            _getPerformanceFee(instanceReader, poolNftId), 
+            amount);
+
+        // update pool bookkeeping - performance fees stay in the pool, but as fees 
+        _componentService.decreasePoolBalance(
+            instanceStore, 
+            poolNftId, 
+            amount, 
+            AmountLib.zero());
+
+        _componentService.increasePoolBalance(
+            instanceStore, 
+            poolNftId, 
+            AmountLib.zero(), 
+            performanceFeeAmount);
+
+        // TODO: transfer net amount to bundle owner (allowance)
+
+        // TODO: log event
+    }
+
+    function _getPerformanceFee(InstanceReader instanceReader, NftId poolNftId)
+        internal
+        virtual
+        view
+        returns (Fee memory performanceFee)
+    {
+        NftId productNftId = instanceReader.getPoolInfo(poolNftId).productNftId;
+        return instanceReader.getPoolInfo(productNftId).performanceFee;
     }
 
     function processSale(

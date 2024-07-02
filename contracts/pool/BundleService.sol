@@ -264,8 +264,26 @@ contract BundleService is
         virtual
         restricted()
     {
-        // TODO: implement
-        revert();
+        InstanceStore instanceStore = instance.getInstanceStore();
+        (
+            Amount balanceAmount,
+            Amount lockedAmount,
+            Amount feeAmount
+        ) = instanceStore.getAmounts(bundleNftId);
+
+        // TODO: should the available amount include the fees or not? 
+        Amount availableAmount = balanceAmount - (lockedAmount + feeAmount);
+        
+        if (availableAmount < amount) {
+            revert ErrorBundleServiceStakeAmountExceedsLimit(amount, availableAmount);
+        }
+
+        _componentService.decreaseBundleBalance(
+            instanceStore, 
+            bundleNftId, 
+            amount, 
+            // TODO: if above includes fees, how to split this? 
+            AmountLib.zero());
     }
 
 
