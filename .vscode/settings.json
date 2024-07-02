@@ -36,5 +36,5 @@
     },
     "asciidoc.antora.enableAntoraSupport": true,
     "security.olympix.project.includePath": "/contracts",
-    "solidity.defaultCompiler": "remote",
+    "solidity.defaultCompiler": "localFile",
 }
