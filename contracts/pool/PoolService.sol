@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {IComponentService} from "../shared/IComponentService.sol";
@@ -200,16 +201,50 @@ contract PoolService is
         emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId);
     }
 
+    /// @inheritdoc IPoolService
     function stake(NftId bundleNftId, Amount amount) 
         external 
         virtual
         restricted()
         returns(Amount netAmount) 
     {
-        // TODO: implement
-        revert();
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        InstanceReader instanceReader = instance.getInstanceReader();
+        IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+
+        if (bundleInfo.poolNftId != poolNftId) {
+            revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
+        }
+
+        // calculate fees
+        (
+            Amount feeAmount,
+            Amount netAmount
+        ) = FeeLib.calculateFee(
+            _getStakingFee(instanceReader, poolNftId), 
+            amount);
+
+        // do all the bookkeeping
+        _componentService.increasePoolBalance(
+            instance.getInstanceStore(), 
+            poolNftId, 
+            amount, 
+            feeAmount);
+
+        _bundleService.stake(instance, bundleNftId, netAmount);
+
+        // collect tokens from bundle owner
+        address bundleOwner = getRegistry().ownerOf(bundleNftId);
+        _collectStakingAmount(
+            instanceReader, 
+            poolNftId, 
+            bundleOwner, 
+            amount);
+
+        emit LogPoolServiceBundleStaked(instance.getNftId(), poolNftId, bundleNftId, amount, netAmount);
     }
 
+    /// @inheritdoc IPoolService
     function unstake(NftId bundleNftId, Amount amount) 
         external 
         virtual

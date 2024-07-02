@@ -23,8 +23,11 @@ interface IPoolService is IService {
     event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
     event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
 
+    event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
+
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
+    error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
 
     /// @dev defines the required role for bundle owners for the calling pool
     /// default implementation returns PUBLIC ROLE
@@ -112,7 +115,6 @@ interface IPoolService is IService {
     /// staking fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
     function stake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
-
 
     /// @dev decrease stakes for bundle
     /// performance fees will be deducted by the pool service from the staking amount

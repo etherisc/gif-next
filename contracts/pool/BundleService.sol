@@ -16,7 +16,7 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-import {Fee} from "../type/Fee.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, POOL, BUNDLE, REGISTRY} from "../type/ObjectType.sol";
@@ -233,21 +233,36 @@ contract BundleService is
         bundleManager.lock(bundleNftId);
     }
 
-    function stake(NftId bundleNftId, Amount amount) 
+    /// @inheritdoc IBundleService
+    function stake(
+        IInstance instance,
+        NftId bundleNftId, 
+        Amount amount
+    ) 
         external 
         virtual
         restricted()
-        returns(Amount netAmount) 
     {
-        // TODO: implement
-        revert();
+        // TODO: check not locked
+        // TODO: check not expired
+        // TODO: check not closed
+
+        _componentService.increaseBundleBalance(
+            instance.getInstanceStore(), 
+            bundleNftId, 
+            amount, 
+            AmountLib.zero());
     }
 
-    function unstake(NftId bundleNftId, Amount amount) 
+    /// @inheritdoc IBundleService
+    function unstake(
+        IInstance instance, 
+        NftId bundleNftId, 
+        Amount amount
+    ) 
         external 
         virtual
         restricted()
-        returns(Amount netAmount) 
     {
         // TODO: implement
         revert();

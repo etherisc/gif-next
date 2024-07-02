@@ -49,11 +49,12 @@ interface IBundleService is IService {
 
 
     /// @dev increase bundle stakes by the specified amount
-    /// may only be called by the bundle owner
-    function stake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
+    /// may only be called by the pool service
+    function stake(IInstance instance, NftId bundleNftId, Amount amount) external;
 
     /// @dev decrease bundle stakes by the specified amount
-    function unstake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
+    /// may only be called by the pool service
+    function unstake(IInstance instance, NftId bundleNftId, Amount amount) external;
 
     /// @dev locks the specified bundle, locked bundles are not available to collateralize new policies
     /// only active bundles may be locked
