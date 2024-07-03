@@ -28,6 +28,7 @@ interface IPoolService is IService {
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
     error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
+    error ErrorPoolServiceMaxCapitalAmountExceeded(NftId poolNftId, Amount maxCapitalAmount, Amount capitalAmount, Amount amountToBeAdded);
 
     /// @dev defines the required role for bundle owners for the calling pool
     /// default implementation returns PUBLIC ROLE

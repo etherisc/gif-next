@@ -243,7 +243,12 @@ contract BundleService is
         virtual
         restricted()
     {
-        // TODO: check not expired and not closed
+        IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
+        StateId bundleState = instance.getInstanceReader().getMetadata(bundleNftId.toKey32(BUNDLE())).state;
+
+        if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.blockTimestamp() || bundleInfo.closedAt.gtz()) {
+            revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
+        }
 
         _componentService.increaseBundleBalance(
             instance.getInstanceStore(), 

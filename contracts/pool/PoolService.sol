@@ -165,7 +165,7 @@ contract PoolService is
         _componentService.increasePoolBalance(
             instance.getInstanceStore(), 
             poolNftId, 
-            stakingAmount, 
+            stakingNetAmount, 
             stakingFeeAmount);
 
         // pool bookkeeping and collect tokens from bundle owner
@@ -214,12 +214,16 @@ contract PoolService is
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
+        IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
         if (bundleInfo.poolNftId != poolNftId) {
             revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
         }
 
-        // TODO: ensure that poolBalance + amount <= maxCapitalAmount
+        Amount currentPoolBalance = instanceReader.getBalanceAmount(poolNftId);
+        if (amount + currentPoolBalance > poolInfo.maxCapitalAmount) {
+            revert ErrorPoolServiceMaxCapitalAmountExceeded(poolNftId, poolInfo.maxCapitalAmount, currentPoolBalance, amount);
+        }
 
         // calculate fees
         (
@@ -233,7 +237,7 @@ contract PoolService is
         _componentService.increasePoolBalance(
             instance.getInstanceStore(), 
             poolNftId, 
-            amount, 
+            netAmount, 
             feeAmount);
 
         _bundleService.stake(instance, bundleNftId, netAmount);
