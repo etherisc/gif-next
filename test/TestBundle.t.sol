@@ -7,6 +7,7 @@ import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {BasicPoolAuthorization} from "../contracts/pool/BasicPoolAuthorization.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
+import {IBundleService} from "../contracts/pool/IBundleService.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IKeyValueStore} from "../contracts/shared/IKeyValueStore.sol";
 import {ILifecycle} from "../contracts/shared/ILifecycle.sol";
@@ -140,6 +141,77 @@ contract TestBundle is GifTest {
             IPoolService.ErrorPoolServiceAmountIsZero.selector));
 
         // WHEN - pool is staked with another 1000 tokens
+        pool.stake(bundleNftId, stakeAmount);
+    }
+
+    /// @dev test staking of an existing bundle 
+    function test_Bundle_stakeBundle_bundleExpired() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+        
+        Amount stakeAmount = AmountLib.toAmount(1000);
+        
+        // fast forward time to after bundle expiration
+        skip(lifetime.toInt() + 1000);
+
+        // THEN - revert
+        vm.expectRevert(abi.encodeWithSelector(IBundleService.ErrorBundleServiceBundleNotOpen.selector,
+            bundleNftId,
+            ACTIVE(),
+            createdAt + lifetime.toInt()
+        ));
+
+        // WHEN - bundle is expired
+        pool.stake(bundleNftId, stakeAmount);
+    }
+
+    /// @dev test staking of an existing bundle 
+    function test_Bundle_stakeBundle_bundleClosed() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+        
+        Amount stakeAmount = AmountLib.toAmount(1000);
+        
+        pool.close(bundleNftId);
+
+        // THEN - revert
+        vm.expectRevert(abi.encodeWithSelector(IBundleService.ErrorBundleServiceBundleNotOpen.selector,
+            bundleNftId,
+            CLOSED(),
+            createdAt + lifetime.toInt()
+        ));
+
+        // WHEN - bundle is expired
         pool.stake(bundleNftId, stakeAmount);
     }
 
