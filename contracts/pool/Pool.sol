@@ -114,7 +114,6 @@ abstract contract Pool is
         returns (IComponents.PoolInfo memory poolInfo)
     {
         return IComponents.PoolInfo(
-            NftIdLib.zero(), // will be set when GIF registers the related product
             PUBLIC_ROLE(), // bundleOwnerRole
             AmountLib.max(), // maxCapitalAmount,
             isNftInterceptor(), // isInterceptingBundleTransfers

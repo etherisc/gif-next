@@ -318,7 +318,7 @@ contract PoolService is
         view
         returns (Fee memory performanceFee)
     {
-        NftId productNftId = instanceReader.getPoolInfo(poolNftId).productNftId;
+        NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
         return instanceReader.getPoolInfo(productNftId).performanceFee;
     }
 

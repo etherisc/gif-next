@@ -102,7 +102,7 @@ contract TestPool is GifTest {
         IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
 
         // check nftid
-        assertTrue(poolInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
+        assertTrue(componentInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
         assertEq(poolInfo.bundleOwnerRole.toInt(), PUBLIC_ROLE().toInt(), "unexpected bundle owner role");
 
         // check fees

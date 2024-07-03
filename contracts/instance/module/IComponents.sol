@@ -14,7 +14,6 @@ interface IComponents {
 
     struct ComponentInfo {
         string name; // component name (needs to be unique per instance)
-        // TODO: why here **AND** in ProductInfo/PoolInfo?
         NftId productNftId;
         IERC20Metadata token;
         TokenHandler tokenHandler;
@@ -36,7 +35,6 @@ interface IComponents {
 
 
     struct PoolInfo {
-        NftId productNftId; // the nft of the product this pool is linked to
         RoleId bundleOwnerRole; // the required role for bundle owners
         // TODO maxCapitalAmount -> maxBalanceAmount
         Amount maxCapitalAmount; // max capital amount allowed for pool
