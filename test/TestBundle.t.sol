@@ -20,7 +20,7 @@ import {POOL_OWNER_ROLE, PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
 import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
-import {TimestampLib} from "../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib, toTimestamp} from "../contracts/type/Timestamp.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {UFixedLib} from "../contracts/type/UFixed.sol";
 
@@ -419,6 +419,46 @@ contract TestBundle is GifTest {
 
         // WHEN - tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmount);
+    }
+
+    /// @dev test extension of a bundle
+    function test_Bundle_extend() public {
+        // GIVEN
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 1000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+        uint256 createdAtTs = vm.getBlockTimestamp();
+
+        IBundle.BundleInfo memory bundleInfoBefore = instanceReader.getBundleInfo(bundleNftId);
+        assertEq(bundleInfoBefore.activatedAt.toInt(), createdAtTs, "bundle activatedAt incorrect");
+        assertEq(bundleInfoBefore.expiredAt.toInt(), createdAtTs + lifetime.toInt(), "bundle lockedAt incorrect");
+
+        Timestamp expectedExpiredAt = bundleInfoBefore.expiredAt.addSeconds(lifetime);
+
+        // THEN - expect a log event
+        vm.expectEmit();
+        emit IBundleService.LogBundleServiceBundleExtended(bundleNftId, lifetime, expectedExpiredAt);
+
+        // WHEN - bundle is extended
+        Timestamp newExpiredAt = pool.extend(bundleNftId, lifetime);
+
+        // THEN - check the new expiration time is correct
+        assertEq(newExpiredAt.toInt(), expectedExpiredAt.toInt(), "bundle expiredAt incorrect");
+
+        IBundle.BundleInfo memory bundleInfoAfter = instanceReader.getBundleInfo(bundleNftId);
+        assertEq(bundleInfoAfter.activatedAt.toInt(), createdAtTs, "bundle activatedAt incorrect");
+        assertEq(bundleInfoAfter.expiredAt.toInt(), newExpiredAt.toInt(), "bundle expiredAt incorrect");
     }
 
     function _fundInvestor(uint256 amount) internal {
