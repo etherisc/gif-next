@@ -1,25 +1,14 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {COMPONENT, DISTRIBUTION} from "../type/ObjectType.sol";
 import {Distribution} from "./Distribution.sol";
 import {IAuthorization} from "../authorization/IAuthorization.sol";
-import {IDistributionService} from "./IDistributionService.sol";
-import {IProductService} from "../product/IProductService.sol";
-import {NftId, NftIdLib} from "../type/NftId.sol";
-import {ReferralId, ReferralStatus, ReferralLib} from "../type/Referral.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
-import {InstanceLinkedComponent} from "../shared/InstanceLinkedComponent.sol";
-import {IComponentService} from "../shared/IComponentService.sol";
-import {IDistribution} from "../instance/module/IDistribution.sol";
-import {IDistributionComponent} from "./IDistributionComponent.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
-import {TokenHandler} from "../shared/TokenHandler.sol";
-import {InstanceReader} from "../instance/InstanceReader.sol";
+import {NftId} from "../type/NftId.sol";
+import {ReferralId} from "../type/Referral.sol";
+import {Fee} from "../type/Fee.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {DistributorType} from "../type/DistributorType.sol";
-import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
-import {ITransferInterceptor} from "../registry/ITransferInterceptor.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 
 
 contract BasicDistribution is

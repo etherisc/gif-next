@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
-import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol"; 
 
 import {Amount} from "../type/Amount.sol";
 import {ClaimId} from "../type/ClaimId.sol";
-import {ERC165} from "./ERC165.sol";
+import {InitializableERC165} from "./InitializableERC165.sol";
 import {IPolicyHolder} from "./IPolicyHolder.sol";
 import {NftId} from "../type/NftId.sol";
 import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {RegistryLinked} from "./RegistryLinked.sol";
-import {IRegistry} from "../registry/IRegistry.sol";
 
 /// @dev template implementation for IPolicyHolder
 contract PolicyHolder is
-    ERC165,
+    InitializableERC165,
     RegistryLinked, // TODO need upgradeable version
     IPolicyHolder
 {

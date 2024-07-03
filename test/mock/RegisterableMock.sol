@@ -7,13 +7,13 @@ import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
 import {ObjectType} from "../../contracts/type/ObjectType.sol";
-import {ERC165} from "../../contracts/shared/ERC165.sol";
+import {InitializableERC165} from "../../contracts/shared/InitializableERC165.sol";
 import {IRegisterable} from "../../contracts/shared/IRegisterable.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {ITransferInterceptor} from "../../contracts/registry/ITransferInterceptor.sol";
 
 
-contract RegisterableMock is ERC165, IRegisterable, ITransferInterceptor {
+contract RegisterableMock is InitializableERC165, IRegisterable, ITransferInterceptor {
 
     IRegistry.ObjectInfo internal _info;
 
