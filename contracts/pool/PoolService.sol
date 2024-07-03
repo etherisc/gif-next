@@ -539,12 +539,14 @@ contract PoolService is
             if (allowance < amount.toInt()) {
                 revert ErrorPoolServiceWalletAllowanceTooSmall(bundleOwner, address(tokenHandler), allowance, amount.toInt());
             }
-            
+
             // TODO: centralize token handling (issue #471)
             tokenHandler.transfer(
                 bundleOwner,
                 poolWallet,
                 amount);
+        } else {
+            revert ErrorPoolServiceAmountIsZero();
         }
     }
 

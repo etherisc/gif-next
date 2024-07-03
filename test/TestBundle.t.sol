@@ -114,6 +114,35 @@ contract TestBundle is GifTest {
         pool.stake(bundleNftId, stakeAmount);
     }
 
+    /// @dev test staking of an existing bundle 
+    function test_Bundle_stakeBundle_amountIsZero() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+        
+        Amount stakeAmount = AmountLib.toAmount(0);
+
+        // THEN  
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolService.ErrorPoolServiceAmountIsZero.selector));
+
+        // WHEN - pool is staked with another 1000 tokens
+        pool.stake(bundleNftId, stakeAmount);
+    }
+
     function _fundInvestor(uint256 amount) internal {
         vm.startPrank(registryOwner);
         token.transfer(investor, amount);
