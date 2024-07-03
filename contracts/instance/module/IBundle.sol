@@ -13,8 +13,7 @@ interface IBundle {
         NftId poolNftId;
         Fee fee; // bundle fee on net premium amounts
         bytes filter; // required conditions for applications to be considered for collateralization by this bundle
-        // TODO: replace lifetime with activatedAt
-        Seconds lifetime; // lifetime of bundle after creation
+        Timestamp activatedAt; 
         Timestamp expiredAt; // no new policies starting with this timestamp
         Timestamp closedAt; // no open policies, locked amount = 0
     }

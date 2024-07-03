@@ -14,7 +14,7 @@ import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
 import {Pool} from "../contracts/pool/Pool.sol";
 import {POOL_OWNER_ROLE, PUBLIC_ROLE} from "../contracts/type/RoleId.sol";
-import {SecondsLib} from "../contracts/type/Seconds.sol";
+import {Seconds, SecondsLib} from "../contracts/type/Seconds.sol";
 import {SimplePool} from "./mock/SimplePool.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED} from "../contracts/type/StateId.sol";
 import {TimestampLib} from "../contracts/type/Timestamp.sol";
@@ -173,10 +173,11 @@ contract TestPool is GifTest {
         vm.startPrank(investor);
         token.approve(address(pool.getTokenHandler()), 10000);
 
+        Seconds lifetime = SecondsLib.toSeconds(604800);
         bundleNftId = pool.createBundle(
             FeeLib.zero(), 
             10000, 
-            SecondsLib.toSeconds(604800), 
+            lifetime, 
             ""
         );
         vm.stopPrank();
@@ -195,8 +196,12 @@ contract TestPool is GifTest {
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
         assertEq(
             bundleInfo.expiredAt.toInt(), 
-            TimestampLib.blockTimestamp().toInt() + bundleInfo.lifetime.toInt(),
+            TimestampLib.blockTimestamp().addSeconds(lifetime).toInt(),
             "unexpected expired at");
+        assertEq(
+            bundleInfo.activatedAt.toInt(),
+            vm.getBlockTimestamp(),
+            "unexpected activatedAt");
     }
 
 

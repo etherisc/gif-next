@@ -117,7 +117,7 @@ contract BundleService is
                 poolNftId,
                 bundleFee,
                 filter,
-                lifetime,
+                TimestampLib.blockTimestamp(),
                 TimestampLib.blockTimestamp().addSeconds(lifetime),
                 zeroTimestamp()));
 
@@ -303,8 +303,6 @@ contract BundleService is
             revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
         }
 
-        // update bundle lifetime and store in instance
-        bundleInfo.lifetime = bundleInfo.lifetime + lifetimeExtension;
         bundleInfo.expiredAt = bundleInfo.expiredAt.addSeconds(lifetimeExtension);
         instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
 
