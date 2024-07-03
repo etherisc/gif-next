@@ -461,6 +461,77 @@ contract TestBundle is GifTest {
         assertEq(bundleInfoAfter.expiredAt.toInt(), newExpiredAt.toInt(), "bundle expiredAt incorrect");
     }
 
+    /// @dev test extension of an expired bundle
+    function test_Bundle_extend_bundleExpired() public {
+        // GIVEN
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 1000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+        uint256 createdAtTs = vm.getBlockTimestamp();
+
+        IBundle.BundleInfo memory bundleInfoBefore = instanceReader.getBundleInfo(bundleNftId);
+        assertEq(bundleInfoBefore.activatedAt.toInt(), createdAtTs, "bundle activatedAt incorrect");
+        assertEq(bundleInfoBefore.expiredAt.toInt(), createdAtTs + lifetime.toInt(), "bundle lockedAt incorrect");
+
+        Timestamp expectedExpiredAt = bundleInfoBefore.expiredAt.addSeconds(lifetime);
+
+        // fast forward time to after bundle expiration
+        skip(lifetime.toInt() + 1000);
+
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(IBundleService.ErrorBundleServiceBundleNotOpen.selector,
+            bundleNftId,
+            ACTIVE(),
+            createdAtTs + lifetime.toInt()
+        ));
+
+        // WHEN - bundle is extended
+        pool.extend(bundleNftId, lifetime);
+    }
+
+    /// @dev test extension of an expired bundle
+    function test_Bundle_extend_bundleClosed() public {
+        // GIVEN
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 1000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+        uint256 createdAtTs = vm.getBlockTimestamp();
+
+        pool.close(bundleNftId);
+
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(IBundleService.ErrorBundleServiceBundleNotOpen.selector,
+            bundleNftId,
+            CLOSED(),
+            createdAtTs + lifetime.toInt()
+        ));
+        
+        // WHEN - bundle is extended
+        pool.extend(bundleNftId, lifetime);
+    }
+
     function _fundInvestor(uint256 amount) internal {
         vm.startPrank(registryOwner);
         token.transfer(investor, amount);
