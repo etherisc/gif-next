@@ -318,6 +318,38 @@ contract TestBundle is GifTest {
         assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
     }
 
+    /// @dev test unstaking of an existing bundle 
+    function test_Bundle_unstakeBundle_exceedsAvailable() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+
+        Amount unstakeAmount = AmountLib.toAmount(1000);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IBundleService.ErrorBundleServiceUnstakeAmountExceedsLimit.selector,
+            unstakeAmount,
+            AmountLib.toAmount(960)
+        ));
+
+        // WHEN - max tokens are unstaked
+        pool.unstake(bundleNftId, unstakeAmount);
+    }
+
     function _fundInvestor(uint256 amount) internal {
         vm.startPrank(registryOwner);
         token.transfer(investor, amount);

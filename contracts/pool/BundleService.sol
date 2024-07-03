@@ -285,7 +285,7 @@ contract BundleService is
         
         // ensure unstaked amount does not exceed available amount
         if (unstakedAmount > availableAmount) {
-            revert ErrorBundleServiceStakeAmountExceedsLimit(amount, availableAmount);
+            revert ErrorBundleServiceUnstakeAmountExceedsLimit(amount, availableAmount);
         }
 
         _componentService.decreaseBundleBalance(
@@ -293,7 +293,7 @@ contract BundleService is
             bundleNftId, 
             unstakedAmount, 
             AmountLib.zero());
-            
+
         return unstakedAmount;
     }
 
