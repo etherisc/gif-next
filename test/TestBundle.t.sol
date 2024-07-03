@@ -500,7 +500,7 @@ contract TestBundle is GifTest {
         pool.extend(bundleNftId, lifetime);
     }
 
-    /// @dev test extension of an expired bundle
+    /// @dev test extension of a closed bundle
     function test_Bundle_extend_bundleClosed() public {
         // GIVEN
         _prepareProduct(false);
@@ -527,6 +527,30 @@ contract TestBundle is GifTest {
             CLOSED(),
             createdAtTs + lifetime.toInt()
         ));
+        
+        // WHEN - bundle is extended
+        pool.extend(bundleNftId, lifetime);
+    }
+
+    /// @dev test extension with lifetime is zero
+    function test_Bundle_extend_lifetimeIsZero() public {
+        // GIVEN
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 1000);
+
+        Seconds lifetime = SecondsLib.toSeconds(0);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+        // THEN - expect a revert
+        vm.expectRevert(abi.encodeWithSelector(IBundleService.ErrorBundleServiceExtensionLifetimeIsZero.selector));
         
         // WHEN - bundle is extended
         pool.extend(bundleNftId, lifetime);

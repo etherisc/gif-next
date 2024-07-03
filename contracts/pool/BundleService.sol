@@ -318,6 +318,10 @@ contract BundleService is
             revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
         }
 
+        if (lifetimeExtension.eqz()) {
+            revert ErrorBundleServiceExtensionLifetimeIsZero();
+        }
+
         bundleInfo.expiredAt = bundleInfo.expiredAt.addSeconds(lifetimeExtension);
         instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
 

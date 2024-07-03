@@ -26,12 +26,13 @@ interface IBundleService is IService {
 
     error ErrorBundleServicePolicyNotCloseable(NftId policyNftId);
 
-    // error ErrorBundleServiceBundleNotActive(NftId distributorNftId);
     error ErrorBundleServiceFeesWithdrawAmountExceedsLimit(Amount amount, Amount limit);
     error ErrorBundleServiceFeesWithdrawAmountIsZero();
     error ErrorBundleServiceWalletAllowanceTooSmall(address wallet, address tokenHandler, uint256 allowance, uint256 amount);
 
     error ErrorBundleServiceUnstakeAmountExceedsLimit(Amount amount, Amount limit);
+
+    error ErrorBundleServiceExtensionLifetimeIsZero();
 
     event LogBundleServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
     event LogBundleServiceBundleExtended(NftId bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
