@@ -81,7 +81,7 @@ contract TestBundle is GifTest {
         assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
     }
 
-    /// @dev test staking of an existing bundle 
+    /// @dev test staking when the allowance is too small
     function test_Bundle_stakeBundle_allowanceTooSmall() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
@@ -111,11 +111,11 @@ contract TestBundle is GifTest {
             1000
             ));
 
-        // WHEN - pool is staked with another 1000 tokens
+        // WHEN 
         pool.stake(bundleNftId, stakeAmount);
     }
 
-    /// @dev test staking of an existing bundle 
+    /// @dev test staking amount of zero
     function test_Bundle_stakeBundle_amountIsZero() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
@@ -140,11 +140,11 @@ contract TestBundle is GifTest {
         vm.expectRevert(abi.encodeWithSelector(
             IPoolService.ErrorPoolServiceAmountIsZero.selector));
 
-        // WHEN - pool is staked with another 1000 tokens
+        // WHEN 
         pool.stake(bundleNftId, stakeAmount);
     }
 
-    /// @dev test staking of an existing bundle 
+    /// @dev test staking into an expired bundle
     function test_Bundle_stakeBundle_bundleExpired() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
@@ -180,7 +180,7 @@ contract TestBundle is GifTest {
         pool.stake(bundleNftId, stakeAmount);
     }
 
-    /// @dev test staking of an existing bundle 
+    /// @dev test staking into a closed bundle
     function test_Bundle_stakeBundle_bundleClosed() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
@@ -213,6 +213,57 @@ contract TestBundle is GifTest {
 
         // WHEN - bundle is expired
         pool.stake(bundleNftId, stakeAmount);
+    }
+
+    /// @dev test unstaking of an existing bundle 
+    function test_Bundle_unstakeBundle() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        assertEq(token.balanceOf(poolComponentInfo.wallet), 1000, "pool wallet token balance not 1000");
+        uint256 investorBalanceBefore = token.balanceOf(investor);
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 1000, "pool balance not 1000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 40, "pool fees not 40");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 960, "bundle balance not 960");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
+
+        uint256 unstakeAmount = 500;
+        Amount unstakeAmt = AmountLib.toAmount(unstakeAmount);
+
+        // THEN - expect log event
+        vm.expectEmit();
+        emit IPoolService.LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, unstakeAmt);
+
+        // WHEN - 500 tokens are unstaked
+        pool.unstake(bundleNftId, unstakeAmt);
+        
+        // THEN - assert all counters are updated
+        assertEq(token.balanceOf(poolComponentInfo.wallet), 500, "pool wallet token balance not 500");
+        assertEq(token.balanceOf(investor), investorBalanceBefore + unstakeAmount, "investor token balance not 500");
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 500, "pool balance not 500");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 40, "pool fees not 40");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 460, "bundle balance not 460");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
     }
 
     function _fundInvestor(uint256 amount) internal {
