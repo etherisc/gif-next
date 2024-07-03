@@ -346,7 +346,7 @@ contract TestBundle is GifTest {
             AmountLib.toAmount(960)
         ));
 
-        // WHEN - max tokens are unstaked
+        // WHEN - more tokens are unstaked than available
         pool.unstake(bundleNftId, unstakeAmount);
     }
 
@@ -375,7 +375,49 @@ contract TestBundle is GifTest {
         vm.expectRevert(abi.encodeWithSelector(
             IPoolService.ErrorPoolServiceAmountIsZero.selector));
 
-        // WHEN - max tokens are unstaked
+        // WHEN - 0 tokens are unstaked
+        pool.unstake(bundleNftId, unstakeAmount);
+    }
+
+    /// @dev test unstaking of an amount when allowance is too small
+    function test_Bundle_unstakeBundle_allowanceTooSmall() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+
+        vm.stopPrank();
+
+        vm.startPrank(poolOwner);
+        address externalWallet = makeAddr("externalWallet");
+        pool.setWallet(externalWallet);
+        vm.stopPrank();
+
+        vm.startPrank(investor);
+
+        Amount unstakeAmount = AmountLib.toAmount(500);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolService.ErrorPoolServiceWalletAllowanceTooSmall.selector,
+            externalWallet,
+            address(pool.getTokenHandler()),
+            0,
+            500));
+
+        // WHEN - tokens are unstaked
         pool.unstake(bundleNftId, unstakeAmount);
     }
 
