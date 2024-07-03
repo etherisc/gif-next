@@ -266,6 +266,58 @@ contract TestBundle is GifTest {
         assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
     }
 
+    /// @dev test unstaking of an existing bundle 
+    function test_Bundle_unstakeBundle_maxAmount() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        bundleNftId = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        assertEq(token.balanceOf(poolComponentInfo.wallet), 1000, "pool wallet token balance not 1000");
+        uint256 investorBalanceBefore = token.balanceOf(investor);
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 1000, "pool balance not 1000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 40, "pool fees not 40");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 960, "bundle balance not 960");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
+
+        Amount unstakeAmount = AmountLib.max();
+        uint256 expectedUnstakeAmt = 960;
+        Amount expectedUnstakeAmount = AmountLib.toAmount(expectedUnstakeAmt);
+        
+        // THEN - expect log event
+        vm.expectEmit();
+        emit IPoolService.LogPoolServiceBundleUnstaked(instanceNftId, poolNftId, bundleNftId, expectedUnstakeAmount);
+
+        // WHEN - max tokens are unstaked
+        pool.unstake(bundleNftId, unstakeAmount);
+        
+        // THEN - assert all counters are updated
+        assertEq(token.balanceOf(poolComponentInfo.wallet), 40, "pool wallet token balance not 40");
+        assertEq(token.balanceOf(investor), investorBalanceBefore + expectedUnstakeAmt, "investor token balance not 960");
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 40, "pool balance not 40");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 40, "pool fees not 40");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 0, "bundle balance not 0");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
+    }
+
     function _fundInvestor(uint256 amount) internal {
         vm.startPrank(registryOwner);
         token.transfer(investor, amount);

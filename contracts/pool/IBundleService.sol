@@ -57,7 +57,11 @@ interface IBundleService is IService {
 
     /// @dev decrease bundle stakes by the specified amount
     /// may only be called by the pool service
-    function unstake(IInstance instance, NftId bundleNftId, Amount amount) external;
+    /// @param instance the instance relevant for the bundle
+    /// @param bundleNftId the bundle nft id
+    /// @param amount the amount to unstake (set to AmountLib.max() to unstake all available stakes)
+    /// @return unstakedAmount the effective unstaked amount
+    function unstake(IInstance instance, NftId bundleNftId, Amount amount) external returns (Amount unstakedAmount);
 
     /// @dev extend the lifetime of the bundle by the specified time in seconds
     function extend(NftId bundleNftId, Seconds lifetimeExtension) external returns (Timestamp extendedExpiredAt);

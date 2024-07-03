@@ -276,7 +276,10 @@ contract PoolService is
         }
 
         // call bundle service for bookkeeping and additional checks
-        _bundleService.unstake(instance, bundleNftId, amount);
+        Amount unstakedAmount = _bundleService.unstake(instance, bundleNftId, amount);
+
+        // Important: from now on work only with unstakedAmount as it is the only reliable amount.
+        // if amount was max, this was set to the available amount
 
         // TODO: handle performance fees (issue #477)
 
@@ -284,26 +287,29 @@ contract PoolService is
         _componentService.decreasePoolBalance(
             instanceStore, 
             poolNftId, 
-            amount, 
+            unstakedAmount, 
             AmountLib.zero());
 
-        // check allowance
         IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
         address poolWallet = poolComponentInfo.wallet;
-        IERC20Metadata token = IERC20Metadata(poolComponentInfo.token);
-        uint256 tokenAllowance = token.allowance(poolWallet, address(poolComponentInfo.tokenHandler));
-        if (tokenAllowance < amount.toInt()) {
-            revert ErrorPoolServiceWalletAllowanceTooSmall(poolWallet, address(poolComponentInfo.tokenHandler), tokenAllowance, amount.toInt());
+
+        // check allowance
+        {
+            IERC20Metadata token = IERC20Metadata(poolComponentInfo.token);
+            uint256 tokenAllowance = token.allowance(poolWallet, address(poolComponentInfo.tokenHandler));
+            if (tokenAllowance < unstakedAmount.toInt()) {
+                revert ErrorPoolServiceWalletAllowanceTooSmall(poolWallet, address(poolComponentInfo.tokenHandler), tokenAllowance, amount.toInt());
+            }
         }
 
         // transfer amount to bundle owner
         address owner = getRegistry().ownerOf(bundleNftId);
         // TODO: centralize token handling (issue #471)
-        poolComponentInfo.tokenHandler.transfer(poolWallet, owner, amount);
+        poolComponentInfo.tokenHandler.transfer(poolWallet, owner, unstakedAmount);
         
-        emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, amount);
+        emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount);
 
-        return amount;
+        return unstakedAmount;
     }
 
     function _getPerformanceFee(InstanceReader instanceReader, NftId poolNftId)

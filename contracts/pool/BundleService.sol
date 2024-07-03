@@ -266,6 +266,7 @@ contract BundleService is
         external 
         virtual
         // TODO: restricted() (once #462 is done)
+        returns (Amount unstakedAmount)
     {
         InstanceStore instanceStore = instance.getInstanceStore();
         (
@@ -274,17 +275,26 @@ contract BundleService is
             Amount feeAmount
         ) = instanceStore.getAmounts(bundleNftId);
 
+        Amount unstakedAmount = amount;
         Amount availableAmount = balanceAmount - (lockedAmount + feeAmount);
+
+        // if amount is max, then unstake all available 
+        if (amount.gte(AmountLib.max())) {
+            unstakedAmount = availableAmount;
+        }
         
-        if (availableAmount < amount) {
+        // ensure unstaked amount does not exceed available amount
+        if (unstakedAmount > availableAmount) {
             revert ErrorBundleServiceStakeAmountExceedsLimit(amount, availableAmount);
         }
 
         _componentService.decreaseBundleBalance(
             instanceStore, 
             bundleNftId, 
-            amount, 
+            unstakedAmount, 
             AmountLib.zero());
+            
+        return unstakedAmount;
     }
 
     /// @inheritdoc IBundleService
