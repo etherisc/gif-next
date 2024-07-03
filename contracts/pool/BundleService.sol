@@ -286,15 +286,35 @@ contract BundleService is
             AmountLib.zero());
     }
 
+    /// @inheritdoc IBundleService
     function extend(NftId bundleNftId, Seconds lifetimeExtension) 
         external 
         virtual
         restricted
         returns (Timestamp extendedExpiredAt) 
     {
-        // TODO: implement lifetime extension
-        // TODO: bundle must be active or locked, not expired or closed
-        revert("Not implemented yet");
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
+        StateId bundleState = instance.getInstanceReader().getMetadata(bundleNftId.toKey32(BUNDLE())).state;
+
+        // ensure bundle belongs to the pool
+        if (bundleInfo.poolNftId != poolNftId) {
+            revert ErrorBundleServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+        }
+
+        // ensure bundle is active and not yet expired
+        if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.blockTimestamp()) {
+            revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
+        }
+
+        // update bundle lifetime and store in instance
+        bundleInfo.lifetime = bundleInfo.lifetime + lifetimeExtension;
+        bundleInfo.expiredAt = bundleInfo.expiredAt.addSeconds(lifetimeExtension);
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+
+        emit LogBundleServiceBundleExtended(bundleNftId, lifetimeExtension, bundleInfo.expiredAt);
+
+        return bundleInfo.expiredAt;
     }
 
 

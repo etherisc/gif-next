@@ -34,6 +34,7 @@ interface IBundleService is IService {
     error ErrorBundleServiceStakeAmountExceedsLimit(Amount amount, Amount limit);
 
     event LogBundleServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
+    event LogBundleServiceBundleExtended(NftId bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
 
     /// @dev create a new bundle for the specified attributes
     /// may only be called by pool service
