@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {IBundle} from "../instance/module/IBundle.sol";
 import {IBundleService} from "./IBundleService.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -264,22 +266,19 @@ contract PoolService is
         InstanceReader instanceReader = instance.getInstanceReader();
         InstanceStore instanceStore = instance.getInstanceStore();
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
-
+        
         if (bundleInfo.poolNftId != poolNftId) {
             revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
+        }
+
+        if (amount.eqz()) {
+            revert ErrorPoolServiceAmountIsZero();
         }
 
         // call bundle service for bookkeeping and additional checks
         _bundleService.unstake(instance, bundleNftId, amount);
 
-        // TODO: no performance fees right now -> separate new ticket
-        // FIXME: performance fee is only calculated on the earnings
-        (
-            Amount performanceFeeAmount,
-            Amount netAmount
-        ) = FeeLib.calculateFee(
-            _getPerformanceFee(instanceReader, poolNftId), 
-            amount);
+        // TODO: handle performance fees (issue #477)
 
         // update pool bookkeeping - performance fees stay in the pool, but as fees 
         _componentService.decreasePoolBalance(
@@ -288,15 +287,23 @@ contract PoolService is
             amount, 
             AmountLib.zero());
 
-        _componentService.increasePoolBalance(
-            instanceStore, 
-            poolNftId, 
-            AmountLib.zero(), 
-            performanceFeeAmount);
+        // check allowance
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+        address poolWallet = poolComponentInfo.wallet;
+        IERC20Metadata token = IERC20Metadata(poolComponentInfo.token);
+        uint256 tokenAllowance = token.allowance(poolWallet, address(poolComponentInfo.tokenHandler));
+        if (tokenAllowance < amount.toInt()) {
+            revert ErrorPoolServiceWalletAllowanceTooSmall(poolWallet, address(poolComponentInfo.tokenHandler), tokenAllowance, amount.toInt());
+        }
 
-        // TODO: transfer net amount to bundle owner (allowance)
+        // transfer amount to bundle owner
+        address owner = getRegistry().ownerOf(bundleNftId);
+        // TODO: centralize token handling (issue #471)
+        poolComponentInfo.tokenHandler.transfer(poolWallet, owner, amount);
+        
+        emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, amount);
 
-        // TODO: log event
+        return amount;
     }
 
     function _getPerformanceFee(InstanceReader instanceReader, NftId poolNftId)

@@ -24,11 +24,14 @@ interface IPoolService is IService {
     event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
 
     event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
+    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount);
 
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
     error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
     error ErrorPoolServiceMaxCapitalAmountExceeded(NftId poolNftId, Amount maxCapitalAmount, Amount capitalAmount, Amount amountToBeAdded);
+    error ErrorPoolServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
+    error ErrorPoolServiceAmountIsZero();
 
     /// @dev defines the required role for bundle owners for the calling pool
     /// default implementation returns PUBLIC ROLE
