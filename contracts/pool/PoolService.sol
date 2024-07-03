@@ -128,6 +128,7 @@ contract PoolService is
         // TODO add logging
     }
 
+    /// @inheritdoc IPoolService
     function createBundle(
         address bundleOwner, // initial bundle owner
         Fee memory fee, // fees deducted from premium that go to bundle owner
@@ -267,6 +268,7 @@ contract PoolService is
         // call bundle service for bookkeeping and additional checks
         _bundleService.unstake(instance, bundleNftId, amount);
 
+        // TODO: no performance fees right now -> separate new ticket
         // FIXME: performance fee is only calculated on the earnings
         (
             Amount performanceFeeAmount,

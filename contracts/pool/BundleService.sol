@@ -243,9 +243,7 @@ contract BundleService is
         virtual
         restricted()
     {
-        // TODO: check not locked
-        // TODO: check not expired
-        // TODO: check not closed
+        // TODO: check not expired and not closed
 
         _componentService.increaseBundleBalance(
             instance.getInstanceStore(), 
@@ -271,7 +269,6 @@ contract BundleService is
             Amount feeAmount
         ) = instanceStore.getAmounts(bundleNftId);
 
-        // TODO: should the available amount include the fees or not? 
         Amount availableAmount = balanceAmount - (lockedAmount + feeAmount);
         
         if (availableAmount < amount) {
@@ -282,7 +279,6 @@ contract BundleService is
             instanceStore, 
             bundleNftId, 
             amount, 
-            // TODO: if above includes fees, how to split this? 
             AmountLib.zero());
     }
 
