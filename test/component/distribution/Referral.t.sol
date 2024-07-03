@@ -126,8 +126,8 @@ contract ReferralTest is ReferralTestBase {
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
 
         uint256 netPremium = 100;
-        uint256 expectedPremium = netPremium + 14; // 100 (net premium) + 14 (distribution fee 3 + 11 distributor commission)
-        assertEq(token.balanceOf(address(customer)), initialCustomerBalance - expectedPremium, "customer balance not 886");
+        uint256 expectedPremium = netPremium + 17; // 100 (net premium) + 14 (distribution fee 3 + pool fee 3 + 11 distributor commission)
+        assertEq(token.balanceOf(address(customer)), initialCustomerBalance - expectedPremium, "customer balance not 883");
 
         {
             IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
@@ -146,8 +146,9 @@ contract ReferralTest is ReferralTestBase {
         assertEq(instanceReader.getFeeAmount(distributorNftId).toInt(), 3, "sumCommisions not 3");
 
         // check pool financials and balance
-        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), initialPoolBalance + netPremium, "unexpected pool balance (1)");
-        assertEq(token.balanceOf(pool.getWallet()), initialPoolBalance + netPremium, "unexpected pool balance (2)");
+        uint256 expectedPoolFee = 3;
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), initialPoolBalance + netPremium + expectedPoolFee, "unexpected pool balance (1)");
+        assertEq(token.balanceOf(pool.getWallet()), initialPoolBalance + netPremium + expectedPoolFee, "unexpected pool balance (2)");
 
         assertEq(instanceBundleSet.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleSet.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");

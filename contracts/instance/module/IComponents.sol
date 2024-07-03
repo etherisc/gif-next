@@ -14,6 +14,7 @@ interface IComponents {
 
     struct ComponentInfo {
         string name; // component name (needs to be unique per instance)
+        // TODO: why here **AND** in ProductInfo/PoolInfo?
         NftId productNftId;
         IERC20Metadata token;
         TokenHandler tokenHandler;

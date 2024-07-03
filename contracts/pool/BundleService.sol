@@ -241,7 +241,7 @@ contract BundleService is
     ) 
         external 
         virtual
-        restricted()
+        // TODO: restricted() (once #462 is done)
     {
         IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
         StateId bundleState = instance.getInstanceReader().getMetadata(bundleNftId.toKey32(BUNDLE())).state;
@@ -265,7 +265,7 @@ contract BundleService is
     ) 
         external 
         virtual
-        restricted()
+        // TODO: restricted() (once #462 is done)
     {
         InstanceStore instanceStore = instance.getInstanceStore();
         (
@@ -291,7 +291,7 @@ contract BundleService is
     function extend(NftId bundleNftId, Seconds lifetimeExtension) 
         external 
         virtual
-        restricted
+        // TODO: restricted() (once #462 is done)
         returns (Timestamp extendedExpiredAt) 
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());

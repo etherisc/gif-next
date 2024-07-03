@@ -186,8 +186,8 @@ contract PoolService is
         view
         returns (Fee memory stakingFee)
     {
-        NftId productNftId = instanceReader.getPoolInfo(poolNftId).productNftId;
-        return instanceReader.getPoolInfo(productNftId).stakingFee;
+        NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
+        return instanceReader.getProductInfo(productNftId).stakingFee;
     }
 
     function closeBundle(NftId bundleNftId)
@@ -210,7 +210,7 @@ contract PoolService is
     function stake(NftId bundleNftId, Amount amount) 
         external 
         virtual
-        restricted()
+        // TODO: restricted() (once #462 is done)
         returns(Amount netAmount) 
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
@@ -259,7 +259,7 @@ contract PoolService is
     function unstake(NftId bundleNftId, Amount amount) 
         external 
         virtual
-        restricted()
+        // TODO: restricted() (once #462 is done)
         returns(Amount netAmount) 
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
