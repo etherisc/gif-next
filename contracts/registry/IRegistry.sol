@@ -16,6 +16,7 @@ interface IRegistry is IERC165 {
 
     event LogRegistration(NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner);
     event LogServiceRegistration(VersionPart majorVersion, ObjectType domain);
+    event LogChainRegistryRegistration(NftId nftId, uint256 chainId, address chainRegistryAddress);
 
     // initialize
     error ErrorRegistryCallerNotDeployer();
@@ -27,7 +28,7 @@ interface IRegistry is IERC165 {
     error ErrorRegistryAddressZero(NftId nftId);
 
     // registerService()
-    error ErrorRegistryCallerNotReleaseRegistry();
+    error ErrorRegistryCallerNotReleaseRegistry(); //TODO consider using onlyReleaseRegistry() modifier -> if not -> delete this error
     error ErrorRegistryServiceAddressZero(); 
     error ErrorRegistryServiceVersionZero(); 
     error ErrorRegistryNotService(address service, ObjectType objectType);
@@ -39,7 +40,9 @@ interface IRegistry is IERC165 {
     error ErrorRegistryCoreTypeRegistration();
 
     // _register()
+    // TODO consider adding object address to errors
     error ErrorRegistryParentAddressZero();
+    error ErrorRegistryGlobalRegistryAsParent(ObjectType objectType, NftId parentNftId);
     error ErrorRegistryTypesCombinationInvalid(ObjectType objectType, ObjectType parentType);
     error ErrorRegistryContractAlreadyRegistered(address objectAddress);
 

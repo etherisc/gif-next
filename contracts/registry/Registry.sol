@@ -7,8 +7,8 @@ import {AccessManaged} from "@openzeppelin/contracts/access/manager/AccessManage
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {VersionPart} from "../type/Version.sol";
-import {ObjectType, PROTOCOL, REGISTRY, SERVICE, INSTANCE, STAKE, STAKING, PRODUCT, DISTRIBUTION, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../type/ObjectType.sol";
+import {VersionPart, VersionPartLib} from "../type/Version.sol";
+import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, STAKE, STAKING, PRODUCT, DISTRIBUTION, DISTRIBUTOR, ORACLE, POOL, POLICY, BUNDLE} from "../type/ObjectType.sol";
 
 import {ChainNft} from "./ChainNft.sol";
 import {IRegistry} from "./IRegistry.sol";
@@ -21,10 +21,12 @@ import {RegistryAdmin} from "./RegistryAdmin.sol";
 // Each NFT minted by registry is accosiated with:
 // 1) NFT owner
 // 2) registred contract OR object stored in registered (parent) contract
-// Three registration flows:
+// Five registration flows:
 // 1) registerService() -> registers IService address by ReleaseRegistry (ReleaseRegistry is set at deployment time)
 // 2) register() -> registers IRegisterable address by IService (INSTANCE, PRODUCT, POOL, DISTRIBUTION, ORACLE)
 // 3)            -> registers object by IService (POLICY, BUNDLE, STAKE)
+// 4) registerWithCustomType() -> registers IRegisterable address with custom type by IService
+// 5) registerChainRegistry -> registers IRegistry address (from different chain) by ReleaseRegistry (ONLY on mainnet)
 
 /// @dev Chain Registry contract implementing IRegistry.
 /// IRegistry for method details.
@@ -134,7 +136,7 @@ contract Registry is
         _stakingNftId = _registerStaking();
     }
 
-
+    // TODO why nftId is given as arg?
     /// @inheritdoc IRegistry
     function registerRegistry(
         NftId nftId,
@@ -149,7 +151,8 @@ contract Registry is
             revert ErrorRegistryNotOnMainnet(block.chainid);
         }
 
-        // check registry is not arelady registered
+        // check registry is not already registered
+        // TODO chainNft handles this check during mint, same nftId can not be minted twice
         if (isRegistered(nftId)) {
             revert ErrorRegistryAlreadyRegistered(nftId);
         }
@@ -170,7 +173,7 @@ contract Registry is
             chainId,
             ObjectInfo({
                 nftId: nftId,
-                parentNftId: REGISTRY_NFT_ID,
+                parentNftId: REGISTRY_NFT_ID, // TODO better to use GLOBAL_REGISTRY_NFT_ID?
                 objectType: REGISTRY(),
                 isInterceptor: false,
                 objectAddress: registryAddress,
@@ -178,6 +181,9 @@ contract Registry is
                 data: ""  
             }),
             false); // don't update address lookup for registries on different chains
+            // TODO means 1) non of getters "by address" will work for chain registries; 2) chain regerstries can have same address
+
+        emit LogChainRegistryRegistration(nftId, chainId, registryAddress);
     }
 
 
@@ -207,11 +213,6 @@ contract Registry is
             revert ErrorRegistryDomainZero(service);
         }
 
-        // check contract has not already been registered
-        if(_service[version][domain] != address(0)) {
-            revert ErrorRegistryDomainAlreadyRegistered(service, version, domain);
-        }
-
         // check service has proper type
         if(info.objectType != SERVICE()) {
             revert ErrorRegistryNotService(service, info.objectType);
@@ -220,7 +221,12 @@ contract Registry is
         // check that parent has registry type
         if(info.parentNftId != REGISTRY_NFT_ID) {
             revert ErrorRegistryServiceParentNotRegistry(info.parentNftId);
-        }        
+        }
+
+        // check service has not already been registered
+        if(_service[version][domain] != address(0)) {
+            revert ErrorRegistryDomainAlreadyRegistered(service, version, domain);
+        }
 
         _service[version][domain] = service;
         nftId = _register(info);
@@ -269,6 +275,8 @@ contract Registry is
         }
 
         if(
+            objectType == ObjectTypeLib.zero() ||
+            parentType == ObjectTypeLib.zero() ||
             parentType == PROTOCOL() ||
             parentType == SERVICE()
         ) {
@@ -281,7 +289,7 @@ contract Registry is
 
     /// @dev earliest GIF major version 
     function getInitialVersion() external view returns (VersionPart) {
-        return _releaseRegistry.getInitialVersion();
+        return VersionPartLib.toVersionPart(_releaseRegistry.INITIAL_GIF_VERSION());
     }
 
     /// @dev next GIF release version to be released
@@ -419,23 +427,32 @@ contract Registry is
         internal
         returns(NftId nftId)
     {
-        ObjectType objectType = info.objectType;
+        ObjectType objectType = info.objectType; // do not care here, never PROTOCOL(), REGISTRY()
         bool isInterceptor = info.isInterceptor;
-        address objectAddress = info.objectAddress;
-        address owner = info.initialOwner;
+        address objectAddress = info.objectAddress; // do not care here, can be 0
+        address owner = info.initialOwner; // do not care here, can be 0
 
-        NftId parentNftId = info.parentNftId;
+        NftId parentNftId = info.parentNftId; // do not care here, can not be 0
         ObjectInfo memory parentInfo = _info[parentNftId];
-        address parentAddress = parentInfo.objectAddress;
+        address parentAddress = parentInfo.objectAddress; // can be 0
 
         // parent is contract -> need to check? -> check before minting
         // special case: staking: to protocol possible as well
-        // special case: global registry nft as parent when not on mainnet -> global registry address is 0
+        // NO LONGER TRUE: special case: global registry nft as parent when not on mainnet -> global registry address is 0
         // special case: when parentNftId == CHAIN_NFT.mint(), check for zero parent address before mint
         // special case: when parentNftId == CHAIN_NFT.mint() && objectAddress == initialOwner
-        if(objectType != STAKE()) {
+        // Parent can have 0 address in case of STAKE for PROTOCOL / CUSTOM_TYPE for object
+        // But it MUST be registered -> parentType != 0 && parentNftId != 0
+        /*if(objectType != STAKE()) {
             if(parentAddress == address(0)) {
                 revert ErrorRegistryParentAddressZero();
+            }
+        }*/
+    
+        // global registry is never parent when not on mainnet
+        if(block.chainid != 1) {
+            if(parentNftId == GLOBAL_REGISTRY_NFT_ID) {
+                revert ErrorRegistryGlobalRegistryAsParent(objectType, parentNftId);
             }
         }
 
@@ -453,6 +470,7 @@ contract Registry is
         _info[nftId] = info;
         _setAddressForNftId(nftId, objectAddress);
 
+        // TODO isInterceptor may be false but interceptorAddress != 0...? -> use interceptorAddress instead of isInterceptor?
         emit LogRegistration(nftId, parentNftId, objectType, isInterceptor, objectAddress, owner);
 
         // calls nft receiver(1) and interceptor(2)
@@ -508,7 +526,6 @@ contract Registry is
         uint256 protocolId = CHAIN_NFT.PROTOCOL_NFT_ID();
         protocolNftId = NftIdLib.toNftId(protocolId);
 
-        // _info[protocolNftId] = ObjectInfo({
         _registerForNft(
             protocolNftId,
             ObjectInfo({
@@ -578,6 +595,7 @@ contract Registry is
     {
 
         // update registry lookup variables
+        // TODO beter to check for overwrite here instead of isRegistered() in registerChainRegistry()?
         _registryNftIdByChainId[chainId] = nftId;
         _chainId.push(chainId);
 
@@ -611,6 +629,7 @@ contract Registry is
     }
 
     /// @dev Register the provided object info for the specified NFT ID.
+    // TODO consider ommiting nftId arg and use info.nftId instead
     function _registerForNft(
         NftId nftId, 
         ObjectInfo memory info, 
@@ -624,6 +643,7 @@ contract Registry is
             _setAddressForNftId(nftId, info.objectAddress);
         }
 
+        // calls nft receiver
         CHAIN_NFT.mint(info.initialOwner, nftId.toInt());
     }
 
@@ -649,9 +669,11 @@ contract Registry is
 
     /// @dev defines which object - parent types relations are allowed to register
     /// EACH object type MUST have only one parent type across ALL mappings
+    // TODO "STAKE" violates this rule
     function _setupValidCoreTypesAndCombinations() 
         private
     {
+        _coreTypes[PROTOCOL()] = true;
         _coreTypes[REGISTRY()] = true;
         _coreTypes[SERVICE()] = true;
         _coreTypes[INSTANCE()] = true;
@@ -665,6 +687,8 @@ contract Registry is
         _coreTypes[STAKING()] = true;
         _coreTypes[STAKE()] = true;
 
+        // types combinations allowed to use with register() function ONLY
+        // TODO consider dissalowing staking for registry? it is not registered through register() function?
         _coreContractCombinations[STAKING()][REGISTRY()] = true; // only for chain staking contract
         _coreContractCombinations[INSTANCE()][REGISTRY()] = true;
 
@@ -674,13 +698,13 @@ contract Registry is
         _coreContractCombinations[ORACLE()][INSTANCE()] = true;
         _coreContractCombinations[POOL()][INSTANCE()] = true;
 
-        // objects with coponent parents
+        // objects with component parents
         _coreObjectCombinations[DISTRIBUTOR()][DISTRIBUTION()] = true;
         _coreObjectCombinations[POLICY()][PRODUCT()] = true;
         _coreObjectCombinations[BUNDLE()][POOL()] = true;
 
         // staking
-        _coreObjectCombinations[STAKE()][PROTOCOL()] = true;
+        _coreObjectCombinations[STAKE()][PROTOCOL()] = true;// TODO consider allowing this combo only on mainnet?
         _coreObjectCombinations[STAKE()][INSTANCE()] = true;
     }
 }
