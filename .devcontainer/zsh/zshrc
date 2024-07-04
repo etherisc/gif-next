@@ -1,11 +1,11 @@
 # custom aliases for forge commands
 
-alias fb='forge build'
-alias fbw='forge build --watch'
-alias fbc='forge build contracts/'
-alias fbcw='forge build --watch contracts/'
+alias fb='FOUNDRY_PROFILE=ci forge build'
+alias fbw='FOUNDRY_PROFILE=ci forge build --watch'
+alias fbc='FOUNDRY_PROFILE=ci forge build contracts/'
+alias fbcw='FOUNDRY_PROFILE=ci forge build --watch contracts/'
 
-alias ft='forge test'
+alias ft='FOUNDRY_PROFILE=ci forge test'
 # exclude all fuzz and continuous tests
-alias ftf='forge test --nmt "testFuzz|test_continuous"'
-alias ftmw='forge test -vvvv --watch --mt'
+alias ftf='FOUNDRY_PROFILE=ci forge test --nmt "testFuzz|test_continuous"'
+alias ftmw='FOUNDRY_PROFILE=ci forge test -vvvv --watch --mt'

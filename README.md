@@ -178,6 +178,7 @@ forge coverage --report lcov
 
 ### Aliases 
 
+
 | Alias | Command |
 | --- | --- |
 | fb | forge build |
@@ -188,6 +189,7 @@ forge coverage --report lcov
 | ftf | forge test --nmt "testFuzz\|test_continuous" |
 | ftmw | forge test -vvvv --watch --mt |
 
+**Important**: All profiles are run using the foundry `ci` profile which disables the optimizer (for speed).
 
 ### Chisel session
 
