@@ -1229,6 +1229,70 @@ contract TestProduct is GifTest {
         product.expire(policyNftId, expireAtTs2);
     }
 
+    /// @dev test that policy expiration reverts if the expireAt timestamp is too early
+    function test_productPolicyExpire_expireAtTooEarly() public {
+        skip(10);
+
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
+
+        uint256 expireAt = createdAt - 5;
+        Timestamp expireAtTs = TimestampLib.toTimestamp(expireAt);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorIPolicyServicePolicyExpirationTooEarly.selector, 
+            policyNftId,
+            vm.getBlockTimestamp(),
+            expireAtTs));
+
+        // WHEN
+        product.expire(policyNftId, expireAtTs);
+    }
+
+
     function test_productCreateRisk() public {
         _prepareProductLocal();
         vm.startPrank(productOwner);
