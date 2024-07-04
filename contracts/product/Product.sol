@@ -274,6 +274,15 @@ abstract contract Product is
             policyNftId);
     }
 
+    function _expire(
+        NftId policyNftId,
+        Timestamp expireAt
+    )
+        internal
+    {
+        _getProductStorage()._policyService.expire(policyNftId, expireAt);
+    }
+
     function _collectPremium(
         NftId policyNftId,
         Timestamp activateAt

@@ -50,7 +50,7 @@ function neTimestamp(Timestamp a, Timestamp b) pure returns (bool) {
 
 /// @dev Converts the uint256 to a Timestamp.
 function toTimestamp(uint256 timestamp) pure returns (Timestamp) {
-    return Timestamp.wrap(uint40(timestamp));
+    return TimestampLib.toTimestamp(timestamp);
 }
 
 // TODO move to TimestampLib and rename to zero()
@@ -71,6 +71,10 @@ library TimestampLib {
     
     function blockTimestamp() public view returns (Timestamp) {
         return Timestamp.wrap(uint40(block.timestamp));
+    }
+
+    function toTimestamp(uint256 timestamp) public pure returns (Timestamp) {
+        return Timestamp.wrap(uint40(timestamp));
     }
     
     /// @dev return true if Timestamp a is after Timestamp b

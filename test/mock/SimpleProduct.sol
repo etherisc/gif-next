@@ -149,6 +149,13 @@ contract SimpleProduct is
         _decline(policyNftId);
     }
 
+    function expire(
+        NftId policyNftId,
+        Timestamp expireAt
+    ) public {
+        _expire(policyNftId, expireAt);
+    }
+
     function collectPremium(
         NftId policyNftId,
         Timestamp activateAt

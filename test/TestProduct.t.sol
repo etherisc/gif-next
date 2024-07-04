@@ -209,6 +209,7 @@ contract TestProduct is GifTest {
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
 
+        // solhint-disable-next-line
         console.log("checking policy info after underwriting");
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.sumInsuredAmount.toInt(), 1000, "sumInsuredAmount not 1000");
@@ -217,6 +218,7 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
+        // solhint-disable-next-line
         console.log("checking bundle amounts after underwriting");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
         assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount (1)");
@@ -635,6 +637,7 @@ contract TestProduct is GifTest {
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
+        // solhint-disable-next-line
         console.log("checking bundle amounts after collateralizaion");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
         assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount (3)");
@@ -841,6 +844,7 @@ contract TestProduct is GifTest {
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == CLOSED(), "policy state not CLOSE");
 
+        // solhint-disable-next-line
         console.log("checking bundle amounts after collateralizaion");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
         uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
@@ -902,6 +906,68 @@ contract TestProduct is GifTest {
 
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId) == DECLINED(), "policy state not DECLINED");
+    }
+
+    function test_productPolicyExpire() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        // solhint-disable-next-line 
+        console.log("before collateralization of", policyNftId.toInt());
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
+        IPolicy.PolicyInfo memory policyInfoBefore = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoBefore.expiredAt.toInt(), createdAt + lifetime, "unexpected expiredAt");
+
+        // WHEN
+        uint256 expireAt = createdAt + 10;
+        Timestamp expireAtTs = TimestampLib.toTimestamp(expireAt);
+        product.expire(policyNftId, expireAtTs);
+
+        // THEN
+        IPolicy.PolicyInfo memory policyInfoAfter = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoAfter.expiredAt.toInt(), expireAt, "unexpected expiredAt");
     }
 
     function test_productCreateRisk() public {
