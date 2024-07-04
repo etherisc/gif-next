@@ -120,10 +120,7 @@ abstract contract Pool is
             false, // isExternallyManaged,
             false, // isVerifyingApplications,
             UFixedLib.toUFixed(1), // collateralizationLevel,
-            UFixedLib.toUFixed(1), // retentionLevel,
-            FeeLib.zero(), // initialPoolFee,
-            FeeLib.zero(), // initialStakingFee,
-            FeeLib.zero() // initialPerformanceFee,
+            UFixedLib.toUFixed(1) // retentionLevel,
         );
     }
 

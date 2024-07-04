@@ -105,17 +105,6 @@ contract TestPool is GifTest {
         assertTrue(componentInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
         assertEq(poolInfo.bundleOwnerRole.toInt(), PUBLIC_ROLE().toInt(), "unexpected bundle owner role");
 
-        // check fees
-        Fee memory poolFee = poolInfo.poolFee;
-        Fee memory stakingFee = poolInfo.stakingFee;
-        Fee memory performanceFee = poolInfo.performanceFee;
-        assertEq(poolFee.fractionalFee.toInt(), 0, "pool fee not 0");
-        assertEq(poolFee.fixedFee, 0, "pool fee not 0");
-        assertEq(stakingFee.fractionalFee.toInt(), 0, "staking fee not 0");
-        assertEq(stakingFee.fixedFee, 0, "staking fee not 0");
-        assertEq(performanceFee.fractionalFee.toInt(), 0, "performance fee not 0");
-        assertEq(performanceFee.fixedFee, 0, "performance fee not 0");
-
         // check pool balance
         assertTrue(instanceReader.getBalanceAmount(poolNftId).eqz(), "initial pool balance not zero");
         assertTrue(instanceReader.getFeeAmount(poolNftId).eqz(), "initial pool fee not zero");

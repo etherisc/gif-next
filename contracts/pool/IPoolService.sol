@@ -40,14 +40,6 @@ interface IPoolService is IService {
     /// @dev sets the max capital amount for the calling pool
     function setMaxCapitalAmount(Amount maxCapitalAmount) external;
 
-    /// @dev set pool sepecific fees
-    function setFees(
-        Fee memory poolFee,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external;
-
-
     /// @dev locks required collateral to cover the specified application (and turn it into a policy)
     /// - retention level == 1: the full collateral amount will be locked by the specified bundle
     /// - retention level < 1: a part of the coverage is provided by the specified bundle, the rest by the pool component

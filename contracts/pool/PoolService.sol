@@ -109,27 +109,6 @@ contract PoolService is
         emit LogPoolServiceBundleOwnerRoleSet(poolNftId, bundleOwnerRole);
     }
 
-
-    function setFees(
-        Fee memory poolFee,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    )
-        external
-        virtual
-    {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-
-        IComponents.PoolInfo memory poolInfo = instance.getInstanceReader().getPoolInfo(poolNftId);
-        poolInfo.poolFee = poolFee;
-        poolInfo.stakingFee = stakingFee;
-        poolInfo.performanceFee = performanceFee;
-
-        instance.getInstanceStore().updatePool(poolNftId, poolInfo, KEEP_STATE());
-
-        // TODO add logging
-    }
-
     /// @inheritdoc IPoolService
     function createBundle(
         address bundleOwner, // initial bundle owner
@@ -310,16 +289,6 @@ contract PoolService is
         emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount);
 
         return unstakedAmount;
-    }
-
-    function _getPerformanceFee(InstanceReader instanceReader, NftId poolNftId)
-        internal
-        virtual
-        view
-        returns (Fee memory performanceFee)
-    {
-        NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
-        return instanceReader.getPoolInfo(productNftId).performanceFee;
     }
 
     function processSale(

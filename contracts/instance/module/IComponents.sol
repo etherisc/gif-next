@@ -43,8 +43,5 @@ interface IComponents {
         bool isVerifyingApplications; // underwriting requires the pool component checks/confirms the applications 
         UFixed collateralizationLevel; // factor to calculate collateral for sum insurance (default 100%)
         UFixed retentionLevel; // amount of collateral held in pool (default 100%)
-        Fee poolFee; // pool fee on net premium
-        Fee stakingFee; // pool fee on staked capital from investor
-        Fee performanceFee; // pool fee on profits from capital investors
     }
 }
