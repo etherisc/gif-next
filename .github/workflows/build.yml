@@ -62,10 +62,10 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Compile contracts
-        run: forge build
+        run: forge build contracts/
 
       - name: Extract contract sizes report
-        run: forge build --sizes | egrep "|([^|]+)|([^|]*)|([^|]*)|" > contract_sizes.log
+        run: forge build contracts/ --sizes | egrep "|([^|]+)|([^|]*)|([^|]*)|" > contract_sizes.log
 
       - name: Archive size log
         uses: actions/upload-artifact@v4
