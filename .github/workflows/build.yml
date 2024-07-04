@@ -69,7 +69,7 @@ jobs:
         run: forge test -vv --nmt "testFuzz|test_continuous"
       
       - name: Run all tests
-        if: ${{ github.event_name == 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
+        if: ${{ github.event_name != 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
         run: forge test -vv
 
       - name: Extract contract sizes report
