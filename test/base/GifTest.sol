@@ -486,7 +486,7 @@ contract GifTest is GifDeployer {
             IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
             token.approve(address(poolComponentInfo.tokenHandler), DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
 
-            bundleNftId = SimplePool(address(pool)).createBundle(
+            (bundleNftId,) = SimplePool(address(pool)).createBundle(
                 FeeLib.zero(), 
                 DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals(), 
                 SecondsLib.toSeconds(DEFAULT_BUNDLE_LIFETIME), 

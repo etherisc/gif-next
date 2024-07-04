@@ -39,7 +39,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 2000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -93,7 +93,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 1000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -127,7 +127,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 2000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -156,7 +156,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 2000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -192,7 +192,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 2000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -227,7 +227,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 2000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -278,7 +278,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 2000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -330,7 +330,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 2000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -362,7 +362,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 2000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -391,7 +391,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 2000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -432,7 +432,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 1000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -472,7 +472,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 1000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -511,7 +511,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 1000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 
@@ -543,7 +543,7 @@ contract TestBundle is GifTest {
         token.approve(address(pool.getTokenHandler()), 1000);
 
         Seconds lifetime = SecondsLib.toSeconds(0);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             1000, 
             lifetime, 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {AmountLib} from "../../contracts/type/Amount.sol";
+import {Amount, AmountLib} from "../../contracts/type/Amount.sol";
 import {BasicPool} from "../../contracts/pool/BasicPool.sol";
 import {BasicPoolAuthorization} from "../../contracts/pool/BasicPoolAuthorization.sol";
 import {Fee} from "../../contracts/type/Fee.sol";
@@ -59,16 +59,18 @@ contract SimplePool is
     )
         external
         virtual 
-        returns(NftId bundleNftId)
+        returns(NftId bundleNftId, uint256 netStakedAmountInt)
     {
         address owner = msg.sender;
-        bundleNftId = _createBundle(
+        Amount netStakedAmount;
+        (bundleNftId, netStakedAmount) = _createBundle(
             owner,
             fee,
             AmountLib.toAmount(initialAmount),
             lifetime,
             filter
         );
+        netStakedAmountInt = netStakedAmount.toInt();
     }
 
 }

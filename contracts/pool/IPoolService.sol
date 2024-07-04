@@ -94,8 +94,7 @@ interface IPoolService is IService {
         bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
     )
         external 
-        returns(NftId bundleNftId); // the nft id of the newly created bundle
-        // TODO: return netAmount
+        returns(NftId bundleNftId, Amount netStakedAmount); // the nft id of the newly created bundle
 
 
     /// @dev closes the specified bundle

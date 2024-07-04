@@ -387,7 +387,7 @@ contract TestPricingService is GifTest {
             address(instanceReader.getComponentInfo(poolNftId).tokenHandler), 
             10000);
 
-        bundleNftId = pool.createBundle(
+        (bundleNftId, ) = pool.createBundle(
             bundleFee, 
             10000, 
             SecondsLib.toSeconds(604800), 

@@ -931,7 +931,7 @@ contract TestProduct is GifTest {
         token.approve(address(componentInfo.tokenHandler), bundleCapital);
 
         Fee memory bundleFee = FeeLib.toFee(UFixedLib.zero(), 10);
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             bundleFee, 
             bundleCapital, 
             SecondsLib.toSeconds(604800), 

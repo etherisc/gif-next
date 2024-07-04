@@ -306,7 +306,7 @@ contract ReferralTest is ReferralTestBase {
         token.approve(address(poolInfo.tokenHandler), bundleAmount);
 
         // SimplePool spool = SimplePool(address(pool));
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             bundleAmount, 
             SecondsLib.toSeconds(604800), 

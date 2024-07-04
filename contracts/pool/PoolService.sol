@@ -119,16 +119,13 @@ contract PoolService is
     )
         external 
         virtual
-        returns(NftId bundleNftId)
+        returns(NftId bundleNftId, Amount netStakedAmount)
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-        InstanceReader instanceReader = instance.getInstanceReader();
-
-        (
-            Amount stakingFeeAmount,
-            Amount stakingNetAmount
-        ) = FeeLib.calculateFee(
-            _getStakingFee(instanceReader, poolNftId), 
+        
+        Amount stakingFeeAmount;
+        (stakingFeeAmount, netStakedAmount) = FeeLib.calculateFee(
+            _getStakingFee(instance.getInstanceReader(), poolNftId), 
             stakingAmount);
 
         // TODO: staking amount must be be > maxCapitalAmount
@@ -138,7 +135,7 @@ contract PoolService is
             poolNftId,
             bundleOwner,
             fee,
-            stakingNetAmount,
+            netStakedAmount,
             lifetime,
             filter);
 
@@ -146,12 +143,12 @@ contract PoolService is
         _componentService.increasePoolBalance(
             instance.getInstanceStore(), 
             poolNftId, 
-            stakingNetAmount, 
+            netStakedAmount, 
             stakingFeeAmount);
 
         // pool bookkeeping and collect tokens from bundle owner
         _collectStakingAmount(
-            instanceReader, 
+            instance.getInstanceReader(), 
             poolNftId, 
             bundleOwner, 
             stakingAmount);
