@@ -50,7 +50,7 @@ jobs:
         run: npm run lint
 
   build_foundry:
-    name: Build and test (Foundry)
+    name: Build contracts (Foundry - default profile with optimizer)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -64,14 +64,6 @@ jobs:
       - name: Compile contracts
         run: forge build
 
-      - name: Run fasts tests without fuzz and continuous tests (label 'fast_tests')
-        if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
-        run: forge test -vv --nmt "testFuzz|test_continuous"
-      
-      - name: Run all tests
-        if: ${{ github.event_name != 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
-        run: forge test -vv
-
       - name: Extract contract sizes report
         run: forge build --sizes | egrep "|([^|]+)|([^|]*)|([^|]*)|" > contract_sizes.log
 
@@ -81,6 +73,31 @@ jobs:
           name: contract_sizes
           path: |
             contract_sizes.log
+
+  test_foundry:
+    name: Run tests (Foundry - ci profile)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+    
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run fasts tests without fuzz and continuous tests (label 'fast_tests')
+        if: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
+        env:
+          FOUNDRY_PROFILE: ci
+        run: forge test -vv --nmt "testFuzz|test_continuous"
+      
+      - name: Run all tests
+        if: ${{ github.event_name != 'pull_request' || ! contains(github.event.pull_request.labels.*.name, 'fast_tests') }}
+        env:
+          FOUNDRY_PROFILE: ci
+        run: forge test -vv
+
             
 
   publish:
@@ -89,7 +106,7 @@ jobs:
     permissions:
         contents: read
         id-token: write
-    needs: [build_hardhat, build_foundry]
+    needs: [build_hardhat, build_foundry, test_foundry]
     # only run if not on main and hardhat **and** founddry are successful and not dependabot
     if: ${{ github.ref != 'refs/heads/main' && contains(join(needs.*.result, ','), 'success') && github.actor != 'dependabot[bot]' }}
     steps:
@@ -127,7 +144,7 @@ jobs:
     permissions:
         contents: read
         # id-token: write
-    needs: [build_hardhat, build_foundry]
+    needs: [build_hardhat, build_foundry, test_foundry]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
