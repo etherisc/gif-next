@@ -908,6 +908,7 @@ contract TestProduct is GifTest {
         assertTrue(instanceReader.getPolicyState(policyNftId) == DECLINED(), "policy state not DECLINED");
     }
 
+    /// @dev test that policy expiration works 
     function test_productPolicyExpire() public {
         // GIVEN
         vm.startPrank(registryOwner);
@@ -968,6 +969,69 @@ contract TestProduct is GifTest {
         // THEN
         IPolicy.PolicyInfo memory policyInfoAfter = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfoAfter.expiredAt.toInt(), expireAt, "unexpected expiredAt");
+    }
+
+    /// @dev test that policy expiration reverts if policy is not active
+    function test_productPolicyExpire_policyNotActive() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        // solhint-disable-next-line 
+        product.decline(policyNftId);
+
+        assertTrue(instanceReader.getPolicyState(policyNftId) == DECLINED(), "policy state not DECLINED");
+
+        uint256 expireAt = createdAt + 10;
+        Timestamp expireAtTs = TimestampLib.toTimestamp(expireAt);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorIPolicyServicePolicyNotActive.selector, 
+            policyNftId,
+            DECLINED()));
+
+        // WHEN
+        product.expire(policyNftId, expireAtTs);
     }
 
     function test_productCreateRisk() public {
