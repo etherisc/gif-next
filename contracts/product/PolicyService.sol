@@ -115,12 +115,11 @@ contract PolicyService is
                 productNftId);
         }
         
-        StateId newPolicyState = DECLINED();
 
         // store updated policy info
         instance.getInstanceStore().updatePolicyState(
             applicationNftId, 
-            newPolicyState);
+            DECLINED());
 
         emit LogPolicyServicePolicyDeclined(applicationNftId);
     }
