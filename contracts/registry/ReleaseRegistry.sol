@@ -41,7 +41,7 @@ contract ReleaseRegistry is
 {
     using ObjectTypeLib for ObjectType;
 
-    uint256 public constant INITIAL_GIF_VERSION = 3;
+    uint256 public constant INITIAL_GIF_VERSION = 3;// first active version  
 
     event LogReleaseCreation(VersionPart version, bytes32 salt); 
     event LogReleaseActivation(VersionPart version);
@@ -99,7 +99,6 @@ contract ReleaseRegistry is
     mapping(VersionPart version => IRegistry.ReleaseInfo info) internal _releaseInfo;
     mapping(VersionPart version => IServiceAuthorization authz) internal _serviceAuthorization;
 
-    VersionPart private _initial;// first active version    
     VersionPart internal _latest; // latest active version
     VersionPart internal _next; // version to create and activate 
     mapping(VersionPart verson => StateId releaseState) private _state;
@@ -120,12 +119,12 @@ contract ReleaseRegistry is
         _registry = registry;
         _admin = RegistryAdmin(_registry.getRegistryAdminAddress());
 
-        _initial = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION);
         _next = VersionPartLib.toVersionPart(INITIAL_GIF_VERSION - 1);
     }
 
     /// @dev skips previous release if was not activated
     /// sets next release into state SCHEDULED
+    // TODO set specific state if release was skiped?
     function createNextRelease()
         external
         restricted() // GIF_ADMIN_ROLE
@@ -215,7 +214,7 @@ contract ReleaseRegistry is
             revert ErrorReleaseRegistryNoServiceRegistrationExpected();
         }
 
-        // service can work with release manager
+        // service can work with release registry and release version
         (
             IRegistry.ObjectInfo memory info,
             ObjectType serviceDomain,
@@ -353,10 +352,6 @@ contract ReleaseRegistry is
 
     function getLatestVersion() external view returns(VersionPart) {
         return _latest;
-    }
-
-    function getInitialVersion() external view returns(VersionPart) {
-        return _initial;
     }
 
     function getState(VersionPart version) external view returns (StateId stateId) {
