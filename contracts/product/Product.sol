@@ -265,6 +265,15 @@ abstract contract Product is
             activateAt);
     }
 
+    function _decline(
+        NftId policyNftId
+    )
+        internal
+    {
+        _getProductStorage()._policyService.decline(
+            policyNftId);
+    }
+
     function _collectPremium(
         NftId policyNftId,
         Timestamp activateAt

@@ -20,9 +20,8 @@ import {Timestamp, TimestampLib, zeroTimestamp} from "../contracts/type/Timestam
 import {IRisk} from "../contracts/instance/module/IRisk.sol";
 import {RiskId, RiskIdLib, eqRiskId} from "../contracts/type/RiskId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
-import {APPLIED, ACTIVE, COLLATERALIZED, CLOSED} from "../contracts/type/StateId.sol";
 import {ReferralId, ReferralLib} from "../contracts/type/Referral.sol";
-import {APPLIED, ACTIVE, COLLATERALIZED, CLOSED} from "../contracts/type/StateId.sol";
+import {APPLIED, ACTIVE, COLLATERALIZED, CLOSED, DECLINED} from "../contracts/type/StateId.sol";
 import {POLICY} from "../contracts/type/ObjectType.sol";
 import {DistributorType} from "../contracts/type/DistributorType.sol";
 import {SimpleDistribution} from "./mock/SimpleDistribution.sol";
@@ -857,6 +856,52 @@ contract TestProduct is GifTest {
         assertEq(token.balanceOf(address(pool)) - pb[address(pool)], 120, "pool balance not 10120"); // 100 (netPremium) + 10 (poolFee) + 10 (bundleFee)
 
         assertEq(instanceBundleSet.activePolicies(bundleNftId), 0, "expected no active policy");
+    }
+
+    function test_productDeclineApplication() public {
+        // GIVEN
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        // crete application
+        uint256 sumInsuredAmount = 1000;
+        Seconds lifetime = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetime,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+
+        vm.stopPrank();
+
+        assertTrue(policyNftId.gtz(), "policyNftId was zero");
+        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
+        
+        vm.startPrank(productOwner);
+        
+        // THEN
+        vm.expectEmit();
+        emit IPolicyService.LogPolicyServicePolicyDeclined(policyNftId);
+
+        // WHEN
+        product.decline(policyNftId);
+
+        // THEN 
+        assertTrue(instanceReader.getPolicyState(policyNftId) == DECLINED(), "policy state not DECLINED");
     }
 
     function test_productCreateRisk() public {

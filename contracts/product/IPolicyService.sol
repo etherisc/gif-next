@@ -38,6 +38,8 @@ interface IPolicyService is IService {
     error ErrorPolicyServicePremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount recalculatedPremiumAmount);
     error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount transferredPremiumAmount);
 
+    event LogPolicyServicePolicyDeclined(NftId policyNftId);
+
     /// @dev collateralizes the policy represented by {policyNftId}
     /// sets the policy state to collateralized
     /// may set the policy state to activated and set the activation date

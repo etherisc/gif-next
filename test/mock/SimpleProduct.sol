@@ -143,6 +143,12 @@ contract SimpleProduct is
         _collateralize(policyNftId, requirePremiumPayment, activateAt);
     }
 
+    function decline(
+        NftId policyNftId
+    ) public {
+        _decline(policyNftId);
+    }
+
     function collectPremium(
         NftId policyNftId,
         Timestamp activateAt
