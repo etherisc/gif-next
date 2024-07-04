@@ -152,8 +152,11 @@ contract SimpleProduct is
     function expire(
         NftId policyNftId,
         Timestamp expireAt
-    ) public {
-        _expire(policyNftId, expireAt);
+    ) 
+        public 
+        returns (Timestamp)
+    {
+        return _expire(policyNftId, expireAt);
     }
 
     function collectPremium(

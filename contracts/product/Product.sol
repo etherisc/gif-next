@@ -279,8 +279,9 @@ abstract contract Product is
         Timestamp expireAt
     )
         internal
+        returns (Timestamp)
     {
-        _getProductStorage()._policyService.expire(policyNftId, expireAt);
+        return _getProductStorage()._policyService.expire(policyNftId, expireAt);
     }
 
     function _collectPremium(

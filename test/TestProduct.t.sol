@@ -971,6 +971,127 @@ contract TestProduct is GifTest {
         assertEq(policyInfoAfter.expiredAt.toInt(), expireAt, "unexpected expiredAt");
     }
 
+    /// @dev test that policy expiration works when current timestamp is provided
+    function test_productPolicyExpire_currentTimestamp() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        // solhint-disable-next-line 
+        console.log("before collateralization of", policyNftId.toInt());
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
+        IPolicy.PolicyInfo memory policyInfoBefore = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoBefore.expiredAt.toInt(), createdAt + lifetime, "unexpected expiredAt");
+
+        // WHEN
+        Timestamp expireAtTs = TimestampLib.blockTimestamp();
+        product.expire(policyNftId, expireAtTs);
+
+        // THEN
+        IPolicy.PolicyInfo memory policyInfoAfter = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoAfter.expiredAt.toInt(), expireAtTs.toInt(), "unexpected expiredAt");
+    }
+
+    /// @dev test that policy expiration works when expireAt is set to 0
+    function test_productPolicyExpire_earliestPossible() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        // solhint-disable-next-line 
+        console.log("before collateralization of", policyNftId.toInt());
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+
+        // WHEN
+        Timestamp expireAtTs = TimestampLib.zero();
+        Timestamp expiredAt = product.expire(policyNftId, expireAtTs);
+
+        // THEN
+        assertEq(expiredAt.toInt(), vm.getBlockTimestamp(), "unexpected expiredAt (1)");
+        IPolicy.PolicyInfo memory policyInfoAfter = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoAfter.expiredAt.toInt(), vm.getBlockTimestamp(), "unexpected expiredAt (2)");
+    }
+
     /// @dev test that policy expiration reverts if policy is not active
     function test_productPolicyExpire_policyNotActive() public {
         // GIVEN

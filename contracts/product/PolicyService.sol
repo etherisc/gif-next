@@ -252,6 +252,7 @@ contract PolicyService is
         external
         override
         virtual
+        returns (Timestamp)
     {
         (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -270,11 +271,15 @@ contract PolicyService is
                 productNftId);
         }
 
+        if (expireAt.eqz()) {
+            expireAt = TimestampLib.blockTimestamp();
+        }
+
         // check preconditions
         if (expireAt >= policyInfo.expiredAt) {
             revert ErrorIPolicyServicePolicyExpirationTooLate(policyNftId, policyInfo.expiredAt, expireAt);
         }
-        if (expireAt <= TimestampLib.blockTimestamp()) {
+        if (expireAt < TimestampLib.blockTimestamp()) {
             revert ErrorIPolicyServicePolicyExpirationTooEarly(policyNftId, TimestampLib.blockTimestamp(), expireAt);
         }
         if (policyInfo.openClaimsCount > 0) {
@@ -285,6 +290,8 @@ contract PolicyService is
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
         emit LogPolicyServicePolicyExpirationUpdated(policyNftId, expireAt);
+
+        return expireAt;
     }
 
     function close(
