@@ -1,14 +1,10 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/utils/Strings.sol";
 
-import {console} from "../lib/forge-std/src/Script.sol";
 import {GifTest} from "./base/GifTest.sol";
 import {InstanceLinkedComponent} from "../contracts/shared/InstanceLinkedComponent.sol";
 import {IRegistry} from "../contracts/registry/IRegistry.sol";
-import {IStaking} from "../contracts/staking/IStaking.sol";
-import {IStakingService} from "../contracts/staking/IStakingService.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType} from "../contracts/type/ObjectType.sol";
 import {BUNDLE, COMPONENT, DISTRIBUTION, ORACLE, POOL, PRODUCT, POLICY, RISK, REQUEST, SERVICE, STAKING} from "../contracts/type/ObjectType.sol";

@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {Blocknumber, BlocknumberLib, neBlocknumber, eqBlocknumber, gtBlocknumber, gteBlocknumber, ltBlocknumber, lteBlocknumber, toBlocknumber, zeroBlocknumber, blockBlocknumber} from "../../contracts/type/Blocknumber.sol";
+
 import {Test} from "../../lib/forge-std/src/Test.sol";
-import "../../contracts/type/Blocknumber.sol";
 
 contract BlocknumberTest is Test {
-    using BlocknumberLib for Blocknumber;
 
     Blocknumber bn1;
     Blocknumber bn2;

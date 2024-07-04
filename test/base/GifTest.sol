@@ -594,6 +594,7 @@ contract GifTest is GifDeployer {
     )
         internal
     {
+        // solhint-disable no-console
         console.log("==========================================");
         console.log(aaName, "admin authorization");
         console.log(aaName, "admin contract:", address(aa));

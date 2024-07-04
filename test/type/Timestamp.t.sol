@@ -2,11 +2,10 @@
 pragma solidity ^0.8.20;
 
 import {Test} from "../../lib/forge-std/src/Test.sol";
-import "../../contracts/type/Timestamp.sol";
+import {Timestamp, TimestampLib, gteTimestamp, gtTimestamp, lteTimestamp, ltTimestamp, eqTimestamp, neTimestamp, toTimestamp, zeroTimestamp} from "../../contracts/type/Timestamp.sol";
 
 contract TimestampTest is Test {
-    using TimestampLib for Timestamp;
-
+    
     Timestamp ts1;
     Timestamp ts2;
     Timestamp ts3;
