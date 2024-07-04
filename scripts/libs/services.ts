@@ -365,6 +365,7 @@ export async function deployAndRegisterServices(owner: Signer, registry: Registr
                 AmountLib: libraries.amountLibAddress,
                 NftIdLib: libraries.nftIdLibAddress,
                 RoleIdLib: libraries.roleIdLibAddress,
+                SecondsLib: libraries.secondsLibAddress,
                 TimestampLib: libraries.timestampLibAddress,
                 VersionLib: libraries.versionLibAddress, 
                 VersionPartLib: libraries.versionPartLibAddress, 
