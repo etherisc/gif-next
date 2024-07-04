@@ -15,6 +15,8 @@ import {ITransferInterceptor} from "../../contracts/registry/ITransferIntercepto
 
 contract RegisterableMock is ERC165, IRegisterable, ITransferInterceptor {
 
+    error ErrorRegisterableMockIsNotInterceptor(address registerable);
+
     IRegistry.ObjectInfo internal _info;
 
     constructor(
@@ -58,9 +60,15 @@ contract RegisterableMock is ERC165, IRegisterable, ITransferInterceptor {
 
     // from ITransferInterceptor
     function nftMint(address to, uint256 tokenId) external {
+        if(!_info.isInterceptor) {
+            revert ErrorRegisterableMockIsNotInterceptor(address(this));
+        }
         // do nothing
     }
     function nftTransferFrom(address from, address to, uint256 tokenId) external {
+        if(!_info.isInterceptor) {
+            revert ErrorRegisterableMockIsNotInterceptor(address(this));
+        }
         // do nothing
     }
 

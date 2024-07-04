@@ -3,16 +3,15 @@ pragma solidity ^0.8.20;
 
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
-import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
-import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, BUNDLE, POLICY, STAKE} from "../../contracts/type/ObjectType.sol";
+import {VersionLib, VersionPart, VersionPartLib} from "../../contracts/type/Version.sol";
+import {NftIdLib} from "../../contracts/type/NftId.sol";
+import {ObjectType, ObjectTypeLib, SERVICE} from "../../contracts/type/ObjectType.sol";
 
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
 
 import {RegistryTestBase} from "./RegistryTestBase.sol";
 import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
+import {RegisterServiceFuzzTest} from "./RegisterServiceFuzz.t.sol";
 
 contract RegisterServiceConcreteTest is RegistryTestBase {
 
@@ -163,7 +162,91 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
         ObjectType domain = ObjectTypeLib.toObjectType(250);
         address sender = address(0x000000000000000000000000000000005FA4428e);
 
-        _registerService_testFunction(sender, info, version, domain);
+        registerService_testFunction(sender, info, version, domain);
+    }
+
+    function test_registerService_specificCases_8() public
+    {
+        // args=[0x4Dc593023536B7b8c4f254893f3bCA460c45EF8B, ObjectInfo({ nftId: 27734615690662410822268275 [2.773e25], parentNftId: 915066191401421401 [9.15e17], objectType: 0, isInterceptor: true, objectAddress: 0x24E9ffB8B924aA3d30e8F701Cd33f15C871cC8AC, initialOwner: 0xB3d21d1a92C4d65A6b878facf5dB1fB422199394, data: 0x0a24f63bcf984404134eb0867bed5c4b0a1675ba2da124de18a0897e460b5c22b635957e19b24af75a006242e9aeff5144f9cc9ec2f04a17278dafa058e2086f3d1e9ca393607a2b6632ec055e3db2 }), 8, 254]]
+        // testFuzz_registerService(address sender, IRegistry.ObjectInfo memory info, VersionPart version, ObjectType domain)
+
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            NftIdLib.toNftId(27734615690662410822268275),
+            NftIdLib.toNftId(915066191401421401),
+            ObjectTypeLib.toObjectType(0),
+            true,
+            address(0x24E9ffB8B924aA3d30e8F701Cd33f15C871cC8AC),
+            address(0xB3d21d1a92C4d65A6b878facf5dB1fB422199394),
+            "0x0a24f63bcf984404134eb0867bed5c4b0a1675ba2da124de18a0897e460b5c22b635957e19b24af75a006242e9aeff5144f9cc9ec2f04a17278dafa058e2086f3d1e9ca393607a2b6632ec055e3db2"
+        );
+
+        VersionPart version = VersionLib.toVersionPart(8);
+        ObjectType domain = ObjectTypeLib.toObjectType(254);
+        address sender = address(0x4Dc593023536B7b8c4f254893f3bCA460c45EF8B);
+
+        registerService_testFunction(sender, info, version, domain);
+    }
+
+    function test_registerServiceWithDuplicateVersionAndDomain_specificCase() public
+    {
+        // args=[ObjectInfo({ nftId: 58320260334610590964687536414 [5.832e28], parentNftId: 23060 [2.306e4], objectType: 7, isInterceptor: false, objectAddress: 0x35EEEF71D74d608fe53AB0d76CF84F261a2B81E5, initialOwner: 0x000000000000000000000000000000001641c88f, data: 0x0000000000000000000000000000000000000000000000000000000000000f7b }), ObjectInfo({ nftId: 129, parentNftId: 1148, objectType: 181, isInterceptor: true, objectAddress: 0x0000000000000000000000000000000000001C12, initialOwner: 0x00000000000000000000000000000000000017c5, data: 0x000000000000000000000000000000000000000000000000000000002255341b }), 224, 27]] 
+        // testFuzz_registerService_withDuplicateVersionAndDomain((uint96,uint96,uint8,bool,address,address,bytes),(uint96,uint96,uint8,bool,address,address,bytes),uint8,uint8)
+
+        require(!EnumerableSet.contains(_registeredAddresses, 0x35EEEF71D74d608fe53AB0d76CF84F261a2B81E5), "Test error: address already registered #1");
+        // !!! TODO this address is registered but not part of _registeredAddresses set
+        require(!registry.isRegistered(0x35EEEF71D74d608fe53AB0d76CF84F261a2B81E5), "Test error: address already registered #2");
+
+        IRegistry.ObjectInfo memory info_1 = IRegistry.ObjectInfo(
+            NftIdLib.toNftId(58320260334610590964687536414),
+            NftIdLib.toNftId(23060),
+            ObjectTypeLib.toObjectType(7),
+            false,
+            address(0x35EEEF71D74d608fe53AB0d76CF84F261a2B81E5),
+            address(0x000000000000000000000000000000001641c88f),
+            "0x0000000000000000000000000000000000000000000000000000000000000f7b"
+        );
+
+        IRegistry.ObjectInfo memory info_2 = IRegistry.ObjectInfo(
+            NftIdLib.toNftId(129),
+            NftIdLib.toNftId(1148),
+            ObjectTypeLib.toObjectType(181),
+            true,
+            address(0x0000000000000000000000000000000000001C12),
+            address(0x00000000000000000000000000000000000017c5),
+            "0x000000000000000000000000000000000000000000000000000000002255341b"
+        );
+
+        VersionPart version = VersionLib.toVersionPart(224);
+        ObjectType domain = ObjectTypeLib.toObjectType(27);
+
+
+        info_1.parentNftId = registryNftId;
+        info_1.objectType = SERVICE();
+        info_1.isInterceptor = false;
+
+        info_2.parentNftId = registryNftId;
+        info_2.objectType = SERVICE();
+        info_2.isInterceptor = false;
+
+
+        _startPrank(address(releaseRegistry));
+
+        _assert_registerService(info_1, version, domain, false, "");
+
+        _assert_registerService(
+            info_2,
+            version,
+            domain,
+            true, 
+            abi.encodeWithSelector(
+                IRegistry.ErrorRegistryDomainAlreadyRegistered.selector,
+                info_2.objectAddress,
+                version,
+                domain)
+        );
+
+        _stopPrank();
+
     }
 
     // TODO move to release manager tests
@@ -194,4 +277,32 @@ contract RegisterServiceConcreteTest is RegistryTestBase {
 
         _stopPrank();
     }*/
+}
+
+
+contract RegisterServiceWithPresetConcreteTest is RegistryTestBaseWithPreset
+{
+
+    function test_registerService_specificCases_9() public
+    {
+        // args=[0x4Dc593023536B7b8c4f254893f3bCA460c45EF8B, 27734615690662410822268275 [2.773e25], 1120358745980813599 [1.12e18], true, 0x9f42f339A39F93e66782894Df2042c2b24E9FFB8, 0xB924Aa3d30e8F701cd33f15C871cC8aCB3d21D1a, 0xd65a6b878facf5db1fb422199394c9190a24f63bcf984404134eb0867bed5c4b0a1675ba2da124de18a0897e460b5c22b635957e19b24af75a006242e9aeff5144f9cc9ec2f04a17278dafa058, 13, 8]]
+        // testFuzz_registerService_withValidType_00P011(address sender, NftId nftId, uint parentIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data, VersionPart version, ObjectType domain)
+
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            NftIdLib.toNftId(27734615690662410822268275),
+            _nftIdByType[1120358745980813599 % _nftIdByType.length],
+            SERVICE(),
+            true,
+            address(0x9f42f339A39F93e66782894Df2042c2b24E9FFB8),
+            address(0xB924Aa3d30e8F701cd33f15C871cC8aCB3d21D1a),
+            "0xd65a6b878facf5db1fb422199394c9190a24f63bcf984404134eb0867bed5c4b0a1675ba2da124de18a0897e460b5c22b635957e19b24af75a006242e9aeff5144f9cc9ec2f04a17278dafa058"
+        );
+
+        VersionPart version = VersionLib.toVersionPart(13);
+        ObjectType domain = ObjectTypeLib.toObjectType(8);
+        address sender = address(0x4Dc593023536B7b8c4f254893f3bCA460c45EF8B);
+
+        registerService_testFunction(sender, info, version, domain);
+    }
+
 }

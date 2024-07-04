@@ -107,8 +107,8 @@ contract RegisterConcreteTest is RegistryTestBase {
         _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 NftIdLib.toNftId(22045),
-                NftIdLib.toNftId(EnumerableSet.at(_nftIds, 2620112370 % EnumerableSet.length(_nftIds))),
-                _types[199 % _types.length],
+                _getNftIdAtIndex(2620112370),
+                _getObjectTypeAtIndex(199),
                 false, // isInterceptor
                 address(0),
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
@@ -121,8 +121,8 @@ contract RegisterConcreteTest is RegistryTestBase {
         _assert_register_withChecks(
             IRegistry.ObjectInfo(
                 NftIdLib.toNftId(5764),
-                NftIdLib.toNftId(EnumerableSet.at(_nftIds, 1794 % EnumerableSet.length(_nftIds))),
-                _types[167 % _types.length],
+                _getNftIdAtIndex(1794),
+                _getObjectTypeAtIndex(167),
                 false,
                 address(0),
                 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D,
@@ -150,7 +150,7 @@ contract RegisterConcreteTest is RegistryTestBase {
             "0x000000000000000000000000000000000000000000000000000000000000285d"
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
 
     }
 
@@ -185,8 +185,29 @@ contract RegisterConcreteTest is RegistryTestBase {
             "0xf9472e2c1691cd0f268bbc652cb91347ecd7917dc8a988ac15c2d9f4dbb203f9eacbbc0f3035c78e7e"
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
         */
+    }
+
+    function test_registerWithGlobalRegistryAsParent() public
+    {
+        // register for global registry
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            NftIdLib.toNftId(0),
+            registry.GLOBAL_REGISTRY_NFT_ID(),
+            INSTANCE(), // or SERVICE
+            false,
+            address(uint160(randomNumber(type(uint160).max))),
+            registryOwner,
+            ""
+        );
+
+        _startPrank(address(registryServiceMock));
+        _assert_register(
+            info, 
+            true, 
+            abi.encodeWithSelector(IRegistry.ErrorRegistryGlobalRegistryAsParent.selector, info.objectType, info.parentNftId));
+        _stopPrank();
     }
 
     // TODO move to RegistryService.t.sol

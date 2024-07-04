@@ -14,255 +14,267 @@ import {RegistryTestBase} from "./RegistryTestBase.sol";
 import {RegistryTestBaseWithPreset} from "./RegistryTestBaseWithPreset.sol";
 
 contract RegisterFuzzTest is RegistryTestBase 
-{    
-    function testFuzz_register(address sender, IRegistry.ObjectInfo memory info) public
+{
+    using EnumerableSet for EnumerableSet.UintSet;
+
+    function testFuzz_register(address sender, IRegistry.ObjectInfo memory info, bytes32 salt) public
     {
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info, salt);
     }
 
+    // sender - random
     // nftId - always random
     // parentNftId - random
     // objectType - random
-    // isInterceptor - always random
-    // objectAddress - random
+    // isInterceptor - random
+    // salt - always random
     // initialOwner - set of addresses (actors + registered + initial owners)
-    function testFuzz_register_0000001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address objectAddress, uint initialOwnerIdx, bytes memory data) public
+    // data - always random
+    function testFuzz_register_00000010(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             objectType,
             isInterceptor,
-            objectAddress,
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info, salt);
     }
 
-    
-    function testFuzz_register_0000010(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, uint objectAddressIdx, address initialOwner, bytes memory data) public
+    // sender - random
+    // nftId - always random
+    // parentNftId - random
+    // objectType - random
+    // objectAddress - from addresses set (actors + registered + initial owners)
+    // initialOwner - random
+    // data - always random
+    // if objectAddress is from address set -> set isInterceptor to false
+    function testFuzz_register_0000100(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             objectType,
-            isInterceptor,
-            EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
+            false, // isInterceptor
+            _getAddressAtIndex(objectAddressIdx),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
     
-    function testFuzz_register_0000011(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public
+    function testFuzz_register_0000110(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
             objectType,
-            isInterceptor,
-            EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            false, // isInterceptor
+            _getAddressAtIndex(objectAddressIdx),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
     
-    function testFuzz_register_0001000(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data) public 
+    function testFuzz_register_00010000(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
-            _types[objectTypeIdx % _types.length],
+            _getObjectTypeAtIndex(objectTypeIdx),
             isInterceptor,
-            objectAddress,
+            address(0),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info, salt);
     }
 
     
-    function testFuzz_register_0001001(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, uint initialOwnerIdx, bytes memory data) public
+    function testFuzz_register_00010010(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
-            _types[objectTypeIdx % _types.length],
+            _getObjectTypeAtIndex(objectTypeIdx),
             isInterceptor,
-            objectAddress,
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info, salt);
     }
 
     
-    function testFuzz_register_0001010(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor,  uint objectAddressIdx, address initialOwner, bytes memory data) public 
+    function testFuzz_register_0001100(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
-            _types[objectTypeIdx % _types.length],
-            isInterceptor,
-            EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            false, // isInterceptor
+            _getAddressAtIndex(objectAddressIdx),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
     
-    function testFuzz_register_0001011(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor,  uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public 
+    function testFuzz_register_0001110(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
-            _types[objectTypeIdx % _types.length],
-            isInterceptor,
-            EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            false, // isInterceptor
+            _getAddressAtIndex(objectAddressIdx),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
     
-    function testFuzz_register_0010000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data) public
+    function testFuzz_register_00100000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            _getNftIdAtIndex(parentIdx),
             objectType,
             isInterceptor,
-            objectAddress,
+            address(0),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info, salt);
     }
 
     
-    function testFuzz_register_0010001(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, address objectAddress, uint initialOwnerIdx, bytes memory data) public
+    function testFuzz_register_00100010(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            _getNftIdAtIndex(parentIdx),
             objectType,
             isInterceptor,
-            objectAddress,
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info, salt);
     }
 
     
-    function testFuzz_register_0010010(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, uint objectAddressIdx, address initialOwner, bytes memory data) public
+    function testFuzz_register_0010100(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            _getNftIdAtIndex(parentIdx),
             objectType,
-            isInterceptor,
-            EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
+            false, // isInterceptor
+            _getAddressAtIndex(objectAddressIdx),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
+
     }
 
     
-    function testFuzz_register_0010011(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public 
+    function testFuzz_register_0010110(address sender, NftId nftId, uint parentIdx, ObjectType objectType, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            _getNftIdAtIndex(parentIdx),
             objectType,
-            isInterceptor,
-            EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            false, // isInterceptor
+            _getAddressAtIndex(objectAddressIdx),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
     
-    function testFuzz_register_0011000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data) public 
+    function testFuzz_register_00110000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public 
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
-            _types[objectTypeIdx % _types.length],
+            _getNftIdAtIndex(parentIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
             isInterceptor,
-            objectAddress,
+            address(0),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info, salt);
     }
 
     
-    function testFuzz_register_0011001(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, uint initialOwnerIdx, bytes memory data) public
+    function testFuzz_register_00110010(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
-            _types[objectTypeIdx % _types.length],
+            _getNftIdAtIndex(parentIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
             isInterceptor,
-            objectAddress,
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            address(0),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info, salt);
     }
 
     
-    function testFuzz_register_0011010(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, uint objectAddressIdx, address initialOwner, bytes memory data) public
+    function testFuzz_register_0011100(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
-            _types[objectTypeIdx % _types.length],
-            isInterceptor,
-            EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
+            _getNftIdAtIndex(parentIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            false, // isInterceptor
+            _getAddressAtIndex(objectAddressIdx),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
     
-    function testFuzz_register_0011011(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public
+    function testFuzz_register_0011110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, uint objectAddressIdx, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
-            _types[objectTypeIdx % _types.length],
-            isInterceptor,
-            EnumerableSet.at(_addresses, objectAddressIdx % EnumerableSet.length(_addresses)),
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            _getNftIdAtIndex(parentIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
+            false, // isInterceptor
+            _getAddressAtIndex(objectAddressIdx),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
@@ -277,10 +289,10 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
-    function testFuzz_register_withZeroObjectAddress_00001(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
+    function testFuzz_register_withZeroObjectAddress_0000010(address sender, NftId nftId, NftId parentNftId, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
@@ -288,48 +300,48 @@ contract RegisterFuzzTest is RegistryTestBase
             objectType,
             isInterceptor,
             address(0),
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
-    function testFuzz_register_withZeroObjectAddress_00010(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
+    function testFuzz_register_withZeroObjectAddress_0001000(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
-            _types[objectTypeIdx % _types.length],
+            _getObjectTypeAtIndex(objectTypeIdx),
             isInterceptor,
             address(0),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
-    function testFuzz_register_withZeroObjectAddress_00011(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
+    function testFuzz_register_withZeroObjectAddress_0001010(address sender, NftId nftId, NftId parentNftId, uint8 objectTypeIdx, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
             parentNftId,
-            _types[objectTypeIdx % _types.length],
+            _getObjectTypeAtIndex(objectTypeIdx),
             isInterceptor,
             address(0),
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
-    function testFuzz_register_withZeroObjectAddress_00100(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
+    function testFuzz_register_withZeroObjectAddress_0010000(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            _getNftIdAtIndex(parentIdx),
             objectType,
             isInterceptor,
             address(0),
@@ -337,52 +349,52 @@ contract RegisterFuzzTest is RegistryTestBase
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
-    function testFuzz_register_withZeroObjectAddress_00101(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
+    function testFuzz_register_withZeroObjectAddress_0010010(address sender, NftId nftId, uint parentIdx, ObjectType objectType, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
+            _getNftIdAtIndex(parentIdx),
             objectType,
             isInterceptor,
             address(0),
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress_00110(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
-            _types[objectTypeIdx % _types.length],
+            _getNftIdAtIndex(parentIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
             isInterceptor,
             address(0),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 
     function testFuzz_register_withZeroObjectAddress_00111(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, uint initialOwnerIdx, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            NftIdLib.toNftId(EnumerableSet.at(_nftIds, parentIdx % EnumerableSet.length(_nftIds))),
-            _types[objectTypeIdx % _types.length],
+            _getNftIdAtIndex(parentIdx),
+            _getObjectTypeAtIndex(objectTypeIdx),
             isInterceptor,
             address(0),
-            EnumerableSet.at(_addresses, initialOwnerIdx % EnumerableSet.length(_addresses)),
+            _getAddressAtIndex(initialOwnerIdx),
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info);
     }
 }
 
@@ -393,33 +405,33 @@ contract RegisterWithPresetFuzzTest is RegistryTestBaseWithPreset, RegisterFuzzT
         RegistryTestBaseWithPreset.setUp();
     }
 
-    function testFuzz_register_00P1000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address objectAddress, address initialOwner, bytes memory data) public
+    function testFuzz_register_00P1000(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, bytes32 salt, address initialOwner, bytes memory data) public
     {
         IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
             nftId,
-            _nftIdByType[_types[parentIdx % _types.length]],
-            _types[objectTypeIdx % _types.length],
-            isInterceptor,
-            objectAddress,
-            initialOwner,
-            data
-        );
-
-        _register_testFunction(sender, info);
-    }
-
-    function testFuzz_register_withZeroObjectAddress_00P100(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
-    {
-        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
-            nftId,
-            _nftIdByType[_types[parentIdx % _types.length]],
-            _types[objectTypeIdx % _types.length],
+            _nftIdByType[parentIdx % _nftIdByType.length],
+            _getObjectTypeAtIndex(objectTypeIdx),
             isInterceptor,
             address(0),
             initialOwner,
             data
         );
 
-        _register_testFunction(sender, info);
+        register_testFunction(sender, info, salt);
+    }
+
+    function testFuzz_register_withZeroObjectAddress_00P100(address sender, NftId nftId, uint parentIdx, uint8 objectTypeIdx, bool isInterceptor, address initialOwner, bytes memory data) public
+    {
+        IRegistry.ObjectInfo memory info = IRegistry.ObjectInfo(
+            nftId,
+            _nftIdByType[parentIdx % _nftIdByType.length],
+            _getObjectTypeAtIndex(objectTypeIdx),
+            isInterceptor,
+            address(0),
+            initialOwner,
+            data
+        );
+
+        register_testFunction(sender, info);
     }
 }

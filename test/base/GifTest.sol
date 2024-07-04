@@ -161,6 +161,8 @@ contract GifTest is GifDeployer {
     uint256 public initialCapitalAmount;
 
     address constant public NFT_LOCK_ADDRESS = address(0x1);
+
+    address public globalRegistry = makeAddr("globalRegistry");
     address public registryOwner = makeAddr("registryOwner");
     address public stakingOwner = registryOwner;
     address public instanceOwner = makeAddr("instanceOwner");
@@ -294,6 +296,7 @@ contract GifTest is GifDeployer {
             stakingManager,
             staking
         ) = deployCore(
+            globalRegistry,
             gifAdmin,
             gifManager,
             stakingOwner);

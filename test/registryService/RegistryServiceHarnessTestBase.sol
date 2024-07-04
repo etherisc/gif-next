@@ -29,12 +29,13 @@ import {GifTest} from "../base/GifTest.sol";
 
 contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
 
+    address public globalRegistry = makeAddr("globalRegistry");
+    address public registryOwner = makeAddr("registryOwner");
     address public registerableOwner = makeAddr("registerableOwner");
+    address public outsider = makeAddr("outsider");
 
     IRegistry public registry;
     address public registryAddress;
-    address public registryOwner = makeAddr("registryOwner");
-    address public outsider = makeAddr("outsider");
     ReleaseRegistry releaseRegistry;
 
     RegistryServiceManagerMockWithHarness public registryServiceManagerWithHarness;
@@ -59,6 +60,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             , // stakingManager,
             // staking
         ) = deployCore(
+            globalRegistry,
             gifAdmin,
             gifManager,
             stakingOwner);

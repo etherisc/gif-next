@@ -1,38 +1,43 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
-import {IERC721Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import { FoundryRandom } from "foundry-random/FoundryRandom.sol";
 
-import {Test, Vm, console} from "../../lib/forge-std/src/Test.sol";
-import {blockBlocknumber} from "../../contracts/type/Blocknumber.sol";
-import {VersionLib, Version, VersionPart} from "../../contracts/type/Version.sol";
+import {console} from "../../lib/forge-std/src/Test.sol";
 import {NftId, NftIdLib} from "../../contracts/type/NftId.sol";
-import {Timestamp, TimestampLib} from "../../contracts/type/Timestamp.sol";
-import {Blocknumber, BlocknumberLib} from "../../contracts/type/Blocknumber.sol";
-import {ObjectType, ObjectTypeLib, PROTOCOL, REGISTRY, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
+import {Timestamp} from "../../contracts/type/Timestamp.sol";
+import {ObjectType, PROTOCOL, REGISTRY, SERVICE, INSTANCE, PRODUCT, POOL, ORACLE, DISTRIBUTION, DISTRIBUTOR, BUNDLE, POLICY, STAKE, STAKING} from "../../contracts/type/ObjectType.sol";
 
-import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
-import {Registry} from "../../contracts/registry/Registry.sol";
 
 import {RegistryTestBase} from "./RegistryTestBase.sol";
 
 
 contract RegistryTestBaseWithPreset is RegistryTestBase
 {
-    mapping(ObjectType objectType => NftId nftId) public _nftIdByType;// default parent nft id for each type
+    NftId[] _nftIdByType; // keeps 1 nftId of each type
+
+    NftId instanceNftId;
+    NftId productNftId;
+    NftId distributionNftId;
+    NftId poolNftId;
+    NftId oracleNftId;
+    NftId distributorNftId;
+    NftId policyNftId;
+    NftId bundleNftId;
+    NftId stakeForProtocolNftId;
+    NftId stakeForInstanceNftId;
+
 
     function setUp() public virtual override
     {
         super.setUp();
 
-        _nftIdByType[PROTOCOL()] = protocolNftId;
-        _nftIdByType[REGISTRY()] = registryNftId; // collision with globalRegistryNftId...have the same type
+        _nftIdByType.push(protocolNftId);
+        _nftIdByType.push(globalRegistryNftId);
+        _nftIdByType.push(registryNftId); // have same type as globalRegistryNftId 
+        _nftIdByType.push(stakingNftId);
+        _nftIdByType.push(registryServiceNftId);
 
         _startPrank(address(registryServiceMock));
 
@@ -41,56 +46,81 @@ contract RegistryTestBaseWithPreset is RegistryTestBase
         _stopPrank();
     }
 
-    function _registerContractType(ObjectType objectType, ObjectType parentType) internal
+    function _registerContractType(ObjectType objectType, NftId parentNftId) internal returns (NftId)
     {
-        console.log("Registering object of type %s for %s", _typeName[objectType], _typeName[parentType]);
-        
         IRegistry.ObjectInfo memory info;
 
         info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
-        info.parentNftId = _nftIdByType[parentType];
+        info.parentNftId = parentNftId;
         info.objectType = objectType;
         info.objectAddress = address(uint160(randomNumber(11, type(uint160).max)));
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        NftId registeredNftId = _assert_register(info, false, "");
-        require(_nftIdByType[objectType].toInt() == 0, "Test error: _nftIdByType[objectType] is already set");
-        _nftIdByType[objectType] = registeredNftId;
+        return _assert_register(info, false, "");
     }
 
-    function _registerObjectType(ObjectType objectType, ObjectType parentType) internal
+    function _registerObjectType(ObjectType objectType, NftId parentNftId) internal returns (NftId)
     {
-        console.log("Registering object of type %s for %s", _typeName[objectType], _typeName[parentType]);
-
         IRegistry.ObjectInfo memory info;
 
         info.nftId = NftIdLib.toNftId(randomNumber(type(uint96).max));
-        info.parentNftId = _nftIdByType[parentType];
+        info.parentNftId = parentNftId;
         info.objectType = objectType;
         info.objectAddress = address(0);
         info.initialOwner = address(uint160(randomNumber(type(uint160).max)));
 
-        NftId registeredNftId = _assert_register(info, false, "");
-        require(_nftIdByType[objectType].toInt() == 0, "Test error: _nftIdByType[objectType] is already set");
-        _nftIdByType[objectType] = registeredNftId;
+        return _assert_register(info, false, "");
     }
 
+    // TODO register service AND registry (if mainnet)
     function _register_all_types() internal
     {
         IRegistry.ObjectInfo memory info;
+        // TODO register each type while looping thorugh _types set
+        /*  
+        for (uint256 i = 0; i < _validCoreContractTypesCombos.length(); i++)
+        {
+            ObjectTypePair contractTypePair = EnumerableSet.at(_validCoreContractTypesCombos, i);
+            _registerContractType(contractTypePair);
+        }
 
-        _registerContractType(STAKING(), REGISTRY());
-        _registerContractType(INSTANCE(), REGISTRY());
-        _registerContractType(PRODUCT(), INSTANCE());
-        _registerContractType(POOL(), INSTANCE());
-        _registerContractType(ORACLE(), INSTANCE());
-        _registerContractType(DISTRIBUTION(), INSTANCE());
+        for (uint256 i = 0; i < _validCoreObjectTypesCombos.length(); i++) 
+        {
+            ObjectTypePair objectTypePair = EnumerableSet.at(_validCoreObjectTypesCombos, i);
+            _registerObjectType(objectTypePair);
+        }
+        */
 
-        _registerObjectType(STAKE(), PROTOCOL());
-        //_registerObjectType(STAKE(), INSTANCE());// collision with STAKE() for PROTOOCOL()
-        _registerObjectType(DISTRIBUTOR(), DISTRIBUTION());
-        _registerObjectType(POLICY(), PRODUCT());
-        _registerObjectType(BUNDLE(), POOL());
+        instanceNftId = _registerContractType(INSTANCE(), registryNftId);
+        _nftIdByType.push(instanceNftId);
 
+
+
+        productNftId = _registerContractType(PRODUCT(), instanceNftId);
+        _nftIdByType.push(productNftId);
+
+        distributionNftId = _registerContractType(DISTRIBUTION(), instanceNftId);
+        _nftIdByType.push(distributionNftId);
+
+        poolNftId = _registerContractType(POOL(), instanceNftId);
+        _nftIdByType.push(poolNftId);
+
+        oracleNftId = _registerContractType(ORACLE(), instanceNftId);
+        _nftIdByType.push(oracleNftId);
+
+        distributorNftId = _registerObjectType(DISTRIBUTOR(), distributionNftId);
+        _nftIdByType.push(distributorNftId);
+
+        policyNftId = _registerObjectType(POLICY(), productNftId);
+        _nftIdByType.push(policyNftId);
+
+        bundleNftId = _registerObjectType(BUNDLE(), poolNftId);
+        _nftIdByType.push(bundleNftId);
+
+        stakeForProtocolNftId = _registerObjectType(STAKE(), protocolNftId);
+        _nftIdByType.push(stakeForProtocolNftId);
+
+        stakeForInstanceNftId = _registerObjectType(STAKE(), instanceNftId);
+        _nftIdByType.push(stakeForInstanceNftId);
     }
 }

@@ -119,6 +119,7 @@ contract GifDeployer is Test {
 
 
     function deployCore(
+        address globalRegistry,
         address gifAdmin,
         address gifManager,
         address stakingOwner
@@ -139,28 +140,13 @@ contract GifDeployer is Test {
         // 1) deploy dip token
         dip = new Dip();
 
-        // TODO cleanup
-        // if(block.chainid == 1) {
-        //     registryAdmin = new GlobalRegistryAdmin();
-        // } else {
-        //     registryAdmin = new RegistryAdmin();
-        // }
         // 2) deploy registry admin
         registryAdmin = new RegistryAdmin();
 
         // 3) deploy registry
         registry = new Registry(
                 registryAdmin, 
-                makeAddr("global registry"));
-
-        // TODO cleanup
-        // if(block.chainid == 1) {
-        //     registry = new GlobalRegistry(registryAdmin);
-        // } else {
-        //     registry = new Registry(
-        //         registryAdmin, 
-        //         makeAddr("global registry"));
-        // }
+                globalRegistry);
 
         // 4) deploy release manager
         releaseRegistry = new ReleaseRegistry(registry);
