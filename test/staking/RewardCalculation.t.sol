@@ -17,7 +17,7 @@ contract RewardCalculation is GifTest {
     function test_rewardCalculationConsoleLog() public {
         // solhint-disable
         console.log("getYearDuration()", SecondsLib.oneYear().toInt());
-        console.log("356 * 24 * 3600", 356 * 24 * 3600);
+        console.log(string("356 * 24 * 3600"), int(356 * 24 * 3600));
 
         Seconds halfYear = SecondsLib.toSeconds(SecondsLib.oneYear().toInt() / 2);
         console.log("halfYear", halfYear.toInt());
