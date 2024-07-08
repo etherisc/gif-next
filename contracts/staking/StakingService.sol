@@ -122,11 +122,10 @@ contract StakingService is
 
         // transfer withdrawal amount to target owner
         address instanceOwner = getRegistry().ownerOf(instanceNftId);
+        emit LogStakingServiceRewardReservesDecreased(instanceNftId, instanceOwner, dipAmount, newBalance);
         $._staking.transferDipAmount(
             instanceOwner,
             dipAmount);
-
-        emit LogStakingServiceRewardReservesDecreased(instanceNftId, instanceOwner, dipAmount, newBalance);
     }
 
 
@@ -169,12 +168,12 @@ contract StakingService is
             targetNftId,
             dipAmount);
 
+        emit LogStakingServiceStakeCreated(stakeNftId, targetNftId, stakeOwner, dipAmount);
+
         // collect staked dip by staking
         $._staking.collectDipAmount(
             stakeOwner,
             dipAmount);
-
-        emit LogStakingServiceStakeCreated(stakeNftId, targetNftId, stakeOwner, dipAmount);
     }
 
 
@@ -197,12 +196,11 @@ contract StakingService is
 
         // collect staked dip by staking
         if (dipAmount.gtz()) {
+            emit LogStakingServiceStakeIncreased(stakeNftId, stakeOwner, dipAmount, stakeBalance);
             $._staking.collectDipAmount(
                 stakeOwner,
                 dipAmount);
         }
-
-        emit LogStakingServiceStakeIncreased(stakeNftId, stakeOwner, dipAmount, stakeBalance);
     }
 
 
@@ -247,11 +245,10 @@ contract StakingService is
         address stakeOwner = msg.sender;
 
         Amount rewardsClaimedAmount = $._staking.claimRewards(stakeNftId);
+        emit LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount);
         $._staking.transferDipAmount(
             stakeOwner,
             rewardsClaimedAmount);
-
-        emit LogStakingServiceRewardsClaimed(stakeNftId, stakeOwner, rewardsClaimedAmount);
     }
 
 
@@ -270,11 +267,10 @@ contract StakingService is
         ) = $._staking.unstake(stakeNftId);
 
         Amount totalAmount = unstakedAmount + rewardsClaimedAmount;
+        emit LogStakingServiceUnstaked(stakeNftId, stakeOwner, totalAmount);
         $._staking.transferDipAmount(
             stakeOwner,
             totalAmount);
-
-        emit LogStakingServiceUnstaked(stakeNftId, stakeOwner, totalAmount);
     }
 
 
@@ -389,12 +385,12 @@ contract StakingService is
         StakingServiceStorage storage $ = _getStakingServiceStorage();
         newBalance = $._staking.refillRewardReserves(targetNftId, dipAmount);
 
+        emit LogStakingServiceRewardReservesIncreased(targetNftId, rewardProvider, dipAmount, newBalance);
+
         // collect reward dip from provider
         $._staking.collectDipAmount(
             rewardProvider,
             dipAmount);
-
-        emit LogStakingServiceRewardReservesIncreased(targetNftId, rewardProvider, dipAmount, newBalance);
     }
 
 
