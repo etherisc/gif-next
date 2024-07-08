@@ -52,7 +52,7 @@ interface IBundleService is IService {
         returns(NftId bundleNftId); // the nft id of the newly created bundle
 
 
-    /// @dev increase bundle stakes by the specified amount
+    /// @dev increase bundle stakes by the specified amount. bundle must not be expired or closed
     /// may only be called by the pool service
     function stake(IInstance instance, NftId bundleNftId, Amount amount) external;
 
