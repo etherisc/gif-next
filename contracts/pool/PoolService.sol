@@ -222,13 +222,12 @@ contract PoolService is
 
         // collect tokens from bundle owner
         address bundleOwner = getRegistry().ownerOf(bundleNftId);
+        emit LogPoolServiceBundleStaked(instance.getNftId(), poolNftId, bundleNftId, amount, netAmount);
         _collectStakingAmount(
             instanceReader, 
             poolNftId, 
             bundleOwner, 
             amount);
-
-        emit LogPoolServiceBundleStaked(instance.getNftId(), poolNftId, bundleNftId, amount, netAmount);
     }
 
     /// @inheritdoc IPoolService
@@ -280,11 +279,9 @@ contract PoolService is
 
         // transfer amount to bundle owner
         address owner = getRegistry().ownerOf(bundleNftId);
+        emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount);
         // TODO: centralize token handling (issue #471)
         poolComponentInfo.tokenHandler.transfer(poolWallet, owner, unstakedAmount);
-        
-        emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount);
-
         return unstakedAmount;
     }
 
