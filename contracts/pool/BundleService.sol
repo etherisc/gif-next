@@ -148,7 +148,7 @@ contract BundleService is
         restricted()
     {
         InstanceReader instanceReader = instance.getInstanceReader();
-        StateId bundleState = instanceReader.getMetadata(bundleNftId.toKey32(BUNDLE())).state;
+        StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
         IBundle.BundleInfo memory bundleInfo = instanceReader.getBundleInfo(bundleNftId);
 
         // ensure bundle is active and not yet expired
@@ -244,7 +244,7 @@ contract BundleService is
         // TODO: restricted() (once #462 is done)
     {
         IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
-        StateId bundleState = instance.getInstanceReader().getMetadata(bundleNftId.toKey32(BUNDLE())).state;
+        StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
 
         if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.blockTimestamp() || bundleInfo.closedAt.gtz()) {
             revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
@@ -306,7 +306,7 @@ contract BundleService is
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
-        StateId bundleState = instance.getInstanceReader().getMetadata(bundleNftId.toKey32(BUNDLE())).state;
+        StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
 
         // ensure bundle belongs to the pool
         if (bundleInfo.poolNftId != poolNftId) {
