@@ -906,7 +906,7 @@ contract TestProductClaim is GifTest {
         token.approve(address(poolComponentInfo.tokenHandler), BUNDLE_CAPITAL);
 
         // SimplePool spool = SimplePool(address(pool));
-        bundleNftId = SimplePool(address(pool)).createBundle(
+        (bundleNftId,) = SimplePool(address(pool)).createBundle(
             FeeLib.zero(), 
             BUNDLE_CAPITAL, 
             SecondsLib.toSeconds(604800), 

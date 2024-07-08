@@ -120,10 +120,7 @@ abstract contract Pool is
             false, // isExternallyManaged,
             false, // isVerifyingApplications,
             UFixedLib.toUFixed(1), // collateralizationLevel,
-            UFixedLib.toUFixed(1), // retentionLevel,
-            FeeLib.zero(), // initialPoolFee,
-            FeeLib.zero(), // initialStakingFee,
-            FeeLib.zero() // initialPerformanceFee,
+            UFixedLib.toUFixed(1) // retentionLevel,
         );
     }
 
@@ -299,9 +296,9 @@ abstract contract Pool is
         bytes memory filter
     )
         internal
-        returns(NftId bundleNftId)
+        returns(NftId bundleNftId, Amount netStakedAmount)
     {
-        bundleNftId = _getPoolStorage()._poolService.createBundle(
+        (bundleNftId, netStakedAmount) = _getPoolStorage()._poolService.createBundle(
             bundleOwner,
             fee,
             amount,

@@ -109,27 +109,6 @@ contract PoolService is
         emit LogPoolServiceBundleOwnerRoleSet(poolNftId, bundleOwnerRole);
     }
 
-
-    function setFees(
-        Fee memory poolFee,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    )
-        external
-        virtual
-    {
-        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-
-        IComponents.PoolInfo memory poolInfo = instance.getInstanceReader().getPoolInfo(poolNftId);
-        poolInfo.poolFee = poolFee;
-        poolInfo.stakingFee = stakingFee;
-        poolInfo.performanceFee = performanceFee;
-
-        instance.getInstanceStore().updatePool(poolNftId, poolInfo, KEEP_STATE());
-
-        // TODO add logging
-    }
-
     /// @inheritdoc IPoolService
     function createBundle(
         address bundleOwner, // initial bundle owner
@@ -140,16 +119,13 @@ contract PoolService is
     )
         external 
         virtual
-        returns(NftId bundleNftId)
+        returns(NftId bundleNftId, Amount netStakedAmount)
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-        InstanceReader instanceReader = instance.getInstanceReader();
-
-        (
-            Amount stakingFeeAmount,
-            Amount stakingNetAmount
-        ) = FeeLib.calculateFee(
-            _getStakingFee(instanceReader, poolNftId), 
+        
+        Amount stakingFeeAmount;
+        (stakingFeeAmount, netStakedAmount) = FeeLib.calculateFee(
+            _getStakingFee(instance.getInstanceReader(), poolNftId), 
             stakingAmount);
 
         // TODO: staking amount must be be > maxCapitalAmount
@@ -159,7 +135,7 @@ contract PoolService is
             poolNftId,
             bundleOwner,
             fee,
-            stakingNetAmount,
+            netStakedAmount,
             lifetime,
             filter);
 
@@ -167,12 +143,12 @@ contract PoolService is
         _componentService.increasePoolBalance(
             instance.getInstanceStore(), 
             poolNftId, 
-            stakingNetAmount, 
+            netStakedAmount, 
             stakingFeeAmount);
 
         // pool bookkeeping and collect tokens from bundle owner
         _collectStakingAmount(
-            instanceReader, 
+            instance.getInstanceReader(), 
             poolNftId, 
             bundleOwner, 
             stakingAmount);
@@ -310,16 +286,6 @@ contract PoolService is
         emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount);
 
         return unstakedAmount;
-    }
-
-    function _getPerformanceFee(InstanceReader instanceReader, NftId poolNftId)
-        internal
-        virtual
-        view
-        returns (Fee memory performanceFee)
-    {
-        NftId productNftId = instanceReader.getComponentInfo(poolNftId).productNftId;
-        return instanceReader.getPoolInfo(productNftId).performanceFee;
     }
 
     function processSale(

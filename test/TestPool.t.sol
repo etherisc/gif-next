@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import {console} from "../lib/forge-std/src/Test.sol";
 
+import {Amount, AmountLib} from "../contracts/type/Amount.sol";
 import {BasicPoolAuthorization} from "../contracts/pool/BasicPoolAuthorization.sol";
 import {Fee, FeeLib} from "../contracts/type/Fee.sol";
 import {IBundle} from "../contracts/instance/module/IBundle.sol";
@@ -105,17 +106,6 @@ contract TestPool is GifTest {
         assertTrue(componentInfo.productNftId.eqz(), "product nft not zero (not yet linked to product)");
         assertEq(poolInfo.bundleOwnerRole.toInt(), PUBLIC_ROLE().toInt(), "unexpected bundle owner role");
 
-        // check fees
-        Fee memory poolFee = poolInfo.poolFee;
-        Fee memory stakingFee = poolInfo.stakingFee;
-        Fee memory performanceFee = poolInfo.performanceFee;
-        assertEq(poolFee.fractionalFee.toInt(), 0, "pool fee not 0");
-        assertEq(poolFee.fixedFee, 0, "pool fee not 0");
-        assertEq(stakingFee.fractionalFee.toInt(), 0, "staking fee not 0");
-        assertEq(stakingFee.fixedFee, 0, "staking fee not 0");
-        assertEq(performanceFee.fractionalFee.toInt(), 0, "performance fee not 0");
-        assertEq(performanceFee.fixedFee, 0, "performance fee not 0");
-
         // check pool balance
         assertTrue(instanceReader.getBalanceAmount(poolNftId).eqz(), "initial pool balance not zero");
         assertTrue(instanceReader.getFeeAmount(poolNftId).eqz(), "initial pool fee not zero");
@@ -174,7 +164,8 @@ contract TestPool is GifTest {
         token.approve(address(pool.getTokenHandler()), 10000);
 
         Seconds lifetime = SecondsLib.toSeconds(604800);
-        bundleNftId = pool.createBundle(
+        uint256 netStakedAmount;
+        (bundleNftId, netStakedAmount) = pool.createBundle(
             FeeLib.zero(), 
             10000, 
             lifetime, 
@@ -184,9 +175,15 @@ contract TestPool is GifTest {
 
         // THEN
         assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+        assertEq(netStakedAmount, 10000, "net staked amount not 10000");
 
-        assertEq(token.balanceOf(poolOwner), 0, "pool owner balance not 0");
-        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet balance not 10000");
+        assertEq(token.balanceOf(poolOwner), 0, "pool owner token balance not 0");
+        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet token balance not 10000");
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 10000, "pool balance not 10000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 0, "pool fee not 0");
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 10000, "bundle balance not 10000");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fee not 0");
 
         assertEq(instanceBundleSet.bundles(poolNftId), 1, "expected only 1 bundle");
         assertEq(instanceBundleSet.getBundleNftId(poolNftId, 0).toInt(), bundleNftId.toInt(), "bundle nft id in bundle manager not equal to bundle nft id");
@@ -202,6 +199,42 @@ contract TestPool is GifTest {
             bundleInfo.activatedAt.toInt(),
             vm.getBlockTimestamp(),
             "unexpected activatedAt");
+    }
+
+    function test_PoolCreateBundle_withStakingFee() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(10);
+        _prepareProduct(false);
+        _fundInvestor();
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        // WHEN
+        // SimplePool spool = SimplePool(address(pool));
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 10000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        uint256 netStakedAmount;
+        (bundleNftId, netStakedAmount) = pool.createBundle(
+            FeeLib.zero(), 
+            10000, 
+            lifetime, 
+            ""
+        );
+        vm.stopPrank();
+
+        // THEN
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+        assertEq(netStakedAmount, 9000, "net staked amount not 9000");
+
+        assertEq(token.balanceOf(poolOwner), 0, "pool owner token balance not 0");
+        assertEq(token.balanceOf(componentInfo.wallet), 10000, "pool wallet token balance not 10000");
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 10000, "pool balance not 10000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 1000, "pool fee not 0");
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 9000, "bundle balance not 10000");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fee not 0");
     }
 
 
@@ -330,7 +363,7 @@ contract TestPool is GifTest {
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
         token.approve(address(componentInfo.tokenHandler), 10000);
 
-        bundleNftId = pool.createBundle(
+        (bundleNftId,) = pool.createBundle(
             FeeLib.zero(), 
             10000, 
             SecondsLib.toSeconds(604800), 

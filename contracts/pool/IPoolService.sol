@@ -40,14 +40,6 @@ interface IPoolService is IService {
     /// @dev sets the max capital amount for the calling pool
     function setMaxCapitalAmount(Amount maxCapitalAmount) external;
 
-    /// @dev set pool sepecific fees
-    function setFees(
-        Fee memory poolFee,
-        Fee memory stakingFee,
-        Fee memory performanceFee
-    ) external;
-
-
     /// @dev locks required collateral to cover the specified application (and turn it into a policy)
     /// - retention level == 1: the full collateral amount will be locked by the specified bundle
     /// - retention level < 1: a part of the coverage is provided by the specified bundle, the rest by the pool component
@@ -102,8 +94,7 @@ interface IPoolService is IService {
         bytes calldata filter // optional use case specific criteria that define if a policy may be covered by this bundle
     )
         external 
-        returns(NftId bundleNftId); // the nft id of the newly created bundle
-        // TODO: return netAmount
+        returns(NftId bundleNftId, Amount netStakedAmount); // the nft id of the newly created bundle
 
 
     /// @dev closes the specified bundle
