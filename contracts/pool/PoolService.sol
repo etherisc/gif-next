@@ -128,7 +128,7 @@ contract PoolService is
             _getStakingFee(instance.getInstanceReader(), poolNftId), 
             stakingAmount);
 
-        // TODO: staking amount must be be > maxCapitalAmount
+        // TODO: (staking amount + existing pool balance) must be be > maxCapitalAmount
 
         bundleNftId = _bundleService.create(
             instance,
