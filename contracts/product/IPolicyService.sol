@@ -22,7 +22,7 @@ interface IPolicyService is IService {
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
     error ErrorPolicyServicePolicyStateNotCollateralizedOrApplied(NftId applicationNftId);
 
-    error ErrorPolicyServicePremiumHigherThanExpected(Amount premiumExpectedAmount, Amount premiumToBePaidAmount);
+    error ErrorPolicyServicePremiumHigherThanExpected(uint256 premiumExpectedAmount, uint256 premiumToBePaidAmount);
     error ErrorPolicyServiceBalanceInsufficient(address policyOwner, uint256 premiumAmount, uint256 balance);
     error ErrorPolicyServiceAllowanceInsufficient(address policyOwner, address tokenHandler, uint256 premiumAmount, uint256 allowance);
 
@@ -43,7 +43,7 @@ interface IPolicyService is IService {
     event LogPolicyServicePolicyDeclined(NftId policyNftId);
     event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);
 
-    /// @dev collateralizes the policy represented by {policyNftId}
+    /// @dev collateralizes the policy represented by {policyNftId}. locks the sum insured amount in the pool.
     /// sets the policy state to collateralized
     /// may set the policy state to activated and set the activation date
     /// optionally collects premiums and activates the policy.
@@ -62,7 +62,7 @@ interface IPolicyService is IService {
     /// only the related product may decline an application
     function decline(NftId policyNftId) external;
 
-    /// @dev collects the premium token for the specified policy
+    /// @dev collects the premium token for the specified policy (must be in COLLATERALIZED or ACTIVE state)
     function collectPremium(NftId policyNftId, Timestamp activateAt) external;
 
     /// @dev activates the specified policy and sets the activation date in the policy metadata
