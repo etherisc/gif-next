@@ -10,6 +10,8 @@ import {Amount} from "../type/Amount.sol";
 /// a default token contract is provided via contract constructor
 /// relies internally on oz SafeERC20.safeTransferFrom
 contract TokenHandler {
+    event LogTokenHandlerTokenTransfer(address token, address from, address to, uint256 amount);
+
     IERC20Metadata private _token;
 
     constructor(address token) {
@@ -24,6 +26,7 @@ contract TokenHandler {
     )
         external
     {
+        emit LogTokenHandlerTokenTransfer(address(_token), from, to, amount.toInt());
         SafeERC20.safeTransferFrom(
             _token, 
             from, 
@@ -40,6 +43,7 @@ contract TokenHandler {
     )
         external
     {
+        emit LogTokenHandlerTokenTransfer(token, from, to, amount.toInt());
         SafeERC20.safeTransferFrom(
             IERC20Metadata(token), 
             from, 
