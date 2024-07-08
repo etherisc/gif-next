@@ -141,23 +141,29 @@ contract ReferralTest is ReferralTestBase {
         assertEq(instanceReader.getBalanceAmount(distributionNftId).toInt(), 14, "distribution balance not 14 (2)");
         assertEq(instanceReader.getFeeAmount(distributionNftId).toInt(), 11, "distribution fee not 14");
 
-        IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
-        assertEq(distributorInfo.numPoliciesSold, 1, "numPoliciesSold not 1");
-        assertEq(instanceReader.getFeeAmount(distributorNftId).toInt(), 3, "sumCommisions not 3");
+        {
+            IDistribution.DistributorInfo memory distributorInfo = instanceReader.getDistributorInfo(distributorNftId);
+            assertEq(distributorInfo.numPoliciesSold, 1, "numPoliciesSold not 1");
+            assertEq(instanceReader.getFeeAmount(distributorNftId).toInt(), 3, "sumCommisions not 3");
+        }
 
         // check pool financials and balance
-        uint256 expectedPoolFee = 3;
-        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), initialPoolBalance + netPremium + expectedPoolFee, "unexpected pool balance (1)");
-        assertEq(token.balanceOf(pool.getWallet()), initialPoolBalance + netPremium + expectedPoolFee, "unexpected pool balance (2)");
+        {
+            uint256 expectedPoolFee = 3;
+            assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), initialPoolBalance + netPremium + expectedPoolFee, "unexpected pool balance (1)");
+            assertEq(token.balanceOf(pool.getWallet()), initialPoolBalance + netPremium + expectedPoolFee, "unexpected pool balance (2)");
+        }
 
         assertEq(instanceBundleSet.activePolicies(bundleNftId), 1, "expected one active policy");
         assertTrue(instanceBundleSet.getActivePolicy(bundleNftId, 0).eq(policyNftId), "active policy nft id in bundle manager not equal to policy nft id");
 
         // check bundle financials
-        Amount lockedAmount = instanceReader.getLockedAmount(bundleNftId);
-        assertEq(lockedAmount.toInt(), 1000, "unexpected lockedAmount");
-        Amount capitalAmount = instanceReader.getBalanceAmount(bundleNftId) - instanceReader.getFeeAmount(bundleNftId);
-        assertEq(capitalAmount.toInt(), bundleBalanceInitial.toInt() + 100, "unexpected capitalAmount");
+        {
+            Amount lockedAmount = instanceReader.getLockedAmount(bundleNftId);
+            assertEq(lockedAmount.toInt(), 1000, "unexpected lockedAmount");
+            Amount capitalAmount = instanceReader.getBalanceAmount(bundleNftId) - instanceReader.getFeeAmount(bundleNftId);
+            assertEq(capitalAmount.toInt(), bundleBalanceInitial.toInt() + 100, "unexpected capitalAmount");
+        }
     }
 
     function test_referralCollateralizeMultipleWithReferral() public {
