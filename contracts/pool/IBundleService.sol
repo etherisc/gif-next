@@ -26,12 +26,16 @@ interface IBundleService is IService {
 
     error ErrorBundleServicePolicyNotCloseable(NftId policyNftId);
 
-    // error ErrorBundleServiceBundleNotActive(NftId distributorNftId);
     error ErrorBundleServiceFeesWithdrawAmountExceedsLimit(Amount amount, Amount limit);
     error ErrorBundleServiceFeesWithdrawAmountIsZero();
     error ErrorBundleServiceWalletAllowanceTooSmall(address wallet, address tokenHandler, uint256 allowance, uint256 amount);
 
+    error ErrorBundleServiceUnstakeAmountExceedsLimit(Amount amount, Amount limit);
+
+    error ErrorBundleServiceExtensionLifetimeIsZero();
+
     event LogBundleServiceFeesWithdrawn(NftId bundleNftId, address recipient, address tokenAddress, Amount amount);
+    event LogBundleServiceBundleExtended(NftId bundleNftId, Seconds lifetimeExtension, Timestamp extendedExpiredAt);
 
     /// @dev create a new bundle for the specified attributes
     /// may only be called by pool service
@@ -49,10 +53,19 @@ interface IBundleService is IService {
 
 
     /// @dev increase bundle stakes by the specified amount
-    /// may only be called by the bundle owner
-    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+    /// may only be called by the pool service
+    function stake(IInstance instance, NftId bundleNftId, Amount amount) external;
 
-    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+    /// @dev decrease bundle stakes by the specified amount
+    /// may only be called by the pool service
+    /// @param instance the instance relevant for the bundle
+    /// @param bundleNftId the bundle nft id
+    /// @param amount the amount to unstake (set to AmountLib.max() to unstake all available stakes)
+    /// @return unstakedAmount the effective unstaked amount
+    function unstake(IInstance instance, NftId bundleNftId, Amount amount) external returns (Amount unstakedAmount);
+
+    /// @dev extend the lifetime of the bundle by the specified time in seconds
+    function extend(NftId bundleNftId, Seconds lifetimeExtension) external returns (Timestamp extendedExpiredAt);
 
     /// @dev locks the specified bundle, locked bundles are not available to collateralize new policies
     /// only active bundles may be locked

@@ -14,6 +14,7 @@ import {
     // GIF_MANAGER_ROLE,
     // GIF_ADMIN_ROLE,
     // ADMIN_ROLE,
+    PUBLIC_ROLE,
     PRODUCT_OWNER_ROLE, 
     ORACLE_OWNER_ROLE, 
     POOL_OWNER_ROLE, 
@@ -171,12 +172,14 @@ contract GifTest is GifDeployer {
 
     uint8 initialProductFeePercentage = 2;
     uint8 initialPoolFeePercentage = 3;
+    uint8 initialStakingFeePercentage = 0;
     uint8 initialBundleFeePercentage = 4;
     uint8 initialDistributionFeePercentage = 20;
     uint8 initialMinDistributionOwnerFeePercentage = 2;
 
     Fee public initialProductFee = FeeLib.percentageFee(initialProductFeePercentage);
     Fee public initialPoolFee = FeeLib.percentageFee(initialPoolFeePercentage);
+    Fee public initialStakingFee = FeeLib.percentageFee(initialStakingFeePercentage);
     Fee public initialBundleFee = FeeLib.percentageFee(initialBundleFeePercentage);
     Fee public initialDistributionFee = FeeLib.percentageFee(initialDistributionFeePercentage);
     Fee public initialMinDistributionOwnerFee = FeeLib.percentageFee(initialMinDistributionOwnerFeePercentage);
@@ -460,7 +463,14 @@ contract GifTest is GifDeployer {
             initialDistributionFee, 
             initialMinDistributionOwnerFee);
         vm.stopPrank();
-
+        
+        vm.startPrank(poolOwner);
+        pool.setFees(
+            initialPoolFee, 
+            initialStakingFee, 
+            FeeLib.zero());
+        vm.stopPrank();
+        
         // solhint-disable
         console.log("product nft id", productNftId.toInt());
         console.log("product component at", address(product));

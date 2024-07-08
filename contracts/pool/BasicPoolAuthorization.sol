@@ -46,6 +46,9 @@ contract BasicPoolAuthorization
           _authorize(functions, BasicPool.setMaxCapitalAmount.selector, "setMaxCapitalAmount");
           _authorize(functions, BasicPool.setBundleOwnerRole.selector, "setBundleOwnerRole");
           _authorize(functions, BasicPool.setFees.selector, "setFees");
+          _authorize(functions, BasicPool.stake.selector, "stake");
+          _authorize(functions, BasicPool.unstake.selector, "unstake");
+          _authorize(functions, BasicPool.extend.selector, "extend");
 
           _authorize(functions, IInstanceLinkedComponent.withdrawFees.selector, "withdrawFees");
 

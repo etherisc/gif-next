@@ -23,8 +23,15 @@ interface IPoolService is IService {
     event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
     event LogPoolServiceBundleClosed(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
 
+    event LogPoolServiceBundleStaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount, Amount netAmount);
+    event LogPoolServiceBundleUnstaked(NftId instanceNftId, NftId poolNftId, NftId bundleNftId, Amount amount);
+
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
+    error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
+    error ErrorPoolServiceMaxCapitalAmountExceeded(NftId poolNftId, Amount maxCapitalAmount, Amount capitalAmount, Amount amountToBeAdded);
+    error ErrorPoolServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
+    error ErrorPoolServiceAmountIsZero();
 
     /// @dev defines the required role for bundle owners for the calling pool
     /// default implementation returns PUBLIC ROLE
@@ -85,7 +92,8 @@ interface IPoolService is IService {
 
     /// @dev create a new bundle for the provided parameters
     /// staking fees will be deducted by the pool service from the staking amount
-    /// may only be called by registered and unlocked pool components
+    /// may only be called by registered and unlocked pool components.
+    /// The pool balance is equal to the pool fees plus the capital of all bundles. 
     function createBundle(
         address owner, // initial bundle owner
         Fee memory fee, // fees deducted from premium that go to bundle owner
@@ -95,6 +103,7 @@ interface IPoolService is IService {
     )
         external 
         returns(NftId bundleNftId); // the nft id of the newly created bundle
+        // TODO: return netAmount
 
 
     /// @dev closes the specified bundle
@@ -111,13 +120,12 @@ interface IPoolService is IService {
     /// @dev increase stakes for bundle
     /// staking fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
-    // function stake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
-
+    function stake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
 
     /// @dev decrease stakes for bundle
     /// performance fees will be deducted by the pool service from the staking amount
     /// may only be called by registered and unlocked pool components
-    // function unstake(NftId bundleNftId, uint256 amount) external returns(uint256 netAmount);
+    function unstake(NftId bundleNftId, Amount amount) external returns(Amount netAmount);
 
 
     /// @dev calulate required collateral for the provided parameters

@@ -35,7 +35,6 @@ interface IComponents {
 
 
     struct PoolInfo {
-        NftId productNftId; // the nft of the product this pool is linked to
         RoleId bundleOwnerRole; // the required role for bundle owners
         // TODO maxCapitalAmount -> maxBalanceAmount
         Amount maxCapitalAmount; // max capital amount allowed for pool

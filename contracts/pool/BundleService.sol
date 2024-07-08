@@ -16,13 +16,13 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-import {Fee} from "../type/Fee.sol";
+import {Fee, FeeLib} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, POOL, BUNDLE, REGISTRY} from "../type/ObjectType.sol";
 import {StateId, ACTIVE, PAUSED, CLOSED, KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
-import {TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
+import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
 
 string constant BUNDLE_SERVICE_NAME = "BundleService";
 
@@ -117,7 +117,7 @@ contract BundleService is
                 poolNftId,
                 bundleFee,
                 filter,
-                lifetime,
+                TimestampLib.blockTimestamp(),
                 TimestampLib.blockTimestamp().addSeconds(lifetime),
                 zeroTimestamp()));
 
@@ -231,6 +231,103 @@ contract BundleService is
 
         // update set of active bundles
         bundleManager.lock(bundleNftId);
+    }
+
+    /// @inheritdoc IBundleService
+    function stake(
+        IInstance instance,
+        NftId bundleNftId, 
+        Amount amount
+    ) 
+        external 
+        virtual
+        // TODO: restricted() (once #462 is done)
+    {
+        IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
+        StateId bundleState = instance.getInstanceReader().getMetadata(bundleNftId.toKey32(BUNDLE())).state;
+
+        if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.blockTimestamp() || bundleInfo.closedAt.gtz()) {
+            revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
+        }
+
+        _componentService.increaseBundleBalance(
+            instance.getInstanceStore(), 
+            bundleNftId, 
+            amount, 
+            AmountLib.zero());
+    }
+
+    /// @inheritdoc IBundleService
+    function unstake(
+        IInstance instance, 
+        NftId bundleNftId, 
+        Amount amount
+    ) 
+        external 
+        virtual
+        // TODO: restricted() (once #462 is done)
+        returns (Amount unstakedAmount)
+    {
+        InstanceStore instanceStore = instance.getInstanceStore();
+        (
+            Amount balanceAmount,
+            Amount lockedAmount,
+            Amount feeAmount
+        ) = instanceStore.getAmounts(bundleNftId);
+
+        Amount unstakedAmount = amount;
+        Amount availableAmount = balanceAmount - (lockedAmount + feeAmount);
+
+        // if amount is max, then unstake all available 
+        if (amount.gte(AmountLib.max())) {
+            unstakedAmount = availableAmount;
+        }
+        
+        // ensure unstaked amount does not exceed available amount
+        if (unstakedAmount > availableAmount) {
+            revert ErrorBundleServiceUnstakeAmountExceedsLimit(amount, availableAmount);
+        }
+
+        _componentService.decreaseBundleBalance(
+            instanceStore, 
+            bundleNftId, 
+            unstakedAmount, 
+            AmountLib.zero());
+
+        return unstakedAmount;
+    }
+
+    /// @inheritdoc IBundleService
+    function extend(NftId bundleNftId, Seconds lifetimeExtension) 
+        external 
+        virtual
+        // TODO: restricted() (once #462 is done)
+        returns (Timestamp extendedExpiredAt) 
+    {
+        (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
+        IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
+        StateId bundleState = instance.getInstanceReader().getMetadata(bundleNftId.toKey32(BUNDLE())).state;
+
+        // ensure bundle belongs to the pool
+        if (bundleInfo.poolNftId != poolNftId) {
+            revert ErrorBundleServiceBundlePoolMismatch(bundleNftId, bundleInfo.poolNftId, poolNftId);
+        }
+
+        // ensure bundle is active and not yet expired
+        if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.blockTimestamp()) {
+            revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
+        }
+
+        if (lifetimeExtension.eqz()) {
+            revert ErrorBundleServiceExtensionLifetimeIsZero();
+        }
+
+        bundleInfo.expiredAt = bundleInfo.expiredAt.addSeconds(lifetimeExtension);
+        instance.getInstanceStore().updateBundle(bundleNftId, bundleInfo, KEEP_STATE());
+
+        emit LogBundleServiceBundleExtended(bundleNftId, lifetimeExtension, bundleInfo.expiredAt);
+
+        return bundleInfo.expiredAt;
     }
 
 

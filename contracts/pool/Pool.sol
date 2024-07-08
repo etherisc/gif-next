@@ -14,6 +14,7 @@ import {Fee, FeeLib} from "../type/Fee.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {RoleId, PUBLIC_ROLE} from "../type/RoleId.sol";
 import {Seconds} from "../type/Seconds.sol";
+import {Timestamp} from "../type/Timestamp.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
 import {UFixed, UFixedLib} from "../type/UFixed.sol";
 
@@ -113,7 +114,6 @@ abstract contract Pool is
         returns (IComponents.PoolInfo memory poolInfo)
     {
         return IComponents.PoolInfo(
-            NftIdLib.zero(), // will be set when GIF registers the related product
             PUBLIC_ROLE(), // bundleOwnerRole
             AmountLib.max(), // maxCapitalAmount,
             isNftInterceptor(), // isInterceptingBundleTransfers
@@ -172,8 +172,9 @@ abstract contract Pool is
     )
         internal
         virtual
+        returns(Amount netAmount) 
     {
-        // TODO add implementation
+        _getPoolStorage()._poolService.stake(bundleNftId, amount);
     }
 
 
@@ -185,8 +186,9 @@ abstract contract Pool is
     )
         internal
         virtual
+        returns(Amount netAmount) 
     {
-        // TODO add implementation
+        return _getPoolStorage()._poolService.unstake(bundleNftId, amount);
     }
 
 
@@ -198,8 +200,9 @@ abstract contract Pool is
     )
         internal
         virtual
+        returns (Timestamp extendedExpiredAt) 
     {
-        // TODO add implementation
+        return _getPoolStorage()._bundleService.extend(bundleNftId, lifetimeExtension);
     }
 
 
