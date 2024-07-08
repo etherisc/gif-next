@@ -34,11 +34,14 @@ interface IPolicyService is IService {
     error ErrorPolicyServicePremiumNotFullyPaid(NftId policyNftId, Amount premiumAmount, Amount premiumPaidAmount);
     error ErrorIPolicyServiceOpenClaims(NftId policyNftId, uint16 openClaimsCount);
     error ErrorIPolicyServicePolicyHasNotExpired(NftId policyNftId, Timestamp expiredAt);
+    error ErrorIPolicyServicePolicyExpirationTooLate(NftId policyNftId, Timestamp upperLimit, Timestamp expiredAt);
+    error ErrorIPolicyServicePolicyExpirationTooEarly(NftId policyNftId, Timestamp lowerLimit, Timestamp expiredAt);
 
     error ErrorPolicyServicePremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount recalculatedPremiumAmount);
     error ErrorPolicyServiceTransferredPremiumMismatch(NftId policyNftId, Amount expectedPremiumAmount, Amount transferredPremiumAmount);
 
     event LogPolicyServicePolicyDeclined(NftId policyNftId);
+    event LogPolicyServicePolicyExpirationUpdated(NftId policyNftId, Timestamp expiredAt);
 
     /// @dev collateralizes the policy represented by {policyNftId}
     /// sets the policy state to collateralized
@@ -66,11 +69,12 @@ interface IPolicyService is IService {
     /// to activate a policy it needs to be in underwritten state
     function activate(NftId policyNftId, Timestamp activateAt) external;
 
-    /// @dev expires the specified policy and sets the expiry date in the policy metadata
+    /// @dev expires the specified policy and sets the expiry date in the policy metadata. If expiry date is set to 0, then the earliest possible expiry date (current blocktime) is set
     /// to expire a policy it must be in active state, policies may be expired even when the predefined expiry date is still in the future
     /// a policy can only be closed when it has been expired. in addition, it must not have any open claims
     /// this function can only be called by a product. the policy needs to match with the calling product
-    function expire(NftId policyNftId) external;
+    /// @return expiredAt the effective expiry date
+    function expire(NftId policyNftId, Timestamp expireAt) external returns (Timestamp expiredAt);
 
     /// @dev closes the specified policy and sets the closed data in the policy metadata
     /// a policy can only be closed when it has been expired. in addition, it must not have any open claims

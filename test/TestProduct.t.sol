@@ -209,6 +209,7 @@ contract TestProduct is GifTest {
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
 
+        // solhint-disable-next-line
         console.log("checking policy info after underwriting");
         IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
         assertEq(policyInfo.sumInsuredAmount.toInt(), 1000, "sumInsuredAmount not 1000");
@@ -217,6 +218,7 @@ contract TestProduct is GifTest {
         assertTrue(policyInfo.expiredAt.gtz(), "expiredAt not set");
         assertTrue(policyInfo.expiredAt.toInt() == policyInfo.activatedAt.addSeconds(sec30).toInt(), "expiredAt not activatedAt + 30");
 
+        // solhint-disable-next-line
         console.log("checking bundle amounts after underwriting");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
         assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount (1)");
@@ -635,6 +637,7 @@ contract TestProduct is GifTest {
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId) == COLLATERALIZED(), "policy state not COLLATERALIZED");
 
+        // solhint-disable-next-line
         console.log("checking bundle amounts after collateralizaion");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
         assertEq(amount.toInt(), DEFAULT_BUNDLE_CAPITALIZATION, "unexpected bundle amount (3)");
@@ -841,6 +844,7 @@ contract TestProduct is GifTest {
         // THEN
         assertTrue(instanceReader.getPolicyState(policyNftId) == CLOSED(), "policy state not CLOSE");
 
+        // solhint-disable-next-line
         console.log("checking bundle amounts after collateralizaion");
         (Amount amount, Amount lockedAmount, Amount feeAmount) = instanceStore.getAmounts(bundleNftId);
         uint bundleFee = ep.bundleFeeFixAmount + ep.bundleFeeVarAmount;
@@ -903,6 +907,391 @@ contract TestProduct is GifTest {
         // THEN 
         assertTrue(instanceReader.getPolicyState(policyNftId) == DECLINED(), "policy state not DECLINED");
     }
+
+    /// @dev test that policy expiration works 
+    function test_productPolicyExpire() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        // solhint-disable-next-line 
+        console.log("before collateralization of", policyNftId.toInt());
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
+        IPolicy.PolicyInfo memory policyInfoBefore = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoBefore.expiredAt.toInt(), createdAt + lifetime, "unexpected expiredAt");
+
+        // WHEN
+        uint256 expireAt = createdAt + 10;
+        Timestamp expireAtTs = TimestampLib.toTimestamp(expireAt);
+        product.expire(policyNftId, expireAtTs);
+
+        // THEN
+        IPolicy.PolicyInfo memory policyInfoAfter = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoAfter.expiredAt.toInt(), expireAt, "unexpected expiredAt");
+    }
+
+    /// @dev test that policy expiration works when current timestamp is provided
+    function test_productPolicyExpire_currentTimestamp() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        // solhint-disable-next-line 
+        console.log("before collateralization of", policyNftId.toInt());
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
+        IPolicy.PolicyInfo memory policyInfoBefore = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoBefore.expiredAt.toInt(), createdAt + lifetime, "unexpected expiredAt");
+
+        // WHEN
+        Timestamp expireAtTs = TimestampLib.blockTimestamp();
+        product.expire(policyNftId, expireAtTs);
+
+        // THEN
+        IPolicy.PolicyInfo memory policyInfoAfter = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoAfter.expiredAt.toInt(), expireAtTs.toInt(), "unexpected expiredAt");
+    }
+
+    /// @dev test that policy expiration works when expireAt is set to 0
+    function test_productPolicyExpire_earliestPossible() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        // solhint-disable-next-line 
+        console.log("before collateralization of", policyNftId.toInt());
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+
+        // WHEN
+        Timestamp expireAtTs = TimestampLib.zero();
+        Timestamp expiredAt = product.expire(policyNftId, expireAtTs);
+
+        // THEN
+        assertEq(expiredAt.toInt(), vm.getBlockTimestamp(), "unexpected expiredAt (1)");
+        IPolicy.PolicyInfo memory policyInfoAfter = instanceReader.getPolicyInfo(policyNftId);
+        assertEq(policyInfoAfter.expiredAt.toInt(), vm.getBlockTimestamp(), "unexpected expiredAt (2)");
+    }
+
+    /// @dev test that policy expiration reverts if policy is not active
+    function test_productPolicyExpire_policyNotActive() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+
+        // solhint-disable-next-line 
+        product.decline(policyNftId);
+
+        assertTrue(instanceReader.getPolicyState(policyNftId) == DECLINED(), "policy state not DECLINED");
+
+        uint256 expireAt = createdAt + 10;
+        Timestamp expireAtTs = TimestampLib.toTimestamp(expireAt);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorIPolicyServicePolicyNotActive.selector, 
+            policyNftId,
+            DECLINED()));
+
+        // WHEN
+        product.expire(policyNftId, expireAtTs);
+    }
+
+    /// @dev test that policy expiration reverts if the expireAt timestamp is too late
+    function test_productPolicyExpire_expireAtTooLate() public {
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not COLLATERALIZED");
+
+        uint256 expireAt = createdAt + 30;
+        Timestamp expireAtTs = TimestampLib.toTimestamp(expireAt);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorIPolicyServicePolicyExpirationTooLate.selector, 
+            policyNftId,
+            expireAtTs,
+            expireAtTs));
+
+        // WHEN
+        product.expire(policyNftId, expireAtTs);
+
+        // THEN - expect revert
+        uint256 expireAt2 = createdAt + 35;
+        Timestamp expireAtTs2 = TimestampLib.toTimestamp(expireAt);
+
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorIPolicyServicePolicyExpirationTooLate.selector, 
+            policyNftId,
+            expireAtTs,
+            expireAtTs2));
+
+        // WHEN
+        product.expire(policyNftId, expireAtTs2);
+    }
+
+    /// @dev test that policy expiration reverts if the expireAt timestamp is too early
+    function test_productPolicyExpire_expireAtTooEarly() public {
+        skip(10);
+
+        // GIVEN
+        vm.startPrank(registryOwner);
+        token.transfer(customer, 1000);
+        vm.stopPrank();
+
+        _prepareProductLocal();  
+
+        vm.startPrank(productOwner);
+
+        RiskId riskId = RiskIdLib.toRiskId("42x4711");
+        bytes memory data = "bla di blubb";
+        product.createRisk(riskId, data);
+
+        vm.stopPrank();
+
+        vm.startPrank(customer);
+
+        IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(productNftId);
+        token.approve(address(componentInfo.tokenHandler), 1000);
+
+        // solhint-disable-next-line 
+        console.log("before application creation");
+
+        uint sumInsuredAmount = 1000;
+        uint256 lifetime = 30;
+        Seconds lifetimeSecs = SecondsLib.toSeconds(30);
+        bytes memory applicationData = "";
+        ReferralId referralId = ReferralLib.zero();
+        NftId policyNftId = product.createApplication(
+            customer,
+            riskId,
+            sumInsuredAmount,
+            lifetimeSecs,
+            applicationData,
+            bundleNftId,
+            referralId
+        );
+        uint256 createdAt = vm.getBlockTimestamp();
+
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp()); 
+        assertTrue(instanceReader.getPolicyState(policyNftId) == ACTIVE(), "policy state not ACTIVE");
+
+        uint256 expireAt = createdAt - 5;
+        Timestamp expireAtTs = TimestampLib.toTimestamp(expireAt);
+        
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPolicyService.ErrorIPolicyServicePolicyExpirationTooEarly.selector, 
+            policyNftId,
+            vm.getBlockTimestamp(),
+            expireAtTs));
+
+        // WHEN
+        product.expire(policyNftId, expireAtTs);
+    }
+
 
     function test_productCreateRisk() public {
         _prepareProductLocal();

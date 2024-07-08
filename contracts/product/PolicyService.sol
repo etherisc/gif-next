@@ -4,23 +4,16 @@ pragma solidity ^0.8.20;
 import {IRegistry} from "../registry/IRegistry.sol";
 import {Product} from "./Product.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
-import {IDistributionComponent} from "../distribution/IDistributionComponent.sol";
 import {IInstance} from "../instance/IInstance.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
-import {IPoolComponent} from "../pool/IPoolComponent.sol";
-import {IRisk} from "../instance/module/IRisk.sol";
-import {IBundle} from "../instance/module/IBundle.sol";
 
 import {TokenHandler} from "../shared/TokenHandler.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
-import {ClaimId, ClaimIdLib} from "../type/ClaimId.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
-import {UFixed, UFixedLib} from "../type/UFixed.sol";
 import {ObjectType, APPLICATION, COMPONENT, DISTRIBUTION, PRODUCT, POOL, POLICY, BUNDLE, CLAIM, PRICE} from "../type/ObjectType.sol";
-import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED, CONFIRMED} from "../type/StateId.sol";
+import {APPLIED, COLLATERALIZED, ACTIVE, KEEP_STATE, CLOSED, DECLINED} from "../type/StateId.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
-import {PayoutId, PayoutIdLib} from "../type/PayoutId.sol";
 import {ReferralId} from "../type/Referral.sol";
 import {StateId} from "../type/StateId.sol";
 import {VersionPart} from "../type/Version.sol";
@@ -36,8 +29,6 @@ import {InstanceStore} from "../instance/InstanceStore.sol";
 import {IPolicyService} from "./IPolicyService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
 import {IPricingService} from "./IPricingService.sol";
-import {IService} from "../shared/IService.sol";
-import {Service} from "../shared/Service.sol";
 
 contract PolicyService is
     ComponentVerifyingService, 
@@ -253,15 +244,54 @@ contract PolicyService is
         // TODO: add logging
     }
 
-
+    /// @inheritdoc IPolicyService
     function expire(
-        NftId policyNftId
+        NftId policyNftId,
+        Timestamp expireAt
     )
         external
         override
-        // solhint-disable-next-line no-empty-blocks
+        virtual
+        returns (Timestamp)
     {
-        
+        (NftId productNftId,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
+        InstanceReader instanceReader = instance.getInstanceReader();
+
+        // check policy is in state applied
+        if (instanceReader.getPolicyState(policyNftId) != ACTIVE()) {
+            revert ErrorIPolicyServicePolicyNotActive(policyNftId, instanceReader.getPolicyState(policyNftId));
+        }
+
+        // check policy matches with calling product
+        IPolicy.PolicyInfo memory policyInfo = instanceReader.getPolicyInfo(policyNftId);
+        if(policyInfo.productNftId != productNftId) {
+            revert ErrorPolicyServicePolicyProductMismatch(
+                policyNftId, 
+                policyInfo.productNftId, 
+                productNftId);
+        }
+
+        if (expireAt.eqz()) {
+            expireAt = TimestampLib.blockTimestamp();
+        }
+
+        // check preconditions
+        if (expireAt >= policyInfo.expiredAt) {
+            revert ErrorIPolicyServicePolicyExpirationTooLate(policyNftId, policyInfo.expiredAt, expireAt);
+        }
+        if (expireAt < TimestampLib.blockTimestamp()) {
+            revert ErrorIPolicyServicePolicyExpirationTooEarly(policyNftId, TimestampLib.blockTimestamp(), expireAt);
+        }
+        if (policyInfo.openClaimsCount > 0) {
+            revert ErrorIPolicyServiceOpenClaims(policyNftId, policyInfo.openClaimsCount);
+        }
+
+        policyInfo.expiredAt = expireAt;
+        instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
+
+        emit LogPolicyServicePolicyExpirationUpdated(policyNftId, expireAt);
+
+        return expireAt;
     }
 
     function close(
