@@ -6,7 +6,7 @@ import {IAccessManaged} from "@openzeppelin/contracts/access/manager/IAccessMana
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-import {Amount} from "../type/Amount.sol";
+import {Amount, AmountLib} from "../type/Amount.sol";
 import {IComponent} from "./IComponent.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
@@ -132,7 +132,7 @@ abstract contract Component is
                 // move tokens from component smart contract to external wallet
             } else {
                 // move tokens from external wallet to component smart contract or another external wallet
-                uint256 allowance = token.allowance(currentWallet, address(this));
+                uint256 allowance = token.allowance(currentWallet, address(getTokenHandler()));
                 if (allowance < currentBalance) {
                     revert ErrorComponentWalletAllowanceTooSmall(currentWallet, newWallet, allowance, currentBalance);
                 }
@@ -147,11 +147,11 @@ abstract contract Component is
             // transfer tokens from current wallet to new wallet
             if (currentWallet == address(this)) {
                 // transferFrom requires self allowance too
-                token.approve(address(this), currentBalance);
+                token.approve(address(getTokenHandler()), currentBalance);
             }
             
-            SafeERC20.safeTransferFrom(token, currentWallet, newWallet, currentBalance);
             emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
+            getTokenHandler().transfer(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
         }
     }
 
