@@ -113,13 +113,15 @@ contract BundleService is
         InstanceStore instanceStore = instance.getInstanceStore();
         instanceStore.createBundle(
             bundleNftId, 
-            IBundle.BundleInfo(
-                poolNftId,
-                bundleFee,
-                filter,
-                TimestampLib.blockTimestamp(),
-                TimestampLib.blockTimestamp().addSeconds(lifetime),
-                zeroTimestamp()));
+            IBundle.BundleInfo({
+                poolNftId: poolNftId,
+                fee: bundleFee,
+                filter: filter,
+                activatedAt: TimestampLib.blockTimestamp(),
+                expiredAt: TimestampLib.blockTimestamp().addSeconds(lifetime),
+                closedAt: zeroTimestamp()
+            })
+        );
 
         // bundle book keeping
         _componentService.increaseBundleBalance(
