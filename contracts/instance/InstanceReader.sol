@@ -85,6 +85,14 @@ contract InstanceReader {
         return _store.getState(toPolicyKey(policyNftId));
     }
 
+    function getBundleState(NftId bundleNftId)
+        public
+        view
+        returns (StateId state)
+    {
+        return _store.getState(toBundleKey(bundleNftId));
+    }
+
     /// @dev returns true iff policy may be closed
     /// a policy can be closed all conditions below are met
     /// - policy exists
