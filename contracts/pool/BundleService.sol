@@ -246,7 +246,9 @@ contract BundleService is
         IBundle.BundleInfo memory bundleInfo = instance.getInstanceReader().getBundleInfo(bundleNftId);
         StateId bundleState = instance.getInstanceReader().getBundleState(bundleNftId);
 
-        if(bundleState != ACTIVE() || bundleInfo.expiredAt < TimestampLib.blockTimestamp() || bundleInfo.closedAt.gtz()) {
+        if( (bundleState != ACTIVE() && bundleState != PAUSED()) // locked bundles can be staked
+            || bundleInfo.expiredAt < TimestampLib.blockTimestamp() 
+            || bundleInfo.closedAt.gtz()) {
             revert ErrorBundleServiceBundleNotOpen(bundleNftId, bundleState, bundleInfo.expiredAt);
         }
 
