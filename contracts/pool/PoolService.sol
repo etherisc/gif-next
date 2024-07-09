@@ -185,8 +185,8 @@ contract PoolService is
         _componentService.decreasePoolBalance(
             instance.getInstanceStore(), 
             poolNftId, 
-            balanceAmount, 
-            feeAmount);
+            balanceAmount +  feeAmount, 
+            AmountLib.zero());
         
         emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId);
 
