@@ -135,6 +135,47 @@ contract TestBundle is GifTest {
         assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
     }
 
+    function test_Bundle_stakeBundle_maxBalanceExceeded() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(false);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+        vm.startPrank(poolOwner);
+        pool.setMaxBalanceAmount(AmountLib.toAmount(1500));
+        vm.stopPrank();
+
+        vm.startPrank(investor);
+        token.approve(address(pool.getTokenHandler()), 2000);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        (bundleNftId,) = pool.createBundle(
+            FeeLib.zero(), 
+            1000, 
+            lifetime, 
+            ""
+        );
+
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        uint256 stakeAmount = 1001;
+        Amount stakeAmt = AmountLib.toAmount(stakeAmount);
+        Amount stakeNetAmt = AmountLib.toAmount(960);
+
+        pool.lockBundle(bundleNftId);
+
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolService.ErrorPoolServiceMaxBalanceAmountExceeded.selector, 
+            poolNftId,
+            AmountLib.toAmount(1500),
+            AmountLib.toAmount(1000),
+            AmountLib.toAmount(1001)));
+
+        // WHEN - pool is staked with more tokens
+        pool.stake(bundleNftId, stakeAmt);
+    }
+
     /// @dev test staking when the allowance is too small
     function test_Bundle_stakeBundle_allowanceTooSmall() public {
         // GIVEN

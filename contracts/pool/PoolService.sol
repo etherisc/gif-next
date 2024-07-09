@@ -118,20 +118,22 @@ contract PoolService is
         returns(NftId bundleNftId, Amount netStakedAmount)
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
-        
-        Amount stakingFeeAmount;
-        (stakingFeeAmount, netStakedAmount) = FeeLib.calculateFee(
-            _getStakingFee(instance.getInstanceReader(), poolNftId), 
-            stakingAmount);
 
         {
             InstanceReader instanceReader = instance.getInstanceReader();
             IComponents.PoolInfo memory poolInfo = instanceReader.getPoolInfo(poolNftId);
             Amount currentPoolBalance = instanceReader.getBalanceAmount(poolNftId);
-            if (currentPoolBalance + netStakedAmount > poolInfo.maxBalanceAmount) {
-                revert ErrorPoolServiceMaxBalanceAmountExceeded(poolNftId, poolInfo.maxBalanceAmount, currentPoolBalance, netStakedAmount);
+            if (currentPoolBalance + stakingAmount > poolInfo.maxBalanceAmount) {
+                revert ErrorPoolServiceMaxBalanceAmountExceeded(poolNftId, poolInfo.maxBalanceAmount, currentPoolBalance, stakingAmount);
             }
         }
+
+
+        Amount stakingFeeAmount;
+        (stakingFeeAmount, netStakedAmount) = FeeLib.calculateFee(
+            _getStakingFee(instance.getInstanceReader(), poolNftId), 
+            stakingAmount);
+
 
         bundleNftId = _bundleService.create(
             instance,
@@ -201,6 +203,13 @@ contract PoolService is
             revert ErrorPoolServiceBundlePoolMismatch(bundleNftId, poolNftId);
         }
 
+        {
+            Amount currentPoolBalance = instanceReader.getBalanceAmount(poolNftId);
+            if (currentPoolBalance + amount > poolInfo.maxBalanceAmount) {
+                revert ErrorPoolServiceMaxBalanceAmountExceeded(poolNftId, poolInfo.maxBalanceAmount, currentPoolBalance, amount);
+            }
+        }
+
         // calculate fees
         Amount feeAmount;
         (
@@ -209,11 +218,6 @@ contract PoolService is
         ) = FeeLib.calculateFee(
             _getStakingFee(instanceReader, poolNftId), 
             amount);
-
-        Amount currentPoolBalance = instanceReader.getBalanceAmount(poolNftId);
-        if (currentPoolBalance + netAmount > poolInfo.maxBalanceAmount) {
-            revert ErrorPoolServiceMaxBalanceAmountExceeded(poolNftId, poolInfo.maxBalanceAmount, currentPoolBalance, netAmount);
-        }
 
         // do all the bookkeeping
         _componentService.increasePoolBalance(
