@@ -229,7 +229,7 @@ abstract contract Pool is
     /// To close a bundle all all linked policies MUST be in closed state as well.
     /// Closing a bundle finalizes the bundle bookkeeping including overall profit calculation.
     /// Once a bundle is closed this action cannot be reversed.
-    function _close(NftId bundleNftId)
+    function _closeBundle(NftId bundleNftId)
         internal
         virtual
     {

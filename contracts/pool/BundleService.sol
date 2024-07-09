@@ -238,8 +238,8 @@ contract BundleService is
         instanceStore.updateBundleState(bundleNftId, CLOSED());
         bundleManager.lock(bundleNftId);
 
-        Amount balanceAmount = instanceReader.getBalanceAmount(bundleNftId);
-        Amount feeAmount = instanceReader.getFeeAmount(bundleNftId);
+        balanceAmount = instanceReader.getBalanceAmount(bundleNftId);
+        feeAmount = instanceReader.getFeeAmount(bundleNftId);
         _componentService.decreaseBundleBalance(instanceStore, bundleNftId, balanceAmount, feeAmount);
     }
 
