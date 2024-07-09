@@ -131,13 +131,13 @@ abstract contract BasicPool is
     }
 
 
-    function setMaxCapitalAmount(Amount maxCapitalAmount)
+    function setMaxBalanceAmount(Amount maxBalanceAmount)
         public
         virtual
         restricted()
         onlyOwner()
     {
-        _setMaxCapitalAmount(maxCapitalAmount);
+        _setMaxBalanceAmount(maxBalanceAmount);
     }
 
 

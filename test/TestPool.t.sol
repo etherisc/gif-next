@@ -10,6 +10,7 @@ import {IBundle} from "../contracts/instance/module/IBundle.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IKeyValueStore} from "../contracts/shared/IKeyValueStore.sol";
 import {ILifecycle} from "../contracts/shared/ILifecycle.sol";
+import {IPoolService} from "../contracts/pool/IPoolService.sol";
 import {Key32} from "../contracts/type/Key32.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
@@ -199,6 +200,68 @@ contract TestPool is GifTest {
             bundleInfo.activatedAt.toInt(),
             vm.getBlockTimestamp(),
             "unexpected activatedAt");
+    }
+
+    function test_PoolCreateBundle_twoBundlesMaxBalanceExceeded() public {
+        // GIVEN
+        _prepareProduct(false);
+
+        vm.startPrank(poolOwner);
+        pool.setMaxBalanceAmount(AmountLib.toAmount(5000));
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(investor);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        Fee memory zeroFee = FeeLib.zero();
+        
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolService.ErrorPoolServiceMaxBalanceAmountExceeded.selector, 
+            poolNftId,
+            AmountLib.toAmount(5000),
+            AmountLib.toAmount(0),
+            AmountLib.toAmount(10000)));
+
+        // WHEN
+        pool.createBundle(
+            zeroFee, 
+            10000, 
+            lifetime, 
+            ""
+        );
+    }
+
+    function test_PoolCreateBundle_maxBalanceExceeded() public {
+        // GIVEN
+        _prepareProduct(true);
+        
+        vm.startPrank(poolOwner);
+        pool.setMaxBalanceAmount(AmountLib.toAmount(15000));
+        vm.stopPrank();
+
+        // WHEN
+        vm.startPrank(investor);
+
+        Seconds lifetime = SecondsLib.toSeconds(604800);
+        Fee memory zeroFee = FeeLib.zero();
+        
+        // THEN
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolService.ErrorPoolServiceMaxBalanceAmountExceeded.selector, 
+            poolNftId,
+            AmountLib.toAmount(15000),
+            AmountLib.toAmount(100000000000),
+            AmountLib.toAmount(10000)));
+
+        // WHEN
+        pool.createBundle(
+            zeroFee, 
+            10000, 
+            lifetime, 
+            ""
+        );
     }
 
     function test_PoolCreateBundle_withStakingFee() public {
