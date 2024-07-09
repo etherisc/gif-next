@@ -232,8 +232,9 @@ contract BundleService is
         }
 
         {
-            balanceAmount = instanceReader.getBalanceAmount(bundleNftId);
+            Amount balanceAmountWithFees = instanceReader.getBalanceAmount(bundleNftId);
             feeAmount = instanceReader.getFeeAmount(bundleNftId);
+            balanceAmount = balanceAmountWithFees - feeAmount;
 
             InstanceStore instanceStore = instance.getInstanceStore();
             instanceStore.updateBundleState(bundleNftId, CLOSED());
