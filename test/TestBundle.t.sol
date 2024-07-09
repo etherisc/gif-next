@@ -11,6 +11,7 @@ import {IBundleService} from "../contracts/pool/IBundleService.sol";
 import {IComponents} from "../contracts/instance/module/IComponents.sol";
 import {IKeyValueStore} from "../contracts/shared/IKeyValueStore.sol";
 import {ILifecycle} from "../contracts/shared/ILifecycle.sol";
+import {IPoolComponent} from "../contracts/pool/IPoolComponent.sol";
 import {Key32} from "../contracts/type/Key32.sol";
 import {NftId, NftIdLib} from "../contracts/type/NftId.sol";
 import {ObjectType, BUNDLE} from "../contracts/type/ObjectType.sol";
@@ -917,7 +918,7 @@ contract TestBundle is GifTest {
         pool.closeBundle(bundleNftId);
     }
 
-    /// @dev test closing of a bundle
+    /// @dev test closing of a bundle when allowance is too small
     function test_Bundle_closeBundle_allowanceTooSmall() public {
         // GIVEN
         initialStakingFee = FeeLib.percentageFee(4);
@@ -942,6 +943,28 @@ contract TestBundle is GifTest {
             address(pool.getTokenHandler()),
             0,
             96000 * 10 ** 6));
+
+        // WHEN
+        pool.closeBundle(bundleNftId);
+    }
+
+    /// @dev test closing of a bundle when caller is not the owner
+    function test_Bundle_closeBundle_notOwner() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(true);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+        
+        vm.startPrank(customer);
+
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolComponent.ErrorPoolNotBundleOwner.selector, 
+            bundleNftId,
+            customer));
 
         // WHEN
         pool.closeBundle(bundleNftId);
