@@ -219,7 +219,7 @@ contract BundleService is
         external
         virtual
         restricted
-        returns (Amount balanceAmount, Amount feeAmount)
+        returns (Amount unstakedAmount, Amount feeAmount)
     {
         // udpate bundle state
         InstanceReader instanceReader = instance.getInstanceReader();
@@ -234,13 +234,13 @@ contract BundleService is
         {
             Amount balanceAmountWithFees = instanceReader.getBalanceAmount(bundleNftId);
             feeAmount = instanceReader.getFeeAmount(bundleNftId);
-            balanceAmount = balanceAmountWithFees - feeAmount;
+            unstakedAmount = balanceAmountWithFees - feeAmount;
 
             InstanceStore instanceStore = instance.getInstanceStore();
             instanceStore.updateBundleState(bundleNftId, CLOSED());
             bundleManager.lock(bundleNftId);
 
-            _componentService.decreaseBundleBalance(instanceStore, bundleNftId, balanceAmount, feeAmount);
+            _componentService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
         }
     }
 

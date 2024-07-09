@@ -180,17 +180,17 @@ contract PoolService is
         // TODO get performance fee for pool (#477)
 
         // releasing collateral in bundle
-        (Amount balanceAmount, Amount feeAmount) = _bundleService.close(instance, bundleNftId);
+        (Amount unstakedAmount, Amount feeAmount) = _bundleService.close(instance, bundleNftId);
 
         _componentService.decreasePoolBalance(
             instance.getInstanceStore(), 
             poolNftId, 
-            balanceAmount +  feeAmount, 
+            unstakedAmount +  feeAmount, 
             AmountLib.zero());
         
         emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId);
 
-        {
+        if ((unstakedAmount + feeAmount).gtz()){
             IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolNftId);
             TokenHandler tokenHandler = poolComponentInfo.tokenHandler;
             IERC20Metadata token = IERC20Metadata(poolComponentInfo.token);
@@ -199,13 +199,17 @@ contract PoolService is
             
             // check allowance
             uint256 tokenAllowance = token.allowance(poolComponentInfo.wallet, address(tokenHandler));
-            if (tokenAllowance < (balanceAmount.toInt() +  feeAmount.toInt())) {
-                revert ErrorPoolServiceWalletAllowanceTooSmall(poolComponentInfo.wallet, address(tokenHandler), tokenAllowance, balanceAmount.toInt() + feeAmount.toInt());
+            if (tokenAllowance < (unstakedAmount.toInt() +  feeAmount.toInt())) {
+                revert ErrorPoolServiceWalletAllowanceTooSmall(
+                    poolComponentInfo.wallet, 
+                    address(tokenHandler), 
+                    tokenAllowance, 
+                    unstakedAmount.toInt() + feeAmount.toInt());
             }
 
             // transfer amount to bundle owner
             address bundleOwner = getRegistry().ownerOf(bundleNftId);
-            tokenHandler.transfer(poolComponentInfo.wallet, bundleOwner, balanceAmount + feeAmount);
+            tokenHandler.transfer(poolComponentInfo.wallet, bundleOwner, unstakedAmount + feeAmount);
         }
     }
 
