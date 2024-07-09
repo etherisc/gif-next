@@ -251,8 +251,8 @@ contract TestPool is GifTest {
         vm.expectRevert(abi.encodeWithSelector(
             IPoolService.ErrorPoolServiceMaxBalanceAmountExceeded.selector, 
             poolNftId,
-            AmountLib.toAmount(10000),
-            AmountLib.toAmount(10000),
+            AmountLib.toAmount(15000),
+            AmountLib.toAmount(100000000000),
             AmountLib.toAmount(10000)));
 
         // WHEN
