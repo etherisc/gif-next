@@ -109,11 +109,11 @@ abstract contract Component is
             revert ErrorComponentWalletNotComponent();
         }
 
+        emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount);
+
         IERC20Metadata(token).approve(
             address(getTokenHandler()),
             spendingLimitAmount.toInt());
-
-        emit LogComponentTokenHandlerApproved(address(getTokenHandler()), spendingLimitAmount);
     }
 
     function setWallet(address newWallet)
@@ -144,13 +144,14 @@ abstract contract Component is
 
         // interactions
         if (currentBalance > 0) {
+            emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
+
             // transfer tokens from current wallet to new wallet
             if (currentWallet == address(this)) {
                 // transferFrom requires self allowance too
                 token.approve(address(getTokenHandler()), currentBalance);
             }
             
-            emit LogComponentWalletTokensTransferred(currentWallet, newWallet, currentBalance);
             getTokenHandler().transfer(currentWallet, newWallet, AmountLib.toAmount(currentBalance));
         }
     }
