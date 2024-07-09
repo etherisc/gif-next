@@ -31,7 +31,6 @@ interface IBundleService is IService {
     error ErrorBundleServiceWalletAllowanceTooSmall(address wallet, address tokenHandler, uint256 allowance, uint256 amount);
 
     error ErrorBundleServiceUnstakeAmountExceedsLimit(Amount amount, Amount limit);
-    error ErrorBundleServiceBundleWithLockedCollateral(NftId bundleNftId, Amount lockedCollateralAmount);
 
     error ErrorBundleServiceExtensionLifetimeIsZero();
 
