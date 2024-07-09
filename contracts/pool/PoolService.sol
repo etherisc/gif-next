@@ -68,24 +68,22 @@ contract PoolService is
         registerInterface(type(IPoolService).interfaceId);
     }
 
-
-    function setMaxCapitalAmount(Amount maxCapitalAmount)
+    /// @inheritdoc IPoolService
+    function setMaxBalanceAmount(Amount maxBalanceAmount)
         external
         virtual
     {
-        /*
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
         InstanceReader instanceReader = instance.getInstanceReader();
 
         IComponents.ComponentInfo memory componentInfo = instanceReader.getComponentInfo(poolNftId);
         IComponents.PoolInfo memory poolInfo = abi.decode(componentInfo.data, (IComponents.PoolInfo));
-        Amount previousMaxCapitalAmount = poolInfo.maxCapitalAmount;
+        Amount previousMaxBalanceAmount = poolInfo.maxBalanceAmount;
 
-        poolInfo.maxCapitalAmount = maxCapitalAmount;
+        poolInfo.maxBalanceAmount = maxBalanceAmount;
         instance.getInstanceStore().updatePool(poolNftId, poolInfo, KEEP_STATE());
 
-        emit LogPoolServiceMaxCapitalAmountUpdated(poolNftId, previousMaxCapitalAmount, maxCapitalAmount);
-        */
+        emit LogPoolServiceMaxBalanceAmountUpdated(poolNftId, previousMaxBalanceAmount, maxBalanceAmount);
     }
 
     function setBundleOwnerRole(RoleId bundleOwnerRole)
@@ -199,8 +197,8 @@ contract PoolService is
         }
 
         Amount currentPoolBalance = instanceReader.getBalanceAmount(poolNftId);
-        if (amount + currentPoolBalance > poolInfo.maxCapitalAmount) {
-            revert ErrorPoolServiceMaxCapitalAmountExceeded(poolNftId, poolInfo.maxCapitalAmount, currentPoolBalance, amount);
+        if (amount + currentPoolBalance > poolInfo.maxBalanceAmount) {
+            revert ErrorPoolServiceMaxBalanceAmountExceeded(poolNftId, poolInfo.maxBalanceAmount, currentPoolBalance, amount);
         }
 
         // calculate fees

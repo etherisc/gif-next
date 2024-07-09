@@ -251,13 +251,13 @@ abstract contract Pool is
     }
 
 
-    /// @dev Sets the maximum overall capital amound held by this pool.
+    /// @dev Sets the maximum balance amound held by this pool.
     /// Function may only be called by pool owner.
-    function _setMaxCapitalAmount(Amount maxCapitalAmount)
+    function _setMaxBalanceAmount(Amount maxBalanceAmount)
         internal
         virtual
     {
-        _getPoolStorage()._poolService.setMaxCapitalAmount(maxCapitalAmount);
+        _getPoolStorage()._poolService.setMaxBalanceAmount(maxBalanceAmount);
     }
 
     /// @dev Sets the required role to create/own bundles.

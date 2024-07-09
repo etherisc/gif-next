@@ -17,7 +17,7 @@ import {UFixed} from "../type/UFixed.sol";
 
 interface IPoolService is IService {
 
-    event LogPoolServiceMaxCapitalAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
+    event LogPoolServiceMaxBalanceAmountUpdated(NftId poolNftId, Amount previousMaxCapitalAmount, Amount currentMaxCapitalAmount);
     event LogPoolServiceBundleOwnerRoleSet(NftId poolNftId, RoleId bundleOwnerRole);
 
     event LogPoolServiceBundleCreated(NftId instanceNftId, NftId poolNftId, NftId bundleNftId);
@@ -29,7 +29,7 @@ interface IPoolService is IService {
     error ErrorPoolServiceBundleOwnerRoleAlreadySet(NftId poolNftId);
     error ErrorPoolServiceInvalidTransferAmount(Amount expectedAmount, Amount actualAmount);
     error ErrorPoolServiceBundlePoolMismatch(NftId bundleNftId, NftId poolNftId);
-    error ErrorPoolServiceMaxCapitalAmountExceeded(NftId poolNftId, Amount maxCapitalAmount, Amount capitalAmount, Amount amountToBeAdded);
+    error ErrorPoolServiceMaxBalanceAmountExceeded(NftId poolNftId, Amount maxBalanceAmount, Amount currentBalanceAmount, Amount transferAmount);
     error ErrorPoolServiceWalletAllowanceTooSmall(address wallet, address spender, uint256 allowance, uint256 amount);
     error ErrorPoolServiceAmountIsZero();
 
@@ -37,8 +37,8 @@ interface IPoolService is IService {
     /// default implementation returns PUBLIC ROLE
     function setBundleOwnerRole(RoleId bundleOwnerRole) external;
 
-    /// @dev sets the max capital amount for the calling pool
-    function setMaxCapitalAmount(Amount maxCapitalAmount) external;
+    /// @dev sets the max balance amount for the calling pool
+    function setMaxBalanceAmount(Amount maxBalanceAmount) external;
 
     /// @dev locks required collateral to cover the specified application (and turn it into a policy)
     /// - retention level == 1: the full collateral amount will be locked by the specified bundle
