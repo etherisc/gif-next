@@ -81,6 +81,8 @@ interface IBundleService is IService {
     /// only open bundles (active or locked) may be closed
     /// to close a bundle it may not have any non-closed polices attached to it
     /// may only be called by registered and unlocked pool components
+    /// @return balanceAmount the unstaked amount that was remaining in the bundle
+    /// @return feeAmount the fee amount that was remaining for the bundle
     function close(
         IInstance instance, 
         NftId bundleNftId
