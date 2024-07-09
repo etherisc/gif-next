@@ -31,6 +31,7 @@ interface IBundleService is IService {
     error ErrorBundleServiceWalletAllowanceTooSmall(address wallet, address tokenHandler, uint256 allowance, uint256 amount);
 
     error ErrorBundleServiceUnstakeAmountExceedsLimit(Amount amount, Amount limit);
+    error ErrorBundleServiceBundleWithLockedCollateral(NftId bundleNftId, Amount lockedCollateralAmount);
 
     error ErrorBundleServiceExtensionLifetimeIsZero();
 
@@ -84,7 +85,7 @@ interface IBundleService is IService {
     function close(
         IInstance instance, 
         NftId bundleNftId
-    ) external;
+    ) external returns (Amount balanceAmount, Amount feeAmount);
 
     /// @dev set bundle fee to provided value
     /// may only be called by registered and unlocked pool components

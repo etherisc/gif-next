@@ -133,7 +133,6 @@ contract BundleService is
         // put bundle under bundle managemet
         BundleSet bundleManager = instance.getBundleSet();
         bundleManager.add(bundleNftId);
-
         // TODO add logging
     }
 
@@ -220,9 +219,10 @@ contract BundleService is
         external
         virtual
         restricted
+        returns (Amount balanceAmount, Amount feeAmount)
     {
         // udpate bundle state
-        instance.getInstanceStore().updateBundleState(bundleNftId, CLOSED());
+        InstanceReader instanceReader = instance.getInstanceReader();
 
         // ensure no open policies attached to bundle
         BundleSet bundleManager = instance.getBundleSet();
@@ -230,9 +230,17 @@ contract BundleService is
         if(openPolicies > 0) {
             revert ErrorBundleServiceBundleWithOpenPolicies(bundleNftId, openPolicies);
         }
+        if(instanceReader.getLockedAmount(bundleNftId) > AmountLib.zero()) {
+            revert ErrorBundleServiceBundleWithLockedCollateral(bundleNftId, instanceReader.getLockedAmount(bundleNftId));
+        }
 
-        // update set of active bundles
+        InstanceStore instanceStore = instance.getInstanceStore();
+        instanceStore.updateBundleState(bundleNftId, CLOSED());
         bundleManager.lock(bundleNftId);
+
+        Amount balanceAmount = instanceReader.getBalanceAmount(bundleNftId);
+        Amount feeAmount = instanceReader.getFeeAmount(bundleNftId);
+        _componentService.decreaseBundleBalance(instanceStore, bundleNftId, balanceAmount, feeAmount);
     }
 
     /// @inheritdoc IBundleService
