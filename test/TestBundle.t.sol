@@ -756,6 +756,49 @@ contract TestBundle is GifTest {
         assertTrue(instanceBundleSet.activeBundles(poolNftId) == 0, "active bundles not 0");
     }
 
+    /// @dev test closing of a bundle without any balance (full unstake before)
+    function test_Bundle_closeBundle_unstakeFullAmountBeforeClose() public {
+        // GIVEN - pool (3% staking fee), a bundle and no policy
+        initialStakingFee = FeeLib.percentageFee(3);
+        _prepareProduct(true);
+        vm.stopPrank();
+
+        vm.startPrank(investor);
+        pool.unstake(bundleNftId, AmountLib.max());
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        assertEq(token.balanceOf(poolComponentInfo.wallet), 3000 * 10 ** 6 , "pool wallet token balance not 3");
+        uint256 investorBalanceBefore = token.balanceOf(investor);
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 3000 * 10 ** 6, "pool balance not 3000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 3000 * 10 ** 6, "pool fees not 3000");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 0, "bundle balance not 0");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
+
+        vm.startPrank(investor);
+
+        // WHEN - bundle is closed
+        pool.closeBundle(bundleNftId);
+
+        // THEN - assert all counters are updated, but no tokens moved
+        assertEq(token.balanceOf(poolComponentInfo.wallet), 3000 * 10 ** 6, "pool wallet token balance not 3 (2)");
+        uint256 investorBalanceAfter = token.balanceOf(investor);
+        assertEq(investorBalanceAfter, investorBalanceBefore, "investor token balance should not change");
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 3000 * 10 ** 6, "pool balance not 3000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 3000 * 10 ** 6, "pool fees not 3000");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 0, "bundle balance not 0");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
+
+        assertTrue(instanceReader.getBundleState(bundleNftId) == CLOSED(), "bundle not closed");
+        assertTrue(instanceBundleSet.activeBundles(poolNftId) == 0, "active bundles not 0");
+    }
+
     /// @dev test closing of a bundle with an open policy
     function test_Bundle_closeBundle_openPolicy() public {
         // GIVEN
