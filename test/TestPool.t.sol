@@ -300,7 +300,7 @@ contract TestPool is GifTest {
 
         // WHEN close bundle
         vm.prank(investor);
-        pool.close(bundleNftId);
+        pool.closeBundle(bundleNftId);
 
         // THEN
         metadata = instanceReader.getMetadata(bundleKey);

@@ -108,13 +108,13 @@ abstract contract BasicPool is
     }
 
 
-    function close(NftId bundleNftId)
+    function closeBundle(NftId bundleNftId)
         public
         virtual
         restricted()
         onlyBundleOwner(bundleNftId)
     {
-        _close(bundleNftId);
+        _closeBundle(bundleNftId);
     }
 
 

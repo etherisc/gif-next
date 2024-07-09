@@ -256,7 +256,7 @@ contract TestBundle is GifTest {
         
         Amount stakeAmount = AmountLib.toAmount(1000);
         
-        pool.close(bundleNftId);
+        pool.closeBundle(bundleNftId);
 
         // THEN - revert
         vm.expectRevert(abi.encodeWithSelector(IBundleService.ErrorBundleServiceBundleNotOpen.selector,
@@ -573,7 +573,7 @@ contract TestBundle is GifTest {
         );
         uint256 createdAtTs = vm.getBlockTimestamp();
 
-        pool.close(bundleNftId);
+        pool.closeBundle(bundleNftId);
 
         // THEN - expect a revert
         vm.expectRevert(abi.encodeWithSelector(IBundleService.ErrorBundleServiceBundleNotOpen.selector,
@@ -608,6 +608,46 @@ contract TestBundle is GifTest {
         
         // WHEN - bundle is extended
         pool.extend(bundleNftId, lifetime);
+    }
+
+    /// @dev test staking of an existing bundle 
+    function test_Bundle_closeBundle() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(true);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        assertEq(token.balanceOf(poolComponentInfo.wallet), DEFAULT_BUNDLE_CAPITALIZATION * 10 ** 6, "pool wallet token balance not 100000");
+        uint256 investorBalanceBefore = token.balanceOf(investor);
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), DEFAULT_BUNDLE_CAPITALIZATION * 10 ** 6, "pool balance not 100000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 4000 * 10 ** 6, "pool fees not 4000");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 96000 * 10 ** 6, "bundle balance not 96000");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
+
+        vm.stopPrank(); 
+        vm.startPrank(investor);
+
+        // WHEN
+        pool.closeBundle(bundleNftId);
+
+        // THEN
+        assertEq(token.balanceOf(poolComponentInfo.wallet), 4000 * 10 ** 6, "pool wallet token balance not 4000");
+        uint256 investorBalanceAfter = token.balanceOf(investor);
+        assertEq(investorBalanceAfter, investorBalanceBefore + 96000 * 10 ** 6, "investor token balance not increased by 96000");
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 4000 * 10 ** 6, "pool balance not 4000");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 4000 * 10 ** 6, "pool fees not 4000");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 0, "bundle balance not 0");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
+
+        assertTrue(instanceReader.getBundleState(bundleNftId) == CLOSED(), "bundle not closed");
+        assertTrue(instanceBundleSet.activeBundles(poolNftId) == 0, "active bundles not 0");
     }
 
     function _fundInvestor(uint256 amount) internal {
