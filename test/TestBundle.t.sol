@@ -659,28 +659,8 @@ contract TestBundle is GifTest {
         _prepareProduct(true);
         vm.stopPrank();
 
-        vm.startPrank(productOwner);
-        RiskId riskId = RiskIdLib.toRiskId("the risk");
-        product.createRisk(riskId, "");
-        vm.stopPrank();
-
-        vm.startPrank(customer);
-        NftId policyNftId = product.createApplication(
-            customer, 
-            riskId, 
-            1000 * 10 ** 6, 
-            SecondsLib.toSeconds(30 * 24 * 60 * 60), 
-            "", 
-            bundleNftId, 
-            ReferralLib.zero());
-        token.approve(address(product.getTokenHandler()), 1000 * 10 ** 6);
-        vm.stopPrank();
-
-        vm.startPrank(productOwner);
-        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp());
-        product.expire(policyNftId, TimestampLib.zero());
-        product.close(policyNftId);
-        vm.stopPrank();
+        RiskId riskId = _createRisk("the risk");
+        _sellCollateralizeAndClosePolicy(riskId, 1000 * 10 ** 6, 30 * 24 * 60 * 60);
         
         IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
 
@@ -701,15 +681,15 @@ contract TestBundle is GifTest {
         pool.closeBundle(bundleNftId);
 
         // THEN - assert all counters are updated and tokens moved
-        assertEq(token.balanceOf(poolComponentInfo.wallet), 3 * 10 ** 6, "pool wallet token balance not 3");
+        assertEq(token.balanceOf(poolComponentInfo.wallet), 3 * 10 ** 6, "pool wallet token balance not 3 (2)");
         uint256 investorBalanceAfter = token.balanceOf(investor);
         assertEq(investorBalanceAfter, investorBalanceBefore + (100000 + 100 + 3) * 10 ** 6, "investor token balance not increased by 100000 + 100 + 3");
 
-        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 3 * 10 ** 6, "pool balance not 3");
-        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 0, "pool fees not 0");
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), 3 * 10 ** 6, "pool balance not 3 (2)");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), 3 * 10 ** 6, "pool fees not 3 (2)");
 
-        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 0, "bundle balance not 0");
-        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0");
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 0, "bundle balance not 0 (2)");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0 (2)");
 
         assertTrue(instanceReader.getBundleState(bundleNftId) == CLOSED(), "bundle not closed");
         assertTrue(instanceBundleSet.activeBundles(poolNftId) == 0, "active bundles not 0");
@@ -758,6 +738,53 @@ contract TestBundle is GifTest {
         assertTrue(instanceBundleSet.activeBundles(poolNftId) == 0, "active bundles not 0");
     }
 
+    /// @dev test closing of a bundle with a closed policy and no balance (full unstake before close)
+    function test_Bundle_closeBundle_withClosedPolicyUnstakeFullAmountBeforeClose() public {
+        // GIVEN - pool (3% staking fee), a bundle and no policy
+        initialStakingFee = FeeLib.percentageFee(3);
+        initialBundleFee = FeeLib.percentageFee(6);
+        _prepareProduct(true);
+        vm.stopPrank();
+
+        RiskId riskId = _createRisk("the risk");
+        _sellCollateralizeAndClosePolicy(riskId, 1000 * 10 ** 6, 30 * 24 * 60 * 60);
+
+        vm.startPrank(investor);
+        pool.unstake(bundleNftId, AmountLib.max());
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        assertEq(token.balanceOf(poolComponentInfo.wallet), (3000 + 6 + 3) * 10 ** 6 , "pool wallet token balance not 3009");
+        uint256 investorBalanceBefore = token.balanceOf(investor);
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), (3000 + 6 + 3) * 10 ** 6, "pool balance not 3009");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), (3000 + 3) * 10 ** 6, "pool fees not 3009");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 6 * 10 ** 6, "bundle balance not 6");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 6 * 10 ** 6, "bundle fees 6");
+
+        vm.startPrank(investor);
+
+        // WHEN - bundle is closed
+        pool.closeBundle(bundleNftId);
+
+        // THEN - assert all counters are updated
+        assertEq(token.balanceOf(poolComponentInfo.wallet), (3000 + 3) * 10 ** 6, "pool wallet token balance not 3003 (2)");
+        uint256 investorBalanceAfter = token.balanceOf(investor);
+        assertEq(investorBalanceAfter, investorBalanceBefore + 6 * 10 ** 6, "investor token balance should be increased by 6");
+
+        assertEq(instanceReader.getBalanceAmount(poolNftId).toInt(), (3000 + 3) * 10 ** 6, "pool balance not 3003 (2)");
+        assertEq(instanceReader.getFeeAmount(poolNftId).toInt(), (3000 + 3) * 10 ** 6, "pool fees not 3003 (2)");
+
+        assertEq(instanceReader.getBalanceAmount(bundleNftId).toInt(), 0, "bundle balance not 0 (2)");
+        assertEq(instanceReader.getFeeAmount(bundleNftId).toInt(), 0, "bundle fees 0 (2)");
+
+        assertTrue(instanceReader.getBundleState(bundleNftId) == CLOSED(), "bundle not closed");
+        assertTrue(instanceBundleSet.activeBundles(poolNftId) == 0, "active bundles not 0");
+    }
+
     /// @dev test closing of a bundle with an open policy
     function test_Bundle_closeBundle_openPolicy() public {
         // GIVEN
@@ -801,6 +828,33 @@ contract TestBundle is GifTest {
     function _fundInvestor(uint256 amount) internal {
         vm.startPrank(registryOwner);
         token.transfer(investor, amount);
+        vm.stopPrank();
+    }
+
+    function _createRisk(string memory riskIdStr) internal returns (RiskId riskId) {
+        vm.startPrank(productOwner);
+        riskId = RiskIdLib.toRiskId(riskIdStr);
+        product.createRisk(riskId, "");
+        vm.stopPrank();
+    }
+
+    function _sellCollateralizeAndClosePolicy(RiskId riskId, uint256 sumInsured, uint256 lifetime) internal {
+        vm.startPrank(customer);
+        NftId policyNftId = product.createApplication(
+            customer, 
+            riskId, 
+            sumInsured, 
+            SecondsLib.toSeconds(lifetime), 
+            "", 
+            bundleNftId, 
+            ReferralLib.zero());
+        token.approve(address(product.getTokenHandler()), sumInsured);
+        vm.stopPrank();
+
+        vm.startPrank(productOwner);
+        product.collateralize(policyNftId, true, TimestampLib.blockTimestamp());
+        product.expire(policyNftId, TimestampLib.zero());
+        product.close(policyNftId);
         vm.stopPrank();
     }
 
