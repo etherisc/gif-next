@@ -928,10 +928,7 @@ contract TestBundle is GifTest {
         _prepareProduct(true);
         vm.stopPrank();
 
-        vm.startPrank(productOwner);
-        RiskId riskId = RiskIdLib.toRiskId("the risk");
-        product.createRisk(riskId, "");
-        vm.stopPrank();
+        RiskId riskId = _createRisk("the risk");
 
         vm.startPrank(customer);
         NftId policyNftId = product.createApplication(
@@ -956,6 +953,36 @@ contract TestBundle is GifTest {
             IBundleService.ErrorBundleServiceBundleWithOpenPolicies.selector, 
             bundleNftId,
             1));
+
+        // WHEN
+        pool.closeBundle(bundleNftId);
+    }
+
+    /// @dev test closing of a bundle
+    function test_Bundle_closeBundle_allowanceTooSmall() public {
+        // GIVEN
+        initialStakingFee = FeeLib.percentageFee(4);
+        _prepareProduct(true);
+        
+        IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
+
+        assertTrue(!bundleNftId.eqz(), "bundle nft id is zero");
+
+        address externalWallet = makeAddr("externalWallet");
+
+        vm.startPrank(poolOwner);
+        pool.setWallet(externalWallet);
+        vm.stopPrank();
+        
+        vm.startPrank(investor);
+
+        // THEN - expect revert
+        vm.expectRevert(abi.encodeWithSelector(
+            IPoolService.ErrorPoolServiceWalletAllowanceTooSmall.selector, 
+            externalWallet,
+            address(pool.getTokenHandler()),
+            0,
+            96000 * 10 ** 6));
 
         // WHEN
         pool.closeBundle(bundleNftId);
