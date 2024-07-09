@@ -230,17 +230,17 @@ contract BundleService is
         if(openPolicies > 0) {
             revert ErrorBundleServiceBundleWithOpenPolicies(bundleNftId, openPolicies);
         }
-        if(instanceReader.getLockedAmount(bundleNftId) > AmountLib.zero()) {
-            revert ErrorBundleServiceBundleWithLockedCollateral(bundleNftId, instanceReader.getLockedAmount(bundleNftId));
+
+        {
+            balanceAmount = instanceReader.getBalanceAmount(bundleNftId);
+            feeAmount = instanceReader.getFeeAmount(bundleNftId);
+
+            InstanceStore instanceStore = instance.getInstanceStore();
+            instanceStore.updateBundleState(bundleNftId, CLOSED());
+            bundleManager.lock(bundleNftId);
+
+            _componentService.decreaseBundleBalance(instanceStore, bundleNftId, balanceAmount, feeAmount);
         }
-
-        InstanceStore instanceStore = instance.getInstanceStore();
-        instanceStore.updateBundleState(bundleNftId, CLOSED());
-        bundleManager.lock(bundleNftId);
-
-        balanceAmount = instanceReader.getBalanceAmount(bundleNftId);
-        feeAmount = instanceReader.getFeeAmount(bundleNftId);
-        _componentService.decreaseBundleBalance(instanceStore, bundleNftId, balanceAmount, feeAmount);
     }
 
     /// @inheritdoc IBundleService
