@@ -110,10 +110,13 @@ Components, instances, the registry and the staking module may only interact wit
 === Modules
 
 Modules are defined as a set of contracts that serve a specific purpose.
-Each contract in a module has its clear role and responsibility and interacts with other contracts in the module to fulfill its purpose.
-Contracts in the same module may directly interact with each other without the need to go over a service contract.
+Each contract in a module has its clear role and responsibility.
+Contracts in the same module may directly interact with each other. 
+Module contracts may never directly interact with contracts from other modules.
+Instead, a module contract may call a service contract that then interact with a contract in another module on its behalf.
 
 Examples of modules are the registry module, the staking module, and instance modules.
+Except for the staking module, all modules are non-upgradeable.
 
 === Services
 
@@ -121,7 +124,8 @@ Services have a domain scope such as "Registry" or "Policy" and implement the do
 Services are stateless and only operate on the state of the involved module contracts.
 Service contract may also interact with other service contracts.
 
-Even though the service contracts are upgradeable, only non breaking changes are ever allowed inside a specific major release.
+All service contracts are upgradeable to allow for bug fixing and minor enhancements.
+Service contract upgrades are only allowed for non-breaking changes.
 
 === Registry Module
 
@@ -170,7 +174,6 @@ Registry service contracts are authoriezd to register new objects with the regis
 | The DIP token deployed outside of the GIF deployment.
 The DIP token is always registered with the Token registry.
 
-
 |===
 
 === Staking Module
@@ -179,6 +182,7 @@ The staking module diagram below provides an overview of the registry related co
 
 image::./images/staking-module.png[Staking Module]
 
+Contracts and their responsibilities are outlined below.
 
 [cols="1,3"]
 |===
@@ -200,10 +204,46 @@ image::./images/staking-module.png[Staking Module]
 | Informs the staking contract about changes in the total locked value (TVL) amounts of the instances.
 
 | RegistryAdmin
-| Manages the authorization for all contracts in the staking module.
+| Central authorization for all core contracts (resistry module and staking module) and all service contracts from all major releases.
 
 |===
 
+
+=== Instance Module
+
+The instance module diagram below provides an overview of the instance related contracts.
+
+image::./images/instance-module.png[Staking Module]
+
+Contracts and their responsibilities are outlined below.
+
+[cols="1,3"]
+|===
+| Contract | Responsibility
+
+| Instance
+| Central instance contract that manages instance authorization and references to other instance module contracts.
+
+| InstanceReader
+| Provides all read access functions to instance related data.
+This includes data access for all components linked to the instance.
+
+| InstanceStore
+| Stores all instance related data like managed components, polices, bundles, distributors etc.
+
+| BundleSet
+| Manages the set of active policies for each bundle.
+
+| RiskSet
+| Manages the set of active policies for each risk.
+
+| InstanceAdmin
+| Central authorization for all instance and linked component contracts as well as all service contracts that need write access to instance data.
+
+| Services ...
+| The set of services that interact with the instance module.
+
+|===
 
 == Authorization
 
