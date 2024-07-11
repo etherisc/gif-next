@@ -221,7 +221,6 @@ contract BundleService is
         restricted
         returns (Amount unstakedAmount, Amount feeAmount)
     {
-        // udpate bundle state
         InstanceReader instanceReader = instance.getInstanceReader();
 
         // ensure no open policies attached to bundle
@@ -232,14 +231,15 @@ contract BundleService is
         }
 
         {
-            Amount balanceAmountWithFees = instanceReader.getBalanceAmount(bundleNftId);
-            feeAmount = instanceReader.getFeeAmount(bundleNftId);
-            unstakedAmount = balanceAmountWithFees - feeAmount;
-
+            // update bundle state
             InstanceStore instanceStore = instance.getInstanceStore();
             instanceStore.updateBundleState(bundleNftId, CLOSED());
             bundleManager.lock(bundleNftId);
 
+            // decrease bundle counters
+            Amount balanceAmountWithFees = instanceReader.getBalanceAmount(bundleNftId);
+            feeAmount = instanceReader.getFeeAmount(bundleNftId);
+            unstakedAmount = balanceAmountWithFees - feeAmount;
             _componentService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
         }
     }
