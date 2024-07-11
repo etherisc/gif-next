@@ -40,7 +40,7 @@ contract BasicPoolAuthorization
           _authorize(functions, BasicPool.extend.selector, "extend");
           _authorize(functions, BasicPool.lockBundle.selector, "lockBundle");
           _authorize(functions, BasicPool.unlockBundle.selector, "unlockBundle");
-          _authorize(functions, BasicPool.close.selector, "close");
+          _authorize(functions, BasicPool.closeBundle.selector, "closeBundle");
           _authorize(functions, BasicPool.setBundleFee.selector, "setBundleFee");
 
           _authorize(functions, BasicPool.setMaxBalanceAmount.selector, "setMaxBalanceAmount");

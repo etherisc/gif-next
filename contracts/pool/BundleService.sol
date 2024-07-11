@@ -16,7 +16,7 @@ import {IPolicy} from "../instance/module/IPolicy.sol";
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {BundleSet} from "../instance/BundleSet.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
-import {Fee, FeeLib} from "../type/Fee.sol";
+import {Fee} from "../type/Fee.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {NftId, NftIdLib} from "../type/NftId.sol";
 import {ObjectType, COMPONENT, POOL, BUNDLE, REGISTRY} from "../type/ObjectType.sol";
@@ -133,7 +133,6 @@ contract BundleService is
         // put bundle under bundle managemet
         BundleSet bundleManager = instance.getBundleSet();
         bundleManager.add(bundleNftId);
-
         // TODO add logging
     }
 
@@ -220,9 +219,9 @@ contract BundleService is
         external
         virtual
         restricted
+        returns (Amount unstakedAmount, Amount feeAmount)
     {
-        // udpate bundle state
-        instance.getInstanceStore().updateBundleState(bundleNftId, CLOSED());
+        InstanceReader instanceReader = instance.getInstanceReader();
 
         // ensure no open policies attached to bundle
         BundleSet bundleManager = instance.getBundleSet();
@@ -231,8 +230,18 @@ contract BundleService is
             revert ErrorBundleServiceBundleWithOpenPolicies(bundleNftId, openPolicies);
         }
 
-        // update set of active bundles
-        bundleManager.lock(bundleNftId);
+        {
+            // update bundle state
+            InstanceStore instanceStore = instance.getInstanceStore();
+            instanceStore.updateBundleState(bundleNftId, CLOSED());
+            bundleManager.lock(bundleNftId);
+
+            // decrease bundle counters
+            Amount balanceAmountWithFees = instanceReader.getBalanceAmount(bundleNftId);
+            feeAmount = instanceReader.getFeeAmount(bundleNftId);
+            unstakedAmount = balanceAmountWithFees - feeAmount;
+            _componentService.decreaseBundleBalance(instanceStore, bundleNftId, unstakedAmount, feeAmount);
+        }
     }
 
     /// @inheritdoc IBundleService

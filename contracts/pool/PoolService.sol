@@ -177,14 +177,40 @@ contract PoolService is
     {
         (NftId poolNftId,, IInstance instance) = _getAndVerifyActiveComponent(POOL());
 
-        // TODO book keeping for pool collateral released outside of retention level
+        // TODO get performance fee for pool (#477)
 
         // releasing collateral in bundle
-        _bundleService.close(instance, bundleNftId);
+        (Amount unstakedAmount, Amount feeAmount) = _bundleService.close(instance, bundleNftId);
 
-        // TODO get performance fee for pool, transfer of remaining funds + bundle fees to bundle owner
-
+        _componentService.decreasePoolBalance(
+            instance.getInstanceStore(), 
+            poolNftId, 
+            unstakedAmount +  feeAmount, 
+            AmountLib.zero());
+        
         emit LogPoolServiceBundleClosed(instance.getNftId(), poolNftId, bundleNftId);
+
+        if ((unstakedAmount + feeAmount).gtz()){
+            IComponents.ComponentInfo memory poolComponentInfo = instance.getInstanceReader().getComponentInfo(poolNftId);
+            TokenHandler tokenHandler = poolComponentInfo.tokenHandler;
+            IERC20Metadata token = IERC20Metadata(poolComponentInfo.token);
+
+            // TODO: centralize token handling (issue #471)
+            
+            // check allowance
+            uint256 tokenAllowance = token.allowance(poolComponentInfo.wallet, address(tokenHandler));
+            if (tokenAllowance < (unstakedAmount.toInt() +  feeAmount.toInt())) {
+                revert ErrorPoolServiceWalletAllowanceTooSmall(
+                    poolComponentInfo.wallet, 
+                    address(tokenHandler), 
+                    tokenAllowance, 
+                    unstakedAmount.toInt() + feeAmount.toInt());
+            }
+
+            // transfer amount to bundle owner
+            address bundleOwner = getRegistry().ownerOf(bundleNftId);
+            tokenHandler.transfer(poolComponentInfo.wallet, bundleOwner, unstakedAmount + feeAmount);
+        }
     }
 
     /// @inheritdoc IPoolService

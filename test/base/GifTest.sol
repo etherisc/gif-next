@@ -173,7 +173,7 @@ contract GifTest is GifDeployer {
     uint8 initialProductFeePercentage = 2;
     uint8 initialPoolFeePercentage = 3;
     uint8 initialStakingFeePercentage = 0;
-    uint8 initialBundleFeePercentage = 4;
+    uint8 initialBundleFeePercentage = 0;
     uint8 initialDistributionFeePercentage = 20;
     uint8 initialMinDistributionOwnerFeePercentage = 2;
 
@@ -487,7 +487,7 @@ contract GifTest is GifDeployer {
             token.approve(address(poolComponentInfo.tokenHandler), DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals());
 
             (bundleNftId,) = SimplePool(address(pool)).createBundle(
-                FeeLib.zero(), 
+                initialBundleFee, 
                 DEFAULT_BUNDLE_CAPITALIZATION * 10**token.decimals(), 
                 SecondsLib.toSeconds(DEFAULT_BUNDLE_LIFETIME), 
                 ""
