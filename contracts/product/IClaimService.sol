@@ -31,6 +31,7 @@ interface IClaimService is
     error ErrorClaimServicePolicyProductMismatch(NftId policyNftId, NftId expectedProduct, NftId actualProduct);
     error ErrorClaimServicePolicyNotOpen(NftId policyNftId);
     error ErrorClaimServiceClaimExceedsSumInsured(NftId policyNftId, Amount sumInsured, Amount payoutsIncludingClaimAmount);
+    error ErrorClaimsServicePayoutAmountIsZero(NftId policyNftId, PayoutId payoutId);
 
     error ErrorClaimServiceClaimWithOpenPayouts(NftId policyNftId, ClaimId claimId, uint8 openPayouts);
     error ErrorClaimServiceClaimWithMissingPayouts(NftId policyNftId, ClaimId claimId, Amount claimAmount, Amount paidAmount);

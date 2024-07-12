@@ -298,10 +298,9 @@ contract DistributionService is
         // transfer amount to distributor
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
+            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(token), withdrawnAmount);
             // TODO: centralize token handling (issue #471)
             distributionInfo.tokenHandler.transfer(distributionWallet, distributor, withdrawnAmount);
-
-            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(token), withdrawnAmount);
         }
     }
 

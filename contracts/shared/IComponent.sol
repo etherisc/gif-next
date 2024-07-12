@@ -35,10 +35,11 @@ interface IComponent is
     /// only component owner (nft holder) is authorizes to call this function
     function approveTokenHandler(Amount spendingLimitAmount) external;
 
-    /// @dev sets the wallet address for the component
-    /// if the current wallet has tokens, these will be transferred
+    /// @dev sets the wallet address for the component.
+    /// if the current wallet has tokens, these will be transferred.
     /// if the new wallet address is externally owned, an approval from the 
-    /// owner of the external wallet for the component to move all tokens must exist
+    /// owner of the external wallet to the tokenhandler of the component that 
+    /// covers the current component balance must exist
     function setWallet(address walletAddress) external;
 
     /// @dev returns the name of this component

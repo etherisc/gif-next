@@ -214,10 +214,10 @@ contract TestProductClaim is GifTest {
 
         // THEN
         // checking last of 8 logs
-        assertEq(entries.length, 8, "unexpected number of logs");
-        assertEq(entries[7].emitter, address(claimService), "unexpected emitter");
-        assertEq(entries[7].topics[0], keccak256("LogClaimServicePayoutProcessed(uint96,uint24,uint96,address,uint96)"), "unexpected log signature");
-        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmntInt) = abi.decode(entries[7].data, (uint96,uint24,uint96));
+        assertEq(entries.length, 9, "unexpected number of logs");
+        assertEq(entries[6].topics[0], keccak256("LogClaimServicePayoutProcessed(uint96,uint24,uint96,address,uint96)"), "unexpected log signature");
+        assertEq(entries[6].emitter, address(claimService), "unexpected emitter");
+        (uint96 nftIdInt ,uint24 payoutIdInt, uint96 payoutAmntInt) = abi.decode(entries[6].data, (uint96,uint24,uint96));
         assertEq(nftIdInt, policyNftId.toInt(), "unexpected policy nft id");
         assertEq(payoutIdInt, payoutId.toInt(), "unexpected payout id");
         assertEq(payoutAmntInt, payoutAmountInt, "unexpected payout amount");

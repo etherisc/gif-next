@@ -22,7 +22,7 @@ interface IPolicy {
         uint256 netPremiumAmount;
         // fullPremium = netPremium + all fixed amounts + all variable amounts (excl commission and minDistribtuionOwnerFee variable part)
         uint256 fullPremiumAmount;
-        // premium = fullPremium - discount
+        // effective premium = fullPremium - discount 
         uint256 premiumAmount;
         uint256 productFeeFixAmount;
         uint256 poolFeeFixAmount;

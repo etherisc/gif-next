@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
+import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+
 import {IRegistry} from "../registry/IRegistry.sol";
 import {Product} from "./Product.sol";
 import {IComponents} from "../instance/module/IComponents.sol";
@@ -117,7 +119,7 @@ contract PolicyService is
 
     event LogDebug(uint idx, string message);
 
-    /// @dev underwites application which includes the locking of the required collateral from the pool.
+    /// @inheritdoc IPolicyService
     function collateralize(
         NftId applicationNftId, // = policyNftId
         bool requirePremiumPayment,
@@ -165,14 +167,16 @@ contract PolicyService is
             applicationInfo.expiredAt = activateAt.addSeconds(applicationInfo.lifetime);
         }
 
-        // optional collection of premium
+        IPolicy.Premium memory premium;
+
+        // optional: calculate the premium and update counters for collection at the end of this function
         if(requirePremiumPayment) {
-            Amount premiumPaidAmount = _calculateAndCollectPremium(
+            premium = _calculateAndProcessPremium(
                 instance,
                 applicationNftId,
                 applicationInfo);
 
-            applicationInfo.premiumPaidAmount = premiumPaidAmount;
+            applicationInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
         }
 
         // store updated policy info
@@ -184,9 +188,14 @@ contract PolicyService is
         // TODO add calling pool contract if it needs to validate application
 
         // TODO: add logging
+
+        // optional: transfer funds for premium 
+        if(requirePremiumPayment) {
+            _transferFunds(instanceReader, applicationNftId, applicationInfo.productNftId, premium);
+        }
     }
 
-
+    /// @inheritdoc IPolicyService
     function collectPremium(
         NftId policyNftId, 
         Timestamp activateAt
@@ -211,10 +220,13 @@ contract PolicyService is
             revert ErrorPolicyServicePremiumAlreadyPaid(policyNftId, policyInfo.premiumPaidAmount);
         }
 
-        policyInfo.premiumPaidAmount = _calculateAndCollectPremium(
+        // calculate premium
+        IPolicy.Premium memory premium = _calculateAndProcessPremium(
                 instance,
                 policyNftId,
                 policyInfo);
+
+        policyInfo.premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
 
         instance.getInstanceStore().updatePolicy(policyNftId, policyInfo, KEEP_STATE());
 
@@ -223,8 +235,11 @@ contract PolicyService is
         }
 
         // TODO: add logging
+
+        _transferFunds(instanceReader, policyNftId, policyInfo.productNftId, premium);
     }
 
+    /// @inheritdoc IPolicyService
     function activate(NftId policyNftId, Timestamp activateAt) public override {
         // check caller is registered product
         (,, IInstance instance) = _getAndVerifyActiveComponent(PRODUCT());
@@ -339,7 +354,8 @@ contract PolicyService is
     }
 
 
-    function _calculateAndCollectPremium(
+    /// @dev calculates the premium and updates all counters in the other services
+    function _calculateAndProcessPremium(
         IInstance instance,
         NftId applicationNftId,
         IPolicy.PolicyInfo memory applicationInfo
@@ -347,13 +363,14 @@ contract PolicyService is
         internal
         virtual
         returns (
-            Amount premiumPaidAmount
+            IPolicy.Premium memory premium
         )
     {
         NftId productNftId = applicationInfo.productNftId;
+        InstanceReader instanceReader = instance.getInstanceReader();
 
         // calculate premium details
-        IPolicy.Premium memory premium = _pricingService.calculatePremium(
+        premium = _pricingService.calculatePremium(
             productNftId,
             applicationInfo.riskId,
             applicationInfo.sumInsuredAmount,
@@ -362,90 +379,63 @@ contract PolicyService is
             applicationInfo.bundleNftId,
             applicationInfo.referralId);
 
+        // ensure the calculated premium is not higher than the expected premium from the application
+        if (applicationInfo.premiumAmount.toInt() < premium.premiumAmount) {
+            revert ErrorPolicyServicePremiumHigherThanExpected(applicationInfo.premiumAmount.toInt(), premium.premiumAmount);
+        }
 
-        // update financials and transfer premium tokens
-        premiumPaidAmount = _processAndCollect(
-            instance, 
-            productNftId,
-            applicationNftId, 
-            applicationInfo.premiumAmount,
-            applicationInfo.bundleNftId,
-            applicationInfo.referralId,
-            premium);
-    }
+        // check if premium balance and allowance of policy holder is sufficient
+        {
+            TokenHandler tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
+            address policyHolder = getRegistry().ownerOf(applicationNftId);
+        
+            _checkPremiumBalanceAndAllowance(
+                tokenHandler.getToken(), 
+                address(tokenHandler),
+                policyHolder, 
+                applicationInfo.premiumAmount,
+                AmountLib.toAmount(premium.premiumAmount));
+        }
 
-
-    function _processAndCollect(
-        IInstance instance,
-        NftId productNftId,
-        NftId policyNftId,
-        Amount premiumExpectedAmount,
-        NftId bundleNftId,
-        ReferralId referralId,
-        IPolicy.Premium memory premium
-    )
-        internal
-        virtual
-        returns (Amount premiumPaidAmount)
-    {
-        InstanceReader instanceReader = instance.getInstanceReader();
-        TokenHandler tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
-        address policyHolder = getRegistry().ownerOf(policyNftId);
-        premiumPaidAmount = AmountLib.toAmount(premium.premiumAmount);
-
-        _checkPremiumBalanceAndAllowance(
-            tokenHandler, 
-            policyHolder, 
-            premiumExpectedAmount,
-            premiumPaidAmount);
-
-        _processSaleAndTransferFunds(
+        // update the counters
+        _processSale(
             instanceReader, 
             instance.getInstanceStore(), 
-            tokenHandler, 
-            policyHolder, 
             productNftId, 
-            bundleNftId, 
-            referralId, 
+            applicationInfo.bundleNftId, 
+            applicationInfo.referralId, 
             premium);
     }
 
-
+    /// @dev checks the balance and allowance of the policy holder
     function _checkPremiumBalanceAndAllowance(
-        TokenHandler tokenHandler, 
+        IERC20Metadata token,
+        address tokenHandlerAddress, 
         address policyHolder, 
         Amount premiumExpectedAmount,
-        Amount premiumPaidAmount
+        Amount premiumAmount
     )
         internal
         virtual
         view
     {
-        // TODO decide how to handle this properly
-        // not clear if this is the best way to handle this
-        if (premiumExpectedAmount < premiumPaidAmount) {
-            revert ErrorPolicyServicePremiumHigherThanExpected(premiumExpectedAmount, premiumPaidAmount);
-        }
-
-        uint256 premiumAmount = premiumPaidAmount.toInt();
-        uint256 balance = tokenHandler.getToken().balanceOf(policyHolder);
-        uint256 allowance = tokenHandler.getToken().allowance(policyHolder, address(tokenHandler));
+        uint256 premium = premiumAmount.toInt();
+        uint256 balance = token.balanceOf(policyHolder);
+        uint256 allowance = token.allowance(policyHolder, tokenHandlerAddress);
     
-        if (balance < premiumAmount) {
-            revert ErrorPolicyServiceBalanceInsufficient(policyHolder, premiumAmount, balance);
+        if (balance < premium) {
+            revert ErrorPolicyServiceBalanceInsufficient(policyHolder, premium, balance);
         }
 
-        if (allowance < premiumAmount) {
-            revert ErrorPolicyServiceAllowanceInsufficient(policyHolder, address(tokenHandler), premiumAmount, allowance);
+        if (allowance < premium) {
+            revert ErrorPolicyServiceAllowanceInsufficient(policyHolder, tokenHandlerAddress, premium, allowance);
         }
     }
 
-
-    function _processSaleAndTransferFunds(
+    /// @dev update counters by calling the involved services
+    function _processSale(
         InstanceReader instanceReader,
         InstanceStore instanceStore,
-        TokenHandler tokenHandler,
-        address policyHolder,
         NftId productNftId,
         NftId bundleNftId,
         ReferralId referralId,
@@ -479,6 +469,29 @@ contract PolicyService is
         _poolService.processSale(
             bundleNftId, 
             premium);
+    }
+
+    /// @dev transfer the premium to the wallets the premium is distributed to
+    function _transferFunds(
+        InstanceReader instanceReader,
+        NftId policyNftId,
+        NftId productNftId,
+        IPolicy.Premium memory premium
+    )
+        internal
+        virtual
+    {
+        TokenHandler tokenHandler = instanceReader.getComponentInfo(productNftId).tokenHandler;
+        address policyHolder = getRegistry().ownerOf(policyNftId);
+
+        (
+            NftId distributionNftId,
+            address distributionWallet,
+            address poolWallet,
+            address productWallet
+        ) = _getDistributionNftAndWallets(
+            instanceReader, 
+            productNftId);
 
         // TODO: centralize token handling (issue #471)
         // transfer premium amounts to target wallets

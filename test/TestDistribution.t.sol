@@ -178,7 +178,7 @@ contract TestDistribution is GifTest {
 
         // allowance from externally owned wallet to distribution component
         vm.startPrank(externallyOwnedWallet);
-        token.approve(address(distribution), INITIAL_BALANCE);
+        token.approve(address(distribution.getTokenHandler()), INITIAL_BALANCE);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
@@ -238,7 +238,7 @@ contract TestDistribution is GifTest {
 
         // allowance from externally owned wallet to distribution component
         vm.startPrank(externallyOwnedWallet);
-        token.approve(address(distribution), INITIAL_BALANCE);
+        token.approve(address(distribution.getTokenHandler()), INITIAL_BALANCE);
         vm.stopPrank();
 
         vm.startPrank(distributionOwner);
