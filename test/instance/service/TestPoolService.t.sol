@@ -16,7 +16,7 @@ contract TestPoolService is GifTest {
     function test_PoolServiceRegisterWithMissingOwnerRole() public {
         vm.startPrank(poolOwner);
         pool = new SimplePool(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             address(token),
             new BasicPoolAuthorization("SimplePool"),
@@ -40,7 +40,7 @@ contract TestPoolService is GifTest {
 
         vm.startPrank(outsider);
         pool = new SimplePool(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             address(token),
             new BasicPoolAuthorization("SimplePool"),

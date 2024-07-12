@@ -38,8 +38,8 @@ contract TvlCalculation is GifTest {
     function test_tvlCalculationInitialState() public {
 
         // check instance is active target
-        assertTrue(stakingReader.isTarget(instanceNftId), "instance not target");
-        assertTrue(stakingReader.isActive(instanceNftId), "instance not active target");
+        assertTrue(core.stakingReader.isTarget(instanceNftId), "instance not target");
+        assertTrue(core.stakingReader.isActive(instanceNftId), "instance not active target");
 
         // check token is what we think it is
         assertEq(token.symbol(), "USDC", "token symbol not USDC");
@@ -48,13 +48,13 @@ contract TvlCalculation is GifTest {
         // check product and link to instance
         assertEq(address(product.getToken()), tokenAddress, "product token not USDC");
         assertEq(
-            registry.getObjectInfo(product.getNftId()).parentNftId.toInt(), 
+            core.registry.getObjectInfo(product.getNftId()).parentNftId.toInt(), 
             instanceNftId.toInt(),
             "product parent not instance");
 
         // check initial total value locked
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             0, 
@@ -62,7 +62,7 @@ contract TvlCalculation is GifTest {
 
         // check initial required staking balance
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             0, 
             "initial instance required stake balance not zero");
     }
@@ -83,7 +83,7 @@ contract TvlCalculation is GifTest {
         // THEN
         // check total value locked after application
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             0, 
@@ -91,7 +91,7 @@ contract TvlCalculation is GifTest {
 
         // check required staking balance after application
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             0, 
             "unexpected required stake balance (before collateralization)");
 
@@ -113,20 +113,20 @@ contract TvlCalculation is GifTest {
         // THEN
         // check total value locked after collateralizaion
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             sumInsuredAmountInt, 
             "unexpected instance tvl(usdc) (after collateralization)");
 
         // check required staking balance after collateralizaion
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = core.stakingReader.getStakingRate(block.chainid, tokenAddress);
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
 
         assertTrue(stakingRate.gtz(), "staking rate zero");
         assertTrue(expectedRequiredStakeBalance.gtz(), "required staking balance zero");
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             expectedRequiredStakeBalance.toInt(), 
             "unexpected required stake balance (after collateralization)");
     }
@@ -144,20 +144,20 @@ contract TvlCalculation is GifTest {
         // THEN
         // check total value locked after policy creation
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             sumInsuredAmountInt, 
             "unexpected instance tvl(usdc) (after policy creation)");
 
         // check required staking balance after policy creation
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = core.stakingReader.getStakingRate(block.chainid, tokenAddress);
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
 
         assertTrue(stakingRate.gtz(), "staking rate zero");
         assertTrue(expectedRequiredStakeBalance.gtz(), "required staking balance zero");
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             expectedRequiredStakeBalance.toInt(), 
             "unexpected required stake balance (after policy creation)");
 
@@ -182,7 +182,7 @@ contract TvlCalculation is GifTest {
         // THEN
         // check total value locked after policy closing
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             0, 
@@ -190,7 +190,7 @@ contract TvlCalculation is GifTest {
 
         // check required staking balance after policy closing
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             0, 
             "unexpected required stake balance (after policy closing)");
     }
@@ -209,20 +209,20 @@ contract TvlCalculation is GifTest {
         // THEN
         // check total value locked after 2 policies
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             2 * sumInsuredAmountInt, 
             "unexpected instance tvl(usdc) (after collateralization)");
 
         // check required staking balance 2 policies
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = core.stakingReader.getStakingRate(block.chainid, tokenAddress);
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
 
         assertTrue(stakingRate.gtz(), "staking rate zero");
         assertTrue(expectedRequiredStakeBalance.gtz(), "required staking balance zero");
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             2 * expectedRequiredStakeBalance.toInt(), 
             "unexpected required stake balance (after collateralization)");
 
@@ -232,7 +232,7 @@ contract TvlCalculation is GifTest {
         // THEN
         // check total value locked after 3 policies
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             3 * sumInsuredAmountInt, 
@@ -240,7 +240,7 @@ contract TvlCalculation is GifTest {
 
         // check required staking balance 3 policies
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             3 * expectedRequiredStakeBalance.toInt(), 
             "unexpected required stake balance (after collateralization)");
 
@@ -255,7 +255,7 @@ contract TvlCalculation is GifTest {
         // THEN
         // check total value locked after policy closing
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             2 * sumInsuredAmountInt, 
@@ -263,7 +263,7 @@ contract TvlCalculation is GifTest {
 
         // check required staking balance after policy closing
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             2 * expectedRequiredStakeBalance.toInt(), 
             "unexpected required stake balance (after closing 2nd policy)");
 
@@ -287,17 +287,17 @@ contract TvlCalculation is GifTest {
 
         // THEN
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             sumInsuredAmountInt, 
             "unexpected instance tvl(usdc) (after payout creation)");
 
         // check required staking balance after policy closing
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = core.stakingReader.getStakingRate(block.chainid, tokenAddress);
         Amount expectedRequiredStakeBalance = sumInsuredAmount.multiplyWith(stakingRate);
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             expectedRequiredStakeBalance.toInt(), 
             "unexpected required stake balance (after payout creation)");
 
@@ -316,7 +316,7 @@ contract TvlCalculation is GifTest {
 
         // THEN
         assertEq(
-            stakingReader.getTotalValueLocked(
+            core.stakingReader.getTotalValueLocked(
                 instanceNftId, 
                 tokenAddress).toInt(), 
             sumInsuredAmountInt - claimAmountInt, 
@@ -325,7 +325,7 @@ contract TvlCalculation is GifTest {
         // check required staking balance after policy closing
         expectedRequiredStakeBalance = (sumInsuredAmount - claimAmount).multiplyWith(stakingRate);
         assertEq(
-            stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
+            core.stakingReader.getRequiredStakeBalance(instanceNftId).toInt(),
             expectedRequiredStakeBalance.toInt(), 
             "unexpected required stake balance (after payout processing)");
 
@@ -346,13 +346,13 @@ contract TvlCalculation is GifTest {
         _fundAccount(customer, CUSTOMER_FUNDS * 10 ** token.decimals());
 
         tokenAddress = address(token);
-        stakingStoreAddress = address(staking.getStakingStore());
+        stakingStoreAddress = address(core.staking.getStakingStore());
 
         // for every usdc token 10 dip tokens must be staked
-        stakingRate = UFixedLib.toUFixed(1, int8(dip.decimals() - token.decimals() + 1));
+        stakingRate = UFixedLib.toUFixed(1, int8(core.dip.decimals() - token.decimals() + 1));
 
         vm.startPrank(stakingOwner);
-        staking.setStakingRate(block.chainid, tokenAddress, stakingRate);
+        core.staking.setStakingRate(block.chainid, tokenAddress, stakingRate);
         vm.stopPrank();
     }
 

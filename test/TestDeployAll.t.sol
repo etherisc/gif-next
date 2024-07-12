@@ -74,75 +74,75 @@ contract TestDeployAll is GifTest {
 
 
     function test_deployServicesOverview() public {
-        assertEq(registry.getObjectCount(), 24, "invalid object count for base setup");
+        assertEq(core.registry.getObjectCount(), 24, "invalid object count for base setup");
 
         // validate registry service
-        assertTrue(registry.getNftId(address(registryService)).eq(registryServiceNftId), "registry service nft does not match");
+        assertTrue(core.registry.getNftId(address(registryService)).eq(registryServiceNftId), "registry service nft does not match");
         assertTrue(address(registryServiceManager) != address(0), "registry service manager is zero address");
 
         // validate staking service
-        assertTrue(registry.getNftId(address(stakingService)).eq(stakingServiceNftId), "staking service nft does not match");
+        assertTrue(core.registry.getNftId(address(stakingService)).eq(stakingServiceNftId), "staking service nft does not match");
         assertTrue(address(stakingServiceManager) != address(0), "staking service manager is zero address");
 
         // validate instance service
-        assertTrue(registry.getNftId(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");
+        assertTrue(core.registry.getNftId(address(instanceService)).eq(instanceServiceNftId), "instance service nft does not match");
         assertTrue(address(instanceServiceManager) != address(0), "instance service manager is zero address");
 
         // validate component service
-        assertTrue(registry.getNftId(address(componentService)).eq(componentServiceNftId), "instance service nft does not match");
+        assertTrue(core.registry.getNftId(address(componentService)).eq(componentServiceNftId), "instance service nft does not match");
         assertTrue(address(componentServiceManager) != address(0), "instance service manager is zero address");
 
         // validate distribution service
-        assertTrue(registry.getNftId(address(distributionService)).eq(distributionServiceNftId), "distribution service nft does not match");
+        assertTrue(core.registry.getNftId(address(distributionService)).eq(distributionServiceNftId), "distribution service nft does not match");
         assertTrue(address(distributionServiceManager) != address(0), "distribution service manager is zero address");
 
         // validate pricing service
-        assertTrue(registry.getNftId(address(pricingService)).eq(pricingServiceNftId), "pricing service nft does not match");
+        assertTrue(core.registry.getNftId(address(pricingService)).eq(pricingServiceNftId), "pricing service nft does not match");
         assertTrue(address(pricingServiceManager) != address(0), "pricing service manager is zero address");
 
         // validate bundle service
-        assertTrue(registry.getNftId(address(bundleService)).eq(bundleServiceNftId), "bundle service nft does not match");
+        assertTrue(core.registry.getNftId(address(bundleService)).eq(bundleServiceNftId), "bundle service nft does not match");
         assertTrue(address(bundleServiceManager) != address(0), "bundle service manager is zero address");
 
         // validate pool service
-        assertTrue(registry.getNftId(address(poolService)).eq(poolServiceNftId), "pool service nft does not match");
+        assertTrue(core.registry.getNftId(address(poolService)).eq(poolServiceNftId), "pool service nft does not match");
         assertTrue(address(poolServiceManager) != address(0), "pool service manager is zero address");
 
         // validate oracle service
-        assertTrue(registry.getNftId(address(oracleService)).eq(oracleServiceNftId), "oracle service nft does not match");
+        assertTrue(core.registry.getNftId(address(oracleService)).eq(oracleServiceNftId), "oracle service nft does not match");
         assertTrue(address(oracleServiceManager) != address(0), "oracle service manager is zero address");
 
         // validate product service
-        assertTrue(registry.getNftId(address(productService)).eq(productServiceNftId), "product service nft does not match");
+        assertTrue(core.registry.getNftId(address(productService)).eq(productServiceNftId), "product service nft does not match");
         assertTrue(address(productServiceManager) != address(0), "product service manager is zero address");
 
         // validate claim service
-        assertTrue(registry.getNftId(address(claimService)).eq(claimServiceNftId), "claim service nft does not match");
+        assertTrue(core.registry.getNftId(address(claimService)).eq(claimServiceNftId), "claim service nft does not match");
         assertTrue(address(claimServiceManager) != address(0), "claim service manager is zero address");
 
         // validate application service
-        assertTrue(registry.getNftId(address(applicationService)).eq(applicationServiceNftId), "application service nft does not match");
+        assertTrue(core.registry.getNftId(address(applicationService)).eq(applicationServiceNftId), "application service nft does not match");
         assertTrue(address(applicationServiceManager) != address(0), "application service manager is zero address");
 
         // validate policy service
-        assertTrue(registry.getNftId(address(policyService)).eq(policyServiceNftId), "policy service nft does not match");
+        assertTrue(core.registry.getNftId(address(policyService)).eq(policyServiceNftId), "policy service nft does not match");
         assertTrue(address(policyServiceManager) != address(0), "policy service manager is zero address");
 
         // validate master instance
-        assertTrue(registry.getNftId(address(masterInstance)).eq(masterInstanceNftId), "master instance nft does not match");
+        assertTrue(core.registry.getNftId(address(masterInstance)).eq(masterInstanceNftId), "master instance nft does not match");
         assertTrue(address(masterInstanceAdmin) != address(0), "master instance admin is zero address");
         assertTrue(address(masterInstanceReader) != address(0), "master instance reader is zero address");
 
         // validate created (cloned) instance
-        assertTrue(registry.getNftId(address(instance)).eq(instanceNftId), "instance nft does not match");
+        assertTrue(core.registry.getNftId(address(instance)).eq(instanceNftId), "instance nft does not match");
         assertTrue(address(instanceAdmin) != address(0), "instance admin is zero address");
         assertTrue(address(instanceReader) != address(0), "instance reader is zero address");
     }
 
     function test_deployAllInstanceOwner() public {
-        NftId nftId = registry.getNftId(address(instance));
+        NftId nftId = core.registry.getNftId(address(instance));
         assertEq(
-            registry.ownerOf(nftId),
+            core.registry.ownerOf(nftId),
             instanceOwner,
             "unexpected instance owner"
         );
@@ -178,7 +178,7 @@ contract TestDeployAll is GifTest {
         assertTrue(ownerRoleId.gtz(), "component owner role 0");
 
         // check against registered object info
-        IRegistry.ObjectInfo memory info = registry.getObjectInfo(address(component));
+        IRegistry.ObjectInfo memory info = core.registry.getObjectInfo(address(component));
         assertEq(info.nftId.toInt(), nftId.toInt(), "unexpected component nft id");
         assertEq(info.parentNftId.toInt(), parentNftId.toInt(), "unexpected component parent nft id");
         assertEq(info.objectType.toInt(), componentType.toInt(), "unexpected component type");
@@ -187,7 +187,7 @@ contract TestDeployAll is GifTest {
         // TODO component name
 
         // check owner
-        assertEq(registry.ownerOf(address(component)), componentOwner, "unexpected component owner");
+        assertEq(core.registry.ownerOf(address(component)), componentOwner, "unexpected component owner");
 
         // check component owner has expected role
         assertTrue(instanceReader.hasRole(componentOwner, ownerRoleId), "component owner missing component owner role");

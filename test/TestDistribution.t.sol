@@ -287,7 +287,7 @@ contract TestDistribution is GifTest {
 
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,

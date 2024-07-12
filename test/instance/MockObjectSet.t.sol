@@ -41,7 +41,7 @@ contract MockObjectSetTest is GifTest {
         // solhint-disable no-console
         console.log("====================");
         //console.log("authority", address(authority));
-        console.log("registry address", address(registry));
+        console.log("registry address", address(core.registry));
         console.log("instance nft id", address(instance));
         console.log("instanceReader", address(instanceReader));
         console.log("masterObjectSet", address(masterObjectSet));
@@ -53,7 +53,7 @@ contract MockObjectSetTest is GifTest {
         assertTrue(address(objectSet) != address(masterObjectSet), "object manager and master object manager identical");
 
         assertEq(objectSet.authority(), instance.authority(), "unexpected authority");
-        assertEq(address(objectSet.getRegistry()), address(registry), "unexpected registry");
+        assertEq(address(objectSet.getRegistry()), address(core.registry), "unexpected registry");
 
         NftId fakeComponentNftId = NftIdLib.toNftId(13);
         NftId fakeObjectNftId = NftIdLib.toNftId(17);

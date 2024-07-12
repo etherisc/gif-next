@@ -116,18 +116,10 @@ contract GifTest is GifDeployer {
     // bundle lifetime is one year in seconds
     uint256 constant public DEFAULT_BUNDLE_LIFETIME = 365 * 24 * 3600;
 
-    IERC20Metadata public dip;
+    GifCore public core;
+
     IERC20Metadata public token;
 
-    RegistryAdmin registryAdmin;
-    Registry public registry;
-    ChainNft public chainNft;
-    ReleaseRegistry public releaseRegistry;
-    TokenRegistry public tokenRegistry;
-
-    StakingManager public stakingManager;
-    Staking public staking;
-    StakingReader public stakingReader;
     NftId public stakingNftId;
 
     AccessManagerCloneable public masterAccessManager;
@@ -212,8 +204,10 @@ contract GifTest is GifDeployer {
         internal
         virtual
     {
-        // solhint-disable-next-line
+        // solhint-disable
         console.log("tx origin", tx.origin);
+        console.log("chain id", block.chainid);
+        // solhint-enable
 
         address gifAdmin = registryOwner;
         address gifManager = registryOwner;
@@ -236,7 +230,7 @@ contract GifTest is GifDeployer {
         vm.stopPrank();
 
         // print full authz setup
-        _printAuthz(registryAdmin, "registry");
+        _printAuthz(core.registryAdmin, "registry");
         _printAuthz(instance.getInstanceAdmin(), "instance");
     }
 
@@ -287,43 +281,33 @@ contract GifTest is GifDeployer {
     )
         internal
     {
-        (
-            dip,
-            registry,
-            tokenRegistry,
-            releaseRegistry,
-            registryAdmin,
-            stakingManager,
-            staking
-        ) = deployCore(
+        core = deployCore(
             globalRegistry,
             gifAdmin,
             gifManager,
             stakingOwner);
 
         // obtain some references
-        registryAddress = address(registry);
-        chainNft = ChainNft(registry.getChainNftAddress());
-        registryNftId = registry.getNftId(registryAddress);
-        stakingNftId = registry.getNftId(address(staking));
-        stakingReader = staking.getStakingReader();
+        registryAddress = address(core.registry);
+        registryNftId = core.registry.getNftId(registryAddress);
+        stakingNftId = core.registry.getNftId(address(core.staking));
 
         // solhint-disable
-        console.log("registry deployed at", address(registry));
+        console.log("registry deployed at", address(core.registry));
         console.log("registry owner", registryOwner);
 
-        console.log("token registry deployed at", address(tokenRegistry));
-        console.log("release manager deployed at", address(releaseRegistry));
+        console.log("token registry deployed at", address(core.tokenRegistry));
+        console.log("release manager deployed at", address(core.releaseRegistry));
 
-        console.log("registry access manager deployed:", address(registryAdmin));
-        console.log("registry access manager authority", registryAdmin.authority());
+        console.log("registry access manager deployed:", address(core.registryAdmin));
+        console.log("registry access manager authority", core.registryAdmin.authority());
 
-        console.log("staking manager deployed at", address(stakingManager));
+        console.log("staking manager deployed at", address(core.stakingManager));
 
-        console.log("staking nft id", registry.getNftId(address(staking)).toInt());
-        console.log("staking deployed at", address(staking));
-        console.log("staking owner (opt 1)", registry.ownerOf(address(staking)));
-        console.log("staking owner (opt 2)", staking.getOwner());
+        console.log("staking nft id", core.registry.getNftId(address(core.staking)).toInt());
+        console.log("staking deployed at", address(core.staking));
+        console.log("staking owner (opt 1)", core.registry.ownerOf(address(core.staking)));
+        console.log("staking owner (opt 2)", core.staking.getOwner());
         // solhint-enable
     }
 
@@ -337,12 +321,12 @@ contract GifTest is GifDeployer {
         IServiceAuthorization serviceAuthorization = new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810");
 
         deployRelease(
-            releaseRegistry, 
+            core.releaseRegistry, 
             serviceAuthorization, 
             gifAdmin, 
             gifManager);
 
-        assertEq(releaseRegistry.getState(releaseRegistry.getLatestVersion()).toInt(), ACTIVE().toInt(), "unexpected state for releaseRegistry after activateNextRelease");
+        assertEq(core.releaseRegistry.getState(core.releaseRegistry.getLatestVersion()).toInt(), ACTIVE().toInt(), "unexpected state for core.releaseRegistry after activateNextRelease");
     }
 
     function _deployMasterInstance() internal 
@@ -361,7 +345,7 @@ contract GifTest is GifDeployer {
             masterInstanceStore,
             masterBundleSet,
             masterInstanceReader,
-            registry,
+            core.registry,
             registryOwner);
 
         // retrieve master access manager from instance
@@ -376,7 +360,7 @@ contract GifTest is GifDeployer {
         masterInstanceAdmin.initializeInstanceAuthorization(address(masterInstance));
 
         // lock master instance nft
-        chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
+        core.chainNft.transferFrom(registryOwner, NFT_LOCK_ADDRESS, masterInstanceNftId.toInt());
 
         // solhint-disable
         console.log("master instance deployed at", address(masterInstance));
@@ -414,22 +398,22 @@ contract GifTest is GifDeployer {
 
     function _deployRegisterAndActivateToken() internal {
         // dip
-        tokenRegistry.setActiveForVersion(
+        core.tokenRegistry.setActiveForVersion(
             block.chainid, 
-            address(dip), 
-            registry.getLatestVersion(), true);
+            address(core.dip), 
+            core.registry.getLatestVersion(), true);
 
         // usdc
         token = new Usdc();
-        tokenRegistry.registerToken(address(token));
-        tokenRegistry.setActiveForVersion(
+        core.tokenRegistry.registerToken(address(token));
+        core.tokenRegistry.setActiveForVersion(
             block.chainid, 
             address(token), 
-            registry.getLatestVersion(), true);
+            core.registry.getLatestVersion(), true);
 
         // solhint-disable
         console.log("token (usdc) deployed at", address(token));
-        console.log("token (dip) deployed at", address(dip));
+        console.log("token (dip) deployed at", address(core.dip));
         // solhint-enable
     }
 
@@ -450,7 +434,7 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(productOwner);
         product = new SimpleProduct(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             new BasicProductAuthorization("SimpleProduct"),
             productOwner,
@@ -512,7 +496,7 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
@@ -533,7 +517,7 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(poolOwner);
         pool = new SimplePool(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             address(token),
             new BasicPoolAuthorization("SimplePool"),
@@ -556,7 +540,7 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(oracleOwner);
         oracle = new SimpleOracle(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             new BasicOracleAuthorization("SimpleOracle"),
             oracleOwner,
@@ -580,7 +564,7 @@ contract GifTest is GifDeployer {
 
         vm.startPrank(poolOwner);
         pool = new SimplePool(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             address(token),
             new BasicPoolAuthorization("SimplePool"),

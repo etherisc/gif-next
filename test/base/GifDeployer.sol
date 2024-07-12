@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
+import {AccessManager} from "@openzeppelin/contracts/access/manager/AccessManager.sol";
 import {Test, console} from "../../lib/forge-std/src/Test.sol";
 
 // core contracts
@@ -9,16 +10,14 @@ import {Dip} from "../../contracts/mock/Dip.sol";
 import {IRegistry} from "../../contracts/registry/IRegistry.sol";
 import {IServiceAuthorization} from "../../contracts/authorization/IServiceAuthorization.sol";
 import {Registry} from "../../contracts/registry/Registry.sol";
-// TODO cleanup
-// import {GlobalRegistry} from "../../contracts/registry/GlobalRegistry.sol";
 import {RegistryAdmin} from "../../contracts/registry/RegistryAdmin.sol";
-// import {GlobalRegistryAdmin} from "../../contracts/registry/GlobalRegistryAdmin.sol";
 import {ReleaseRegistry} from "../../contracts/registry/ReleaseRegistry.sol";
 import {Staking} from "../../contracts/staking/Staking.sol";
 import {StakingManager} from "../../contracts/staking/StakingManager.sol";
 import {StakingReader} from "../../contracts/staking/StakingReader.sol";
 import {StakingStore} from "../../contracts/staking/StakingStore.sol";
 import {TokenRegistry} from "../../contracts/registry/TokenRegistry.sol";
+import {ChainNft} from "../../contracts/registry/ChainNft.sol";
 
 // service and proxy contracts
 import {IService} from "../../contracts/shared/IService.sol";
@@ -56,6 +55,20 @@ import {StakingService} from "../../contracts/staking/StakingService.sol";
 import {StakingServiceManager} from "../../contracts/staking/StakingServiceManager.sol";
 
 contract GifDeployer is Test {
+
+    struct GifCore {
+        IERC20Metadata dip;
+        AccessManager accessManager;
+        RegistryAdmin registryAdmin;
+        Registry registry;
+        ChainNft chainNft;
+        ReleaseRegistry releaseRegistry;
+        TokenRegistry tokenRegistry;
+        StakingManager stakingManager;
+        Staking staking;
+        StakingReader stakingReader;
+        StakingStore stakingStore;
+    }
 
     struct DeployedServiceInfo {
         NftId nftId;
@@ -125,60 +138,54 @@ contract GifDeployer is Test {
         address stakingOwner
     )
         public
-        returns (
-            IERC20Metadata dip,
-            Registry registry,
-            TokenRegistry tokenRegistry,
-            ReleaseRegistry releaseRegistry,
-            RegistryAdmin registryAdmin,
-            StakingManager stakingManager,
-            Staking staking
-        )
+        returns (GifCore memory core)
     {
         vm.startPrank(gifManager);
 
         // 1) deploy dip token
-        dip = new Dip();
+        core.dip = new Dip();
 
         // 2) deploy registry admin
-        registryAdmin = new RegistryAdmin();
+        core.registryAdmin = new RegistryAdmin();
+        core.accessManager = AccessManager(core.registryAdmin.authority());
 
         // 3) deploy registry
-        registry = new Registry(
-                registryAdmin, 
+        core.registry = new Registry(
+                core.registryAdmin, 
                 globalRegistry);
+        core.chainNft = ChainNft(core.registry.getChainNftAddress());
 
         // 4) deploy release manager
-        releaseRegistry = new ReleaseRegistry(registry);
+        core.releaseRegistry = new ReleaseRegistry(core.registry);
 
         // 5) deploy token registry
-        tokenRegistry = new TokenRegistry(registry, dip);
+        core.tokenRegistry = new TokenRegistry(core.registry, core.dip);
 
         // 6) deploy staking reader
-        StakingReader stakingReader = new StakingReader(registry);
+        core.stakingReader = new StakingReader(core.registry);
 
         // 7) deploy staking store
-        StakingStore stakingStore = new StakingStore(registry, stakingReader);
+        core.stakingStore = new StakingStore(core.registry, core.stakingReader);
 
         // 8) deploy staking manager and staking component
-        stakingManager = new StakingManager(
-            address(registry),
-            address(tokenRegistry),
-            address(stakingStore),
+        core.stakingManager = new StakingManager(
+            address(core.registry),
+            address(core.tokenRegistry),
+            address(core.stakingStore),
             stakingOwner);
-        staking = stakingManager.getStaking();
+        core.staking = core.stakingManager.getStaking();
 
         // 9) initialize instance reader
-        stakingReader.initialize(
-            address(staking),
-            address(stakingStore));
+        core.stakingReader.initialize(
+            address(core.staking),
+            address(core.stakingStore));
 
         // 10) intialize registry and register staking component
-        registry.initialize(
-            address(releaseRegistry),
-            address(tokenRegistry),
-            address(staking));
-        staking.linkToRegisteredNftId();
+        core.registry.initialize(
+            address(core.releaseRegistry),
+            address(core.tokenRegistry),
+            address(core.staking));
+        core.staking.linkToRegisteredNftId();
 
         // 11) initialize registry admin
         // TODO Consider making it non permitted
@@ -191,8 +198,8 @@ contract GifDeployer is Test {
         // if state is different -> setup can not be completed...
         // state: owner/admin/manager
         // can be usefull for non permissioned deployment
-        registryAdmin.completeSetup(
-            registry,
+        core.registryAdmin.completeSetup(
+            core.registry,
             gifAdmin,
             gifManager);
 

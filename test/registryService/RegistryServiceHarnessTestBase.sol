@@ -34,9 +34,9 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
     address public registerableOwner = makeAddr("registerableOwner");
     address public outsider = makeAddr("outsider");
 
-    IRegistry public registry;
+    GifCore core;
+    
     address public registryAddress;
-    ReleaseRegistry releaseRegistry;
 
     RegistryServiceManagerMockWithHarness public registryServiceManagerWithHarness;
     RegistryServiceHarness public registryServiceHarness;
@@ -51,21 +51,13 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
         address gifManager = registryOwner;
         address stakingOwner = registryOwner;
 
-        (
-            , // dip,
-            registry,
-            , // tokenRegistry,
-            releaseRegistry,
-            , // registryAdmin,
-            , // stakingManager,
-            // staking
-        ) = deployCore(
+        core = deployCore(
             globalRegistry,
             gifAdmin,
             gifManager,
             stakingOwner);
 
-        registryAddress = address(registry);
+        registryAddress = address(core.registry);
 
         vm.startPrank(registryOwner);
         _deployRegistryServiceHarness();
@@ -76,13 +68,13 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
     {
         bytes32 salt = "0x2222";
 
-        releaseRegistry.createNextRelease();
+        core.releaseRegistry.createNextRelease();
 
         (
             address releaseAccessManager,
             VersionPart releaseVersion,
             bytes32 releaseSalt
-        ) = releaseRegistry.prepareNextRelease(
+        ) = core.releaseRegistry.prepareNextRelease(
             new ServiceMockAuthorizationV3(),
             salt);
 
@@ -92,13 +84,13 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             releaseSalt);
 
         registryServiceHarness = RegistryServiceHarness(address(registryServiceManagerWithHarness.getRegistryService()));
-        releaseRegistry.registerService(registryServiceHarness);
+        core.releaseRegistry.registerService(registryServiceHarness);
         registryServiceManagerWithHarness.linkToProxy();
 
         // TODO check if this nees to be re-enabled
         // assertEq(serviceAddresses[0], address(registryServiceHarness), "error: registry service address mismatch");
 
-        releaseRegistry.activateNextRelease();
+        core.releaseRegistry.activateNextRelease();
 
     }
 
@@ -140,7 +132,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             vm.expectRevert(abi.encodeWithSelector(IRegistryService.ErrorRegistryServiceRegisterableOwnerZero.selector,
             info.objectAddress));
             expectRevert = true;
-        }else if(registry.isRegistered(info.initialOwner)) { 
+        }else if(core.registry.isRegistered(info.initialOwner)) { 
             vm.expectRevert(abi.encodeWithSelector(IRegistryService.ErrorRegistryServiceRegisterableOwnerRegistered.selector,
             info.objectAddress,
             info.initialOwner));
@@ -158,7 +150,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
                 expectedType,
                 expectedOwner);  
 
-            IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(address(registerable));
+            IRegistry.ObjectInfo memory infoFromRegistry = core.registry.getObjectInfo(address(registerable));
 
             eqObjectInfo(info, infoFromRegistryService);
             eqObjectInfo(infoFromRegistry, infoFromRegistryService);
@@ -183,7 +175,7 @@ contract RegistryServiceHarnessTestBase is GifDeployer, FoundryRandom {
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceObjectOwnerZero.selector,
                 info.objectType));
-        } else if(registry.isRegistered(info.initialOwner)) { 
+        } else if(core.registry.isRegistered(info.initialOwner)) { 
             vm.expectRevert(abi.encodeWithSelector(
                 IRegistryService.ErrorRegistryServiceObjectOwnerRegistered.selector,
                 info.objectType, 

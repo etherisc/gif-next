@@ -27,14 +27,7 @@ import {VersionPart, VersionPartLib} from "../contracts/type/Version.sol";
 // solhint-disable-next-line max-states-count
 contract GifDeployerTest is GifDeployer {
 
-    IERC20Metadata public dip;
-    ChainNft public chainNft;
-    Registry public registry;
-    TokenRegistry public tokenRegistry;
-    ReleaseRegistry public releaseRegistry;
-    RegistryAdmin public registryAdmin;
-    StakingManager public stakingManager;
-    Staking public staking;
+    GifCore core;
 
     VersionPart public gifV3 = VersionPartLib.toVersionPart(3);
     IServiceAuthorization public serviceAuthorization = new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810");
@@ -49,97 +42,97 @@ contract GifDeployerTest is GifDeployer {
     // TODO missing setup function
 
     function test_deployerCoreDip() public {
-        assertTrue(address(dip) != address(0), "dip address zero");
-        assertEq(dip.decimals(), 18, "unexpected decimals for dip");
+        assertTrue(address(core.dip) != address(0), "dip address zero");
+        assertEq(core.dip.decimals(), 18, "unexpected decimals for dip");
     }
 
 
     function test_deployerCoreRegistry() public {
-        assertTrue(address(registry) != address(0), "registry address zero");
+        assertTrue(address(core.registry) != address(0), "registry address zero");
 
         // check registry
-        NftId registryNftId = registry.getNftId();
+        NftId registryNftId = core.registry.getNftId();
         assertTrue(registryNftId.gtz(), "registry nft id zero");
 
         // nft id and ownership
-        assertEq(registry.getNftId(address(registry)).toInt(), registryNftId.toInt(), "unexpected registry nft id");
-        assertEq(registry.ownerOf(registryNftId), registry.NFT_LOCK_ADDRESS(), "unexpected registry nft owner (via nft lock address)");
-        assertEq(registry.ownerOf(registryNftId), registry.getOwner(), "unexpected registry nft owner (via owner)");
+        assertEq(core.registry.getNftId(address(core.registry)).toInt(), registryNftId.toInt(), "unexpected registry nft id");
+        assertEq(core.registry.ownerOf(registryNftId), core.registry.NFT_LOCK_ADDRESS(), "unexpected registry nft owner (via nft lock address)");
+        assertEq(core.registry.ownerOf(registryNftId), core.registry.getOwner(), "unexpected registry nft owner (via owner)");
 
         // check info
-        IRegistry.ObjectInfo memory info = registry.getObjectInfo(registryNftId);
+        IRegistry.ObjectInfo memory info = core.registry.getObjectInfo(registryNftId);
         assertEq(info.nftId.toInt(), registryNftId.toInt(), "unexpected registry nft id (info)");
         assertTrue(info.parentNftId.gtz(), "registry parent nft zero");
         assertEq(info.objectType.toInt(), REGISTRY().toInt(), "unexpected registry type");
         assertFalse(info.isInterceptor, "registry marked as interceptor");
-        assertEq(info.objectAddress, address(registry), "unexpected registry address");
+        assertEq(info.objectAddress, address(core.registry), "unexpected registry address");
 
         // check linked contracts
-        assertEq(registry.getChainNftAddress(), address(chainNft), "unexpected chainNft address");
-        assertEq(registry.getReleaseRegistryAddress(), address(releaseRegistry), "unexpected release manager address");
-        assertEq(registry.getStakingAddress(), address(staking), "unexpected staking address");
-        assertEq(registry.getTokenRegistryAddress(), address(tokenRegistry), "unexpected token registry address");
+        assertEq(core.registry.getChainNftAddress(), address(core.chainNft), "unexpected chainNft address");
+        assertEq(core.registry.getReleaseRegistryAddress(), address(core.releaseRegistry), "unexpected release manager address");
+        assertEq(core.registry.getStakingAddress(), address(core.staking), "unexpected staking address");
+        assertEq(core.registry.getTokenRegistryAddress(), address(core.tokenRegistry), "unexpected token registry address");
     }
 
 
     function test_deployerCoreTokenRegistry() public {
-        assertTrue(address(tokenRegistry) != address(0), "token registry address zero");
+        assertTrue(address(core.tokenRegistry) != address(0), "token registry address zero");
 
-        assertEq(address(tokenRegistry.getDipToken()), address(dip), "unexpected dip address");
-        assertTrue(tokenRegistry.isRegistered(block.chainid, address(dip)), "dip not registered with token registry");
+        assertEq(address(core.tokenRegistry.getDipToken()), address(core.dip), "unexpected dip address");
+        assertTrue(core.tokenRegistry.isRegistered(block.chainid, address(core.dip)), "dip not registered with token registry");
 
         // TODO reactivate + amend once full gif setup is streamlined
-        // assertTrue(tokenRegistry.isActive(block.chainid, address(dip), VersionPartLib.toVersionPart(3)), "dip not active for gif version 3");
+        // assertTrue(core.tokenRegistry.isActive(block.chainid, address(core.dip), VersionPartLib.toVersionPart(3)), "dip not active for gif version 3");
     }
 
 
     function test_deployerCoreReleaseRegistry() public {
-        assertTrue(address(releaseRegistry) != address(0), "release manager address zero");
+        assertTrue(address(core.releaseRegistry) != address(0), "release manager address zero");
 
         // check authority
-        assertEq(releaseRegistry.authority(), registryAdmin.authority(), "unexpected release manager authority");
+        assertEq(core.releaseRegistry.authority(), core.registryAdmin.authority(), "unexpected release manager authority");
 
         // check linked contracts
-        assertEq(address(releaseRegistry.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
-        assertEq(address(releaseRegistry.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
+        assertEq(address(core.releaseRegistry.getRegistry()), address(core.registry), "unexpected registry address");
+        assertEq(core.releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
+        assertEq(address(core.releaseRegistry.getRegistryAdmin()), address(core.registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
     }
 
 
     function test_deployerCoreRegistryAdmin() public {
-        assertTrue(address(registryAdmin) != address(0), "registry admin manager address zero");
-        assertTrue(registryAdmin.authority() != address(0), "registry admin manager authority address zero");
+        assertTrue(address(core.registryAdmin) != address(0), "registry admin manager address zero");
+        assertTrue(core.registryAdmin.authority() != address(0), "registry admin manager authority address zero");
 
         // check authority
         // TODO is this correct? 
-        assertEq(registryAdmin.authority(), registryAdmin.authority(), "unexpected release manager authority");
+        assertEq(core.registryAdmin.authority(), core.registryAdmin.authority(), "unexpected release manager authority");
 
         // check initial roles assignments
-        assertTrue(registryAdmin.hasRole(gifAdmin, GIF_ADMIN_ROLE()), "registry owner not admin");
-        assertTrue(registryAdmin.hasRole(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
+        assertTrue(core.registryAdmin.hasRole(gifAdmin, GIF_ADMIN_ROLE()), "registry owner not admin");
+        assertTrue(core.registryAdmin.hasRole(gifManager, GIF_MANAGER_ROLE()), "registry owner not manager");
 
         // check sample admin access
         assertTrue(
-            registryAdmin.canCall(
+            core.registryAdmin.canCall(
                 gifAdmin, // caller
-                address(releaseRegistry), // target
+                address(core.releaseRegistry), // target
                 _toSelector(ReleaseRegistry.createNextRelease.selector)), 
             "gif manager cannot call registerToken");
 
         // check sample manager access
         assertTrue(
-            registryAdmin.canCall(
+            core.registryAdmin.canCall(
                 gifManager, // caller
-                address(tokenRegistry), // target
+                address(core.tokenRegistry), // target
                 _toSelector(TokenRegistry.registerToken.selector)), 
             "gif manager cannot call registerToken");
 
         // check linked contracts
-        assertEq(address(releaseRegistry.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
-        assertEq(address(releaseRegistry.getRegistryAdmin()), address(registryAdmin), "unexpected registry address");
+        assertEq(address(core.releaseRegistry.getRegistry()), address(core.registry), "unexpected registry address");
+        assertEq(core.releaseRegistry.INITIAL_GIF_VERSION(), gifV3.toInt(), "unexpected initial gif version");
+        assertEq(address(core.releaseRegistry.getRegistryAdmin()), address(core.registryAdmin), "unexpected registry address");
 
         // TODO amend once full gif setup is streamlined
     }
@@ -149,80 +142,70 @@ contract GifDeployerTest is GifDeployer {
     }
 
     function test_deployerCoreStakingManager() public {
-        assertTrue(address(stakingManager) != address(0), "staking manager address zero");
+        assertTrue(address(core.stakingManager) != address(0), "staking manager address zero");
 
         // assertEq(stakingOwner, registryOwner, "unexpected staking owner");
-        // assertEq(stakingManager.getOwner(), stakingOwner, "unexpected staking manager owner");
-        // assertEq(stakingManager.getOwner(), staking.getOwner(), "staking manager owner mismatch");
-        // assertEq(address(stakingManager.getStaking()), address(staking), "unexpected staking address");
+        // assertEq(core.stakingManager.getOwner(), stakingOwner, "unexpected staking manager owner");
+        // assertEq(core.stakingManager.getOwner(), core.staking.getOwner(), "staking manager owner mismatch");
+        // assertEq(address(core.stakingManager.getStaking()), address(core.staking), "unexpected staking address");
     }
 
 
     function test_deployerCoreStakingContract() public {
-        assertTrue(address(staking) != address(0), "staking address zero");
+        assertTrue(address(core.staking) != address(0), "staking address zero");
 
         // check nft id
-        NftId stakingNftId = staking.getNftId();
+        NftId stakingNftId = core.staking.getNftId();
         assertTrue(stakingNftId.gtz(), "staking nft id zero");
-        assertEq(stakingNftId.toInt(), registry.getNftId(address(staking)).toInt(), "unexpected staking nft id");
+        assertEq(stakingNftId.toInt(), core.registry.getNftId(address(core.staking)).toInt(), "unexpected staking nft id");
 
         // check ownership
         assertEq(stakingOwner, registryOwner, "unexpected staking owner");
-        assertEq(staking.getOwner(), stakingOwner, "unexpected staking owner (via staking)");
-        assertEq(registry.ownerOf(address(staking)), stakingOwner, "unexpected staking owner (via registry)");
+        assertEq(core.staking.getOwner(), stakingOwner, "unexpected staking owner (via staking)");
+        assertEq(core.registry.ownerOf(address(core.staking)), stakingOwner, "unexpected staking owner (via registry)");
 
         // check authority
-        assertEq(staking.authority(), registryAdmin.authority(), "unexpected staking authority");
+        assertEq(core.staking.authority(), core.registryAdmin.authority(), "unexpected staking authority");
 
         // check info
-        IRegistry.ObjectInfo memory info = registry.getObjectInfo(stakingNftId);
+        IRegistry.ObjectInfo memory info = core.registry.getObjectInfo(stakingNftId);
         assertEq(info.nftId.toInt(), stakingNftId.toInt(), "unexpected staking nft id (info)");
-        assertEq(info.parentNftId.toInt(), registry.getNftId().toInt(), "staking parent nft not registry");
+        assertEq(info.parentNftId.toInt(), core.registry.getNftId().toInt(), "staking parent nft not registry");
         assertEq(info.objectType.toInt(), STAKING().toInt(), "unexpected staking type");
         assertFalse(info.isInterceptor, "staking marked as interceptor");
-        assertEq(info.objectAddress, address(staking), "unexpected staking address");
+        assertEq(info.objectAddress, address(core.staking), "unexpected staking address");
 
         // check linked contracts
-        assertTrue(address(staking.getStakingReader()) != address(0), "staking reader zero");
-        assertTrue(address(staking.getStakingStore()) != address(0), "staking reader zero");
+        assertTrue(address(core.staking.getStakingReader()) != address(0), "staking reader zero");
+        assertTrue(address(core.staking.getStakingStore()) != address(0), "staking reader zero");
     }
 
 
     function test_deployerCoreStakingReader() public {
-        StakingReader reader = StakingReader(staking.getStakingReader());
+        StakingReader reader = StakingReader(core.staking.getStakingReader());
 
-        assertEq(address(reader.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(address(reader.getStaking()), address(staking), "unexpected staking address");
+        assertEq(address(reader.getRegistry()), address(core.registry), "unexpected registry address");
+        assertEq(address(reader.getStaking()), address(core.staking), "unexpected staking address");
     }
 
 
     function test_deployerCoreStakingStore() public {
-        StakingStore store = StakingStore(staking.getStakingStore());
+        StakingStore store = StakingStore(core.staking.getStakingStore());
 
         // check authority
-        assertEq(store.authority(), registryAdmin.authority(), "unexpected staking store authority");
+        assertEq(store.authority(), core.registryAdmin.authority(), "unexpected staking store authority");
     }
 
 
     function setUp() public virtual {
-        (
-            dip,
-            registry,
-            tokenRegistry,
-            releaseRegistry,
-            registryAdmin,
-            stakingManager,
-            staking
-        ) = deployCore(
+        core = deployCore(
             globalRegistry,
             gifAdmin,
             gifManager,
             stakingOwner);
-        
-        chainNft = ChainNft(registry.getChainNftAddress());
 
         deployRelease(
-            releaseRegistry,
+            core.releaseRegistry,
             serviceAuthorization,
             gifAdmin,
             gifManager);

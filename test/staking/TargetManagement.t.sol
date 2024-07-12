@@ -26,24 +26,24 @@ contract StakingTargetManagementTest is GifTest {
 
 
     function test_stakingTargetSetLockingPeriodHappyCase() public {
-        IStaking.TargetInfo memory targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        IStaking.TargetInfo memory targetInfo = core.stakingReader.getTargetInfo(instanceNftId);
         assertEq(targetInfo.lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
-        assertEq(registry.ownerOf(instanceNftId), instanceOwner, "unexpected instance owner");
+        assertEq(core.registry.ownerOf(instanceNftId), instanceOwner, "unexpected instance owner");
 
         vm.startPrank(instanceOwner);
         Seconds newLockingPeriod = SecondsLib.toSeconds(14 * 24 * 3600);
         instance.setStakingLockingPeriod(newLockingPeriod);
         vm.stopPrank();
 
-        targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        targetInfo = core.stakingReader.getTargetInfo(instanceNftId);
         assertEq(targetInfo.lockingPeriod.toInt(), newLockingPeriod.toInt(), "unexpected locking period after setting");
     }
 
 
     function test_stakingTargetSetLockingPeriodNotTargetOwner() public {
-        IStaking.TargetInfo memory targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        IStaking.TargetInfo memory targetInfo = core.stakingReader.getTargetInfo(instanceNftId);
         assertEq(targetInfo.lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period");
-        assertEq(registry.ownerOf(instanceNftId), instanceOwner, "unexpected instance owner");
+        assertEq(core.registry.ownerOf(instanceNftId), instanceOwner, "unexpected instance owner");
         assertTrue(instanceOwner != staker, "instance and stake owner same");
 
         vm.startPrank(outsider);
@@ -60,15 +60,15 @@ contract StakingTargetManagementTest is GifTest {
 
         vm.stopPrank();
 
-        targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        targetInfo = core.stakingReader.getTargetInfo(instanceNftId);
         assertEq(targetInfo.lockingPeriod.toInt(), TargetManagerLib.getDefaultLockingPeriod().toInt(), "unexpected locking period after setting");
     }
 
 
     function test_stakingTargetSetRewardRateHappyCase() public {
-        IStaking.TargetInfo memory targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        IStaking.TargetInfo memory targetInfo = core.stakingReader.getTargetInfo(instanceNftId);
 
-        assertEq(registry.ownerOf(instanceNftId), instanceOwner, "unexpected instance owner");
+        assertEq(core.registry.ownerOf(instanceNftId), instanceOwner, "unexpected instance owner");
         assertEq(_times1000(targetInfo.rewardRate), _times1000(TargetManagerLib.getDefaultRewardRate()), "unexpected reward rate");
 
         vm.startPrank(instanceOwner);
@@ -79,13 +79,13 @@ contract StakingTargetManagementTest is GifTest {
 
         vm.stopPrank();
 
-        targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        targetInfo = core.stakingReader.getTargetInfo(instanceNftId);
         assertEq(_times1000(targetInfo.rewardRate), _times1000(newRewardRate), "unexpected reward rate (updated)");
     }
 
 
     function test_stakingTargetSetRewardRateNotTargetOwner() public {
-        IStaking.TargetInfo memory targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        IStaking.TargetInfo memory targetInfo = core.stakingReader.getTargetInfo(instanceNftId);
         UFixed newRewardRate = UFixedLib.toUFixed(75, -3);
 
         vm.startPrank(outsider);
@@ -101,7 +101,7 @@ contract StakingTargetManagementTest is GifTest {
         vm.stopPrank();
 
         // verify reward rate did not change
-        targetInfo = stakingReader.getTargetInfo(instanceNftId);
+        targetInfo = core.stakingReader.getTargetInfo(instanceNftId);
         assertEq(_times1000(targetInfo.rewardRate), _times1000(TargetManagerLib.getDefaultRewardRate()), "unexpected reward rate");
     }
 
@@ -109,21 +109,21 @@ contract StakingTargetManagementTest is GifTest {
     function test_stakingTargetRefillRewardReservesInstanceOwner() public {
 
         // GIVEN
-        Amount reservesInitialAmount = stakingReader.getRewardBalance(instanceNftId);
+        Amount reservesInitialAmount = core.stakingReader.getRewardBalance(instanceNftId);
         assertEq(reservesInitialAmount.toInt(), 0, "instance reward reserves not 0");
 
-        address stakingWallet = staking.getWallet();
+        address stakingWallet = core.staking.getWallet();
         uint256 refillAmountFullDips = 500;
 
         (
-            TokenHandler tokenHandler, 
+            TokenHandler tokenHandler,
             Amount refillAmount
         ) = _prepareAccount(instanceOwner, refillAmountFullDips);
 
-        assertEq(dip.balanceOf(stakingWallet), 0, "staking wallet dip balance not 0 (after instance owner funding)");
-        assertEq(refillAmount.toInt(), refillAmountFullDips * 10 ** dip.decimals(), "unexpected refill amount");
-        assertEq(dip.balanceOf(instanceOwner), refillAmount.toInt(), "staking owner dip balance not at refill amount (after instance owner funding)");
-        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), 0, "reward reserves balance not at refill amount (after instance owner funding)");
+        assertEq(core.dip.balanceOf(stakingWallet), 0, "staking wallet dip balance not 0 (after instance owner funding)");
+        assertEq(refillAmount.toInt(), refillAmountFullDips * 10 ** core.dip.decimals(), "unexpected refill amount");
+        assertEq(core.dip.balanceOf(instanceOwner), refillAmount.toInt(), "staking owner dip balance not at refill amount (after instance owner funding)");
+        assertEq(core.stakingReader.getReserveBalance(instanceNftId).toInt(), 0, "reward reserves balance not at refill amount (after instance owner funding)");
 
         // WHEN
         vm.startPrank(instanceOwner);
@@ -132,28 +132,28 @@ contract StakingTargetManagementTest is GifTest {
 
         // THEN
         // check reward reserve balance from book keeping
-        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), refillAmount.toInt(), "reward reserves balance not at refill amount (after reward funding)");
+        assertEq(core.stakingReader.getReserveBalance(instanceNftId).toInt(), refillAmount.toInt(), "reward reserves balance not at refill amount (after reward funding)");
 
         // check dips have been transferred to staking wallet
-        assertEq(dip.balanceOf(stakingWallet), refillAmount.toInt(), "staking wallet dip balance not at refill amount (after reward funding)");
-        assertEq(dip.balanceOf(instanceOwner), 0, "staking owner dip balance not 0 (after reward funding)");
+        assertEq(core.dip.balanceOf(stakingWallet), refillAmount.toInt(), "staking wallet dip balance not at refill amount (after reward funding)");
+        assertEq(core.dip.balanceOf(instanceOwner), 0, "staking owner dip balance not 0 (after reward funding)");
     }
 
 
     function test_stakingTargetRefillRewardReservesOutsider() public {
 
         // GIVEN
-        address stakingWallet = staking.getWallet();
+        address stakingWallet = core.staking.getWallet();
         uint256 refillAmountFullDips = 500;
-        Amount refillAmount = AmountLib.toAmount(500 * 10 ** dip.decimals());
+        Amount refillAmount = AmountLib.toAmount(500 * 10 ** core.dip.decimals());
 
         (, refillAmount) = _prepareAccount(outsider, refillAmountFullDips);
 
         // check reward reserve balance from book keeping
-        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), 0, "reward reserves balance not at refill amount (before funding)");
+        assertEq(core.stakingReader.getReserveBalance(instanceNftId).toInt(), 0, "reward reserves balance not at refill amount (before funding)");
 
-        assertEq(dip.balanceOf(stakingWallet), 0, "staking wallet dip balance not 0 (before)");
-        assertEq(dip.balanceOf(outsider), refillAmount.toInt(), "outsider dip balance not 0 (before)");
+        assertEq(core.dip.balanceOf(stakingWallet), 0, "staking wallet dip balance not 0 (before)");
+        assertEq(core.dip.balanceOf(outsider), refillAmount.toInt(), "outsider dip balance not 0 (before)");
 
         // WHEN + THEN
         vm.expectRevert(
@@ -165,15 +165,15 @@ contract StakingTargetManagementTest is GifTest {
         instance.refillStakingRewardReserves(refillAmount);
         vm.stopPrank();
 
-        assertEq(dip.balanceOf(stakingWallet), 0, "staking wallet dip balance not 0 (after)");
-        assertEq(dip.balanceOf(outsider), refillAmount.toInt(), "outsider dip balance not 0 (after)");
+        assertEq(core.dip.balanceOf(stakingWallet), 0, "staking wallet dip balance not 0 (after)");
+        assertEq(core.dip.balanceOf(outsider), refillAmount.toInt(), "outsider dip balance not 0 (after)");
     }
 
 
     function test_stakingTargetWithdrawRewardReservesInstanceOwner() public {
 
         // GIVEN
-        address stakingWallet = staking.getWallet();
+        address stakingWallet = core.staking.getWallet();
         uint256 refillAmountFullDips = 500;
         (
             TokenHandler tokenHandler,
@@ -181,11 +181,11 @@ contract StakingTargetManagementTest is GifTest {
         ) = _addRewardReserves(instanceNftId, instanceOwner, refillAmountFullDips);
 
         // check reward reserve balance from book keeping
-        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), refillAmount.toInt(), "reward reserves balance not at refill amount (after reward funding)");
+        assertEq(core.stakingReader.getReserveBalance(instanceNftId).toInt(), refillAmount.toInt(), "reward reserves balance not at refill amount (after reward funding)");
 
         // check dips have been transferred to staking wallet
-        assertEq(dip.balanceOf(stakingWallet), refillAmount.toInt(), "staking wallet dip balance not at refill amount (after reward funding)");
-        assertEq(dip.balanceOf(outsider), 0, "outsider dip balance not 0 (after reward funding)");
+        assertEq(core.dip.balanceOf(stakingWallet), refillAmount.toInt(), "staking wallet dip balance not at refill amount (after reward funding)");
+        assertEq(core.dip.balanceOf(outsider), 0, "outsider dip balance not 0 (after reward funding)");
 
         // WHEN (withdraw some reserves)
         Amount withdrawAmount = AmountLib.toAmount(refillAmount.toInt() / 2);
@@ -194,21 +194,21 @@ contract StakingTargetManagementTest is GifTest {
         instance.withdrawStakingRewardReserves(withdrawAmount);
         vm.stopPrank();
 
-        // THEN 
+        // THEN
         // check reward reserve balance from book keeping
         Amount expectedRemainingReserves = refillAmount - withdrawAmount;
-        assertEq(stakingReader.getReserveBalance(instanceNftId).toInt(), expectedRemainingReserves.toInt(), "unexpected reward reserves balance (after reserve withdrawal)");
+        assertEq(core.stakingReader.getReserveBalance(instanceNftId).toInt(), expectedRemainingReserves.toInt(), "unexpected reward reserves balance (after reserve withdrawal)");
 
         // check dips have been transferred to staking wallet
-        assertEq(dip.balanceOf(stakingWallet), expectedRemainingReserves.toInt(), "unexpected staking wallet dip balance (after reserve withdrawal)");
-        assertEq(dip.balanceOf(instanceOwner), withdrawAmount.toInt(), "unexpected instance owner dip balance (after reserve withdrawal)");
+        assertEq(core.dip.balanceOf(stakingWallet), expectedRemainingReserves.toInt(), "unexpected staking wallet dip balance (after reserve withdrawal)");
+        assertEq(core.dip.balanceOf(instanceOwner), withdrawAmount.toInt(), "unexpected instance owner dip balance (after reserve withdrawal)");
     }
 
 
     function test_stakingTargetWithdrawRewardReservesOutsider() public {
 
         // GIVEN
-        address stakingWallet = staking.getWallet();
+        address stakingWallet = core.staking.getWallet();
         uint256 refillAmountFullDips = 500;
         (
             TokenHandler tokenHandler,
@@ -235,14 +235,14 @@ contract StakingTargetManagementTest is GifTest {
 
         // set staking wallet approval for staking token handler
         vm.startPrank(stakingOwner);
-        staking.approveTokenHandler(AmountLib.max());
+        core.staking.approveTokenHandler(AmountLib.max());
         vm.stopPrank();
     }
 
 
     function _addRewardReserves(
-        NftId instanceNftId, 
-        address account, 
+        NftId instanceNftId,
+        address account,
         uint256 amount
     )
         internal
@@ -260,7 +260,7 @@ contract StakingTargetManagementTest is GifTest {
 
 
     function _prepareAccount(
-        address myStaker, 
+        address myStaker,
         uint256 myStakeAmount
     )
         internal
@@ -274,7 +274,7 @@ contract StakingTargetManagementTest is GifTest {
 
 
     function _prepareAccount(
-        address myStaker, 
+        address myStaker,
         uint256 myStakeAmount,
         bool reset,
         bool withFunding,
@@ -287,24 +287,24 @@ contract StakingTargetManagementTest is GifTest {
         )
     {
         tokenHandler = stakingService.getTokenHandler();
-        dipAmount = AmountLib.toAmount(myStakeAmount * 10 ** dip.decimals());
+        dipAmount = AmountLib.toAmount(myStakeAmount * 10 ** core.dip.decimals());
 
         // return existing dip balance back to registry owner
         if (reset) {
             vm.startPrank(myStaker);
-            dip.transfer(registryOwner, dip.balanceOf(myStaker));
+            core.dip.transfer(registryOwner, core.dip.balanceOf(myStaker));
             vm.stopPrank();
         }
 
         if (withFunding) {
             vm.startPrank(registryOwner);
-            dip.transfer(myStaker, dipAmount.toInt());
+            core.dip.transfer(myStaker, dipAmount.toInt());
             vm.stopPrank();
         }
 
         if (withApproval) {
             vm.startPrank(myStaker);
-            dip.approve(address(tokenHandler), dipAmount.toInt());
+            core.dip.approve(address(tokenHandler), dipAmount.toInt());
             vm.stopPrank();
         }
     }

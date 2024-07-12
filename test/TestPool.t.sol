@@ -25,7 +25,7 @@ contract TestPool is GifTest {
 
     function test_PoolContractLocations() public {
         pool = new SimplePool(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             address(token),
             new BasicPoolAuthorization("SimplePool"),
@@ -60,7 +60,7 @@ contract TestPool is GifTest {
         vm.startPrank(poolOwner);
 
         pool = new SimplePool(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             address(token),
             new BasicPoolAuthorization("SimplePool"),

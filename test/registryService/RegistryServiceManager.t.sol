@@ -40,7 +40,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
     //     address stakingOwner = registryOwner;
     //     stakingManager = new StakingManager(
     //         registryAccessManager.authority(),
-    //         address(registry));
+    //         address(core.registry));
     //     staking = stakingManager.getStaking();
 
     //     vm.stopPrank();
@@ -57,42 +57,42 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         console.log("registry service nft", registryService.getNftId().toInt());
         console.log("registry service owner", registryService.getOwner());
         console.log("registry service authority", registryService.authority());
-        console.log("registry", address(registry));
-        console.log("registry nft", registry.getNftId(address(registry)).toInt());
-        console.log("registry owner (opt 1)", registry.ownerOf(address(registry)));
-        console.log("registry owner (opt 2)", registry.getOwner());
+        console.log("registry", address(core.registry));
+        console.log("registry nft", core.registry.getNftId(address(core.registry)).toInt());
+        console.log("registry owner (opt 1)", core.registry.ownerOf(address(core.registry)));
+        console.log("registry owner (opt 2)", core.registry.getOwner());
         // solhint-enable
 
-        console.log("registered objects", registry.getObjectCount());
+        console.log("registered objects", core.registry.getObjectCount());
         _logObject("protocol", NftIdLib.toNftId(1101));
         _logObject("globalRegistry", NftIdLib.toNftId(2101));
-        _logObject("chainRegistry", address(registry));
+        _logObject("chainRegistry", address(core.registry));
         _logObject("registryService", address(registryService));
 
         // check for zero addresses
         assertTrue(address(registryServiceManager) != address(0), "registry installer zero");
         assertTrue(address(registryService) != address(0), "registry service zero");
-        assertTrue(address(registry) != address(0), "registry zero");
-        assertTrue(address(chainNft) != address(0), "chain nft zero");
+        assertTrue(address(core.registry) != address(0), "registry zero");
+        assertTrue(address(core.chainNft) != address(0), "chain nft zero");
 
         // check contract links
-        assertEq(address(registryService.getRegistry()), address(registry), "unexpected registry address");
-        assertEq(registry.getChainNftAddress(), address(chainNft), "unexpected chain nft address");
+        assertEq(address(registryService.getRegistry()), address(core.registry), "unexpected registry address");
+        assertEq(core.registry.getChainNftAddress(), address(core.chainNft), "unexpected chain nft address");
 
         // check nft ids
-        assertTrue(registry.getNftId(address(registryService)).gtz(), "registry service nft id (option 1) zero");
+        assertTrue(core.registry.getNftId(address(registryService)).gtz(), "registry service nft id (option 1) zero");
         assertTrue(registryService.getNftId().gtz(), "registry service nft id (option 2) zero");
-        assertEq(registryService.getNftId().toInt(), registry.getNftId(address(registryService)).toInt(), "registry service nft id mismatch");
+        assertEq(registryService.getNftId().toInt(), core.registry.getNftId(address(registryService)).toInt(), "registry service nft id mismatch");
         
         // check ownership
         assertEq(registryServiceManager.getOwner(), address(registryOwner), "service manager owner not registry owner");
         assertEq(registryService.getOwner(), address(registryOwner), "registry owner not owner of registry");
-        assertEq(registry.getOwner(), address(0x1), "registry owner not owner of registry");
-        assertEq(registry.getOwner(), registry.ownerOf(address(registry)), "non matching registry owners");
+        assertEq(core.registry.getOwner(), address(0x1), "registry owner not owner of registry");
+        assertEq(core.registry.getOwner(), core.registry.ownerOf(address(core.registry)), "non matching registry owners");
 
         // check registered objects
-        assertTrue(registry.isRegistered(address(registry)), "registry itself not registered");
-        assertTrue(registry.isRegistered(address(registryService)), "registry service not registered");
+        assertTrue(core.registry.isRegistered(address(core.registry)), "registry itself not registered");
+        assertTrue(core.registry.isRegistered(address(registryService)), "registry service not registered");
     }
 
     function test_attemptsToRedeployedRegistryService() public {
@@ -165,11 +165,11 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         bytes memory emptyUpgradeData;
 
         // check initial ownership
-        assertEq(registry.ownerOf(registryServiceAddress), registryOwner, "registry service owner not registry owner");
+        assertEq(core.registry.ownerOf(registryServiceAddress), registryOwner, "registry service owner not registry owner");
         assertEq(registryServiceManager.getOwner(), registryOwner, "registry service manager owner not registry owner");
 
         // transfer ownership by transferring nft
-        NftId registryServiceNft = registry.getNftId(registryServiceAddress);
+        NftId registryServiceNft = core.registry.getNftId(registryServiceAddress);
 
         vm.startPrank(registryOwner);
         chainNft.approve(registryOwnerNew, registryServiceNft.toInt());
@@ -177,7 +177,7 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
         vm.stopPrank();
 
         // check ownership after transfer
-        assertEq(registry.ownerOf(registryServiceAddress), registryOwnerNew, "registry service owner not registry owner");
+        assertEq(core.registry.ownerOf(registryServiceAddress), registryOwnerNew, "registry service owner not registry owner");
         assertEq(registryServiceManager.getOwner(), registryOwnerNew, "registry service manager owner not registry owner");
 
         // attempt to upgrade with old owner
@@ -208,19 +208,19 @@ contract RegistryServiceManagerTest is RegistryServiceTestBase {
 
 
     function _logObject(string memory prefix, address object) internal view {
-        NftId nftId = registry.getNftId(object);
+        NftId nftId = core.registry.getNftId(object);
         _logObject(prefix, nftId);
     }
 
     function _logObject(string memory prefix, NftId nftId) internal view {
-        IRegistry.ObjectInfo memory info = registry.getObjectInfo(nftId);
+        IRegistry.ObjectInfo memory info = core.registry.getObjectInfo(nftId);
 
         // solhint-disable no-console
         console.log(prefix, "nftId", nftId.toInt());
         console.log(prefix, "parentNftId", info.parentNftId.toInt());
         console.log(prefix, "type", info.objectType.toInt());
         console.log(prefix, "address", info.objectAddress);
-        console.log(prefix, "owner", registry.ownerOf(nftId));
+        console.log(prefix, "owner", core.registry.ownerOf(nftId));
         // solhint-enable
     }
 

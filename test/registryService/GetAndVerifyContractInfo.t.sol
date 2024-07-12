@@ -262,19 +262,19 @@ contract GetAndVerifyContractInfoTest is RegistryServiceHarnessTestBase {
             NftIdLib.toNftId(randomNumber(type(uint96).max)), // parentNftId
             registerableType,
             toBool(randomNumber(1)), // isInterceptor
-            address(registry), // initialOwner
+            address(core.registry), // initialOwner
             ""
         );
 
         vm.expectRevert(abi.encodeWithSelector(
             IRegistryService.ErrorRegistryServiceRegisterableOwnerRegistered.selector,
             address(registerable),
-            address(registry)));
+            address(core.registry)));
 
         registryServiceHarness.exposed_getAndVerifyContractInfo(
             registerable,
             registerableType,
-            address(registry)); // expectedOwner 
+            address(core.registry)); // expectedOwner 
     }
 
     function test_withSelfOwnedRegisterable() public

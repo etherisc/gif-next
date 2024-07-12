@@ -112,7 +112,7 @@ contract ReferralTest is ReferralTestBase {
         );
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
@@ -203,7 +203,7 @@ contract ReferralTest is ReferralTestBase {
             referralId
         );
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
         NftId policyNftId2 = product.createApplication(
             customer,
@@ -215,7 +215,7 @@ contract ReferralTest is ReferralTestBase {
             referralId
         );
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
         
         vm.stopPrank();
 

@@ -96,7 +96,7 @@ contract DistributorTest is GifTest {
         // solhint-disable-next-line 
         console.log("info distributor nft id", info.distributorNftId.toInt());
         assertTrue(info.distributorNftId == distributorNftId, "unexpected distributor nft id");
-        assertEq(registry.ownerOf(info.distributorNftId), customer, "unexpected referral owner");
+        assertEq(core.registry.ownerOf(info.distributorNftId), customer, "unexpected referral owner");
 
         // solhint-disable-next-line 
         console.log("referral code", info.referralCode);
@@ -148,16 +148,16 @@ contract DistributorTest is GifTest {
         _setupTestData(true);
 
         assertTrue(distribution.isDistributor(customer), "customer still not distributor");
-        assertEq(registry.ownerOf(distributorNftId), customer, "unexpected distributor nft owner");
+        assertEq(core.registry.ownerOf(distributorNftId), customer, "unexpected distributor nft owner");
         assertTrue(distribution.getDistributorNftId(customer) == distributorNftId, "unexpected distributor nft id for customer");
         assertTrue(!distribution.isDistributor(customer2), "customer2 not yet distributor");
 
         vm.startPrank(customer);
-        // chainNft.approve(customer2, distributorNftId.toInt());
-        chainNft.safeTransferFrom(customer, customer2, distributorNftId.toInt());
+        // core.chainNft.approve(customer2, distributorNftId.toInt());
+        core.chainNft.safeTransferFrom(customer, customer2, distributorNftId.toInt());
         vm.stopPrank();
 
-        assertEq(registry.ownerOf(distributorNftId), customer2, "customer2 not owner of distributor nft after token transfer");
+        assertEq(core.registry.ownerOf(distributorNftId), customer2, "customer2 not owner of distributor nft after token transfer");
         assertTrue(!distribution.isDistributor(customer), "customer is still distributor after token transfer");
         assertTrue(distribution.isDistributor(customer2), "customer2 is not yet distributor after token transfer");
         assertTrue(distribution.getDistributorNftId(customer2) == distributorNftId, "unexpected distributor nft id for customer2");
@@ -174,7 +174,7 @@ contract DistributorTest is GifTest {
             distributorData);
         vm.stopPrank();
 
-        assertEq(registry.ownerOf(distributorNftId), customer, "unexpected distributor nft owner");
+        assertEq(core.registry.ownerOf(distributorNftId), customer, "unexpected distributor nft owner");
 
         IDistribution.DistributorInfo memory info = instanceReader.getDistributorInfo(distributorNftId);
         assertTrue(info.active, "distributor info not active");
@@ -195,7 +195,7 @@ contract DistributorTest is GifTest {
 
         distributionNftId = distribution.getNftId();
         assertTrue(distributionNftId.gtz(), "distribution nft id unexpectedly zero");
-        assertEq(registry.ownerOf(distributionNftId), distributionOwner, "distribution owner unexpectly not owner of distribution nft id");
+        assertEq(core.registry.ownerOf(distributionNftId), distributionOwner, "distribution owner unexpectly not owner of distribution nft id");
     }
 
     function test_DistributorTypeCreateHappyCase() public {

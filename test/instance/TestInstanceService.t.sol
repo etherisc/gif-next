@@ -63,7 +63,7 @@ contract TestInstanceService is GifTest {
         
         address oldInstanceReaderAddress = address(instance.getInstanceReader());
         
-        assertEq(registry.ownerOf(instanceNftId), instanceOwner, "instanceOwner not owner of instance nft id");
+        assertEq(core.registry.ownerOf(instanceNftId), instanceOwner, "instanceOwner not owner of instance nft id");
 
         // WHEN
         vm.startPrank(instanceOwner);

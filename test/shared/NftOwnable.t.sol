@@ -30,7 +30,7 @@ contract NftOwnableTest is GifTest {
         super.setUp();
 
         vm.startPrank(mockOwner);
-        mock = new NftOwnableMock(address(registry));
+        mock = new NftOwnableMock(address(core.registry));
         mockUninitialized = new NftOwnableMockUninitialized();
         vm.stopPrank();
     }
@@ -38,9 +38,9 @@ contract NftOwnableTest is GifTest {
     function test_NftOwnableMockSimple() public {
         // solhint-disable no-console
         console.log("registryOwner", registryOwner);
-        console.log("registry address", address(registry));
-        console.log("registry nft id", registry.getNftId(address(registry)).toInt());
-        console.log("registry owner", registry.ownerOf(address(registry)));
+        console.log("registry address", address(core.registry));
+        console.log("registry nft id", core.registry.getNftId(address(core.registry)).toInt());
+        console.log("registry owner", core.registry.ownerOf(address(core.registry)));
         console.log("mockOwner", mockOwner);
         console.log("mock address", address(mock));
         console.log("mock registry address", address(mock.getRegistry()));
@@ -73,7 +73,7 @@ contract NftOwnableTest is GifTest {
     }
 
     function test_NftOwnableLinkToRegNftIdWithUnregisteredContract() public {
-        mockUninitialized.initialize(mockOwner, address(registry));
+        mockUninitialized.initialize(mockOwner, address(core.registry));
 
         vm.expectRevert(
             abi.encodeWithSelector(
@@ -141,20 +141,20 @@ contract NftOwnableTest is GifTest {
     }
 
     function test_NftOwnableLinkToNftOwnableHappyCase() public {
-        address registryAddress = address(registry);
+        address registryAddress = address(core.registry);
 
         assertEq(mock.getOwner(), mockOwner, "mock owner not initial mock owner before linking");
 
         // NFT_LOCK_ADDRESS becomes owner of mock
         vm.prank(mockOwner);
-        mock.linkToNftOwnable(address(registry));
+        mock.linkToNftOwnable(address(core.registry));
 
-        assertEq(mock.getNftId().toInt(), registry.getNftId(registryAddress).toInt(), "mock nft id not registry nft id");
+        assertEq(mock.getNftId().toInt(), core.registry.getNftId(registryAddress).toInt(), "mock nft id not registry nft id");
         assertEq(mock.getOwner(), address(0x1), "mock owner not registry owner after linking");
     }
 
     function test_NftOwnableLinkToNftOwnableLinkTwice() public {
-        address registryAddress = address(registry);
+        address registryAddress = address(core.registry);
 
         // NFT_LOCK_ADDRESS becomes owner of mock
         vm.prank(mockOwner);

@@ -49,13 +49,13 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
     {
         bytes32 salt = "0x1111";
 
-        releaseRegistry.createNextRelease();
+        core.releaseRegistry.createNextRelease();
 
         (
             address releaseAccessManager,
             VersionPart releaseVersion,
             bytes32 releaseSalt
-        ) = releaseRegistry.prepareNextRelease(
+        ) = core.releaseRegistry.prepareNextRelease(
             new ServiceAuthorizationV3("85b428cbb5185aee615d101c2554b0a58fb64810"),
             salt);
 
@@ -64,9 +64,9 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
             registryAddress,
             releaseSalt);
         registryService = registryServiceManager.getRegistryService();
-        releaseRegistry.registerService(registryService);
+        core.releaseRegistry.registerService(registryService);
 
-        releaseRegistry.activateNextRelease();
+        core.releaseRegistry.activateNextRelease();
         
         registryServiceManager.linkToProxy();
     }
@@ -77,7 +77,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
         bytes memory dataFromRegistryService) 
         internal
     {
-        IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(registeredContract);
+        IRegistry.ObjectInfo memory infoFromRegistry = core.registry.getObjectInfo(registeredContract);
         IRegistry.ObjectInfo memory infoFromRegisterable = IRegisterable(registeredContract).getInitialInfo();
 
         infoFromRegisterable.nftId = infoFromRegistry.nftId; // initial value is random
@@ -89,7 +89,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
 
     function _assert_registered_object(IRegistry.ObjectInfo memory objectInfo) internal 
     {
-        IRegistry.ObjectInfo memory infoFromRegistry = registry.getObjectInfo(objectInfo.nftId);
+        IRegistry.ObjectInfo memory infoFromRegistry = core.registry.getObjectInfo(objectInfo.nftId);
 
         assertEq(infoFromRegistry.objectAddress, address(0), "Object has non zero address");
         eqObjectInfo(infoFromRegistry, objectInfo);
@@ -140,7 +140,7 @@ contract RegistryServiceTestBase is GifTest, FoundryRandom {
         assertEq(registerable.getNftId().toInt(), info.nftId.toInt(), "getNftId() returned unxpected value #1");
 
         (IRegistry.ObjectInfo memory infoFromRegisterable, bytes memory dataFromRegisterable) = registerable.getInitialInfo();
-        IRegistry.ObjectInfo infoFromRegistry = registry.getObjectInfo(registryServiceNftId);
+        IRegistry.ObjectInfo infoFromRegistry = core.registry.getObjectInfo(registryServiceNftId);
         
         assertTrue(eqObjectInfo(info, infoFromRegisterable), "getInitialInfo() returned unexpected value");
         assertTrue(eqObjectInfo(infoFromRegistry, infoFromRegisterable), "getInitialInfo() returned unexpected value");

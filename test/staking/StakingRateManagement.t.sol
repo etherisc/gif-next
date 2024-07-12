@@ -35,7 +35,7 @@ contract StakingRateManagement is GifTest {
         assertEq(tokenAddress, address(token), "unexpected token address");
 
         // check instance is active target
-        UFixed stakingRate = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRate = core.stakingReader.getStakingRate(block.chainid, tokenAddress);
         assertTrue(stakingRate.gtz(), "staking rate 0");
         assertTrue(stakingRate == tokenStakingRate, "unexpected token staking rate");
     }
@@ -48,14 +48,14 @@ contract StakingRateManagement is GifTest {
 
         // calculate new staking rate
         UFixed newStakingRate = TargetManagerLib.calculateStakingRate(
-            dip,
+            core.dip,
             token,
             UFixedLib.toUFixed(dipTokenPerToken)); // required dip token per token
 
         assertTrue(newStakingRate.gtz(), "new staking rate 0");
 
         // WHEN
-        vm.expectEmit(address(staking));
+        vm.expectEmit(address(core.staking));
         emit LogStakingStakingRateSet(
             block.chainid, 
             tokenAddress, 
@@ -63,11 +63,11 @@ contract StakingRateManagement is GifTest {
             newStakingRate); // new staking rate
 
         vm.startPrank(registryOwner);
-        staking.setStakingRate(block.chainid, tokenAddress, newStakingRate);
+        core.staking.setStakingRate(block.chainid, tokenAddress, newStakingRate);
         vm.stopPrank();
 
         // THEN
-        UFixed stakingRateFromReader = stakingReader.getStakingRate(block.chainid, tokenAddress);
+        UFixed stakingRateFromReader = core.stakingReader.getStakingRate(block.chainid, tokenAddress);
         assertTrue(stakingRateFromReader.gtz(), "staking rate (from reader) 0");
         assertTrue(stakingRateFromReader == newStakingRate, "unexpected token staking rate (from reader)");
     }
@@ -79,7 +79,7 @@ contract StakingRateManagement is GifTest {
 
         // calculate staking rate
         UFixed stakingRate = TargetManagerLib.calculateStakingRate(
-            dip,
+            core.dip,
             token,
             UFixedLib.toUFixed(dipTokenPerToken)); // required dip token per token
 
@@ -92,7 +92,7 @@ contract StakingRateManagement is GifTest {
 
         // define expected dip amount using staking rate
         uint256 expectedRequiredDipAmountInt = dipTokenPerToken * tokenAmountInt;
-        Amount expectedRequiredDipAmount = AmountLib.toAmount(expectedRequiredDipAmountInt * 10 ** dip.decimals());
+        Amount expectedRequiredDipAmount = AmountLib.toAmount(expectedRequiredDipAmountInt * 10 ** core.dip.decimals());
         assertTrue(expectedRequiredDipAmount.gtz(), "required expected dip amount is 0");
 
         // get required dip amount from library
@@ -111,7 +111,7 @@ contract StakingRateManagement is GifTest {
 
         // calculate staking rate
         UFixed stakingRate = TargetManagerLib.calculateStakingRate(
-            dip,
+            core.dip,
             token,
             dipTokenPerToken); // required dip token per token
 
@@ -124,7 +124,7 @@ contract StakingRateManagement is GifTest {
 
         // define expected dip amount using staking rate
         uint256 expectedRequiredDipAmountInt = tokenAmountInt / 2;
-        Amount expectedRequiredDipAmount = AmountLib.toAmount(expectedRequiredDipAmountInt * 10 ** dip.decimals());
+        Amount expectedRequiredDipAmount = AmountLib.toAmount(expectedRequiredDipAmountInt * 10 ** core.dip.decimals());
         assertTrue(expectedRequiredDipAmount.gtz(), "required expected dip amount is 0");
 
         // get required dip amount from library
@@ -141,16 +141,16 @@ contract StakingRateManagement is GifTest {
         super.setUp();
 
         tokenAddress = address(token);
-        stakingStoreAddress = address(staking.getStakingStore());
+        stakingStoreAddress = address(core.staking.getStakingStore());
 
         // 10 dips per usdc
         tokenStakingRate = TargetManagerLib.calculateStakingRate(
-            dip,
+            core.dip,
             token,
             UFixedLib.toUFixed(10));
         
         vm.startPrank(registryOwner);
-        staking.setStakingRate(block.chainid, tokenAddress, tokenStakingRate);
+        core.staking.setStakingRate(block.chainid, tokenAddress, tokenStakingRate);
         vm.stopPrank();
     }
 }

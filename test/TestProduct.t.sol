@@ -156,7 +156,7 @@ contract TestProduct is GifTest {
             ReferralLib.zero()
         );
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
@@ -198,7 +198,7 @@ contract TestProduct is GifTest {
         );
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
         vm.stopPrank();
@@ -272,7 +272,7 @@ contract TestProduct is GifTest {
         vm.stopPrank();
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
         // calculate expected premium/fee amounts
@@ -402,7 +402,7 @@ contract TestProduct is GifTest {
         );
 
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
@@ -524,7 +524,7 @@ contract TestProduct is GifTest {
             referralId
         );
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
         
@@ -578,7 +578,7 @@ contract TestProduct is GifTest {
             ReferralLib.zero()
         );
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
         vm.stopPrank();
 
@@ -626,7 +626,7 @@ contract TestProduct is GifTest {
             ReferralLib.zero()
         );
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == APPLIED(), "state not APPLIED");
 
@@ -720,7 +720,7 @@ contract TestProduct is GifTest {
         product.collateralize(policyNftId, false, zeroTimestamp()); 
         
         assertTrue(policyNftId.gtz(), "policyNftId was zero");
-        assertEq(chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
+        assertEq(core.chainNft.ownerOf(policyNftId.toInt()), customer, "customer not owner of policyNftId");
 
         assertTrue(instance.getInstanceStore().getState(policyNftId.toKey32(POLICY())) == COLLATERALIZED(), "state not COLLATERALIZED");
         

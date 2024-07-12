@@ -181,14 +181,14 @@ contract VerifyObjectInfoTest is RegistryServiceHarnessTestBase {
             objectType: objectType,
             isInterceptor: toBool(randomNumber(1)),
             objectAddress: address(0),
-            initialOwner: address(registry), // any registered address
+            initialOwner: address(core.registry), // any registered address
             data: ""
         });
 
         vm.expectRevert(abi.encodeWithSelector(
             IRegistryService.ErrorRegistryServiceObjectOwnerRegistered.selector,
             objectType,
-            address(registry)));
+            address(core.registry)));
 
         registryServiceHarness.exposed_verifyObjectInfo(
             info,

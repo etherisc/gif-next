@@ -15,7 +15,7 @@ contract TestDistributionService is GifTest {
     function test_DistributionService_register_missingDistributionOwnerRole() public {
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,
@@ -38,7 +38,7 @@ contract TestDistributionService is GifTest {
 
         vm.startPrank(distributionOwner);
         distribution = new SimpleDistribution(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             new BasicDistributionAuthorization("SimpleDistribution"),
             distributionOwner,

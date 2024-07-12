@@ -21,7 +21,7 @@ contract TestProductService is GifTest {
 
         vm.startPrank(productOwner);
         product = new SimpleProduct(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             new BasicProductAuthorization("SimpleProduct"),
             productOwner,
@@ -50,7 +50,7 @@ contract TestProductService is GifTest {
 
         vm.startPrank(productOwner);
         product = new SimpleProduct(
-            address(registry),
+            address(core.registry),
             instanceNftId,
             new BasicProductAuthorization("SimpleProduct"),
             productOwner,

@@ -14,7 +14,7 @@ import {ContractV02} from "./mock/ContractV02.sol";
 contract ProxyManagerTest is GifTest {
 
     function testProductV01Deploy() public {
-        ProxyManager proxyManager = new ProxyManager(address(registry));
+        ProxyManager proxyManager = new ProxyManager(address(core.registry));
         // solhint-disable-next-line
         console.log("proxyManager[address]", address(proxyManager));
         assertTrue(address(proxyManager) != address(0), "proxyManager address zero");
@@ -39,7 +39,7 @@ contract ProxyManagerTest is GifTest {
 
     function testProductV01DeployAndUpgrade() public {
 
-        ProxyManager proxyManager = new ProxyManager(address(registry));
+        ProxyManager proxyManager = new ProxyManager(address(core.registry));
         bytes memory initializationData = abi.encode(uint(0));
         bytes memory upgradeData = abi.encode(uint(0));
         IVersionable versionable = proxyManager.deploy(address(new ContractV01()), initializationData);
@@ -55,7 +55,7 @@ contract ProxyManagerTest is GifTest {
     // getting the proxy admin address via logs
     // https://forum.openzeppelin.com/t/version-5-how-can-should-the-proxyadmin-of-the-transparentupgradableproxy-be-used/38127
     function testProductV01DeployCheckProxyAdminAddress() public {
-        ProxyManager proxyManager = new ProxyManager(address(registry));
+        ProxyManager proxyManager = new ProxyManager(address(core.registry));
 
         vm.recordLogs();
         bytes memory initializationData = abi.encode(uint(0));
