@@ -24,6 +24,7 @@ import {Fee, FeeLib} from "../type/Fee.sol";
 import {KEEP_STATE} from "../type/StateId.sol";
 import {Seconds} from "../type/Seconds.sol";
 import {TokenHandler} from "../shared/TokenHandler.sol";
+import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 import {UFixed} from "../type/UFixed.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {InstanceReader} from "../instance/InstanceReader.sol";
@@ -521,7 +522,6 @@ contract PoolService is
     }
 
 
-    // TODO create (I)TreasuryService that deals with all gif related token transfers
     /// @dev transfers the specified amount from the bundle owner to the pool's wallet
     function _collectStakingAmount(
         InstanceReader instanceReader,
@@ -537,20 +537,11 @@ contract PoolService is
         TokenHandler tokenHandler = componentInfo.tokenHandler;
         address poolWallet = componentInfo.wallet;
 
-        if(amount.gtz()) {
-            uint256 allowance = IERC20Metadata(componentInfo.token).allowance(bundleOwner, address(tokenHandler));
-            if (allowance < amount.toInt()) {
-                revert ErrorPoolServiceWalletAllowanceTooSmall(bundleOwner, address(tokenHandler), allowance, amount.toInt());
-            }
-
-            // TODO: centralize token handling (issue #471)
-            tokenHandler.transfer(
-                bundleOwner,
-                poolWallet,
-                amount);
-        } else {
-            revert ErrorPoolServiceAmountIsZero();
-        }
+        TokenTransferLib.collectTokens(
+            bundleOwner,
+            poolWallet,
+            amount,
+            tokenHandler);
     }
 
     function _getDomain() internal pure override returns(ObjectType) {

@@ -10,6 +10,7 @@ import {IInstance} from "../instance/IInstance.sol";
 import {IPolicy} from "../instance/module/IPolicy.sol";
 
 import {TokenHandler} from "../shared/TokenHandler.sol";
+import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {Timestamp, TimestampLib, zeroTimestamp} from "../type/Timestamp.sol";
@@ -473,7 +474,7 @@ contract PolicyService is
         address policyHolder = getRegistry().ownerOf(policyNftId);
 
         (
-            NftId distributionNftId,
+            ,
             address distributionWallet,
             address poolWallet,
             address productWallet
@@ -481,11 +482,27 @@ contract PolicyService is
             instanceReader, 
             productNftId);
 
-        // TODO: centralize token handling (issue #471)
-        // transfer premium amounts to target wallets
-        tokenHandler.transfer(policyHolder, productWallet, premium.productFeeAmount);
-        tokenHandler.transfer(policyHolder, distributionWallet, premium.distributionFeeAndCommissionAmount);
-        tokenHandler.transfer(policyHolder, poolWallet, premium.poolPremiumAndFeeAmount);
+        if (premium.productFeeAmount.gtz()) {
+            TokenTransferLib.collectTokens(
+                policyHolder,
+                productWallet,
+                premium.productFeeAmount,
+                tokenHandler);
+        }
+        if (premium.distributionFeeAndCommissionAmount.gtz()) {
+            TokenTransferLib.collectTokens(
+                policyHolder,
+                distributionWallet,
+                premium.distributionFeeAndCommissionAmount,
+                tokenHandler);
+        }
+        if (premium.poolPremiumAndFeeAmount.gtz()) {
+            TokenTransferLib.collectTokens(
+                policyHolder,
+                poolWallet,
+                premium.poolPremiumAndFeeAmount,
+                tokenHandler);
+        }
     }
 
 
