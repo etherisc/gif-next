@@ -25,6 +25,7 @@ import {ReferralId, ReferralLib} from "../type/Referral.sol";
 import {Timestamp, TimestampLib} from "../type/Timestamp.sol";
 import {IDistribution} from "../instance/module/IDistribution.sol";
 import {InstanceStore} from "../instance/InstanceStore.sol";
+import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 
 contract DistributionService is
@@ -275,17 +276,6 @@ contract DistributionService is
             }
         }
 
-        if (withdrawnAmount.eqz()) {
-            revert ErrorDistributionServiceCommissionWithdrawAmountIsZero();
-        }
-
-        // check allowance
-        IERC20Metadata token = IERC20Metadata(distributionInfo.token);
-        uint256 tokenAllowance = token.allowance(distributionWallet, address(distributionInfo.tokenHandler));
-        if (tokenAllowance < withdrawnAmount.toInt()) {
-            revert ErrorDistributionServiceWalletAllowanceTooSmall(distributionWallet, address(distributionInfo.tokenHandler), tokenAllowance, withdrawnAmount.toInt());
-        }
-
         // decrease fee counters by withdrawnAmount and update distributor info
         {
             InstanceStore store = instance.getInstanceStore();
@@ -298,9 +288,8 @@ contract DistributionService is
         // transfer amount to distributor
         {
             address distributor = getRegistry().ownerOf(distributorNftId);
-            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(token), withdrawnAmount);
-            // TODO: centralize token handling (issue #471)
-            distributionInfo.tokenHandler.transfer(distributionWallet, distributor, withdrawnAmount);
+            emit LogDistributionServiceCommissionWithdrawn(distributorNftId, distributor, address(distributionInfo.token), withdrawnAmount);
+            TokenTransferLib.distributeTokens(distributionWallet, distributor, withdrawnAmount, distributionInfo.tokenHandler);
         }
     }
 

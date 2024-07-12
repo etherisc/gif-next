@@ -19,7 +19,29 @@ library TokenTransferLib {
     )
         internal
     {
+        _transfer(from, to, amount, tokenHandler);
+    }
 
+    /// @dev distribute tokens from a wallet within the scope of gif to an external address
+    function distributeTokens(
+        address from,
+        address to,
+        Amount amount,
+        TokenHandler tokenHandler
+    )
+        internal
+    {
+        _transfer(from, to, amount, tokenHandler);
+    }
+
+    function _transfer(
+        address from,
+        address to,
+        Amount amount,
+        TokenHandler tokenHandler
+    )
+        internal
+    {
         if (amount.eqz()) {
             revert ErrorTokenTransferLibAmountIsZero();
         }

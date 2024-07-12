@@ -302,21 +302,14 @@ contract PoolService is
 
         IComponents.ComponentInfo memory poolComponentInfo = instanceReader.getComponentInfo(poolNftId);
         address poolWallet = poolComponentInfo.wallet;
-
-        // check allowance
-        {
-            IERC20Metadata token = IERC20Metadata(poolComponentInfo.token);
-            uint256 tokenAllowance = token.allowance(poolWallet, address(poolComponentInfo.tokenHandler));
-            if (tokenAllowance < unstakedAmount.toInt()) {
-                revert ErrorPoolServiceWalletAllowanceTooSmall(poolWallet, address(poolComponentInfo.tokenHandler), tokenAllowance, amount.toInt());
-            }
-        }
-
         // transfer amount to bundle owner
         address owner = getRegistry().ownerOf(bundleNftId);
         emit LogPoolServiceBundleUnstaked(instance.getNftId(), poolNftId, bundleNftId, unstakedAmount);
-        // TODO: centralize token handling (issue #471)
-        poolComponentInfo.tokenHandler.transfer(poolWallet, owner, unstakedAmount);
+        TokenTransferLib.distributeTokens(
+            poolWallet, 
+            owner, 
+            unstakedAmount, 
+            poolComponentInfo.tokenHandler);
         return unstakedAmount;
     }
 
