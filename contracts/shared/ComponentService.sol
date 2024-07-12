@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 pragma solidity ^0.8.20;
 
-import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
-
 import {Amount, AmountLib} from "../type/Amount.sol";
 import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol";
 import {Fee, FeeLib} from "../type/Fee.sol";
@@ -22,6 +20,7 @@ import {NftId} from "../type/NftId.sol";
 import {ObjectType, REGISTRY, COMPONENT, DISTRIBUTION, INSTANCE, ORACLE, POOL, PRODUCT} from "../type/ObjectType.sol";
 import {RoleId, DISTRIBUTION_OWNER_ROLE, ORACLE_OWNER_ROLE, POOL_OWNER_ROLE, PRODUCT_OWNER_ROLE} from "../type/RoleId.sol";
 import {TokenHandler} from "./TokenHandler.sol";
+import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 contract ComponentService is
     ComponentVerifyingService,
@@ -115,22 +114,13 @@ contract ComponentService is
             }
         }
 
-        // check allowance
-        TokenHandler tokenHandler = info.tokenHandler;
-        IERC20Metadata token = IERC20Metadata(info.token);
-        uint256 tokenAllowance = token.allowance(componentWallet, address(tokenHandler));
-        if (tokenAllowance < withdrawnAmount.toInt()) {
-            revert ErrorComponentServiceWalletAllowanceTooSmall(componentWallet, address(tokenHandler), tokenAllowance, withdrawnAmount.toInt());
-        }
-
         // decrease fee counters by withdrawnAmount
         _changeTargetBalance(DECREASE, instance.getInstanceStore(), componentNftId, AmountLib.zero(), withdrawnAmount);
         
         // transfer amount to component owner
         address componentOwner = getRegistry().ownerOf(componentNftId);
-        emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(token), withdrawnAmount);
-        // TODO: centralize token handling (issue #471)
-        tokenHandler.transfer(componentWallet, componentOwner, withdrawnAmount);
+        emit LogComponentServiceComponentFeesWithdrawn(componentNftId, componentOwner, address(info.token), withdrawnAmount);
+        TokenTransferLib.distributeTokens(componentWallet, componentOwner, withdrawnAmount, info.tokenHandler);
     }
 
 

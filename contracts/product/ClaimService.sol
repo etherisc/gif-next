@@ -17,6 +17,7 @@ import {ComponentVerifyingService} from "../shared/ComponentVerifyingService.sol
 import {InstanceReader} from "../instance/InstanceReader.sol";
 import {IClaimService} from "./IClaimService.sol";
 import {IPoolService} from "../pool/IPoolService.sol";
+import {TokenTransferLib} from "../shared/TokenTransferLib.sol";
 
 
 contract ClaimService is 
@@ -302,20 +303,12 @@ contract ClaimService is
 
         // TODO callback IPolicyHolder
 
-        if (netPayoutAmount.eqz()) {
-            revert ErrorClaimsServicePayoutAmountIsZero(policyNftId, payoutId);
-        }
-
         emit LogClaimServicePayoutProcessed(policyNftId, payoutId, payoutAmount, beneficiary, netPayoutAmount);
 
         {
             NftId poolNftId = getRegistry().getObjectInfo(policyInfo.bundleNftId).parentNftId;
             IComponents.ComponentInfo memory poolInfo = instanceReader.getComponentInfo(poolNftId);
-            // TODO: centralize token handling (issue #471)
-            poolInfo.tokenHandler.transfer(
-                poolInfo.wallet,
-                beneficiary,
-                netPayoutAmount);
+            TokenTransferLib.distributeTokens(poolInfo.wallet, beneficiary, netPayoutAmount, poolInfo.tokenHandler);
         }
     }
 

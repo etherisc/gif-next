@@ -155,7 +155,7 @@ contract TestFees is GifTest {
         
         // THEN
         vm.expectRevert(abi.encodeWithSelector(
-            IComponentService.ErrorComponentServiceWalletAllowanceTooSmall.selector, 
+            TokenTransferLib.ErrorTokenTransferLibAllowanceTooSmall.selector, 
             externalWallet, 
             address(distribution.getTokenHandler()),
             0,
