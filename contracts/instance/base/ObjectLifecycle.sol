@@ -54,9 +54,7 @@ contract ObjectLifecycle is
         setStateTransition(POLICY(), APPLIED(), REVOKED());
         setStateTransition(POLICY(), APPLIED(), DECLINED());
         setStateTransition(POLICY(), APPLIED(), COLLATERALIZED());
-        setStateTransition(POLICY(), APPLIED(), ACTIVE());
-        setStateTransition(POLICY(), COLLATERALIZED(), ACTIVE());
-        setStateTransition(POLICY(), ACTIVE(), CLOSED());
+        setStateTransition(POLICY(), COLLATERALIZED(), CLOSED());
     }
 
     function _setupClaimLifecycle() private {

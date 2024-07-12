@@ -20,7 +20,8 @@ interface IPolicyService is IService {
 
     error ErrorPolicyServicePolicyProductMismatch(NftId applicationNftId, NftId expectedProductNftId, NftId actualProductNftId);
     error ErrorPolicyServicePolicyStateNotApplied(NftId applicationNftId);
-    error ErrorPolicyServicePolicyStateNotCollateralizedOrApplied(NftId applicationNftId);
+    error ErrorPolicyServicePolicyStateNotCollateralized(NftId applicationNftId);
+    error ErrorPolicyServicePolicyAlreadyActivated(NftId policyNftId);
 
     error ErrorPolicyServicePremiumHigherThanExpected(uint256 premiumExpectedAmount, uint256 premiumToBePaidAmount);
     error ErrorPolicyServiceBalanceInsufficient(address policyOwner, uint256 premiumAmount, uint256 balance);
